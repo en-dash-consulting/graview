@@ -1,6 +1,7 @@
 import {
   assertReadable,
   formatStamp,
+  Graph,
   isEmptyDiff,
   tickEachDay,
   OperationLog,
@@ -35,6 +36,22 @@ export interface OpenStoreOptions<S extends AnySchema> {
   readonly adapter: PersistenceAdapter<string> & {
     loadMeta?(scope: string): StoredMeta | null | Promise<StoredMeta | null>;
     saveMeta?(scope: string, meta: StoredMeta): void | Promise<void>;
+    /**
+     * A WRITE-AHEAD JOURNAL, for an adapter whose writes land later than
+     * the apply (the browser adapter's IndexedDB): called synchronously
+     * with every applied op, inside the apply, so an op is kept the moment
+     * `store.apply` returns even when the page goes before the adapter's
+     * own write commits. Throws when it cannot keep them, and the error is
+     * reported through `onPersistError`.
+     */
+    journal?(scope: string, ops: readonly Operation[]): void;
+    /**
+     * What the journal holds, and the seq of the last op the stored
+     * snapshot reflects (-1: none). On open, the ops the log does not have
+     * are appended to it and the ops the snapshot does not reflect are
+     * folded onto it — each once, by id and by seq.
+     */
+    loadJournal?(scope: string): Promise<{ readonly ops: readonly Operation[]; readonly through: number }>;
   };
   readonly scope?: string;
   /** First-run data when nothing is stored yet. */
@@ -144,7 +161,10 @@ export async function openStore<S extends AnySchema>(
 
   if (options.fresh) await adapter.delete(scope);
   const stored = (await adapter.load(scope)) as GraphSnapshot | null;
-  const persisted = (await adapter.loadLog?.(scope)) ?? [];
+  const loggedOps = (await adapter.loadLog?.(scope)) ?? [];
+  const report = options.onPersistError ?? ((error: unknown) => console.error("graview ship: persistence failed", error));
+  const replayed = await replayJournal(options, scope, stored, loggedOps, report);
+  const persisted = replayed?.log ?? loggedOps;
   const epochs: Epoch[] = (await adapter.loadEpochs?.(scope)) ?? [];
   /*
    * A COMPACTED LOG BEGINS AT ITS HORIZON (FR-23): the adapter hands over
@@ -180,7 +200,7 @@ export async function openStore<S extends AnySchema>(
       : // A migration run behind the horizon is archived; the checkpoint still says the version it stood at.
         Math.max(meta?.version ?? options.assumeVersion ?? target, migratedTo, checkpoint?.version ?? 0);
 
-  let snapshot: GraphSnapshot = stored ?? options.seed ?? { nodes: [], edges: [] };
+  let snapshot: GraphSnapshot = replayed?.snapshot ?? stored ?? options.seed ?? { nodes: [], edges: [] };
   let migrated: readonly Operation[] = [];
   if (storedVersion < target) {
     const run = migrateSnapshot(app, snapshot, storedVersion);
@@ -328,7 +348,6 @@ export async function openStore<S extends AnySchema>(
    * first's snapshot, and a failure is reported rather than swallowed —
    * an app that thinks it persisted and did not is the worst quiet state.
    */
-  const report = options.onPersistError ?? ((error: unknown) => console.error("graview ship: persistence failed", error));
   /*
    * A WRITE AT OPEN THAT FAILS IS REPORTED as a later one is, and the store
    * opens on what it holds. WebKit keeps 5 MB of localStorage an origin
@@ -337,7 +356,7 @@ export async function openStore<S extends AnySchema>(
    * empty page and said nothing anywhere.
    */
   try {
-    if (stored === null || migrated.length > 0 || rebuilt) await adapter.save(scope, store.snapshot());
+    if (stored === null || migrated.length > 0 || rebuilt || replayed?.folded) await adapter.save(scope, store.snapshot());
     await adapter.saveMeta?.(scope, { version: target, ...formatStamp() });
   } catch (error) {
     report(error);
@@ -347,6 +366,17 @@ export async function openStore<S extends AnySchema>(
     // The day turning (`store.tick`) changes no record: nothing to write.
     if (ops.length === 0 && isEmptyDiff(diff as never)) return;
     const stamped = ops.map((op) => ({ ...op, seq: seq++ }));
+    /*
+     * KEPT BEFORE `apply` RETURNS. The adapter's own write lands on the
+     * chain below, a transaction later in IndexedDB, and a page that
+     * navigates first would lose the op: the journal is written now,
+     * synchronously, and the next open replays what the write did not land.
+     */
+    try {
+      adapter.journal?.(scope, stamped);
+    } catch (error) {
+      report(error);
+    }
     writing = writing
       .then(async () => {
         await adapter.appendOps?.(scope, stamped);
@@ -403,6 +433,60 @@ export async function openStore<S extends AnySchema>(
       return done;
     },
   };
+}
+
+/**
+ * WHAT THE JOURNAL KEPT AND THE ADAPTER'S WRITE DID NOT LAND (the page
+ * left first) is put back, each op once: the ops the log does not hold,
+ * by id, are appended to it, and the ops the stored snapshot does not
+ * reflect, by seq, are folded onto it (onto the seed, for a scope whose
+ * first snapshot never landed) as the log folds each. Answers nothing
+ * when there was nothing to put back. An op that will not fold is
+ * reported and left in the journal, and nothing is appended without the
+ * graph it made.
+ */
+async function replayJournal<S extends AnySchema>(
+  options: OpenStoreOptions<S>,
+  scope: string,
+  stored: GraphSnapshot | null,
+  logged: readonly Operation[],
+  report: (error: unknown) => void,
+): Promise<{ readonly log: Operation[]; readonly snapshot?: GraphSnapshot; readonly folded: boolean } | undefined> {
+  const { adapter, app } = options;
+  const journal = await adapter.loadJournal?.(scope);
+  if (!journal || journal.ops.length === 0) return undefined;
+  const held = new Set(logged.map((op) => op.id));
+  const unlogged = journal.ops.filter((op) => !held.has(op.id));
+  const unfolded = journal.ops.filter((op) => op.seq > journal.through);
+  if (unlogged.length === 0 && unfolded.length === 0) return undefined;
+  let snapshot: GraphSnapshot | undefined;
+  if (unfolded.length > 0) {
+    try {
+      const base = stored ?? options.seed ?? { nodes: [], edges: [] };
+      const graph = Graph.from(app.schema, base as never, { validate: options.storeOptions?.validate ?? true });
+      for (const op of unfolded) foldJournaled(graph, op);
+      snapshot = graph.snapshot() as GraphSnapshot;
+    } catch (error) {
+      report(new Error(`graview ship: the ops "${scope}" kept in its journal would not fold onto what it stored, and were not put back: ${String((error as Error)?.message ?? error)}`));
+      return undefined;
+    }
+  }
+  if (unlogged.length > 0) await adapter.appendOps?.(scope, unlogged);
+  const log = [...logged, ...unlogged].sort((a, b) => a.seq - b.seq);
+  return { log, ...(snapshot ? { snapshot } : {}), folded: snapshot !== undefined };
+}
+
+/** One op folded as `OperationLog.fold` lands each: an undo puts back what was there, and a write an older declaration accepted is held as written. */
+function foldJournaled<S extends AnySchema>(graph: Graph<S>, op: Operation): void {
+  if (op.undoes !== undefined) {
+    graph.applyPrimitives(op.primitives, { restoring: true });
+    return;
+  }
+  try {
+    graph.applyPrimitives(op.primitives);
+  } catch {
+    graph.applyPrimitives(op.primitives, { restoring: true });
+  }
 }
 
 /** Whether a log with no epochs folds from empty to exactly what is stored. */

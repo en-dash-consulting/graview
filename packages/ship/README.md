@@ -15,7 +15,9 @@ declaration plus one persistence adapter is a running deployment.
   adapter is the scale answer; this is the "where is my data" answer.
 - **`createBrowserAdapter()`** — the same three things in IndexedDB, for an app that
   runs in the page with no server (a store kept in `localStorage` before is carried forward on
-  its first open, and `localStorage` is used only where IndexedDB will not open): the sample apps remember their edits through it,
+  its first open, and `localStorage` is used only where IndexedDB will not open). An edit is
+  kept when `apply` returns: a journal in `localStorage` holds what IndexedDB has not committed
+  yet, and the next open puts it back, so a page left at once loses nothing. The sample apps remember their edits through it,
   attributed and undoable, migrations included. Import from `@graview/ship/browser` in a
   bundle (the root entry carries the file adapter's `node:fs`). Conventions the helpers
   read: `?fresh=1` returns to the seed (`openStore({ fresh })`), and a driven browser

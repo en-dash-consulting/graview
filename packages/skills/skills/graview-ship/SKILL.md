@@ -31,7 +31,9 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    **In the page, with no server**, the browser adapter stores the same
    three things in IndexedDB (localStorage only where IndexedDB will not
    open; a store localStorage already holds is carried forward on its first
-   open) and slots into the same call — import it from
+   open). An edit is kept when `apply` returns, not when IndexedDB commits:
+   a journal in localStorage holds what IndexedDB has not yet, and the next
+   open puts it back, so a page left at once loses nothing. It slots into the same call — import it from
    `@graview/ship/browser` so the bundler never meets `node:fs`:
 
    ```ts
