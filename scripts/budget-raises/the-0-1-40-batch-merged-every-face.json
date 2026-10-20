@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 128,
+  "gzipped": 96,
+  "note": "Raised when the 0.1.40 batch's last branches were merged (FR-194's first-draw doors, FR-195's upload at, the long headline, the scene under a host's bar): each measured every face alone against the branch it started from, and together they come to 95 / 57 bytes more than their own raises (held for a few bytes either side). Measured at 2_483_431 / 840_126."
+}

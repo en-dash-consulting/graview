@@ -115,7 +115,8 @@ describe("a hosted page", () => {
     // 955 KB since a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): both faces' menus offer Hide and Delete for a place and go elsewhere when the place drawn is deleted, the bar's places open them, and the frame's registry is tidied as the host keeps its views: the scene face measured 977_750 B over the 0.1.38 batch beside it (966_453 before it, at 945).
     // 956 KB since a headline bound to a long field came to be warned of and drawn a step smaller: `view-headline-long` in the view checker a page that compiles its document carries, and one rule in the blocks' stylesheet: the scene face measured 978_345 B, 597 more than before it (977_748).
     // 956 KB since what a page fetches before it is wanted came to wait for the first draw (FR-194), and the routed face stopped fetching the acts' pane for a selection it draws nothing for: the scene face measured 977_928 B, 413 more than before it (977_515).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(956 * 1024);
+    // 957 KB once both of 0.1.40's 956 KB raises above were merged: each measured alone against the branch it started from, together they come to 978_997 B.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(957 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
