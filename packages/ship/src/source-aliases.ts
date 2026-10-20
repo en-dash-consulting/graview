@@ -20,7 +20,8 @@ import { fileURLToPath } from "node:url";
  * primitives' fonts) to that file. Each `find` matches its specifier exactly,
  * so `@graview/core` never swallows `@graview/core/words` whatever the order,
  * and a built file nobody writes in `src` (`@graview/core/document.schema.json`)
- * is left to ordinary resolution. They are listed subpaths first all the same,
+ * to the checkout's own build of it: left to ordinary resolution, a linked
+ * project on CI found none (its link reached no built copy). They are listed subpaths first all the same,
  * for a reader and for an app that adds its own prefix aliases after them.
  *
  * Development only. An installed `@graview/ship` carries `dist` and no `src`,
@@ -32,7 +33,7 @@ export interface SourceAlias {
   readonly replacement: string;
 }
 
-/** One export of one package, and where its source is (none for a built file left alone). */
+/** One export of one package, and where it runs from: its source, or the checkout's build of a file nobody writes in `src` (none while that is unbuilt). */
 export interface SourceEntry {
   readonly specifier: string;
   readonly target: string;
@@ -93,7 +94,7 @@ export function sourceEntries(root: string = thisCheckout()): SourceEntry[] {
         continue;
       }
       const file = join(packages, dir, target);
-      entries.push({ specifier, target, source: !target.startsWith("./dist/") && existsSync(file) ? file : undefined });
+      entries.push({ specifier, target, source: existsSync(file) ? file : undefined });
     }
   }
   return entries;
