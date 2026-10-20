@@ -30,7 +30,7 @@ Every view comes with a manifest the host enforces:
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
-- `pictures: true` (or `{ width }`) hands each file on a record as an address the host made, never its path, and lets the view place a video and open the full-screen viewer (`graview-view-drawing`).
+- `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path, and lets the view place a record's video (`<graview-video>`) and open the host's full-screen viewer: `graview-view-drawing` says how a view shows them.
 
 A manifest that names a kind, an edge or an act the app does not declare is
 refused before the view starts.
@@ -59,13 +59,13 @@ title }`, those the viewer may run), `places` (`{ as, title }`), and `theme`
 (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's
 `name`, and its `logo` as a URL the host made), and `locale` and `timeZone`:
 say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone:
-props.timeZone })`, the clock the rest of
-the app says it on, never a zone of your own. `render` keeps what it can, by
-element and by `data-key` or `id`, so give repeated rows a `data-key`: a
-field being typed in keeps its text across a push. An event carries
-`value`, `checked`, `key`, `pressed` for a bound press, and `element`,
-what the selector matched: read its `data-*`. Elements lack `closest`,
-`matches` and `dataset`.
+props.timeZone, hour: "numeric", minute: "2-digit" })`, the clock the rest
+of the app says it on, never a zone of your own. `render` keeps what it
+can, by element and by `data-key` or `id`, so give repeated rows a
+`data-key`: a field being typed in keeps its text across a push. An event
+carries `value`, `checked`, `key`, `pressed` for a bound press, and
+`element`, what the selector matched: read its `data-*`. Elements lack
+`closest`, `matches` and `dataset`.
 
 ```js
 graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
@@ -94,67 +94,29 @@ stage%3Abuilding` and can be shared. A lens narrows the records it is
 handed; a blocks lens lists what its own `where` says. Any destination may
 take a **section**, a heading's words or an element's id (`section:
 "Every feature"`, `data-section`): the page scrolls there and gives it the
-keyboard. On the scene a list is the kind's stop
-narrowed (`in.filter`). A filter on a
-field the kind lacks, or a choice it lacks, goes nowhere and says why, so link
+keyboard (`#every-feature`). On the scene a list is the kind's stop
+narrowed (`in.filter`); a section is looked for there too. A filter on a
+field the kind lacks, or a choice it lacks, goes nowhere and says why
+(`Features have no field "stag" to filter by; they filter by …`), so link
 to the list narrowed rather than to a lens per filter; a lens kept only
 as a link target can be hidden (set-lens-hidden, `graview-pages`).
 
 ## Writes
 
-An act must be in the manifest. If every member of the app sees every
-record, `graview.act` applies it as given. Otherwise **only a press
-applies an act**: a person's click on an element with `data-act`. Its
-arguments come only from the record it is bound to (`data-record`, on it
-or around it), the manifest's constants, and the fields in its `fieldset`,
-named for the act's arguments and typed by the person:
-
-```html
-<fieldset>
-  <input name="summary" placeholder="What it is">
-  <button data-act="set-summary" data-record="package:start">Say it</button>
-</fieldset>
-```
-
-A field the view filled (`value="…"`) is the view's until the person
-empties it, and a press carrying it is refused. To offer a record's own
-text to edit, let the host fill it: `data-prefill` names the field, and
-`name` is the same.
-
-```html
-<fieldset data-record="deliverable:email">
-  <textarea name="draft" data-prefill="draft"></textarea>
-  <button data-act="set-draft">Save the draft</button>
-</fieldset>
-```
-
-The host fills it with the record's whole value, line breaks kept, when
-an act in the fieldset writes that field of that record and the person
-may run it there; otherwise it stays empty. The person edits it in place,
-and it goes only back into that field. A view
-may empty a field after a press. A radio or a select is the person's
-pick, not their words: its value goes only if it is one the act declares
-(an enum's option) or a record the view was shown. The press applies before the view
-hears it: `event.pressed`, and `acted` after every act.
-
-In a `fieldset data-record`, a field saves as it is typed, no button:
-
-```html
-<textarea name="notes" data-prefill="notes" data-act="save-notes" data-save="input" data-debounce="1500"></textarea>
-```
-
-Saved when the person pauses (`data-debounce`, default 1 000 ms) or
-leaves it, by a press's rules. Say Saving… on `input`, Saved on
-`acted` (`examples/a-call-sheet.js`).
+An act must be in the manifest. Where every member sees every record,
+`graview.act` applies it as given; anywhere else **only a press applies
+an act**: a person's click on a `data-act`, or a field of theirs that
+saves. How those are written and heard is `graview-view-forms`.
 
 ## Limits
 
 About 256 kB of source, 5 000 drawn nodes, 120 messages a second,
-1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face
-of its records is drawn instead, with why.
-Work a view schedules with timers between pushes is not
-timed per push. Never spin: the page stays
-responsive, the person.s CPU does not.
+1 000 ms per push, and 100 ms a second of the page's time drawing it.
+Past any of them the view is stopped and the plain face of its records is
+drawn instead, with why. Draw summaries, not every row of a huge set.
+Work a view schedules with timers between pushes is not timed per push.
+It may keep its worker busy just under the heartbeat's 5 s; the page
+stays responsive, the person's CPU does not: never spin.
 
 ## Worked examples
 
@@ -174,8 +136,8 @@ pages.surface("home", workerHome({ manifest: front, worker: { source: frontSourc
 ```
 
 A view with `attach: "home"` given to `registerWorkerView` is the home's own
-view: the routed home's body, the page the app opens on, and the app's declared home is drawn if it
-fails.
+view: the routed home's body, the page the app opens on — full width under
+the bar on a desk too — and the app's declared home is drawn if it fails.
 
 ## Then find out whether it worked
 
@@ -197,9 +159,8 @@ fails.
    Content-Security-Policy needs `worker-src blob:` and `style-src
    'unsafe-inline'`, and the note under the plain face names what it lacks.
 4. Toggle the app to dark. Does the view restyle?
-5. Press each bound button with typed words, then again with a field the
-   view filled. The first applies and the second is refused. A prefilled
-   field is filled only for a seat that may write it.
+5. Follow each link, narrowed and to a section, and see it land where it
+   says. A view that writes is pressed as `graview-view-forms` says.
 
 ## What the check cannot see
 
@@ -208,6 +169,6 @@ view that throws on an empty graph, draws the wrong number, or takes too
 long on a big one. Only running it does: `graview view check` on an empty
 app, a full one, and a member with narrow sight. A headless run is one
 push with timers that never fire, and nothing laid out, so it cannot see
-an animation or a layout that breaks at 390; the faces can. Nor can it see a view that misleads. The host
-keeps it from reaching or leaking anything, not from arranging what the
-person may see badly.
+an animation or a layout that breaks at 390; the faces can. Nor can it
+see a view that misleads. The host keeps it from reaching or leaking
+anything, not from arranging what the person may see badly.

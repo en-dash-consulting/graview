@@ -16,7 +16,7 @@
  * a view that offers Rae the same field, or binds one to the memo she may
  * not see, gets nothing filled in, and her press changes nothing.
  *
- * And the workshop's call sheet (FR-191), the skill's `examples/a-call-sheet.js`
+ * And the workshop's call sheet (FR-191), graview-view-forms' `examples/a-call-sheet.js`
  * registered for `call`: the notes, filled by the host, save as Nick types
  * them — with no button, once he pauses and at once when he leaves the
  * field — and the view says "Saving…" and then "Saved"; Rae, offered the
@@ -41,7 +41,7 @@ export async function recordSuite({ repoRoot, build, browser, claim, report, HOS
     .replace(/const editable = [^;]+;/, "const editable = true;")
     .replace("<p role=\"note\">", '<fieldset data-record="memo:margin" class="memo"><textarea name="body" data-prefill="body" aria-label="The memo"></textarea><button data-act="quote-draft">Quote</button></fieldset><p role="note">');
   if (eager === example) throw new Error("the eager view is the example: the example changed shape");
-  const callSheet = readFileSync(resolve(repoRoot, "packages/skills/skills/graview-worker-view/examples/a-call-sheet.js"), "utf8");
+  const callSheet = readFileSync(resolve(repoRoot, "packages/skills/skills/graview-view-forms/examples/a-call-sheet.js"), "utf8");
   /* The call sheet offering its notes field to every seat: what a careless author writes. */
   const eagerCalls = callSheet.replace(/const mayWrite = [^;]+;/, "const mayWrite = true;");
   if (eagerCalls === callSheet) throw new Error("the eager call sheet is the example: the example changed shape");
