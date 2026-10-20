@@ -280,7 +280,11 @@ export function placesThatStand(input: {
  * while it is used), then the place down to 9em of its name (whole in its
  * title), then the app's name, which wraps between its words onto a second
  * line and never inside one; the switch keeps its size, and draws its marks
- * alone when its words do not fit (`roomForWords`).
+ * alone when its words do not fit (`roomForWords`). Whether the places stand
+ * and the words fit is weighed with the name as it would stand on one line
+ * (`nameGiven`), never as it is drawn now: the name drawn on two lines because
+ * the places stood would fold them, and the name back on one would stand
+ * them again, frame after frame.
  *
  * Where the places stand on the row (FR-145), Find gives first — down to
  * its least — then the places fold into "More", then into the one control,
@@ -324,6 +328,7 @@ const BAR_CSS = `
 .graview-bar-at[aria-current]{font-weight:600;border-bottom-color:var(--graview-accent)}
 .graview-bar-ruler{position:absolute;left:0;top:0;display:flex;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none}
 .graview-bar-ruler .graview-bar-at{font-weight:600}
+.graview-bar-ruler>.graview-bar-name{flex:none;white-space:nowrap;letter-spacing:-.005em}
 .graview-bar-list{display:grid;align-content:start;width:min(320px,calc(100vw - 24px));height:auto;max-height:min(70vh,560px);overflow:auto;margin:0;padding:6px;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high);color:var(--graview-ink)}
 .graview-bar-list[hidden]{display:none}
 .graview-bar-list p{margin:8px 8px 2px;font-size:.6875rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--graview-ink-muted)}
@@ -587,6 +592,12 @@ export function AppBar({
               </span>
             </span>
           ) : null}
+          {/* The app's name on one line, unseen, for the row to be weighed by as if it stood so (`nameGiven`). */}
+          {named ? (
+            <span className="graview-bar-ruler" aria-hidden="true">
+              <span className="graview-bar-name">{name}</span>
+            </span>
+          ) : null}
           <div className="graview-bar-tools">
             {find ? (
               <>
@@ -689,8 +700,9 @@ function FaceSwitch({ faces, form, drawn }: { readonly faces: BarFaces; readonly
  * WHETHER THE SWITCH'S WORDS FIT (the switch left to say its words where
  * there is room). The row is weighed as it is drawn: the room the middle
  * has past what the place wants (its words, up to 14em; none on the
- * scene), less what Find has given up; none when the app's name has
- * wrapped. The words fit when that room holds them — the words
+ * scene), less what Find has given up and what the app's name has given
+ * (`nameGiven`); none when the name is wider on one line than its room. The
+ * words fit when that room holds them — the words
  * drawn already, or their width to come when the marks are drawn alone —
  * so the switch never flips back and forth at one width. Not weighed while
  * Find is in use (it is drawn wide then), on a phone's bar (the marks
@@ -709,20 +721,37 @@ function roomForWords(header: HTMLElement): boolean | null {
   const em = place ? parseFloat(getComputedStyle(place).fontSize) || 14 : 0;
   // The place's words, its chevron, its gap, padding and frame: up to 14em of them.
   const wanted = place ? Math.min(place.scrollWidth + 34, 14 * em) : 0;
-  let spare = mid.getBoundingClientRect().width - wanted;
+  const given = nameGiven(header);
+  // The app's name on two lines whatever stands beside it has given its room already: no room for the words.
+  if (given === null) return false;
+  let spare = mid.getBoundingClientRect().width - wanted - given;
   if (find && find.getBoundingClientRect().width > 0) {
     const basis = parseFloat(getComputedStyle(find).flexBasis);
     if (isFinite(basis)) spare -= Math.max(0, basis - find.getBoundingClientRect().width);
   }
-  // The app's name on two lines has given its room already: no room for the words.
-  if (nameWrapped(header)) return false;
   return faces.getAttribute("data-switch-drawn") === "icons" ? spare >= words + 2 : spare >= -1;
 }
 
-/** Whether the app's name is on two lines: it has given its room already. */
-function nameWrapped(header: HTMLElement): boolean {
-  const name = header.querySelector(".graview-bar-app-name");
-  return Boolean(name && name.getBoundingClientRect().height > parseFloat(getComputedStyle(name).lineHeight) * 1.5);
+/**
+ * THE ROOM THE APP'S NAME HAS GIVEN, weighed by the name as it would stand
+ * on one line: how much narrower the app is drawn now than it would stand
+ * so (its mark, its gap, its words unwrapped off the ruler and the 2 px
+ * spacer beside them) — the room the name has given to what stands after
+ * it. Null when the name is wider on one line than its room (the app's
+ * `max-width`, half the row inside its padding), when it is on two lines
+ * whatever stands beside it. Weighing by the name as it is drawn would
+ * weigh the row by what the weighing did: places standing squeeze the name
+ * onto two lines, a name on two lines folds the places, the name is back
+ * on one, and the places stand again.
+ */
+function nameGiven(header: HTMLElement): number | null {
+  const app = header.querySelector<HTMLElement>(".graview-bar-app");
+  const probe = header.querySelector(".graview-bar-ruler>.graview-bar-name");
+  if (!app || !probe) return 0;
+  const width = (one: Element | null) => one?.getBoundingClientRect().width ?? 0;
+  const one = width(app.firstElementChild) - width(header.querySelector(".graview-bar-app-name")) + width(probe) + 2;
+  const room = (parseFloat(getComputedStyle(app).maxWidth) / 100) * (app.parentElement!.clientWidth - 2 * app.offsetLeft) || Infinity;
+  return one > room + 0.5 ? null : Math.max(0, one - width(app));
 }
 
 /** A press a page should follow itself: the main button, no key held (a new tab, a new window, a download). */
@@ -1000,26 +1029,37 @@ function usePlaceGestures(places: readonly BarPlace[], current: string | null, s
  * where the places begin to where Find ends, less Find at its least, less
  * the switch's words when they are asked for. The same answer whichever way
  * the places are drawn, so the row never flips between the two at one
- * width. Not weighed while Find is in use (`undefined`); none on a phone's
- * bar, when the app's name has wrapped, or where nothing is laid out (null).
+ * width. The places begin where they would with the app's name on one
+ * line (`nameGiven`), so they stand only where they leave it there, and the
+ * name they would squeeze onto two lines never folds them back. Not weighed
+ * while Find is in use (`undefined`); none on a phone's bar, when the app's
+ * name is wider on one line than its room, or where nothing is laid out
+ * (null).
  */
 function standsIn(header: HTMLElement, current: number, wordsAsked: boolean, ranks: string): string | null | undefined {
-  const ruler = header.querySelector<HTMLElement>(".graview-bar-ruler");
+  const ruler = header.querySelector<HTMLElement>("[data-graview-bar-ruler]");
   const mid = header.querySelector<HTMLElement>(".graview-bar-mid");
   if (!ruler || !mid) return null;
   const find = header.querySelector<HTMLElement>(".graview-bar-find");
   if (find?.matches(":focus-within")) return undefined;
   if (header.getBoundingClientRect().width < BAR_PHONE) return null;
-  if (nameWrapped(header)) return null;
+  const given = nameGiven(header);
+  if (given === null) return null;
   const widths = [...ruler.children].map((one) => one.getBoundingClientRect().width);
   const more = widths.pop() ?? 0;
   const faces = header.querySelector<HTMLElement>(".graview-bar-faces");
   const words = faces && wordsAsked ? wordsOf(faces) : 0;
   const drawnWords = faces?.getAttribute("data-switch-drawn") === "words" ? words : 0;
-  const from = mid.getBoundingClientRect().left;
+  const from = mid.getBoundingClientRect().left + given;
   const end = find?.getBoundingClientRect();
-  // To Find's end, less Find at its least and the room between them (the row's gap, less the tools' pull); with no Find, the middle's own room.
-  const room = end && end.width > 0 ? end.right - from - (parseFloat(getComputedStyle(find!).minWidth) || 0) - 8 : mid.getBoundingClientRect().width;
+  /*
+   * To Find's end, less Find at its least and the room between them — the
+   * row's whole gap: Find stands at `margin-left:auto`, which is nothing
+   * once the row is full, not the tools' pull of 8 px, which would weigh
+   * the places 8 px roomier than the row and squeeze the app's name by it.
+   * With no Find, the middle's own room.
+   */
+  const room = end && end.width > 0 ? end.right - from - (parseFloat(getComputedStyle(find!).minWidth) || 0) - 16 : mid.getBoundingClientRect().width - given;
   const primary = [...ranks].map((rank) => rank !== "0");
   return placesThatStand({ widths, current, room: Math.floor(room + drawnWords - words), more, primary })?.join(",") ?? null;
 }
