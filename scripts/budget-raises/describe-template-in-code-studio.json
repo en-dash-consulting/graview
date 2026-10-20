@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 2000,
+  "gzipped": 250,
+  "note": "graview check's warning of a describe in code that returns a {field} template (describe-template-in-code), which the studio carries with the checker: 1_863_059 / 596_458 budgeted before it, 1_865_004 / 596_681 with it: 1_945 / 223 more."
+}
