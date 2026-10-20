@@ -397,6 +397,19 @@ for (const [title, minutes] of [["Keynote: The Next Ten Years of the Program", 9
   edge("led-by", id, speakers[1]);
 }
 
+/*
+ * AND ONE WORKSHOP WHOSE LEADER PRESENTS BOTH KEYNOTES THAT DAY: a rule
+ * naming a workshop and two talks together, two kinds that each have a
+ * `status` in words of their own ("planned", "scheduled"), chosen at once
+ * through the problem (carried from walks XI and XII, W-228).
+ */
+{
+  const label = "Hands-on: Planning the Next Ten Years, with the Keynote Speaker";
+  const id = node({ id: mint("workshop", label), kind: "workshop", label, startsAt: at(day(next, 0), 13 * 60), capacity: 20, status: "planned" });
+  edge("held-in", id, rooms[4].id);
+  edge("led-by", id, speakers[0]);
+}
+
 /* ------------------------------------------------------------ written */
 
 // One record a line: diffable, and a third of the size of indented JSON.

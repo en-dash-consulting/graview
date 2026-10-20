@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 53,
+  "gzipped": 18,
+  "changeset": "the-scene-strip-tells-the-watch.md",
+  "note": "Raised when the scene's strip came to tell a watching harness that an act's own input refused a press there (carried from W-228 and W-238): previewAffordance's `pressed` and the one line on @graview/core that tells the watch of the preview's input refusal. Up front: the watch's one line and the press's preview asking it. 53 / 18 more than before it (585_235 / 203_246): measured at 585_288 / 203_264 (0.1 KB)."
+}

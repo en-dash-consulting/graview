@@ -77,12 +77,25 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
             text: `all but "${named(odd)}" share "${named(neighbor)}" (${humanizeField(edgeKind).toLowerCase()})`,
             nodeIds: [...ids, neighborId],
           });
+          /*
+           * BROUGHT IN LINE THROUGH THE RELATION THE OTHERS SHARE (the
+           * gauntlet's workshop and two keynotes, carried from walks XI and
+           * XII). Two talks presented by Zoë and a workshop she leads read
+           * "all but the workshop share Zoë (presented by)", and the workshop
+           * was offered "Add a leader" and "Unlink a speaker" to bring it in
+           * line: acts that tie another relation, or untie one. A record that
+           * cannot hold the relation is not out of step with it, and an act
+           * that says what it ties must tie this one.
+           */
+          if (!store.schema.edgeAllowed(edgeKind, odd.kind, neighbor.kind) && !store.schema.edgeAllowed(edgeKind, neighbor.kind, odd.kind)) continue;
           for (const mutation of store.allMutations()) {
             const subject = mutation.subject;
             if (!subject) continue;
             if (subject.kinds !== "*" && !(subject.kinds as readonly string[]).includes(odd.kind)) {
               continue;
             }
+            const saysWhatItTies = mutation.connects !== undefined || mutation.severs !== undefined;
+            if (saysWhatItTies && !(mutation.connects ?? []).includes(edgeKind)) continue;
             const target = argAccepting(mutation.input, neighbor.kind);
             if (!target) continue;
             affordances.push({

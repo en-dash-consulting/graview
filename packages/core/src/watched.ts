@@ -16,6 +16,7 @@
  * every reader of a hosted page for a harness's sake, until the ninth walk
  * needed the room (the hosted page's budget).
  */
+import { InvalidArguments } from "./mutations/invalid-arguments.js";
 import type { Principal, Refusal } from "./permissions/types.js";
 
 interface Watch {
@@ -55,8 +56,25 @@ export function tellTheWatchOfARefusal(refusal: Refusal, author: string | undefi
  * take, or a person who filled a form wrongly, is the press's origin, which
  * the watch knows and the store does not.
  */
-export function tellTheWatchOfAnInputRefusal(refusal: { readonly mutation: string; readonly message: string }, author: string | undefined): void {
-  theWatch()?.refusedInput?.({ mutation: refusal.mutation, message: refusal.message, ...(author === undefined ? {} : { author }) });
+export function tellTheWatchOfAnInputRefusal(refusal: InvalidArguments, author: string | undefined): void {
+  const watch = theWatch();
+  if (!watch?.refusedInput) return;
+  const message = refusal.issues.map((issue) => `${issue.path.map(String).join(".")}: ${issue.message}`).join("; ");
+  watch.refusedInput({ mutation: refusal.mutation, message, ...(author === undefined ? {} : { author }) });
+}
+
+/**
+ * A PRESS'S OWN PREVIEW, REFUSED BY THE ACT'S INPUT (carried from W-228 and
+ * W-238). The scene's strip and the quick ask show what an act would do
+ * before they apply it, so the act's input refused it in the preview and
+ * the apply that tells the watch never ran: an act offered whole and
+ * refused on press was a finding on the pages and passed on the scene. A
+ * surface previewing the press it is about to apply tells the watch here;
+ * a preview of what an act would do before anything is pressed tells
+ * nothing.
+ */
+export function tellTheWatchOfAPressRefusedByItsInput(error: unknown, author: string | undefined): void {
+  if (error instanceof InvalidArguments) tellTheWatchOfAnInputRefusal(error, author);
 }
 
 /**

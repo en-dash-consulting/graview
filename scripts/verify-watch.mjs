@@ -8,9 +8,11 @@
  * rule must name its page, and the clean page must name nothing.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+import { graviewSources } from "./lib/graview-sources.mjs";
 import { takeViolations } from "./lib/watch.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -18,9 +20,64 @@ const engine = engineName();
 const browser = await launchEngine(engine);
 const page = await browser.newPage();
 const settle = () => page.waitForTimeout(2800);
+/*
+ * THE STRIP'S HALF, PLAYED BY THE FRAMEWORK ITSELF (carried from W-228 and
+ * W-238): a store and the press the scene's strip makes — the act's preview
+ * first, then its apply — bundled from the workspace's sources, so the claim
+ * below holds the code that tells the watch, not a page pretending to.
+ */
+const strip = await createRequire(import.meta.url)("esbuild").build({
+  stdin: {
+    contents: `
+      import { bindSchema, createSchema, defineNode, nodeRef, Store, z } from "@graview/core";
+      import { applyAffordance, previewAffordance } from "@graview/tools";
+      const loan = defineNode("loan", { fields: z.object({ label: z.string(), late: z.boolean() }), plural: "Loans", label: (node) => node.label });
+      const schema = createSchema([loan]);
+      const { defineMutation } = bindSchema(schema);
+      const giveBack = defineMutation("give-back", {
+        title: "Check it back in",
+        subject: { kinds: ["loan"], arg: "loanId" },
+        writes: ["late"],
+        input: z.object({ loanId: nodeRef(["loan"]), note: z.string().min(3).optional() }),
+        apply: (ctx, args) => void ctx.patchNode(args.loanId, { late: false }),
+      });
+      const store = new Store({ schema, mutations: [giveBack], snapshot: { nodes: [{ id: "l1", kind: "loan", label: "Hammer drill", late: true }], edges: [] } });
+      const seat = { kind: "human", id: "staff:tomas", roles: [] };
+      // Offered whole, with an argument its act's input refuses: the strip's preview refuses before the apply.
+      const offer = { id: "invariant:on-time:give-back", mutation: "give-back", label: "Check it back in", args: { loanId: "l1", note: 7 }, open: [] };
+      const press = (affordance, extra) => {
+        try {
+          previewAffordance(store, affordance, extra, { pressed: { author: seat } });
+          applyAffordance(store, affordance, extra, { author: seat });
+        } catch {
+          // Said in the strip; what the watch hears is the claim.
+        }
+      };
+      // Working out what to offer, before anything is pressed: a preview that is not a press tells nothing.
+      try { previewAffordance(store, offer); } catch {}
+      document.getElementById("offer").addEventListener("click", () => press(offer, {}));
+      document.querySelector("form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        press({ ...offer, args: { loanId: "l1" } }, { note: document.getElementById("typed").value });
+      });
+    `,
+    resolveDir: repoRoot,
+    loader: "ts",
+  },
+  bundle: true,
+  write: false,
+  format: "esm",
+  platform: "browser",
+  plugins: [graviewSources(repoRoot)],
+  logLevel: "silent",
+});
 /* Served, not setContent: the watch is an init script, and only a navigation runs one. */
 let served = "";
-await page.route("http://watch.test/**", (route) => route.fulfill({ contentType: "text/html", body: served }));
+await page.route("http://watch.test/**", (route) =>
+  route.request().url().endsWith("/strip.js")
+    ? route.fulfill({ contentType: "text/javascript", body: strip.outputFiles[0].text })
+    : route.fulfill({ contentType: "text/html", body: served }),
+);
 let visit = 0;
 const show = async (html) => {
   served = `<!doctype html><html><body>${html}</body></html>`;
@@ -92,6 +149,23 @@ await page.evaluate(() => window.__graviewWatch.refusedInput({ mutation: "schedu
 await settle();
 const refusedByInput = takeViolations().filter((v) => v.rule === "offered-then-refused").map((v) => v.detail);
 checks.anOfferItsInputRefusesIsCaught = refusedByInput.length === 1 && refusedByInput[0].includes("its own input refused it: venueId");
+
+/*
+ * offered-then-refused by the act's own input, in the strip's preview
+ * (carried from W-228 and W-238): the scene's strip previews a press before
+ * it applies it, so the input refused it there and the store never told the
+ * watch. A press on the offer is caught; the same act answered wrongly in
+ * its form is not; and a preview before any press tells nothing.
+ */
+await show(`<main><button id="offer">Check it back in</button><form><input id="typed" value="ok"><button id="send">Check it back in</button></form></main><script type="module" src="/strip.js"></script>`);
+await page.waitForFunction(() => document.querySelector("#offer") !== null);
+await page.waitForLoadState("load");
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await page.click("#offer");
+await page.click("#send");
+await settle();
+const refusedInTheStrip = takeViolations().filter((v) => v.rule === "offered-then-refused").map((v) => v.detail);
+checks.aPressTheStripsPreviewRefusesIsCaught = refusedInTheStrip.length === 1 && refusedInTheStrip[0].includes('reached "give-back"') && refusedInTheStrip[0].includes("its own input refused it: note");
 
 /* shown-what-is-not-theirs: a customer the seat may not see, named on the page; a name it may see is not. */
 await show(`<main><h1>Cars</h1><p>Shortlisted by Freya Davies</p><p>Signed in as Bethan Okonkwo</p></main>`);

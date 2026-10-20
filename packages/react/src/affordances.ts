@@ -137,7 +137,8 @@ export function useApplyAffordance<S extends AnySchema>() {
   return useMemo(
     () => ({
       preview: (affordance: Affordance, args?: Record<string, unknown>) =>
-        previewAffordance(store, affordance, args ?? {}),
+        // The preview of the press about to be applied: an act's own input refusing it is told to a watching harness.
+        previewAffordance(store, affordance, args ?? {}, { pressed: principal ? { author: principal } : {} }),
       apply: (affordance: Affordance, args?: Record<string, unknown>) =>
         applyAffordance(store, affordance, args ?? {}, {
           // The principal, not a bare "human": the store enforces against
