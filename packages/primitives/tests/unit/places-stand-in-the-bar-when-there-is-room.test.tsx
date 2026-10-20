@@ -187,15 +187,20 @@ describe("the places standing on the row (FR-145)", () => {
   /*
    * A row laid out as a browser would: the bar 1920 wide, the places
    * beginning at 420, Find ending at 1800 at its least 120 — and each
-   * place's width eight pixels a letter and its padding.
+   * place's width eight pixels a letter and its padding. The app's name
+   * stands on one line 200 wide; `squeezed`, the places have pressed it
+   * onto two lines that much narrower, and they begin that much sooner.
    */
-  function layOut(barWidth: number) {
+  function layOut(barWidth: number, squeezed = 0) {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
       const box = (left: number, width: number, height = 30) => ({ left, right: left + width, width, top: 0, bottom: height, height, x: left, y: 0, toJSON: () => ({}) }) as DOMRect;
       if (this.matches(".graview-bar")) return box(0, barWidth, 48);
-      if (this.matches(".graview-bar-mid")) return box(420, 300);
+      if (this.matches(".graview-bar-mid")) return box(420 - squeezed, 300);
       if (this.matches(".graview-bar-find")) return box(barWidth - 264, 144);
-      if (this.matches(".graview-bar-app-name")) return box(16, 200, 19);
+      if (this.matches(".graview-bar-app")) return box(16, 228 - squeezed);
+      if (this.matches(".graview-bar-app > .graview-bar-name")) return box(16, 226 - squeezed);
+      if (this.matches(".graview-bar-app-name")) return box(44, 200 - squeezed, squeezed ? 38 : 19);
+      if (this.matches(".graview-bar-ruler > .graview-bar-name")) return box(0, 200, 19);
       if (this.closest(".graview-bar-ruler")) return box(0, (this.textContent ?? "").length * 8 + 16);
       return box(0, 0, 0);
     });
@@ -242,6 +247,29 @@ describe("the places standing on the row (FR-145)", () => {
     act(() => at.querySelector<HTMLButtonElement>('[data-testid="app-places"] [data-place-path="/map"]')!.click());
     expect(went).toEqual(["/map"]);
     act(() => root.unmount());
+  });
+
+  /*
+   * THE BAR HOLDS STILL AT EVERY WIDTH. Cloud's "En Dash Social Media
+   * Playbook" flickered: the places stood, squeezed its name onto two
+   * lines, a name on two lines folded them, the name went back to one line
+   * and they stood again. The row is weighed with the name as it would
+   * stand on one line, so the same places stand however it is drawn.
+   */
+  it("are the same whether the app's name is drawn on one line or squeezed onto two", () => {
+    const standing = (at: HTMLElement) => [...at.querySelectorAll('[data-testid="app-places-standing"] > [data-place-path]')].map((one) => one.textContent);
+    layOut(1280);
+    const one = drawn(bar("home"));
+    const onOneLine = standing(one.at);
+    act(() => one.root.unmount());
+    vi.restoreAllMocks();
+    layOut(1280, 60);
+    const two = drawn(bar("home"));
+    expect(onOneLine.length).toBeGreaterThanOrEqual(2);
+    expect(standing(two.at)).toEqual(onOneLine);
+    // The name unwrapped is drawn off the ruler, unseen.
+    expect(two.at.querySelector(".graview-bar-ruler > .graview-bar-name")?.textContent).toBe("Farm Bureau POM Workshop");
+    act(() => two.root.unmount());
   });
 
   it("give way to the one control on a phone's bar", () => {

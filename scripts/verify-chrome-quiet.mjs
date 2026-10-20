@@ -131,9 +131,23 @@
  * never draws a district past the box's edge (it used to fly in from a
  * desk's width).
  *
- *   node scripts/verify-chrome-quiet.mjs [--engine=chromium|webkit|firefox] [--shots=<dir>] [--quick] [--notices]
+ * And THE BAR HOLDS STILL AT EVERY WIDTH. Nick, of "En Dash Social Media
+ * Playbook" on Cloud's scene: "the nav does this weird glitching on
+ * certain page widths". The places stood on the row, squeezed the app's
+ * name onto two lines, a name on two lines folded them into the one
+ * control, the name went back to one line and they stood again, frame
+ * after frame. The workshop under that name, on the scene with its thirty
+ * places and on Pages, at every 4 px from 900 to 2100 and back down in Chromium (every 12 in WebKit and Firefox)
+ * between them (every 12 with `--quick`): once settled, the bar is
+ * watched for 600 ms of frames, and whether the places stand, which
+ * stand, how the switch is drawn and the name's lines never change; the
+ * name is on two lines beside standing places only when it is wider on
+ * one line than its room.
  *
- * `--notices` measures only the notices (FR-133) and the way back (FR-152, FR-153), for iterating on them.
+ *   node scripts/verify-chrome-quiet.mjs [--engine=chromium|webkit|firefox] [--shots=<dir>] [--quick] [--notices] [--steady]
+ *
+ * `--notices` measures only the notices (FR-133) and the way back (FR-152, FR-153), for iterating on them;
+ * `--steady` only the bar held still at every width.
  */
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -164,6 +178,21 @@ const ONLY_BOXES = process.argv.includes("--boxes");
 const ONLY_PICKS = process.argv.includes("--picks");
 /** `--standing`: only the places in the bar on both faces (FR-144, FR-145). */
 const ONLY_STANDING = process.argv.includes("--standing");
+/** `--steady`: only the bar held still at every width (the row never flickers between two drawings). */
+const ONLY_STEADY = process.argv.includes("--steady");
+/* The bar held still: a name as long as Cloud's, the widths swept up and back down, and how long each is watched once settled. */
+const STEADY_NAME = "En Dash Social Media Playbook";
+const STEADY_FROM = 900;
+const STEADY_TO = 2100;
+/*
+ * Every 4 px in Chromium, where the flicker was measured (a band a few px wide at 964, 1072 and 1100);
+ * every 12 in WebKit and Firefox, which weigh the row with the same code: the full sweep in all three
+ * cost the Nightly twenty minutes for no difference the engines can make.
+ */
+const steadyStep = (engine) => (QUICK || engine !== "chromium" ? 12 : 4);
+const STEADY_WATCH_MS = 600;
+/* The pages that share a sweep, each its own share of the widths, so the watch takes a quarter of the time. */
+const STEADY_PAGES = 4;
 /** What a notice says here: a sentence as long as a real change's, which must wrap on a phone rather than be cut. */
 const LONG_VENDOR = "Could Val lead the Thursday tasting while Sam is away for the fortnight";
 /** How long the way back stands after an act: `WAY_BACK_MS` in @graview/primitives. */
@@ -452,7 +481,7 @@ function measure() {
 const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview, placesSaid].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview, placesSaid });`;
 const host = await buildHost();
 const errors = [];
-const results = { standing: [], standingResized: [], emptyKinds: [], railed: [], standingPresses: [], heldAcross: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [], wayBack: [] };
+const results = { steady: [], standing: [], standingResized: [], emptyKinds: [], railed: [], standingPresses: [], heldAcross: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [], wayBack: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -483,6 +512,36 @@ try {
        * pause between them — on a fresh page, while the routed face is still being fetched; then Scene and the same again,
        * which once handed the pick to the router of the last time Pages was drawn. Ten pages, twenty picks, in the first scheme.
        */
+      /*
+       * ---- THE BAR HOLDS STILL AT EVERY WIDTH: Cloud's "En Dash Social Media Playbook" on its scene, the bar's places
+       * flickering between standing on the row and folding into the one control at some widths. The workshop under that
+       * name, on the scene with its thirty places and on Pages, swept from 900 to 2100 px and back down; at each width,
+       * once settled, the bar is watched frame by frame. In the first scheme.
+       */
+      if (scheme === SCHEMES[0] && (ONLY_STEADY || (!ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS && !ONLY_STANDING))) {
+        const up = [];
+        for (let width = STEADY_FROM; width <= STEADY_TO; width += steadyStep(engine)) up.push(width);
+        /* Back down between the widths the way up met, so a width is reached from either side. */
+        const down = up.map((width) => width + steadyStep(engine) / 2).filter((width) => width < STEADY_TO).reverse();
+        for (const face of ["graview", "pages"]) {
+          const query = `doc=workshop&face=${face}&heading=1&name=${encodeURIComponent(STEADY_NAME)}${face === "graview" ? "&many=1" : ""}`;
+          const pages = await Promise.all(Array.from({ length: STEADY_PAGES }, () => open(query, { width: STEADY_FROM, height: 800 })));
+          const seen = [];
+          await Promise.all(
+            pages.map(async ({ page }, share) => {
+              for (const [way, widths] of [["up", up], ["down", down]]) {
+                for (const width of widths.filter((_, at) => at % STEADY_PAGES === share)) {
+                  await page.setViewportSize({ width, height: 800 });
+                  seen.push({ engine, face: face === "pages" ? "pages" : "scene", way, width, ...(await page.evaluate(theBarAtRest, STEADY_WATCH_MS)) });
+                }
+              }
+            }),
+          );
+          await Promise.all(pages.map(({ close }) => close()));
+          results.steady.push({ engine, face: face === "pages" ? "pages" : "scene", seen: seen.sort((a, b) => (a.way === b.way ? a.width - b.width : a.way === "up" ? -1 : 1)) });
+        }
+      }
+      if (ONLY_STEADY) continue;
       /*
        * ---- FR-144, FR-145: the places in the bar, on both faces, at whole pages and in boxes; the same after a resize;
        * every place in two presses, and on the scene a picture from the bar moves `in.view`.
@@ -1211,6 +1270,29 @@ try {
   if (ONLY_BOXES) {
     for (const name of Object.keys(report.checks)) if (!(name in BOX_CHECKS)) delete report.checks[name];
   }
+  /*
+   * THE BAR HOLDS STILL AT EVERY WIDTH. At each width, swept up and back
+   * down, once the bar has settled: across the frames it is watched, the
+   * places stand or fold the same way, the same ones stand, the switch is
+   * drawn the same and the app's name keeps its lines. And the name is on
+   * two lines while places stand only when it is wider on one line than
+   * its room (the places never squeeze it there).
+   */
+  const steadyAll = results.steady.length === engines.length * 2 && results.steady.every((one) => one.seen.length > 0);
+  const flickers = (one) => one.states.length !== 1;
+  const squeezed = (one) => one.states.some((state) => state.lines >= 2 && state.standing !== "") && !(one.natural > one.cap);
+  const steadyWhere = (test) => results.steady.map(({ engine, face, seen }) => ({ engine, face, widths: seen.length, at: seen.filter(test).map(({ way, width, states, natural, cap, geometry }) => ({ way, width, states, natural, cap, geometry })) }));
+  report.checks.theBarHoldsStillAtEveryWidthUpAndDown = {
+    seen: steadyWhere(flickers),
+    ok: steadyAll && results.steady.every(({ seen }) => !seen.some(flickers)),
+  };
+  report.checks.theNameIsOnTwoLinesBesideStandingPlacesOnlyWhenOneLineIsWiderThanItsRoom = {
+    seen: steadyWhere(squeezed),
+    ok: steadyAll && results.steady.every(({ seen }) => !seen.some(squeezed)),
+  };
+  if (ONLY_STEADY) {
+    for (const name of Object.keys(report.checks)) if (!name.startsWith("theBarHoldsStill") && !name.startsWith("theNameIsOnTwoLines")) delete report.checks[name];
+  }
   if (ONLY_STANDING) {
     for (const name of Object.keys(report.checks)) if (!(name in STANDING_CHECKS)) delete report.checks[name];
   }
@@ -1428,6 +1510,64 @@ function placesSaid(root, header) {
     standing: [...root.querySelectorAll('[data-testid="app-places-standing"] [data-place-path]')].filter((one) => !one.closest('[data-testid="app-places"]') && seen(one)).length,
     opener: opener ? (opener.textContent.trim() === "More" ? "More" : "one control") : null,
   };
+}
+
+/**
+ * THE BAR AT REST, WATCHED (the bar holds still at every width): the bar is
+ * let settle — the same drawing for six frames running, or half a second —
+ * then read on every frame for `ms`. Each distinct drawing seen: whether the
+ * places stand ("standing"), are the one control or are none; which stand;
+ * how the switch is drawn; how many lines the app's name is on. And the
+ * name's width on one line (its mark, its gap and its words unwrapped, read
+ * off a copy of it) against its room, the app's `max-width`.
+ */
+async function theBarAtRest(ms) {
+  const header = document.querySelector("[data-graview-embed] [data-graview-app-bar]");
+  const frame = () => new Promise((done) => requestAnimationFrame(() => done(performance.now())));
+  const read = () => {
+    const mid = header?.querySelector(".graview-bar-mid");
+    const name = header?.querySelector('[data-testid="app-name"]');
+    const standing = [...(header?.querySelectorAll('[data-testid="app-places-standing"] [data-place-path]') ?? [])].filter((one) => !one.closest('[data-testid="app-places"]')).map((one) => one.getAttribute("data-place-path"));
+    return {
+      places: mid?.getAttribute("data-places") ?? (mid?.hasAttribute("data-place") ? "one control" : "none"),
+      standing: standing.join(" "),
+      drawn: header?.querySelector('[data-testid="app-faces"]')?.getAttribute("data-switch-drawn") ?? null,
+      lines: name ? Math.round(name.getBoundingClientRect().height / parseFloat(getComputedStyle(name).lineHeight)) : 0,
+    };
+  };
+  const start = performance.now();
+  let last = JSON.stringify(read());
+  for (let same = 0; same < 6 && performance.now() - start < 500; ) {
+    await frame();
+    const now = JSON.stringify(read());
+    same = now === last ? same + 1 : 0;
+    last = now;
+  }
+  const states = new Set([last]);
+  let frames = 0;
+  for (const until = performance.now() + ms; (await frame()) < until; frames++) states.add(JSON.stringify(read()));
+  const name = header?.querySelector('[data-testid="app-name"]');
+  const home = header?.querySelector(".graview-bar-home");
+  const app = header?.querySelector(".graview-bar-app");
+  const row = header?.querySelector(".graview-bar-row");
+  let natural = null;
+  let cap = null;
+  if (name && home && app && row) {
+    const style = getComputedStyle(name);
+    const copy = document.createElement("span");
+    copy.textContent = name.textContent;
+    copy.style.cssText = `position:absolute;visibility:hidden;white-space:nowrap;font:${style.font};letter-spacing:${style.letterSpacing}`;
+    document.body.append(copy);
+    natural = Math.round((copy.getBoundingClientRect().width + home.getBoundingClientRect().width - name.getBoundingClientRect().width) * 10) / 10;
+    copy.remove();
+    const rowStyle = getComputedStyle(row);
+    const inner = row.clientWidth - parseFloat(rowStyle.paddingLeft) - parseFloat(rowStyle.paddingRight);
+    const max = getComputedStyle(app).maxWidth;
+    cap = max.endsWith("%") ? Math.round(((inner * parseFloat(max)) / 100) * 10) / 10 : max === "none" ? null : parseFloat(max);
+  }
+  const box = (selector) => { const one = header?.querySelector(selector); if (!one) return null; const r = one.getBoundingClientRect(); return [Math.round(r.left * 10) / 10, Math.round(r.width * 10) / 10]; };
+  const geometry = { app: box(".graview-bar-app"), home: box(".graview-bar-home"), name: box(".graview-bar-app-name"), probe: box(".graview-bar-name-probe"), faces: box(".graview-bar-faces"), mid: box(".graview-bar-mid"), find: box(".graview-bar-find"), row: box(".graview-bar-row") };
+  return { states: [...states].map((one) => JSON.parse(one)), frames, natural, cap, geometry };
 }
 
 /**
