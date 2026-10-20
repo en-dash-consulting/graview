@@ -135,7 +135,8 @@ Rules for a page at this rung:
    refuses on submit is the bug this prevents.
 6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the
    scene on one thing; `placeHref(as)` (`/#view=the-grounds`) on one named
-   place.
+   place. A scene not at `/`: set `sceneHref` in the PagesApp context;
+   both take it second.
 7. **Take the act LIST from the derivation, not from the mutations.**
    `recordFacts(store, id, { principal }).actions` is the `AffordanceSet`
    the scene's strip reads: `affordances` can act here, `args` decided and
