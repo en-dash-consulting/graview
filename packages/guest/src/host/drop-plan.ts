@@ -1,4 +1,4 @@
-import { labelOf, made, nounOf, pluralOf, type AnyMutationDefinition, type AnySchema, type FileKind, type FileValue, type HostFiles, type MutationCall, type Principal, type Store } from "@graview/core";
+import { fileAt, labelOf, made, nounOf, pluralOf, type AnyMutationDefinition, type AnySchema, type FileKind, type FileValue, type HostFiles, type MutationCall, type Principal, type Store } from "@graview/core";
 import { fileFieldOf, type WorkerViewManifest } from "./manifest.js";
 import { refArgsOf } from "./marks.js";
 
@@ -106,13 +106,17 @@ function namingArgs(mutation: AnyMutationDefinition<AnySchema>, taken: ReadonlyS
 const baseName = (name: string) => name.replace(/\.[a-z0-9]{1,5}$/i, "") || name;
 
 /*
- * WHEN THE FILE WAS TAKEN (the thirteenth walk): a required time the act
- * cannot go without — a detection's `takenAt`, a moment's day — is the
- * instant the file says it was made (its `at`), else the drop's own, as an
- * instant or as its day, whichever the argument takes.
+ * WHEN THE FILE WAS TAKEN (the thirteenth walk, FR-195): a required time
+ * the act cannot go without — a detection's `takenAt`, a moment's day — is
+ * the instant the host's upload said the file was made (the stored value's
+ * `at`, a photograph's EXIF), else the time the file was last changed (the
+ * drop's `at`, its lastModified), else the drop's own — as the instant as
+ * it was said, in UTC, or as its day, whichever the argument takes.
  */
-const timeOf = (schema: { safeParse(value: unknown): { success: boolean } }, at: string): string | undefined =>
-  [at, at.replace(/\.\d{3}Z$/, "Z"), at.slice(0, 10)].find((one) => schema.safeParse(one).success);
+const timeOf = (schema: { safeParse(value: unknown): { success: boolean } }, at: string): string | undefined => {
+  const utc = Number.isFinite(Date.parse(at)) ? new Date(Date.parse(at)).toISOString() : at;
+  return [at, utc, utc.replace(/\.\d{3}Z$/, "Z"), at.slice(0, 10)].find((one) => schema.safeParse(one).success);
+};
 const PROBE = "2026-01-01T00:00:00.000Z";
 
 /** The arguments a file fills by its time, and those no file can fill: what a drop would leave the act asking for. */
@@ -163,7 +167,8 @@ export function planDrop<S extends AnySchema>(store: Store<S>, principal: Princi
   const invite = `Drop to add ${plural}${label ? ` to ${label}` : ""}.`;
   const fill = (mutation: AnyMutationDefinition<AnySchema>, args: Record<string, unknown>, file: FileValue, at?: string) => {
     const given = new Set(Object.keys(args));
-    for (const arg of unfilled(mutation, given).timed) args[arg] = timeOf(shapeOf(mutation)[arg]!, at ?? new Date().toISOString());
+    const when = fileAt(file.at) ?? at ?? new Date().toISOString();
+    for (const arg of unfilled(mutation, given).timed) args[arg] = timeOf(shapeOf(mutation)[arg]!, when);
     for (const arg of namingArgs(mutation, given)) args[arg] = baseName(file.name);
     return args;
   };

@@ -68,6 +68,16 @@ describe("a drop on a station's contact sheet", () => {
     expect(store.graph.allNodes().filter((node) => node.kind === "detection").map((node) => (node as { takenAt?: string }).takenAt)).toEqual(["2026-10-12T03:14:00.000Z"]);
   });
 
+  it("logs a photograph at the instant the host's upload said it was taken, before the time its file was last changed (FR-195)", () => {
+    const store = storeWith([log]);
+    const plan = planDrop(store, anyone, manifest, { kind: "detection", connect: "taken-by:station:bear-wallow" }, { shown: new Set(["station:bear-wallow"]), files });
+    if (!plan.ok) throw new Error(plan.says);
+    const stored = { ...photo, at: "2026-10-10T22:41:00.000Z" } as FileValue;
+    expect(plan.calls({ field: "photo", value: stored, at: "2026-10-12T03:14:00.000Z" }, 0)[0]!.args["takenAt"]).toBe("2026-10-10T22:41:00.000Z");
+    /* An instant with an offset, as EXIF read with its zone is said, fills an argument that takes one as it is. */
+    expect(plan.calls({ field: "photo", value: { ...photo, at: "2026-10-10T18:41:00-04:00" } as FileValue }, 0)[0]!.args["takenAt"]).toBe("2026-10-10T18:41:00-04:00");
+  });
+
   it("is no drop target where the act asks for something no file says, so nothing is offered and then refused", () => {
     const store = storeWith([tagged]);
     const plan = planDrop(store, anyone, manifest, { kind: "detection", connect: "taken-by:station:bear-wallow" }, { shown: new Set(["station:bear-wallow"]), files });

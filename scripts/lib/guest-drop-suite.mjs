@@ -19,7 +19,10 @@
  * several; a friend, who may make no moment, is offered no drop target and
  * a drop makes nothing; and on a phone (a coarse pointer) a tap on
  * Sunday's card opens the picker, asking for pictures and videos, and what
- * is picked is moments on Sunday.
+ * is picked is moments on Sunday. And where the host's upload answers when
+ * each file was made (`at`, as Graview Cloud reads a photograph's EXIF,
+ * FR-195), three photographs taken on Saturday and dropped on Monday are
+ * three moments at Saturday's times, not at Monday's.
  */
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -37,9 +40,12 @@ export async function dropSuite({ repoRoot, build, browser, claim, report, HOST,
       contents: `
 import { mount } from "@graview/embed";
 import { registerWorkerView } from "@graview/guest/host/views";
-import { JOURNEY_HANDLED_JS, JOURNEY_HANDLED_MANIFEST, JOURNEY_JS, JOURNEY_MANIFEST, nana, theo, weekendApp, weekendOnDayApp, weekendSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/weekend-app.ts"))};
+import { JOURNEY_HANDLED_JS, JOURNEY_HANDLED_MANIFEST, JOURNEY_JS, JOURNEY_MANIFEST, nana, theo, weekendApp, weekendOnDayApp, weekendSeed, weekendTimedApp } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/weekend-app.ts"))};
 const asked = new URLSearchParams(location.search);
 const handled = asked.has("handled");
+const timed = asked.has("timed");
+/* When each photograph was taken, as the host's upload reads it from the file (FR-195): Saturday. */
+window.__stored = { "IMG_6101.jpg": "2026-10-17T09:12:00.000Z", "IMG_6102.jpg": "2026-10-17T12:40:00.000Z", "IMG_6103.jpg": "2026-10-17T17:55:00.000Z" };
 window.__failures = [];
 window.__problems = [];
 window.__uploaded = [];
@@ -51,13 +57,13 @@ const files = {
     window.__uploaded.push({ name, type: file.type, bytes: file.size });
     const n = window.__uploaded.length;
     const video = file.type.startsWith("video/");
-    return { href: "/graview/files/" + n + "-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + (video ? ".mp4" : ""), name, type: video ? "video/mp4" : file.type, bytes: file.size, ...(video ? { duration: 9, poster: "/graview/files/" + n + "-poster.jpg" } : {}) };
+    return { href: "/graview/files/" + n + "-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + (video ? ".mp4" : ""), name, type: video ? "video/mp4" : file.type, bytes: file.size, ...(video ? { duration: 9, poster: "/graview/files/" + n + "-poster.jpg" } : {}), ...(timed && window.__stored[name] ? { at: window.__stored[name] } : {}) };
   },
 };
 const manifest = handled ? JOURNEY_HANDLED_MANIFEST : JOURNEY_MANIFEST;
 const definition = { manifest, worker: { source: handled ? JOURNEY_HANDLED_JS : JOURNEY_JS }, onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
 window.__handle = mount(document.getElementById("app"), {
-  app: handled ? weekendOnDayApp : weekendApp,
+  app: handled ? weekendOnDayApp : timed ? weekendTimedApp : weekendApp,
   seed: weekendSeed,
   principal: asked.get("seat") === "theo" ? theo : nana,
   face: "pages",
@@ -75,7 +81,9 @@ window.__handle.drawn().then(() => { window.__ready = true; });
 /* Three photographs and a phone's video, as Finder hands them: a DataTransfer built in the page. */
 window.__finder = (names) => {
   const transfer = new DataTransfer();
-  for (const [name, type, size] of names) transfer.items.add(new File([new Uint8Array(size)], name, { type, lastModified: Date.UTC(2026, 9, 17, 15, 2) }));
+  /* Copied off the camera on Monday, where a host says when each was made. */
+  const lastModified = timed ? Date.UTC(2026, 9, 19, 8, 30) : Date.UTC(2026, 9, 17, 15, 2);
+  for (const [name, type, size] of names) transfer.items.add(new File([new Uint8Array(size)], name, { type, lastModified }));
   return transfer;
 };
 window.__card = (day) => document.querySelector('[data-worker-view]')?.shadowRoot?.querySelector('[data-day="' + day + '"]') ?? null;
@@ -201,6 +209,22 @@ window.__moments = (day) => window.__handle.store.graph.allEdges().filter((edge)
       "a view that hears the drop is told the files as the host stored them, and makes them four moments with one act of several, as one change",
       told.captions.join("|") === "Dropped IMG_4031.jpg|Dropped IMG_4032.jpg|Dropped IMG_4033.png|Dropped IMG_4034.MOV" && told.acts.join() === "add-moment-to-day" && told.batches.length === 1 && told.vias.join() === "view:journey-handled" && told.clip?.href?.endsWith(".mp4") && told.clip.field === undefined && told.clip.at === undefined,
       told,
+    );
+
+    /* WHEN THE HOST SAYS EACH WAS MADE (FR-195): taken Saturday, dropped Monday. */
+    await open(tab, "timed");
+    const SATURDAY_SHOTS = [
+      ["IMG_6101.jpg", "image/jpeg", 2_000],
+      ["IMG_6102.jpg", "image/jpeg", 2_100],
+      ["IMG_6103.jpg", "image/jpeg", 2_200],
+    ];
+    await tab.evaluate(([day, names]) => window.__drag(day, "drop", names), [SATURDAY, SATURDAY_SHOTS]);
+    await until(tab, (day) => window.__moments(day).length === 3, SATURDAY, "three moments on Saturday, dropped on Monday");
+    const timedKept = await tab.evaluate((day) => ({ stored: window.__stored, at: Object.fromEntries(window.__moments(day).map((one) => [one.photo.name, one.takenAt])), batches: [...new Set(window.__handle.store.log.all().map((op) => op.batch))].length }), SATURDAY);
+    claim(
+      "three photographs the host's upload says were taken on Saturday, copied and dropped on Monday, are three moments at Saturday's times, in one change",
+      JSON.stringify(timedKept.at, Object.keys(timedKept.stored).sort()) === JSON.stringify(timedKept.stored, Object.keys(timedKept.stored).sort()) && timedKept.batches === 1,
+      timedKept,
     );
 
     /* A SEAT THAT MAY MAKE NO MOMENT. */
