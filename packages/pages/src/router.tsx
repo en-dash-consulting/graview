@@ -616,7 +616,8 @@ export function PagesApp<S extends AnySchema>({
   useTheWatchKnowsWhatIsUnseen(given.store, given.principal);
   const routed = (
     <>
-      {onNavigate || path !== undefined ? <Reported onNavigate={onNavigate} path={path} /> : null}
+      {/* Always drawn, so a path a host first hands after the face opened (a handle's setPath) is gone to, not taken for where it began. */}
+      <Reported onNavigate={onNavigate} path={path} />
       {steering ? <Steered steering={steering} /> : null}
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
       <PagesRoutes context={context} {...(registry ? { registry } : {})} />

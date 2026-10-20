@@ -1,4 +1,6 @@
 import { partsArriving } from "@graview/react/provider";
+import { useLayoutEffect, useRef } from "react";
+import type { EmbedWhere } from "./where.js";
 
 /*
  * THE PAGE SAYS WHEN A PLACE HAS DRAWN AND SETTLED (FR-188).
@@ -8,7 +10,7 @@ import { partsArriving } from "@graview/react/provider";
  * ms. The embed knows better. Once the place it is on has drawn — the face
  * here, every part drawn on it arrived (or said it did not), the fonts and
  * images loaded, every worker view drawn (or failed, its plain face drawn
- * in its place) — and nothing in it has moved for a moment, its root says
+ * in its place), every frame guest drawn (or silent past its time) — and nothing in it has moved for a moment, its root says
  * `data-graview-drawn`, its value the place's path, and the host is told
  * `onDrawn(place)`. A move to another place takes it off in the same
  * commit, and the new place says it again once it settles.
@@ -38,7 +40,7 @@ function here(root: HTMLElement): boolean {
   const fonts = (root.ownerDocument as Document & { fonts?: { status?: string } }).fonts;
   if (fonts?.status === "loading") return false;
   if (partsArriving() > 0) return false;
-  // The face on its way, or a part of it saying it is busy.
+  // The face on its way, or a part of it saying it is busy: a frame guest among them, until it has drawn or its time is up.
   if (root.querySelector('[aria-busy="true"]')) return false;
   // An image off screen and lazy is not waited for: it never loads until it is scrolled to.
   if (images(root).some((image) => !image.complete && image.loading !== "lazy")) return false;
@@ -113,4 +115,30 @@ export function watchDrawn(root: HTMLElement, path: string, settled: () => void)
   };
   timer = setTimeout(look, EVERY_MS);
   return stop;
+}
+
+/**
+ * SAYS WHEN THE PLACE HAS DRAWN AND SETTLED, on the root and to the host:
+ * watched again from nothing each time `key` moves — another page, another
+ * stop on the scene, another face, another draft — so the attribute comes
+ * off in the commit that moved and goes back on once the new place
+ * settles. The whole embed and the pages alone say it alike.
+ */
+export function useDrawnSignal(rootRef: { readonly current: HTMLElement | null }, key: string, place: EmbedWhere, onDrawn: ((place: EmbedWhere) => void) | undefined): void {
+  const latest = useRef({ place, onDrawn });
+  latest.current = { place, onDrawn };
+  useLayoutEffect(() => {
+    const watch = (root: HTMLElement) => watchDrawn(root, latest.current.place.path, () => latest.current.onDrawn?.(latest.current.place));
+    if (rootRef.current) return watch(rootRef.current);
+    // First drawn below the root, its ref is set after this effect runs: watched once the commit is done (there is nothing to take off yet).
+    let stop: (() => void) | undefined;
+    let gone = false;
+    queueMicrotask(() => {
+      if (!gone && rootRef.current) stop = watch(rootRef.current);
+    });
+    return () => {
+      gone = true;
+      stop?.();
+    };
+  }, [key, rootRef]);
 }

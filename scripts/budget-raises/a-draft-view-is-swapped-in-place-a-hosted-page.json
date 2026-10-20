@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 491,
+  "gzipped": 185,
+  "changeset": "a-draft-view-is-swapped-in-place.md",
+  "note": "Raised when a draft view came to be swapped in place (FR-187). Up front: setDraftView on the handle and the draft the mount keeps, a draft handed after the embed first drew registered once the worker's host arrives — the host still a door, counted while it is on its way so the place is not said drawn before it — and the drawn signal watched again for each draft, through the hook the pages alone share. 491 / 185 more than before it (584_716 / 203_051): measured at 585_207 / 203_236 (0.5 KB)."
+}

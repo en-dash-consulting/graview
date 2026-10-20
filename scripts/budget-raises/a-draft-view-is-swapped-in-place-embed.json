@@ -1,0 +1,6 @@
+{
+  "budget": "embed without the studio",
+  "minified": 519,
+  "gzipped": 207,
+  "note": "Raised when a draft view came to be swapped in place (FR-187): setDraftView on the handle and the draft kept by the mount, a draft handed after the embed first drew registered once the worker's host arrives (counted while it is on its way, so the place is not said drawn before it), and the drawn signal watched again for each draft. 519 / 207 more than before it (722_204 / 192_731): measured at 722_723 / 192_938."
+}
