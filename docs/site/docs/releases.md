@@ -44,7 +44,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.40
 
-Published October 20, 2026 · the current version
+Published October 20, 2026
 
 Edits kept the moment they are made, labels that keep their space in a focused scene, a keyboard that reaches what it means, and a first draw with no extra round trips.
 

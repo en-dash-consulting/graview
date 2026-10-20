@@ -1,5 +1,12 @@
 # @graview/guest
 
+## 0.1.41
+
+### Patch Changes
+
+- @graview/core@0.1.41
+  - @graview/react@0.1.41
+
 ## 0.1.40
 
 ### Patch Changes
