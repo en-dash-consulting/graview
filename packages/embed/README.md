@@ -13,7 +13,7 @@ const handle = mount(document.querySelector("#garden")!, {
   face: "graview",            // "scene" | "graview" | "pages" | "picture" — one named lens, no chrome: stop "#view=<place>"; leave it out and the app opens on its home view, else the scene
   stop: "#focus=plot-1",      // the scene's view state, as its URL fragment
   principal: { kind: "human", id: "june", roles: ["coordinator"] },
-  bar: true,                  // the app bar over every face (the default)
+  bar: true,                  // the app bar over every face (the default); { faces: false, name: false } under a host's own bar
   switch: "words",            // the bar's Scene/Pages switch: its words where they fit (the default), or "icons" for its marks alone
 });
 
@@ -70,6 +70,21 @@ is in order" otherwise), and the person (an avatar whose menu holds who is
 signed in, the seats, the host's own actions and, for whoever keeps the
 app, the installation and the studio). `bar: false` draws none of it, for a
 host whose own page already says all of that.
+
+UNDER A HOST'S OWN BAR. A product with its own shell that mounts the scene
+in it says what the bar leaves out (`EmbedBar`): `faces: false` draws no
+switch — its Pages side is Graview's derived pages, not the product's own —
+and `name: false` no app mark and name, which the product's bar already
+says. The scene's places, Find, the standing (Activity beside it once
+anything has happened) and the person stay. Pass `heading: false` too, so
+nothing in the embed says the app's name as a heading.
+
+```ts
+mount(stage, { app, store, face: "graview", bar: { faces: false, name: false }, heading: false });
+```
+
+`@graview/embed/pages` takes `bar: { name: false }` the same way (it has no
+switch to leave out).
 
 THE BAR FITS ITS BOX. Every rule the bar is drawn by reads the bar's own
 width, never the screen's: an embed in a 650 px box on a 1440 desk is a

@@ -15,6 +15,7 @@ import { flushSync } from "react-dom";
 import {
   AUTO_SCENE_HEIGHT,
   FaceBoundary,
+  barLeaves,
   FrameBar,
   FrameFirstLook,
   FrameNotices,
@@ -616,7 +617,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
             <FrameBar
               name={brand?.name ?? app.name}
               heading={heading}
-              faces={{
+              named={barLeaves(bar).name !== false}
+              faces={barLeaves(bar).faces === false ? undefined : {
                 scene: { label: sceneTitle(arrangement), current: !onPages, go: () => toOverview(), reach: () => void preload(sceneFace.current) },
                 // The pages, back at the page the reader was on.
                 pages: { label: pagesTitle(arrangement), current: onPages, go: () => toPage(pagesAt.current.path), reach: () => void preload("pages") },

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 143,
+  "gzipped": 70,
+  "changeset": "the-scene-sits-under-a-hosts-own-bar.md",
+  "note": "Raised when the embed came to take `bar: { faces: false, name: false }` for the scene under a host's own bar: `EmbedBar` read by `barLeaves`, the bar drawn without its switch or the app's name, and the scene's places handed to a bar with no switch. Measured at 538_593 / 186_900 against 538_450 / 186_838, gzipped a few bytes either way between builds."
+}

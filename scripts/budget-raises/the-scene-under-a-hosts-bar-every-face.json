@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 149,
+  "gzipped": 65,
+  "note": "Raised when the embed came to take `bar: { faces: false, name: false }` for the scene under a host's own bar: `EmbedBar` read by `barLeaves`, the bar drawn without its switch or the app's name, and the scene's places handed to a bar with no switch. Measured at 149 / 51 more, gzipped a few bytes either way between builds."
+}

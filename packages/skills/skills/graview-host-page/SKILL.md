@@ -26,6 +26,9 @@ decides the frame; the app still decides what is in it.**
    `addressOf(place, { basePath })` (`@graview/core`) spells a place's
    link. A host that keeps its own history stays on memory, hears
    `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
+   A product shell of its own that shows the scene at a route mounts
+   `face: "graview"` there with `bar: { faces: false, name: false }` and
+   `heading: false`: no second name, no switch to Graview's own pages.
 2. **In a chat's widget, let the frame be sized from the embed.** `height:
    "auto"` with `onIntrinsicHeight` tells the host the height to give it;
    `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the
