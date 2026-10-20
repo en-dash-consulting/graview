@@ -3,7 +3,7 @@ import { valueWords } from "@graview/core/words";
 import { amountBox, amountInBox, endAfterStartMoved, pageSections, parseDuration, readableFields, readAmount, startAndEndOf } from "@graview/core/words";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
-import { useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
+import { afterFirstDraw, useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
 import type { EditableField } from "@graview/tools";
 import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
 import { TextBody } from "./text-body.js";
@@ -85,10 +85,12 @@ export function EditableValue<S extends AnySchema>({
   // The graph can change underneath an open editor — an agent turn, an undo —
   // and the draft must not silently overwrite it on blur.
   useEffect(() => setDraft(held), [held, editing]);
-  // A date that can be changed here fetches its editor while the page is idle, so it opens at once when pressed.
+  // A date that can be changed here fetches its editor once the place has drawn, so it opens at once when pressed.
   const dated = editable?.shape.type === "date";
   useEffect(() => {
-    if (dated) void prefetchWhenInput();
+    // Once the place has first drawn: while it draws, the network is the parts' it waits for (FR-194).
+    if (dated) return afterFirstDraw(() => void prefetchWhenInput());
+    return undefined;
   }, [dated]);
   useEffect(() => {
     // A date's editor takes the keyboard itself as it arrives (`autoSelect`): it may be fetched after this.

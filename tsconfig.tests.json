@@ -56,6 +56,7 @@
       "@graview/ship/cli": ["./packages/ship/src/cli.ts"],
       "@graview/ship": ["./packages/ship/src/index.ts"],
       "@graview/embed/pages": ["./packages/embed/src/pages.tsx"],
+      "@graview/embed/first-draw": ["./packages/embed/src/first-draw.ts"],
       "@graview/embed": ["./packages/embed/src/index.ts"],
       "@graview/guest/host/frame": ["./packages/guest/src/host/frame.ts"],
       "@graview/guest/host/worker": ["./packages/guest/src/host/worker.ts"],

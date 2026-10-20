@@ -624,12 +624,14 @@ export async function measureHostedPage(repo, entry = HOSTED_PAGE_ENTRY, { minif
  * trips before the face can draw, each half a second on a phone's network.
  * Named in the page's head as `modulepreload`, the entry's chunks and the
  * opening face's are all asked for as the head is read; and the document a
- * shell fetches first (`fetch`), beside them.
+ * shell fetches first (`fetch`), beside them. And what the face opens as it
+ * first draws (`chunks`: `firstDrawChunks` from `@graview/embed/first-draw`,
+ * FR-194), which it would otherwise ask for only once it had run.
  */
 /** Fetched with every face, beside it (`preload` in `@graview/embed`): what draws a notice. */
 const WITH_EVERY_FACE = ["primitives/src/notice-stacks.tsx"];
 
-export function preloadLinks(metafile, { entry, faces = [], fetches = [] }) {
+export function preloadLinks(metafile, { entry, faces = [], fetches = [], chunks = [] }) {
   const outputs = metafile.outputs;
   const closure = (from) => {
     const found = new Set([from]);
@@ -643,11 +645,27 @@ export function preloadLinks(metafile, { entry, faces = [], fetches = [] }) {
     .map((module) => Object.keys(outputs).find((file) => outputs[file].entryPoint && byModuleName(outputs[file].entryPoint) === module))
     .filter(Boolean);
   const files = new Set([...closure(entryFile), ...doorFiles.flatMap((file) => [...closure(file)])]);
+  const later = [...new Set(chunks.filter((file) => outputs[file]).flatMap((file) => [...closure(file)]).filter((file) => !files.has(file) && file !== entryFile))];
   files.delete(entryFile);
   return [
     ...fetches.map((path) => `<link rel="preload" href="${path}" as="fetch" crossorigin="anonymous">`),
     ...[...files].map((file) => `<link rel="modulepreload" href="/${named(file)}">`),
+    ...(later.length > 0 ? [`<script>${afterTheFace(later.map((file) => `/${named(file)}`))}</script>`] : []),
   ].join("\n");
+}
+
+/*
+ * WHAT THE FACE OPENS, ASKED FOR AS SOON AS THE FACE HAS ARRIVED (FR-194).
+ * Named in the head beside the face's own chunks, the doors a face opens as
+ * it first draws took a phone's network from the face itself: the face
+ * drew 0.65 s later. Asked for once every chunk the head names has
+ * arrived, they take nothing from the face, and are on their way before
+ * the face has run and asked for them — the round trip it would wait
+ * through is gone. An inline script, read as the head is: the links it
+ * waits on cannot have loaded before it runs.
+ */
+export function afterTheFace(hrefs) {
+  return `(()=>{const later=${JSON.stringify(hrefs)},first=[...document.querySelectorAll('link[rel="modulepreload"]')];let left=first.length;const go=()=>{for(const href of later){const link=document.createElement("link");link.rel="modulepreload";link.href=href;document.head.append(link)}};if(left===0)return go();const one=()=>{if(--left===0)go()};for(const link of first){link.addEventListener("load",one,{once:true});link.addEventListener("error",one,{once:true})}})()`;
 }
 
 /*

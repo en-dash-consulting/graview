@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { memoryViews, removedLensName, type AnySchema, type GraviewApp, type KeptViews, type KeptViewsMay, type LensTidyEdit } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
-import { fetchDeclaredLenses } from "@graview/primitives";
+import { fetchDeclaredLenses, fetchInspector } from "@graview/primitives";
 import type { ReactViewRegistry, ViewProps } from "@graview/react/provider";
 import { act } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -34,7 +34,8 @@ function SeatChart(props: ViewProps<AnySchema>) {
 }
 const views = (_schema: AnySchema, registry: ReactViewRegistry<AnySchema>) => registry.register("seat" as never, { cardinality: "many", fidelity: "full" }, SeatChart, { title: "Seat chart", name: "seat-chart" });
 
-beforeAll(() => Promise.all([preload(), fetchDeclaredLenses()]));
+// The acts' pane is fetched once the place has first drawn and the page is idle (FR-194): here, before the first right-click.
+beforeAll(() => Promise.all([preload(), fetchDeclaredLenses(), fetchInspector()]));
 (Element.prototype as { scrollTo?: unknown }).scrollTo = () => {};
 
 async function settle(ms = 30) {

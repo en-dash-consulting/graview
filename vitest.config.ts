@@ -89,6 +89,7 @@ export default defineConfig({
       "@graview/ship": src("ship"),
       // The subpath first, or the bare-name alias swallows it.
       "@graview/embed/pages": fileURLToPath(new URL("./packages/embed/src/pages.tsx", import.meta.url)),
+      "@graview/embed/first-draw": fileURLToPath(new URL("./packages/embed/src/first-draw.ts", import.meta.url)),
       "@graview/embed": src("embed"),
       // The subpaths first, or the bare-name alias swallows them.
       "@graview/guest/host/frame": fileURLToPath(new URL("./packages/guest/src/host/frame.ts", import.meta.url)),

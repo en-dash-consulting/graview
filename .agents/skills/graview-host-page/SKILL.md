@@ -26,6 +26,9 @@ decides the frame; the app still decides what is in it.**
    `addressOf(place, { basePath })` (`@graview/core`) spells a place's
    link. A host that keeps its own history stays on memory, hears
    `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
+   A product shell of its own that shows the scene at a route mounts
+   `face: "graview"` there with `bar: { faces: false, name: false }` and
+   `heading: false`: no second name, no switch to Graview's own pages.
 2. **In a chat's widget, let the frame be sized from the embed.** `height:
    "auto"` with `onIntrinsicHeight` tells the host the height to give it;
    `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the
@@ -59,8 +62,11 @@ decides the frame; the app still decides what is in it.**
 6. **Start what it loads before it asks.** Each face is a chunk of its
    own, fetched as it is first drawn: `preload(face)` starts it beside the
    host's own requests, and `handle.drawn()` waits for the face to be on
-   the page. `onError` and `onReady` tell the host failures (class and
-   module only) and the time to the first face drawn.
+   the page. What the face opens as it first draws (the home's lenses, the
+   scene's ribbons) your build names in the head:
+   `firstDrawChunks(metafile, face)` from `@graview/embed/first-draw`, as
+   `modulepreload` links. `onError` and `onReady` tell the host failures
+   (class and module only) and the time to the first face drawn.
 
 ## Knowing when a place has drawn
 

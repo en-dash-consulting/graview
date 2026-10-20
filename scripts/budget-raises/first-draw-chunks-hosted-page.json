@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 307,
+  "gzipped": 132,
+  "changeset": "a-face-names-what-its-first-draw-opens.md",
+  "note": "Raised when what a page fetches before it is wanted came to wait for the first draw (FR-194): `afterFirstDraw`, `placeWatched` and `placeDrawn` in `@graview/react`'s lazy parts, said by the embed's drawn signal, and the other face's idle fetch at a desk waiting on it. The provider and the embed's frame are on every page, so this is up front. Measured at 585_616 / 203_412 against 585_309 / 203_280 minified and gzipped."
+}

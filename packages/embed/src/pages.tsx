@@ -14,7 +14,7 @@ const pagesViews = <S extends AnySchema>(schema: S, specs: Parameters<typeof reg
   registerViewSpecs(registerDefaultViews(schema, createViews(schema)), schema, specs) as unknown as ReactViewRegistry<S>;
 import { flushSync } from "react-dom";
 import { createNoticeBoard, NoticeBoardContext, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { FaceBoundary, FrameBar, FrameFirstLook, FrameNotices, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import { barLeaves, FaceBoundary, FrameBar, FrameFirstLook, FrameNotices, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
 import { addressOf, pathWithin } from "@graview/core";
 import { appKeyOf, BarFindContext, type BarFind } from "@graview/primitives/frame";
 
@@ -105,6 +105,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
                 <FrameBar
                   name={brand?.name ?? app.name}
                   heading={props.heading ?? 2}
+                  named={barLeaves(bar).name !== false}
                   at={at}
                   without={props.pages?.without()}
                   home={{ ...(address ? { href: addressOf("/", base) } : {}), go: () => steer("/"), current: at.split("?")[0] === "/" }}
@@ -234,7 +235,7 @@ export { hostScheme } from "./frame.js";
 export { DRAWN_ATTRIBUTE } from "./drawn.js";
 export type { EmbedDraftView } from "./draft.js";
 export type { EmbedWhere } from "./where.js";
-export type { EmbedError, EmbedErrorWhere, EmbedHostContext, EmbedReady, EmbedRemote } from "./frame.js";
+export type { EmbedBar, EmbedError, EmbedErrorWhere, EmbedHostContext, EmbedReady, EmbedRemote } from "./frame.js";
 export type { HostAction } from "@graview/primitives/frame";
 export { createNoticeBoard } from "@graview/primitives/frame";
 export type { Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "@graview/primitives/frame";

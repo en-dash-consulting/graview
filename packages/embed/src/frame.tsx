@@ -24,6 +24,24 @@ import { fontsLink } from "./fonts.js";
 export type EmbedFace = "scene" | "graview" | "pages" | "picture";
 
 /**
+ * WHAT THE BAR LEAVES OUT UNDER A HOST'S OWN BAR. A product with its own
+ * shell mounts the scene in it: its bar already says the app's name, and
+ * its own pages are where its pages are — Graview's switch to the derived
+ * pages would lead a reader out of the product. What is left is the
+ * scene's places, Find, the standing (Activity beside it, once anything has
+ * happened) and the person.
+ */
+export interface EmbedBar {
+  /** `false`: no switch between the scene and the pages. */
+  readonly faces?: false;
+  /** `false`: no app mark and name, the way home; the host's own bar says it. Say `heading: false` too where the host's heading names the app. */
+  readonly name?: false;
+}
+
+/** What `bar` leaves out, read from the option: nothing when it is `true`. */
+export const barLeaves = (bar: boolean | EmbedBar | undefined): EmbedBar => (typeof bar === "object" ? bar : {});
+
+/**
  * WHAT WENT WRONG, AS A HOST MAY KEEP IT (FR-24): the error's class
  * (`TypeError`, `GraphError`), never its message, which may quote a
  * record's words.
@@ -186,9 +204,12 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   /**
    * THE APP BAR (FR-131) above every face: the app's name, its places —
    * the overview among them — Find, the standing and the person. Default
-   * on; off for a host whose own page already says all of that.
+   * on; off for a host whose own page already says all of that. Or what
+   * of it to leave out, for a host whose own bar stands above it
+   * (`EmbedBar`): `{ faces: false, name: false }` is the scene under a
+   * product's own shell, its places, Find, the standing and the person kept.
    */
-  readonly bar?: boolean;
+  readonly bar?: boolean | EmbedBar;
   /**
    * HOW THE BAR'S SWITCH BETWEEN THE SCENE AND THE PAGES IS DRAWN (FR-137).
    * `"words"`, the default, says "Scene" and "Pages" beside their marks
@@ -696,8 +717,11 @@ export function FrameBar({
   keeping,
   onFind,
   switch: switchForm,
+  named = true,
 }: {
   readonly name: string;
+  /** Whether the bar draws the app's mark and name (`EmbedBar.name`). */
+  readonly named?: boolean;
   readonly heading: 1 | 2 | 3 | 4 | 5 | 6 | false;
   /** The switch between the scene and the pages (FR-137); none where only the pages are drawn. */
   readonly faces?: BarFaces | undefined;
@@ -726,6 +750,7 @@ export function FrameBar({
     <AppBar
       brand={brand}
       name={name}
+      named={named}
       description={brand?.subtitle}
       heading={heading}
       faces={faces}
@@ -735,7 +760,7 @@ export function FrameBar({
       reach={reach}
       onFind={onFind}
       {...(switchForm ? { switch: switchForm } : {})}
-      {...(faces ? { scenePlaces: scene } : {})}
+      {...(faces || at === null ? { scenePlaces: scene } : {})}
       tools={
         <>
           <Standing clean={standing} />

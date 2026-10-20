@@ -1,4 +1,4 @@
-import { partsArriving } from "@graview/react/provider";
+import { partsArriving, placeDrawn, placeWatched } from "@graview/react/provider";
 import { useLayoutEffect, useRef } from "react";
 import type { EmbedWhere } from "./where.js";
 
@@ -107,6 +107,7 @@ export function watchDrawn(root: HTMLElement, path: string, settled: () => void)
         if (stopped) return;
         stop();
         root.setAttribute(DRAWN_ATTRIBUTE, path);
+        placeDrawn();
         settled();
       });
       return;
@@ -125,6 +126,8 @@ export function watchDrawn(root: HTMLElement, path: string, settled: () => void)
  * settles. The whole embed and the pages alone say it alike.
  */
 export function useDrawnSignal(rootRef: { readonly current: HTMLElement | null }, key: string, place: EmbedWhere, onDrawn: ((place: EmbedWhere) => void) | undefined): void {
+  // What is fetched early waits for the first draw (FR-194): said as the embed first renders, before any part's effect runs.
+  placeWatched();
   const latest = useRef({ place, onDrawn });
   latest.current = { place, onDrawn };
   useLayoutEffect(() => {
