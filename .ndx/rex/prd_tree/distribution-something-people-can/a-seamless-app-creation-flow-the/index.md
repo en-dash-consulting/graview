@@ -43,4 +43,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Walkthrough VIII · The eighth walk, from a fresh checkout, adds nothing](./walkthrough-viii-the-eighth-walk-from.md) | completed |
 | [Walkthrough IX · The ninth walk, from a fresh checkout, adds nothing](./walkthrough-ix-the-ninth-walk-from-a.md) | completed |
 | [What a seat may not see never leaves the store: sees applied by graview mcp, graview serve and the served store, and editable in the studio](./what-a-seat-may-not-see-never-leaves.md) | completed |
-| [What the walks carried: the minors of Walkthroughs VII to XII, as ordinary tasks](./what-the-walks-carried/index.md) | pending |
+| [What the walks carried: the minors of the walks, as ordinary tasks](./what-the-walks-carried/index.md) | pending |
