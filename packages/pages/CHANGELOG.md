@@ -1,5 +1,33 @@
 # @graview/pages
 
+## 0.1.39
+
+### Patch Changes
+
+- 99ed9e7: A record a lens draws as a link answers the right-click menu on a page mounted under a base, and a new tab keeps the base (FR-189). On a page mounted with `basePath` (`/a/<app>`), a board's card and a blocks lens's card or row were `<a href="/features/live-documents">`, the base dropped, so the menu read them as a link somewhere else: "Open in a new tab" and nothing more, no Open, no acts, no "Move to ›" — and with the Move button gone in 0.1.38, a phone could not move a card at all — while the new tab opened outside the app. Now every record a list draws as a link (a board's card, a blocks lens's cards and rows, grouped or not, a home's lists) links to its address under the router's base (`/a/<app>/features/live-documents`), the menu reads the record an item is listed as (`data-graview-listed`) wherever in it the press lands, its own stretched link included — a link the card draws to somewhere else stays that link — and "Open in a new tab" opens the record's address under the base. On a status board a finger resting on a card opens its menu, with Move to ›, rather than choosing it; on a phone that menu offers "Choose several", which chooses the card and begins choosing as the long press did, and while several are chosen a tap and a long press choose as before (a card is `data-graview-choose` only then). `capabilities().shipped` gains FR-189. The pages face alone grows 218 / 81 bytes (minified / gzipped), every face 679 / 250 and the embed with the studio handed in 218 / 97, each raised in `scripts/budget-raises/`; a hosted page's first load holds to its budget unraised.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `capabilities().shipped` lists FR-189. What Graview Cloud does: nothing — a page mounted with `basePath` draws its cards' links under the base and its menu answers them; a host that read a card's `href` as basename-relative now reads it with the base on.
+- 3bfdf76: The page says when a place has drawn and settled (FR-188). A host picturing a place headless waited on a guess — its opening frame gone, the network quiet, then 600 ms — and a font, an image or a worker view that came later than that was pictured half drawn. Now once the place the reader is on has drawn and settled — its face here, every part drawn on it arrived or said it did not, the fonts and images loaded, each worker view drawn or stopped (what stands in its place drawn), and nothing moving for 200 ms — the embed's root wears `data-graview-drawn`, its value the place's path, and `mount`'s `onDrawn(place)` is told the place as `where()` says it (`EmbedWhere`: face, path, stop). A move to another page, another stop on the scene or another face takes the attribute off in the commit that moves, and the next place puts it back as it settles; a place that never stops moving is said drawn after ten seconds all the same. `DRAWN_ATTRIBUTE` names it on `@graview/embed`, and `graview shots` waits for it before each picture where it waited 0.7 s, or 1.8 s on the scene. A worker view's region says `data-worker-view-drawn` once it has drawn what it was last shown with no picture still being fetched for it; `partsArriving()` on `@graview/react` counts the parts drawn and still on their way, and `partArriving(load)` counts a loader of one's own. `onDrawn` was told the face once it was on the page (FR-57); that is `onFaceDrawn` on `<Embed>` now, and `handle.drawn()` still waits for it. A hosted page carries 2.3 KB more up front for it (the compiled page too), and their budgets are raised by that, and the pages face, the embed, every face and the open kit's host by what they measured. `capabilities().shipped` gains FR-188.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `capabilities().shipped` lists FR-188. `mount`'s `onDrawn` is handed the place (`EmbedWhere`) where it was handed the face, and is called once the place settles rather than when the face is first committed; a React host that wanted the old call passes `onFaceDrawn` to `<Embed>`. What Graview Cloud does: in `pictures.ts`, wait for `#graview-app [data-graview-drawn]` (or its value, the address pictured) in place of the opening's absence, network idle and the 600 ms settle.
+- 099209c: The pages alone say when a page has drawn, and open on a draft view, as the whole embed does (FR-188, FR-187). `@graview/embed/pages` — a chat's widget, a phone's page — took neither `onDrawn` nor `draftView`, so a host picturing a proposal there guessed when it had drawn and could not draw the proposal at all. Now its `mount` takes `onDrawn(place)` and its root wears `data-graview-drawn` (the page's path) once the page has drawn and settled, off in the commit that moves; and it takes `draftView`, drawn where the manifest attaches and marked "Draft — <title> · Not kept", kept nowhere, the worker's host fetched before the pages draw and only when a draft is handed. Both come from the same code as the whole embed's: what watches the place is one hook (`drawn.ts`), and the draft's registration one module (`draft.ts`). `DRAWN_ATTRIBUTE` and the `EmbedDraftView` and `EmbedWhere` types are on `@graview/embed/pages` too. And the pages alone go where `handle.setPath` sends them when they were mounted without a `path`: the routed face took the first path a host handed after it opened for the one it began at, and stayed. The pages face alone measures 3.5 KB more (1.7 KB gzipped) for them, and its budget is raised by that; nothing of it is in a hosted page.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. New on `@graview/embed/pages`: `onDrawn` and `draftView` on `mount` and `<PagesEmbed>`, `setDraftView` on its handle, `DRAWN_ATTRIBUTE`, and the types `EmbedDraftView` and `EmbedWhere`. `PagesApp` follows its `path` prop from any value, not only from the one it was first drawn with. What Graview Cloud does: a widget on `@graview/embed/pages` waits for `[data-graview-drawn]` as the hosted page does, and passes `draftView` there too.
+- Updated dependencies [77a235a]
+- Updated dependencies [f3af490]
+- Updated dependencies [1d365af]
+- Updated dependencies [6bff55b]
+- Updated dependencies [99ed9e7]
+- Updated dependencies [c9c13d2]
+- Updated dependencies [817aaba]
+- Updated dependencies [3bfdf76]
+- Updated dependencies [328235d]
+  - @graview/core@0.1.39
+  - @graview/primitives@0.1.39
+  - @graview/react@0.1.39
+  - @graview/layout@0.1.39
+  - @graview/tools@0.1.39
+
 ## 0.1.38
 
 ### Patch Changes

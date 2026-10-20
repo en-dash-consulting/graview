@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.38)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.39)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -703,6 +703,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.39`](https://graview.dev/docs/releases.html#v0-1-39)
 - [`0.1.38`](https://graview.dev/docs/releases.html#v0-1-38)
 - [`0.1.37`](https://graview.dev/docs/releases.html#v0-1-37)
 - [`0.1.36`](https://graview.dev/docs/releases.html#v0-1-36)
@@ -739,9 +740,27 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.39
+
+Published October 20, 2026 · the current version
+
+Cards that answer the menu under a base, full-size photos in views, views that save as you type and take a drop, and a page that says when it has drawn.
+
+- **Cards answer the right-click menu on a hosted page.** A board or blocks card served under a base path offers its acts and Move to ›, a new tab keeps the base, and a finger resting on a board card opens its menu, so a phone moves cards again.
+- **Full-size photos in views.** A view that shows record pictures draws them at any size, and the headless check says when a page would leave one out.
+- **Views save as you type.** A field marked `data-save="input"` saves when the person pauses, and the view hears whether it saved.
+- **Drop photos and videos onto a view.** A view marks where files may land; the host takes them, stores them and makes one record per file, in one undoable change, with a picker on a phone.
+- **The page says when it has drawn.** `data-graview-drawn` and `onDrawn` replace a timer for anyone picturing a place, and a page can open on a view proposed and not yet kept.
+- **add-lens refuses an option the lens does not take.**
+- **Authoring skills split at their limit**, so each teaches one job: 26 skills now.
+
+**Before you upgrade:** `mount` takes `onDrawn(place)` (the old first-commit callback is `onFaceDrawn` on `<Embed>`), `draftView` and `handle.setDraftView`; `@graview/embed` depends on `@graview/guest`; `add-lens` refuses an unknown option (`lens-option-unknown`, an error) and `lensOptionsRefused` judges a patch; a worker view's manifest takes `accepts`, and `graview.act` takes a list of arguments as one change; a board card's long press opens its menu; code acts that move a board's cards need `sets` (`lens-column-written-unsaid`). The hosted page carries about 4 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.39) · [The full changelog for 0.1.39](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0139)
+
 ## 0.1.38
 
-Published October 19, 2026 · the current version
+Published October 19, 2026
 
 Boards without buttons that search and filter, places that hide and restore views, a menu that offers what exists, and the last of inline AI.
 
@@ -5907,7 +5926,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 396 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 397 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -5932,7 +5951,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 40 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 41 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made
