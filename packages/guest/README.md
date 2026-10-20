@@ -38,6 +38,15 @@ read the answer, but the request is made. Set the cookie SameSite=Lax or
 Strict, or serve guests with `connect-src 'none'`
 (`scripts/guest-sandbox.mjs` checks both in all three engines).
 
+The frame says when the guest has drawn, so a page that says it has drawn
+(the embed's `data-graview-drawn`) can wait for it: `data-guest-view-drawn`
+once the guest has said it is ready, been handed what it shows (and the
+pictures it asked for) and asked for its height — or stayed quiet for a
+moment after, if it never asks — and `data-guest-view-failed="silent"` when
+it does not say it is ready in `limits.readyMs` (eight seconds by default).
+It is `aria-busy` until one or the other; a guest that says it is ready
+after all is drawn then.
+
 ## In the guest
 
 ```ts
@@ -394,6 +403,33 @@ host filled it, is the view's, as ever. Nothing leaks by it: the value is
 a field of a record the view was already shown, and it can only be saved
 back where it came from, by an act the viewer may run there.
 
+A field can save itself as the viewer types, with no button (FR-191): it
+carries its act, and says when it saves.
+
+```html
+<fieldset data-record="call:todd">
+  <textarea name="notes" data-prefill="notes" data-act="save-notes"
+            data-save="input" data-debounce="1500"></textarea>
+</fieldset>
+```
+
+With `data-save="input"` the viewer's typing (a trusted `input`) saves it
+once they pause for `data-debounce` milliseconds — 1 000 when it is left
+out, held to 250–10 000 — and leaving the field (its trusted `change`)
+saves at once what was still waiting, as does the view going away;
+`data-save="change"` saves on the `change` alone. A save is a press in
+every way but the click: the act is the field's own `data-act`, its record
+and its `fieldset`'s fields are read as a press reads them, and it is held
+to the same rules. A click into the field is not a press. The view's code
+holds nothing and can start nothing; it hears what became of each act a
+press or a save asked for as an `acted` event on the bound element —
+`graview.on("acted", "textarea", (event) => …)`, with `event.pressed`
+holding `as`, `ok`, and `reason` and `message` when it was refused — so it
+can say "Saving…" on `input` and "Saved" on `acted`. A headless run says
+when a field's `data-save` would save nothing: no `data-act`, no `name`,
+outside a `fieldset` bound to a record, or a `data-debounce` it does not
+read.
+
 ### Links stay in the app
 
 A worker view links to a record or a named place of this app, and nowhere
@@ -445,6 +481,59 @@ view as its facts (`name`, `type`, `bytes`, `width`, `height`, `caption`,
 `duration`), never an address; a headless run says a placed video as "The
 waves at dusk, a 45-second video". A frame guest places none: its frame is
 another origin.
+
+### Files a person drops on it
+
+A worker view takes files a person drops on what it drew (FR-193). Its
+manifest says which fields files become, and it marks the element:
+
+```html
+<!-- manifest: accepts: [{ kind: "moment", field: "photo" }, { kind: "moment", field: "clip" }] -->
+<section data-drop="moment" data-drop-connect="takenOn:day:saturday">Saturday</section>
+```
+
+The host owns the rest. The element is a drop target only where this seat
+may make that kind (and link it to the record `data-drop-connect` names,
+`<relation>:<record id>`, one the view was shown) and the page's host's
+`files` take what the fields hold; anywhere else it is no target, and a
+drop there is the browser's. While files are dragged over it the host
+draws it with an outline of its own and says what dropping does in a
+status of its own; on a coarse pointer the same element is a tap that
+opens the picker, asking for what the fields take, and Enter or Space on
+it does the same. Each file goes to the field its type fits (a picture to
+an image field, a video to a video field, else a file field), is held to
+the kinds and the size the host's files take, and is stored through `files.upload`;
+what was refused is said, a sentence a file. `data-drop-field` narrows a
+target to one of its kind's accepted fields.
+
+A view that does not hear `drop` gets a record of the kind per file, its
+file on its field, linked as `data-drop-connect` says — by an act on the
+dropped-on record that makes one linked, where the app has one, else the
+act that makes the kind and the relation's connect, naming the record
+just made with `{ $made: n }` — all in one change one undo takes back. A
+view that hears it is told once, and makes what it will:
+
+```js
+graview.on("drop", "[data-drop]", (event) => {
+  // event.files: [{ href, name, type, bytes, width, height, poster, duration, at, field }]; event.refused: sentences.
+  graview.act("add-moment-to-day", event.files.map((file) => ({ id: "day:saturday", [file.field]: file })));
+});
+```
+
+`graview.act(name, [args, …])` runs several of one act as one change. An
+act's argument takes a file only as the host handed it — in a drop, or on
+a record the view was shown — and it goes as the host kept it; any other
+`href` is refused `malformed`. Where sight is not total, an act from the
+view's code applies only from a press, as ever, except one whose every
+argument is a drop's file, a record the view was shown, a record the same
+change makes, or a value the app declares. A headless run says a
+`data-drop` its manifest does not accept, and a `data-drop-connect` that
+names no record the view was shown.
+
+Every event a view hears is `{ type, target, element }` and what that
+event carries: `value` and `checked` (`input`, `change`), `key`
+(`keydown`), `pressed` (a press on `data-act`, and `acted`), `files` and
+`refused` (`drop`).
 
 ### What the host page allows
 
@@ -568,6 +657,11 @@ under the app's base or by `origin`'s address for it) and `origin` (the
 page's origin). Nothing is loaded in a run. A view whose manifest asks for
 `pictures` is handed each picture with a stand-in `src`, a blank image, so
 its `<img>` is drawn and judged as it will be once the page has the bytes.
+The page draws a picture it handed at any size, as handed; one it would
+leave out before fetching it — heavier than the host fetches, or past the
+view's budget for its pictures, as `limits` says them — comes with
+no `src` and the page's sentence in `left`, said among the problems at
+`pictures` (FR-192).
 
 A view never runs in the host's own context. The host supplies the
 isolate: `run` is handed one script and one JSON string (`HeadlessPayload`),

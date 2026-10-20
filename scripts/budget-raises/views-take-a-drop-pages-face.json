@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 700,
+  "gzipped": 337,
+  "note": "Raised when a view came to take files dropped on it (FR-193, Graview Cloud's family weekend): `applyAll` reads `{ $made: n }` as the record an earlier call of the same change made, and judges that call once it is there to name (`mutations/made.ts`), so a record made and linked to the one it was dropped on is one change; the file editor offers nothing on a host that takes no files. Measured at 613_730 / 225_152 against 613_030 / 224_815: 700 / 337 more."
+}

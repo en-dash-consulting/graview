@@ -50,7 +50,7 @@ import { fileURLToPath } from "node:url";
 import { launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
-import { serving } from "./lib/serve.mjs";
+import { serving, vacant } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const QUICK = process.argv.includes("--quick") || process.env["GRAVIEW_QUICK"] === "1";
@@ -135,6 +135,7 @@ async function buildHost() {
     response.writeHead(200, { "content-type": path.endsWith(".js") ? "text/javascript" : "text/html" });
     response.end(readFileSync(file));
   });
+  await vacant(portFor("a11y-host"));
   await new Promise((ready) => host.listen(portFor("a11y-host"), ready));
   return { stop: () => (host.close(), rmSync(out, { recursive: true, force: true })) };
 }

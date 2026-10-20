@@ -14,7 +14,7 @@
  * port lies in 5190–5289, so a moved base keeps them all in one block of a
  * hundred (5600–5699 for a worktree).
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -68,6 +68,8 @@ export const OWN = {
   "files-host": 5263,
   /** The host's page `verify-growing` mounts a roadmap grown large into: filters that stay usable, cards read at a glance. */
   "growing-host": 5258,
+  /** The host's page `verify-drawn` mounts a roadmap into with a late font, a late image and a view that fails, to hold `data-graview-drawn` to what a person sees (FR-188). */
+  "drawn-host": 5259,
   /** The host's page `verify-screen-reader` mounts a roadmap into, in two tabs sat down as two people, to hear what a screen reader is told. */
   "screen-reader-host": 5256,
   /** The host's page `verify-field-types` mounts a choir's rehearsals into: a phone to call, a place to map, a duration said and summed. */
@@ -134,6 +136,25 @@ export function portFor(name) {
 /** The address of what a harness serves: `at("todo")` is `http://localhost:5193`, or 5603 on a base of 5600. */
 export function at(name) {
   return `http://localhost:${portFor(name)}`;
+}
+
+/**
+ * Every port a harness names, moved onto the base: each app under `apps/`
+ * whose vite config claims one (with its directory, so a server there can
+ * be told apart from somebody else's), and each of `OWN`.
+ *
+ * @returns {{ name: string, port: number, app: string | null }[]}
+ */
+export function namedPorts() {
+  const apps = readdirSync(resolve(repoRoot, "apps")).flatMap((name) => {
+    try {
+      return [{ name, port: portFor(name), app: resolve(repoRoot, "apps", name) }];
+    } catch {
+      // No vite config, or one that serves nothing in development (apps/spike).
+      return [];
+    }
+  });
+  return [...apps, ...Object.keys(OWN).map((name) => ({ name, port: portFor(name), app: null }))];
 }
 
 /** What the desk (apps/launcher) links to and probes: the apps it surveys, and the store server one demo opens from. */

@@ -85,20 +85,8 @@ somebody with a bright office files a bug — so the framework measures it.
    relation's ribbon off the map too.
    An embed's `handle.setBrand({ ...brand, kit })` re-dresses it live.
 
-7. **Say its money and its days.** `currency: "EUR"` and `locale: "de-DE"`
-   on the brand (a document's `brand` may carry them alone, without an
-   accent) are what a sum is said in wherever a block names none: a figure
-   or a field shown as money, and `{net | money}` in a template — "21.000
-   €". A block's own `currency` wins. A document field marked
-   `"format": "money"` is said in it on every face — record, list, card,
-   table, form ("$" beside the box, "$1,250.50" taken as typed) — and its
-   own `"unit": "EUR"` wins; `graview check` warns `money-currency` where
-   neither names one. `set-format` changes only a field's format or unit.
-   The locale says every day, time and number on every face, en-US
-   unless it says ("Sep 10, 2023", "1,250"); `timeZone:
-   "America/New_York"` is the clock an instant is said on, acts and views
-   too. A host's `locale` and `timeZone` win. `graview check` refuses
-   what it cannot write (`brand-currency`, `brand-locale`, `brand-time-zone`).
+7. **Say its money and its days** on the brand too: `currency`, `locale`
+   and `timeZone`, and a field kept as money, are `graview-locale`.
 
 ## A document's brand
 
@@ -164,7 +152,7 @@ because the whole look is one serializable declaration:
   pages" sets those in the app's stylesheet, never a component's size;
 - **kind colors** → `accents` hues per kind;
 - **per-kind layout** → register a view over the registry cell, the same
-  authoring move as everything else (see graview-node-kind).
+  authoring move as everything else (see graview-view-specs).
 
 The loop for each request: edit ONLY the declaration file, run `pnpm check`
 (the framework measures contrast rather than trusting either of you), then

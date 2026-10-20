@@ -120,8 +120,8 @@ describe("what a project starts with passes its own checks", () => {
 
   it("opens the studio door in development, so Apply writes into src/domain", () => {
     const config = file("Field Notes", "vite.config.ts");
-    expect(config).toContain('import { studioDoor } from "@graview/ship/dev";');
-    expect(config).toContain("plugins: [studioDoor()],");
+    expect(config).toContain('import { devFiles, studioDoor } from "@graview/ship/dev";');
+    expect(config).toContain("plugins: [studioDoor(), devFiles()],");
   });
 });
 
@@ -324,6 +324,22 @@ describe("a new project's pages", () => {
     for (const page of files.filter((f) => f.path.endsWith(".html"))) {
       expect(page.contents, page.path).toMatch(/<link rel="icon" href="[^"]+" \/>/);
       expect(page.contents.indexOf('rel="icon"'), page.path).toBeLessThan(page.contents.indexOf("<script"));
+    }
+  });
+});
+
+describe("a picture on a record (the thirteenth walk)", () => {
+  it("can be put on one in development: the dev server keeps files, and both faces are handed them", () => {
+    // graview-node-kind's first example declares imageField(); a project that followed it was told "This host doesn't take files".
+    for (const link of [undefined, "../graview"]) {
+      const s = scaffoldProject({ name: "Pictured", ...(link ? { link } : {}) });
+      const file = (path: string) => s.files.find((f) => f.path === path)!.contents;
+      expect(file("vite.config.ts")).toMatch(/plugins: \[studioDoor\(\), devFiles\(\)\]/);
+      const main = file("src/main.tsx");
+      expect(main).toContain('filesAt("/__graview/files"');
+      expect(main).toMatch(/files: devHostFiles/);
+      expect(main).toMatch(/files=\{devHostFiles\}/);
+      expect(file("src/ui/app.tsx")).toMatch(/files=\{files\}/);
     }
   });
 });

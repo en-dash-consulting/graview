@@ -145,7 +145,8 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
       };
     }, [store, principal, setSelection, views]);
     useEffect(() => frame.current?.update(), [props, brand]);
-    return <div ref={holder} data-guest={options.name} />;
+    // A frame's holder is busy until the frame's host has drawn the frame in it, and the frame is until the guest has drawn (FR-188).
+    return <div ref={holder} data-guest={options.name} aria-busy={options.url ? true : undefined} />;
   }
   GuestView.displayName = `GuestView(${options.name})`;
   return GuestView;

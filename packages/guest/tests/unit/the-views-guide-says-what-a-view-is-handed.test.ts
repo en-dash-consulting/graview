@@ -16,6 +16,8 @@ import type { WorkerViewManifest } from "../../src/host/manifest.js";
  */
 const skill = new URL("../../../skills/skills/graview-worker-view/", import.meta.url);
 const guide = readFileSync(new URL("SKILL.md", skill), "utf8");
+/** Its other half, since the skill split at its limit: how a view's presses and fields are written. */
+const forms = readFileSync(new URL("../../../skills/skills/graview-view-forms/SKILL.md", import.meta.url), "utf8");
 const example = readFileSync(new URL("examples/a-record.js", skill), "utf8");
 const store = () => new Store({ schema: workshopApp.schema, mutations: workshopApp.mutations ?? [], policy: workshopApp.policy!, snapshot: structuredClone(workshopSeed) as never }) as unknown as Store<AnySchema>;
 /** The manifest the example opens with, read from its own comment. */
@@ -53,8 +55,9 @@ describe("the guide", () => {
     expect(guide).toContain("examples/a-record.js");
   });
   it("says how a field is filled from the record, and no longer says not to prefill", () => {
-    expect(guide).toContain('data-prefill="draft"');
-    expect(guide).not.toContain("Do not prefill");
+    expect(forms).toContain('data-prefill="draft"');
+    expect(guide).toContain("graview-view-forms");
+    for (const half of [guide, forms]) expect(half).not.toContain("Do not prefill");
   });
   it("says a view of one sits above the record's own fields unless it replaces the page", () => {
     expect(guide).toContain('replaces: "page"');

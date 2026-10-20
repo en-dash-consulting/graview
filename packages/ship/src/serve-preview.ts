@@ -56,6 +56,12 @@ export interface PreviewOptions {
    * at all (`false`). Run with credentials from the environment by default.
    */
   readonly connections?: false | Omit<RunConnectionsOptions<AnySchema>, "app" | "store">;
+  /**
+   * A VIEW PROPOSED AND NOT KEPT (FR-187): a worker view's manifest and its
+   * source, handed to the page with the document and drawn there as the
+   * embed's `draftView`, marked as a draft. It is written nowhere.
+   */
+  readonly draftView?: { readonly manifest: unknown; readonly source: string };
 }
 
 export interface Preview {
@@ -107,7 +113,8 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
   const app = compiled.app as GraviewApp<AnySchema>;
   const principal = options.principal ?? previewPrincipal(options.document);
   let document = options.document;
-  let handed = JSON.stringify({ document, compiled: serializeCompiled(compiled), principal });
+  const drafted = options.draftView ? { draftView: options.draftView } : {};
+  let handed = JSON.stringify({ document, compiled: serializeCompiled(compiled), principal, ...drafted });
   /*
    * A DECLARED LENS HIDDEN OR DELETED FROM THE PLACE MENU (Roadmap
    * f-place-menu-views): the change written into the document this preview
@@ -122,7 +129,7 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     const next = compileDocument(edited.document);
     if (!next.ok) throw new Error(sayFindings(next.findings));
     document = edited.document;
-    handed = JSON.stringify({ document, compiled: serializeCompiled(next), principal });
+    handed = JSON.stringify({ document, compiled: serializeCompiled(next), principal, ...drafted });
   };
   const declaration = {
     change(edit: LensTidyEdit) {

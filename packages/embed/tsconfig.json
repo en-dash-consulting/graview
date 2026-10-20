@@ -19,6 +19,9 @@
       "path": "../core"
     },
     {
+      "path": "../guest"
+    },
+    {
       "path": "../layout"
     },
     {

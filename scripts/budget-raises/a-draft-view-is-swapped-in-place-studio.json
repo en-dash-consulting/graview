@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 500,
+  "gzipped": 194,
+  "note": "Raised when a draft view came to be swapped in place (FR-187), as the embed without the studio: setDraftView, a draft handed later registered once the worker's host arrives, and the drawn signal watched again for each draft. 500 / 194 more than before it (1_861_737 / 595_533): measured at 1_862_237 / 595_727."
+}

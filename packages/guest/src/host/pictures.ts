@@ -93,7 +93,7 @@ export function handFiles(props: GuestProps, hand: (file: FileValue, on: GuestNo
 }
 
 export interface GuestPicturesOptions {
-  /** `"blob"` for a worker view, drawn in this page (a `data:` image where the page's policy refuses `blob:`); `"data"` for a frame, another origin. */
+  /** `"blob"` for a worker view, drawn in this page (handed a `blob:` URL, drawn as a `data:` image where the page's policy refuses `blob:`); `"data"` for a frame, another origin. */
   readonly as: "blob" | "data";
   /** The view, as a sentence names it: its title, else its name. */
   readonly view: string;
@@ -116,16 +116,79 @@ export interface GuestPicturesOptions {
 export interface GuestPictureHand {
   /** `props` with each file as the guest is handed it, starting what has not been fetched. */
   hand(props: GuestProps): GuestProps;
+  /**
+   * WHAT THE PAGE DRAWS FOR A `src` THIS HAND GAVE (FR-192): the address
+   * the host made for a record's picture, at any size, or undefined where
+   * `src` is none it handed (or one it has let go). A worker view's drawing
+   * asks it (`JudgeContext.picture`), so the picture it was handed is drawn
+   * as handed, never refused for its length.
+   */
+  drawn(src: string): string | undefined;
+  /** Whether a picture handed is still being fetched: the view is pushed again once it is (FR-188). */
+  waiting(): boolean;
   /** Let go of every address made. */
   dispose(): void;
 }
 
 type Entry =
   | { readonly state: "pending"; readonly bytes: number }
-  | { readonly state: "ready"; readonly url: string; readonly bytes: number }
+  /* `url` is what the guest is handed; `drawn` what the page draws for it — the same, but where the page will not load its own `blob:` images. */
+  | { readonly state: "ready"; readonly url: string; readonly drawn: string; readonly bytes: number }
   | { readonly state: "left"; readonly said: string };
 
 const said = (n: number) => n.toLocaleString("en-US");
+
+/** The picture, as a sentence about it names it. */
+const namedPicture = (file: FileValue, on: GuestNode) => `The picture "${file.name}" on ${on.label ? `"${on.label}"` : "a record"}`;
+
+/**
+ * HOW MANY BYTES A VIEW'S PICTURES COME TO, BEFORE ANY IS FETCHED: the
+ * widest it draws one, in device pixels, the budgets, and what a picture
+ * is reckoned at — smaller by the square of how much narrower it is drawn,
+ * and no more than one picture may be. The page and a headless run reckon
+ * alike, so a run says what the page will leave out.
+ */
+export function pictureBudget(pictures: GuestPictures, limits: GuestPictureLimits | undefined, devicePixelRatio: number) {
+  const width = pictures === true ? PICTURE_WIDTH : (pictures.width ?? PICTURE_WIDTH);
+  const perFile = limits?.pictureBytes ?? 1_500_000;
+  const perView = limits?.picturesBytes ?? 12_000_000;
+  /* As many device pixels as the screen draws a CSS pixel with, up to two. */
+  const need = Math.round(width * Math.min(2, Math.max(1, devicePixelRatio || 1)));
+  const reckon = (file: FileValue) => Math.min(perFile, Math.ceil(file.bytes * (file.width && file.width > need ? (need / file.width) ** 2 : 1)));
+  return { width, perFile, perView, need, reckon };
+}
+
+/** A picture heavier, as the record says it, than the host fetches for a view: left out unfetched. */
+const tooHeavyToFetch = (file: FileValue, on: GuestNode) => `${namedPicture(file, on)} is left out: at ${said(file.bytes)} bytes it is more than the host fetches for a view.`;
+/** A picture past the view's budget for its pictures together: left out unfetched. */
+const pastTheViewsBudget = (file: FileValue, on: GuestNode, view: string, perView: number) => `${namedPicture(file, on)} is left out: the view ${view} is handed at most ${said(perView)} bytes of pictures, and the pictures before it took them.`;
+
+/**
+ * THE PICTURES A HEADLESS RUN HANDS A VIEW (FR-192): each picture the page
+ * would fetch with `standIn` as its `src`, and each it would leave out
+ * before fetching — heavier than the host fetches, or past the view's
+ * budget as the page reckons it on a screen of two device pixels to a CSS
+ * pixel, the most it reckons for — with no `src` and the page's own
+ * sentence, said again in `left`.
+ */
+export function standInPictures(props: GuestProps, options: { readonly view: string; readonly pictures: GuestPictures; readonly limits?: GuestPictureLimits; readonly standIn: string }): { readonly props: GuestProps; readonly left: readonly string[] } {
+  const { perView, reckon } = pictureBudget(options.pictures, options.limits, 2);
+  const left: string[] = [];
+  let total = 0;
+  const handed = handFiles(props, (file, on) => {
+    if (!isGuestPicture(file)) return guestFileOf(file);
+    const leave = (said: string) => {
+      if (!left.includes(said)) left.push(said);
+      return guestFileOf(file, { left: said });
+    };
+    if (file.bytes > PICTURE_FETCH_BYTES) return leave(tooHeavyToFetch(file, on));
+    const bytes = reckon(file);
+    if (total + bytes > perView) return leave(pastTheViewsBudget(file, on, options.view, perView));
+    total += bytes;
+    return guestFileOf(file, { src: options.standIn });
+  });
+  return { props: handed, left };
+}
 
 /**
  * THE HOST'S PICTURES FOR ONE GUEST: fetched once each, on the page's own
@@ -133,13 +196,11 @@ const said = (n: number) => n.toLocaleString("en-US");
  * no more, and let go when no record handed holds them.
  */
 export function createGuestPictures(window: Window & typeof globalThis, options: GuestPicturesOptions): GuestPictureHand {
-  const width = options.pictures === true ? PICTURE_WIDTH : (options.pictures.width ?? PICTURE_WIDTH);
-  const perFile = options.limits?.pictureBytes ?? 1_500_000;
-  const perView = options.limits?.picturesBytes ?? 12_000_000;
-  /* As many device pixels as the screen draws a CSS pixel with, up to two. */
-  const need = Math.round(width * Math.min(2, Math.max(1, window.devicePixelRatio || 1)));
+  const { width, perFile, perView, need, reckon } = pictureBudget(options.pictures, options.limits, window.devicePixelRatio);
   const shrink = options.shrink ?? ((blob: Blob, across: number, bytes: number) => shrinkOnCanvas(window, blob, across, bytes));
   const entries = new Map<string, Entry>();
+  /* Each `src` handed, to what the page draws for it. */
+  const drawnFor = new Map<string, string>();
   const told = new Set<string>();
   let disposed = false;
   let moving = false;
@@ -157,9 +218,11 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
     options.onLeft?.(text);
   };
   const release = (entry: Entry | undefined) => {
-    if (entry?.state === "ready" && entry.url.startsWith("blob:")) window.URL.revokeObjectURL(entry.url);
+    if (entry?.state !== "ready") return;
+    drawnFor.delete(entry.url);
+    if (entry.url.startsWith("blob:")) window.URL.revokeObjectURL(entry.url);
   };
-  const named = (file: FileValue, on: GuestNode) => `The picture "${file.name}" on ${on.label ? `"${on.label}"` : "a record"}`;
+  const named = namedPicture;
 
   /* Whether this page's policy lets an image load from its own `blob:` (ChatGPT's img-src has none): asked once. */
   let blobLoads: Promise<boolean> | undefined;
@@ -178,14 +241,22 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
       reader.onerror = fail;
       reader.readAsDataURL(blob);
     });
-  const addressOf = async (blob: Blob): Promise<string> => {
+  /*
+   * WHAT THE GUEST IS HANDED, AND WHAT THE PAGE DRAWS FOR IT. A worker view
+   * is handed a `blob:` URL of this page; where the page's policy will not
+   * load one, it is handed it all the same — short, whatever the picture's
+   * size — and the page draws the `data:` image behind it (FR-192). A frame,
+   * another origin, is handed the `data:` image itself.
+   */
+  const addressOf = async (blob: Blob): Promise<{ readonly url: string; readonly drawn: string }> => {
     if (options.as === "blob") {
       const url = window.URL.createObjectURL(blob);
       blobLoads ??= loads(url);
-      if (await blobLoads) return url;
-      window.URL.revokeObjectURL(url);
+      if (await blobLoads) return { url, drawn: url };
+      return { url, drawn: await dataOf(blob) };
     }
-    return dataOf(blob);
+    const data = await dataOf(blob);
+    return { url: data, drawn: data };
   };
 
   /*
@@ -220,11 +291,9 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
       else if (blob.size > perFile) return failed;
     }
     if (blob.size > perFile) return { state: "left", said: `${named(file, on)} is left out: made as small as the ${said(width)} pixels across the view ${options.view} draws a picture at, it is still more than the ${said(perFile)} bytes one picture is handed.` };
-    return { state: "ready", url: await addressOf(blob), bytes: blob.size };
+    return { state: "ready", ...(await addressOf(blob)), bytes: blob.size };
   };
 
-  /* What a picture is reckoned to come to before it is made: smaller by the square of how much narrower it is drawn, and no more than one picture may be. */
-  const reckon = (file: FileValue) => Math.min(perFile, Math.ceil(file.bytes * (file.width && file.width > need ? (need / file.width) ** 2 : 1)));
   const start = (file: FileValue, on: GuestNode) => {
     entries.set(file.href, { state: "pending", bytes: reckon(file) });
     void make(file, on).then(
@@ -235,6 +304,7 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
   const settle = (href: string, entry: Entry) => {
     if (disposed || entries.get(href)?.state !== "pending") return release(entry);
     entries.set(href, entry);
+    if (entry.state === "ready") drawnFor.set(entry.url, entry.drawn);
     if (entry.state === "left") tell(entry.said);
     moved();
   };
@@ -250,14 +320,14 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
         let entry = entries.get(file.href);
         if (entry?.state === "left") return guestFileOf(file, { left: entry.said });
         if (!entry && file.bytes > PICTURE_FETCH_BYTES) {
-          entry = { state: "left", said: `${named(file, on)} is left out: at ${said(file.bytes)} bytes it is more than the host fetches for a view.` };
+          entry = { state: "left", said: tooHeavyToFetch(file, on) };
           entries.set(file.href, entry);
           tell(entry.said);
           return guestFileOf(file, { left: entry.said });
         }
         const bytes = entry ? entry.bytes : reckon(file);
         if (total + bytes > perView) {
-          const left = `${named(file, on)} is left out: the view ${options.view} is handed at most ${said(perView)} bytes of pictures, and the pictures before it took them.`;
+          const left = pastTheViewsBudget(file, on, options.view, perView);
           tell(left);
           return guestFileOf(file, { left });
         }
@@ -273,10 +343,13 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
       }
       return handed;
     },
+    drawn: (src) => drawnFor.get(src),
+    waiting: () => [...entries.values()].some((entry) => entry.state === "pending"),
     dispose() {
       disposed = true;
       for (const entry of entries.values()) release(entry);
       entries.clear();
+      drawnFor.clear();
     },
   };
 }

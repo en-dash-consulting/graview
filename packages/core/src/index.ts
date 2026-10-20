@@ -196,6 +196,9 @@ export type {
   MutationDefinition,
   MutationDefinitionSpec,
 } from "./mutations/types.js";
+// A record an earlier call of the same change made, named by a later one (FR-193).
+export { isMadeRef, made } from "./mutations/made.js";
+export type { MadeRef } from "./mutations/made.js";
 
 // Operation log — attribution, causality, selective undo.
 export { OperationLog } from "./ops/log.js";

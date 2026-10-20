@@ -2,7 +2,7 @@
 id: "2cf0da0d-d2d2-4514-9da1-924718c50add"
 level: "task"
 title: "Walkthrough VIII · The eighth walk, from a fresh checkout, adds nothing"
-status: "failing"
+status: "completed"
 priority: "critical"
 tags:
   - "walkthrough"
@@ -17,7 +17,11 @@ acceptanceCriteria:
   - "all nine stages walked by an agent that did not do the first seven walks"
   - "docs/walkthrough-findings.md gains nothing; if it does, the fixes land with criteria and the walk repeats"
 description: "The seventh walk (task 76f13b53, a dealership's public face, ../walk7) added 22 findings, W-154 to W-175, and two new classes (no-way-to-do-a-job, shown-what-is-not-theirs), so the log did not stay still. This is the next run: a fresh clone, pnpm install && pnpm build && pnpm test, a new app beside it with graview create (use ../walk8, in a domain of its own, seeded at real size), all nine stages of docs/walkthrough.md by an agent that did not do the previous walks, and every finding fixed in a package with a criterion verified to fail without it. Notes from the seventh walk's review: the walker's --quick runs never sat the gauntlet's visitor down, so a new watch rule fired only in the reviewer's full chain (the seat switcher, and the visitor counted as not reaching staff it may not see) — a walker that adds or widens a watch rule runs the harnesses it touches without --quick before handing back; scale's aSelectionAndASearchAreCheap flaked once under the full chain and held alone. Press on: the shopper's privacy across every surface once sees is enforced; target size (district buttons measure 22px); keyboard press counts (relate costs 54 presses on a phone); a repair from the agent's seat. Run the browser harnesses one at a time; stop any dev server first."
-lastModified: "2026-10-11T21:30:00.000Z"
+lastModified: "2026-10-20T04:00:00.000Z"
 resolution: "Walked on ../walk8, a tool library: fourteen findings, W-176 to W-189, and one new class (permitted-what-was-never-granted), each fixed with a criterion in walk/eighth; the log did not stay still, so the walk repeats as Walkthrough IX (ea07de68)."
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
+
+## Superseded
+
+Closed 2026-10-20 as superseded (Nick: the walks take forever and the bar is never met). The bar "the log gains nothing" is replaced by severity: a walk passes when it leaves no blocker open, minors become tasks, and a release walk is time-boxed to what changed (docs/walkthrough.md, Done). This walk's blockers were fixed in their packages; what it carried is filed under "What the walks carried" in this feature.

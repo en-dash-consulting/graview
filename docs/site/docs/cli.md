@@ -108,7 +108,7 @@ Writes a lens that compiles: the role check that fails loudly, the createXLens f
 graview preview <document.json> [--seed <file>] [--port <n>] [--host <address>]
 ```
 
-[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the document declares, unless --as or --roles say who. Its connections run as serve's do, unless --no-sync.
+[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync] [--view <view.js> --manifest <manifest.json>] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the document declares, unless --as or --roles say who. Its connections run as serve's do, unless --no-sync. --view and --manifest draw a worker view proposed and not kept where it attaches, marked as a draft.
 
 ## graview serve
 
@@ -130,7 +130,7 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
 graview shots <document.json> [--seed <file>] [--places a,b] [--out <dir>]
 ```
 
-[--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene] Photographs places headless to PNGs, <place>-<scheme>-<width>.png in <dir> (default ./shots): each place by its address word or title (the home, overview, a lens's name, a kind's plural) or a path such as /tasks/t1; every place when none is named. Needs Playwright, which you install beside the project (npm i -D playwright, then npx playwright install chromium).
+[--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene] [--view <view.js> --manifest <manifest.json>] Photographs places headless to PNGs, <place>-<scheme>-<width>.png in <dir> (default ./shots): each place by its address word or title (the home, overview, a lens's name, a kind's plural) or a path such as /tasks/t1; every place when none is named. Needs Playwright, which you install beside the project (npm i -D playwright, then npx playwright install chromium). --view and --manifest picture a proposed view before it is kept: name its place's path (/places/<title>).
 
 ## graview skills
 

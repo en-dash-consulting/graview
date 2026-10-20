@@ -120,6 +120,19 @@ async function walkingThereAndBack(page) {
 }
 
 /*
+ * WHAT A CLAIM READS, ONCE IT IS THERE. A fixed 1.2 s after the page was
+ * ready read the week's lines before a CPU four times slower had measured
+ * the cards they join (GRAVIEW_SLOW=4): the scene is waited on until it
+ * has stopped moving, and then until what the claim looks for is drawn,
+ * or fifteen seconds have gone, when the claim reads what is there and
+ * fails by name.
+ */
+async function drawnWith(page, drawn) {
+  await page.waitForSelector(".graview-ground[data-graview-settled]", { timeout: 15_000 }).catch(() => {});
+  await page.waitForFunction(drawn, undefined, { timeout: 15_000 }).catch(() => {});
+}
+
+/*
  * A VIEW THAT DRAWS BOTH ENDS HAS DRAWN THE RELATION. With the lists in
  * focus and every task raised, each task is drawn inside its list; a line
  * from the list column to the same task's chip says nothing the column
@@ -128,7 +141,7 @@ async function walkingThereAndBack(page) {
 async function aViewThatDrawsBothEnds(page) {
   await page.goto(`${at("todo")}/?today=2026-09-01#focus=aggregate%3Alist&relation=task`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  await page.waitForTimeout(1200);
+  await drawnWith(page, () => document.querySelectorAll('[data-graview-plane="1"]').length >= 12 && document.querySelectorAll('[data-graview-view="aggregate:list"] [data-graview-pick^="t-"]').length >= 12);
   report.restated = await page.evaluate(() => ({
     holds: document.querySelectorAll('[data-graview-connector="holds"]').length,
     chips: document.querySelectorAll('[data-graview-plane="1"]').length,
@@ -141,7 +154,10 @@ async function aViewThatDrawsBothEnds(page) {
   // week's entries and itself; every entry keeps its line to its list.
   await page.goto(`${at("todo")}/?today=2026-09-01#focus=aggregate%3Atask&relation=list`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  await page.waitForTimeout(1200);
+  await drawnWith(page, () => {
+    const entries = document.querySelectorAll('[data-graview-view="aggregate:task"] [data-graview-pick^="t-"]').length;
+    return entries >= 9 && document.querySelectorAll('[data-graview-connector="holds"]').length >= entries;
+  });
   report.restated = {
     ...report.restated,
     entries: await page.evaluate(() => document.querySelectorAll('[data-graview-view="aggregate:task"] [data-graview-pick^="t-"]').length),
@@ -924,7 +940,8 @@ async function aLensIsADriveIn() {
      * docked at the side, the lens in it at its own size — no billboard of
      * the lens drawn small on its plot, and no line drawn over it.
      */
-    await drive.waitForSelector('[data-testid="lens-panel"]', { timeout: 10_000 }).catch(() => {});
+    // The panel and the lens in it, drawn: under GRAVIEW_SLOW=10 the panel stood with no record in it yet when it was read.
+    await drawnWith(drive, () => document.querySelector('[data-testid="lens-panel"] [data-graview-pick]') !== null);
     const standing = await drive.evaluate(() => {
       const panel = document.querySelector('[data-testid="lens-panel"]');
       const box = panel?.getBoundingClientRect() ?? null;
@@ -1157,105 +1174,105 @@ async function zoomAndPanByHand() {
      * rode the tween — so choosing a picture snapped the whole ground to the
      * new place on one frame and the buildings walked over to join it.
      */
+    /*
+     * THE PAGE'S CLOCK, STEPPED A FRAME AT A TIME. The ground's easing was
+     * read on the page's own frames, and a starved runner drew so few of
+     * them that an easing looked like a cut: two frames on 0.1.37's Nightly,
+     * three on 0.1.35's — the same move, read at moments a busy machine had
+     * chosen — and reading longer, asking three times and loosening what
+     * "eased" meant each only moved where it failed. A tween runs on
+     * requestAnimationFrame and performance.now, so the page's clock is
+     * installed and paused once the city has settled, and stepped sixteen
+     * milliseconds at a time after the press: every frame of the move is
+     * drawn and read however slow the machine, and the claim judges the
+     * move itself. Between steps the page is let render (three message hops,
+     * which React's scheduler and the layout it measures ride on), and the
+     * stepping goes on until the ground has moved and the scene says it has
+     * settled, or thirty seconds have gone.
+     */
     const measureTravel = async () => {
-    await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
-    await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-    await cam.waitForTimeout(1500);
-    return cam.evaluate(async () => {
-      const read = () => {
-        const g = document.querySelector(".graview-ground");
+      await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+      await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+      await cam.waitForSelector(".graview-ground[data-graview-settled]", { timeout: 15_000 }).catch(() => {});
+      await cam.clock.install();
+      await cam.clock.pauseAt(Date.now() + 1_000);
+      const read = () =>
+        cam.evaluate(() => {
+          const g = document.querySelector(".graview-ground");
+          return {
+            cell: Math.round(parseFloat(g?.style.getPropertyValue("--graview-lattice-cell") ?? "") || 0),
+            x: Math.round(parseFloat(g?.style.getPropertyValue("--graview-lattice-x") ?? "") || 0),
+            settled: g?.hasAttribute("data-graview-settled") ?? false,
+          };
+        });
+      const rendered = () =>
+        cam.evaluate(
+          () =>
+            new Promise((done) => {
+              const hop = (left) => {
+                if (left === 0) return done(undefined);
+                const channel = new MessageChannel();
+                channel.port1.onmessage = () => hop(left - 1);
+                channel.port2.postMessage(0);
+              };
+              hop(3);
+            }),
+        );
+      const seen = [{ ...(await read()), t: 0 }];
+      await cam.evaluate(() => document.querySelector('[data-testid="showing-the-week"]')?.click());
+      await rendered();
+      const began = Date.now();
+      for (let step = 1; Date.now() - began < 30_000; step++) {
+        await cam.clock.runFor(16);
+        await rendered();
+        const now = { ...(await read()), t: step * 16 };
+        seen.push(now);
+        const moved = seen.some((one) => one.cell !== seen[0].cell || one.x !== seen[0].x);
+        if (moved && now.settled && seen.slice(-4).every((one) => one.cell === now.cell && one.x === now.x)) break;
+      }
+      /*
+       * A LEAP IS MOST OF THE WAY IN ONE STEP: a cut puts the whole move in
+       * one frame; an easing puts no more than a share of it in any one. The
+       * same rule for the lattice's cell as for where it stands — a picture
+       * opens beside the map, and the city is laid out again in the room
+       * left, at the same cell when the room's height is what held it.
+       */
+      const summary = (key) => {
+        const whole = Math.abs(seen[seen.length - 1][key] - seen[0][key]);
+        const stepsOf = seen.map((one, at) => (at > 0 ? Math.abs(one[key] - seen[at - 1][key]) : 0));
         return {
-          cell: Math.round(parseFloat(g.style.getPropertyValue("--graview-lattice-cell")) || 0),
-          x: Math.round(parseFloat(g.style.getPropertyValue("--graview-lattice-x")) || 0),
-          t: performance.now(),
+          steps: new Set(seen.map((one) => one[key])).size,
+          jumps: stepsOf.filter((step) => step > Math.max(20, whole * 0.6)).length,
+          share: whole === 0 ? 0 : Math.max(...stepsOf) / whole,
         };
       };
-      /*
-       * READ UNTIL IT STANDS STILL, not for forty frames or 900 ms. The
-       * nightly's runner, three harnesses side by side, drew so few frames in
-       * that window that the ground was read four times on its way and not
-       * yet where it was going (-59 of -66): an easing cut short by the
-       * reading, not a leap. Every frame is read until the ground has not
-       * moved for six frames after moving, or for four seconds.
-       */
-      const seen = [];
-      const began = performance.now();
-      const settled = new Promise((done) => {
-        const tick = () => {
-          seen.push(read());
-          const last = seen.slice(-6);
-          const moved = seen.some((one) => one.cell !== seen[0].cell || one.x !== seen[0].x);
-          const still = moved && last.length === 6 && last.every((one) => one.cell === last[0].cell && one.x === last[0].x);
-          if (still || performance.now() - began > 4000) return done();
-          requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-      });
-      document.querySelector('[data-testid="showing-the-week"]')?.click();
-      await settled;
-      const cells = [...new Set(seen.map((one) => one.cell))];
-      /*
-       * A LEAP IS MOST OF THE WAY IN ONE STEP, not more than twenty pixels in
-       * one frame. Twenty per frame assumed sixty frames a second; a runner that
-       * drew eight frames in the same 900 ms moved the ground in steps of thirty
-       * and called each a jump. A cut puts the whole move in one step at any
-       * frame rate; easing never puts more than a share of it in one.
-       */
-      const travel = Math.abs((seen[seen.length - 1]?.cell ?? 0) - (seen[0]?.cell ?? 0));
-      /*
-       * AND IN ONE ORDINARY FRAME. A cut lands in the frame after the press; a
-       * runner that stalled for a third of a second drew most of an easing in
-       * one late frame, which is a starved machine, not a cut — a step counts
-       * as a leap only when it came within 50 ms of the one before.
-       */
-      const jumps = seen.filter((one, at) => at > 0 && Math.abs(one.cell - seen[at - 1].cell) > Math.max(20, travel * 0.6) && one.t - seen[at - 1].t < 50).length;
-      /*
-       * AND WHERE IT STANDS. A picture opens beside the map now, and the city
-       * is laid out again in the room left: at the same cell when the room's
-       * height is what held it, so what travels is where the ground stands.
-       * The same rule for the lattice's origin as for its cell.
-       */
-      const xs = [...new Set(seen.map((one) => one.x))];
-      const shift = Math.abs((seen[seen.length - 1]?.x ?? 0) - (seen[0]?.x ?? 0));
-      const xJumps = seen.filter((one, at) => at > 0 && Math.abs(one.x - seen[at - 1].x) > Math.max(20, shift * 0.6) && one.t - seen[at - 1].t < 50).length;
-      /*
-       * AND HOW LONG IT TOOK: from the first frame that moved to the last. A
-       * cut is over in one frame; an easing on a runner that drew five frames
-       * in it is still most of a second long, with a step or two on the way.
-       */
-      const changed = seen.map((one, at) => (at > 0 && (one.cell !== seen[at - 1].cell || one.x !== seen[at - 1].x) ? one.t : null)).filter((t) => t !== null);
-      const movingMs = changed.length > 0 ? Math.round(changed[changed.length - 1] - (seen[seen.findIndex((one) => one.t === changed[0]) - 1]?.t ?? changed[0])) : 0;
-      /*
-       * AND THE LARGEST SHARE OF THE MOVE ANY ONE STEP CARRIED, whatever the
-       * frame rate: a cut puts all of it in one step; an easing caught in three
-       * frames on a starved runner puts no more than about half in one.
-       */
-      const share = (key, whole) => (whole === 0 ? 0 : Math.max(0, ...seen.map((one, at) => (at > 0 ? Math.abs(one[key] - seen[at - 1][key]) / whole : 0))));
-      return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1], xSteps: xs.length, xJumps, xFirst: seen[0]?.x, xLast: seen[seen.length - 1]?.x, frames: seen.length, movingMs, share: share("cell", travel), xShare: share("x", shift) };
-    });
+      const cell = summary("cell");
+      const x = summary("x");
+      const changed = seen.filter((one, at) => at > 0 && (one.cell !== seen[at - 1].cell || one.x !== seen[at - 1].x)).map((one) => one.t);
+      return {
+        steps: cell.steps,
+        jumps: cell.jumps,
+        share: cell.share,
+        first: seen[0].cell,
+        last: seen[seen.length - 1].cell,
+        xSteps: x.steps,
+        xJumps: x.jumps,
+        xShare: x.share,
+        xFirst: seen[0].x,
+        xLast: seen[seen.length - 1].x,
+        frames: seen.length,
+        movingMs: changed.length > 0 ? changed[changed.length - 1] - changed[0] + 16 : 0,
+      };
     };
-    /*
-     * Eased: five steps or more, or — where a starved runner drew only a few
-     * frames on the way — a step between the ends and a move that took a
-     * third of a second, which a cut never does.
-     */
-    // Or a step between the ends and no step carrying most of the move: 2026-10-18's GPU leg drew nine frames and eased 366 px in three steps over 286 ms.
-    const eased = (steps, ms, share) => steps >= 5 || (steps >= 3 && (ms >= 300 || share < 0.6));
+    // Eased: five steps or more on the way, and no one step carrying most of the move.
+    const eased = (steps, share) => steps >= 5 && share < 0.6;
     const traveled = (one) =>
       one.jumps === 0 &&
       one.xJumps === 0 &&
       (one.last !== one.first || one.xLast !== one.xFirst) &&
-      (one.last === one.first || eased(one.steps, one.movingMs, one.share)) &&
-      (one.xLast === one.xFirst || eased(one.xSteps, one.movingMs, one.xShare));
-    /*
-     * AND ASKED AGAIN WHEN A STARVED RUNNER SAW ONLY THE ENDS: an easing read
-     * in two frames looks like a cut (main's 0.1.37 Nightly, GPU leg). A cut
-     * shows no frame between the ends however often it is asked; an easing
-     * shows one on a frame the runner did draw. Three tries at most, and the
-     * report says how many it took.
-     */
-    let travel = await measureTravel();
-    for (let attempt = 2; attempt <= 3 && !traveled(travel); attempt++) travel = { ...(await measureTravel()), attempt };
+      (one.last === one.first || eased(one.steps, one.share)) &&
+      (one.xLast === one.xFirst || eased(one.xSteps, one.xShare));
+    const travel = await measureTravel();
     report.checks = {
       ...(report.checks ?? {}),
       theCityPansBesideAnOpenPicture: onThePicture,

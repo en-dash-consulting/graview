@@ -6,6 +6,7 @@ export type {
   GuestAnswer,
   GuestEdge,
   GuestDomEvent,
+  GuestDroppedFile,
   GuestEvent,
   GuestFile,
   GuestNavigateTo,

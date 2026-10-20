@@ -1,6 +1,9 @@
 import type { AnySchema, Brand, Person, Principal, Store } from "@graview/core";
 import { ErrorReportContext, GraviewProvider, type Scheme } from "@graview/react/provider";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useDrawnSignal } from "./drawn.js";
+import { draftWaits, fetchDraftHost, Settling, useDraft, type EmbedDraftView } from "./draft.js";
+import type { EmbedWhere } from "./where.js";
 import { createRoot, type Root } from "react-dom/client";
 import { PagesContent } from "./pages-content.js";
 import { registerDefaultViews, registerViewSpecs } from "@graview/primitives/pages";
@@ -30,6 +33,20 @@ import { appKeyOf, BarFindContext, type BarFind } from "@graview/primitives/fram
 export interface PagesEmbedOptions<S extends AnySchema = AnySchema> extends FrameOptions<S> {
   /** The level the app bar says the app's name at (FR-131): `1` when the host's page is the app, `2` (the default) in an article, `false` when the host's own heading says it. */
   readonly heading?: 1 | 2 | 3 | 4 | 5 | 6 | false;
+  /**
+   * TOLD WHEN A PAGE HAS DRAWN AND SETTLED (FR-188), as the whole embed
+   * tells it: once its parts, fonts, images, worker views and frame guests
+   * are here and nothing has moved for a moment. The root wears
+   * `data-graview-drawn` (the page's path) from then until the reader moves.
+   */
+  readonly onDrawn?: (place: EmbedWhere) => void;
+  /**
+   * A VIEW PROPOSED AND NOT KEPT (FR-187), as the whole embed draws one:
+   * drawn where its manifest attaches, marked "Draft — <title> · Not kept",
+   * kept nowhere. The worker's host is fetched before the pages draw, only
+   * when a draft is handed; `handle.setDraftView` swaps it in place.
+   */
+  readonly draftView?: EmbedDraftView | null;
 }
 
 export interface PagesEmbedProps<S extends AnySchema = AnySchema> extends PagesEmbedOptions<S> {
@@ -38,10 +55,21 @@ export interface PagesEmbedProps<S extends AnySchema = AnySchema> extends PagesE
 }
 
 export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
+  const [, ready] = useState(false);
+  const arrived = useCallback(() => ready(true), []);
+  const drew = useRef(false);
+  // A draft is drawn with the app's own views from the first frame (FR-187); one handed later is drawn in once the worker's host is here.
+  if (!drew.current && draftWaits(props.draftView)) return <Settling onReady={arrived} fetch={fetchDraftHost} />;
+  drew.current = true;
+  return <PagesDrawing<S> {...props} />;
+}
+
+function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
   const { app, bar = true, standing = "Everything is in order" } = props;
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
-  // The registry the whole embed would draw from: the pages' cards, rows and record pages (FR-35).
-  const views = useViews<S>(props, pagesViews);
+  // The registry the whole embed would draw from: the pages' cards, rows and record pages (FR-35), and a draft over them.
+  const draft = useDraft(props.draftView);
+  const views = useViews<S>(props, pagesViews, draft.over);
   useIntrinsicHeight(rootRef, "pages", props.onIntrinsicHeight);
   const report = useErrorReport(props.onError, "pages");
   const ready = useReady(props.onReady, "pages");
@@ -50,6 +78,8 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
   const base = props.basePath === undefined ? {} : { basePath: props.basePath };
   // Where the routed face is, said by its router, for the bar's tabs; and the bar's presses, taken by it (FR-131).
   const { at, steering, steer } = useSteering(address && typeof window !== "undefined" ? `${pathWithin(window.location.pathname, props.basePath) ?? "/"}${window.location.search}` : (props.path ?? "/"));
+  // Said on the root once the page has drawn and settled, and off in the commit that moves or swaps the draft (FR-188).
+  useDrawnSignal(rootRef, `${at} ${draft.n}`, { face: "pages", path: at, stop: "#" }, props.onDrawn);
   const [barFind, setBarFind] = useState<BarFind | null>(null);
   // The board the app speaks on, the host's or the frame's own: the one drawn is the one the face says things on.
   const [ownBoard] = useState(createNoticeBoard);
@@ -117,6 +147,8 @@ export interface PagesEmbedHandle {
   setLabel(label: string): void;
   /** The host's own actions in the profile menu (FR-72), now. */
   setHostActions(actions: PagesEmbedOptions["hostActions"]): void;
+  /** Another view proposed and not kept, or none (FR-187), swapped in place: `data-graview-drawn` comes off and returns once it has drawn. */
+  setDraftView(draft: EmbedDraftView | null): void;
   /** Says something in the app's own notices (FR-75): a toast, or a banner that stays until it is cleared. */
   notify(notice: Notice): NoticeHandle;
   readonly store: Store<AnySchema>;
@@ -140,6 +172,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     path(path: string): void;
     label(label: string): void;
     hostActions(actions: PagesEmbedOptions["hostActions"]): void;
+    draft(draft: EmbedDraftView | null): void;
   } | null = null;
   function Host() {
     const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
@@ -151,7 +184,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
     const [label, setLabel] = useState<string | undefined>(options.label);
     const [hostActions, setHostActions] = useState<PagesEmbedOptions["hostActions"]>(options.hostActions);
-    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, label: setLabel, hostActions: setHostActions };
+    const [draft, setDraft] = useState<EmbedDraftView | null | undefined>(options.draftView);
+    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, label: setLabel, hostActions: setHostActions, draft: setDraft };
     return (
       <PagesEmbed<S>
         {...options}
@@ -165,6 +199,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
         {...(path !== undefined ? { path } : {})}
         label={label}
         hostActions={hostActions}
+        draftView={draft}
         scheme={scheme}
         onSeat={setSeat}
       />
@@ -183,6 +218,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     setBrand: (brand) => flushSync(() => set?.brand(brand)),
     setLabel: (label) => flushSync(() => set?.label(label)),
     setHostActions: (actions) => flushSync(() => set?.hostActions(actions)),
+    setDraftView: (draft) => flushSync(() => set?.draft(draft)),
     notify: (notice) => {
       let said: NoticeHandle | undefined;
       flushSync(() => {
@@ -195,6 +231,9 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
 }
 
 export { hostScheme } from "./frame.js";
+export { DRAWN_ATTRIBUTE } from "./drawn.js";
+export type { EmbedDraftView } from "./draft.js";
+export type { EmbedWhere } from "./where.js";
 export type { EmbedError, EmbedErrorWhere, EmbedHostContext, EmbedReady, EmbedRemote } from "./frame.js";
 export type { HostAction } from "@graview/primitives/frame";
 export { createNoticeBoard } from "@graview/primitives/frame";

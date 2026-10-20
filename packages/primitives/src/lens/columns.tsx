@@ -3,7 +3,7 @@ import { columnChoices, columnMoves, columnOf, statusColumns, type ColumnMove, t
 import { useGraph, useGraview, ViewModeProvider, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
 import { holdBoard } from "../board-move-section.js";
-import { MoveTo, type MoveChoice } from "./move-to.js";
+import { ChooseSeveral, MoveTo, type MoveChoice } from "./move-to.js";
 import { CHOOSING_CSS, useChoosing, type Choosing } from "../choosing.js";
 import { prefetchSeveral, SeveralBarDoor } from "../several-door.js";
 import { hueFor } from "../default-views.js";
@@ -114,7 +114,7 @@ const BOARD_CSS = `
 .graview-columns-menu button { text-align: left; }
 .graview-columns-said { margin: 0 0 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.8125rem; color: var(--graview-ink); }
 .graview-columns-said[data-tone="refused"] { color: var(--graview-warn); }
-.graview-columns-card[data-graview-choose] { position: relative; }
+.graview-columns-card { position: relative; -webkit-touch-callout: none; }
 .graview-columns-card .graview-choose-at { position: absolute; top: 6px; right: 6px; z-index: ${LOCAL_LAYERS.raised}; display: flex; }
 [data-graview-choosable] { outline: none; }
 @media (pointer: coarse) { [data-graview-choosable]:not([data-graview-choosing]) .graview-columns-card .graview-choose-at { display: none; } }
@@ -309,8 +309,8 @@ function ColumnsBoard({ boards, title, options }: { readonly boards: readonly Bo
    * THE BOARD, AS A CARD'S MENU ASKS IT: every other column of the field —
    * the ones left off too — each the move this seat may make, or why not.
    */
-  const latest = useRef({ move, boards });
-  latest.current = { move, boards };
+  const latest = useRef({ move, boards, choosing, choosable });
+  latest.current = { move, boards, choosing, choosable };
   useEffect(() => {
     const kinds = [...new Set(boards.map((board) => board.kind))];
     const held = kinds.map((kind) =>
@@ -330,7 +330,24 @@ function ColumnsBoard({ boards, title, options }: { readonly boards: readonly Bo
               ...(choice.move ? { run: () => latest.current.move(id, choice.move!, choice.label, "menu") } : {}),
             }),
           );
-          return choices.length === 0 ? null : { id: "move-to", at: "start", render: (close) => <MoveTo choices={choices} close={close} /> };
+          /*
+           * CHOOSING SEVERAL BEGINS HERE ON A PHONE (FR-189), where a resting
+           * finger opens this menu rather than choosing the card, and the
+           * boxes stand only once something is chosen.
+           */
+          const { choosing: chooser, choosable: may } = latest.current;
+          const choose = may && chooser.chosen.length === 0 && typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches ? () => chooser.toggle(id) : undefined;
+          if (choices.length === 0 && !choose) return null;
+          return {
+            id: "move-to",
+            at: "start",
+            render: (close) => (
+              <>
+                {choices.length > 0 ? <MoveTo choices={choices} close={close} /> : null}
+                {choose ? <ChooseSeveral choose={choose} close={close} /> : null}
+              </>
+            ),
+          };
         },
       }),
     );
@@ -636,7 +653,13 @@ function ColumnCard({
       data-graview-listed={card.id}
       data-as="card"
       data-carried={carried || undefined}
-      {...(choosing ? { "data-graview-choose": card.id } : {})}
+      /*
+       * A FINGER RESTING ON A CARD OPENS ITS MENU (FR-189): Move to ›, its
+       * acts, Open — on a phone the only way to move one card, since the
+       * board has no Move button. Only while several are being chosen is a
+       * card a row the long press and a tap choose; its menu begins that.
+       */
+      {...(choosing && choosing.chosen.length > 0 ? { "data-graview-choose": card.id } : {})}
       draggable={moves.length > 0 || undefined}
       onKeyDown={onCarryKey}
       // A press of Space a button would take as a click is the carrying's, not the button's.

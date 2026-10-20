@@ -20,7 +20,8 @@ import { arrangeable, listFieldsOf, throughEdges } from "../../arrangement.js";
 import { kindListFindings } from "../../kind-list.js";
 import { fieldOf } from "./context.js";
 import { columnReach } from "../../columns.js";
-import { deriveMutations } from "../../mutations/derive-edits.js";
+import { nounOf, withArticle } from "../../schema/define-node.js";
+import { deriveMutations, fieldsWrittenBy, subjectKindsOf } from "../../mutations/derive-edits.js";
 
 export function checkShippedLenses<S extends AnySchema>(ctx: CheckContext<S>): void {
   const { app, add } = ctx;
@@ -360,6 +361,26 @@ export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): 
       if (!roles.column) continue;
       const reach = columnReach(ctx.app.schema, acts, kind, roles.column);
       const unreached = reach.filter((one) => one.by === "none");
+      /*
+       * ACTS THAT SAY THEY WRITE THE COLUMN AND NOT TO WHAT (the thirteenth
+       * walk): `writes: ["status"]` on an act written in code says it writes
+       * the field, never the value, so no column is reached by it and every
+       * card's "Move to ›" is withheld with "Nothing in this app moves …".
+       */
+      const definition = ctx.app.schema.tryDefinition(kind);
+      const unsaid = definition && unreached.length > 0 ? own.filter((act) => act.subject !== undefined && act.sets?.[roles.column!] === undefined && subjectKindsOf(ctx.app.schema, act).includes(kind) && fieldsWrittenBy(act, definition).includes(roles.column!)) : [];
+      if (unsaid.length > 0) {
+        const names = unsaid.map((act) => `"${act.title ?? act.name}"`);
+        const listed = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+        ctx.add({
+          severity: "warning",
+          code: "lens-column-written-unsaid",
+          where: `lenses.${lens.index}.bindings.${kind}.column`,
+          message: `${listed} write ${roles.column} on ${withArticle(nounOf(definition, kind))} without saying to what, so "${lens.title}" moves no card into ${unreached.map((one) => one.label).join(", ")}.`,
+          fix: `Say the value each one writes: sets: { ${roles.column}: "<the value it writes>" } beside writes, and it is the move to that column.`,
+        });
+        continue;
+      }
       // A board nothing moves on at all is a picture of where things stand, and `describe` says so; the note is for the gaps in one that moves.
       if (unreached.length === 0 || unreached.length === reach.length) continue;
       ctx.add({

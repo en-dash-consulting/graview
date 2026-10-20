@@ -26,6 +26,8 @@ export interface DescribeDrawingContext {
   readonly props: GuestProps;
   /** The app's places, by slug and title: where a `data-place` may point. */
   readonly places: readonly NamedPlace[];
+  /** The fields files dropped on the view go in, as its manifest says them (FR-193): what a `data-drop` may name. */
+  readonly accepts?: readonly { readonly kind: string; readonly field: string }[];
 }
 
 export interface DescribedDrawing {
@@ -81,6 +83,52 @@ function* elementsUnder(element: TreeElement): Generator<TreeElement> {
   }
 }
 
+/** The words a field saved as it is typed asks for (FR-191, host/press.ts), said wrongly: what the host would never save, and why. */
+function saveProblems(element: TreeElement): DescribedProblem[] {
+  const save = element.getAttribute("data-save");
+  const debounce = element.getAttribute("data-debounce");
+  if (save === null && debounce === null) return [];
+  const at = `drawing <${element.localName}${save !== null ? ` data-save="${save}"` : ` data-debounce="${debounce}"`}>`;
+  const problems: DescribedProblem[] = [];
+  if (save === null) return [{ at, says: 'data-debounce is read only on a field that saves as it is typed (data-save="input").' }];
+  if (!["input", "textarea", "select"].includes(element.localName)) problems.push({ at, says: "Only a field saves as it is typed: an input, a textarea or a select. A button is pressed (data-act alone)." });
+  else if (save !== "input" && save !== "change") problems.push({ at, says: `data-save is "input" (saved as the person types, once they pause, and when they leave it) or "change" (saved when they leave it or pick), not "${save}".` });
+  else if (element.getAttribute("data-act") === null) problems.push({ at, says: 'It saves through no act: a field saved as it is typed names its act itself, data-act="…", one in the manifest.' });
+  else if (!element.getAttribute("name")) problems.push({ at, says: "It has no name: the host sends a field as the act's argument its name says." });
+  else {
+    let scoped = false;
+    let bound = false;
+    for (let up: TreeElement | null = element; up; up = up.parentElement) {
+      if (up.getAttribute("data-record") !== null) bound = true;
+      if (up !== element && (up.localName === "fieldset" || up.getAttribute("role") === "group")) scoped = true;
+    }
+    if (!scoped || !bound) problems.push({ at, says: 'It is in no fieldset bound to a record: the host saves a field inside <fieldset data-record="…">, with the fields beside it, to the record the fieldset names.' });
+  }
+  if (debounce !== null && save !== "input") problems.push({ at, says: 'data-debounce is read only with data-save="input": a "change" saves at once.' });
+  else if (debounce !== null && !(debounce.trim() !== "" && Number.isFinite(Number(debounce)) && Number(debounce) >= 250 && Number(debounce) <= 10_000)) problems.push({ at, says: `data-debounce is how long the host waits for the person to pause, in milliseconds from 250 to 10 000, not "${debounce}"; left out, it waits 1 000.` });
+  return problems;
+}
+
+/** What a drop target the view drew needs (FR-193): a kind and field its manifest accepts, and a record it was shown to link to. */
+function dropProblems(element: TreeElement, context: DescribeDrawingContext, shown: ReadonlyMap<string, GuestNode>): DescribedProblem[] {
+  const kind = element.getAttribute("data-drop");
+  if (kind === null) return [];
+  const at = `drawing <${element.localName} data-drop="${kind}">`;
+  const problems: DescribedProblem[] = [];
+  const accepted = (context.accepts ?? []).filter((one) => one.kind === kind);
+  const field = element.getAttribute("data-drop-field");
+  if (accepted.length === 0) problems.push({ at, says: `The view's accepts names no field of "${kind}", so the host offers no drop target here: say the field files go in, accepts: [{ "kind": "${kind}", "field": "<its image, video or file field>" }].` });
+  else if (field !== null && !accepted.some((one) => one.field === field)) problems.push({ at, says: `data-drop-field names "${field}", which the view's accepts does not name for "${kind}" (${accepted.map((one) => `"${one.field}"`).join(", ")}): the host offers no drop target here.` });
+  const connect = element.getAttribute("data-drop-connect");
+  if (connect !== null) {
+    const colon = connect.indexOf(":");
+    const record = colon > 0 ? connect.slice(colon + 1) : "";
+    if (colon <= 0 || record === "" || shown.has(connect)) problems.push({ at, says: `data-drop-connect is "<relation>:<record id>" — "takenOn:day:saturday" — not "${connect}"${shown.has(connect) ? ", which names a record and no relation" : ""}.` });
+    else if (!shown.has(record)) problems.push({ at, says: `data-drop-connect names "${record}", which this seat was not shown: the host offers no drop target here.` });
+  }
+  return problems;
+}
+
 export function describeDrawing(root: TreeElement, context: DescribeDrawingContext): DescribedDrawing {
   const problems: DescribedProblem[] = [];
   const acts = new Set<string>();
@@ -101,6 +149,8 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
     }
     const place = element.getAttribute("data-place");
     if (place !== null && !known(place)) problems.push({ at: `drawing <${element.localName} data-place="${place}">`, says: `It names the place "${place}", which this app does not have.${placesSaid(context.places)}` });
+    problems.push(...saveProblems(element));
+    problems.push(...dropProblems(element, context, shown));
   }
 
   /** The record an element stands for: its own `data-record`, a `data-key` that is a shown record's id, or the one record linked inside it. */

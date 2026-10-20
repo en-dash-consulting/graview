@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 250,
+  "gzipped": 93,
+  "note": "Raised when the page came to say when a place has drawn and settled (FR-188): the embed watches the place it is on (watchDrawn) and puts data-graview-drawn on its root once it settles, a part drawn before its module is here is counted while it is on its way (partsArriving), and a worker view's region says data-worker-view-drawn once it has drawn what it was last shown. 250 / 93 more than before it (154_901 / 58_181): measured at 155_151 / 58_274."
+}

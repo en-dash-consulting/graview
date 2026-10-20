@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
 import { portFor } from "./ports.mjs";
+import { vacant } from "./serve.mjs";
 
 const HOST_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>A Roadmap</title>
 <style>html,body{margin:0}</style></head>
@@ -106,6 +107,7 @@ export async function buildRoadmapHost(repoRoot) {
     response.writeHead(200, { "content-type": script ? "text/javascript" : "text/html" });
     response.end(readFileSync(script ? file : join(out, "index.html")));
   });
+  await vacant(portFor("screen-reader-host"));
   await new Promise((ready) => host.listen(portFor("screen-reader-host"), ready));
   return { stop: () => (host.close(), rmSync(out, { recursive: true, force: true })) };
 }

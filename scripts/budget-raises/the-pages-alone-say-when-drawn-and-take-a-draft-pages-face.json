@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 3631,
+  "gzipped": 1763,
+  "note": "Raised when the pages alone came to say when a page has drawn and to open on a draft view (FR-188, FR-187), from the whole embed's own code: what watches the place and puts data-graview-drawn on the root (drawn.ts, new to this face), the draft's registration over the app's views and the wait for the worker's host before the pages draw (draft.ts; the host itself a door), setDraftView on the handle, and the routed face following a path a host hands after it opened. 3_631 / 1_763 more than before them (613_730 / 225_152): measured at 617_361 / 226_915."
+}

@@ -1,6 +1,7 @@
 import { imageRefusedWords } from "./open-judge.js";
 import { guestPlacesOf } from "./links-words.js";
-import type { AnySchema, Principal, Store } from "@graview/core";
+import type { AnySchema, FileValue, HostFiles, Principal, Store } from "@graview/core";
+import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { checkManifest, workerViewProps, type WorkerViewManifest } from "./manifest.js";
@@ -16,6 +17,7 @@ import { arriveAt } from "./arrive-at.js";
 import type { GoTo } from "@graview/react/provider";
 import type { GuestPictureHand } from "./pictures.js";
 import type { GuestMedia } from "./media.js";
+import type { GuestDrops } from "./drop.js";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
 /** A worker view's code: its own source, which the host makes a worker of, or a whole worker script. */
@@ -33,6 +35,8 @@ const pressChunk = retryingImport(() => import("./press.js"));
 const picturesChunk = retryingImport(() => import("./pictures.js"));
 /* A record's video placed by a view, and the full-screen viewer (0.1.37), fetched with the first view that places one. */
 const mediaChunk = retryingImport(() => import("./media.js"));
+/* Files dropped on what the view drew (FR-193), fetched with the first `data-drop` a view whose manifest accepts files draws. */
+const dropChunk = retryingImport(() => import("./drop.js"));
 
 export type WorkerViewFailure =
   /** Its manifest names a kind, an edge or an act the app does not declare (FR-91): it was never started. */
@@ -189,6 +193,13 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
   readonly images?: { readonly origins: readonly string[] };
   /** Who made it, said under the region (ADR 0007: "Made by Claude for Nick"). Nothing by default. */
   readonly author?: string;
+  /**
+   * THE PAGE'S HOST'S FILES (FR-163), for a view whose manifest `accepts`
+   * files (FR-193): what a file dropped on, or picked for, an element it
+   * marked `data-drop` is stored through. Without it, no drop target is
+   * offered: this host takes no files.
+   */
+  readonly files?: () => HostFiles | undefined;
 }
 
 export interface WorkerView {
@@ -275,7 +286,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let unwatch = () => {};
   /* The interval that times each push (FR-94), once the view is ready. */
   let timing = 0;
+  /* What the person typed into a field saved as it is typed and not yet saved (FR-191, press.ts): saved as the view goes. */
+  let flushSaves = () => {};
   const stop = () => {
+    flushSaves();
+    flushSaves = () => {};
     tally();
     session?.dispose();
     session = undefined;
@@ -289,6 +304,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     stop();
     drawing?.dispose();
     const said = why(reason, limits, detail);
+    region.removeAttribute("data-worker-view-drawn");
     region.setAttribute("data-worker-view-failed", reason);
     if (options.fallback !== false) (options.fallback ?? plainFace)(region, reason, said);
     options.onFailure?.(reason, said);
@@ -370,6 +386,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * view is never handed a record's path to a file.
    */
   let pictures: GuestPictureHand | undefined;
+  /* What is dropped on what it draws (FR-193): below, with the drawing. */
+  let drops: GuestDrops | undefined;
   const picturesReady: Promise<unknown> = manifest.pictures
     ? picturesChunk().then(({ createGuestPictures }) => {
         if (failed) return;
@@ -392,12 +410,23 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     logo.dispose();
     pictures?.dispose();
     media?.dispose();
+    drops?.dispose();
   };
 
   let port: MessagePort | undefined;
   const send = (message: GuestDomEvent) => port?.postMessage(message);
   /* Anything drawn yet: a view that throws after it drew goes on; one that throws before has failed. */
   let drew = false;
+  /*
+   * DRAWN, AND NOTHING ON ITS WAY (FR-188): the region says
+   * `data-worker-view-drawn` once the view has answered what it was last
+   * shown, the host has drawn all it sent, and no picture it was handed is
+   * still being fetched — so a page that says it has drawn (the embed's
+   * `data-graview-drawn`) can wait for it. A view that fails says
+   * `data-worker-view-failed` instead, its plain face drawn.
+   */
+  let answered = false;
+  const mark = () => region.toggleAttribute("data-worker-view-drawn", !failed && answered && drawing !== undefined && waiting.length === 0 && pending.size === 0 && !pictures?.waiting() && !(drops?.waiting ?? 0));
 
   /*
    * TIME PER PUSH (FR-94). Each push of what the view is shown is timed
@@ -485,6 +514,59 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       () => options.onProblem?.(`The view "${manifest.title ?? manifest.name}" places a video or a full-screen viewer, and the host's player could not be loaded.`),
     );
   };
+  /*
+   * FILES DROPPED ON WHAT IT DREW (FR-193, drop.ts): fetched the first time
+   * a view whose manifest accepts files draws a `data-drop`, and looked at
+   * again after each batch it draws. What the host stores is handed to the
+   * view, and may come back in an act's argument (writes.ts); a view that
+   * hears `drop` is left the drop.
+   */
+  let dropsAsked = false;
+  let hearsDrop = false;
+  const handed = new Map<string, FileValue>();
+  const wantDrops = () => {
+    if (dropsAsked || !manifest.accepts?.length) return;
+    dropsAsked = true;
+    void dropChunk().then(
+      ({ createGuestDrops }) => {
+        if (failed) return;
+        drops = createGuestDrops(window, {
+          shadow,
+          manifest,
+          store: options.store,
+          principal: options.principal,
+          files: () => options.files?.(),
+          shown: () => shown,
+          hears: () => hearsDrop,
+          idOf: (one) => drawing?.renderer.idOf(one),
+          send,
+          change: (calls, intent) => {
+            if (!session) return { ok: false, reason: "refused", message: "The view has gone." };
+            const outcome = session.change(calls, intent);
+            tally();
+            return outcome;
+          },
+          handed: (file) => handed.set(file.href, file),
+          onProblem: (said) => {
+            port?.postMessage({ type: "notice", text: said });
+            options.onProblem?.(said);
+          },
+          onBusy: () => mark(),
+        });
+        drops.refresh();
+      },
+      () => options.onProblem?.(`The view "${manifest.title ?? manifest.name}" takes files, and the host's drop could not be loaded.`),
+    );
+  };
+  /* A file on a record the view was shown, as the record keeps it: one it may hand back to an act. */
+  const fileOnShown = (href: string): FileValue | undefined => {
+    const graph = options.store.seenBy(options.principal).graph;
+    for (const id of shown) {
+      const node = graph.getNode(id) as Record<string, unknown> | undefined;
+      for (const value of Object.values(node ?? {})) for (const file of storedFilesOf(value)) if (file.href === href) return file;
+    }
+    return undefined;
+  };
   const marksMedia = (element: Element) => {
     if (element.localName === "graview-video") return wantMedia();
     if (!element.hasAttribute("data-lightbox")) return;
@@ -492,23 +574,47 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     element.setAttribute("aria-haspopup", "dialog");
     wantMedia();
   };
-  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, fillPrefills, judgePress, prefillOf }]) => {
+  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, createSaver, fillPrefills, judgePress, prefillOf }]) => {
     if (failed) return;
     const reader = createPressReader();
+    /* The view hears what became of an act a press or a save asked for as `acted` on the element bound to it (FR-191). */
+    const acted = (bound: Element, pressed: NonNullable<GuestDomEvent["pressed"]>) => {
+      const target = drawing?.renderer.idOf(bound);
+      if (target !== undefined) send({ type: "dom-event", target, event: "acted", pressed });
+    };
+    /* A field saved as the person types (FR-191): judged and applied as a press is. */
+    const saver = createSaver({
+      reader,
+      save: (press, field) => {
+        if (!session) return;
+        const outcome = session.pressed(judgePress(options.store, manifest, shown, press));
+        tally();
+        acted(field, { as: press.as, ...outcome });
+      },
+    });
+    const leaving = () => saver.flush();
+    window.addEventListener("pagehide", leaving);
+    flushSaves = () => {
+      window.removeEventListener("pagehide", leaving);
+      saver.flush();
+    };
     const prefilled = new WeakSet<Element>();
     refill = () => {
       fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
       media?.refresh(shadow);
+      drops?.refresh();
     };
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
       ...(options.asset ? { asset: options.asset } : {}),
       ...(options.images ? { imageOrigins: options.images.origins } : {}),
+      /* A record's picture the host handed is drawn as handed, at any size (FR-192). */
+      ...(manifest.pictures ? { picture: (value: string) => pictures?.drawn(value) } : {}),
       /* An image's address refused is said once, with why and what would do — not left to be found in `refused`. */
       onRefused: (refusal) => {
         if (refusal.reason !== "url" || refusal.element !== "img" || refusal.address === undefined || toldImages.has(refusal.address)) return;
         toldImages.add(refusal.address);
-        const said = imageRefusedWords(refusal.address, { ...(options.images ? { origins: options.images.origins } : {}), assets: options.asset !== undefined });
+        const said = imageRefusedWords(refusal.address, { ...(options.images ? { origins: options.images.origins } : {}), assets: options.asset !== undefined }, refusal.length);
         port?.postMessage({ type: "notice", text: said });
         options.onProblem?.(said);
       },
@@ -519,10 +625,12 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       onAttribute: (element, name) => {
         if (element.localName === "a" && (name === "data-record" || name === "data-place")) links.link(element);
         if (name === "data-lightbox") marksMedia(element);
+        if (name === "data-drop") wantDrops();
       },
       decorate: (element) => {
         if (element.localName === "a") links.link(element);
         marksMedia(element);
+        if (element.hasAttribute("data-drop")) wantDrops();
       },
       /*
        * THE VIEWER'S PRESS, IN ITS OWN HANDLER (FR-92). A trusted click on
@@ -531,6 +639,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
        */
       before: (event, at, root) => {
         reader.heard(event, at);
+        saver.heard(event, at, root);
         /* A link the view drew goes where it says, if that is a record or a place of this app. */
         const anchor = at.closest("a[data-graview-link]");
         if (anchor && root.contains(anchor) && (event.type === "click" || (event.type === "keydown" && (event as KeyboardEvent).key === "Enter"))) {
@@ -547,15 +656,22 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           event.stopPropagation();
           media?.open(lightbox);
         }
+        /* A tap on a drop target on a phone, or Enter on one, opens the host's picker (FR-193): the host's, not the view's. */
+        if (drops?.before(event, at, root)) return false;
         const press = reader.press(event, at, root);
         if (!press || !session) return;
         event.stopPropagation();
         const outcome = session.pressed(judgePress(options.store, manifest, shown, press));
         tally();
-        return { pressed: { as: press.as, ...outcome } };
+        const pressed = { as: press.as, ...outcome };
+        /* Told with the click, and then as `acted`, the one event a view hears every act's outcome by. */
+        const bound = at.closest("[data-act]")!;
+        queueMicrotask(() => acted(bound, pressed));
+        return { pressed };
       },
     });
     for (const one of waiting.splice(0)) draw(one);
+    mark();
   },
   // The drawing did not arrive (the network away as it was drawn): the plain face says so, and it is asked for again as the view is drawn again (FR-139).
   () => fail("start", "the view's drawing could not be loaded"));
@@ -580,7 +696,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         view: manifest.name,
         nonce,
         send: (message) => {
-          if (message.type === "props" && typeof message.push === "number") pending.set(message.push, clock.now());
+          if (message.type === "props" && typeof message.push === "number") {
+            pending.set(message.push, clock.now());
+            mark();
+          }
           given.postMessage(message);
         },
         props: () => {
@@ -590,14 +709,20 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           return props;
         },
         ...(pictures ? { hand: pictures.hand } : {}),
-        judgeAct: (name, args) => judgeCodeAct(options.store, manifest, name, args),
+        judgeAct: (name, args) => judgeCodeAct(options.store, manifest, name, args, { shown, file: (href) => handed.get(href) ?? fileOnShown(href), dropped: (href) => handed.has(href) }),
+        /* A view that hears `drop` is left the drop (FR-193). */
+        onHears: (events) => {
+          if (events.includes("drop")) hearsDrop = true;
+        },
         onRender: (records) => {
           drew = true;
           draw(["render", records]);
         },
         onPushed: (push, ms) => {
           pending.delete(push);
-          if (ms >= limits.pushMs) fail("slow");
+          if (ms >= limits.pushMs) return fail("slow");
+          answered = true;
+          mark();
         },
         /* Past the message allowance, a view is stopped, not read on (FR-94). */
         onFlood: () => fail("flood"),

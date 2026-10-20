@@ -6,16 +6,16 @@ import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
-import { GoToContext, GraviewProvider, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
+import { GoToContext, GraviewProvider, partArriving, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageQuickAsk } from "./quick-ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
-const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
+const DraftPage = lazy(partArriving(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage }))));
 import { FaceControlsRoot } from "./face-controls.js";
 import { PagesContextMenu } from "./context-menu.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
-import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
+import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
 /** Who reads the face when the host names nobody. */
@@ -53,13 +53,20 @@ function SeeAll<S extends AnySchema>({ list, store }: { readonly list: { readonl
 function RecordLinks<S extends AnySchema>({ context, children }: { readonly context: PageContext<S>; readonly children: ReactNode }) {
   const navigate = useNavigate();
   const schema = context.store.schema;
+  /*
+   * THE ADDRESS CARRIES THE BASE (FR-189): this is an `<a href>`, not a
+   * `<Link>`, so the router's basename (`/a/<app>`) is joined on here — a
+   * card's link under a base that dropped it went outside the app in a new
+   * tab, and the menu read it as a link somewhere else.
+   */
+  const base = useHref("/").replace(/\/$/, "");
   const value = useMemo(
     () => ({
-      href: (node: { readonly id: string; readonly kind: string }) => recordPath(schema, node.kind, node.id),
+      href: (node: { readonly id: string; readonly kind: string }) => `${base}${recordPath(schema, node.kind, node.id)}`,
       go: (node: { readonly id: string; readonly kind: string }) => navigate(recordPath(schema, node.kind, node.id)),
       more: (list: { readonly members: readonly { readonly id: string; readonly kind: string }[]; readonly total: number }) => <SeeAll list={list} store={context.store} />,
     }),
-    [schema, navigate, context.store],
+    [base, schema, navigate, context.store],
   );
   // A view's own headlines are said under the page's title, which is said under the app's name (FR-131).
   return (
@@ -609,7 +616,8 @@ export function PagesApp<S extends AnySchema>({
   useTheWatchKnowsWhatIsUnseen(given.store, given.principal);
   const routed = (
     <>
-      {onNavigate || path !== undefined ? <Reported onNavigate={onNavigate} path={path} /> : null}
+      {/* Always drawn, so a path a host first hands after the face opened (a handle's setPath) is gone to, not taken for where it began. */}
+      <Reported onNavigate={onNavigate} path={path} />
       {steering ? <Steered steering={steering} /> : null}
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
       <PagesRoutes context={context} {...(registry ? { registry } : {})} />

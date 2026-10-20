@@ -31,7 +31,7 @@ export function sayRefusal(refusal: ViewRefusal, host: ImageHost = {}): Describe
     case "value":
       return { at: `drawing ${element}${name}`, says: `Not drawn: the value of${name} is not one the open kit takes.` };
     case "url":
-      return { at: `drawing ${element}${name}`, says: refusal.address !== undefined && "element" in refusal && refusal.element === "img" ? `Not drawn: ${imageRefusedWords(refusal.address, host)}` : `Not drawn: an address. A view loads nothing; an image is a data: image.` };
+      return { at: `drawing ${element}${name}`, says: refusal.address !== undefined && "element" in refusal && refusal.element === "img" ? `Not drawn: ${imageRefusedWords(refusal.address, host, "length" in refusal ? refusal.length : undefined)}` : `Not drawn: an address. A view loads nothing; an image is a data: image.` };
     case "child":
       return { at: `drawing ${element}`, says: `Not drawn: ${element} holds nothing.` };
     case "record":
@@ -55,7 +55,7 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   if (drawn.over) return { ok: false, reason: "nodes", detail: `It drew more than the ${limits.maxNodes.toLocaleString("en-US")} things a view may draw.` };
   // A kind's list is somewhere a view may go by name too, by its plural or the kind's name.
   const goes = [...input.places, ...(input.lists ?? []).filter((slug) => !input.places.some((place) => place.as === slug)).map((slug) => ({ as: slug }))];
-  const said = describeDrawing(drawn.root, { props: input.props, places: goes });
+  const said = describeDrawing(drawn.root, { props: input.props, places: goes, ...(input.accepts ? { accepts: input.accepts } : {}) });
   for (const act of said.acts) {
     if (!acts.has(act)) return { ok: false, reason: "act", detail: `It binds a press to the act "${act}" (data-act), which its manifest does not name.` };
   }

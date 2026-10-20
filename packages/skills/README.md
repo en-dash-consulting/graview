@@ -31,17 +31,27 @@ skills say which parts of their work the checker cannot see.
 
 | Skill | The move it teaches |
 |---|---|
-| `graview-node-kind` | Add a node kind: fields, edges, plural, roles, and what renders for free |
+| `graview-node-kind` | Add a node kind: fields, edges, plural, roles, verbs, and what renders for free |
+| `graview-view-specs` | Say a kind's card, row and page as data, and the values worked out from others that they show |
+| `graview-lists` | Keep lists usable as an app grows: filters, order and groups, cards at a glance, several at once, a static page, a date that repeats |
+| `graview-tidying` | Set records aside instead of deleting them, merge a duplicate, and let the app's own actor tidy by suggestion |
 | `graview-invariant` | Write a rule that names the mutations that would repair it |
 | `graview-lens` | Build a lens that binds roles rather than field names, so another domain can reuse it |
+| `graview-shipped-lens` | Declare a lens the framework ships as a titled place, with the options it takes and what the checker and `add-lens` refuse |
 | `graview-agent-seat` | Wire an agent seat that shares the interface's actions rather than shadowing them |
 | `graview-permissions` | Declare who may do what, once, and let the strip and the seat narrow themselves |
 | `graview-brand` | Put someone's name on an installation without forking a package |
+| `graview-locale` | Say money, days and times the way the app's people do: a currency, a locale and a time zone, once |
 | `graview-new-app` | Start a product on Graview in its own repository, with the CI that keeps it honest |
+| `graview-ship` | Deploy: persistence, op-log-native migrations, export, health, serving and a host that compiles once |
+| `graview-sync` | Keep an app in step with another system: a snapshot projected from it, a sync back, an MCP remote, a Google calendar |
 | `graview-pages` | The routed face: derived pages, one page in the app's words, a product design over every surface, and the embed |
+| `graview-embed` | Put an app on somebody else's page, its theme scoped to one element, and somebody's HTML page inside the app as a framed view |
+| `graview-host-page` | Host an app as the page itself: the address bar, a chat's widget, the host's menu and news, when a place has drawn, a view proposed and not kept, and pictures of places |
 | `graview-port-app` | Port an existing application onto Graview, deciding what is a node and what is a field |
 | `graview-studio` | Open the declaration as a graph, change it with acts, check before applying, migrate, and write it back as the scaffold's files |
-| `graview-worker-view` | Write a worker view: one plain script with a manifest the host enforces, its writes, its limits, and a headless run |
+| `graview-worker-view` | Write a worker view: one plain script with a manifest the host enforces, its links, its limits, and a headless run |
+| `graview-view-forms` | Let a worker view change records: a bound press, a record's text filled to edit, a field that saves as it is typed, and hearing what became of each |
 | `graview-view-drawing` | Draw in a worker view: what the host keeps, the app's tokens, the images a view may show — the logo, the app's own images, the pictures on records — and a record's video the host plays, with its full-screen viewer |
 
 The worked examples live in `apps/` in the framework repository. The skills

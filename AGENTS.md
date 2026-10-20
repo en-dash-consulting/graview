@@ -123,7 +123,7 @@ outside 5190–5289 by setting `GRAVIEW_PORT_BASE` (5600 puts todo on 5603:
 every port moves to base + (port − 5190), through `scripts/lib/ports.mjs`,
 and no harness writes a port of its own; the apps' vite configs move
 with it, and the desk links to and probes the moved ports), and a harness only borrows a
-server that serves its own checkout. Each writes its verdict to `docs/*.json` as named claims; when one
+server whose process runs in its own checkout's app directory (`scripts/lib/serve.mjs`); when another directory's server holds one of its ports, `pnpm verify` moves the whole run onto a free hundred and says so, stopping nothing. Each writes its verdict to `docs/*.json` as named claims; when one
 fails it names the claim that stopped being true. Every page every harness
 opens is also judged by the watch (`scripts/lib/watch.mjs`) — the keyboard
 never left on `<body>`, no declared id shown to a person, no act offered

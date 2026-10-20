@@ -116,38 +116,13 @@ the reuse test beside it, red on purpose.
    bound kind and `graview describe` can say it. A person who arranged the
    list can ask your picture the same thing in the same words.
 
-9. **Declare a shipped lens; register only your own.** A `lenses` entry
-   with a `title` is a PLACE the framework draws with no registration — a
-   tab, a name on its district, a page at `/places/<as>`:
-   `{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }`.
-   A status board: `{ name: "columns", title: "The board", bindings: { task:
-   { column: "status" } } }`; a card moves only by an act setting `status`
-   (`book` where its `allowedWhen` holds): dragged, carried by the keyboard
-   (Space, arrows, Space) or from its menu's "Move to ›". Its options:
-   `search` (the fields Find looks in; past 20 cards Find shows unasked),
-   `filters` (chips; a calendar and a coverage take both), `collapsed` and
-   `hidden` columns, `cap` (newest per column), `move: true` for a button.
-   `on` names the kind when the bindings do not (reach; a coverage over its
-   columns), and `options` are data (`SHIPPED_LENSES[name].options`):
-   - a calendar's `range: "years"` with `horizon: { years: 30, title: "The
-     career" }` spans its records, first to last, as well as `years` from
-     `today`; `from` and `to` (years: 1962, 2023) pin its ends;
-   - a coverage's `sort` (rows) and `columnSort`, and a status board's
-     `sort` (cards): a field or `{ by, direction }`, `label` the name, held
-     to the kind (`lens-sort`);
-   - a coverage with no columns, or no link over its relation, says so
-     ("No genres yet: link songs to genres.") and lists no rows. A lens
-   you wrote is registered with a title as the fourth argument:
+9. **Register your own with a title, and declare the rest.** A lens you
+   wrote is registered with a title as the fourth argument:
    `.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })`.
-   Untitled, it is reachable only by focusing the group.
-
-10. **Before writing a picture, try blocks.** `{ name: "blocks", title:
-   "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')",
-   group: "type", as: "row" }] } }` is a place drawn from the closed block set
-   (headline, figure, list — `graview-node-kind`), each record by its own row
-   or card. Nothing in it runs; a chat can write it. A place read, not
-   written, says `create: false`: its page drops the forms that add one.
-   Write code only for what blocks cannot say: a grid of cells, positions.
+   Untitled, it is reachable only by focusing the group. Before writing
+   one, look for it among the shipped lenses — a calendar, a status board,
+   a coverage, a blocks place — which are declared as data, with no
+   registration: `graview-shipped-lens`.
 
 ## Roles live in two places, and they do different jobs
 
@@ -169,10 +144,9 @@ pnpm build && npx graview check ./dist/domain/app.js
 ```
 
 The checker reads `lenses` in `defineApp` and reports `lens-role-unbound`,
-`lens-binding-missing-field` and `lens-binding-undeclared-kind` — and, for a
-titled lens that cannot draw, why, at its path (`lens-cannot-draw`,
-`lens-option-unknown`, `lens-title-taken`); `graview describe` lists the
-places that draw. Report the output.
+`lens-binding-missing-field` and `lens-binding-undeclared-kind`; what it
+says of a titled shipped lens is `graview-shipped-lens`. `graview describe`
+lists the places that draw. Report the output.
 
 **And prove the reuse.** This is the claim a lens exists to support, and the one
 the checker cannot make for you — it NOTES every lens in `lenses` that the

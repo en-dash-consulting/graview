@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 28,
+  "gzipped": 10,
+  "changeset": "a-frame-guest-holds-back-the-drawn-signal.md",
+  "note": "Raised when a frame guest came to hold back the page's drawn signal (FR-188). Up front, only `aria-busy` on `guestView`'s holder for a frame guest, until the frame's host has drawn the frame in it; the frame's own drawn and silent marks are in the frame's host, a door fetched as the frame is first drawn. 28 / 10 more than before it (585_207 / 203_236 with the swapped draft): measured at 585_235 / 203_246 (0.0 KB)."
+}

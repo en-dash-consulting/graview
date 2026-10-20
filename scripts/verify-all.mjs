@@ -36,9 +36,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { updateLedger } from "./lib/ledger.mjs";
 import { judge, recordFlakes } from "./lib/second-look.mjs";
-import { serving } from "./lib/serve.mjs";
+import { described, holders, listeners, serving } from "./lib/serve.mjs";
 import { watchFile } from "./lib/watch.mjs";
-import { portFor } from "./lib/ports.mjs";
+import { namedPorts, PORT_FLOOR, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -97,6 +97,8 @@ const CHAIN = [
   ["date-inputs", "verify-date-inputs.mjs"],
   // A selected record drawn once, its relations said in their words, a district's name in its box, on a document shaped like Cloud's workshop, in three engines (FR-141–FR-143).
   ["drawn-once", "verify-drawn-once.mjs"],
+  // The page says when a place has drawn and settled: after a late font, a worker view's late image and a view that fails, nothing moving after it, off on a move and back as the next place settles (FR-188); and a view proposed and not kept, pictured where it attaches, marked, and kept nowhere (FR-187).
+  ["drawn", "verify-drawn.mjs"],
   // A record's long text keeps its paragraphs and lists, spans the record under its label, is edited in a text area, and its facts follow the declared or the page's order, in three engines (FR-146–FR-148).
   ["long-text", "verify-long-text.mjs"],
   // A roadmap grown large: status chips with counts, a Filter that opens short and finds a record by typing, whole badges, cards read at a glance, at a desk and a phone, in three engines.
@@ -221,20 +223,50 @@ const gist = (text) => {
  * later. Nothing in the report said the machine had not been quiet.
  *
  * So it says so now, at the top, before any of it runs.
+ *
+ * AND WHOSE THEY ARE. This note once said "2 dev servers already running"
+ * on the gauntlet's and todo's ports, and the chain drove them — another project's
+ * `graview preview` and another project's vite — and twenty-nine harnesses
+ * failed against the wrong app. So every port a harness names is asked
+ * first: free, or this checkout's server for that app, or somebody else's.
+ * Somebody else's moves the whole run onto a free block of a hundred
+ * (GRAVIEW_PORT_BASE), says so, and stops nothing: the chain was run for a
+ * verdict on this checkout, and the other server is somebody's work.
  */
-const APP_PORTS = ["linked", "gauntlet", "todo", "seedbed", "rota", "served", "launcher"].map(portFor);
-const answering = [];
-for (const port of APP_PORTS) {
-  try {
-    await fetch(`http://localhost:${port}/`, { signal: AbortSignal.timeout(400) });
-    answering.push(port);
-  } catch {
-    // Nothing there, which is what a quiet machine looks like.
+const FREE_BASES = Array.from({ length: 10 }, (_, step) => 5600 + step * 100);
+let found = await holders(namedPorts());
+const foreign = found.filter((one) => !one.ours);
+if (foreign.length > 0) {
+  const was = process.env.GRAVIEW_PORT_BASE;
+  let movedTo = null;
+  for (const base of FREE_BASES) {
+    if (String(base) === was) continue;
+    process.env.GRAVIEW_PORT_BASE = String(base);
+    const there = await holders(namedPorts());
+    // A block another checkout's chain is using holds ports no harness here names, too: that block is not free either.
+    const strangers = [...(listeners(base, base + 99)?.keys() ?? [])].filter((port) => !there.some((one) => one.port === port && one.ours));
+    if (there.every((one) => one.ours) && strangers.length === 0) {
+      movedTo = base;
+      found = there;
+      break;
+    }
   }
+  for (const one of foreign) {
+    say(`held  port ${one.port} (${one.app ? `apps/${one.name}` : one.name}) is held by ${described(one.holder)}, which is not this checkout's.\n`);
+  }
+  if (movedTo === null) {
+    if (was === undefined) delete process.env.GRAVIEW_PORT_BASE;
+    else process.env.GRAVIEW_PORT_BASE = was;
+    say(`stop  No block of ports from ${FREE_BASES[0]} to ${FREE_BASES.at(-1) + 99} is free either: stop that server, or run with GRAVIEW_PORT_BASE set to a free hundred.\n`);
+    process.exit(2);
+  }
+  const first = Number(was ?? PORT_FLOOR);
+  say(`moved Every harness port moves onto GRAVIEW_PORT_BASE=${movedTo} (${movedTo}–${movedTo + 99}) for this run, so no harness drives a server that is not this checkout's; nothing was stopped, and stopping ${foreign.length === 1 ? "that server" : "those servers"} gives the run ${first}–${first + 99} back.\n\n`);
 }
+const answering = found.filter((one) => one.ours).map((one) => one.port);
 if (answering.length > 0) {
   say(
-    `note  ${answering.length} dev server${answering.length === 1 ? "" : "s"} already running (${answering.join(", ")}).\n` +
+    `note  ${answering.length} dev server${answering.length === 1 ? "" : "s"} of this checkout's already running (${answering.join(", ")}).\n` +
       `      The harnesses will drive those rather than starting their own, and the\n` +
       `      machine is busier than it would be otherwise. Timing-sensitive checks —\n` +
       `      presence time-to-live, animations settling — are the ones that mind.\n\n`,

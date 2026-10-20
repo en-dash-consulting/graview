@@ -1,0 +1,6 @@
+{
+  "budget": "a worker view's runtime",
+  "minified": 190,
+  "gzipped": 68,
+  "note": "Raised when a view came to take files dropped on it (FR-193, Graview Cloud's family weekend): `graview.on` tells the host each event a view hears, once, a drop's `files` and `refused` reach the listener, and `graview.act` takes a list of arguments. Measured at 61_028 / 20_990 against 60_838 / 20_922: 190 / 68 more."
+}

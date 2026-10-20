@@ -1,6 +1,6 @@
 # graview-worker-view
 
-`graview-worker-view` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+`graview-worker-view` is one of Graview's 26 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -38,7 +38,7 @@ graview.onProps((props) => …)   // every push of what it is shown (and at once
 graview.props                   // the last push
 graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`<li>${x}</li>`     // markup; every value put in is escaped
-graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle
+graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle, acted
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
 graview.navigate("offer:7")     // a record, else a place or a kind's list by slug
 graview.navigate({ place: "features", where: { stage: "building" }, section: "Shipping soon" })
@@ -62,25 +62,7 @@ A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in 
 
 ### Writes
 
-An act must be in the manifest. If every member of the app sees every record, `graview.act` applies it as given. Otherwise **only a press applies an act**: a person's click on an element with `data-act`. Its arguments come only from the record it is bound to (`data-record`, on it or around it), the manifest's constants, and the fields in its `fieldset`, named for the act's arguments and typed by the person:
-
-```html
-<fieldset>
-  <input name="summary" placeholder="What it is">
-  <button data-act="set-summary" data-record="package:start">Say it</button>
-</fieldset>
-```
-
-A field the view filled (`value="…"`) is the view's until the person empties it, and a press carrying it is refused. To offer a record's own text to edit, let the host fill it: `data-prefill` names the field, and `name` is the same.
-
-```html
-<fieldset data-record="deliverable:email">
-  <textarea name="draft" data-prefill="draft"></textarea>
-  <button data-act="set-draft">Save the draft</button>
-</fieldset>
-```
-
-The host fills it with the record's whole value, line breaks kept, when an act in the fieldset writes that field of that record and the person may run it there; otherwise it stays empty. The person edits it in place, and it goes only back into that field. A view may empty a field after a press. A radio or a select is the person's pick, not their words: its value goes only if it is one the act declares (an enum's option) or a record the view was shown. The press is applied before the view hears it; read `event.pressed`.
+An act must be in the manifest. Where every member sees every record, `graview.act` applies it as given; anywhere else **only a press applies an act**: a person's click on a `data-act`, or a field of theirs that saves. How those are written and heard is `graview-view-forms`.
 
 ### Limits
 
@@ -106,7 +88,7 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. Run it on an empty seed too. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
 3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means the view never ran: a page with a Content-Security-Policy needs `worker-src blob:` and `style-src 'unsafe-inline'`, and the note under the plain face names what it lacks.
 4. Toggle the app to dark. Does the view restyle?
-5. Press each bound button with typed words, then again with a field the view filled. The first applies and the second is refused. A prefilled field is filled only for a seat that may write it.
+5. Follow each link, narrowed and to a section, and see it land where it says. A view that writes is pressed as `graview-view-forms` says.
 
 ### What the check cannot see
 

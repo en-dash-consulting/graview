@@ -9,6 +9,10 @@
  * Rae, a reviewer, may read the deliverables and change nothing, and sees
  * no memo. "Quote the draft" makes a memo of a deliverable's draft: it
  * takes a `draft` argument and writes none of its subject's fields.
+ *
+ * The workshop's call sheet (FR-191): a call is a county lead to ring, and
+ * the notes taken on the call, saved as they are typed. Everyone sees the
+ * calls; only staff may save their notes.
  */
 import { bindSchema, createSchema, defineApp, defineNode, nodeRef, z, type Policy, type Principal } from "@graview/core";
 
@@ -23,7 +27,13 @@ const memo = defineNode("memo", {
   label: (node) => node.label,
 });
 
-export const workshopSchema = createSchema([deliverable, memo]);
+const call = defineNode("call", {
+  fields: z.object({ who: z.string().min(1).max(120), county: z.string().max(80), phone: z.string().max(40), notes: z.string().max(20_000) }),
+  plural: "Calls",
+  label: (node) => node.who,
+});
+
+export const workshopSchema = createSchema([deliverable, memo, call]);
 const { defineMutation } = bindSchema(workshopSchema);
 
 const setDraft = defineMutation("set-draft", {
@@ -58,15 +68,26 @@ const quoteDraft = defineMutation("quote-draft", {
   },
 });
 
+const saveNotes = defineMutation("save-notes", {
+  title: "Save the call's notes",
+  subject: { kinds: ["call"], arg: "callId" },
+  writes: ["notes"],
+  input: z.object({ callId: nodeRef(["call"]), notes: z.string().max(20_000) }),
+  describe: (args) => `Save the notes on ${args.callId}`,
+  apply(ctx, args) {
+    ctx.patchNode(args.callId, { notes: args.notes });
+  },
+});
+
 const policy: Policy = {
   grants: [{ roles: ["staff"], mutations: "*" }],
   sees: [
-    { roles: "*", kinds: ["deliverable"] },
+    { roles: "*", kinds: ["deliverable", "call"] },
     { roles: ["staff"], kinds: ["memo"] },
   ],
 };
 
-export const workshopApp = defineApp({ name: "Workshop", schema: workshopSchema, mutations: [setDraft, setSubject, quoteDraft], policy });
+export const workshopApp = defineApp({ name: "Workshop", schema: workshopSchema, mutations: [setDraft, setSubject, quoteDraft, saveNotes], policy });
 
 export const nick: Principal = { kind: "human", id: "person:nick", roles: ["staff"] };
 export const rae: Principal = { kind: "human", id: "person:rae", roles: ["reviewer"] };
@@ -86,6 +107,8 @@ export const workshopSeed = {
     { id: "deliverable:email", kind: "deliverable", subject: "Email to Todd", draft: EMAIL_DRAFT, status: "drafting" },
     { id: "deliverable:agenda", kind: "deliverable", subject: "The day's agenda", draft: "Morning: the field data.\n\nAfternoon: scouting, timing, records.", status: "drafting" },
     { id: "memo:margin", kind: "memo", label: "Our margin on the day", body: "We clear 18 percent after the barn." },
+    { id: "call:todd", kind: "call", who: "Todd Meyer", county: "Story County", phone: "515-555-0142", notes: "Asked for the attendance list a week ahead." },
+    { id: "call:ines", kind: "call", who: "Ines Alvarado", county: "Polk County", phone: "515-555-0187", notes: "" },
   ],
   edges: [],
 };

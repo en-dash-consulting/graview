@@ -1,6 +1,6 @@
 # graview-lists
 
-`graview-lists` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
+`graview-lists` is one of Graview's 26 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -8,7 +8,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Lists that stay usable as an app grows
 
-A list that worked at twelve records stops working at three hundred: Filter lists every record at the far end of every relation, each card prints a thirty-line summary, and the only way to tidy is to delete. None of this needs a custom page. The declaration says what the list offers, the templates say how much of a long text a card shows, and every kind can already set a record aside.
+A list that worked at twelve records stops working at three hundred: Filter lists every record at the far end of every relation, each card prints a thirty-line summary, and a weekly practice is fifty records. None of this needs a custom page: the declaration says what the list offers and the order it opens in, the templates how much of a long text a card shows, and a date repeats. Setting records aside, merging a duplicate and the app's own actor tidying are `graview-tidying`.
 
 ### Do this
 
@@ -25,10 +25,6 @@ In TypeScript, the same under `defineApp({ pages: { lists: … } })`. Each key i
 `sort` is a field, a computed field (a rank the kind works out) or `label`, lowest first unless `"desc"`, with a `then` for ties; `group` is a choice or yes-or-no field (`"true"`, `"false"`). `order` puts its groups first; `closed` ones are drawn last and shut, each a button saying "done · 12 requests" that opens it (`?open=done` keeps it open; words in the Find box open them all). A person still sorts or groups the list another way from its arranging line. The edit is `arrange-pages` with `sort: { "<kind>": … | null }` and `group: { "<kind>": … | null }`.
 
 1. **Let a card say a long text's start.** A card shows a `text` field in three lines at most and a row in one, cut with an ellipsis. Say it on purpose with the `excerpt` formatter — `{summary|excerpt}` is its first sentence or about 140 characters cut at a word, `{summary|excerpt: 80}` at most 80 (20 to 1000) — and leave the whole text to the record's page. A list block draws 100, then "Show 58 more" (`limit` up to 1000); `group: "inGenre"` heads it by linked record. Markdown prose says so — `{"type": "text", "format": "markdown"}`, or `markdownField()` — and the record's page draws it as prose (headings, lists, links, code; no HTML), while a row, a card, a describe line and a search hit say its first paragraph or about 160 characters with the syntax taken out. A card with no blocks of its own says its kind's `glance` — exactly those fields, nothing after them; prose there is a line under the chips, never a cut chip. A choice another chip beside it shares (a severity and a confidence, both "high") says its field: "Confidence: high". A related record in a template is said by its kind's `label`: `{out('affects') | and}` is "src/files.ts and tsconfig.json"; a count starting a headline, `{n | words | capital}`, is "Two findings". A place titled as a kind's list is keeps the name on the bar, and the list folds into More as "All root causes" (`pages-place-named-as-a-list`).
-
-1. **Set records aside instead of deleting them.** Every kind has `archive-<kind>` and `unarchive-<kind>` (`{ id }`, "Bring it back") and `merge-<kind>` (`{ id, into }`: `into` takes the duplicate's links and the duplicate is archived), permitted through the acts that create the kind. An archived record is out of lists, the scene, counts, computed fields and rules; its own page and search still find it, marked. A list says "+3 archived" and opens them at `?archived=true`; a rule reads them with `all('feature', true)` (`'all'` for both) and `archived()`. A kind that should never be archived says `archives: false` in `defineNode` (a document's `"archives": false`; the edit `set-archives`).
-
-1. **Let the app's own actor tidy, and say what it may not.** An actor that links and prunes on its own is an author that says `automated: true` (`kind: "system"` or `"agent"`). What it is sure of it applies with `lineage: { basis, confidence }`; what it is not it suggests: `suggest(store, calls, { author, lineage })` (from `@graview/core/tidying`) keeps the calls in the log, changes nothing, and they wait in the Suggested tray beside Activity until a person accepts (made as them) or declines them; `declined(store, calls)` says so, and the actor is refused the same change again. Its run of changes is one Activity row, "Tidied 6 things today". A person says "Leave this one alone" on a record (`leave-alone-<kind>`, cleared by `allow-tidying-<kind>`; `isLeftAlone(store, id)`), and the declaration says a kind is never tidied or never linked — `tidying: "never" | "no-links"` on `defineNode`, `tidying: "never"` on a relation; in a document the edit `{"op": "set-tidying", "kind": "vendor", "tidying": "no-links"}` (with `"relation"` for one relation, `"allowed"` to undo it). The store refuses the actor each in a sentence.
 
 1. **Print a place when a fixed link wants one.** `renderPlace(store, app, "/requests", { viewer, locale })` from `@graview/pages/static` answers `{ html, css, title, found }`: one self-contained page, no script, in the app's look, under the viewer's sight, the same words the routed face says. It imports no React, so a Worker renders it on each change. A `design` puts it in the product's own markup — `records[kind](record, site)` writes a record's page, `document(page)` what goes around it — which is how graview.dev renders its pages (`apps/site/design.mjs`).
 
@@ -50,16 +46,16 @@ It warns of a filter the kind cannot be filtered by (`pages-filter-unknown`) and
 graview describe src/domain/app.ts --place requests --seed seed.json --width 390
 ```
 
-It says the list's headings, each record's card and what is filtered, as the page draws them. Archive one record by its act and ask again: it is gone from the list and the count, and `?archived=true` finds it. Undo the merge you tried; both records come back with their links. Have a test actor suggest a link and decline it from the tray: `suggest(store, …)` of the same calls then refuses, and a record left alone refuses the actor's change by name.
+It says the list's headings, each record's card and what is filtered, as the page draws them. Run an act over three records, one of which it may not take: that one is named and stays chosen, and one undo takes back the rest.
 
-Right-click opens the scene's menu on the pages. A design's own row joins with `data-graview-record`, its value with `data-graview-field`.
+A right-click on a row, a value or the page's ground opens the scene's menu on the pages (Shift+right-click, a text field or selected text keep the browser's). A design's own row takes part as a link to its record or with `data-graview-record`, its own value with `data-graview-field` and `data-graview-editable`, which adds "Change …" to the menu.
 
 ### What the check cannot see
 
-Whether the filters you named are the ones a person reaches for — that is a question for someone who uses the list. Whether a card's first sentence is a useful one: `excerpt` cuts where the text does. Whether a rule should still count an archived record: it does not unless it asks with `all(kind, true)`. And `renderPlace` writes no history and no acts by design; a host that wants them on paper writes them itself.
+Whether the filters you named are the ones a person reaches for — that is a question for someone who uses the list. Whether a card's first sentence is a useful one: `excerpt` cuts where the text does. And `renderPlace` writes no history and no acts by design; a host that wants them on paper writes them itself.
 
 ---
 
-Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
+Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
 
 The page: https://graview.dev/docs/skills/graview-lists.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
