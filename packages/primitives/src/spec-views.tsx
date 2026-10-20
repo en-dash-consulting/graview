@@ -38,7 +38,6 @@ import { LinkedRecordView } from "./linked-record-door.js";
  * own tokens. The one link a view draws is a `url` field's own value, and
  * only when it is http(s).
  */
-
 export { SPEC_VIEW_CSS } from "./spec-css.js";
 export { compileBlocks, safeHref, sayNumber, type SpecBlock } from "@graview/core/blocks";
 
@@ -63,6 +62,9 @@ export interface AlreadySaid {
   /** The value, and its words as the heading says them. */
   readonly values: readonly string[];
 }
+
+/** Past this many characters a headline is a sentence or more, drawn a step smaller and clamped (`[data-long]`). */
+const LONG_HEADLINE = 90;
 export const SaidAround = createContext<AlreadySaid | null>(null);
 const sameWords = (a: string, b: string) => a.trim().toLowerCase().replace(/[_-]+/g, " ") === b.trim().toLowerCase().replace(/[_-]+/g, " ");
 
@@ -205,9 +207,10 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
     case "figure":
       return <SpecFigure />;
     case "headline": {
+      /* A headline past about 90 characters (a long text bound whole) is drawn a step smaller and clamped: CSS's [data-long]. */
       const Tag = `h${Math.min(6, block.level + under)}` as "h1";
       const heading = (
-        <Tag className="graview-spec-headline" data-level={block.level}>
+        <Tag className="graview-spec-headline" data-level={block.level} data-long={block.text.length > LONG_HEADLINE ? "" : undefined}>
           {block.text}
         </Tag>
       );

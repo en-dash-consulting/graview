@@ -420,7 +420,20 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   // The first view only: after it, where the reader goes is theirs. Under address routing, a stop in the fragment is where it starts.
   // Where the declaration says the app opens (FR-80): the first view, and the scene's when the pages leave it holding nothing (FR-157).
   const opens = useMemo(() => openingView(views as ReactViewRegistry<S>, app.schema), [views, app.schema]);
-  const initialView = useMemo(() => viewFor(face, at?.stop ?? (address ? stopAtAddress(props.basePath) : undefined) ?? stop, kinds, (views as ReactViewRegistry<S>).places(), opens), []);
+  /*
+   * THE SCENE AT ITS ROOT OPENS ON THE OVERVIEW. A scene with nowhere to
+   * be — no stop, in the address or handed, no place handed back, no path
+   * but the overview's, no first place in the declaration — opened
+   * descended on nothing, a near-empty floor with the kinds' tiles along its
+   * foot, where the overview's own address (`graview preview`) opens on the
+   * whole thing from above. It opens there too, as the scene does when "Up"
+   * is pressed: a stop set later goes down to it as before.
+   */
+  const initialView = useMemo(() => {
+    const asked = at?.stop ?? (address ? stopAtAddress(props.basePath) : undefined) ?? stop;
+    const atTheRoot = face === "scene" && asked === undefined && opens === undefined && (props.path === undefined || isOverview(props.path));
+    return atTheRoot ? whereTheSceneOpens(undefined) : viewFor(face, asked, kinds, (views as ReactViewRegistry<S>).places(), opens);
+  }, []);
   // A visit that opened on the scene landed there: the pages, drawn later by a press on Home, open on the home (`hasLanded`).
   const [openedOn] = useState(face);
   useEffect(() => {

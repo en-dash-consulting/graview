@@ -229,7 +229,8 @@ function expression(source: unknown, path: string, scope: Scope): void {
   }
 }
 
-function template(source: unknown, path: string, scope: Scope, text = false): void {
+function template(source: unknown, path: string, scope: Scope, block?: "text" | "headline"): void {
+  const text = block === "text";
   if (typeof source !== "string" || source.length === 0 || source.length > 300) {
     scope.findings.push(error("view-template", path, 'a template is words with {field} in braces, like "{name}" or "{quote|money}", at most 300 characters'));
     return;
@@ -255,6 +256,16 @@ function template(source: unknown, path: string, scope: Scope, text = false): vo
     if (text && !part.format && part.expr.t === "ident" && (scope.slot === "card" || scope.slot === "row") && scope.spec.prose?.(part.expr.name)) {
       const field = part.expr.name;
       scope.findings.push(warning("view-whole-text", path, `${scope.kind} ${scope.slot} shows ${field} whole; it will be clamped. Use {${field}|excerpt} or move it to the page.`, `write {${field}|excerpt}, or {${field}|excerpt: 80} for fewer characters`));
+    }
+    /*
+     * A HEADLINE IS A FEW WORDS. One bound to a long text whole — a call's
+     * three sentences — filled a focus card at display size; it is drawn a
+     * step smaller and clamped past about 90 characters, and the check says
+     * where those words belong.
+     */
+    if (block === "headline" && !part.format && part.expr.t === "ident" && scope.spec.prose?.(part.expr.name)) {
+      const field = part.expr.name;
+      scope.findings.push(warning("view-headline-long", path, `${about(scope)}${scope.slot ? ` ${scope.slot}` : ""} heads it with ${field}, a long text, drawn at a headline's size; a headline is a few words.`, `say it in a text block, {"text": "{${field}}"}, or head it with {${field}|excerpt: 60}`));
     }
   }
 }
@@ -310,7 +321,7 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
     case "headline":
     case "text":
     case "badge":
-      template(value, `${path}.${type}`, scope, type === "text");
+      template(value, `${path}.${type}`, scope, type === "text" || type === "headline" ? type : undefined);
       if ("tone" in raw) tone(raw["tone"], `${path}.tone`, scope);
       return;
     // A field, or a field's pictures and documents (FR-162).

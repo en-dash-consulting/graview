@@ -47,6 +47,7 @@ Report **the actual output**, including warnings. What it catches here:
 
 - `view-field`, `view-name`, `view-tone` — a view spec naming a field the kind lacks, or a tone outside the kit; `view-key` — two blocks under one key; `view-template`, `view-expression` — a template or a condition it cannot read; `view-depth` — lists nested past three
 - `view-whole-text` — a card or row putting a long `text` field whole in a text block (`graview-lists` says how a card shows its start)
+- `view-headline-long` — a headline bound to a long `text`, Markdown or long string field whole, which a focus card drew at display size: say it in a `text` block, or head it with `{call|excerpt: 60}` (a headline past about 90 characters is drawn a step smaller and clamped to four lines)
 - `computed-cycle` — values worked out from each other; `computed-clash` — a computed name that is already a field; `computed-cost` — work that grows with the cube of the graph (a warning at the square)
 
 Then look: `graview describe <entry> --place <slug>` says each record's card and row as the page draws them, and the page itself shows the blocks in both schemes. Open it as a seat that may not see a listed record: the list is shorter, and the computed value is worked out without it.

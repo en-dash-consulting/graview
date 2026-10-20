@@ -1,4 +1,4 @@
-import type { AnySchema, FileValue, HostFiles, MutationCall, Principal, Store } from "@graview/core";
+import { fileAt, type AnySchema, type FileValue, type HostFiles, type MutationCall, type Principal, type Store } from "@graview/core";
 import type { GuestDomEvent, GuestDroppedFile, GuestRefusal } from "../protocol.js";
 import { fieldFor, planDrop, takes, type DropPlan } from "./drop-plan.js";
 import type { WorkerViewManifest } from "./manifest.js";
@@ -306,6 +306,11 @@ export function createGuestDrops<S extends AnySchema>(window: Window & typeof gl
         continue;
       }
       let value: FileValue = answered;
+      /* An `at` that is no date and time a page reads (EXIF's own "2026:10:17 09:12:00") is left off, rather than the file refused for it. */
+      if (value.at !== undefined && fileAt(value.at) === undefined) {
+        const { at: _unread, ...rest } = value;
+        value = rest;
+      }
       /* A picture's size in pixels, where the host did not say it and this browser can read it. */
       if (isImage(value) && (value.width === undefined || value.height === undefined) && typeof window.createImageBitmap === "function") {
         try {
@@ -316,7 +321,8 @@ export function createGuestDrops<S extends AnySchema>(window: Window & typeof gl
           // Its size is the host's to know, then.
         }
       }
-      const at = Number.isFinite(file.lastModified) && file.lastModified > 0 ? new Date(file.lastModified).toISOString() : undefined;
+      /* When it was made: as the host's upload read it from the file (FR-195), else when the file was last changed. */
+      const at = fileAt(value.at) ?? (Number.isFinite(file.lastModified) && file.lastModified > 0 ? new Date(file.lastModified).toISOString() : undefined);
       kept.push({ field: field.field, value, ...(at ? { at } : {}) });
     }
     for (const one of kept) options.handed(one.value);

@@ -18,6 +18,7 @@ export const NOT_EXPORTS = new Map([
   ["basePath", "an option of the embed's mount and of addressOf, not an export"],
   ["onNavigate", "an option of the embed's mount and a prop of PagesApp, not an export"],
   ["setPath", "a method of the embed's handle, not an export"],
+  ["sceneHref", "a field of the pages' context and a parameter of spatialHref and placeHref, not an export"],
   ["signIn", "an option of the embed's mount, GraviewProvider and the pages' context, not an export (FR-183)"],
   ["keptViews", "an option of the embed's mount, FrameOptions and GraviewProvider, not an export (0.1.38)"],
   ["setApp", "a method of the embed's handle, not an export (FR-116)"],

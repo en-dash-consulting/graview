@@ -31,6 +31,10 @@ this package serves lists, records, forms, problems and history as ordinary link
   drawing only what is its own; `surface("shell", Shell, { without: ["bar"] })`
   makes it the whole window. Each page's own title is said a level under the app's name. See
   `apps/todo` for both mounted from one declaration (`/` scene, `/pages` routed).
+- **The scene may live elsewhere.** A page's links into the scene go to `/` unless the
+  host says where the scene is: set `sceneHref` in the PagesApp context
+  (`sceneHref: "/scene/places/overview"`) when it is not at `/`, and pass the same to
+  `spatialHref(id, sceneHref)` and `placeHref(as, sceneHref)` in a page of your own.
 - **The host may own the history.** `basename` mounts the face under a path;
   `onNavigate(path, how)` tells a host each page the face opens (`"push"`,
   `"replace"` or `"pop"`), and `path` sends it back to one, so a host that

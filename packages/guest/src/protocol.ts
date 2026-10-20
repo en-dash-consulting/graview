@@ -356,8 +356,9 @@ export interface GuestDomEvent {
  * keeps of it (`FileValue`) — where the host keeps it, never its bytes —
  * and two things more. `field` is the field of the `data-drop` kind it is
  * for, by its type (a picture to the image field, a video to the video
- * field); `at` is when the file was last changed, as the person's device
- * said it: for a photograph, about when it was taken. Handed back in an
+ * field); `at` is when the file was made, as the host's upload read it
+ * from the file (`FileValue.at`, a photograph's EXIF, FR-195), else when
+ * it was last changed, as the person's device said it. Handed back in an
  * act's argument, it goes as the host kept it — `field` and `at` left off —
  * and a file the host did not hand is refused.
  */
@@ -371,7 +372,7 @@ export interface GuestDroppedFile {
   readonly height?: number;
   readonly poster?: string;
   readonly duration?: number;
-  /** When it was last changed, as an ISO instant. */
+  /** When it was made, as the host stored it (`FileValue.at`), else when it was last changed: an ISO instant. */
   readonly at?: string;
   /** The field it is for: one of the manifest's `accepts` for the dropped-on kind. */
   readonly field: string;

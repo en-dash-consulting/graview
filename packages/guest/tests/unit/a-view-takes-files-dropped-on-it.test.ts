@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { fileKindOf as coreFileKindOf, nodeRefArgs, Store, type AnySchema, type FileValue, type GraviewApp, type HostFiles, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
-import { JOURNEY_HANDLED_MANIFEST, JOURNEY_MANIFEST, nana, theo, weekendApp, weekendOnDayApp, weekendSeed } from "../../../../scripts/fixtures/weekend-app.js";
+import { JOURNEY_HANDLED_MANIFEST, JOURNEY_MANIFEST, nana, theo, weekendApp, weekendOnDayApp, weekendSeed, weekendTimedApp } from "../../../../scripts/fixtures/weekend-app.js";
 import { runWorkerViewHeadless } from "../../src/headless/index.js";
 import { nodeIsolate } from "../../src/headless/node.js";
 import { createGuestDrops } from "../../src/host/drop.js";
@@ -44,7 +44,7 @@ const finder = () => [
 ];
 
 /** A host that stores what it is handed, at a path of its own, and answers a video with what a browser plays. */
-function hostFiles(options: { maxBytes?: number; kinds?: readonly string[] } = {}): HostFiles & { readonly sent: string[] } {
+function hostFiles(options: { maxBytes?: number; kinds?: readonly string[]; at?: (name: string) => string | undefined } = {}): HostFiles & { readonly sent: string[] } {
   const sent: string[] = [];
   return {
     sent,
@@ -59,6 +59,7 @@ function hostFiles(options: { maxBytes?: number; kinds?: readonly string[] } = {
         type: video ? "video/mp4" : file.type,
         bytes: file.size,
         ...(video ? { duration: 12, poster: `/graview/files/${sent.length}-poster.jpg` } : {}),
+        ...(options.at?.(name) ? { at: options.at(name)! } : {}),
       };
     },
   };
@@ -249,6 +250,57 @@ describe("files dropped on a view that hears the drop", () => {
     view.session.receive({ type: "act", nonce: "n", id: 2, name: "add-moment-to-day", args: { id: SATURDAY, photo: { href: "/graview/files/someone-elses.jpg", name: "x.jpg", type: "image/jpeg", bytes: 10 } } });
     expect(view.answers.find((one) => one.type === "answer")).toMatchObject({ ok: false, reason: "malformed", message: expect.stringContaining("the host did not hand this view") });
     expect(s.log.length).toBe(0);
+  });
+});
+
+/*
+ * WHEN THE HOST SAYS EACH FILE WAS MADE (FR-195, Graview Cloud): a host's
+ * upload answers the file with `at`, the instant it read from the file
+ * itself (a photograph's EXIF), which a copy, a download or a sync does not
+ * change as it does the file's lastModified. Three photographs taken on
+ * Saturday, copied off the camera and dropped on Monday, are three moments
+ * at Saturday's times.
+ */
+describe("files whose stored at the host answered", () => {
+  const MONDAY = Date.UTC(2026, 9, 19, 9, 30);
+  const SATURDAYS: Record<string, string> = { "IMG_4031.jpg": "2026-10-17T10:02:00.000Z", "IMG_4032.jpg": "2026-10-17T13:45:00.000Z", "IMG_4033.png": "2026-10-17T18:20:00.000Z" };
+  const copied = () => Object.keys(SATURDAYS).map((name) => new File([new Uint8Array(1_000)], name, { type: name.endsWith(".png") ? "image/png" : "image/jpeg", lastModified: MONDAY }));
+  const takenAt = (s: Store<AnySchema>) => Object.fromEntries(momentsOn(s).map((one) => [(one["photo"] as FileValue).name, one["takenAt"]]));
+
+  it("are three moments at Saturday's times, dropped on Monday, rather than at the time the files were copied", async () => {
+    const s = store(weekendTimedApp);
+    const view = region(s, { files: hostFiles({ at: (name) => SATURDAYS[name] }) });
+    view.drag("drop", copied());
+    await view.drops.idle();
+    expect(takenAt(s)).toEqual(SATURDAYS);
+  });
+
+  it("are at the time each file was last changed where the host said none, and at the drop where the file says none either", async () => {
+    const s = store(weekendTimedApp);
+    const view = region(s, { files: hostFiles({ at: (name) => (name === "IMG_4031.jpg" ? SATURDAYS[name] : undefined) }) });
+    const before = Date.now();
+    view.drag("drop", [...copied().slice(0, 2), new File([new Uint8Array(1_000)], "IMG_4033.png", { type: "image/png", lastModified: 0 })]);
+    await view.drops.idle();
+    const at = takenAt(s);
+    expect(at["IMG_4031.jpg"]).toBe(SATURDAYS["IMG_4031.jpg"]);
+    expect(at["IMG_4032.jpg"]).toBe(new Date(MONDAY).toISOString());
+    expect(Date.parse(at["IMG_4033.png"] as string)).toBeGreaterThanOrEqual(before - 1_000);
+  });
+
+  it("are kept, at the time each file was last changed, where the host's at is no date and time a page reads", async () => {
+    const s = store(weekendTimedApp);
+    const view = region(s, { files: hostFiles({ at: () => "2026:10:17 10:02:00" }) });
+    view.drag("drop", copied().slice(0, 1));
+    await view.drops.idle();
+    expect(momentsOn(s).map((one) => [one["takenAt"], (one["photo"] as FileValue).at])).toEqual([[new Date(MONDAY).toISOString(), undefined]]);
+  });
+
+  it("are told to a view that hears the drop with the at the host stored", async () => {
+    const s = store(weekendOnDayApp);
+    const view = region(s, { hears: true, manifest: JOURNEY_HANDLED_MANIFEST as unknown as WorkerViewManifest, files: hostFiles({ at: (name) => SATURDAYS[name] }) });
+    view.drag("drop", copied());
+    await view.drops.idle();
+    expect(view.told.find((one) => one.event === "drop")!.files!.map((file) => file.at)).toEqual(Object.values(SATURDAYS));
   });
 });
 

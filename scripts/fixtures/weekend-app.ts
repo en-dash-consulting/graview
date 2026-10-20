@@ -13,6 +13,9 @@
  * with the derived "Set the day" (`connect-moment-taken-on`), as a Cloud
  * author's app does; `weekendOnDayApp` has, besides, "Add a moment to this
  * day", an act on a day that makes a moment linked to it.
+ * `weekendTimedApp` is the first with a moment that cannot go without when
+ * it was taken (`takenAt`, a required date and time), which a drop fills
+ * from the instant the host's upload says the file was made (FR-195).
  */
 import type { AnySchema, GraviewApp, Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
@@ -65,6 +68,13 @@ export const weekendOnDayApp = compiled({
         { connect: "takenOn", from: "$new", to: "$subject" },
       ],
     },
+  },
+});
+export const weekendTimedApp = compiled({
+  ...weekendDocument,
+  kinds: {
+    ...weekendDocument.kinds,
+    moment: { ...weekendDocument.kinds.moment, fields: { ...weekendDocument.kinds.moment.fields, takenAt: { type: "datetime", required: true, description: "when it was taken" } } },
   },
 });
 export const weekendSeed = {

@@ -346,7 +346,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           {isCurrent(store.schema.tryDefinition(node.kind), node) ? null : "In the past: out of the picture, never out of the record. "}
           {ties.length === 0 ? "Connected to nothing yet." : null}
         </p>
-        <a href={spatialHref(id)} style={{ ...pageStyles.link, ...pageStyles.quiet }} data-testid="spatial-link">
+        <a href={spatialHref(id, context.sceneHref)} style={{ ...pageStyles.link, ...pageStyles.quiet }} data-testid="spatial-link">
           See it in the scene ↗
         </a>
       </header>
