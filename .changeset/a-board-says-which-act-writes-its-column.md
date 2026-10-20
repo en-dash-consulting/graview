@@ -1,0 +1,7 @@
+---
+"@graview/core": patch
+---
+
+`graview check` says which acts write a status board's column without saying to what (the thirteenth walk, a camera-trap survey). The survey's review queue, a status board of detections with `move: true`, offered "Move to ›" on every card — on a phone the only way to move one — and withheld every column with "Nothing in this app moves a detection to Confirmed.", though "Confirm", "Nothing there" and "Same animal again" each set the status. They were written in code as the scaffold wrote its own close act, with `writes: ["status"]`, which says an act writes the field and not the value it writes, so no column was reached; and the checker said nothing, since a board nothing moves on at all was taken for a picture of where things stand. Now it warns, `lens-column-written-unsaid` at `lenses.<i>.bindings.<kind>.column`: "\"Confirm\", \"Nothing there\" and \"Same animal again\" write status on a detection without saying to what, so \"Review queue\" moves no card into Confirmed, False trigger, Duplicate.", with the fix `sets: { status: "<the value it writes>" }` beside `writes`, which makes each the move to its column. The close act `graview create` writes says `sets: { status: "closed" }`.
+
+Compatibility: ops, stored formats, the wire and derived tools are unchanged; every declaration that compiled still compiles. The check finding codes gain `lens-column-written-unsaid`, a warning about acts in code a status board names by the field they write; a column such an act would have reached was already unreached, and said so.
