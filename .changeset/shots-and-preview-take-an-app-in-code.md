@@ -1,9 +1,0 @@
----
-"@graview/ship": patch
-"graview": patch
-"@graview/skills": patch
----
-
-`graview shots` and `graview preview` picture an app declared in code, as they picture a document (W-245, the thirteenth walk, a camera-trap survey). Both said "a declaration document (a .json file) is required", so the survey, declared in code, could picture its contact sheet — a view proposed and not kept — only over a document written for the purpose, and a document written from the app (`toDocument`) leaves out every act, rule and label that is code. Now both take the app module `graview check` takes (`./dist/domain/app.js`, or any module whose default export or `app` is the app): the store runs the app as Node loaded it, and the page is handed its module bundled for a browser — with the project's esbuild, which a project built with vite has; without one, the command says how to add it — at `/graview/app.js`, in place of the document. The page sits as a person holding every role the app's policy declares, unless `--as` or `--roles` say who; a lens hidden from the place menu is not written back into code, so a code app's lenses are not removed from there. `servePreview` takes `code: { app, bundle }` in place of `document`, and `bundleAppForPage(entry)` makes the bundle. The `graview-host-page` skill says so, and `pnpm verify preview` photographs a code app's draft view by its title.
-
-Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. `/graview/document` on a preview of an app in code answers `{ module: "/graview/app.js", principal, state, views, draftView? }`, and a document's preview answers as it did. New: `code` on `servePreview`'s options (`document` is now optional, one of the two); `bundleAppForPage`, `findBundler`, `NO_BUNDLER` and `PREVIEW_APP_PATH` on `@graview/ship`. What Graview Cloud does: nothing — its apps are documents.

@@ -1,5 +1,45 @@
 # graview
 
+## 0.1.40
+
+### Patch Changes
+
+- b98303b: A face names what its first draw opens, and a hosted page on a phone draws Pages with no chunk asked for after the face's own (FR-194). Graview Cloud names in its page's head every chunk its shell's startup doors open, but a face opens doors of its own as it draws — on the pages the home's lenses, a list's arranging, the bar's Activity and a form's date box; on the scene the relations' ribbons, the city's ground, the districts' states and the way back — each found only once the face had run, a round trip after it on a phone. And what is fetched before it is wanted went out while the place was still drawing: the acts' pane, readied by the keyboard the page put on a title and drawn on every routed page for a selection it draws nothing for there, a date's editor, the other face at a desk. `pnpm verify first-load` counted 41 to 45 scripts asked for after the face on the preview's home and list before the place said `data-graview-drawn`.
+  
+  They stay doors — a page that never draws a lens never runs one — and `@graview/embed/first-draw`, a new entry for a host's build, names them: `firstDrawChunks(metafile, face)` reads esbuild's metafile and returns the chunks a face's first draw asks for, each door's chunk and every chunk it imports outright, and `FIRST_DRAW_DOORS` is the list it reads, each door `{ package, module }`. `graview preview`'s page asks for them from its head once the face's own chunks have arrived (named beside the face, they took a phone's bandwidth from it and the face drew 0.65 s later). What is fetched early now waits until the place has first drawn and settled (`afterFirstDraw`, `firstDrawn`, `placeWatched` and `placeDrawn` on `@graview/react` and its `/provider`, said by the embed's drawn signal; at once where nothing watches a place), the keyboard put on the page as it draws readies no menu, and the routed face no longer draws the acts' pane for a selection.
+  
+  Measured by `pnpm verify first-load`, three cold runs on a phone (four times slower CPU, slow 4G), before and after: the roadmap draws and settles in 4.50 s, from 4.96 s, and is interactive in 4.85 s, from 5.30 s; the tasks settle in 4.63 s, from 5.12 s; the first useful paint is unchanged (3.55 s and 3.49 s). Before the home has drawn the roadmap asks for 75 requests and 478 KB, from 78 and 495 KB, and nothing after the face, on both profiles and both apps (`…DrawsPagesWithNoChunkAskedForAfterTheFace`, a new claim of the harness, which also says the time to `data-graview-drawn`). A hosted page carries 0.3 KB more up front for it (307 bytes, 132 gzipped; the compiled page 307 and 143), under a raise of each budget by that, and the scene face 413 bytes more before it draws. `capabilities().shipped` gains FR-194.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `capabilities().shipped` gains FR-194. New: the `@graview/embed/first-draw` entry (`firstDrawChunks`, `FIRST_DRAW_DOORS`, and the types `FirstDrawFace`, `FirstDrawDoor`, `FirstDrawMetafile`), and `afterFirstDraw`, `firstDrawn`, `placeWatched`, `placeDrawn` on `@graview/react` and `@graview/react/provider`. The acts' pane, a date's editor and the other face are fetched once an embed's place has first drawn rather than at the first idle moment. What Graview Cloud does: at build, `firstDrawChunks(metafile, face)` for the face the shell opens on (`"pages"` on a phone, `"graview"` at a desk), less the chunks the head already names, and asks for them once the face's own `modulepreload` links have loaded, as `graview preview`'s head does.
+- 674748e: `graview shots` and `graview preview` picture an app declared in code, as they picture a document (W-245, the thirteenth walk, a camera-trap survey). Both said "a declaration document (a .json file) is required", so the survey, declared in code, could picture its contact sheet — a view proposed and not kept — only over a document written for the purpose, and a document written from the app (`toDocument`) leaves out every act, rule and label that is code. Now both take the app module `graview check` takes (`./dist/domain/app.js`, or any module whose default export or `app` is the app): the store runs the app as Node loaded it, and the page is handed its module bundled for a browser — with the project's esbuild, which a project built with vite has; without one, the command says how to add it — at `/graview/app.js`, in place of the document. The page sits as a person holding every role the app's policy declares, unless `--as` or `--roles` say who; a lens hidden from the place menu is not written back into code, so a code app's lenses are not removed from there. `servePreview` takes `code: { app, bundle }` in place of `document`, and `bundleAppForPage(entry)` makes the bundle. The `graview-host-page` skill says so, and `pnpm verify preview` photographs a code app's draft view by its title.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. `/graview/document` on a preview of an app in code answers `{ module: "/graview/app.js", principal, state, views, draftView? }`, and a document's preview answers as it did. New: `code` on `servePreview`'s options (`document` is now optional, one of the two); `bundleAppForPage`, `findBundler`, `NO_BUNDLER` and `PREVIEW_APP_PATH` on `@graview/ship`. What Graview Cloud does: nothing — its apps are documents.
+- Updated dependencies [b5c1332]
+- Updated dependencies [b98303b]
+- Updated dependencies [bdb45b6]
+- Updated dependencies [749a684]
+- Updated dependencies [686b2e4]
+- Updated dependencies [9a8b622]
+- Updated dependencies [4088496]
+- Updated dependencies [a9502b7]
+- Updated dependencies [39106b6]
+- Updated dependencies [2ff7c28]
+- Updated dependencies [04fe262]
+- Updated dependencies [56b88e1]
+- Updated dependencies [4aa429f]
+- Updated dependencies [674748e]
+- Updated dependencies [380c236]
+- Updated dependencies [752da2b]
+- Updated dependencies [ac694b7]
+- Updated dependencies [6fc222b]
+- Updated dependencies [68ebfd2]
+- Updated dependencies [6959652]
+  - @graview/core@0.1.40
+  - @graview/guest@0.1.40
+  - @graview/ship@0.1.40
+  - @graview/skills@0.1.40
+  - @graview/tools@0.1.40
+
 ## 0.1.39
 
 ### Patch Changes

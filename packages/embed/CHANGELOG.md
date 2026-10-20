@@ -1,5 +1,48 @@
 # @graview/embed
 
+## 0.1.40
+
+### Patch Changes
+
+- b98303b: A face names what its first draw opens, and a hosted page on a phone draws Pages with no chunk asked for after the face's own (FR-194). Graview Cloud names in its page's head every chunk its shell's startup doors open, but a face opens doors of its own as it draws — on the pages the home's lenses, a list's arranging, the bar's Activity and a form's date box; on the scene the relations' ribbons, the city's ground, the districts' states and the way back — each found only once the face had run, a round trip after it on a phone. And what is fetched before it is wanted went out while the place was still drawing: the acts' pane, readied by the keyboard the page put on a title and drawn on every routed page for a selection it draws nothing for there, a date's editor, the other face at a desk. `pnpm verify first-load` counted 41 to 45 scripts asked for after the face on the preview's home and list before the place said `data-graview-drawn`.
+  
+  They stay doors — a page that never draws a lens never runs one — and `@graview/embed/first-draw`, a new entry for a host's build, names them: `firstDrawChunks(metafile, face)` reads esbuild's metafile and returns the chunks a face's first draw asks for, each door's chunk and every chunk it imports outright, and `FIRST_DRAW_DOORS` is the list it reads, each door `{ package, module }`. `graview preview`'s page asks for them from its head once the face's own chunks have arrived (named beside the face, they took a phone's bandwidth from it and the face drew 0.65 s later). What is fetched early now waits until the place has first drawn and settled (`afterFirstDraw`, `firstDrawn`, `placeWatched` and `placeDrawn` on `@graview/react` and its `/provider`, said by the embed's drawn signal; at once where nothing watches a place), the keyboard put on the page as it draws readies no menu, and the routed face no longer draws the acts' pane for a selection.
+  
+  Measured by `pnpm verify first-load`, three cold runs on a phone (four times slower CPU, slow 4G), before and after: the roadmap draws and settles in 4.50 s, from 4.96 s, and is interactive in 4.85 s, from 5.30 s; the tasks settle in 4.63 s, from 5.12 s; the first useful paint is unchanged (3.55 s and 3.49 s). Before the home has drawn the roadmap asks for 75 requests and 478 KB, from 78 and 495 KB, and nothing after the face, on both profiles and both apps (`…DrawsPagesWithNoChunkAskedForAfterTheFace`, a new claim of the harness, which also says the time to `data-graview-drawn`). A hosted page carries 0.3 KB more up front for it (307 bytes, 132 gzipped; the compiled page 307 and 143), under a raise of each budget by that, and the scene face 413 bytes more before it draws. `capabilities().shipped` gains FR-194.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `capabilities().shipped` gains FR-194. New: the `@graview/embed/first-draw` entry (`firstDrawChunks`, `FIRST_DRAW_DOORS`, and the types `FirstDrawFace`, `FirstDrawDoor`, `FirstDrawMetafile`), and `afterFirstDraw`, `firstDrawn`, `placeWatched`, `placeDrawn` on `@graview/react` and `@graview/react/provider`. The acts' pane, a date's editor and the other face are fetched once an embed's place has first drawn rather than at the first idle moment. What Graview Cloud does: at build, `firstDrawChunks(metafile, face)` for the face the shell opens on (`"pages"` on a phone, `"graview"` at a desk), less the chunks the head already names, and asks for them once the face's own `modulepreload` links have loaded, as `graview preview`'s head does.
+- b4788c0: The scene face, mounted at its root, opens on the overview (from Graview Cloud). `mount(stage, { face: "scene", routing: "memory" })` opened on the scene descended on nothing — a near-empty floor, the kinds' tiles along its foot — where `graview preview`, at `/places/overview`, opens on the whole thing from above; under `routing: "address"` at a bare base it drew that floor first and rose only once the scene's address sync arrived. Now a scene with nowhere to be — no `stop` (in the address or handed), no place handed back (`at`), no `path` but the overview's, no first place in the declaration (`pages.first`) — opens on the overview from its first frame, as the scene does when "Up" is pressed: `where()` says `{ face: "scene", path: "/places/overview", stop: "#overview=1" }`, and a stop set then or later goes down to it as before. A host that passes a stop, a page's path or a place handed back is drawn what it asked for. `path` is documented for the scene face: nothing, or `/places/overview`. A hosted page's first load carries 0.1 KB more (under 0.1 KB gzipped).
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. What a host sees: a scene mounted with no stop is at altitude, its `where().stop` `#overview=1` where it was `#`. What Graview Cloud does: nothing; a stage that mounts the scene face with no path opens on the overview, as preview does.
+- 6fc222b: The scene sits under a host's own bar. A product face with its own shell wanted the scene in it: `mount(stage, { face: "scene", bar: true })` worked, but its bar said the app's name a second time under the product's and offered a Scene | Pages switch whose Pages were Graview's derived pages, not the product's own, so the product hid both with CSS. `bar` now also takes what it leaves out (`EmbedBar`): `bar: { faces: false, name: false }` draws the bar without the switch or the app's mark and name, and keeps the scene's places, Find, the standing (Activity beside it once anything has happened) and the person; either may be said alone. `@graview/embed/pages` takes `bar: { name: false }` the same way. `AppBar` takes `named` (`true` by default), and a bar with no switch on the scene names the scene's places, as one with a switch did. A hosted page carries 0.1 KB more up front for it (143 bytes, 70 gzipped, the compiled page the same), under a raise of each budget by that; the pages face, the embed without the studio, every face and the embed with the studio are raised by what they measured. The embed's README and the graview-embed and graview-host-page skills say it.
+  
+  A scene at a route of the pages' own registry (`PagesApp` drawing the scene under the host's shell) is not here: the scene face is the embed's, under its `GraviewProvider`, its inspector, its map panel and its rules, and `@graview/pages` may not import the scene; it would take an embed-side page component that wraps the provider over the page context's store and draws the scene face, registered by the host with `registry.route(path, …)`, with the scene's stop kept apart from the router's address. Until then a product mounts the embed at that route with the bar above.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. Additive on the embed's options: `bar` takes `boolean | EmbedBar`, `EmbedBar` being `{ faces?: false; name?: false }`, on `mount` and `<Embed>` from `@graview/embed` and on `mount` and `<PagesEmbed>` from `@graview/embed/pages`; `EmbedBar` is a new type export of both. `bar: true` and `bar: false` draw what they drew. With `faces: false` the bar has no `[data-testid="app-faces"]`; with `name: false` no `app-home` and no `app-name`. What Graview Cloud does: a product face with its own shell mounts the scene with `bar: { faces: false, name: false }` and `heading: false`, and drops the CSS that hid the name and the switch.
+- Updated dependencies [d2ef34e]
+- Updated dependencies [b5c1332]
+- Updated dependencies [b98303b]
+- Updated dependencies [bdb45b6]
+- Updated dependencies [686b2e4]
+- Updated dependencies [4088496]
+- Updated dependencies [2ff7c28]
+- Updated dependencies [56b88e1]
+- Updated dependencies [4aa429f]
+- Updated dependencies [752da2b]
+- Updated dependencies [c3b7ab9]
+- Updated dependencies [6fc222b]
+- Updated dependencies [68ebfd2]
+- Updated dependencies [8c8a486]
+- Updated dependencies [6959652]
+  - @graview/primitives@0.1.40
+  - @graview/core@0.1.40
+  - @graview/guest@0.1.40
+  - @graview/react@0.1.40
+  - @graview/layout@0.1.40
+  - @graview/tools@0.1.40
+  - @graview/pages@0.1.40
+  - @graview/studio@0.1.40
+
 ## 0.1.39
 
 ### Patch Changes

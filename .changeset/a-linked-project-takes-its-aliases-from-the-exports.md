@@ -1,7 +1,0 @@
----
-"@graview/core": patch
----
-
-A project `graview create --link` makes takes its dev server's aliases from the framework checkout's own exports, as the framework's apps now do. Its `vite.config.ts` used to list one alias per entry point by hand, pinned by a test to the exports of the day, so a project created today broke on the next subpath the framework added: the bare name's alias swallowed the subpath and the page answered 500, which is how seven product apps linked by path broke. It now says `alias: sourceAliases(framework)`, from `@graview/ship/dev`, where `framework` is the linked checkout; the list is read from every package's `exports` each time the server starts. Everything else the linked config does stays: one React, the studio's door and `devFiles`, and the checkout allowed to the dev server. Core still imports nothing of ship; the scaffold only writes the call. `smoke:create` holds it with a new claim, `aLinkedProjectsDevServerResolvesEveryExportFromSource`, which resolves every export of every package a product depends on through the linked project's own Vite. A project linked before this keeps its hand list until it replaces it with `sourceAliases(<its checkout>)`.
-
-Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. Only the `vite.config.ts` a linked project is created with changes; a project made against the published packages is written as before.

@@ -43,7 +43,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.39
 
-Published October 20, 2026 · the current version
+Published October 20, 2026
 
 Cards that answer the menu under a base, full-size photos in views, views that save as you type and take a drop, and a page that says when it has drawn.
 

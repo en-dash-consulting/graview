@@ -1,5 +1,27 @@
 # @graview/guest
 
+## 0.1.40
+
+### Patch Changes
+
+- b5c1332: A drop reads when the host says each file was made (FR-195). Roadmap f-drop-reads-upload-at, from Graview Cloud: its `POST /graview/files` answers a photograph with `at`, the instant it read from the file's EXIF, and a view's drop (FR-193) never read it. A required time a drop fills — a moment's `takenAt`, a detection's day — came from the file's `lastModified`, which a copy off the camera, a download or a sync sets to the moment it happened, so three photographs taken on Saturday and dropped on Monday were three moments on Monday. Now `FileValue` takes `at`, an ISO date and time with a `Z` or an offset (`fileAt` from `@graview/core` reads one; `isFileValue` refuses anything else there, and a drop leaves off an `at` it cannot read, EXIF's own `2026:10:17 09:12:00` say, rather than refuse the file), and a drop fills a required time from the stored value's `at` first, then the file's `lastModified`, then the drop's own time in the record a drop makes by default; an instant with an offset fills an argument that takes one as it was said, and one that takes only UTC or a day as that. `event.files` in a view's `drop` carries the stored `at` where the host said one. A record keeps the `at` its host answered, as it keeps a picture's size. The guest-sandbox drop harness proves the three photographs land at Saturday's times. A hosted page's first load carries 0.2 KB more (0.1 KB gzipped), the file value's `at` read where a record's file is judged; the embed's faces and the guest host carry the same. `capabilities().shipped` gains FR-195.
+  
+  Compatibility: ops and stored formats are unchanged; a file value that kept no `at` reads as it did, and one with an `at` that is not a date and time is refused where it was ignored before. The declaration is unchanged. The wire: a `dom-event` `drop`'s `files[].at` is the host's stored `at` where it answered one, else the file's last change as before; `capabilities().shipped` lists FR-195. Derived tools: a file argument's schema gains an optional `at`. What Graview Cloud does: keep answering `at` from the files route's upload, as an ISO instant with a `Z` or an offset; nothing else.
+- 6959652: `graview view check` runs a view of one record over a record, and a view's pictures are reckoned over its own records first (W-242, the thirteenth walk, a camera-trap survey). The survey's contact sheet, a pictures view of one station that reads the detections and the edge saying which camera took each, was run with no station at all and said "No station.", which judges nothing; and the picture budget the run reported was spent on every detection of the app in the order they were kept, so the station's own photographs were left out for the pictures of cameras it never draws — on the page too. Now a view of one record is run over the record `--record <id>` names, or the first of its kind the seat sees, and the run says which first: `over "North ridge" (station:north)`; a `--record` that is no record of the kind the seat sees is refused, exit 1. And what a guest reads across kinds (`readAcross`, a worker view's and a frame guest's alike) comes with the records linked to its own by an edge it reads first, so a budget spent in order — `pictures`, on the page and headless — is spent on what it draws for its own records before the rest. The `graview-worker-view` and `graview-view-drawing` skills say so. The guest host measures 0.2 to 0.3 KB more for it, and its budgets and every face's are raised by that.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. A guest is handed the same records and edges as before; only their order in `nodes` moves, linked to its own records first. New: `--record <id>` on `graview view check`. What Graview Cloud does: nothing more — a headless check of a view of one passes `input: { node: { id } }` to `runWorkerViewHeadless` as it did.
+- Updated dependencies [b5c1332]
+- Updated dependencies [b98303b]
+- Updated dependencies [bdb45b6]
+- Updated dependencies [686b2e4]
+- Updated dependencies [2ff7c28]
+- Updated dependencies [56b88e1]
+- Updated dependencies [4aa429f]
+- Updated dependencies [752da2b]
+- Updated dependencies [68ebfd2]
+  - @graview/core@0.1.40
+  - @graview/react@0.1.40
+
 ## 0.1.39
 
 ### Patch Changes
