@@ -153,7 +153,7 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     kept.set(node.id, {
       key,
       tile: points(corners),
-      rests: rests.map((rest) => ({ count: rest.count, at: toIso(rest.col, rest.row, cell, tilt) })),
+      rests: rests.map((rest) => ({ count: rest.count, rows: rest.rows, at: toIso(rest.col, rest.row, cell, tilt) })),
       buildings: blocks.map((block) => {
         const record = due ? (store.graph.getNode(block.id) as Record<string, unknown> | undefined) : undefined;
         const when = record?.[due!];
@@ -207,7 +207,7 @@ interface PlotDrawing {
   readonly key: string;
   readonly tile: string;
   /** A row's records it had no room for, counted at the row's own end. */
-  readonly rests: readonly { readonly count: number; readonly at: Point }[];
+  readonly rests: readonly { readonly count: number; readonly rows: number; readonly at: Point }[];
   readonly buildings: readonly {
     readonly id: string;
     readonly tier: StateTier;
@@ -342,7 +342,7 @@ const PlotTile = memo(function PlotTile({
           ))}
           {drawing.rests.map((rest, i) => (
             <text key={i} className="graview-village-rest" x={rest.at.x - 3} y={rest.at.y + 4} textAnchor="end">
-              <title>{`${numberAsRead(rest.count)} more in this row than the plot has room to show`}</title>+{numberAsRead(rest.count)}
+              <title>{`${numberAsRead(rest.count)} more ${rest.rows > 1 ? `in ${rest.rows} rows` : "in this row"} than the plot has room to show`}</title>+{numberAsRead(rest.count)}
             </text>
           ))}
         </g>

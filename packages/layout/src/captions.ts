@@ -1,3 +1,6 @@
+import { humanizeField } from "@graview/core";
+import type { Layout, Via } from "./types.js";
+
 /**
  * WHERE A RELATION'S CAPTION GOES — pure, so it can be held to.
  *
@@ -41,13 +44,29 @@ export const MIN_CAPTION = 300;
 /** Cards in one row are within this many pixels of each other's top. */
 const SAME_ROW = 12;
 const GAP = 8;
-/** About how wide a caption's words are drawn: 0.75rem capitals, letter-spaced, on a padded ground. */
-const wordsWidth = (text: string): number => text.length * 8.4 + 16;
+/**
+ * HOW A CAPTION STANDS OVER ITS ROW, at a 16px rem: its top this far above
+ * the row's, this tall. The band keeps the gutter between its rows at least
+ * this deep (`CAPTION_GUTTER` in the layout), so the words stand on ground
+ * of their own and never on the row above.
+ */
+export const CAPTION_RISE = 19;
+export const CAPTION_HEIGHT = 17;
+/** About how wide a caption's words are drawn: 0.75rem capitals, letter-spaced, on a padded ground — at a 16px rem, times `scale` for the reader's own. */
+export const captionWidth = (text: string, scale = 1): number => (text.length * 8.4 + 16) * scale;
+
+/** What a relation's caption says: the declaration's words for this end, or the edge's name with an arrow for its direction (FR-142). */
+export function captionText(via: Via): string {
+  return via.description ?? `${via.direction === "in" ? "←" : "→"} ${humanizeField(via.edgeKind).toLowerCase()}`;
+}
 
 export function captionRuns(
   entries: readonly CaptionEntry[],
   room: { readonly left: number; readonly right: number },
+  /** The reader's rem over 16: a caption is set in rem, so its words grow with it. */
+  scale = 1,
 ): CaptionRun[] {
+  const wordsWidth = (text: string) => captionWidth(text, scale);
   const groups = new Map<string, CaptionEntry[]>();
   for (const entry of entries) {
     const held = groups.get(entry.key);
@@ -97,4 +116,40 @@ export function captionRuns(
     const left = own >= width ? run.left : Math.max(floor, Math.min(mid - width / 2, ceiling - width));
     return { key: run.key, text: run.text, left, width, top: run.top };
   });
+}
+
+/** A caption's box, in the layout's own coordinates. */
+export interface CaptionBox {
+  readonly key: string;
+  readonly text: string;
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * THE CAPTIONS A LAID-OUT BAND WILL DRAW, from the layout alone: the
+ * placement the renderer makes from what it measures (`captionRuns`), on
+ * the boxes the layout gave the cards. It is how the layout is held to
+ * giving the captions ground of their own — none on a card, none on
+ * another caption — without a browser.
+ */
+export function bandCaptions(
+  result: Pick<Layout, "nodes" | "width">,
+  room: { readonly left: number; readonly right: number } = { left: 0, right: result.width },
+  unit = 16,
+): CaptionBox[] {
+  const scale = unit / 16;
+  const entries: CaptionEntry[] = result.nodes
+    .filter((node) => node.plane === 1 && node.via)
+    .map((node) => ({ key: `${node.via!.edgeKind}|${node.via!.direction}`, text: captionText(node.via!), left: node.x, right: node.x + node.width, top: node.y }));
+  return captionRuns(entries, room, scale).map((run) => ({
+    key: run.key,
+    text: run.text,
+    x: run.left,
+    y: Math.max(0, run.top - CAPTION_RISE * scale),
+    width: run.width,
+    height: CAPTION_HEIGHT * scale,
+  }));
 }
