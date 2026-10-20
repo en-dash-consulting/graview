@@ -181,6 +181,23 @@ describe("the state a district shows", () => {
     expect(districtState(app, "plain")).toBeUndefined();
   });
 
+  /*
+   * ONE COUNT PER PLOT. Each cut row said its own "+n" off the plot's
+   * edge, a row's depth apart — and on a small plot of many rows that is a
+   * few pixels, so "+138" and "+10" stood on each other, read as neither.
+   */
+  it("says what a plot has no room for once, however many of its rows are cut", () => {
+    const plot = { col: 4, row: 2, side: 2 };
+    const ids = (n: number, p: string) => Array.from({ length: n }, (_, i) => `${p}${i}`);
+    const { blocks, rests } = districtBlocks(plot, [ids(150, "open"), ids(4, "doing"), ids(30, "done"), ids(40, "gone")]);
+    expect(rests).toHaveLength(1);
+    expect(rests[0]!.count).toBe(150 + 4 + 30 + 40 - blocks.length);
+    expect(rests[0]!.rows).toBeGreaterThan(1);
+    // Where the first row it counts begins, off the plot's left edge.
+    expect(rests[0]!.col).toBeLessThan(plot.col);
+    expect(rests[0]!.lane).toBe(0);
+  });
+
   it("stands a row of blocks per value, back row first, every block one size, the rest of a full row counted where it begins", () => {
     const plot = { col: 0, row: 0, side: 3 };
     const ids = (n: number, p: string) => Array.from({ length: n }, (_, i) => `${p}${i}`);
@@ -189,7 +206,7 @@ describe("the state a district shows", () => {
     expect(lane(0)).toHaveLength(9);
     expect(lane(1)).toHaveLength(8);
     expect(lane(2)).toHaveLength(12);
-    expect(rests).toEqual([{ lane: 2, count: 2, col: -0.15, row: 2.5 }]);
+    expect(rests).toEqual([{ lane: 2, count: 2, rows: 1, col: -0.15, row: 2.5 }]);
     // Rows in declared order down the plot's depth, each inside its own third.
     for (const b of lane(1)) expect(b.row).toBeGreaterThan(1);
     for (const b of lane(1)) expect(b.row).toBeLessThan(2);

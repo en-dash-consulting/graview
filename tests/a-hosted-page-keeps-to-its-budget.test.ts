@@ -116,6 +116,7 @@ describe("a hosted page", () => {
     // 956 KB since a headline bound to a long field came to be warned of and drawn a step smaller: `view-headline-long` in the view checker a page that compiles its document carries, and one rule in the blocks' stylesheet: the scene face measured 978_345 B, 597 more than before it (977_748).
     // 956 KB since what a page fetches before it is wanted came to wait for the first draw (FR-194), and the routed face stopped fetching the acts' pane for a selection it draws nothing for: the scene face measured 977_928 B, 413 more than before it (977_515).
     // 957 KB once both of 0.1.40's 956 KB raises above were merged: each measured alone against the branch it started from, together they come to 978_997 B.
+    // 957 KB since a focused record's words came to get ground of their own (0.1.40): the band laid out by relation with a caption's room, captions leveled over a row's tallest card, a tie's words only where no caption says them, one count per district: the scene face measured 978_975 B, 1_460 more than before it (977_515). Nothing up front changed.
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(957 * 1024);
   });
 

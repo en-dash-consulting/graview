@@ -48,6 +48,8 @@ export type { FitOptions, FitPoint, FittedLabel, LabelBox, Measure } from "./lab
 export { cameraLimit, collides, districtsPastTheEdge, panForZoom, placeCity } from "./city.js";
 export type { CityCard, Nameplate, PastTheEdge, PlacedCard } from "./city.js";
 export type { CityFrame } from "./types.js";
-export { bandAggregateWords, bandCaps, bandOf, chooseGrouping, isBandAggregate, packRuns, runOf, shares } from "./band.js";
-export type { BandItem, BandOptions, Relevance } from "./band.js";
+export { bandAggregateWords, bandCaps, bandOf, chooseGrouping, isBandAggregate, packBand, packRuns, runOf, shares } from "./band.js";
+export type { BandItem, BandOptions, BandSegment, Relevance } from "./band.js";
+export { bandCaptions, CAPTION_HEIGHT, CAPTION_RISE, captionRuns, captionText, captionWidth, MIN_CAPTION } from "./captions.js";
+export type { CaptionBox, CaptionEntry, CaptionRun } from "./captions.js";
 export type { Opens } from "./types.js";

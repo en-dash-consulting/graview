@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { captionRuns, type CaptionEntry } from "../../src/captions.js";
+import { captionRuns, type CaptionEntry } from "../../src/index.js";
 
 /**
  * A RELATION IS CAPTIONED ONCE, over the row it starts in, and never over

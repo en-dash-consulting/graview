@@ -28,6 +28,38 @@ import type { SceneNode } from "./scene-node.js";
  * border is where a road meets a building.
  */
 /**
+ * THE CAPTIONS' WORDS AS THE BAND'S ROADS SEE THEM, in stage pixels. A
+ * caption is OF ITS RUN: its box reaches down to the top of the cards it
+ * names, so a road along the gutter passes over the heading rather than
+ * between the heading and its cards — the focused scene of a product with
+ * many relations ran a line under "WHO PRODUCED IT" and over its one card,
+ * cutting the words from what they name.
+ */
+export function captionBoxes(
+  stageEl: HTMLElement,
+  stage: { readonly left: number; readonly top: number },
+  nodes: readonly SceneNode[],
+  boxOf: (id: string) => Box | null | undefined,
+): Box[] {
+  const out: Box[] = [];
+  for (const caption of stageEl.querySelectorAll("[data-graview-relation] > span")) {
+    const r = caption.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) continue;
+    const y = r.top - stage.top;
+    const key = caption.parentElement?.getAttribute("data-graview-relation");
+    let below = Infinity;
+    for (const node of nodes) {
+      if (Math.round(node.plane) !== 1 || !node.via || `${node.via.edgeKind}|${node.via.direction}` !== key) continue;
+      const box = boxOf(node.id);
+      if (box && box.y >= y + r.height - 1) below = Math.min(below, box.y);
+    }
+    // Only as far as the gutter it stands in: a run whose cards are not under it keeps the words' own box.
+    out.push({ x: r.left - stage.left, y, width: r.width, height: below - y <= r.height * 4 ? below - y : r.height });
+  }
+  return out;
+}
+
+/**
  * HOW A TIE RUNS between two measured drawings — a pure decision, so it is
  * testable without a browser.
  *
@@ -426,10 +458,7 @@ export function connectorStrands(
    */
   if (!overview && stageEl && typeof document !== "undefined") {
     const stage = stageEl.getBoundingClientRect();
-    for (const caption of stageEl.querySelectorAll("[data-graview-relation] > span")) {
-      const r = caption.getBoundingClientRect();
-      if (r.width > 0 && r.height > 0) bandBoxes.push({ x: r.left - stage.left, y: r.top - stage.top, width: r.width, height: r.height });
-    }
+    bandBoxes.push(...captionBoxes(stageEl, stage, nodes, (id) => boxes.get(id)));
   }
   const bandFor = (a: string, b: string): Box[] | undefined => (!overview && inBand(a) && inBand(b) ? bandBoxes : undefined);
   /*

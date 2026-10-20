@@ -253,6 +253,16 @@ nobody looked at the band. Walked stop by stop, with screenshots:
   current one, and the gutter between rows is a caption's height (22 px).
   The rows are planned by `packRuns` and `bandCaps` before anything is
   drawn: water-filled shares, trimmed until the packing fits.
+- **Below the crowd the band was still one grid, and its captions still
+  sat on the cards.** A product's focused position had five small
+  relations in two rows in id order: "QUESTIONS THAT WOULD SETT…" over the
+  cards of the relation beside it. Every band of more than one relation is
+  now laid out by relation with the caption's gutter, crowded or not, and
+  a relation takes as many slots of the row it starts as its caption's
+  words need (`packBand`), its cards centered in them. `bandCaptions`
+  places the captions on the layout's own boxes, the placement the page
+  makes on what it measures, so a unit test holds that no caption stands
+  on a card or another caption.
 - **A song in a crowded row drew its summary card, cut to a sliver.** A
   record standing in a crowded band is `compact` and drawn as a chip, and a
   chip is never wider than its slot.
