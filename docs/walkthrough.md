@@ -68,9 +68,8 @@ confusing, a picture that misleads, a word that is wrong for the domain.
   second checkout — a worktree, a walk app's own framework copy — runs its
   servers outside 5190–5399.
 - The walker commits each finding with its check ("walkthrough: <stage> ·
-  <finding>") and does not push. When a walk adds a new class or a blocked
-  job, the walk task is closed by acknowledgment and the next walk task
-  carries the done criterion (see Done).
+  <finding>") and does not push. A walk passes when it leaves no
+  blocker open; minors become tasks (see Done).
 
 ## The stance
 
@@ -442,38 +441,33 @@ asked it since.
 
 ## Done
 
-There are two answers to "is it done", and they are asked by two kinds of
-run.
+**A walk passes when it leaves no blocker open.** It is not asked to find
+nothing. Twelve walks in twelve domains found 238 findings and none kept the
+log still, because a new domain is new data and every release ships new
+surfaces. "The log gains nothing" was a bar no walk could meet, so from the
+thirteenth walk (2026-10-19) the bar is severity:
 
-- **A walk is done when no job is blocked and it adds no new class.** The
-  journeys finish every derived job in both faces, at both widths, by
-  keyboard and by pointer, on the walk's own app at real size; nothing on
-  the friction list costs more than the cheapest way to the same job by a
-  margin the walk can name a reason for; and every finding is of a class
-  already on the list, fixed by closing the hole in that class's check. A second agent, starting
-  from the kick-off prompt in a fresh checkout and a new domain, works all
-  nine stages; every finding it makes is of a class already on the list,
-  and each has been fixed by closing the hole in that class's shared check.
-  A new domain is new data, so a walk that finds nothing at all is not the
-  bar — six walks in six domains found 31, 19, 19, 16, 32 and 29, and every
-  one of those 152 was of a class the first walk had already met.
-- **A regression re-walk is done when it finds nothing.** It walks an
-  earlier domain again — `../walk6`, the car dealership, or any walk before
-  it — on the current framework. The data is not new, the classes are not
-  new, and every finding that domain produced is held by a shared check,
-  so "the log gains nothing" is the expected answer here, and anything it
-  does find is a regression in a check that should have held it.
+- **Blocker:** a stranger cannot finish the step, or gets a wrong result,
+  loses data, or is refused with no way forward. A walk fixes every blocker
+  it finds, in the framework package it belongs to, with a criterion seen
+  failing first, and where it fits a journeys or harness claim so the next
+  walk does not have to find it again.
+- **Minor:** friction, wording, keystrokes, cosmetics. A walk logs it in
+  the findings (marked minor) and it becomes an ordinary PRD task. It does
+  not fail the walk and the walk does not stop to fix it.
 
-Until then, every commit is "walkthrough: <stage> · <finding>", with the
-criterion in the same commit as the fix — and for a known class, the
-criterion is the shared check's.
+**A walk is time-boxed and scoped.** A release's walk takes about
+forty-five minutes and walks what that release and the ones since the last
+walk added or changed, entered from `graview create` and the first page.
+The full nine stages, A to I, are walked once a quarter, on the same bar.
+A walk that runs out of time says what it did not reach; that is carried,
+not failed.
 
-Ten walks have been run (31, 19, 19, 16, 32, 29, 22, 14, 13 and 13 findings,
-every one fixed with a criterion or carried open by name); none kept the
-log still. The first six added no class the first had not; the seventh
-added two, the eighth one, and the ninth and tenth none. The eighth found the journeys themselves
-blind for eight days (W-176, W-178): a walk starts by asking whether the
-instrument it starts from walked anything. The seventh starts from the journeys and the ledger: the
-watch, the gauntlet and the ledger hold the classes six walks found, so
-what it is for is the jobs — the ones a person cannot finish, then the ones
-that cost too much — and whatever fits no class at all.
+**A regression re-walk is done when it finds no blocker** in an earlier
+domain (`../walk6`, `../walk12`) on the current framework: anything it does
+find is a regression in a check that should have held it.
+
+Every blocker's commit is "walkthrough: <stage> · <finding>", with the
+criterion in the same commit as the fix. Walkthroughs VII to XII, run on
+the old bar, are closed as superseded; what each carried is filed as
+ordinary tasks.
