@@ -63,7 +63,7 @@ export async function open(): Promise<OpenedApp> {
       nodes: example.nodes.filter((node) => node.id !== "rule-limit"),
       edges: example.edges,
     });
-    adapter.saveMeta(rotaApp.name, { version: 1 });
+    await adapter.saveMeta(rotaApp.name, { version: 1 });
   }
   const opened = await openStore({
     app: rotaApp,

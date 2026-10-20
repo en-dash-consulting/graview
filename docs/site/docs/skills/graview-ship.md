@@ -20,7 +20,7 @@ const opened = await openStore({ app, adapter: createFileAdapter("./data") }); /
 
 The file adapter is deliberately readable: `snapshot.json`, append-only `log.jsonl`, `meta.json` with the stored schema version. The core's sqlite adapter is the scale answer.
 
-**In the page, with no server**, the browser adapter stores the same three things in `localStorage` and slots into the same call — import it from `@graview/ship/browser` so the bundler never meets `node:fs`:
+**In the page, with no server**, the browser adapter stores the same three things in IndexedDB (localStorage only where IndexedDB will not open; a store localStorage already holds is carried forward on its first open) and slots into the same call — import it from `@graview/ship/browser` so the bundler never meets `node:fs`:
 
 ```ts import { browserStartsFresh, createBrowserAdapter, forgetFreshParam, openStore } from "@graview/ship/browser";
 

@@ -30,7 +30,9 @@ function exportsOf(entry: string): Set<string> {
 const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   // The page's storage: localStorage and the address bar.
   browserStartsFresh: "a page's address bar",
-  createBrowserAdapter: "localStorage",
+  createBrowserAdapter: "IndexedDB and localStorage",
+  BROWSER_DATABASE: "IndexedDB",
+  IDBFactoryLike: "IndexedDB",
   forgetFreshParam: "a page's address bar",
   freshHref: "a page's address bar",
   PRINCIPAL_KEY: "localStorage",

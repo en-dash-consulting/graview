@@ -13,8 +13,9 @@ declaration plus one persistence adapter is a running deployment.
 - **`createFileAdapter(root)`** — persistence a person can read: `snapshot.json`,
   append-only `log.jsonl`, `meta.json` with the stored schema version. The core's sqlite
   adapter is the scale answer; this is the "where is my data" answer.
-- **`createBrowserAdapter()`** — the same three things in `localStorage`, for an app that
-  runs in the page with no server: the sample apps remember their edits through it,
+- **`createBrowserAdapter()`** — the same three things in IndexedDB, for an app that
+  runs in the page with no server (a store kept in `localStorage` before is carried forward on
+  its first open, and `localStorage` is used only where IndexedDB will not open): the sample apps remember their edits through it,
   attributed and undoable, migrations included. Import from `@graview/ship/browser` in a
   bundle (the root entry carries the file adapter's `node:fs`). Conventions the helpers
   read: `?fresh=1` returns to the seed (`openStore({ fresh })`), and a driven browser
@@ -42,7 +43,7 @@ declaration plus one persistence adapter is a running deployment.
   `Response`, for any runtime: a Cloudflare Worker or Durable Object, Deno, Bun. `serveStore`
   is a thin `node:http` wrapper around it. Import it from `@graview/ship/runtime`, the entry
   that reaches no `node:` builtin: the store, migrations, the handler and `openRemote`, without
-  the file adapter or the page's localStorage. A host that opens, migrates and heals its own
+  the file adapter or the page's own storage. A host that opens, migrates and heals its own
   `Store` hands it over instead of an adapter: `createStoreHandler({ app, store, seatOf, flush })`.
 - **Content moves as steps.** The step DSL (`stepsMigration`) has five content steps beside
   the schema ones — `put-node`, `patch-node`, `drop-node`, `put-edge`, `drop-edge` — each

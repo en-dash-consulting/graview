@@ -17,6 +17,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { stored } from "./lib/stored.mjs";
 import { arrangeByKeyboard, chooseOnTheLine, endClearsTheFoot, FIRST_RECORD_WITHIN, listHead } from "./lib/arranging-line.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 
@@ -897,6 +898,50 @@ async function aListReadsOnOneScale() {
   };
 }
 
+async function aLargeStoreReloadsWithItsEdit() {
+  /*
+   * A STORE TOO LARGE FOR LOCALSTORAGE IS KEPT (the engines leg, #330).
+   * WebKit keeps 5 MB of localStorage an origin and counts each character
+   * twice, so the gauntlet's 2.8 MB seed did not fit: the store opened,
+   * reported the failed write, and a reload had forgotten every edit. The
+   * browser adapter keeps it in IndexedDB now. Here, in whichever engine
+   * this run is: start fresh, add a session through the derived form,
+   * reload remembering, and find it again.
+   */
+  const LABEL = "Kept across a reload";
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const failed = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().includes("persistence failed")) failed.push(message.text().slice(0, 200));
+  });
+  await page.goto(`${at("gauntlet")}/pages/sessions?remember=1&fresh=1`, { waitUntil: "load", timeout: 120_000 });
+  await page.waitForSelector('[data-testid="records"] li', { timeout: 120_000 });
+  if (!(await page.locator('[data-testid="form-add-session"]').isVisible().catch(() => false))) await page.click('[data-testid="act-open-add-session"]');
+  await page.fill('[data-testid="form-add-session"] input[name="label"]', LABEL);
+  await page.fill('[data-testid="form-add-session"] input[name="day"]', "2017-09-25");
+  await page.click('[data-testid="form-add-session"] button[type="submit"]');
+  // The write of 2.8 MB settles on its own time; ask what is kept until it says so.
+  let kept = null;
+  for (let tries = 0; tries < 20 && !kept?.nodes?.some((node) => node.label === LABEL); tries++) {
+    await page.waitForTimeout(500);
+    kept = await stored(page, "graview:Program:snapshot");
+  }
+  const log = (await stored(page, "graview:Program:log")) ?? [];
+  await page.goto(`${at("gauntlet")}/pages/search?q=${encodeURIComponent(LABEL)}&remember=1`, { waitUntil: "load", timeout: 120_000 });
+  await page.waitForFunction((label) => document.querySelector("main")?.textContent?.includes(label), LABEL, { timeout: 30_000 }).catch(() => undefined);
+  const found = await page.evaluate((label) => document.querySelector("main")?.textContent?.includes(label) ?? false, LABEL);
+  report.checks.aLargeStoreReloadsWithItsEdit = {
+    engine: ENGINE,
+    storedNodes: kept?.nodes?.length ?? 0,
+    keptTheEdit: kept?.nodes?.some((node) => node.label === LABEL) ?? false,
+    logged: log.length,
+    foundAfterTheReload: found,
+    failed,
+    ok: (kept?.nodes?.length ?? 0) > 1000 && log.length > 0 && found && failed.length === 0,
+  };
+  await page.close();
+}
+
 async function aShortPagesPaperFillsTheWindow() {
   /* A design's short page (the almanac's two gardeners): its paper fills the window, and nothing side-scrolls. */
   const seen = [];
@@ -1315,6 +1360,7 @@ try {
   // The gauntlet's Program, the derived face with nothing of its own, for a list that reads well by default.
   program = await startVite("gauntlet", portFor("gauntlet"));
   await aListReadsOnOneScale();
+  await aLargeStoreReloadsWithItsEdit();
   await aShortPagesPaperFillsTheWindow();
   await theMapOnAPhone();
   const { deskGallery, phoneGallery } = await theLandingIsAGallery();

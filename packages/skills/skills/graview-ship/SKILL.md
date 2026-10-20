@@ -29,8 +29,10 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    sqlite adapter is the scale answer.
 
    **In the page, with no server**, the browser adapter stores the same
-   three things in `localStorage` and slots into the same call — import it
-   from `@graview/ship/browser` so the bundler never meets `node:fs`:
+   three things in IndexedDB (localStorage only where IndexedDB will not
+   open; a store localStorage already holds is carried forward on its first
+   open) and slots into the same call — import it from
+   `@graview/ship/browser` so the bundler never meets `node:fs`:
 
    ```ts
    import { browserStartsFresh, createBrowserAdapter, forgetFreshParam, openStore }

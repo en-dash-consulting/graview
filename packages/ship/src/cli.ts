@@ -91,8 +91,8 @@ export function flag(argv: readonly string[], name: string): string | undefined 
 
 export interface StoreBackend {
   readonly adapter: PersistenceAdapter<string> & {
-    loadMeta?(scope: string): StoredMeta | null;
-    saveMeta?(scope: string, meta: StoredMeta): void;
+    loadMeta?(scope: string): StoredMeta | null | Promise<StoredMeta | null>;
+    saveMeta?(scope: string, meta: StoredMeta): void | Promise<void>;
   };
   /** Where the data is, in words a person can open. */
   readonly where: string;
