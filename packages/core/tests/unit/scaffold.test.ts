@@ -364,7 +364,7 @@ describe("link mode", () => {
     expect(manifest.dependencies["@graview/core"]).toBe("link:../graview/packages/core");
     const vite = s.files.find((f) => f.path === "vite.config.ts")!.contents;
     expect(vite).toContain("dedupe");
-    expect(vite).toContain('"@graview/ship/browser"');
+    expect(vite).toContain("alias: sourceAliases(framework)");
     expect(vite).toContain("searchForWorkspaceRoot");
     /*
      * And no `paths` into anyone's package manager. The project's schemas
@@ -497,34 +497,37 @@ describe("a project can do what its own skills tell it to", () => {
     expect(GRAVIEW_PACKAGES).toContain("embed");
   });
 
-  it("aliases every one of them for the linked dev server", () => {
+  /*
+   * The linked dev server used to carry a hand list of aliases, one per
+   * export, pinned here to the exports of the day — so a project created
+   * today broke on the next subpath the framework added, the way seven
+   * product apps did. It asks `sourceAliases` from `@graview/ship/dev` for
+   * them now, which reads every package's `exports` in the checkout when
+   * the server starts (ship's every-export test holds that it covers each
+   * one, and `smoke:create` resolves each through a linked project's own
+   * Vite). The scaffold only writes the call; core imports nothing of ship.
+   */
+  it("takes its aliases from the framework checkout's own exports, not from a list", () => {
     const vite = scaffoldProject({ name: "Walk", link: "../framework" }).files.find(
       (one) => one.path === "vite.config.ts",
     )!.contents;
-    for (const pkg of GRAVIEW_PACKAGES) {
-      expect(vite, pkg).toContain(`"@graview/${pkg}"`);
-    }
+    expect(vite).toMatch(/^import \{ devFiles, sourceAliases, studioDoor \} from "@graview\/ship\/dev";$/m);
+    expect(vite).toContain('const framework = fileURLToPath(new URL("../framework", import.meta.url));');
+    expect(vite).toContain("alias: sourceAliases(framework),");
+    // The same checkout is the one the dev server may serve from.
+    expect(vite).toContain("allow: [searchForWorkspaceRoot(process.cwd()), framework]");
+    // And no export is named by hand, so none can be missing.
+    expect(vite).not.toMatch(/"@graview\/[a-z-]+(\/[^"]*)?":/);
+    // What the linked config kept: one React, the studio's door and the record files.
+    expect(vite).toContain('dedupe: ["react", "react-dom", "react-router-dom"]');
+    expect(vite).toContain("plugins: [studioDoor(), devFiles()]");
   });
 
-  /*
-   * A string alias is a PREFIX: "@graview/core" also takes
-   * "@graview/core/testing" and resolves it to "core/src/index.ts/testing",
-   * which does not exist — a product's tests that reach for the testing
-   * entry, or ship's cli that reaches for core's, failed to load at all.
-   */
-  it("aliases every subpath a package exports, ahead of its bare name", () => {
-    const vite = scaffoldProject({ name: "Walk", link: "../framework" }).files.find(
-      (one) => one.path === "vite.config.ts",
+  it("points a workspace's app at the checkout one directory further up", () => {
+    const vite = scaffoldProject({ name: "Walk", link: "../framework", workspace: true }).files.find(
+      (one) => one.path === "app/vite.config.ts",
     )!.contents;
-    const packages = fileURLToPath(new URL("../../..", import.meta.url));
-    for (const pkg of GRAVIEW_PACKAGES) {
-      const manifest = JSON.parse(readFileSync(join(packages, pkg, "package.json"), "utf8")) as { exports: Record<string, unknown> };
-      for (const sub of Object.keys(manifest.exports).filter((one) => one !== "." && one !== "./package.json")) {
-        const name = `"@graview/${pkg}/${sub.slice(2)}":`;
-        expect(vite, name).toContain(name);
-        expect(vite.indexOf(name), `${name} before "@graview/${pkg}":`).toBeLessThan(vite.indexOf(`"@graview/${pkg}":`));
-      }
-    }
+    expect(vite).toContain('new URL("../../framework", import.meta.url)');
   });
 });
 
