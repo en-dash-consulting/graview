@@ -63,7 +63,9 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    ```
 
    The first prints the content steps — `task t-van is put`, `today is
-   patched: label`, `today holds t-van is tied` — and writes nothing; the
+   patched: label`, `today holds t-van is tied` — and writes nothing, or
+   exits 1 naming every record, field and declared limit the store would
+   refuse (`Step: Too big: expected number to be <=4`); the
    second lands them as one operation authored `system · ship:sync-seed`,
    logged, undoable, leaving what people made alone unless `--prune` says
    otherwise. The same five steps (`put-node`, `patch-node`, `drop-node`,

@@ -14,7 +14,7 @@ import { sayStep } from "./steps.js";
 import { LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
 import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
 import { bundleAppForPage } from "./preview-app.js";
-import { applySteps, seedSteps } from "./sync-seed.js";
+import { applySteps, sayRefusals, seedRefusals, seedSteps } from "./sync-seed.js";
 import { runConnections } from "./connections.js";
 import { fileConnectionState, readEnvFile } from "./connections-file.js";
 import { heldBy, holdFileOf, holdStore, sayHeld, sayTookOver, type StoreHold } from "./store-hold.js";
@@ -327,6 +327,25 @@ export async function syncSeed(argv: readonly string[]): Promise<number> {
     if (steps.length === 0) {
       process.stdout.write(json ? `{"steps":[],"applied":null}\n` : `graview sync-seed: ${backend.where} already has everything the seed has.\n`);
       return 0;
+    }
+    /*
+     * JUDGED BEFORE IT IS ASKED. Every put and patch is applied to a copy as
+     * the store would apply it, so a dry run that passes is an apply that
+     * lands, and an apply that would be refused is refused here, naming
+     * every record at once — not after a clean-looking dry run.
+     */
+    const refused = seedRefusals(app.schema, steps, live);
+    if (refused.length > 0) {
+      const fits = steps.filter((step) => !refused.some((one) => one.step === step));
+      process.stdout.write(
+        json
+          ? `${JSON.stringify({ steps, refused, applied: null }, null, 2)}\n`
+          : `graview sync-seed: ${refused.length} of ${steps.length} step${steps.length === 1 ? "" : "s"} would be refused by what ${app.name} declares, so the store would take none of them:\n` +
+              sayRefusals(refused) +
+              (fits.length > 0 ? `The other ${fits.length} fit${fits.length === 1 ? "s" : ""}:\n${fits.map((step) => `  ${sayStep(step)}\n`).join("")}` : "") +
+              `Nothing was written. Change these records in the seed, or the declaration, and run this again.\n`,
+      );
+      return 1;
     }
     if (!argv.includes("--apply")) {
       process.stdout.write(

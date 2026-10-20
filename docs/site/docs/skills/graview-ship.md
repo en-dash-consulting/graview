@@ -32,7 +32,7 @@ Reopened, the store carries its persisted history: earlier edits are in the acti
 
 ```sh graview sync-seed ./dist/domain/app.js --seed ./src/data/example.json --data ./data graview sync-seed ./dist/domain/app.js --seed ./src/data/example.json --data ./data --apply ```
 
-The first prints the content steps — `task t-van is put`, `today is patched: label`, `today holds t-van is tied` — and writes nothing; the second lands them as one operation authored `system · ship:sync-seed`, logged, undoable, leaving what people made alone unless `--prune` says otherwise. The same five steps (`put-node`, `patch-node`, `drop-node`, `put-edge`, `drop-edge`) go in `migrations[]` through `stepsMigration` when every installation should get them.
+The first prints the content steps — `task t-van is put`, `today is patched: label`, `today holds t-van is tied` — and writes nothing, or exits 1 naming every record, field and declared limit the store would refuse (`Step: Too big: expected number to be <=4`); the second lands them as one operation authored `system · ship:sync-seed`, logged, undoable, leaving what people made alone unless `--prune` says otherwise. The same five steps (`put-node`, `patch-node`, `drop-node`, `put-edge`, `drop-edge`) go in `migrations[]` through `stepsMigration` when every installation should get them.
 
 1. **Version the declaration, and migrate in primitives.** When the schema changes shape:
 

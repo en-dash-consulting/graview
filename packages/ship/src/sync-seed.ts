@@ -1,4 +1,5 @@
 import {
+  Graph,
   invert,
   normalize,
   writesOf,
@@ -8,7 +9,8 @@ import {
   type Store,
 } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
-import { primitivesForSteps, sayStep, type MigrationStep } from "./steps.js";
+import { applyToSnapshot } from "./snapshot.js";
+import { primitivesFor, primitivesForSteps, sayStep, type MigrationStep } from "./steps.js";
 
 /**
  * THE SEED IS A BOOTSTRAP SNAPSHOT, and the live store is the truth.
@@ -86,6 +88,71 @@ export function seedSteps(seed: GraphSnapshot, live: GraphSnapshot, options: See
   }
 
   return steps;
+}
+
+/** A step the store would refuse: the record it names, the fields that do not fit, and why, in the declaration's words. */
+export interface SeedRefusal {
+  readonly step: MigrationStep;
+  /** The record's id (an edge's names its two ends). */
+  readonly record: string;
+  /** The fields of the record that do not fit its kind, as the kind names them; empty when the refusal is not about a field. */
+  readonly fields: readonly string[];
+  /** The store's own refusal: `Begin does not match what chapter declares` and, under it, `Step: Too big: …`. */
+  readonly said: string;
+}
+
+const recordOf = (step: MigrationStep): string =>
+  step.what === "put-node" ? String(step.node.id) : step.what === "put-edge" || step.what === "drop-edge" ? `${step.edge.from} → ${step.edge.to}` : "id" in step ? String(step.id) : "?";
+
+/**
+ * WHAT THE APPLY WOULD REFUSE, said before it is asked. The steps' own
+ * primitives are applied to a copy of the live graph, judged as the store
+ * judges them — the same `applyPrimitives` that `receive` runs — so a dry
+ * run that passes is an apply that lands. When the batch fails, each step
+ * is tried in turn against the copy as the steps before it left it, so
+ * every refusal is named at once rather than the first one only.
+ */
+export function seedRefusals(schema: AnySchema, steps: readonly MigrationStep[], live: GraphSnapshot): SeedRefusal[] {
+  const primitives = primitivesForSteps(steps, live).map(normalize);
+  if (primitives.length === 0) return [];
+  try {
+    Graph.from(schema, live as never).applyPrimitives(primitives);
+    return [];
+  } catch {
+    /* at least one step does not fit: find each */
+  }
+  const scratch = Graph.from(schema, live as never);
+  let running = live;
+  const refused: SeedRefusal[] = [];
+  for (const step of steps) {
+    const own = primitivesFor(step, running).map(normalize);
+    if (own.length === 0) continue;
+    try {
+      scratch.applyPrimitives(own);
+      running = applyToSnapshot(running, own);
+    } catch (error) {
+      const record = recordOf(step);
+      const after = step.what === "put-node" ? step.node : step.what === "patch-node" ? { ...running.nodes.find((node) => node.id === step.id), ...step.fields } : undefined;
+      refused.push({ step, record, fields: after ? misfitFields(schema, after) : [], said: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  return refused;
+}
+
+/** The fields of a record its kind does not take, by the names the kind gives them. */
+function misfitFields(schema: AnySchema, node: unknown): string[] {
+  try {
+    schema.parseNode(node);
+    return [];
+  } catch (error) {
+    const issues = (error as { issues?: readonly { path?: readonly PropertyKey[]; keys?: readonly string[] }[] }).issues ?? [];
+    return [...new Set(issues.flatMap((issue) => issue.keys ?? (typeof issue.path?.[0] === "string" ? [issue.path[0]] : [])))];
+  }
+}
+
+/** The refusals as lines a person reads: the step, then the store's words under it. */
+export function sayRefusals(refused: readonly SeedRefusal[]): string {
+  return refused.map((one) => `  ${sayStep(one.step)}\n${one.said.split("\n").map((line) => `      ${line.trim()}\n`).join("")}`).join("");
 }
 
 export const SEED_SYNC_AUTHOR: Principal = { kind: "system", id: "ship:sync-seed" };
