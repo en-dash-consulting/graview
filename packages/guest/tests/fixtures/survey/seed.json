@@ -1,0 +1,232 @@
+{
+  "nodes": [
+    {
+      "id": "station:north",
+      "kind": "station",
+      "label": "North ridge"
+    },
+    {
+      "id": "station:creek",
+      "kind": "station",
+      "label": "Creek bend"
+    },
+    {
+      "id": "detection:c1",
+      "kind": "detection",
+      "label": "Creek 1",
+      "photo": {
+        "href": "/graview/files/creek-1.jpg",
+        "name": "creek-1.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:c2",
+      "kind": "detection",
+      "label": "Creek 2",
+      "photo": {
+        "href": "/graview/files/creek-2.jpg",
+        "name": "creek-2.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:c3",
+      "kind": "detection",
+      "label": "Creek 3",
+      "photo": {
+        "href": "/graview/files/creek-3.jpg",
+        "name": "creek-3.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:c4",
+      "kind": "detection",
+      "label": "Creek 4",
+      "photo": {
+        "href": "/graview/files/creek-4.jpg",
+        "name": "creek-4.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:c5",
+      "kind": "detection",
+      "label": "Creek 5",
+      "photo": {
+        "href": "/graview/files/creek-5.jpg",
+        "name": "creek-5.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:c6",
+      "kind": "detection",
+      "label": "Creek 6",
+      "photo": {
+        "href": "/graview/files/creek-6.jpg",
+        "name": "creek-6.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:c7",
+      "kind": "detection",
+      "label": "Creek 7",
+      "photo": {
+        "href": "/graview/files/creek-7.jpg",
+        "name": "creek-7.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:c8",
+      "kind": "detection",
+      "label": "Creek 8",
+      "photo": {
+        "href": "/graview/files/creek-8.jpg",
+        "name": "creek-8.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:c9",
+      "kind": "detection",
+      "label": "Creek 9",
+      "photo": {
+        "href": "/graview/files/creek-9.jpg",
+        "name": "creek-9.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:c10",
+      "kind": "detection",
+      "label": "Creek 10",
+      "photo": {
+        "href": "/graview/files/creek-10.jpg",
+        "name": "creek-10.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:n1",
+      "kind": "detection",
+      "label": "Ridge 1",
+      "photo": {
+        "href": "/graview/files/ridge-1.jpg",
+        "name": "ridge-1.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    },
+    {
+      "id": "detection:n2",
+      "kind": "detection",
+      "label": "Ridge 2",
+      "photo": {
+        "href": "/graview/files/ridge-2.jpg",
+        "name": "ridge-2.jpg",
+        "type": "image/jpeg",
+        "bytes": 1500000,
+        "width": 2000,
+        "height": 1500
+      }
+    }
+  ],
+  "edges": [
+    {
+      "kind": "taken-by",
+      "from": "detection:c1",
+      "to": "station:creek"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:c2",
+      "to": "station:creek"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:c3",
+      "to": "station:creek"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:c4",
+      "to": "station:creek"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:c5",
+      "to": "station:creek"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:c6",
+      "to": "station:creek"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:c7",
+      "to": "station:creek"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:c8",
+      "to": "station:creek"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:c9",
+      "to": "station:creek"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:c10",
+      "to": "station:creek"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:n1",
+      "to": "station:north"
+    },
+    {
+      "kind": "taken-by",
+      "from": "detection:n2",
+      "to": "station:north"
+    }
+  ]
+}

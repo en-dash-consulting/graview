@@ -13,6 +13,7 @@ import type { GraphSnapshot } from "./snapshot.js";
 import { sayStep } from "./steps.js";
 import { LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
 import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
+import { bundleAppForPage } from "./preview-app.js";
 import { applySteps, seedSteps } from "./sync-seed.js";
 import { runConnections } from "./connections.js";
 import { fileConnectionState, readEnvFile } from "./connections-file.js";
@@ -53,19 +54,21 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       install — this is how default content moves afterwards, in place of
       deleting the store.
 
-  graview preview <document.json> [--seed <file>] [--port <n>] [--host <address>]
+  graview preview <document.json | app module> [--seed <file>] [--port <n>] [--host <address>]
                   [--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync]
                   [--view <view.js> --manifest <manifest.json>]
       Serves the store and Graview's own faces over it — the scene and
       Pages, with the bar — so a document and a snapshot can be looked at
       with no product. Nothing to build or install: the page ships with
-      graview. The store is in memory unless --data or --sqlite name where
-      to keep it; the page sits as a person holding every role the document
-      declares, unless --as or --roles say who. Its connections run as
+      graview. An app declared in code is taken as graview check takes it
+      (./dist/domain/app.js), its module bundled for the page with the
+      project's esbuild. The store is in memory unless --data or --sqlite
+      name where to keep it; the page sits as a person holding every role
+      the app declares, unless --as or --roles say who. Its connections run as
       serve's do, unless --no-sync. --view and --manifest draw a worker view
       proposed and not kept where it attaches, marked as a draft.
 
-  graview shots <document.json> [--seed <file>] [--places a,b] [--out <dir>]
+  graview shots <document.json | app module> [--seed <file>] [--places a,b] [--out <dir>]
                 [--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene]
                 [--view <view.js> --manifest <manifest.json>]
       Photographs places headless to PNGs, <place>-<scheme>-<width>.png in
@@ -74,7 +77,7 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       /tasks/t1; every place when none is named. Needs Playwright, which you
       install beside the project (npm i -D playwright, then npx playwright
       install chromium). --view and --manifest picture a proposed view
-      before it is kept: name its place's path (/places/<title>).
+      before it is kept: name its place by its title, as a kept view's.
 `;
 
 /** The same store, whichever command asked: parsed from the flags every store command shares. */
@@ -331,12 +334,25 @@ export interface PreviewPage {
   readonly page: string;
 }
 
-/** The document a preview or a shots run was asked for, or the reason it cannot start. */
-function previewInput(argv: readonly string[], command: string): { readonly document: unknown } | number {
+/**
+ * The document a preview or a shots run was asked for — or the app declared
+ * in code, as `graview check` loads one, with its module bundled for the
+ * page (W-245) — or the reason it cannot start.
+ */
+async function previewInput(argv: readonly string[], command: string): Promise<{ readonly document: unknown; readonly code?: undefined } | { readonly code: { readonly app: GraviewApp; readonly bundle: string }; readonly document?: undefined } | number> {
   const file = argv[0];
-  if (!file || file.startsWith("--") || !file.endsWith(".json")) {
-    process.stderr.write(`graview ${command}: a declaration document (a .json file) is required\n\n${SERVE_USAGE}`);
+  if (!file || file.startsWith("--")) {
+    process.stderr.write(`graview ${command}: a declaration document (a .json file) or an app module (./dist/domain/app.js) is required\n\n${SERVE_USAGE}`);
     return 2;
+  }
+  if (!file.endsWith(".json")) {
+    try {
+      const app = await loadApp(file);
+      return { code: { app, bundle: await bundleAppForPage(file) } };
+    } catch (error) {
+      process.stderr.write(`graview ${command}: cannot picture ${file}: ${error instanceof Error ? error.message : String(error)}\n`);
+      return 1;
+    }
   }
   try {
     return { document: JSON.parse(readFileSync(resolve(process.cwd(), file), "utf8")) as unknown };
@@ -345,6 +361,9 @@ function previewInput(argv: readonly string[], command: string): { readonly docu
     return 1;
   }
 }
+
+/** What `servePreview` is handed of it: the document, or the app in code. */
+const previewed = (input: { readonly document?: unknown; readonly code?: { readonly app: GraviewApp; readonly bundle: string } }) => (input.code ? { code: input.code as never } : { document: input.document });
 
 /** A view proposed and not kept (FR-187), from `--view <view.js> --manifest <manifest.json>`: nothing when neither is given, or the reason it cannot be read. */
 function draftOf(argv: readonly string[], command: string): { readonly draftView?: { readonly manifest: unknown; readonly source: string } } | number {
@@ -384,7 +403,7 @@ async function said<T>(command: string, step: () => Promise<T>): Promise<T | und
  * for somebody with no product (`./serve-preview.ts`).
  */
 export async function preview(argv: readonly string[], { page }: PreviewPage): Promise<number> {
-  const input = previewInput(argv, "preview");
+  const input = await previewInput(argv, "preview");
   if (typeof input === "number") return input;
   const draft = draftOf(argv, "preview");
   if (typeof draft === "number") return draft;
@@ -405,7 +424,7 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
   let opened;
   try {
     opened = await servePreview({
-      document: input.document,
+      ...previewed(input),
       page,
       ...draft,
       ...(backend.seed ? { seed: backend.seed } : {}),
@@ -414,10 +433,10 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
       port: Number(flag(argv, "--port") ?? 0),
       host,
       trustSeatHeaders: trust.trust,
-      principal: previewPrincipal(input.document, { ...(as ? { as } : {}), ...(roles !== undefined ? { roles: listOf(roles) } : {}) }),
+      principal: previewPrincipal(input.code?.app ?? input.document, { ...(as ? { as } : {}), ...(roles !== undefined ? { roles: listOf(roles) } : {}) }),
       // The document's connections: credentials from the environment, cursors beside the data when it is kept, else in memory.
       connections: {
-        ...(keeps ? { state: fileConnectionState(connectionsFileOf(backend, (input.document as { name?: string }).name ?? "app")) } : {}),
+        ...(keeps ? { state: fileConnectionState(connectionsFileOf(backend, input.code?.app.name ?? (input.document as { name?: string }).name ?? "app")) } : {}),
         paused: argv.includes("--no-sync"),
         say: (line) => process.stdout.write(`graview preview: connection ${line}\n`),
       },
@@ -452,7 +471,7 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
  * preview, on a free port of its own, into PNGs (`./shots.ts`).
  */
 export async function shots(argv: readonly string[], { page }: PreviewPage): Promise<number> {
-  const input = previewInput(argv, "shots");
+  const input = await previewInput(argv, "shots");
   if (typeof input === "number") return input;
   const draft = draftOf(argv, "shots");
   if (typeof draft === "number") return draft;
@@ -480,15 +499,17 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
   if (backend === undefined) return 1;
   let opened;
   try {
-    opened = await servePreview({ document: input.document, page, ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0) });
+    opened = await servePreview({ ...previewed(input), page, ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0) });
   } catch (error) {
     process.stderr.write(`graview shots: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
   try {
-    const { shots: taken, unknown } = shotsOf(opened.app, listOf(flag(argv, "--places")), faces as ("pages" | "scene")[]);
+    // A draft's place by its title too, as a kept view's (W-243).
+    const drafted = draft.draftView?.manifest;
+    const { shots: taken, unknown } = shotsOf(opened.app, listOf(flag(argv, "--places")), faces as ("pages" | "scene")[], drafted);
     if (unknown.length > 0) {
-      const known = shotsOf(opened.app, [], ["pages"]).shots.map((shot) => shot.name).join(", ");
+      const known = shotsOf(opened.app, [], ["pages"], drafted).shots.map((shot) => shot.name).join(", ");
       process.stderr.write(`graview shots: ${opened.app.name} has no place called ${unknown.map((one) => JSON.stringify(one)).join(", ")}. Its places: ${known}, or a path such as /places/overview.\n`);
       return 2;
     }

@@ -153,6 +153,16 @@ describe("the places graview shots photographs", () => {
     ]);
     expect(shotsOf(preview.app, ["nowhere"], ["pages"]).unknown).toEqual(["nowhere"]);
   });
+
+  it("take a draft view's place by its title, as a kept view's, and list it among the places (W-243)", () => {
+    const draft = { name: "people-sheet", title: "People sheet", attach: "person", cardinality: "one" };
+    const asked = shotsOf(preview.app, ["People sheet"], ["pages"], draft);
+    expect(asked.unknown).toEqual([]);
+    expect(asked.shots.map((shot) => [shot.name, shot.address])).toEqual([["people-sheet", "/places/people-sheet"]]);
+    expect(shotsOf(preview.app, ["people-sheet"], ["pages"], draft).shots.map((shot) => shot.address)).toEqual(["/places/people-sheet"]);
+    expect(shotsOf(preview.app, [], ["pages"], draft).shots.map((shot) => shot.name)).toContain("people-sheet");
+    expect(shotsOf(preview.app, ["People sheet"], ["pages"]).unknown).toEqual(["People sheet"]);
+  });
 });
 
 describe("graview shots without Playwright", () => {

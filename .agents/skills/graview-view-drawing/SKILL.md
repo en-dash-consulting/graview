@@ -163,6 +163,8 @@ against its size.
    with a stand-in `src` (a blank image), so its `<img>` is drawn and
    judged; only the page shows its pixels. A picture the page would
    leave out comes with `left`, and the run says it among its problems.
+   The budget is spent in order, the records linked to a view's own by an
+   edge it reads first: a station's sheet on that camera's detections.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or
    `graview.refused` in its console): every element, attribute and
    address the host left out, and why.

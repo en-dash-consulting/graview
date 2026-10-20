@@ -150,8 +150,9 @@ the bar on a desk too — and the app's declared home is drawn if it fails.
    manifest.json --seed <seed.json> --roles <role>`. It prints what the
    view drew, said as `graview describe` says a place, or why it will not
    do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act
-   its manifest does not name), `manifest` or `source`. Run it on an empty
-   seed too. In code, `runWorkerViewHeadless` from
+   its manifest does not name), `manifest` or `source`. A view of one
+   record runs over the first of its kind the seat sees, or the one
+   `--record <id>` names. Run it on an empty seed too. In code, `runWorkerViewHeadless` from
    `@graview/guest/headless` does the same in an isolate you supply.
 3. Open the place on both faces as that member. Is anything shown that
    they should not see? Does the region carry no `data-worker-view-failed`?

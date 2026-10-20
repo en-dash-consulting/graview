@@ -6,6 +6,7 @@ import { readSnapshot } from "@graview/core/snapshot";
 import type { WorkerViewManifest } from "./host/manifest.js";
 import { runWorkerViewHeadless } from "./headless/index.js";
 import { nodeIsolate } from "./headless/node.js";
+import { plainNode } from "./host/session.js";
 
 /**
  * `graview view check` — run a worker view once, headless, and say what it
@@ -22,10 +23,12 @@ import { nodeIsolate } from "./headless/node.js";
  */
 
 export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest <manifest.json>
-                     [--seed <file>] [--as <id>] [--roles a,b] [--width <px>] [--json]
+                     [--seed <file>] [--record <id>] [--as <id>] [--roles a,b]
+                     [--width <px>] [--json]
       run a worker view once, headless, with no network, seated as one
       member (the system, unless --as or --roles say who), and say what it
-      drew, or why it will not do
+      drew, or why it will not do; a view of one record is run over the
+      record --record names, or the first of its kind the seat sees
 `;
 
 function flag(argv: readonly string[], name: string): string | undefined {
@@ -60,10 +63,29 @@ export async function view(argv: readonly string[]): Promise<number> {
   const as = flag(argv, "--as");
   const principal: Principal = as || roles.length > 0 ? { kind: "human", id: as ?? "graview-view-check", ...(roles.length > 0 ? { roles } : {}) } : { kind: "system", id: "graview-view-check" };
   const width = flag(argv, "--width");
+  const manifest = readJson(manifestAt) as WorkerViewManifest;
+  /* A view of one record is run over one (W-242): the one --record names, or the first of its kind the seat sees. */
+  let over = "";
+  let input: { readonly node: { readonly id: string } } | undefined;
+  if (manifest.cardinality === "one" && typeof manifest.attach === "string" && manifest.attach !== "home") {
+    const seen = store.seenBy(principal).graph;
+    const named = flag(argv, "--record");
+    const record = named !== undefined ? seen.getNode(named) : seen.nodesOfKind(manifest.attach as never)[0];
+    if (named !== undefined && (!record || record.kind !== manifest.attach)) {
+      process.stdout.write(`${file} was not run: ${named} is no ${manifest.attach} the seat sees.\n`);
+      return 1;
+    }
+    if (record) {
+      input = { node: { id: record.id } };
+      const label = plainNode(store, record).label;
+      over = `over "${label}" (${record.id})${named === undefined ? `, the first ${manifest.attach} the seat sees; --record <id> names another` : ""}\n`;
+    } else over = `over no ${manifest.attach}: the seat sees none\n`;
+  }
   const result = await runWorkerViewHeadless({
     store,
     principal,
-    manifest: readJson(manifestAt) as WorkerViewManifest,
+    manifest,
+    ...(input ? { input } : {}),
     source: readFileSync(resolve(process.cwd(), file), "utf8"),
     run: nodeIsolate(),
     // Each slug once: a picture over several kinds is one place to a view.
@@ -78,6 +100,6 @@ export async function view(argv: readonly string[]): Promise<number> {
     process.stdout.write(`${file} will not do (${result.reason}): ${result.detail}\n`);
     return 1;
   }
-  process.stdout.write(`${result.description.text}\n`);
+  process.stdout.write(`${over}${result.description.text}\n`);
   return 0;
 }

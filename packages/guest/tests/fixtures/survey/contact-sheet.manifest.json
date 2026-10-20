@@ -1,0 +1,8 @@
+{
+  "name": "contact-sheet",
+  "title": "Contact sheet",
+  "attach": "station",
+  "cardinality": "one",
+  "reads": { "kinds": ["detection"], "edges": ["taken-by"] },
+  "pictures": true
+}

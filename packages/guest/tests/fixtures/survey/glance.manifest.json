@@ -1,0 +1,7 @@
+{
+  "name": "glance",
+  "title": "Stations at a glance",
+  "attach": "station",
+  "cardinality": "many",
+  "reads": { "kinds": ["detection"], "edges": ["taken-by"] }
+}

@@ -401,10 +401,10 @@ Writes a lens that compiles: the role check that fails loudly, the createXLens f
 ## graview preview
 
 ```text
-graview preview <document.json> [--seed <file>] [--port <n>] [--host <address>]
+graview preview <document.json | app module> [--seed <file>] [--port <n>] [--host <address>]
 ```
 
-[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync] [--view <view.js> --manifest <manifest.json>] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the document declares, unless --as or --roles say who. Its connections run as serve's do, unless --no-sync. --view and --manifest draw a worker view proposed and not kept where it attaches, marked as a draft.
+[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync] [--view <view.js> --manifest <manifest.json>] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. An app declared in code is taken as graview check takes it (./dist/domain/app.js), its module bundled for the page with the project's esbuild. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the app declares, unless --as or --roles say who. Its connections run as serve's do, unless --no-sync. --view and --manifest draw a worker view proposed and not kept where it attaches, marked as a draft.
 
 ## graview serve
 
@@ -423,10 +423,10 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
 ## graview shots
 
 ```text
-graview shots <document.json> [--seed <file>] [--places a,b] [--out <dir>]
+graview shots <document.json | app module> [--seed <file>] [--places a,b] [--out <dir>]
 ```
 
-[--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene] [--view <view.js> --manifest <manifest.json>] Photographs places headless to PNGs, <place>-<scheme>-<width>.png in <dir> (default ./shots): each place by its address word or title (the home, overview, a lens's name, a kind's plural) or a path such as /tasks/t1; every place when none is named. Needs Playwright, which you install beside the project (npm i -D playwright, then npx playwright install chromium). --view and --manifest picture a proposed view before it is kept: name its place's path (/places/<title>).
+[--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene] [--view <view.js> --manifest <manifest.json>] Photographs places headless to PNGs, <place>-<scheme>-<width>.png in <dir> (default ./shots): each place by its address word or title (the home, overview, a lens's name, a kind's plural) or a path such as /tasks/t1; every place when none is named. Needs Playwright, which you install beside the project (npm i -D playwright, then npx playwright install chromium). --view and --manifest picture a proposed view before it is kept: name its place by its title, as a kept view's.
 
 ## graview skills
 
@@ -466,15 +466,15 @@ Source: https://graview.dev/docs/checks.html
 
 # What `graview check` says
 
-`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 107 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
+`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 108 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
 
 ## 70 errors
 
 `brand-accent-not-a-hue`, `brand-accent-unknown-kind`, `brand-currency`, `brand-emoji`, `brand-locale`, `brand-time-zone`, `creates-unknown-kind`, `edge-claim-unknown-kind`, `edge-target-undeclared`, `field-role-ill-typed`, `field-role-missing-field`, `figure-undrawable`, `figure-unknown-kind`, `fixed-unknown-field`, `glance-unknown-field`, `grant-own-end-without-link`, `grant-unknown-kind`, `grant-unknown-mutation`, `intelligence-decision-cannot-call`, `intelligence-reach-unknown`, `intelligence-unknown-mutation`, `invariant-scope-undeclared`, `kit-contrast-below-aa`, `lens-binding-empty`, `lens-binding-empty-path`, `lens-binding-fieldless-owner`, `lens-binding-missing-field`, `lens-binding-not-a-field`, `lens-binding-path-misses`, `lens-binding-undeclared-edge`, `lens-binding-undeclared-kind`, `lens-option`, `lens-role-unbound`, `lifecycle-missing-field`, `lifecycle-never-retires`, `migration-gap`, `migration-not-single-step`, `migration-without-version`, `module-unknown-invariant`, `module-unknown-kind`, `module-unknown-mutation`, `module-unknown-requirement`, `mutation-subject-arg-missing`, `mutation-subject-undeclared`, `mutation-unreachable-by-any-role`, `mutation-untitled`, `node-ref-undeclared`, `page-too-large`, `pages-kind-unknown`, `pages-list-arrangement`, `people-ambiguous`, `people-unsaid`, `plot-overlap`, `plural-slug-collision`, `repair-unknown-mutation`, `repair-wrong-kind`, `setting-name-taken`, `setting-name-unusable`, `setting-not-a-length`, `setting-not-honorable`, `setting-starts-nowhere`, `setting-without-a-choice`, `sight-hides-a-required-field`, `sight-names-an-unknown-field`, `sight-unknown-kind`, `sight-via-misses-people`, `sight-via-unknown-edge`, `theme-contrast-below-aa`, `view-for-undeclared-kind`, `writes-unknown-field`
 
-## 27 warnings
+## 28 warnings
 
-`act-reads-hidden-kind`, `act-without-far-end-reading`, `brand-unnamed`, `edge-without-inverse`, `field-without-writer`, `fixed-but-written`, `intelligence-decision-prose-door`, `intelligence-key-without-storage`, `intelligence-local-without-bridge`, `intelligence-reach-on-graph`, `kind-without-view`, `kit-color-unreadable`, `lens-column-written-unsaid`, `lens-title-repeated`, `module-edge-leak`, `mutation-title-ambiguous`, `mutation-title-is-an-identifier`, `mutation-undescribed`, `order-role-unknown`, `pages-filter-unknown`, `required-invariant-unregistered`, `role-may-do-nothing`, `rule-says-hidden-fact`, `sight-hides-a-labeled-field`, `sight-hides-required-ref`, `sight-unnamed-kind`, `theme-token-unreadable`
+`act-reads-hidden-kind`, `act-without-far-end-reading`, `brand-unnamed`, `describe-template-in-code`, `edge-without-inverse`, `field-without-writer`, `fixed-but-written`, `intelligence-decision-prose-door`, `intelligence-key-without-storage`, `intelligence-local-without-bridge`, `intelligence-reach-on-graph`, `kind-without-view`, `kit-color-unreadable`, `lens-column-written-unsaid`, `lens-title-repeated`, `module-edge-leak`, `mutation-title-ambiguous`, `mutation-title-is-an-identifier`, `mutation-undescribed`, `order-role-unknown`, `pages-filter-unknown`, `required-invariant-unregistered`, `role-may-do-nothing`, `rule-says-hidden-fact`, `sight-hides-a-labeled-field`, `sight-hides-required-ref`, `sight-unnamed-kind`, `theme-token-unreadable`
 
 ## 10 notes
 
@@ -482,7 +482,7 @@ Source: https://graview.dev/docs/checks.html
 
 ---
 
-Every one of the 107 things graview check can tell you, and how loudly.
+Every one of the 108 things graview check can tell you, and how loudly.
 
 The page: https://graview.dev/docs/checks.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -1257,7 +1257,7 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [Packages (14)](https://graview.dev/docs/packages.html): What each ships and what each exports.
 - [Skills (26)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.html): create, check, types, docs, describe, lens, figure, serve, skills.
-- [What check says (107)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
+- [What check says (108)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
 - [Releases](https://graview.dev/docs/releases.html): What came in each version, and what to know before upgrading.
 - [The garden, grown](https://graview.dev/progression.html): Sixteen live chapters, from one kind to a product.
@@ -2540,11 +2540,11 @@ A third party stands up their own host — a file store or SQLite, `graview serv
 
 Anything **one** deployment needs lives here. Anything only the **operator of many** deployments needs — tenancy, provisioning, deploy-to-URL, billing, fleet upgrades, the builder UX — lives in the `graview-cloud` repo, which consumes this package the way any customer would. If Cloud ever needs a private hook into the framework, that hook is a missing public seam to fix here first.
 
-## What it exports (85)
+## What it exports (89)
 
 Read off the package's own barrel, so this is what is there today.
 
-`announcePresence`, `answerSubscriptions`, `answerViews`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `conflictSentence`, `connectionsFileOf`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `fileConnectionState`, `filesAt`, `fileSubscriptions`, `fileViews`, `forgetFreshParam`, `freshHref`, `GOOGLE_TOKEN_URL`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `keepsTheApp`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `readEnvFile`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `remoteSubscriptions`, `remoteViews`, `runConnections`, `sayHeld`, `sayReport`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `VIEWS_PATH`, `visitorPresence`, `WIRE`, `wireRefusalOf`
+`announcePresence`, `answerSubscriptions`, `answerViews`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `bundleAppForPage`, `conflictSentence`, `connectionsFileOf`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `fileConnectionState`, `filesAt`, `fileSubscriptions`, `fileViews`, `findBundler`, `forgetFreshParam`, `freshHref`, `GOOGLE_TOKEN_URL`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `keepsTheApp`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `NO_BUNDLER`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `PREVIEW_APP_PATH`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `readEnvFile`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `remoteSubscriptions`, `remoteViews`, `runConnections`, `sayHeld`, `sayReport`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `VIEWS_PATH`, `visitorPresence`, `WIRE`, `wireRefusalOf`
 
 ---
 
@@ -3252,14 +3252,14 @@ It is drawn where its manifest attaches — the home, a kind's list at the place
 
 `graview preview <document.json>` serves the store and Graview's own faces over a document; `graview shots <document.json> --places a,b --scheme both
 
---width 390,1280` photographs places to PNGs, waiting for `data-graview-drawn` before each. Both take a proposed view as `--view <view.js> --manifest <manifest.json>`, drawn as a draft where it attaches; for `shots`, name its place's path (`/places/<title>`).
+--width 390,1280` photographs places to PNGs, waiting for `data-graview-drawn` before each. Both take an app declared in code as `graview check` does (`./dist/domain/app.js`): the store runs it, and the page is handed its module bundled with the project's esbuild. Both take a proposed view as `--view <view.js> --manifest <manifest.json>`, drawn as a draft where it attaches; `shots` takes its place by its title, as a kept view's (`--places "The week"`), and lists it among the places.
 
 ### Then find out whether it worked
 
 ```sh
 pnpm build && npx graview check ./dist/domain/app.js   # the declaration is still whole
 pnpm typecheck                                          # the host's options, no casts
-graview shots app.json --view view.js --manifest manifest.json --places /places/the-week --scheme both --width 390
+graview shots app.json --view view.js --manifest manifest.json --places "The week" --scheme both --width 390
 ```
 
 Then, on the host's page: reload a deep address and land on it; press Back after the switch and come back; sign in as a member and see no "sit as" in the menu; say a notice and see it at the app's foot. Read `data-graview-drawn` before and after a move: off in the commit that moves, back with the new path. Open a draft and see its line, and reload without it and see none.
@@ -4696,7 +4696,7 @@ graview.on("drop", "[data-drop]", (event) => {
 ### Then find out whether it worked
 
 1. `graview check` the app, and `checkManifest(manifest, store)` from `@graview/guest/host/views`: it says what is wrong with `pictures`.
-2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says what it drew. Headless, a picture comes with a stand-in `src` (a blank image), so its `<img>` is drawn and judged; only the page shows its pixels. A picture the page would leave out comes with `left`, and the run says it among its problems.
+2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says what it drew. Headless, a picture comes with a stand-in `src` (a blank image), so its `<img>` is drawn and judged; only the page shows its pixels. A picture the page would leave out comes with `left`, and the run says it among its problems. The budget is spent in order, the records linked to a view's own by an edge it reads first: a station's sheet on that camera's detections.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or `graview.refused` in its console): every element, attribute and address the host left out, and why.
 4. Toggle the app to dark, and change the brand where you can. Does the view follow, logo and all?
 5. As a member who may see fewer records, are the pictures on the records they may not see absent — not merely hidden?
@@ -4831,7 +4831,7 @@ In a document the same is the top-level `views.<kind>`, and the edit is `{ "op":
 
 Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused (`computed-written`). It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). A document's top-level `computed` holds facts of the whole graph, read as `fact('name')`; a kind's is changed with `set-computed`.
 
-1. **Say counts and times in words.** Templates say counts in words: `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three"), `{at | time}` ("10:47 AM"). A field's label, a group's heading and what an empty list says are words, not templates: braces there would be drawn as typed, and `view-braces` warns of them.
+1. **Say counts and times in words.** Templates say counts in words: `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three"), `{at | time}` ("10:47 AM"). A field's label, a group's heading and what an empty list says are words, not templates: braces there would be drawn as typed, and `view-braces` warns of them. A `describe` or `label` written in code is not a template either: say the value in code (`momentAsRead(node.startsAt)`), and `describe-template-in-code` warns of `{field}` returned there.
 
 ### Then find out whether it worked
 
@@ -4950,7 +4950,7 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 ### Then find out whether it worked
 
 1. `graview check` the app the view names: a manifest is only as sound as the declaration it reads. `checkManifest(manifest, store)` and `checkViewSource(source)` from `@graview/guest/host/views` must both say nothing.
-2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. Run it on an empty seed too. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
+2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or the one `--record <id>` names. Run it on an empty seed too. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
 3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means the view never ran: a page with a Content-Security-Policy needs `worker-src blob:` and `style-src 'unsafe-inline'`, and the note under the plain face names what it lacks.
 4. Toggle the app to dark. Does the view restyle?
 5. Follow each link, narrowed and to a section, and see it land where it says. A view that writes is pressed as `graview-view-forms` says.
@@ -5926,7 +5926,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 397 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 398 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -5944,7 +5944,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
 | `entry` | One subpath a package exports, as a product imports it. | 92 |
 | `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 26 |
-| `check` | A thing graview check can say, read out of the checker's source. | 107 |
+| `check` | A thing graview check can say, read out of the checker's source. | 108 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |
 | `concept` | One of the ideas a Graview declaration is made of: not in the repository, the reason it is shaped the way it is. | 7 |
 | `recipe` | The prompt on the front page with a different task, and the declaration and seed an agent made of it, under docs/site/recipes/. | 3 |

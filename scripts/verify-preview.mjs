@@ -16,7 +16,9 @@
  *   a change another seat makes on the served store reaches the open page,
  *   live, and the command's store holds it;
  *   `graview shots` writes a PNG for each named place, and refuses a place
- *   the app has not got, naming the ones it has.
+ *   the app has not got, naming the ones it has;
+ *   and pictures an app declared in code, a draft view's place named by its
+ *   title.
  *
  *   node scripts/verify-preview.mjs [--engine=chromium|webkit|firefox]
  *
@@ -145,6 +147,20 @@ try {
     report.checks.shotsWritesAPngForEachNamedPlace = { status: taken.status, said: taken.stdout.trim().split("\n").at(-1), pngs, ok: taken.status === 0 && pngs.every(Boolean) };
     const refused = run("nowhere");
     report.checks.shotsRefusesAPlaceTheAppHasNot = { status: refused.status, said: refused.stderr.trim(), ok: refused.status === 2 && refused.stderr.includes('no place called "nowhere"') && refused.stderr.includes("people") };
+  }
+
+  /* ---- graview shots of an app declared in code (W-245), its draft view's place named by its title (W-243) */
+  {
+    const fixture = (name) => `packages/guest/tests/fixtures/survey/${name}`;
+    const out = join(shotsDir, "in-code");
+    const taken = spawnSync(
+      process.execPath,
+      [CLI, "shots", fixture("app.mjs"), "--seed", fixture("seed.json"), "--view", fixture("glance.js"), "--manifest", fixture("glance.manifest.json"), "--places", "Stations at a glance,Stations", "--out", out, "--port", String(portFor("preview-shots"))],
+      { cwd: repoRoot, encoding: "utf8", timeout: 180_000 },
+    );
+    const files = ["stations-at-a-glance", "stations"].map((name) => join(out, `${name}-light-1280.png`));
+    const pngs = files.map((file) => existsSync(file) && statSync(file).size > 10_000 && readFileSync(file).subarray(1, 4).toString() === "PNG");
+    report.checks.shotsPicturesAnAppInCodeAndItsDraftByTitle = { status: taken.status, said: (taken.stdout.trim().split("\n").at(-1) ?? "") + taken.stderr.trim(), pngs, ok: taken.status === 0 && pngs.every(Boolean) };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
