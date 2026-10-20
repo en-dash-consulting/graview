@@ -137,7 +137,7 @@
  * name onto two lines, a name on two lines folded them into the one
  * control, the name went back to one line and they stood again, frame
  * after frame. The workshop under that name, on the scene with its thirty
- * places and on Pages, at every 4 px from 900 to 2100 and back down
+ * places and on Pages, at every 4 px from 900 to 2100 and back down in Chromium (every 12 in WebKit and Firefox)
  * between them (every 12 with `--quick`): once settled, the bar is
  * watched for 600 ms of frames, and whether the places stand, which
  * stand, how the switch is drawn and the name's lines never change; the
@@ -184,7 +184,12 @@ const ONLY_STEADY = process.argv.includes("--steady");
 const STEADY_NAME = "En Dash Social Media Playbook";
 const STEADY_FROM = 900;
 const STEADY_TO = 2100;
-const STEADY_STEP = QUICK ? 12 : 4;
+/*
+ * Every 4 px in Chromium, where the flicker was measured (a band a few px wide at 964, 1072 and 1100);
+ * every 12 in WebKit and Firefox, which weigh the row with the same code: the full sweep in all three
+ * cost the Nightly twenty minutes for no difference the engines can make.
+ */
+const steadyStep = (engine) => (QUICK || engine !== "chromium" ? 12 : 4);
 const STEADY_WATCH_MS = 600;
 /* The pages that share a sweep, each its own share of the widths, so the watch takes a quarter of the time. */
 const STEADY_PAGES = 4;
@@ -515,9 +520,9 @@ try {
        */
       if (scheme === SCHEMES[0] && (ONLY_STEADY || (!ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS && !ONLY_STANDING))) {
         const up = [];
-        for (let width = STEADY_FROM; width <= STEADY_TO; width += STEADY_STEP) up.push(width);
+        for (let width = STEADY_FROM; width <= STEADY_TO; width += steadyStep(engine)) up.push(width);
         /* Back down between the widths the way up met, so a width is reached from either side. */
-        const down = up.map((width) => width + STEADY_STEP / 2).filter((width) => width < STEADY_TO).reverse();
+        const down = up.map((width) => width + steadyStep(engine) / 2).filter((width) => width < STEADY_TO).reverse();
         for (const face of ["graview", "pages"]) {
           const query = `doc=workshop&face=${face}&heading=1&name=${encodeURIComponent(STEADY_NAME)}${face === "graview" ? "&many=1" : ""}`;
           const pages = await Promise.all(Array.from({ length: STEADY_PAGES }, () => open(query, { width: STEADY_FROM, height: 800 })));
