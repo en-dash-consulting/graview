@@ -1,4 +1,4 @@
-import { counted, humanizeField, labelOf, SCENE_LAYERS, type AnySchema, type HasLog, type GraphReader, type NodeOfSchema } from "@graview/core";
+import { counted, labelOf, SCENE_LAYERS, type AnySchema, type HasLog, type GraphReader, type NodeOfSchema } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { provenanceWords, provisionalLinks } from "@graview/core/provenance";
 import { type InterpolatedLayout, edgeOfSelection } from "@graview/layout";
@@ -9,11 +9,11 @@ import type { ActivityMark } from "./activity.js";
 import { kitConnector, useKit } from "./kit.js";
 import { orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 import { channelRoute } from "./channels.js";
-import { clipQuadratic, Connectors, connectorStrands, movedBy, tieRoute, type Owed } from "./connectors.js";
+import { captionBoxes, clipQuadratic, Connectors, connectorStrands, movedBy, tieRoute, type Owed } from "./connectors.js";
 import { watchDrawnLate } from "./drawn-late.js";
 import { drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
 import type { SceneNode } from "./scene-node.js";
-import { captionRuns, type CaptionEntry, type CaptionRun } from "./captions.js";
+import { CAPTION_RISE, captionRuns, captionText, type CaptionEntry, type CaptionRun } from "@graview/layout";
 import { railInset } from "./rails.js";
 import { placeTieLabels, tiesReached, type TieLabel, type TieReach } from "./tie-labels.js";
 import { retryingImport } from "@graview/core/retry";
@@ -246,9 +246,21 @@ export function Lines<S extends AnySchema>({
     (measured && holding ? movedBy(measured, measuredAt.current, frame.nodes) : measured) ?? connectorStrands(frame.nodes, frame.connectors, null, overview, scheme);
   const drawnSingles = new Set<string>();
   for (const strand of strands) {
-    if (strand.edges.length !== 1) continue;
-    const edge = strand.edges[0]!;
-    drawnSingles.add(`${strand.connector.kind}|${edge.from}|${edge.to}`);
+    if (strand.edges.length === 1) {
+      const edge = strand.edges[0]!;
+      drawnSingles.add(`${strand.connector.kind}|${edge.from}|${edge.to}`);
+      continue;
+    }
+    /*
+     * A BUNDLE FROM THE RECORD ITSELF has drawn each of its edges too: the
+     * line from a focused artist to the band's "790 more songs" is the line
+     * a tie from the artist to any of those songs would draw. The tie drew
+     * it again, from inside the card's edge (the focused scene of a product
+     * with many relations: a second line under the card to the same door).
+     */
+    for (const edge of strand.edges) {
+      if (strand.connector.from === edge.from || strand.connector.to === edge.to) drawnSingles.add(`${strand.connector.kind}|${edge.from}|${edge.to}`);
+    }
   }
 
   return (
@@ -570,10 +582,8 @@ function SelectionTies<S extends AnySchema>({
       const box = measureVisible(stageRef.current, node.id, false);
       if (box) band.push(box);
     }
-    for (const caption of stageRef.current.querySelectorAll("[data-graview-relation] > span")) {
-      const r = caption.getBoundingClientRect();
-      if (r.width > 0 && r.height > 0) band.push({ x: r.left - stage.left, y: r.top - stage.top, width: r.width, height: r.height });
-    }
+    const stageEl = stageRef.current;
+    band.push(...captionBoxes(stageEl, stage, nodes, (id) => measureVisible(stageEl, id, false)));
   }
   const seen = new Map<string, TieLine>();
   const found: TieLine[] = [];
@@ -735,15 +745,41 @@ function SelectionTies<S extends AnySchema>({
     seen.set(key, line);
     found.push(line);
   }
+  /*
+   * A RECORD ON THE GROUND HAS ITS RELATIONS SAID ALREADY: the band's
+   * captions name each of them over the cards they reach. The focused scene
+   * of a product with many relations hung "questions that would settle it:
+   * 1 question" and "is a call about: Additive file o…" in open ground as
+   * well, clipped at the edge, detached from what they named — a band card
+   * chosen said its own links over the focus's, and the focus said again
+   * what its captions said, with the count of the ties kept rather than the
+   * relation's. So on the ground only the focused record's own ties speak,
+   * and only where no caption already does; another record's links are its
+   * inspector's to say.
+   */
+  const focused = overview ? undefined : nodes.find((node) => Math.round(node.plane) === 0 && !node.aggregate);
+  const captioned = (line: TieLine): boolean => {
+    const far = nodes.find((node) => node.id === line.other) ?? nodes.find((node) => node.aggregate?.memberIds.includes(line.other));
+    return far !== undefined && Math.round(far.plane) === 1 && far.via?.edgeKind === line.kind;
+  };
   // EVERY LINE SAYS ITS RELATION at its far end, in the chosen record's kind's words, as the same record's links do from altitude.
   for (const line of found) {
+    if (focused && (line.self !== focused.id || captioned(line))) continue;
     const edge = [...store.graph.allEdges()].find((one) => one.kind === line.kind && ((one.from === line.self && one.to === line.other) || (one.from === line.other && one.to === line.self)));
     const selfNode = store.graph.getNode(line.self);
     const otherNode = store.graph.getNode(line.other);
     if (!edge || !selfNode || !otherNode) continue;
     const direction = edge.from === line.self ? "out" : "in";
     const words = edgeWords(store.schema, direction === "out" ? selfNode.kind : otherNode.kind, line.kind, direction);
-    line.said = line.proxy ? `${words}: ${counted(store.schema, otherNode.kind, line.others)}` : `${words}: ${labelOf(store.schema.tryDefinition(otherNode.kind), otherNode as never)}`;
+    /*
+     * Into a stand-in, how many the RELATION reaches, not how many ties this
+     * one kept: a busy record keeps fourteen, and "their songs: 4 songs"
+     * stood beside a door to 790.
+     */
+    const reach = line.proxy
+      ? (direction === "out" ? store.graph.out(line.self, line.kind) : store.graph.in(line.self, line.kind)).filter((node) => node.kind === otherNode.kind).length
+      : 1;
+    line.said = line.proxy ? `${words}: ${counted(store.schema, otherNode.kind, Math.max(reach, line.others))}` : `${words}: ${labelOf(store.schema.tryDefinition(otherNode.kind), otherNode as never)}`;
   }
   return found;
   };
@@ -989,6 +1025,12 @@ function SelectionTies<S extends AnySchema>({
  * repeating itself once per card.
  */
 
+/** The reader's rem over the browser's 16: what the captions' words are set in, so what their room is reckoned in. */
+function remScale(): number {
+  if (typeof document === "undefined") return 1;
+  return parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 || 1;
+}
+
 export function RelationCaptions({
   nodes,
   scheme,
@@ -1018,6 +1060,8 @@ export function RelationCaptions({
   }, [nodes, moving, holding, scheme, stageWidth, stageRef]);
   function placeCaptions(): CaptionRun[] {
     const entries: CaptionEntry[] = [];
+    /** The layout's row each entry stands in. */
+    const rowOf: number[] = [];
     for (const node of nodes) {
       if (!node.via || Math.round(node.plane) !== 1) continue;
       /*
@@ -1032,19 +1076,31 @@ export function RelationCaptions({
       entries.push({
         key: `${node.via.edgeKind}|${node.via.direction}`,
         // Where the declaration has no words for this end, the arrow says which way the relation points (FR-142).
-        text: node.via.description ?? `${node.via.direction === "in" ? "←" : "→"} ${humanizeField(node.via.edgeKind).toLowerCase()}`,
+        text: captionText(node.via),
         left: measured?.x ?? node.x,
         right: measured ? measured.x + measured.width : node.x + node.width * scale,
         top: measured?.y ?? node.y,
       });
+      rowOf.push(Math.round(node.y));
     }
+    /*
+     * ONE ROW, ONE LINE OF CAPTIONS, over the tallest card in it. Each card
+     * centers in its slot, so a row of a session, two topics and two
+     * speakers had five tops; a relation's caption went over whichever of
+     * its cards stood highest, and "who presents it" hung over one of its
+     * two speakers with the other under no words at all.
+     */
+    const highest = new Map<number, number>();
+    entries.forEach((entry, at) => highest.set(rowOf[at]!, Math.min(highest.get(rowOf[at]!) ?? Infinity, entry.top)));
+    const level = entries.map((entry, at) => ({ ...entry, top: highest.get(rowOf[at]!) ?? entry.top }));
     const rails = railInset(stageWidth);
-    return captionRuns(entries, { left: rails.left, right: stageWidth - rails.right });
+    return captionRuns(level, { left: rails.left, right: stageWidth - rails.right }, remScale());
   }
   // The kit may keep the captions off: the edge's words stay on the inspector.
   if (runs.length === 0 || !kit.captions.visible) return null;
 
   if (moving) return null;
+  const rise = CAPTION_RISE * remScale();
   return (
     <div
       aria-hidden="true"
@@ -1072,8 +1128,8 @@ export function RelationCaptions({
               left,
               width: span,
               textAlign: "center",
-              // Sits in the gutter above the run, not on top of the cards.
-              top: Math.max(0, run.top - 19),
+              // Sits in the gutter the layout keeps above the run, not on top of the cards.
+              top: Math.max(0, run.top - rise),
               fontSize: "0.75rem",
               letterSpacing: "0.09em",
               textTransform: "uppercase",

@@ -406,9 +406,13 @@ export function AppBar({
   onFind,
   switch: switchForm = "words",
   scenePlaces,
+  skips,
+  named = true,
 }: {
   readonly brand: Brand | undefined;
   readonly name: string;
+  /** Whether the app's mark and name are drawn, the way home: not under a host's own bar that says them. */
+  readonly named?: boolean;
   /** The level the app's name is said at: 1 when the page is the app's, `false` when the host's own heading already says it. */
   readonly heading?: 1 | 2 | 3 | 4 | 5 | 6 | false;
   /** The way home, and whether the reader is there. */
@@ -442,6 +446,8 @@ export function AppBar({
    * and the scene's bar names no place.
    */
   readonly scenePlaces?: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo } | undefined;
+  /** The ways past the bar (`SkipLinks`), the first stops Tab reaches: the face says where they go. */
+  readonly skips?: ReactNode;
 }) {
   const bar = useRef<HTMLElement>(null);
   // Anybody else here, by the provider's presence (FR-155); none where no provider is.
@@ -544,8 +550,9 @@ export function AppBar({
         {...(finding && compact ? { "data-finding": "" } : {})}
       >
         <style>{BAR_CSS}</style>
+        {skips}
         <div className="graview-bar-row">
-          <div className="graview-bar-app">
+          {named ? <div className="graview-bar-app">
             <Heading className="graview-bar-name">
               {/* A link where home has an address; a press where the embed keeps its places in memory. */}
               <Home
@@ -561,7 +568,7 @@ export function AppBar({
                 </span>
               </Home>
             </Heading>
-          </div>
+          </div> : null}
           {faces ? <FaceSwitch faces={faces} form={switchForm} drawn={drawn} /> : null}
           <div className="graview-bar-mid" {...(stands ? { "data-places": "standing" } : !compact && placeControl ? { "data-place": "" } : {})}>
             {compact ? null : placeControl}

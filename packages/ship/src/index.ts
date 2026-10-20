@@ -3,6 +3,7 @@ import "@graview/core/field-sight";
 export { createFileAdapter } from "./file-adapter.js";
 export type { FileAdapter } from "./file-adapter.js";
 export {
+  BROWSER_DATABASE,
   browserStartsFresh,
   createBrowserAdapter,
   forgetFreshParam,
@@ -11,10 +12,11 @@ export {
   rememberedPrincipal,
 } from "./browser-adapter.js";
 export type { BrowserAdapter, BrowserAdapterOptions, StorageLike } from "./browser-adapter.js";
+export type { IDBFactoryLike } from "./indexed-entries.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
 export { countSteps, primitivesFor, primitivesForSteps, sayStep, stepsMigration } from "./steps.js";
-export { applySteps, contentOperation, SEED_SYNC_AUTHOR, seedSteps } from "./sync-seed.js";
-export type { SeedSyncOptions } from "./sync-seed.js";
+export { applySteps, contentOperation, SEED_SYNC_AUTHOR, sayRefusals, seedRefusals, seedSteps } from "./sync-seed.js";
+export type { SeedRefusal, SeedSyncOptions } from "./sync-seed.js";
 export type { MigrationStep, StepCount } from "./steps.js";
 export type { MigrationRun } from "./migrations.js";
 export { openStore } from "./open-store.js";
@@ -58,7 +60,8 @@ export { backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, connectio
 export { heldBy, holdFileOf, holdStore, sayHeld } from "./store-hold.js";
 export type { StoreHold, StoreHolder } from "./store-hold.js";
 export type { PreviewPage } from "./cli.js";
-export { previewPrincipal, servePreview } from "./serve-preview.js";
+export { PREVIEW_APP_PATH, previewPrincipal, servePreview } from "./serve-preview.js";
+export { bundleAppForPage, findBundler, NO_BUNDLER } from "./preview-app.js";
 export type { Preview, PreviewOptions } from "./serve-preview.js";
 export type { StoreBackend } from "./cli.js";
 export {

@@ -45,6 +45,13 @@ export interface FileValue {
   readonly poster?: string;
   readonly duration?: number;
   readonly captions?: string;
+  /**
+   * WHEN THE FILE WAS MADE (FR-195), where the host's upload read it from
+   * the file itself — a photograph's EXIF, a video's creation time — as an
+   * ISO instant: what a drop fills a required time from before the file's
+   * lastModified, which a copy, a download or a sync changes.
+   */
+  readonly at?: string;
 }
 
 /**
@@ -112,8 +119,14 @@ export function isFileValue(value: unknown): value is FileValue {
     (v.caption === undefined || (typeof v.caption === "string" && v.caption.length < 501)) &&
     (v.poster === undefined || safeFileHref(v.poster)) &&
     (v.captions === undefined || safeFileHref(v.captions)) &&
-    (v.duration === undefined || (typeof v.duration === "number" && Number.isFinite(v.duration) && v.duration > 0))
+    (v.duration === undefined || (typeof v.duration === "number" && Number.isFinite(v.duration) && v.duration > 0)) &&
+    (v.at === undefined || fileAt(v.at) !== undefined)
   );
+}
+
+/** A file's `at` as the host said it, where it is an ISO date and time (an offset or a Z) a page can read; undefined where it is not. */
+export function fileAt(at: unknown): string | undefined {
+  return typeof at === "string" && at.length < 41 && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:?\d{2})$/.test(at) && Number.isFinite(Date.parse(at)) ? at : undefined;
 }
 
 /** Whether a file is a picture a page can draw. */
@@ -174,6 +187,7 @@ export const fileShape = () => ({
   poster: z.optional(z.string()),
   duration: z.optional(z.number()),
   captions: z.optional(z.string()),
+  at: z.optional(z.string()),
 });
 
 /** A document's `image`, `video` or `file` field, in zod/mini. */

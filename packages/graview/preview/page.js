@@ -3,7 +3,8 @@
  *
  * Graview's own faces over a document and nothing else: the server
  * (`@graview/ship/cli`'s `preview`) answers `/graview/document` with the
- * document, the app it compiled from it and the seat this page sits in, and
+ * document, the app it compiled from it and the seat this page sits in — or,
+ * for an app declared in code, where its bundled module is — and
  * serves the store beside it. The page builds the app from what it was
  * handed, opens the store over the wire and mounts the embed as the whole
  * page — the scene and Pages, the bar and the address bar — the way Graview
@@ -21,9 +22,15 @@ try {
   const response = await fetch("/graview/document");
   if (!response.ok) throw new Error(`The preview server did not hand over the document (${response.status}).`);
   const handed = await response.json();
-  const compiled = await appFromOrCompile(handed);
-  if (!compiled.ok) throw new Error(sayFindings(compiled.findings));
-  const app = compiled.app;
+  // An app declared in code comes as its module, bundled by the server (W-245); a document with the app compiled from it.
+  const appOf = async (said) => {
+    if (typeof said.module === "string") return (await import(/* @vite-ignore */ said.module)).app;
+    const compiled = await appFromOrCompile(said);
+    if (!compiled.ok) throw new Error(sayFindings(compiled.findings));
+    return compiled.app;
+  };
+  const app = await appOf(handed);
+  if (!app || typeof app !== "object" || !("schema" in app)) throw new Error("The app module the preview server handed does not export an app.");
   const principal = handed.principal;
   /*
    * The store's state came with the document: the store opens on it without
@@ -47,6 +54,7 @@ try {
     ...(handed.views ? { state: handed.views } : {}),
     onDeclaration: async () => {
       const again = await (await fetch("/graview/document")).json();
+      if (typeof again.module === "string") return;
       const next = await appFromOrCompile(again);
       if (next.ok) handle?.setApp(next.app, remote);
     },

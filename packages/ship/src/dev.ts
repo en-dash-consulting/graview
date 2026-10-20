@@ -626,3 +626,5 @@ export type { StudioDoorOptions } from "./studio-door.js";
 export { declaredCode, editDeclaration } from "./source-edit.js";
 export { typecheckWith } from "./typecheck.js";
 export type { SourceEdit, SourceText } from "./source-edit.js";
+export { sourceAliases, sourceEntries } from "./source-aliases.js";
+export type { SourceAlias, SourceEntry } from "./source-aliases.js";

@@ -82,6 +82,39 @@ export function partArriving<T>(load: () => Promise<T>): () => Promise<T> {
 
 /** How many parts are drawn and still on their way: none once every drawn part has arrived, or said it did not. */
 export const partsArriving = (): number => onTheirWay;
+
+/*
+ * WHAT IS FETCHED EARLY WAITS FOR THE FIRST DRAW (FR-194). A part fetched
+ * before it is wanted — the acts' pane when the page is idle, a date's
+ * editor, the other face — was asked for while the place was still
+ * drawing, on a phone's network beside the parts the place waited for.
+ * Where an embed watches its place settle (`data-graview-drawn`), they wait
+ * until it first has; where nothing watches, at once.
+ */
+let watched = false;
+let drawnOnce = false;
+const afterDrawn = new Set<() => void>();
+/** Said by what watches a place settle: from now, an early fetch waits for the first draw. */
+export function placeWatched(): void {
+  watched = true;
+}
+/** Said once the place has drawn and settled: every early fetch waiting goes. */
+export function placeDrawn(): void {
+  drawnOnce = true;
+  for (const run of [...afterDrawn]) run();
+  afterDrawn.clear();
+}
+/** Whether the first draw is behind us, or nothing watches for it. */
+export const firstDrawn = (): boolean => drawnOnce || !watched;
+/** Run `then` once the first draw is behind us (at once if it is); the answer forgets it. */
+export function afterFirstDraw(then: () => void): () => void {
+  if (firstDrawn()) {
+    then();
+    return () => undefined;
+  }
+  afterDrawn.add(then);
+  return () => void afterDrawn.delete(then);
+}
 let listening = false;
 
 /** Ask again for every part that failed to arrive: what "Try again" and the browser's `online` do. */

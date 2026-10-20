@@ -1,4 +1,4 @@
-import { pluralLabel, counted, isCurrent, labelOf, LOCAL_LAYERS, SEARCH_UNASKED, sortForGrid, type AnyGraphNode, type AnySchema, type GridSort, type NodeOfSchema, type Principal } from "@graview/core";
+import { pluralLabel, counted, isCurrent, labelOf, LOCAL_LAYERS, numberAsRead, SEARCH_UNASKED, sortForGrid, type AnyGraphNode, type AnySchema, type GridSort, type NodeOfSchema, type Principal } from "@graview/core";
 import { columnChoices, columnMoves, columnOf, statusColumns, type ColumnMove, type StatusColumn } from "@graview/core/describe";
 import { useGraph, useGraview, ViewModeProvider, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
@@ -84,7 +84,8 @@ type Card = AnyGraphNode & Readonly<Record<string, unknown>>;
 interface Board {
   readonly kind: string;
   readonly field: string;
-  readonly columns: readonly { readonly column: StatusColumn; readonly cards: readonly Card[]; readonly count: number }[];
+  /** Each column's cards, how many it holds, and the records the kind's lifecycle keeps behind the horizon there (W-244). */
+  readonly columns: readonly { readonly column: StatusColumn; readonly cards: readonly Card[]; readonly count: number; readonly past: readonly Card[] }[];
   /** Every column of the field, those left off included: where a card's menu may move it. */
   readonly all: readonly StatusColumn[];
   /** Each card's place in the graph's order: the higher, the newer. */
@@ -166,6 +167,22 @@ export function createColumnsLens<S extends AnySchema>(options: ColumnsOptions):
       const every = current(kind);
       const all = own.has(kind) && !cut ? drawn : keep(kind, every);
       const hidden = new Set(options.hidden ?? []);
+      /*
+       * WHAT THE LIFECYCLE HIDES, SAID IN ITS COLUMN (W-244). A review
+       * queue's "False trigger" column said "0 · Nothing here." over 2,500
+       * detections retired by the kind's lifecycle, and a card moved there
+       * left the board unsaid. Each column counts the records behind the
+       * horizon in it — not on a picture with a budget, which has no
+       * controls, nor while the line narrows what is drawn — and says "+N
+       * past", as a district and a list do.
+       */
+      const definition = store.schema.tryDefinition(kind);
+      const narrowing = Boolean(arrangement.query) || (arrangement.filter?.length ?? 0) > 0;
+      const seen = new Set([...every, ...(own.has(kind) ? given.filter((node) => node.kind === kind) : [])].map((node) => node.id));
+      const behind =
+        definition?.lifecycle && props.budget === undefined && props.fidelity === "full" && !narrowing
+          ? (store.graph.nodesOfKind(kind as never) as unknown as Card[]).filter((node) => !seen.has(node.id) && !isCurrent(definition, node as never))
+          : [];
       return {
         kind,
         field,
@@ -177,8 +194,9 @@ export function createColumnsLens<S extends AnySchema>(options: ColumnsOptions):
             column,
             cards: drawn.filter((node) => columnOf(node, field, columns) === column.value),
             count: all.filter((node) => columnOf(node, field, columns) === column.value).length,
+            past: behind.filter((node) => columnOf(node, field, columns) === column.value),
           }))
-          .filter((entry) => entry.column.value !== null || entry.count > 0),
+          .filter((entry) => entry.column.value !== null || entry.count > 0 || entry.past.length > 0),
       };
     });
     const total = boards.reduce((sum, board) => sum + board.columns.reduce((n, entry) => n + entry.count, 0), 0);
@@ -240,6 +258,8 @@ function ColumnsBoard({ boards, title, options }: { readonly boards: readonly Bo
   /** The columns opened past their cap, and the ones shut (`collapsed`, then as pressed). */
   const [uncapped, setUncapped] = useState<ReadonlySet<string>>(() => new Set());
   const [shut, setShut] = useState<ReadonlySet<string>>(() => new Set(options.collapsed ?? []));
+  /** The columns whose records behind the horizon were asked for, by kind and value: drawn in them once "+N past" is pressed. */
+  const [pastShown, setPastShown] = useState<ReadonlySet<string>>(() => new Set());
   /** The card whose Move button keeps the keyboard after it changes column, or the undo after a move. */
   const [focusing, setFocusing] = useState<string | null>(null);
   const how = useId();
@@ -447,8 +467,13 @@ function ColumnsBoard({ boards, title, options }: { readonly boards: readonly Bo
       {boards.map((board) => (
         <section key={board.kind} data-columns-kind={board.kind} data-columns-field={board.field} aria-label={`${pluralLabel(store.schema, board.kind)} by ${board.field}`}>
           <div className="graview-columns">
-            {board.columns.map(({ column, cards, count }) => {
+            {board.columns.map(({ column, cards: current, count: currentCount, past }) => {
               const value = column.value ?? "";
+              const pastKey = `${board.kind}\u0000${value}`;
+              const withPast = past.length > 0 && pastShown.has(pastKey);
+              const cards = withPast ? [...current, ...past] : current;
+              const count = withPast ? currentCount + past.length : currentCount;
+              const pastUnsaid = past.length > 0 && !withPast ? past.length : 0;
               const droppable = (dragging !== null && column.value !== null && dragging.to.includes(column.value)) || (carry !== null && carry.to !== carry.from && carry.to === column.value && board.columns.some((entry) => entry.cards.some((card) => card.id === carry.id)));
               const collapsible = column.value !== null && (options.collapsed ?? []).includes(column.value);
               const closed = collapsible && shut.has(value);
@@ -473,7 +498,7 @@ function ColumnsBoard({ boards, title, options }: { readonly boards: readonly Bo
                   data-droppable={droppable || undefined}
                   data-over={(droppable && (over === value || carriedHere)) || undefined}
                   // The lens first (FR-109): a phone's screen reader says a region by its name alone, and "Researching, 0" does not say which board — nor does the app's name, so an embed leaves this one as it is.
-                  aria-label={`${title} · ${column.label}, ${count}`}
+                  aria-label={`${title} · ${column.label}, ${count}${pastUnsaid > 0 ? `, ${numberAsRead(pastUnsaid)} past` : ""}`}
                   data-graview-named-by-lens=""
                   onDragOver={(event) => {
                     if (!droppable) return;
@@ -505,7 +530,7 @@ function ColumnsBoard({ boards, title, options }: { readonly boards: readonly Bo
                     )}
                   </h3>
                   {closed ? null : shown.length === 0 && !carriedHere ? (
-                    <p className="graview-columns-empty">Nothing here.</p>
+                    pastUnsaid > 0 ? null : <p className="graview-columns-empty">Nothing here.</p>
                   ) : (
                     <ul className="graview-columns-cards">
                       {/* The column says the card's state; the card does not say it again (FR-117). */}
@@ -542,6 +567,17 @@ function ColumnsBoard({ boards, title, options }: { readonly boards: readonly Bo
                       </SaidAround.Provider>
                     </ul>
                   )}
+                  {!closed && pastUnsaid > 0 ? (
+                    <button
+                      type="button"
+                      className="graview-columns-rest"
+                      data-testid="columns-past"
+                      title={`${numberAsRead(pastUnsaid)} more behind the horizon — press to show them here`}
+                      onClick={() => setPastShown((was) => new Set([...was, pastKey]))}
+                    >
+                      +{numberAsRead(pastUnsaid)} past
+                    </button>
+                  ) : null}
                   {!closed && capped ? (
                     <button type="button" className="graview-columns-rest" data-testid="columns-rest" onClick={() => setUncapped((was) => new Set([...was, value]))}>
                       Show {cards.length - shown.length} more

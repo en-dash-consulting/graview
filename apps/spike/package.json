@@ -14,6 +14,7 @@
     "vgpu": "^0.3.1"
   },
   "devDependencies": {
+    "@graview/ship": "workspace:*",
     "vite": "^5.4.11"
   }
 }

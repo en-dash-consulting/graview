@@ -9,7 +9,7 @@
  * tool surface and zod's JSON Schema into that face's first load — some
  * 30 KB the pages face alone never drew with before a reader asked.
  */
-import { nodeRefArgs, type AnySchema, type NodeOfSchema, type Principal, type Store } from "@graview/core";
+import { nodeRefArgs, tellTheWatchOfAPressRefusedByItsInput, type AnySchema, type NodeOfSchema, type Principal, type Store } from "@graview/core";
 import { insightProvider } from "./providers/insight.js";
 import { usageBoost, usageWeights } from "./usage.js";
 import { invariantProvider } from "./providers/invariant.js";
@@ -399,16 +399,28 @@ export function applyAffordance<S extends AnySchema>(
   });
 }
 
-/** What an affordance would do, as a diff plus the invariants it would break. */
+/**
+ * What an affordance would do, as a diff plus the invariants it would break.
+ * `pressed`: this is the preview of a press about to be applied — the
+ * scene's strip shows what an act would do first — so the act's own input
+ * refusing it is told to a watching harness, as the apply would have told
+ * it (`tellTheWatchOfAPressRefusedByItsInput`).
+ */
 export function previewAffordance<S extends AnySchema>(
   store: Store<S>,
   affordance: Affordance,
   extraArgs: Readonly<Record<string, unknown>> = {},
+  options: { readonly pressed?: { readonly author?: Principal } } = {},
 ) {
-  return store.preview({
-    name: affordance.mutation,
-    args: { ...affordance.args, ...extraArgs },
-  });
+  try {
+    return store.preview({
+      name: affordance.mutation,
+      args: { ...affordance.args, ...extraArgs },
+    });
+  } catch (error) {
+    if (options.pressed) tellTheWatchOfAPressRefusedByItsInput(error, options.pressed.author?.id);
+    throw error;
+  }
 }
 
 /**

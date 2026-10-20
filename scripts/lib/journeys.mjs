@@ -337,6 +337,79 @@ const onMarked = (page) =>
     return !!target && active === target;
   });
 
+/**
+ * INSIDE A GROUP THAT IS ONE TAB STOP (`data-graview-roving`) and holds the
+ * target, the keys from where the keyboard is: the arrows, Home or End and
+ * the arrows, or — where the group takes letters — the letter the target's
+ * words begin with, as many times as it takes. The fewest; null when the
+ * keyboard is not in the target's group.
+ */
+const groupKeys = (page) =>
+  page.evaluate(() => {
+    const target = document.querySelector("[data-journey-target]");
+    const at = document.activeElement;
+    const group = target?.closest("[data-graview-roving]");
+    if (!group || !at || at === target || !group.contains(at)) return null;
+    const items = [...group.querySelectorAll("[data-graview-roving-item]")].filter((item) => item.closest("[data-graview-roving]") === group && !item.disabled && item.getAttribute("aria-hidden") !== "true");
+    const from = items.indexOf(at);
+    const to = items.indexOf(target);
+    if (from < 0 || to < 0) return null;
+    const ways = [
+      Array(Math.abs(to - from)).fill(to > from ? "ArrowDown" : "ArrowUp"),
+      ["Home", ...Array(to).fill("ArrowDown")],
+      ["End", ...Array(items.length - 1 - to).fill("ArrowUp")],
+    ];
+    if (group.getAttribute("data-graview-roving") === "letters") {
+      const words = (el) => (el.textContent?.trim() || el.getAttribute("aria-label") || "").toLowerCase();
+      const letter = words(target)[0];
+      if (letter && /^[a-z0-9]$/.test(letter)) {
+        let times = 0;
+        for (let step = 1; step <= items.length; step++) {
+          const item = items[(from + step) % items.length];
+          if (!words(item).startsWith(letter)) continue;
+          times += 1;
+          if (item === target) break;
+        }
+        ways.push(Array(times).fill(letter));
+      }
+    }
+    return ways.sort((a, b) => a.length - b.length)[0];
+  });
+
+/**
+ * THE CHEAPEST WAY BY TAB from where `restore` puts the keyboard to where
+ * `isOn` says it is: forward, then back, each a probe, with the keys inside
+ * the target's group where a Tab lands in it (`groups`). A route — Tabs,
+ * which way, then the keys — or null within `limit`.
+ */
+async function walkTo(page, isOn, restore, limit, { groups = true } = {}) {
+  let best = null;
+  for (const back of [false, true]) {
+    await restore();
+    const ceiling = best ? best.cost - 1 : limit;
+    for (let tabs = back ? 1 : 0; tabs <= ceiling; tabs++) {
+      if (tabs > 0) await page.keyboard.press(back ? "Shift+Tab" : "Tab");
+      if (await isOn()) {
+        best = { cost: tabs, tabs, back, keys: [] };
+        break;
+      }
+      const keys = groups ? await groupKeys(page) : null;
+      if (keys) {
+        if (tabs + keys.length <= ceiling) best = { cost: tabs + keys.length, tabs, back, keys };
+        break;
+      }
+    }
+  }
+  return best;
+}
+
+/** A route taken, key by key, from where the keyboard is; whether it arrived. */
+async function follow(page, route, isOn) {
+  for (let at = 0; at < route.tabs; at++) await page.keyboard.press(route.back ? "Shift+Tab" : "Tab");
+  for (const key of route.keys) await page.keyboard.press(key);
+  return isOn();
+}
+
 export class Person {
   constructor(page, input) {
     this.page = page;
@@ -364,8 +437,13 @@ export class Person {
     this.presses += 1;
   }
 
-  /** The keyboard to this control, by Tab or Shift+Tab, whichever is shorter. */
-  async reach(locator, what) {
+  /**
+   * The keyboard to this control, the cheapest way a person who knows the
+   * page would take: Tab or Shift+Tab; the arrows (or a letter) inside a
+   * group that is one Tab stop (`data-graview-roving`); and a skip
+   * (`data-graview-skip`) that takes the keyboard past what stands between.
+   */
+  async reach(locator, what, { skips = true } = {}) {
     /*
      * THE CONTROL AS IT IS NOW, asked again at every press. Marked once, a
      * control a page redrew while the walk went on was a node no longer in
@@ -387,19 +465,19 @@ export class Person {
           { timeout: 2_000 },
         )
         .catch(() => false);
-    const onTarget = async (page) => (await mark()) && onMarked(page);
+    const onTarget = async () => (await mark()) && onMarked(this.page);
     if (!(await mark())) throw new DeadEnd(`${what} is not on the screen`);
-    if (await onTarget(this.page)) return;
+    if (await onTarget()) return;
     /*
      * HOW FAR IT REALLY IS, found by pressing rather than computed: the
      * browser's Tab order is not the document's (a scroller takes focus, a
      * lens's inert copy does not), and a guess that walked the wrong way
-     * counted presses nobody would make. The walk forward is a probe; where
-     * the keyboard started on a control, the walk back from it is tried
-     * too, and the person is charged the shorter.
+     * counted presses nobody would make. Every way is a probe from where the
+     * keyboard started; the person is charged the cheapest, and then takes
+     * it, key by key, so a way that only seemed to work is found out.
      */
-    const LIMIT = 220;
     const page = this.page;
+    const LIMIT = 220;
     const started = await page.evaluate(() => {
       for (const old of document.querySelectorAll("[data-journey-start]")) old.removeAttribute("data-journey-start");
       const at = document.activeElement;
@@ -407,18 +485,8 @@ export class Person {
       at.setAttribute("data-journey-start", "");
       return true;
     });
-    let forward = -1;
-    for (let i = 1; i <= LIMIT; i++) {
-      await page.keyboard.press("Tab");
-      if (await onTarget(page)) {
-        forward = i;
-        break;
-      }
-    }
-    let charged = forward;
-    {
-      const ceiling = forward < 0 ? LIMIT : forward - 1;
-      await page.evaluate((started) => {
+    const restore = () =>
+      page.evaluate((started) => {
         if (started) {
           document.querySelector("[data-journey-start]")?.focus();
           return;
@@ -430,19 +498,61 @@ export class Person {
         anchor.focus();
         anchor.remove();
       }, started);
-      let backward = -1;
-      for (let i = 1; i <= ceiling; i++) {
-        await page.keyboard.press("Shift+Tab");
-        if (await onTarget(page)) {
-          backward = i;
-          break;
-        }
+    /*
+     * PAST WHAT STANDS BETWEEN. A skip that only moves the keyboard is
+     * pressed as a person reading "Skip to the 12 tasks" presses it: the
+     * walk to the skip, Enter, and the walk on from where it landed — which
+     * may be another skip ("Skip to the content", then the record's own).
+     */
+    const onSkip = (name) => () => page.evaluate((name) => document.activeElement?.getAttribute?.("data-graview-skip") === name, name);
+    const search = async (from, budget, depth, used) => {
+      if (budget < 0) return null;
+      const direct = await walkTo(page, onTarget, from, budget);
+      let found = direct ? { cost: direct.cost, legs: [{ route: direct }] } : null;
+      if (depth === 0 || (found && found.cost <= 3)) return found;
+      const names = (await page.evaluate(() => [...document.querySelectorAll("[data-graview-skip]:not([data-graview-skip-opens])")].map((el) => el.getAttribute("data-graview-skip")))).filter((name) => !used.includes(name));
+      for (const name of names) {
+        const ceiling = Math.min(budget, found ? found.cost - 1 : budget);
+        const to = await walkTo(page, onSkip(name), from, ceiling - 1, { groups: false });
+        if (!to) continue;
+        await from();
+        if (!(await follow(page, to, onSkip(name)))) continue;
+        await page.keyboard.press("Enter");
+        await page.waitForTimeout(60);
+        const landed = await page.evaluate((depth) => {
+          for (const old of document.querySelectorAll(`[data-journey-landed="${depth}"]`)) old.removeAttribute("data-journey-landed");
+          const at = document.activeElement;
+          if (!at || at === document.body) return false;
+          at.setAttribute("data-journey-landed", String(depth));
+          return true;
+        }, depth);
+        if (!landed) continue;
+        const fromLanding = () => page.evaluate((depth) => document.querySelector(`[data-journey-landed="${depth}"]`)?.focus(), depth);
+        const rest = (await onTarget())
+          ? { cost: 0, legs: [{ route: { cost: 0, tabs: 0, back: false, keys: [] } }] }
+          : await search(fromLanding, ceiling - to.cost - 1, depth - 1, [...used, name]);
+        if (rest && (found === null || to.cost + 1 + rest.cost < found.cost)) found = { cost: to.cost + 1 + rest.cost, legs: [{ route: to, skip: name }, ...rest.legs] };
       }
-      if (backward > 0) charged = backward;
-      else if (forward > 0) await page.evaluate(() => document.querySelector("[data-journey-target]")?.focus());
+      return found;
+    };
+    const best = await search(restore, LIMIT, skips ? 2 : 0, []);
+    if (best === null) throw new DeadEnd(`the keyboard cannot reach ${what} in ${LIMIT} presses of Tab`);
+    /* Taken, key by key, from where the keyboard started. */
+    await restore();
+    let there = true;
+    for (const leg of best.legs) {
+      if (!there) break;
+      there = await follow(page, leg.route, leg.skip ? onSkip(leg.skip) : onTarget);
+      if (there && leg.skip) {
+        await page.keyboard.press("Enter");
+        await page.waitForTimeout(60);
+      }
     }
-    if (charged < 0) throw new DeadEnd(`the keyboard cannot reach ${what} in ${LIMIT} presses of Tab`);
-    this.presses += charged;
+    // A way that held as a probe and not when taken: the keyboard is put there, and the person charged what the probe found.
+    if (!there) await page.evaluate(() => document.querySelector("[data-journey-target]")?.focus());
+    this.presses += best.cost;
+    const skipped = best.legs.flatMap((leg) => (leg.skip ? [leg.skip] : []));
+    if (skipped.length > 0) this.skipped = [...(this.skipped ?? []), ...skipped];
   }
 
   /** Activate a control the way this person does. */
@@ -461,6 +571,23 @@ export class Person {
     }
     this.note(what, before);
     await this.settle();
+  }
+
+  /**
+   * A SKIP THAT OPENS what it names ("Skip to the 2 rules that are broken"),
+   * pressed from the keyboard where the page offers one: the walk to it and
+   * Enter. False where there is none, or the hand is the pointer's.
+   */
+  async pressSkip(name, what) {
+    if (this.input !== "keyboard") return false;
+    const skip = this.page.locator(`[data-graview-skip="${name}"]`).first();
+    if ((await skip.count()) === 0) return false;
+    const before = this.presses;
+    await this.reach(skip, what, { skips: false });
+    await this.key("Enter");
+    this.note(what, before);
+    await this.settle(250);
+    return true;
   }
 
   /** Where the presses went, so a costly run says which step cost it. */
@@ -863,11 +990,19 @@ async function openFind(person, face) {
     face === "scene"
       ? page.locator('[data-testid="find-box"]')
       : page.getByRole("searchbox", { name: "Find anything" }).or(page.locator('[data-testid="find-box"]'));
-  if (face === "scene" && person.input === "keyboard") {
-    // The box says its own keys (`aria-keyshortcuts`: "/" and ⌘K); a keyboard person uses one.
+  /*
+   * The box says its own keys (`aria-keyshortcuts`: "/" and ⌘K); a keyboard
+   * person uses one — on the pages as on the scene, where the walk had Tabbed
+   * eleven times across the bar to a box that answered "/" all along.
+   */
+  // Put away behind a magnifier on a phone, the box still says them: the key opens it.
+  const anyBox = page.locator('[data-testid="find-box"], [data-testid="nav-find"]');
+  const keys = person.input === "keyboard" ? await anyBox.first().getAttribute("aria-keyshortcuts", { timeout: 2_000 }).catch(() => null) : null;
+  if (keys && keys.split(/\s+/).includes("/")) {
     await person.key("/");
-    await person.settle(100);
-    if (await box.first().evaluate((el) => el === document.activeElement).catch(() => false)) return box.first();
+    await person.settle(200);
+    const now = anyBox.locator("visible=true").first();
+    if (await now.evaluate((el) => el === document.activeElement).catch(() => false)) return now;
   }
   let shown = box.locator("visible=true").first();
   if (!(await shown.isVisible().catch(() => false))) {
@@ -1444,6 +1579,8 @@ export const JOBS = {
       if (rows.length < 3) throw new DeadEnd(`the ${job.plural} page shows fewer than three that "${job.title}" would change`);
       const chosen = rows.slice(0, 3);
       const before = await inStore(page, ctx.kinds, (store) => store.batches().length);
+      // What the first box cost from the keyboard, and whether the list's own skip was the way (`theKeyboardSkipsIntoALongList`).
+      let firstBox;
       for (const [at, id] of chosen.entries()) {
         const box = page.locator(`[data-graview-choose-box="${escapeAttr(id)}"]`).first();
         if (person.input === "pointer") {
@@ -1452,8 +1589,11 @@ export const JOBS = {
         } else {
           const pressed = person.presses;
           const on = () => box.evaluate((el) => el === document.activeElement).catch(() => false);
-          if (at === 0) await person.reach(box, "a row's box");
-          else {
+          if (at === 0) {
+            const skipped = person.skipped?.length ?? 0;
+            await person.reach(box, "a row's box");
+            firstBox = { presses: person.presses - pressed, skip: person.skipped?.[skipped] ?? null };
+          } else {
             // The boxes are one Tab stop: the arrows go from the last one chosen to the next.
             for (let step = 0; step < 200 && !(await on()); step++) await person.key("ArrowDown");
             if (!(await on())) throw new DeadEnd(`the arrows do not reach the ${at === 1 ? "second" : "third"} row's box`);
@@ -1478,6 +1618,7 @@ export const JOBS = {
         const left = chosen.filter((id) => store.wouldChange({ name: act, args: { [arg]: id } }));
         return left.length === 0 ? { ok: true } : { ok: false, why: `${left.length} of the three were not changed` };
       }, { before, chosen, act: job.act, arg: job.subjectArg }, "the change to all three");
+      return firstBox ? { firstBox } : undefined;
     },
   },
 
@@ -1498,7 +1639,8 @@ export const JOBS = {
       if (ctx.face === "scene") {
         const standing = page.locator('[data-testid="standing"]').locator("visible=true").first();
         if (!(await appears(standing))) throw new DeadEnd("nothing on the scene says something is wrong");
-        await person.press(standing, "the problems");
+        // From the keyboard, the skip that says so, where the page offers one; else the standing itself.
+        if (!(await person.pressSkip("problems", "the skip to the problems"))) await person.press(standing, "the problems");
         const problem = page.locator('[data-testid="standing"] ~ ul button, [data-testid="standing"] + * button, [data-testid="standing-card"] button').locator("visible=true").first();
         const listed = (await problem.isVisible().catch(() => false)) ? problem : page.getByRole("listitem").getByRole("button", { name: /ways? to fix|to fix/ }).locator("visible=true").first();
         await person.press(listed, "the problem");
@@ -1509,11 +1651,13 @@ export const JOBS = {
         await answerAsks(person, { name: "Somebody" });
       } else {
         const link = page.locator('a[href$="/problems"]').locator("visible=true").first();
-        if (!(await link.isVisible().catch(() => false))) {
-          const menu = page.getByRole("button", { name: /every place|more (place|picture)|menu|sections|kinds|navigation/i }).first();
-          if (await menu.isVisible().catch(() => false)) await person.press(menu, "the menu");
+        if (!(await person.pressSkip("problems", "the skip to the problems"))) {
+          if (!(await link.isVisible().catch(() => false))) {
+            const menu = page.getByRole("button", { name: /every place|more (place|picture)|menu|sections|kinds|navigation/i }).first();
+            if (await menu.isVisible().catch(() => false)) await person.press(menu, "the menu");
+          }
+          await person.press(page.locator('a[href$="/problems"]').locator("visible=true").first(), "the Problems link");
         }
-        await person.press(page.locator('a[href$="/problems"]').locator("visible=true").first(), "the Problems link");
         await page.waitForLoadState("domcontentloaded");
         await person.settle(300);
         const repair = page.locator('[data-testid="repairs"] button, [data-affordance^="invariant:"]').locator("visible=true").first();
@@ -1733,6 +1877,81 @@ export function regressionsOf(previous, current) {
     }
   }
   return [...unwalked, ...found.map((line) => line.replace(/: (\w)/, (m, c) => `: ${c.toUpperCase()}`))];
+}
+
+/**
+ * WHY THE KEYBOARD COSTS MORE THAN TWICE THE POINTER, where it still does —
+ * by job, and by job on one face — said as a reader would be told it. A job
+ * on a face named here may cost the keyboard more than twice the pointer's
+ * presses; any other is held to twice (`keyboardChecks`). What a skip, a
+ * group that is one stop, or a key could take off has been taken off
+ * (walks XI and XII); what is left is the shape of the page.
+ */
+export const KEYBOARD_WHY = {
+  make: "a form is answered field by field: the pointer goes straight to each field it needs, and the keyboard passes the ones it does not, and crosses the bar to the act that opens it",
+  "find/pages": "Find on the pages answers on a page of its own: the keyboard goes on from the box past the bar's tools to the row, where the pointer presses the row it reads",
+  "relate/pages": "a record's act asks in a form, whose choice is one field among the form's others, Tabbed to in turn, and sent by its button; the pointer presses each",
+  narrow: "a kind's list is a place on the bar, reached across it, and its \"Filter\" stands after the list's own chips; the pointer presses each where it is drawn",
+  "several/pages": "a kind's list is a place on the bar, reached across it; into the records is one skip, and the boxes are one stop",
+  "undo/scene": "Activity is a tool at the bar's far end, past every place the bar names; the pointer presses it where it is",
+  "repair/pages": "the problems are a page of their own: the keyboard skips to them, then Tabs to the repair, where the pointer presses the count and the repair",
+  refused: "a right-click opens a record's acts where the pointer is, and says what is withheld; the keyboard is first taken to the record — a skip, or a district across the bar — and then presses its acts' key",
+};
+
+const jobKind = (jobId) => (jobId.startsWith("make-") ? "make" : jobId);
+
+/** Why a job on a face may cost the keyboard more than twice the pointer, or null where it may not. */
+export function keyboardWhy(jobId, face) {
+  const job = jobKind(jobId);
+  return KEYBOARD_WHY[`${job}/${face}`] ?? KEYBOARD_WHY[job] ?? null;
+}
+
+/**
+ * THE KEYBOARD'S CLAIMS, from the verdict.
+ *
+ * `theKeyboardCostsAtMostTwiceThePointer`: every job done both ways, on each
+ * face and at each width, costs the keyboard at most twice the pointer's
+ * presses — or its job is named in `KEYBOARD_WHY`, and the verdict says why.
+ *
+ * `theKeyboardSkipsIntoALongList`: wherever several records are chosen from
+ * a list on the pages, the keyboard's way to the first box is the list's own
+ * skip, at most five presses from the list's heading.
+ */
+export function keyboardChecks(report) {
+  const within = [];
+  const named = new Map();
+  const unnamed = [];
+  const lists = [];
+  for (const [app, result] of Object.entries(report.apps)) {
+    for (const [jobId, job] of Object.entries(result.jobs ?? {})) {
+      for (const face of ["scene", "pages"]) {
+        for (const width of ["1440", "390"]) {
+          const pointer = job.runs?.[`${face}/${width}/pointer`];
+          const keyboard = job.runs?.[`${face}/${width}/keyboard`];
+          if (jobKind(jobId) === "several" && face === "pages" && keyboard?.done) lists.push({ app, width: Number(width), firstBox: keyboard.firstBox ?? null });
+          if (!pointer?.done || !keyboard?.done) continue;
+          const said = `${app} ${jobId} ${face}/${width}: ${keyboard.presses} by keyboard, ${pointer.presses} by pointer`;
+          if (keyboard.presses <= Math.max(1, pointer.presses) * 2) {
+            within.push(said);
+            continue;
+          }
+          const why = keyboardWhy(jobId, face);
+          if (why) named.set(why, [...(named.get(why) ?? []), said]);
+          else unnamed.push(said);
+        }
+      }
+    }
+  }
+  const skipped = lists.filter((one) => one.firstBox?.skip === "records" && one.firstBox.presses <= 5);
+  return {
+    theKeyboardCostsAtMostTwiceThePointer: {
+      ok: unnamed.length === 0 && within.length + named.size > 0,
+      within: within.length,
+      unnamed,
+      named: [...named].map(([why, runs]) => ({ why, runs })),
+    },
+    theKeyboardSkipsIntoALongList: { ok: skipped.length === lists.length, lists },
+  };
 }
 
 export { lower };

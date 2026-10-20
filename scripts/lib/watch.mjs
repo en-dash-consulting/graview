@@ -36,6 +36,14 @@
  *                           holds what reaches past its own edge and the
  *                           screen's, cut off rather than scrolled.
  *   page-error              an uncaught error in the page.
+ *   app-drew-nothing        the root an app mounts into (`#root`) is still
+ *                           empty eight seconds after the page loaded: its
+ *                           module threw, or its top-level await rejected,
+ *                           which WebKit raises no error for at all.
+ *
+ * A harness whose page leaves an app's root empty on purpose opts out by
+ * name in watch-acknowledged.mjs ({ rule, harness, match, reason }), or the
+ * page marks the root `data-graview-draws-nothing`.
  *
  * Each harness writes what it saw to docs/watch/<script>.json, and
  * `verify-all` fails a harness with any violation not acknowledged, by
@@ -743,6 +751,39 @@ function watchInPage() {
   };
   if (document.body) observe();
   else document.addEventListener("DOMContentLoaded", observe, { once: true });
+
+  /*
+   * THE APP'S ROOT DREW SOMETHING. The gauntlet's page module awaited
+   * openStore at its top level, WebKit's 5 MB of localStorage did not hold
+   * its seed, and the await rejected — and WebKit said nothing at all: no
+   * pageerror, no error or unhandledrejection on the window, not even a
+   * rejected import() of the same module (#330). Safari drew a blank page
+   * and the watch passed it. What a rejected module leaves in every engine
+   * is an app root with nothing in it, so that is what is judged: the root
+   * an app mounts into (`#root`, what every app and `graview create` write),
+   * some seconds after the page loaded, and asked again before it is said.
+   * A harness's own host page mounts into a point of its own (`#app`) when
+   * it chooses, and is not judged; a root left empty on purpose says so
+   * (`data-graview-draws-nothing`).
+   */
+  const ROOTS = "#root";
+  const empty = (root) => root.isConnected && !root.hasAttribute("data-graview-draws-nothing") && root.childElementCount === 0 && (root.textContent ?? "").trim() === "";
+  const undrawn = () => [...document.querySelectorAll(ROOTS)].filter(empty);
+  const drewNothing = () =>
+    setTimeout(() => {
+      if (undrawn().length === 0) return;
+      setTimeout(() => {
+        for (const root of undrawn()) {
+          report(
+            "app-drew-nothing",
+            `the app's root <${root.tagName.toLowerCase()} id="${root.id}"> drew nothing in 8 seconds after the page loaded: its module threw, or its top-level await rejected, which WebKit raises no error for`,
+            `${location.pathname}|${root.id}`,
+          );
+        }
+      }, 3000);
+    }, 5000);
+  if (document.readyState === "complete") drewNothing();
+  else addEventListener("load", drewNothing, { once: true });
 }
 
 /* ------------------------------------------------------------------ */

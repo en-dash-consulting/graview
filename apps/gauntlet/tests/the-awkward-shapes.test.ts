@@ -182,9 +182,35 @@ describe("the awkward shapes", () => {
   it("rules that are broken in the seed, on purpose", () => {
     const violations = createStore({ snapshot: seed as never }).violations();
     expect(violations.map((one) => one.invariant).sort()).toEqual([
+      "a-leader-is-free-on-their-workshops-day",
       "a-slot-is-in-a-session",
       "a-slot-is-in-a-session",
       "a-workshop-fits-its-room",
     ]);
+  });
+
+  /*
+   * Carried from walks XI and XII (W-228): a kennel and its animals, chosen
+   * together through a problem, were read as one set agreeing on `status`
+   * and the kennel was offered an animal's value its input refused.
+   */
+  it("two kinds sharing a field name, in words of their own, chosen together through one rule", () => {
+    const store = createStore({ snapshot: seed as never });
+    const clash = store.violations().find((one) => one.invariant === "a-leader-is-free-on-their-workshops-day")!;
+    const chosen = clash.nodeIds.map((id) => store.graph.getNode(id) as unknown as Rec);
+    expect(new Set(chosen.map((node) => node.kind))).toEqual(new Set(["workshop", "talk"]));
+    expect(chosen.filter((node) => node.kind === "talk").length).toBe(2);
+    // One field name on both kinds, and no value of one is a value of the other.
+    const values = (kind: string) => new Set((definition(kind).fields.shape as Record<string, { options?: readonly string[] }>)["status"]!.options);
+    expect([...values("talk")].some((value) => values("workshop").has(value))).toBe(false);
+    expect(new Set(chosen.map((node) => node["status"]))).toEqual(new Set(["planned", "scheduled"]));
+    // And whatever is offered over them whole is an act its input accepts, the repair among them.
+    const mutations = new Map(store.allMutations().map((mutation) => [mutation.name, mutation]));
+    const chair = SEATS.find((seat) => seat.principal.roles.includes("chair"))!.principal as never;
+    const offered = deriveAffordances(store, clash.nodeIds, { principal: chair }).affordances.filter((affordance) => affordance.open.length === 0 && !affordance.batch);
+    expect(offered.map((affordance) => affordance.mutation)).toContain("unlead");
+    // Nothing aligns one kind's status to the other's, or brings the workshop "in line" through a relation only a talk holds.
+    expect(offered.map((affordance) => affordance.label).filter((label) => /^Align/.test(label) || label.includes("in line with the others"))).toEqual([]);
+    expect(offered.filter((affordance) => !mutations.get(affordance.mutation)!.input.safeParse(affordance.args).success).map((affordance) => affordance.label)).toEqual([]);
   });
 });

@@ -11,7 +11,8 @@ import {
   type LayoutOptions,
   type Plane,
 } from "./types.js";
-import { bandCaps, bandOf, packRuns, runOf, type BandItem } from "./band.js";
+import { bandCaps, bandOf, packBand, runOf, type BandItem, type BandSegment } from "./band.js";
+import { captionText, captionWidth, MIN_CAPTION } from "./captions.js";
 import { nameplateSize, placeCity } from "./city.js";
 import { rankKinds } from "./rank.js";
 import type { ViewState } from "./view-state.js";
@@ -66,22 +67,6 @@ function shelf(
     x: startX + index * (size.width + gap),
     y: baseY,
     depth,
-  }));
-}
-
-/** Lays a row of equal boxes out, centered on the canvas. */
-function row(
-  count: number,
-  size: { width: number; height: number },
-  gap: number,
-  canvasWidth: number,
-  y: number,
-): { x: number; y: number }[] {
-  const total = count * size.width + Math.max(0, count - 1) * gap;
-  const startX = Math.max(gap, (canvasWidth - total) / 2);
-  return Array.from({ length: count }, (_, index) => ({
-    x: startX + index * (size.width + gap),
-    y,
   }));
 }
 
@@ -598,8 +583,39 @@ export function layout<S extends AnySchema>(
    * artist with a thousand songs is three captioned rows a person can read.
    */
   const scaleUnit = opts.unit / 16;
-  const chipRows = Math.max(2, Math.floor((band.relationH + opts.gap) / (READABLE_ROW * scaleUnit + opts.gap)));
-  const crowded = related.length > perRow * chipRows;
+  /*
+   * EVERY BAND OF SEVERAL RELATIONS IS LAID OUT BY RELATION, crowded or not.
+   * Below the crowd the band was one grid in the frame's order: a relation
+   * began mid-row, its caption hung over its first card in a gutter no
+   * deeper than the gap between cards, and the words stood on the row
+   * above — the cards of the relation beside it — while the next caption
+   * along was cut to its one card's width. Now each relation starts a row
+   * unless all of it, and the room its caption's words take, fits what is
+   * left of the current one, and the rows keep a caption's gutter between
+   * them. One relation needs neither: its caption stands over the band.
+   */
+  const runsOfRelated = new Map<string, typeof related>();
+  for (const entry of related) {
+    const key = runOf(entry);
+    const run = runsOfRelated.get(key);
+    if (run) run.push(entry);
+    else runsOfRelated.set(key, [entry]);
+  }
+  const relations = [...runsOfRelated.values()];
+  const captioned = relations.length > 1;
+  const gutter = Math.max(opts.gap, CAPTION_GUTTER * scaleUnit);
+  const chipGap = captioned ? gutter : opts.gap;
+  const chipRows = Math.max(2, Math.floor((band.relationH + chipGap) / (READABLE_ROW * scaleUnit + chipGap)));
+  /** How many of a row's slots each relation's caption needs to be said whole, at the width a full row gives a card. */
+  const slotPitch = Math.min(opts.relationSize.width, (spanW - opts.gap * (perRow + 1)) / perRow) + opts.gap;
+  const need = relations.map((run) => {
+    const via = run[0]!.via;
+    if (!captioned || !via) return 1;
+    return Math.ceil((Math.min(MIN_CAPTION * scaleUnit, captionWidth(captionText(via), scaleUnit)) + opts.gap) / slotPitch);
+  });
+  const sizes = relations.map((run) => run.length);
+  const packedWhole = packBand(sizes, perRow, need);
+  const crowded = related.length > perRow * chipRows || packedWhole.length > chipRows;
   const bandOptions = {
     schema,
     graph,
@@ -610,43 +626,60 @@ export function layout<S extends AnySchema>(
     plural: (kind: string) => pluralOf(schema, kind),
     ...(opts.today ? { today: opts.today } : {}),
   };
-  const rowGap = crowded ? Math.max(opts.gap, CAPTION_GUTTER * scaleUnit) : opts.gap;
+  const rowGap = crowded || captioned ? gutter : opts.gap;
   let drawn: BandItem<NodeOfSchema<S>>[];
-  let rowsOf: number[][];
+  let rows: BandSegment[][];
   if (!crowded) {
-    drawn = related.map((entry) => ({ id: entry.node.id, kind: entry.node.kind, node: entry.node, ...(entry.via ? { via: entry.via } : {}) }));
-    rowsOf = Array.from({ length: Math.max(1, Math.ceil(drawn.length / perRow)) }, (_, r) =>
-      Array.from({ length: Math.min(perRow, drawn.length - r * perRow) }, (_, i) => r * perRow + i),
-    );
+    // Relation by relation, in the order each was first met.
+    drawn = relations.flat().map((entry) => ({ id: entry.node.id, kind: entry.node.kind, node: entry.node, ...(entry.via ? { via: entry.via } : {}) }));
+    rows = packedWhole;
   } else {
     const cardRows = Math.max(1, Math.floor((band.relationH + rowGap) / (READABLE_CARD * scaleUnit + rowGap)));
-    const runs = new Map<string, typeof related>();
-    for (const entry of related) {
-      const key = runOf(entry);
-      const run = runs.get(key);
-      if (run) run.push(entry);
-      else runs.set(key, [entry]);
-    }
-    const caps = bandCaps([...runs.values()].map((run) => run.length), perRow, cardRows);
-    const byRun = [...runs.values()].map((run, index) => bandOf(run, { ...bandOptions, budget: caps[index]! }));
+    // Where the captions' room cannot be had in the rows there are, the cards come first and the words are cut.
+    const roomy = packBand(sizes.map(() => 1), perRow, need).length <= cardRows;
+    const needed = roomy ? need : [];
+    const caps = bandCaps(sizes, perRow, cardRows, needed);
+    const byRun = relations.map((run, index) => bandOf(run, { ...bandOptions, budget: caps[index]! }));
     drawn = byRun.flat();
-    // Rows of indices into `drawn`, relation by relation.
-    const starts = byRun.map((_, index) => byRun.slice(0, index).reduce((sum, items) => sum + items.length, 0));
-    const seen = byRun.map(() => 0);
-    rowsOf = packRuns(byRun.map((items) => items.length), perRow).map((row) => row.map((run) => starts[run]! + seen[run]!++));
+    rows = packBand(byRun.map((items) => items.length), perRow, needed);
   }
-  const relationRows = rowsOf.length;
+  const relationRows = rows.length;
   const rowH = relationRows === 1 ? band.relationH : (band.relationH - rowGap * (relationRows - 1)) / relationRows;
   const relationSize = fit(
-    Math.max(...rowsOf.map((items) => items.length), 1),
+    Math.max(...rows.map((segments) => segments.reduce((sum, segment) => sum + segment.slots, 0)), 1),
     drawn.length <= 2 ? Math.round(opts.relationSize.width * 1.35) : opts.relationSize.width,
     rowH,
   );
+  // Rows of indices into `drawn`, relation by relation: each segment's cards centered in the slots it takes.
   const relationPositions: { x: number; y: number }[] = [];
-  rowsOf.forEach((items, r) => {
-    const positions = row(items.length, relationSize, opts.gap, spanW, band.relationY + r * (rowH + rowGap));
-    items.forEach((index, i) => (relationPositions[index] = { ...positions[i]!, x: positions[i]!.x + railLeft }));
-  });
+  {
+    const pitch = relationSize.width + opts.gap;
+    // Where each relation's items begin in `drawn`.
+    const firstOf: number[] = [];
+    let seen = 0;
+    const lengths = new Map<number, number>();
+    for (const segment of rows.flat()) lengths.set(segment.run, (lengths.get(segment.run) ?? 0) + segment.cards);
+    for (let run = 0; run < relations.length; run++) {
+      firstOf[run] = seen;
+      seen += lengths.get(run) ?? 0;
+    }
+    const taken = relations.map(() => 0);
+    rows.forEach((segments, r) => {
+      const slots = segments.reduce((sum, segment) => sum + segment.slots, 0);
+      const total = slots * relationSize.width + Math.max(0, slots - 1) * opts.gap;
+      let x = railLeft + Math.max(opts.gap, (spanW - total) / 2);
+      const y = band.relationY + r * (rowH + rowGap);
+      for (const segment of segments) {
+        const span = segment.slots * pitch - opts.gap;
+        const cards = segment.cards * pitch - opts.gap;
+        const left = x + (span - cards) / 2;
+        for (let i = 0; i < segment.cards; i++) {
+          relationPositions[firstOf[segment.run]! + taken[segment.run]!++] = { x: left + i * pitch, y };
+        }
+        x += segment.slots * pitch;
+      }
+    });
+  }
   drawn.forEach((entry, index) => {
     const position = relationPositions[index]!;
     push({

@@ -28,6 +28,8 @@ export interface StoreHolder {
 
 export interface StoreHold {
   readonly file: string;
+  /** The hold this one replaced, when its process had gone without letting go (a `kill -9`, a crash). */
+  readonly tookOverFrom?: StoreHolder;
   /** Says where the holder now answers, once its server listens. */
   serving(url: string): void;
   release(): void;
@@ -83,6 +85,11 @@ export function sayHeld(holder: StoreHolder, where: string, wanted: string, opti
   );
 }
 
+/** The sentence a writer says when it took over a hold whose process had gone. */
+export function sayTookOver(holder: StoreHolder, where: string): string {
+  return `took over ${where} from a ${holder.command ?? "process"} (pid ${holder.pid}, since ${holder.since ?? "a time it did not say"}), which is no longer running.\n`;
+}
+
 /**
  * Takes the store whose hold file is `file` for this process, or says who
  * has it.
@@ -95,6 +102,7 @@ export function holdStore(file: string, command: string): StoreHold | { readonly
   mkdirSync(dirname(file), { recursive: true });
   const mine: StoreHolder = { command, pid: process.pid, since: new Date().toISOString() };
   const write = (holder: StoreHolder, flag: "wx" | "w") => writeFileSync(file, `${JSON.stringify(holder, null, 2)}\n`, { flag });
+  let stale: StoreHolder | undefined;
   for (let attempt = 0; ; attempt++) {
     try {
       write(mine, "wx");
@@ -105,6 +113,11 @@ export function holdStore(file: string, command: string): StoreHold | { readonly
       if (holder) return { heldBy: holder };
       if (attempt > 0) throw error;
       // Stale: whoever wrote it is gone. Take it over and try once more.
+      try {
+        stale = JSON.parse(readFileSync(file, "utf8")) as StoreHolder;
+      } catch {
+        /* unreadable: nobody's, and nothing to name */
+      }
       try {
         unlinkSync(file);
       } catch {
@@ -128,6 +141,7 @@ export function holdStore(file: string, command: string): StoreHold | { readonly
   process.on("exit", release);
   return {
     file,
+    ...(stale && typeof stale.pid === "number" ? { tookOverFrom: stale } : {}),
     serving(url) {
       if (!held) return;
       current = { ...current, url };

@@ -26,7 +26,7 @@ import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { packTarballs, pinToTarballs } from "./lib/tarballs.mjs";
 import { portFor } from "./lib/ports.mjs";
@@ -600,6 +600,57 @@ try {
   report.linked.gitInitialized = existsSync(resolve(linked, ".git/HEAD"));
   report.linked.ciChecksOutTheFramework = readFileSync(resolve(linked, ".github/workflows/ci.yml"), "utf8").includes("repository: en-dash-consulting/graview");
 
+  /*
+   * EVERY EXPORT, THROUGH THE PROJECT'S OWN DEV SERVER. The linked config
+   * takes its aliases from `sourceAliases`, which reads the packages'
+   * `exports`; a hand list in the scaffold used to fall behind the next
+   * subpath the framework added. Here the project's own Vite, with the
+   * project's own config, resolves every export of every package a product
+   * depends on, and each built one must land in that package's `src`.
+   */
+  const probe = resolve(scratch, "resolve-every-export.mjs");
+  writeFileSync(
+    probe,
+    `import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
+const [project, ...specifiers] = process.argv.slice(2);
+// The project's own Vite: require.resolve finds its CommonJS entry, whose API is the default export.
+const loaded = await import(pathToFileURL(createRequire(project + "/package.json").resolve("vite")).href);
+const vite = loaded.createServer ? loaded : loaded.default;
+const server = await vite.createServer({ root: project, logLevel: "silent", server: { middlewareMode: true, hmr: false }, optimizeDeps: { noDiscovery: true, include: [] } });
+const out = {};
+for (const specifier of specifiers) out[specifier] = (await server.pluginContainer.resolveId(specifier, project + "/src/main.tsx"))?.id ?? null;
+await server.close();
+process.stdout.write(JSON.stringify(out));
+`,
+    "utf8",
+  );
+  const { GRAVIEW_PACKAGES } = await import(pathToFileURL(resolve(repoRoot, "packages/core/dist/scaffold/index.js")).href);
+  const wanted = GRAVIEW_PACKAGES.flatMap((dir) => {
+    const pkg = JSON.parse(readFileSync(resolve(repoRoot, "packages", dir, "package.json"), "utf8"));
+    return Object.entries(pkg.exports ?? {})
+      .filter(([subpath]) => subpath !== "./package.json")
+      .map(([subpath, value]) => ({
+        dir,
+        specifier: subpath === "." ? pkg.name : `${pkg.name}/${subpath.slice(2)}`,
+        target: typeof value === "string" ? value : (value.default ?? value.import),
+      }));
+  });
+  const resolved = JSON.parse(run("node", [probe, linked, ...wanted.map((one) => one.specifier)], linked));
+  const sourceOf = (one) => resolve(repoRoot, "packages", one.dir, "src") + "/";
+  report.linked.exports = {
+    count: wanted.length,
+    // A built file nobody writes in src (core's document.schema.json) is only there once `pnpm build` has run; CI's legs typecheck, which writes none.
+    unresolved: wanted
+      .filter((one) => !resolved[one.specifier])
+      .filter((one) => /\.js$/.test(one.target) || existsSync(resolve(repoRoot, "packages", one.dir, one.target)))
+      .map((one) => one.specifier),
+    notFromSource: wanted
+      .filter((one) => /^\.\/dist\/.+\.js$/.test(one.target) && resolved[one.specifier])
+      .filter((one) => !resolved[one.specifier].split("?")[0].startsWith(sourceOf(one)))
+      .map((one) => `${one.specifier} -> ${resolved[one.specifier]}`),
+  };
+
   // And the linked dev server in a browser: the aliases into the framework's
   // sources, the dedupe, and the allowed directory are what this shape adds,
   // and a headless verify exercises none of them.
@@ -712,6 +763,8 @@ report.verdict = {
     : report.linked.git?.commit === null && (report.linked.git?.staged ?? "").includes("AGENTS.md") && report.linked.said.some((line) => line.includes("user.name")),
   aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework:
     report.linked.gitInitialized === true && report.linked.ciChecksOutTheFramework === true,
+  aLinkedProjectsDevServerResolvesEveryExportFromSource:
+    (report.linked.exports?.count ?? 0) > 0 && report.linked.exports?.unresolved?.length === 0 && report.linked.exports?.notFromSource?.length === 0,
   ...(withBrowser
     ? {
         theLinkedDevServerRunsInABrowser:

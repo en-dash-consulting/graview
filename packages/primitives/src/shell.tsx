@@ -12,6 +12,7 @@ import { DraftDoor } from "./draft-door.js";
 import { appKeyOf } from "./reader-lenses.js";
 import { registerReaderLenses } from "./declared-lens-doors.js";
 import { AppBar, type BarFind } from "./app-bar.js";
+import { SceneSkips } from "./scene-skips.js";
 import { useScenePlaces } from "./scene-places.js";
 import { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
 import { SceneWayBack } from "./scene-way-back.js";
@@ -236,6 +237,7 @@ function ShellFace<S extends AnySchema>({
         reach={{}}
         scenePlaces={scenePlaces}
         onFind={setBarFind}
+        skips={<SceneSkips />}
         tools={
           <>
             <Standing clean={standing} />

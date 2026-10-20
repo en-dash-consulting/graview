@@ -1,0 +1,6 @@
+{
+  "budget": "embed without the studio",
+  "minified": 64,
+  "gzipped": 0,
+  "note": "Raised when the 0.1.40 batch's branches were merged: each measured the embed without the studio against the branch it started from, and together the skip links, the board's past count and the strip's watch call come to 8 bytes more than their own raises (64 held for a byte or two either side). Measured at 722_785 / 192_975."
+}

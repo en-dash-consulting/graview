@@ -118,10 +118,18 @@ export interface Block extends Building {
   readonly lane: number;
 }
 
-/** Records a row had no room for, said as `+n` where the row begins — off the plot's left edge, never under its name. */
+/**
+ * Records the plot had no room for, said ONCE as `+n` where the first row
+ * it counts begins — off the plot's left edge, never under its name. Each
+ * cut row used to say its own, a row's depth apart, and on a small plot of
+ * many rows "+138" and "+10" stood on each other.
+ */
 export interface LaneRest {
+  /** The first row it counts. */
   readonly lane: number;
   readonly count: number;
+  /** How many rows it counts for. */
+  readonly rows: number;
   readonly col: number;
   readonly row: number;
 }
@@ -166,7 +174,11 @@ export function districtBlocks(
         height: heights[lane] ?? TIER_HEIGHT.waiting,
       });
     });
-    if (ids.length > shown.length) rests.push({ lane, count: ids.length - shown.length, col: plot.col - 0.15, row: plot.row + (lane + 0.5) * depth });
+    if (ids.length <= shown.length) return;
+    const first = rests[0];
+    const count = ids.length - shown.length;
+    if (first) rests[0] = { ...first, count: first.count + count, rows: first.rows + 1 };
+    else rests.push({ lane, count, rows: 1, col: plot.col - 0.15, row: plot.row + (lane + 0.5) * depth });
   });
   // Back to front: a smaller col+row is further from the viewer.
   blocks.sort((a, b) => a.col + a.row - (b.col + b.row) || a.col - b.col);

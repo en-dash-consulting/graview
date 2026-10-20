@@ -26,6 +26,9 @@ decides the frame; the app still decides what is in it.**
    `addressOf(place, { basePath })` (`@graview/core`) spells a place's
    link. A host that keeps its own history stays on memory, hears
    `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
+   A product shell of its own that shows the scene at a route mounts
+   `face: "graview"` there with `bar: { faces: false, name: false }` and
+   `heading: false`: no second name, no switch to Graview's own pages.
 2. **In a chat's widget, let the frame be sized from the embed.** `height:
    "auto"` with `onIntrinsicHeight` tells the host the height to give it;
    `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the
@@ -59,8 +62,11 @@ decides the frame; the app still decides what is in it.**
 6. **Start what it loads before it asks.** Each face is a chunk of its
    own, fetched as it is first drawn: `preload(face)` starts it beside the
    host's own requests, and `handle.drawn()` waits for the face to be on
-   the page. `onError` and `onReady` tell the host failures (class and
-   module only) and the time to the first face drawn.
+   the page. What the face opens as it first draws (the home's lenses, the
+   scene's ribbons) your build names in the head:
+   `firstDrawChunks(metafile, face)` from `@graview/embed/first-draw`, as
+   `modulepreload` links. `onError` and `onReady` tell the host failures
+   (class and module only) and the time to the first face drawn.
 
 ## Knowing when a place has drawn
 
@@ -120,16 +126,19 @@ Writing the view itself is `graview-worker-view`.
 `graview preview <document.json>` serves the store and Graview's own faces
 over a document; `graview shots <document.json> --places a,b --scheme both
 --width 390,1280` photographs places to PNGs, waiting for
-`data-graview-drawn` before each. Both take a proposed view as `--view
+`data-graview-drawn` before each. Both take an app declared in code as
+`graview check` does (`./dist/domain/app.js`): the store runs it, and the
+page is handed its module bundled with the project's esbuild. Both take a proposed view as `--view
 <view.js> --manifest <manifest.json>`, drawn as a draft where it
-attaches; for `shots`, name its place's path (`/places/<title>`).
+attaches; `shots` takes its place by its title, as a kept view's
+(`--places "The week"`), and lists it among the places.
 
 ## Then find out whether it worked
 
 ```sh
 pnpm build && npx graview check ./dist/domain/app.js   # the declaration is still whole
 pnpm typecheck                                          # the host's options, no casts
-graview shots app.json --view view.js --manifest manifest.json --places /places/the-week --scheme both --width 390
+graview shots app.json --view view.js --manifest manifest.json --places "The week" --scheme both --width 390
 ```
 
 Then, on the host's page: reload a deep address and land on it; press

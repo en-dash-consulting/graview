@@ -1,4 +1,4 @@
-import { pluralLabel, pluralOf, labelOf, placeSlug, type AnySchema } from "@graview/core";
+import { pluralLabel, pluralOf, labelOf, placeSlug, type AnySchema, type Store } from "@graview/core";
 import { bandAggregateWords, kindOfCard, kindsOfAggregate } from "@graview/layout";
 import { useGraview, useSelection } from "@graview/react";
 import { useEffect, useState } from "react";
@@ -120,22 +120,7 @@ export function useSubject<S extends AnySchema>({ hover = true }: { readonly hov
     };
   }, [pointer, hover]);
 
-  const name = (id: string): string | null => {
-    const node = store.graph.getNode(id);
-    if (node) return labelOf(store.schema.tryDefinition(node.kind), node);
-    const band = bandAggregateWords(id, store.schema);
-    if (band) return band;
-    const kind = kindOfCard(id);
-    if (kind) return pluralLabel(store.schema, kind);
-    /* A group of several kinds is its plurals together, as the scene's own label says: "Blocks and Runs", never "block+duty". */
-    const kinds = kindsOfAggregate(id);
-    if (kinds.length > 0) {
-      const plurals = kinds.map((one) => pluralOf(store.schema, one));
-      const said = plurals.length === 1 ? plurals[0]! : `${plurals.slice(0, -1).join(", ")} and ${plurals.at(-1)}`;
-      return said.charAt(0).toUpperCase() + said.slice(1);
-    }
-    return null;
-  };
+  const name = (id: string): string | null => wordsForChosen(store, id);
 
   const chosen = selection[selection.length - 1];
   if (chosen !== undefined) {
@@ -161,4 +146,27 @@ export function useSubject<S extends AnySchema>({ hover = true }: { readonly hov
     if (said) return { id: view.focusId, name: said, because: "place" };
   }
   return { id: null, name: "the whole thing", because: "place" };
+}
+
+/**
+ * What is chosen, in words: a record by its label, a band by what it gathers
+ * ("Albums — released by"), a kind's card by its plural, a group of kinds by
+ * their plurals together. Null for an id none of these knows, so a caller
+ * never shows the picture's own bookkeeping (`aggregate:album|released-by|…`).
+ */
+export function wordsForChosen<S extends AnySchema>(store: Store<S>, id: string): string | null {
+  const node = store.graph.getNode(id);
+  if (node) return labelOf(store.schema.tryDefinition(node.kind), node);
+  const band = bandAggregateWords(id, store.schema);
+  if (band) return band;
+  const kind = kindOfCard(id);
+  if (kind) return pluralLabel(store.schema, kind);
+  /* A group of several kinds is its plurals together, as the scene's own label says: "Blocks and Runs", never "block+duty". */
+  const kinds = kindsOfAggregate(id);
+  if (kinds.length > 0) {
+    const plurals = kinds.map((one) => pluralOf(store.schema, one));
+    const said = plurals.length === 1 ? plurals[0]! : `${plurals.slice(0, -1).join(", ")} and ${plurals.at(-1)}`;
+    return said.charAt(0).toUpperCase() + said.slice(1);
+  }
+  return null;
 }

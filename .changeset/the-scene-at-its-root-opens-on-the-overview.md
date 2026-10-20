@@ -1,0 +1,7 @@
+---
+"@graview/embed": patch
+---
+
+The scene face, mounted at its root, opens on the overview (from Graview Cloud). `mount(stage, { face: "scene", routing: "memory" })` opened on the scene descended on nothing — a near-empty floor, the kinds' tiles along its foot — where `graview preview`, at `/places/overview`, opens on the whole thing from above; under `routing: "address"` at a bare base it drew that floor first and rose only once the scene's address sync arrived. Now a scene with nowhere to be — no `stop` (in the address or handed), no place handed back (`at`), no `path` but the overview's, no first place in the declaration (`pages.first`) — opens on the overview from its first frame, as the scene does when "Up" is pressed: `where()` says `{ face: "scene", path: "/places/overview", stop: "#overview=1" }`, and a stop set then or later goes down to it as before. A host that passes a stop, a page's path or a place handed back is drawn what it asked for. `path` is documented for the scene face: nothing, or `/places/overview`. A hosted page's first load carries 0.1 KB more (under 0.1 KB gzipped).
+
+Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. What a host sees: a scene mounted with no stop is at altitude, its `where().stop` `#overview=1` where it was `#`. What Graview Cloud does: nothing; a stage that mounts the scene face with no path opens on the overview, as preview does.

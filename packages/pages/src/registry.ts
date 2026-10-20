@@ -162,9 +162,13 @@ export function recordPath(schema: AnySchema, kind: string, id: string): string 
   return recordPathOf(schema, kind, id);
 }
 
-/** The spatial stop for the same node, for the link back into the scene. */
-export function spatialHref(id: string): string {
-  return `/#focus=${encodeURIComponent(id)}`;
+/**
+ * The spatial stop for the same node, for the link back into the scene: on
+ * the scene's own address, `/` unless the host's scene lives elsewhere
+ * (`/scene/places/overview`) — the `sceneHref` its PagesApp context says.
+ */
+export function spatialHref(id: string, sceneHref = "/"): string {
+  return `${sceneHref}#focus=${encodeURIComponent(id)}`;
 }
 
 /**

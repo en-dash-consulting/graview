@@ -4,7 +4,7 @@ import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } f
 import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { afterFirstDraw, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
@@ -15,6 +15,7 @@ import { flushSync } from "react-dom";
 import {
   AUTO_SCENE_HEIGHT,
   FaceBoundary,
+  barLeaves,
   FrameBar,
   FrameFirstLook,
   FrameNotices,
@@ -147,12 +148,18 @@ function useOtherFaceWhenIdle(shown: EmbedFace, width: number | null): void {
     if (faceIsHere(other)) return undefined;
     const idle = globalThis as { requestIdleCallback?: (run: () => void, options?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
     const fetchIt = () => void preload(other);
-    if (idle.requestIdleCallback && idle.cancelIdleCallback) {
-      const asked = idle.requestIdleCallback(fetchIt, { timeout: 4000 });
-      return () => idle.cancelIdleCallback?.(asked);
-    }
-    const later = setTimeout(fetchIt, 1500);
-    return () => clearTimeout(later);
+    // Once the place has first drawn (FR-194): an idle moment before then is the place's own.
+    let stop = () => {};
+    const wait = afterFirstDraw(() => {
+      if (idle.requestIdleCallback && idle.cancelIdleCallback) {
+        const asked = idle.requestIdleCallback(fetchIt, { timeout: 4000 });
+        stop = () => idle.cancelIdleCallback?.(asked);
+      } else {
+        const later = setTimeout(fetchIt, 1500);
+        stop = () => clearTimeout(later);
+      }
+    });
+    return () => (wait(), stop());
   }, [shown, desk]);
 }
 
@@ -420,7 +427,20 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   // The first view only: after it, where the reader goes is theirs. Under address routing, a stop in the fragment is where it starts.
   // Where the declaration says the app opens (FR-80): the first view, and the scene's when the pages leave it holding nothing (FR-157).
   const opens = useMemo(() => openingView(views as ReactViewRegistry<S>, app.schema), [views, app.schema]);
-  const initialView = useMemo(() => viewFor(face, at?.stop ?? (address ? stopAtAddress(props.basePath) : undefined) ?? stop, kinds, (views as ReactViewRegistry<S>).places(), opens), []);
+  /*
+   * THE SCENE AT ITS ROOT OPENS ON THE OVERVIEW. A scene with nowhere to
+   * be — no stop, in the address or handed, no place handed back, no path
+   * but the overview's, no first place in the declaration — opened
+   * descended on nothing, a near-empty floor with the kinds' tiles along its
+   * foot, where the overview's own address (`graview preview`) opens on the
+   * whole thing from above. It opens there too, as the scene does when "Up"
+   * is pressed: a stop set later goes down to it as before.
+   */
+  const initialView = useMemo(() => {
+    const asked = at?.stop ?? (address ? stopAtAddress(props.basePath) : undefined) ?? stop;
+    const atTheRoot = face === "scene" && asked === undefined && opens === undefined && (props.path === undefined || isOverview(props.path));
+    return atTheRoot ? whereTheSceneOpens(undefined) : viewFor(face, asked, kinds, (views as ReactViewRegistry<S>).places(), opens);
+  }, []);
   // A visit that opened on the scene landed there: the pages, drawn later by a press on Home, open on the home (`hasLanded`).
   const [openedOn] = useState(face);
   useEffect(() => {
@@ -610,7 +630,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
             <FrameBar
               name={brand?.name ?? app.name}
               heading={heading}
-              faces={{
+              named={barLeaves(bar).name !== false}
+              faces={barLeaves(bar).faces === false ? undefined : {
                 scene: { label: sceneTitle(arrangement), current: !onPages, go: () => toOverview(), reach: () => void preload(sceneFace.current) },
                 // The pages, back at the page the reader was on.
                 pages: { label: pagesTitle(arrangement), current: onPages, go: () => toPage(pagesAt.current.path), reach: () => void preload("pages") },

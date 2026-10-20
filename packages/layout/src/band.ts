@@ -133,26 +133,58 @@ export function runOf(entry: { readonly node: { readonly kind: string }; readonl
  * current one; then every caption has open ground above it.
  */
 
-/** Rows of `perRow`, each relation in order starting a row unless it fits the rest of the current one. */
-export function packRuns(counts: readonly number[], perRow: number): number[][] {
-  const rows: number[][] = [];
+/**
+ * One relation's part of a band row: which relation, how many of its cards,
+ * and how many of the row's slots it takes — more than its cards where its
+ * caption's words need them (`packBand`).
+ */
+export interface BandSegment {
+  readonly run: number;
+  readonly cards: number;
+  readonly slots: number;
+}
+
+/*
+ * A CAPTION TAKES ROOM IN THE ROW IT STARTS (the focused scene of a product
+ * with many relations). Two relations of one card each shared a row, each
+ * caption had its one card's width, and "questions that would settle it"
+ * was cut to "QUESTIONS THAT WOULD SETT…" against its neighbor's words. A
+ * relation starting in a row takes as many slots as its words need, its
+ * cards centered in them, so a caption is never asked to fit in less than
+ * it says — and a relation joins a row only if that much is left.
+ */
+
+/** Rows of `perRow` slots: each relation in order starting a row unless all of it, and its caption's `need` in slots, fits what is left. */
+export function packBand(counts: readonly number[], perRow: number, need: readonly number[] = []): BandSegment[][] {
+  const rows: BandSegment[][] = [];
   let left = 0;
   counts.forEach((count, run) => {
     if (count <= 0) return;
-    if (rows.length > 0 && count <= left) {
-      for (let i = 0; i < count; i++) rows[rows.length - 1]!.push(run);
-      left -= count;
+    const wants = Math.min(perRow, Math.max(1, need[run] ?? 1));
+    const whole = Math.max(count, wants);
+    if (rows.length > 0 && count <= perRow && whole <= left) {
+      rows[rows.length - 1]!.push({ run, cards: count, slots: whole });
+      left -= whole;
       return;
     }
     let rest = count;
+    let first = true;
     while (rest > 0) {
       const take = Math.min(perRow, rest);
-      rows.push(Array.from({ length: take }, () => run));
+      // Its caption stands over its first row only: the rows after it continue it.
+      const slots = first ? Math.max(take, wants) : take;
+      rows.push([{ run, cards: take, slots }]);
       rest -= take;
-      left = perRow - take;
+      left = perRow - slots;
+      first = false;
     }
   });
   return rows;
+}
+
+/** Rows of `perRow`, each relation in order starting a row unless it fits the rest of the current one: `packBand`'s rows, card by card. */
+export function packRuns(counts: readonly number[], perRow: number, need: readonly number[] = []): number[][] {
+  return packBand(counts, perRow, need).map((row) => row.flatMap((segment) => Array.from({ length: segment.cards }, () => segment.run)));
 }
 
 /**
@@ -161,9 +193,9 @@ export function packRuns(counts: readonly number[], perRow: number): number[][] 
  * largest trimmed until the packing fits. Arithmetic only — the band is
  * planned once, not tried.
  */
-export function bandCaps(sizes: readonly number[], perRow: number, rows: number): number[] {
+export function bandCaps(sizes: readonly number[], perRow: number, rows: number, need: readonly number[] = []): number[] {
   const caps = shares(sizes, perRow * rows);
-  while (packRuns(caps, perRow).length > rows) {
+  while (packBand(caps, perRow, need).length > rows) {
     let largest = -1;
     caps.forEach((cap, index) => {
       if (cap > 1 && (largest < 0 || cap > caps[largest]!)) largest = index;

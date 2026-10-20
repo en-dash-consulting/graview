@@ -13,8 +13,11 @@ declaration plus one persistence adapter is a running deployment.
 - **`createFileAdapter(root)`** — persistence a person can read: `snapshot.json`,
   append-only `log.jsonl`, `meta.json` with the stored schema version. The core's sqlite
   adapter is the scale answer; this is the "where is my data" answer.
-- **`createBrowserAdapter()`** — the same three things in `localStorage`, for an app that
-  runs in the page with no server: the sample apps remember their edits through it,
+- **`createBrowserAdapter()`** — the same three things in IndexedDB, for an app that
+  runs in the page with no server (a store kept in `localStorage` before is carried forward on
+  its first open, and `localStorage` is used only where IndexedDB will not open). An edit is
+  kept when `apply` returns: a journal in `localStorage` holds what IndexedDB has not committed
+  yet, and the next open puts it back, so a page left at once loses nothing. The sample apps remember their edits through it,
   attributed and undoable, migrations included. Import from `@graview/ship/browser` in a
   bundle (the root entry carries the file adapter's `node:fs`). Conventions the helpers
   read: `?fresh=1` returns to the seed (`openStore({ fresh })`), and a driven browser
@@ -42,7 +45,7 @@ declaration plus one persistence adapter is a running deployment.
   `Response`, for any runtime: a Cloudflare Worker or Durable Object, Deno, Bun. `serveStore`
   is a thin `node:http` wrapper around it. Import it from `@graview/ship/runtime`, the entry
   that reaches no `node:` builtin: the store, migrations, the handler and `openRemote`, without
-  the file adapter or the page's localStorage. A host that opens, migrates and heals its own
+  the file adapter or the page's own storage. A host that opens, migrates and heals its own
   `Store` hands it over instead of an adapter: `createStoreHandler({ app, store, seatOf, flush })`.
 - **Content moves as steps.** The step DSL (`stepsMigration`) has five content steps beside
   the schema ones — `put-node`, `patch-node`, `drop-node`, `put-edge`, `drop-edge` — each
@@ -468,6 +471,38 @@ the rules broken after. It writes, logs and tells nothing, and spends no id the 
 ```ts
 const would = store.previewAll(calls, { author: seat, via, admit: (planned) => caps(seat, planned) });
 ```
+
+## The framework from its sources
+
+An app that runs Graview from a checkout in development — the framework's own
+apps, or a product linked to a sibling checkout by path — points its bundler at
+each package's `src`, so an edit to the framework is live without a build.
+`sourceAliases(root?)` on `@graview/ship/dev` reads those aliases from every
+package's own `exports`, one per entry point, so a new subpath export reaches
+every such app without a line in its config:
+
+```ts
+import { sourceAliases } from "@graview/ship/dev";
+import { fileURLToPath } from "node:url";
+
+export default defineConfig({
+  resolve: {
+    dedupe: ["react", "react-dom", "react-router-dom"],
+    // The sibling checkout; left out, the one this @graview/ship was loaded from.
+    alias: sourceAliases(fileURLToPath(new URL("../graview", import.meta.url))),
+  },
+});
+```
+
+Each export of `./dist/<path>.js` is aliased to `src/<path>.ts` (or `.tsx`),
+and a file shipped as it is (`@graview/guest/client.js`, the primitives' fonts)
+to that file. Each alias matches its specifier exactly, so `@graview/core`
+never swallows `@graview/core/words`; a built file with no source
+(`@graview/core/document.schema.json`) is left to ordinary resolution. It is an
+array, so an app's own aliases follow it: `[...sourceAliases(), { find, replacement }]`.
+`sourceEntries(root?)` lists the same exports with the file each runs from.
+It is for development only: an installed `@graview/ship` carries no `src`, and
+`sourceAliases` throws there rather than answer an empty list.
 
 ## The hosted-store contract
 

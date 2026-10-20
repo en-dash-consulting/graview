@@ -33,4 +33,8 @@ describe("the link a page makes to a place", () => {
   it("leaves the node link alone — they answer different questions", () => {
     expect(spatialHref("lawn")).toBe("/#focus=lawn");
   });
+
+  it("takes the scene's own address for a node too, as a host whose scene is not at the root sets it", () => {
+    expect(spatialHref("plot:north-bed", "/scene/places/overview")).toBe("/scene/places/overview#focus=plot%3Anorth-bed");
+  });
 });

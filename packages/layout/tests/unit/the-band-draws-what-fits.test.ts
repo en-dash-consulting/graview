@@ -1,6 +1,6 @@
 import { createSchema, defineNode, Graph, isoDate, z, type NodeOfSchema } from "@graview/core";
 import { describe, expect, it } from "vitest";
-import { bandCaps, bandOf, chooseGrouping, EMPTY_VIEW, layout, packRuns, shares, toggleExpanded, type BandItem, type BandOptions } from "../../src/index.js";
+import { bandCaps, bandOf, chooseGrouping, EMPTY_VIEW, layout, packBand, packRuns, shares, toggleExpanded, type BandItem, type BandOptions } from "../../src/index.js";
 
 /**
  * THE BAND DRAWS WHAT A PERSON CAN READ (docs/scale.md). Below its budget
@@ -140,6 +140,19 @@ describe("a crowded band is laid out by relation", () => {
     expect(packRuns([5, 5, 5], 5)).toEqual([[0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [2, 2, 2, 2, 2]]);
     expect(packRuns([3, 2, 4], 5)).toEqual([[0, 0, 0, 1, 1], [2, 2, 2, 2]]);
     expect(packRuns([3, 3], 5)).toEqual([[0, 0, 0], [1, 1, 1]]);
+  });
+
+  it("gives a relation starting in a row the slots its caption's words need, and joins a row only where they fit", () => {
+    // One card each, words two slots wide: two share a row of five, the third begins the next.
+    expect(packBand([1, 1, 1], 5, [2, 2, 2])).toEqual([
+      [
+        { run: 0, cards: 1, slots: 2 },
+        { run: 1, cards: 1, slots: 2 },
+      ],
+      [{ run: 2, cards: 1, slots: 2 }],
+    ]);
+    // A relation of several rows takes the room for its words in its first row only.
+    expect(packBand([7, 1], 5, [1, 3])).toEqual([[{ run: 0, cards: 5, slots: 5 }], [{ run: 0, cards: 2, slots: 2 }, { run: 1, cards: 1, slots: 3 }]]);
   });
 
   it("gives each relation what the rows can hold, packed", () => {

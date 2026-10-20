@@ -80,7 +80,7 @@ Rules for a page at this rung:
 3. **`pageStyles`** for the parts you did not design: one face, derived or not.
 4. **Prefill, never wire.** `DerivedForm` with `prefilled` is how a record offers an act about itself; the form asks for the rest.
 5. **Read permission before drawing an act.** `store.permits({ name, args }, principal)`, struck through with `verdict.refusal.message`. A form that refuses on submit is the bug this prevents.
-6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the scene on one thing; `placeHref(as)` (`/#view=the-grounds`) on one named place.
+6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the scene on one thing; `placeHref(as)` (`/#view=the-grounds`) on one named place. A scene not at `/`: set `sceneHref` in the PagesApp context; both take it second.
 7. **Take the act LIST from the derivation, not from the mutations.** `recordFacts(store, id, { principal }).actions` is the `AffordanceSet` the scene's strip reads: `affordances` can act here, `args` decided and `open` questions left; `withheld` are this seat's refusals, with the reason. `store.allMutations()` offers acts with nothing to act on. A **list** page asks it of a kind instead — `kindFacts(store, kind, { principal }).actions`, the acts that can BEGIN it.
 
 ### Rung two: a product design

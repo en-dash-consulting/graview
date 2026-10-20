@@ -20,6 +20,7 @@ export default defineConfig({
       // The command lines, reached by the packages that dispatch to one another.
       "@graview/core/cli": fileURLToPath(new URL("./packages/core/src/cli/index.ts", import.meta.url)),
       "@graview/core/typed": fileURLToPath(new URL("./packages/core/src/typed.ts", import.meta.url)),
+      "@graview/core/scaffold": fileURLToPath(new URL("./packages/core/src/scaffold/index.ts", import.meta.url)),
       "@graview/core/blocks": fileURLToPath(new URL("./packages/core/src/blocks.ts", import.meta.url)),
       "@graview/core/arrange": fileURLToPath(new URL("./packages/core/src/arrange.ts", import.meta.url)),
       "@graview/core/navigate": fileURLToPath(new URL("./packages/core/src/navigate.ts", import.meta.url)),
@@ -88,6 +89,7 @@ export default defineConfig({
       "@graview/ship": src("ship"),
       // The subpath first, or the bare-name alias swallows it.
       "@graview/embed/pages": fileURLToPath(new URL("./packages/embed/src/pages.tsx", import.meta.url)),
+      "@graview/embed/first-draw": fileURLToPath(new URL("./packages/embed/src/first-draw.ts", import.meta.url)),
       "@graview/embed": src("embed"),
       // The subpaths first, or the bare-name alias swallows them.
       "@graview/guest/host/frame": fileURLToPath(new URL("./packages/guest/src/host/frame.ts", import.meta.url)),

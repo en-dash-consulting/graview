@@ -76,6 +76,18 @@ const APPS = [
       ["the timetable in the dark", "The timetable", 1440, 900, "dark"],
       ["the timetable on a phone", "The timetable", 390, 844, "light"],
     ],
+    /*
+     * A RECORD FOCUSED WITH SEVERAL RELATIONS, few of each and many: a talk
+     * reached four ways in six records, below the crowd, and a speaker who
+     * presents a hundred and fifty-five talks and proposes a hundred and
+     * twenty-two, past it — and the whole program from altitude, where a
+     * district of many rows had a "+n" off the edge of each.
+     */
+    focused: [
+      ["a talk with four small relations", "talk:memory-safety-without-garbage-collection-a-field-report-on-a-startup-that-grew-faster-than-its-database"],
+      ["a speaker with three hundred", "speaker:zoe-lamarre"],
+    ],
+    plots: "/?theme=light#overview=1",
   },
   {
     /*
@@ -87,6 +99,11 @@ const APPS = [
     port: portFor("discography"),
     states: [],
     record: { id: "artist:skatterman-snug-brim", name: "Skatterman & Snug Brim", sizes: [[1440, 900], [390, 844]] },
+    /* A song by one, featuring nine, produced by one, on two releases; and an artist of eleven hundred, chosen and holding the keyboard. */
+    focused: [
+      ["a song with four relations", "song:the-anthem"],
+      ["an artist with eleven hundred, chosen and holding the keyboard", "artist:tech-n9ne", { chosen: true }],
+    ],
   },
   {
     app: "rota",
@@ -335,6 +352,51 @@ const WHOLE = (focus) => {
   return { lines, stage: stage ? Math.round(stage.getBoundingClientRect().width) : 0 };
 };
 
+/*
+ * A FOCUSED RECORD'S WORDS STAND ON THEIR OWN GROUND. Every caption over
+ * the band and every tie's words shown, as drawn: none on a card of the
+ * ground (the record's, or one of its band), none on another's words, none
+ * past the stage's edge, and — where the stage is wide — none cut short.
+ */
+const WORDS = () => {
+  const stage = document.querySelector("[data-graview-stage]")?.getBoundingClientRect();
+  const box = (r) => ({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+  const cards = [];
+  for (const host of document.querySelectorAll('[data-graview-view][data-graview-plane="0"], [data-graview-view][data-graview-plane="1"]')) {
+    if (host.closest("[data-graview-offstage]")) continue;
+    const id = host.getAttribute("data-graview-view");
+    const drawn = host.getAttribute("data-graview-plane") === "0" ? [host.querySelector('[data-graview-primitive="panel"]') ?? host] : [...host.children];
+    for (const el of drawn) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 2 && r.height > 2 && getComputedStyle(el).visibility !== "hidden") cards.push({ id, ...box(r) });
+    }
+  }
+  const words = [
+    ...[...document.querySelectorAll("[data-graview-relation]")].map((el) => {
+      const span = el.firstElementChild ?? el;
+      return { text: el.getAttribute("title") ?? el.textContent, ...box(span.getBoundingClientRect()), cut: el.scrollWidth > el.clientWidth + 1 };
+    }),
+    ...[...document.querySelectorAll('[data-graview-link-said][data-graview-tie-said="shown"]')].map((el) => ({ text: el.textContent, ...box(el.getBoundingClientRect()), cut: el.scrollWidth > el.clientWidth + 1 })),
+  ].filter((w) => w.right - w.left > 1);
+  const meets = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+  return {
+    words: words.length,
+    onCards: words.flatMap((w) => cards.filter((c) => meets(w, c)).map((c) => `"${w.text}" on ${c.id}`)),
+    onWords: words.flatMap((w, i) => words.slice(i + 1).filter((o) => meets(w, o)).map((o) => `"${w.text}" on "${o.text}"`)),
+    pastTheEdge: stage ? words.filter((w) => w.left < stage.left - 1 || w.right > stage.right + 1 || w.top < stage.top - 1).map((w) => w.text) : [],
+    cut: words.filter((w) => w.cut).map((w) => w.text),
+  };
+};
+
+/* From altitude: how many "+n" each district says, and whether any two stand on each other. */
+const RESTS = () => {
+  const rests = [...document.querySelectorAll("text.graview-village-rest")].map((el) => ({ plot: el.closest("[data-graview-plot]")?.getAttribute("data-graview-plot"), r: el.getBoundingClientRect() }));
+  const meets = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  const per = {};
+  for (const rest of rests) per[rest.plot] = (per[rest.plot] ?? 0) + 1;
+  return { rests: rests.length, plots: per, stacked: rests.flatMap((a, i) => rests.slice(i + 1).filter((b) => meets(a.r, b.r)).map((b) => `${a.plot} / ${b.plot}`)) };
+};
+
 /* What altitude shows of a record risen from: the panel beside the map, and nothing of it stamped over the city. */
 const RISEN = (id) => {
   const panel = document.querySelector("[data-graview-map-panel]");
@@ -353,7 +415,7 @@ const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, fault
 
 /* `--only=<app>` while iterating on one app's lines; the verdict is the whole run's. */
 const ONLY = process.argv.find((arg) => arg.startsWith("--only="))?.slice(7);
-for (const { app, port, states, chosen = [], ground = [], record } of APPS.filter((one) => !ONLY || one.app === ONLY)) {
+for (const { app, port, states, chosen = [], ground = [], record, focused = [], plots } of APPS.filter((one) => !ONLY || one.app === ONLY)) {
   const served = await serving(app, port, repoRoot);
   const browser = await launchEngine(ENGINE, { headless: true });
   try {
@@ -599,6 +661,44 @@ for (const { app, port, states, chosen = [], ground = [], record } of APPS.filte
       await risen("Back");
       await page.close();
     }
+    for (const [what, id, { chosen: choose = false } = {}] of focused) {
+      for (const [width, height] of [[1440, 900], [390, 844]]) {
+        const where = `${app} ${what} at ${width}`;
+        const page = await browser.newPage({ viewport: { width, height } });
+        await page.goto(`${served.url}/?theme=light#focus=${encodeURIComponent(id)}${choose ? `&sel=${encodeURIComponent(id)}` : ""}`, { waitUntil: "load" });
+        await page.waitForFunction(() => "__graviewReady" in window && document.querySelector("[data-graview-stage]") !== null, null, { timeout: 60_000 }).catch(() => {});
+        await page.waitForTimeout(2200);
+        // Held by the keyboard, every tie of a chosen record is reached at once: the state whose words floated free.
+        if (choose) await page.locator(`[data-graview-view="${id}"]`).first().focus({ timeout: 4000 }).catch(() => {});
+        await page.waitForTimeout(700);
+        const seen = await page.evaluate(WORDS);
+        report.words = [...(report.words ?? []), { where, ...seen }];
+        for (const one of seen.onCards) report.faults.push(`${where}: the words ${one}`);
+        for (const one of seen.onWords) report.faults.push(`${where}: the words ${one}`);
+        for (const one of seen.pastTheEdge) report.faults.push(`${where}: the words "${one}" run past the stage's edge`);
+        if (width >= 1200) for (const one of seen.cut) report.faults.push(`${where}: the words "${one}" are cut short with room to say them`);
+        const lines = await page.evaluate(WHOLE, id);
+        report.ground = report.ground ?? { lines: 0, ties: 0, asked: 0 };
+        report.ground.lines += lines.lines.length;
+        for (const line of lines.lines) {
+          if (line.coveredCount > 0) report.faults.push(`${where}: a ${line.kind} line ${line.from ?? ""}→${line.to ?? ""} runs behind or across ${line.covered.map((c) => `${c.by} at ${c.x},${c.y}`).join("; ")}`);
+        }
+        await page.close();
+      }
+    }
+    if (plots) {
+      for (const [width, height] of [[1440, 900], [390, 844]]) {
+        const page = await browser.newPage({ viewport: { width, height } });
+        await page.goto(`${served.url}${plots}`, { waitUntil: "load" });
+        await page.waitForFunction(() => document.querySelector("[data-graview-plot]") !== null, null, { timeout: 60_000 }).catch(() => {});
+        await page.waitForTimeout(2000);
+        const seen = await page.evaluate(RESTS);
+        report.rests = [...(report.rests ?? []), { where: `${app} from altitude at ${width}`, ...seen }];
+        for (const [plot, count] of Object.entries(seen.plots)) if (count > 1) report.faults.push(`${app} from altitude at ${width}: ${plot} says what it has no room for ${count} times`);
+        for (const one of seen.stacked) report.faults.push(`${app} from altitude at ${width}: two "+n" stand on each other (${one})`);
+        await page.close();
+      }
+    }
   } catch (error) {
     report.faults.push(`${app}: ${String(error).slice(0, 160)}`);
   } finally {
@@ -624,6 +724,11 @@ report.checks.whileTheCardIsHeldEveryTieStartsOnItsDrawnEdge = (report.held ?? [
 report.checks.noLineOnTheGroundRunsBehindOrAcrossAnything = (report.ground?.lines ?? 0) > 0 && !report.faults.some((f) => /runs behind or across/.test(f));
 report.checks.aRecordRisenFromIsInThePanelBesideTheMapAndNotOverTheCity =
   (report.risen ?? []).length >= 10 && !report.faults.some((f) => /did not rise|not in the panel beside the map|drawn over the city|building is not drawn|closing the map does not return/.test(f));
+report.checks.aFocusedRecordsWordsStandOnGroundOfTheirOwn =
+  (report.words ?? []).length > 0 &&
+  (report.words ?? []).every((one) => one.words > 0) &&
+  !report.faults.some((f) => /: the words .* on |run past the stage's edge|cut short with room/.test(f));
+report.checks.aDistrictSaysWhatItHasNoRoomForOnce = (report.rests ?? []).some((one) => one.rests > 0) && !report.faults.some((f) => /has no room for \d+ times|"\+n" stand on each other/.test(f));
 report.checks.nothingThrew = !report.faults.some((f) => /Error|Timeout/.test(f));
 /*
  * A HARNESS THAT PASSES ON NOTHING IS THEATER: with no lines on any page

@@ -75,7 +75,7 @@ if (chapter?.stored) {
   const scope = `chapter-${chapter.n}`;
   await adapter.delete(scope);
   await adapter.save(scope, chapter.stored.snapshot as never);
-  (adapter as { saveMeta?: (scope: string, meta: { version: number }) => void }).saveMeta?.(scope, { version: chapter.stored.version });
+  await (adapter as { saveMeta?: (scope: string, meta: { version: number }) => void | Promise<void> }).saveMeta?.(scope, { version: chapter.stored.version });
 }
 const opened: Opened = chapter
   ? ((await openStore({

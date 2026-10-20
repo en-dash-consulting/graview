@@ -83,7 +83,10 @@ fields, edges, label, roles — is `graview-node-kind`.
    `{out('includes') | and}` ("A, B and C"), `{n | words | capital}`
    ("Three"), `{at | time}` ("10:47 AM"). A field's label, a group's
    heading and what an empty list says are words, not templates: braces
-   there would be drawn as typed, and `view-braces` warns of them.
+   there would be drawn as typed, and `view-braces` warns of them. A
+   `describe` or `label` written in code is not a template either: say the
+   value in code (`momentAsRead(node.startsAt)`), and
+   `describe-template-in-code` warns of `{field}` returned there.
 
 ## Then find out whether it worked
 
@@ -100,6 +103,10 @@ Report **the actual output**, including warnings. What it catches here:
   cannot read; `view-depth` — lists nested past three
 - `view-whole-text` — a card or row putting a long `text` field whole in a
   text block (`graview-lists` says how a card shows its start)
+- `view-headline-long` — a headline bound to a long `text`, Markdown or long
+  string field whole, which a focus card drew at display size: say it in a
+  `text` block, or head it with `{call|excerpt: 60}` (a headline past about
+  90 characters is drawn a step smaller and clamped to four lines)
 - `computed-cycle` — values worked out from each other; `computed-clash` —
   a computed name that is already a field; `computed-cost` — work that grows
   with the cube of the graph (a warning at the square)

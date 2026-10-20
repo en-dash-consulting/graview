@@ -1434,7 +1434,7 @@ export class Store<S extends AnySchema> {
           compiled = compileMutation(this.graph, definition, call.args, this.sighted(author as Principal));
         } catch (error) {
           // A press the act's own input refused: the watch tells a form filled wrongly from an act offered whole.
-          if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal({ mutation: error.mutation, message: error.issues.map((issue) => `${issue.path.map(String).join(".")}: ${issue.message}`).join("; ") }, author.id);
+          if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal(error, author.id);
           throw error;
         }
         if (automated) {

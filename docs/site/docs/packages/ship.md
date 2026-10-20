@@ -15,14 +15,14 @@ What **every** deployment of a Graview app needs, hosted or self-hosted: one `de
 - **`openStore({ app, adapter })`** — load what was stored, migrate it forward, fold it into a live `Store`, and keep the adapter current (every diff appends its operations and rewrites the snapshot).
 - **`createSqlAdapter({ sql })`** (from `@graview/core`) — persistence over one synchronous `exec(sql, ...params)`: a Durable Object's `ctx.storage.sql` as it is, or better-sqlite3 through `sqlFromDatabase(db)`. The core's sqlite adapter is this adapter over better-sqlite3, so the same tests hold for both.
 - **`createFileAdapter(root)`** — persistence a person can read: `snapshot.json`, append-only `log.jsonl`, `meta.json` with the stored schema version. The core's sqlite adapter is the scale answer; this is the "where is my data" answer.
-- **`createBrowserAdapter()`** — the same three things in `localStorage`, for an app that runs in the page with no server: the sample apps remember their edits through it, attributed and undoable, migrations included. Import from `@graview/ship/browser` in a bundle (the root entry carries the file adapter's `node:fs`). Conventions the helpers read: `?fresh=1` returns to the seed (`openStore({ fresh })`), and a driven browser starts fresh unless it says `?remember=1` — `browserStartsFresh()`, `forgetFreshParam()`.
+- **`createBrowserAdapter()`** — the same three things in IndexedDB, for an app that runs in the page with no server (a store kept in `localStorage` before is carried forward on its first open, and `localStorage` is used only where IndexedDB will not open). An edit is kept when `apply` returns: a journal in `localStorage` holds what IndexedDB has not committed yet, and the next open puts it back, so a page left at once loses nothing. The sample apps remember their edits through it, attributed and undoable, migrations included. Import from `@graview/ship/browser` in a bundle (the root entry carries the file adapter's `node:fs`). Conventions the helpers read: `?fresh=1` returns to the seed (`openStore({ fresh })`), and a driven browser starts fresh unless it says `?remember=1` — `browserStartsFresh()`, `forgetFreshParam()`.
 - **The store reopens with its history.** `openStore` hands the persisted log to the store alongside the snapshot, so what was done in an earlier session is still in the activity and still undoable — persistence is the op log, not a cache of the graph.
 - **Op-log-native migrations** — a declaration carries `version` and `migrations` (`{ from, to, title, apply(snapshot) → primitives }`). Running one appends ordinary operations: authored `system · ship:migration`, stating intent, carrying their inverse. `graview check` refuses a chain with gaps or multi-version jumps before deploy time.
 - **`exportBundle` / `assertBundle`** — the anti-lock-in shape: graph + attributed history + version in one JSON bundle, re-importable into any deployment of the same declaration.
 - **A long-lived log compacts.** `opened.compact({ keepDays, keepOps })` makes the graph at an undo horizon a checkpoint and has the adapter archive the ops before it (the file adapter writes them to `archive/`). The next open loads the checkpoint and the tail, undo stops at the horizon and says so, and `exportBundle(app, store, { full: true })` still carries every op. The browser adapter keeps no epochs, so it keeps no checkpoint either.
 - **`health(store)`** — coherence, not liveness: dangling edges, standing, sizes.
 - **`serveStore` / `openRemote`** — the store behind HTTP, and the other end of the wire. A client sends CALLS, never primitives; the server applies them through an ordinary `Store` under the seat the request carries, so the policy refuses on the server exactly what it refuses in a browser. `graview serve <entry>` is the command.
-- **`createStoreHandler`** — the same routes as one function from a `Request` to a `Response`, for any runtime: a Cloudflare Worker or Durable Object, Deno, Bun. `serveStore` is a thin `node:http` wrapper around it. Import it from `@graview/ship/runtime`, the entry that reaches no `node:` builtin: the store, migrations, the handler and `openRemote`, without the file adapter or the page's localStorage. A host that opens, migrates and heals its own `Store` hands it over instead of an adapter: `createStoreHandler({ app, store, seatOf, flush })`.
+- **`createStoreHandler`** — the same routes as one function from a `Request` to a `Response`, for any runtime: a Cloudflare Worker or Durable Object, Deno, Bun. `serveStore` is a thin `node:http` wrapper around it. Import it from `@graview/ship/runtime`, the entry that reaches no `node:` builtin: the store, migrations, the handler and `openRemote`, without the file adapter or the page's own storage. A host that opens, migrates and heals its own `Store` hands it over instead of an adapter: `createStoreHandler({ app, store, seatOf, flush })`.
 - **Content moves as steps.** The step DSL (`stepsMigration`) has five content steps beside the schema ones — `put-node`, `patch-node`, `drop-node`, `put-edge`, `drop-edge` — each judged against the stored graph when it runs, so a default that is already there is not put twice. `seedSteps(seed, live)` diffs a bootstrap seed against a live snapshot into them; `applySteps(store, steps)` lands them as one logged, undoable operation authored `system · ship:sync-seed`. `graview sync-seed <entry> --seed <file> --data <dir> [--apply] [--prune]` is the command.
 
 ### The seed is read once
@@ -189,6 +189,25 @@ admit: (asked, planned) =>
 const would = store.previewAll(calls, { author: seat, via, admit: (planned) => caps(seat, planned) });
 ```
 
+### The framework from its sources
+
+An app that runs Graview from a checkout in development — the framework's own apps, or a product linked to a sibling checkout by path — points its bundler at each package's `src`, so an edit to the framework is live without a build. `sourceAliases(root?)` on `@graview/ship/dev` reads those aliases from every package's own `exports`, one per entry point, so a new subpath export reaches every such app without a line in its config:
+
+```ts
+import { sourceAliases } from "@graview/ship/dev";
+import { fileURLToPath } from "node:url";
+
+export default defineConfig({
+  resolve: {
+    dedupe: ["react", "react-dom", "react-router-dom"],
+    // The sibling checkout; left out, the one this @graview/ship was loaded from.
+    alias: sourceAliases(fileURLToPath(new URL("../graview", import.meta.url))),
+  },
+});
+```
+
+Each export of `./dist/<path>.js` is aliased to `src/<path>.ts` (or `.tsx`), and a file shipped as it is (`@graview/guest/client.js`, the primitives' fonts) to that file. Each alias matches its specifier exactly, so `@graview/core` never swallows `@graview/core/words`; a built file with no source (`@graview/core/document.schema.json`) is left to ordinary resolution. It is an array, so an app's own aliases follow it: `[...sourceAliases(), { find, replacement }]`. `sourceEntries(root?)` lists the same exports with the file each runs from. It is for development only: an installed `@graview/ship` carries no `src`, and `sourceAliases` throws there rather than answer an empty list.
+
 ### The hosted-store contract
 
 A third party stands up their own host — a file store or SQLite, `graview serve`, `graview mcp` — without forking anything here. Graview Cloud is the polished multi-tenant host of the same API, and it consumes this package the way any customer would.
@@ -208,11 +227,11 @@ A third party stands up their own host — a file store or SQLite, `graview serv
 
 Anything **one** deployment needs lives here. Anything only the **operator of many** deployments needs — tenancy, provisioning, deploy-to-URL, billing, fleet upgrades, the builder UX — lives in the `graview-cloud` repo, which consumes this package the way any customer would. If Cloud ever needs a private hook into the framework, that hook is a missing public seam to fix here first.
 
-## What it exports (85)
+## What it exports (92)
 
 Read off the package's own barrel, so this is what is there today.
 
-`announcePresence`, `answerSubscriptions`, `answerViews`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `conflictSentence`, `connectionsFileOf`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `fileConnectionState`, `filesAt`, `fileSubscriptions`, `fileViews`, `forgetFreshParam`, `freshHref`, `GOOGLE_TOKEN_URL`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `keepsTheApp`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `readEnvFile`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `remoteSubscriptions`, `remoteViews`, `runConnections`, `sayHeld`, `sayReport`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `VIEWS_PATH`, `visitorPresence`, `WIRE`, `wireRefusalOf`
+`announcePresence`, `answerSubscriptions`, `answerViews`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `BROWSER_DATABASE`, `browserStartsFresh`, `bundleAppForPage`, `conflictSentence`, `connectionsFileOf`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `fileConnectionState`, `filesAt`, `fileSubscriptions`, `fileViews`, `findBundler`, `forgetFreshParam`, `freshHref`, `GOOGLE_TOKEN_URL`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `keepsTheApp`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `NO_BUNDLER`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `PREVIEW_APP_PATH`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `readEnvFile`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `remoteSubscriptions`, `remoteViews`, `runConnections`, `sayHeld`, `sayRefusals`, `sayReport`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedRefusals`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `VIEWS_PATH`, `visitorPresence`, `WIRE`, `wireRefusalOf`
 
 ---
 

@@ -332,6 +332,9 @@ importers:
         specifier: ^0.3.1
         version: 0.3.1
     devDependencies:
+      '@graview/ship':
+        specifier: workspace:*
+        version: link:../../packages/ship
       vite:
         specifier: ^5.4.11
         version: 5.4.21(@types/node@22.20.1)(terser@5.51.2)

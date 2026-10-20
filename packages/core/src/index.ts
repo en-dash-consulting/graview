@@ -27,7 +27,7 @@ export type { ZodDef } from "./schema/zod.js";
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf } from "./schema/define-node.js";
 // A picture or a document on a record (FR-162), and the host that stores them (FR-163).
-export { fileKindOf, fileSrc, filesOf, isFileValue, isImage, isVideo, safeFileHref, videoWords } from "./schema/files.js";
+export { fileAt, fileKindOf, fileSrc, filesOf, isFileValue, isImage, isVideo, safeFileHref, videoWords } from "./schema/files.js";
 export type { FileKind, FileValue, HostFiles } from "./schema/files.js";
 export { fileField, imageField, videoField } from "./schema/file-field.js";
 // A link to another app (FR-171): its address on a record, and the host that says what it is called.
@@ -320,7 +320,7 @@ export { hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
 export { keptSubscription, memorySubscriptions, subscriberOf, subscriptionId } from "./subscription-shape.js";
 export type { MatchedRecord, OnSubscriptionMatch, Subscription, SubscriptionDraft, SubscriptionMatch, SubscriptionStore, SubscriptionWhen } from "./subscription-shape.js";
 export { walkKinds } from "./schema/path.js";
-export { tellTheWatchWhatIsUnseen } from "./watched.js";
+export { tellTheWatchOfAPressRefusedByItsInput, tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Integrity — a fold has a fingerprint, and a store can prove its own (FR-20).
 export { sha256Hex, snapshotHash } from "./integrity.js";

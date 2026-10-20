@@ -1,0 +1,6 @@
+{
+  "budget": "embed without the studio",
+  "minified": 236,
+  "gzipped": 85,
+  "note": "Raised when a drop came to read when the host says each file was made (FR-195): a file value takes `at`, an ISO date and time, and `isFileValue` and `fileAt` read it (`schema/files.ts`), so a stored photograph's EXIF time fills a required time before the file's lastModified. A record's file is judged on every page, so this is up front. Measured at 723_030 / 193_058 against 722_794 / 192_973 minified and gzipped."
+}

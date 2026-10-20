@@ -30,7 +30,9 @@ function exportsOf(entry: string): Set<string> {
 const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   // The page's storage: localStorage and the address bar.
   browserStartsFresh: "a page's address bar",
-  createBrowserAdapter: "localStorage",
+  createBrowserAdapter: "IndexedDB and localStorage",
+  BROWSER_DATABASE: "IndexedDB",
+  IDBFactoryLike: "IndexedDB",
   forgetFreshParam: "a page's address bar",
   freshHref: "a page's address bar",
   PRINCIPAL_KEY: "localStorage",
@@ -86,6 +88,11 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   previewPrincipal: "the CLI",
   Preview: "node:http",
   PreviewOptions: "node:http",
+  PREVIEW_APP_PATH: "the CLI",
+  // An app in code bundled for the preview's page: esbuild, found on disk.
+  bundleAppForPage: "node:module",
+  findBundler: "node:module",
+  NO_BUNDLER: "the CLI",
 };
 
 describe("the runtime entry, beside the main and browser entries", () => {

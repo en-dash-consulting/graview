@@ -1,4 +1,4 @@
-import { AppBar, barPlaceAt, barPlaces, Profile, StandingDot, standingWords, toolStyle, useFavicon } from "@graview/primitives/pages";
+import { AppBar, barPlaceAt, barPlaces, focusInto, Profile, SkipLinks, StandingDot, standingWords, toolStyle, useFavicon } from "@graview/primitives/pages";
 import { PagesActivity } from "./pages-activity.js";
 import { faviconHref, pagesTitle, pluralLabel, sceneTitle } from "@graview/core";
 import type { AnySchema } from "@graview/core";
@@ -110,6 +110,9 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
   const broken = store.violations(invariantContext);
   const problems = broken.length;
   const said = standingWords(broken, "All rules hold");
+  // A record's own page: `/<its kind's plural>/<its id>`.
+  const segments = location.pathname.split("/").filter(Boolean);
+  const onRecord = segments.length === 2 && kindOfSlug(store.schema, segments[0]!) !== undefined && store.graph.getNode(decodeURIComponent(segments[1]!)) !== undefined;
   return (
     <>
       <AppBar
@@ -126,6 +129,32 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
         current={barPlaceAt(places, here)}
         reach={{ href: (path) => `${base}${path}`, go: (place) => navigate(place.path) }}
         {...(toldFind ? { onFind: toldFind.onFind, find: toldFind.find } : { findBox: <PageFind context={context} /> })}
+        skips={
+          /*
+           * THE WAYS PAST THE BAR, onto what the page is for: a list's
+           * records, where the page is a list, else the page itself — and on a
+           * record's page, onto what can be done with it, past its fields and
+           * its relations (nine Tabs on, the twelfth walk's relate), whoever
+           * designed the page. No more than that: every stop before the bar
+           * is a press more for everything in it, and the problems are a
+           * place of the bar's own, its count the press.
+           */
+          <SkipLinks
+            to={[
+              {
+                label: "Skip to the content",
+                testid: "content",
+                go: () => {
+                  const records = document.querySelector<HTMLElement>("[data-graview-skip-target]");
+                  focusInto(records?.querySelector<HTMLElement>('[data-graview-choose-box][tabindex="0"]') ?? records ?? document.querySelector<HTMLElement>("main"));
+                },
+              },
+              ...(onRecord
+                ? [{ label: "Skip to what can be done", testid: "acts", go: () => void focusInto(document.querySelector<HTMLElement>("main [data-affordance]:not([disabled])") ?? document.querySelector<HTMLElement>("main")) }]
+                : []),
+            ]}
+          />
+        }
         tools={
           <>
             {/* The standing, as the problems' own page: a dot, a number only when a rule is broken (FR-131). */}

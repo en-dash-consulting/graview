@@ -38,7 +38,9 @@ the project's `pnpm typecheck` covers the embed from day one.
    app with a home view opens on it, else the scene; `"scene"`,
    `"graview"`, `"pages"` (on `path`); `"picture"` is ONE lens alone
    (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar;
-   `switch: "icons"` keeps the switch to its marks.
+   `switch: "icons"` keeps the switch to its marks. Under a product's own
+   bar, `bar: { faces: false, name: false }` (and `heading: false`) keeps
+   the places, Find, the standing and the person, never CSS hiding them.
 3. **Name it.** Two embeds on one page carry the same landmarks — the
    relation key, the inspector, the pages' navigation — and a landmark must
    be unique by role and name. `label` names every one of them after the

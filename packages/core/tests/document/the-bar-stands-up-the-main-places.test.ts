@@ -33,6 +33,12 @@ describe("the kinds that support the others", () => {
     // A kind with no ties at all is a main kind until the declaration says otherwise.
     expect(supporting.has("rule")).toBe(false);
   });
+
+  it("read a tie to any kind as a tie to every kind, so a note about anything supports them", () => {
+    const note = defineNode("note", { fields: z.object({ text: z.string() }), edges: { about: { to: "*" } } });
+    const supporting = supportingKinds(createSchema([list, task, note]), undefined);
+    expect([...supporting]).toEqual(["note"]);
+  });
 });
 
 describe("pages.primary", () => {

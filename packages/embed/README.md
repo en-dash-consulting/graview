@@ -11,9 +11,10 @@ const handle = mount(document.querySelector("#garden")!, {
   app,                        // defineApp(...)
   seed,                       // the graph to open with, or nothing
   face: "graview",            // "scene" | "graview" | "pages" | "picture" — one named lens, no chrome: stop "#view=<place>"; leave it out and the app opens on its home view, else the scene
-  stop: "#focus=plot-1",      // the scene's view state, as its URL fragment
+  stop: "#focus=plot-1",      // the scene's view state, as its URL fragment; none, and the scene opens on the overview
+  path: "/plots",             // the routed face's page; on the scene, nothing or "/places/overview" — the whole thing from above
   principal: { kind: "human", id: "june", roles: ["coordinator"] },
-  bar: true,                  // the app bar over every face (the default)
+  bar: true,                  // the app bar over every face (the default); { faces: false, name: false } under a host's own bar
   switch: "words",            // the bar's Scene/Pages switch: its words where they fit (the default), or "icons" for its marks alone
 });
 
@@ -22,6 +23,12 @@ handle.setPath("/places/overview"); // the scene, at its own address
 handle.setStop("#overview=1&expand=kind:plot");
 handle.unmount();
 ```
+
+A scene with nowhere to be — no `stop`, no `path` but the overview's, no
+first place in the declaration — opens on the overview, the whole thing
+from above, as `graview preview` at `/places/overview` does: `mount(stage,
+{ face: "scene" })` under either routing, and `routing: "address"` at a bare
+base. A `stop` set then or later goes down to it.
 
 `<Embed {...options} />` is the same thing as a React component.
 
@@ -70,6 +77,21 @@ is in order" otherwise), and the person (an avatar whose menu holds who is
 signed in, the seats, the host's own actions and, for whoever keeps the
 app, the installation and the studio). `bar: false` draws none of it, for a
 host whose own page already says all of that.
+
+UNDER A HOST'S OWN BAR. A product with its own shell that mounts the scene
+in it says what the bar leaves out (`EmbedBar`): `faces: false` draws no
+switch — its Pages side is Graview's derived pages, not the product's own —
+and `name: false` no app mark and name, which the product's bar already
+says. The scene's places, Find, the standing (Activity beside it once
+anything has happened) and the person stay. Pass `heading: false` too, so
+nothing in the embed says the app's name as a heading.
+
+```ts
+mount(stage, { app, store, face: "graview", bar: { faces: false, name: false }, heading: false });
+```
+
+`@graview/embed/pages` takes `bar: { name: false }` the same way (it has no
+switch to leave out).
 
 THE BAR FITS ITS BOX. Every rule the bar is drawn by reads the bar's own
 width, never the screen's: an embed in a 650 px box on a 1440 desk is a
@@ -147,6 +169,40 @@ const app = await fetchAndCompile();        // the host's own round trips, meanw
 await faceReady;
 const handle = mount(root, { app, face });  // drawn in this commit
 ```
+
+A face opens doors of its own as it first draws — on the pages the home's
+lenses, a list's arranging, the bar's Activity and a form's date box; on
+the scene the relations' ribbons, the city's ground, the districts' states
+and the way back after an act — each a chunk asked for only once the face
+has run, a round trip after the face's own on a phone (FR-194). They stay
+doors, so a page that never draws a lens never runs one, and
+`@graview/embed/first-draw` names them for a host's build:
+`firstDrawChunks(metafile, face)` reads esbuild's metafile and returns the
+chunks a face's first draw asks for — each door's chunk and every chunk it
+imports outright — to name in the page's head beside the face's own;
+`FIRST_DRAW_DOORS` is the list it reads, each door by its package and
+module. It is a build script's, never the page's: importing it costs a page
+nothing.
+
+```ts
+import { firstDrawChunks } from "@graview/embed/first-draw";
+
+const built = await esbuild.build({ ...shell, splitting: true, metafile: true });
+const doors = firstDrawChunks(built.metafile, "pages").map((chunk) => `/${chunk.split("/").pop()}`);
+// Less what the head already names for the face itself.
+```
+
+Ask for them once the face's own chunks have arrived, not beside them: on
+a phone's network a door named beside the face takes its bandwidth, and
+the face draws later. `graview preview`'s page writes them from a script in
+its head that waits for each `modulepreload` link's `load`; so asked, the
+face drew when it did and the place settled about half a second sooner on
+a slow 4G (`pnpm verify first-load`).
+
+What is fetched before it is wanted — the acts' pane when the page is
+idle, a date's editor, the other face at a desk — waits until the place
+has first drawn and settled (`data-graview-drawn`), so on a phone the
+network is the first draw's until then.
 
 What this asks of the framework, and what it adds: the theme scopes to the
 element (`themeBaseCss(scheme, brand, { scope })`, and the blocks a view is

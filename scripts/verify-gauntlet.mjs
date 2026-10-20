@@ -85,6 +85,14 @@ const RECORDS = {
   staff: "staff:sam-taylor-2",
   workshop: "workshop:hands-on-fifty-people-twenty-four-chairs-and-one-projector",
   session: "session:2026-day-1-morning-track-a-distributed-systems-and-the-long-tail-of-reliability-engineering",
+  /*
+   * Two kinds sharing a field name, chosen together through one rule
+   * (carried from walks XI and XII, W-228): a workshop whose leader presents
+   * both of next year's keynotes that day. A talk's status and a workshop's
+   * are each in words of their own.
+   */
+  clashingWorkshop: "workshop:hands-on-planning-the-next-ten-years-with-the-keynote-speaker",
+  clashingTalks: ["talk:keynote-the-next-ten-years-of-the-program", "talk:keynote-the-next-ten-years-of-the-program-revisited"],
 };
 
 const report = { at: new Date().toISOString(), engine: ENGINE, states: [], pageErrors: [], checks: {} };
@@ -313,6 +321,59 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     const offered = await count(page, '[data-testid="affordances"] [data-affordance]');
     const withheld = await count(page, '[data-testid="withheld"] [data-affordance]');
     return { reached: offered + withheld > 0, detail: { offered, withheld } };
+  });
+
+  /*
+   * TWO KINDS SHARING A FIELD, CHOSEN THROUGH THE RULE THEY BREAK (carried
+   * from walks XI and XII, W-228). The problem pressed under the standing
+   * chooses the workshop and both keynotes at once, and its acts open over
+   * them: what is offered there whole is the watch's to judge — an
+   * alignment of their `status` told a value one kind's input refuses is
+   * offered-then-refused — and the chair presses the repair and takes it
+   * back, so the offer is walked to the store and not only drawn.
+   */
+  await reach(page, where, "a workshop and two talks chosen through the rule they break", async () => {
+    await go(page, "#overview=1", 1500);
+    const standing = page.locator('[data-testid="standing"]').locator("visible=true").first();
+    if ((await standing.count()) === 0) return { reached: false, detail: "no standing on the scene" };
+    await standing.click();
+    await page.waitForTimeout(800);
+    const problem = page.locator('[data-testid="problems"] button', { hasText: "leads Hands-on: Planning the Next Ten Years" }).locator("visible=true").first();
+    if ((await problem.count()) === 0) return { reached: false, detail: "the problem is not listed" };
+    await problem.click();
+    await page.waitForSelector('[data-testid="context-menu"]', { timeout: 10_000 }).catch(() => {});
+    await page.waitForTimeout(800);
+    const chosen = await page.evaluate(() => decodeURIComponent(location.hash));
+    const wanted = [RECORDS.clashingWorkshop, ...RECORDS.clashingTalks];
+    const offered = await page.evaluate(() => [...document.querySelectorAll('[data-testid="affordances"] [data-affordance]:not([disabled])')].map((one) => one.textContent?.trim() ?? ""));
+    // Neither kind's status told the other's words, nor one brought "in line" through a relation only the others hold.
+    const aligned = offered.filter((label) => (/align/i.test(label) && /status/i.test(label)) || /in line with the others/.test(label));
+    let repaired = null;
+    if (who === "chair") {
+      const repair = page.locator('[data-affordance^="invariant:a-leader-is-free-on-their-workshops-day"]').locator("visible=true").first();
+      if ((await repair.count()) > 0) {
+        await repair.focus();
+        await page.keyboard.press("Enter");
+        await page.waitForTimeout(1200);
+        repaired = !(await page.locator('[data-testid="problems"] button', { hasText: "leads Hands-on: Planning the Next Ten Years" }).count());
+        // Taken back, so the walk after it meets the seed as it was.
+        await page.click('[data-testid="activity-button"]');
+        await page.waitForTimeout(800);
+        const undo = page.locator('[data-testid="undo-turn"]');
+        if ((await undo.count()) > 0) await undo.first().click();
+        await page.waitForTimeout(800);
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(400);
+      } else repaired = false;
+    }
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(400);
+    // Back on the talk the next steps open their acts over.
+    await go(page, focusHash(RECORDS.submittedTalk), 2000);
+    return {
+      reached: wanted.every((id) => chosen.includes(id)) && aligned.length === 0 && repaired !== false,
+      detail: { offered, aligned, ...(repaired === null ? {} : { repaired }) },
+    };
   });
 
   /*
@@ -634,6 +695,8 @@ report.checks = {
       "a workshop over its room's seats focused",
     ].every((name) => reached(name)) &&
     ["a talk with a long, shared-prefix title", "one of ten Opening Remarks", "one of three Wei Zhangs", "a speaker whose id is in Han script", "a room with no label field"].every((name) => reached(name)),
+  // Two kinds sharing a field name are chosen together through the rule they break, on the scene, as every seat; nothing aligns them, and the chair's repair is pressed and taken back (W-228).
+  twoKindsSharingAFieldAreChosenThroughTheirRule: reached("a workshop and two talks chosen through the rule they break"),
   // The calendar over two kinds opens, pages and widens to ten years, on both faces.
   theCalendarOverTwoKindsOpens:
     reached("the timetable over talks and workshops opened") &&

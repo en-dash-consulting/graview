@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 import { launchEngine } from "./lib/engine.mjs";
 import { portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
+import { stored as keptInPage } from "./lib/stored.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const scratch = resolve(repoRoot, "apps/.studio-rehearsal");
@@ -203,7 +204,7 @@ try {
   );
   await page.goto(`http://localhost:${PORT}/?remember=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
-  const storedEdges = () => page.evaluate(() => (JSON.parse(localStorage.getItem("graview:seedbed:snapshot") ?? "{}").edges ?? []).length);
+  const storedEdges = async () => ((await keptInPage(page, "graview:seedbed:snapshot"))?.edges ?? []).length;
   report.debug = { afterSeeding: await storedEdges() };
 
   /* ------------------------------------------- said to the studio's seat */
@@ -289,11 +290,12 @@ try {
   await page.goto(`http://localhost:${PORT}/?remember=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
   await page.waitForTimeout(800);
-  const after = await page.evaluate(() => ({
-    snapshot: JSON.parse(localStorage.getItem("graview:seedbed:snapshot") ?? "null"),
-    meta: JSON.parse(localStorage.getItem("graview:seedbed:meta") ?? "null"),
-    log: JSON.parse(localStorage.getItem("graview:seedbed:log") ?? "[]"),
-  }));
+  // Read where the browser adapter keeps it: the garden planted in localStorage above was carried into IndexedDB on its first open.
+  const after = {
+    snapshot: await keptInPage(page, "graview:seedbed:snapshot"),
+    meta: await keptInPage(page, "graview:seedbed:meta"),
+    log: (await keptInPage(page, "graview:seedbed:log")) ?? [],
+  };
   const tended = (after.snapshot?.edges ?? []).filter((edge) => edge.kind === "tended-by").map((edge) => `${edge.from}->${edge.to}`).sort();
   report.checks.theCaretakersMovedOntoThePlantings = {
     version: after.meta?.version,

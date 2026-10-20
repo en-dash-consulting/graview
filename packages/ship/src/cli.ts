@@ -13,10 +13,11 @@ import type { GraphSnapshot } from "./snapshot.js";
 import { sayStep } from "./steps.js";
 import { LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
 import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
-import { applySteps, seedSteps } from "./sync-seed.js";
+import { bundleAppForPage } from "./preview-app.js";
+import { applySteps, sayRefusals, seedRefusals, seedSteps } from "./sync-seed.js";
 import { runConnections } from "./connections.js";
 import { fileConnectionState, readEnvFile } from "./connections-file.js";
-import { heldBy, holdFileOf, holdStore, sayHeld, type StoreHold } from "./store-hold.js";
+import { heldBy, holdFileOf, holdStore, sayHeld, sayTookOver, type StoreHold } from "./store-hold.js";
 import type { StoredMeta } from "./meta.js";
 
 /**
@@ -53,19 +54,21 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       install — this is how default content moves afterwards, in place of
       deleting the store.
 
-  graview preview <document.json> [--seed <file>] [--port <n>] [--host <address>]
+  graview preview <document.json | app module> [--seed <file>] [--port <n>] [--host <address>]
                   [--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync]
                   [--view <view.js> --manifest <manifest.json>]
       Serves the store and Graview's own faces over it — the scene and
       Pages, with the bar — so a document and a snapshot can be looked at
       with no product. Nothing to build or install: the page ships with
-      graview. The store is in memory unless --data or --sqlite name where
-      to keep it; the page sits as a person holding every role the document
-      declares, unless --as or --roles say who. Its connections run as
+      graview. An app declared in code is taken as graview check takes it
+      (./dist/domain/app.js), its module bundled for the page with the
+      project's esbuild. The store is in memory unless --data or --sqlite
+      name where to keep it; the page sits as a person holding every role
+      the app declares, unless --as or --roles say who. Its connections run as
       serve's do, unless --no-sync. --view and --manifest draw a worker view
       proposed and not kept where it attaches, marked as a draft.
 
-  graview shots <document.json> [--seed <file>] [--places a,b] [--out <dir>]
+  graview shots <document.json | app module> [--seed <file>] [--places a,b] [--out <dir>]
                 [--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene]
                 [--view <view.js> --manifest <manifest.json>]
       Photographs places headless to PNGs, <place>-<scheme>-<width>.png in
@@ -74,7 +77,7 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       /tasks/t1; every place when none is named. Needs Playwright, which you
       install beside the project (npm i -D playwright, then npx playwright
       install chromium). --view and --manifest picture a proposed view
-      before it is kept: name its place's path (/places/<title>).
+      before it is kept: name its place by its title, as a kept view's.
 `;
 
 /** The same store, whichever command asked: parsed from the flags every store command shares. */
@@ -88,8 +91,8 @@ export function flag(argv: readonly string[], name: string): string | undefined 
 
 export interface StoreBackend {
   readonly adapter: PersistenceAdapter<string> & {
-    loadMeta?(scope: string): StoredMeta | null;
-    saveMeta?(scope: string, meta: StoredMeta): void;
+    loadMeta?(scope: string): StoredMeta | null | Promise<StoredMeta | null>;
+    saveMeta?(scope: string, meta: StoredMeta): void | Promise<void>;
   };
   /** Where the data is, in words a person can open. */
   readonly where: string;
@@ -109,6 +112,7 @@ export function holdBackend(backend: StoreBackend, command: string, wanted: stri
     process.stderr.write(`graview ${command}: ${sayHeld(held.heldBy, backend.where, wanted, options)}`);
     return undefined;
   }
+  if (held.tookOverFrom) process.stderr.write(`graview ${command}: ${sayTookOver(held.tookOverFrom, backend.where)}`);
   return held;
 }
 
@@ -230,6 +234,11 @@ export async function serve(argv: readonly string[]): Promise<number> {
     say: (line) => process.stdout.write(`graview serve: connection ${line}\n`),
   });
 
+  // Listening for a stop before saying where it listens: whoever reads the address may send one at once.
+  stopOnSignal("serve", async () => {
+    await connections.stop();
+    await served.close();
+  }, hold);
   process.stdout.write(
     `graview serve: ${app.name} on ${served.url}\n` +
       `  live: ${served.url.replace(/^http/, "ws")}${LIVE_PATH}\n` +
@@ -238,18 +247,43 @@ export async function serve(argv: readonly string[]): Promise<number> {
       `  ${served.store.graph.allNodes().length} nodes, ${served.opened.store.log.all().length} operations` +
       `${served.opened.migrated.length > 0 ? `, migrated: ${served.opened.migrated.map((op) => op.intent).join("; ")}` : ""}\n`,
   );
+  return 0;
+}
+
+/** How long a server's stop may take before the process goes anyway: the sockets' grace, and a margin. */
+const STOP_DEADLINE_MS = 2500;
+
+/**
+ * A SERVER STOPS WHEN IT IS TOLD TO. SIGTERM, SIGINT or SIGHUP closes the
+ * server — its live sockets told and given a short grace, its keep-alive
+ * connections cut — lets the store go, and exits. A close that is still
+ * waiting at the deadline, or a second signal, exits anyway: a process that
+ * only `kill -9` stops leaves its store's hold naming it.
+ */
+function stopOnSignal(command: string, close: () => Promise<void>, hold: StoreHold | undefined): void {
+  let stopping = false;
+  const leave = (code: number) => {
+    hold?.release();
+    process.exit(code);
+  };
   const stop = () => {
-    void connections
-      .stop()
-      .then(() => served.close())
-      .then(() => {
-        hold.release();
-        process.exit(0);
-      });
+    if (stopping) return leave(0);
+    stopping = true;
+    setTimeout(() => {
+      process.stderr.write(`graview ${command}: a connection was still open after ${STOP_DEADLINE_MS / 1000} s; stopped anyway.\n`);
+      leave(0);
+    }, STOP_DEADLINE_MS).unref();
+    close().then(
+      () => leave(0),
+      (error: unknown) => {
+        process.stderr.write(`graview ${command}: stopping: ${error instanceof Error ? error.message : String(error)}\n`);
+        leave(1);
+      },
+    );
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
-  return 0;
+  process.on("SIGHUP", stop);
 }
 
 /**
@@ -294,6 +328,25 @@ export async function syncSeed(argv: readonly string[]): Promise<number> {
       process.stdout.write(json ? `{"steps":[],"applied":null}\n` : `graview sync-seed: ${backend.where} already has everything the seed has.\n`);
       return 0;
     }
+    /*
+     * JUDGED BEFORE IT IS ASKED. Every put and patch is applied to a copy as
+     * the store would apply it, so a dry run that passes is an apply that
+     * lands, and an apply that would be refused is refused here, naming
+     * every record at once — not after a clean-looking dry run.
+     */
+    const refused = seedRefusals(app.schema, steps, live);
+    if (refused.length > 0) {
+      const fits = steps.filter((step) => !refused.some((one) => one.step === step));
+      process.stdout.write(
+        json
+          ? `${JSON.stringify({ steps, refused, applied: null }, null, 2)}\n`
+          : `graview sync-seed: ${refused.length} of ${steps.length} step${steps.length === 1 ? "" : "s"} would be refused by what ${app.name} declares, so the store would take none of them:\n` +
+              sayRefusals(refused) +
+              (fits.length > 0 ? `The other ${fits.length} fit${fits.length === 1 ? "s" : ""}:\n${fits.map((step) => `  ${sayStep(step)}\n`).join("")}` : "") +
+              `Nothing was written. Change these records in the seed, or the declaration, and run this again.\n`,
+      );
+      return 1;
+    }
     if (!argv.includes("--apply")) {
       process.stdout.write(
         json
@@ -331,12 +384,25 @@ export interface PreviewPage {
   readonly page: string;
 }
 
-/** The document a preview or a shots run was asked for, or the reason it cannot start. */
-function previewInput(argv: readonly string[], command: string): { readonly document: unknown } | number {
+/**
+ * The document a preview or a shots run was asked for — or the app declared
+ * in code, as `graview check` loads one, with its module bundled for the
+ * page (W-245) — or the reason it cannot start.
+ */
+async function previewInput(argv: readonly string[], command: string): Promise<{ readonly document: unknown; readonly code?: undefined } | { readonly code: { readonly app: GraviewApp; readonly bundle: string }; readonly document?: undefined } | number> {
   const file = argv[0];
-  if (!file || file.startsWith("--") || !file.endsWith(".json")) {
-    process.stderr.write(`graview ${command}: a declaration document (a .json file) is required\n\n${SERVE_USAGE}`);
+  if (!file || file.startsWith("--")) {
+    process.stderr.write(`graview ${command}: a declaration document (a .json file) or an app module (./dist/domain/app.js) is required\n\n${SERVE_USAGE}`);
     return 2;
+  }
+  if (!file.endsWith(".json")) {
+    try {
+      const app = await loadApp(file);
+      return { code: { app, bundle: await bundleAppForPage(file) } };
+    } catch (error) {
+      process.stderr.write(`graview ${command}: cannot picture ${file}: ${error instanceof Error ? error.message : String(error)}\n`);
+      return 1;
+    }
   }
   try {
     return { document: JSON.parse(readFileSync(resolve(process.cwd(), file), "utf8")) as unknown };
@@ -345,6 +411,9 @@ function previewInput(argv: readonly string[], command: string): { readonly docu
     return 1;
   }
 }
+
+/** What `servePreview` is handed of it: the document, or the app in code. */
+const previewed = (input: { readonly document?: unknown; readonly code?: { readonly app: GraviewApp; readonly bundle: string } }) => (input.code ? { code: input.code as never } : { document: input.document });
 
 /** A view proposed and not kept (FR-187), from `--view <view.js> --manifest <manifest.json>`: nothing when neither is given, or the reason it cannot be read. */
 function draftOf(argv: readonly string[], command: string): { readonly draftView?: { readonly manifest: unknown; readonly source: string } } | number {
@@ -384,7 +453,7 @@ async function said<T>(command: string, step: () => Promise<T>): Promise<T | und
  * for somebody with no product (`./serve-preview.ts`).
  */
 export async function preview(argv: readonly string[], { page }: PreviewPage): Promise<number> {
-  const input = previewInput(argv, "preview");
+  const input = await previewInput(argv, "preview");
   if (typeof input === "number") return input;
   const draft = draftOf(argv, "preview");
   if (typeof draft === "number") return draft;
@@ -405,7 +474,7 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
   let opened;
   try {
     opened = await servePreview({
-      document: input.document,
+      ...previewed(input),
       page,
       ...draft,
       ...(backend.seed ? { seed: backend.seed } : {}),
@@ -414,10 +483,10 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
       port: Number(flag(argv, "--port") ?? 0),
       host,
       trustSeatHeaders: trust.trust,
-      principal: previewPrincipal(input.document, { ...(as ? { as } : {}), ...(roles !== undefined ? { roles: listOf(roles) } : {}) }),
+      principal: previewPrincipal(input.code?.app ?? input.document, { ...(as ? { as } : {}), ...(roles !== undefined ? { roles: listOf(roles) } : {}) }),
       // The document's connections: credentials from the environment, cursors beside the data when it is kept, else in memory.
       connections: {
-        ...(keeps ? { state: fileConnectionState(connectionsFileOf(backend, (input.document as { name?: string }).name ?? "app")) } : {}),
+        ...(keeps ? { state: fileConnectionState(connectionsFileOf(backend, input.code?.app.name ?? (input.document as { name?: string }).name ?? "app")) } : {}),
         paused: argv.includes("--no-sync"),
         say: (line) => process.stdout.write(`graview preview: connection ${line}\n`),
       },
@@ -429,6 +498,8 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
   }
   const { app, served, url, principal } = opened;
   hold?.serving(url);
+  // Listening for a stop before saying where it listens: whoever reads the address may send one at once.
+  stopOnSignal("preview", () => opened.close(), hold);
   process.stdout.write(
     `graview preview: ${app.name} on ${url}\n` +
       `  Pages: ${url}/   the scene: ${url}/places/overview\n` +
@@ -436,14 +507,6 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
       `  sits as ${principal.name ?? principal.id}${principal.roles?.length ? `, holding ${principal.roles.join(", ")}` : ""}\n` +
       `  ${served.store.graph.allNodes().length} nodes. Ctrl-C stops it.\n`,
   );
-  const stop = () => {
-    void opened.close().then(() => {
-      hold?.release();
-      process.exit(0);
-    });
-  };
-  process.on("SIGINT", stop);
-  process.on("SIGTERM", stop);
   return 0;
 }
 
@@ -452,7 +515,7 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
  * preview, on a free port of its own, into PNGs (`./shots.ts`).
  */
 export async function shots(argv: readonly string[], { page }: PreviewPage): Promise<number> {
-  const input = previewInput(argv, "shots");
+  const input = await previewInput(argv, "shots");
   if (typeof input === "number") return input;
   const draft = draftOf(argv, "shots");
   if (typeof draft === "number") return draft;
@@ -480,15 +543,17 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
   if (backend === undefined) return 1;
   let opened;
   try {
-    opened = await servePreview({ document: input.document, page, ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0) });
+    opened = await servePreview({ ...previewed(input), page, ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0) });
   } catch (error) {
     process.stderr.write(`graview shots: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
   try {
-    const { shots: taken, unknown } = shotsOf(opened.app, listOf(flag(argv, "--places")), faces as ("pages" | "scene")[]);
+    // A draft's place by its title too, as a kept view's (W-243).
+    const drafted = draft.draftView?.manifest;
+    const { shots: taken, unknown } = shotsOf(opened.app, listOf(flag(argv, "--places")), faces as ("pages" | "scene")[], drafted);
     if (unknown.length > 0) {
-      const known = shotsOf(opened.app, [], ["pages"]).shots.map((shot) => shot.name).join(", ");
+      const known = shotsOf(opened.app, [], ["pages"], drafted).shots.map((shot) => shot.name).join(", ");
       process.stderr.write(`graview shots: ${opened.app.name} has no place called ${unknown.map((one) => JSON.stringify(one)).join(", ")}. Its places: ${known}, or a path such as /places/overview.\n`);
       return 2;
     }

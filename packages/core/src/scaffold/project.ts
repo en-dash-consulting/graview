@@ -376,7 +376,7 @@ export default defineConfig({
 });
 `;
   }
-  return `import { devFiles, studioDoor } from "@graview/ship/dev";
+  return `import { devFiles, sourceAliases, studioDoor } from "@graview/ship/dev";
 import { searchForWorkspaceRoot } from "vite";
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
@@ -384,13 +384,13 @@ import { fileURLToPath } from "node:url";
 /*
  * THE FRAMEWORK IS A SIBLING CHECKOUT. This project consumes \`@graview/*\`
  * by path (\`link:\` dependencies) and, in development, straight from the
- * framework's sources. Two things follow: the dev server must be allowed
+ * framework's sources, one alias per export (\`sourceAliases\`, read from
+ * the checkout's own packages). Two things follow: the dev server must be allowed
  * to serve files from that directory, and React must be deduplicated, or
  * the framework's components and this app's would each hold their own copy
  * and hooks would break. Build the framework first: \`pnpm -C ${ids.link} build\`.
  */
-const framework = (p: string) =>
-  fileURLToPath(new URL(\`${ids.link}/packages/\${p}\`, import.meta.url));
+const framework = fileURLToPath(new URL("${ids.link}", import.meta.url));
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
@@ -458,112 +458,21 @@ export default defineConfig({
      */
     dedupe: ["react", "react-dom", "react-router-dom"],
     /*
-     * Every subpath before its bare name: an alias is a prefix, so
-     * "@graview/core" alone would take "@graview/core/testing" too and
-     * point it inside core's index file.
+     * One alias per export of every framework package, read from the
+     * packages' own \`exports\` in the checkout each time the server starts,
+     * so a subpath the framework adds tomorrow resolves to its source
+     * without a line here. Each matches its specifier exactly, so
+     * "@graview/core" never swallows "@graview/core/words". A file the
+     * framework's build writes (\`@graview/core/document.schema.json\`) is
+     * not aliased and resolves through the link, from its dist.
      */
-    alias: {
-      "@graview/core/testing": framework("core/src/testing.ts"),
-      "@graview/core/typed": framework("core/src/typed.ts"),
-      // Written by the build, so it is read from dist: the framework is built first.
-      "@graview/core/document.schema.json": framework("core/dist/document.schema.json"),
-      "@graview/core/blocks": framework("core/src/blocks.ts"),
-      "@graview/core/arrange": framework("core/src/arrange.ts"),
-      "@graview/core/navigate": framework("core/src/navigate.ts"),
-      "@graview/core/search": framework("core/src/search.ts"),
-      "@graview/core/words": framework("core/src/words.ts"),
-      "@graview/core/markdown": framework("core/src/markdown.ts"),
-      "@graview/core/seat": framework("core/src/seat.ts"),
-      "@graview/core/field-sight": framework("core/src/field-sight.ts"),
-      "@graview/core/provenance": framework("core/src/provenance.ts"),
-      "@graview/core/history": framework("core/src/history.ts"),
-      "@graview/core/past": framework("core/src/past.ts"),
-      "@graview/core/linked": framework("core/src/linked.ts"),
-      "@graview/core/tidying": framework("core/src/tidying.ts"),
-      "@graview/core/catalog": framework("core/src/catalog.ts"),
-      "@graview/core/subscriptions": framework("core/src/subscriptions.ts"),
-      "@graview/core/forms": framework("core/src/forms.ts"),
-      "@graview/core/lines": framework("core/src/lines.ts"),
-      "@graview/core/json-schema": framework("core/src/json-schema.ts"),
-      "@graview/core/check": framework("core/src/check.ts"),
-      "@graview/core/scene": framework("core/src/scene.ts"),
-      "@graview/core/city": framework("core/src/city.ts"),
-      "@graview/core/figures": framework("core/src/figures.ts"),
-      "@graview/core/compiled": framework("core/src/compiled.ts"),
-      "@graview/core/describe": framework("core/src/describe.ts"),
-      "@graview/core/retry": framework("core/src/retry.ts"),
-      "@graview/core/document": framework("core/src/document/index.ts"),
-      "@graview/core/conformance": framework("core/src/conformance/index.ts"),
-      "@graview/core/sync": framework("core/src/sync/index.ts"),
-      "@graview/core/import": framework("core/src/import/index.ts"),
-      "@graview/core/snapshot": framework("core/src/snapshot.ts"),
-      "@graview/core/cli": framework("core/src/cli/index.ts"),
-      "@graview/core/scaffold": framework("core/src/scaffold/index.ts"),
-      "@graview/core/sqlite": framework("core/src/persistence/sqlite.ts"),
-      "@graview/core": framework("core/src/index.ts"),
-      "@graview/layout/view": framework("layout/src/view.ts"),
-      "@graview/layout/sizes": framework("layout/src/sizes.ts"),
-      "@graview/layout/view-moves": framework("layout/src/view-moves.ts"),
-      "@graview/layout": framework("layout/src/index.ts"),
-      "@graview/tools/cli": framework("tools/src/cli.ts"),
-      "@graview/tools/frame": framework("tools/src/frame.ts"),
-      "@graview/tools/edit": framework("tools/src/edit.ts"),
-      "@graview/tools/suggest": framework("tools/src/suggest.ts"),
-      "@graview/tools/derive": framework("tools/src/derive.ts"),
-      "@graview/tools/go": framework("tools/src/go.ts"),
-      "@graview/tools/draft": framework("tools/src/draft.ts"),
-      "@graview/tools/keep": framework("tools/src/keep.ts"),
-      "@graview/tools/turn": framework("tools/src/turn.ts"),
-      "@graview/tools/several": framework("tools/src/several.ts"),
-      "@graview/tools/inline-ai": framework("tools/src/inline-ai.ts"),
-      "@graview/tools": framework("tools/src/index.ts"),
-      "@graview/render/gpu": framework("render/src/gpu.ts"),
-      "@graview/render": framework("render/src/index.ts"),
-      "@graview/react/provider": framework("react/src/provider.ts"),
-      "@graview/react/drawing": framework("react/src/drawing.ts"),
-      "@graview/react": framework("react/src/index.ts"),
-      "@graview/primitives/frame": framework("primitives/src/frame.ts"),
-      "@graview/primitives/pages": framework("primitives/src/pages.ts"),
-      "@graview/primitives/scene": framework("primitives/src/scene.ts"),
-      // The identity's face, optional: the host imports it once if it wants Montserrat.
-      "@graview/primitives/montserrat.css": framework("primitives/fonts/montserrat.css"),
-      "@graview/primitives/montserrat-latin.woff2": framework("primitives/fonts/montserrat-latin.woff2"),
-      "@graview/primitives": framework("primitives/src/index.ts"),
-      "@graview/pages/static": framework("pages/src/static.ts"),
-      "@graview/pages": framework("pages/src/index.ts"),
-      // The browser entry, so the file adapter's node:fs never meets the bundler.
-      "@graview/ship/browser": framework("ship/src/browser.ts"),
-      "@graview/ship/runtime": framework("ship/src/runtime.ts"),
-      "@graview/ship/dev": framework("ship/src/dev.ts"),
-      "@graview/ship/cli": framework("ship/src/cli.ts"),
-      "@graview/ship": framework("ship/src/index.ts"),
-      "@graview/embed/pages": framework("embed/src/pages.tsx"),
-      "@graview/embed": framework("embed/src/index.ts"),
-      "@graview/guest/host/frame": framework("guest/src/host/frame.ts"),
-      "@graview/guest/host/worker": framework("guest/src/host/worker.ts"),
-      "@graview/guest/host/views": framework("guest/src/host/views.ts"),
-      "@graview/guest/headless/node": framework("guest/src/headless/node.ts"),
-      "@graview/guest/headless": framework("guest/src/headless/index.ts"),
-      "@graview/guest/cli": framework("guest/src/cli.ts"),
-      "@graview/guest/client.js": framework("guest/client.js"),
-      "@graview/guest/client": framework("guest/src/client.ts"),
-      "@graview/guest/host": framework("guest/src/host/index.ts"),
-      "@graview/guest/react": framework("guest/src/react.ts"),
-      "@graview/guest/worker/view": framework("guest/src/worker/view.ts"),
-      "@graview/guest/worker": framework("guest/src/worker/index.ts"),
-      "@graview/guest/build": framework("guest/src/build.ts"),
-      "@graview/guest": framework("guest/src/index.ts"),
-      "@graview/studio": framework("studio/src/index.ts"),
-    },
+    alias: sourceAliases(framework),
   },
   server: {
     port: ${ids.port},
     strictPort: true,
     fs: {
-      allow: [
-        searchForWorkspaceRoot(process.cwd()),
-        fileURLToPath(new URL("${ids.link}", import.meta.url)),
-      ],
+      allow: [searchForWorkspaceRoot(process.cwd()), framework],
     },
   },
   test: { environment: "node" },

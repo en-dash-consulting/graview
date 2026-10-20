@@ -5,7 +5,8 @@ import type { GraphReader } from "@graview/core";
  *
  * A photograph off a modern phone is three to six megabytes. The browser
  * adapter in this package keeps the whole graph — snapshot, log and meta —
- * in `localStorage`, which is about five megabytes in total. So the failure
+ * in IndexedDB, and falls back to `localStorage` (about five megabytes in
+ * total) where IndexedDB will not open. So the failure
  * mode of doing nothing is not "photographs are big"; it is that the
  * twelfth photograph throws a `QuotaExceededError` somewhere inside a save
  * and **the graph does not persist** — every node, every op, every hour
@@ -34,8 +35,8 @@ import type { GraphReader } from "@graview/core";
 /**
  * What to spend on photographs, in bytes.
  *
- * `localStorage` is ~5 MB per origin and the adapter stores a snapshot AND
- * an append-only log, so a graph's own text can easily be another megabyte
+ * Where the adapter falls back to `localStorage` it has ~5 MB per origin
+ * for a snapshot AND an append-only log, so a graph's own text can easily be another megabyte
  * after a few seasons. 2 MB for photographs leaves room for both and for
  * the log to keep growing, which matters more: a lost photograph is an
  * annoyance and a lost log is the whole record.

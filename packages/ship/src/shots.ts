@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { type AnySchema, type AppPlace, type GraviewApp } from "@graview/core";
+import { placePath, placeSlug, type AnySchema, type AppPlace, type GraviewApp } from "@graview/core";
 import { placesOf } from "@graview/core/seat";
 
 /**
@@ -11,6 +11,8 @@ import { placesOf } from "@graview/core/seat";
  * Each of the app's places (`placesOf`: the home, the scene's overview,
  * each declared lens, each kind's list) by its address word or its title;
  * a path (`/tasks/t1`) is taken as it is. Nothing asked is every place.
+ * A titled view proposed and not kept (`--view`, `--manifest`) is a place
+ * too, by its title and its address word, as it would be kept (W-243).
  */
 export interface Shot {
   /** The file's name, before the scheme and width: the place's address word, `-scene` when it is the place's stop in the scene. */
@@ -22,8 +24,10 @@ export interface Shot {
 
 const fileWord = (said: string) => said.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "home";
 
-export function shotsOf(app: GraviewApp<AnySchema>, asked: readonly string[], faces: readonly ("pages" | "scene")[]): { readonly shots: readonly Shot[]; readonly unknown: readonly string[] } {
-  const places = placesOf(app);
+export function shotsOf(app: GraviewApp<AnySchema>, asked: readonly string[], faces: readonly ("pages" | "scene")[], draft?: unknown): { readonly shots: readonly Shot[]; readonly unknown: readonly string[] } {
+  const places: AppPlace[] = [...placesOf(app)];
+  const drafted = draftPlace(draft);
+  if (drafted && !places.some((place) => place.slug === drafted.slug)) places.push(drafted);
   const found: AppPlace[] = [];
   const paths: string[] = [];
   const unknown: string[] = [];
@@ -49,6 +53,14 @@ export function shotsOf(app: GraviewApp<AnySchema>, asked: readonly string[], fa
   }
   for (const path of paths) shots.push({ name: fileWord(path), address: path, scene: path.startsWith("/places/overview") });
   return { shots, unknown };
+}
+
+/** A draft view's place, from its manifest, when it has a title: where the page draws it, `/places/<its address word>`. */
+function draftPlace(manifest: unknown): AppPlace | undefined {
+  const { title, attach } = (typeof manifest === "object" && manifest !== null ? manifest : {}) as { title?: unknown; attach?: unknown };
+  if (typeof title !== "string" || placeSlug(title) === "") return undefined;
+  const slug = placeSlug(title);
+  return { slug, title, kind: typeof attach === "string" && attach !== "home" ? attach : null, cardinality: "many", address: placePath(slug), stop: `#view=${slug}` };
 }
 
 /** What a Playwright module offers that this needs. */

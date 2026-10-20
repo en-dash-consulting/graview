@@ -85,7 +85,7 @@ export type { MotionStore } from "./motion.js";
 export { landingIn, useTheKeyboardLandsSomewhere } from "./keyboard.js";
 export { inTopLayer, placePane, POPOVER_STYLE, POPOVERS, raiseOverPopovers, usePopover, useTopLayer } from "./popover.js";
 export type { PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions } from "./popover.js";
-export { lazyModule, partArriving, partsArriving, retryLazyParts } from "./lazy-part.js";
+export { afterFirstDraw, firstDrawn, lazyModule, partArriving, partsArriving, placeDrawn, placeWatched, retryLazyParts } from "./lazy-part.js";
 // The conversation with the seat, held by the app so a face switch keeps it.
 export { createSeatTalk, seatTalkKey, useSeatTalkState } from "./seat-talk.js";
 // The inline AI's desk: the interactions Activity draws and the ghost waiting to be accepted, held by the app.
