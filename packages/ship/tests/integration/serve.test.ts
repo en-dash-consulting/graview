@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { bindSchema, createSchema, defineApp, defineNode, nodeRef } from "@graview/core";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { assertBundle } from "../../src/export.js";
 import { createFileAdapter } from "../../src/file-adapter.js";
@@ -136,8 +136,8 @@ describe("the store behind HTTP", () => {
     two.store.apply({ name: "finish", args: { id: "t1" } });
     // For that moment, the second browser believes it.
     expect(done(two.store, "t1")).toBe(true);
-    await new Promise((settle) => setTimeout(settle, 80));
-    expect(said[0]).toMatch(/already finished/);
+    // The refusal comes back over the wire: waited for, not timed.
+    await vi.waitFor(() => expect(said[0]).toMatch(/already finished/), { timeout: 5_000 });
     // Taken back — and the server's own op then brings the truth.
     await two.pull();
     expect(done(two.store, "t1")).toBe(true);
