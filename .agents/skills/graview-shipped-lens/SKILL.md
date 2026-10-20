@@ -64,7 +64,7 @@ when the bindings do not (reach; a coverage over its columns).
   link over its relation, says so ("No genres yet: link songs to
   genres.") and lists no rows.
 - **A blocks place** is drawn from the closed block set (headline,
-  figure, list — `graview-node-kind`), each record by its own row or card:
+  figure, list — `graview-view-specs`), each record by its own row or card:
   `{ name: "blocks", title: "What we heard", on: "signal", options: {
   blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }`.
   Nothing in it runs; a chat can write it. Write code only for what

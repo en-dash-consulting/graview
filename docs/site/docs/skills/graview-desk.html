@@ -1520,7 +1520,7 @@ main.page > section.tour-intro { padding-top: 64px; }
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-desk</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-desk</code> is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-desk</code> is one of Graview's 26 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1530,7 +1530,11 @@ main.page > section.tour-intro { padding-top: 64px; }
 <h3>The four seams</h3>
 <ol>
 <li><strong>Intake</strong> — getting the something in. <code>&lt;Intake onPhotos={...} /&gt;</code> hands back data URLs.</li>
-<li><strong>A door</strong> — reaching the model. Declared, not hard-wired: ```ts intelligence: [{ name: "surveyor", kind: "llm", reach: ["paste", "local"], bridge: "/__graview/local", keyStorage: "in this browser only, never in the repository", may: ["stake-out", "place-feature"], }] ``` <code>&lt;Door provider="surveyor" prompt={...} photos={...} onProposals={...} /&gt;</code> draws exactly the doors declared. <strong>Paste is the floor</strong> — a prompt out, an answer back, no key and no network — and a product reachable that way is a product anybody can run. <code>local</code> is the machine under the dev server (<code>localIntelligence()</code> from <code>@graview/ship/dev</code>), offered only when something is actually answering there.</li>
+<li><strong>A door</strong> — reaching the model. Declared, not hard-wired: ```ts intelligence: [{ name: "surveyor", kind: "llm", reach: ["paste", "local"], bridge: "/__graview/local", keyStorage: "in this browser only, never in the repository", may: ["stake-out", "place-feature"], }] ``` <code>&lt;Door provider="surveyor" prompt={...} photos={...} onProposals={...} /&gt;</code> draws exactly the doors declared. <strong>Paste is the floor</strong> — a prompt out, an answer back, no key and no network — and a product reachable that way is a product anybody can run. <code>local</code> is the machine under the dev server, offered only when something is actually answering there. A locally-run product very often has a coding agent installed, logged in and paid for; the browser cannot spawn it and the dev server can:</li>
+</ol>
+<p>``<code>ts    // vite.config.ts    import { localIntelligence } from "@graview/ship/dev";    plugins: [localIntelligence({ path: "/__graview/local", budgetUsd: 2 })]    </code>``</p>
+<p>Read it with <code>useLocalIntelligence(path)</code> from <code>@graview/react</code>. The    spawned session gets Read and only Read, a turn per photograph plus    three, a dollar budget, a closed stdin and an environment with every    <code>CLAUDE*</code> variable stripped. <code>apply: "serve"</code> means a build carries no    door: a deployed copy probes, gets nothing, and reads as <strong>closed</strong> —    which is a state, not a fault.</p>
+<ol>
 <li><strong>A plan</strong> — what came back, as an object rather than a list: ordered by the chain, judged against the policy and the provider's <code>may</code>, reviewable. <code>planFrom(store, proposals, { app, principal })</code>.</li>
 <li><strong>A review</strong> — <code>&lt;PlanReview plan={plan} onApplied={...} /&gt;</code>. Applied as one turn, so <code>store.undo(batch)</code> takes the whole thing back.</li>
 </ol>

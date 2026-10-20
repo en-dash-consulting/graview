@@ -1,6 +1,6 @@
 # graview-pages
 
-`graview-pages` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
+`graview-pages` is one of Graview's 26 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -30,7 +30,7 @@ The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, P
 
 **Arrange it, declared**: `pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }`. `order` sorts gallery, nav, city; `hide` drops kinds from the home only; `first` (place, kind or `"home"`) is where a new visit lands; a drawn home stays Home, on the bar and at `/`. `primary` stands on the bar. `placesOf(app)` (`/seat`) lists them. A lens only a home links to may be `hidden: true` (set-lens-hidden): off the bar and the page list, still at its address.
 
-**Home as data** (FR-81): `home`, blocks as in `graview-node-kind` (`views.home`), replaces this body, and the app opens on it (FR-136): 40 blocks at its top (a group is one; 120 in all), and a `figure` may say `emphasis: "large"`.
+**Home as data** (FR-81): `home`, blocks as in `graview-view-specs` (`views.home`), replaces this body, and the app opens on it (FR-136): 40 blocks at its top (a group is one; 120 in all), and a `figure` may say `emphasis: "large"`.
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) — `graview create` does — and the face puts the scene's provider under its routes:
 

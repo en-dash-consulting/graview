@@ -1,6 +1,6 @@
 # graview-desk
 
-`graview-desk` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
+`graview-desk` is one of Graview's 26 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -13,9 +13,14 @@ Installed into a project by `graview skills install .`, and read by whichever as
 ### The four seams
 
 1. **Intake** — getting the something in. `<Intake onPhotos={...} />` hands back data URLs.
-2. **A door** — reaching the model. Declared, not hard-wired: ```ts intelligence: [{ name: "surveyor", kind: "llm", reach: ["paste", "local"], bridge: "/__graview/local", keyStorage: "in this browser only, never in the repository", may: ["stake-out", "place-feature"], }] ``` `<Door provider="surveyor" prompt={...} photos={...} onProposals={...} />` draws exactly the doors declared. **Paste is the floor** — a prompt out, an answer back, no key and no network — and a product reachable that way is a product anybody can run. `local` is the machine under the dev server (`localIntelligence()` from `@graview/ship/dev`), offered only when something is actually answering there.
-3. **A plan** — what came back, as an object rather than a list: ordered by the chain, judged against the policy and the provider's `may`, reviewable. `planFrom(store, proposals, { app, principal })`.
-4. **A review** — `<PlanReview plan={plan} onApplied={...} />`. Applied as one turn, so `store.undo(batch)` takes the whole thing back.
+2. **A door** — reaching the model. Declared, not hard-wired: ```ts intelligence: [{ name: "surveyor", kind: "llm", reach: ["paste", "local"], bridge: "/__graview/local", keyStorage: "in this browser only, never in the repository", may: ["stake-out", "place-feature"], }] ``` `<Door provider="surveyor" prompt={...} photos={...} onProposals={...} />` draws exactly the doors declared. **Paste is the floor** — a prompt out, an answer back, no key and no network — and a product reachable that way is a product anybody can run. `local` is the machine under the dev server, offered only when something is actually answering there. A locally-run product very often has a coding agent installed, logged in and paid for; the browser cannot spawn it and the dev server can:
+
+```ts // vite.config.ts import { localIntelligence } from "@graview/ship/dev"; plugins: [localIntelligence({ path: "/__graview/local", budgetUsd: 2 })] ```
+
+Read it with `useLocalIntelligence(path)` from `@graview/react`. The spawned session gets Read and only Read, a turn per photograph plus three, a dollar budget, a closed stdin and an environment with every `CLAUDE*` variable stripped. `apply: "serve"` means a build carries no door: a deployed copy probes, gets nothing, and reads as **closed** — which is a state, not a fault.
+
+1. **A plan** — what came back, as an object rather than a list: ordered by the chain, judged against the policy and the provider's `may`, reviewable. `planFrom(store, proposals, { app, principal })`.
+2. **A review** — `<PlanReview plan={plan} onApplied={...} />`. Applied as one turn, so `store.undo(batch)` takes the whole thing back.
 
 ### Or in the context menu
 
