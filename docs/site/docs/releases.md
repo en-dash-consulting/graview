@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.40`](https://graview.dev/docs/releases.html#v0-1-40)
 - [`0.1.39`](https://graview.dev/docs/releases.html#v0-1-39)
 - [`0.1.38`](https://graview.dev/docs/releases.html#v0-1-38)
 - [`0.1.37`](https://graview.dev/docs/releases.html#v0-1-37)
@@ -40,6 +41,23 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.40
+
+Published October 20, 2026 · the current version
+
+Edits kept the moment they are made, labels that keep their space in a focused scene, a keyboard that reaches what it means, and a first draw with no extra round trips.
+
+- **Stores persist in IndexedDB.** A page's store moves from localStorage to IndexedDB, carried forward intact, so a large one survives in Safari; every edit is journaled the moment it is made, so leaving the page loses nothing.
+- **A focused scene gives its words room.** Relation headings sit over their own cards, counts appear once per district, and lines route around labels.
+- **The keyboard reaches what it means.** Skip links into a long list, the chosen card and the problems; a menu of acts is one Tab stop. Keyboard presses across the examples' jobs fell from 1,995 to 1,103.
+- **The first draw needs no extra round trips.** `firstDrawChunks` names what a face's first paint opens, and early fetches wait for it.
+- **Smaller asks:** a drop takes the photo's capture time; the scene opens on the overview and can sit under a host's own bar; `sync-seed`'s dry run refuses what the apply would; `graview preview` stops when told; `graview check` warns of long headlines and templates in code describes; `shots` and `preview` take an app declared in code.
+- **Apps that run the framework from source take their aliases from its exports** (`sourceAliases`), including projects `graview create --link` makes.
+
+**Before you upgrade:** The browser adapter keeps stores in IndexedDB (localStorage stores are carried forward) and `loadMeta`/`saveMeta` return promises; the adapter journals ops (`journal`, `loadJournal`); `mount`'s `bar` takes `{ faces?: false, name?: false }`; the scene with no path opens on the overview (`where().stop` is `#overview=1`); `spatialHref(id, sceneHref)`; `sync-seed` exits 1 on a seed the declaration refuses; `ServedStore.close({ grace })`; new check findings `describe-template-in-code`, `view-headline-long`, `lens-column-written-unsaid`. The hosted page carries about 2 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.40) · [The full changelog for 0.1.40](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0140)
 
 ## 0.1.39
 
