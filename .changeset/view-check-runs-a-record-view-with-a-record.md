@@ -1,0 +1,8 @@
+---
+"@graview/guest": patch
+"@graview/skills": patch
+---
+
+`graview view check` runs a view of one record over a record, and a view's pictures are reckoned over its own records first (W-242, the thirteenth walk, a camera-trap survey). The survey's contact sheet, a pictures view of one station that reads the detections and the edge saying which camera took each, was run with no station at all and said "No station.", which judges nothing; and the picture budget the run reported was spent on every detection of the app in the order they were kept, so the station's own photographs were left out for the pictures of cameras it never draws — on the page too. Now a view of one record is run over the record `--record <id>` names, or the first of its kind the seat sees, and the run says which first: `over "North ridge" (station:north)`; a `--record` that is no record of the kind the seat sees is refused, exit 1. And what a guest reads across kinds (`readAcross`, a worker view's and a frame guest's alike) comes with the records linked to its own by an edge it reads first, so a budget spent in order — `pictures`, on the page and headless — is spent on what it draws for its own records before the rest. The `graview-worker-view` and `graview-view-drawing` skills say so.
+
+Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. A guest is handed the same records and edges as before; only their order in `nodes` moves, linked to its own records first. New: `--record <id>` on `graview view check`. What Graview Cloud does: nothing more — a headless check of a view of one passes `input: { node: { id } }` to `runWorkerViewHeadless` as it did.

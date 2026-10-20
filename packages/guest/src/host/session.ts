@@ -53,10 +53,22 @@ export interface GuestReads {
  * neither. One rule for a frame guest and a worker view alike.
  */
 export function readAcross(graph: { nodesOfKind(kind: never): readonly { readonly id: string }[]; outEdges(id: string): readonly { readonly kind: string; readonly from: string; readonly to: string }[] }, shown: ReadonlySet<string>, reads: GuestReads | undefined): { readonly nodes: readonly unknown[]; readonly edges: readonly GuestEdge[] } {
-  const nodes = new Map<string, unknown>();
-  for (const kind of reads?.kinds ?? []) for (const node of graph.nodesOfKind(kind as never)) if (!shown.has(node.id)) nodes.set(node.id, node);
-  const all = new Set([...shown, ...nodes.keys()]);
+  const read = new Map<string, unknown>();
+  for (const kind of reads?.kinds ?? []) for (const node of graph.nodesOfKind(kind as never)) if (!shown.has(node.id)) read.set(node.id, node);
+  const all = new Set([...shown, ...read.keys()]);
   const kinds = new Set(reads?.edges ?? []);
+  /*
+   * LINKED FIRST (W-242): what it reads by an edge it reads to or from what
+   * it is drawn over comes before the rest, so a budget spent in order — a
+   * view's pictures — is spent on what it draws for its own records first:
+   * a station's contact sheet on that camera's detections, not the app's.
+   */
+  const linked = new Set<string>();
+  if (kinds.size > 0 && shown.size > 0) {
+    for (const id of shown) for (const edge of graph.outEdges(id)) if (kinds.has(edge.kind) && read.has(edge.to)) linked.add(edge.to);
+    for (const id of read.keys()) if (graph.outEdges(id).some((edge) => kinds.has(edge.kind) && shown.has(edge.to))) linked.add(id);
+  }
+  const nodes = new Map<string, unknown>([...[...read].filter(([id]) => linked.has(id)), ...[...read].filter(([id]) => !linked.has(id))]);
   const edges: GuestEdge[] = [];
   if (kinds.size > 0) {
     for (const id of all) for (const edge of graph.outEdges(id)) if (kinds.has(edge.kind) && all.has(edge.to)) edges.push({ kind: edge.kind, from: edge.from, to: edge.to });
