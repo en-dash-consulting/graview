@@ -1,11 +1,11 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { Agent, get } from "node:http";
 import { connect, type Socket } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 /**
  * A PREVIEW STOPS WHEN IT IS TOLD TO, whoever still has it open.
@@ -26,6 +26,17 @@ const ORG = fileURLToPath(new URL("../../../core/tests/document/fixtures/org.gdd
 const ORG_SEED = fileURLToPath(new URL("../../../core/tests/document/fixtures/org.seed.json", import.meta.url));
 // Outside the checkout's harness ports (5190–5289): a worktree's own hundred.
 const BASE = Number(process.env.GRAVIEW_PORT_BASE ?? 5700);
+
+/*
+ * The preview page is built by `pnpm build`'s last step, which a test job
+ * that only typechecks never runs: build it here when it isn't there, so the
+ * stop is proven on CI too rather than skipped.
+ */
+const PAGE = fileURLToPath(new URL("../../dist/preview/index.html", import.meta.url));
+const BUILD_PAGE = fileURLToPath(new URL("../../../../scripts/build-preview-page.mjs", import.meta.url));
+beforeAll(() => {
+  if (!existsSync(PAGE)) execFileSync(process.execPath, [BUILD_PAGE], { stdio: "ignore" });
+}, 120_000);
 
 let child: ChildProcess | undefined;
 let folder: string | undefined;
