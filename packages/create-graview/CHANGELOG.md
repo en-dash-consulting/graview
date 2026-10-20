@@ -1,5 +1,12 @@
 # create-graview
 
+## 0.1.39
+
+### Patch Changes
+
+- Updated dependencies [1d365af]
+  - graview@0.1.39
+
 ## 0.1.38
 
 ### Patch Changes

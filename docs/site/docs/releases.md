@@ -42,7 +42,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.38
 
-Published October 19, 2026 · the current version
+Published October 19, 2026
 
 Boards without buttons that search and filter, places that hide and restore views, a menu that offers what exists, and the last of inline AI.
 

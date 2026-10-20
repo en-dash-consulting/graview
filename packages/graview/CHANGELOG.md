@@ -1,5 +1,31 @@
 # graview
 
+## 0.1.39
+
+### Patch Changes
+
+- 1d365af: A page opens on a view proposed and not kept, so a proposal can be seen before it is kept (FR-187). `propose_view` tries a view headless and answers in words; an agent that wanted to see it at 390 px in dark had to keep it first, because the hosted page drew only the app's views. Now `mount` takes `draftView` (`EmbedDraftView`: a worker view's `manifest` and its `source`, or `worker`, with what else a `WorkerViewDefinition` takes) and draws it for the seat at the keyboard where its manifest attaches — the home, a kind's list at the place its title names, each record's page — under one line, "Draft — <title> · Not kept", in a group named "Draft: <title>" (`[data-graview-draft-view]`), as the seat's drawn panel is marked on `/~draft`. A kept view of the same name is the one it stands in for: whatever the host's `views` registers under that name is left out, so it is drawn nowhere beside the draft. Nothing of it is kept: it goes by no name the place menu or `keptViews` could keep it under, the store is not written, and the next page, handed no draft, has none. A draft that is stopped says why in its place instead of standing the kind's own face there, and playback draws it as proposed. With FR-188's `data-graview-drawn`, a host pictures it once it has drawn. `registerWorkerView` takes `draft: true` on the definition for a host that registers one itself. `graview preview` and `graview shots` take one as `--view <view.js> --manifest <manifest.json>`, handed to the page with the document (`servePreview`'s `draftView`). The worker's host is fetched before the embed draws, and only when a draft is handed: a hosted page carries 0.7 KB more up front for it (the compiled page too), and their budgets are raised by that; the pages face, the embed, the studio handed in and the guest host registering a view by what they measured, and every face, counted with every chunk, by the worker's host and the open kit it can now fetch. `capabilities().shipped` gains FR-187.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `capabilities().shipped` lists FR-187. New: `draftView` on `mount` and `<Embed>`, `EmbedDraftView` on `@graview/embed`, `WorkerViewDefinition.draft` on `@graview/guest/host/views`, `PreviewOptions.draftView` on `@graview/ship`; `/graview/document` from `graview preview` carries `draftView` when one was given. `@graview/embed` depends on `@graview/guest`. What Graview Cloud does: serve a proposed view once — a one-time draft id on the picture's address, say, that the shell trades for the manifest and source — and pass it to `mount` as `draftView`, then picture the address where it attaches once `[data-graview-drawn]` is on the root.
+- Updated dependencies [77a235a]
+- Updated dependencies [e577880]
+- Updated dependencies [79a3dfd]
+- Updated dependencies [f3af490]
+- Updated dependencies [1d365af]
+- Updated dependencies [6bff55b]
+- Updated dependencies [99ed9e7]
+- Updated dependencies [c9c13d2]
+- Updated dependencies [817aaba]
+- Updated dependencies [a455281]
+- Updated dependencies [3bfdf76]
+- Updated dependencies [38ea99a]
+- Updated dependencies [328235d]
+  - @graview/core@0.1.39
+  - @graview/guest@0.1.39
+  - @graview/ship@0.1.39
+  - @graview/skills@0.1.39
+  - @graview/tools@0.1.39
+
 ## 0.1.38
 
 ### Patch Changes
