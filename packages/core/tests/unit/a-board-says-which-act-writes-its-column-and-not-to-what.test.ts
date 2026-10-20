@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { checkApp } from "../../src/cli/check.js";
 import { columnChoices } from "../../src/columns.js";
-import { createSchema, defineApp, defineMutation, defineNode, nodeRef, Store, z } from "../../src/index.js";
+import { bindSchema, createSchema, defineApp, defineNode, nodeRef, Store, z } from "../../src/index.js";
 
 /**
  * A BOARD SAYS WHICH ACT WRITES ITS COLUMN, AND NOT TO WHAT (the thirteenth
@@ -22,8 +22,9 @@ const detection = defineNode("detection", {
   label: (node) => node.label,
 });
 const schema = createSchema([detection]);
+const { defineMutation } = bindSchema(schema);
 const step = (name: string, title: string, status: "confirmed" | "false-trigger", sets: boolean) =>
-  defineMutation<typeof schema>(name, {
+  defineMutation(name, {
     title,
     description: title,
     subject: { kinds: ["detection"], arg: "id" },

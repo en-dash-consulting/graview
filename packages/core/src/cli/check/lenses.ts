@@ -20,6 +20,7 @@ import { arrangeable, listFieldsOf, throughEdges } from "../../arrangement.js";
 import { kindListFindings } from "../../kind-list.js";
 import { fieldOf } from "./context.js";
 import { columnReach } from "../../columns.js";
+import { nounOf, withArticle } from "../../schema/define-node.js";
 import { deriveMutations, fieldsWrittenBy, subjectKindsOf } from "../../mutations/derive-edits.js";
 
 export function checkShippedLenses<S extends AnySchema>(ctx: CheckContext<S>): void {
@@ -375,7 +376,7 @@ export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): 
           severity: "warning",
           code: "lens-column-written-unsaid",
           where: `lenses.${lens.index}.bindings.${kind}.column`,
-          message: `${listed} write ${roles.column} on a ${kind} without saying to what, so "${lens.title}" moves no card into ${unreached.map((one) => one.label).join(", ")}.`,
+          message: `${listed} write ${roles.column} on ${withArticle(nounOf(definition, kind))} without saying to what, so "${lens.title}" moves no card into ${unreached.map((one) => one.label).join(", ")}.`,
           fix: `Say the value each one writes: sets: { ${roles.column}: "<the value it writes>" } beside writes, and it is the move to that column.`,
         });
         continue;

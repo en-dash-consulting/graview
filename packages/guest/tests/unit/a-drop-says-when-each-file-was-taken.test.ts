@@ -1,4 +1,4 @@
-import { createSchema, defineMutation, defineNode, imageField, nodeRef, Store, videoField, z, type AnySchema, type FileValue, type HostFiles } from "@graview/core";
+import { bindSchema, createSchema, defineNode, imageField, nodeRef, Store, videoField, z, type AnySchema, type FileValue, type HostFiles } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { planDrop } from "../../src/host/drop-plan.js";
 import type { WorkerViewManifest } from "../../src/host/manifest.js";
@@ -22,7 +22,8 @@ const detection = defineNode("detection", {
   fieldRoles: { when: "takenAt" },
 });
 const schema = createSchema([station, detection]);
-const log = defineMutation<typeof schema>("log-detection", {
+const { defineMutation } = bindSchema(schema);
+const log = defineMutation("log-detection", {
   title: "Log a detection",
   description: "Take a photograph off a camera's card.",
   creates: ["detection"],
@@ -35,7 +36,7 @@ const log = defineMutation<typeof schema>("log-detection", {
     ctx.addEdge({ kind: "taken-by", from: id, to: args.stationId });
   },
 });
-const tagged = defineMutation<typeof schema>("log-tagged", {
+const tagged = defineMutation("log-tagged", {
   title: "Log a tagged detection",
   description: "One whose collar number must be typed.",
   creates: ["detection"],
@@ -63,7 +64,7 @@ describe("a drop on a station's contact sheet", () => {
     const calls = plan.calls({ field: "photo", value: photo, at: "2026-10-12T03:14:00.000Z" } as never, 0);
     expect(calls[0]!.args["takenAt"]).toBe("2026-10-12T03:14:00.000Z");
     const outcome = store.applyAll(calls as never, { author: anyone } as never);
-    expect(outcome.ok, JSON.stringify(outcome).slice(0, 300)).not.toBe(false);
+    expect(outcome.ops.length).toBeGreaterThan(0);
     expect(store.graph.allNodes().filter((node) => node.kind === "detection").map((node) => (node as { takenAt?: string }).takenAt)).toEqual(["2026-10-12T03:14:00.000Z"]);
   });
 
