@@ -360,19 +360,7 @@ const APPS = {
      * all. A number field is narrower and hides both, which is why todo's
      * ask alone was not enough.
      */
-    asked: async (p) => {
-      await p.click('[data-testid="activity-button"]');
-      await p.waitForTimeout(300);
-      await p.click('[data-testid="agent-starter"]');
-      await p.waitForTimeout(1600);
-      await p.keyboard.press("Escape");
-      await p.waitForTimeout(400);
-      const opener = await p.$("[data-testid^='open-']");
-      if (opener) { await opener.click(); await p.waitForTimeout(500); }
-      const chip = await p.$("[data-graview-pick]");
-      if (chip) { await chip.click({ button: "right" }); await p.waitForTimeout(500); }
-      await p.locator('[data-testid="context-menu"] [data-testid="affordances"] button', { hasText: "Change the" }).first().click();
-    },
+    asked: async (p) => askTheGardener(p),
     /*
      * A LENS, AT ITS OWN PLACE. Every state here reached a picture by
      * focusing a group rather than by pressing its name, so a titled
@@ -389,30 +377,31 @@ const APPS = {
       await pressPlace(p, "What grows where");
       await p.waitForTimeout(900);
     },
-    askedNarrow: { viewport: { width: 390, height: 620 }, go: async (p) => {
-      await p.click('[data-testid="activity-button"]');
-      await p.waitForTimeout(300);
-      await p.click('[data-testid="agent-starter"]');
-      await p.waitForTimeout(1600);
-      await p.keyboard.press("Escape");
-      await p.waitForTimeout(400);
-      const opener = await p.$("[data-testid^='open-']");
-      if (opener) { await opener.click(); await p.waitForTimeout(500); }
-      /*
-       * PICK SOMETHING THAT HAS ACTS. This took whatever chip was first on
-       * screen, which in this chapter is a plot — and a fresh plot declares
-       * no mutation with itself as a subject, so the pane says so in a
-       * sentence and renders no list at all. The gardener is the subject
-       * with acts on it, and "Change the gardener …" is the derived edit
-       * this state exists to open.
-       */
-      /* Its acts are the menu a right-click opens on it: the scene draws no strip beside a selection. */
-      const chip = await p.$('[data-graview-pick^="gardener:"]');
-      if (chip) { await chip.click({ force: true, button: "right" }); await p.waitForTimeout(500); }
-      await p.locator('[data-testid="context-menu"] [data-testid="affordances"] button', { hasText: "Change the" }).first().click();
-    } },
+    askedNarrow: { viewport: { width: 390, height: 620 }, go: async (p) => askTheGardener(p) },
   } },
 };
+
+/**
+ * THE GARDENER'S DERIVED EDIT, MID-ASK, reached the way a person reaches it
+ * now. The garden opens on its map, and opening a district lists its
+ * records in the panel beside it rather than drawing them as chips, so the
+ * state that took "whatever chip was on screen" found none and timed out
+ * in every engine. The gardener is the subject with acts on it (a fresh
+ * plot declares none), and its row in the district's panel answers a
+ * right-click with the same menu a chip does. Each step waits for what it
+ * leads to rather than for a guessed time.
+ */
+async function askTheGardener(p) {
+  await p.click('[data-testid="activity-button"]');
+  await p.click('[data-testid="agent-starter"]');
+  await p.waitForSelector('[data-testid="open-gardener"]', { state: "attached" });
+  await p.keyboard.press("Escape");
+  await p.click('[data-testid="open-gardener"]', { force: true });
+  const row = p.locator('[data-graview-map-panel] [data-graview-record^="gardener:"]').first();
+  await row.click({ button: "right" });
+  await p.locator('[data-testid="context-menu"] [data-testid="affordances"] button', { hasText: "Change the" }).first().click();
+  await p.waitForSelector('[data-testid="context-menu"] input, [data-testid="context-menu"] textarea');
+}
 
 const audit = () => {
   const box = (el) => el.getBoundingClientRect();

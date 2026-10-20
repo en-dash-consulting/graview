@@ -323,17 +323,25 @@ export async function openStore<S extends AnySchema>(
    * would only churn the file, and `store.findings()` is how a host hears
    * about them.
    */
-  if (stored === null || migrated.length > 0 || rebuilt) {
-    await adapter.save(scope, store.snapshot());
-  }
-  adapter.saveMeta?.(scope, { version: target, ...formatStamp() });
-
   /*
    * Writes are SERIALIZED: a second diff's ops never land before the
    * first's snapshot, and a failure is reported rather than swallowed —
    * an app that thinks it persisted and did not is the worst quiet state.
    */
   const report = options.onPersistError ?? ((error: unknown) => console.error("graview ship: persistence failed", error));
+  /*
+   * A WRITE AT OPEN THAT FAILS IS REPORTED as a later one is, and the store
+   * opens on what it holds. WebKit keeps 5 MB of localStorage an origin
+   * and counts each character twice, so a 2.8 MB seed did not fit: the
+   * open threw, the page's top-level await rejected, and Safari drew an
+   * empty page and said nothing anywhere.
+   */
+  try {
+    if (stored === null || migrated.length > 0 || rebuilt) await adapter.save(scope, store.snapshot());
+    adapter.saveMeta?.(scope, { version: target, ...formatStamp() });
+  } catch (error) {
+    report(error);
+  }
   let writing: Promise<void> = Promise.resolve();
   const unsubscribe = store.subscribe((diff, ops) => {
     // The day turning (`store.tick`) changes no record: nothing to write.
