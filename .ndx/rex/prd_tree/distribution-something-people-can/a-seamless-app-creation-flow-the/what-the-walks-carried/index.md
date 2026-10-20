@@ -25,9 +25,10 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The gauntlet has two kinds sharing a field name, and a rule that names both](./the-gauntlet-has-kinds-sharing-a-field.md) | pending |
 | [graview view check runs a one-record view with a record, and reckons pictures over what it draws](./view-check-runs-a-record-view-with-a-record.md) | completed |
 | [graview shots --places takes a draft view's title](./shots-takes-a-draft-views-title.md) | completed |
-| [A status board says how many records the lifecycle hides](./a-board-says-how-many-are-past.md) | pending |
+| [A status board says how many records the lifecycle hides](./a-board-says-how-many-are-past.md) | completed |
 | [graview shots and graview preview picture an app declared in code](./shots-and-preview-take-an-app-in-code.md) | completed |
 | [The pages' resting-pointer chips test holds under full-suite load](./the-resting-pointer-chips-test-holds-under-load.md) | completed |
 | [The surfaces Walkthrough XIII had no time for are walked](./the-surfaces-walk-xiii-did-not-reach.md) | pending |
 | [A store too large for Safari's localStorage persists, in IndexedDB](./a-large-store-persists-in-safari.md) | pending |
 | [The watch hears a page whose module rejected before it drew](./the-watch-hears-a-rejected-top-level-await.md) | pending |
+
