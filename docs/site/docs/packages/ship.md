@@ -189,6 +189,25 @@ admit: (asked, planned) =>
 const would = store.previewAll(calls, { author: seat, via, admit: (planned) => caps(seat, planned) });
 ```
 
+### The framework from its sources
+
+An app that runs Graview from a checkout in development — the framework's own apps, or a product linked to a sibling checkout by path — points its bundler at each package's `src`, so an edit to the framework is live without a build. `sourceAliases(root?)` on `@graview/ship/dev` reads those aliases from every package's own `exports`, one per entry point, so a new subpath export reaches every such app without a line in its config:
+
+```ts
+import { sourceAliases } from "@graview/ship/dev";
+import { fileURLToPath } from "node:url";
+
+export default defineConfig({
+  resolve: {
+    dedupe: ["react", "react-dom", "react-router-dom"],
+    // The sibling checkout; left out, the one this @graview/ship was loaded from.
+    alias: sourceAliases(fileURLToPath(new URL("../graview", import.meta.url))),
+  },
+});
+```
+
+Each export of `./dist/<path>.js` is aliased to `src/<path>.ts` (or `.tsx`), and a file shipped as it is (`@graview/guest/client.js`, the primitives' fonts) to that file. Each alias matches its specifier exactly, so `@graview/core` never swallows `@graview/core/words`; a built file with no source (`@graview/core/document.schema.json`) is left to ordinary resolution. It is an array, so an app's own aliases follow it: `[...sourceAliases(), { find, replacement }]`. `sourceEntries(root?)` lists the same exports with the file each runs from. It is for development only: an installed `@graview/ship` carries no `src`, and `sourceAliases` throws there rather than answer an empty list.
+
 ### The hosted-store contract
 
 A third party stands up their own host — a file store or SQLite, `graview serve`, `graview mcp` — without forking anything here. Graview Cloud is the polished multi-tenant host of the same API, and it consumes this package the way any customer would.

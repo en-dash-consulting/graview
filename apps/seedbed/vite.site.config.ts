@@ -1,3 +1,4 @@
+import { sourceAliases } from "@graview/ship/dev";
 import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
 
@@ -6,69 +7,14 @@ import { fileURLToPath } from "node:url";
  * module loader, nothing external — so the page loads it by name and the
  * artifact build inlines it whole. React and the framework ride inside.
  */
-const pkg = (name: string) => fileURLToPath(new URL(`../../packages/${name}/src/index.ts`, import.meta.url));
-
 export default defineConfig({
   esbuild: { jsx: "automatic" },
   define: { "process.env.NODE_ENV": '"production"' },
   resolve: {
-    alias: {
-      "@graview/core/blocks": fileURLToPath(new URL("../../packages/core/src/blocks.ts", import.meta.url)),
-      "@graview/core/arrange": fileURLToPath(new URL("../../packages/core/src/arrange.ts", import.meta.url)),
-      "@graview/core/navigate": fileURLToPath(new URL("../../packages/core/src/navigate.ts", import.meta.url)),
-      "@graview/core/provenance": fileURLToPath(new URL("../../packages/core/src/provenance.ts", import.meta.url)),
-      "@graview/core/history": fileURLToPath(new URL("../../packages/core/src/history.ts", import.meta.url)),
-      "@graview/core/past": fileURLToPath(new URL("../../packages/core/src/past.ts", import.meta.url)),
-      "@graview/core/linked": fileURLToPath(new URL("../../packages/core/src/linked.ts", import.meta.url)),
-      "@graview/core/tidying": fileURLToPath(new URL("../../packages/core/src/tidying.ts", import.meta.url)),
-      "@graview/core/catalog": fileURLToPath(new URL("../../packages/core/src/catalog.ts", import.meta.url)),
-      "@graview/core/subscriptions": fileURLToPath(new URL("../../packages/core/src/subscriptions.ts", import.meta.url)),
-      "@graview/core/forms": fileURLToPath(new URL("../../packages/core/src/forms.ts", import.meta.url)),
-      "@graview/core/lines": fileURLToPath(new URL("../../packages/core/src/lines.ts", import.meta.url)),
-      "@graview/core/json-schema": fileURLToPath(new URL("../../packages/core/src/json-schema.ts", import.meta.url)),
-      "@graview/core/search": fileURLToPath(new URL("../../packages/core/src/search.ts", import.meta.url)),
-      "@graview/core/words": fileURLToPath(new URL("../../packages/core/src/words.ts", import.meta.url)),
-      "@graview/core/markdown": fileURLToPath(new URL("../../packages/core/src/markdown.ts", import.meta.url)),
-      "@graview/core/seat": fileURLToPath(new URL("../../packages/core/src/seat.ts", import.meta.url)),
-      "@graview/core/check": fileURLToPath(new URL("../../packages/core/src/check.ts", import.meta.url)),
-      "@graview/core/sync": fileURLToPath(new URL("../../packages/core/src/sync/index.ts", import.meta.url)),
-      "@graview/core/scene": fileURLToPath(new URL("../../packages/core/src/scene.ts", import.meta.url)),
-      "@graview/core/city": fileURLToPath(new URL("../../packages/core/src/city.ts", import.meta.url)),
-      "@graview/core/figures": fileURLToPath(new URL("../../packages/core/src/figures.ts", import.meta.url)),
-      "@graview/core/describe": fileURLToPath(new URL("../../packages/core/src/describe.ts", import.meta.url)),
-      "@graview/core/retry": fileURLToPath(new URL("../../packages/core/src/retry.ts", import.meta.url)),
-      "@graview/core/document": fileURLToPath(new URL("../../packages/core/src/document/index.ts", import.meta.url)),
-      "@graview/core": pkg("core"),
-      "@graview/layout/view": fileURLToPath(new URL("../../packages/layout/src/view.ts", import.meta.url)),
-      "@graview/layout/sizes": fileURLToPath(new URL("../../packages/layout/src/sizes.ts", import.meta.url)),
-      "@graview/layout/view-moves": fileURLToPath(new URL("../../packages/layout/src/view-moves.ts", import.meta.url)),
-      "@graview/layout": pkg("layout"),
-      "@graview/tools/frame": fileURLToPath(new URL("../../packages/tools/src/frame.ts", import.meta.url)),
-      "@graview/tools/edit": fileURLToPath(new URL("../../packages/tools/src/edit.ts", import.meta.url)),
-      "@graview/tools/suggest": fileURLToPath(new URL("../../packages/tools/src/suggest.ts", import.meta.url)),
-      "@graview/tools/derive": fileURLToPath(new URL("../../packages/tools/src/derive.ts", import.meta.url)),
-      "@graview/tools/go": fileURLToPath(new URL("../../packages/tools/src/go.ts", import.meta.url)),
-      "@graview/tools/draft": fileURLToPath(new URL("../../packages/tools/src/draft.ts", import.meta.url)),
-      "@graview/tools/keep": fileURLToPath(new URL("../../packages/tools/src/keep.ts", import.meta.url)),
-      "@graview/tools/turn": fileURLToPath(new URL("../../packages/tools/src/turn.ts", import.meta.url)),
-      "@graview/tools/several": fileURLToPath(new URL("../../packages/tools/src/several.ts", import.meta.url)),
-      "@graview/tools/inline-ai": fileURLToPath(new URL("../../packages/tools/src/inline-ai.ts", import.meta.url)),
-      "@graview/tools": pkg("tools"),
-      "@graview/render/gpu": fileURLToPath(new URL("../../packages/render/src/gpu.ts", import.meta.url)),
-      "@graview/render": pkg("render"),
-      "@graview/react/provider": fileURLToPath(new URL("../../packages/react/src/provider.ts", import.meta.url)),
-      "@graview/react/drawing": fileURLToPath(new URL("../../packages/react/src/drawing.ts", import.meta.url)),
-      "@graview/react": pkg("react"),
-      "@graview/primitives/frame": fileURLToPath(new URL("../../packages/primitives/src/frame.ts", import.meta.url)),
-      "@graview/primitives/pages": fileURLToPath(new URL("../../packages/primitives/src/pages.ts", import.meta.url)),
-      "@graview/primitives/scene": fileURLToPath(new URL("../../packages/primitives/src/scene.ts", import.meta.url)),
-      "@graview/primitives": pkg("primitives"),
-      "@graview/pages": pkg("pages"),
-      "@graview/studio": pkg("studio"),
-      "@graview/ship/browser": fileURLToPath(new URL("../../packages/ship/src/browser.ts", import.meta.url)),
-      "@graview/ship": pkg("ship"),
-      "@graview/embed": pkg("embed"),
-      "@graview/guest/host/views": fileURLToPath(new URL("../../packages/guest/src/host/views.ts", import.meta.url)),
+    // Every export of every framework package, from its source (read from the
+    // packages' own `exports`), then what rides along with the chapters.
+    alias: [
+      ...sourceAliases(),
       /*
        * THE ROTA RIDES ALONG. The lenses section's claim is one calendar
        * over two domains — written for the rota, unchanged over the garden
@@ -77,22 +23,22 @@ export default defineConfig({
        * declaration, seed and views come from its source, as the
        * framework's do.
        */
-      "@graview/rota/views": fileURLToPath(new URL("../rota/src/ui/views.tsx", import.meta.url)),
-      "@graview/rota": fileURLToPath(new URL("../rota/src/index.ts", import.meta.url)),
+      { find: "@graview/rota/views", replacement: fileURLToPath(new URL("../rota/src/ui/views.tsx", import.meta.url)) },
+      { find: "@graview/rota", replacement: fileURLToPath(new URL("../rota/src/index.ts", import.meta.url)) },
       /*
        * THE RECIPES RIDE ALONG TOO: each one's declaration document and
        * seed, from where the site serves them, so the app on a recipe's
        * page is the file an agent can fetch beside it.
        */
-      "@recipes": fileURLToPath(new URL("../../docs/site/recipes", import.meta.url)),
+      { find: "@recipes", replacement: fileURLToPath(new URL("../../docs/site/recipes", import.meta.url)) },
       /*
        * AND THE ASKS: the turns graview.dev replays — a person's words, and
        * the worker view that came back — with the season app they were
        * asked of, from apps/site/asks/. The views ride as their own text,
        * run by the same host a product's views run in.
        */
-      "@site-asks": fileURLToPath(new URL("../site/asks", import.meta.url)),
-    },
+      { find: "@site-asks", replacement: fileURLToPath(new URL("../site/asks", import.meta.url)) },
+    ],
   },
   // The app's own favicons are its page's, not the docs site's: the site has its own in brand/.
   publicDir: false,

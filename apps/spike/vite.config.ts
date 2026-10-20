@@ -1,39 +1,11 @@
+import { sourceAliases } from "@graview/ship/dev";
 import { defineConfig } from "vite";
-import { fileURLToPath } from "node:url";
 
 export default defineConfig({
   resolve: {
-    alias: {
-      "@graview/render/gpu": fileURLToPath(new URL("../../packages/render/src/gpu.ts", import.meta.url)),
-      "@graview/render": fileURLToPath(new URL("../../packages/render/src/index.ts", import.meta.url)),
-      "@graview/core/blocks": fileURLToPath(new URL("../../packages/core/src/blocks.ts", import.meta.url)),
-      "@graview/core/arrange": fileURLToPath(new URL("../../packages/core/src/arrange.ts", import.meta.url)),
-      "@graview/core/navigate": fileURLToPath(new URL("../../packages/core/src/navigate.ts", import.meta.url)),
-      "@graview/core/provenance": fileURLToPath(new URL("../../packages/core/src/provenance.ts", import.meta.url)),
-      "@graview/core/history": fileURLToPath(new URL("../../packages/core/src/history.ts", import.meta.url)),
-      "@graview/core/past": fileURLToPath(new URL("../../packages/core/src/past.ts", import.meta.url)),
-      "@graview/core/linked": fileURLToPath(new URL("../../packages/core/src/linked.ts", import.meta.url)),
-      "@graview/core/tidying": fileURLToPath(new URL("../../packages/core/src/tidying.ts", import.meta.url)),
-      "@graview/core/catalog": fileURLToPath(new URL("../../packages/core/src/catalog.ts", import.meta.url)),
-      "@graview/core/subscriptions": fileURLToPath(new URL("../../packages/core/src/subscriptions.ts", import.meta.url)),
-      "@graview/core/forms": fileURLToPath(new URL("../../packages/core/src/forms.ts", import.meta.url)),
-      "@graview/core/lines": fileURLToPath(new URL("../../packages/core/src/lines.ts", import.meta.url)),
-      "@graview/core/json-schema": fileURLToPath(new URL("../../packages/core/src/json-schema.ts", import.meta.url)),
-      "@graview/core/search": fileURLToPath(new URL("../../packages/core/src/search.ts", import.meta.url)),
-      "@graview/core/words": fileURLToPath(new URL("../../packages/core/src/words.ts", import.meta.url)),
-      "@graview/core/markdown": fileURLToPath(new URL("../../packages/core/src/markdown.ts", import.meta.url)),
-      "@graview/core/seat": fileURLToPath(new URL("../../packages/core/src/seat.ts", import.meta.url)),
-      "@graview/core/field-sight": fileURLToPath(new URL("../../packages/core/src/field-sight.ts", import.meta.url)),
-      "@graview/core/check": fileURLToPath(new URL("../../packages/core/src/check.ts", import.meta.url)),
-      "@graview/core/sync": fileURLToPath(new URL("../../packages/core/src/sync/index.ts", import.meta.url)),
-      "@graview/core/scene": fileURLToPath(new URL("../../packages/core/src/scene.ts", import.meta.url)),
-      "@graview/core/city": fileURLToPath(new URL("../../packages/core/src/city.ts", import.meta.url)),
-      "@graview/core/figures": fileURLToPath(new URL("../../packages/core/src/figures.ts", import.meta.url)),
-      "@graview/core/describe": fileURLToPath(new URL("../../packages/core/src/describe.ts", import.meta.url)),
-      "@graview/core/retry": fileURLToPath(new URL("../../packages/core/src/retry.ts", import.meta.url)),
-      "@graview/core/document": fileURLToPath(new URL("../../packages/core/src/document/index.ts", import.meta.url)),
-      "@graview/core": fileURLToPath(new URL("../../packages/core/src/index.ts", import.meta.url)),
-    },
+    // Every export of every framework package, from its source: read from the
+    // packages' own `exports`, so a new entry point needs no line here.
+    alias: sourceAliases(),
   },
   server: { port: 5187, strictPort: true },
 });
