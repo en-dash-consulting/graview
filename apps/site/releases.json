@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.39",
+      "date": "2026-10-20",
+      "headline": "Cards that answer the menu under a base, full-size photos in views, views that save as you type and take a drop, and a page that says when it has drawn.",
+      "summary": "- **Cards answer the right-click menu on a hosted page.** A board or blocks card served under a base path offers its acts and Move to ›, a new tab keeps the base, and a finger resting on a board card opens its menu, so a phone moves cards again.\n- **Full-size photos in views.** A view that shows record pictures draws them at any size, and the headless check says when a page would leave one out.\n- **Views save as you type.** A field marked `data-save=\"input\"` saves when the person pauses, and the view hears whether it saved.\n- **Drop photos and videos onto a view.** A view marks where files may land; the host takes them, stores them and makes one record per file, in one undoable change, with a picker on a phone.\n- **The page says when it has drawn.** `data-graview-drawn` and `onDrawn` replace a timer for anyone picturing a place, and a page can open on a view proposed and not yet kept.\n- **add-lens refuses an option the lens does not take.**\n- **Authoring skills split at their limit**, so each teaches one job: 26 skills now.",
+      "compatibility": "`mount` takes `onDrawn(place)` (the old first-commit callback is `onFaceDrawn` on `<Embed>`), `draftView` and `handle.setDraftView`; `@graview/embed` depends on `@graview/guest`; `add-lens` refuses an unknown option (`lens-option-unknown`, an error) and `lensOptionsRefused` judges a patch; a worker view's manifest takes `accepts`, and `graview.act` takes a list of arguments as one change; a board card's long press opens its menu; code acts that move a board's cards need `sets` (`lens-column-written-unsaid`). The hosted page carries about 4 KB more up front.",
+      "published": true
+    },
+    {
       "version": "0.1.38",
       "date": "2026-10-19",
       "headline": "Boards without buttons that search and filter, places that hide and restore views, a menu that offers what exists, and the last of inline AI.",
