@@ -154,7 +154,7 @@ export function useSubject<S extends AnySchema>({ hover = true }: { readonly hov
  * their plurals together. Null for an id none of these knows, so a caller
  * never shows the picture's own bookkeeping (`aggregate:album|released-by|…`).
  */
-export function wordsForChosen(store: Store<AnySchema>, id: string): string | null {
+export function wordsForChosen<S extends AnySchema>(store: Store<S>, id: string): string | null {
   const node = store.graph.getNode(id);
   if (node) return labelOf(store.schema.tryDefinition(node.kind), node);
   const band = bandAggregateWords(id, store.schema);
