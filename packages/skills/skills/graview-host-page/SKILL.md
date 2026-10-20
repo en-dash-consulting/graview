@@ -122,14 +122,15 @@ over a document; `graview shots <document.json> --places a,b --scheme both
 --width 390,1280` photographs places to PNGs, waiting for
 `data-graview-drawn` before each. Both take a proposed view as `--view
 <view.js> --manifest <manifest.json>`, drawn as a draft where it
-attaches; for `shots`, name its place's path (`/places/<title>`).
+attaches; `shots` takes its place by its title, as a kept view's
+(`--places "The week"`), and lists it among the places.
 
 ## Then find out whether it worked
 
 ```sh
 pnpm build && npx graview check ./dist/domain/app.js   # the declaration is still whole
 pnpm typecheck                                          # the host's options, no casts
-graview shots app.json --view view.js --manifest manifest.json --places /places/the-week --scheme both --width 390
+graview shots app.json --view view.js --manifest manifest.json --places "The week" --scheme both --width 390
 ```
 
 Then, on the host's page: reload a deep address and land on it; press

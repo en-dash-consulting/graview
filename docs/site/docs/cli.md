@@ -130,7 +130,7 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
 graview shots <document.json> [--seed <file>] [--places a,b] [--out <dir>]
 ```
 
-[--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene] [--view <view.js> --manifest <manifest.json>] Photographs places headless to PNGs, <place>-<scheme>-<width>.png in <dir> (default ./shots): each place by its address word or title (the home, overview, a lens's name, a kind's plural) or a path such as /tasks/t1; every place when none is named. Needs Playwright, which you install beside the project (npm i -D playwright, then npx playwright install chromium). --view and --manifest picture a proposed view before it is kept: name its place's path (/places/<title>).
+[--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene] [--view <view.js> --manifest <manifest.json>] Photographs places headless to PNGs, <place>-<scheme>-<width>.png in <dir> (default ./shots): each place by its address word or title (the home, overview, a lens's name, a kind's plural) or a path such as /tasks/t1; every place when none is named. Needs Playwright, which you install beside the project (npm i -D playwright, then npx playwright install chromium). --view and --manifest picture a proposed view before it is kept: name its place by its title, as a kept view's.
 
 ## graview skills
 

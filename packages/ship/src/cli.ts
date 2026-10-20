@@ -74,7 +74,7 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       /tasks/t1; every place when none is named. Needs Playwright, which you
       install beside the project (npm i -D playwright, then npx playwright
       install chromium). --view and --manifest picture a proposed view
-      before it is kept: name its place's path (/places/<title>).
+      before it is kept: name its place by its title, as a kept view's.
 `;
 
 /** The same store, whichever command asked: parsed from the flags every store command shares. */
@@ -486,9 +486,11 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
     return 1;
   }
   try {
-    const { shots: taken, unknown } = shotsOf(opened.app, listOf(flag(argv, "--places")), faces as ("pages" | "scene")[]);
+    // A draft's place by its title too, as a kept view's (W-243).
+    const drafted = draft.draftView?.manifest;
+    const { shots: taken, unknown } = shotsOf(opened.app, listOf(flag(argv, "--places")), faces as ("pages" | "scene")[], drafted);
     if (unknown.length > 0) {
-      const known = shotsOf(opened.app, [], ["pages"]).shots.map((shot) => shot.name).join(", ");
+      const known = shotsOf(opened.app, [], ["pages"], drafted).shots.map((shot) => shot.name).join(", ");
       process.stderr.write(`graview shots: ${opened.app.name} has no place called ${unknown.map((one) => JSON.stringify(one)).join(", ")}. Its places: ${known}, or a path such as /places/overview.\n`);
       return 2;
     }
