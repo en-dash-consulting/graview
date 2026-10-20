@@ -32,7 +32,7 @@ Reopened, the store carries its persisted history: earlier edits are in the acti
 
 ```sh graview sync-seed ./dist/domain/app.js --seed ./src/data/example.json --data ./data graview sync-seed ./dist/domain/app.js --seed ./src/data/example.json --data ./data --apply ```
 
-The first prints the content steps — `task t-van is put`, `today is patched: label`, `today holds t-van is tied` — and writes nothing; the second lands them as one operation authored `system · ship:sync-seed`, logged, undoable, leaving what people made alone unless `--prune` says otherwise. The same five steps (`put-node`, `patch-node`, `drop-node`, `put-edge`, `drop-edge`) go in `migrations[]` through `stepsMigration` when every installation should get them.
+The first prints the content steps — `task t-van is put`, `today is patched: label`, `today holds t-van is tied` — and writes nothing, or exits 1 naming every record, field and declared limit the store would refuse (`Step: Too big: expected number to be <=4`); the second lands them as one operation authored `system · ship:sync-seed`, logged, undoable, leaving what people made alone unless `--prune` says otherwise. The same five steps (`put-node`, `patch-node`, `drop-node`, `put-edge`, `drop-edge`) go in `migrations[]` through `stepsMigration` when every installation should get them.
 
 1. **Version the declaration, and migrate in primitives.** When the schema changes shape:
 
@@ -50,7 +50,7 @@ A migration answers in the op log's own five words, so running one appends ordin
 
 1. **A host serving document apps compiles once, on the server.** Send `serializeCompiled(compileDocument(document))` beside the document, and build the app in the page with `appFromOrCompile({ compiled, document })` from `@graview/core/compiled` — never `@graview/core/document`, which brings the compiler back into the first chunk. A compiled app of another format (`graview-compiled@1` today), or made from another document than the one beside it, is not built and the document is compiled instead; `pnpm verify hosted` says what the page carries.
 
-1. **Look at a document with no product.** `graview preview <document.json> --seed <snapshot.json>` is `serve` with Graview's own faces over the store — the scene and Pages, in memory unless `--data` says where, which it then holds: `sync-seed --apply` and `apply` refuse until it stops — and `graview shots … --places home,overview --out shots` photographs named places headless (Playwright is yours to install). Prove a change to an emitted document with these, not hand-written screenshots. In a test, `compileDocumentFiles(path, { seed })` from `@graview/core/testing` reads the document where it lives — no fixture copy to drift.
+1. **Look at a document with no product.** `graview preview <document.json> --seed <snapshot.json>` is `serve` with Graview's own faces over the store — the scene and Pages, in memory unless `--data` says where, which it then holds: `sync-seed --apply` and `apply` refuse until it stops (Ctrl-C or `kill` stops it within seconds, open pages or not; a hold whose process died is taken over, and says so) — and `graview shots … --places home,overview --out shots` photographs named places headless (Playwright is yours to install). Prove a change to an emitted document with these, not hand-written screenshots. In a test, `compileDocumentFiles(path, { seed })` from `@graview/core/testing` reads the document where it lives — no fixture copy to drift.
 
 ### Then find out whether it worked
 

@@ -47,8 +47,19 @@ export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, 
   readonly server: Server;
   readonly port: number;
   readonly url: string;
-  close(): Promise<void>;
+  /**
+   * Closes the store and the server, and every connection still open on
+   * it: a keep-alive connection at once, a live socket after it has been
+   * told the store is closing and given `grace` milliseconds (1500 unless
+   * said) to go. A socket somebody else holds open — a dev server's proxy
+   * keeps its half while its page is open — would otherwise keep the server,
+   * and the process, from ever closing.
+   */
+  close(options?: { readonly grace?: number }): Promise<void>;
 }
+
+/** How long a live socket is given to go once it has been told the store is closing. */
+const CLOSE_GRACE_MS = 1500;
 
 export async function serveStore<S extends AnySchema>(options: ServeOptions<S>): Promise<ServedStore<S>> {
   const { port: wanted, host, answer, ownOrigin = false, ...rest } = options;
@@ -77,8 +88,12 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
    * answered: a store that cannot say who is asking refuses with the same
    * 401 its routes do, and never switches protocols.
    */
+  // Every upgraded stream, which the server no longer counts as its own connection to close.
+  const upgraded = new Set<Duplex>();
   server.on("upgrade", (incoming: IncomingMessage, stream: Duplex, head: Buffer) => {
     stream.on("error", () => {});
+    upgraded.add(stream);
+    stream.once("close", () => upgraded.delete(stream));
     const path = new URL(incoming.url ?? "/", "http://localhost").pathname;
     const key = incoming.headers["sec-websocket-key"];
     if (refused(incoming)) {
@@ -128,11 +143,28 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     server,
     port,
     url: `http://localhost:${port}`,
-    async close() {
-      await handler.close();
-      // An open socket is a connection `close` would otherwise wait for.
+    async close({ grace = CLOSE_GRACE_MS } = {}) {
+      const closed = new Promise<void>((done) => server.close(() => done()));
+      // An open socket is a connection `close` would otherwise wait for: keep-alive ones go now.
       server.closeAllConnections();
-      await new Promise<void>((done) => server.close(() => done()));
+      // The live sockets are told the store is closing (1001), and given the grace to go.
+      await handler.close();
+      for (const stream of upgraded) stream.end();
+      if (upgraded.size > 0) {
+        await new Promise<void>((done) => {
+          const timer = setTimeout(done, grace);
+          timer.unref?.();
+          const check = () => {
+            if (upgraded.size > 0) return;
+            clearTimeout(timer);
+            done();
+          };
+          for (const stream of upgraded) stream.once("close", () => queueMicrotask(check));
+        });
+        // What did not go in the grace is cut: its other end is not listening.
+        for (const stream of upgraded) stream.destroy();
+      }
+      await closed;
     },
   };
 }
