@@ -115,6 +115,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   iframe.setAttribute("allow", "");
   iframe.setAttribute("title", options.title ?? options.view);
   iframe.setAttribute("data-guest-view", options.view);
+  // Busy until the guest has drawn, or its time is up (FR-188): what a page that says it has drawn waits for.
+  iframe.setAttribute("aria-busy", "true");
   iframe.style.border = "0";
   iframe.style.width = "100%";
   iframe.style.display = "block";
@@ -158,10 +160,44 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   let waiting = false;
   const stopPictures = options.pictures
     ? untilItArrives(picturesChunk, ({ createGuestPictures }) => {
-        pictures = createGuestPictures(window as Window & typeof globalThis, { as: "data", view: `"${options.title ?? options.view}"`, pictures: options.pictures!, ...(options.limits ? { limits: options.limits } : {}), ...(options.file ? { file: options.file } : {}), moved: () => session?.push() });
+        pictures = createGuestPictures(window as Window & typeof globalThis, { as: "data", view: `"${options.title ?? options.view}"`, pictures: options.pictures!, ...(options.limits ? { limits: options.limits } : {}), ...(options.file ? { file: options.file } : {}), moved: () => {
+          session?.push();
+          // The last picture handed: drawn once the guest has had a moment with it.
+          if (handed) soon();
+        } });
         if (waiting) greet();
       })
     : () => {};
+
+  /*
+   * DRAWN, OR NOT IN TIME (FR-188): the frame says `data-guest-view-drawn`
+   * once the guest has said it is ready, been handed what it shows (its
+   * pictures among it) and asked for its height — what the protocol says
+   * once it has rendered — or, for a guest that never asks, stayed quiet
+   * for a moment after; and `data-guest-view-failed="silent"` when it does
+   * not say it is ready in `limits.readyMs`, so a page that says it has
+   * drawn (the embed's `data-graview-drawn`) waits for neither longer. The
+   * frame is `aria-busy` until one or the other, and the element it is
+   * drawn in is not from the moment the frame is in it.
+   */
+  let handed = false;
+  let quiet: ReturnType<typeof setTimeout> | undefined;
+  const drew = () => {
+    if (!handed || pictures?.waiting()) return;
+    clearTimeout(quiet);
+    iframe.removeAttribute("data-guest-view-failed");
+    iframe.removeAttribute("aria-busy");
+    iframe.setAttribute("data-guest-view-drawn", "");
+  };
+  const soon = () => {
+    clearTimeout(quiet);
+    quiet = setTimeout(drew, 250);
+  };
+  const silent = setTimeout(() => {
+    if (session) return;
+    iframe.removeAttribute("aria-busy");
+    iframe.setAttribute("data-guest-view-failed", "silent");
+  }, options.limits?.readyMs ?? 8_000);
 
   const end = () => {
     tally();
@@ -212,7 +248,11 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
       ...(options.onArrive ? { onArrive: options.onArrive } : options.goTo ? { onArrive: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
       ...(options.onLost ? { onLost: options.onLost } : {}),
-      onSize: options.onSize ?? ((height) => (iframe.style.height = `${height}px`)),
+      onSize: (height) => {
+        if (options.onSize) options.onSize(height);
+        else iframe.style.height = `${height}px`;
+        drew();
+      },
       ...(options.limits ? { limits: options.limits } : {}),
       limiter,
     });
@@ -229,9 +269,12 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
      */
     iframe.contentWindow!.postMessage(hello, "*", [channel.port2]);
     push();
+    handed = true;
+    soon();
   };
   window.addEventListener("message", onMessage);
   element.appendChild(iframe);
+  element.removeAttribute("aria-busy");
 
   return {
     iframe,
@@ -242,6 +285,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
     },
     dispose() {
       end();
+      clearTimeout(silent);
+      clearTimeout(quiet);
       unwatch();
       logo.dispose();
       stopPictures();

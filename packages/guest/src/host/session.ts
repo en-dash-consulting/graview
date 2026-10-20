@@ -35,6 +35,8 @@ export interface GuestLimits extends GuestPictureLimits {
   readonly messageWindowMs?: number;
   /** The tallest a guest may ask to be, in CSS pixels. 4 000 by default. */
   readonly maxHeight?: number;
+  /** How long a frame has to say it is ready before it is said not to have drawn (`data-guest-view-failed="silent"`, FR-188). 8 000 by default. */
+  readonly readyMs?: number;
 }
 
 /** The other kinds and the edges a guest is shown, beyond what it is drawn over (FR-85, FR-91). */

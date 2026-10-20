@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 28,
+  "gzipped": 12,
+  "changeset": "a-frame-guest-holds-back-the-drawn-signal.md",
+  "note": "Raised when a frame guest came to hold back the page's drawn signal (FR-188): `aria-busy` on `guestView`'s holder for a frame guest, as on the page that compiles. 28 / 12 more than before it (538_041 / 186_668 with the swapped draft): measured at 538_069 / 186_680 (0.0 KB)."
+}
