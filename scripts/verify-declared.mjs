@@ -72,6 +72,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { vacant } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -244,6 +245,7 @@ async function buildHost() {
     response.writeHead(200, { "content-type": path.endsWith(".js") ? "text/javascript" : "text/html" });
     response.end(readFileSync(file));
   });
+  await vacant(portFor("declared-host"));
   await new Promise((ready) => host.listen(portFor("declared-host"), ready));
   return { stop: () => (host.close(), rmSync(out, { recursive: true, force: true })) };
 }

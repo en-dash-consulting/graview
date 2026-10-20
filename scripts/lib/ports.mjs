@@ -14,7 +14,7 @@
  * port lies in 5190–5289, so a moved base keeps them all in one block of a
  * hundred (5600–5699 for a worktree).
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -136,6 +136,25 @@ export function portFor(name) {
 /** The address of what a harness serves: `at("todo")` is `http://localhost:5193`, or 5603 on a base of 5600. */
 export function at(name) {
   return `http://localhost:${portFor(name)}`;
+}
+
+/**
+ * Every port a harness names, moved onto the base: each app under `apps/`
+ * whose vite config claims one (with its directory, so a server there can
+ * be told apart from somebody else's), and each of `OWN`.
+ *
+ * @returns {{ name: string, port: number, app: string | null }[]}
+ */
+export function namedPorts() {
+  const apps = readdirSync(resolve(repoRoot, "apps")).flatMap((name) => {
+    try {
+      return [{ name, port: portFor(name), app: resolve(repoRoot, "apps", name) }];
+    } catch {
+      // No vite config, or one that serves nothing in development (apps/spike).
+      return [];
+    }
+  });
+  return [...apps, ...Object.keys(OWN).map((name) => ({ name, port: portFor(name), app: null }))];
 }
 
 /** What the desk (apps/launcher) links to and probes: the apps it surveys, and the store server one demo opens from. */

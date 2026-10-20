@@ -87,6 +87,7 @@ import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { portFor } from "./lib/ports.mjs";
+import { vacant } from "./lib/serve.mjs";
 import { localize, POLICIES, proxyPage } from "./lib/widget-policies.mjs";
 import { openSuite, viewScriptOf } from "./lib/guest-open-suite.mjs";
 import { placeSuite } from "./lib/guest-place-suite.mjs";
@@ -126,6 +127,8 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=pictures", `--engine=${engine}`]),
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=drop", `--engine=${engine}`]),
       ];
+  // Each run listens on the same three ports: somebody else's server on one of them is said once, before any run.
+  await vacant(portFor("guest-host"), portFor("guest-sandbox"), portFor("guest-attacker"));
   let failed = 0;
   for (const run of runs) {
     process.stdout.write(`\n— ${run.join(" ")}\n`);
