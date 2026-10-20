@@ -764,8 +764,11 @@ try {
       await form.fill('[data-testid="form-add-deal"] input[name="name"]', "Pier lighting");
       await form.fill('[data-testid="form-add-deal"] input[name="amount"]', "$1,250.50");
       await form.click('[data-testid="form-add-deal"] button[type="submit"]');
-      await form.waitForTimeout(800);
-      // The deal made, said back as the amount it was written as: on its page, or its row in the list.
+      // The deal made, said back as the amount it was written as: on its page, or its row in the list — waited for, not timed.
+      await form.waitForFunction(() => {
+        const text = document.querySelector("main")?.textContent ?? "";
+        return text.includes("Pier lighting") && text.includes("$1,250.50");
+      }, null, { timeout: 15_000 }).catch(() => {});
       made = await form.evaluate(() => {
         const text = document.querySelector("main")?.textContent ?? "";
         return text.includes("Pier lighting") && text.includes("$1,250.50") ? "said" : null;
