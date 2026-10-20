@@ -9,6 +9,7 @@ import { LinkedPicker } from "../linked-record-door.js";
 import { RepeatPicker } from "../repeat-picker-door.js";
 import { WhenInput } from "../when-input-door.js";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { ROVING_ITEM, useRoving } from "../roving.js";
 
 
 /**
@@ -104,13 +105,23 @@ export function AnswerArgs({
    * left the keyboard on <body> — "Fuel", then "Gearbox", sixteen questions
    * into "Put a car on sale" (the seventh walk).
    */
+  /*
+   * AND THE FIRST QUESTION TOO, when it was the act's own press that asked
+   * it: the keyboard stood on "This has to happen first", and the ask opened
+   * under the act with nothing of it in hand — eight Tabs to its filter (the
+   * twelfth walk's relate). Where the choices are many, the filter is what
+   * takes it; the arrow down goes on into them.
+   */
   useLayoutEffect(() => {
     const box = asked.current;
     const now = typeof document === "undefined" ? null : document.activeElement;
-    if (!box || (now && now !== document.body && !box.contains(now))) return;
-    const first = box.querySelector<HTMLElement>("form input, [role=group] button:not([disabled])");
+    const pressedTheAct = now instanceof HTMLElement && now.getAttribute("data-affordance") === affordance.id;
+    if (!box || (now && now !== document.body && !box.contains(now) && !pressedTheAct)) return;
+    const first = box.querySelector<HTMLElement>('[data-testid="ask-filter"], form input, [role=group] button:not([disabled])');
     if (first && first !== now) first.focus();
   }, [parameter?.name]);
+  // The choices are one stop for Tab: the arrows go through them, a letter to the next that begins with it.
+  const roving = useRoving<HTMLDivElement>({ flow: "both", letters: true });
 
   if (!parameter) return null;
 
@@ -277,6 +288,14 @@ export function AnswerArgs({
           placeholder={`Filter ${choices.length}…`}
           aria-label={`Filter ${asking}`}
           data-testid="ask-filter"
+          onKeyDown={(event) => {
+            // Down from the words into what they left: the choices' one stop.
+            if (event.key !== "ArrowDown" || event.metaKey || event.ctrlKey || event.altKey) return;
+            const into = roving.ref.current?.querySelector<HTMLElement>(`[${ROVING_ITEM}][tabindex="0"]`);
+            if (!into) return;
+            event.preventDefault();
+            into.focus();
+          }}
           style={{ font: "inherit", fontSize: "0.8125rem", minWidth: 0, padding: "3px 7px" }}
         />
       ) : null}
@@ -312,6 +331,7 @@ export function AnswerArgs({
         </div>
       ) : choices.length > 0 ? (
         <div
+          {...roving}
           role="group"
           aria-labelledby={promptId}
           style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
@@ -322,6 +342,7 @@ export function AnswerArgs({
               <button
                 key={choice}
                 type="button"
+                {...{ [ROVING_ITEM]: "" }}
                 // The question travels with the answer: a control read on its
                 // own says what choosing it would mean.
                 aria-label={`${asking}: ${say(choice)}`}

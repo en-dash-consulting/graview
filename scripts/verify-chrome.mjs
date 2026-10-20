@@ -699,7 +699,8 @@ try {
         const parts = [...bar.querySelectorAll(".graview-bar-row > *, .graview-bar-tools > *, .graview-bar-own > *")].filter((el) => el.getBoundingClientRect().width > 0);
         return {
           // The places stand or fold by the room and by the one you are on; the rest of the bar is the same bar.
-          ids: ids.filter((id) => !id.startsWith("app-place") && id !== "activity-button"),
+          // And the ways past the bar (`skip-*`) are the face's, not the bar's: the Shell's scene says where they go, an embed's host page has its own.
+          ids: ids.filter((id) => !id.startsWith("app-place") && id !== "activity-button" && !id.startsWith("skip-")),
           places: [...document.querySelectorAll('[data-testid^="app-place-scene:"]')].map((el) => el.getAttribute("data-place-path")).sort(),
           activity: bar.querySelector('[data-testid="activity-button"]') !== null,
           activityBeforeStanding: (() => {

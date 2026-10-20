@@ -125,6 +125,12 @@ export { SceneWayBack } from "./scene-way-back.js";
 export { freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, takeBackWords, WAY_BACK_MS } from "./way-back.js";
 export type { LastChange } from "./way-back.js";
 export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
+// The ways past what stands before the work (WCAG 2.4.1), and the groups that are one Tab stop.
+export { focusInto, SkipLinks } from "./skip-links.js";
+export type { SkipTo } from "./skip-links.js";
+export { ROVING, ROVING_ITEM, rovingItems, useRoving } from "./roving.js";
+export type { RovingFlow } from "./roving.js";
+export { SceneSkips } from "./scene-skips.js";
 export { Places } from "./places.js";
 // A seat's move, as the scene makes it: the stop it is, or the pane it opens.
 export { sceneMove, useSceneGo, type SceneMove } from "./seat-move.js";

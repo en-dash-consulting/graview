@@ -406,6 +406,7 @@ export function AppBar({
   onFind,
   switch: switchForm = "words",
   scenePlaces,
+  skips,
 }: {
   readonly brand: Brand | undefined;
   readonly name: string;
@@ -442,6 +443,8 @@ export function AppBar({
    * and the scene's bar names no place.
    */
   readonly scenePlaces?: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo } | undefined;
+  /** The ways past the bar (`SkipLinks`), the first stops Tab reaches: the face says where they go. */
+  readonly skips?: ReactNode;
 }) {
   const bar = useRef<HTMLElement>(null);
   // Anybody else here, by the provider's presence (FR-155); none where no provider is.
@@ -544,6 +547,7 @@ export function AppBar({
         {...(finding && compact ? { "data-finding": "" } : {})}
       >
         <style>{BAR_CSS}</style>
+        {skips}
         <div className="graview-bar-row">
           <div className="graview-bar-app">
             <Heading className="graview-bar-name">
