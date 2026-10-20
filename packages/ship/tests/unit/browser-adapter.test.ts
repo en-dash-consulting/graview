@@ -190,6 +190,18 @@ describe("the browser adapter", () => {
     opened.close();
   });
 
+  it("opens a seed too large for the storage and reports the write that failed", async () => {
+    const storage = memoryStorage();
+    storage.setItem = () => {
+      throw new Error("QuotaExceededError");
+    };
+    const failures: unknown[] = [];
+    const opened = await openStore({ app, adapter: createBrowserAdapter({ storage }), seed, onPersistError: (e) => failures.push(e) });
+    expect(opened.store.graph.getNode("p1")).toBeDefined();
+    expect(failures).toHaveLength(1);
+    opened.close();
+  });
+
   it("refuses to run without any storage, plainly", () => {
     const had = (globalThis as { localStorage?: unknown }).localStorage;
     delete (globalThis as { localStorage?: unknown }).localStorage;

@@ -164,6 +164,12 @@ export async function holders(named) {
  * them holding their ports. A SIGTERM stops them first.
  */
 const owned = new Set();
+/** Each port a server this process stopped is letting go of: resolved once nothing accepts there, or after 15 s. */
+const releasing = new Map();
+const untilFree = async (port) => {
+  const until = Date.now() + 15_000;
+  while (Date.now() < until && (await held(port))) await new Promise((next) => setTimeout(next, 100));
+};
 let listening = false;
 const stopOnTerm = () => {
   if (listening) return;
@@ -183,6 +189,14 @@ const stopOnTerm = () => {
 export async function serving(app, port, repoRoot) {
   const url = `http://localhost:${port}`;
   const dir = appDir(app, repoRoot);
+  /*
+   * A SERVER THIS PROCESS JUST STOPPED IS GONE FIRST. A stop only sends the
+   * signal, and the next harness step asking for the same app found the
+   * port still held by the vite on its way out — "held by a process this
+   * machine will not name" — and failed a run that had done nothing wrong.
+   */
+  await releasing.get(port);
+  releasing.delete(port);
   if (await held(port)) {
     /*
      * BORROW ONLY THIS CHECKOUT'S SERVER. This asked the server for the
@@ -215,6 +229,7 @@ export async function serving(app, port, repoRoot) {
     } catch {
       child.kill("SIGTERM");
     }
+    releasing.set(port, untilFree(port));
   };
   owned.add(stop);
   stopOnTerm();
