@@ -24,6 +24,8 @@ export interface HeadlessInput {
   readonly props: GuestProps;
   /** What the view may ask for or bind a press to, by the name it uses: the manifest's acts. */
   readonly acts: readonly string[];
+  /** The fields files dropped on it go in: the manifest's accepts (FR-193). */
+  readonly accepts?: readonly { readonly kind: string; readonly field: string }[];
   /** The `https:` origins the host lists for a view's images (WorkerViewOptions.images). */
   readonly imageOrigins?: readonly string[];
   /** The live host says where the app's own images live (WorkerViewOptions.asset): an image by that path is drawn. */

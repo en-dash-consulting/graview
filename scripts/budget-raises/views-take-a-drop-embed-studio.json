@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 745,
+  "gzipped": 349,
+  "note": "Raised when a view came to take files dropped on it (FR-193, Graview Cloud's family weekend): `applyAll` reads `{ $made: n }` as the record an earlier call of the same change made, and judges that call once it is there to name (`mutations/made.ts`), so a record made and linked to the one it was dropped on is one change. Measured at 1_861_737 / 595_528 against 1_860_992 / 595_179: 745 / 349 more."
+}

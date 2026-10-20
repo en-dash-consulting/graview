@@ -494,7 +494,9 @@ export function FilesEditor({ value, onChange, several, image, video = false, la
   const kinds = host ? (family ? host.kinds.filter((kind) => kind.startsWith(family) || kind === "*" || kind === "*/*") : host.kinds) : [];
   const familyKinds = host ? host.kinds.length === 0 || kinds.length > 0 : false;
   const pictureKinds = !video && (host ? host.kinds.length === 0 || (image ? kinds : host.kinds).some((kind) => kind.startsWith("image/") || kind.startsWith("*")) : false);
-  const open = Boolean(host) && (!family || familyKinds);
+  /* A host whose files take nothing (`maxBytes` 0, as a face with no files config hands it) takes no files: no picker, no "up to 0 bytes". */
+  const takesAny = Boolean(host) && host!.maxBytes > 0;
+  const open = takesAny && (!family || familyKinds);
   const sort = image ? "picture" : video ? "video" : "file";
   const noun = several ? `${sort}s` : `a ${sort}`;
   const accept = family ? (kinds.length > 0 ? kinds.join(",") : `${family}*`) : host?.kinds.join(",") || undefined;
@@ -661,7 +663,7 @@ export function FilesEditor({ value, onChange, several, image, video = false, la
         </div>
       ) : (
         <p style={{ ...QUIET, margin: 0 }} data-graview-file-none="">
-          {host ? `This host doesn’t take ${video ? "videos" : "pictures"}, so none can be added here.` : "This host doesn’t take files, so none can be added here."}
+          {takesAny ? `This host doesn’t take ${video ? "videos" : "pictures"}, so none can be added here.` : "This host doesn’t take files, so none can be added here."}
         </p>
       )}
       <p aria-live="polite" style={{ ...QUIET, margin: 0, minHeight: busy || said ? undefined : 0 }} data-graview-file-status="">

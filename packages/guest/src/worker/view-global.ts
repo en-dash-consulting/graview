@@ -16,7 +16,7 @@
 import { RemoteRootElement, remoteId, updateRemoteElementAttribute } from "@remote-dom/core/elements";
 import type { Unsent } from "../channel.js";
 import { HTML_ELEMENTS, UNNAMED_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
-import { navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
+import { navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestDroppedFile, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
 import type { Hardening } from "./harden.js";
 import { createListenerLedger } from "./listeners.js";
 
@@ -41,6 +41,10 @@ export interface ViewEvent {
   readonly checked?: boolean;
   /** A key's name, for `keydown`. */
   readonly key?: string;
+  /** On `drop`: the files the person dropped on (or picked for) a `data-drop` element, as the host stored them, never their bytes (FR-193). */
+  readonly files?: readonly GuestDroppedFile[];
+  /** On `drop`: each file the host would not take, and why. */
+  readonly refused?: readonly string[];
   /**
    * What became of the act this press was bound to (`data-act`): the host
    * applied it, or refused it, before the view heard (FR-92). On an
@@ -53,13 +57,17 @@ export interface ViewEvent {
 
 export type Drawable = string | Html | Node | readonly (string | Html | Node)[] | null | undefined;
 
+/** An act's arguments, or a list of them: several of the act as one change, one undo (FR-193). */
+export type ActArgs = Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[];
+
 export interface GraviewView {
   readonly props: GuestProps | undefined;
   onProps(listener: (props: GuestProps) => void): () => void;
   render(content: Drawable): void;
   style(css: string): void;
   on(type: string, selector: string, listener: (event: ViewEvent) => void): () => void;
-  act(name: string, args?: Readonly<Record<string, unknown>>): Promise<GuestAnswer>;
+  /** Ask for an act; with a list of arguments, several of it as one change that one undo takes back (FR-193). */
+  act(name: string, args?: ActArgs): Promise<GuestAnswer>;
   /** Go to a record, a place or a kind's list — narrowed (`where`) and to a `section`, as `GuestNavigateTo` says. */
   navigate(to: GuestNavigateTo): void;
   html(strings: TemplateStringsArray, ...values: unknown[]): Html;
@@ -72,8 +80,8 @@ export interface GraviewView {
 export interface ViewIo {
   /** A message for the host. */
   send(request: Unsent): void;
-  /** Ask the host for an act, and hear its answer. */
-  act(name: string, args: Readonly<Record<string, unknown>>): Promise<GuestAnswer>;
+  /** Ask the host for an act, or several of it as one change, and hear its answer. */
+  act(name: string, args: ActArgs): Promise<GuestAnswer>;
   /** Ask to go to a record. */
   navigate(to: string): void;
   microtask(task: () => void): void;
@@ -116,6 +124,7 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
   const delegated = new Set<{ readonly type: string; readonly selector: string; readonly listener: (event: ViewEvent) => void }>();
   let current: GuestProps | undefined;
   let refusedLast: string[] = [];
+  const heardOf = new Set<string>();
 
   /*
    * WHAT REMOTE DOM'S ELEMENTS LACK, SAID. Its polyfill has no `closest`,
@@ -148,7 +157,7 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     const target = byId(message.target);
     if (!target) return;
     const event = new DomEvent(message.event, { bubbles: true });
-    for (const key of ["value", "checked", "key", "pressed"] as const) if (message[key] !== undefined) Object.defineProperty(event, key, { value: message[key], enumerable: true });
+    for (const key of ["value", "checked", "key", "pressed", "files", "refused"] as const) if (message[key] !== undefined) Object.defineProperty(event, key, { value: message[key], enumerable: true });
     target.dispatchEvent(event);
     for (const one of delegated) {
       if (one.type !== message.event) continue;
@@ -160,7 +169,7 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
       }
       for (let at: Element | null = target; at && at !== (root as unknown as Element); at = at.parentNode as Element | null) {
         if (!matching.has(at)) continue;
-        one.listener(Object.freeze({ type: message.event, target, element: at, ...(message.value !== undefined ? { value: message.value } : {}), ...(message.checked !== undefined ? { checked: message.checked } : {}), ...(message.key !== undefined ? { key: message.key } : {}), ...(message.pressed !== undefined ? { pressed: message.pressed } : {}) }));
+        one.listener(Object.freeze({ type: message.event, target, element: at, ...(message.value !== undefined ? { value: message.value } : {}), ...(message.checked !== undefined ? { checked: message.checked } : {}), ...(message.key !== undefined ? { key: message.key } : {}), ...(message.pressed !== undefined ? { pressed: message.pressed } : {}), ...(message.files !== undefined ? { files: message.files } : {}), ...(message.refused !== undefined ? { refused: message.refused } : {}) }));
         break;
       }
     }
@@ -335,9 +344,14 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     on(type: string, selector: string, listener: (event: ViewEvent) => void) {
       const one = { type, selector, listener };
       delegated.add(one);
+      /* The host is told each event the view hears, once: a view that hears `drop` is left the drop (FR-193). */
+      if (typeof type === "string" && !heardOf.has(type)) {
+        heardOf.add(type);
+        io.send({ type: "hears", events: [type] });
+      }
       return () => void delegated.delete(one);
     },
-    act: (name: string, args: Readonly<Record<string, unknown>> = {}) => io.act(name, args),
+    act: (name: string, args: ActArgs = {}) => io.act(name, args),
     navigate(to: GuestNavigateTo) {
       if (typeof to === "string") return io.navigate(to);
       const request = navigateRequest(to);

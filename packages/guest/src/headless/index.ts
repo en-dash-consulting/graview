@@ -236,6 +236,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const input: HeadlessInput = {
     props,
     acts: manifestActs(manifest).map((one) => one.as ?? one.act),
+    ...(manifest.accepts ? { accepts: manifest.accepts.map(({ kind, field }) => ({ kind, field })) } : {}),
     places: places.map((place) => ({ as: place.as, title: place.title })),
     ...(options.images ? { imageOrigins: [...options.images.origins] } : {}),
     ...(options.asset ? { assets: true } : {}),

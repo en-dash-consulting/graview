@@ -55,7 +55,7 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   if (drawn.over) return { ok: false, reason: "nodes", detail: `It drew more than the ${limits.maxNodes.toLocaleString("en-US")} things a view may draw.` };
   // A kind's list is somewhere a view may go by name too, by its plural or the kind's name.
   const goes = [...input.places, ...(input.lists ?? []).filter((slug) => !input.places.some((place) => place.as === slug)).map((slug) => ({ as: slug }))];
-  const said = describeDrawing(drawn.root, { props: input.props, places: goes });
+  const said = describeDrawing(drawn.root, { props: input.props, places: goes, ...(input.accepts ? { accepts: input.accepts } : {}) });
   for (const act of said.acts) {
     if (!acts.has(act)) return { ok: false, reason: "act", detail: `It binds a press to the act "${act}" (data-act), which its manifest does not name.` };
   }

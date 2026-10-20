@@ -26,6 +26,8 @@ export interface DescribeDrawingContext {
   readonly props: GuestProps;
   /** The app's places, by slug and title: where a `data-place` may point. */
   readonly places: readonly NamedPlace[];
+  /** The fields files dropped on the view go in, as its manifest says them (FR-193): what a `data-drop` may name. */
+  readonly accepts?: readonly { readonly kind: string; readonly field: string }[];
 }
 
 export interface DescribedDrawing {
@@ -107,6 +109,26 @@ function saveProblems(element: TreeElement): DescribedProblem[] {
   return problems;
 }
 
+/** What a drop target the view drew needs (FR-193): a kind and field its manifest accepts, and a record it was shown to link to. */
+function dropProblems(element: TreeElement, context: DescribeDrawingContext, shown: ReadonlyMap<string, GuestNode>): DescribedProblem[] {
+  const kind = element.getAttribute("data-drop");
+  if (kind === null) return [];
+  const at = `drawing <${element.localName} data-drop="${kind}">`;
+  const problems: DescribedProblem[] = [];
+  const accepted = (context.accepts ?? []).filter((one) => one.kind === kind);
+  const field = element.getAttribute("data-drop-field");
+  if (accepted.length === 0) problems.push({ at, says: `The view's accepts names no field of "${kind}", so the host offers no drop target here: say the field files go in, accepts: [{ "kind": "${kind}", "field": "<its image, video or file field>" }].` });
+  else if (field !== null && !accepted.some((one) => one.field === field)) problems.push({ at, says: `data-drop-field names "${field}", which the view's accepts does not name for "${kind}" (${accepted.map((one) => `"${one.field}"`).join(", ")}): the host offers no drop target here.` });
+  const connect = element.getAttribute("data-drop-connect");
+  if (connect !== null) {
+    const colon = connect.indexOf(":");
+    const record = colon > 0 ? connect.slice(colon + 1) : "";
+    if (colon <= 0 || record === "" || shown.has(connect)) problems.push({ at, says: `data-drop-connect is "<relation>:<record id>" — "takenOn:day:saturday" — not "${connect}"${shown.has(connect) ? ", which names a record and no relation" : ""}.` });
+    else if (!shown.has(record)) problems.push({ at, says: `data-drop-connect names "${record}", which this seat was not shown: the host offers no drop target here.` });
+  }
+  return problems;
+}
+
 export function describeDrawing(root: TreeElement, context: DescribeDrawingContext): DescribedDrawing {
   const problems: DescribedProblem[] = [];
   const acts = new Set<string>();
@@ -128,6 +150,7 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
     const place = element.getAttribute("data-place");
     if (place !== null && !known(place)) problems.push({ at: `drawing <${element.localName} data-place="${place}">`, says: `It names the place "${place}", which this app does not have.${placesSaid(context.places)}` });
     problems.push(...saveProblems(element));
+    problems.push(...dropProblems(element, context, shown));
   }
 
   /** The record an element stands for: its own `data-record`, a `data-key` that is a shown record's id, or the one record linked inside it. */

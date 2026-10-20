@@ -20,6 +20,7 @@ import { compileMutation } from "./mutations/define-mutation.js";
 import { InvalidArguments } from "./mutations/invalid-arguments.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
+import { namesMade, resolveMade } from "./mutations/made.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
@@ -1386,12 +1387,6 @@ export class Store<S extends AnySchema> {
      * also the honest answer to "may I do this": the answer must not depend
      * on how far through the list you got.
      */
-    if (this.policy) {
-      for (const call of calls) {
-        const verdict = this.permits(call, author as Principal);
-        if (!verdict.ok) this.refuse(verdict.refusal, author.id);
-      }
-    }
     /*
      * AND AN AGENT IS HELD TO WHAT IT WAS DECLARED ABLE TO DO.
      *
@@ -1402,10 +1397,18 @@ export class Store<S extends AnySchema> {
      * seat holds say what it may do at all; `may` narrows what THIS provider
      * was brought in for, and the narrower of the two wins.
      */
-    for (const call of calls) {
+    const permitted = (call: MutationCall) => {
+      const verdict = this.policy ? this.permits(call, author as Principal) : undefined;
+      if (verdict && !verdict.ok) this.refuse(verdict.refusal, author.id);
+    };
+    const declared = (call: MutationCall) => {
       const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call, author as Principal);
       if (refusal) this.refuse(refusal, author.id);
-    }
+    };
+    /* A call that names a record an earlier call makes (`{ $made: n }`, FR-193) is asked once that record is there to name. */
+    const naming = calls.map(namesMade);
+    calls.forEach((call, at) => naming[at] || permitted(call));
+    calls.forEach((call, at) => naming[at] || declared(call));
     /*
      * THE APP'S OWN ACTOR IS HELD TO WHAT PEOPLE SAID: a change a person
      * declined is not made again, a record a person said to leave alone is
@@ -1417,8 +1420,12 @@ export class Store<S extends AnySchema> {
     if (automated) this.refuseDeclined(calls, author);
     if (!this.rehearsing) tellTheWatchOfAnAuthor(author.id);
 
+    /* The first record each call made, for a later call that names it (FR-193). */
+    const madeIds: (string | undefined)[] = [];
     try {
-      for (const call of calls) {
+      for (const [at, asked] of calls.entries()) {
+        const call = naming[at] ? resolveMade(asked, madeIds, at) : asked;
+        if (naming[at]) (permitted(call), declared(call));
         const definition = this.mutation(call.name);
         const missing = this.missingFor(call, author as Principal);
         if (missing) throw missing;
@@ -1446,6 +1453,7 @@ export class Store<S extends AnySchema> {
          * simply leaves no trace, because it left no trace.
          */
         if (compiled.primitives.length === 0) continue;
+        madeIds[at] = compiled.primitives.find((primitive): primitive is Extract<Primitive, { op: "add-node" }> => primitive.op === "add-node")?.node.id;
         const op: Operation = {
           id: this.nextId(),
           seq: this.log.length,

@@ -1,4 +1,5 @@
-import { localeFor, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
+import { localeFor, timeZoneFor, type AnySchema, type FileKind, type Principal, type Store } from "@graview/core";
+import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
 import { plainNode, readAcross, type GuestViewInput } from "./session.js";
@@ -17,6 +18,10 @@ import { plainNode, readAcross, type GuestViewInput } from "./session.js";
  *   replaces     "page", for a view of one record drawn alone in place of
  *                the record's own fields (FR-149); left out, it sits above
  *                them and they stay editable
+ *   accepts      the fields files dropped on it go in (FR-193): each a kind
+ *                and its image, video or file field — `[{ kind: "moment",
+ *                field: "photo" }]` — for an element it draws marked
+ *                `data-drop="<kind>"` (drop.ts)
  *   pictures     true, or { width }: each file on a record it is handed
  *                comes as a `GuestFile`, a picture with an address the
  *                host made from the bytes (FR-175, pictures.ts); and it
@@ -69,6 +74,46 @@ export interface WorkerViewManifest {
    * as the record keeps it.
    */
   readonly pictures?: GuestPictures;
+  /**
+   * WHAT FILES DROPPED ON IT BECOME (FR-193): each a kind of the app and a
+   * field of it that holds a picture, a video or a file. An element the view
+   * draws with `data-drop="<kind>"` (and `data-drop-connect="<relation>:<record
+   * id>"`) is then a drop target the host draws and takes files at — a tap
+   * that opens the picker on a phone — storing each through the host's files
+   * into the field its type fits. A view that hears `drop` is told the files;
+   * one that does not gets a record of the kind per file, linked as
+   * `data-drop-connect` says, all in one change.
+   */
+  readonly accepts?: readonly ManifestAccept[];
+}
+
+/** A field files dropped on a view go in (FR-193): a kind, and its image, video or file field. */
+export interface ManifestAccept {
+  readonly kind: string;
+  readonly field: string;
+}
+
+/** What a kind's field holds, where it holds files: a picture, a video or a file, one or a list of them. Undefined where it holds none. */
+export function fileFieldOf<S extends AnySchema>(store: Store<S>, kind: string, field: string): { readonly as: FileKind; readonly list: boolean } | undefined {
+  const definition = store.schema.tryDefinition(kind);
+  const schema = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[field];
+  return schema === undefined ? undefined : fileFieldKind(schema);
+}
+
+/** What `accepts` says wrongly, in sentences; empty when it is sound. */
+function acceptsProblems<S extends AnySchema>(accepts: unknown, store: Store<S>): readonly string[] {
+  if (accepts === undefined) return [];
+  if (!Array.isArray(accepts)) return ['The view\'s accepts is a list of { "kind": <a kind>, "field": <its image, video or file field> }.'];
+  const problems: string[] = [];
+  const kinds = new Set<string>(store.schema.kinds as readonly string[]);
+  for (const one of accepts as unknown[]) {
+    const { kind, field } = (one ?? {}) as { kind?: unknown; field?: unknown };
+    if (typeof kind !== "string" || typeof field !== "string") problems.push('Each of the view\'s accepts is { "kind": <a kind>, "field": <its image, video or file field> }.');
+    else if (!kinds.has(kind)) problems.push(`The view accepts files for "${kind}", which is no kind of this app.`);
+    else if (!fileFieldOf(store, kind, field)) problems.push(`The view accepts files into ${kind}'s "${field}", which holds no picture, video or file.`);
+    else if (!store.allMutations().some((mutation) => (mutation.creates ?? []).includes(kind) && Object.hasOwn((mutation.input as { shape?: object } | undefined)?.shape ?? {}, field))) problems.push(`No act of this app makes a "${kind}" with its "${field}", so a file dropped could become nothing.`);
+  }
+  return problems;
 }
 
 /** What `pictures` asks for, said wrongly, in sentences; empty when it is sound. */
@@ -105,6 +150,7 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   if (manifest.replaces !== undefined && manifest.replaces !== "page") findings.push(`The view's replaces is "${String(manifest.replaces)}": the one thing a view replaces is "page", or leave it out to draw the view above the record's own fields.`);
   else if (manifest.replaces === "page" && (manifest.attach === "home" || manifest.cardinality !== "one")) findings.push('Only a view of one record replaces its page: replaces "page" needs cardinality one on a kind.');
   findings.push(...picturesProblems(manifest.pictures));
+  findings.push(...acceptsProblems(manifest.accepts, store));
   for (const kind of manifest.reads?.kinds ?? []) if (!kinds.has(kind)) findings.push(`The view reads "${kind}", which is no kind of this app.`);
   for (const edge of manifest.reads?.edges ?? []) if (!edges.has(edge)) findings.push(`The view reads the edge "${edge}", which no kind of this app declares.`);
   const named = new Set<string>();

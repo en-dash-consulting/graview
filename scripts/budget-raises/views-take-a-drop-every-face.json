@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 16781,
+  "gzipped": 7016,
+  "note": "Raised when a view came to take files dropped on it (FR-193, Graview Cloud's family weekend): `applyAll` reads `{ $made: n }` as the record an earlier call of the same change made, and judges that call once it is there to name (`mutations/made.ts`), so a record made and linked to the one it was dropped on is one change; and, fetched when it is asked for, the drop itself (`host/drop.ts`, `host/drop-plan.ts`) is fetched with the first `data-drop` a view whose manifest accepts files draws, with what the guest host's session, manifest and write rules add for it. Measured at 2_470_140 / 835_106 against 2_453_359 / 828_090: 16_781 / 7_016 more."
+}
