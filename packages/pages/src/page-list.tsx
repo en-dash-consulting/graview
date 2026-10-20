@@ -1,4 +1,4 @@
-import { AppLink, ArrangeBar, CHOOSING_CSS, Files, pageSays, prefetchSeveral, SeveralBarDoor, useChoosing, useEndsAboveItsList } from "@graview/primitives/pages";
+import { AppLink, ArrangeBar, CHOOSING_CSS, Files, focusInto, pageSays, prefetchSeveral, SeveralBarDoor, SkipLinks, useChoosing, useEndsAboveItsList } from "@graview/primitives/pages";
 import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, listGroup, listOpening, orderListGroups, parseArrangement, throughEdges, withWorkedOut } from "@graview/core/arrange";
 import {
   archivedFrom,
@@ -437,6 +437,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
   const drawn = arranged.grouped && grouping ? groupsDrawn.flatMap((group) => (isShut(group) ? [] : group.nodes)) : sections && sections.length > 1 ? sections.flatMap((section) => section.nodes) : members;
   const order = useMemo(() => drawn.map((node) => node.id), [drawn.map((node) => node.id).join("\n")]); // eslint-disable-line react-hooks/exhaustive-deps
   const choosing = useChoosing(order);
+  // The records' own mark, for the skips into them.
+  const skipAt = useId();
   const choosable = (principal ? store.permittedMutations(principal) : store.permittedMutations()).some((mutation) => {
     const kinds = mutation.subject?.kinds as readonly string[] | "*" | undefined;
     return kinds !== undefined && (kinds === "*" || kinds.includes(kind));
@@ -517,6 +519,38 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
               </span>
             ) : null}
           </div>
+          {/*
+            * THE WAY INTO THE RECORDS, the press after adding one (the
+            * eleventh and twelfth walks): between the heading and the first
+            * row's box stood every related list, every chip and every way to
+            * arrange — twenty-five Tabs on a long list, where the pointer
+            * pressed the box. Unseen until the keyboard is on it.
+            */}
+          {members.length > 0 ? (
+            <SkipLinks
+              place="here"
+              to={[
+                { label: `Skip to the ${members.length === 1 ? nounOf(definition, kind) : `${members.length} ${plural.toLowerCase()}`}`, testid: "records", go: () => {
+                  // Onto the boxes' one stop, past the index of years or letters a long list opens with.
+                  const records = document.querySelector<HTMLElement>(`[data-graview-skip-target="${CSS.escape(skipAt)}"]`);
+                  focusInto(records?.querySelector<HTMLElement>('[data-graview-choose-box][tabindex="0"]') ?? records);
+                } },
+                ...(current.length > 0
+                  ? [
+                      {
+                        label: "Skip to arranging them",
+                        testid: "arranging",
+                        go: () => {
+                          // Onto the line's own way in — "Filter", or the one "Arrange" a narrow line folds it into — past the chips before it.
+                          const line = document.querySelector<HTMLElement>(`[data-graview-skip-target="${CSS.escape(skipAt)}"]`)?.parentElement?.querySelector<HTMLElement>('[role="group"][aria-label="Arrange"]');
+                          focusInto(line?.querySelector<HTMLElement>('button[data-testid$="-add"], button[data-testid$="-all"]') ?? line);
+                        },
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          ) : null}
           {description ?? definition?.description ? <p style={lede}>{description ?? definition?.description}</p> : null}
           {roads.length > 0 || pictures.length > 0 ? (
             /*
@@ -626,6 +660,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
         {/* The rows measure the room they are given, not the window: a list in a narrow embed on a desk stacks as on a phone. */}
         <div
           className="graview-list"
+          // Where "Skip to the content" and the list's own skip take the keyboard: its records.
+          data-graview-skip-target={skipAt}
           {...(choosable
             ? {
                 ...choosing.listProps,

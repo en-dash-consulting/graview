@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain module of the harness, with no types of its own.
-import { appsNamed, frictionOf, partOf, planJobs, regressionsOf, storeHookInPage } from "../scripts/lib/journeys.mjs";
+import { appsNamed, frictionOf, keyboardChecks, keyboardWhy, partOf, planJobs, regressionsOf, storeHookInPage } from "../scripts/lib/journeys.mjs";
 // @ts-expect-error — a plain module of the harness, with no types of its own.
 import { portFor } from "../scripts/lib/ports.mjs";
 
@@ -169,5 +169,29 @@ describe("relating two", () => {
     const app = core.defineApp({ name: "Festival", schema, mutations: [invite] });
     const relate = planJobs({ app, core }).jobs.find((job: { id: string }) => job.id === "relate");
     expect(relate).toMatchObject({ act: "connect-guest-introduces", kind: "guest", subjectArg: "id", otherArg: "to", otherKinds: ["screening"] });
+  });
+});
+
+describe("the keyboard's cost", () => {
+  const jobs = (id: string, runs: Record<string, Run & { firstBox?: { presses: number; skip: string | null } }>) => ({ apps: { todo: { jobs: { [id]: { says: id, runs } } } } });
+
+  it("holds every job to twice the pointer's presses, and lets one through only where the verdict says why", () => {
+    const held = keyboardChecks(jobs("relate", { "scene/1440/pointer": run(true, 5), "scene/1440/keyboard": run(true, 10) }));
+    expect(held.theKeyboardCostsAtMostTwiceThePointer).toMatchObject({ ok: true, within: 1, unnamed: [] });
+    const over = keyboardChecks(jobs("relate", { "scene/1440/pointer": run(true, 5), "scene/1440/keyboard": run(true, 11) }));
+    expect(over.theKeyboardCostsAtMostTwiceThePointer).toMatchObject({ ok: false, unnamed: ["todo relate scene/1440: 11 by keyboard, 5 by pointer"] });
+    // The same cost on the pages, where a record's act asks in a form, is named.
+    const named = keyboardChecks(jobs("relate", { "pages/1440/pointer": run(true, 4), "pages/1440/keyboard": run(true, 12) }));
+    expect(named.theKeyboardCostsAtMostTwiceThePointer.ok).toBe(true);
+    expect(named.theKeyboardCostsAtMostTwiceThePointer.named).toEqual([{ why: keyboardWhy("relate", "pages"), runs: ["todo relate pages/1440: 12 by keyboard, 4 by pointer"] }]);
+    expect(keyboardWhy("relate", "scene")).toBeNull();
+    expect(keyboardWhy("make-task", "scene")).toBe(keyboardWhy("make-plot", "pages"));
+  });
+
+  it("holds the first box of a long list to its own skip and five presses", () => {
+    const skipped = keyboardChecks(jobs("several", { "pages/1440/keyboard": run(true, 12, { firstBox: { presses: 3, skip: "records" } } as Partial<Run>) }));
+    expect(skipped.theKeyboardSkipsIntoALongList.ok).toBe(true);
+    const tabbed = keyboardChecks(jobs("several", { "pages/1440/keyboard": run(true, 30, { firstBox: { presses: 22, skip: null } } as Partial<Run>) }));
+    expect(tabbed.theKeyboardSkipsIntoALongList).toMatchObject({ ok: false, lists: [{ app: "todo", width: 1440, firstBox: { presses: 22, skip: null } }] });
   });
 });

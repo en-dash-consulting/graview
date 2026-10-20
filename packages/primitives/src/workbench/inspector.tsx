@@ -8,6 +8,7 @@ import { loadPins, togglePin, type Affordance, type PinOverrides } from "@gravie
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnswerArgs, nameOf } from "./answer-args.js";
 import { VISUALLY_HIDDEN } from "../primitives/index.js";
+import { ROVING_ITEM, useRoving } from "../roving.js";
 import type { InspectorPlacement } from "./inspector-door.js";
 import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -256,6 +257,14 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
    * there: the field only renders once the list outgrows the fold.
    */
   const [query, setQuery] = useState("");
+  /*
+   * THE ACTS ARE ONE STOP FOR TAB (`useRoving`): the arrows go down them, a
+   * letter to the next that begins with it, and an act's pin is the arrow
+   * to its right — where each act and each pin were a Tab stop of their own,
+   * and the eleventh act of a menu was twenty-one Tabs from the key that
+   * opened it (walks XI and XII).
+   */
+  const roving = useRoving<HTMLOListElement>({ letters: true });
   /*
    * A REFUSAL IS A RESULT, said where the button was pressed.
    *
@@ -916,6 +925,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         </p>
       ) : (
         <ol
+          {...roving}
           data-testid="affordances"
           style={{
             margin: 0,
@@ -966,9 +976,25 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
                 />
               ) : null}
               {section.items.map((affordance) => (
-                <li key={affordance.id} style={{ display: "flex", gap: 2, alignItems: "stretch" }}>
+                <li
+                  key={affordance.id}
+                  style={{ display: "flex", gap: 2, alignItems: "stretch" }}
+                  onKeyDown={(event) => {
+                    // Its pin is beside it: the arrow to the right, and back.
+                    if (event.metaKey || event.ctrlKey || event.altKey) return;
+                    const own = event.currentTarget.querySelector<HTMLElement>("[data-affordance]");
+                    const pin = event.currentTarget.querySelector<HTMLElement>("[data-pin-for]");
+                    const onPin = event.target === pin;
+                    const to = event.key === "ArrowRight" && !onPin ? pin : onPin && ["ArrowLeft", "ArrowUp", "ArrowDown"].includes(event.key) ? own : null;
+                    if (!to) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    to.focus();
+                  }}
+                >
                   <button
                     type="button"
+                    {...{ [ROVING_ITEM]: "" }}
                     data-affordance={affordance.id}
                     /*
                      * Where the derivation put it. The sections regroup the
@@ -1048,6 +1074,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
                   <button
                     type="button"
                     data-testid="pin-toggle"
+                    // Reached by the arrow from its act, not by a Tab of its own.
+                    tabIndex={-1}
                     data-pin-for={affordance.mutation}
                     aria-pressed={affordance.pinned !== undefined}
                     aria-label={
@@ -1101,6 +1129,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
             <li>
               <button
                 type="button"
+                {...{ [ROVING_ITEM]: "" }}
                 onClick={() => setExpanded(true)}
                 // What it DOES, not what is behind it. "+9 more" is a label
                 // on a quantity; this is a control, and a control says what

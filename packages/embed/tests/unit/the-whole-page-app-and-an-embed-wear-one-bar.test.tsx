@@ -39,8 +39,9 @@ const snapshot = { nodes: [{ id: "n1", kind: "note", label: "First" }], edges: [
 const store = () => new Store({ schema, mutations: [addNote], invariants: [], snapshot });
 const views = () => registerDefaultViews(schema, createViews(schema));
 
-/** The test ids on the bar, in the order it draws them. */
-const barIds = (host: Element) => [...(host.querySelector('[data-testid="app-bar"]')?.querySelectorAll("[data-testid]") ?? [])].map((el) => el.getAttribute("data-testid"));
+/** The test ids on the bar, in the order it draws them — less the ways past it (`skip-*`), which are the face's: the Shell's scene says where they go, an embed's host page has its own. */
+const barIds = (host: Element) =>
+  [...(host.querySelector('[data-testid="app-bar"]')?.querySelectorAll("[data-testid]") ?? [])].map((el) => el.getAttribute("data-testid")).filter((id) => !id?.startsWith("skip-"));
 
 const settle = async (host: Element) => {
   for (let turn = 0; turn < 200 && !host.querySelector('[data-testid="app-find"] input'); turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
