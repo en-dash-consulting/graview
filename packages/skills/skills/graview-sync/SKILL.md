@@ -1,0 +1,91 @@
+---
+name: graview-sync
+description: Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
+---
+
+# Keep an app in step with another system
+
+Often the records already live somewhere: a tracker, an analysis, a
+calendar. The app is then a projection of them that people act on, and
+every act has to reach the system that owns the record — or be refused, in
+a sentence, where that system owns it. Storing, migrating, serving and
+exporting the app itself is `graview-ship`.
+
+## Do this
+
+1. **Project the other system as a snapshot.** Write the projection with
+   `writeSnapshot(graph)` from `@graview/core/snapshot`: a header line
+   (`generatedAt`, records per kind, links per kind, where each kind's
+   lines are), then a record per line. `readSnapshot(text, { kinds })`
+   parses only those kinds, and `fetchSnapshot(url, { kinds })` fetches only
+   their bytes; an old `{ nodes, edges }` file still reads, and `--seed`
+   takes either. Open it with `openStore({ seed, storeOptions: { principal:
+   rememberedPrincipal() } })` so the page's acts are its reader's.
+
+2. **Sync back with `SyncEngine`** from `@graview/core/sync`:
+
+   ```ts
+   const sync = new SyncEngine({ store, remote, applyInbound, conflicts: "report", mapping: { system: "n-dx", resources: [
+     { kind: "task", resource: "task", fields: { status: "status" }, version: "lastModified" },
+     { kind: "zone", resource: "zone", fields: {}, readonly: true, because: "Sourcevision owns the zones." },
+   ] } });
+   sync.guard();   // an act on a zone is not offered, and refused, with that sentence
+   ```
+
+   `version` links every projected record at the version it was made from,
+   so the first run sends nothing. `report` holds a field both sides changed
+   and sends neither until `resolve`; `theirs` lands theirs through
+   `applyInbound`; `ours` sends ours — `report.resolved` says which it took.
+   A refused delete is said once; one made there goes through
+   `removeInbound`, or, without it, stays here unsynced (`report.gone`).
+
+3. **A remote that speaks MCP** is `mcpRemote({ call, pull, push })`:
+   `call` is `mcpClient({ url, allow })` in Node, or `doorClient()` in a
+   page behind `mcpDoor({ call, allow })` on the dev server — the door holds
+   the token, takes only JSON from its own origin on this machine (`hosts`
+   names others), and only the allowed tools. It knows no seat: never put it
+   where sight is a boundary.
+
+4. **Keep it in step with a Google calendar by declaring it.** A
+   document's `connections.<name>`: `system: "google-calendar"`,
+   `calendar` (or `{ env }`), `kind`, `fields` (`summary`, `start`, `end`,
+   `location`, `description`; a `date` field is an all-day day), `filter`
+   (`{ color: "Basil" }` or `{ tag: "#graview", keep? }`, absent for all),
+   `direction` (`"read"` refuses acts on the kind; `"both"`), `conflicts`,
+   `every`, `paused`. `serve` and `preview` run it with
+   `GOOGLE_CLIENT_ID`/`_CLIENT_SECRET`/`_REFRESH_TOKEN` (or
+   `auth: { env, file }`), the cursor in `connections.json` beside the data;
+   `--no-sync` leaves it off. A host calls `runConnections({ app, store,
+   state, token })`.
+
+## Then find out whether it worked
+
+```sh
+npx graview check --document app.json
+```
+
+`graview check` judges a connection before anything is sent: a kind or a
+field it does not have (`connection-kind`, `connection-field`), a field of
+the wrong type for the event's part, a start and an end that are not both
+days or both moments (`connection-when`), a filter it cannot read
+(`connection-filter`, `connection-color`, `connection-tag`), and it warns
+`connection-remove` when no act removes the kind, so an event deleted in
+the calendar would stay here. Report what it said.
+
+Then run the engine against a scripted remote in a test: the first run
+after a projection sends nothing; a field changed on both sides is in the
+report and sent by neither until `resolve`; an act on a read-only kind is
+not offered and is refused with its `because`. Against Google itself,
+`node scripts/verify-google-calendar.mjs` (credentials of your own, never in
+CI) writes its claims to `docs/google-calendar.json` — a round trip both
+ways, an all-day event kept a day, a declared filter honored.
+
+## What the check cannot see
+
+- Whether the mapping is the right one: a field mapped to the wrong field
+  on the far side syncs faithfully and wrongly. Change one record on each
+  side by hand and read both.
+- Whether `theirs` or `ours` is the policy the people on both sides would
+  choose. `report` is the one that asks them.
+- Whether the door's `allow` is narrow enough. It is the token's reach on
+  this machine; name the tools the sync calls and no others.

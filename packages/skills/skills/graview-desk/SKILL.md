@@ -29,9 +29,23 @@ product is for, and it is four seams, all of which the framework ships.
    `<Door provider="surveyor" prompt={...} photos={...} onProposals={...} />`
    draws exactly the doors declared. **Paste is the floor** — a prompt out, an
    answer back, no key and no network — and a product reachable that way is a
-   product anybody can run. `local` is the machine under the dev server
-   (`localIntelligence()` from `@graview/ship/dev`), offered only when
-   something is actually answering there.
+   product anybody can run. `local` is the machine under the dev server,
+   offered only when something is actually answering there. A locally-run
+   product very often has a coding agent installed, logged in and paid for;
+   the browser cannot spawn it and the dev server can:
+
+   ```ts
+   // vite.config.ts
+   import { localIntelligence } from "@graview/ship/dev";
+   plugins: [localIntelligence({ path: "/__graview/local", budgetUsd: 2 })]
+   ```
+
+   Read it with `useLocalIntelligence(path)` from `@graview/react`. The
+   spawned session gets Read and only Read, a turn per photograph plus
+   three, a dollar budget, a closed stdin and an environment with every
+   `CLAUDE*` variable stripped. `apply: "serve"` means a build carries no
+   door: a deployed copy probes, gets nothing, and reads as **closed** —
+   which is a state, not a fault.
 3. **A plan** — what came back, as an object rather than a list: ordered by
    the chain, judged against the policy and the provider's `may`, reviewable.
    `planFrom(store, proposals, { app, principal })`.

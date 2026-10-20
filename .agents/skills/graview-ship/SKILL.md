@@ -7,7 +7,8 @@ description: Deploy a Graview app — persistence, op-log-native migrations, exp
 
 `@graview/ship` holds what every deployment needs. One `defineApp`
 declaration plus one persistence adapter is a running deployment; nothing
-here requires a service.
+here requires a service. A graph projected from another system, synced back
+to it, or kept in step with a Google calendar is `graview-sync`.
 
 ## Do this
 
@@ -23,8 +24,9 @@ here requires a service.
    // One writer per scope: opening it twice interleaves and clobbers.
    ```
 
-   The file adapter is readable: `snapshot.json`, append-only `log.jsonl`,
-   `meta.json`. The core's sqlite adapter is the scale answer.
+   The file adapter is deliberately readable: `snapshot.json`, append-only
+   `log.jsonl`, `meta.json` with the stored schema version. The core's
+   sqlite adapter is the scale answer.
 
    **In the page, with no server**, the browser adapter stores the same
    three things in `localStorage` and slots into the same call — import it
@@ -41,10 +43,12 @@ here requires a service.
    forgetFreshParam();              // the seed is the FIRST load, not every load
    ```
 
-   Reopened, the store carries its history, attributed and undoable. Give
-   the person a visible way back — `StartFresh` from `@graview/primitives`,
-   or `remembers: true` on the pages context; `pnpm remember` holds the
-   sample apps to it.
+   Reopened, the store carries its persisted history: earlier edits are in
+   the activity, attributed, and undoable. Give the person a visible way
+   back — `StartFresh` from `@graview/primitives`, or `remembers: true` on
+   the pages context — because a demo that can be edited into a corner with
+   no exit teaches distrust. The sample apps' `main.tsx` files are the
+   worked examples; `pnpm remember` is the harness that holds them to it.
 
    **The seed is read once**, into an empty store. When the default content
    moves afterwards, do not delete the store to see it — diff and land it:
@@ -54,10 +58,11 @@ here requires a service.
    graview sync-seed ./dist/domain/app.js --seed ./src/data/example.json --data ./data --apply
    ```
 
-   The first prints the content steps (`task t-van is put`) and writes
-   nothing; the second lands them as one undoable operation authored
-   `system · ship:sync-seed`, leaving what people made alone unless
-   `--prune`. The same five steps (`put-node`, `patch-node`, `drop-node`,
+   The first prints the content steps — `task t-van is put`, `today is
+   patched: label`, `today holds t-van is tied` — and writes nothing; the
+   second lands them as one operation authored `system · ship:sync-seed`,
+   logged, undoable, leaving what people made alone unless `--prune` says
+   otherwise. The same five steps (`put-node`, `patch-node`, `drop-node`,
    `put-edge`, `drop-edge`) go in `migrations[]` through `stepsMigration`
    when every installation should get them.
 
@@ -88,7 +93,8 @@ here requires a service.
 
 3. **Export is the exit.** `exportBundle(app, store)` — graph, attributed
    history and version in one JSON shape; `assertBundle` refuses someone
-   else's app or a newer version, plainly.
+   else's app or a newer version, plainly. A tenant who cannot leave was
+   never a customer.
 
 4. **Health is coherence, not liveness.** `health(store)` reports sizes,
    standing and dangling edges — poll it per deployment, curl it self-hosted.
@@ -100,21 +106,39 @@ here requires a service.
    PDF (an SVG runs script otherwise), only to a seat that `seesId` a record
    holding it.
 
-5. **The machine under the dev server is a door.** A locally-run product
-   very often has a coding agent installed, logged in and paid for; the
-   browser cannot spawn it and the dev server can.
+5. **Serve it, and let an agent in.** `graview serve <entry> --data ./data`
+   puts the store behind HTTP with the op log as the wire; `graview mcp
+   <entry> --remote-url <url>` and `graview apply … --remote-url <url>` are
+   the same commands an agent uses against a folder, now against the server,
+   judged under the seat the request carries. Put `serve` and `mcp` in the
+   app's scripts. The routes are `WIRE`, exported and pinned by a test, and
+   `serveStore({ seatOf })` is where a host reads its own credential from
+   the `Request` — `openRemote({ headers })` carries whatever it asks for.
+   Off Node (a Worker, a Durable Object, Deno), `createStoreHandler` from
+   `@graview/ship/runtime` answers the same routes as `handle(request)`. A store believes
+   the seat headers the framework's clients send only with
+   `trustSeatHeaders: true` (`graview serve` sets it on 127.0.0.1 and
+   refuses another `--host` without `--trust-seat-headers`); with neither,
+   it answers 401.
 
-   ```ts
-   // vite.config.ts
-   import { localIntelligence } from "@graview/ship/dev";
-   plugins: [localIntelligence({ path: "/__graview/local", budgetUsd: 2 })]
-   ```
+6. **A host serving document apps compiles once, on the server.** Send
+   `serializeCompiled(compileDocument(document))` beside the document, and
+   build the app in the page with `appFromOrCompile({ compiled, document })`
+   from `@graview/core/compiled` — never `@graview/core/document`, which
+   brings the compiler back into the first chunk. A compiled app of another
+   format (`graview-compiled@1` today), or made from another document than
+   the one beside it, is not built and the document is compiled instead;
+   `pnpm verify hosted` says what the page carries.
 
-   Declare it — `intelligence: [{ …, reach: ["paste", "local"], bridge:
-   "/__graview/local" }]` — and read it with `useLocalIntelligence(path)`
-   from `@graview/react`. The session gets Read only, a turn budget, a
-   dollar budget and no `CLAUDE*` variables. A build carries no door: a
-   deployed copy reads it as **closed** — a state, not a fault.
+7. **Look at a document with no product.** `graview preview <document.json>
+   --seed <snapshot.json>` is `serve` with Graview's own faces over the
+   store — the scene and Pages, in memory unless `--data` says where, which
+   it then holds: `sync-seed --apply` and `apply` refuse until it stops — and
+   `graview shots … --places home,overview --out shots` photographs named
+   places headless (Playwright is yours to install). Prove a change to an
+   emitted document with these, not hand-written screenshots. In a test,
+   `compileDocumentFiles(path, { seed })` from `@graview/core/testing`
+   reads the document where it lives — no fixture copy to drift.
 
 ## Then find out whether it worked
 
@@ -131,89 +155,16 @@ own rehearsal (`pnpm smoke`) does exactly this from packed tarballs —
 - Whether the adapter's storage location survives your deployment story
   (containers with ephemeral disks lose a file adapter's whole point).
 - Whether the export round-trips: rehearse an import into a fresh
-  deployment.
-
-6. **Serve it, and let an agent in.** `graview serve <entry> --data ./data`
-   puts the store behind HTTP with the op log as the wire; `graview mcp
-   <entry> --remote-url <url>` and `graview apply … --remote-url <url>` are
-   the same commands an agent uses against a folder, now against the server,
-   judged under the seat the request carries. Put `serve` and `mcp` in the
-   app's scripts. The routes are `WIRE`, exported and pinned by a test, and
-   `serveStore({ seatOf })` is where a host reads its own credential from
-   the `Request` — `openRemote({ headers })` carries whatever it asks for.
-   Off Node (a Worker, a Durable Object, Deno), `createStoreHandler` from
-   `@graview/ship/runtime` answers the same routes as `handle(request)`. A store believes
-   the seat headers the framework's clients send only with
-   `trustSeatHeaders: true` (`graview serve` sets it on 127.0.0.1 and
-   refuses another `--host` without `--trust-seat-headers`); with neither,
-   it answers 401.
-
-7. **A host serving document apps compiles once, on the server.** Send
-   `serializeCompiled(compileDocument(document))` beside the document, and
-   build the app in the page with `appFromOrCompile({ compiled, document })`
-   from `@graview/core/compiled` — never `@graview/core/document`, which
-   brings the compiler back into the first chunk. A compiled app of another
-   format, or from another document, is not built and the document is
-   compiled instead; `pnpm verify hosted` says what the page carries.
-
-8. **A graph made from another system: a snapshot, and a sync back.**
-   Write the projection with `writeSnapshot(graph)` from
-   `@graview/core/snapshot`: a header line (`generatedAt`, records per
-   kind, links per kind, where each kind's lines are), then a record per
-   line. `readSnapshot(text, { kinds })` parses only those kinds, and
-   `fetchSnapshot(url, { kinds })` fetches only their bytes; an old
-   `{ nodes, edges }` file still reads, and `--seed` takes either. Open
-   it with `openStore({ seed, storeOptions: { principal:
-   rememberedPrincipal() } })` so the page's acts are its reader's.
-   Sync back with `SyncEngine` from `@graview/core/sync`:
-
-   ```ts
-   const sync = new SyncEngine({ store, remote, applyInbound, conflicts: "report", mapping: { system: "n-dx", resources: [
-     { kind: "task", resource: "task", fields: { status: "status" }, version: "lastModified" },
-     { kind: "zone", resource: "zone", fields: {}, readonly: true, because: "Sourcevision owns the zones." },
-   ] } });
-   sync.guard();   // an act on a zone is not offered, and refused, with that sentence
-   ```
-
-   `version` links every projected record at the version it was made from,
-   so the first run sends nothing. `report` holds a field both sides changed
-   and sends neither until `resolve`; `theirs` lands theirs through
-   `applyInbound`; `ours` sends ours — `report.resolved` says which it took.
-   A refused delete is said once; one made there goes through
-   `removeInbound`, or, without it, stays here unsynced (`report.gone`).
-   A remote that speaks MCP is
-   `mcpRemote({ call, pull, push })`: `call` is `mcpClient({ url, allow })`
-   in Node, or `doorClient()` in a page behind `mcpDoor({ call, allow })`
-   on the dev server — the door holds the token, takes only JSON from its
-   own origin on this machine, and only the allowed tools. It knows no
-   seat: never put it where sight is a boundary.
-
-10. **Keep it in step with a Google calendar by declaring it.** A
-   document's `connections.<name>`: `system: "google-calendar"`,
-   `calendar` (or `{ env }`), `kind`, `fields` (`summary`, `start`, `end`,
-   `location`, `description`; a `date` field is an all-day day), `filter`
-   (`{ color: "Basil" }` or `{ tag: "#graview", keep? }`, absent for all),
-   `direction` (`"read"` refuses acts on the kind; `"both"`), `conflicts`,
-   `every`, `paused`. `graview check` judges it; `serve` and `preview` run
-   it with `GOOGLE_CLIENT_ID`/`_CLIENT_SECRET`/`_REFRESH_TOKEN` (or
-   `auth: { env, file }`), the cursor in `connections.json` beside the data;
-   `--no-sync` leaves it off. A host calls `runConnections({ app, store,
-   state, token })`. `scripts/verify-google-calendar.mjs` proves it live.
-
-9. **Look at a document with no product.** `graview preview <document.json>
-   --seed <snapshot.json>` is `serve` with Graview's own faces over the
-   store — the scene and Pages, in memory unless `--data` says where, which
-   it then holds: `sync-seed --apply` and `apply` refuse until it stops — and
-   `graview shots … --places home,overview --out shots` photographs named
-   places headless (you install Playwright). In a test,
-   `compileDocumentFiles(path, { seed })` from `@graview/core/testing`
-   reads the document where it lives — no fixture copy to drift.
+  deployment, the way the framework's smoke run does — do not assume it.
 
 ## The boundary
 
-Anything ONE deployment needs belongs in ship: the op log, migrating on
-open, the wire, a principal on every apply, the seed, content steps, the
-agent's door, connections. Tenancy, provisioning, billing, quotas and fleet
-upgrades belong to the operator of many — a service consuming ship like
-any customer, with its own `seatOf`. The concern table is in
-`@graview/ship`'s README.
+Anything ONE deployment needs belongs in ship: the op log, the snapshot,
+migrating on open, the wire, a principal on every apply, the seed at first
+install, content steps, the agent's door on the dev server (`localIntelligence`,
+taught in `graview-desk`), connections (`graview-sync`).
+Tenancy, provisioning, billing, quotas and fleet upgrades belong to the
+operator of many — a service consuming ship like any customer, with its own
+`seatOf` mapping people and keys to principals. The concern table is in
+`@graview/ship`'s README; a third party can stand up their own host from
+it without forking anything.

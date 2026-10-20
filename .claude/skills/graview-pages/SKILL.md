@@ -47,7 +47,7 @@ kind or `"home"`) is where a new visit lands; a drawn home stays Home, on
 the bar and at `/`. `primary` stands on the bar. `placesOf(app)` (`/seat`)
 lists them. A lens only a home links to may be `hidden: true`
 (set-lens-hidden): off the bar and the page list, still at its address.
-**Home as data** (FR-81): `home`, blocks as in `graview-node-kind`
+**Home as data** (FR-81): `home`, blocks as in `graview-view-specs`
 (`views.home`), replaces this body, and the app opens on it (FR-136):
 40 blocks at its top (a group is one; 120 in all), and a `figure` may say
 `emphasis: "large"`.

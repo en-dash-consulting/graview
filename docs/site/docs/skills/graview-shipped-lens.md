@@ -1,6 +1,6 @@
 # graview-shipped-lens
 
-`graview-shipped-lens` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
+`graview-shipped-lens` is one of Graview's 26 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -40,7 +40,7 @@ A **fields** lens binds a kind's own fields onto its roles (`bindings: { task: {
 - **A calendar** opens at `range` — `day`, `week`, `month`, `quarter`, `year`, `years` or `agenda` — on `today` (`"YYYY-MM-DD"`, else the day it is drawn). `range: "years"` with `horizon: { years: 30, title: "The career" }` spans its records, first to last, as well as `years` from `today`; `from` and `to` (years: 1962, 2023) pin its ends.
 - **A timeline** needs columns: named in `columns`, or read from the choices of the field its `column` role is bound to.
 - **A coverage**'s `sort` orders its rows and `columnSort` its columns; a status board's `sort` orders its cards: a field or `{ by, direction }`, `label` the name, held to the kind. A coverage with no columns, or no link over its relation, says so ("No genres yet: link songs to genres.") and lists no rows.
-- **A blocks place** is drawn from the closed block set (headline, figure, list — `graview-node-kind`), each record by its own row or card: `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }`. Nothing in it runs; a chat can write it. Write code only for what blocks cannot say: a grid of cells, positions.
+- **A blocks place** is drawn from the closed block set (headline, figure, list — `graview-view-specs`), each record by its own row or card: `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }`. Nothing in it runs; a chat can write it. Write code only for what blocks cannot say: a grid of cells, positions.
 
 Any titled place may say `create: false` when it is read, not written (its page drops the forms that add one), `hidden: true` to keep it off the lists while it stays a link target, and `arrangedBy` in the grammar (`{ group: "held-at" }`) for how it opens, held to the bound kind.
 

@@ -50,6 +50,7 @@ describe("the skills package", () => {
       "graview-lens",
       "graview-linked-records",
       "graview-lists",
+      "graview-locale",
       "graview-new-app",
       "graview-node-kind",
       "graview-pages",
@@ -60,8 +61,11 @@ describe("the skills package", () => {
       "graview-shipped-lens",
       "graview-sight",
       "graview-studio",
+      "graview-sync",
+      "graview-tidying",
       "graview-view-drawing",
       "graview-view-forms",
+      "graview-view-specs",
       "graview-worker-view",
     ]);
   });
