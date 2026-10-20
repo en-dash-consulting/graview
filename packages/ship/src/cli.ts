@@ -17,7 +17,7 @@ import { bundleAppForPage } from "./preview-app.js";
 import { applySteps, seedSteps } from "./sync-seed.js";
 import { runConnections } from "./connections.js";
 import { fileConnectionState, readEnvFile } from "./connections-file.js";
-import { heldBy, holdFileOf, holdStore, sayHeld, type StoreHold } from "./store-hold.js";
+import { heldBy, holdFileOf, holdStore, sayHeld, sayTookOver, type StoreHold } from "./store-hold.js";
 import type { StoredMeta } from "./meta.js";
 
 /**
@@ -112,6 +112,7 @@ export function holdBackend(backend: StoreBackend, command: string, wanted: stri
     process.stderr.write(`graview ${command}: ${sayHeld(held.heldBy, backend.where, wanted, options)}`);
     return undefined;
   }
+  if (held.tookOverFrom) process.stderr.write(`graview ${command}: ${sayTookOver(held.tookOverFrom, backend.where)}`);
   return held;
 }
 
@@ -233,6 +234,11 @@ export async function serve(argv: readonly string[]): Promise<number> {
     say: (line) => process.stdout.write(`graview serve: connection ${line}\n`),
   });
 
+  // Listening for a stop before saying where it listens: whoever reads the address may send one at once.
+  stopOnSignal("serve", async () => {
+    await connections.stop();
+    await served.close();
+  }, hold);
   process.stdout.write(
     `graview serve: ${app.name} on ${served.url}\n` +
       `  live: ${served.url.replace(/^http/, "ws")}${LIVE_PATH}\n` +
@@ -241,18 +247,43 @@ export async function serve(argv: readonly string[]): Promise<number> {
       `  ${served.store.graph.allNodes().length} nodes, ${served.opened.store.log.all().length} operations` +
       `${served.opened.migrated.length > 0 ? `, migrated: ${served.opened.migrated.map((op) => op.intent).join("; ")}` : ""}\n`,
   );
+  return 0;
+}
+
+/** How long a server's stop may take before the process goes anyway: the sockets' grace, and a margin. */
+const STOP_DEADLINE_MS = 2500;
+
+/**
+ * A SERVER STOPS WHEN IT IS TOLD TO. SIGTERM, SIGINT or SIGHUP closes the
+ * server — its live sockets told and given a short grace, its keep-alive
+ * connections cut — lets the store go, and exits. A close that is still
+ * waiting at the deadline, or a second signal, exits anyway: a process that
+ * only `kill -9` stops leaves its store's hold naming it.
+ */
+function stopOnSignal(command: string, close: () => Promise<void>, hold: StoreHold | undefined): void {
+  let stopping = false;
+  const leave = (code: number) => {
+    hold?.release();
+    process.exit(code);
+  };
   const stop = () => {
-    void connections
-      .stop()
-      .then(() => served.close())
-      .then(() => {
-        hold.release();
-        process.exit(0);
-      });
+    if (stopping) return leave(0);
+    stopping = true;
+    setTimeout(() => {
+      process.stderr.write(`graview ${command}: a connection was still open after ${STOP_DEADLINE_MS / 1000} s; stopped anyway.\n`);
+      leave(0);
+    }, STOP_DEADLINE_MS).unref();
+    close().then(
+      () => leave(0),
+      (error: unknown) => {
+        process.stderr.write(`graview ${command}: stopping: ${error instanceof Error ? error.message : String(error)}\n`);
+        leave(1);
+      },
+    );
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
-  return 0;
+  process.on("SIGHUP", stop);
 }
 
 /**
@@ -448,6 +479,8 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
   }
   const { app, served, url, principal } = opened;
   hold?.serving(url);
+  // Listening for a stop before saying where it listens: whoever reads the address may send one at once.
+  stopOnSignal("preview", () => opened.close(), hold);
   process.stdout.write(
     `graview preview: ${app.name} on ${url}\n` +
       `  Pages: ${url}/   the scene: ${url}/places/overview\n` +
@@ -455,14 +488,6 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
       `  sits as ${principal.name ?? principal.id}${principal.roles?.length ? `, holding ${principal.roles.join(", ")}` : ""}\n` +
       `  ${served.store.graph.allNodes().length} nodes. Ctrl-C stops it.\n`,
   );
-  const stop = () => {
-    void opened.close().then(() => {
-      hold?.release();
-      process.exit(0);
-    });
-  };
-  process.on("SIGINT", stop);
-  process.on("SIGTERM", stop);
   return 0;
 }
 

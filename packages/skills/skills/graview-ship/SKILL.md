@@ -137,7 +137,9 @@ to it, or kept in step with a Google calendar is `graview-sync`.
 7. **Look at a document with no product.** `graview preview <document.json>
    --seed <snapshot.json>` is `serve` with Graview's own faces over the
    store — the scene and Pages, in memory unless `--data` says where, which
-   it then holds: `sync-seed --apply` and `apply` refuse until it stops — and
+   it then holds: `sync-seed --apply` and `apply` refuse until it stops
+   (Ctrl-C or `kill` stops it within seconds, open pages or not; a hold
+   whose process died is taken over, and says so) — and
    `graview shots … --places home,overview --out shots` photographs named
    places headless (Playwright is yours to install). Prove a change to an
    emitted document with these, not hand-written screenshots. In a test,
