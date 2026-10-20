@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 491,
+  "gzipped": 172,
+  "changeset": "a-draft-view-is-swapped-in-place.md",
+  "note": "Raised when a draft view came to be swapped in place (FR-187), as on the page that compiles: setDraftView, a draft handed later registered once the worker's host arrives, and the drawn signal watched again for each draft. 491 / 172 more than before it (537_550 / 186_496): measured at 538_041 / 186_668 (0.5 KB)."
+}

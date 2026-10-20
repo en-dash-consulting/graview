@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 501,
+  "gzipped": 178,
+  "note": "Raised when a frame guest came to hold back the page's drawn signal (FR-188): the frame's host marks its frame data-guest-view-drawn once the guest has been handed its props and asked for its height (or stayed quiet 250 ms after), data-guest-view-failed=\"silent\" past limits.readyMs, aria-busy until either, and guestView's holder aria-busy until the frame is in it. 501 / 178 more than before it (22_057 / 10_454): measured at 22_558 / 10_632."
+}

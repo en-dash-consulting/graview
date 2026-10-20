@@ -29,6 +29,8 @@ frame.dispose();
 
 `mountGuestView` gives the frame `sandbox="allow-scripts"` and never `allow-same-origin`, so its origin is opaque and no cookie, storage or store of the host's is reachable from it. A `guest-ready` is answered only from that frame's own window and from the opaque origin, with a fresh nonce and a MessageChannel; every request over the port carries the nonce. Acts are rate-limited per frame (30 a minute by default, `limits`), and a flood of messages past 120 a second is dropped unread. `createGuestHost` is the same host without the DOM. Where the frame is served from, and its CSP, are the host's business: a separate registrable domain with `connect-src 'none'` is the shape the protocol assumes. It matters where the host's session rides a cookie: in Firefox and WebKit a guest with no CSP can send a credentialed request to the host that carries a cookie without SameSite. It cannot read the answer, but the request is made. Set the cookie SameSite=Lax or Strict, or serve guests with `connect-src 'none'` (`scripts/guest-sandbox.mjs` checks both in all three engines).
 
+The frame says when the guest has drawn, so a page that says it has drawn (the embed's `data-graview-drawn`) can wait for it: `data-guest-view-drawn` once the guest has said it is ready, been handed what it shows (and the pictures it asked for) and asked for its height — or stayed quiet for a moment after, if it never asks — and `data-guest-view-failed="silent"` when it does not say it is ready in `limits.readyMs` (eight seconds by default). It is `aria-busy` until one or the other; a guest that says it is ready after all is drawn then.
+
 ### In the guest
 
 ```ts

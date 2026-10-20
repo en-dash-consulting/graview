@@ -36,6 +36,23 @@
  * them kept: the store unwritten, the host's keeper asked nothing, and the
  * same address opened again without it drawing none.
  *
+ * And what the build left out at first, each held the same way:
+ *
+ *   a frame guest (`guestView`, a sandboxed iframe) that draws a second
+ *   after it is handed its props holds the signal back until it has drawn
+ *   and asked for its height, and one that never says it is ready counts
+ *   as settled once its time is up (`data-guest-view-failed="silent"`);
+ *
+ *   the pages alone (`@graview/embed/pages`, `?alone=1`) say it, after the
+ *   same late font and image, and draw a draft where it attaches;
+ *
+ *   `handle.setDraftView` swaps one draft for another in place, on both
+ *   mounts: the attribute off in the call, back once the new draft has
+ *   drawn its words, the root and the store the same;
+ *
+ *   under a base path, as Cloud serves an app (`/a/<app>`), a draft is
+ *   drawn at its place and the root says the place's path within the app.
+ *
  *   node scripts/verify-drawn.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>] [--probe]
  */
 import { createServer } from "node:http";
@@ -105,6 +122,37 @@ const DRAFTS = {
   stopped: { manifest: { name: "stage-board", title: "Stage board", attach: "feature", cardinality: "many", reads: { kinds: ["feature"] } }, source: STAGE_SOURCE, limits: { maxNodes: 4 }, words: null, address: "/places/stage-board" },
 };
 
+/* A draft that revises the stage board, handed in place of it with `setDraftView`: the same place, other words. */
+const REVISED = { manifest: { name: "stage-board", title: "Stage board", attach: "feature", cardinality: "many", reads: { kinds: ["feature"] } }, source: `graview.onProps((props) => graview.render(graview.html\`<ol id="revised">\${props.nodes.map((node) => graview.html\`<li>Revised: \${node.label}</li>\`)}</ol>\`));`, words: "Revised: Printable boards" };
+/* Where Cloud serves an app: the page is the app, under a base. */
+const BASE = "/a/roadmap";
+
+/*
+ * FRAME GUESTS (FR-188): a guest that draws a second after it is handed its props, then asks for its height,
+ * and one that never says it is ready. Each is plain HTML speaking the frame protocol by hand.
+ */
+const GUEST_LATE_MS = 1_000;
+const GUEST_LATE = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;font:16px system-ui"><p>Waiting…</p><script>
+addEventListener("message", (event) => {
+  const hello = event.data;
+  if (!hello || hello.graview !== "host-hello" || !event.ports[0]) return;
+  const port = event.ports[0];
+  let drawn = false;
+  port.onmessage = (message) => {
+    if (!message.data || message.data.type !== "props" || drawn) return;
+    drawn = true;
+    setTimeout(() => {
+      document.body.innerHTML = '<h3 id="drawn" style="margin:0 0 8px">A card drawn late</h3><div style="height:180px;background:#5a5a5a"></div>';
+      window.__drewAt = performance.timeOrigin + performance.now();
+      port.postMessage({ type: "size", nonce: hello.nonce, height: document.documentElement.scrollHeight });
+    }, ${GUEST_LATE_MS});
+  };
+});
+parent.postMessage({ graview: "guest-ready", protocol: 1 }, "*");
+</script></body></html>`;
+const GUEST_SILENT = `<!doctype html><html><head><meta charset="utf-8"></head><body><p>Never ready.</p></body></html>`;
+const GUEST_READY_MS = 1_500;
+
 const HOST_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>The roadmap</title>
 <style>
 @font-face{font-family:"Late Face";src:url(/late-face.woff2) format("woff2");font-display:swap}
@@ -152,13 +200,26 @@ async function buildHost() {
     stdin: {
       contents: `
         import { mount } from "@graview/embed";
+        import { mount as mountPages } from "@graview/embed/pages";
+        import { guestView } from "@graview/guest/host";
         import { registerWorkerView } from "@graview/guest/host/views";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import roadmap from ${JSON.stringify(ROADMAP)};
         const seed = ${JSON.stringify(SEED)};
         window.__drawn = [];
         const drafts = ${JSON.stringify(DRAFTS)};
-        const asked = drafts[new URLSearchParams(location.search).get("draft") ?? ""];
+        const params = new URLSearchParams(location.search);
+        const asked = drafts[params.get("draft") ?? ""];
+        // The pages alone (?alone=1), under Cloud's base (?base=1), with a frame guest on a feature's page (?guest=late|silent).
+        const alone = params.has("alone");
+        const based = params.has("base") ? { basePath: ${JSON.stringify(BASE)} } : {};
+        const guest = params.get("guest");
+        const revised = ${JSON.stringify(REVISED)};
+        window.__revise = () => window.__handle.setDraftView({ manifest: revised.manifest, source: revised.source, author: "Proposed by Claude" });
+        const framed = (registry) =>
+          guest === "late" ? registry.register("feature", { cardinality: "one", fidelity: "full" }, guestView({ url: "/guest-late.html", name: "late-card", title: "Late card" }))
+          : guest === "silent" ? registry.register("feature", { cardinality: "one", fidelity: "full" }, guestView({ url: "/guest-silent.html", name: "silent-card", title: "Silent card", limits: { readyMs: ${GUEST_READY_MS} } }))
+          : registry;
         // The host's keeper, writing down every ask: a draft must ask it nothing.
         window.__keptAsked = [];
         const keptViews = { current: () => ({ hidden: [], removed: [], may: { views: true, lenses: true } }), hide: (name) => void window.__keptAsked.push("hide " + name), show: (name) => void window.__keptAsked.push("show " + name), remove: (name) => void window.__keptAsked.push("remove " + name), restore: (name) => void window.__keptAsked.push("restore " + name) };
@@ -168,18 +229,18 @@ async function buildHost() {
         const compiled = compileDocumentWithoutCheck(roadmap, { today: () => "2026-10-19" });
         if (!compiled.ok) window.__failed = compiled.findings.map((finding) => finding.message).join("; ");
         else
-          window.__handle = mount(document.getElementById("app"), {
+          window.__handle = (alone ? mountPages : mount)(document.getElementById("app"), {
             app: compiled.app,
             seed,
-            face: "pages",
+            ...(alone ? {} : { face: "pages", studio: false }),
             routing: "address",
+            ...based,
             principal: { kind: "human", id: "u:owner", roles: ["owner"] },
             label: compiled.app.name,
             heading: 1,
             height: "100dvh",
             fonts: false,
-            studio: false,
-            views: (schema, registry) => registerWorkerView(registerWorkerView(registry, home), broken),
+            views: (schema, registry) => framed(registerWorkerView(registerWorkerView(registry, home), broken)),
             onDrawn: (place) => window.__drawn.push({ ...place, at: performance.now() }),
             keptViews,
             ...(asked ? { draftView: { manifest: asked.manifest, source: asked.source, author: "Proposed by Claude", ...(asked.limits ? { limits: asked.limits } : {}) } } : {}),
@@ -194,6 +255,8 @@ async function buildHost() {
     outdir: out,
     entryNames: "entry",
     define: { "process.env.NODE_ENV": '"development"' },
+    // Every package's JSX is React's own runtime, whichever tsconfig esbuild finds for a file.
+    jsx: "automatic",
     plugins: [graviewSources(repoRoot)],
     logLevel: "silent",
   });
@@ -204,6 +267,7 @@ async function buildHost() {
   const host = createServer((request, response) => {
     const path = decodeURIComponent((request.url ?? "/").split("?")[0]);
     if (path === IMAGE_PATH) return later(IMAGE_LATE_MS, () => (response.writeHead(200, { "content-type": "image/png", "cache-control": "no-store" }), response.end(image)));
+    if (path === "/guest-late.html" || path === "/guest-silent.html") return (response.writeHead(200, { "content-type": "text/html" }), response.end(path === "/guest-late.html" ? GUEST_LATE : GUEST_SILENT));
     if (path === "/late-face.woff2") return later(FONT_LATE_MS, () => (response.writeHead(200, { "content-type": "font/woff2", "cache-control": "no-store" }), response.end(font)));
     const name = path.replace(/^\/+/, "") || "index.html";
     const file = join(out, name);
@@ -250,8 +314,13 @@ function instrument() {
     const root = document.querySelector("[data-graview-embed]");
     const region = root?.querySelector('[data-worker-view="front"]');
     const picture = region?.shadowRoot?.querySelector("#picture");
+    const frame = root?.querySelector("iframe[data-guest-view]");
+    const draft = root?.querySelector("[data-graview-draft-view]");
     return {
       address: location.pathname,
+      atAbs: performance.timeOrigin + performance.now(),
+      frame: frame ? { drawn: frame.hasAttribute("data-guest-view-drawn"), failed: frame.getAttribute("data-guest-view-failed"), height: Math.round(frame.getBoundingClientRect().height) } : null,
+      draft: draft ? { line: draft.querySelector('[data-testid="draft-view-line"]')?.textContent ?? null, words: words(draft.querySelector("[data-worker-view]")?.shadowRoot ?? null) } : null,
       fonts: document.fonts?.status,
       lateFace: document.fonts ? [...document.fonts].some((face) => face.family.replace(/"/g, "") === "Late Face" && face.status === "loaded") : null,
       busy: Boolean(root?.querySelector('[aria-busy="true"]')),
@@ -291,7 +360,7 @@ const movedBetween = (before, after) => {
 const report = { at: new Date().toISOString(), engines, screens: SCREENS, late: { fontMs: FONT_LATE_MS, imageMs: IMAGE_LATE_MS }, checks: {} };
 const host = await buildHost();
 const errors = [];
-const seen = { home: [], still: [], move: [], failed: [], told: [], scene: [], drafts: [], gone: [] };
+const seen = { home: [], still: [], move: [], failed: [], told: [], scene: [], drafts: [], gone: [], frames: [], silent: [], alone: [], aloneDraft: [], swaps: [], based: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -395,6 +464,73 @@ try {
         seen.gone.push({ engine, screen: screen.name, name, ...(await next.page.evaluate(() => ({ drafts: document.querySelectorAll("[data-graview-draft-view]").length, keptHome: (document.querySelector('[data-worker-view="front"]')?.shadowRoot?.textContent ?? "").includes("What we are making") }))) });
         await next.close();
       }
+      {
+        // A frame guest that draws a second after it is handed its props (FR-188).
+        const address = "/features/f1?guest=late";
+        const { page, close } = await open(address);
+        const drawn = await said(page, address);
+        const mark = await page.evaluate((value) => window.__marks.find((one) => one.value === value) ?? null, address);
+        const guestFrame = page.frames().find((frame) => frame.url().endsWith("/guest-late.html"));
+        const drewAt = guestFrame ? await guestFrame.evaluate(() => window.__drewAt ?? null).catch(() => null) : null;
+        const words = guestFrame ? await guestFrame.evaluate(() => document.getElementById("drawn")?.textContent ?? null).catch(() => null) : null;
+        seen.frames.push({ engine, screen: screen.name, drawn, frame: mark?.seen.frame ?? null, markAt: mark ? Math.round(mark.seen.atAbs) : null, drewAt: drewAt === null ? null : Math.round(drewAt), words });
+        await shot(page, "frame-guest");
+        await close();
+      }
+      {
+        // A frame guest that never says it is ready: settled once its time is up.
+        const address = "/features/f1?guest=silent";
+        const { page, started, close } = await open(address);
+        const drawn = await said(page, address);
+        const mark = await page.evaluate((value) => window.__marks.find((one) => one.value === value) ?? null, address);
+        seen.silent.push({ engine, screen: screen.name, drawn, afterMs: drawn ? Date.now() - started : null, frame: mark?.seen.frame ?? null });
+        await close();
+      }
+      {
+        // The pages alone: the home, after the late font and the view's late image.
+        const { page, close } = await open("/?alone=1");
+        const drawn = await said(page, "/?alone=1");
+        const mark = await page.evaluate(() => window.__marks.find((one) => one.value === "/?alone=1") ?? null);
+        const embed = await page.evaluate(() => document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed"));
+        seen.alone.push({ engine, screen: screen.name, drawn, embed, seen: mark?.seen ?? null });
+        await shot(page, "alone");
+        await close();
+      }
+      for (const [mounting, alone] of [["whole", ""], ["alone", "&alone=1"]]) {
+        // A draft swapped in place on each mount (setDraftView), and a draft under Cloud's base.
+        const address = `/places/stage-board?draft=board${alone}`;
+        const { page, close } = await open(address);
+        const drawn = await said(page, address);
+        if (alone) {
+          const mark = await page.evaluate((value) => window.__marks.find((one) => one.value === value) ?? null, address);
+          seen.aloneDraft.push({ engine, screen: screen.name, drawn, draft: mark?.seen.draft ?? null });
+        }
+        const before = await page.evaluate(() => {
+          window.__storeBefore = window.__handle.store;
+          document.querySelector("[data-graview-embed]")?.setAttribute("data-harness-root", "same");
+          return window.__marks.length;
+        });
+        const offInTheCall = await page.evaluate(() => {
+          window.__revise();
+          return document.querySelector("[data-graview-embed]")?.hasAttribute("data-graview-drawn") ?? null;
+        });
+        const back = await page.waitForFunction((from) => window.__marks.slice(from).some((mark) => mark.value !== null), before, { timeout: 20_000 }).then(() => true, () => false);
+        const after = await page.evaluate((from) => ({
+          marks: window.__marks.slice(from).map((one) => ({ value: one.value, draft: one.seen.draft })),
+          sameRoot: document.querySelector("[data-graview-embed]")?.getAttribute("data-harness-root") === "same",
+          sameStore: window.__handle.store === window.__storeBefore,
+        }), before);
+        seen.swaps.push({ engine, screen: screen.name, mounting, address, drawn, offInTheCall, back, ...after });
+        await shot(page, `swapped-${mounting}`);
+        await close();
+        const underBase = `${BASE}/places/stage-board?draft=board&base=1${alone}`;
+        const based = await open(underBase);
+        const value = `/places/stage-board?draft=board&base=1${alone}`;
+        const basedDrawn = await said(based.page, value);
+        const basedMark = await based.page.evaluate((value) => window.__marks.find((one) => one.value === value) ?? null, value);
+        seen.based.push({ engine, screen: screen.name, mounting, drawn: basedDrawn, address: basedMark?.seen.address ?? null, draft: basedMark?.seen.draft ?? null });
+        await based.close();
+      }
       if (PROBE) process.stdout.write(`${label}: ${JSON.stringify(Object.fromEntries(Object.entries(seen).map(([key, list]) => [key, list.at(-1)])))}\n`);
     }
     await browser.close();
@@ -457,6 +593,32 @@ report.checks.aDraftThatIsStoppedSaysWhyInItsPlace = {
 report.checks.nothingOfADraftIsKept = {
   seen: { drafts: seen.drafts.map(({ engine, screen, name, keptAsked, wrote }) => ({ engine, screen, name, keptAsked, wrote })), after: seen.gone },
   ok: everyDraft(Object.keys(DRAFTS), (one) => one.keptAsked.length === 0 && one.wrote === 0) && seen.gone.length >= runs * Object.keys(DRAFTS).length && seen.gone.every((one) => one.drafts === 0 && (one.name !== "home" || one.keptHome)),
+};
+report.checks.aFrameGuestHoldsTheSignalUntilItHasDrawn = {
+  seen: seen.frames,
+  ok: every(seen.frames, (one) => one.drawn && one.frame?.drawn === true && one.frame.height >= 180 && one.words === "A card drawn late" && one.drewAt !== null && one.markAt !== null && one.markAt >= one.drewAt),
+};
+report.checks.aFrameGuestThatNeverSaysReadyCountsAsSettled = {
+  seen: seen.silent,
+  ok: every(seen.silent, (one) => one.drawn && one.frame?.failed === "silent" && one.frame.drawn === false && one.afterMs < 8_000),
+};
+report.checks.thePagesAloneSayItOnceThePlaceSettles = {
+  seen: seen.alone.map(({ engine, screen, drawn, embed, seen: at }) => ({ engine, screen, drawn, embed, ...(at ? { fonts: at.fonts, lateFace: at.lateFace, viewWords: at.viewWords, picture: at.picture, busy: at.busy } : {}) })),
+  ok: every(seen.alone, (one) => one.drawn && one.embed === "pages" && one.seen && one.seen.lateFace === true && !one.seen.busy && /Printable boards/.test(one.seen.viewWords ?? "") && one.seen.picture?.complete === true && one.seen.picture.width === 360),
+};
+report.checks.thePagesAloneDrawADraftWhereItAttaches = {
+  seen: seen.aloneDraft,
+  ok: every(seen.aloneDraft, (one) => one.drawn && one.draft?.line === `Draft — ${DRAFTS.board.manifest.title}·Not kept` && one.draft.words.includes(DRAFTS.board.words)),
+};
+const swapped = (mounting) => seen.swaps.filter((one) => one.mounting === mounting);
+report.checks.aDraftSwappedInPlaceIsSaidDrawnOnceTheNewOneHas = {
+  seen: seen.swaps,
+  ok: ["whole", "alone"].every((mounting) => every(swapped(mounting), (one) => one.drawn && one.offInTheCall === false && one.back && one.marks.length === 2 && one.marks[0].value === null && one.marks[1].value === one.address && one.marks[1].draft?.line === `Draft — ${REVISED.manifest.title}·Not kept` && one.marks[1].draft.words.includes(REVISED.words) && one.sameRoot && one.sameStore)),
+};
+const basedOn = (mounting) => seen.based.filter((one) => one.mounting === mounting);
+report.checks.aDraftUnderABasePathIsDrawnAtItsPlace = {
+  seen: seen.based,
+  ok: ["whole", "alone"].every((mounting) => every(basedOn(mounting), (one) => one.drawn && one.address === `${BASE}/places/stage-board` && one.draft?.line === `Draft — ${DRAFTS.board.manifest.title}·Not kept` && one.draft.words.includes(DRAFTS.board.words))),
 };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 

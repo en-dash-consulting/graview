@@ -38,6 +38,15 @@ read the answer, but the request is made. Set the cookie SameSite=Lax or
 Strict, or serve guests with `connect-src 'none'`
 (`scripts/guest-sandbox.mjs` checks both in all three engines).
 
+The frame says when the guest has drawn, so a page that says it has drawn
+(the embed's `data-graview-drawn`) can wait for it: `data-guest-view-drawn`
+once the guest has said it is ready, been handed what it shows (and the
+pictures it asked for) and asked for its height — or stayed quiet for a
+moment after, if it never asks — and `data-guest-view-failed="silent"` when
+it does not say it is ready in `limits.readyMs` (eight seconds by default).
+It is `aria-busy` until one or the other; a guest that says it is ready
+after all is drawn then.
+
 ## In the guest
 
 ```ts

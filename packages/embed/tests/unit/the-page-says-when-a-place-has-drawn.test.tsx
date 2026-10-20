@@ -116,4 +116,46 @@ describe("the page says when a place has drawn", () => {
       handle = undefined;
     }
   });
+
+  it("waits for each frame guest to draw, or to fail to say it is ready, and for its frame's host to arrive", async () => {
+    for (const ending of ["data-guest-view-drawn", "data-guest-view-failed"]) {
+      frames.length = 0;
+      const { root } = await mounted({ views: withFrameHome as never });
+      expect(await until(() => holders.length > 0)).toBe(true);
+      await wait(600);
+      expect(root().hasAttribute(DRAWN_ATTRIBUTE), "not while the frame's host is on its way").toBe(false);
+      // The frame's host arrives and draws its frame, as guestView does.
+      await act(async () => {
+        const frame = document.createElement("iframe");
+        frame.setAttribute("data-guest-view", "card");
+        frame.setAttribute("aria-busy", "true");
+        holders.at(-1)!.appendChild(frame);
+        holders.at(-1)!.removeAttribute("aria-busy");
+        frames.push(frame);
+      });
+      await wait(600);
+      expect(root().hasAttribute(DRAWN_ATTRIBUTE), `not before the frame says ${ending}`).toBe(false);
+      // As the frame's host says either: the frame no longer busy.
+      frames.at(-1)!.setAttribute(ending, ending === "data-guest-view-failed" ? "silent" : "");
+      frames.at(-1)!.removeAttribute("aria-busy");
+      expect(await until(() => root().hasAttribute(DRAWN_ATTRIBUTE)), ending).toBe(true);
+      await act(async () => handle?.unmount());
+      host?.remove();
+      handle = undefined;
+      holders.length = 0;
+    }
+  });
 });
+
+/* A frame guest's holder as guestView draws one: busy until the frame's host has drawn its frame in it, the frame busy until the guest has drawn. */
+const holders: HTMLElement[] = [];
+const frames: HTMLIFrameElement[] = [];
+function FakeFrameHome() {
+  const holder = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => void (holder.current && holders.push(holder.current)), []);
+  return <div ref={holder} data-guest="card" aria-busy="true" />;
+}
+const withFrameHome = (_schema: AnySchema, registry: ReactViewRegistry<AnySchema>) => {
+  registry.home?.(FakeFrameHome as never);
+  return registry;
+};

@@ -112,7 +112,9 @@ A face on the page is not yet a place a person can read: its parts, the
 fonts, a worker view's drawing and its pictures may still be on their way.
 Once the place the reader is on has drawn and settled — every part drawn
 on it arrived, the fonts and images loaded, each worker view drawn (or
-stopped, what stands in its place drawn) and nothing moving for 200 ms —
+stopped, what stands in its place drawn), each frame guest drawn (or
+silent past its `limits.readyMs`, eight seconds by default) and nothing
+moving for 200 ms —
 the embed's root wears `data-graview-drawn`, its value the place's path,
 and `onDrawn(place)` is told where it is as `where()` says it. A move to
 another place takes the attribute off in the same commit, and the next
@@ -123,6 +125,14 @@ waits for the attribute rather than a timer:
 ```ts
 await page.waitForSelector("[data-graview-drawn]");
 ```
+
+A frame guest (`guestView({ url })`) has drawn once it has said it is
+ready, been handed what it shows and asked for its height — or stayed
+quiet for a moment after, if it never asks — and its frame says
+`data-guest-view-drawn`; one that never says it is ready says
+`data-guest-view-failed="silent"`. Until one or the other, the frame is
+`aria-busy`, and so is its holder until the frame's host has drawn the
+frame in it.
 
 A host that knows its face before it mounts starts that chunk at once,
 beside its own requests, and an embed mounted once it is here draws it in
@@ -261,6 +271,24 @@ none. The worker's host is fetched before the embed draws, and only when a
 draft is handed. With `data-graview-drawn`, a host pictures the proposal
 once it has drawn. `graview preview` and `graview shots` take one as
 `--view <view.js> --manifest <manifest.json>`.
+
+A host picturing several proposals in turn swaps them in place rather than
+mounting again: `handle.setDraftView(draft)` draws another, and
+`handle.setDraftView(null)` the app's own views again. The store, the place
+and the seat stay; `data-graview-drawn` comes off in the call and comes
+back, with `onDrawn` told again, once the new draft has drawn and settled:
+
+```ts
+for (const proposal of proposals) {
+  handle.setDraftView(proposal);
+  await page.waitForSelector("[data-graview-drawn]");
+  // picture it
+}
+```
+
+Under a base path — the page the app, served at `/a/<app>` — a draft of a
+kind's view is drawn at `/a/<app>/places/<title>`, and the attribute's
+value is the place's path within the app (`/places/<title>`).
 
 ## What stands over what
 
@@ -418,6 +446,12 @@ that and does not bundle the scene, the Graview or the studio:
 ```ts
 import { mount } from "@graview/embed/pages";
 ```
+
+It says when a page has drawn as the whole embed does — `onDrawn(place)`,
+and `data-graview-drawn` (`DRAWN_ATTRIBUTE`) on its root — and takes a
+`draftView`, swapped in place with `handle.setDraftView`, drawn and marked
+as the whole embed draws one, the worker's host fetched only when a draft
+is handed.
 
 Bundled for the browser without React, the pages face alone is about 500 KB
 minified (165 KB gzipped); the whole embed loads about 750 KB (190 KB) before a
