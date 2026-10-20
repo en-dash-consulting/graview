@@ -110,6 +110,15 @@ const row = (host: HTMLElement, id: string) => host.querySelector(`[data-graview
 const over = async (element: Element) => act(async () => void element.dispatchEvent(new PointerEvent("pointerover", { bubbles: true, pointerType: "mouse" } as PointerEventInit)));
 const out = async (element: Element) => act(async () => void element.dispatchEvent(new PointerEvent("pointerout", { bubbles: true, pointerType: "mouse", relatedTarget: document.body } as PointerEventInit)));
 const chips = () => document.querySelectorAll('[data-testid="hover-chip"]');
+/**
+ * Waits, a little at a time, for the state a claim judges: the dwell, the
+ * chips' own chunk fetched cold and the Fast slot's answer take what they
+ * take under a loaded suite, so a claim waits for its state, not a time (W-246).
+ */
+async function until(ready: () => boolean, ms = 5000) {
+  const deadline = Date.now() + ms;
+  while (!ready() && Date.now() < deadline) await settle(1);
+}
 
 describe("several chosen get the Fast slot's suggestions in their bar", () => {
   it("asks the Fast slot once per choice, and offers what it picked beside the acts they share", async () => {
@@ -117,7 +126,7 @@ describe("several chosen get the Fast slot's suggestions in their bar", () => {
     const { host, store } = await rendered({ fast, thinking });
     await choose(host, "book");
     await choose(host, "send");
-    await settle();
+    await until(() => barOffers().length === 1);
     expect(document.querySelector('[data-testid="several-bar"]')).not.toBeNull();
     expect(calls).toEqual({ fast: 1, thinking: 0 });
     expect(barOffers()).toEqual([expect.stringContaining("Mark it done")]);
@@ -125,6 +134,7 @@ describe("several chosen get the Fast slot's suggestions in their bar", () => {
     await clear();
     await choose(host, "send");
     await choose(host, "book");
+    await until(() => barOffers().length === 1);
     await settle();
     expect(calls).toEqual({ fast: 1, thinking: 0 });
     expect(barOffers().length).toBe(1);
@@ -168,26 +178,28 @@ describe("a pointer at rest gets one quiet chip, where the host asked for chips"
   it("shows the Fast slot's sure suggestion after the dwell, one at a time, and asks once per record", async () => {
     const { calls, fast, thinking } = counted(0.9);
     const { host } = await rendered({ fast, thinking, hoverChips: true });
+    /** The one chip, about this record: its offer names what it acts on. */
+    const chipOn = (id: string) => chips().length === 1 && (chips()[0]!.getAttribute("data-ai-offer") ?? "").includes(id);
     await over(row(host, "book"));
-    await settle();
+    await until(() => chipOn("book"));
     expect(calls).toEqual({ fast: 1, thinking: 0 });
     expect(chips().length).toBe(1);
     expect(chips()[0]!.getAttribute("aria-label")).toMatch(/^Suggested by AI: /);
     // Resting on another moves the one chip there.
     await out(row(host, "book"));
     await over(row(host, "send"));
-    await settle();
+    await until(() => chipOn("send"));
     expect(chips().length).toBe(1);
     expect(calls.fast).toBe(2);
     // Back on the first: kept, not asked again.
     await out(row(host, "send"));
     await over(row(host, "book"));
-    await settle();
+    await until(() => chipOn("book"));
     expect(chips().length).toBe(1);
     expect(calls).toEqual({ fast: 2, thinking: 0 });
     // Leaving puts it away.
     await out(row(host, "book"));
-    await settle(14);
+    await until(() => chips().length === 0);
     expect(chips().length).toBe(0);
   });
 
@@ -208,6 +220,7 @@ describe("a pointer at rest gets one quiet chip, where the host asked for chips"
     const unsure = counted(0.3);
     const first = await rendered({ fast: unsure.fast, hoverChips: true });
     await over(row(first.host, "book"));
+    await until(() => unsure.calls.fast === 1);
     await settle();
     expect(unsure.calls.fast).toBe(1);
     expect(chips().length).toBe(0);
