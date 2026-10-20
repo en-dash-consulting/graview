@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 48,
+  "note": "Held for gzip moving a few bytes between builds once the focused-scene labels merged onto the 0.1.40 batch: every face measured 2 B gzipped over its summed raises (2_485_013 / 840_838)."
+}

@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 0,
+  "gzipped": 32,
+  "note": "Held for gzip moving a byte or two between builds once the 0.1.40 batch's last branches were merged: the pages face alone measured 1 B gzipped over its summed raises (623_186 / 229_338)."
+}
