@@ -640,7 +640,11 @@ process.stdout.write(JSON.stringify(out));
   const sourceOf = (one) => resolve(repoRoot, "packages", one.dir, "src") + "/";
   report.linked.exports = {
     count: wanted.length,
-    unresolved: wanted.filter((one) => !resolved[one.specifier]).map((one) => one.specifier),
+    // A built file nobody writes in src (core's document.schema.json) is only there once `pnpm build` has run; CI's legs typecheck, which writes none.
+    unresolved: wanted
+      .filter((one) => !resolved[one.specifier])
+      .filter((one) => /\.js$/.test(one.target) || existsSync(resolve(repoRoot, "packages", one.dir, one.target)))
+      .map((one) => one.specifier),
     notFromSource: wanted
       .filter((one) => /^\.\/dist\/.+\.js$/.test(one.target) && resolved[one.specifier])
       .filter((one) => !resolved[one.specifier].split("?")[0].startsWith(sourceOf(one)))

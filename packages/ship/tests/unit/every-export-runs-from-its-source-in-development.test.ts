@@ -51,8 +51,9 @@ describe("the framework's sources, one alias per export", () => {
     expect(resolveLike("@graview/primitives/pages")).toBe(join(root, "packages/primitives/src/pages.ts"));
     expect(resolveLike("@graview/embed/pages")).toBe(join(root, "packages/embed/src/pages.tsx"));
     expect(resolveLike("@graview/core/not-an-export")).toBeUndefined();
-    // A built file nobody writes in src is the checkout's own build of it, which a linked project's link may not reach.
-    expect(resolveLike("@graview/core/document.schema.json")).toBe(join(root, "packages/core/dist/document.schema.json"));
+    // A built file nobody writes in src is the checkout's own build of it, which a linked project's link may not reach; unbuilt (CI's typecheck writes no schema), it is nothing.
+    const schema = join(root, "packages/core/dist/document.schema.json");
+    expect(resolveLike("@graview/core/document.schema.json")).toBe(existsSync(schema) ? schema : undefined);
   });
 
   it("lists subpaths before bare names, for an app that adds prefix aliases after them", () => {
