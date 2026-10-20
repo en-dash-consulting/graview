@@ -399,8 +399,11 @@ export function supportingKinds(
   kept: Iterable<string> = [],
 ): ReadonlySet<string> {
   const kinds = schema.kinds as readonly string[];
-  // Each tie's far kinds, other than the kind itself.
-  const ties = (kind: string) => Object.values((schema.tryDefinition(kind)?.edges ?? {}) as Record<string, { readonly to?: readonly string[] }>).map((edge) => (edge.to ?? []).filter((far) => far !== kind));
+  // Each tie's far kinds, other than the kind itself; a tie to "*" reaches every kind.
+  const ties = (kind: string) =>
+    Object.values((schema.tryDefinition(kind)?.edges ?? {}) as Record<string, { readonly to: readonly string[] | "*" }>).map((edge) =>
+      (edge.to === "*" ? kinds : edge.to).filter((far) => far !== kind),
+    );
   const pointedAt = new Set(kinds.flatMap((kind) => ties(kind).flat()));
   return new Set([...(pages?.hide ?? []), ...kept, ...kinds.filter((kind) => !pointedAt.has(kind) && ties(kind).length > 0 && ties(kind).every((far) => far.length >= 2))]);
 }
