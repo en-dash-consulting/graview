@@ -59,8 +59,11 @@ decides the frame; the app still decides what is in it.**
 6. **Start what it loads before it asks.** Each face is a chunk of its
    own, fetched as it is first drawn: `preload(face)` starts it beside the
    host's own requests, and `handle.drawn()` waits for the face to be on
-   the page. `onError` and `onReady` tell the host failures (class and
-   module only) and the time to the first face drawn.
+   the page. What the face opens as it first draws (the home's lenses, the
+   scene's ribbons) your build names in the head:
+   `firstDrawChunks(metafile, face)` from `@graview/embed/first-draw`, as
+   `modulepreload` links. `onError` and `onReady` tell the host failures
+   (class and module only) and the time to the first face drawn.
 
 ## Knowing when a place has drawn
 

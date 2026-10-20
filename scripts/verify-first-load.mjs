@@ -40,6 +40,12 @@
  * (`lib/watch.mjs`) is not attached — its observers would run inside what
  * is timed; every other harness opens these faces under it.
  *
+ * And what a cold load asks for before the place has drawn and settled
+ * (`data-graview-drawn`): its requests and bytes, and every script the
+ * head did not name — a door opened only once the face had run, a round
+ * trip after the face's own (FR-194). Each app on each profile holds that
+ * there are none (`…DrawsPagesWithNoChunkAskedForAfterTheFace`).
+ *
  * THE BUDGET (`TIMING_BUDGET`, below) is what CI holds, with room for a
  * shared runner's noise.
  *
@@ -158,6 +164,12 @@ function timers() {
   new PerformanceObserver((list) => {
     for (const entry of list.getEntries()) w.__long.push({ start: entry.startTime, end: entry.startTime + entry.duration });
   }).observe({ type: "longtask", buffered: true });
+  // The moment the place says it has drawn and settled (`data-graview-drawn`, FR-188): every part it draws arrived.
+  new MutationObserver((records, watcher) => {
+    if (w.__drawnAt !== undefined || !document.querySelector("[data-graview-drawn]")) return;
+    w.__drawnAt = performance.now();
+    watcher.disconnect();
+  }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-graview-drawn"] });
   let ready = false;
   Object.defineProperty(w, "__graviewReady", {
     configurable: true,
@@ -229,6 +241,33 @@ async function contextFor(browser, profile) {
   return { context, page };
 }
 
+/** Every script the page's head names — its entry and the chunks it preloads: what is asked for as the head is read. */
+async function namedInTheHead(context, url) {
+  const html = await (await context.request.get(url)).text();
+  return new Set([...html.matchAll(/"(\/[^"]+\.js)"/g)].map((match) => new URL(match[1], url).pathname));
+}
+
+/*
+ * WHAT IS ASKED FOR AFTER THE FACE'S OWN (FR-194). A door inside a face —
+ * the home's lenses, a list's arranging, the bar's Activity, the scene's
+ * ribbons and plots — opened only once the face has run is a round trip
+ * after the face's chunk, half a second and more on a phone. Every script
+ * asked for before the place has drawn and settled that the head did not
+ * name is one.
+ */
+async function askedLate(page, head) {
+  return page.evaluate(
+    (head) => {
+      const until = window.__drawnAt ?? performance.now();
+      return performance
+        .getEntriesByType("resource")
+        .filter((entry) => entry.startTime < until && new URL(entry.name).pathname.endsWith(".js") && !head.includes(new URL(entry.name).pathname))
+        .map((entry) => new URL(entry.name).pathname);
+    },
+    [...head],
+  );
+}
+
 async function openCold(page, url, errors) {
   page.on("pageerror", (error) => errors.push(`${url}: ${error.message}`));
   await page.goto(url, { waitUntil: "commit" });
@@ -236,12 +275,25 @@ async function openCold(page, url, errors) {
   const failed = await page.evaluate(() => window.__graviewFailed ?? null);
   if (failed) throw new Error(`${url} did not open: ${failed}`);
   const useful = await page.evaluate(() => window.__useful);
+  await page.waitForFunction(() => window.__drawnAt !== undefined, null, { timeout: 60_000, polling: 50 });
+  const late = await askedLate(page, await namedInTheHead(page.context(), url));
+  const drawn = await page.evaluate(() => window.__drawnAt);
   const interactive = await settledAfter(page, useful);
   const resources = await page.evaluate(() => {
     const entries = performance.getEntriesByType("resource");
-    return { requests: entries.length + 1, scripts: entries.filter((entry) => entry.initiatorType === "script" || entry.name.endsWith(".js")).length, bytes: entries.reduce((sum, entry) => sum + (entry.transferSize || entry.encodedBodySize || 0), 0) };
+    const drawn = window.__drawnAt ?? Infinity;
+    const before = entries.filter((entry) => entry.startTime < drawn);
+    const size = (entry) => entry.transferSize || entry.encodedBodySize || 0;
+    return {
+      requests: entries.length + 1,
+      scripts: entries.filter((entry) => entry.initiatorType === "script" || entry.name.endsWith(".js")).length,
+      bytes: entries.reduce((sum, entry) => sum + size(entry), 0),
+      // Before the place has drawn and settled: what a person waited on.
+      requestsBeforeDrawn: before.length + 1,
+      bytesBeforeDrawn: before.reduce((sum, entry) => sum + size(entry), 0),
+    };
   });
-  return { useful, interactive, ...resources };
+  return { useful, drawn, interactive, late, ...resources };
 }
 
 async function measure(browser, app, profile, errors) {
@@ -249,11 +301,13 @@ async function measure(browser, app, profile, errors) {
   const cold = [];
   const record = [];
   const scene = [];
+  const late = new Set();
   for (let run = 0; run < RUNS; run++) {
     // Cold: the home, from nothing.
     {
       const { context, page } = await contextFor(browser, profile);
       cold.push(await openCold(page, `${base}/`, errors));
+      for (const one of cold.at(-1).late) late.add(`/ ${one}`);
       // Pages → Scene, from the home just opened.
       const pressed = await pressUntil(page, '[data-testid="app-face-scene"]', { selector: ".graview-ground *", least: 3 });
       const settled = await settledAfter(page, pressed.painted);
@@ -263,7 +317,8 @@ async function measure(browser, app, profile, errors) {
     // List → record: the list opened, then its first row pressed.
     {
       const { context, page } = await contextFor(browser, profile);
-      await openCold(page, `${base}${app.list}`, errors);
+      const list = await openCold(page, `${base}${app.list}`, errors);
+      for (const one of list.late) late.add(`${app.list} ${one}`);
       const pressed = await pressUntil(page, '[data-testid="records"] li a', { selector: '[data-testid="record-fields"]' });
       const settled = await settledAfter(page, pressed.painted);
       record.push({ painted: pressed.painted - pressed.start, settled: Math.max(settled, pressed.painted) - pressed.start });
@@ -272,6 +327,7 @@ async function measure(browser, app, profile, errors) {
   }
   return {
     useful: median(cold.map((one) => one.useful)),
+    drawn: median(cold.map((one) => one.drawn)),
     interactive: median(cold.map((one) => one.interactive)),
     record: median(record.map((one) => one.painted)),
     recordSettled: median(record.map((one) => one.settled)),
@@ -279,6 +335,9 @@ async function measure(browser, app, profile, errors) {
     sceneSettled: median(scene.map((one) => one.settled)),
     requests: median(cold.map((one) => one.requests)),
     bytes: median(cold.map((one) => one.bytes)),
+    requestsBeforeDrawn: median(cold.map((one) => one.requestsBeforeDrawn)),
+    bytesBeforeDrawn: median(cold.map((one) => one.bytesBeforeDrawn)),
+    askedAfterTheFace: [...late],
     runs: { cold, record, scene },
   };
 }
@@ -302,13 +361,14 @@ try {
       const measured = await measure(browser, app, profile, errors);
       report.measured[app.name][profile.name] = measured;
       process.stdout.write(
-        `${app.name} ${profile.name}: useful ${measured.useful} ms, interactive ${measured.interactive} ms, list → record ${measured.record} ms (settled ${measured.recordSettled}), pages → scene ${measured.scene} ms (settled ${measured.sceneSettled}); ${measured.requests} requests, ${Math.round(measured.bytes / 1024)} KB\n`,
+        `${app.name} ${profile.name}: useful ${measured.useful} ms, drawn and settled ${measured.drawn} ms, interactive ${measured.interactive} ms, list → record ${measured.record} ms (settled ${measured.recordSettled}), pages → scene ${measured.scene} ms (settled ${measured.sceneSettled}); ${measured.requests} requests, ${Math.round(measured.bytes / 1024)} KB; before the home drew ${measured.requestsBeforeDrawn} requests, ${Math.round(measured.bytesBeforeDrawn / 1024)} KB, ${measured.askedAfterTheFace.length} asked for after the face\n`,
       );
       const budget = TIMING_BUDGET[app.name][profile.name];
       for (const [what, limit] of Object.entries(budget)) {
         const name = `${app.name}On${profile.name[0].toUpperCase()}${profile.name.slice(1)}${{ useful: "IsUsefulWithin", interactive: "IsInteractiveWithin", record: "GoesFromAListToARecordWithin", scene: "GoesFromPagesToTheSceneWithin" }[what]}${limit}Ms`;
         report.checks[name] = { measured: measured[what], budget: limit, ok: measured[what] <= limit };
       }
+      report.checks[`${app.name}On${profile.name[0].toUpperCase()}${profile.name.slice(1)}DrawsPagesWithNoChunkAskedForAfterTheFace`] = { late: measured.askedAfterTheFace, ok: measured.askedAfterTheFace.length === 0 };
     }
   }
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

@@ -19,6 +19,7 @@ import { mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { firstDrawChunks } from "../packages/embed/dist/first-draw.js";
 import { doorsOpenAtOnce, englishOnly, noStudio, preloadLinks, workspaceSources } from "./lib/hosted-page.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -61,7 +62,9 @@ const built = await esbuild.build({
   logLevel: "warning",
 });
 for (const file of doorsOpenAtOnce(built.outputFiles, built.metafile)) writeFileSync(file.path, file.text);
-writeFileSync(join(out, "index.html"), PAGE.replace("<!--preloads-->", preloadLinks(built.metafile, { entry: "page.js", faces: ["pages"], fetches: ["/graview/document"] })));
+// The head names the pages face's chunks and what it opens as it first draws (FR-194), as a host names them from its own build.
+const head = preloadLinks(built.metafile, { entry: "page.js", faces: ["pages"], fetches: ["/graview/document"], chunks: firstDrawChunks(built.metafile, "pages") });
+writeFileSync(join(out, "index.html"), PAGE.replace("<!--preloads-->", head));
 
 const bytes = readdirSync(out).reduce((sum, file) => sum + statSync(join(out, file)).size, 0);
 process.stdout.write(`the preview page: ${readdirSync(out).length} files, ${Math.round(bytes / 1024)} KB, in packages/graview/dist/preview\n`);

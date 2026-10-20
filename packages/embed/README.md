@@ -148,6 +148,40 @@ await faceReady;
 const handle = mount(root, { app, face });  // drawn in this commit
 ```
 
+A face opens doors of its own as it first draws — on the pages the home's
+lenses, a list's arranging, the bar's Activity and a form's date box; on
+the scene the relations' ribbons, the city's ground, the districts' states
+and the way back after an act — each a chunk asked for only once the face
+has run, a round trip after the face's own on a phone (FR-194). They stay
+doors, so a page that never draws a lens never runs one, and
+`@graview/embed/first-draw` names them for a host's build:
+`firstDrawChunks(metafile, face)` reads esbuild's metafile and returns the
+chunks a face's first draw asks for — each door's chunk and every chunk it
+imports outright — to name in the page's head beside the face's own;
+`FIRST_DRAW_DOORS` is the list it reads, each door by its package and
+module. It is a build script's, never the page's: importing it costs a page
+nothing.
+
+```ts
+import { firstDrawChunks } from "@graview/embed/first-draw";
+
+const built = await esbuild.build({ ...shell, splitting: true, metafile: true });
+const doors = firstDrawChunks(built.metafile, "pages").map((chunk) => `/${chunk.split("/").pop()}`);
+// Less what the head already names for the face itself.
+```
+
+Ask for them once the face's own chunks have arrived, not beside them: on
+a phone's network a door named beside the face takes its bandwidth, and
+the face draws later. `graview preview`'s page writes them from a script in
+its head that waits for each `modulepreload` link's `load`; so asked, the
+face drew when it did and the place settled about half a second sooner on
+a slow 4G (`pnpm verify first-load`).
+
+What is fetched before it is wanted — the acts' pane when the page is
+idle, a date's editor, the other face at a desk — waits until the place
+has first drawn and settled (`data-graview-drawn`), so on a phone the
+network is the first draw's until then.
+
 What this asks of the framework, and what it adds: the theme scopes to the
 element (`themeBaseCss(scheme, brand, { scope })`, and the blocks a view is
 drawn with, `viewsCss`, and the scene's own rules, `sceneCss`, drawn by the

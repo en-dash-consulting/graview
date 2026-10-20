@@ -1522,7 +1522,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <h1 id="h-what">@graview/embed</h1>
       <p class="lede" style="margin-top: 18px;"><code>@graview/embed</code> is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add @graview/embed</code><button type="button" class="copy" data-copy="pnpm add @graview/embed">Copy</button></div></div>
-      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/embed</code>, <code>@graview/embed/pages</code></p>
+      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/embed</code>, <code>@graview/embed/pages</code>, <code>@graview/embed/first-draw</code></p>
     </section>
     <section id="readme" aria-labelledby="h-readme">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
@@ -1562,6 +1562,14 @@ const faceReady = preload(face);            // with no face named, every face
 const app = await fetchAndCompile();        // the host's own round trips, meanwhile
 await faceReady;
 const handle = mount(root, { app, face });  // drawn in this commit</code></pre></div>
+<p>A face opens doors of its own as it first draws — on the pages the home's lenses, a list's arranging, the bar's Activity and a form's date box; on the scene the relations' ribbons, the city's ground, the districts' states and the way back after an act — each a chunk asked for only once the face has run, a round trip after the face's own on a phone (FR-194). They stay doors, so a page that never draws a lens never runs one, and <code>@graview/embed/first-draw</code> names them for a host's build: <code>firstDrawChunks(metafile, face)</code> reads esbuild's metafile and returns the chunks a face's first draw asks for — each door's chunk and every chunk it imports outright — to name in the page's head beside the face's own; <code>FIRST_DRAW_DOORS</code> is the list it reads, each door by its package and module. It is a build script's, never the page's: importing it costs a page nothing.</p>
+<div class="code" data-scroller><pre><code class="language-ts">import { firstDrawChunks } from "@graview/embed/first-draw";
+
+const built = await esbuild.build({ ...shell, splitting: true, metafile: true });
+const doors = firstDrawChunks(built.metafile, "pages").map((chunk) =&gt; `/${chunk.split("/").pop()}`);
+// Less what the head already names for the face itself.</code></pre></div>
+<p>Ask for them once the face's own chunks have arrived, not beside them: on a phone's network a door named beside the face takes its bandwidth, and the face draws later. <code>graview preview</code>'s page writes them from a script in its head that waits for each <code>modulepreload</code> link's <code>load</code>; so asked, the face drew when it did and the place settled about half a second sooner on a slow 4G (<code>pnpm verify first-load</code>).</p>
+<p>What is fetched before it is wanted — the acts' pane when the page is idle, a date's editor, the other face at a desk — waits until the place has first drawn and settled (<code>data-graview-drawn</code>), so on a phone the network is the first draw's until then.</p>
 <p>What this asks of the framework, and what it adds: the theme scopes to the element (<code>themeBaseCss(scheme, brand, { scope })</code>, and the blocks a view is drawn with, <code>viewsCss</code>, and the scene's own rules, <code>sceneCss</code>, drawn by the face that needs them beside it) rather than the document, every rule of it held inside that element, so nothing of the host's is restyled; the panes size against the picture's own box (<code>cqh</code>) rather than the viewport; the routed face runs on a memory router, so the host page's address is never touched (unless the host's page is the app: see below); the brand's fonts are fetched by the embed rather than assumed. The page's icon is the host's: only a host whose page is the app passes <code>favicon: true</code> to wear the brand's (FR-124), and an app that prefers dark is drawn dark until the host stamps a scheme of its own. The store is in memory and starts from the seed on every mount, unless the host hands it one.</p>
 <h3>When the page is the app: the address bar</h3>
 <p>A host whose whole page is the app — Graview Cloud's hosted app is one — hands the routed face the address bar, so a place, a record and the home can be linked, reloaded and shared:</p>

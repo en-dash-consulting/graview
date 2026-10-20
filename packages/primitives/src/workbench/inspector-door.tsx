@@ -1,7 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import type { AnySchema } from "@graview/core";
 import { useMenuPrepare } from "@graview/react/drawing";
-import { lazyModule, useGraview, useSelection, type MenuTarget } from "@graview/react/provider";
+import { afterFirstDraw, firstDrawn, lazyModule, useGraview, useSelection, type MenuTarget } from "@graview/react/provider";
 import { hoverChipsOn } from "@graview/tools/frame";
 import { Suspense, useEffect, useRef, useState } from "react";
 
@@ -170,6 +170,8 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
       if (element) ready(element);
     };
     const focused = (event: FocusEvent) => {
+      // The keyboard put on the page as it first draws is no person's reach: nothing is got ready for it (FR-194).
+      if (!firstDrawn()) return;
       const element = at(event);
       if (element) ready(element);
     };
@@ -212,10 +214,13 @@ export function Inspector({
       stop();
       pane.prefetch();
     };
-    const cancelIdle = whenIdle(reach);
+    // Once the place has first drawn: an idle moment before then is the place's, still arriving (FR-194).
+    let cancelIdle = () => undefined as void;
+    const cancelWait = afterFirstDraw(() => void (cancelIdle = whenIdle(reach)));
     const events = ["pointerdown", "keydown"] as const;
     for (const event of events) document.addEventListener(event, reach, { capture: true, passive: true });
     function stop() {
+      cancelWait();
       cancelIdle();
       for (const event of events) document.removeEventListener(event, reach, { capture: true });
     }
@@ -242,7 +247,8 @@ export function Inspector({
     return () => registerActsDoor(null);
   }, [placement, registerActsDoor, setMenuAt, openActs]);
   // A menu's pane is drawn for a selection too: in a narrow scene it says the chosen record's acts (the tenth walk).
-  const wanted = menuAt !== null || selection.length > 0;
+  // Not where the face opens the menu its own way (the routed face): there the pane draws nothing for a selection, and was fetched with every page's first draw for it (FR-194).
+  const wanted = menuAt !== null || (selection.length > 0 && openActs === undefined);
   const [drawn, setDrawn] = useState(wanted);
   useEffect(() => {
     if (wanted) setDrawn(true);

@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 268,
+  "gzipped": 70,
+  "note": "Raised when what a page fetches before it is wanted came to wait for the first draw (FR-194): `afterFirstDraw` and its three companions in the lazy parts, the drawn signal saying them, the acts pane fetched once the place has drawn and not for a selection the routed face draws nothing for, and a date editor fetched once the place has drawn. Measured 268 / 64 more."
+}
