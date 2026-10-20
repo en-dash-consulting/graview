@@ -1,7 +1,7 @@
 import type { AnySchema } from "@graview/core";
 import { useGraview, useSelection, useViolations } from "@graview/react";
 import { focusInto, SkipLinks, type SkipTo } from "./skip-links.js";
-import { nameOf } from "./workbench/answer-args.js";
+import { wordsForChosen } from "./subject.js";
 
 /** What is chosen, where it is drawn as itself: its card, else its mark in a picture — never a copy drawn small and inert. */
 function chosenDrawn(id: string | undefined): HTMLElement | null {
@@ -25,7 +25,7 @@ export function SceneSkips() {
   const last = selection[selection.length - 1];
   if (last !== undefined) {
     to.push({
-      label: selection.length === 1 ? `Skip to ${nameOf(store, last)}` : `Skip to the ${selection.length} chosen`,
+      label: selection.length === 1 ? `Skip to ${wordsForChosen(store, last) ?? "what is chosen"}` : `Skip to the ${selection.length} chosen`,
       testid: "chosen",
       go: () => void focusInto(chosenDrawn(last)),
     });
