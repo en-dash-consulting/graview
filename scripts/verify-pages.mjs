@@ -1211,23 +1211,37 @@ async function severalTasksAreOneChange() {
   report.checks.theArrowsChooseRowsFromOneTabStop = { arrowed, extended, stops, ok: arrowed === "3 tasks chosen" && extended === "4 tasks chosen" && stops === 1 };
   await desk.close();
 
-  const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
+  // Firefox takes no isMobile from Playwright; a touch screen is what the list asks of a phone (pointer: coarse).
+  const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, ...(ENGINE === "firefox" ? {} : { isMobile: true }) })).newPage();
   await phone.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
   await phone.waitForSelector("[data-graview-choose]", { timeout: 20_000 });
   const rows = phone.locator("[data-graview-choose]");
   const atRest = await phone.evaluate(() => [...document.querySelectorAll("[data-graview-choose-box]")].filter((box) => box.getBoundingClientRect().width > 0).length);
   const phoneBefore = await rowsDrawn(phone);
-  const touch = await phone.context().newCDPSession(phone);
+  /*
+   * THE FINGER RESTS until the row is chosen, then lifts. A real touch where
+   * the engine takes one from outside (Chromium's CDP); elsewhere the
+   * pointer events a touch is heard as, since WebKit and Firefox take no
+   * held touch from Playwright — the list listens to pointers either way.
+   * The rest lasts until the bar says a task is chosen, not a guessed time.
+   */
   const held = await rows.nth(0).boundingBox();
-  await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: held.x + held.width / 2, y: held.y + held.height / 2 }] });
-  await phone.waitForTimeout(700);
-  await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await phone.waitForTimeout(500);
-  const pressed = { said: await barSays(phone), path: await phone.evaluate(() => location.pathname) };
+  const finger = { x: held.x + held.width / 2, y: held.y + held.height / 2 };
+  const touch = ENGINE === "chromium" ? await phone.context().newCDPSession(phone) : null;
+  const pointer = (type) =>
+    phone.evaluate(({ type, x, y }) => {
+      document.elementFromPoint(x, y)?.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y }));
+    }, { type, ...finger });
+  if (touch) await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [finger] });
+  else await pointer("pointerdown");
+  await phone.waitForSelector('[data-testid="several-count"]', { timeout: 5_000 }).catch(() => null);
+  if (touch) await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  else await pointer("pointerup");
+  const pressed = { how: touch ? "touch" : "pointer events", said: await barSays(phone), path: await phone.evaluate(() => location.pathname) };
   for (const at of [1, 2]) {
     const box = await rows.nth(at).boundingBox();
     await phone.touchscreen.tap(box.x + box.width / 2, box.y + Math.min(box.height / 2, 20));
-    await phone.waitForTimeout(300);
+    await phone.waitForFunction((n) => document.querySelector('[data-testid="several-count"]')?.textContent === `${n} tasks chosen`, at + 1, { timeout: 5_000 }).catch(() => null);
   }
   const tapped = { said: await barSays(phone), path: await phone.evaluate(() => location.pathname) };
   await phone.locator('[data-testid="several-act"][data-mutation="finish"]').tap();
