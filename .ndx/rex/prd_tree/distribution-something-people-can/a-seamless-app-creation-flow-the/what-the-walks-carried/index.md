@@ -21,7 +21,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 |-------|--------|
 | [The scene's strip tells the watch when an act's own input refuses there](./the-scene-strip-tells-the-watch.md) | pending |
 | [The keyboard reaches a long list's records and a scene's relate and repair in few presses](./the-keyboard-reaches-a-long-list.md) | pending |
-| [graview check warns when a code describe returns a template string](./check-warns-a-template-in-a-code-describe.md) | pending |
+| [graview check warns when a code describe returns a template string](./check-warns-a-template-in-a-code-describe.md) | completed |
 | [The gauntlet has two kinds sharing a field name, and a rule that names both](./the-gauntlet-has-kinds-sharing-a-field.md) | pending |
 | [graview view check runs a one-record view with a record, and reckons pictures over what it draws](./view-check-runs-a-record-view-with-a-record.md) | pending |
 | [graview shots --places takes a draft view's title](./shots-takes-a-draft-views-title.md) | pending |

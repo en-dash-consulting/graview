@@ -83,7 +83,10 @@ fields, edges, label, roles — is `graview-node-kind`.
    `{out('includes') | and}` ("A, B and C"), `{n | words | capital}`
    ("Three"), `{at | time}` ("10:47 AM"). A field's label, a group's
    heading and what an empty list says are words, not templates: braces
-   there would be drawn as typed, and `view-braces` warns of them.
+   there would be drawn as typed, and `view-braces` warns of them. A
+   `describe` or `label` written in code is not a template either: say the
+   value in code (`momentAsRead(node.startsAt)`), and
+   `describe-template-in-code` warns of `{field}` returned there.
 
 ## Then find out whether it worked
 
