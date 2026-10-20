@@ -21,6 +21,7 @@ import { createSecureServer } from "node:http2";
 import { connect } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { vacant } from "./serve.mjs";
 
 /** Headers HTTP/2 forbids, which a server behind it sends over HTTP/1.1. */
 const HOP_BY_HOP = new Set(["connection", "keep-alive", "transfer-encoding", "upgrade", "proxy-connection"]);
@@ -73,6 +74,7 @@ export async function secureFront(port, behind) {
     upstream.on("error", end);
     socket.on("error", end);
   });
+  await vacant(port);
   await new Promise((ready, fail) => {
     server.once("error", fail);
     server.listen(port, ready);

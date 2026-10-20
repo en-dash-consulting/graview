@@ -24,7 +24,7 @@ import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
-import { serving } from "./lib/serve.mjs";
+import { serving, vacant } from "./lib/serve.mjs";
 import { at, movedIn, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -41,6 +41,7 @@ const READY = { todo: "__todoReady", rota: "__rotaReady", seedbed: "__seedbedRea
  * from a folder on a server — "data in a folder you can open" cannot be
  * shown by a stop that has nothing to open.
  */
+await vacant(portFor("served"));
 const store = spawn(
   "node",
   [

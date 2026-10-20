@@ -28,7 +28,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
-import { serving } from "./lib/serve.mjs";
+import { serving, vacant } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -168,6 +168,7 @@ async function inAHostsPage(browser, report) {
     response.writeHead(200, { "content-type": path.endsWith(".js") ? "text/javascript" : "text/html" });
     response.end(readFileSync(file));
   });
+  await vacant(portFor("studio-host"));
   await new Promise((ready) => host.listen(portFor("studio-host"), ready));
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors = [];
@@ -688,6 +689,7 @@ try {
       response.end(JSON.stringify({ choices: [{ message: { content: answer } }] }));
     });
   });
+  await vacant(portFor("studio-model"));
   await new Promise((ready) => provider.listen(portFor("studio-model"), ready));
 
   try {

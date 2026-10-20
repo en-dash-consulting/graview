@@ -30,6 +30,7 @@ import { fileURLToPath } from "node:url";
 import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { vacant } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -107,6 +108,7 @@ async function buildHost() {
     response.writeHead(200, { "content-type": script ? "text/javascript" : "text/html" });
     response.end(readFileSync(script ? file : join(out, "index.html")));
   });
+  await vacant(portFor("repeats-host"));
   await new Promise((ready) => host.listen(portFor("repeats-host"), ready));
   return { stop: () => (host.close(), rmSync(out, { recursive: true, force: true })) };
 }

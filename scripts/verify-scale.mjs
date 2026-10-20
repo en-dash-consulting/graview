@@ -28,6 +28,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchCanaryGpu, launchEngine } from "./lib/engine.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { vacant } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const app = resolve(repoRoot, "apps/discography");
@@ -43,6 +44,7 @@ const GPU_ARGS = ["--enable-unsafe-webgpu", "--enable-gpu", "--ignore-gpu-blockl
 
 /* The page as it ships: built, then served by vite preview. */
 execFileSync("npx", ["vite", "build"], { cwd: app, stdio: "ignore" });
+await vacant(PORT);
 const server = spawn("npx", ["vite", "preview", "--port", String(PORT), "--strictPort"], { cwd: app, detached: true, stdio: ["ignore", "pipe", "pipe"] });
 await new Promise((ready, fail) => {
   const timer = setTimeout(() => fail(new Error("vite preview did not start")), 60_000);

@@ -29,6 +29,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { vacant } from "./lib/serve.mjs";
 import { seatHeaders } from "../packages/ship/dist/index.js";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -45,6 +46,7 @@ if (!existsSync(resolve(repoRoot, "packages/graview/dist/preview/index.html"))) 
   process.exit(1);
 }
 
+await vacant(portFor("preview"), portFor("preview-shots"));
 const server = spawn(process.execPath, [CLI, "preview", DOCUMENT, "--seed", SEED, "--port", String(portFor("preview"))], { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"] });
 let said = "";
 server.stdout.on("data", (chunk) => (said += chunk));

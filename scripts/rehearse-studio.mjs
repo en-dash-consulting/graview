@@ -24,6 +24,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { launchEngine } from "./lib/engine.mjs";
 import { portFor } from "./lib/ports.mjs";
+import { vacant } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const scratch = resolve(repoRoot, "apps/.studio-rehearsal");
@@ -156,6 +157,7 @@ try {
   // With its node_modules links: they are relative, and point at the same packages from the same depth.
   cpSync(resolve(repoRoot, "apps/seedbed"), scratch, { recursive: true, verbatimSymlinks: true, filter: (from) => !from.includes("/dist") && !from.endsWith(".tsbuildinfo") });
 
+  await vacant(MODEL_PORT, PORT);
   await new Promise((ready) => model.listen(MODEL_PORT, ready));
   vite = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], { cwd: scratch, stdio: ["ignore", "pipe", "pipe"], detached: true });
   await new Promise((ready, fail) => {

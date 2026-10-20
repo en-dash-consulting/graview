@@ -15,7 +15,7 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
-import { serving } from "./lib/serve.mjs";
+import { serving, vacant } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -73,6 +73,7 @@ const logLines = () => {
 
 rmSync(DATA, { recursive: true, force: true });
 const app = await serving("rota", portFor("rota"), repoRoot);
+await vacant(PORT);
 let server = await startServer();
 let browser;
 

@@ -30,6 +30,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { packTarballs, pinToTarballs } from "./lib/tarballs.mjs";
 import { portFor } from "./lib/ports.mjs";
+import { vacant } from "./lib/serve.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -203,6 +204,7 @@ try {
   if (withBrowser) {
     const port = portFor("created");
     const base = `http://localhost:${port}`;
+    await vacant(port);
     vite = await startVite(app, port);
     browser = await launchEngine(engineName(), { headless: true });
     const errors = [];
@@ -603,6 +605,7 @@ try {
   // and a headless verify exercises none of them.
   if (withBrowser) {
     const port = portFor("linked");
+    await vacant(port);
     vite = await startVite(linked, port);
     browser = await launchEngine(engineName(), { headless: true });
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
