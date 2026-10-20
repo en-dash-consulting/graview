@@ -72,7 +72,10 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   /**
    * For the pages face: the path to open, within the app's own routes. Set
    * again (`setPath`), the face goes there. Under `routing: "address"` the
-   * address the page was loaded at is where the face opens instead.
+   * address the page was loaded at is where the face opens instead. For
+   * the scene: nothing, or the overview's (`/places/overview`) — with no
+   * `stop` either, the scene opens on the overview, the whole thing from
+   * above.
    */
   readonly path?: string;
   /**

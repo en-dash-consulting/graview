@@ -1430,7 +1430,8 @@ const handle = mount(document.querySelector("#garden")!, {
   app,                        // defineApp(...)
   seed,                       // the graph to open with, or nothing
   face: "graview",            // "scene" | "graview" | "pages" | "picture" — one named lens, no chrome: stop "#view=<place>"; leave it out and the app opens on its home view, else the scene
-  stop: "#focus=plot-1",      // the scene's view state, as its URL fragment
+  stop: "#focus=plot-1",      // the scene's view state, as its URL fragment; none, and the scene opens on the overview
+  path: "/plots",             // the routed face's page; on the scene, nothing or "/places/overview" — the whole thing from above
   principal: { kind: "human", id: "june", roles: ["coordinator"] },
   bar: true,                  // the app bar over every face (the default)
   switch: "words",            // the bar's Scene/Pages switch: its words where they fit (the default), or "icons" for its marks alone
@@ -1441,6 +1442,8 @@ handle.setPath("/places/overview"); // the scene, at its own address
 handle.setStop("#overview=1&expand=kind:plot");
 handle.unmount();
 ```
+
+A scene with nowhere to be — no `stop`, no `path` but the overview's, no first place in the declaration — opens on the overview, the whole thing from above, as `graview preview` at `/places/overview` does: `mount(stage, { face: "scene" })` under either routing, and `routing: "address"` at a bare base. A `stop` set then or later goes down to it.
 
 `<Embed {...options} />` is the same thing as a React component.
 

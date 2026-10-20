@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 96,
+  "gzipped": 25,
+  "changeset": "the-scene-at-its-root-opens-on-the-overview.md",
+  "note": "Raised when the scene face, mounted at its root, came to open on the overview: the embed's first view is the whole thing from above where the scene has no stop, no path but the overview's and no first place (`Drawing`'s initial view). The embed is on every page, so this is up front. Measured at 538_472 / 186_811 against 538_376 / 186_786 minified and gzipped."
+}
