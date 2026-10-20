@@ -48,7 +48,7 @@ describe("the view checker on a field saved as it is typed", () => {
 });
 
 describe("the guide's worked call sheet", () => {
-  const example = readFileSync(new URL("../../../skills/skills/graview-worker-view/examples/a-call-sheet.js", import.meta.url), "utf8");
+  const example = readFileSync(new URL("../../../skills/skills/graview-view-forms/examples/a-call-sheet.js", import.meta.url), "utf8");
   const declared = Function(`return (${/manifest: (\{[\s\S]*?\n\/\/ \})/.exec(example)![1]!.replace(/^\/\/ ?/gm, "")});`)() as WorkerViewManifest;
 
   it("opens with a manifest of one call that may save its notes, and draws the notes field with no problems", async () => {

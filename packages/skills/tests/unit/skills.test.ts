@@ -45,6 +45,7 @@ describe("the skills package", () => {
       "graview-brand",
       "graview-desk",
       "graview-embed",
+      "graview-host-page",
       "graview-invariant",
       "graview-lens",
       "graview-linked-records",
@@ -56,9 +57,11 @@ describe("the skills package", () => {
       "graview-port-app",
       "graview-seed",
       "graview-ship",
+      "graview-shipped-lens",
       "graview-sight",
       "graview-studio",
       "graview-view-drawing",
+      "graview-view-forms",
       "graview-worker-view",
     ]);
   });

@@ -244,7 +244,7 @@ graview describe <entry> [--as <role>] [--views <module>] [--place <slug|id>]
 graview docs <entry> [--out <dir>] [--views <module>]
 ```
 
-## What a model reads before it writes (19 skills)
+## What a model reads before it writes (22 skills)
 
 Skills that teach an assistant the authoring moves, each ending in a real graview check verdict. Installed into a product by `graview skills install .` — which `graview create` runs for you — into `.claude/skills` and `.agents/skills`, so Claude Code and Codex find the same instructions.
 
@@ -252,6 +252,7 @@ Skills that teach an assistant the authoring moves, each ending in a real gravie
 - [graview-brand](https://graview.dev/docs/skills/graview-brand.html): Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 - [graview-desk](https://graview.dev/docs/skills/graview-desk.html): Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
 - [graview-embed](https://graview.dev/docs/skills/graview-embed.html): Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
+- [graview-host-page](https://graview.dev/docs/skills/graview-host-page.html): Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
 - [graview-invariant](https://graview.dev/docs/skills/graview-invariant.html): Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
 - [graview-lens](https://graview.dev/docs/skills/graview-lens.html): Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
 - [graview-linked-records](https://graview.dev/docs/skills/graview-linked-records.html): Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
@@ -263,9 +264,11 @@ Skills that teach an assistant the authoring moves, each ending in a real gravie
 - [graview-port-app](https://graview.dev/docs/skills/graview-port-app.html): Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
 - [graview-seed](https://graview.dev/docs/skills/graview-seed.html): Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
 - [graview-ship](https://graview.dev/docs/skills/graview-ship.html): Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
+- [graview-shipped-lens](https://graview.dev/docs/skills/graview-shipped-lens.html): Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
 - [graview-sight](https://graview.dev/docs/skills/graview-sight.html): Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
 - [graview-studio](https://graview.dev/docs/skills/graview-studio.html): Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
 - [graview-view-drawing](https://graview.dev/docs/skills/graview-view-drawing.html): Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
+- [graview-view-forms](https://graview.dev/docs/skills/graview-view-forms.html): Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
 - [graview-worker-view](https://graview.dev/docs/skills/graview-worker-view.html): Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 ## The studio: a model edits the declaration itself
@@ -1229,7 +1232,7 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [Working with a model](https://graview.dev/docs/agents.html): The seat, the typed tools, what a model reads, and the studio.
 - [Live demos](https://graview.dev/docs/demos.html): Every surface of the garden, running on the page, and the example apps.
 - [Packages (14)](https://graview.dev/docs/packages.html): What each ships and what each exports.
-- [Skills (19)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
+- [Skills (22)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.html): create, check, types, docs, describe, lens, figure, serve, skills.
 - [What check says (106)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
@@ -2548,14 +2551,18 @@ A skill that cannot verify its own outcome says so. That is the rule, and the sk
 | `graview-node-kind` | Add a node kind: fields, edges, plural, roles, and what renders for free |
 | `graview-invariant` | Write a rule that names the mutations that would repair it |
 | `graview-lens` | Build a lens that binds roles rather than field names, so another domain can reuse it |
+| `graview-shipped-lens` | Declare a lens the framework ships as a titled place, with the options it takes and what the checker and `add-lens` refuse |
 | `graview-agent-seat` | Wire an agent seat that shares the interface's actions rather than shadowing them |
 | `graview-permissions` | Declare who may do what, once, and let the strip and the seat narrow themselves |
 | `graview-brand` | Put someone's name on an installation without forking a package |
 | `graview-new-app` | Start a product on Graview in its own repository, with the CI that keeps it honest |
 | `graview-pages` | The routed face: derived pages, one page in the app's words, a product design over every surface, and the embed |
+| `graview-embed` | Put an app on somebody else's page, its theme scoped to one element, and somebody's HTML page inside the app as a framed view |
+| `graview-host-page` | Host an app as the page itself: the address bar, a chat's widget, the host's menu and news, when a place has drawn, a view proposed and not kept, and pictures of places |
 | `graview-port-app` | Port an existing application onto Graview, deciding what is a node and what is a field |
 | `graview-studio` | Open the declaration as a graph, change it with acts, check before applying, migrate, and write it back as the scaffold's files |
-| `graview-worker-view` | Write a worker view: one plain script with a manifest the host enforces, its writes, its limits, and a headless run |
+| `graview-worker-view` | Write a worker view: one plain script with a manifest the host enforces, its links, its limits, and a headless run |
+| `graview-view-forms` | Let a worker view change records: a bound press, a record's text filled to edit, a field that saves as it is typed, and hearing what became of each |
 | `graview-view-drawing` | Draw in a worker view: what the host keeps, the app's tokens, the images a view may show — the logo, the app's own images, the pictures on records — and a record's video the host plays, with its full-screen viewer |
 
 The worked examples live in `apps/` in the framework repository. The skills point at them rather than restating them — a skill that copies an example goes stale the moment the example changes.
@@ -2734,7 +2741,7 @@ Source: https://graview.dev/docs/skills.html
 
 # The skills
 
-Graview's 19 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
+Graview's 22 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
 
 ```sh
 graview skills install .
@@ -2746,6 +2753,7 @@ graview skills install .
 - [graview-brand](https://graview.dev/docs/skills/graview-brand.html): Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 - [graview-desk](https://graview.dev/docs/skills/graview-desk.html): Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
 - [graview-embed](https://graview.dev/docs/skills/graview-embed.html): Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
+- [graview-host-page](https://graview.dev/docs/skills/graview-host-page.html): Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
 - [graview-invariant](https://graview.dev/docs/skills/graview-invariant.html): Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
 - [graview-lens](https://graview.dev/docs/skills/graview-lens.html): Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
 - [graview-linked-records](https://graview.dev/docs/skills/graview-linked-records.html): Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
@@ -2757,14 +2765,16 @@ graview skills install .
 - [graview-port-app](https://graview.dev/docs/skills/graview-port-app.html): Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
 - [graview-seed](https://graview.dev/docs/skills/graview-seed.html): Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
 - [graview-ship](https://graview.dev/docs/skills/graview-ship.html): Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
+- [graview-shipped-lens](https://graview.dev/docs/skills/graview-shipped-lens.html): Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
 - [graview-sight](https://graview.dev/docs/skills/graview-sight.html): Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
 - [graview-studio](https://graview.dev/docs/skills/graview-studio.html): Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
 - [graview-view-drawing](https://graview.dev/docs/skills/graview-view-drawing.html): Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
+- [graview-view-forms](https://graview.dev/docs/skills/graview-view-forms.html): Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
 - [graview-worker-view](https://graview.dev/docs/skills/graview-worker-view.html): Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 ---
 
-The 19 skills that teach an assistant the authoring moves, each ending in a real check.
+The 22 skills that teach an assistant the authoring moves, each ending in a real check.
 
 The page: https://graview.dev/docs/skills.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -2774,7 +2784,7 @@ Source: https://graview.dev/docs/skills/graview-agent-seat.html
 
 # graview-agent-seat
 
-`graview-agent-seat` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
+`graview-agent-seat` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2873,7 +2883,7 @@ Source: https://graview.dev/docs/skills/graview-brand.html
 
 # graview-brand
 
-`graview-brand` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
+`graview-brand` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2985,7 +2995,7 @@ Source: https://graview.dev/docs/skills/graview-desk.html
 
 # graview-desk
 
-`graview-desk` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
+`graview-desk` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3048,7 +3058,7 @@ Source: https://graview.dev/docs/skills/graview-embed.html
 
 # graview-embed
 
-`graview-embed` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
+`graview-embed` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3084,10 +3094,8 @@ handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
 7. **Presence is opt-in.** An embed broadcasts nothing and draws nobody unless handed a `presence` channel: a graph on a page does not tell its readers about each other.
 8. **Register only what differs.** `views(schema, registry)` is handed the framework's own view for every cell, with the declaration's `viewSpecs` already drawn; register onto it the cells you want different, and the rest stay. The same registry draws every face — the gallery's card, the list's row (one × glyph), the record's page (one × full). A view that adds to the default draws it inside itself with `<DefaultView {...props} />` (`@graview/primitives`); on the record page, which is the default, that draws nothing. `@graview/embed/pages` takes `views` too.
 9. **Say its name at the right level.** The bar says the app's name once, as a heading: `heading: 1` when the page is the app (and `height: "viewport"`, re-measured as a phone turns), the default `2` inside an article, `false` when your heading already says it.
-10. **In a chat's widget, let the frame be sized from the embed.** `height: "auto"` with `onIntrinsicHeight` tells the host the height to give it; `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the scene for the pages on a phone; `remote` takes an `openRemote` store, `subscriptions` the host's Notify me (`remoteSubscriptions`), `signIn` a visitor's way in. A hosted reader sits only as who signed in: name members through `people` (and `setPeople`), never as `seats`, which offer "sit as somebody else". Where readers cannot save a declaration, `studio: false` (or `studio: { onApply }` to keep what it applies: return `{ ok: false, sentence, findings }` when you could not (the sentence heads its panel), `offered: true` when you decided who builds, and `place: StudioPlace`, imported, when the page is the studio and should not wait for its chunk); where only the pages are shown, import `mount` from `@graview/embed/pages` and bundle nothing else. `onError` and `onReady` tell the host failures (class and module only) and time to the first face drawn. Each face is fetched as it is first drawn: `preload(face)` starts it beside the host's own requests, and `handle.drawn()` waits for it.
-11. **Put the host's own furniture inside the embed, never over it.** `hostActions: [{ label, href }]` (or `onSelect` for a press) draws the host's links in the person's menu, under who is signed in, reached by the keyboard. Every popover the embed draws stands in the browser's top layer, so a host needs no `z-index` override. `quickAsk: false` draws no quick ask (⌘K) on either face. Say the host's own news through `handle.notify({ kind: "toast" | "banner", sentence, tone, action })`, not a toast of your own fixed over the app: it floats at the app's foot, moving nothing. No tour of your own: `firstLook: { seen, onDone, steps }` points at the app's controls once, your `steps` naming a `FIRST_LOOK_ANCHORS` control.
-12. **When the page IS the app, hand it the address bar.** The default, `routing: "memory"`, never touches the host's `location` or `history` — right in an article. A host whose whole page is the app passes `routing: "address"` (and `basePath: "/apps/a1/"` when it is not served at `/`), and answers every address under the base with the one page: `<base>/places/<as>`, `<base>/<plural>/<id>` and the home are the routed face's pages, pushed and reloadable; the scene is `<base>/places/overview#overview=1`; the switch is a step Back undoes. `faceAtAddress(options)` is the face an address opens on, and `addressOf(place, { basePath })` (`@graview/core`) spells a place's link. A host that keeps its own history stays on memory, hears `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
-13. **A changed app keeps the reader's place.** `handle.setApp(app, store)`, not a remount, keeps the face, the page and the stop, and a `label` that was the app's name takes the new name. To remount, pass `handle.where()` back as `mount(…, { at })`.
+
+A host whose page IS the app — a service that serves it, a chat's widget, the address bar, its own menu, knowing when a place has drawn, a view proposed and not kept, and pictures of places — is `graview-host-page`.
 
 ### A view of your own, in a frame
 
@@ -3141,11 +3149,84 @@ The page: https://graview.dev/docs/skills/graview-embed.html · Every Graview do
 
 ---
 
+Source: https://graview.dev/docs/skills/graview-host-page.html
+
+# graview-host-page
+
+`graview-host-page` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
+
+Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
+
+## The skill
+
+## The host's page: when the page is the app
+
+`graview-embed` puts an app on somebody else's page with `mount`. This is the other end of the same call: a host whose page exists to serve the app — a service that hosts apps for strangers, a chat that draws one in a widget, a desk — and so owns the address bar, the sign-in and the news, and needs to know when what it serves can be read or pictured. **The host decides the frame; the app still decides what is in it.**
+
+### The moves
+
+1. **When the page IS the app, hand it the address bar.** The default, `routing: "memory"`, never touches the host's `location` or `history` — right in an article. A host whose whole page is the app passes `routing: "address"` (and `basePath: "/apps/a1/"` when it is not served at `/`), and answers every address under the base with the one page: `<base>/places/<as>`, `<base>/<plural>/<id>` and the home are the routed face's pages, pushed and reloadable; the scene is `<base>/places/overview#overview=1`; the switch is a step Back undoes. `faceAtAddress(options)` is the face an address opens on, and `addressOf(place, { basePath })` (`@graview/core`) spells a place's link. A host that keeps its own history stays on memory, hears `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
+2. **In a chat's widget, let the frame be sized from the embed.** `height: "auto"` with `onIntrinsicHeight` tells the host the height to give it; `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the scene for the pages on a phone; `remote` takes an `openRemote` store, `subscriptions` the host's Notify me (`remoteSubscriptions`), `signIn` a visitor's way in.
+3. **A hosted reader sits only as who signed in.** Name members through `people` (and `setPeople`), never as `seats`, which offer "sit as somebody else". Where readers cannot save a declaration, `studio: false` — or `studio: { onApply }` to keep what it applies: return `{ ok: false, sentence, findings }` when you could not (the sentence heads its panel), `offered: true` when you decided who builds, and `place: StudioPlace`, imported, when the page is the studio and should not wait for its chunk. Where only the pages are shown, import `mount` from `@graview/embed/pages` and bundle nothing else.
+4. **Put the host's own furniture inside the embed, never over it.** `hostActions: [{ label, href }]` (or `onSelect` for a press) draws the host's links in the person's menu, under who is signed in, reached by the keyboard. Every popover the embed draws stands in the browser's top layer, so a host needs no `z-index` override. `quickAsk: false` draws no quick ask (⌘K) on either face. Say the host's own news through `handle.notify({ kind: "toast" | "banner", sentence, tone, action })`, not a toast of your own fixed over the app: it floats at the app's foot, moving nothing. No tour of your own: `firstLook: { seen, onDone, steps }` points at the app's controls once, your `steps` naming a `FIRST_LOOK_ANCHORS` control.
+5. **A changed app keeps the reader's place.** `handle.setApp(app, store)`, not a remount, keeps the face, the page and the stop, and a `label` that was the app's name takes the new name. To remount, pass `handle.where()` back as `mount(…, { at })`.
+6. **Start what it loads before it asks.** Each face is a chunk of its own, fetched as it is first drawn: `preload(face)` starts it beside the host's own requests, and `handle.drawn()` waits for the face to be on the page. `onError` and `onReady` tell the host failures (class and module only) and the time to the first face drawn.
+
+### Knowing when a place has drawn
+
+A face on the page is not yet a place a person can read: its parts, the fonts, a worker view's drawing and its pictures may still be on their way. Once the place the reader is on has drawn and settled — every part drawn on it arrived or said it did not, the fonts and images loaded, each worker view drawn or stopped (what stands in its place drawn), and nothing moving for 200 ms — the embed's root wears `data-graview-drawn` (`DRAWN_ATTRIBUTE`), its value the place's path, and `mount`'s `onDrawn(place)` is told where it is as `where()` says it (`EmbedWhere`: face, path, stop). A move to another page, stop or face takes the attribute off in the commit that moves, and the next place puts it back as it settles; a place that never stops moving is said drawn after ten seconds all the same. A worker view's region says `data-worker-view-drawn` once it has drawn what it was last shown. A React host that wants the face committed, not settled, passes `onFaceDrawn` to `<Embed>`.
+
+Picture a place by waiting for the attribute, never a timer:
+
+```ts
+await page.waitForSelector(`[data-graview-drawn="/places/the-week"]`);
+```
+
+### A view proposed and not kept
+
+A chat that proposes a worker view can try it headless and be told what it drew in words; to see it at a phone's width in dark it had to keep it first. `draftView` (`EmbedDraftView`) draws one for the seat at the keyboard without keeping it — its `manifest` and its `source` (or `worker`, and anything else a `WorkerViewDefinition` takes but `draft`):
+
+```ts
+mount(root, { app, remote, routing: "address", draftView: { manifest, source, author: "Proposed by Claude" } });
+```
+
+It is drawn where its manifest attaches — the home, a kind's list at the place its title names (`/places/<title>`), each record's page — under one line, "Draft — <title> · Not kept", in a group named "Draft: <title>" (`[data-graview-draft-view="<name>"]`). A kept view of the same name is the one it stands in for: it is drawn nowhere beside the draft. A draft that is stopped says why in its place rather than standing the kind's own face there. Nothing of it is kept: it is registered under no name, so the place menu offers no Hide or Delete and `keptViews` is asked nothing; the store is not written; the next page, handed no draft, has none. A host that registers one itself passes `draft: true` to `registerWorkerView`. Writing the view itself is `graview-worker-view`.
+
+### Pictures of places, with no product
+
+`graview preview <document.json>` serves the store and Graview's own faces over a document; `graview shots <document.json> --places a,b --scheme both
+
+--width 390,1280` photographs places to PNGs, waiting for `data-graview-drawn` before each. Both take a proposed view as `--view <view.js> --manifest <manifest.json>`, drawn as a draft where it attaches; for `shots`, name its place's path (`/places/<title>`).
+
+### Then find out whether it worked
+
+```sh
+pnpm build && npx graview check ./dist/domain/app.js   # the declaration is still whole
+pnpm typecheck                                          # the host's options, no casts
+graview shots app.json --view view.js --manifest manifest.json --places /places/the-week --scheme both --width 390
+```
+
+Then, on the host's page: reload a deep address and land on it; press Back after the switch and come back; sign in as a member and see no "sit as" in the menu; say a notice and see it at the app's foot. Read `data-graview-drawn` before and after a move: off in the commit that moves, back with the new path. Open a draft and see its line, and reload without it and see none.
+
+### What the check cannot see
+
+- Whether the picture is the right one. `data-graview-drawn` says the place settled, not that it shows what the article or the proposal says; look at each shot, in both schemes and at a phone's width.
+- Whether the host answers every address under its base. A route the host's server does not answer is a 404 on reload that nothing in the app can see.
+- Whether a draft is worth keeping. Drawn is not good; the person decides.
+
+---
+
+Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
+
+The page: https://graview.dev/docs/skills/graview-host-page.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
+
+---
+
 Source: https://graview.dev/docs/skills/graview-invariant.html
 
 # graview-invariant
 
-`graview-invariant` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
+`graview-invariant` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3242,7 +3323,7 @@ Source: https://graview.dev/docs/skills/graview-lens.html
 
 # graview-lens
 
-`graview-lens` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
+`graview-lens` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3294,9 +3375,7 @@ Start it with the scaffolder — `graview lens grounds-map --roles regions,marke
 
 `bar` is the framework's own row (`ArrangeBar`), drawn at full fidelity unless declined; `nodes` are the members as arranged; `arranged.groups` are there when the picture has a place for headings, as the calendar's agenda does. Declare `arrangedBy` on the app's `lenses` entry too, in the grammar (`{ group: "held-at" }`), so `graview check` holds it to the bound kind and `graview describe` can say it. A person who arranged the list can ask your picture the same thing in the same words.
 
-1. **Declare a shipped lens; register only your own.** A `lenses` entry with a `title` is a PLACE the framework draws with no registration — a tab, a name on its district, a page at `/places/<as>`: `{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }`. A status board: `{ name: "columns", title: "The board", bindings: { task: { column: "status" } } }`; a card moves only by an act setting `status` (`book` where its `allowedWhen` holds): dragged, carried by the keyboard (Space, arrows, Space) or from its menu's "Move to ›". Its options: `search` (the fields Find looks in; past 20 cards Find shows unasked), `filters` (chips; a calendar and a coverage take both), `collapsed` and `hidden` columns, `cap` (newest per column), `move: true` for a button. `on` names the kind when the bindings do not (reach; a coverage over its columns), and `options` are data (`SHIPPED_LENSES[name].options`): - a calendar's `range: "years"` with `horizon: { years: 30, title: "The career" }` spans its records, first to last, as well as `years` from `today`; `from` and `to` (years: 1962, 2023) pin its ends; - a coverage's `sort` (rows) and `columnSort`, and a status board's `sort` (cards): a field or `{ by, direction }`, `label` the name, held to the kind (`lens-sort`); - a coverage with no columns, or no link over its relation, says so ("No genres yet: link songs to genres.") and lists no rows. A lens you wrote is registered with a title as the fourth argument: `.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })`. Untitled, it is reachable only by focusing the group.
-
-1. **Before writing a picture, try blocks.** `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }` is a place drawn from the closed block set (headline, figure, list — `graview-node-kind`), each record by its own row or card. Nothing in it runs; a chat can write it. A place read, not written, says `create: false`: its page drops the forms that add one. Write code only for what blocks cannot say: a grid of cells, positions.
+1. **Register your own with a title, and declare the rest.** A lens you wrote is registered with a title as the fourth argument: `.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })`. Untitled, it is reachable only by focusing the group. Before writing one, look for it among the shipped lenses — a calendar, a status board, a coverage, a blocks place — which are declared as data, with no registration: `graview-shipped-lens`.
 
 ### Roles live in two places, and they do different jobs
 
@@ -3310,7 +3389,7 @@ Start it with the scaffolder — `graview lens grounds-map --roles regions,marke
 pnpm build && npx graview check ./dist/domain/app.js
 ```
 
-The checker reads `lenses` in `defineApp` and reports `lens-role-unbound`, `lens-binding-missing-field` and `lens-binding-undeclared-kind` — and, for a titled lens that cannot draw, why, at its path (`lens-cannot-draw`, `lens-option-unknown`, which `add-lens` refuses, `lens-title-taken`); `graview describe` lists the places that draw. Report the output.
+The checker reads `lenses` in `defineApp` and reports `lens-role-unbound`, `lens-binding-missing-field` and `lens-binding-undeclared-kind`; what it says of a titled shipped lens is `graview-shipped-lens`. `graview describe` lists the places that draw. Report the output.
 
 **And prove the reuse.** This is the claim a lens exists to support, and the one the checker cannot make for you — it NOTES every lens in `lenses` that the framework did not ship (`lens-authored-here`) so the question gets asked out loud, and the answer is yours. Write a test that builds it against a domain it was not designed for, then point at it with `provenBy: "tests/lens-reuse.test.ts"` and the note stands down:
 
@@ -3342,7 +3421,7 @@ Source: https://graview.dev/docs/skills/graview-linked-records.html
 
 # graview-linked-records
 
-`graview-linked-records` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
+`graview-linked-records` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3399,7 +3478,7 @@ Source: https://graview.dev/docs/skills/graview-lists.html
 
 # graview-lists
 
-`graview-lists` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
+`graview-lists` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3469,7 +3548,7 @@ Source: https://graview.dev/docs/skills/graview-new-app.html
 
 # graview-new-app
 
-`graview-new-app` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
+`graview-new-app` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3590,7 +3669,7 @@ Source: https://graview.dev/docs/skills/graview-node-kind.html
 
 # graview-node-kind
 
-`graview-node-kind` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
+`graview-node-kind` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3695,7 +3774,7 @@ Source: https://graview.dev/docs/skills/graview-pages.html
 
 # graview-pages
 
-`graview-pages` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
+`graview-pages` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3831,7 +3910,7 @@ Source: https://graview.dev/docs/skills/graview-permissions.html
 
 # graview-permissions
 
-`graview-permissions` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
+`graview-permissions` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3927,7 +4006,7 @@ Source: https://graview.dev/docs/skills/graview-port-app.html
 
 # graview-port-app
 
-`graview-port-app` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
+`graview-port-app` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4009,7 +4088,7 @@ Source: https://graview.dev/docs/skills/graview-seed.html
 
 # graview-seed
 
-`graview-seed` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
+`graview-seed` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4083,7 +4162,7 @@ Source: https://graview.dev/docs/skills/graview-ship.html
 
 # graview-ship
 
-`graview-ship` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
+`graview-ship` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4171,11 +4250,88 @@ The page: https://graview.dev/docs/skills/graview-ship.html · Every Graview doc
 
 ---
 
+Source: https://graview.dev/docs/skills/graview-shipped-lens.html
+
+# graview-shipped-lens
+
+`graview-shipped-lens` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
+
+Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
+
+## The skill
+
+## Declare a shipped lens
+
+Most pictures an app wants are already written. A `lenses` entry with a `title` is a PLACE the framework draws with no registration — a tab, a name on its district, a page at `/places/<as>`:
+
+```ts
+lenses: [
+  { name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } },
+  { name: "columns", title: "The board", bindings: { task: { column: "status" } }, options: { cap: 50 } },
+]
+```
+
+Writing a lens of your own, one that binds roles so another domain can reuse it, is `graview-lens`. **Declare before you write**: a shipped lens is data, so a document, a chat and `add-lens` can all say it.
+
+### The lenses and what each takes
+
+`options` are data, and each lens takes only its own (`SHIPPED_LENSES[name].options` on `@graview/core`); read that table rather than guessing a key:
+
+| Lens | Binds | Roles | Options |
+| --- | --- | --- | --- |
+| `timeline` | fields | `start`, `end` | `columns`, `extent`, `tick`, `minWindow`, `arranging` |
+| `calendar` | fields | `start` | `today`, `range`, `weekStartsOn`, `perCell`, `horizon`, `arranging`, `search`, `filters` |
+| `columns` | fields | `column` | `sort`, `search`, `filters`, `move`, `collapsed`, `cap`, `hidden` |
+| `coverage` | entities | `rows`, `columns`, `link` | `rowRef`, `rowGroup`, `groupOrder`, `requiredGroups`, `requiredVia`, `badge`, `columnGroup`, `sort`, `columnSort`, `search`, `filters` |
+| `board` | entities | `slots`, `x`, `y`, `fill` | `fillFrom`, `slotCode`, `zones`, `aspect`, `emptyLabel`, `pickTarget`, `arranging`, `arrange` |
+| `plan` | entities | `regions`, `outline` | `hues`, `aspect`, `undrawnLabel`, `strayLabel`, `draw`, `place`, `help` |
+| `reach` | nothing | — | — |
+| `blocks` | nothing | — | `blocks` |
+
+A **fields** lens binds a kind's own fields onto its roles (`bindings: { task: { start: "due" } }`); an **entities** lens binds roles onto whole kinds and edges (`{ rows: { kind: "skill" }, columns: { kind: "person" }, link: { edge: "develops" } }`). `on` names the kind a place stands on when the bindings do not (reach; a coverage over its columns).
+
+- **A status board** (`columns`) draws a kind's records in columns by one choice field, in its declared order. A card moves only by an act setting that field (`book` where its `allowedWhen` holds): dragged, carried by the keyboard (Space, arrows, Space) or from its menu's "Move to ›". `search` names the fields Find looks in (past 20 cards Find shows unasked), `filters` the chips, `collapsed` columns open shut, `hidden` ones are not drawn, `cap` keeps each column to its newest (1 to 500), and `move: true` puts a Move button under each card.
+- **A calendar** opens at `range` — `day`, `week`, `month`, `quarter`, `year`, `years` or `agenda` — on `today` (`"YYYY-MM-DD"`, else the day it is drawn). `range: "years"` with `horizon: { years: 30, title: "The career" }` spans its records, first to last, as well as `years` from `today`; `from` and `to` (years: 1962, 2023) pin its ends.
+- **A timeline** needs columns: named in `columns`, or read from the choices of the field its `column` role is bound to.
+- **A coverage**'s `sort` orders its rows and `columnSort` its columns; a status board's `sort` orders its cards: a field or `{ by, direction }`, `label` the name, held to the kind. A coverage with no columns, or no link over its relation, says so ("No genres yet: link songs to genres.") and lists no rows.
+- **A blocks place** is drawn from the closed block set (headline, figure, list — `graview-node-kind`), each record by its own row or card: `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }`. Nothing in it runs; a chat can write it. Write code only for what blocks cannot say: a grid of cells, positions.
+
+Any titled place may say `create: false` when it is read, not written (its page drops the forms that add one), `hidden: true` to keep it off the lists while it stays a link target, and `arrangedBy` in the grammar (`{ group: "held-at" }`) for how it opens, held to the bound kind.
+
+### Then find out whether it worked
+
+```sh
+pnpm build && npx graview check ./dist/domain/app.js
+```
+
+The checker holds every titled lens and says, at its path, what it will not draw and what it ignores:
+
+- `lens-option-unknown` — a key the lens does not take, in one sentence and its fix: "The columns lens takes no option "shade", so "Work" ignores it." / "Use one of: sort, search, filters, move, collapsed, cap, hidden." A declaration carrying one still compiles, with the warning; **`add-lens` refuses it** at `edits.<i>.options.<key>`, and a change sent as a JSON patch or a whole document is judged by `lensOptionsRefused(stored, proposed)` (`@graview/core/document`): an error for each such key the same lens did not already carry.
+- `lens-cannot-draw` — it binds no kind, its board's column field is not a choice, its timeline has no columns, its calendar's `today` is not a date or its `range` not one it opens at, it stands on what is not a kind, or its title has nothing to make an address of.
+- `lens-not-shipped` — a title on a lens the framework does not draw; `lens-title-taken` — two pictures on one kind under one title; `lens-options-not-an-object`, `lens-sort`, `lens-horizon`, `lens-create` and `lens-hidden-untitled` say the rest.
+- The bindings themselves: `lens-role-unbound`, `lens-binding-missing-field` and `lens-binding-undeclared-kind`.
+
+`graview describe` lists the places that draw. Report the output, then open each place on both faces and look.
+
+### What the check cannot see
+
+- Whether the place is the right picture. A calendar of what has no date that matters, or a board over a field nobody moves, draws without a finding; open it and ask whether a person would reach for it.
+- Whether its options read well. `cap`, `collapsed` and `sort` are held to the kind, not to what a person needs first; look at it full.
+- Whether a card can be moved by the seat who needs to. The board moves by the acts the seat may run; sit as them and try it (`graview-permissions`).
+
+---
+
+Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
+
+The page: https://graview.dev/docs/skills/graview-shipped-lens.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
+
+---
+
 Source: https://graview.dev/docs/skills/graview-sight.html
 
 # graview-sight
 
-`graview-sight` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
+`graview-sight` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4253,7 +4409,7 @@ Source: https://graview.dev/docs/skills/graview-studio.html
 
 # graview-studio
 
-`graview-studio` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
+`graview-studio` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4312,7 +4468,7 @@ Source: https://graview.dev/docs/skills/graview-view-drawing.html
 
 # graview-view-drawing
 
-`graview-view-drawing` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
+`graview-view-drawing` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4397,11 +4553,91 @@ The page: https://graview.dev/docs/skills/graview-view-drawing.html · Every Gra
 
 ---
 
+Source: https://graview.dev/docs/skills/graview-view-forms.html
+
+# graview-view-forms
+
+`graview-view-forms` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
+
+Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
+
+## The skill
+
+## Forms in a worker view
+
+A worker view (`graview-worker-view`: its manifest, its global, its links and its limits) changes records only by asking for the acts its manifest names. **Where every member sees every record, `graview.act(name, args)` applies as given. Anywhere else only a press applies an act** — a person's click on an element with `data-act`, or a field of theirs that saves — because a view's code is never handed what a person types where sight is not total, and so cannot put words in their mouth.
+
+### A press
+
+An element with `data-act` is a press. Its arguments come only from three places: the record it is bound to (`data-record`, on it or on an element around it), the manifest's constants (an `acts` entry with `as` and `constants`), and the fields in its `fieldset`, named for the act's arguments and typed by the person:
+
+```html
+<fieldset>
+  <input name="summary" placeholder="What it is">
+  <button data-act="set-summary" data-record="package:start">Say it</button>
+</fieldset>
+```
+
+A field the view filled (`value="…"`) is the view's until the person empties it, and a press carrying it is refused. A radio or a select is the person's pick, not their words: its value goes only if it is one the act declares (an enum's option) or a record the view was shown. A view may empty a field after a press. A press on an act the seat may not run there is refused, and the view hears why.
+
+### A record's own text, to edit
+
+To offer a record's own text to edit, let the host fill it: `data-prefill` names the field, and `name` is the same.
+
+```html
+<fieldset data-record="deliverable:email">
+  <textarea name="draft" data-prefill="draft"></textarea>
+  <button data-act="set-draft">Save the draft</button>
+</fieldset>
+```
+
+The host fills an empty `input` or `textarea` with the record's whole value, line breaks kept, read through the viewer's sight, when an act in the fieldset writes that field of that record and the person may run it there; otherwise it stays empty, so a seat that may not write the field is offered nothing to edit. The person edits it in place, and it goes only back into that field: a press carrying it anywhere else is refused `untyped`. `graview-worker-view`'s `examples/a-record.js` offers "Edit draft" this way.
+
+### A field that saves as it is typed
+
+In a `fieldset data-record`, a field that carries its own act saves with no button:
+
+```html
+<textarea name="notes" data-prefill="notes" data-act="save-notes" data-save="input" data-debounce="1500"></textarea>
+```
+
+The host saves it once the person pauses for `data-debounce` milliseconds (1 000 when it is left out, held to 250–10 000), at once when they leave the field, and as the view goes, whatever was still waiting. `data-save="change"` saves on the field's `change` alone. A save is a press in every way but the click: the act is the field's own `data-act`, its record and its fieldset's fields are read as a press reads them and held to the same rules — only what the person typed, a prefilled value only back where it came from, under their grants — and a click into the field is not a press.
+
+### Hearing what became of it
+
+The press applies before the view hears it, so the view never decides whether it happened: a bound press's `click` carries `event.pressed`, and every act a press or a save asked for comes back as an `acted` event on the bound element, `event.pressed` holding `as`, `ok`, and `reason` and `message` when it was refused:
+
+```js
+graview.on("input", "textarea", () => draw("Saving…"));
+graview.on("acted", "textarea", (e) => draw(e.pressed.ok ? "Saved" : e.pressed.message));
+```
+
+Say the refusal's `message` as it is: it is the policy's sentence, or the host's. `examples/a-call-sheet.js` is a whole one: a call's notes, filled by the host, saved as they are typed, "Saving…" on `input` and "Saved" on `acted`.
+
+### Then find out whether it worked
+
+1. `graview check` the app the view writes to: a form is only as sound as the acts it asks for. `checkManifest(manifest, store)` from `@graview/guest/host/views` must say nothing; it refuses an act the app does not declare.
+2. Run it headless as a member who may see less than you: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It reports `act` for an act its manifest does not name, and says when a field's `data-save` would save nothing: no `data-act` or `name`, no fieldset bound to a record, a `data-save` other than `input` or `change`, a `data-debounce` it does not read, or a `data-save` on what is not a field.
+3. Open it on both faces as that member. Press each bound button with typed words, then again with a field the view filled. The first applies and the second is refused. A prefilled field is filled only for a seat that may write it: open it as one who may not, and it is empty.
+4. Type into a field that saves, stop, and see "Saved"; type again and leave it at once, and see the save land without the pause.
+
+### What the check cannot see
+
+`graview check` judges the declaration, not the form. It cannot see a field named for the wrong argument, a button that says "Save" over an act that sends, or a view that says "Saved" without waiting for `acted`. A headless run presses nothing and lets no pause pass, so it cannot see a save land; only pressing and typing on the faces, as a seat with narrow sight, does. Nor can it see a form that asks for what the person should not have to type.
+
+---
+
+Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
+
+The page: https://graview.dev/docs/skills/graview-view-forms.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
+
+---
+
 Source: https://graview.dev/docs/skills/graview-worker-view.html
 
 # graview-worker-view
 
-`graview-worker-view` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+`graview-worker-view` is one of Graview's 22 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4427,7 +4663,7 @@ Every view comes with a manifest the host enforces:
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
-- `pictures: true` (or `{ width }`) hands each file on a record as an address the host made, never its path, and lets the view place a video and open the full-screen viewer (`graview-view-drawing`).
+- `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path, and lets the view place a record's video (`<graview-video>`) and open the host's full-screen viewer: `graview-view-drawing` says how a view shows them.
 
 A manifest that names a kind, an edge or an act the app does not declare is refused before the view starts.
 
@@ -4445,7 +4681,7 @@ graview.navigate("offer:7")     // a record, else a place or a kind's list by sl
 graview.navigate({ place: "features", where: { stage: "building" }, section: "Shipping soon" })
 ```
 
-`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made), and `locale` and `timeZone`: say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone })`, the clock the rest of the app says it on, never a zone of your own. `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
+`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made), and `locale` and `timeZone`: say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, hour: "numeric", minute: "2-digit" })`, the clock the rest of the app says it on, never a zone of your own. `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
 
 ```js
 graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
@@ -4459,41 +4695,15 @@ HTML, SVG and one stylesheet, drawn with the app's `--graview-*` tokens so light
 
 `<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows, on both faces. `<a href="https://…">` is drawn as text. A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places.
 
-A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in navigate, `data-filter="stage:building"` on a link — the words the list's own arranging line writes, so the address is `/features?filter= stage%3Abuilding` and can be shared. A lens narrows the records it is handed; a blocks lens lists what its own `where` says. Any destination may take a **section**, a heading's words or an element's id (`section: "Every feature"`, `data-section`): the page scrolls there and gives it the keyboard. On the scene a list is the kind's stop narrowed (`in.filter`). A filter on a field the kind lacks, or a choice it lacks, goes nowhere and says why, so link to the list narrowed rather than to a lens per filter; a lens kept only as a link target can be hidden (set-lens-hidden, `graview-pages`).
+A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in navigate, `data-filter="stage:building"` on a link — the words the list's own arranging line writes, so the address is `/features?filter= stage%3Abuilding` and can be shared. A lens narrows the records it is handed; a blocks lens lists what its own `where` says. Any destination may take a **section**, a heading's words or an element's id (`section: "Every feature"`, `data-section`): the page scrolls there and gives it the keyboard (`#every-feature`). On the scene a list is the kind's stop narrowed (`in.filter`); a section is looked for there too. A filter on a field the kind lacks, or a choice it lacks, goes nowhere and says why (`Features have no field "stag" to filter by; they filter by …`), so link to the list narrowed rather than to a lens per filter; a lens kept only as a link target can be hidden (set-lens-hidden, `graview-pages`).
 
 ### Writes
 
-An act must be in the manifest. If every member of the app sees every record, `graview.act` applies it as given. Otherwise **only a press applies an act**: a person's click on an element with `data-act`. Its arguments come only from the record it is bound to (`data-record`, on it or around it), the manifest's constants, and the fields in its `fieldset`, named for the act's arguments and typed by the person:
-
-```html
-<fieldset>
-  <input name="summary" placeholder="What it is">
-  <button data-act="set-summary" data-record="package:start">Say it</button>
-</fieldset>
-```
-
-A field the view filled (`value="…"`) is the view's until the person empties it, and a press carrying it is refused. To offer a record's own text to edit, let the host fill it: `data-prefill` names the field, and `name` is the same.
-
-```html
-<fieldset data-record="deliverable:email">
-  <textarea name="draft" data-prefill="draft"></textarea>
-  <button data-act="set-draft">Save the draft</button>
-</fieldset>
-```
-
-The host fills it with the record's whole value, line breaks kept, when an act in the fieldset writes that field of that record and the person may run it there; otherwise it stays empty. The person edits it in place, and it goes only back into that field. A view may empty a field after a press. A radio or a select is the person's pick, not their words: its value goes only if it is one the act declares (an enum's option) or a record the view was shown. The press applies before the view hears it: `event.pressed`, and `acted` after every act.
-
-In a `fieldset data-record`, a field saves as it is typed, no button:
-
-```html
-<textarea name="notes" data-prefill="notes" data-act="save-notes" data-save="input" data-debounce="1500"></textarea>
-```
-
-Saved when the person pauses (`data-debounce`, default 1 000 ms) or leaves it, by a press's rules. Say Saving… on `input`, Saved on `acted` (`examples/a-call-sheet.js`).
+An act must be in the manifest. Where every member sees every record, `graview.act` applies it as given; anywhere else **only a press applies an act**: a person's click on a `data-act`, or a field of theirs that saves. How those are written and heard is `graview-view-forms`.
 
 ### Limits
 
-About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Work a view schedules with timers between pushes is not timed per push. Never spin: the page stays responsive, the person.s CPU does not.
+About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set. Work a view schedules with timers between pushes is not timed per push. It may keep its worker busy just under the heartbeat's 5 s; the page stays responsive, the person's CPU does not: never spin.
 
 ### Worked examples
 
@@ -4507,7 +4717,7 @@ views: (schema, registry) => registerWorkerView(registry, { manifest, worker: { 
 pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));
 ```
 
-A view with `attach: "home"` given to `registerWorkerView` is the home's own view: the routed home's body, the page the app opens on, and the app's declared home is drawn if it fails.
+A view with `attach: "home"` given to `registerWorkerView` is the home's own view: the routed home's body, the page the app opens on — full width under the bar on a desk too — and the app's declared home is drawn if it fails.
 
 ### Then find out whether it worked
 
@@ -4515,7 +4725,7 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. Run it on an empty seed too. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
 3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means the view never ran: a page with a Content-Security-Policy needs `worker-src blob:` and `style-src 'unsafe-inline'`, and the note under the plain face names what it lacks.
 4. Toggle the app to dark. Does the view restyle?
-5. Press each bound button with typed words, then again with a field the view filled. The first applies and the second is refused. A prefilled field is filled only for a seat that may write it.
+5. Follow each link, narrowed and to a section, and see it land where it says. A view that writes is pressed as `graview-view-forms` says.
 
 ### What the check cannot see
 
@@ -5488,7 +5698,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 381 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 387 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -5502,10 +5712,10 @@ This is that declaration, compiled in your browser by the same compiler `graview
 
 | Kind | What it is | Records |
 | --- | --- | --- |
-| `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 58 |
+| `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 61 |
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
 | `entry` | One subpath a package exports, as a product imports it. | 92 |
-| `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 19 |
+| `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 22 |
 | `check` | A thing graview check can say, read out of the checker's source. | 106 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |
 | `concept` | One of the ideas a Graview declaration is made of: not in the repository, the reason it is shaped the way it is. | 7 |
