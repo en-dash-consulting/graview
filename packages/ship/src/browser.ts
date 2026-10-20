@@ -4,6 +4,7 @@
  * never meets `node:fs` through the file adapter.
  */
 export {
+  BROWSER_DATABASE,
   browserStartsFresh,
   createBrowserAdapter,
   forgetFreshParam,
@@ -12,6 +13,7 @@ export {
   rememberedPrincipal,
 } from "./browser-adapter.js";
 export type { BrowserAdapter, BrowserAdapterOptions, StorageLike } from "./browser-adapter.js";
+export type { IDBFactoryLike } from "./indexed-entries.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
 export { countSteps, primitivesFor, sayStep, stepsMigration } from "./steps.js";
 export type { MigrationStep, StepCount } from "./steps.js";

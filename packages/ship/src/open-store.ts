@@ -33,8 +33,8 @@ import type { GraphSnapshot } from "./snapshot.js";
 export interface OpenStoreOptions<S extends AnySchema> {
   readonly app: GraviewApp<S>;
   readonly adapter: PersistenceAdapter<string> & {
-    loadMeta?(scope: string): StoredMeta | null;
-    saveMeta?(scope: string, meta: StoredMeta): void;
+    loadMeta?(scope: string): StoredMeta | null | Promise<StoredMeta | null>;
+    saveMeta?(scope: string, meta: StoredMeta): void | Promise<void>;
   };
   readonly scope?: string;
   /** First-run data when nothing is stored yet. */
@@ -154,7 +154,7 @@ export async function openStore<S extends AnySchema>(
   const horizon = checkpoint?.seq ?? 0;
   let seq = horizon + persisted.length;
 
-  const meta = adapter.loadMeta?.(scope) ?? null;
+  const meta = (await adapter.loadMeta?.(scope)) ?? null;
   /*
    * A SNAPSHOT IN A NEWER FORMAT IS NOT FOLDED (FR-31). A rolled-back
    * framework meeting what its successor wrote says so — the host refolds
@@ -338,7 +338,7 @@ export async function openStore<S extends AnySchema>(
    */
   try {
     if (stored === null || migrated.length > 0 || rebuilt) await adapter.save(scope, store.snapshot());
-    adapter.saveMeta?.(scope, { version: target, ...formatStamp() });
+    await adapter.saveMeta?.(scope, { version: target, ...formatStamp() });
   } catch (error) {
     report(error);
   }

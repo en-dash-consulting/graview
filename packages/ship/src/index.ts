@@ -3,6 +3,7 @@ import "@graview/core/field-sight";
 export { createFileAdapter } from "./file-adapter.js";
 export type { FileAdapter } from "./file-adapter.js";
 export {
+  BROWSER_DATABASE,
   browserStartsFresh,
   createBrowserAdapter,
   forgetFreshParam,
@@ -11,6 +12,7 @@ export {
   rememberedPrincipal,
 } from "./browser-adapter.js";
 export type { BrowserAdapter, BrowserAdapterOptions, StorageLike } from "./browser-adapter.js";
+export type { IDBFactoryLike } from "./indexed-entries.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
 export { countSteps, primitivesFor, primitivesForSteps, sayStep, stepsMigration } from "./steps.js";
 export { applySteps, contentOperation, SEED_SYNC_AUTHOR, seedSteps } from "./sync-seed.js";

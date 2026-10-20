@@ -20,6 +20,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { stored } from "./lib/stored.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -206,11 +207,11 @@ try {
     const opened = async () => {
       await bed.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 120_000 });
       await bed.waitForTimeout(900);
-      return bed.evaluate(() => {
-        const stored = JSON.parse(localStorage.getItem("graview:seedbed:snapshot") ?? "null");
+      const kept = await stored(bed, "graview:seedbed:snapshot");
+      return bed.evaluate((nodes) => {
         const gardeners = document.querySelector('[data-graview-view="kind:gardener"]')?.textContent?.trim() ?? null;
-        return { nodes: stored?.nodes?.length ?? 0, gardeners, address: window.location.search };
-      });
+        return { nodes, gardeners, address: window.location.search };
+      }, kept?.nodes?.length ?? 0);
     };
     const pressInMenu = async (label) => {
       await bed.click('[data-testid="profile-button"]');
@@ -232,10 +233,10 @@ try {
     await flagged.goto(`${at("seedbed")}/?theme=light&empty=1`, { waitUntil: "load" });
     await flagged.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 120_000 });
     await flagged.waitForTimeout(900);
-    const byFlag = await flagged.evaluate(() => ({
-      nodes: JSON.parse(localStorage.getItem("graview:seedbed:snapshot") ?? "null")?.nodes?.length ?? 0,
-      address: window.location.search,
-    }));
+    const byFlag = {
+      nodes: (await stored(flagged, "graview:seedbed:snapshot"))?.nodes?.length ?? 0,
+      address: await flagged.evaluate(() => window.location.search),
+    };
     await flagged.close();
     report.steps.garden = { planted, offered, emptied, reloaded, restored, byFlag, errors: gardenErrors };
     await gardenContext.close();
