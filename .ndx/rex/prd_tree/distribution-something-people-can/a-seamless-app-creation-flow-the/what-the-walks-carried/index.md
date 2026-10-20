@@ -26,6 +26,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [graview view check runs a one-record view with a record, and reckons pictures over what it draws](./view-check-runs-a-record-view-with-a-record.md) | completed |
 | [graview shots --places takes a draft view's title](./shots-takes-a-draft-views-title.md) | completed |
 | [A status board says how many records the lifecycle hides](./a-board-says-how-many-are-past.md) | pending |
-| [graview shots and graview preview picture an app declared in code](./shots-and-preview-take-an-app-in-code.md) | pending |
+| [graview shots and graview preview picture an app declared in code](./shots-and-preview-take-an-app-in-code.md) | completed |
 | [The pages' resting-pointer chips test holds under full-suite load](./the-resting-pointer-chips-test-holds-under-load.md) | pending |
 | [The surfaces Walkthrough XIII had no time for are walked](./the-surfaces-walk-xiii-did-not-reach.md) | pending |

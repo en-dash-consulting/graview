@@ -58,7 +58,8 @@ export { backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, connectio
 export { heldBy, holdFileOf, holdStore, sayHeld } from "./store-hold.js";
 export type { StoreHold, StoreHolder } from "./store-hold.js";
 export type { PreviewPage } from "./cli.js";
-export { previewPrincipal, servePreview } from "./serve-preview.js";
+export { PREVIEW_APP_PATH, previewPrincipal, servePreview } from "./serve-preview.js";
+export { bundleAppForPage, findBundler, NO_BUNDLER } from "./preview-app.js";
 export type { Preview, PreviewOptions } from "./serve-preview.js";
 export type { StoreBackend } from "./cli.js";
 export {

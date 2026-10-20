@@ -28,8 +28,15 @@ import type { GraphSnapshot } from "./snapshot.js";
  * a place can be linked and reloaded.
  */
 export interface PreviewOptions {
-  /** The declaration document, as read from its file. */
-  readonly document: unknown;
+  /** The declaration document, as read from its file. Or `code`. */
+  readonly document?: unknown;
+  /**
+   * AN APP DECLARED IN CODE (W-245), in place of a document: the app as
+   * Node loaded it (`loadApp`, as `graview check` loads one), which the store
+   * runs, and its module bundled for the browser (`bundleAppForPage`), which
+   * the page imports from `/graview/app.js` and draws.
+   */
+  readonly code?: { readonly app: GraviewApp<AnySchema>; readonly bundle: string };
   /** The graph a first install starts from. */
   readonly seed?: GraphSnapshot;
   /** The built page's directory: `index.html` and its chunks. */
@@ -93,11 +100,17 @@ function rolesOf(document: unknown): string[] {
   return Array.isArray(roles) ? roles.filter((role): role is string => typeof role === "string") : [];
 }
 
-/** The seat a preview sits in when none is named: a person who may do everything the document lets anyone do. */
+/** The seat a preview sits in when none is named: a person who may do everything the document — or the app in code — lets anyone do. */
 export function previewPrincipal(document: unknown, asked: { readonly as?: string; readonly roles?: readonly string[] } = {}): Principal {
-  const roles = asked.roles ?? rolesOf(document);
+  const roles = asked.roles ?? (isApp(document) ? [...(document.policy?.roles ?? [])] : rolesOf(document));
   return { kind: "human", id: asked.as ?? "preview", name: asked.as ?? "You", ...(roles.length > 0 ? { roles: [...roles] } : {}) };
 }
+
+/** Whether what a preview was handed is an app (in code) rather than a document. */
+const isApp = (said: unknown): said is GraviewApp<AnySchema> => typeof said === "object" && said !== null && "schema" in said && typeof (said as { schema?: { kinds?: unknown } }).schema?.kinds !== "undefined";
+
+/** Where the page imports an app in code from. */
+export const PREVIEW_APP_PATH = "/graview/app.js";
 
 export async function servePreview(options: PreviewOptions): Promise<Preview> {
   const host = options.host ?? "127.0.0.1";
@@ -108,13 +121,16 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
   if (!existsSync(index)) {
     throw new Error(`The preview page is not at ${options.page}: build the framework (pnpm build) or reinstall graview.`);
   }
-  const compiled = compileDocument(options.document);
-  if (!compiled.ok) throw new Error(`The document does not compile:\n${sayFindings(compiled.findings)}`);
-  const app = compiled.app as GraviewApp<AnySchema>;
-  const principal = options.principal ?? previewPrincipal(options.document);
+  const code = options.code;
+  if ((code === undefined) === (options.document === undefined)) throw new Error("A preview is of a declaration document or of an app in code: hand it one of them.");
+  const compiled = code ? undefined : compileDocument(options.document);
+  if (compiled && !compiled.ok) throw new Error(`The document does not compile:\n${sayFindings(compiled.findings)}`);
+  const app = code ? code.app : (compiled!.app as GraviewApp<AnySchema>);
+  const principal = options.principal ?? previewPrincipal(code ? code.app : options.document);
   let document = options.document;
   const drafted = options.draftView ? { draftView: options.draftView } : {};
-  let handed = JSON.stringify({ document, compiled: serializeCompiled(compiled), principal, ...drafted });
+  // An app in code is handed as its module, which the page imports; a document with the app compiled from it.
+  let handed = JSON.stringify(code ? { module: PREVIEW_APP_PATH, principal, ...drafted } : { document, compiled: serializeCompiled(compiled!), principal, ...drafted });
   /*
    * A DECLARED LENS HIDDEN OR DELETED FROM THE PLACE MENU (Roadmap
    * f-place-menu-views): the change written into the document this preview
@@ -185,6 +201,7 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
       const more = `${state === undefined ? "" : `,"state":${state}`}${views === undefined ? "" : `,"views":${views}`}`;
       return new Response(more === "" ? handed : `${handed.slice(0, -1)}${more}}`, { headers: { "content-type": "application/json", "cache-control": "no-store" } });
     }
+    if (code && path === PREVIEW_APP_PATH) return new Response(code.bundle, { headers: { "content-type": TYPES[".js"]!, "cache-control": "no-store" } });
     if (path.startsWith("/graview/")) return undefined;
     const file = normalize(join(root, path));
     const served = file.startsWith(root + sep) && extname(file) !== "" && existsSync(file) && statSync(file).isFile() ? file : index;
@@ -204,9 +221,9 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     // And only its own page: a page on another site, or one rebinding its own name to this machine, may not sit in that seat.
     ownOrigin: true,
     where: options.where ?? "memory (gone when the preview stops)",
-    // The page's seat may tidy every view, the declaration's lenses among them, which this preview writes into its document.
-    views: memoryViews({ may: { views: true, lenses: true }, declaration }),
-    mayTidyViews: () => ({ views: true, lenses: true }),
+    // The page's seat may tidy every view, the declaration's lenses among them, which this preview writes into its document; an app in code is not written, so its lenses stay.
+    views: code ? memoryViews({ may: { views: true, lenses: false } }) : memoryViews({ may: { views: true, lenses: true }, declaration }),
+    mayTidyViews: () => ({ views: true, lenses: !code }),
     answer,
   });
   opened = served as unknown as ServedStore<AnySchema>;

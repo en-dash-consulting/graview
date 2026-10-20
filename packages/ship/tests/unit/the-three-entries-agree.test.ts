@@ -86,6 +86,11 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   previewPrincipal: "the CLI",
   Preview: "node:http",
   PreviewOptions: "node:http",
+  PREVIEW_APP_PATH: "the CLI",
+  // An app in code bundled for the preview's page: esbuild, found on disk.
+  bundleAppForPage: "node:module",
+  findBundler: "node:module",
+  NO_BUNDLER: "the CLI",
 };
 
 describe("the runtime entry, beside the main and browser entries", () => {
