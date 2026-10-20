@@ -107,6 +107,12 @@ there. Nothing of it is kept: it is registered under no name, so the
 place menu offers no Hide or Delete and `keptViews` is asked nothing; the
 store is not written; the next page, handed no draft, has none. A host
 that registers one itself passes `draft: true` to `registerWorkerView`.
+To picture several proposals, swap them on the same page with
+`handle.setDraftView(next)` (`null` goes back to the app's own views): the
+attribute comes off and returns once the new draft has settled, and
+`onDrawn` is told again. The pages alone (`@graview/embed/pages`) take the
+same `draftView`, `onDrawn` and `setDraftView`. A framed guest view holds
+the attribute back until it has drawn, or until `limits.readyMs` passes.
 Writing the view itself is `graview-worker-view`.
 
 ## Pictures of places, with no product
