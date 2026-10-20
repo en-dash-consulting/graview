@@ -29,6 +29,9 @@ import { z } from "@graview/core";
  *   `chaired-by`) read from their declaring end (W-135);
  * - talks withdrawn and rejected, workshops canceled: a lifecycle with
  *   retired members (W-105);
+ * - a talk and a workshop each with a `status` in words of its own, named
+ *   together by one rule, so its problem chooses two kinds sharing a field
+ *   (carried from walks XI and XII, W-228);
  * - a calendar over talks AND workshops (W-144), and a policy that refuses
  *   a volunteer almost everything (W-115), sat at by people and an agent
  *   whose ids are not their names (W-114);

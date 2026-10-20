@@ -3998,7 +3998,8 @@
 {"id":"talk:memory-safety-without-garbage-collection-a-field-report-on-a-hospital-s-records-system-15","kind":"talk","title":"Memory Safety Without Garbage Collection: A Field Report on a Hospital's Records System","format":"talk","status":"submitted","minutes":25},
 {"id":"talk:keynote-the-next-ten-years-of-the-program","kind":"talk","title":"Keynote: The Next Ten Years of the Program","format":"keynote","status":"scheduled","startsAt":"2027-09-27T09:00","minutes":45},
 {"id":"talk:keynote-the-next-ten-years-of-the-program-revisited","kind":"talk","title":"Keynote: The Next Ten Years of the Program, Revisited","format":"keynote","status":"scheduled","startsAt":"2027-09-27T16:00","minutes":45},
-{"id":"workshop:hands-on-fifty-people-twenty-four-chairs-and-one-projector","kind":"workshop","label":"Hands-on: Fifty People, Twenty-Four Chairs and One Projector","startsAt":"2027-09-26T09:00","capacity":50,"status":"planned"}
+{"id":"workshop:hands-on-fifty-people-twenty-four-chairs-and-one-projector","kind":"workshop","label":"Hands-on: Fifty People, Twenty-Four Chairs and One Projector","startsAt":"2027-09-26T09:00","capacity":50,"status":"planned"},
+{"id":"workshop:hands-on-planning-the-next-ten-years-with-the-keynote-speaker","kind":"workshop","label":"Hands-on: Planning the Next Ten Years, with the Keynote Speaker","startsAt":"2027-09-27T13:00","capacity":20,"status":"planned"}
 ],
 "edges": [
 {"kind":"looks-after","from":"staff:aiyana-whitehorse","to":"room:salle-emile-durkheim"},
@@ -15759,6 +15760,8 @@
 {"kind":"presented-by","from":"talk:keynote-the-next-ten-years-of-the-program-revisited","to":"speaker:zoe-lamarre"},
 {"kind":"proposed-by","from":"talk:keynote-the-next-ten-years-of-the-program-revisited","to":"speaker:zoe-lamarre"},
 {"kind":"held-in","from":"workshop:hands-on-fifty-people-twenty-four-chairs-and-one-projector","to":"room:raum-0-001"},
-{"kind":"led-by","from":"workshop:hands-on-fifty-people-twenty-four-chairs-and-one-projector","to":"speaker:søren-kierkegaard-ødegard"}
+{"kind":"led-by","from":"workshop:hands-on-fifty-people-twenty-four-chairs-and-one-projector","to":"speaker:søren-kierkegaard-ødegard"},
+{"kind":"held-in","from":"workshop:hands-on-planning-the-next-ten-years-with-the-keynote-speaker","to":"room:hall-11"},
+{"kind":"led-by","from":"workshop:hands-on-planning-the-next-ten-years-with-the-keynote-speaker","to":"speaker:zoe-lamarre"}
 ]
 }
