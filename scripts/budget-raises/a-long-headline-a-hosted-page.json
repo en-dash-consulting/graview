@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 385,
+  "gzipped": 110,
+  "changeset": "check-warns-a-headline-bound-to-a-long-field.md",
+  "note": "Raised when a headline bound to a long field came to be warned of and drawn a step smaller: `graview check` says `view-headline-long` where a view's headline binds a long text whole (`document/views.ts`, which a page that compiles its document carries), and a headline past 90 characters says `data-long`, drawn at a heading's size and clamped to four lines (one rule in the blocks' stylesheet). Measured at 585_927 / 203_477 against 585_542 / 203_367 minified and gzipped."
+}

@@ -1557,6 +1557,7 @@ npx graview check --document app.json   # a document</code></pre></div>
 <ul>
 <li><code>view-field</code>, <code>view-name</code>, <code>view-tone</code> — a view spec naming a field the kind lacks, or a tone outside the kit; <code>view-key</code> — two blocks under one key; <code>view-template</code>, <code>view-expression</code> — a template or a condition it cannot read; <code>view-depth</code> — lists nested past three</li>
 <li><code>view-whole-text</code> — a card or row putting a long <code>text</code> field whole in a text block (<code>graview-lists</code> says how a card shows its start)</li>
+<li><code>view-headline-long</code> — a headline bound to a long <code>text</code>, Markdown or long string field whole, which a focus card drew at display size: say it in a <code>text</code> block, or head it with <code>{call|excerpt: 60}</code> (a headline past about 90 characters is drawn a step smaller and clamped to four lines)</li>
 <li><code>computed-cycle</code> — values worked out from each other; <code>computed-clash</code> — a computed name that is already a field; <code>computed-cost</code> — work that grows with the cube of the graph (a warning at the square)</li>
 </ul>
 <p>Then look: <code>graview describe &lt;entry&gt; --place &lt;slug&gt;</code> says each record's card and row as the page draws them, and the page itself shows the blocks in both schemes. Open it as a seat that may not see a listed record: the list is shorter, and the computed value is worked out without it.</p>
