@@ -1,5 +1,35 @@
 # @graview/pages
 
+## 0.1.40
+
+### Patch Changes
+
+- 752da2b: `spatialHref(id, sceneHref = "/")` takes the scene's address, as `placeHref` already did. It answered `/#focus=<id>` whatever the host, so a host whose scene lives at `/scene/places/overview` could not link a page of its own to a record there. Now `spatialHref("plot:north-bed", "/scene/places/overview")` is `/scene/places/overview#focus=plot%3Anorth-bed`, and unsaid it is `/` as before. A project `graview create` writes passes its PagesApp context's `sceneHref` to it. The `@graview/pages` README and the `graview-pages` skill say to set `sceneHref` in the PagesApp context when the scene is not at `/`, and pass it on.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `spatialHref(id)` answers what it did.
+- c3b7ab9: The keyboard reaches a long list's records, a chosen card's acts and the problems in few presses. Walks XI and XII counted what each job costs from the keyboard against the pointer (`pnpm verify journeys`): relating two records on the scene took 31 to 49 presses where the pointer took 3 to 5, the gauntlet's repair 46 against 7, choosing three of its talks 52 against 5, and a list's first box was up to 24 Tabs from its heading. The bar's first stops are now ways past it, unseen until the keyboard is on one (`SkipLinks`, WCAG 2.4.1): on the scene "Skip to <what is chosen>", whose card then opens its acts on its key, "Skip to the picture" and, while a rule is broken, "Skip to the 2 rules that are broken", which opens them; on the pages "Skip to the content" — a list's records where the page is a list — and, on a record's page, "Skip to what can be done", whoever designed the page. A list's own heading is followed by "Skip to the 30 tasks", onto the boxes' one stop, and "Skip to arranging them", onto "Filter". A menu of acts is one Tab stop (`useRoving`): the arrows go down it, Home and End to its ends, a letter to the next act whose words begin with it, and an act's pin is the arrow to its right, out of Tab's way. An ask's choices are one stop the same way, its filter's arrow down goes into them, and an ask opened by its act's own press takes the keyboard, on its filter where the choices are many. `focusInto`, `SkipLinks`, `useRoving`, `rovingItems`, `ROVING` and `ROVING_ITEM` are on `@graview/primitives` and its `/pages`, `SceneSkips` on the main entry, and `AppBar` takes `skips`. Across every example's jobs but making one, the keyboard's presses fell from 1,995 to 1,103 — relating on the scene to 6 to 9, a repair on the scene to 5 to 9, choosing three to 16 to 18; the journeys hold the keyboard to twice the pointer's presses or say why not (`theKeyboardCostsAtMostTwiceThePointer`), and a long list's first box to its own skip (`theKeyboardSkipsIntoALongList`). A hosted page carries 0.0 KB more up front, 12 bytes, the bar's slot for the skips (the compiled page too); the pages face, every face and the embed with the studio are raised by what they measured.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. The bar's first Tab stops are its skips, so a host that walks the bar by Tab from the top of the page reaches the app's mark one or two presses later; the pins in a menu of acts are reached by the arrow from their act, not by Tab.
+- Updated dependencies [d2ef34e]
+- Updated dependencies [b5c1332]
+- Updated dependencies [b98303b]
+- Updated dependencies [bdb45b6]
+- Updated dependencies [686b2e4]
+- Updated dependencies [4088496]
+- Updated dependencies [2ff7c28]
+- Updated dependencies [56b88e1]
+- Updated dependencies [4aa429f]
+- Updated dependencies [752da2b]
+- Updated dependencies [c3b7ab9]
+- Updated dependencies [6fc222b]
+- Updated dependencies [68ebfd2]
+- Updated dependencies [8c8a486]
+  - @graview/primitives@0.1.40
+  - @graview/core@0.1.40
+  - @graview/react@0.1.40
+  - @graview/layout@0.1.40
+  - @graview/tools@0.1.40
+
 ## 0.1.39
 
 ### Patch Changes

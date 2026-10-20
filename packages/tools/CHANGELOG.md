@@ -1,5 +1,35 @@
 # @graview/tools
 
+## 0.1.40
+
+### Patch Changes
+
+- 4088496: A record is brought "in line with the others" only through the relation the others share (the gauntlet's two kinds sharing a field, carried from walks XI and XII). A workshop whose leader presents both of the day's keynotes breaks a rule, and its problem chooses the workshop and the two talks together: the talks are presented by Zoë and the workshop is led by her, so the structure provider read "all but the workshop share Zoë (presented by)" and offered "Add a leader: bring the workshop in line with the others" — an act that ties another relation, to somebody who already leads it — and "Unlink a speaker", which unties one. Now a record whose kind cannot hold the relation is not out of step with it, and an act that says what it ties (`connects` or `severs`) is offered only where it ties that relation; an act that says neither is still read by its arguments, as before. The pages face, every face and the studio handed in are raised by the 0.2 KB each measured.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tool names and schemas are unchanged; the structure provider offers fewer "in line with the others" acts.
+- 68ebfd2: The scene's strip tells a watching harness when an act's own input refuses a press there, as the pages do (carried from W-228 and W-238). The strip and the quick ask show what an act would do before they apply it, so an act offered whole whose argument its input refuses was refused in the preview — said in the strip — and the apply that tells the watch never ran: the same offer was a finding on the pages and passed every harness on the scene. `previewAffordance` takes `{ pressed: { author } }` for the preview of a press about to be applied, and then tells the watch of an input refusal (`tellTheWatchOfAPressRefusedByItsInput`, on `@graview/core`); `useApplyAffordance`'s preview and the quick ask pass it. A preview of what an act would do before anything is pressed still tells nothing, and a form a person filled wrongly is still theirs, not the surface's (the watch reads the press's origin). `pnpm verify watch` holds it with a new claim, `aPressTheStripsPreviewRefusesIsCaught`, over the workspace's own store and strip press. A hosted page carries 0.1 KB more up front for it (the compiled page too), and their budgets are raised by that; the pages face, every face and the studio handed in by what they measured.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tool names and schemas are unchanged. New, additive: `previewAffordance`'s fourth argument `{ pressed }`, and `tellTheWatchOfAPressRefusedByItsInput` on `@graview/core`.
+- Updated dependencies [b5c1332]
+- Updated dependencies [b98303b]
+- Updated dependencies [bdb45b6]
+- Updated dependencies [749a684]
+- Updated dependencies [686b2e4]
+- Updated dependencies [9a8b622]
+- Updated dependencies [a9502b7]
+- Updated dependencies [39106b6]
+- Updated dependencies [2ff7c28]
+- Updated dependencies [04fe262]
+- Updated dependencies [56b88e1]
+- Updated dependencies [4aa429f]
+- Updated dependencies [674748e]
+- Updated dependencies [380c236]
+- Updated dependencies [752da2b]
+- Updated dependencies [ac694b7]
+- Updated dependencies [68ebfd2]
+  - @graview/core@0.1.40
+  - @graview/ship@0.1.40
+
 ## 0.1.39
 
 ### Patch Changes

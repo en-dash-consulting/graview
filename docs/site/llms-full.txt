@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.39)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.40)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -705,6 +705,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.40`](https://graview.dev/docs/releases.html#v0-1-40)
 - [`0.1.39`](https://graview.dev/docs/releases.html#v0-1-39)
 - [`0.1.38`](https://graview.dev/docs/releases.html#v0-1-38)
 - [`0.1.37`](https://graview.dev/docs/releases.html#v0-1-37)
@@ -742,9 +743,26 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.39
+## 0.1.40
 
 Published October 20, 2026 · the current version
+
+Edits kept the moment they are made, labels that keep their space in a focused scene, a keyboard that reaches what it means, and a first draw with no extra round trips.
+
+- **Stores persist in IndexedDB.** A page's store moves from localStorage to IndexedDB, carried forward intact, so a large one survives in Safari; every edit is journaled the moment it is made, so leaving the page loses nothing.
+- **A focused scene gives its words room.** Relation headings sit over their own cards, counts appear once per district, and lines route around labels.
+- **The keyboard reaches what it means.** Skip links into a long list, the chosen card and the problems; a menu of acts is one Tab stop. Keyboard presses across the examples' jobs fell from 1,995 to 1,103.
+- **The first draw needs no extra round trips.** `firstDrawChunks` names what a face's first paint opens, and early fetches wait for it.
+- **Smaller asks:** a drop takes the photo's capture time; the scene opens on the overview and can sit under a host's own bar; `sync-seed`'s dry run refuses what the apply would; `graview preview` stops when told; `graview check` warns of long headlines and templates in code describes; `shots` and `preview` take an app declared in code.
+- **Apps that run the framework from source take their aliases from its exports** (`sourceAliases`), including projects `graview create --link` makes.
+
+**Before you upgrade:** The browser adapter keeps stores in IndexedDB (localStorage stores are carried forward) and `loadMeta`/`saveMeta` return promises; the adapter journals ops (`journal`, `loadJournal`); `mount`'s `bar` takes `{ faces?: false, name?: false }`; the scene with no path opens on the overview (`where().stop` is `#overview=1`); `spatialHref(id, sceneHref)`; `sync-seed` exits 1 on a seed the declaration refuses; `ServedStore.close({ grace })`; new check findings `describe-template-in-code`, `view-headline-long`, `lens-column-written-unsaid`. The hosted page carries about 2 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.40) · [The full changelog for 0.1.40](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0140)
+
+## 0.1.39
+
+Published October 20, 2026
 
 Cards that answer the menu under a base, full-size photos in views, views that save as you type and take a drop, and a page that says when it has drawn.
 
@@ -5974,7 +5992,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 399 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 400 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -5999,7 +6017,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 41 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 42 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made
