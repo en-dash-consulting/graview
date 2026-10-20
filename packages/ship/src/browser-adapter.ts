@@ -23,7 +23,21 @@ export interface BrowserAdapter extends PersistenceAdapter<string> {
    * database, and the log is kept in pieces: `log` holds how many, and
    * `log:0`, `log:1`, … each hold the ops one write appended.
    */
-  keysFor(scope: string): { snapshot: string; log: string; meta: string };
+  keysFor(scope: string): { snapshot: string; log: string; meta: string; through: string; journal: string };
+  /**
+   * THE WRITE-AHEAD JOURNAL, under `journal` in localStorage: the ops
+   * applied whose IndexedDB write has not committed yet, written
+   * synchronously the moment they are applied (`openStore` calls this
+   * inside the apply). IndexedDB's own write lands a transaction later,
+   * and a page that navigates or closes first would lose it. An op is let
+   * go of once the log has committed it and a snapshot that reflects it
+   * has (the snapshot is kept with `through`, the seq of the last op it
+   * reflects). Throws when localStorage refuses even that, and `openStore`
+   * reports it. Absent where the store is kept in localStorage alone.
+   */
+  journal?(scope: string, ops: readonly Operation[]): void;
+  /** What the journal holds for a scope, and the seq of the last op the stored snapshot reflects (-1: none), for `openStore` to replay. */
+  loadJournal?(scope: string): Promise<{ ops: readonly Operation[]; through: number }>;
   /** Where this adapter keeps a store: IndexedDB, or localStorage where IndexedDB would not open or would not take it. */
   keptIn(): Promise<"indexedDB" | "localStorage">;
 }
@@ -81,6 +95,15 @@ const MOST_PIECES = 32;
  * The database opens on the first read, not when the adapter is made, and
  * every read and write waits for the ones asked for before it.
  *
+ * A WRITE IS KEPT WHEN `apply` RETURNS, not when IndexedDB commits it: an
+ * IndexedDB write lands a transaction later, and a person who changed
+ * something and left the page at once lost it. `openStore` writes each op
+ * to a journal in localStorage (`<prefix>:<scope>:journal`) inside the
+ * apply, synchronously; the journal holds only the ops IndexedDB has not
+ * committed yet, and the next open puts back what it holds, each op once
+ * (the snapshot is kept with `<prefix>:<scope>:through`, the seq of the
+ * last op it reflects).
+ *
  * A write that fails (quota, a locked-down browser) THROWS, and `openStore`
  * reports it: an app that believes it remembered and did not is the worst
  * quiet state, so nothing here swallows an error.
@@ -91,6 +114,8 @@ export function createBrowserAdapter(options: BrowserAdapterOptions = {}): Brows
     snapshot: `${prefix}:${scope}:snapshot`,
     log: `${prefix}:${scope}:log`,
     meta: `${prefix}:${scope}:meta`,
+    through: `${prefix}:${scope}:through`,
+    journal: `${prefix}:${scope}:journal`,
   });
   const factory = options.indexedDB ?? (options.storage ? undefined : pageIndexedDB());
   const storage = options.storage ?? (factory ? pageStorageIfAny() : pageStorage());
@@ -98,7 +123,7 @@ export function createBrowserAdapter(options: BrowserAdapterOptions = {}): Brows
   if (!factory) {
     if (!local) throw noStorage();
     const only: Chosen = { backend: local, kept: "localStorage" };
-    return adapterOver(keysFor, async () => only);
+    return adapterOver(keysFor, async () => only, undefined);
   }
 
   let chosen: Promise<Chosen> | undefined;
@@ -115,12 +140,15 @@ export function createBrowserAdapter(options: BrowserAdapterOptions = {}): Brows
         return { backend: local, kept: "localStorage" };
       },
     ));
-  return adapterOver(keysFor, choose);
+  return adapterOver(keysFor, choose, storage);
 }
 
 interface Backend {
   load(scope: string): Promise<GraphSnapshot | null>;
-  save(scope: string, snapshot: GraphSnapshot): Promise<void>;
+  /** `through`: the seq of the last op the snapshot reflects, kept with it in the same write. */
+  save(scope: string, snapshot: GraphSnapshot, through: number | undefined): Promise<void>;
+  /** The seq of the last op the stored snapshot reflects, or -1 when it was kept without one. */
+  loadThrough(scope: string): Promise<number>;
   delete(scope: string): Promise<void>;
   loadLog(scope: string): Promise<Operation[]>;
   appendOps(scope: string, ops: readonly Operation[]): Promise<void>;
@@ -131,14 +159,22 @@ interface Chosen {
   readonly backend: Backend;
   readonly kept: "indexedDB" | "localStorage";
 }
-type Keys = (scope: string) => { snapshot: string; log: string; meta: string };
+type Keys = (scope: string) => { snapshot: string; log: string; meta: string; through: string; journal: string };
 
 /**
  * One adapter over whichever backend was chosen, every call waiting for
  * the ones asked for before it — so a `saveMeta` a page does not await
  * still lands before the `openStore` after it reads.
+ *
+ * With `journalIn`, it also keeps the write-ahead journal there: the ops
+ * applied and not yet committed, written synchronously. An op is let go
+ * of once the log has committed it AND a snapshot that reflects it has,
+ * which the adapter knows by seq: a snapshot is kept with the seq of the
+ * newest op heard of when `save` was CALLED — `openStore` journals every
+ * op inside the apply and takes the snapshot as it calls `save`, so that
+ * is the last op the snapshot reflects, whenever its write's turn comes.
  */
-function adapterOver(keysFor: Keys, choose: () => Promise<Chosen>): BrowserAdapter {
+function adapterOver(keysFor: Keys, choose: () => Promise<Chosen>, journalIn: StorageLike | undefined): BrowserAdapter {
   let chain: Promise<unknown> = Promise.resolve();
   const queued = <T>(run: (chosen: Chosen) => Promise<T>): Promise<T> => {
     const next = chain.then(async () => {
@@ -153,17 +189,137 @@ function adapterOver(keysFor: Keys, choose: () => Promise<Chosen>): BrowserAdapt
     chain = next.catch(() => undefined);
     return next;
   };
-  return {
+  const adapter: BrowserAdapter = {
     name: "browser",
     keysFor,
     keptIn: () => queued(async (chosen) => chosen.kept),
     load: (scope) => queued(({ backend }) => backend.load(scope)),
-    save: (scope, snapshot) => queued(({ backend }) => backend.save(scope, snapshot)),
+    save: (scope, snapshot) => queued(({ backend }) => backend.save(scope, snapshot, undefined)),
     delete: (scope) => queued(({ backend }) => backend.delete(scope)),
     loadLog: (scope) => queued(({ backend }) => backend.loadLog(scope)),
     appendOps: (scope, ops) => queued(({ backend }) => (ops.length === 0 ? Promise.resolve() : backend.appendOps(scope, ops))),
     loadMeta: (scope) => queued(({ backend }) => backend.loadMeta(scope)),
     saveMeta: (scope, meta) => queued(({ backend }) => backend.saveMeta(scope, meta)),
+  };
+  return journalIn ? journaled(adapter, keysFor, queued, journalIn) : adapter;
+}
+
+/** Per scope: the journal as last written, the newest seq heard of, and the newest the log and the snapshot have committed. */
+interface JournalState {
+  journal: Operation[] | undefined;
+  head: number;
+  logged: number;
+  through: number;
+}
+
+/** The adapter with its write-ahead journal in `storage`: see `BrowserAdapter.journal`. */
+function journaled(
+  plain: BrowserAdapter,
+  keysFor: Keys,
+  queued: <T>(run: (chosen: Chosen) => Promise<T>) => Promise<T>,
+  storage: StorageLike,
+): BrowserAdapter {
+  const scopes = new Map<string, JournalState>();
+  const stateOf = (scope: string): JournalState => {
+    let state = scopes.get(scope);
+    // Nothing is let go of until what the log and the snapshot hold has been read or written.
+    if (!state) scopes.set(scope, (state = { journal: undefined, head: -1, logged: -Infinity, through: -Infinity }));
+    return state;
+  };
+  const newest = (ops: readonly Operation[]) => ops.reduce((most, op) => Math.max(most, op.seq), -1);
+  const heard = (scope: string, ops: readonly Operation[]) => {
+    const state = stateOf(scope);
+    state.head = Math.max(state.head, newest(ops));
+  };
+  const journalOf = (scope: string): Operation[] => {
+    const state = stateOf(scope);
+    if (!state.journal) {
+      try {
+        const raw = storage.getItem(keysFor(scope).journal);
+        state.journal = raw === null ? [] : (JSON.parse(raw) as Operation[]);
+      } catch {
+        // Storage locked away, or a journal that does not read, holds nothing to replay.
+        state.journal = [];
+      }
+    }
+    return state.journal;
+  };
+  const write = (scope: string, ops: readonly Operation[]) => {
+    const key = keysFor(scope).journal;
+    if (ops.length === 0) storage.removeItem(key);
+    else storage.setItem(key, JSON.stringify(ops));
+  };
+  /** Lets go of what the log and the snapshot have both committed. */
+  const prune = (scope: string) => {
+    const state = stateOf(scope);
+    const kept = Math.min(state.logged, state.through);
+    const journal = journalOf(scope);
+    const left = journal.filter((op) => op.seq > kept);
+    if (left.length === journal.length) return;
+    state.journal = left;
+    try {
+      write(scope, left);
+    } catch {
+      // Left in localStorage, it is skipped on the next open: the log and the snapshot already have it.
+    }
+  };
+  const throughOf = async (backend: Backend, scope: string) => ((await backend.load(scope)) === null ? -1 : backend.loadThrough(scope));
+
+  return {
+    ...plain,
+    load: (scope) =>
+      queued(async ({ backend }) => {
+        const snapshot = await backend.load(scope);
+        stateOf(scope).through = snapshot === null ? -1 : await backend.loadThrough(scope);
+        return snapshot;
+      }),
+    save: (scope, snapshot) => {
+      // Read NOW, not when the write's turn comes: the snapshot was taken now, after every op journaled so far.
+      const through = stateOf(scope).head;
+      return queued(async ({ backend }) => {
+        await backend.save(scope, snapshot, through);
+        const state = stateOf(scope);
+        state.through = Math.max(state.through, through);
+        prune(scope);
+      });
+    },
+    delete: (scope) =>
+      queued(async ({ backend }) => {
+        await backend.delete(scope);
+        scopes.set(scope, { journal: [], head: -1, logged: -1, through: -1 });
+        write(scope, []);
+      }),
+    loadLog: (scope) =>
+      queued(async ({ backend }) => {
+        const log = await backend.loadLog(scope);
+        heard(scope, log);
+        stateOf(scope).logged = newest(log);
+        return log;
+      }),
+    appendOps: (scope, ops) => {
+      heard(scope, ops);
+      return queued(async ({ backend }) => {
+        if (ops.length === 0) return;
+        await backend.appendOps(scope, ops);
+        const state = stateOf(scope);
+        state.logged = Math.max(state.logged, newest(ops));
+        prune(scope);
+      });
+    },
+    journal(scope, ops) {
+      if (ops.length === 0) return;
+      heard(scope, ops);
+      const journal = journalOf(scope);
+      journal.push(...ops);
+      // Throws when localStorage refuses it: `openStore` reports that, and the op is kept here to be written with the next.
+      write(scope, journal);
+    },
+    loadJournal: (scope) =>
+      queued(async ({ backend }) => {
+        const ops = [...journalOf(scope)].sort((a, b) => a.seq - b.seq);
+        heard(scope, ops);
+        return { ops, through: await throughOf(backend, scope) };
+      }),
   };
 }
 
@@ -178,14 +334,19 @@ function localBackend(storage: StorageLike, keysFor: Keys): Backend {
     async load(scope) {
       return read<GraphSnapshot>(keysFor(scope).snapshot);
     },
-    async save(scope, snapshot) {
+    async save(scope, snapshot, through) {
       write(keysFor(scope).snapshot, snapshot);
+      if (through !== undefined) write(keysFor(scope).through, through);
+    },
+    async loadThrough(scope) {
+      return read<number>(keysFor(scope).through) ?? -1;
     },
     async delete(scope) {
       const keys = keysFor(scope);
       storage.removeItem(keys.snapshot);
       storage.removeItem(keys.log);
       storage.removeItem(keys.meta);
+      storage.removeItem(keys.through);
     },
     async loadLog(scope) {
       return read<Operation[]>(keysFor(scope).log) ?? [];
@@ -245,6 +406,7 @@ function indexedBackend(
       legacy?.removeItem(keys.snapshot);
       legacy?.removeItem(keys.log);
       legacy?.removeItem(keys.meta);
+      legacy?.removeItem(keys.through);
     } catch {
       // Left behind, it is carried in again next time: the same store, not a lost one.
     }
@@ -270,6 +432,7 @@ function indexedBackend(
     for (let n = 0, had = await count(scope); n < had; n++) write.set(piece(scope, n), null);
     write.set(keys.snapshot, snapshot);
     write.set(keys.meta, legacyItem(keys.meta));
+    write.set(keys.through, legacyItem(keys.through));
     const log = legacyItem(keys.log);
     const hasLog = log !== null && log !== "[]";
     if (hasLog) write.set(piece(scope, 0), log);
@@ -298,9 +461,18 @@ function indexedBackend(
       const [raw] = await entries.read([keysFor(scope).snapshot]);
       return raw == null ? null : (JSON.parse(raw) as GraphSnapshot);
     },
-    async save(scope, snapshot) {
+    async save(scope, snapshot, through) {
       await settle(scope);
-      await entries.write(new Map([[keysFor(scope).snapshot, JSON.stringify(snapshot)]]));
+      // The snapshot and the seq it reflects in one transaction: a journal is never replayed onto a snapshot that has it.
+      const write = new Map<string, string | null>([[keysFor(scope).snapshot, JSON.stringify(snapshot)]]);
+      if (through !== undefined) write.set(keysFor(scope).through, String(through));
+      await entries.write(write);
+    },
+    async loadThrough(scope) {
+      await settle(scope);
+      const [raw] = await entries.read([keysFor(scope).through]);
+      const through = raw == null ? Number.NaN : Number(raw);
+      return Number.isInteger(through) ? through : -1;
     },
     async delete(scope) {
       const keys = keysFor(scope);
@@ -309,6 +481,7 @@ function indexedBackend(
         [keys.snapshot, null],
         [keys.log, null],
         [keys.meta, null],
+        [keys.through, null],
       ]);
       for (let n = 0; n < had; n++) write.set(piece(scope, n), null);
       await entries.write(write);

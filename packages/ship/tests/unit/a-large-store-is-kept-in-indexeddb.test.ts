@@ -72,7 +72,7 @@ describe("the browser adapter, in IndexedDB", () => {
 
     expect(await adapter.keptIn()).toBe("indexedDB");
     expect(BROWSER_DATABASE).toBe("graview");
-    expect([...entriesOf(idb).keys()].sort()).toEqual(["graview:garden:log", "graview:garden:log:0", "graview:garden:meta", "graview:garden:snapshot"]);
+    expect([...entriesOf(idb).keys()].sort()).toEqual(["graview:garden:log", "graview:garden:log:0", "graview:garden:meta", "graview:garden:snapshot", "graview:garden:through"]);
     expect(storage.map.size).toBe(0);
     expect(await adapter.loadMeta("garden")).toMatchObject({ version: 1 });
   });
