@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 691,
+  "gzipped": 143,
+  "changeset": "importing-the-framework-builds-nothing-it-does-not-use.md",
+  "note": "Raised when the document format came to build its shapes on first use (Roadmap f-smaller-worker): each exported shape is `z.lazy` over the set built the first time one parses, and a page handed a compiled app now builds none of them unless it reads a document. Measured at 540_151 / 187_305 against 539_460 / 187_162 minified and gzipped."
+}

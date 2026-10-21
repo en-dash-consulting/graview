@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import { markRepeat, validRepeat, type Repeat } from "../repeat.js";
 
 /*

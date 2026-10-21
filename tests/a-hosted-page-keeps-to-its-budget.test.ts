@@ -120,6 +120,7 @@ describe("a hosted page", () => {
     // 958 KB once the focused scene's words were merged onto the two raises above: each measured alone, together 980_457 B.
     // 959 KB since the bar came to hold still at every width: the app's name read unwrapped off a ruler of its own (`nameGiven`), the row weighed with the name as it would stand on one line: the scene face measured 980_995 B, 538 more than before it (980_457).
     // 960 KB since a brand's logo came to have one for each scheme: the mark drawn for each, the theme's rule that hides the other scheme's and inverts a fallback asked for in the dark: the scene face measured 982_536 B, 1_541 more than before it (980_995).
+    // 960 KB since the document format came to build its shapes on first use (Roadmap f-smaller-worker): zod/mini's lazy schema and the fifteen wrappers over the shapes: the scene face measured 982_187 B, 1_192 more than before it (980_995).
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(960 * 1024);
   });
 

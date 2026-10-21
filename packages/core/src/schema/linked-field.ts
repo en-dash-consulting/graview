@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import { linkedRefOf, markLinked, parseLinkedTarget, type LinkedRelation } from "./linked.js";
 
 /*
