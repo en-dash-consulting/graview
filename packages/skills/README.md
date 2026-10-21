@@ -42,6 +42,7 @@ skills say which parts of their work the checker cannot see.
 | `graview-permissions` | Declare who may do what, once, and let the strip and the seat narrow themselves |
 | `graview-brand` | Put someone's name on an installation without forking a package |
 | `graview-locale` | Say money, days and times the way the app's people do: a currency, a locale and a time zone, once |
+| `graview-logo` | Put a client's logo and page icon on an app: one for each scheme, an inverted fallback only when asked, an emoji icon |
 | `graview-new-app` | Start a product on Graview in its own repository, with the CI that keeps it honest |
 | `graview-ship` | Deploy: persistence, op-log-native migrations, export, health, serving and a host that compiles once |
 | `graview-sync` | Keep an app in step with another system: a snapshot projected from it, a sync back, an MCP remote, a Google calendar |

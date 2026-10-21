@@ -66,7 +66,8 @@ it (Find in a bar above, the way back docked at the corner), and
 - **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`,
   `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with
   `color-mix` for the design's own paper. Never a color that works in one
-  scheme only.
+  scheme only — nor a logo: `<AppMark brand={context.brand} />` draws the
+  brand's, the dark one in the dark (`graview-logo`).
 - **Keep landmarks and targets honest.** One `main` — a `section` when
   `context.embedded`, and UNNAMED, or a page holding two embeds has two
   regions with one name. Controls at least 24px, AA contrast.

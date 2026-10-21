@@ -299,7 +299,14 @@ export const BrandSpec = z.strictObject({
    * inline SVG, or a path on the app's own host — the faces words are set
    * in, how round and how roomy, a hue per kind, and the scheme it prefers.
    */
-  logo: z.optional(z.union([str(1, MARK_MAX), z.strictObject({ src: str(1, MARK_MAX), alt: z.optional(str(1, 120)) })])),
+  logo: z.optional(
+    z.union([
+      str(1, MARK_MAX),
+      z.strictObject({ src: str(1, MARK_MAX), alt: z.optional(str(1, 120)) }),
+      // One for each scheme: the dark one drawn in the dark; with none, `darkFallback: "invert"` asks for the light one inverted there (never guessed).
+      z.strictObject({ light: str(1, MARK_MAX), dark: z.optional(str(1, MARK_MAX)), alt: z.optional(str(1, 120)), darkFallback: z.optional(z.literal("invert")) }),
+    ]),
+  ),
   // A page icon: a mark as the logo is one, or `{ "emoji": "🏡" }` — one standard emoji, the app's mark where it has no logo (`brand-emoji`).
   favicon: z.optional(z.union([str(1, MARK_MAX), z.strictObject({ emoji: z.string() })])),
   typography: z.optional(z.strictObject({ display: z.optional(str(1, 200)), body: z.optional(str(1, 200)), mono: z.optional(str(1, 200)) })),

@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 982,
+  "gzipped": 337,
+  "note": "Raised when a brand's logo came to have one for each scheme: `AppMark` draws both, each marked `data-graview-scheme-only`, or the light one marked for the inverted fallback a brand asked for, and the theme's sheet hides the other scheme's and inverts the fallback in the dark alone (`logoOf`, `logoFor`). Measured at 625_172 / 229_996 against 624_190 / 229_659: 982 / 337 more."
+}

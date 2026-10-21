@@ -4,6 +4,7 @@ import { fontProblem } from "../theme/fonts.js";
 import { emojiProblem, markProblem } from "../theme/marks.js";
 import { error, warning, type Finding } from "./findings.js";
 import type { BrandSpec } from "./schema.js";
+import { logoParts } from "./logo.js";
 
 /*
  * WHAT A DOCUMENT'S BRAND MAY HOLD (FR-124, FR-126), judged where a host
@@ -20,6 +21,9 @@ export interface BrandCheckOptions {
   readonly at?: string;
 }
 
+/** Said wherever a brand is judged: a fallback beside a dark logo is never drawn. */
+export const LOGO_FALLBACK_UNUSED = "the dark logo is drawn in the dark scheme, so the light one is never inverted there";
+
 /** How a page icon's emoji is refused, wherever it is judged: the document, an edit, a TypeScript brand. */
 export function emojiSentence(emoji: unknown, problem: string): string {
   return `${typeof emoji === "string" && emoji.trim() !== "" ? JSON.stringify(emoji) : "that"} cannot be the app's icon, because ${problem}`;
@@ -34,14 +38,17 @@ export function brandFindings(brand: Partial<BrandSpec> | undefined, options: Br
   const out: Finding[] = [];
   if (!brand) return out;
   const at = options.at ?? "brand";
+  const logo = logoParts(brand.logo);
   const marks: [string, string | undefined, string][] = [
-    ["logo", typeof brand.logo === "string" ? brand.logo : brand.logo?.src, typeof brand.logo === "string" ? "logo" : "logo.src"],
+    ["logo", logo?.light, typeof brand.logo === "string" ? "logo" : logo?.form === "src" ? "logo.src" : "logo.light"],
+    ["dark scheme's logo", logo?.dark, "logo.dark"],
     ["page icon", typeof brand.favicon === "string" ? brand.favicon : undefined, "favicon"],
   ];
   for (const [what, mark, path] of marks) {
     const problem = mark === undefined ? null : markProblem(mark);
     if (problem) out.push(error("brand-mark", `${at}.${path}`, `the ${what} cannot be drawn as given, because ${problem}`, "Graview draws an image exactly as it is given, never rewritten: remove that and give it again, or give the path Graview Cloud's add_image answers with"));
   }
+  if (logo?.dark !== undefined && logo.darkFallback !== undefined) out.push(warning("brand-logo", `${at}.logo.darkFallback`, LOGO_FALLBACK_UNUSED, 'remove "darkFallback", or remove "dark" to draw the light logo inverted in the dark scheme'));
   if (typeof brand.favicon === "object" && brand.favicon !== null) {
     const problem = emojiProblem(brand.favicon.emoji);
     if (problem) out.push(error("brand-emoji", `${at}.favicon.emoji`, emojiSentence(brand.favicon.emoji, problem), EMOJI_FIX));

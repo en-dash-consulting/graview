@@ -51,6 +51,7 @@ describe("the skills package", () => {
       "graview-linked-records",
       "graview-lists",
       "graview-locale",
+      "graview-logo",
       "graview-new-app",
       "graview-node-kind",
       "graview-pages",

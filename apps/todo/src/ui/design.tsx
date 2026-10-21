@@ -1,4 +1,4 @@
-import { dayAsRead, dayOfMonthAsRead, fieldWords, humanizeField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
+import { dayAsRead, dayOfMonthAsRead, fieldWords, humanizeField, labelOf, logoOf, type Arrangement, type Principal, type Violation } from "@graview/core";
 import { KindFigure, NotifyButton, RecordInteractionsDoor, useMarkup } from "@graview/primitives";
 import {
   DerivedForm,
@@ -226,7 +226,7 @@ const CSS = `
 function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
   const { store, brand } = context;
   useStoreTick(store);
-  const logo = useMarkup(brand?.logo);
+  const logo = useMarkup(logoOf(brand)?.light);
   const here = useLocation().pathname;
   const problems = store.violations(context.invariantContext).length;
   const open = (store.graph.nodesOfKind("task") as { done: boolean }[]).filter(

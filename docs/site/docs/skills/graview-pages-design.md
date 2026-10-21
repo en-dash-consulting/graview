@@ -1,6 +1,6 @@
 # graview-pages-design
 
-`graview-pages-design` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, Find and the way back in that bar at its own height — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.
+`graview-pages-design` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, Find and the way back in that bar at its own height — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -41,7 +41,7 @@ Both are the face's, whichever shell draws it: a shell that places `<PageFind>` 
 
 - **Read the graph through one model.** `readGarden(store)` turns nodes, edges and violations into the design's words; every page reads it and none reaches for `store.graph`. The scene's lens reads the same model.
 - **Take the act list from the derivation.** `recordFacts(store, id, { principal }).actions` and `kindFacts(store, kind, …).actions`, never a scan of `store.allMutations()`; `withheld` are struck through with the policy's sentence (`store.permits` says the same at the press), not dropped.
-- **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`, `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with `color-mix` for the design's own paper. Never a color that works in one scheme only.
+- **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`, `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with `color-mix` for the design's own paper. Never a color that works in one scheme only — nor a logo: `<AppMark brand={context.brand} />` draws the brand's, the dark one in the dark (`graview-logo`).
 - **Keep landmarks and targets honest.** One `main` — a `section` when `context.embedded`, and UNNAMED, or a page holding two embeds has two regions with one name. Controls at least 24px, AA contrast. Every size in `rem`: at 200% text a flex or grid item's automatic minimum is its CONTENT's, so one un-wrappable row pushes the whole column off the screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on the row. Measure rather than trust: `-ink-faint` fails AA on an 11px label, and the accent fails on the warning ground. `node scripts/verify-pages.mjs` runs axe over every route, both widths, both schemes.
 
 ### Then find out whether it worked

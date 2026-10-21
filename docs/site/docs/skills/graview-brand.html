@@ -1520,7 +1520,7 @@ main.page > section.tour-intro { padding-top: 64px; }
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-brand</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-brand</code> is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-brand</code> is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1533,7 +1533,7 @@ main.page > section.tour-intro { padding-top: 64px; }
 </ol>
 <p>```ts    import { brandFromAccent, DARK, LIGHT, type Brand } from "@graview/core";</p>
 <p>const derived = brandFromAccent({ accent: "#7a4bd0", base: { dark: DARK, light: LIGHT } });    if (!derived.ok) {      throw new Error(<code>Needs ${derived.missing.join(", ")} — ${derived.why}</code>);    }</p>
-<p>export const brand: Brand = {      name: "Acme Bids",      // Inline SVG using currentColor: one file works in both schemes.      logo: '&lt;svg viewBox="0 0 24 24" ... stroke="currentColor"&gt;...&lt;/svg&gt;',      typography: { body: '"Inter", ui-sans-serif, system-ui, sans-serif' },      schemes: derived.schemes,    };    ```</p>
+<p>export const brand: Brand = {      name: "Acme Bids",      // Inline SVG using currentColor: one file works in both schemes.      // A client's picture on white wants one for each scheme: graview-logo.      logo: '&lt;svg viewBox="0 0 24 24" ... stroke="currentColor"&gt;...&lt;/svg&gt;',      typography: { body: '"Inter", ui-sans-serif, system-ui, sans-serif' },      schemes: derived.schemes,    };    ```</p>
 <ol>
 <li><strong>Expect the refusal path to be real.</strong> No single color can be accent TEXT in both schemes — 4.5:1 on white needs a lightness under about 0.18 and 4.5:1 on a dark panel needs one over about 0.24, and those do not overlap. So <code>brandFromAccent</code> keeps the hue and saturation, which are the brand's, and moves the lightness the smallest distance that clears AA. When that distance is far enough that the color has stopped being theirs, it refuses and names what to supply. <strong>Do not catch that and carry on with a guess</strong> — shipping a color they did not choose under their own name is worse than asking.</li>
 </ol>
@@ -1567,12 +1567,10 @@ main.page > section.tour-intro { padding-top: 64px; }
   "accents": { "workshop": 168 }, "scheme": "dark"
 }</code></pre></div>
 <ul>
-<li><strong>A mark</strong> is inline SVG or a path on the app's own host — never another origin. It is drawn as given (<code>currentColor</code> takes the accent), so it is read element by element as the browser reads it: shapes, groups, gradients, filters, text and links to its own <code>#id</code>s, every attribute quoted, and nothing after <code>&lt;/svg&gt;</code>. A script, a handler, <code>&lt;a&gt;</code>, <code>&lt;style&gt;</code>, an animation, <code>foreignObject</code> or anything it loads is refused (<code>brand-mark</code>, with the reason), never rewritten. On Cloud, <code>add_image</code> answers the path.</li>
+<li><strong>A mark</strong> — the logo, one for each scheme, and the page icon, an emoji among them — is <code>graview-logo</code>: inline SVG or a path on the app's own host, drawn as given, and one that could act refused (<code>brand-mark</code>).</li>
 <li><strong>A face</strong> is <code>system-serif</code>, <code>system-sans</code>, <code>system-mono</code>, a face every system has (Georgia, Menlo), or a web font on <code>DOCUMENT_FONTS</code>; one named by its address is refused (<code>brand-font</code>). The host decides where web fonts load from.</li>
-<li><strong>An accent</strong> must read as given in light: <code>set-brand</code> refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names.</li>
-<li><strong>The icon</strong> is set only by a face that owns the page; an embed on somebody else's page leaves theirs alone unless the host passes <code>favicon: true</code>. <code>"favicon": { "emoji": "🏡" }</code> — exactly one standard emoji (👩🏽‍🌾 and 🇺🇸 count as one) — is the icon and, with no logo, the mark; anything else is refused (<code>brand-emoji</code>).</li>
+<li><strong>An accent</strong> must read as given in light: <code>set-brand</code> refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names. Contrast is judged on colors alone; a logo is a picture and is not measured.</li>
 </ul>
-<p><code>describe_place("home")</code> says the app as the home draws it (its <code>masthead</code>): the name, the line under it, and the logo by its alt text.</p>
 <h3>Styling by conversation</h3>
 <p>This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more editorial", "our green is #1B4332", "make people amber and money green" — because the whole look is one serializable declaration:</p>
 <ul>
@@ -1597,7 +1595,6 @@ main.page > section.tour-intro { padding-top: 64px; }
 <h3>What the check cannot see</h3>
 <ul>
 <li>Whether it looks like the brand. Contrast is measurable; taste is not.</li>
-<li>Whether the logo reads at 18 pixels. Most do not.</li>
 <li>Whether the typeface is loaded. A declared face with no <code>@font-face</code> and no web font silently falls back, and the fallback is usually fine — which is why nobody notices for months.</li>
 <li>Anything about a value it cannot parse. It says so; believe it.</li>
 </ul>

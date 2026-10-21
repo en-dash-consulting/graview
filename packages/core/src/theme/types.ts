@@ -59,6 +59,20 @@ export interface ThemeTokens {
  * a brand handing over a hex code has not given you a theme, and a brand
  * handing over a logo without a color has not either.
  */
+/**
+ * A LOGO FOR EACH SCHEME: `light` drawn in the light scheme, and in the
+ * dark too where there is no `dark`. Whether a light logo with no dark one
+ * is a picture opaque on white cannot be known from it, so inverting it in
+ * the dark scheme (`invert(1) hue-rotate(180deg)`, screened onto the
+ * ground) is asked for with `darkFallback: "invert"`, never guessed.
+ * `logoFor(brand, scheme)` says which one a scheme draws.
+ */
+export interface BrandLogo {
+  readonly light: string;
+  readonly dark?: string;
+  readonly darkFallback?: "invert";
+}
+
 /** A brand's page icon: a mark (inline SVG or a path), or one standard emoji. */
 export type FaviconSpec = string | { readonly emoji: string };
 
@@ -66,12 +80,14 @@ export interface Brand {
   /** The product name, shown where the framework shows a wordmark. */
   readonly name: string;
   /**
-   * A logo, as an inline SVG string or a URL.
+   * A logo, as an inline SVG string or a URL — or one for each scheme
+   * (`BrandLogo`), the dark one drawn in the dark scheme.
    *
    * Inline is preferred and is what `currentColor` support is for: a logo
    * that inherits the ink color works in both schemes without two files.
+   * A client's logo that is a picture on white is the case for two.
    */
-  readonly logo?: string;
+  readonly logo?: string | BrandLogo;
   /**
    * What the logo says to someone who cannot see it (FR-124): the app's
    * name when absent. Drawn beside the name, the logo is said only when

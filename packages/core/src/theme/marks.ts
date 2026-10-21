@@ -20,7 +20,7 @@
  * the rules Graview Cloud's `add_image` holds an image to.
  */
 
-import type { FaviconSpec } from "./types.js";
+import type { BrandLogo, FaviconSpec, Scheme } from "./types.js";
 
 /** The most an inline SVG mark may be, in characters. */
 export const MAX_INLINE_SVG = 64 * 1024;
@@ -272,8 +272,23 @@ export function faviconHref(brand: { readonly favicon?: FaviconSpec } | undefine
   return markHref(favicon);
 }
 
+/** A brand's logo as one for each scheme (`BrandLogo`): a string is the light one, and the dark one too. */
+export function logoOf(brand: { readonly logo?: string | BrandLogo } | undefined): BrandLogo | undefined {
+  const logo = brand?.logo;
+  if (typeof logo === "string") return logo === "" ? undefined : { light: logo };
+  return logo && typeof logo.light === "string" && logo.light !== "" ? logo : undefined;
+}
+
+/** The logo a scheme draws, and whether it is the light one inverted (`darkFallback: "invert"`, the dark scheme alone). */
+export function logoFor(brand: { readonly logo?: string | BrandLogo } | undefined, scheme: Scheme): { readonly src: string; readonly invert: boolean } | undefined {
+  const logo = logoOf(brand);
+  if (!logo) return undefined;
+  if (scheme === "dark" && logo.dark) return { src: logo.dark, invert: false };
+  return { src: logo.light, invert: scheme === "dark" && logo.darkFallback === "invert" };
+}
+
 /** The emoji that stands in as the app's mark: the page icon's, when the brand has no logo and it is one standard emoji. */
-export function emojiMark(brand: { readonly logo?: string; readonly favicon?: FaviconSpec } | undefined): string | undefined {
+export function emojiMark(brand: { readonly logo?: string | BrandLogo; readonly favicon?: FaviconSpec } | undefined): string | undefined {
   if (brand?.logo) return undefined;
   const emoji = emojiOf(brand?.favicon);
   return emoji !== undefined && emojiProblem(emoji) === null ? emoji : undefined;
