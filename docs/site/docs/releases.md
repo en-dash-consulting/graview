@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.42`](https://graview.dev/docs/releases.html#v0-1-42)
 - [`0.1.41`](https://graview.dev/docs/releases.html#v0-1-41)
 - [`0.1.40`](https://graview.dev/docs/releases.html#v0-1-40)
 - [`0.1.39`](https://graview.dev/docs/releases.html#v0-1-39)
@@ -42,6 +43,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.42
+
+Published October 21, 2026 · the current version
+
+Pages that say where you are, a logo for each scheme, gestures in views, an open on a short tail, and playback past the undo horizon.
+
+- **A page says where you are.** A derived list, record or picture opens with a "You are here" trail; `usePlaceHere()` and `registry.section` let a design's own shell light its tab.
+- **Undo and Find fit a design's bar.** `<PageUndo compact />`, and `className` and `size` on both.
+- **A logo for each scheme.** `brand.logo: { light, dark? }`, drawn in the dark by the bar and `AppMark`; a light logo inverted only when the brand asks.
+- **Worker views hear wheel, drag and pinch** when their manifest says `gestures: true`.
+- **Heavy apps open fast.** A page can open on the snapshot and a short tail of the log (`openTail`), and a view's code is fetched only when it is drawn.
+- **Playback reaches past the undo horizon** by asking the host's archive for the older changes.
+- **The framework costs half as much to import** in a Worker: schemas are built on first use and zod is shaken to what is called.
+- **A recipe:** a product face of its own over a running preview.
+
+**Before you upgrade:** `Brand.logo` is `string | BrandLogo` (read `logoOf(brand)?.light`); a host building its own `Playback` sets `archive: null`; the exported document shapes are `z.lazy`; a field revision is stale only when written after the claim; `openTail`, `HistoryHost.archived` and a lazy `worker` are additive. About 3 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.42) · [The full changelog for 0.1.42](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0142)
 
 ## 0.1.41
 
