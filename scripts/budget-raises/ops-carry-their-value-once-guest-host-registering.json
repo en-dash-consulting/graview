@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 730,
+  "gzipped": 370,
+  "note": "Raised when an op came to carry its value once less (op format 2, Roadmap f-ops-without-inverse-on-the-wire): the past a guest host reads to play a view back now works each op's inverse out from its primitives (inverseOf), so the primitives' invert and normalize sit in a chunk the past shares with what the host loads first, rather than in the past's own chunk. Measured at 29_307 / 13_529 against 28_582 / 13_166: 725 / 363 more."
+}

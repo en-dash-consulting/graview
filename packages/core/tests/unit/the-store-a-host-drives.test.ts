@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { bindSchema, createSchema, defineNode, GraphError, nodeRef, ReceiveError, Store, UndoBlockedError } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, GraphError, inverseOf, nodeRef, ReceiveError, Store, UndoBlockedError } from "../../src/index.js";
 
 /**
  * FR-18. A host — Graview Cloud's room, a server, a migration — drives a
@@ -161,12 +161,13 @@ describe("the store a host drives", () => {
 
     expect(landed).toHaveLength(1);
     const op = landed[0]!;
-    // Filled in the way the store fills its own: seq, id, batch, the inverse, what it wrote, when.
+    // Filled in the way the store fills its own: seq, id, batch, what it wrote, when — and, like its own, no inverse beside its primitives.
     expect(op.seq).toBe(1);
     expect(op.mutation).toBeNull();
     expect(op.at).toBe("2026-10-02T09:00:00.000Z");
     expect(op.writes).toEqual(["e1", "e2"]);
-    expect(op.inverse.map((p) => p.op)).toEqual(["remove-node", "remove-node"]);
+    expect(op).not.toHaveProperty("inverse");
+    expect(inverseOf(op).map((p) => p.op)).toEqual(["remove-node", "remove-node"]);
     expect(s.log.all().at(-1)).toEqual(op);
     expect(heard).toEqual([[op.id]]);
     expect(s.graph.getNode("e1")).toBeDefined();

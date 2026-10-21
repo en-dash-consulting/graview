@@ -239,7 +239,6 @@ function attentionAsOp(note: Attention): Operation {
     intent: note.intent,
     mutation: null,
     primitives: [],
-    inverse: [],
     reads: note.reads,
     writes: [],
     at: new Date().toISOString(),

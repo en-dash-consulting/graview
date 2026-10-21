@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 420,
+  "gzipped": 370,
+  "note": "Raised when an op came to carry its value once less (op format 2, Roadmap f-ops-without-inverse-on-the-wire): every page's store works an op's inverse out from its primitives where undo, a rebase or playback reads it (inverseOf), drops a format-1 inverse its primitives already say from every op its log takes (bareOp), and openRemote says in its hello, its reads and its posts that it reads format 2, so the server sends it ops bare. Measured at 628_985 / 231_648 against 628_570 / 231_288: 415 / 360 more."
+}

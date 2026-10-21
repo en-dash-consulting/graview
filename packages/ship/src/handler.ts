@@ -35,6 +35,7 @@ import {
   seatOfTab,
   serverBatchIds,
   visitorPresence,
+  opFormatOf,
   wireOf,
   type LivePeer,
   type LiveProtocol,
@@ -663,7 +664,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       const author = await seat();
       const via = await viaFor(request, author, otherwise);
       const build = buildOf(author, via);
-      return { seat: author, via, ...(build ? { build } : {}) };
+      const opFormat = opFormatOf(url);
+      return { seat: author, via, ...(build ? { build } : {}), ...(opFormat !== undefined ? { opFormat } : {}) };
     };
     const answered = (answer: WireAnswer) => send(answer.status, answer.body, answer.headers);
 

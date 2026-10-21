@@ -399,7 +399,6 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
       seq: at + index,
       batch: options.batch ?? "import",
       mutation: null,
-      inverse: [...one.primitives].reverse(),
       reads: [],
       writes: [...new Set(one.primitives.map((primitive) => ("node" in primitive ? primitive.node.id : primitive.op === "add-edge" ? primitive.edge.from : "")))],
       at: "",
