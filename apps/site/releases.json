@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.42",
+      "date": "2026-10-21",
+      "headline": "Pages that say where you are, a logo for each scheme, gestures in views, an open on a short tail, and playback past the undo horizon.",
+      "summary": "- **A page says where you are.** A derived list, record or picture opens with a \"You are here\" trail; `usePlaceHere()` and `registry.section` let a design's own shell light its tab.\n- **Undo and Find fit a design's bar.** `<PageUndo compact />`, and `className` and `size` on both.\n- **A logo for each scheme.** `brand.logo: { light, dark? }`, drawn in the dark by the bar and `AppMark`; a light logo inverted only when the brand asks.\n- **Worker views hear wheel, drag and pinch** when their manifest says `gestures: true`.\n- **Heavy apps open fast.** A page can open on the snapshot and a short tail of the log (`openTail`), and a view's code is fetched only when it is drawn.\n- **Playback reaches past the undo horizon** by asking the host's archive for the older changes.\n- **The framework costs half as much to import** in a Worker: schemas are built on first use and zod is shaken to what is called.\n- **A recipe:** a product face of its own over a running preview.",
+      "compatibility": "`Brand.logo` is `string | BrandLogo` (read `logoOf(brand)?.light`); a host building its own `Playback` sets `archive: null`; the exported document shapes are `z.lazy`; a field revision is stale only when written after the claim; `openTail`, `HistoryHost.archived` and a lazy `worker` are additive. About 3 KB more up front.",
+      "published": true
+    },
+    {
       "version": "0.1.41",
       "date": "2026-10-21",
       "headline": "The app bar holds still at every width.",
