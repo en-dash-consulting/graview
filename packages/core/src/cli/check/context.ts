@@ -1,3 +1,4 @@
+import type { HostView } from "../../views/types.js";
 import type { GraviewApp } from "../../app.js";
 import type { AnySchema } from "../../schema/schema.js";
 import type { AnyMutationDefinition } from "../../mutations/types.js";
@@ -42,6 +43,8 @@ export interface CheckContext<S extends AnySchema> {
   readonly derivedRemoves: readonly AnyMutationDefinition<S>[];
   readonly mutations: ReadonlyMap<string, AnyMutationDefinition<S>>;
   readonly invariants: ReadonlyMap<string, NonNullable<GraviewApp<S>["invariants"]>[number]>;
+  /** The host's views, when it says them (`CheckOptions.views`): what `view:<name>` in the arrangement may name. */
+  readonly views?: readonly HostView[];
   add(finding: Finding): void;
 }
 

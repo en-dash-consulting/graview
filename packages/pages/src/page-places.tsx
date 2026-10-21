@@ -243,8 +243,14 @@ export function galleryOf<S extends AnySchema>(context: PageContext<S>): readonl
    */
   const order = arrangedKinds(context);
   const all = placesOf(context);
+  // A host's view `pages.order` names (`view:<name>`) comes first, where it is named; the other pictures by their kind's place.
+  const named = context.views?.arrangement?.()?.order ?? [];
+  const rank = (place: Place) => {
+    const at = place.name === undefined ? -1 : named.indexOf(`view:${place.name}`);
+    return at >= 0 ? at - named.length : order.indexOf(place.kind);
+  };
   // Each picture once: one over several kinds is one card, under the first of them in the declaration's order. A lens kept off the lists is a link's to reach, not the gallery's.
-  const places = onePerPicture([...all].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind))).filter((place) => !place.hidden);
+  const places = onePerPicture([...all].sort((a, b) => rank(a) - rank(b))).filter((place) => !place.hidden);
   const pictured = new Set(places.flatMap((place) => place.over ?? [place.kind]));
   return [
     ...places.map((place) => ({ key: placeKey(place), kind: place.kind, title: placeLabel(place, all, store.schema), to: pathOfPlace(context, place), place })),

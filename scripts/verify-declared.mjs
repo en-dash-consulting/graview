@@ -324,7 +324,7 @@ try {
     report.checks.everyDeclaredLensHasItsPageOnThePagesFace = { pages, ok: TITLES.every((title) => pages[title]?.heading?.includes(title) && pages[title].lens && pages[title].drawn) };
   }
 
-  /* ---- FR-80 on the Pages face: it opens on the first place; the home is in order; the hidden kind stays reachable */
+  /* ---- FR-80 on the Pages face: it opens on the first place; the home is in order; the hidden kind leaves the nav and stays reachable */
   {
     const page = await open("face=pages", { width: 1280, height: 900 });
     const opened = await page.evaluate(() => document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null);
@@ -344,18 +344,20 @@ try {
         // The pictures by their kind's place in the order — the seats' first — and no card for the hidden rooms.
         home.gallery[0] === "/places/the-floor" &&
         !home.gallery.includes("/rooms") &&
-        // The kinds in the declared order; the hidden rooms still reached from the bar, folded into More with what supports the rest (FR-145, ranked).
+        // The kinds in the declared order; the hidden rooms kept off the bar's places (q-custom-views-in-nav: a kind `pages.hide` keeps off leaves the drop-down, 0.1.44).
         JSON.stringify(home.nav.filter((href) => ["/volunteers", "/seats", "/shifts", "/members"].includes(href))) === JSON.stringify(["/volunteers", "/seats", "/shifts", "/members"]) &&
-        home.nav.includes("/rooms"),
+        !home.nav.includes("/rooms"),
     };
     await page.close();
     const listed = await open(`face=pages&path=${encodeURIComponent("/rooms")}`, { width: 1280, height: 900 });
     const byLink = await listed.evaluate(() => document.body.textContent?.includes("The cellar") ?? false);
+    // On its own page the bar lists it, so a person always sees where they are.
+    const listedWhileOn = await listed.evaluate(() => [...document.querySelectorAll("[data-graview-embed] [data-place-path]")].some((tab) => tab.getAttribute("data-place-path") === "/rooms"));
     await listed.close();
     const searched = await open(`face=pages&path=${encodeURIComponent("/search?q=cellar")}`, { width: 1280, height: 900 });
     const bySearch = await searched.evaluate(() => document.body.textContent?.includes("The cellar") ?? false);
     await searched.close();
-    report.checks.theHiddenKindIsReachedByLinkNavAndSearch = { byLink, byNav: home.nav.includes("/rooms"), bySearch, ok: byLink && bySearch && home.nav.includes("/rooms") };
+    report.checks.theHiddenKindLeavesTheNavAndIsReachedByLinkAndSearch = { byLink, inNav: home.nav.includes("/rooms"), listedWhileOn, bySearch, ok: byLink && bySearch && !home.nav.includes("/rooms") && listedWhileOn };
   }
 
   /*

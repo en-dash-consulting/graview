@@ -396,7 +396,7 @@ export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): 
 
 /** What `pages` names that is not there: a kind in `order` or `hide`, a place for `first` (FR-80), a list's filter. */
 export function checkPagesArrangement<S extends AnySchema>(ctx: CheckContext<S>): void {
-  for (const finding of arrangementFindings(ctx.app)) {
+  for (const finding of arrangementFindings(ctx.app, ctx.views ? { views: ctx.views } : {})) {
     ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix });
   }
   const kinds = ctx.app.schema.kinds as readonly string[];

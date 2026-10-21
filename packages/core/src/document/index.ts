@@ -13,6 +13,8 @@ export { homeOf, validateViews, viewsOf, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_A
 export type { FigureEmphasis, FigureFormat, HomeView, ListGroup, ListSort, ToneSpec, ViewBlock, ViewSpecs, ViewSpecsByKind, ViewSlot, ViewTone, ViewFieldFormat } from "./views.js";
 export * from "./expr/index.js";
 export { diffDocuments } from "./diff.js";
+export { logoOfDocument } from "./logo.js";
+export type { DocumentLogo } from "./logo.js";
 export type { DocumentDiff } from "./diff.js";
 export { applyPatch, PatchError } from "./patch.js";
 export { lensOptionsRefused } from "./lens-options.js";

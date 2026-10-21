@@ -45,3 +45,31 @@ export const recordFlakes = (repoRoot, flakes, { sha = process.env.GITHUB_SHA ??
   writeFileSync(file, `${JSON.stringify([...fresh, ...kept].slice(0, 100), null, 2)}\n`);
   return fresh;
 };
+
+/**
+ * What a check that answers `{ ok, … }` (an engine matrix's cell) missed:
+ * the screens or shots it names as errors, its own `false` claims, or its
+ * error said once.
+ */
+export const missedOf = (result) => {
+  const claims = Object.entries(result)
+    .filter(([key, value]) => value === false && key !== "ok" && key !== "passed")
+    .map(([key]) => key);
+  const missed = [...(Array.isArray(result.errors) ? result.errors.map(String) : []), ...claims];
+  return missed.length > 0 ? missed : typeof result.error === "string" ? [result.error.slice(0, 200)] : [];
+};
+
+/**
+ * The same second look for a check that answers `{ ok, … }` rather than an
+ * exit code: one that fails is looked at again alone (`look(2)`), and the
+ * answer carries its `verdict` — `held`, `failed`, or `flaky` when it held
+ * the second time, with the first look kept (`firstLook`) and what it
+ * `missed`. Failing twice is `failed`, and `ok` stays false.
+ */
+export const lookTwice = async (look, { strict = false } = {}) => {
+  const first = await look(1);
+  if (first.ok) return { ...first, verdict: "held" };
+  if (strict) return { ...first, verdict: "failed" };
+  const again = await look(2);
+  return { ...again, verdict: again.ok ? "flaky" : "failed", missed: missedOf(first), firstLook: first };
+};

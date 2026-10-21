@@ -3,7 +3,41 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module, typed by its use here.
-import { judge, missedClaims, recordFlakes } from "../scripts/lib/second-look.mjs";
+import { judge, lookTwice, missedClaims, missedOf, recordFlakes } from "../scripts/lib/second-look.mjs";
+
+/** A cell of the engine matrix (scripts/verify-engines.mjs) whose looks answer in turn. */
+const answering = (...looks: Array<Record<string, unknown>>) => {
+  const asked: number[] = [];
+  return { asked, look: async (n: number) => (asked.push(n), looks[Math.min(n, looks.length) - 1]) };
+};
+const firefoxAudit = { ok: false, screens: 12, errors: ["todo/selected: page.click: Timeout 30000ms exceeded"] };
+
+describe("an engine's cell that fails is looked at again, alone", () => {
+  it("holds a cell that held, asking once", async () => {
+    const cell = answering({ ok: true, screens: 12 });
+    expect(await lookTwice(cell.look)).toMatchObject({ ok: true, verdict: "held" });
+    expect(cell.asked).toEqual([1]);
+  });
+
+  it("calls a cell that failed and then held a flake, keeping the first look and the screens it missed", async () => {
+    const cell = answering(firefoxAudit, { ok: true, screens: 12 });
+    const judged = await lookTwice(cell.look);
+    expect(cell.asked).toEqual([1, 2]);
+    expect(judged).toMatchObject({ ok: true, verdict: "flaky", missed: ["todo/selected: page.click: Timeout 30000ms exceeded"], firstLook: firefoxAudit });
+  });
+
+  it("keeps a cell that fails twice red, and one --strict never looks at again", async () => {
+    expect(await lookTwice(answering(firefoxAudit, firefoxAudit).look)).toMatchObject({ ok: false, verdict: "failed" });
+    const strict = answering(firefoxAudit, { ok: true });
+    expect(await lookTwice(strict.look, { strict: true })).toMatchObject({ ok: false, verdict: "failed" });
+    expect(strict.asked).toEqual([1]);
+  });
+
+  it("names what a cell missed: its screens, its false claims, or its error", () => {
+    expect(missedOf({ ok: false, paneWentAway: false, tabbedTo: ["body"] })).toEqual(["paneWentAway"]);
+    expect(missedOf({ ok: false, error: "pages wrote no report" })).toEqual(["pages wrote no report"]);
+  });
+});
 
 const run = (code: number, output = "") => ({ name: "navigation", file: "verify-navigation.mjs", code, took: 1, gist: "", output });
 const navigationRed = `{\n  "theMarkHasTwoStates": false,\n  "theMarkMovesAsTheSceneDoes": false,\n  "aDistrictWithAPictureGoesIntoIt": true,\n  "ok": false\n}`;

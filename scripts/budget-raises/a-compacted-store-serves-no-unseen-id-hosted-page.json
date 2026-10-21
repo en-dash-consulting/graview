@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1040,
+  "gzipped": 370,
+  "changeset": "a-compacted-store-serves-no-unseen-id.md",
+  "note": "Raised when a compacted store came to serve no unseen id (FR-199): every store's checkpoint keeps the kind of each record removed behind it and who wrote each field of its graph that names a record (behind, writersBehind), a store opened on one seeds its index of records and of writers from them, and the seat view judges an id it cannot place, from a checkpoint written before, as a record of the kind it names, and leaves both maps out of an epoch it serves. Measured at 591_497 / 205_624 against 590_472 / 205_267: 1_025 / 357 more."
+}

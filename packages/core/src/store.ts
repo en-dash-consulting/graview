@@ -30,8 +30,9 @@ import { declinedIn, isAutomated, tidyingRefusal } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
+import { writersBehind } from "./ops/writers.js";
 import { nounOf } from "./schema/define-node.js";
-import { creatorsBefore, fieldsJudged, partialSight, recordsOf } from "./permissions/sight.js";
+import { behind, fieldsJudged, partialSight, recordsOf } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -2150,8 +2151,11 @@ export class Store<S extends AnySchema> {
    * 1000). It is moved back to the start of the gesture it would split, so
    * a batch is never half behind it.
    *
-   * The checkpoint keeps who made each record behind it (`creators`), so a
-   * store opened on it knows a record's maker without the archived ops.
+   * The checkpoint keeps who made each record behind it (`creators`), the
+   * kind of each record removed behind it (`removed`, FR-199) and who wrote
+   * each field of its graph that names a record (`writers`), so a store
+   * opened on it knows a record's maker, that a field names a record a seat
+   * may not see, and a seat's own words, without the archived ops.
    *
    * Nothing moves until `compact` is handed the checkpoint, so a host can
    * archive what is behind it first. A store whose graph does not verify
@@ -2176,10 +2180,19 @@ export class Store<S extends AnySchema> {
     if (seq <= this.log.horizon) return undefined;
     const verified = this.verify();
     if (!verified.ok) throw new GraphError(`Cannot compact a store that does not verify: ${verified.reason}`);
-    const checkpoint = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
-    // Who made each record behind it, so a store opened on it still knows (an `own` sight reads the log for it).
-    const creators = creatorsBefore(this.log, seq);
-    return Object.keys(creators).length > 0 ? { ...checkpoint, creators } : checkpoint;
+    // What the store keeps of who made what and what was removed is written here, from the log, never carried over from an epoch.
+    const { creators: _creators, removed: _removed, writers: _writers, ...checkpoint } = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+    /*
+     * Who made each record behind it, so a store opened on it still knows (an `own` sight reads the log for it);
+     * what each record removed behind it was, so a field naming one is still judged as naming it; and who wrote
+     * each field naming a record, so a seat is still served its own words past the horizon (FR-55, FR-199).
+     */
+    const base = new Set(checkpoint.base.nodes.map((node) => node.id));
+    const { creators, removed } = behind(this.log, seq, (id) => base.has(id));
+    const records = recordsOf(this.log);
+    const writers = writersBehind(this.log, seq, checkpoint.base.nodes, (value) => namesUnseen(value, (id) => !base.has(id) && records.kindOf(id) === undefined));
+    const kept = (map: object | undefined) => map && Object.keys(map).length > 0;
+    return { ...checkpoint, ...(kept(creators) && { creators }), ...(removed && { removed }), ...(kept(writers) && { writers }) };
   }
 
   /**

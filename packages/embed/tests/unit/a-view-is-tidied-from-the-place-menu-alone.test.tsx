@@ -104,7 +104,8 @@ describe("a view tidied from the place menu", () => {
     await press(hidden.querySelector('[data-testid="app-view-show"]'));
     expect(kept.current().hidden).toEqual([]);
     expect(pictures(await openPlaces(host))).toContain("Seat chart");
-    expect(host.querySelector('[data-place-group="hidden"]')).toBeNull();
+    // Only the rooms, which the hall's declaration keeps off the places, are under Hidden now.
+    expect(host.querySelector('[data-place-group="hidden"] [data-testid="app-view-show"]')).toBeNull();
   });
 
   it("is deleted from a drop-down entry and restored from Recently deleted", async () => {
@@ -179,10 +180,33 @@ describe("a view tidied from the place menu", () => {
     expect(kept.current().removed.map((one) => one.name)).not.toContain(removedLensName("By day"));
   });
 
+  it("hides a kind's list from its drop-down entry as set-lens-hidden on the kind, and the foot's Hidden shows one kept off", async () => {
+    const changes: LensTidyEdit[] = [];
+    const host = await open(keeper({ views: true, lenses: true }, changes), "/");
+    const list = await openPlaces(host);
+    // The hall keeps its rooms off the places (`pages.hide`): not an entry, but under Hidden, with Show.
+    expect(list.querySelector('[data-testid="app-place-kind:room"]')).toBeNull();
+    const hidden = list.querySelector('[data-place-group="hidden"]')!;
+    expect(hidden.textContent).toContain("Rooms");
+    expect(hidden.querySelector('[data-testid="app-view-hidden-place"]')?.textContent).toBe("Rooms");
+    await press(hidden.querySelector('[data-testid="app-list-show"]'));
+    await rightClick((await openPlaces(host)).querySelector('[data-testid="app-place-kind:seat"]'));
+    expect(rows()).toEqual(expect.arrayContaining(["hide-list"]));
+    expect(rows()).not.toContain("delete-view");
+    await press(menu()!.querySelector('[data-menu-item="hide-list"]'));
+    expect(changes).toEqual([
+      { op: "set-lens-hidden", title: "room", hidden: false },
+      { op: "set-lens-hidden", title: "seat", hidden: true },
+    ]);
+  });
+
   it("offers an editor the views a chat drew but not the declaration's lenses, and a reader neither", async () => {
     const editor = await open(keeper({ views: true, lenses: false }), "/");
     await rightClick((await openPlaces(editor)).querySelector('[data-testid="app-place-place:shift:by-day"]'));
     expect(rows()).not.toContain("hide-view");
+    await rightClick((await openPlaces(editor)).querySelector('[data-testid="app-place-kind:seat"]'));
+    expect(rows()).not.toContain("hide-list");
+    expect((await openPlaces(editor)).querySelector('[data-place-group="hidden"]')).toBeNull();
     await rightClick((await openPlaces(editor)).querySelector('[data-testid="app-place-place:seat:seat-chart"]'));
     expect(rows()).toContain("hide-view");
     for (const done of opened.splice(0)) await done();

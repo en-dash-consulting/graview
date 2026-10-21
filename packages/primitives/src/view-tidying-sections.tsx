@@ -1,5 +1,5 @@
 import { retryingImport } from "@graview/core/retry";
-import { placeTidying, REMOVED_VIEW_DAYS, type Place } from "@graview/core";
+import { placeTidying, pluralLabel, REMOVED_VIEW_DAYS, type Place } from "@graview/core";
 import { aggregateId, withOverview, withPicture } from "@graview/layout/view";
 import { MenuSections } from "@graview/react/drawing";
 import { lazyModule, useGraviewIfAny, useNavigation, type MenuItem, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
@@ -50,10 +50,21 @@ export function useViewTidyingSection(away?: (place: Place, after: Place | undef
   return useMemo<MenuSectionSource | null>(() => {
     if (!keeper || !views) return null;
     return (target: MenuTarget) => {
-      if (target.place === undefined) return null;
       // What the host says as the menu opens.
       const state = keeper.current();
       const kind = kindOf(target);
+      /*
+       * A KIND'S LIST, on Pages: kept off the places (`pages.hide`) as a
+       * change to the declaration — `set-lens-hidden` on the kind — by
+       * whoever may change it. Still at its address, and Show brings it back.
+       */
+      if (target.place === undefined) {
+        if (target.face !== "pages" || kind === undefined || target.on !== undefined || !state.may.lenses || !keeper.lens) return null;
+        const hidden = views.arrangement?.()?.hide?.includes(kind) === true;
+        const setListHidden = (hide: boolean) => void tidying.load().then((module) => module.setListHidden(kind, pluralLabel(context!.store.schema, kind), keeper, hide, board), String);
+        const items: MenuItem[] = [hidden ? { id: "show-list", label: "Show", hint: "Back in the places, for everyone", run: () => setListHidden(false) } : { id: "hide-list", label: "Hide", hint: "Off the places, for everyone; still at its address", run: () => setListHidden(true) }];
+        return { id: "tidy-view", items, prepare: () => tidying.prefetch() };
+      }
       const place = views.places().find((one) => one.as === target.place && (kind === undefined || one.kind === kind || one.over?.includes(kind) === true));
       if (!place) return null;
       const how = placeTidying(place, state, keeper);

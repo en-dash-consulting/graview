@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 910,
+  "gzipped": 340,
+  "changeset": "a-kept-view-is-a-place-in-the-nav.md",
+  "note": "Raised when a view the host keeps came to be a place in the nav (Roadmap q-custom-views-in-nav): the bar's places list a registered view pages.order names (`view:<name>`) among the lists where it is named (arrangedEntries), pages.first opens on it by its name (openingOf), a kind pages.hide names leaves the drop-down but for the place you are on, and the drop-down's foot lists the kinds kept off with Show. Measured at 591_375 / 205_603 against 590_472 / 205_267: 903 / 336 more."
+}
