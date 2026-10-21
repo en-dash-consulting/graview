@@ -143,4 +143,20 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: npx playwright install --with-deps chromium webkit firefox
+      # A cell that fails is looked at again alone; one that held the second
+      # time is written to docs/flakes.json and raised as a warning.
       - run: pnpm engines
+
+      # The matrix, each engine's own reports (docs/engines/<engine>/) and the
+      # survey's shots, so a failing cell names its screen.
+      - name: The verdicts, for reading
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verdicts-engines
+          path: |
+            docs/*.json
+            docs/engines/
+            docs/survey/
+            docs/watch/
+          if-no-files-found: ignore

@@ -31,6 +31,33 @@ export function logoParts(logo: unknown): LogoParts | undefined {
   };
 }
 
+/** A document's logo as a host draws it: the light one, the dark one, its words and the dark scheme's fallback. */
+export interface DocumentLogo {
+  readonly light: string;
+  readonly dark?: string;
+  readonly alt?: string;
+  readonly darkFallback?: "invert";
+}
+
+/**
+ * ANY LOGO A DOCUMENT GIVES, READ AS ONE (FR-197): a string, `{ src, alt }`
+ * or `{ light, dark?, alt?, darkFallback? }` becomes `{ light, dark?, alt?,
+ * darkFallback? }`, or undefined where there is no mark to draw. `logoOf`
+ * reads the compiled brand; this reads the document before it compiles, and
+ * keeps only what the compile would (an empty mark, or a fallback other than
+ * `"invert"`, is left out).
+ */
+export function logoOfDocument(logo: unknown): DocumentLogo | undefined {
+  const parts = logoParts(logo);
+  if (!parts || parts.light === "") return undefined;
+  return {
+    light: parts.light,
+    ...(parts.dark ? { dark: parts.dark } : {}),
+    ...(parts.alt ? { alt: parts.alt } : {}),
+    ...(parts.darkFallback === "invert" ? { darkFallback: "invert" as const } : {}),
+  };
+}
+
 /** What a change to the logo's dark scheme says, by an edit and by the preview of a change alike; nothing when that part did not change. */
 export function darkLogoSentence(was: unknown, now: unknown): string | undefined {
   const before = logoParts(was);

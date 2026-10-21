@@ -56,3 +56,6 @@ apps/promo/
 
 # Flakes a second look caught (scripts/lib/second-look.mjs): kept per machine and per CI run, never committed.
 docs/flakes.json
+
+# Each engine's own harness reports (scripts/verify-engines.mjs), uploaded by the Nightly's engines job, never committed.
+docs/engines/
