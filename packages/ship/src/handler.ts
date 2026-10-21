@@ -224,6 +224,12 @@ interface HandlerOptions<S extends AnySchema> {
    */
   readonly minHostProtocol?: number;
   /**
+   * WHAT AN OPEN CARRIES OF THE LOG: `liveProtocol`'s `openTail`, at most
+   * this many of the latest ops in `/graview/state` and a fresh socket's
+   * welcome, with the horizon they begin at, while the store keeps them all.
+   */
+  readonly openTail?: number;
+  /**
    * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions): the host's
    * `SubscriptionStore`, served to each seat at `/graview/subscriptions`
    * and judged against every commit. Unsaid, the handler keeps them in
@@ -548,6 +554,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       ...(options.withheldKey !== undefined ? { withheldKey: options.withheldKey } : {}),
       ...(options.limit ? { limit: options.limit } : {}),
       ...(options.admit ? { admit: options.admit } : {}),
+      ...(options.openTail !== undefined ? { openTail: options.openTail } : {}),
       held: () => holding,
     }),
   });

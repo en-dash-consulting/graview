@@ -16,6 +16,16 @@ import type { Operation } from "./types.js";
  * every client and every host that folds the same log agrees on it without
  * being told. A field no op in the log has written (a seeded one, or one
  * written before the log's first op) is at `NEVER_WRITTEN`.
+ *
+ * A CLAIM IS STALE ONLY WHEN THE FIELD WAS WRITTEN AFTER THE REVISION IT
+ * NAMES. A page opened on a log that begins at a horizon (FR-23) — a
+ * compacted store's, or the short tail `liveProtocol`'s `openTail` serves
+ * — knows of a field written before it only that it was: read with that
+ * `horizon`, such a field is at the seq before it, which is what the page
+ * claims to have seen, and a server holding the whole log takes it as seen
+ * when the field's last write is no later. The server reads its own log
+ * with no horizon, so a field behind its own horizon is at `NEVER_WRITTEN`
+ * there and no claim of it is stale: its last write is history nobody holds.
  */
 export const NEVER_WRITTEN = -1;
 
@@ -65,10 +75,16 @@ export function fieldsWritten(primitive: Primitive): readonly (readonly [string,
  */
 export class FieldRevisions {
   private readonly revs = new Map<string, number>();
+  /** What a field no op here wrote is at: the seq before the log's horizon. */
+  private readonly floor: number;
 
-  /** Revisions read from a whole log (or the part of one a seat may see). */
-  static of(ops: readonly Operation[]): FieldRevisions {
-    const revisions = new FieldRevisions();
+  private constructor(horizon = 0) {
+    this.floor = Math.max(0, Math.floor(horizon)) - 1;
+  }
+
+  /** Revisions read from a whole log (or the part of one a seat may see), or from its tail with the `horizon` it begins at. */
+  static of(ops: readonly Operation[], options: { readonly horizon?: number } = {}): FieldRevisions {
+    const revisions = new FieldRevisions(options.horizon);
     revisions.note(ops);
     return revisions;
   }
@@ -79,15 +95,15 @@ export class FieldRevisions {
       for (const primitive of op.primitives) {
         for (const [node, field] of fieldsWritten(primitive)) {
           const at = key(node, field);
-          if ((this.revs.get(at) ?? NEVER_WRITTEN) < op.seq) this.revs.set(at, op.seq);
+          if ((this.revs.get(at) ?? this.floor) < op.seq) this.revs.set(at, op.seq);
         }
       }
     }
   }
 
-  /** The seq of the op that last wrote this field, or `NEVER_WRITTEN`. */
+  /** The seq of the op that last wrote this field, or the seq before the horizon (`NEVER_WRITTEN` for a whole log). */
   of(node: string, field: string): number {
-    return this.revs.get(key(node, field)) ?? NEVER_WRITTEN;
+    return this.revs.get(key(node, field)) ?? this.floor;
   }
 
   /** The base a call made of these ops would carry: each field they patch on a record they did not add, at its revision here. */
@@ -108,9 +124,9 @@ export class FieldRevisions {
     return [...base.values()];
   }
 
-  /** The base entries that no longer hold: each field written since its sender read it. */
+  /** The base entries that no longer hold: each field written since its sender read it (after the revision the entry names). */
   stale(base: readonly FieldRevision[]): FieldRevision[] {
-    return base.filter((entry) => this.of(entry.node, entry.field) !== entry.rev);
+    return base.filter((entry) => this.of(entry.node, entry.field) > entry.rev);
   }
 }
 
