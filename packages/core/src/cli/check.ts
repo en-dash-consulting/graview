@@ -1,3 +1,4 @@
+import type { HostView } from "../views/types.js";
 import type { GraviewApp } from "../app.js";
 import { deriveArchiveMutations, deriveEditMutations, deriveRemoveMutations } from "../mutations/derive-edits.js";
 import { deriveRepeatMutations } from "../mutations/derive-repeats.js";
@@ -68,12 +69,18 @@ export interface CheckResult {
  * because the primary reader is an agent editing the declaration.
  */
 
+/** What a host tells the checker beyond the declaration. */
+export interface CheckOptions {
+  /** The views the host keeps (`HostView`; a script view's manifest is one): what `view:<name>` in `pages` may name. Unsaid, such a name is a note. */
+  readonly views?: readonly HostView[];
+}
+
 /**
  * EVERY QUESTION A DECLARATION IS ASKED, in the order it is asked. Each
  * family of checks lives in `check/` and is handed the same context; the
  * order is the report's order, which is the order a person reads it in.
  */
-export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
+export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: CheckOptions = {}): CheckResult {
   const findings: Finding[] = [];
   const kinds = new Set<string>(app.schema.kinds as readonly string[]);
   const declaredMutations = app.mutations ?? [];
@@ -84,7 +91,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   const invariants = new Map((app.invariants ?? []).map((i) => [i.name, i]));
 
   const add = (f: Finding) => findings.push(f);
-  const ctx: CheckContext<S> = { app, kinds, declaredMutations, derivedEdits, derivedRemoves, mutations, invariants, add };
+  const ctx: CheckContext<S> = { app, kinds, declaredMutations, derivedEdits, derivedRemoves, mutations, invariants, add, ...(options.views ? { views: options.views } : {}) };
 
   checkRoutes(ctx);
   checkShippedLenses(ctx);

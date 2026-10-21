@@ -88,8 +88,8 @@ const ROUND_TRIPS: readonly { name: string; on?: GraviewDocument; edit: Record<s
     name: "arrange-pages",
     edit: { op: "arrange-pages", order: ["package", "offer"], hide: ["stakeholder", "party"], first: "The packages" },
     inverse: { op: "arrange-pages", order: ["offer", "package", "signal", "question", "party", "stakeholder"], hide: ["stakeholder"], first: null },
-    said: /^Packages and offers come first, in that order, the front page leaves off people and teams and parties and the app opens on "The packages"\.$/,
-    says: /The kinds are put in a new order: package, offer\..*The front page leaves off party\..*The app opens on "The packages"\./,
+    said: /^Packages and offers come first, in that order, the places and the front page leave off people and teams and parties and the app opens on "The packages"\.$/,
+    says: /The places are put in a new order: package, offer\..*The places and the front page leave off party\..*The app opens on "The packages"\./,
   },
   {
     name: "set-computed: a new one",

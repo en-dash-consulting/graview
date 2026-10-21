@@ -88,11 +88,12 @@ describe("a document's declared lenses, on the routed face", () => {
     await done();
   });
 
-  it("orders the nav and the home's kinds as declared, leaves a hidden kind off the home and keeps it at its address", async () => {
+  it("orders the nav and the home's kinds as declared, leaves a hidden kind off the home and the nav and keeps it at its address", async () => {
     const { host, done } = await rendered("/problems");
     const nav = [...host.querySelectorAll('[data-testid="app-places"] a')].map((a) => a.textContent ?? "");
     const kinds = nav.filter((text) => /^(Volunteers|Seats|Shifts|Rooms|Members)$/.test(text));
-    expect(kinds).toEqual(["Volunteers", "Seats", "Shifts", "Rooms", "Members"]);
+    // The rooms `pages.hide` keeps off the places are not in the drop-down (Roadmap q-custom-views-in-nav).
+    expect(kinds).toEqual(["Volunteers", "Seats", "Shifts", "Members"]);
     await act(async () => (host.querySelector('[data-testid="app-home"]') as HTMLAnchorElement).click());
     const counted = [...host.querySelectorAll('[data-testid="kinds"] li a')].map((a) => a.getAttribute("href"));
     expect(counted).toEqual(["/volunteers", "/seats", "/shifts", "/members"]);

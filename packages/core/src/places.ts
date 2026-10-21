@@ -3,7 +3,7 @@ import { parseArrangement } from "./arrangement-words.js";
 import { defOf } from "./schema/zod.js";
 import { gridSortProblem } from "./grid-sort.js";
 import type { AnySchema } from "./schema/schema.js";
-import { kindPath, placeSlug, type PagesArrangement, type Place } from "./views/types.js";
+import { kindPath, placeSlug, VIEW_REFERENCE, type PagesArrangement, type Place } from "./views/types.js";
 
 /**
  * THE LENSES THIS FRAMEWORK SHIPS, AND WHAT EACH ONE TAKES AS DATA (FR-79).
@@ -423,7 +423,7 @@ export function primaryOf(
   const words = new Set(pages.primary.map(placeSlug));
   return {
     kinds: new Set((schema.kinds as readonly string[]).filter((kind) => words.has(placeSlug(kind)) || words.has(kindPath(schema, kind).slice(1)))),
-    places: new Set(places.filter((place) => words.has(place.as) || words.has(placeSlug(place.title))).map((place) => `${place.kind}|${place.as}`)),
+    places: new Set(places.filter((place) => words.has(place.as) || words.has(placeSlug(place.title)) || (place.name !== undefined && pages.primary!.includes(VIEW_REFERENCE + place.name))).map((place) => `${place.kind}|${place.as}`)),
   };
 }
 
@@ -449,6 +449,37 @@ export function orderKinds(kinds: readonly string[], order: readonly string[] | 
   return [...new Set(named), ...kinds.filter((kind) => !named.includes(kind))];
 }
 
+/** The name of the host's view a word of the arrangement names (`view:<name>`), or undefined for any other word. */
+export function viewReference(word: string): string | undefined {
+  return word.startsWith(VIEW_REFERENCE) ? word.slice(VIEW_REFERENCE.length).trim() || undefined : undefined;
+}
+
+/** One entry of the arranged list: a kind's list, or a host's view `pages.order` names, at its place in the order. */
+export type ArrangedEntry = { readonly kind: string; readonly view?: undefined } | { readonly kind: string; readonly view: Place };
+
+/**
+ * THE KINDS' LISTS AND THE VIEWS `pages.order` NAMES, IN ITS ORDER: what it
+ * names first — a kind, or `view:<name>` for a host's view registered here
+ * on one of `kinds` — then the other kinds as given. A view not registered
+ * here is passed over until it is.
+ */
+export function arrangedEntries(kinds: readonly string[], order: readonly string[] | undefined, places: readonly Place[]): readonly ArrangedEntry[] {
+  const out: ArrangedEntry[] = [];
+  const listed = new Set<string>();
+  for (const word of order ?? []) {
+    const name = viewReference(word);
+    const view = name === undefined ? undefined : places.find((one) => one.name === name && kinds.includes(one.kind));
+    if (view) {
+      if (!out.some((held) => held.view === view)) out.push({ kind: view.kind, view });
+    } else if (name === undefined && kinds.includes(word) && !listed.has(word)) {
+      listed.add(word);
+      out.push({ kind: word });
+    }
+  }
+  for (const kind of kinds) if (!listed.has(kind)) out.push({ kind });
+  return out;
+}
+
 /** Where `first` opens, resolved against the places and kinds a face has. */
 export type Opening = { readonly to: "home" } | { readonly to: "place"; readonly place: Place } | { readonly to: "kind"; readonly kind: string };
 
@@ -459,7 +490,8 @@ export function openingOf(first: string | undefined, schema: AnySchema, places: 
   if (word === "" ) return undefined;
   if (word.toLowerCase() === "home" || word === "/") return { to: "home" };
   const slug = placeSlug(word);
-  const place = places.find((one) => one.title === word) ?? places.find((one) => one.as === slug);
+  // A host's view by its manifest name (`view:<name>`): where it is registered here; else nothing matches it yet.
+  const place = places.find((one) => one.title === word || VIEW_REFERENCE + one.name === word) ?? places.find((one) => one.as === slug);
   if (place) return { to: "place", place };
   const kinds = schema.kinds as readonly string[];
   const kind = kinds.find((one) => one === word) ?? kinds.find((one) => kindPath(schema, one).slice(1) === slug);

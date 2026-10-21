@@ -1,7 +1,7 @@
-import { allLabel, hueFor, kindPath, MOST_STANDING, onePerPicture, orderKinds, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
+import { allLabel, arrangedEntries, hueFor, kindPath, MOST_STANDING, onePerPicture, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, samePicture, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
 import { useQuickAskDrawn } from "./quick-ask-desk.js";
-import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
+import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
 import { barPanes } from "./bar-panes-door.js";
 /* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): fetched with the panes, and the tidying with it, once there is something to list and the list is open. */
@@ -84,6 +84,12 @@ export interface BarPlace {
    * kind with no records yet. Unsaid is yes.
    */
   readonly primary?: boolean;
+  /**
+   * A kind's list `pages.hide` keeps off the places: listed only while it is
+   * the place you are on, so the bar still says where you are; its address,
+   * Find and the links to it still reach it.
+   */
+  readonly hidden?: boolean;
 }
 
 /** The key the home's place has (FR-136): the app's front page, first in the list, at the app's own address. */
@@ -139,15 +145,30 @@ export function barPlaces(input: {
    * tabs both reading "Root causes" left a reader to guess which was which.
    */
   const titled = new Set(onePerPicture(seen).map((place) => placeLabel(place, all, store.schema).toLowerCase()));
-  for (const kind of orderKinds(live, arrangement?.order)) {
+  // Two DIFFERENT pictures of one name say whose, at `?of=` and beside the name (as the routed face addresses and lists them).
+  const pathOf = (place: Place) => placePath(place.as, sharesItsName(place, all) ? kindPath(store.schema, place.kind).slice(1) : undefined);
+  const hidden = new Set(arrangement?.hide ?? []);
+  /*
+   * THE KINDS' LISTS, AND A HOST'S VIEW WHERE `pages.order` NAMES IT
+   * (`view:<name>`): the view stands among the lists at its place in the
+   * order — a way in the app is about, not one more picture at the foot —
+   * on the bar's row unless `pages.primary` says other places. A kind
+   * `pages.hide` keeps off is listed only while it is where you are.
+   */
+  const arranged = arrangedEntries(live, arrangement?.order, seen);
+  for (const { kind, view } of arranged) {
+    if (view) {
+      out.push({ key: `place:${view.kind}:${view.as}`, label: placeLabel(view, all, store.schema), path: pathOf(view), group: "lists", kind, primary: declared ? declared.places.has(`${kind}|${view.as}`) : true });
+      continue;
+    }
     const label = pluralLabel(store.schema, kind);
     const named = titled.has(label.toLowerCase());
-    out.push({ key: `kind:${kind}`, label: named ? allLabel(store.schema, kind) : label, path: kindPath(store.schema, kind), group: "lists", kind, primary: named ? false : stands(kind) });
+    out.push({ key: `kind:${kind}`, label: named ? allLabel(store.schema, kind) : label, path: kindPath(store.schema, kind), group: "lists", kind, primary: named || hidden.has(kind) ? false : stands(kind), ...(hidden.has(kind) ? { hidden: true } : {}) });
   }
   // Each picture once: one over several kinds is one entry, under the first of them this seat sees.
   for (const place of onePerPicture(seen)) {
-    // Two DIFFERENT pictures of one name say whose, at `?of=` and beside the name (as the routed face addresses and lists them).
-    const path = placePath(place.as, sharesItsName(place, all) ? kindPath(store.schema, place.kind).slice(1) : undefined);
+    if (arranged.some((entry) => entry.view && samePicture(entry.view, place))) continue;
+    const path = pathOf(place);
     const standing = [place.kind, ...(place.over ?? [])].some((kind) => live.includes(kind) && stands(kind, place.as));
     if (!out.some((held) => held.path === path)) out.push({ key: `place:${place.kind}:${place.as}`, label: placeLabel(place, all, store.schema), path, group: "pictures", kind: place.kind, primary: standing });
   }
@@ -467,7 +488,9 @@ export function AppBar({
   const [standing, setStanding] = useState<string | null>(null);
   // The places on the face drawn: the routed face's, or the scene's (FR-144) — a scene with no pages to switch to has its places too.
   const onPages = faces ? faces.pages.current : !scenePlaces;
-  const shown = onPages ? { places, current, reach } : scenePlaces;
+  // A kind's list kept off the places (`hidden`) is listed only while it is where you are.
+  const offered = useMemo(() => (places.some((place) => place.hidden && place.key !== current) ? places.filter((place) => !place.hidden || place.key === current) : places), [places, current]);
+  const shown = onPages ? { places: offered, current, reach } : scenePlaces;
   const list = shown && shown.places.length > 0 ? shown : null;
   const currentAt = list ? list.places.findIndex((place) => place.key === list.current) : -1;
   const wordsAsked = Boolean(faces) && switchForm === "words";
@@ -956,7 +979,7 @@ function Places({ places, current, reach, scene, stands: weighed }: { readonly p
    */
   const graview = useGraviewIfAny();
   const tidied = graview?.keptViews?.current();
-  const tidies = Boolean(tidied && (tidied.removed.length > 0 || graview!.views.places().some((place) => place.hidden)));
+  const tidies = Boolean(tidied && (tidied.removed.length > 0 || graview!.views.places().some((place) => place.hidden) || (tidied.may.lenses && (graview!.views.arrangement?.()?.hide?.length ?? 0) > 0)));
   return (
     <nav className={stands ? "graview-bar-places" : "graview-bar-place-at"} aria-label={scene ? "What the scene shows" : "The app’s places"} {...(stands ? { "data-testid": "app-places-standing" } : {})} {...gestures}>
       {stands?.map((at) => <PlaceEntry key={places[at]!.key} place={places[at]!} current={current} reach={reach} standing done={() => undefined} />)}

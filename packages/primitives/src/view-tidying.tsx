@@ -1,4 +1,4 @@
-import { NO_KEPT_VIEWS, placePath, placeTidying, REMOVED_VIEW_DAYS, removedLensName, type KeptViews, type KeptViewsState, type Place, type RemovedView } from "@graview/core";
+import { kindPath, NO_KEPT_VIEWS, placePath, placeTidying, pluralLabel, REMOVED_VIEW_DAYS, removedLensName, type KeptViews, type KeptViewsState, type Place, type RemovedView } from "@graview/core";
 import { useGraview, useGraviewIfAny } from "@graview/react/provider";
 import { useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { NoticeBoardContext, type NoticeBoard } from "./notices.js";
@@ -55,6 +55,11 @@ export function setHidden(place: Place, how: "view" | "lens", keeper: KeptViews,
   );
 }
 
+/** Keeps a kind's list off the places (`pages.hide`), or puts it back: a change to the declaration, `set-lens-hidden` on the kind. */
+export function setListHidden(kind: string, title: string, keeper: KeptViews, hidden: boolean, board: NoticeBoard | null): Promise<boolean> {
+  return tidy(board, () => keeper.lens?.({ op: "set-lens-hidden", title: kind, hidden }), hidden ? `“${title}” could not be hidden.` : `“${title}” could not be shown.`);
+}
+
 /** Restores a deleted view, by the name the host lists it under. */
 export function restore(removed: Pick<RemovedView, "name" | "title">, keeper: KeptViews, board: NoticeBoard | null): Promise<boolean> {
   return tidy(board, () => keeper.restore(removed.name), `“${removed.title}” could not be restored.`);
@@ -80,7 +85,14 @@ export async function remove(place: Place, how: "view" | "lens", keeper: KeptVie
 }
 
 /** What the drop-down's foot lists: the hidden places this viewer may show, and the deleted views they may restore. */
-export function useTidied(): { readonly keeper: KeptViews; readonly hidden: readonly Place[]; readonly removed: readonly RemovedView[]; readonly how: (place: Place) => "view" | "lens" | null } | null {
+/** A kind's list kept off the places (`pages.hide`), as the foot lists it: the kind, what its list is called, and where it is. */
+export interface HiddenList {
+  readonly kind: string;
+  readonly title: string;
+  readonly path: string;
+}
+
+export function useTidied(): { readonly keeper: KeptViews; readonly hidden: readonly Place[]; readonly lists: readonly HiddenList[]; readonly removed: readonly RemovedView[]; readonly how: (place: Place) => "view" | "lens" | null } | null {
   const context = useGraviewIfAny();
   const keeper = context?.keptViews;
   const state = useKeptViewsState(keeper);
@@ -97,8 +109,11 @@ export function useTidied(): { readonly keeper: KeptViews; readonly hidden: read
       seen.add(key);
       return true;
     });
-    return { keeper, hidden, removed: state.removed.filter((one) => mayRestore(one, state)), how };
-  }, [keeper, state, views]);
+    // The kinds' lists kept off the places, where this viewer may change the declaration that keeps them off.
+    const schema = context?.store.schema;
+    const lists = state.may.lenses && keeper.lens && schema ? (views.arrangement?.()?.hide ?? []).filter((kind) => schema.tryDefinition(kind) !== undefined).map((kind) => ({ kind, title: pluralLabel(schema, kind), path: kindPath(schema, kind) })) : [];
+    return { keeper, hidden, lists, removed: state.removed.filter((one) => mayRestore(one, state)), how };
+  }, [keeper, state, views, context?.store.schema]);
 }
 
 /** A day as the drop-down says it: "Nov 18". */
@@ -117,9 +132,9 @@ const TIDY_CSS = `.graview-bar-list li.graview-bar-tidied{display:flex;align-ite
 .graview-bar-tidy:focus-visible{outline:2px solid var(--graview-accent);outline-offset:1px}`;
 
 /** A hidden place's name in the foot: a link to it on Pages, where it is still at its address; its name alone on the scene. */
-function HiddenName({ place, scene, reach, done }: { readonly place: Place; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }): ReactNode {
+function HiddenName({ place, scene, reach, done }: { readonly place: Place | HiddenList; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }): ReactNode {
   if (scene) return <span className="graview-bar-gone">{place.title}</span>;
-  const entry: BarPlace = { key: `place:${place.kind}:${place.as}`, label: place.title, path: placePath(place.as), group: "pictures", kind: place.kind };
+  const entry: BarPlace = "as" in place ? { key: `place:${place.kind}:${place.as}`, label: place.title, path: placePath(place.as), group: "pictures", kind: place.kind } : { key: `kind:${place.kind}`, label: place.title, path: place.path, group: "lists", kind: place.kind };
   const href = reach.href?.(entry.path);
   const Entry = (href !== undefined ? "a" : "button") as "a";
   return (
@@ -148,15 +163,23 @@ export function TidyGroups({ id, scene, reach, done }: { readonly id: string; re
   const tidied = useTidied();
   const { locale } = useGraview();
   const board = useContext(NoticeBoardContext);
-  if (!tidied || (tidied.hidden.length === 0 && tidied.removed.length === 0)) return null;
-  const { keeper, hidden, removed, how } = tidied;
+  if (!tidied || (tidied.hidden.length === 0 && tidied.lists.length === 0 && tidied.removed.length === 0)) return null;
+  const { keeper, hidden, lists, removed, how } = tidied;
   return (
     <>
       <style>{TIDY_CSS}</style>
-      {hidden.length > 0 ? (
+      {hidden.length > 0 || lists.length > 0 ? (
         <div role="group" aria-labelledby={`${id}-hidden`} data-place-group="hidden">
           <p id={`${id}-hidden`}>Hidden</p>
           <ul>
+            {lists.map((list) => (
+              <li key={`kind:${list.kind}`} className="graview-bar-tidied">
+                <HiddenName place={list} scene={scene} reach={reach} done={done} />
+                <button type="button" className="graview-bar-tidy" data-testid="app-list-show" data-kind={list.kind} aria-label={`Show “${list.title}”`} onClick={() => void setListHidden(list.kind, list.title, keeper, false, board)}>
+                  Show
+                </button>
+              </li>
+            ))}
             {hidden.map((place) => (
               <li key={`${place.kind}:${place.as}`} className="graview-bar-tidied">
                 <HiddenName place={place} scene={scene} reach={reach} done={done} />

@@ -47,7 +47,13 @@
  *   (FR-189): a board's card links to `<base>/tasks/t1`, its menu —
  *   right-clicked at a desk, a finger resting on it on a phone — has Open,
  *   the task's acts and Move to ›, which moves it, and "Open in a new tab"
- *   keeps the base; a blocks lens's card, grouped by status, the same.
+ *   keeps the base; a blocks lens's card, grouped by status, the same;
+ *   and a view the host keeps (a script view registered by its manifest
+ *   name, as Cloud's `propose_view` makes one) that `pages.order` and
+ *   `pages.first` name as `view:to-do` is where the bare address opens,
+ *   stands first among the Pages drop-down's lists, while a kind
+ *   `pages.hide` names is out of the drop-down and still opens at its
+ *   address (Roadmap q-custom-views-in-nav).
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
@@ -74,6 +80,11 @@ const SWAP_BASE = "/apps/a2";
 const CARDS_BASE = "/apps/a3";
 /** Cards grouped by where each task stands, as Cloud's Roadmap draws its features by stage. */
 const BY_STATUS = { name: "blocks", title: "By status", on: "task", options: { blocks: [{ list: "all('task')", group: { by: "status" }, sort: "label", as: "card" }] } };
+/** Where the tasks are served with a view the host keeps, ordered first and opened on, and the people kept off the places. */
+const VIEWS_BASE = "/apps/a4";
+const TO_DO = { name: "to-do", title: "To do", attach: "task", cardinality: "many" };
+const TO_DO_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<ul class="to-do">\${props.nodes.map((task) => graview.html\`<li>\${task.label}</li>\`)}</ul>\`));`;
+const VIEWS_PAGES = { order: ["view:to-do", "task"], first: "view:to-do", hide: ["person"] };
 const SEED = {
   nodes: [
     { id: "t1", kind: "task", label: "Write the brief", status: "todo" },
@@ -105,6 +116,7 @@ async function buildHost() {
     stdin: {
       contents: `
         import { mount } from "@graview/embed";
+        import { registerWorkerView } from "@graview/guest/host/views";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import { Store } from "@graview/core";
         import tasks from ${JSON.stringify(TASKS)};
@@ -116,7 +128,8 @@ async function buildHost() {
           return compiled.app;
         };
         const cards = location.pathname.startsWith("${CARDS_BASE}");
-        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : tasks) };
+        const kept = location.pathname.startsWith("${VIEWS_BASE}");
+        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : tasks) };
         const article = location.pathname.startsWith("/article");
         window.__navigated = [];
         /*
@@ -179,8 +192,10 @@ async function buildHost() {
           app: compiled.app,
           seed: ${JSON.stringify(SEED)},
           principal: { kind: "human", id: "p1", roles: ["owner"] },
-          // As Cloud's shell: the Graview on a desk, the pages on a phone.
-          face: article ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
+          // As Cloud's shell: the Graview on a desk, the pages on a phone; the kept view's app on the pages at both.
+          face: article || kept ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
+          // A view the host keeps, registered by its manifest's name as Cloud registers a chat's view.
+          ...(kept ? { views: (schema, registry) => registerWorkerView(registry, { manifest: ${JSON.stringify(TO_DO)}, worker: { source: ${JSON.stringify(TO_DO_SOURCE)} } }) } : {}),
           bar: true,
           label: "The tasks",
           heading: article ? 2 : 1,
@@ -188,7 +203,7 @@ async function buildHost() {
           fonts: false,
           studio: false,
           onNavigate: (path, how) => window.__navigated.push([path, how]),
-          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : "${BASE}/" }),
+          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : "${BASE}/" }),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
         }`,
@@ -214,7 +229,7 @@ async function buildHost() {
       return;
     }
     // Every address under the base is the one page, as a host that owns the page answers it.
-    if ([BASE, SWAP_BASE, CARDS_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
+    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
       response.writeHead(200, { "content-type": "text/html" });
       response.end(APP_PAGE);
       return;
@@ -504,6 +519,38 @@ try {
         one.blocksCard = blocksCard;
       } catch (error) {
         one.cardsError = String(error?.message ?? error);
+      }
+      /*
+       * A VIEW THE HOST KEEPS, AS A NAV ENTRY (Roadmap q-custom-views-in-nav):
+       * the bare address opens on it, the drop-down lists it first among the
+       * lists, and the people `pages.hide` keeps off are not listed — and
+       * still open at their address, where the bar names them.
+       */
+      try {
+        const places = () =>
+          tab.evaluate(() => {
+            const list = document.querySelector('[data-testid="app-places"]');
+            const entries = (within) => [...(within?.querySelectorAll("[data-place-path]") ?? [])].map((one) => one.getAttribute("data-place-path"));
+            const nav = list?.closest("nav");
+            return {
+              all: [...new Set(entries(nav))],
+              lists: entries(list?.querySelector('[data-place-group="lists"]')),
+              current: document.querySelector('[data-testid="app-place-current"]')?.textContent?.trim() ?? null,
+            };
+          });
+        await go(`${VIEWS_BASE}/`);
+        const opened = await settled();
+        await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="to-do"]')?.shadowRoot?.querySelector(".to-do li")), null, { timeout: 20_000 }).catch(() => null);
+        const drawn = await tab.evaluate(() => [...(document.querySelector('[data-worker-view="to-do"]')?.shadowRoot?.querySelectorAll(".to-do li") ?? [])].map((li) => li.textContent));
+        if (await tab.locator('[data-testid="app-places-open"]').isVisible().catch(() => false)) await tab.click('[data-testid="app-places-open"]');
+        await tab.waitForTimeout(300);
+        one.keptView = { opened, drawn, places: await places() };
+        await tab.keyboard.press("Escape");
+        await go(`${VIEWS_BASE}/people`);
+        const hiddenList = await settled();
+        one.hiddenKind = { opened: hiddenList, places: await places() };
+      } catch (error) {
+        one.keptError = String(error?.message ?? error);
       }
       await context.close();
 
@@ -870,6 +917,17 @@ try {
   report.checks.openInANewTabKeepsTheBase = {
     seen: Object.fromEntries(pagesAt.map(([name, one]) => [name, one.cardsError ? { error: one.cardsError } : { board: one.boardCard?.opened, blocks: one.blocksCard?.opened }])),
     ok: cardsHold(({ boardCard, blocksCard }) => boardCard.opened === `${BASE}/tasks/t1` && blocksCard.opened === `${CARDS_BASE}/tasks/t2`),
+  };
+  /* Roadmap q-custom-views-in-nav: a view the host keeps, ordered first, opens first and stands in the drop-down; a hidden kind leaves it and keeps its address. */
+  const keptSeen = (key) => Object.fromEntries(pagesAt.map(([name, one]) => [name, one.keptError ? { error: one.keptError } : one[key]]));
+  const keptHold = (test) => pagesAt.length === engines.length * SIZES.length && pagesAt.every(([, one]) => !one.keptError && test(one));
+  report.checks.aRegisteredViewOrderedFirstOpensFirstAndStandsInTheDropDown = {
+    seen: keptSeen("keptView"),
+    ok: keptHold(({ keptView }) => keptView.opened.path === `${VIEWS_BASE}/places/to-do` && keptView.opened.pushes === 0 && keptView.drawn.includes("Write the brief") && keptView.places.all.filter((path) => path !== "/")[0] === "/places/to-do" && keptView.places.current === "To do"),
+  };
+  report.checks.aHiddenKindIsNotInTheDropDownAndStillOpensAtItsAddress = {
+    seen: { list: keptSeen("keptView"), atItsAddress: keptSeen("hiddenKind") },
+    ok: keptHold(({ keptView, hiddenKind }) => !keptView.places.all.includes("/people") && hiddenKind.opened.path === `${VIEWS_BASE}/people` && /^people$/i.test(hiddenKind.opened.heading ?? "") && hiddenKind.places.current === "People"),
   };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);

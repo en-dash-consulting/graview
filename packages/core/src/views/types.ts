@@ -142,6 +142,28 @@ export interface Place {
   readonly reads?: readonly string[];
 }
 
+/**
+ * A VIEW THE HOST KEEPS, AS THE DECLARATION'S ARRANGEMENT NAMES IT: a
+ * script view's manifest (its `name`, `title`, `attach` and `cardinality`;
+ * a `WorkerViewManifest` is one), and whether the host keeps it off the
+ * lists. The declaration names one as `view:<its name>` in `pages.order`,
+ * `pages.first` and `pages.primary`; a host hands its views to
+ * `editDocument`, `compileDocument` and `placesOf` (`views`) so a title
+ * resolves to that name and the places list it where it is ordered.
+ */
+export interface HostView {
+  readonly name: string;
+  readonly title?: string;
+  /** The kind it is a picture of, or "home". */
+  readonly attach: string;
+  readonly cardinality?: "one" | "many";
+  /** Kept off the lists by the host. */
+  readonly hidden?: boolean;
+}
+
+/** How the arrangement names a host's view: `view:<its manifest name>`. */
+export const VIEW_REFERENCE = "view:";
+
 /** A place as the lists compare it: its name, its kind, and every kind when it is one picture over several. */
 type Pictured = { readonly as: string; readonly kind: string; readonly over?: readonly string[] };
 
@@ -388,8 +410,22 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
  * faces (FR-137).
  */
 export interface PagesArrangement {
+  /**
+   * WHAT COMES FIRST IN THE PLACES: kinds by name, and the host's views
+   * as `view:<its manifest name>` — a view named here is listed among the
+   * kinds' lists where it is named, not with the other pictures. A view
+   * not registered here yet is passed over until it is.
+   *
+   *   pages: { order: ["view:to-do", "task", "project"] }
+   */
   readonly order?: readonly string[];
+  /**
+   * KINDS KEPT OFF THE BAR'S PLACES AND THE FRONT PAGE: each still at its
+   * address, in Find, and reached from wherever it is linked; the bar
+   * lists one only while it is the place you are on.
+   */
   readonly hide?: readonly string[];
+  /** Where a new visit lands: a place's title, a kind, `view:<name>` for a host's view, or "home". */
   readonly first?: string;
   /**
    * WHAT THE BAR'S SWITCH CALLS THE SCENE (FR-137): "Scene" when the

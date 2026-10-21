@@ -323,16 +323,18 @@ type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?
 function pagesSentences(before: Arrangement, after: Arrangement, kinds: GraviewDocument["kinds"]): string[] {
   if (same(before, after)) return [];
   const out: string[] = [];
-  if (!same(before?.order, after?.order)) out.push(after?.order && after.order.length > 0 ? `The kinds are put in a new order: ${after.order.join(", ")}.` : "The kinds go back to the order they were declared in.");
+  // A host's view by its name (`view:<name>`), said as one.
+  const word = (one: string) => (one.startsWith("view:") ? `the view "${one.slice(5)}"` : one);
+  if (!same(before?.order, after?.order)) out.push(after?.order && after.order.length > 0 ? `The places are put in a new order: ${after.order.map(word).join(", ")}.` : "The kinds go back to the order they were declared in.");
   if (!same(before?.hide, after?.hide)) {
     const hidden = after?.hide ?? [];
     const shown = (before?.hide ?? []).filter((kind) => !hidden.includes(kind));
     const newly = hidden.filter((kind) => !(before?.hide ?? []).includes(kind));
-    if (newly.length > 0) out.push(`The front page leaves off ${newly.join(", ")}.`);
-    if (shown.length > 0) out.push(`The front page shows ${shown.join(", ")} again.`);
+    if (newly.length > 0) out.push(`The places and the front page leave off ${newly.join(", ")}.`);
+    if (shown.length > 0) out.push(`The places and the front page show ${shown.join(", ")} again.`);
   }
-  if (!same(before?.first, after?.first)) out.push(after?.first === undefined || after.first.trim().toLowerCase() === "home" ? "The app opens at its home." : `The app opens on "${after.first}".`);
-  if (!same(before?.primary, after?.primary)) out.push(after?.primary && after.primary.length > 0 ? `The bar stands up ${after.primary.join(", ")} beside Home.` : "The bar stands up the main kinds and their pictures again.");
+  if (!same(before?.first, after?.first)) out.push(after?.first === undefined || after.first.trim().toLowerCase() === "home" ? "The app opens at its home." : after.first.startsWith("view:") ? `The app opens on ${word(after.first)}.` : `The app opens on "${after.first}".`);
+  if (!same(before?.primary, after?.primary)) out.push(after?.primary && after.primary.length > 0 ? `The bar stands up ${after.primary.map(word).join(", ")} beside Home.` : "The bar stands up the main kinds and their pictures again.");
   if (!same(before?.scene, after?.scene)) out.push(after?.scene === undefined ? "The switch calls the scene Scene again." : `The switch calls the scene "${after.scene}".`);
   if (!same(before?.pages, after?.pages)) out.push(after?.pages === undefined ? "The switch calls the pages Pages again." : `The switch calls the pages "${after.pages}".`);
   for (const kind of new Set([...Object.keys(before?.lists ?? {}), ...Object.keys(after?.lists ?? {})])) {
