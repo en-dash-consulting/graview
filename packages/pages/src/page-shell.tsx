@@ -9,6 +9,7 @@ import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
+import { classes, sizedBy, type ControlSize } from "./control-size.js";
 import { BODY, WIDE, column, h1, quiet } from "./page-typography.js";
 
 
@@ -233,9 +234,15 @@ export function PageTitle<S extends AnySchema>({
 export function PageFind<S extends AnySchema>({
   context,
   narrowsLists = true,
+  className,
+  size,
 }: {
   context: PageContext<S>;
   narrowsLists?: boolean;
+  /** A design's own class, on the form; the box inside it is `.graview-find-box`. */
+  className?: string;
+  /** How tall it stands in a design's bar: `"sm"` (30 px, as it stands by default), `"md"` (36 px), or the bar's own height. */
+  size?: ControlSize;
 }) {
   usePlacedOnTheFace("find");
   const location = useLocation();
@@ -327,7 +334,8 @@ export function PageFind<S extends AnySchema>({
     <form
       role="search"
       aria-label={onList ? "Narrow this list" : "Find anything"}
-      style={{ display: "flex", minWidth: 0, flex: "1 1 auto" }}
+      className={classes("graview-find", className)}
+      {...sizedBy(size)}
       onSubmit={(event) => {
         event.preventDefault();
         // Enter from a list widens the look to everything the words find.
@@ -343,20 +351,20 @@ export function PageFind<S extends AnySchema>({
         placeholder={onList ? (named ? narrowing : "Narrow…") : "Find…"}
         aria-keyshortcuts="/ Meta+K Control+K"
         aria-label={onList ? "Narrow this list" : "Find anything"}
-        style={{
-          width: "100%",
-          minWidth: 0,
-          height: 30,
-          // Room at its end for the shortcut the bar says over it until it is used.
-          padding: "0 var(--graview-bar-find-end, 10px) 0 10px",
-          font: "inherit",
-          fontSize: "0.875rem",
-          color: "var(--graview-ink)",
-          background: "var(--graview-ground)",
-          border: "1px solid var(--graview-edge)",
-          borderRadius: 8,
-        }}
+        className="graview-find-box"
       />
+      <style>{FIND_CSS}</style>
     </form>
   );
 }
+
+/*
+ * THE FIND BOX'S LOOK, as rules a design's one class outweighs (`:where`
+ * weighs nothing): a bar that wants it 24 px tall says `size={24}`, or
+ * `.my-find { --graview-control-height: 24px }`, and needs no `!important`.
+ * The room at its end is for the shortcut the app bar says over the box
+ * until it is used.
+ */
+const FIND_CSS = `:where(.graview-find){display:flex;min-width:0;flex:1 1 auto}
+:where(.graview-find[data-size=md]){--graview-control-height:36px}
+:where(.graview-find-box){box-sizing:border-box;width:100%;min-width:0;height:var(--graview-control-height,30px);padding:0 var(--graview-bar-find-end,10px) 0 10px;font:inherit;font-size:.875rem;color:var(--graview-ink);background:var(--graview-ground);border:1px solid var(--graview-edge);border-radius:8px}`;

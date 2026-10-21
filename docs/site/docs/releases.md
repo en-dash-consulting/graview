@@ -84,7 +84,7 @@ Cards that answer the menu under a base, full-size photos in views, views that s
 - **Drop photos and videos onto a view.** A view marks where files may land; the host takes them, stores them and makes one record per file, in one undoable change, with a picker on a phone.
 - **The page says when it has drawn.** `data-graview-drawn` and `onDrawn` replace a timer for anyone picturing a place, and a page can open on a view proposed and not yet kept.
 - **add-lens refuses an option the lens does not take.**
-- **Authoring skills split at their limit**, so each teaches one job: 26 skills now.
+- **Authoring skills split at their limit**, so each teaches one job.
 
 **Before you upgrade:** `mount` takes `onDrawn(place)` (the old first-commit callback is `onFaceDrawn` on `<Embed>`), `draftView` and `handle.setDraftView`; `@graview/embed` depends on `@graview/guest`; `add-lens` refuses an unknown option (`lens-option-unknown`, an error) and `lensOptionsRefused` judges a patch; a worker view's manifest takes `accepts`, and `graview.act` takes a list of arguments as one change; a board card's long press opens its menu; code acts that move a board's cards need `sets` (`lens-column-written-unsaid`). The hosted page carries about 4 KB more up front.
 

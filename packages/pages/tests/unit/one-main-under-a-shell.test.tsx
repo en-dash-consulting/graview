@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 /**
  * ONE MAIN, UNDER A SHELL OF THE APP'S OWN.
  *
- * `graview-pages` tells a design's shell to own the landmark — "one `main`
+ * `graview-pages-design` tells a design's shell to own the landmark — "one `main`
  * (a `section` when `context.embedded`)" — and the framework's own pages
  * went on wrapping themselves in `PageMain` underneath it. Any route the
  * design did not replace then had a `main` inside a `main`: every kind left

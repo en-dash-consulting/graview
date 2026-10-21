@@ -11,6 +11,7 @@ import type { PageContext } from "./page-context.js";
 import { useStoreTick } from "./page-context.js";
 import { kindOfSlug, type PageRegistry } from "./registry.js";
 import { PageFind } from "./page-shell.js";
+import type { ControlSize } from "./control-size.js";
 import { createPlaced, FaceControls, usePlaced, usePlacedOnTheFace, type FaceControl, type Placed } from "./face-placed.js";
 
 /**
@@ -55,13 +56,24 @@ const TakeBack = lazy(partArriving(retryingImport(() => import("./take-back.js")
 export function PageUndo<S extends AnySchema>({
   context,
   docked = false,
+  ...placed
 }: {
   readonly context: PageContext<S>;
   /** Held at the corner of the face rather than in a shell's own row. Set by the face's root. */
   readonly docked?: boolean;
-}) {
+} & UndoLook) {
   usePlacedOnTheFace("undo");
-  return <WayBack context={context} docked={docked} at="" />;
+  return <WayBack context={context} docked={docked} at="" {...placed} />;
+}
+
+/** How the way back looks in a shell's own row. */
+export interface UndoLook {
+  /** The arrow and "Undo", for a bar with no room for the sentence: what it takes back is still its accessible name and its title. */
+  readonly compact?: boolean;
+  /** A design's own class, on the button (`.graview-undo`). */
+  readonly className?: string;
+  /** How tall it stands: `"sm"` (30 px), `"md"` (36 px, as it stands by default), or the bar's own height. */
+  readonly size?: ControlSize;
 }
 
 /**
@@ -69,7 +81,7 @@ export function PageUndo<S extends AnySchema>({
  * store has changed since the face was drawn (an offer comes only with an
  * act, FR-152); placed in a shell's row, once there is any change at all.
  */
-function WayBack<S extends AnySchema>({ context, docked, at }: { readonly context: PageContext<S>; readonly docked: boolean; readonly at: string }) {
+function WayBack<S extends AnySchema>({ context, docked, at, ...look }: { readonly context: PageContext<S>; readonly docked: boolean; readonly at: string } & UndoLook) {
   const { store } = context;
   const tick = useStoreTick(store);
   const [since] = useState(() => store.batches().length);
@@ -78,7 +90,7 @@ function WayBack<S extends AnySchema>({ context, docked, at }: { readonly contex
   return wanted.current ? (
     <Suspense fallback={null}>
       {/* The door's component is not generic: the context is the face's own. */}
-      <TakeBack context={context as unknown as PageContext<AnySchema>} docked={docked} at={at} since={since} />
+      <TakeBack context={context as unknown as PageContext<AnySchema>} docked={docked} at={at} since={since} {...look} />
     </Suspense>
   ) : null;
 }

@@ -4,6 +4,8 @@ import { inTopLayer } from "@graview/react/provider";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { PageContext } from "./page-context.js";
 import { useStoreTick } from "./page-context.js";
+import { classes, sizedBy } from "./control-size.js";
+import type { UndoLook } from "./face-controls.js";
 
 /*
  * THE WAY BACK ITSELF, fetched once there is something it could offer: an
@@ -80,7 +82,15 @@ function useTakeBack<S extends AnySchema>(context: PageContext<S>, at: string, s
 }
 
 /** The way back: docked, a notice over the face; placed, a control in a shell's row. `since` is how many batches the log held when the face was drawn. */
-export function TakeBack<S extends AnySchema>({ context, docked, at, since }: { readonly context: PageContext<S>; readonly docked: boolean; readonly at: string; readonly since: number }) {
+export function TakeBack<S extends AnySchema>({
+  context,
+  docked,
+  at,
+  since,
+  compact = false,
+  className,
+  size,
+}: { readonly context: PageContext<S>; readonly docked: boolean; readonly at: string; readonly since: number } & UndoLook) {
   const { change: last, offered, close, takeBack, refused, said } = useTakeBack(context, at, since);
   // Docked, it is a notice: only the offer an act brought. Placed in a shell's row, it is a control: whatever can be taken back.
   const change = docked ? offered : last;
@@ -136,10 +146,17 @@ export function TakeBack<S extends AnySchema>({ context, docked, at, since }: { 
         // After the face has drawn the change gone: if this control went with it, the keyboard lands on the page.
         requestAnimationFrame(() => landOnThePage(face));
       }}
-      style={docked ? DOCKED : PLACED}
+      {...(docked
+        ? { style: DOCKED }
+        : {
+            className: classes("graview-undo", className),
+            ...sizedBy(size),
+            // Compact, the words are "Undo": what it takes back is its name, as it is its title.
+            ...(compact ? { "data-compact": "", "aria-label": takeBackWords(change) } : {}),
+          })}
     >
       <span aria-hidden="true">↶</span>
-      <span style={docked ? WRAPPED : ONE_LINE}>{takeBackWords(change)}</span>
+      {docked ? <span style={WRAPPED}>{takeBackWords(change)}</span> : <span className="graview-undo-words">{compact ? "Undo" : takeBackWords(change)}</span>}
     </button>
   ) : null;
   return (
@@ -152,15 +169,9 @@ export function TakeBack<S extends AnySchema>({ context, docked, at, since }: { 
         ref={dock}
         {...(docked ? { popover: "manual", "data-graview-foot": "", "data-graview-offstage": "" } : {})}
         data-testid={docked ? "face-undo-dock" : "page-undo-place"}
-        style={{
-          display: "grid",
-          justifyItems: "end",
-          gap: 4,
-          maxWidth: "100%",
-          minWidth: 0,
-          ...corner,
-        }}
+        {...(docked ? { style: { ...THE_PLACE, ...corner } } : { className: "graview-undo-place" })}
       >
+        {docked ? null : <style>{UNDO_CSS}</style>}
         {docked && change ? (
           /* The notice's own panel: the way back, and the × that closes it (FR-152). */
           <div data-testid="page-undo-notice" style={PANEL}>
@@ -187,14 +198,8 @@ export function TakeBack<S extends AnySchema>({ context, docked, at, since }: { 
           <span
             data-testid="page-undo-refused"
             role="alert"
-            style={{
-              fontSize: "0.8125rem",
-              lineHeight: 1.4,
-              color: "var(--graview-warn)",
-              background: docked ? "var(--graview-float)" : undefined,
-              padding: docked ? "4px 8px" : undefined,
-              borderRadius: 6,
-            }}
+            className="graview-undo-refused"
+            {...(docked ? { style: { fontSize: "0.8125rem", lineHeight: 1.4, color: "var(--graview-warn)", borderRadius: 6, background: "var(--graview-float)", padding: "4px 8px" } } : {})}
           >
             {refused}
           </span>
@@ -247,26 +252,36 @@ function useFloatingDock(dock: RefObject<HTMLDivElement | null>, shown: boolean)
   }, [dock, shown]);
 }
 
-const PLACED: React.CSSProperties = {
+/*
+ * PLACED IN A SHELL'S ROW, the way back is a capsule drawn by rules a
+ * design's one class outweighs (`:where` weighs nothing), so a bar puts it
+ * at its own height with `size` or `--graview-control-height` and needs no
+ * `!important`. Its sentence is cut at 18rem (`--graview-undo-widest`) —
+ * uncut, a long act's words took the row from Find — and is whole in its
+ * title; compact, it is the arrow and "Undo".
+ */
+const UNDO_CSS = `:where(.graview-undo-place){display:grid;justify-items:end;gap:4px;max-width:100%;min-width:0}
+:where(.graview-undo){box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;min-height:var(--graview-control-height,36px);max-width:min(100%,var(--graview-undo-widest,18rem));min-width:0;padding:0 14px;border-radius:999px;border:1px solid var(--graview-edge);background:var(--graview-float);color:var(--graview-ink);font:inherit;font-size:.875rem;cursor:pointer}
+:where(.graview-undo[data-size=sm]){--graview-control-height:30px}
+:where(.graview-undo[data-compact]){padding:0 10px}
+:where(.graview-undo-words){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:where(.graview-undo-refused){font-size:.8125rem;line-height:1.4;color:var(--graview-warn);border-radius:6px}`;
+
+/** The dock's own box, under its corner. */
+const THE_PLACE: React.CSSProperties = { display: "grid", justifyItems: "end", gap: 4, maxWidth: "100%", minWidth: 0 };
+
+/** Docked, it is a notice: the floating panel's look, a quiet corner rather than a capsule (FR-117). */
+const DOCKED: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
   minHeight: 36,
   maxWidth: "100%",
   minWidth: 0,
-  padding: "0 14px",
   borderRadius: 999,
-  border: "1px solid var(--graview-edge)",
-  background: "var(--graview-float)",
-  color: "var(--graview-ink)",
   font: "inherit",
   fontSize: "0.875rem",
   cursor: "pointer",
-};
-
-/** Docked, it is a notice: the floating panel's look, a quiet corner rather than a capsule (FR-117). */
-const DOCKED: React.CSSProperties = {
-  ...PLACED,
   textAlign: "start",
   lineHeight: 1.4,
   padding: "8px 4px 8px 14px",
@@ -303,8 +318,6 @@ const DISMISS: React.CSSProperties = {
   fontSize: "1rem",
   cursor: "pointer",
 };
-
-const ONE_LINE: React.CSSProperties = { minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
 
 /** Wrapped, not cut: four lines before anything is (FR-118), and what is cut is still whole in the button's name and title. */
 const WRAPPED: React.CSSProperties = {

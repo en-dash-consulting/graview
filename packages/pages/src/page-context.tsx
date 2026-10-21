@@ -62,7 +62,7 @@ export interface PageContext<S extends AnySchema> {
   /**
    * Whether a shell of the app's own is already around these pages.
    *
-   * A design's shell owns the document's landmark — `graview-pages` says so
+   * A design's shell owns the document's landmark — `graview-pages-design` says so
    * in as many words — and the framework's own pages went on wrapping
    * themselves in `PageMain` underneath it, so every route the design left
    * derived had a main inside a main. Set by the router from the registry,

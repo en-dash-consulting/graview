@@ -480,7 +480,7 @@ export function PagesRoutes<S extends AnySchema>({
   /*
    * A SHELL OF THE APP'S OWN OWNS THE LANDMARK.
    *
-   * `graview-pages` tells a design's shell to render the one `main`, and the
+   * `graview-pages-design` tells a design's shell to render the one `main`, and the
    * framework's own pages went on wrapping themselves in `PageMain`
    * underneath it — so every route a design left derived had a main inside a
    * main, and so did the not-found page, which is reachable in EVERY design

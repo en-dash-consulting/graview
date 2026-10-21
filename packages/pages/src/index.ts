@@ -42,6 +42,7 @@ export {
 export type { PageContext, GalleryEntry, Beginning, ListPageProps, ListRowFacts } from "./pages.js";
 export { PageQuickAsk } from "./quick-ask.js";
 export { lastChangeOf, PageUndo } from "./face-controls.js";
-export type { FaceControl, LastChange } from "./face-controls.js";
+export type { FaceControl, LastChange, UndoLook } from "./face-controls.js";
+export type { ControlSize } from "./control-size.js";
 export { PagesApp, PagesRoutes } from "./router.js";
 export type { NavigationHow, PagesAppProps, PagesSteering, PageComponent } from "./router.js";
