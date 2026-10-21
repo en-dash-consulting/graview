@@ -241,6 +241,8 @@ export function Repairs<S extends AnySchema>({
           // What the rule left open, and only that, under the repair's own words.
           only={opened.missing ?? []}
           label={opened.label}
+          // Pressed, the repair's question takes the keyboard: what it asks is the next thing to answer.
+          autoFocus
           onDone={() => {
             const asked = open;
             setOpen(null);

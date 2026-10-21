@@ -151,7 +151,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
                 },
               },
               ...(onRecord
-                ? [{ label: "Skip to what can be done", testid: "acts", go: () => void focusInto(document.querySelector<HTMLElement>("main [data-affordance]:not([disabled])") ?? document.querySelector<HTMLElement>("main")) }]
+                ? [{ label: "Skip to what can be done", testid: "acts", go: () => void focusInto(document.querySelector<HTMLElement>("main [data-affordance]:not([disabled]):not([tabindex='-1'])") ?? document.querySelector<HTMLElement>("main [data-affordance]:not([disabled])") ?? document.querySelector<HTMLElement>("main")) }]
                 : []),
             ]}
           />

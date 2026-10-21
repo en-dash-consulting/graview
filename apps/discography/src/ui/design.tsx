@@ -18,6 +18,7 @@ import {
   type PageComponent,
   type PageContext,
 } from "@graview/pages";
+import { ROVING_ITEM, useRoving } from "@graview/primitives";
 import type { Affordance, AffordanceSet } from "@graview/tools";
 import { useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -293,6 +294,12 @@ function Acts({ title, actions, context }: { title: string; actions: AffordanceS
   const [failed, setFailed] = useState<string | null>(null);
   const [more, setMore] = useState(false);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
+  /*
+   * ONE STOP FOR TAB, the arrows along the acts and a letter to the next
+   * that begins with it, where each act was a stop of its own; and an act's
+   * form, opened, takes the keyboard to what it asks (`autoFocus`).
+   */
+  const roving = useRoving<HTMLDivElement>({ flow: "both", letters: true });
   if (actions.affordances.length === 0 && actions.withheld.length === 0) return null;
   // What takes the record away — archive, merge, remove — waits one press behind the rest.
   const aside = actions.affordances.filter((affordance) => affordance.destructive || affordance.setsAside);
@@ -304,7 +311,7 @@ function Acts({ title, actions, context }: { title: string; actions: AffordanceS
   return (
     <section style={{ display: "grid", gap: "0.6rem" }} data-testid="record-actions">
       <h2 className="ln-h2">{title}</h2>
-      <div className="ln-row">
+      <div className="ln-row" role="toolbar" aria-label={title} {...roving}>
         {shown.map((affordance) => (
           <button
             key={affordance.id}
@@ -313,6 +320,9 @@ function Acts({ title, actions, context }: { title: string; actions: AffordanceS
             }}
             type="button"
             className="ln-btn"
+            // The derivation's own name for it, as the derived page marks its acts: the skip to what can be done lands here.
+            data-affordance={affordance.id}
+            {...{ [ROVING_ITEM]: "" }}
             aria-expanded={affordance.open.length > 0 ? open === affordance.id : undefined}
             onClick={() => {
               setFailed(null);
@@ -334,6 +344,7 @@ function Acts({ title, actions, context }: { title: string; actions: AffordanceS
           <button
             type="button"
             className="ln-btn ln-quiet"
+            {...{ [ROVING_ITEM]: "" }}
             aria-expanded={false}
             onClick={() => {
               setMore(true);
@@ -349,7 +360,7 @@ function Acts({ title, actions, context }: { title: string; actions: AffordanceS
         const mutation = store.allMutations().find((candidate) => candidate.name === affordance.mutation);
         return mutation ? (
           <div key={affordance.id} className="ln-card">
-            <DerivedForm<S> store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} label={affordance.label} {...(principal ? { principal } : {})} onDone={() => done(affordance)} />
+            <DerivedForm<S> store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} label={affordance.label} {...(principal ? { principal } : {})} autoFocus onDone={() => done(affordance)} />
           </div>
         ) : null;
       })}

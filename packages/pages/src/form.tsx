@@ -12,7 +12,7 @@ import { changedArgs, editStart, formFields, formArgs, keptArguments, type FormF
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
 import { Files, LinkedPicker, RepeatPicker, WhenInput } from "@graview/primitives/pages";
-import { useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 /**
  * A form, walked off the mutation's own declaration.
@@ -586,6 +586,23 @@ export interface DerivedFormProps<S extends AnySchema> {
    * typed into the first box renamed the single to "2023-04-14".
    */
   readonly only?: readonly string[];
+  /**
+   * THE KEYBOARD GOES TO WHAT THE FORM ASKS, when it is drawn: an act's form
+   * opened by a press, a repair's question. Onto the first field that must
+   * be answered and is not yet — past a note nobody was asked for, past what
+   * the record already holds — else the first field, else the button.
+   * Only while the keyboard has gone nowhere else since: a person who moved
+   * on is not brought back.
+   */
+  readonly autoFocus?: boolean;
+}
+
+/** The field a form asks first: the first that must be answered and is not, else the first there is, else its button. */
+function askedFirst(form: HTMLFormElement): HTMLElement | null {
+  const fields = [...form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input:not([type=hidden]), select, textarea")].filter(
+    (field) => !field.disabled && !field.closest("[hidden], [inert], [aria-hidden='true']"),
+  );
+  return fields.find((field) => field.required && field.value === "") ?? fields[0] ?? form.querySelector<HTMLElement>('button[type="submit"]');
 }
 
 /** The submit path is the ordinary one: `store.apply`, refusals shown. */
@@ -599,6 +616,7 @@ export function DerivedForm<S extends AnySchema>({
   initial,
   label,
   only,
+  autoFocus = false,
 }: DerivedFormProps<S>) {
   // A record's change starts from what the record holds, and sends only what was changed from there (Roadmap f-edit-form-prefilled).
   const startOf = () => editStart(mutation, store.graph as never, prefilled);
@@ -635,8 +653,37 @@ export function DerivedForm<S extends AnySchema>({
       return out;
     });
 
+  const formRef = useRef<HTMLFormElement | null>(null);
+  useEffect(() => {
+    if (!autoFocus) return;
+    // Where the keyboard was when the form came: the press that opened it, or nowhere.
+    const from = document.activeElement;
+    let frame = 0;
+    let tries = 0;
+    const go = () => {
+      const form = formRef.current;
+      if (!form) return;
+      const now = document.activeElement;
+      // The keyboard went somewhere else meanwhile: it stays there.
+      if (now !== from && now !== document.body && now !== null && !form.contains(now)) return;
+      if (form.contains(now)) return;
+      // A date's editor arrives a beat after its form (fetched when first asked for): what it asks is waited for.
+      const asked = form.querySelector("[data-graview-when-arriving]") && tries < 30 ? null : askedFirst(form);
+      if (asked) {
+        asked.focus();
+        return;
+      }
+      tries += 1;
+      if (tries <= 30) frame = requestAnimationFrame(go);
+    };
+    frame = requestAnimationFrame(go);
+    return () => cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <form
+      ref={formRef}
       data-testid={`form-${mutation.name}`}
       onSubmit={(event) => {
         event.preventDefault();

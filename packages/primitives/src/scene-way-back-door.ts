@@ -61,7 +61,7 @@ export function sceneWay<S extends AnySchema>(store: Store<S>, principal: Princi
     seen = store.batches().length;
     if (fresh) {
       const batch = (offered = fresh.batch);
-      board?.notify({ kind: "toast", id: OFFER, sentence: fresh.intent, timeout: WAY_BACK_MS, action: { label: "Take back", onSelect: () => (landOnTheApp(app), take(batch)) } });
+      board?.notify({ kind: "toast", id: OFFER, sentence: fresh.intent, timeout: WAY_BACK_MS, action: { label: "Take back", keys: "Meta+Z Control+Z", onSelect: () => (landOnTheApp(app), take(batch)) } });
     } else if (offered && lastChangeOf(store, principal)?.batch !== offered) {
       // Taken back, by the key or from Activity: the offer goes with it.
       offered = undefined;
