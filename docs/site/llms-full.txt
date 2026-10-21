@@ -767,7 +767,7 @@ A compacted store shows a seat only what it may see, history judged for one seat
 - **The two-scheme logo** has a capability id and one public reader.
 - **The Nightly's engines leg looks twice** before it fails, and keeps its verdicts.
 
-**Before you upgrade:** Checkpoints gain `removed` and `writers` (optional; older builds ignore them); a store opened on an older checkpoint fails closed for a seat whose sight is not total, so a host mends each once. `view:<name>` in `pages.order`, `first` and `primary`; `editDocument`, `compileDocument` and `placesOf` take `views`; a kind in `pages.hide` leaves the bar's places. `FR-197`, `FR-198` and `FR-199` in `capabilities().shipped`. About 2 KB more up front.
+**Before you upgrade:** Checkpoints gain `removed` and `writers` (optional; older builds ignore them); a store opened on an older checkpoint fails closed for a seat whose sight is not total, so a host mends each once. `view:<name>` in `pages.order`, `first` and `primary`; `editDocument`, `compileDocument` and `placesOf` take `views`; a kind in `pages.hide` leaves the bar's places. About 2 KB more up front.
 
 [The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.44) · [The full changelog for 0.1.44](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0144)
 
