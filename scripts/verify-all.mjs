@@ -93,6 +93,8 @@ const CHAIN = [
   ["declared", "verify-declared.mjs"],
   // A document and a seed looked at with no product: `graview preview` draws both faces over the served store, `graview shots` photographs named places.
   ["preview", "verify-preview.mjs"],
+  // The architecture recipe's product face, run as its page says: PagesApp with its own shell, home, route and record page over openRemote to a graview preview, through a Vite proxy that rewrites Origin for /graview, live both ways.
+  ["face-recipe", "verify-face-recipe.mjs"],
   // A date and a date and time typed as people say them ("tomorrow 3pm") or picked from a month by keyboard, the zone said, an end that moves with its start, on both faces and a phone (Roadmap f-date-inputs).
   ["date-inputs", "verify-date-inputs.mjs"],
   // A selected record drawn once, its relations said in their words, a district's name in its box, on a document shaped like Cloud's workshop, in three engines (FR-141–FR-143).

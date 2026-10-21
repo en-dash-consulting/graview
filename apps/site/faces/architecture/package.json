@@ -1,0 +1,27 @@
+{
+  "name": "larkspur-architecture-face",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "store": "graview preview ../app.json --seed ../seed.json --port 4800",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@graview/core": "^0.1.41",
+    "@graview/pages": "^0.1.41",
+    "@graview/primitives": "^0.1.41",
+    "@graview/react": "^0.1.41",
+    "@graview/ship": "^0.1.41",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.1.1"
+  },
+  "devDependencies": {
+    "graview": "^0.1.41",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11"
+  }
+}
