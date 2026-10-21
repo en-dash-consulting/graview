@@ -1,4 +1,4 @@
-import { svgProblem } from "@graview/core";
+import { svgProblem, type BrandLogo } from "@graview/core";
 import type { GuestTheme } from "../protocol.js";
 
 /*
@@ -60,8 +60,8 @@ export function watchTheme(document: Document, moved: () => void): () => void {
 /** The app's brand as a guest is handed it (FR-127): `Brand`'s name and logo, as the app's wordmark draws them. */
 export interface GuestBrand {
   readonly name?: string;
-  /** An inline SVG string, a `data:` image, or an address on the page's own origin. */
-  readonly logo?: string;
+  /** An inline SVG string, a `data:` image, or an address on the page's own origin — or one for each scheme, the guest handed the one its scheme draws. */
+  readonly logo?: string | BrandLogo;
 }
 
 /**
@@ -70,8 +70,11 @@ export interface GuestBrand {
  */
 export function themeWithBrand(read: () => GuestTheme, brand: (() => GuestBrand | undefined) | undefined, logo: GuestLogo): GuestTheme {
   const given = brand?.();
-  const url = logo.url(given?.logo);
-  return { ...read(), ...(given?.name ? { name: given.name } : {}), ...(url ? { logo: url } : {}) };
+  const look = read();
+  // The logo the guest's scheme draws: a dark one in the dark, where the brand has one.
+  const mark = given?.logo;
+  const url = logo.url(typeof mark === "string" || mark === undefined ? mark : look.scheme === "dark" && mark.dark ? mark.dark : mark.light);
+  return { ...look, ...(given?.name ? { name: given.name } : {}), ...(url ? { logo: url } : {}) };
 }
 
 /** The logo a guest is handed, kept up as the brand changes. */

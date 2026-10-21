@@ -59,6 +59,31 @@ are. The face says it; a design never rebuilds it by matching
   none at their heads; one that draws its own from `usePlaceHere()` says
   `surface("shell", Shell, { without: ["trail"] })`.
 
+## Find and the way back, in the design's bar
+
+Both are the face's, whichever shell draws it: a shell that places
+`<PageFind>` or `<PageUndo>` says where they go, else they are drawn around
+it (Find in a bar above, the way back docked at the corner), and
+`surface("shell", Shell, { without: ["find", "undo"] })` goes without.
+
+```tsx
+<nav className="my-bar">
+  <PageFind context={context} narrowsLists={false} size="sm" className="my-find" />
+  <PageUndo context={context} compact size="sm" className="my-undo" />
+</nav>
+```
+
+- **`compact`** is the arrow and "Undo": what it takes back ("Take back
+  “Rename to …”") is its accessible name and its title. Uncompact, the
+  sentence is cut at 18rem (`--graview-undo-widest`), whole in its title.
+- **`size`**: `"sm"` (30 px, the app bar's tools), `"md"` (36 px), or the
+  bar's own height — a number of pixels or a CSS length — said as
+  `--graview-control-height`.
+- **`className`** goes on Undo's button and on Find's form (its box is
+  `.graview-find-box`). Their own look is rules behind `:where`, so one
+  class of the design's outweighs it: never `!important`, never a CSS
+  `::after` over Undo's words.
+
 ## What every design must keep doing
 
 - **Read the graph through one model.** `readGarden(store)` turns nodes,
@@ -71,7 +96,8 @@ are. The face says it; a design never rebuilds it by matching
 - **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`,
   `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with
   `color-mix` for the design's own paper. Never a color that works in one
-  scheme only.
+  scheme only — nor a logo: `<AppMark brand={context.brand} />` draws the
+  brand's, the dark one in the dark (`graview-logo`).
 - **Keep landmarks and targets honest.** One `main` — a `section` when
   `context.embedded`, and UNNAMED, or a page holding two embeds has two
   regions with one name. Controls at least 24px, AA contrast.

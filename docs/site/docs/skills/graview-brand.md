@@ -1,6 +1,6 @@
 # graview-brand
 
-`graview-brand` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
+`graview-brand` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -18,7 +18,7 @@ Every primitive reads a custom property and `themeCss(scheme, brand)` emits them
 
 const derived = brandFromAccent({ accent: "#7a4bd0", base: { dark: DARK, light: LIGHT } }); if (!derived.ok) { throw new Error(`Needs ${derived.missing.join(", ")} — ${derived.why}`); }
 
-export const brand: Brand = { name: "Acme Bids", // Inline SVG using currentColor: one file works in both schemes. logo: '<svg viewBox="0 0 24 24" ... stroke="currentColor">...</svg>', typography: { body: '"Inter", ui-sans-serif, system-ui, sans-serif' }, schemes: derived.schemes, }; ```
+export const brand: Brand = { name: "Acme Bids", // Inline SVG using currentColor: one file works in both schemes. // A client's picture on white wants one for each scheme: graview-logo. logo: '<svg viewBox="0 0 24 24" ... stroke="currentColor">...</svg>', typography: { body: '"Inter", ui-sans-serif, system-ui, sans-serif' }, schemes: derived.schemes, }; ```
 
 1. **Expect the refusal path to be real.** No single color can be accent TEXT in both schemes — 4.5:1 on white needs a lightness under about 0.18 and 4.5:1 on a dark panel needs one over about 0.24, and those do not overlap. So `brandFromAccent` keeps the hue and saturation, which are the brand's, and moves the lightness the smallest distance that clears AA. When that distance is far enough that the color has stopped being theirs, it refuses and names what to supply. **Do not catch that and carry on with a guess** — shipping a color they did not choose under their own name is worse than asking.
 
@@ -55,12 +55,9 @@ A document (`graview-document@1`) holds the same brand as data, every key option
 }
 ```
 
-- **A mark** is inline SVG or a path on the app's own host — never another origin. It is drawn as given (`currentColor` takes the accent), so it is read element by element as the browser reads it: shapes, groups, gradients, filters, text and links to its own `#id`s, every attribute quoted, and nothing after `</svg>`. A script, a handler, `<a>`, `<style>`, an animation, `foreignObject` or anything it loads is refused (`brand-mark`, with the reason), never rewritten. On Cloud, `add_image` answers the path.
+- **A mark** — the logo, one for each scheme, and the page icon, an emoji among them — is `graview-logo`: inline SVG or a path on the app's own host, drawn as given, and one that could act refused (`brand-mark`).
 - **A face** is `system-serif`, `system-sans`, `system-mono`, a face every system has (Georgia, Menlo), or a web font on `DOCUMENT_FONTS`; one named by its address is refused (`brand-font`). The host decides where web fonts load from.
-- **An accent** must read as given in light: `set-brand` refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names.
-- **The icon** is set only by a face that owns the page; an embed on somebody else's page leaves theirs alone unless the host passes `favicon: true`. `"favicon": { "emoji": "🏡" }` — exactly one standard emoji (👩🏽‍🌾 and 🇺🇸 count as one) — is the icon and, with no logo, the mark; anything else is refused (`brand-emoji`).
-
-`describe_place("home")` says the app as the home draws it (its `masthead`): the name, the line under it, and the logo by its alt text.
+- **An accent** must read as given in light: `set-brand` refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names. Contrast is judged on colors alone; a logo is a picture and is not measured.
 
 ### Styling by conversation
 
@@ -96,7 +93,6 @@ pnpm build && npx graview check ./dist/domain/app.js
 ### What the check cannot see
 
 - Whether it looks like the brand. Contrast is measurable; taste is not.
-- Whether the logo reads at 18 pixels. Most do not.
 - Whether the typeface is loaded. A declared face with no `@font-face` and no web font silently falls back, and the fallback is usually fine — which is why nobody notices for months.
 - Anything about a value it cannot parse. It says so; believe it.
 

@@ -244,7 +244,7 @@ graview describe <entry> [--as <role>] [--views <module>] [--place <slug|id>]
 graview docs <entry> [--out <dir>] [--views <module>]
 ```
 
-## What a model reads before it writes (27 skills)
+## What a model reads before it writes (28 skills)
 
 Skills that teach an assistant the authoring moves, each ending in a real graview check verdict. Installed into a product by `graview skills install .` — which `graview create` runs for you — into `.claude/skills` and `.agents/skills`, so Claude Code and Codex find the same instructions.
 
@@ -258,6 +258,7 @@ Skills that teach an assistant the authoring moves, each ending in a real gravie
 - [graview-linked-records](https://graview.dev/docs/skills/graview-linked-records.html): Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
 - [graview-lists](https://graview.dev/docs/skills/graview-lists.html): Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
 - [graview-locale](https://graview.dev/docs/skills/graview-locale.html): Say a Graview app's money, days, times and numbers the way its people say them — a currency, a locale and a time zone declared once on the brand, a field kept as money, {net | money} and {at | time} in a template — and let graview check refuse a code, a locale or a zone it cannot write rather than trusting the page.
+- [graview-logo](https://graview.dev/docs/skills/graview-logo.html): Put a client's own logo and page icon on a Graview app — inline SVG or a path, one for each scheme so a picture on white is not a white slab in the dark, an emoji as the icon — drawn in the default shell and handed to a design's own, and let graview check refuse a mark that could act rather than trusting it.
 - [graview-new-app](https://graview.dev/docs/skills/graview-new-app.html): Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 - [graview-node-kind](https://graview.dev/docs/skills/graview-node-kind.html): Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 - [graview-pages](https://graview.dev/docs/skills/graview-pages.html): Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).
@@ -467,11 +468,11 @@ Source: https://graview.dev/docs/checks.html
 
 # What `graview check` says
 
-`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 108 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
+`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 110 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
 
-## 70 errors
+## 72 errors
 
-`brand-accent-not-a-hue`, `brand-accent-unknown-kind`, `brand-currency`, `brand-emoji`, `brand-locale`, `brand-time-zone`, `creates-unknown-kind`, `edge-claim-unknown-kind`, `edge-target-undeclared`, `field-role-ill-typed`, `field-role-missing-field`, `figure-undrawable`, `figure-unknown-kind`, `fixed-unknown-field`, `glance-unknown-field`, `grant-own-end-without-link`, `grant-unknown-kind`, `grant-unknown-mutation`, `intelligence-decision-cannot-call`, `intelligence-reach-unknown`, `intelligence-unknown-mutation`, `invariant-scope-undeclared`, `kit-contrast-below-aa`, `lens-binding-empty`, `lens-binding-empty-path`, `lens-binding-fieldless-owner`, `lens-binding-missing-field`, `lens-binding-not-a-field`, `lens-binding-path-misses`, `lens-binding-undeclared-edge`, `lens-binding-undeclared-kind`, `lens-option`, `lens-role-unbound`, `lifecycle-missing-field`, `lifecycle-never-retires`, `migration-gap`, `migration-not-single-step`, `migration-without-version`, `module-unknown-invariant`, `module-unknown-kind`, `module-unknown-mutation`, `module-unknown-requirement`, `mutation-subject-arg-missing`, `mutation-subject-undeclared`, `mutation-unreachable-by-any-role`, `mutation-untitled`, `node-ref-undeclared`, `page-too-large`, `pages-kind-unknown`, `pages-list-arrangement`, `people-ambiguous`, `people-unsaid`, `plot-overlap`, `plural-slug-collision`, `repair-unknown-mutation`, `repair-wrong-kind`, `setting-name-taken`, `setting-name-unusable`, `setting-not-a-length`, `setting-not-honorable`, `setting-starts-nowhere`, `setting-without-a-choice`, `sight-hides-a-required-field`, `sight-names-an-unknown-field`, `sight-unknown-kind`, `sight-via-misses-people`, `sight-via-unknown-edge`, `theme-contrast-below-aa`, `view-for-undeclared-kind`, `writes-unknown-field`
+`brand-accent-not-a-hue`, `brand-accent-unknown-kind`, `brand-currency`, `brand-emoji`, `brand-locale`, `brand-logo`, `brand-mark`, `brand-time-zone`, `creates-unknown-kind`, `edge-claim-unknown-kind`, `edge-target-undeclared`, `field-role-ill-typed`, `field-role-missing-field`, `figure-undrawable`, `figure-unknown-kind`, `fixed-unknown-field`, `glance-unknown-field`, `grant-own-end-without-link`, `grant-unknown-kind`, `grant-unknown-mutation`, `intelligence-decision-cannot-call`, `intelligence-reach-unknown`, `intelligence-unknown-mutation`, `invariant-scope-undeclared`, `kit-contrast-below-aa`, `lens-binding-empty`, `lens-binding-empty-path`, `lens-binding-fieldless-owner`, `lens-binding-missing-field`, `lens-binding-not-a-field`, `lens-binding-path-misses`, `lens-binding-undeclared-edge`, `lens-binding-undeclared-kind`, `lens-option`, `lens-role-unbound`, `lifecycle-missing-field`, `lifecycle-never-retires`, `migration-gap`, `migration-not-single-step`, `migration-without-version`, `module-unknown-invariant`, `module-unknown-kind`, `module-unknown-mutation`, `module-unknown-requirement`, `mutation-subject-arg-missing`, `mutation-subject-undeclared`, `mutation-unreachable-by-any-role`, `mutation-untitled`, `node-ref-undeclared`, `page-too-large`, `pages-kind-unknown`, `pages-list-arrangement`, `people-ambiguous`, `people-unsaid`, `plot-overlap`, `plural-slug-collision`, `repair-unknown-mutation`, `repair-wrong-kind`, `setting-name-taken`, `setting-name-unusable`, `setting-not-a-length`, `setting-not-honorable`, `setting-starts-nowhere`, `setting-without-a-choice`, `sight-hides-a-required-field`, `sight-names-an-unknown-field`, `sight-unknown-kind`, `sight-via-misses-people`, `sight-via-unknown-edge`, `theme-contrast-below-aa`, `view-for-undeclared-kind`, `writes-unknown-field`
 
 ## 28 warnings
 
@@ -483,7 +484,7 @@ Source: https://graview.dev/docs/checks.html
 
 ---
 
-Every one of the 108 things graview check can tell you, and how loudly.
+Every one of the 110 things graview check can tell you, and how loudly.
 
 The page: https://graview.dev/docs/checks.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -1289,9 +1290,9 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [Working with a model](https://graview.dev/docs/agents.html): The seat, the typed tools, what a model reads, and the studio.
 - [Live demos](https://graview.dev/docs/demos.html): Every surface of the garden, running on the page, and the example apps.
 - [Packages (14)](https://graview.dev/docs/packages.html): What each ships and what each exports.
-- [Skills (27)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
+- [Skills (28)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.html): create, check, types, docs, describe, lens, figure, serve, skills.
-- [What check says (108)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
+- [What check says (110)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
 - [Releases](https://graview.dev/docs/releases.html): What came in each version, and what to know before upgrading.
 - [The garden, grown](https://graview.dev/progression.html): Sixteen live chapters, from one kind to a product.
@@ -1382,11 +1383,11 @@ npx graview docs ./dist/domain/app.js
 
 `create` writes the declaration split into domain and UI, a shell, a headless test and a CI workflow, initializes a repository, installs, and says what to do next. `--link <path>` consumes the framework from a sibling checkout by path instead of a registry — the only way that works until the packages are published — and refuses a framework that is not built. The generator behind it is `@graview/core/scaffold`, a pure function from a name and a first kind to a list of files, for a host that provisions apps.
 
-## What it exports (345)
+## What it exports (347)
 
 Read off the package's own barrel, so this is what is there today.
 
-`accentProblem`, `actingAs`, `ActRefusal`, `actTitle`, `addressOf`, `AI_BRIDGE_PATH`, `allLabel`, `appLinkField`, `ARCHIVED`, `archivedFrom`, `argumentsTaken`, `article`, `assertReadable`, `basePathOf`, `bindSchema`, `bindsOf`, `brandFromAccent`, `brokenWords`, `capabilities`, `capabilitiesOf`, `checkBrandContrast`, `checkContrast`, `checkKitContrast`, `checkpoint`, `checkpointOn`, `checkpointsBetween`, `checkUndo`, `colorsIn`, `compileMutation`, `composite`, `connectorHueColor`, `connectorKitFor`, `contrast`, `counted`, `coverageUnlinkedWords`, `createMemoryAdapter`, `createSchema`, `createSqlAdapter`, `createSqliteAdapter`, `createViewRegistry`, `DARK`, `dateOn`, `dayAsRead`, `dayOf`, `dayOfMoment`, `dayOfMonthAsRead`, `daysAsRead`, `dayZoneFor`, `DECISION_BRIDGE_PATH`, `declaredLenses`, `declareInstallation`, `DEFAULT_KIT`, `DEFAULT_LOCALE`, `defineApp`, `defineInvariant`, `defineMutation`, `defineNode`, `defOf`, `deriveArchiveMutations`, `derivedVia`, `deriveEditMutations`, `deriveMutations`, `deriveRemoveMutations`, `describeCapability`, `descriptionOf`, `diffSnapshots`, `DISPLAY_TRACKING`, `DOCUMENT_FONTS`, `documentSchemes`, `durationField`, `edgeId`, `editMutationName`, `editVia`, `effectivity`, `emojiMark`, `emojiOf`, `emojiProblem`, `emojiSvg`, `EMPTY_DIFF`, `evaluate`, `excerpt`, `extendInvariants`, `extendMutations`, `familiesIn`, `faviconHref`, `FIDELITIES`, `FIELD_SIGHT`, `FieldRevisions`, `fieldsWritten`, `fieldsWrittenBy`, `fieldWords`, `fieldWriters`, `fileAt`, `fileField`, `fileKindOf`, `filesOf`, `fileSrc`, `foldPresence`, `fontProblem`, `FORMATS`, `formatStamp`, `FRAMEWORK_VERSION`, `Graph`, `GRAPH_FINDING_CODES`, `GraphError`, `GRAVIEW_COLORS`, `GRAVIEW_FACE`, `graviewSymbol`, `GridSort`, `gridSortOf`, `gridSortProblem`, `hidesFrom`, `hueFor`, `humanizeField`, `imageField`, `INSTALLATION_MODULE`, `InvalidArguments`, `invert`, `isAppAddress`, `isAppLinkField`, `isArchived`, `isAutomated`, `isCurrent`, `isEffectiveBetween`, `isEffectiveOn`, `isEmptyDiff`, `isFileValue`, `isImage`, `isInlineSvg`, `isLeftAlone`, `isLinkedTarget`, `isMadeRef`, `isoDate`, `isoShade`, `isoToday`, `isRepeat`, `isRepeatField`, `isShippedLens`, `isSystem`, `isSystemFamily`, `isUnset`, `isVideo`, `isWithheld`, `KEEP_LINK`, `keptSubscription`, `kindPath`, `kitVariables`, `labelOf`, `layer`, `layerProperty`, `LAYERS`, `layerVariables`, `LIGHT`, `Lineage`, `LINEAGE_BASIS_LIMIT`, `LINEAGE_MODEL_LIMIT`, `lineageOf`, `linkedReads`, `linkedRecordField`, `linkedRefOf`, `linkedRefsOf`, `linkedRelationOf`, `linkedRelations`, `linkedValue`, `LOCAL_BRIDGE_PATH`, `LOCAL_LAYERS`, `localeFor`, `LOGO_RULES`, `logSeenBy`, `luminance`, `made`, `markdownField`, `markHref`, `markProblem`, `MAX_INLINE_SVG`, `memorySubscriptions`, `memoryViews`, `minutesAsRead`, `MissingRecordError`, `MODULES_AUTHOR`, `momentAsRead`, `monthAsRead`, `MOST_STANDING`, `motion`, `nameKey`, `nameOfAuthor`, `namesUnseen`, `NEVER_WRITTEN`, `NewerFormatError`, `nextExpiry`, `nextOccurrence`, `NO_KEPT_VIEWS`, `nodeRef`, `nodeRefArgs`, `nodeRefKinds`, `normalize`, `nounOf`, `numberAsRead`, `occurrences`, `onePerPicture`, `openingOf`, `OperationLog`, `orderKinds`, `OVERVIEW_PATH`, `OVERVIEW_SLUG`, `pagesTitle`, `parseLinkedTarget`, `parseParticipant`, `participantKey`, `passingShade`, `PastError`, `pathWithin`, `PermissionDeniedError`, `permits`, `permittedMutations`, `phoneField`, `placeField`, `placeLabel`, `placePath`, `placeSlug`, `placeTidying`, `PLAIN_WEIGHTS`, `pluralLabel`, `pluralOf`, `PRESENCE_TTL_MS`, `presenceName`, `presenceStands`, `PREVIEW_BATCH`, `primaryOf`, `problemsMoved`, `providerCan`, `readerSettings`, `readLinkedThrough`, `ReceiveError`, `recordPath`, `recordsOf`, `redact`, `REFUSAL_REASONS`, `refusalOf`, `REMOTE_PRESENCE_TTL_MS`, `REMOVED_VIEW_DAYS`, `removedLensName`, `removeMutationName`, `removeVia`, `repairPlan`, `repeatedBy`, `repeatField`, `repeatKey`, `requiredRolesOf`, `resolveKit`, `resolveModules`, `rolesOf`, `rolesWhoCould`, `RuleBudgetError`, `safeFileHref`, `samePicture`, `samePresence`, `sayIn`, `sayingIn`, `SCENE_LAYERS`, `sceneTitle`, `SchemaError`, `SCHEMES`, `SEARCH_UNASKED`, `seatLens`, `SeatLens`, `seatMark`, `seenBy`, `sees`, `seesId`, `settableFields`, `sha256Hex`, `SHAPE`, `shapedRules`, `shapeOf`, `sharesItsName`, `SHIPPED_LENS_NAMES`, `SHIPPED_LENSES`, `sightedKinds`, `SignIn`, `signInInstead`, `snapshotHash`, `sortForGrid`, `sqlFromDatabase`, `SQLITE_TABLE_SHAPE`, `stackOf`, `Store`, `STUDIO_DOOR_PATH`, `subjectKindsOf`, `subscriberOf`, `subscriptionId`, `summarize`, `supportingKinds`, `svgProblem`, `symbolCut`, `SYSTEM_FONTS`, `SYSTEM_STACKS`, `takesAnId`, `tellTheWatchOfAPressRefusedByItsInput`, `tellTheWatchWhatIsUnseen`, `TEXT_PAIRS`, `textSize`, `tickEachDay`, `timeAsRead`, `timeZoneFor`, `timeZoneProblem`, `touchedBy`, `touchesUnseen`, `TrackedReader`, `TYPOGRAPHY`, `typographyOf`, `UndoBlockedError`, `undoPrimitives`, `UnknownMutationError`, `UnregisteredInvariantError`, `UNSET`, `untilTheDayTurns`, `unwrittenFields`, `upgradeOp`, `upgradeSnapshot`, `validateGraph`, `validRepeat`, `videoField`, `videoWords`, `violationKey`, `violationsTouching`, `VISITOR_PRESENCE_TTL_MS`, `walkKinds`, `weekdayAsRead`, `weekdayName`, `WEEKDAYS`, `WEIGHTS`, `whenAsRead`, `whyNot`, `WIRE_PROTOCOL`, `withArticle`, `WITHHELD_AUTHOR`, `WITHHELD_INTENT`, `withhold`, `Writers`, `writersOf`, `writesOf`, `writtenBy`, `z`, `zoneFor`
+`accentProblem`, `actingAs`, `ActRefusal`, `actTitle`, `addressOf`, `AI_BRIDGE_PATH`, `allLabel`, `appLinkField`, `ARCHIVED`, `archivedFrom`, `argumentsTaken`, `article`, `assertReadable`, `basePathOf`, `bindSchema`, `bindsOf`, `brandFromAccent`, `brokenWords`, `capabilities`, `capabilitiesOf`, `checkBrandContrast`, `checkContrast`, `checkKitContrast`, `checkpoint`, `checkpointOn`, `checkpointsBetween`, `checkUndo`, `colorsIn`, `compileMutation`, `composite`, `connectorHueColor`, `connectorKitFor`, `contrast`, `counted`, `coverageUnlinkedWords`, `createMemoryAdapter`, `createSchema`, `createSqlAdapter`, `createSqliteAdapter`, `createViewRegistry`, `DARK`, `dateOn`, `dayAsRead`, `dayOf`, `dayOfMoment`, `dayOfMonthAsRead`, `daysAsRead`, `dayZoneFor`, `DECISION_BRIDGE_PATH`, `declaredLenses`, `declareInstallation`, `DEFAULT_KIT`, `DEFAULT_LOCALE`, `defineApp`, `defineInvariant`, `defineMutation`, `defineNode`, `defOf`, `deriveArchiveMutations`, `derivedVia`, `deriveEditMutations`, `deriveMutations`, `deriveRemoveMutations`, `describeCapability`, `descriptionOf`, `diffSnapshots`, `DISPLAY_TRACKING`, `DOCUMENT_FONTS`, `documentSchemes`, `durationField`, `edgeId`, `editMutationName`, `editVia`, `effectivity`, `emojiMark`, `emojiOf`, `emojiProblem`, `emojiSvg`, `EMPTY_DIFF`, `evaluate`, `excerpt`, `extendInvariants`, `extendMutations`, `familiesIn`, `faviconHref`, `FIDELITIES`, `FIELD_SIGHT`, `FieldRevisions`, `fieldsWritten`, `fieldsWrittenBy`, `fieldWords`, `fieldWriters`, `fileAt`, `fileField`, `fileKindOf`, `filesOf`, `fileSrc`, `foldPresence`, `fontProblem`, `FORMATS`, `formatStamp`, `FRAMEWORK_VERSION`, `Graph`, `GRAPH_FINDING_CODES`, `GraphError`, `GRAVIEW_COLORS`, `GRAVIEW_FACE`, `graviewSymbol`, `GridSort`, `gridSortOf`, `gridSortProblem`, `hidesFrom`, `hueFor`, `humanizeField`, `imageField`, `INSTALLATION_MODULE`, `InvalidArguments`, `invert`, `isAppAddress`, `isAppLinkField`, `isArchived`, `isAutomated`, `isCurrent`, `isEffectiveBetween`, `isEffectiveOn`, `isEmptyDiff`, `isFileValue`, `isImage`, `isInlineSvg`, `isLeftAlone`, `isLinkedTarget`, `isMadeRef`, `isoDate`, `isoShade`, `isoToday`, `isRepeat`, `isRepeatField`, `isShippedLens`, `isSystem`, `isSystemFamily`, `isUnset`, `isVideo`, `isWithheld`, `KEEP_LINK`, `keptSubscription`, `kindPath`, `kitVariables`, `labelOf`, `layer`, `layerProperty`, `LAYERS`, `layerVariables`, `LIGHT`, `Lineage`, `LINEAGE_BASIS_LIMIT`, `LINEAGE_MODEL_LIMIT`, `lineageOf`, `linkedReads`, `linkedRecordField`, `linkedRefOf`, `linkedRefsOf`, `linkedRelationOf`, `linkedRelations`, `linkedValue`, `LOCAL_BRIDGE_PATH`, `LOCAL_LAYERS`, `localeFor`, `LOGO_RULES`, `logoFor`, `logoOf`, `logSeenBy`, `luminance`, `made`, `markdownField`, `markHref`, `markProblem`, `MAX_INLINE_SVG`, `memorySubscriptions`, `memoryViews`, `minutesAsRead`, `MissingRecordError`, `MODULES_AUTHOR`, `momentAsRead`, `monthAsRead`, `MOST_STANDING`, `motion`, `nameKey`, `nameOfAuthor`, `namesUnseen`, `NEVER_WRITTEN`, `NewerFormatError`, `nextExpiry`, `nextOccurrence`, `NO_KEPT_VIEWS`, `nodeRef`, `nodeRefArgs`, `nodeRefKinds`, `normalize`, `nounOf`, `numberAsRead`, `occurrences`, `onePerPicture`, `openingOf`, `OperationLog`, `orderKinds`, `OVERVIEW_PATH`, `OVERVIEW_SLUG`, `pagesTitle`, `parseLinkedTarget`, `parseParticipant`, `participantKey`, `passingShade`, `PastError`, `pathWithin`, `PermissionDeniedError`, `permits`, `permittedMutations`, `phoneField`, `placeField`, `placeLabel`, `placePath`, `placeSlug`, `placeTidying`, `PLAIN_WEIGHTS`, `pluralLabel`, `pluralOf`, `PRESENCE_TTL_MS`, `presenceName`, `presenceStands`, `PREVIEW_BATCH`, `primaryOf`, `problemsMoved`, `providerCan`, `readerSettings`, `readLinkedThrough`, `ReceiveError`, `recordPath`, `recordsOf`, `redact`, `REFUSAL_REASONS`, `refusalOf`, `REMOTE_PRESENCE_TTL_MS`, `REMOVED_VIEW_DAYS`, `removedLensName`, `removeMutationName`, `removeVia`, `repairPlan`, `repeatedBy`, `repeatField`, `repeatKey`, `requiredRolesOf`, `resolveKit`, `resolveModules`, `rolesOf`, `rolesWhoCould`, `RuleBudgetError`, `safeFileHref`, `samePicture`, `samePresence`, `sayIn`, `sayingIn`, `SCENE_LAYERS`, `sceneTitle`, `SchemaError`, `SCHEMES`, `SEARCH_UNASKED`, `seatLens`, `SeatLens`, `seatMark`, `seenBy`, `sees`, `seesId`, `settableFields`, `sha256Hex`, `SHAPE`, `shapedRules`, `shapeOf`, `sharesItsName`, `SHIPPED_LENS_NAMES`, `SHIPPED_LENSES`, `sightedKinds`, `SignIn`, `signInInstead`, `snapshotHash`, `sortForGrid`, `sqlFromDatabase`, `SQLITE_TABLE_SHAPE`, `stackOf`, `Store`, `STUDIO_DOOR_PATH`, `subjectKindsOf`, `subscriberOf`, `subscriptionId`, `summarize`, `supportingKinds`, `svgProblem`, `symbolCut`, `SYSTEM_FONTS`, `SYSTEM_STACKS`, `takesAnId`, `tellTheWatchOfAPressRefusedByItsInput`, `tellTheWatchWhatIsUnseen`, `TEXT_PAIRS`, `textSize`, `tickEachDay`, `timeAsRead`, `timeZoneFor`, `timeZoneProblem`, `touchedBy`, `touchesUnseen`, `TrackedReader`, `TYPOGRAPHY`, `typographyOf`, `UndoBlockedError`, `undoPrimitives`, `UnknownMutationError`, `UnregisteredInvariantError`, `UNSET`, `untilTheDayTurns`, `unwrittenFields`, `upgradeOp`, `upgradeSnapshot`, `validateGraph`, `validRepeat`, `videoField`, `videoWords`, `violationKey`, `violationsTouching`, `VISITOR_PRESENCE_TTL_MS`, `walkKinds`, `weekdayAsRead`, `weekdayName`, `WEEKDAYS`, `WEIGHTS`, `whenAsRead`, `whyNot`, `WIRE_PROTOCOL`, `withArticle`, `WITHHELD_AUTHOR`, `WITHHELD_INTENT`, `withhold`, `Writers`, `writersOf`, `writesOf`, `writtenBy`, `z`, `zoneFor`
 
 ---
 
@@ -2694,11 +2695,12 @@ A skill that cannot verify its own outcome says so. That is the rule, and the sk
 | `graview-permissions` | Declare who may do what, once, and let the strip and the seat narrow themselves |
 | `graview-brand` | Put someone's name on an installation without forking a package |
 | `graview-locale` | Say money, days and times the way the app's people do: a currency, a locale and a time zone, once |
+| `graview-logo` | Put a client's logo and page icon on an app: one for each scheme, an inverted fallback only when asked, an emoji icon |
 | `graview-new-app` | Start a product on Graview in its own repository, with the CI that keeps it honest |
 | `graview-ship` | Deploy: persistence, op-log-native migrations, export, health, serving and a host that compiles once |
 | `graview-sync` | Keep an app in step with another system: a snapshot projected from it, a sync back, an MCP remote, a Google calendar |
 | `graview-pages` | The routed face: derived pages, one page in the app's words, and the embed |
-| `graview-pages-design` | A product design over every surface of the routed face: its own shell, its tabs lit from a kind's section, and a trail that says where a person is |
+| `graview-pages-design` | A product design over every surface of the routed face: its own shell, its tabs lit from a kind's section, a trail that says where a person is, and Find and the way back in its own bar at its own height |
 | `graview-embed` | Put an app on somebody else's page, its theme scoped to one element, and somebody's HTML page inside the app as a framed view |
 | `graview-host-page` | Host an app as the page itself: the address bar, a chat's widget, the host's menu and news, when a place has drawn, a view proposed and not kept, and pictures of places |
 | `graview-port-app` | Port an existing application onto Graview, deciding what is a node and what is a field |
@@ -2883,7 +2885,7 @@ Source: https://graview.dev/docs/skills.html
 
 # The skills
 
-Graview's 27 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
+Graview's 28 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
 
 ```sh
 graview skills install .
@@ -2901,6 +2903,7 @@ graview skills install .
 - [graview-linked-records](https://graview.dev/docs/skills/graview-linked-records.html): Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
 - [graview-lists](https://graview.dev/docs/skills/graview-lists.html): Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
 - [graview-locale](https://graview.dev/docs/skills/graview-locale.html): Say a Graview app's money, days, times and numbers the way its people say them — a currency, a locale and a time zone declared once on the brand, a field kept as money, {net | money} and {at | time} in a template — and let graview check refuse a code, a locale or a zone it cannot write rather than trusting the page.
+- [graview-logo](https://graview.dev/docs/skills/graview-logo.html): Put a client's own logo and page icon on a Graview app — inline SVG or a path, one for each scheme so a picture on white is not a white slab in the dark, an emoji as the icon — drawn in the default shell and handed to a design's own, and let graview check refuse a mark that could act rather than trusting it.
 - [graview-new-app](https://graview.dev/docs/skills/graview-new-app.html): Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 - [graview-node-kind](https://graview.dev/docs/skills/graview-node-kind.html): Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 - [graview-pages](https://graview.dev/docs/skills/graview-pages.html): Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).
@@ -2921,7 +2924,7 @@ graview skills install .
 
 ---
 
-The 27 skills that teach an assistant the authoring moves, each ending in a real check.
+The 28 skills that teach an assistant the authoring moves, each ending in a real check.
 
 The page: https://graview.dev/docs/skills.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -2931,7 +2934,7 @@ Source: https://graview.dev/docs/skills/graview-agent-seat.html
 
 # graview-agent-seat
 
-`graview-agent-seat` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
+`graview-agent-seat` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3030,7 +3033,7 @@ Source: https://graview.dev/docs/skills/graview-brand.html
 
 # graview-brand
 
-`graview-brand` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
+`graview-brand` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3048,7 +3051,7 @@ Every primitive reads a custom property and `themeCss(scheme, brand)` emits them
 
 const derived = brandFromAccent({ accent: "#7a4bd0", base: { dark: DARK, light: LIGHT } }); if (!derived.ok) { throw new Error(`Needs ${derived.missing.join(", ")} — ${derived.why}`); }
 
-export const brand: Brand = { name: "Acme Bids", // Inline SVG using currentColor: one file works in both schemes. logo: '<svg viewBox="0 0 24 24" ... stroke="currentColor">...</svg>', typography: { body: '"Inter", ui-sans-serif, system-ui, sans-serif' }, schemes: derived.schemes, }; ```
+export const brand: Brand = { name: "Acme Bids", // Inline SVG using currentColor: one file works in both schemes. // A client's picture on white wants one for each scheme: graview-logo. logo: '<svg viewBox="0 0 24 24" ... stroke="currentColor">...</svg>', typography: { body: '"Inter", ui-sans-serif, system-ui, sans-serif' }, schemes: derived.schemes, }; ```
 
 1. **Expect the refusal path to be real.** No single color can be accent TEXT in both schemes — 4.5:1 on white needs a lightness under about 0.18 and 4.5:1 on a dark panel needs one over about 0.24, and those do not overlap. So `brandFromAccent` keeps the hue and saturation, which are the brand's, and moves the lightness the smallest distance that clears AA. When that distance is far enough that the color has stopped being theirs, it refuses and names what to supply. **Do not catch that and carry on with a guess** — shipping a color they did not choose under their own name is worse than asking.
 
@@ -3085,12 +3088,9 @@ A document (`graview-document@1`) holds the same brand as data, every key option
 }
 ```
 
-- **A mark** is inline SVG or a path on the app's own host — never another origin. It is drawn as given (`currentColor` takes the accent), so it is read element by element as the browser reads it: shapes, groups, gradients, filters, text and links to its own `#id`s, every attribute quoted, and nothing after `</svg>`. A script, a handler, `<a>`, `<style>`, an animation, `foreignObject` or anything it loads is refused (`brand-mark`, with the reason), never rewritten. On Cloud, `add_image` answers the path.
+- **A mark** — the logo, one for each scheme, and the page icon, an emoji among them — is `graview-logo`: inline SVG or a path on the app's own host, drawn as given, and one that could act refused (`brand-mark`).
 - **A face** is `system-serif`, `system-sans`, `system-mono`, a face every system has (Georgia, Menlo), or a web font on `DOCUMENT_FONTS`; one named by its address is refused (`brand-font`). The host decides where web fonts load from.
-- **An accent** must read as given in light: `set-brand` refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names.
-- **The icon** is set only by a face that owns the page; an embed on somebody else's page leaves theirs alone unless the host passes `favicon: true`. `"favicon": { "emoji": "🏡" }` — exactly one standard emoji (👩🏽‍🌾 and 🇺🇸 count as one) — is the icon and, with no logo, the mark; anything else is refused (`brand-emoji`).
-
-`describe_place("home")` says the app as the home draws it (its `masthead`): the name, the line under it, and the logo by its alt text.
+- **An accent** must read as given in light: `set-brand` refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names. Contrast is judged on colors alone; a logo is a picture and is not measured.
 
 ### Styling by conversation
 
@@ -3126,7 +3126,6 @@ pnpm build && npx graview check ./dist/domain/app.js
 ### What the check cannot see
 
 - Whether it looks like the brand. Contrast is measurable; taste is not.
-- Whether the logo reads at 18 pixels. Most do not.
 - Whether the typeface is loaded. A declared face with no `@font-face` and no web font silently falls back, and the fallback is usually fine — which is why nobody notices for months.
 - Anything about a value it cannot parse. It says so; believe it.
 
@@ -3142,7 +3141,7 @@ Source: https://graview.dev/docs/skills/graview-desk.html
 
 # graview-desk
 
-`graview-desk` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
+`graview-desk` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3210,7 +3209,7 @@ Source: https://graview.dev/docs/skills/graview-embed.html
 
 # graview-embed
 
-`graview-embed` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
+`graview-embed` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3305,7 +3304,7 @@ Source: https://graview.dev/docs/skills/graview-host-page.html
 
 # graview-host-page
 
-`graview-host-page` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
+`graview-host-page` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3378,7 +3377,7 @@ Source: https://graview.dev/docs/skills/graview-invariant.html
 
 # graview-invariant
 
-`graview-invariant` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
+`graview-invariant` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3475,7 +3474,7 @@ Source: https://graview.dev/docs/skills/graview-lens.html
 
 # graview-lens
 
-`graview-lens` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
+`graview-lens` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3573,7 +3572,7 @@ Source: https://graview.dev/docs/skills/graview-linked-records.html
 
 # graview-linked-records
 
-`graview-linked-records` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
+`graview-linked-records` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3630,7 +3629,7 @@ Source: https://graview.dev/docs/skills/graview-lists.html
 
 # graview-lists
 
-`graview-lists` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
+`graview-lists` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3696,7 +3695,7 @@ Source: https://graview.dev/docs/skills/graview-locale.html
 
 # graview-locale
 
-`graview-locale` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say a Graview app's money, days, times and numbers the way its people say them — a currency, a locale and a time zone declared once on the brand, a field kept as money, {net | money} and {at | time} in a template — and let graview check refuse a code, a locale or a zone it cannot write rather than trusting the page.
+`graview-locale` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say a Graview app's money, days, times and numbers the way its people say them — a currency, a locale and a time zone declared once on the brand, a field kept as money, {net | money} and {at | time} in a template — and let graview check refuse a code, a locale or a zone it cannot write rather than trusting the page.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3740,11 +3739,72 @@ The page: https://graview.dev/docs/skills/graview-locale.html · Every Graview d
 
 ---
 
+Source: https://graview.dev/docs/skills/graview-logo.html
+
+# graview-logo
+
+`graview-logo` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a client's own logo and page icon on a Graview app — inline SVG or a path, one for each scheme so a picture on white is not a white slab in the dark, an emoji as the icon — drawn in the default shell and handed to a design's own, and let graview check refuse a mark that could act rather than trusting it.
+
+Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
+
+## The skill
+
+## A logo, and an icon
+
+The brand's mark is drawn as it was given, never redrawn, on every face: the app bar, a design's shell, the static page, a worker view. The palette and the type are `graview-brand`; this is the picture beside the name.
+
+### Do this
+
+1. **One mark when it can be one.** Inline SVG with `currentColor` takes the accent and works in both schemes from one file:
+
+```ts logo: '<svg viewBox="0 0 24 24" ... stroke="currentColor">...</svg>', ```
+
+1. **One for each scheme when it cannot.** A client's real logo — a JPG or PNG on white — sits as a white slab on a dark ground. Give the dark scheme its own:
+
+```ts logo: { light: "/graview/assets/<sha>.jpg", dark: "/graview/assets/<sha>.png" }, ```
+
+The light one is drawn in the light scheme, and in the dark too where there is no dark one. In a document the same object takes `alt`: `"logo": { "light": "…", "dark": "…", "alt": "TrueNorth Recon" }` (`{ "src", "alt" }` and a plain string still mean one logo).
+
+1. **Inverting is asked for, never guessed.** Whether a light logo is a picture opaque on white cannot be known from it, so with no dark one nothing happens in the dark unless the brand says `darkFallback: "invert"`: then, in the dark scheme alone, it is drawn `invert(1) hue-rotate(180deg)` and screened onto the ground. Beside a `dark` one it is never used, and `graview check` says so (`brand-logo`).
+
+1. **A design's shell draws it with `<AppMark brand={context.brand} />`** (`@graview/primitives`), as the default shell's bar does. Both marks are in the page, each `data-graview-scheme-only="light"` or `"dark"`, and the theme's sheet for the scheme the page is in hides the other's — so it switches with the scheme however the page chose it, with no hook. A design that draws its own `<img>` reads `logoFor(brand, scheme)` (`@graview/core`): `{ src, invert }`. Never a CSS filter of the design's own over the brand's logo.
+
+1. **On Graview Cloud**, upload each with `add_image`, then `{"op": "set-brand", "logo": {"light": "/graview/assets/<sha>.jpg", "dark": "/graview/assets/<sha>.png"}}`. `set-brand` says what changed: "The logo gets one of its own for the dark scheme." `null` clears it.
+
+### What a mark may be
+
+- **Inline SVG or a path on the app's own host** in a document — never another origin. It is read element by element as the browser reads it: shapes, groups, gradients, filters, text and links to its own `#id`s, every attribute quoted, nothing after `</svg>`. A script, a handler, `<a>`, `<style>`, an animation, `foreignObject` or anything it loads is refused (`brand-mark`, at `brand.logo.light` or `brand.logo.dark`, with the reason), never rewritten. A declared app's mark may live at any address an image is drawn from; one that could act is refused the same.
+- **The icon** (`favicon`) is a mark too, set only by a face that owns the page; an embed on somebody else's page leaves theirs alone unless the host passes `favicon: true`. `"favicon": { "emoji": "🏡" }` — exactly one standard emoji (👩🏽‍🌾 and 🇺🇸 count as one) — is the icon and, with no logo, the mark; anything else is refused (`brand-emoji`).
+
+`describe_place("home")` says the app as the home draws it (its `masthead`): the name, the line under it, and the logo by its alt text.
+
+### Then find out whether it worked
+
+```sh
+pnpm build && npx graview check ./dist/domain/app.js
+```
+
+`brand-mark` and `brand-logo` say which mark, where and why. Then **look at it in both schemes** — `?theme=light` and `?theme=dark` — on the bar and in the design's own shell: the dark one in the dark, or the light one inverted only where the brand asked.
+
+### What the check cannot see
+
+- Whether the logo reads at 18 pixels. Most do not.
+- Whether an inverted logo still looks like the client's: its hues stay, its lightness flips, so a navy mark comes out pale blue. If that matters, give a dark one.
+- Whether the dark one is the client's at all. Ask for it.
+
+---
+
+Put a client's own logo and page icon on a Graview app — inline SVG or a path, one for each scheme so a picture on white is not a white slab in the dark, an emoji as the icon — drawn in the default shell and handed to a design's own, and let graview check refuse a mark that could act rather than trusting it.
+
+The page: https://graview.dev/docs/skills/graview-logo.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
+
+---
+
 Source: https://graview.dev/docs/skills/graview-new-app.html
 
 # graview-new-app
 
-`graview-new-app` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
+`graview-new-app` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3865,7 +3925,7 @@ Source: https://graview.dev/docs/skills/graview-node-kind.html
 
 # graview-node-kind
 
-`graview-node-kind` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
+`graview-node-kind` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3945,7 +4005,7 @@ Source: https://graview.dev/docs/skills/graview-pages-design.html
 
 # graview-pages-design
 
-`graview-pages-design` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, its tabs lit from the section a kind's pages are in, and a trail that says where a person is — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.
+`graview-pages-design` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, its tabs lit from the section a kind's pages are in, and a trail that says where a person is — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3977,11 +4037,26 @@ A design usually replaces some pages and leaves the rest derived, and a person w
 - **`placeHere(context, path, { registry, base })`** says the same of a path for a bar drawn OUTSIDE the face's router, told where it is by `steering.at` or `onNavigate`.
 - **The trail.** Each derived list, record and picture opens with one: a `nav` called "You are here", the section and the kind's list as links, the page itself last with `aria-current="page"`, out of sight because the heading says it. A list with no section draws none. A shell that places `<PageTrail />` puts THE trail there and the derived pages draw none at their heads; one that draws its own from `usePlaceHere()` says `surface("shell", Shell, { without: ["trail"] })`.
 
+### Find and the way back, in the design's bar
+
+Both are the face's, whichever shell draws it: a shell that places `<PageFind>` or `<PageUndo>` says where they go, else they are drawn around it (Find in a bar above, the way back docked at the corner), and `surface("shell", Shell, { without: ["find", "undo"] })` goes without.
+
+```tsx
+<nav className="my-bar">
+  <PageFind context={context} narrowsLists={false} size="sm" className="my-find" />
+  <PageUndo context={context} compact size="sm" className="my-undo" />
+</nav>
+```
+
+- **`compact`** is the arrow and "Undo": what it takes back ("Take back “Rename to …”") is its accessible name and its title. Uncompact, the sentence is cut at 18rem (`--graview-undo-widest`), whole in its title.
+- **`size`**: `"sm"` (30 px, the app bar's tools), `"md"` (36 px), or the bar's own height — a number of pixels or a CSS length — said as `--graview-control-height`.
+- **`className`** goes on Undo's button and on Find's form (its box is `.graview-find-box`). Their own look is rules behind `:where`, so one class of the design's outweighs it: never `!important`, never a CSS `::after` over Undo's words.
+
 ### What every design must keep doing
 
 - **Read the graph through one model.** `readGarden(store)` turns nodes, edges and violations into the design's words; every page reads it and none reaches for `store.graph`. The scene's lens reads the same model.
 - **Take the act list from the derivation.** `recordFacts(store, id, { principal }).actions` and `kindFacts(store, kind, …).actions`, never a scan of `store.allMutations()`; `withheld` are struck through with the policy's sentence (`store.permits` says the same at the press), not dropped.
-- **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`, `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with `color-mix` for the design's own paper. Never a color that works in one scheme only.
+- **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`, `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with `color-mix` for the design's own paper. Never a color that works in one scheme only — nor a logo: `<AppMark brand={context.brand} />` draws the brand's, the dark one in the dark (`graview-logo`).
 - **Keep landmarks and targets honest.** One `main` — a `section` when `context.embedded`, and UNNAMED, or a page holding two embeds has two regions with one name. Controls at least 24px, AA contrast. Every size in `rem`: at 200% text a flex or grid item's automatic minimum is its CONTENT's, so one un-wrappable row pushes the whole column off the screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on the row. Measure rather than trust: `-ink-faint` fails AA on an 11px label, and the accent fails on the warning ground. `node scripts/verify-pages.mjs` runs axe over every route, both widths, both schemes.
 - **Say where a person is on every page, derived or not**, as above — one trail, not one from the design and one from the face.
 
@@ -4012,7 +4087,7 @@ Source: https://graview.dev/docs/skills/graview-pages.html
 
 # graview-pages
 
-`graview-pages` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).
+`graview-pages` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4048,7 +4123,7 @@ The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, P
 
 - `/places`, `/places/<as>` — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath unless the lens says `create: false`). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record.
 - `/map` — `kindMap(store)`: every declared relation in its words with its live count, also a section on the home page. A kind's list says what it relates to, arranged in the shared words (`?sort=due:desc`, `?filter=done:false`, `?group=due:month`, `?q=tape`) a lens carries in its fragment, so an arrangement is a link; `?by=`, `?<edge>=<id>`, `?with=` and `?past=1` still land. A record links back.
-- `/search?q=` — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places `<PageFind>` or `<PageUndo>` where it wants them, else they are drawn around it (`without: ["find"]` goes without).
+- `/search?q=` — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places `<PageFind>` or `<PageUndo>` where it wants them, else they are drawn around it (`without: ["find"]` goes without; at a bar's height, `graview-pages-design`).
 - **The quick ask** (⌘K, where `ai` gives a model): a bar and answer card by the page's heading, the ROUTE what "this" means. `context.quickAsk: false` draws none.
 
 Everything a page shows is a derivation the scene uses too: `recordFacts`, `deriveAffordances`, `store.permits`. **A page never decides what an act is or who may take it** — it strikes through what the seat may not, and says why. A record's facts, `computed` ones too, read in declared order or as the kind's `display.page` groups them; prose keeps its paragraphs, full width.
@@ -4097,7 +4172,7 @@ Rules for a page at this rung:
 
 ### Rung two: a product design
 
-Replacing every surface — the shell under the bar, the home, the problems, each kind's list and record — is a product: `graview-pages-design`, with its own tabs lit from the section a kind's pages are in.
+Replacing every surface — the shell under the bar, the home, the problems, each kind's list and record — is a product: `graview-pages-design`, with its own tabs lit from the section a kind's pages are in, and Find and the way back in its own bar.
 
 ### On somebody else's page
 
@@ -4129,7 +4204,7 @@ Source: https://graview.dev/docs/skills/graview-permissions.html
 
 # graview-permissions
 
-`graview-permissions` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
+`graview-permissions` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4225,7 +4300,7 @@ Source: https://graview.dev/docs/skills/graview-port-app.html
 
 # graview-port-app
 
-`graview-port-app` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
+`graview-port-app` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4307,7 +4382,7 @@ Source: https://graview.dev/docs/skills/graview-seed.html
 
 # graview-seed
 
-`graview-seed` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
+`graview-seed` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4381,7 +4456,7 @@ Source: https://graview.dev/docs/skills/graview-ship.html
 
 # graview-ship
 
-`graview-ship` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
+`graview-ship` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4459,7 +4534,7 @@ Source: https://graview.dev/docs/skills/graview-shipped-lens.html
 
 # graview-shipped-lens
 
-`graview-shipped-lens` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
+`graview-shipped-lens` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare one of the lenses Graview ships — a calendar, a status board, a coverage, a timeline, a board, a plan, a blocks place — as a titled place with its bindings and options, and read what graview check and add-lens refuse (an option the lens does not take, a lens that cannot draw, a title taken) rather than drawing a lens that quietly ignores a key.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4536,7 +4611,7 @@ Source: https://graview.dev/docs/skills/graview-sight.html
 
 # graview-sight
 
-`graview-sight` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
+`graview-sight` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4614,7 +4689,7 @@ Source: https://graview.dev/docs/skills/graview-studio.html
 
 # graview-studio
 
-`graview-studio` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
+`graview-studio` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4673,7 +4748,7 @@ Source: https://graview.dev/docs/skills/graview-sync.html
 
 # graview-sync
 
-`graview-sync` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
+`graview-sync` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4725,7 +4800,7 @@ Source: https://graview.dev/docs/skills/graview-tidying.html
 
 # graview-tidying
 
-`graview-tidying` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.
+`graview-tidying` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4772,7 +4847,7 @@ Source: https://graview.dev/docs/skills/graview-view-drawing.html
 
 # graview-view-drawing
 
-`graview-view-drawing` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
+`graview-view-drawing` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4861,7 +4936,7 @@ Source: https://graview.dev/docs/skills/graview-view-forms.html
 
 # graview-view-forms
 
-`graview-view-forms` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
+`graview-view-forms` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -4941,7 +5016,7 @@ Source: https://graview.dev/docs/skills/graview-view-specs.html
 
 # graview-view-specs
 
-`graview-view-specs` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say how a Graview kind's card, row and page read, as data — blocks from a closed set bound by {field} templates and rule-language conditions, headlines, figures and lists of related records — and the values worked out from others (computed) that they show, verified by graview check and the page rather than by assuming the spec drew.
+`graview-view-specs` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say how a Graview kind's card, row and page read, as data — blocks from a closed set bound by {field} templates and rule-language conditions, headlines, figures and lists of related records — and the values worked out from others (computed) that they show, verified by graview check and the page rather than by assuming the spec drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -5010,7 +5085,7 @@ Source: https://graview.dev/docs/skills/graview-worker-view.html
 
 # graview-worker-view
 
-`graview-worker-view` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+`graview-worker-view` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -6712,7 +6787,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 403 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 409 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -6726,11 +6801,11 @@ This is that declaration, compiled in your browser by the same compiler `graview
 
 | Kind | What it is | Records |
 | --- | --- | --- |
-| `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 66 |
+| `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 68 |
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
 | `entry` | One subpath a package exports, as a product imports it. | 93 |
-| `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 27 |
-| `check` | A thing graview check can say, read out of the checker's source. | 108 |
+| `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 28 |
+| `check` | A thing graview check can say, read out of the checker's source. | 110 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |
 | `concept` | One of the ideas a Graview declaration is made of: not in the repository, the reason it is shaped the way it is. | 7 |
 | `recipe` | The prompt on the front page with a different task, and the declaration and seed an agent made of it, under docs/site/recipes/. | 4 |

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1541,
+  "gzipped": 509,
+  "changeset": "a-logo-for-each-scheme.md",
+  "note": "Raised when a brand's logo came to have one for each scheme: `AppMark` draws both, each marked for its scheme, the theme's sheet hides the other's and inverts a fallback the brand asked for in the dark alone, and the compile reads the logo's parts (`logo.ts`, `logoOf`, `logoFor`). Measured at 588_552 / 204_354 against 587_011 / 203_845."
+}

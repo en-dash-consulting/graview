@@ -1,5 +1,6 @@
 import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
+import { darkLogoSentence, logoParts } from "./logo.js";
 import { emojiIconSentence } from "./brand-check.js";
 import { emojiOf } from "../theme/marks.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
@@ -210,7 +211,7 @@ const ROLES = { display: "Headings", body: "Body text", mono: "Code" } as const;
 function brandSentences(was: Brand, now: Brand, appName: string): string[] {
   const out: string[] = [];
   if (!same(was.name, now.name)) out.push(now.name === undefined ? "The wordmark says the app's name." : `The wordmark says ${now.name}.`);
-  const src = (logo: Brand["logo"]) => (typeof logo === "string" ? logo : logo?.src);
+  const src = (logo: Brand["logo"]) => logoParts(logo)?.light;
   for (const [what, a, b] of [["logo", src(was.logo), src(now.logo)], ["page icon", was.favicon, now.favicon]] as const) {
     if (same(a, b)) continue;
     if (what === "page icon" && emojiOf(b) !== undefined) {
@@ -219,8 +220,11 @@ function brandSentences(was: Brand, now: Brand, appName: string): string[] {
     }
     out.push(b === undefined ? `The app has no ${what}.` : a === undefined ? `The app gets a ${what}.` : `The ${what} changes.`);
   }
-  const alt = (logo: Brand["logo"]) => (typeof logo === "object" ? logo.alt : undefined);
+  const alt = (logo: Brand["logo"]) => logoParts(logo)?.alt;
   if (same(src(was.logo), src(now.logo)) && now.logo !== undefined && !same(alt(was.logo), alt(now.logo))) out.push(`The logo is said as ${quotedAtTheEnd(alt(now.logo) ?? now.name ?? appName)}`);
+  // Its dark scheme, said as the edit says it.
+  const dark = now.logo !== undefined ? darkLogoSentence(was.logo, now.logo) : undefined;
+  if (dark) out.push(dark);
   for (const role of ["display", "body", "mono"] as const) {
     const [a, b] = [was.typography?.[role], now.typography?.[role]];
     if (!same(a, b)) out.push(b === undefined ? `${ROLES[role]} go${role === "display" ? "" : "es"} back to Graview's face.` : `${ROLES[role]} ${role === "display" ? "are" : "is"} now set in ${b}.`);

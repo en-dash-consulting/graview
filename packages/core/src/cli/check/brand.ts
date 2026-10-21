@@ -1,6 +1,6 @@
 import { checkBrandContrast, crowdedHues, HUE_CROWDING } from "../../theme/derive.js";
-import { emojiProblem } from "../../theme/marks.js";
-import { EMOJI_FIX, emojiSentence } from "../../document/brand-check.js";
+import { emojiProblem, isInlineSvg, markHref, svgProblem } from "../../theme/marks.js";
+import { EMOJI_FIX, emojiSentence, LOGO_FALLBACK_UNUSED } from "../../document/brand-check.js";
 import { capitalize } from "../../capital.js";
 import { TIME_ZONE_FIX, timeZoneProblem } from "../../days.js";
 import { passingShade, ratioWords } from "../../theme/accent.js";
@@ -22,6 +22,34 @@ import type { AnySchema } from "../../schema/schema.js";
  * and never a failure.
  */
 import type { CheckContext } from "./context.js";
+
+/*
+ * A DECLARED APP'S LOGO: a string, or one for each scheme (`BrandLogo`).
+ * Its shape is refused by name, since TypeScript stops only a literal — a
+ * logo read from a file or a config is checked here or nowhere — and each
+ * mark as a document's is: one that could act is never drawn.
+ */
+function checkLogo(logo: unknown, add: CheckContext<AnySchema>["add"]): void {
+  if (logo === undefined) return;
+  const marks: [string, unknown][] = [];
+  if (typeof logo === "string") marks.push(["brand.logo", logo]);
+  else if (typeof logo !== "object" || logo === null) {
+    add({ severity: "error", code: "brand-logo", where: "brand.logo", message: "The logo is neither a mark nor one for each scheme.", fix: 'Give inline SVG or a path, or { light: "/logo.svg", dark: "/logo-dark.svg" }.' });
+    return;
+  } else {
+    const { light, dark, darkFallback } = logo as Record<string, unknown>;
+    if (typeof light !== "string" || light === "") add({ severity: "error", code: "brand-logo", where: "brand.logo.light", message: "A logo for each scheme has no light one, and the light one is what every scheme without its own draws.", fix: 'Give { light: "/logo.svg" }, and dark beside it if the dark scheme has one of its own.' });
+    else marks.push(["brand.logo.light", light]);
+    if (dark !== undefined) marks.push(["brand.logo.dark", dark]);
+    if (darkFallback !== undefined && darkFallback !== "invert") add({ severity: "error", code: "brand-logo", where: "brand.logo.darkFallback", message: `${JSON.stringify(darkFallback)} is not a fallback a logo can have.`, fix: 'Say darkFallback: "invert" to draw the light logo inverted in the dark scheme, or give a dark one.' });
+    else if (darkFallback !== undefined && dark !== undefined) add({ severity: "warning", code: "brand-logo", where: "brand.logo.darkFallback", message: `${capitalize(LOGO_FALLBACK_UNUSED)}.`, fix: 'Remove darkFallback, or remove dark to draw the light logo inverted.' });
+  }
+  for (const [where, mark] of marks) {
+    // A declared app may keep its logo anywhere an image can be drawn from (a document, only on its own host): what is refused is a mark that could act.
+    const problem = typeof mark !== "string" || mark === "" ? "it is not a mark" : isInlineSvg(mark) ? svgProblem(mark) : markHref(mark) ? null : "it is neither inline SVG nor an address an image is drawn from";
+    if (problem) add({ severity: "error", code: "brand-mark", where, message: `The logo cannot be drawn as given, because ${problem}.`, fix: "Graview draws an image exactly as it is given, never rewritten: remove that and give it again." });
+  }
+}
 
 export function checkAccents<S extends AnySchema>(ctx: CheckContext<S>): void {
   const { app, kinds, add } = ctx;
@@ -79,8 +107,9 @@ export function checkAccents<S extends AnySchema>(ctx: CheckContext<S>): void {
     const problem = emojiProblem(favicon.emoji);
     if (problem) add({ severity: "error", code: "brand-emoji", where: "brand.favicon.emoji", message: `${capitalize(emojiSentence(favicon.emoji, problem))}.`, fix: `${capitalize(EMOJI_FIX)}.` });
   }
+  checkLogo(app.brand?.logo, add);
   const { currency, locale } = app.brand ?? {};
-  const formats = (options: Intl.NumberFormatOptions, at?: string) => {
+  const formats =(options: Intl.NumberFormatOptions, at?: string) => {
     try {
       new Intl.NumberFormat(at ?? "en-US", options);
       return true;

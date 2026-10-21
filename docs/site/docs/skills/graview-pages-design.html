@@ -1520,7 +1520,7 @@ main.page > section.tour-intro { padding-top: 64px; }
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-pages-design</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-pages-design</code> is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, its tabs lit from the section a kind's pages are in, and a trail that says where a person is — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-pages-design</code> is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, its tabs lit from the section a kind's pages are in, and a trail that says where a person is — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1544,11 +1544,22 @@ main.page > section.tour-intro { padding-top: 64px; }
 <li><strong><code>placeHere(context, path, { registry, base })</code></strong> says the same of a path for a bar drawn OUTSIDE the face's router, told where it is by <code>steering.at</code> or <code>onNavigate</code>.</li>
 <li><strong>The trail.</strong> Each derived list, record and picture opens with one: a <code>nav</code> called "You are here", the section and the kind's list as links, the page itself last with <code>aria-current="page"</code>, out of sight because the heading says it. A list with no section draws none. A shell that places <code>&lt;PageTrail /&gt;</code> puts THE trail there and the derived pages draw none at their heads; one that draws its own from <code>usePlaceHere()</code> says <code>surface("shell", Shell, { without: ["trail"] })</code>.</li>
 </ul>
+<h3>Find and the way back, in the design's bar</h3>
+<p>Both are the face's, whichever shell draws it: a shell that places <code>&lt;PageFind&gt;</code> or <code>&lt;PageUndo&gt;</code> says where they go, else they are drawn around it (Find in a bar above, the way back docked at the corner), and <code>surface("shell", Shell, { without: ["find", "undo"] })</code> goes without.</p>
+<div class="code" data-scroller><pre><code class="language-tsx">&lt;nav className="my-bar"&gt;
+  &lt;PageFind context={context} narrowsLists={false} size="sm" className="my-find" /&gt;
+  &lt;PageUndo context={context} compact size="sm" className="my-undo" /&gt;
+&lt;/nav&gt;</code></pre></div>
+<ul>
+<li><strong><code>compact</code></strong> is the arrow and "Undo": what it takes back ("Take back “Rename to …”") is its accessible name and its title. Uncompact, the sentence is cut at 18rem (<code>--graview-undo-widest</code>), whole in its title.</li>
+<li><strong><code>size</code></strong>: <code>"sm"</code> (30 px, the app bar's tools), <code>"md"</code> (36 px), or the bar's own height — a number of pixels or a CSS length — said as <code>--graview-control-height</code>.</li>
+<li><strong><code>className</code></strong> goes on Undo's button and on Find's form (its box is <code>.graview-find-box</code>). Their own look is rules behind <code>:where</code>, so one class of the design's outweighs it: never <code>!important</code>, never a CSS <code>::after</code> over Undo's words.</li>
+</ul>
 <h3>What every design must keep doing</h3>
 <ul>
 <li><strong>Read the graph through one model.</strong> <code>readGarden(store)</code> turns nodes, edges and violations into the design's words; every page reads it and none reaches for <code>store.graph</code>. The scene's lens reads the same model.</li>
 <li><strong>Take the act list from the derivation.</strong> `recordFacts(store, id, { principal }).actions<code> and </code>kindFacts(store, kind, …).actions`, never a scan of <code>store.allMutations()</code>; <code>withheld</code> are struck through with the policy's sentence (<code>store.permits</code> says the same at the press), not dropped.</li>
-<li><strong>Style through the theme's tokens</strong> (<code>--graview-ground</code>, <code>-panel</code>, <code>-ink</code>, <code>-edge</code>, <code>-warn</code>, <code>-accent</code>, <code>-font-display</code>, <code>-font-body</code>), tinted with <code>color-mix</code> for the design's own paper. Never a color that works in one scheme only.</li>
+<li><strong>Style through the theme's tokens</strong> (<code>--graview-ground</code>, <code>-panel</code>, <code>-ink</code>, <code>-edge</code>, <code>-warn</code>, <code>-accent</code>, <code>-font-display</code>, <code>-font-body</code>), tinted with <code>color-mix</code> for the design's own paper. Never a color that works in one scheme only — nor a logo: <code>&lt;AppMark brand={context.brand} /&gt;</code> draws the brand's, the dark one in the dark (<code>graview-logo</code>).</li>
 <li><strong>Keep landmarks and targets honest.</strong> One <code>main</code> — a <code>section</code> when <code>context.embedded</code>, and UNNAMED, or a page holding two embeds has two regions with one name. Controls at least 24px, AA contrast. Every size in <code>rem</code>: at 200% text a flex or grid item's automatic minimum is its CONTENT's, so one un-wrappable row pushes the whole column off the screen — <code>minmax(0, 1fr)</code> and <code>min-width: 0</code> on the column, <code>flex-wrap</code> on the row. Measure rather than trust: <code>-ink-faint</code> fails AA on an 11px label, and the accent fails on the warning ground. `node scripts/verify-pages.mjs` runs axe over every route, both widths, both schemes.</li>
 <li><strong>Say where a person is on every page, derived or not</strong>, as above — one trail, not one from the design and one from the face.</li>
 </ul>

@@ -41,6 +41,7 @@ import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
 import { brandFindings, emojiIconSentence } from "./brand-check.js";
+import { darkLogoSentence, logoParts } from "./logo.js";
 import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
 import { quotedAtTheEnd } from "./quote.js";
@@ -188,7 +189,15 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       // An IANA time zone its instants are said in (Roadmap f-app-time-zone).
       timeZone: z.union([z.string().min(1).max(64), z.null()]).optional(),
       // The rest of the brand (FR-124, FR-125): each as the document holds it, null to clear it.
-      logo: z.union([z.string().min(1), z.object({ src: z.string().min(1), alt: z.string().min(1).max(120).optional() }).strict(), z.null()]).optional(),
+      logo: z
+        .union([
+          z.string().min(1),
+          z.object({ src: z.string().min(1), alt: z.string().min(1).max(120).optional() }).strict(),
+          // One for each scheme; with no dark one, `darkFallback: "invert"` asks for the light one inverted in the dark.
+          z.object({ light: z.string().min(1), dark: z.string().min(1).optional(), alt: z.string().min(1).max(120).optional(), darkFallback: z.literal("invert").optional() }).strict(),
+          z.null(),
+        ])
+        .optional(),
       favicon: z.union([z.string().min(1), z.object({ emoji: z.string() }).strict(), z.null()]).optional(),
       typography: z.union([z.object({ display: z.union([z.string().min(1).max(200), z.null()]).optional(), body: z.union([z.string().min(1).max(200), z.null()]).optional(), mono: z.union([z.string().min(1).max(200), z.null()]).optional() }).strict(), z.null()]).optional(),
       shape: z.union([z.object({ radius: z.union([z.number().min(0).max(32), z.null()]).optional(), density: z.union([z.number().min(0.75).max(1.5), z.null()]).optional() }).strict(), z.null()]).optional(),
@@ -640,14 +649,17 @@ class Editor {
       const was = brand[key];
       if (e[key] === null) delete brand[key];
       else brand[key] = e[key];
-      const src = (mark: unknown) => (typeof mark === "string" ? mark : isObject(mark) ? mark["src"] : undefined);
+      // A logo's light one is its `src` or its `light`; its dark scheme is said on its own (logo.ts).
+      const src = (mark: unknown) => (key === "logo" ? logoParts(mark)?.light : typeof mark === "string" ? mark : isObject(mark) ? mark["src"] : undefined);
       const alt = (mark: unknown) => (isObject(mark) && typeof mark["alt"] === "string" ? mark["alt"] : undefined);
+      const dark = key === "logo" && e[key] !== null ? darkLogoSentence(was, e[key]) : undefined;
       if (e[key] === null) this.said.push(`The app has no ${what}.`);
       else if (key === "favicon" && emojiOf(e[key]) !== undefined) this.said.push(emojiIconSentence(emojiOf(e[key])!, brand["logo"] !== undefined));
       else if (was === undefined) this.said.push(`The app gets a ${what}.`);
       else if (canonicalize(was) === canonicalize(e[key])) this.said.push(`The ${what} stays as it was.`);
-      else if (src(was) === src(e[key])) this.said.push(`The ${what} is said as ${quotedAtTheEnd(alt(e[key]) ?? brand["name"] ?? this.doc.name)}`);
-      else this.said.push(`The ${what} changes.`);
+      else if (src(was) !== src(e[key])) this.said.push(`The ${what} changes.`);
+      else if (alt(was) !== alt(e[key]) || !dark) this.said.push(`The ${what} is said as ${quotedAtTheEnd(alt(e[key]) ?? brand["name"] ?? this.doc.name)}`);
+      if (dark) this.said.push(dark);
     }
     const merge = (key: "typography" | "shape" | "accents", say: (part: string, value: unknown) => string, cleared: string) => {
       if (e[key] === undefined) return;

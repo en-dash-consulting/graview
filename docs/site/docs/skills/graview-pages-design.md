@@ -1,6 +1,6 @@
 # graview-pages-design
 
-`graview-pages-design` is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, its tabs lit from the section a kind's pages are in, and a trail that says where a person is — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.
+`graview-pages-design` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app a product design over its routed face — its own shell under the one bar, every surface replaced, its tabs lit from the section a kind's pages are in, and a trail that says where a person is — and verify it by rendering each page and opening it, rather than assuming the derived pages are gone.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -32,11 +32,26 @@ A design usually replaces some pages and leaves the rest derived, and a person w
 - **`placeHere(context, path, { registry, base })`** says the same of a path for a bar drawn OUTSIDE the face's router, told where it is by `steering.at` or `onNavigate`.
 - **The trail.** Each derived list, record and picture opens with one: a `nav` called "You are here", the section and the kind's list as links, the page itself last with `aria-current="page"`, out of sight because the heading says it. A list with no section draws none. A shell that places `<PageTrail />` puts THE trail there and the derived pages draw none at their heads; one that draws its own from `usePlaceHere()` says `surface("shell", Shell, { without: ["trail"] })`.
 
+### Find and the way back, in the design's bar
+
+Both are the face's, whichever shell draws it: a shell that places `<PageFind>` or `<PageUndo>` says where they go, else they are drawn around it (Find in a bar above, the way back docked at the corner), and `surface("shell", Shell, { without: ["find", "undo"] })` goes without.
+
+```tsx
+<nav className="my-bar">
+  <PageFind context={context} narrowsLists={false} size="sm" className="my-find" />
+  <PageUndo context={context} compact size="sm" className="my-undo" />
+</nav>
+```
+
+- **`compact`** is the arrow and "Undo": what it takes back ("Take back “Rename to …”") is its accessible name and its title. Uncompact, the sentence is cut at 18rem (`--graview-undo-widest`), whole in its title.
+- **`size`**: `"sm"` (30 px, the app bar's tools), `"md"` (36 px), or the bar's own height — a number of pixels or a CSS length — said as `--graview-control-height`.
+- **`className`** goes on Undo's button and on Find's form (its box is `.graview-find-box`). Their own look is rules behind `:where`, so one class of the design's outweighs it: never `!important`, never a CSS `::after` over Undo's words.
+
 ### What every design must keep doing
 
 - **Read the graph through one model.** `readGarden(store)` turns nodes, edges and violations into the design's words; every page reads it and none reaches for `store.graph`. The scene's lens reads the same model.
 - **Take the act list from the derivation.** `recordFacts(store, id, { principal }).actions` and `kindFacts(store, kind, …).actions`, never a scan of `store.allMutations()`; `withheld` are struck through with the policy's sentence (`store.permits` says the same at the press), not dropped.
-- **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`, `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with `color-mix` for the design's own paper. Never a color that works in one scheme only.
+- **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`, `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with `color-mix` for the design's own paper. Never a color that works in one scheme only — nor a logo: `<AppMark brand={context.brand} />` draws the brand's, the dark one in the dark (`graview-logo`).
 - **Keep landmarks and targets honest.** One `main` — a `section` when `context.embedded`, and UNNAMED, or a page holding two embeds has two regions with one name. Controls at least 24px, AA contrast. Every size in `rem`: at 200% text a flex or grid item's automatic minimum is its CONTENT's, so one un-wrappable row pushes the whole column off the screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on the row. Measure rather than trust: `-ink-faint` fails AA on an 11px label, and the accent fails on the warning ground. `node scripts/verify-pages.mjs` runs axe over every route, both widths, both schemes.
 - **Say where a person is on every page, derived or not**, as above — one trail, not one from the design and one from the face.
 

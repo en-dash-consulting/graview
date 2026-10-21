@@ -42,11 +42,12 @@ A skill that cannot verify its own outcome says so. That is the rule, and the sk
 | `graview-permissions` | Declare who may do what, once, and let the strip and the seat narrow themselves |
 | `graview-brand` | Put someone's name on an installation without forking a package |
 | `graview-locale` | Say money, days and times the way the app's people do: a currency, a locale and a time zone, once |
+| `graview-logo` | Put a client's logo and page icon on an app: one for each scheme, an inverted fallback only when asked, an emoji icon |
 | `graview-new-app` | Start a product on Graview in its own repository, with the CI that keeps it honest |
 | `graview-ship` | Deploy: persistence, op-log-native migrations, export, health, serving and a host that compiles once |
 | `graview-sync` | Keep an app in step with another system: a snapshot projected from it, a sync back, an MCP remote, a Google calendar |
 | `graview-pages` | The routed face: derived pages, one page in the app's words, and the embed |
-| `graview-pages-design` | A product design over every surface of the routed face: its own shell, its tabs lit from a kind's section, and a trail that says where a person is |
+| `graview-pages-design` | A product design over every surface of the routed face: its own shell, its tabs lit from a kind's section, a trail that says where a person is, and Find and the way back in its own bar at its own height |
 | `graview-embed` | Put an app on somebody else's page, its theme scoped to one element, and somebody's HTML page inside the app as a framed view |
 | `graview-host-page` | Host an app as the page itself: the address bar, a chat's widget, the host's menu and news, when a place has drawn, a view proposed and not kept, and pictures of places |
 | `graview-port-app` | Port an existing application onto Graview, deciding what is a node and what is a field |

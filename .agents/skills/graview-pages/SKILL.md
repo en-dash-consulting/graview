@@ -73,7 +73,7 @@ under its routes:
   nav box narrows a list, else lands here. Find and the way back ("Take
   back “…”", ⌘Z) are on every face: a shell places `<PageFind>` or
   `<PageUndo>` where it wants them, else they are drawn around it
-  (`without: ["find"]` goes without).
+  (`without: ["find"]` goes without; at a bar's height, `graview-pages-design`).
 - **The quick ask** (⌘K, where `ai` gives a model): a bar and answer
   card by the page's heading, the ROUTE what "this" means.
   `context.quickAsk: false` draws none.
@@ -150,7 +150,8 @@ Rules for a page at this rung:
 
 Replacing every surface — the shell under the bar, the home, the problems,
 each kind's list and record — is a product: `graview-pages-design`, with
-its own tabs lit from the section a kind's pages are in.
+its own tabs lit from the section a kind's pages are in, and Find and the way
+back in its own bar.
 
 ## On somebody else's page
 

@@ -1520,7 +1520,7 @@ main.page > section.tour-intro { padding-top: 64px; }
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-pages</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-pages</code> is one of Graview's 27 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-pages</code> is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1546,7 +1546,7 @@ if (location.pathname.startsWith("/pages")) {
 <ul>
 <li><code>/places</code>, <code>/places/&lt;as&gt;</code> — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath unless the lens says <code>create: false</code>). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record.</li>
 <li><code>/map</code> — <code>kindMap(store)</code>: every declared relation in its words with its live count, also a section on the home page. A kind's list says what it relates to, arranged in the shared words (<code>?sort=due:desc</code>, <code>?filter=done:false</code>, <code>?group=due:month</code>, <code>?q=tape</code>) a lens carries in its fragment, so an arrangement is a link; <code>?by=</code>, <code>?&lt;edge&gt;=&lt;id&gt;</code>, <code>?with=</code> and <code>?past=1</code> still land. A record links back.</li>
-<li><code>/search?q=</code> — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places <code>&lt;PageFind&gt;</code> or <code>&lt;PageUndo&gt;</code> where it wants them, else they are drawn around it (<code>without: ["find"]</code> goes without).</li>
+<li><code>/search?q=</code> — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places <code>&lt;PageFind&gt;</code> or <code>&lt;PageUndo&gt;</code> where it wants them, else they are drawn around it (<code>without: ["find"]</code> goes without; at a bar's height, <code>graview-pages-design</code>).</li>
 <li><strong>The quick ask</strong> (⌘K, where <code>ai</code> gives a model): a bar and answer card by the page's heading, the ROUTE what "this" means. <code>context.quickAsk: false</code> draws none.</li>
 </ul>
 <p>Everything a page shows is a derivation the scene uses too: <code>recordFacts</code>, <code>deriveAffordances</code>, <code>store.permits</code>. <strong>A page never decides what an act is or who may take it</strong> — it strikes through what the seat may not, and says why. A record's facts, <code>computed</code> ones too, read in declared order or as the kind's <code>display.page</code> groups them; prose keeps its paragraphs, full width.</p>
@@ -1585,7 +1585,7 @@ export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
 <li><strong>Take the act LIST from the derivation, not from the mutations.</strong> <code>recordFacts(store, id, { principal }).actions</code> is the <code>AffordanceSet</code> the scene's strip reads: <code>affordances</code> can act here, <code>args</code> decided and <code>open</code> questions left; <code>withheld</code> are this seat's refusals, with the reason. <code>store.allMutations()</code> offers acts with nothing to act on. A <strong>list</strong> page asks it of a kind instead — <code>kindFacts(store, kind, { principal }).actions</code>, the acts that can BEGIN it.</li>
 </ol>
 <h3>Rung two: a product design</h3>
-<p>Replacing every surface — the shell under the bar, the home, the problems, each kind's list and record — is a product: <code>graview-pages-design</code>, with its own tabs lit from the section a kind's pages are in.</p>
+<p>Replacing every surface — the shell under the bar, the home, the problems, each kind's list and record — is a product: <code>graview-pages-design</code>, with its own tabs lit from the section a kind's pages are in, and Find and the way back in its own bar.</p>
 <h3>On somebody else's page</h3>
 <p><code>graview-embed</code> mounts the app, this face included (<code>face: "pages"</code>, <code>path</code>, <code>routing</code>), into one element of any page.</p>
 <h3>Then find out whether it worked</h3>
