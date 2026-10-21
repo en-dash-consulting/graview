@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.43",
+      "date": "2026-10-21",
+      "headline": "A change carries its value once less: smaller histories for every app.",
+      "summary": "- **A saved change no longer keeps its own undo copy.** It was always worked out from what changed; now it is worked out when undo, playback or a rebase needs it, instead of being stored and sent. An image field's change is about 40% smaller, and a whole history of image edits about 38%.\n- **Nothing old breaks.** A store written by an earlier version opens and carries on; exports from earlier versions import and undo the same; a tab on an earlier version is still sent each change with its undo copy written out.",
+      "compatibility": "Op format 2: ops carry no `inverse` (read it with `inverseOf(op)`); `AppendOp.inverse` is gone. A version before 0.1.43 that opens a store or export written by this one refuses it with `NewerFormatError`. A reader says it reads format 2 on the wire (`opFormat`); one that says nothing gets format 1. About 0.5 KB more up front.",
+      "published": true
+    },
+    {
       "version": "0.1.42",
       "date": "2026-10-21",
       "headline": "Pages that say where you are, a logo for each scheme, gestures in views, an open on a short tail, and playback past the undo horizon.",

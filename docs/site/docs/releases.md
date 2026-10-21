@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.43`](https://graview.dev/docs/releases.html#v0-1-43)
 - [`0.1.42`](https://graview.dev/docs/releases.html#v0-1-42)
 - [`0.1.41`](https://graview.dev/docs/releases.html#v0-1-41)
 - [`0.1.40`](https://graview.dev/docs/releases.html#v0-1-40)
@@ -44,9 +45,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.42
+## 0.1.43
 
 Published October 21, 2026 · the current version
+
+A change carries its value once less: smaller histories for every app.
+
+- **A saved change no longer keeps its own undo copy.** It was always worked out from what changed; now it is worked out when undo, playback or a rebase needs it, instead of being stored and sent. An image field's change is about 40% smaller, and a whole history of image edits about 38%.
+- **Nothing old breaks.** A store written by an earlier version opens and carries on; exports from earlier versions import and undo the same; a tab on an earlier version is still sent each change with its undo copy written out.
+
+**Before you upgrade:** Op format 2: ops carry no `inverse` (read it with `inverseOf(op)`); `AppendOp.inverse` is gone. A version before 0.1.43 that opens a store or export written by this one refuses it with `NewerFormatError`. A reader says it reads format 2 on the wire (`opFormat`); one that says nothing gets format 1. About 0.5 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.43) · [The full changelog for 0.1.43](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0143)
+
+## 0.1.42
+
+Published October 21, 2026
 
 Pages that say where you are, a logo for each scheme, gestures in views, an open on a short tail, and playback past the undo horizon.
 
