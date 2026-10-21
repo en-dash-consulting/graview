@@ -38,8 +38,15 @@ export interface Playback<S extends AnySchema = AnySchema> {
   show(seq: number | null): void;
   /** The store as it is now, whole: read through the seat's sight (`seenBy`). */
   readonly live: Store<S>;
-  /** What the host keeps outside the log: declaration changes, a script view's code at a moment. */
+  /** What the host keeps outside the log: declaration changes, a script view's code at a moment, the ops a compaction archived. */
   readonly host: HistoryHost | undefined;
+  /**
+   * A MOMENT BEHIND THE UNDO HORIZON, WHILE IT IS READ FROM THE HOST'S
+   * ARCHIVE (FR-196): its seq, and what the host's refusal or failure said
+   * when it could not be. Meanwhile `past` is the picture shown before.
+   * `null` when no moment is waiting on the archive.
+   */
+  readonly archive: { readonly seq: number; readonly refused?: string } | null;
   /** Whether `store` is this playback's — now's or the moment's, whole or as one seat sees it. */
   owns(store: Store<AnySchema>, principal: Principal): boolean;
 }
@@ -108,8 +115,10 @@ export function useOwnPlayback<S extends AnySchema>(live: Store<S>, principal: P
   }, [folds, inherited, seq]);
   // A mark the host handed without its declaration is asked for (`history.declarationAt`); the moment waits on the answer.
   const [answered, setAnswered] = useState(0);
-  const asked = useMemo(() => (inherited || seq === null || seq >= live.log.length || !folds ? undefined : folds.askDeclaration(host, seq)), [inherited, live, seq, host, folds, answered]);
+  // A moment behind the horizon is first read from the host's archive (FR-196): held however long that takes, and said when it is refused.
+  const asked = useMemo(() => (inherited || seq === null || seq >= live.log.length || !folds ? undefined : (folds.askArchived(live, seq, host) ?? folds.askDeclaration(host, seq))), [inherited, live, seq, host, folds, answered]);
   const waiting = asked && "waiting" in asked ? asked.waiting : undefined;
+  const reading = asked && "seq" in asked ? asked : null;
   const [late, setLate] = useState<Promise<void> | undefined>(undefined);
   useEffect(() => {
     if (!waiting) return;
@@ -121,7 +130,7 @@ export function useOwnPlayback<S extends AnySchema>(live: Store<S>, principal: P
       clearTimeout(slow);
     };
   }, [waiting]);
-  const held = waiting !== undefined && late !== waiting;
+  const held = (waiting !== undefined && late !== waiting) || reading !== null;
   const drawn = useMemo<PastShown<S> | null>(() => {
     if (inherited || seq === null || seq >= live.log.length || !folds || held) return null;
     try {
@@ -143,6 +152,6 @@ export function useOwnPlayback<S extends AnySchema>(live: Store<S>, principal: P
     [live, past],
   );
   const open = seq !== null;
-  const own = useMemo<Playback<S>>(() => ({ past, open, show, live, host, owns }), [past, open, show, live, host, owns]);
+  const own = useMemo<Playback<S>>(() => ({ past, open, show, live, host, owns, archive: reading }), [past, open, show, live, host, owns, reading]);
   return inherited ? outer : own;
 }
