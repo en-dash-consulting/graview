@@ -39,6 +39,11 @@ declaration plus one persistence adapter is a running deployment.
   A host that keeps its whole log can still open a page on a short tail of it: `openTail: 200`
   (on `serveStore`, `createStoreHandler` or `liveProtocol`) serves the snapshot and the latest
   200 ops with the horizon they begin at, and the page's undo stops there, as on a compacted store.
+  The timeline still reaches behind the horizon when the page's host hands the archive back:
+  `history.archived(from, to)` on the mount options (or the provider) answers the ops of that
+  range and the epochs among them, an `ArchivedOps` that a `LogArchive` already is, asked in
+  chunks only when somebody scrubs back that far (FR-196); without it the timeline begins at
+  the horizon and says the changes before were archived.
 - **`health(store)`** — coherence, not liveness: dangling edges, standing, sizes.
 - **`serveStore` / `openRemote`** — the store behind HTTP, and the other end of the wire. A
   client sends CALLS, never primitives; the server applies them through an ordinary `Store`

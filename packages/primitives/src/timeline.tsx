@@ -1,5 +1,5 @@
-import { layer, momentAsRead, type AnySchema, type Principal, type Store } from "@graview/core";
-import { makerWords, restoreBatches, ticksOf, type Maker, type PlaybackTick } from "@graview/core/history";
+import { layer, momentAsRead, type AnySchema, type Operation, type Principal, type Store } from "@graview/core";
+import { makerOf, makerWords, restoreBatches, ticksOf, type Maker, type PlaybackTick } from "@graview/core/history";
 import { useGraviewIfAny, useLiveStore, usePlayback } from "@graview/react/provider";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { TimelineFace } from "./past-bar.js";
@@ -26,9 +26,30 @@ const MAKER_INK: Record<Maker, string> = {
   app: "var(--graview-edge-bright)",
 };
 
-/** The stops a scrubber walks: the start, then the moment after each change. */
-function stopsOf(ticks: readonly PlaybackTick[], horizon: number): number[] {
-  return [...new Set([horizon, ...ticks.map((tick) => tick.seq)])].sort((a, b) => a - b);
+/**
+ * The stops a scrubber walks: the start, then the moment after each change.
+ * Behind the undo horizon, when the host keeps the archive (FR-196), every
+ * seq from the start: its gestures are not known until it is read.
+ */
+function stopsOf(ticks: readonly PlaybackTick[], horizon: number, archived: boolean): number[] {
+  const behind = archived ? Array.from({ length: horizon }, (_, seq) => seq) : [];
+  return [...new Set([...behind, horizon, ...ticks.map((tick) => tick.seq)])].sort((a, b) => a - b);
+}
+
+/** A moment read from the archive, as a tick: the last op folded into it, by whom and what it was. */
+function archivedTick(op: Operation, me: Principal): PlaybackTick {
+  const withheld = op.withheld === true;
+  return {
+    seq: op.seq + 1,
+    from: op.seq,
+    at: op.at,
+    batch: op.batch,
+    maker: withheld ? "person" : makerOf(op.author, me),
+    author: withheld ? undefined : op.author,
+    said: op.batchIntent ?? op.intent,
+    declaration: false,
+    withheld,
+  };
 }
 
 /** The stop at or before `seq`. */
@@ -60,11 +81,20 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
     // The log only grows at its end: its length says when to read it again.
     [live, principal, playback.host, length],
   );
-  const stops = useMemo(() => stopsOf(ticks, live.log.horizon), [ticks, live]);
-  const seq = playback.past?.seq ?? length;
+  const horizon = live.log.horizon;
+  // Behind the horizon is the host's archive (FR-196): reached when it keeps one, and said to be archived when it does not.
+  const archived = horizon > 0 && playback.host?.archived !== undefined;
+  const stops = useMemo(() => stopsOf(ticks, horizon, archived), [ticks, horizon, archived]);
+  const reading = playback.archive;
+  const seq = reading?.seq ?? playback.past?.seq ?? length;
   const index = indexOf(stops, seq);
   const last = stops.length - 1;
-  const tick = [...ticks].reverse().find((one) => one.seq <= seq && one.seq > (stops[index - 1] ?? -1)) ?? [...ticks].reverse().find((one) => one.seq <= seq);
+  const folded = seq < horizon && playback.past?.seq === seq ? playback.past.store.log.all().at(-1) : undefined;
+  const tick = folded
+    ? archivedTick(folded, principal)
+    : seq < horizon
+      ? undefined
+      : ([...ticks].reverse().find((one) => one.seq <= seq && one.seq > (stops[index - 1] ?? -1)) ?? [...ticks].reverse().find((one) => one.seq <= seq));
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(1);
   const [refused, setRefused] = useState<string | null>(null);
@@ -80,11 +110,18 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
     return () => clearTimeout(timer);
   }, [playing, index, last, speed, stops, playback]);
 
-  const restore = useMemo(() => (playback.past ? restorable(live, seq, principal) : null), [playback.past, live, seq, principal, length]);
+  // Undo stops at the horizon: a moment behind it is looked at, never restored to.
+  const restore = useMemo(() => (playback.past && !reading && seq >= horizon ? restorable(live, seq, principal) : null), [playback.past, reading, live, seq, horizon, principal, length]);
   const who = (one: PlaybackTick) =>
     makerWords(one, { graph: live.graph as never, schema: live.schema, ...(graview?.seats ? { seats: graview.seats } : {}), ...(graview?.people ? { people: graview.people } : {}) });
   const asOf = playback.past ? (playback.past.at ? momentAsRead(playback.past.at, graview?.locale) : "the start") : null;
-  const caption = tick ? `${who(tick) === "you" ? "You" : who(tick)}: ${tick.said}` : "Nothing had happened yet";
+  const caption = reading
+    ? reading.refused
+      ? "The archive could not be read"
+      : "Reading the older changes from the archive…"
+    : tick
+      ? `${who(tick) === "you" ? "You" : who(tick)}: ${tick.said}`
+      : "Nothing had happened yet";
 
   /*
    * ON THE SCENE IT STANDS OVER THE PICTURE'S FOOT, AND SAYS HOW TALL, as a
@@ -135,7 +172,7 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
     >
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "4px 12px" }}>
         <strong data-testid="as-of" role="status" style={{ fontWeight: 600 }}>
-          {asOf ? `As of ${asOf}` : "Now"}
+          {reading ? "Archived changes" : asOf ? `As of ${asOf}` : "Now"}
         </strong>
         <span data-testid="timeline-caption" style={{ color: "var(--graview-ink-muted)", minWidth: 0, overflowWrap: "anywhere" }}>
           {caption}
@@ -149,8 +186,17 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
 
       <div style={{ position: "relative", height: 22 }} aria-hidden="true">
         {/* A tick per change, where the scrubber stops; a change to the declaration stands taller. */}
+        {archived ? (
+          <span
+            data-testid="timeline-archived"
+            title="Changes read from the archive as you scrub back"
+            style={{ position: "absolute", left: 0, bottom: 0, height: 6, width: `${last === 0 ? 0 : (stops.indexOf(horizon) / last) * 100}%`, borderRadius: 2, background: "var(--graview-edge)" }}
+          />
+        ) : null}
         {stops.slice(1).map((stop, at) => {
-          const one = [...ticks].reverse().find((candidate) => candidate.seq === stop)!;
+          const one = [...ticks].reverse().find((candidate) => candidate.seq === stop);
+          // A seq behind the horizon has no gesture known: the band above stands for them.
+          if (!one) return null;
           const left = last === 0 ? 0 : ((at + 1) / last) * 100;
           return (
             <span
@@ -250,6 +296,16 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
       {refused ? (
         <span role="alert" data-testid="restore-refused" style={{ color: "var(--graview-warn)" }}>
           {refused}
+        </span>
+      ) : null}
+      {reading?.refused ? (
+        <span role="alert" data-testid="archive-refused" style={{ color: "var(--graview-warn)" }}>
+          {reading.refused}
+        </span>
+      ) : null}
+      {horizon > 0 && !archived ? (
+        <span data-testid="timeline-horizon" style={{ color: "var(--graview-ink-faint)" }}>
+          The changes before the timeline's start were archived.
         </span>
       ) : null}
     </section>

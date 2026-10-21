@@ -5,6 +5,7 @@ import { PagesApp } from "@graview/pages";
 import { aiThroughDevServer, type HostAi } from "@graview/tools";
 import { filesAt } from "@graview/ship/browser";
 import { memorySubscriptions, type SubscriptionMatch } from "@graview/core";
+import type { HistoryHost } from "@graview/core/history";
 import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
@@ -139,6 +140,13 @@ void import("@graview/core/subscriptions").then(({ watchSubscriptions }) =>
  * Same store machinery, same ids — a record page links to its spatial stop
  * and the scene's header offers the pages, because they are one app.
  */
+/*
+ * WHAT THE HOST KEEPS OUTSIDE THE LOG (Roadmap f-playback): Things keeps
+ * nothing, so a harness that compacts the store hands the archive it made
+ * (`HistoryHost.archived`, FR-196) as `__todoHistory` before the page loads.
+ */
+const history = (window as unknown as { __todoHistory?: HistoryHost }).__todoHistory;
+
 if (window.location.pathname.startsWith("/pages")) {
   createRoot(root).render(
     <PagesApp
@@ -168,6 +176,7 @@ if (window.location.pathname.startsWith("/pages")) {
         ...(ai ? { ai } : {}),
         ...(files ? { files } : {}),
         subscriptions,
+        ...(history ? { history } : {}),
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is
@@ -188,6 +197,7 @@ if (window.location.pathname.startsWith("/pages")) {
       {...(ai ? { ai } : {})}
       {...(files ? { files } : {})}
       subscriptions={subscriptions}
+      {...(history ? { history } : {})}
       syncUrl
       renderer="auto"
       initialScheme={scheme}

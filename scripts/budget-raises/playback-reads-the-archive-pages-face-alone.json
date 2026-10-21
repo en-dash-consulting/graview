@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 68,
+  "gzipped": 60,
+  "note": "Raised when playback came to read a moment behind the undo horizon from the host's archive (HistoryHost.archived, FR-196): the face's playback asks @graview/core/past whether the moment is still being read, holds the picture it had however long that takes, and hands the timeline the moment it is reading and what a refusal said, which is a few words in the provider's playback that every face loads up front; the asking, the chunks and the fold are on @graview/core/past and the timeline, fetched when somebody first looks back. Measured at 628_570 / 231_288 against 628_502 / 231_237: 68 / 51 more; the gzipped raise leaves room for the few bytes a lazy chunk renamed moves it by."
+}

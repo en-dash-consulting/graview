@@ -14,7 +14,8 @@
 import { capitalize } from "./capital.js";
 import { humanizeField, nounOf } from "./schema/define-node.js";
 import { nameOfAuthor } from "./who.js";
-import type { Author, Batch } from "./ops/types.js";
+import type { Epoch } from "./ops/log.js";
+import type { Author, Batch, Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { PastDeclaration, Store } from "./store.js";
@@ -47,11 +48,26 @@ export interface DeclarationMark {
 export type ViewVersion = { readonly source: string } | Readonly<Record<string, unknown>>;
 
 /**
+ * WHAT A HOST'S ARCHIVE HANDS BACK FOR A RANGE BEHIND THE UNDO HORIZON
+ * (FR-196): the ops it holds of the range, oldest first, each with its
+ * `seq`, and the epochs among them — a checkpoint an earlier compaction
+ * made, a seed's at seq 0 — that a moment is folded from. A `LogArchive`
+ * as `store.compact` returned it is one, as is a slice of it. More than was
+ * asked is kept; an op of the range missing from it is a gap, which the
+ * timeline says it could not read. Without an epoch at or before a
+ * moment, the fold reaches back to seq 0, an empty graph.
+ */
+export interface ArchivedOps {
+  readonly ops: readonly Operation[];
+  readonly epochs?: readonly Epoch[];
+}
+
+/**
  * WHAT THE HOST KEEPS OUTSIDE THE LOG, handed to playback: the declaration
  * changes it knows (with the declaration each began, or a way to ask for
- * it), and a script view's code as it stood at a seq — `null` when the
+ * it), a script view's code as it stood at a seq — `null` when the
  * view did not exist then, `undefined` when the host does not know (the
- * view is drawn as it is now).
+ * view is drawn as it is now) — and the ops a compaction archived.
  */
 export interface HistoryHost {
   readonly declarations?: readonly DeclarationMark[];
@@ -66,6 +82,20 @@ export interface HistoryHost {
    */
   readonly declarationAt?: (seq: number) => Promise<PastDeclaration | undefined> | PastDeclaration | undefined;
   readonly viewAt?: (name: string, seq: number) => ViewVersion | null | undefined;
+  /**
+   * THE OPS BEHIND THE UNDO HORIZON, ASKED FOR WHEN THEY ARE NEEDED
+   * (FR-196): called with a range of seqs, `from` up to but not including
+   * `to`, both at or before `store.log.horizon`, the first time the
+   * timeline is moved to a moment the compacted log no longer holds. It
+   * is asked in chunks aligned to 256 seqs, newest first until an epoch
+   * (or seq 0) is reached, and each chunk once while it is the same
+   * function; the answer is `ArchivedOps`, or the ops alone. With it, the
+   * timeline reaches back to the start; without it, it begins at the
+   * horizon and says the changes before were archived. A refusal or a
+   * failure is said on the timeline, and the present is untouched. The
+   * past it folds is read, never changed: undo still stops at the horizon.
+   */
+  readonly archived?: (from: number, to: number) => Promise<ArchivedOps | readonly Operation[]>;
 }
 
 /** One gesture on the timeline, or one declaration change made outside the log. */
