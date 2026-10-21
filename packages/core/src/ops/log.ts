@@ -50,6 +50,29 @@ export interface Epoch {
    * bare) knows its makers from the horizon on.
    */
   readonly creators?: Readonly<Record<string, string>>;
+  /**
+   * WHAT EACH RECORD BEHIND IT WAS, on a checkpoint (`horizon`, FR-199):
+   * record id to kind, for every record made or removed before its seq that
+   * its graph does not hold — the ones removed behind the horizon. A store
+   * opened on the checkpoint never reads the ops that made them, so without
+   * this a field still naming one names, to it, no record at all, and the
+   * seat view would serve the hidden record's id to a seat that may not see
+   * its kind. Written by `store.checkpoint` (`{}` when there is none),
+   * carried by every adapter as part of the epoch, never served to a seat.
+   * Absent on a checkpoint written before it existed: a store opened on one
+   * judges an id it cannot place as a record of the kind its id names.
+   */
+  readonly removed?: Readonly<Record<string, string>>;
+  /**
+   * WHO WROTE EACH FIELD OF ITS GRAPH THAT NAMES A RECORD, on a checkpoint
+   * (`horizon`, FR-199): record id to field to the seat that wrote the
+   * value it holds. A seat is served its own words, so a field it wrote
+   * naming a record it may not see is served as written; a store opened on
+   * the checkpoint never reads the op that wrote it, and without this
+   * clears it. Written by `store.checkpoint`, never served to a seat; a
+   * checkpoint without it serves such a field cleared, whoever wrote it.
+   */
+  readonly writers?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 /**

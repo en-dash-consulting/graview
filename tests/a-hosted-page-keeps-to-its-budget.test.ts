@@ -123,7 +123,8 @@ describe("a hosted page", () => {
     // 960 KB since the document format came to build its shapes on first use (Roadmap f-smaller-worker): zod/mini's lazy schema and the fifteen wrappers over the shapes: the scene face measured 982_187 B, 1_192 more than before it (980_995).
     // 961 KB once both of 0.1.42's 960 KB raises above were merged: together 983_734 B.
     // 962 KB since an op carries its value once less (op format 2): the scene face measured 984_496 B, 560 more — the inverse worked out where it is read, a format-1 one dropped, and the format said on the wire.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(962 * 1024);
+    // 963 KB since a compacted store serves no unseen id (FR-199): the scene face measured 985_521 B, 1_025 more — what a checkpoint keeps of the records behind it, and the seat view judging from it.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(963 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
