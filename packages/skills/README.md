@@ -45,7 +45,8 @@ skills say which parts of their work the checker cannot see.
 | `graview-new-app` | Start a product on Graview in its own repository, with the CI that keeps it honest |
 | `graview-ship` | Deploy: persistence, op-log-native migrations, export, health, serving and a host that compiles once |
 | `graview-sync` | Keep an app in step with another system: a snapshot projected from it, a sync back, an MCP remote, a Google calendar |
-| `graview-pages` | The routed face: derived pages, one page in the app's words, a product design over every surface, and the embed |
+| `graview-pages` | The routed face: derived pages, one page in the app's words, and the embed |
+| `graview-pages-design` | A product design over every surface of the routed face: its own shell, its tabs lit from a kind's section, and a trail that says where a person is |
 | `graview-embed` | Put an app on somebody else's page, its theme scoped to one element, and somebody's HTML page inside the app as a framed view |
 | `graview-host-page` | Host an app as the page itself: the address bar, a chat's widget, the host's menu and news, when a place has drawn, a view proposed and not kept, and pictures of places |
 | `graview-port-app` | Port an existing application onto Graview, deciding what is a node and what is a field |
