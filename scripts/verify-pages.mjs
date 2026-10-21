@@ -15,7 +15,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { engineName, launchEngine } from "./lib/engine.mjs";
+import { ENGINES, engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { stored } from "./lib/stored.mjs";
 import { arrangeByKeyboard, chooseOnTheLine, endClearsTheFoot, FIRST_RECORD_WITHIN, listHead } from "./lib/arranging-line.mjs";
@@ -1087,6 +1087,89 @@ async function aNewPageOpensAtItsTop() {
   };
 }
 
+/*
+ * A RECORD'S PAGE SAYS WHERE IT IS (Roadmap gv-pages-where-am-i). People
+ * caught in the derived pages did not know where they were: the page now
+ * opens with a trail — a nav called "You are here", the kind's list a link,
+ * the record itself last and current, which the heading under it says — on
+ * one line at a phone's width, and its link goes where it says, under the
+ * face's base. Seedbed's chapter nine keeps the derived record page, in
+ * every engine, at 390 and 1440; and a planting's page says the section
+ * the garden's registry put plantings in first ("The garden › Plantings").
+ */
+async function aRecordPageSaysWhereItIs() {
+  const seen = [];
+  for (const engine of ENGINES) {
+    const own = engine === ENGINE ? browser : await launchEngine(engine, { headless: true });
+    try {
+      for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+        const page = await own.newPage({ viewport });
+        await page.goto(`${at("seedbed")}/pages/gardeners/june?chapter=9`, { waitUntil: "networkidle" });
+        await page.waitForSelector('nav[aria-label="You are here"]', { timeout: 15_000 }).catch(() => {});
+        const said = await page.evaluate(() => {
+          const trails = [...document.querySelectorAll('nav[aria-label="You are here"]')];
+          const trail = trails[0];
+          const links = [...(trail?.querySelectorAll("a") ?? [])];
+          const box = trail?.querySelector("ol")?.getBoundingClientRect();
+          const current = trail?.querySelector('[aria-current="page"]');
+          return {
+            trails: trails.length,
+            links: links.map((a) => ({ words: (a.textContent ?? "").trim(), href: a.getAttribute("href") })),
+            current: (current?.textContent ?? "").trim(),
+            heading: (document.querySelector("[data-graview-page-title]")?.textContent ?? "").trim(),
+            // The page's own name is said once to the eye, by its heading.
+            currentOutOfSight: current ? current.getBoundingClientRect().width <= 1 : false,
+            oneLine: box ? box.height <= 32 : false,
+            noSideScroll: document.documentElement.scrollWidth <= window.innerWidth + 1,
+          };
+        });
+        await page.click('nav[aria-label="You are here"] a[href="/pages/gardeners"]').catch(() => {});
+        await page.waitForFunction(() => location.pathname === "/pages/gardeners", undefined, { timeout: 10_000 }).catch(() => {});
+        const went = await page.evaluate(() => ({ path: location.pathname, heading: (document.querySelector("[data-graview-page-title]")?.textContent ?? "").trim() }));
+        await page.goto(`${at("seedbed")}/pages/plantings/beans?chapter=9`, { waitUntil: "networkidle" });
+        await page.waitForSelector('nav[aria-label="You are here"]', { timeout: 15_000 }).catch(() => {});
+        const inSection = await page.evaluate(() => {
+          const trail = document.querySelector('nav[aria-label="You are here"]');
+          const box = trail?.querySelector("ol")?.getBoundingClientRect();
+          return {
+            steps: [...(trail?.querySelectorAll("li:not([aria-current])") ?? [])].map((li) => (li.textContent ?? "").replace("›", "").trim()),
+            links: [...(trail?.querySelectorAll("a") ?? [])].map((a) => a.getAttribute("href")),
+            current: (trail?.querySelector('[aria-current="page"]')?.textContent ?? "").trim(),
+            oneLine: box ? box.height <= 32 : false,
+          };
+        });
+        await page.close();
+        seen.push({ engine, width: viewport.width, ...said, went, inSection });
+      }
+    } finally {
+      if (own !== browser) await own.close();
+    }
+  }
+  report.checks.aRecordPageSaysWhereItIs = {
+    seen,
+    ok:
+      seen.length === ENGINES.length * 2 &&
+      seen.every(
+        (one) =>
+          one.trails === 1 &&
+          one.links.length === 1 &&
+          one.links[0].words === "Gardeners" &&
+          one.links[0].href === "/pages/gardeners" &&
+          one.current === one.heading &&
+          one.current.length > 0 &&
+          one.currentOutOfSight &&
+          one.oneLine &&
+          one.noSideScroll &&
+          one.went.path === "/pages/gardeners" &&
+          one.went.heading === "Gardeners" &&
+          one.inSection.steps.join(" › ") === "The garden › Plantings" &&
+          one.inSection.links.join(" ") === "/pages/plantings" &&
+          one.inSection.current === "Beans" &&
+          one.inSection.oneLine,
+      ),
+  };
+}
+
 /** The bar is one row, at a desk and on a phone: read from the gallery's own readings. */
 async function theBarIsOneRow(deskGallery, phoneGallery) {
   report.checks.theBarIsOneRow = {
@@ -1353,6 +1436,7 @@ try {
   garden = await startVite("seedbed", portFor("seedbed"));
   const bed = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await relationshipsAsStructure(bed);
+  await aRecordPageSaysWhereItIs();
   await theDerivedListArrangesOnOneQuietLine();
   // Discography's 479 albums, for a large list's way through.
   catalog = await startVite("discography", portFor("discography"));

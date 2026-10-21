@@ -24,13 +24,13 @@ import {
   lede,
   link,
   listed,
-  plain,
   pluralOf,
   quiet,
   rule,
   whoDid,
 } from "./page-typography.js";
 import { PageMain, PageTitle } from "./page-shell.js";
+import { HeadTrail } from "./place-here.js";
 import { capitalize } from "./page-typography.js";
 
 
@@ -139,12 +139,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   return (
     <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
-        <p style={{ ...eyebrow, display: "flex", alignItems: "center", gap: 8 }}>
-          <KindMark kind={facts.kind} brand={brand} schema={store.schema} size={8} />
-          <Link to={`/${pluralSlug(store.schema, facts.kind)}`} style={plain}>
-            {pluralOf(store, facts.kind)}
-          </Link>
-        </p>
+        {/* Where it is (Roadmap gv-pages-where-am-i): its section, if the app named one, and its kind's list, over its name. */}
+        <HeadTrail context={context} />
         {/* The name is changed where it stands, as the scene's record changes it: a shelf renamed on its page took "Change the category" (W-181). */}
         <PageTitle context={context}>{inPlace && node?.["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} said={facts.label} /> : facts.label}</PageTitle>
         {described && described !== facts.label ? <p style={lede}>{described}</p> : null}
