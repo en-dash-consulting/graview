@@ -93,25 +93,11 @@ logo, the app's own images, the pictures on records) are
 
 ## Links
 
-`<a data-record="offer:7">` and `<a data-place="the-packages">` are links
-the host follows, on both faces. `<a href="https://…">` is drawn as text.
-A destination is a record's id, else a place by its slug or its title
-(`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's
-list (`features` or `feature`); any other says why, naming the places.
-
-A list or a lens may be gone to **narrowed**: `where: { stage: "building" }`
-in navigate, `data-filter="stage:building"` on a link — the words the
-list's own arranging line writes, so the address is `/features?filter=
-stage%3Abuilding` and can be shared. A lens narrows the records it is
-handed; a blocks lens lists what its own `where` says. Any destination may
-take a **section**, a heading's words or an element's id (`section:
-"Every feature"`, `data-section`): the page scrolls there and gives it the
-keyboard (`#every-feature`). On the scene a list is the kind's stop
-narrowed (`in.filter`); a section is looked for there too. A filter on a
-field the kind lacks, or a choice it lacks, goes nowhere and says why
-(`Features have no field "stag" to filter by; they filter by …`), so link
-to the list narrowed rather than to a lens per filter; a lens kept only
-as a link target can be hidden (set-lens-hidden, `graview-pages`).
+`<a data-record="offer:7">`, `<a data-place="the-packages">` and a whole
+card or row with `data-record` are links the host follows on a click, a
+phone's tap and Enter, to what the viewer may see; `<a href>` is text. A
+card, what a tap inside it reaches, and going narrowed or to a section are
+`graview-view-links`.
 
 ## Writes
 
@@ -178,7 +164,7 @@ is first drawn.
    Content-Security-Policy needs `worker-src blob:` and `style-src
    'unsafe-inline'`, and the note under the plain face names what it lacks.
 4. Toggle the app to dark. Does the view restyle?
-5. Follow each link, narrowed and to a section, and see it land where it
+5. Follow each link, and tap each card on a phone, as `graview-view-links`
    says. A view that writes is pressed as `graview-view-forms` says.
 
 ## What the check cannot see

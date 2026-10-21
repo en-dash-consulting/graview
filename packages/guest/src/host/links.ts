@@ -3,6 +3,7 @@ import { sectionSlug } from "@graview/core/navigate";
 import { filterOfWhere } from "./where.js";
 import type { GuestPlace } from "../protocol.js";
 import { nowhere, placeNamed, quoted, whereOfWords } from "./links-words.js";
+import { isEntry, linkPressed, opensOnPress, takesRole } from "./pressable.js";
 
 export { nowhere, placesSaid, quoted, whereOfWords } from "./links-words.js";
 
@@ -16,6 +17,14 @@ export { nowhere, placesSaid, quoted, whereOfWords } from "./links-words.js";
  * a link: focusable, a link to assistive technology, and followed by the
  * host when the viewer presses it or presses Enter on it, to a record the
  * viewer may see, a place the app has, or a list of a kind the viewer sees.
+ *
+ * ANY ELEMENT, NOT ONLY AN `<a>` (0.1.45): a card `<div data-record>` with
+ * a heading and badges inside is a link the same way, followed on a click,
+ * a phone's tap and Enter — a tap on its heading as much as on its edge —
+ * unless the press lands on something inside with a press of its own, or
+ * the element is a press scope (a fieldset, an element bound to an act, a
+ * form). pressable.ts says which, and how a tap reaches it.
+ *
  * A view's code asks the same with `graview.navigate`, and is held to the
  * same.
  *
@@ -70,8 +79,12 @@ export interface LinksOptions {
 }
 
 export interface Links {
-  /** An `<a>` the view drew, or changed: a link if it names a record or a place, text if not. */
-  link(anchor: Element): void;
+  /** An element the view drew, or changed: a link if it names a record or a place and is no press scope of its own (pressable.ts), not one if not. */
+  link(element: Element): void;
+  /** Every element under `root` that names a record or a place, or was a link, looked at again: what it holds may have changed. */
+  refresh(root: ParentNode): void;
+  /** A click, a tap or Enter on what the view drew: the link it lands in is followed, and the event kept from the face around it. Whether one was. */
+  pressed(event: Event, at: Element, root: Element): boolean;
   /** The viewer followed a link the host made. */
   follow(anchor: Element): void;
   /** Go somewhere: a record the viewer may see, else a place by that slug. Whether it went; where it did not, `onLost` hears why. */
@@ -127,23 +140,42 @@ const listsSaid = (slugs: readonly string[]) =>
   slugs.length === 0 ? "" : ` Its lists: ${slugs.slice(0, 8).map((slug) => `"${slug}"`).join(", ")}${slugs.length > 8 ? ` and ${slugs.length - 8} more` : ""}.`;
 
 export function createLinks(options: LinksOptions): Links {
+  /* What the host gave the keyboard, so it is taken back if the element stops being a link. */
+  const tabbed = new WeakSet<Element>();
   const go = (to: Destination) => {
     const judged = judgeDestination(to, { sees: options.sees, places: options.places(), lists: options.lists?.() ?? [], ...(options.schema ? { schema: options.schema } : {}) });
     if (judged.ok) options.onNavigate?.(judged.arrival);
     else options.onLost?.(judged.says);
     return judged.ok;
   };
-  return {
-    link(anchor) {
-      const goes = anchor.hasAttribute("data-record") || anchor.hasAttribute("data-place");
-      if (goes && !anchor.hasAttribute("data-graview-link")) {
-        anchor.setAttribute("data-graview-link", "");
-        if (!anchor.hasAttribute("role")) anchor.setAttribute("role", "link");
-        if (!anchor.hasAttribute("tabindex")) anchor.setAttribute("tabindex", "0");
-      } else if (!goes && anchor.hasAttribute("data-graview-link")) {
-        anchor.removeAttribute("data-graview-link");
-        if (anchor.getAttribute("role") === "link") anchor.removeAttribute("role");
+  const links: Links = {
+    link(element) {
+      const goes = opensOnPress(element, [...element.querySelectorAll("input, select, textarea")].some(isEntry));
+      if (goes && !element.hasAttribute("data-graview-link")) {
+        element.setAttribute("data-graview-link", "");
+        if (!element.hasAttribute("role") && (element.localName === "a" || takesRole(element))) element.setAttribute("role", "link");
+        if (!element.hasAttribute("tabindex") && element.localName !== "button") {
+          element.setAttribute("tabindex", "0");
+          tabbed.add(element);
+        }
+      } else if (!goes && element.hasAttribute("data-graview-link")) {
+        element.removeAttribute("data-graview-link");
+        if (element.getAttribute("role") === "link") element.removeAttribute("role");
+        if (tabbed.delete(element)) element.removeAttribute("tabindex");
       }
+    },
+    refresh(root) {
+      for (const element of root.querySelectorAll("[data-record], [data-place], [data-graview-link]")) links.link(element);
+    },
+    pressed(event, at, root) {
+      if (event.type !== "click" && !(event.type === "keydown" && (event as KeyboardEvent).key === "Enter")) return false;
+      const link = linkPressed(at, root, (on) => on.hasAttribute("data-graview-link"));
+      if (!link) return false;
+      /* Followed here, and nowhere else: the face around the view does not also take the press for a press on the card. */
+      event.preventDefault();
+      event.stopPropagation();
+      links.follow(link);
+      return true;
     },
     follow(anchor) {
       const record = anchor.getAttribute("data-record");
@@ -156,4 +188,5 @@ export function createLinks(options: LinksOptions): Links {
     },
     go,
   };
+  return links;
 }
