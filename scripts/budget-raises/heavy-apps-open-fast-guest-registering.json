@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 185,
+  "gzipped": 84,
+  "note": "Raised when a worker view's code came to be fetched only when the view is drawn (Roadmap f-heavy-apps-fast): `worker` may be a function, asked once per function beside the worker's host (`host/code-of.ts`), so a host registers every view by its manifest and fetches no view's code up front. Measured at 28_345 / 13_108 against 28_160 / 13_024: 185 / 84 more."
+}

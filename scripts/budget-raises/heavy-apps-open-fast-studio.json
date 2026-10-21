@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 0,
+  "gzipped": 4,
+  "note": "Raised when a page came to open on a short tail of the log (Roadmap f-heavy-apps-fast): the page's `FieldRevisions` reading a tail with its horizon leaves the minified bytes as they were and compresses 4 bytes worse. Measured at 1_877_109 / 601_426 against 1_877_109 / 601_422."
+}

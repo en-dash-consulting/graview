@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 311,
+  "gzipped": 152,
+  "note": "Raised when a worker view's code came to be fetched only when the view is drawn (Roadmap f-heavy-apps-fast): `mountWorkerView` takes `worker` as a function too, asks it once (`host/code-of.ts`), judges what arrives as handed code is, and refuses code that never arrives in words. Measured at 175_852 / 66_763 against 175_541 / 66_611: 311 / 152 more."
+}
