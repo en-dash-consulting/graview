@@ -7,10 +7,11 @@
  * links between them, and who made only those.
  *
  * WHY THE WHOLE HISTORY. A compacted store's seat view judges from the
- * checkpoint and the tail, and a record made and removed behind the
- * horizon is in neither: an op or an epoch that names it names, to that
- * view, no record at all, and would be served as it is — the hidden
- * record's id, minted from its label, with it. So the seat is judged here
+ * checkpoint and the tail: the checkpoint keeps what kind each record
+ * removed behind the horizon was (FR-199), which is enough for the graph
+ * and the tail, but an archived op is judged at its own moment — who it
+ * touched, linked and named then, and who had written each field — which
+ * only the ops before it say. So the seat is judged here
  * over a store of everything: the archive's ops from seq 0, the store's
  * tail after them, every epoch, and the graph as it stands now — the same
  * judgment the seat's live log is served by, so the past it folds from

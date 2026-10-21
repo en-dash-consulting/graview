@@ -7,7 +7,7 @@ import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
 import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
 import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
-import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged } from "./permissions/sight.js";
+import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 
 const NOTHING: ReadonlySet<string> = new Set();
@@ -71,13 +71,33 @@ export function seesId(store: Judged, principal: Principal): (id: string) => boo
     const records = recordsOf(store.log);
     const node = store.graph.getNode(id);
     if (node) return !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records, fieldsJudged(store));
-    const kind = records.kindOf(id);
+    const kind = records.kindOf(id) ?? unplaced(store, records, id);
     if (kind === undefined) return true;
     return !off.has(kind) && sees(store.policy, principal, { id, kind }, { out: () => [], in: () => [] }, records, fieldsJudged(store));
   };
 }
 
 const NO_LINKS = { out: () => [], in: () => [] };
+
+/**
+ * THE KIND AN ID THE LOG CANNOT PLACE MAY BE OF (FR-199). A store opened
+ * on a checkpoint that keeps what each record removed behind it was knows
+ * every record it ever held, and a string it cannot place names none. One
+ * opened on a checkpoint written before that (`Records.knowsAll` false)
+ * cannot tell a record made and removed behind its horizon from no record
+ * at all, so it fails closed: an id that begins with a kind the app
+ * declares (`secret:s0`) is judged as a record of that kind removed — kept
+ * from a seat that may not see every record of it, as the record would be.
+ * A store that holds only what its host served one seat (`openRemote`'s,
+ * `FIELD_SIGHT.served`) was judged there, and shows what it holds.
+ */
+function unplaced(store: Judged, records: Records, id: string): string | undefined {
+  if (records.knowsAll || FIELD_SIGHT.served.has(store)) return undefined;
+  const colon = id.indexOf(":");
+  if (colon <= 0) return undefined;
+  const kind = id.slice(0, colon);
+  return store.schema?.tryDefinition(kind) ? kind : undefined;
+}
 
 /**
  * ONE SEAT'S SIGHT AS OF NOW, each id judged once: `seesId` for a reading
@@ -97,7 +117,7 @@ function pinnedSight(store: Judged, principal: Principal, judged: Map<string, bo
     const node = store.graph.getNode(id);
     if (node) seen = !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records, fieldsJudged(store));
     else {
-      const kind = records.kindOf(id);
+      const kind = records.kindOf(id) ?? unplaced(store, records, id);
       // A string that names no record is nothing to keep, and not judged: most strings in a log are not ids. A caller that keeps a reading is told it was asked.
       if (kind === undefined) {
         unnamed?.add(id);
@@ -483,12 +503,14 @@ export function seenBy<T extends Viewed>(store: T, principal: Principal): T {
    * the map either, by its id or by its maker's (FR-55). The store keeps
    * the whole map for its own judgment.
    */
-  const servedEpoch = <E extends { readonly seq: number; readonly base: GraphSnapshot; readonly creators?: Readonly<Record<string, string>> }>(epoch: E): E => {
+  const servedEpoch = <E extends { readonly seq: number; readonly base: GraphSnapshot; readonly creators?: Readonly<Record<string, string>>; readonly removed?: unknown; readonly writers?: unknown }>(epoch: E): E => {
+    // What each record removed behind a checkpoint was, and who wrote what, are the store's own to judge by, never the seat's (FR-199): they name every record.
+    const { removed: _removed, writers: _writers, ...rest } = epoch;
     const base = servedGraph(epoch.base, epoch.seq);
-    if (!epoch.creators) return { ...epoch, base };
+    if (!epoch.creators) return { ...rest, base } as unknown as E;
     const kept = new Set(base.nodes.map((node) => node.id));
     const creators = Object.fromEntries(Object.entries(epoch.creators).filter(([id, maker]) => kept.has(id) && !namesUnseen(maker, lens.sees)));
-    return { ...epoch, base, creators };
+    return { ...rest, base, creators } as unknown as E;
   };
   /** An epoch as this seat is served it, when there is one. */
   const servedIf = <E extends Parameters<typeof servedEpoch>[0]>(epoch: E | undefined) => epoch && servedEpoch(epoch);

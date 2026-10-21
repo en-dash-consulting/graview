@@ -77,6 +77,14 @@ export interface Records {
   kindOf(id: string): string | undefined;
   /** The id of the seat that first added it — the person, for an agent acting for one. */
   creatorOf(id: string): string | undefined;
+  /**
+   * WHETHER IT KNOWS EVERY RECORD THE LOG EVER HELD (FR-199): read from seq
+   * 0, or opened on a checkpoint that keeps the kinds of the records behind
+   * it (`Epoch.removed`). When not — a checkpoint written before that — an
+   * id it cannot place may be a record made and removed behind the
+   * horizon, and the seat view judges it as one of the kind its id names.
+   */
+  readonly knowsAll: boolean;
 }
 
 /** A log as `recordsOf` reads it: its ops, and, for an `OperationLog`, the seq it has reached (FR-23). */
@@ -84,7 +92,7 @@ export interface RecordedLog {
   all(): readonly Operation[];
   /** The seq the next op takes, counting what a compaction archived; without it, the ops it holds. */
   readonly length?: number;
-  /** Its epochs, for a log compacted behind a checkpoint that names who made what behind it (`Epoch.creators`). */
+  /** Its epochs, for a log compacted behind a checkpoint that names who made what behind it (`Epoch.creators`) and what each record removed behind it was (`Epoch.removed`). */
   epochs?(): readonly Epoch[];
 }
 
@@ -108,11 +116,17 @@ interface Index {
 
 const INDEXES = new WeakMap<object, Index>();
 
-/** A fresh index for a log that begins at seq `base`, knowing the makers its checkpoint kept behind it. */
-function indexFrom(base: number, behind: Readonly<Record<string, string>> | undefined): Index {
-  const kinds = new Map<string, string>();
-  const creators = new Map<string, string>(Object.entries(behind ?? {}));
-  return { base, end: base, read: [], kinds, creators, entries: [], records: { kindOf: (id) => kinds.get(id), creatorOf: (id) => creators.get(id) } };
+/**
+ * A fresh index for a log that begins at seq `base`, knowing the makers its
+ * checkpoint kept behind it and the kinds of the records removed behind it
+ * — and so every record the log ever held, from seq 0 or from a checkpoint
+ * that kept those kinds.
+ */
+function indexFrom(base: number, checkpoint: Epoch | undefined): Index {
+  const kinds = new Map<string, string>(Object.entries(checkpoint?.removed ?? {}));
+  const creators = new Map<string, string>(Object.entries(checkpoint?.creators ?? {}));
+  const knowsAll = base === 0 || checkpoint?.removed !== undefined;
+  return { base, end: base, read: [], kinds, creators, entries: [], records: { kindOf: (id) => kinds.get(id), creatorOf: (id) => creators.get(id), knowsAll } };
 }
 
 /** Reads one op into the index: the kind of each record it first adds or removes, and who first made one. */
@@ -160,8 +174,10 @@ function cutBack(index: Index, seq: number): void {
  * known by its maker for as long as this log is open. A log OPENED
  * compacted never read them: it knows them from its checkpoint, which keeps
  * who made each record behind it (`Epoch.creators`, written by
- * `store.checkpoint`), and a checkpoint without that (one written before it
- * existed) leaves it knowing its makers from the horizon on.
+ * `store.checkpoint`) and what kind each record behind it that its graph
+ * does not hold was (`Epoch.removed`, FR-199); a checkpoint without those
+ * (one written before they existed) leaves it knowing them from the
+ * horizon on, and saying so (`knowsAll`).
  * The `Records` returned is the same object every time, and answers as of
  * the last call.
  */
@@ -186,7 +202,7 @@ export function recordsOf(log: RecordedLog): Records {
       }
     }
   } else index = undefined;
-  if (!index) INDEXES.set(log, (index = indexFrom(first, first > 0 ? checkpointOf(log, first)?.creators : undefined)));
+  if (!index) INDEXES.set(log, (index = indexFrom(first, first > 0 ? checkpointOf(log, first) : undefined)));
   for (let seq = index.end; seq < end; seq++) readInto(index, ops[seq - first]!);
   return index.records;
 }
@@ -198,21 +214,28 @@ function checkpointOf(log: RecordedLog, seq: number): Epoch | undefined {
 }
 
 /**
- * WHO MADE EACH RECORD BEFORE `seq`, as a checkpoint at `seq` keeps it
- * (`Epoch.creators`): record id to the seat that first added it, in the
- * order they were made — what the log's checkpoint already kept, then what
- * the ops it holds before `seq` add.
+ * WHAT A CHECKPOINT AT `seq` KEEPS OF THE RECORDS BEHIND IT, from the log:
+ *
+ *   - `creators` (`Epoch.creators`): record id to the seat that first
+ *     added it, in the order they were made — what the log's checkpoint
+ *     already kept, then what the ops it holds before `seq` add;
+ *   - `removed` (`Epoch.removed`, FR-199): record id to kind, for every
+ *     record the log made or removed before `seq` that `held` (the
+ *     checkpoint's graph) does not hold — so a store opened on it still
+ *     knows a field naming one names a record, and of what kind. Absent
+ *     when the log does not know every record it held (`knowsAll`): a
+ *     checkpoint written from it would claim to.
  */
-export function creatorsBefore(log: RecordedLog, seq: number): Record<string, string> {
+export function behind(log: RecordedLog, seq: number, held: (id: string) => boolean): { creators: Record<string, string>; removed?: Record<string, string> } {
   recordsOf(log);
   const index = INDEXES.get(log)!;
-  const after = new Set<string>();
-  for (let at = index.entries.length - 1; at >= 0 && index.entries[at]!.seq >= seq; at--) {
-    if (index.entries[at]!.creator) after.add(index.entries[at]!.id);
-  }
+  const after = [new Set<string>(), new Set<string>()];
+  for (let at = index.entries.length - 1; at >= 0 && index.entries[at]!.seq >= seq; at--) after[+index.entries[at]!.creator]!.add(index.entries[at]!.id);
   const creators: Record<string, string> = {};
-  for (const [id, by] of index.creators) if (!after.has(id)) creators[id] = by;
-  return creators;
+  const removed: Record<string, string> = {};
+  for (const [id, by] of index.creators) if (!after[1]!.has(id)) creators[id] = by;
+  for (const [id, kind] of index.kinds) if (!after[0]!.has(id) && !held(id)) removed[id] = kind;
+  return index.records.knowsAll ? { creators, removed } : { creators };
 }
 
 /**

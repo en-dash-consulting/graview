@@ -1,6 +1,7 @@
 import { isUnset, type Primitive } from "../graph/primitives.js";
 import { actingAs } from "../permissions/policy.js";
 import type { Principal } from "../permissions/types.js";
+import type { Epoch } from "./log.js";
 import type { Operation } from "./types.js";
 
 /**
@@ -46,8 +47,15 @@ const keyOf = (id: string, field: string): string => `${id}\u0000${field}`;
 
 const INDEXES = new WeakMap<object, Index>();
 
-function indexFrom(base: number): Index {
+/**
+ * A fresh index for a log that begins at seq `base`, knowing who wrote the
+ * fields its checkpoint kept the writers of (`Epoch.writers`, FR-199): each
+ * as written just before the horizon, so a value written behind it and
+ * still held is its writer's words from the horizon on.
+ */
+function indexFrom(base: number, behind?: Readonly<Record<string, Readonly<Record<string, string>>>>): Index {
   const fields = new Map<string, Entry[]>();
+  for (const [id, wrote] of Object.entries(behind ?? {})) for (const [field, by] of Object.entries(wrote)) fields.set(keyOf(id, field), [{ seq: base - 1, by }]);
   const writerAt = (id: string, field: string, seq: number): string | undefined => {
     const entries = fields.get(keyOf(id, field));
     if (!entries) return undefined;
@@ -105,8 +113,15 @@ function cutBack(index: Index, seq: number): void {
   index.end = seq;
 }
 
+/** A log as `writersOf` reads it: its ops, the seq it has reached, and, for a log compacted behind a checkpoint, its epochs. */
+interface WrittenLog {
+  all(): readonly Operation[];
+  readonly length?: number;
+  epochs?(): readonly Epoch[];
+}
+
 /** Who wrote each field's value in a log, kept as the log goes (see `Writers`). */
-export function writersOf(log: { all(): readonly Operation[]; readonly length?: number }): Writers {
+export function writersOf(log: WrittenLog): Writers {
   const ops = log.all();
   const end = typeof log.length === "number" ? log.length : ops.length;
   const first = end - ops.length;
@@ -123,7 +138,34 @@ export function writersOf(log: { all(): readonly Operation[]; readonly length?: 
       }
     }
   } else index = undefined;
-  if (!index) INDEXES.set(log, (index = indexFrom(first)));
+  if (!index) INDEXES.set(log, (index = indexFrom(first, first > 0 ? [...(log.epochs?.() ?? [])].reverse().find((epoch) => epoch.horizon)?.writers : undefined)));
   for (let seq = index.end; seq < end; seq++) readInto(index, ops[seq - first]!);
   return index.writers;
+}
+
+/**
+ * WHO WROTE EACH FIELD OF `base` THAT `names` SAYS NAMES A RECORD, as a
+ * checkpoint at `seq` keeps it (`Epoch.writers`, FR-199): record id to
+ * field to the seat that wrote the value it holds there. A seat is served
+ * its own words, so a field it wrote naming a record it may not see is
+ * served as written; a store opened on the checkpoint never reads the op
+ * that wrote it, and without this would clear it. Only the fields that
+ * name a record: a field naming nothing is served whoever wrote it.
+ */
+export function writersBehind(
+  log: WrittenLog,
+  seq: number,
+  base: readonly { readonly id: string; readonly kind: string }[],
+  names: (value: unknown) => boolean,
+): Record<string, Record<string, string>> {
+  const writers = writersOf(log);
+  const behind: Record<string, Record<string, string>> = {};
+  for (const node of base) {
+    for (const field in node) {
+      if (!Object.hasOwn(node, field) || field === "id" || field === "kind" || !names((node as Record<string, unknown>)[field])) continue;
+      const by = writers.writerAt(node.id, field, seq);
+      if (by !== undefined) (behind[node.id] ??= {})[field] = by;
+    }
+  }
+  return behind;
 }
