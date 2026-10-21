@@ -46,7 +46,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.42
 
-Published October 21, 2026 · the current version
+Published October 21, 2026
 
 Pages that say where you are, a logo for each scheme, gestures in views, an open on a short tail, and playback past the undo horizon.
 
