@@ -1,0 +1,471 @@
+{
+  "nodes": [
+    {
+      "id": "zone-booking",
+      "kind": "zone",
+      "name": "Booking",
+      "summary": "The patient-facing booking site and the rules it books by."
+    },
+    {
+      "id": "zone-staff",
+      "kind": "zone",
+      "name": "Staff console",
+      "summary": "The admin console clinic staff run their day from."
+    },
+    {
+      "id": "zone-api",
+      "kind": "zone",
+      "name": "API",
+      "summary": "The HTTP API both front ends call."
+    },
+    {
+      "id": "zone-money",
+      "kind": "zone",
+      "name": "Money",
+      "summary": "Invoices, payments and the retry schedule."
+    },
+    {
+      "id": "zone-messages",
+      "kind": "zone",
+      "name": "Messages",
+      "summary": "Reminders and the background jobs that send them."
+    },
+    {
+      "id": "zone-platform",
+      "kind": "zone",
+      "name": "Platform",
+      "summary": "Configuration, logging and the types everything shares."
+    },
+    {
+      "id": "zone-tooling",
+      "kind": "zone",
+      "name": "Tooling",
+      "summary": "Migrations and local development data."
+    },
+    {
+      "id": "module-services-admin",
+      "kind": "module",
+      "path": "services/admin",
+      "packageName": "@larkspur/admin",
+      "area": "service"
+    },
+    {
+      "id": "module-services-api",
+      "kind": "module",
+      "path": "services/api",
+      "packageName": "@larkspur/api",
+      "area": "service"
+    },
+    {
+      "id": "module-services-web",
+      "kind": "module",
+      "path": "services/web",
+      "packageName": "@larkspur/web",
+      "area": "service"
+    },
+    {
+      "id": "module-services-worker",
+      "kind": "module",
+      "path": "services/worker",
+      "packageName": "@larkspur/worker",
+      "area": "service"
+    },
+    {
+      "id": "module-packages-api-client",
+      "kind": "module",
+      "path": "packages/api-client",
+      "packageName": "@larkspur/api-client",
+      "area": "package"
+    },
+    {
+      "id": "module-packages-auth",
+      "kind": "module",
+      "path": "packages/auth",
+      "packageName": "@larkspur/auth",
+      "area": "package"
+    },
+    {
+      "id": "module-packages-billing",
+      "kind": "module",
+      "path": "packages/billing",
+      "packageName": "@larkspur/billing",
+      "area": "package"
+    },
+    {
+      "id": "module-packages-config",
+      "kind": "module",
+      "path": "packages/config",
+      "packageName": "@larkspur/config",
+      "area": "package"
+    },
+    {
+      "id": "module-packages-notifications",
+      "kind": "module",
+      "path": "packages/notifications",
+      "packageName": "@larkspur/notifications",
+      "area": "package"
+    },
+    {
+      "id": "module-packages-scheduling",
+      "kind": "module",
+      "path": "packages/scheduling",
+      "packageName": "@larkspur/scheduling",
+      "area": "package"
+    },
+    {
+      "id": "module-packages-search",
+      "kind": "module",
+      "path": "packages/search",
+      "packageName": "@larkspur/search",
+      "area": "package"
+    },
+    {
+      "id": "module-packages-shared-types",
+      "kind": "module",
+      "path": "packages/shared-types",
+      "packageName": "@larkspur/shared-types",
+      "area": "package"
+    },
+    {
+      "id": "module-packages-telemetry",
+      "kind": "module",
+      "path": "packages/telemetry",
+      "packageName": "@larkspur/telemetry",
+      "area": "package"
+    },
+    {
+      "id": "module-packages-ui-kit",
+      "kind": "module",
+      "path": "packages/ui-kit",
+      "packageName": "@larkspur/ui-kit",
+      "area": "package"
+    },
+    {
+      "id": "module-tools-migrate",
+      "kind": "module",
+      "path": "tools/migrate",
+      "packageName": "@larkspur/migrate",
+      "area": "tool"
+    },
+    {
+      "id": "module-tools-seed-data",
+      "kind": "module",
+      "path": "tools/seed-data",
+      "packageName": "@larkspur/seed-data",
+      "area": "tool"
+    },
+    {
+      "id": "person-maya-r",
+      "kind": "person",
+      "handle": "maya-r"
+    },
+    {
+      "id": "person-ola-b",
+      "kind": "person",
+      "handle": "ola-b"
+    },
+    {
+      "id": "person-devon-k",
+      "kind": "person",
+      "handle": "devon-k"
+    },
+    {
+      "id": "person-tomas-l",
+      "kind": "person",
+      "handle": "tomas-l"
+    },
+    {
+      "id": "person-priya-s",
+      "kind": "person",
+      "handle": "priya-s"
+    },
+    {
+      "id": "person-wen-h",
+      "kind": "person",
+      "handle": "wen-h"
+    },
+    {
+      "id": "person-sam-j",
+      "kind": "person",
+      "handle": "sam-j"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-inZone-1",
+      "kind": "inZone",
+      "from": "module-services-admin",
+      "to": "zone-staff"
+    },
+    {
+      "id": "e-inZone-2",
+      "kind": "inZone",
+      "from": "module-services-api",
+      "to": "zone-api"
+    },
+    {
+      "id": "e-inZone-3",
+      "kind": "inZone",
+      "from": "module-services-web",
+      "to": "zone-booking"
+    },
+    {
+      "id": "e-inZone-4",
+      "kind": "inZone",
+      "from": "module-services-worker",
+      "to": "zone-messages"
+    },
+    {
+      "id": "e-inZone-5",
+      "kind": "inZone",
+      "from": "module-packages-api-client",
+      "to": "zone-booking"
+    },
+    {
+      "id": "e-inZone-6",
+      "kind": "inZone",
+      "from": "module-packages-auth",
+      "to": "zone-staff"
+    },
+    {
+      "id": "e-inZone-7",
+      "kind": "inZone",
+      "from": "module-packages-billing",
+      "to": "zone-money"
+    },
+    {
+      "id": "e-inZone-8",
+      "kind": "inZone",
+      "from": "module-packages-config",
+      "to": "zone-platform"
+    },
+    {
+      "id": "e-inZone-9",
+      "kind": "inZone",
+      "from": "module-packages-notifications",
+      "to": "zone-messages"
+    },
+    {
+      "id": "e-inZone-10",
+      "kind": "inZone",
+      "from": "module-packages-scheduling",
+      "to": "zone-booking"
+    },
+    {
+      "id": "e-inZone-11",
+      "kind": "inZone",
+      "from": "module-packages-shared-types",
+      "to": "zone-platform"
+    },
+    {
+      "id": "e-inZone-12",
+      "kind": "inZone",
+      "from": "module-packages-telemetry",
+      "to": "zone-platform"
+    },
+    {
+      "id": "e-inZone-13",
+      "kind": "inZone",
+      "from": "module-packages-ui-kit",
+      "to": "zone-staff"
+    },
+    {
+      "id": "e-inZone-14",
+      "kind": "inZone",
+      "from": "module-tools-migrate",
+      "to": "zone-tooling"
+    },
+    {
+      "id": "e-ownedBy-1",
+      "kind": "ownedBy",
+      "from": "zone-booking",
+      "to": "person-maya-r"
+    },
+    {
+      "id": "e-ownedBy-2",
+      "kind": "ownedBy",
+      "from": "zone-staff",
+      "to": "person-ola-b"
+    },
+    {
+      "id": "e-ownedBy-3",
+      "kind": "ownedBy",
+      "from": "zone-staff",
+      "to": "person-devon-k"
+    },
+    {
+      "id": "e-ownedBy-4",
+      "kind": "ownedBy",
+      "from": "zone-api",
+      "to": "person-tomas-l"
+    },
+    {
+      "id": "e-ownedBy-5",
+      "kind": "ownedBy",
+      "from": "zone-money",
+      "to": "person-priya-s"
+    },
+    {
+      "id": "e-ownedBy-6",
+      "kind": "ownedBy",
+      "from": "zone-messages",
+      "to": "person-wen-h"
+    },
+    {
+      "id": "e-ownedBy-7",
+      "kind": "ownedBy",
+      "from": "zone-platform",
+      "to": "person-sam-j"
+    },
+    {
+      "id": "e-ownedBy-8",
+      "kind": "ownedBy",
+      "from": "zone-platform",
+      "to": "person-tomas-l"
+    },
+    {
+      "id": "e-importsFrom-1",
+      "kind": "importsFrom",
+      "from": "module-services-admin",
+      "to": "module-packages-api-client"
+    },
+    {
+      "id": "e-importsFrom-2",
+      "kind": "importsFrom",
+      "from": "module-services-admin",
+      "to": "module-packages-auth"
+    },
+    {
+      "id": "e-importsFrom-3",
+      "kind": "importsFrom",
+      "from": "module-services-admin",
+      "to": "module-packages-ui-kit"
+    },
+    {
+      "id": "e-importsFrom-4",
+      "kind": "importsFrom",
+      "from": "module-services-admin",
+      "to": "module-packages-config"
+    },
+    {
+      "id": "e-importsFrom-5",
+      "kind": "importsFrom",
+      "from": "module-services-api",
+      "to": "module-packages-auth"
+    },
+    {
+      "id": "e-importsFrom-6",
+      "kind": "importsFrom",
+      "from": "module-services-api",
+      "to": "module-packages-billing"
+    },
+    {
+      "id": "e-importsFrom-7",
+      "kind": "importsFrom",
+      "from": "module-services-api",
+      "to": "module-packages-scheduling"
+    },
+    {
+      "id": "e-importsFrom-8",
+      "kind": "importsFrom",
+      "from": "module-services-api",
+      "to": "module-packages-search"
+    },
+    {
+      "id": "e-importsFrom-9",
+      "kind": "importsFrom",
+      "from": "module-services-api",
+      "to": "module-packages-shared-types"
+    },
+    {
+      "id": "e-importsFrom-10",
+      "kind": "importsFrom",
+      "from": "module-services-api",
+      "to": "module-packages-telemetry"
+    },
+    {
+      "id": "e-importsFrom-11",
+      "kind": "importsFrom",
+      "from": "module-services-api",
+      "to": "module-packages-config"
+    },
+    {
+      "id": "e-importsFrom-12",
+      "kind": "importsFrom",
+      "from": "module-services-web",
+      "to": "module-packages-api-client"
+    },
+    {
+      "id": "e-importsFrom-13",
+      "kind": "importsFrom",
+      "from": "module-services-web",
+      "to": "module-packages-ui-kit"
+    },
+    {
+      "id": "e-importsFrom-14",
+      "kind": "importsFrom",
+      "from": "module-services-web",
+      "to": "module-packages-config"
+    },
+    {
+      "id": "e-importsFrom-15",
+      "kind": "importsFrom",
+      "from": "module-services-worker",
+      "to": "module-packages-notifications"
+    },
+    {
+      "id": "e-importsFrom-16",
+      "kind": "importsFrom",
+      "from": "module-services-worker",
+      "to": "module-packages-billing"
+    },
+    {
+      "id": "e-importsFrom-17",
+      "kind": "importsFrom",
+      "from": "module-services-worker",
+      "to": "module-packages-search"
+    },
+    {
+      "id": "e-importsFrom-18",
+      "kind": "importsFrom",
+      "from": "module-services-worker",
+      "to": "module-packages-telemetry"
+    },
+    {
+      "id": "e-importsFrom-19",
+      "kind": "importsFrom",
+      "from": "module-packages-api-client",
+      "to": "module-packages-shared-types"
+    },
+    {
+      "id": "e-importsFrom-20",
+      "kind": "importsFrom",
+      "from": "module-packages-billing",
+      "to": "module-packages-config"
+    },
+    {
+      "id": "e-importsFrom-21",
+      "kind": "importsFrom",
+      "from": "module-packages-notifications",
+      "to": "module-packages-config"
+    },
+    {
+      "id": "e-importsFrom-22",
+      "kind": "importsFrom",
+      "from": "module-packages-scheduling",
+      "to": "module-packages-shared-types"
+    },
+    {
+      "id": "e-importsFrom-23",
+      "kind": "importsFrom",
+      "from": "module-tools-migrate",
+      "to": "module-packages-config"
+    },
+    {
+      "id": "e-importsFrom-24",
+      "kind": "importsFrom",
+      "from": "module-tools-seed-data",
+      "to": "module-packages-shared-types"
+    }
+  ]
+}

@@ -21,7 +21,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `check` | A thing graview check can say, read out of the checker's source. | 108 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |
 | `concept` | One of the ideas a Graview declaration is made of: not in the repository, the reason it is shaped the way it is. | 7 |
-| `recipe` | The prompt on the front page with a different task, and the declaration and seed an agent made of it, under docs/site/recipes/. | 3 |
+| `recipe` | The prompt on the front page with a different task, and the declaration and seed an agent made of it, under docs/site/recipes/. | 4 |
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |

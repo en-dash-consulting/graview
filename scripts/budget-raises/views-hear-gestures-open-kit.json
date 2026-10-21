@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 5891,
+  "gzipped": 2438,
+  "note": "Raised when a worker view came to hear a wheel, a drag and a pinch (0.1.42, TrueNorth's architecture map): host/gestures.ts, the wheel, the pointer drag and Safari's gesture events taken over what the view listens on, coalesced once a frame, fetched only for a view whose manifest says gestures: true. Measured at 181_381 / 69_042 against 175_490 / 66_604: 5_891 / 2_438 more."
+}

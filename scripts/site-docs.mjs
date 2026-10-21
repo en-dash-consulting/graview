@@ -105,8 +105,35 @@ function recipes() {
       records: (seed.nodes ?? []).length,
       relations: (seed.edges ?? []).length,
       check: check.trim().split("\n").filter(Boolean),
+      ...(entry.made ? { made: entry.made } : {}),
+      ...(faceOf(entry.slug) ? { face: faceOf(entry.slug) } : {}),
     };
   });
+}
+
+/** The files a face is written in, in the order its page reads them: what the package installs, the proxy, the page, then the code. */
+const FACE_ORDER = ["package.json", "vite.config.ts", "index.html", "src/main.tsx", "src/pages.tsx", "tsconfig.json"];
+
+/**
+ * A RECIPE'S FACE OF ITS OWN, where it has one: the files under
+ * apps/site/faces/<slug>/, each said as its path on the first line
+ * and the file after it, so the page quotes the files CI runs
+ * (`pnpm verify face-recipe`) rather than a copy of them.
+ */
+function faceOf(slug) {
+  const dir = at("apps/site/faces", slug);
+  if (!existsSync(dir)) return undefined;
+  const files = [];
+  const walk = (from) => {
+    for (const name of readdirSync(resolve(dir, from)).sort()) {
+      const path = from ? `${from}/${name}` : name;
+      if (statSync(resolve(dir, path)).isDirectory()) walk(path);
+      else files.push(path);
+    }
+  };
+  walk("");
+  const rank = (path) => FACE_ORDER.indexOf(path) + 1 || FACE_ORDER.length + 1;
+  return files.sort((a, b) => rank(a) - rank(b) || (a < b ? -1 : 1)).map((path) => `${path}\n${readFileSync(resolve(dir, path), "utf8")}`);
 }
 
 function packages() {

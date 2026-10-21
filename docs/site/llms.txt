@@ -74,6 +74,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 ## Recipes
 
 - [Recipes](https://graview.dev/docs/recipes.md): Graview recipes: one prompt to hand an agent, with a different task each, and the app it made, checked on every push and live on its page.
+- [Your architecture, with a face of its own](https://graview.dev/docs/recipes/architecture.md): A Graview recipe: The zones the modules group into, what each module imports, who owns each zone, and the modules no zone holds yet, with a product face of its own over the running preview.
 - [Your decisions, as an app](https://graview.dev/docs/recipes/decisions.md): A Graview recipe: The architecture decision records: what each decided, what it superseded and which modules it affects, with the loose ends flagged.
 - [Your dependencies, as an upgrade plan](https://graview.dev/docs/recipes/dependencies.md): A Graview recipe: Every third-party package, the version pinned against the latest on npm, the modules that use it and the upgrade it needs, with the risky ones flagged.
 - [Your docs, as an app](https://graview.dev/docs/recipes/docs.md): A Graview recipe: The repository's docs, the modules they cover and who owns each, with every module that has no doc or no owner flagged and the repair offered.

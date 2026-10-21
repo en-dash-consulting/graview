@@ -279,7 +279,33 @@ function recipeOf(record) {
     records: f.records ?? 0,
     ties: f.relations ?? 0,
     check: f.check ?? [],
+    made: f.made,
+    face: (f.face ?? []).map((file) => ({ path: file.slice(0, file.indexOf("\n")), source: file.slice(file.indexOf("\n") + 1) })),
   };
+}
+
+/** The language a face's file is highlighted as, by its extension. */
+const faceLanguage = (path) => ({ json: "json", ts: "typescript", tsx: "typescript", html: "html" })[path.slice(path.lastIndexOf(".") + 1)] ?? "plaintext";
+
+/*
+ * A FACE OF ITS OWN, for a recipe that has one: a product's routed face over
+ * the store `graview preview` runs, every file of it as CI runs it.
+ */
+function faceSection(r) {
+  if (r.face.length === 0) return "";
+  const what = {
+    "package.json": "What it installs: the framework's packages, React and the router, and Vite. No framework source: a product installs the packages.",
+    "vite.config.ts": "The dev server, and its proxy: every <code>/graview</code> request, the socket too, goes to the preview, with the preview's own Origin, so its same-app doors answer a page they would refuse from another port.",
+    "index.html": "The page.",
+    "src/main.tsx": "The app and the seat from the preview's <code>/graview/document</code>, the store over <code>openRemote</code>, live; <code>themeCss</code> adopted by hand; the pictures from <code>registerDeclaredLenses(registerViewSpecs(registerDefaultViews(…)))</code>; and <code>PagesApp</code> with the face's own registry.",
+    "src/pages.tsx": "The face's own shell (with Find and Undo in its own row), home, a route about no one kind, and a zone's record page whose map link is <code>spatialHref(id, sceneHref)</code> into the preview's own scene. Every other page is still derived.",
+    "tsconfig.json": "Strict, for the bundler.",
+  };
+  return section("face", "A face of its own",
+    `      <p>An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where <code>graview preview</code> runs it, and draws Graview's routed face over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once. If it mounts the scene too, give the embed <code>bar: { faces: false, name: false }</code> so the face's own shell is the one bar.</p>\n` +
+    `      <div class="code" data-scroller aria-label="Running the face"><pre><code class="language-sh"># the store and its own page, on 4800\nnpx graview preview app.json --seed seed.json --port 4800\n# the face, over it, on 5173\ncd face &amp;&amp; npm install &amp;&amp; npm run dev</code></pre></div>\n` +
+    `      <p class="sm dim">CI runs these files as they are: <code>pnpm verify face-recipe</code> installs them over the built packages, starts the preview and the face&rsquo;s own dev server, and checks that they typecheck, that the preview refuses the face&rsquo;s page without the proxy and answers it through it, that the face draws its own shell, home and zone page, and that a change on either side reaches the other live.</p>\n` +
+    r.face.map((file) => `      <h3><code>face/${escape(file.path)}</code></h3>\n${what[file.path] ? `      <p>${what[file.path]}</p>\n` : ""}      <div class="code" data-scroller aria-label="face/${escape(file.path)}" style="max-height: 560px; overflow: auto;"><pre><code class="language-${faceLanguage(file.path)}">${escape(file.source.trimEnd())}</code></pre></div>`).join("\n"));
 }
 
 /* ── the docs pages' shell ────────────────────────────────────────────── */
@@ -725,7 +751,7 @@ const DOCS = {
     return (
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">${escape(r.title)}</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">This recipe is what an agent made of one prompt, in a repository it had never seen. ${escape(r.blurb)}</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">${r.face.length > 0 ? "This recipe is one prompt, the app it makes, and the face a team gives that app next." : "This recipe is what an agent made of one prompt, in a repository it had never seen."} ${escape(r.blurb)}</p>\n` +
       `      <div class="cta"><div class="cta-line"><code>${escape(r.prompt)}</code><button type="button" class="copy" data-copy="${escape(r.prompt)}">Copy</button></div>\n` +
       `      <p class="cta-sub sm dim">Paste it into Claude Code, Codex or Cursor at the root of your repository. <a class="inl" href="../../start.md">start.md</a> is the page the agent reads.</p></div>\n` +
       `    </section>\n` +
@@ -739,8 +765,11 @@ const DOCS = {
         `      <p>Run on every push, against the committed file:</p>\n` +
         `      <div class="term" data-scroller aria-label="graview check on the ${escape(r.task)} recipe"><div class="l"><span class="p">$</span> <span class="c2">npx graview check --document app.json</span></div>${r.check.map((line) => `<div class="l"><span class="c2">${escape(line)}</span></div>`).join("")}</div>\n` +
         (r.check.some((line) => line.startsWith("·")) ? `      <p class="sm dim">A line starting with a dot is a note, not a warning: advice the checker leaves for a person to weigh.</p>\n` : "")) +
+      faceSection(r) +
       section("made", "How it was made",
-        `      <p>An agent was given the prompt above and nothing else, at the root of Larkspur: a booking service for small clinics that does not exist, written as a TypeScript monorepo the size of a real one, with sixteen modules, guides and runbooks with gaps, a CODEOWNERS that misses some, fourteen decision records and pinned dependencies. It followed <a class="inl" href="../../start.md">start.md</a>, scaffolded, declared, ran <code>graview check</code> until it was clean, opened <code>graview preview</code> and reported back. The two files it wrote are committed as they came out of that run.</p>\n` +
+        (r.made
+          ? `      <p>${escape(r.made)}</p>\n`
+          : `      <p>An agent was given the prompt above and nothing else, at the root of Larkspur: a booking service for small clinics that does not exist, written as a TypeScript monorepo the size of a real one, with sixteen modules, guides and runbooks with gaps, a CODEOWNERS that misses some, fourteen decision records and pinned dependencies. It followed <a class="inl" href="../../start.md">start.md</a>, scaffolded, declared, ran <code>graview check</code> until it was clean, opened <code>graview preview</code> and reported back. The two files it wrote are committed as they came out of that run.</p>\n`) +
         `      <p>CI does not run an agent. On every push it checks the committed declaration with <code>graview check --document</code>, loads the seed into a store, and opens this page in a browser to see the app mount. To run the prompt again yourself:</p>\n` +
         `      <div class="code" data-scroller aria-label="Running the recipe again"><pre><code class="language-sh">node scripts/fixtures/recipes/larkspur.mjs larkspur\ncd larkspur &amp;&amp; git init -q &amp;&amp; git add -A &amp;&amp; git commit -qm larkspur\n# then paste the prompt into your agent</code></pre></div>\n` +
         `      <p class="sm dim">The files: <a class="inl" href="../../recipes/${r.slug}/app.json"><code>app.json</code></a> and <a class="inl" href="../../recipes/${r.slug}/seed.json"><code>seed.json</code></a> (${r.records} records and ${r.ties} relations).</p>`) +
@@ -754,7 +783,7 @@ const DOCS = {
     return (
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">Recipes</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">A recipe is one prompt to hand your agent, with a different task each, and the app an agent made of it. Each was made from the prompt alone in Larkspur, a made-up repository, and each runs on its page.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">A recipe is one prompt to hand your agent, with a different task each, and the app an agent made of it. Each is over Larkspur, a made-up repository, and each runs on its page; each page says how it was made.</p>\n` +
       `      <div class="cta"><div class="cta-line"><code>${escape(rcps[0].prompt)}</code><button type="button" class="copy" data-copy="${escape(rcps[0].prompt)}">Copy</button></div></div>\n` +
       `    </section>\n` +
       section("list", "The recipes",
@@ -866,7 +895,7 @@ function recipeRows(rcps) {
     `      </li>`);
   return (
     `${RECIPES_START}\n    <ol class="recipe-list">\n${rows.join("\n")}\n    </ol>\n` +
-    `    <p class="sm dim recipes-note">How these were made: an agent ran each prompt once, with nothing but the prompt and <a class="inl" href="start.md">start.md</a>, at the root of Larkspur, a made-up repository written for the purpose (<code>scripts/fixtures/recipes/larkspur.mjs</code>). CI does not run an agent. On every push it checks the declaration that run produced, loads its seed, and opens each recipe&rsquo;s page in a browser to see the app mount.</p>\n    ${RECIPES_END}`
+    `    <p class="sm dim recipes-note">How these were made: an agent ran each prompt once, with nothing but the prompt and <a class="inl" href="start.md">start.md</a>, at the root of Larkspur, a made-up repository written for the purpose (<code>scripts/fixtures/recipes/larkspur.mjs</code>); the architecture recipe, and the face of its own beside it, were written by hand over Larkspur, as its page says. CI does not run an agent. On every push it checks the declaration that run produced, loads its seed, and opens each recipe&rsquo;s page in a browser to see the app mount.</p>\n    ${RECIPES_END}`
   );
 }
 

@@ -132,6 +132,8 @@ export interface GuestHostOptions<S extends AnySchema> {
   readonly onFlood?: () => void;
   /** A worker view said the events its `graview.on` listens for (FR-193). Without it, a `hears` is dropped unread. */
   readonly onHears?: (events: readonly string[]) => void;
+  /** A worker view said where it listens for a wheel, a drag or a pinch (0.1.42): the first 32, as it said them, for the host's gestures to read (gestures.ts). Without it, a `gestures` is dropped unread. */
+  readonly onGestures?: (bound: readonly unknown[]) => void;
   readonly limits?: GuestLimits;
   /**
    * The frame's limiter, when the frame outlives this session: a guest
@@ -413,6 +415,10 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       }
       if (data.type === "hears" && Array.isArray(data.events) && options.onHears) {
         options.onHears(data.events.filter((one): one is string => typeof one === "string").slice(0, 20));
+        return;
+      }
+      if (data.type === "gestures" && Array.isArray(data.bound) && options.onGestures) {
+        options.onGestures(data.bound.slice(0, 32));
         return;
       }
       if (data.type === "pushed" && typeof data.push === "number" && typeof data.ms === "number" && options.onPushed) {

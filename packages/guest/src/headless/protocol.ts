@@ -55,6 +55,8 @@ export interface HeadlessTranscript {
   readonly logs: readonly string[];
   /** How many messages it sent. */
   readonly messages: number;
+  /** Where it listens for a wheel, a drag or a pinch, as it last said it (0.1.42). */
+  readonly gestures?: readonly { readonly event: string; readonly selector: string }[];
 }
 
 /**

@@ -1,0 +1,196 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Larkspur architecture",
+  "description": "Larkspur's architecture: the zones its modules group into, what each module imports from the others, who owns each zone, and the modules no zone holds yet.",
+  "roles": [
+    "engineer"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "engineer"
+        ],
+        "mutations": "*"
+      }
+    ]
+  },
+  "kinds": {
+    "zone": {
+      "noun": "zone",
+      "plural": "zones",
+      "label": "{name}",
+      "description": "A part of the codebase that changes together: the modules one team reviews as one.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "What the team calls it."
+        },
+        "summary": {
+          "type": "string",
+          "description": "What it is for, in a line."
+        }
+      },
+      "edges": {
+        "ownedBy": {
+          "to": [
+            "person"
+          ],
+          "cardinality": "many",
+          "description": "who reviews its modules",
+          "inverse": "the zones they own"
+        }
+      }
+    },
+    "module": {
+      "noun": "module",
+      "plural": "modules",
+      "label": "{path}",
+      "description": "A workspace directory with its own package.json, under services/, packages/ or tools/.",
+      "fields": {
+        "path": {
+          "type": "string",
+          "required": true,
+          "description": "The directory, from the repository root."
+        },
+        "packageName": {
+          "type": "string",
+          "label": "Package",
+          "description": "The name in its package.json."
+        },
+        "area": {
+          "type": "enum",
+          "options": [
+            "service",
+            "package",
+            "tool"
+          ],
+          "required": true,
+          "description": "Which workspace folder it sits in."
+        }
+      },
+      "edges": {
+        "inZone": {
+          "to": [
+            "zone"
+          ],
+          "cardinality": "one",
+          "description": "the zone it belongs to",
+          "inverse": "its modules"
+        },
+        "importsFrom": {
+          "to": [
+            "module"
+          ],
+          "cardinality": "many",
+          "description": "the modules its package.json depends on",
+          "inverse": "the modules that import it"
+        }
+      },
+      "glance": [
+        "area",
+        "packageName"
+      ]
+    },
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "label": "{handle}",
+      "description": "Someone .github/CODEOWNERS names.",
+      "fields": {
+        "handle": {
+          "type": "string",
+          "required": true,
+          "description": "Their handle in CODEOWNERS."
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-zone": {
+      "creates": "zone",
+      "title": "Add a zone",
+      "description": "Record a part of the codebase that changes together."
+    },
+    "add-module": {
+      "creates": "module",
+      "title": "Add a module",
+      "description": "Record a workspace directory with its own package.json."
+    },
+    "add-person": {
+      "creates": "person",
+      "title": "Add a person",
+      "description": "Record someone CODEOWNERS names."
+    },
+    "give-zone-owner": {
+      "on": "zone",
+      "connects": "ownedBy",
+      "title": "Give the zone an owner",
+      "description": "Say who reviews this zone's modules.",
+      "fromTheOtherEnd": "Give them a zone"
+    },
+    "take-zone-owner": {
+      "on": "zone",
+      "severs": "ownedBy",
+      "title": "Take an owner off the zone",
+      "description": "Say this person no longer reviews this zone.",
+      "fromTheOtherEnd": "Take a zone off them"
+    },
+    "put-in-zone": {
+      "on": "module",
+      "connects": "inZone",
+      "title": "Put it in a zone",
+      "description": "Say which zone this module belongs to.",
+      "fromTheOtherEnd": "Put a module in this zone"
+    },
+    "take-out-of-zone": {
+      "on": "module",
+      "severs": "inZone",
+      "title": "Take it out of its zone",
+      "description": "Say this module no longer belongs to that zone.",
+      "fromTheOtherEnd": "Take a module out of this zone"
+    },
+    "import-from": {
+      "on": "module",
+      "connects": "importsFrom",
+      "title": "Say what it imports",
+      "description": "Name a module its package.json depends on.",
+      "fromTheOtherEnd": "Say a module imports this one"
+    },
+    "stop-importing": {
+      "on": "module",
+      "severs": "importsFrom",
+      "title": "Say it no longer imports one",
+      "description": "Take a module off what it depends on.",
+      "fromTheOtherEnd": "Say a module no longer imports this one"
+    }
+  },
+  "rules": {
+    "module-in-zone": {
+      "title": "Every module is in a zone",
+      "over": "module",
+      "require": "exists(out('inZone'))",
+      "says": "{path} is in no zone",
+      "repairs": [
+        {
+          "act": "put-in-zone",
+          "label": "Put it in a zone"
+        }
+      ]
+    },
+    "zone-has-owner": {
+      "title": "Every zone has an owner",
+      "over": "zone",
+      "require": "exists(out('ownedBy'))",
+      "says": "No one owns {name}",
+      "repairs": [
+        {
+          "act": "give-zone-owner",
+          "label": "Give it an owner"
+        }
+      ]
+    }
+  }
+}

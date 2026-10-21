@@ -21,6 +21,14 @@
       "title": "Your dependencies, as an upgrade plan",
       "blurb": "Every third-party package, the version pinned against the latest on npm, the modules that use it and the upgrade it needs, with the risky ones flagged.",
       "stop": "#overview=1"
+    },
+    {
+      "slug": "architecture",
+      "task": "architecture",
+      "title": "Your architecture, with a face of its own",
+      "blurb": "The zones the modules group into, what each module imports, who owns each zone, and the modules no zone holds yet, with a product face of its own over the running preview.",
+      "stop": "#overview=1",
+      "made": "Claude Code wrote the declaration and the seed from Larkspur's package.json files and CODEOWNERS, the way the prompt asks, and then the face under face/ by hand from the framework's own pieces, over graview preview of those two files. Nothing here was run from the prompt alone."
     }
   ]
 }

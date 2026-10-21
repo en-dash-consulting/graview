@@ -1,0 +1,6 @@
+{
+  "budget": "a worker view's runtime",
+  "minified": 342,
+  "gzipped": 237,
+  "note": "Raised when a worker view came to hear a wheel, a drag and a pinch (0.1.42, TrueNorth's architecture map): `graview.on` tells the host where it listens for a wheel, a drag or a pinch, whenever that moves, and a gesture's fields reach the listener. Measured at 61_370 / 21_227 against 61_028 / 20_990: 342 / 237 more."
+}

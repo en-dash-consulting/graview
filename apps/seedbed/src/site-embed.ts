@@ -12,6 +12,8 @@ import decisionsApp from "@recipes/decisions/app.json";
 import decisionsSeed from "@recipes/decisions/seed.json";
 import dependenciesApp from "@recipes/dependencies/app.json";
 import dependenciesSeed from "@recipes/dependencies/seed.json";
+import architectureApp from "@recipes/architecture/app.json";
+import architectureSeed from "@recipes/architecture/seed.json";
 import asked from "@site-asks/turns.json";
 import seasonDocument from "@site-asks/season/app.json";
 import seasonSeed from "@site-asks/season/seed.json";
@@ -188,6 +190,7 @@ const RECIPE_FILES: Record<string, { readonly document: unknown; readonly seed: 
   docs: { document: docsApp, seed: docsSeed },
   decisions: { document: decisionsApp, seed: decisionsSeed },
   dependencies: { document: dependenciesApp, seed: dependenciesSeed },
+  architecture: { document: architectureApp, seed: architectureSeed },
 };
 const compiledRecipes = new Map<string, GraviewApp<AnySchema>>();
 

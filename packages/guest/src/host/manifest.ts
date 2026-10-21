@@ -27,6 +27,10 @@ import { plainNode, readAcross, type GuestViewInput } from "./session.js";
  *                host made from the bytes (FR-175, pictures.ts); and it
  *                may place a record's video (`<graview-video>`) and open
  *                the host's full-screen viewer (`data-lightbox`, media.ts)
+ *   gestures     true: the host forwards a wheel, a drag and a pinch over
+ *                what it listens on (`graview.on("wheel" | "drag" |
+ *                "pinch", …)`), once a frame, and takes a wheel from the
+ *                page only there (gestures.ts)
  *
  * What it is handed is the viewer's sight — never more — cut down to the
  * kind it is attached to and what it reads. A record the viewer may not see
@@ -85,6 +89,17 @@ export interface WorkerViewManifest {
    * `data-drop-connect` says, all in one change.
    */
   readonly accepts?: readonly ManifestAccept[];
+  /**
+   * WHETHER IT TAKES GESTURES (0.1.42): `true`, and the host forwards a
+   * wheel (`deltaX`, `deltaY`, `deltaMode`, `ctrlKey`, `metaKey`), a drag
+   * (`pointerdown`, `pointermove`, `pointerup`) and a pinch (Safari's
+   * gesture, or a trackpad's Control-wheel) over an element the view
+   * listens on with `graview.on("wheel" | "drag" | "pinch", selector, …)`,
+   * at most once an animation frame with the deltas coalesced. The page's
+   * own scrolling and zoom are taken from it only there. Left out, a view
+   * hears clicks, typing and choices, and no gesture.
+   */
+  readonly gestures?: boolean;
 }
 
 /** A field files dropped on a view go in (FR-193): a kind, and its image, video or file field. */
@@ -149,6 +164,7 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   if (manifest.attach === "home" && manifest.cardinality !== "many") findings.push("A view of the home draws many records: its cardinality is many.");
   if (manifest.replaces !== undefined && manifest.replaces !== "page") findings.push(`The view's replaces is "${String(manifest.replaces)}": the one thing a view replaces is "page", or leave it out to draw the view above the record's own fields.`);
   else if (manifest.replaces === "page" && (manifest.attach === "home" || manifest.cardinality !== "one")) findings.push('Only a view of one record replaces its page: replaces "page" needs cardinality one on a kind.');
+  if (manifest.gestures !== undefined && typeof manifest.gestures !== "boolean") findings.push(`The view's gestures is "${String(manifest.gestures)}": it is true, or left out.`);
   findings.push(...picturesProblems(manifest.pictures));
   findings.push(...acceptsProblems(manifest.accepts, store));
   for (const kind of manifest.reads?.kinds ?? []) if (!kinds.has(kind)) findings.push(`The view reads "${kind}", which is no kind of this app.`);
