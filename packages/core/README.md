@@ -137,8 +137,10 @@ Everything a Graview app declares, and the checker that verifies it.
   `tellApart`), what an argument asks for (`argShape`, `describeArg`), an
   argument and a refusal in the record's words (`argumentWords`,
   `failureWords`) and `viaSaid`. `@graview/core/seat`: an act's answer as
-  its seat may see it (`answerSeenBy`), every place an app has (`placesOf`,
-  `placesFrom`) and the order things are made in (`beginning`). Judging the
+  its seat may see it (`answerSeenBy`), the archive behind the undo horizon
+  as a seat may see it (`archivedSeenBy`, a host's `HistoryHost.archived`
+  answer), every place an app has (`placesOf`, `placesFrom`) and the order
+  things are made in (`beginning`). Judging the
   arrangement (`arrangementFindings`) is `@graview/core/check`'s.
 - **What a page loads first** — `@graview/core` and `@graview/core/document`
   hold only what a page draws with. The checker, the city, the figures and
