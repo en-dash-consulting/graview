@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync, appendFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { Epoch, LogArchive, Operation, PersistenceAdapter } from "@graview/core";
+import { bareOp, type Epoch, type LogArchive, type Operation, type PersistenceAdapter } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 import type { StoredMeta } from "./meta.js";
 
@@ -52,7 +52,8 @@ export function createFileAdapter(root: string): FileAdapter {
           .filter((line) => line.trim().length > 0)
           .map((line) => JSON.parse(line) as Operation)
       : [];
-  const jsonl = (ops: readonly Operation[]) => ops.map((op) => `${JSON.stringify(op)}\n`).join("");
+  // Rewritten in op format 2: a line format 1 wrote goes without the inverse its primitives say (`bareOp`).
+  const jsonl = (ops: readonly Operation[]) => ops.map((op) => `${JSON.stringify(bareOp(op))}\n`).join("");
   const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
   /** The seq the log begins at: its checkpoint's, once compacted (FR-23). */
   const horizonOf = (scope: string): number =>

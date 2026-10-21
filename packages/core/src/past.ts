@@ -17,6 +17,7 @@ import type { GraphSnapshot } from "./graph/types.js";
 import type { ArchivedOps, DeclarationMark, HistoryHost } from "./history.js";
 import type { EvaluateOptions, InvariantDefinition } from "./invariants/types.js";
 import type { ModuleMap } from "./modules.js";
+import { inverseOf } from "./ops/inverse.js";
 import type { Epoch } from "./ops/log.js";
 import type { Author, Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
@@ -348,7 +349,7 @@ function rewound<S extends AnySchema>(store: Store<S>): GraphSnapshot {
   const graph = (store.graph.constructor as typeof Graph).from(store.schema, (later?.base ?? store.graph.snapshot()) as GraphSnapshot<NodeOfSchema<S>>, { validate: false });
   for (let at = (later?.seq ?? store.log.length) - 1; at >= first; at--) {
     try {
-      graph.applyPrimitives(ops[at - first]!.inverse, { restoring: true });
+      graph.applyPrimitives(inverseOf(ops[at - first]!), { restoring: true });
     } catch {
       // An inverse that lands on nothing is passed over, as a fold passes over an op that does.
     }

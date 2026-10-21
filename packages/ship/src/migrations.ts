@@ -1,5 +1,4 @@
 import {
-  invert,
   normalize,
   writesOf,
   type GraviewApp,
@@ -16,8 +15,8 @@ import { applyToSnapshot } from "./snapshot.js";
  *
  * A migration answers with primitives — the same five words every other
  * change is made of — and running one appends ordinary operations: authored
- * (`system · ship:migration`), stating their intent, carrying their inverse
- * because a patch carries its before. Schema evolution is therefore not a
+ * (`system · ship:migration`), stating their intent, undoable because a patch
+ * carries its before. Schema evolution is therefore not a
  * special ceremony outside the record; it IS the record, replayable and
  * undoable in the same vocabulary as a person's edit.
  */
@@ -78,7 +77,7 @@ export function migrateSnapshot<S extends AnySchema>(
   for (const step of pendingMigrations(app, storedVersion)) {
     /*
      * Normalized, like every other op: a step that clears a field says so
-     * with a value rather than with an absence, so the inverse it carries is
+     * with a value rather than with an absence, so what puts it back is
      * still there after the log has been through JSON.
      */
     const primitives: readonly Primitive[] = step.apply(snapshot).map(normalize);
@@ -91,7 +90,6 @@ export function migrateSnapshot<S extends AnySchema>(
       intent: `migration ${step.from}→${step.to}: ${step.title}`,
       mutation: null,
       primitives,
-      inverse: [...primitives].reverse().map(invert),
       reads: [],
       writes: [...new Set(primitives.flatMap(writesOf))],
       at: now(),

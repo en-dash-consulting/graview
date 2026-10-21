@@ -202,6 +202,7 @@ export type { MadeRef } from "./mutations/made.js";
 
 // Operation log — attribution, causality, selective undo.
 export { OperationLog } from "./ops/log.js";
+export { bareOp, inverseOf, inverted, withInverse } from "./ops/inverse.js";
 export type { Epoch, LogArchive, LogReading } from "./ops/log.js";
 export { isWithheld, namesUnseen, redact, touchedBy, touchesUnseen, withhold, WITHHELD_AUTHOR, WITHHELD_INTENT, type SeatLens } from "./ops/withheld.js";
 export { FieldRevisions, fieldsWritten, NEVER_WRITTEN, writtenBy } from "./ops/revisions.js";

@@ -93,7 +93,7 @@ to it, or kept in step with a Google calendar is `graview-sync`.
 
    A migration answers in the op log's own five words, so running one appends
    ordinary operations — authored `system · ship:migration`, stating intent,
-   carrying their inverse. `openStore` runs the pending chain on load.
+   undone like any other. `openStore` runs the pending chain on load.
    `graview check` refuses a chain with a hole or a multi-version jump
    (`migration-gap`, `migration-not-single-step`) before deploy time finds it.
 

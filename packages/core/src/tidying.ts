@@ -100,7 +100,6 @@ export function suggest<S extends AnySchema>(store: Store<S>, calls: readonly Mu
     ...given("batchIntent", options.intent),
     mutation: null,
     primitives: [],
-    inverse: [],
     reads: [],
     writes: [],
     ...(described.length > 0 ? { described } : {}),

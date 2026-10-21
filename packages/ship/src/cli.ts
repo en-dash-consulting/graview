@@ -292,7 +292,7 @@ function stopOnSignal(command: string, close: () => Promise<void>, hold: StoreHo
  * Read-only unless `--apply` is said, because the steps are the product: a
  * person or an agent reads what WOULD change and decides. Applying lands
  * them through `applySteps`, which is `receive` on the open store — the
- * adapter hears it like any change, the log carries it with its inverse,
+ * adapter hears it like any change, the log carries it like any op,
  * and undo is the ordinary undo.
  */
 export async function syncSeed(argv: readonly string[]): Promise<number> {

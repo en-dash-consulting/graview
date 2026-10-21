@@ -75,7 +75,16 @@ export interface Operation {
   readonly batchIntent?: string;
   readonly mutation: MutationCall | null;
   readonly primitives: readonly Primitive[];
-  readonly inverse: readonly Primitive[];
+  /**
+   * WHAT PUTS IT BACK, ONLY WHEN ITS PRIMITIVES DO NOT SAY IT (op format 2).
+   * An op's inverse is its primitives inverted, newest first, and is read
+   * with `inverseOf(op)`, never from here: this build writes no inverse.
+   * Present only on an op read from format 1 whose stored inverse was not
+   * its primitives' own; format 1 wrote one on every op, and an op that
+   * still carries its own (a format-1 log not yet opened by a store) reads
+   * the same.
+   */
+  readonly inverse?: readonly Primitive[];
   readonly reads: readonly string[];
   readonly writes: readonly string[];
   readonly at: string;
@@ -87,7 +96,7 @@ export interface Operation {
    * SOMETHING YOU CANNOT SEE HAPPENED HERE (FR-16). Set on an op a store
    * served to a seat that may not see what it touched: it keeps its id,
    * seq, batch and time, so the log has no hole, and nothing else of its
-   * own — its author, intent, call and inverse are withheld, and its
+   * own — its author, intent and call are withheld, and its
    * primitives, reads and writes keep only what the seat may see. Absent
    * on every op a store makes; an op without it reads as before.
    */

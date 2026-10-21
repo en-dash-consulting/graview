@@ -1,5 +1,6 @@
 import { Graph } from "./graph/graph.js";
 import { edgeId, type GraphSnapshot } from "./graph/types.js";
+import { inverseOf } from "./ops/inverse.js";
 import type { Operation } from "./ops/types.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 
@@ -122,7 +123,7 @@ export function verifyFold<S extends AnySchema>(
   const backwardAt = (k: number): string | undefined => {
     try {
       const graph = Graph.from(schema, current as GraphSnapshot<NodeOfSchema<S>>, { validate });
-      for (let i = ops.length - 1; i > k; i--) graph.applyPrimitives(ops[i]!.inverse);
+      for (let i = ops.length - 1; i > k; i--) graph.applyPrimitives(inverseOf(ops[i]!));
       return snapshotHash(graph.snapshot());
     } catch {
       return undefined;

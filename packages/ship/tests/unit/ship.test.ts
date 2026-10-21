@@ -9,6 +9,7 @@ import {
   defineNode,
   FORMATS,
   FRAMEWORK_VERSION,
+  inverseOf,
   NewerFormatError,
   RuleBudgetError,
   Store,
@@ -102,8 +103,9 @@ describe("the migration chain", () => {
     const op = run.ops[0]!;
     expect(op.author).toEqual({ kind: "system", id: "ship:migration" });
     expect(op.intent).toContain("size words become bed counts");
-    // The inverse is real: applying it says `size` again.
-    expect(op.inverse[0]).toMatchObject({ op: "patch-node", after: { size: "large" } });
+    // What puts it back is real, from its primitives alone: applying it says `size` again.
+    expect(op).not.toHaveProperty("inverse");
+    expect(inverseOf(op)[0]).toMatchObject({ op: "patch-node", after: { size: "large" } });
   });
 
   /*
@@ -127,7 +129,7 @@ describe("the migration chain", () => {
     expect(Object.keys((written.primitives[0] as { after: object }).after).sort()).toEqual(
       ["beds", "size"],
     );
-    expect(Object.keys((written.inverse[0] as { after: object }).after).sort()).toEqual(
+    expect(Object.keys((inverseOf(written)[0] as { after: object }).after).sort()).toEqual(
       ["beds", "size"],
     );
 
@@ -135,7 +137,7 @@ describe("the migration chain", () => {
     // `beds` away again.
     const forward = applyToSnapshot(stored, written.primitives);
     expect(forward.nodes[0]).toEqual({ id: "p1", kind: "plot", label: "One", beds: 6 });
-    const back = applyToSnapshot(forward, written.inverse);
+    const back = applyToSnapshot(forward, inverseOf(written));
     expect(back.nodes[0]).toEqual({ id: "p1", kind: "plot", label: "One", size: "large" });
   });
 });

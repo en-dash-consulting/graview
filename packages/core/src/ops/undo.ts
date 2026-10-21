@@ -1,4 +1,5 @@
 import { GraphError } from "../graph/graph.js";
+import { inverseOf } from "./inverse.js";
 import type { LogReading } from "./log.js";
 import type { Operation } from "./types.js";
 import { isWithheld } from "./withheld.js";
@@ -105,8 +106,9 @@ export function checkUndo(
   }
 
   /*
-   * NOT A CHANGE YOU CANNOT SEE (FR-16). A withheld op carries no inverse
-   * to put back, and taking it back is for somebody who can see it; the
+   * NOT A CHANGE YOU CANNOT SEE (FR-16). A withheld op is only what this
+   * seat was served of it, and taking it back is for somebody who can see
+   * it; the
    * sentence says so without saying what it was.
    */
   if (ops.some(isWithheld)) {
@@ -211,10 +213,10 @@ export function checkUndo(
 }
 
 /**
- * The primitives an undo would apply: each op's stored inverse, newest first,
- * so dependent writes come apart in the order they went together. (An op's
- * `inverse` is already reversed internally when the op is recorded.)
+ * The primitives an undo would apply: each op's inverse, newest first, so
+ * dependent writes come apart in the order they went together. (An op's
+ * inverse is its own primitives already reversed: `inverseOf`.)
  */
 export function undoPrimitives(ops: readonly Operation[]) {
-  return [...ops].sort((a, b) => b.seq - a.seq).flatMap((op) => op.inverse);
+  return [...ops].sort((a, b) => b.seq - a.seq).flatMap((op) => inverseOf(op));
 }

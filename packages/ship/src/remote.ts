@@ -8,6 +8,7 @@ import {
   samePresence,
   Store,
   tickEachDay,
+  FORMATS,
   WIRE_PROTOCOL,
   writtenBy,
   type AnySchema,
@@ -619,7 +620,7 @@ async function opening<S extends AnySchema>(
   };
 
   const fetchState = async (first = false): Promise<RemoteState> => {
-    const url = `${options.url}/graview/state`;
+    const url = `${options.url}/graview/state?opFormat=${FORMATS.op}`;
     const reached = first ? await call(url, { headers }) : await reach(url, { headers });
     if (!reached.ok) throw new Error(((await reached.json().catch(() => ({}))) as { error?: string }).error ?? `The server refused (${reached.status})`);
     return (await reached.json()) as RemoteState;
@@ -861,7 +862,7 @@ async function opening<S extends AnySchema>(
   };
 
   const since = async (seq: number): Promise<Operation[]> => {
-    const response = await reach(`${options.url}/graview/since?seq=${seq}`, { headers });
+    const response = await reach(`${options.url}/graview/since?seq=${seq}&opFormat=${FORMATS.op}`, { headers });
     const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string };
     return moved(answer) ? [] : (answer.ops ?? []);
   };
@@ -938,7 +939,8 @@ async function opening<S extends AnySchema>(
         response = await reach(`${options.url}/graview/ops`, {
           method: "POST",
           headers,
-          body: JSON.stringify(body),
+          // The op format its answer is read in (0.1.43): a field a server before it ignores.
+          body: JSON.stringify({ ...body, opFormat: FORMATS.op }),
         });
       } catch (error) {
         /*
@@ -1351,7 +1353,7 @@ async function opening<S extends AnySchema>(
       if (socket !== made) return;
       // From the last op this client has: the welcome brings exactly the ones after it.
       // Which codec, which protocol and which build this page speaks (FR-44).
-      made.send(JSON.stringify({ t: "hello", seq: seen, protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, ...(options.build ? { build: options.build.slice(0, 64) } : {}), ...(options.hostProtocol !== undefined ? { hostProtocol: options.hostProtocol } : {}) } satisfies LiveClientMessage));
+      made.send(JSON.stringify({ t: "hello", seq: seen, protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, opFormat: FORMATS.op, ...(options.build ? { build: options.build.slice(0, 64) } : {}), ...(options.hostProtocol !== undefined ? { hostProtocol: options.hostProtocol } : {}) } satisfies LiveClientMessage));
     };
     made.onmessage = (event) => {
       if (socket !== made) return;

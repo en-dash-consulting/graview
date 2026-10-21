@@ -1,4 +1,4 @@
-import { assertReadable, formatStamp, type AnySchema, type FormatStamp, type GraviewApp, type LogArchive, type Operation, type Store } from "@graview/core";
+import { assertReadable, bareOp, formatStamp, type AnySchema, type FormatStamp, type GraviewApp, type LogArchive, type Operation, type Store } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -70,7 +70,8 @@ export function exportBundle<S extends AnySchema>(
     exportedAt: (options.now ?? (() => new Date().toISOString()))(),
     ...formatStamp(),
     snapshot: store.snapshot() as GraphSnapshot,
-    log,
+    // Stamped op format 2, and so written: a persisted or archived op from format 1 goes without an inverse its primitives already say.
+    log: log.map(bareOp),
     ...(horizon > 0 ? { horizon } : {}),
   });
   const horizon = log[0]?.seq ?? store.log.horizon;
