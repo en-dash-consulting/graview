@@ -14,6 +14,13 @@ import ts from "typescript";
 
 /** Names written in backticks that are not exports, and why. */
 export const NOT_EXPORTS = new Map([
+  ["ctrlKey", "a field of a gesture a worker view hears (0.1.42), not an export"],
+  ["deltaMode", "a field of a gesture a worker view hears (0.1.42), not an export"],
+  ["deltaX", "a field of a gesture a worker view hears (0.1.42), not an export"],
+  ["deltaY", "a field of a gesture a worker view hears (0.1.42), not an export"],
+  ["metaKey", "a field of a gesture a worker view hears (0.1.42), not an export"],
+  ["pointerId", "a field of a gesture a worker view hears (0.1.42), not an export"],
+  ["preventDefault", "a DOM event method the host calls over a view that hears gestures, not an export"],
   ["localStorage", "a browser global"],
   ["basePath", "an option of the embed's mount and of addressOf, not an export"],
   ["onNavigate", "an option of the embed's mount and a prop of PagesApp, not an export"],
