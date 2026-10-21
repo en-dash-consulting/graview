@@ -28,7 +28,7 @@ describe("the document format", () => {
     const wrong = FieldSpec.safeParse({ type: "enum" });
     expect(wrong.success).toBe(false);
     expect(wrong.error?.issues.map((issue) => issue.message)).toEqual(['an enum field lists its "options"']);
-    const unknownKey = KindSpec.safeParse({ fields: { title: { type: "string" } }, colour: "red" });
+    const unknownKey = KindSpec.safeParse({ fields: { title: { type: "string" } }, shade: "red" });
     expect(unknownKey.success).toBe(false);
     expect(unknownKey.error?.issues[0]?.code).toBe("unrecognized_keys");
   });
