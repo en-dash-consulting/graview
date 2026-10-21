@@ -1,0 +1,8 @@
+---
+"@graview/guest": patch
+"@graview/skills": patch
+---
+
+A worker view's code is fetched only when the view is drawn. Measured on Graview Cloud on 2026-10-20, on a phone, the Beatles demo fetched all seven of its custom views' sources before the page mounted, though its home drew one: `WorkerViewDefinition.worker` took the code itself, so a host had to have every view's code in hand to register any. It now also takes a function answering the code (`WorkerViewLoad`, `() => Promise<WorkerViewCode>`), and `mountWorkerView`'s `worker` likewise. The manifest is what registers the view — as a place, in the place menu and wherever a manifest is read — so registering asks nothing; the function is asked when the view is first drawn, beside the worker's host rather than after it, once however often the view is drawn, and again after it rejected. What arrives is judged as handed code is (too long, or loading something, it is refused `source`); code that never arrives is refused `source` in words, "Its code did not arrive: 404 Not Found.", and the kind's own face is drawn in its place, so `data-graview-drawn` still comes. The guest README and `graview-worker-view` say how a host hands it. `guest`'s test registers two views with no code asked, draws one and finds only its code asked, asks once for two drawings, refuses code too long once it arrives and code that never does, and asks again after a refusal.
+
+Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged. Additive on `@graview/guest/host/views` and `@graview/guest/host/worker`: `WorkerViewDefinition.worker` and `MountWorkerViewOptions.worker` take `WorkerViewCode | WorkerViewLoad`, and `WorkerViewLoad` is exported.
