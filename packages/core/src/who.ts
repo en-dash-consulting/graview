@@ -62,6 +62,8 @@ export function nameOfAuthor(
    * "ship:migration" above the upgrade it made (the seventh walk).
    */
   if (/(^|:)migration$/.test(author.id)) return "the upgrade";
+  // A visitor a host minted for one answer to a form (Roadmap f-public-forms), where it gave no name: never the token.
+  if (author.id.startsWith("form:")) return "a visitor via a form";
   // A plain name ("kai") is how a host without seats names somebody; a namespaced id is not a name.
   if (/[:_/]/.test(author.id)) return { human: "somebody", agent: "an agent", rule: "a rule", system: "the system" }[author.kind];
   return author.id;

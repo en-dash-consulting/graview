@@ -93,3 +93,5 @@ export type { TimelineFace } from "./past-bar.js";
 // A first look that points at the app's own controls, once (its hints fetched as they are first shown).
 export { FIRST_LOOK_ANCHORS, FirstLookDoor, firstLookKey } from "./first-look-door.js";
 export type { FirstLook, FirstLookAnchor, FirstLookDoorProps, FirstLookEnd, FirstLookOptions, FirstLookStep } from "./first-look-door.js";
+// The theme's sheet, scoped to one element: what a face with no frame wears — a visitor's form (Roadmap f-public-forms).
+export { themeBaseCss } from "./theme.js";

@@ -23,6 +23,10 @@
       "types": "./dist/pages.d.ts",
       "default": "./dist/pages.js"
     },
+    "./form": {
+      "types": "./dist/form.d.ts",
+      "default": "./dist/form.js"
+    },
     "./first-draw": {
       "types": "./dist/first-draw.d.ts",
       "default": "./dist/first-draw.js"

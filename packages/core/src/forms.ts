@@ -16,3 +16,7 @@ export type { FormField, ScalarField } from "./mutations/form.js";
 export { undecidableArguments } from "./mutations/decidable.js";
 export type { UndecidableArgument } from "./mutations/decidable.js";
 export { keptArguments } from "./mutations/kept-arguments.js";
+// A form for a visitor (Roadmap f-public-forms): the declaration's `forms.<name>` resolved, and the visitor a host mints per submission.
+export { formReceived, formVisitor, pickersIn, visitorForm, visitorSeesKind } from "./mutations/visitor-form.js";
+export type { VisitorForm } from "./mutations/visitor-form.js";
+export { VISITOR_ROLE } from "./visitor-form-shape.js";

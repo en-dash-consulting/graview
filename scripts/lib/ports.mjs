@@ -32,6 +32,8 @@ export const OWN = {
   /** `graview preview` of a Cloud document and its seed, for `verify-preview`; and the `graview shots` it runs after. */
   preview: 5200,
   "preview-shots": 5201,
+  /** `graview preview` of the RSVP document, for `verify-preview` to answer its form for a visitor at `/forms/rsvp`. */
+  "preview-form": 5202,
   /** `graview preview` of the meetings document, for `verify-date-inputs` to type and pick a meeting's start and end on both faces. */
   "date-inputs": 5254,
   /** The discography's production build, `vite preview`, for `verify-scale`. */

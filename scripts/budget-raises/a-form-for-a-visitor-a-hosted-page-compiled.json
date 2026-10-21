@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 88,
+  "gzipped": 45,
+  "changeset": "a-form-for-a-visitor.md",
+  "note": "Raised when a declaration came to say forms for visitors (Roadmap f-public-forms): the compiled app carrying its `forms`, and an author minted for a form said as \"a visitor via a form\" where it gave no name (`nameOfAuthor`). The form itself is its own entry (`@graview/embed/form`) and nothing of it is up front here. Measured at 544_357 / 189_106 against 544_269 / 189_061 minified and gzipped."
+}

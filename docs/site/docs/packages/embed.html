@@ -1522,7 +1522,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <h1 id="h-what">@graview/embed</h1>
       <p class="lede" style="margin-top: 18px;"><code>@graview/embed</code> is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add @graview/embed</code><button type="button" class="copy" data-copy="pnpm add @graview/embed">Copy</button></div></div>
-      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/embed</code>, <code>@graview/embed/pages</code>, <code>@graview/embed/first-draw</code></p>
+      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/embed</code>, <code>@graview/embed/pages</code>, <code>@graview/embed/form</code>, <code>@graview/embed/first-draw</code></p>
     </section>
     <section id="readme" aria-labelledby="h-readme">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
@@ -1668,6 +1668,12 @@ mount(root, { app, studio: { onApply: ({ app, migration, files }) =&gt; propose(
 <p><code>@graview/embed/pages</code> is the routed face alone, with the same options less the face, the stop, the heading and the studio, and the same handle less the faces. It takes <code>views</code>, and its pages draw the same cards, rows and record pages the whole embed's would. A page that only ever shows the pages imports that and does not bundle the scene, the Graview or the studio:</p>
 <div class="code" data-scroller><pre><code class="language-ts">import { mount } from "@graview/embed/pages";</code></pre></div>
 <p>It says when a page has drawn as the whole embed does — <code>onDrawn(place)</code>, and <code>data-graview-drawn</code> (<code>DRAWN_ATTRIBUTE</code>) on its root — and takes a <code>draftView</code>, swapped in place with <code>handle.setDraftView</code>, drawn and marked as the whole embed draws one, the worker's host fetched only when a draft is handed.</p>
+<h3>A form for a visitor</h3>
+<p><code>@graview/embed/form</code> draws one act's form alone — the declaration's <code>forms.&lt;name&gt;</code> — for somebody who never joins the workspace: an RSVP, a sign-up. No bar, no lists, no record, no seat. The host mints a visitor per answer and hands its id; the form runs as that visitor (<code>formVisitor</code> from <code>@graview/core/forms</code>: the form's role, named "a visitor via the RSVP form") over the store as they are served it, and says the answer was received in the declaration's words:</p>
+<div class="code" data-scroller><pre><code class="language-ts">import { mount } from "@graview/embed/form";
+const remote = await openRemote({ app, url, principal: formVisitor(app, "rsvp", token) });
+mount(el, { app, form: "rsvp", principal: token, remote, height: "100dvh", onSubmitted });</code></pre></div>
+<p><code>principal</code> is the minted id (<code>"form:&lt;token&gt;"</code>) or the visitor whole. A form the declaration has not got is refused by its name. <code>graview preview</code> serves each form at <code>/forms/&lt;name&gt;</code>. The <code>graview-visitor-forms</code> skill says the declaration and its grant.</p>
 <p>Bundled for the browser without React, the pages face alone is about 500 KB minified (165 KB gzipped); the whole embed loads about 750 KB (190 KB) before a face is fetched, and every face about 1.28 MB (370 KB); <code>node scripts/inspect-pack.mjs</code> fails CI when one passes its budget (<code>scripts/lib/bundle-budget.mjs</code>).</p>
 <h3>In a chat's widget</h3>
 <p>An MCP Apps frame (a ChatGPT or Claude widget) may refuse storage, is sized from its content, and is told its theme by the chat. The embed holds there:</p>

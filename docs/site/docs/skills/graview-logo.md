@@ -1,6 +1,6 @@
 # graview-logo
 
-`graview-logo` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a client's own logo and page icon on a Graview app — inline SVG or a path, one for each scheme so a picture on white is not a white slab in the dark, an emoji as the icon — drawn in the default shell and handed to a design's own, and let graview check refuse a mark that could act rather than trusting it.
+`graview-logo` is one of Graview's 29 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a client's own logo and page icon on a Graview app — inline SVG or a path, one for each scheme so a picture on white is not a white slab in the dark, an emoji as the icon — drawn in the default shell and handed to a design's own, and let graview check refuse a mark that could act rather than trusting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 

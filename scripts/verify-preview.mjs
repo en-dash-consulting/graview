@@ -18,7 +18,11 @@
  *   `graview shots` writes a PNG for each named place, and refuses a place
  *   the app has not got, naming the ones it has;
  *   and pictures an app declared in code, a draft view's place named by its
- *   title.
+ *   title;
+ *   and a visitor opens a form at /forms/rsvp (Roadmap f-public-forms),
+ *   fills it and submits at 390 and 1440: the guest lands on the store as
+ *   "a visitor via the RSVP form", a visitor minted per page, and nothing
+ *   of the records already there is drawn or sent to the page.
  *
  *   node scripts/verify-preview.mjs [--engine=chromium|webkit|firefox]
  *
@@ -39,6 +43,8 @@ const ENGINE = engineName();
 const CLI = resolve(repoRoot, "packages/graview/dist/cli.js");
 const DOCUMENT = "packages/core/tests/document/fixtures/org.gdd.json";
 const SEED = "packages/core/tests/document/fixtures/org.seed.json";
+const FORM_DOCUMENT = "packages/core/tests/document/fixtures/rsvp.gdd.json";
+const FORM_SEED = "packages/core/tests/document/fixtures/rsvp.seed.json";
 const seed = JSON.parse(readFileSync(resolve(repoRoot, SEED), "utf8"));
 const person = seed.nodes.find((node) => node.kind === "person");
 const report = { at: new Date().toISOString(), engine: ENGINE, document: DOCUMENT, seed: SEED, checks: {} };
@@ -48,7 +54,7 @@ if (!existsSync(resolve(repoRoot, "packages/graview/dist/preview/index.html"))) 
   process.exit(1);
 }
 
-await vacant(portFor("preview"), portFor("preview-shots"));
+await vacant(portFor("preview"), portFor("preview-shots"), portFor("preview-form"));
 const server = spawn(process.execPath, [CLI, "preview", DOCUMENT, "--seed", SEED, "--port", String(portFor("preview"))], { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"] });
 let said = "";
 server.stdout.on("data", (chunk) => (said += chunk));
@@ -161,6 +167,103 @@ try {
     const files = ["stations-at-a-glance", "stations"].map((name) => join(out, `${name}-light-1280.png`));
     const pngs = files.map((file) => existsSync(file) && statSync(file).size > 10_000 && readFileSync(file).subarray(1, 4).toString() === "PNG");
     report.checks.shotsPicturesAnAppInCodeAndItsDraftByTitle = { status: taken.status, said: (taken.stdout.trim().split("\n").at(-1) ?? "") + taken.stderr.trim(), pngs, ok: taken.status === 0 && pngs.every(Boolean) };
+  }
+
+  /* ---- a form for a visitor (Roadmap f-public-forms): /forms/rsvp drawn alone, answered, and nothing of the app shown or sent */
+  {
+    const formServer = spawn(process.execPath, [CLI, "preview", FORM_DOCUMENT, "--seed", FORM_SEED, "--port", String(portFor("preview-form"))], { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"] });
+    let formSaid = "";
+    formServer.stdout.on("data", (chunk) => (formSaid += chunk));
+    formServer.stderr.on("data", (chunk) => (formSaid += chunk));
+    const formBase = at("preview-form");
+    try {
+      const began = Date.now();
+      for (;;) {
+        try {
+          if ((await fetch(`${formBase}/graview/health`)).ok) break;
+        } catch {
+          // not listening yet
+        }
+        if (Date.now() - began > 30_000 || formServer.exitCode !== null) throw new Error(`graview preview of the RSVP did not start:\n${formSaid}`);
+        await new Promise((ready) => setTimeout(ready, 200));
+      }
+      // What the visitor must never be shown or sent: every record already there, by what it says.
+      const others = ["Grace Hopper", "grace@example.com", "Arriving late", "Rose table", "guest-grace", "table-rose"];
+      const { principal: host } = await (await fetch(`${formBase}/graview/document`)).json();
+      const widths = {};
+      for (const width of [390, 1440]) {
+        const page = await browser.newPage({ viewport: { width, height: 900 }, colorScheme: "light" });
+        page.on("pageerror", (error) => errors.push(`/forms/rsvp at ${width}: ${error.message}`));
+        // Every answer the page is sent from the server, read for a record it must not hold.
+        const sent = [];
+        page.on("response", (response) => {
+          if (new URL(response.url()).pathname.startsWith("/graview/")) sent.push(response.text().catch(() => ""));
+        });
+        await page.goto(`${formBase}/forms/rsvp`, { waitUntil: "load" });
+        await page.waitForFunction(() => window.__graviewReady === true || typeof window.__graviewFailed === "string", null, { timeout: 60_000 });
+        const drawn = await page.evaluate(() => ({
+          failed: window.__graviewFailed ?? null,
+          title: document.querySelector("h1")?.textContent ?? null,
+          fields: [...document.querySelectorAll("form [name]")].map((el) => el.getAttribute("name")),
+          bar: document.querySelectorAll('nav, [data-testid^="app-face"], [data-testid^="app-place"]').length,
+          links: document.querySelectorAll("a[href]").length,
+          sideways: document.documentElement.scrollWidth > window.innerWidth,
+          text: document.body.innerText,
+        }));
+        const name = `Ada Lovelace ${width}`;
+        await page.fill('input[name="name"]', name);
+        await page.selectOption('select[name="coming"]', "maybe");
+        await page.click('button[type="submit"]');
+        const received = await page
+          .waitForFunction(() => document.querySelector('[role="status"]')?.textContent?.includes("Received"), null, { timeout: 15_000 })
+          .then(() => true)
+          .catch(() => false);
+        const after = await page.evaluate(() => ({ status: document.querySelector('[role="status"]')?.textContent ?? null, focused: document.activeElement?.getAttribute("role") ?? document.activeElement?.tagName ?? null, text: document.body.innerText }));
+        await page.waitForTimeout(300);
+        const bodies = (await Promise.all(sent)).join("\n");
+        await page.close();
+        const state = await (await fetch(`${formBase}/graview/state`, { headers: seatHeaders(host) })).json();
+        const landed = (state.snapshot?.nodes ?? []).find((node) => node.name === name);
+        const shown = others.filter((said) => drawn.text.includes(said) || after.text.includes(said));
+        const leaked = others.filter((said) => bodies.includes(said));
+        widths[width] = {
+          failed: drawn.failed,
+          title: drawn.title,
+          fields: drawn.fields,
+          bar: drawn.bar,
+          links: drawn.links,
+          sideways: drawn.sideways,
+          received,
+          status: after.status,
+          focused: after.focused,
+          landed: landed ? { kind: landed.kind, coming: landed.coming } : null,
+          shown,
+          leaked,
+          ok:
+            !drawn.failed &&
+            drawn.title === "RSVP" &&
+            drawn.fields.join() === "name,email,coming,note" &&
+            drawn.bar === 0 &&
+            drawn.links === 0 &&
+            !drawn.sideways &&
+            received &&
+            after.status?.includes("the hosts will write to you") === true &&
+            after.focused === "status" &&
+            landed?.kind === "guest" &&
+            landed?.coming === "maybe" &&
+            shown.length === 0 &&
+            leaked.length === 0,
+        };
+      }
+      const log = await (await fetch(`${formBase}/graview/state`, { headers: seatHeaders(host) })).json();
+      const authors = (log.log ?? log.ops ?? []).filter((op) => String(op.intent ?? "").includes("Ada Lovelace")).map((op) => op.author);
+      const named = authors.length === 2 && authors.every((author) => author?.name === "a visitor via the RSVP form" && /^form:/.test(author.id ?? "") && author.roles?.join() === "visitor") && authors[0].id !== authors[1].id;
+      report.checks.aVisitorAnswersAFormAndSeesNoOtherRecord = { widths, authors, ok: Object.values(widths).every((one) => one.ok) && named };
+    } catch (error) {
+      report.checks.aVisitorAnswersAFormAndSeesNoOtherRecord = { error: String(error?.stack ?? error), ok: false };
+    } finally {
+      formServer.kill();
+    }
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

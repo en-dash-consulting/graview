@@ -408,6 +408,20 @@ function build() {
     ),
   });
 
+  /*
+   * A FORM FOR A VISITOR (Roadmap f-public-forms): one act, drawn alone for somebody with no account and run as a
+   * visitor the host mints per submission. What the visitor may do and see is the policy's: grant the role its act.
+   */
+  const FormSpec = z.strictObject({
+    act: name("act"),
+    title: z.optional(str(1, 80)),
+    intro: z.optional(sentence),
+    fields: z.optional(some(fieldName, 1, 40)),
+    say: z.optional(sentence),
+    submit: z.optional(str(1, 80)),
+    role: z.optional(name("role")),
+  });
+
   const DocumentSpec = z.strictObject({
     /* Where an editor finds this shape as JSON Schema (`@graview/core/document.schema.json`); the compiler reads past it. */
     $schema: z.optional(z.string()),
@@ -448,6 +462,8 @@ function build() {
      * checker's to judge, and the JSON schema says it to an editor.
      */
     connections: z.optional(z.record(name("connection"), loose)),
+    /** Forms for visitors, by name: each one act, its fields, and what the visitor is told once it is received. */
+    forms: z.optional(z.record(name("form"), FormSpec)),
   });
   return { FieldSpec, EdgeSpec, ComputedSpec, KindSpec, ValueSpec, EffectSpec, ActSpec, RepairSpec, RuleSpec, GrantSpec, SightSpec, PolicySpec, BrandSpec, PagesSpec, DocumentSpec };
 }

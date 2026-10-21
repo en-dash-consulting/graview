@@ -66,7 +66,9 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       name where to keep it; the page sits as a person holding every role
       the app declares, unless --as or --roles say who. Its connections run as
       serve's do, unless --no-sync. --view and --manifest draw a worker view
-      proposed and not kept where it attaches, marked as a draft.
+      proposed and not kept where it attaches, marked as a draft. Each of
+      the app's forms for visitors is at /forms/<name>, drawn alone and
+      answered as a visitor minted for that page.
 
   graview shots <document.json | app module> [--seed <file>] [--places a,b] [--out <dir>]
                 [--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene]
@@ -503,6 +505,8 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
   process.stdout.write(
     `graview preview: ${app.name} on ${url}\n` +
       `  Pages: ${url}/   the scene: ${url}/places/overview\n` +
+      // Each form for a visitor at its own address, answered as a visitor minted per page (Roadmap f-public-forms).
+      (app.forms && Object.keys(app.forms).length > 0 ? `  forms: ${Object.keys(app.forms).map((name) => `${url}/forms/${name}`).join("   ")}\n` : "") +
       `  data: ${keeps ? `${backend.where}  (${backend.adapter.name}), held by this preview: other writers are refused until it stops` : "in memory, gone when the preview stops"}\n` +
       `  sits as ${principal.name ?? principal.id}${principal.roles?.length ? `, holding ${principal.roles.join(", ")}` : ""}\n` +
       `  ${served.store.graph.allNodes().length} nodes. Ctrl-C stops it.\n`,
