@@ -38,7 +38,7 @@ The first prints the content steps — `task t-van is put`, `today is patched: l
 
 ```ts defineApp({ ..., version: 2, migrations: [{ from: 1, to: 2, title: "size words become bed counts", apply: (snapshot) => snapshot.nodes .filter((node) => node.kind === "plot") .map((node) => ({ op: "patch-node", id: node.id, before: { size: node.size, beds: undefined }, after: { size: undefined, beds: node.size === "large" ? 6 : 2 } })), }], }) ```
 
-A migration answers in the op log's own five words, so running one appends ordinary operations — authored `system · ship:migration`, stating intent, carrying their inverse. `openStore` runs the pending chain on load. `graview check` refuses a chain with a hole or a multi-version jump (`migration-gap`, `migration-not-single-step`) before deploy time finds it.
+A migration answers in the op log's own five words, so running one appends ordinary operations — authored `system · ship:migration`, stating intent, undone like any other. `openStore` runs the pending chain on load. `graview check` refuses a chain with a hole or a multi-version jump (`migration-gap`, `migration-not-single-step`) before deploy time finds it.
 
 1. **Export is the exit.** `exportBundle(app, store)` — graph, attributed history and version in one JSON shape; `assertBundle` refuses someone else's app or a newer version, plainly. A tenant who cannot leave was never a customer.
 

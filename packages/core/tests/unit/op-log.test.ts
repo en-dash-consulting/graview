@@ -4,6 +4,7 @@ import {
   bindSchema,
   createSchema,
   defineNode,
+  inverseOf,
   nodeRef,
   Store,
   type Author,
@@ -92,7 +93,7 @@ function store() {
 }
 
 describe("operation log", () => {
-  it("records author, batch, intent, inverse, reads and writes", () => {
+  it("records author, batch, intent, reads and writes, and what puts it back", () => {
     const s = store();
     const result = s.apply(
       { name: "retime", args: { dutyId: "d1", at: 500 } },
@@ -104,7 +105,7 @@ describe("operation log", () => {
     expect(op.intent).toBe("Retime d1 to 500");
     expect(op.writes).toEqual(["d1"]);
     expect(op.reads).toContain("d1");
-    expect(op.inverse).toEqual([
+    expect(inverseOf(op)).toEqual([
       { op: "patch-node", id: "d1", before: { at: 500 }, after: { at: 480 } },
     ]);
   });
@@ -144,7 +145,7 @@ describe("operation log", () => {
     const written = JSON.parse(JSON.stringify(recorded)) as typeof recorded;
     // The instruction is a VALUE, so it is still there.
     expect(Object.keys((written.primitives[0] as { after: object }).after)).toEqual(["pinned"]);
-    expect((written.inverse[0] as { after: Record<string, unknown> }).after["pinned"]).toBe("top");
+    expect((inverseOf(written)[0] as { after: Record<string, unknown> }).after["pinned"]).toBe("top");
 
     // And the re-read op still does what it says, both ways round: a store
     // that has been reopened holds these, not the objects that made them.
@@ -156,7 +157,7 @@ describe("operation log", () => {
     });
     reopened.graph.applyPrimitives(written.primitives);
     expect(reopened.graph.getNode("n1")).toEqual({ id: "n1", kind: "note", label: "One" });
-    reopened.graph.applyPrimitives(written.inverse);
+    reopened.graph.applyPrimitives(inverseOf(written));
     expect(reopened.graph.getNode("n1")).toEqual({ id: "n1", kind: "note", label: "One", pinned: "top" });
   });
 

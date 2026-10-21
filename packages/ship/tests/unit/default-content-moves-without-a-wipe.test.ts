@@ -1,4 +1,4 @@
-import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, nodeRef, UNSET } from "@graview/core";
+import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, inverseOf, nodeRef, UNSET } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -126,12 +126,13 @@ describe("the seed diffed against the live store", () => {
     expect(seedSteps({ nodes: [{ id: "x", kind: "list", label: "X" }], edges: [] }, live).map((s) => s.what)).toEqual(["drop-node", "put-node"]);
   });
 
-  it("comes to one operation with an author, an intent and an inverse — or to nothing", () => {
+  it("comes to one operation with an author, an intent and what puts it back — or to nothing", () => {
     const op = contentOperation(seedSteps(v2, v1), v1, { now: () => "2026-09-28T00:00:00.000Z" });
     expect(op).not.toBeNull();
     expect(op!.author).toEqual({ kind: "system", id: "ship:sync-seed" });
     expect(op!.intent).toMatch(/^seed sync: today is patched: label; task t-van is put; today holds t-van is tied$/);
-    expect(op!.inverse).toHaveLength(op!.primitives.length);
+    expect(op).not.toHaveProperty("inverse");
+    expect(inverseOf(op!)).toHaveLength(op!.primitives.length);
     expect([...op!.writes].sort()).toEqual(["t-van", "today"]);
     expect(contentOperation(seedSteps(v1, v1), v1)).toBeNull();
     // A patch that unsets says so in the log's own word for absence.

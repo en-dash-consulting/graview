@@ -77,6 +77,14 @@ export type LiveClientMessage =
        * A server whose `minHostProtocol` is past it answers `reload`. Absent is 0.
        */
       readonly hostProtocol?: number;
+      /**
+       * The op format this client reads (`FORMATS.op`, 0.1.43). 2 is sent
+       * ops bare, as the store keeps them; absent — a client before it —
+       * is sent each op with its inverse written out, as format 1 had it.
+       * Additive: a server before 0.1.43 ignores it and sends format 1,
+       * which every reader of format 2 reads.
+       */
+      readonly opFormat?: number;
     }
   /**
    * Calls, as `POST /graview/ops` takes them. `cid` names the answer.

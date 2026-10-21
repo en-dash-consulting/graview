@@ -1,3 +1,4 @@
+import { inverseOf } from "./inverse.js";
 import { UNSET, writesOf, type Primitive } from "../graph/primitives.js";
 import type { AnyGraphNode, GraphEdge } from "../graph/types.js";
 import { actingAs } from "../permissions/policy.js";
@@ -165,7 +166,7 @@ function servedPrimitive(primitive: Primitive, lens: SeatLens): Primitive | unde
 
 /**
  * THE OP AS A SEAT THAT MAY NOT SEE IT RECEIVES IT. Its id, seq, batch and
- * time stand; who made it, what it meant, the call and the inverse go. Its
+ * time stand; who made it, what it meant and the call go. Its
  * primitives keep the ones that touch only what the seat is served, as it
  * is served them (FR-55) — a change to a record the seat can see still
  * reaches it, or its copy of the graph would go stale, and no id of what it
@@ -189,7 +190,6 @@ export function withhold(op: Operation, seeing: SeatLens | ((id: string) => bool
         const one = servedPrimitive(primitive, lens);
         return one ? [one] : [];
       }),
-    inverse: [],
     reads: op.reads.filter(kept),
     writes: op.writes.filter(kept),
     at: op.at,
@@ -249,9 +249,13 @@ export function whole(op: Operation, lens: SeatLens, served?: readonly Primitive
    * the op reads as it would had there been no such link. One that did
    * nothing else is withheld: who made it and why are not the seat's.
    */
+  let putBack = inverseOf(op);
   if (served && served.length < op.primitives.length) {
     if (!served.length) return;
-    op = { ...op, primitives: served, inverse: op.inverse.filter((one) => touchedBy(one).every(lens.shows)) };
+    putBack = putBack.filter((one) => touchedBy(one).every(lens.shows));
+    // What puts it back is now its served primitives' own: a format-1 inverse it kept is of the whole op.
+    const { inverse: _whole, ...rest } = op;
+    op = { ...rest, primitives: served };
   }
   /*
    * WHAT IT READ, AS RECORDS THE SEAT SEES (FR-55). An act that looked for a
@@ -297,7 +301,7 @@ export function whole(op: Operation, lens: SeatLens, served?: readonly Primitive
    */
   if (served) collect(served);
   const told = (id: string) => lens.sees(id) || said.has(id);
-  if (namesUnseen(tidy.inverse, told)) return undefined;
+  if (namesUnseen(putBack, told)) return undefined;
   if (own && op.mutation) collect(op.mutation.args);
   return namesUnseen({ ...tidy, primitives: [], inverse: [] }, own ? told : lens.sees) ? undefined : tidy;
 }

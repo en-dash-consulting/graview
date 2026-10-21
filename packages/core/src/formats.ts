@@ -1,3 +1,4 @@
+import { bareOp } from "./ops/inverse.js";
 import type { Operation } from "./ops/types.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import { FRAMEWORK_VERSION } from "./version.js";
@@ -13,11 +14,17 @@ import { FRAMEWORK_VERSION } from "./version.js";
  * `upgradeOp`, one step per format change, each shipped with a test over
  * the previous format's fixtures.
  *
- * Everything written before stamps existed is format 1: nothing has changed
- * format yet. Ops and primitives are the stable contract — a format change
- * within a major is additive and needs no step; a major brings its steps.
+ * Everything written before stamps existed is format 1. Ops and primitives
+ * are the stable contract — a format change within a major is additive and
+ * needs no step; a major brings its steps.
+ *
+ * OP FORMAT 2 (0.1.43) keeps no `inverse`: it is the primitives inverted,
+ * derived where it is read (`inverseOf`). A format-1 op reads on this build
+ * as it did (its step drops an inverse that is its primitives' own), and a
+ * build before 0.1.43 meeting a store stamped `op: 2` refuses it with
+ * `NewerFormatError` rather than undo an op it would find no inverse on.
  */
-export const FORMATS = { snapshot: 1, op: 1 } as const;
+export const FORMATS = { snapshot: 1, op: 2 } as const;
 export type FormatName = keyof typeof FORMATS;
 
 /** What a stored thing says about who wrote it and in what shape. */
@@ -58,12 +65,14 @@ export function assertReadable(stamp: { readonly framework?: string; readonly fo
 
 type Step<T> = (from: T) => T;
 /**
- * One step per format change, keyed by the format it upgrades FROM. Empty
- * while nothing has changed format; the next format change adds its step
- * here, and a fixture of the format before it under tests/fixtures/formats.
+ * One step per format change, keyed by the format it upgrades FROM, each
+ * with a fixture of the format before it under tests/fixtures/formats.
  */
 const SNAPSHOT_STEPS: Readonly<Record<number, Step<GraphSnapshot>>> = {};
-const OP_STEPS: Readonly<Record<number, Step<Operation>>> = {};
+const OP_STEPS: Readonly<Record<number, Step<Operation>>> = {
+  // Format 1 wrote the inverse beside the primitives; format 2 derives it.
+  1: bareOp,
+};
 
 function upgrade<T>(what: FormatName, value: T, from: number, steps: Readonly<Record<number, Step<T>>>): T {
   if (!Number.isInteger(from) || from < 1) throw new Error(`No ${what} format ${from}: formats start at 1.`);

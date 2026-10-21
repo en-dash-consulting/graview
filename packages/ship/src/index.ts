@@ -52,7 +52,7 @@ export { GOOGLE_TOKEN_URL, runConnections, sayReport } from "./connections.js";
 export type { ConnectionStates, ConnectionStateStore, ConnectionTokenRequest, RunConnectionsOptions, RunningConnections } from "./connections.js";
 export { fileConnectionState, readEnvFile } from "./connections-file.js";
 export type { AdapterStoreHandlerOptions, DeclarationChange, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
-export { announcePresence, authoredBy, isClientBatch, liveProtocol, presenceFrom, seatOfTab, serverBatchIds, visitorPresence, wireRefusalOf } from "./live-protocol.js";
+export { announcePresence, authoredBy, isClientBatch, liveProtocol, opFormatOf, opsFor, presenceFrom, seatOfTab, serverBatchIds, visitorPresence, wireRefusalOf } from "./live-protocol.js";
 export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked } from "./live-protocol.js";
 export { SEAT_HEADERS, seatFromHeaders, serveStore, WIRE } from "./serve.js";
 export type { ServeOptions, ServedStore } from "./serve.js";

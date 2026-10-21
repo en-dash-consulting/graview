@@ -15,6 +15,7 @@ import {
   refusalOf,
   VISITOR_PRESENCE_TTL_MS,
   WIRE_PROTOCOL,
+  withInverse,
   type AnySchema,
   type Author,
   type FieldConflict,
@@ -94,6 +95,13 @@ export interface LiveSocketState {
    * made after it overtakes it.
    */
   held?: { readonly cid: string; readonly until: number };
+  /**
+   * THE OP FORMAT ITS HELLO SAID IT READS (op format 2, 0.1.43): 2 is sent
+   * ops bare, as the store keeps them; absent — a client before 0.1.43,
+   * which says nothing and reads an op's inverse off it — is sent every op
+   * with its inverse written out, as format 1 had it.
+   */
+  opFormat?: number;
 }
 
 /**
@@ -386,6 +394,40 @@ export interface WireAsked {
   readonly via: string;
   /** The host's build answering this request; the protocol's `build` when absent. */
   readonly build?: string;
+  /**
+   * The op format the asker reads, as its request said (`?opFormat=2`,
+   * `opFormatOf`): 2 is answered ops bare; absent, a client before 0.1.43,
+   * is answered every op with its inverse written out (format 1).
+   */
+  readonly opFormat?: number;
+}
+
+/**
+ * THE OPS AS A READER OF THIS FORMAT READS THEM. Format 2 (0.1.43) keeps no
+ * inverse, and a reader that says it reads format 2 is sent ops as they
+ * are kept. A reader that says nothing predates it and reads each op's
+ * inverse off the op, so it is sent the inverse written out — the bytes
+ * format 1 cost, and nothing it would misread.
+ */
+export function opsFor(opFormat: number | undefined, ops: readonly Operation[]): readonly Operation[] {
+  return opFormat !== undefined && opFormat >= 2 ? ops : ops.map(withInverse);
+}
+
+/** The op format a request says it reads: `?opFormat=<n>` on its URL; nothing when it says none. */
+export function opFormatOf(url: URL | string): number | undefined {
+  const said = Number((typeof url === "string" ? new URL(url, "http://graview.invalid") : url).searchParams.get("opFormat"));
+  return Number.isInteger(said) && said > 0 ? said : undefined;
+}
+
+/** A live message as a socket of this op format reads it: its ops, and a welcome's log, bare or with their inverses. */
+function readableBy(opFormat: number | undefined, message: LiveServerMessage): LiveServerMessage {
+  if (opFormat !== undefined && opFormat >= 2) return message;
+  if (message.t === "welcome") {
+    const state = message.state ? { state: { ...message.state, log: opsFor(opFormat, message.state.log) } } : {};
+    return { ...message, ops: opsFor(opFormat, message.ops), ...state } as LiveServerMessage;
+  }
+  if (message.t === "ops" || message.t === "ack") return { ...message, ops: opsFor(opFormat, message.ops) } as LiveServerMessage;
+  return message;
 }
 
 /** A route's answer, for the host to send: a status, a JSON body, and the headers that carry meaning (`Retry-After`). */
@@ -842,7 +884,7 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
   };
 }
 
-const say = (peer: LivePeer, message: LiveServerMessage): void => sayText(peer, JSON.stringify(message));
+const say = (peer: LivePeer, message: LiveServerMessage): void => sayText(peer, JSON.stringify(readableBy(peer.opFormat, message)));
 const sayText = (peer: LivePeer, text: string): void => {
   try {
     peer.send(text);
@@ -978,7 +1020,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     if (!seat) return;
     const from = peer.cursor + 1;
     peer.cursor = last;
-    const key = sight ? `${seatKeyOf(peer)}\u0000${from}\u0000${last}` : undefined;
+    // Written once per seat and op format: a reader before 0.1.43 is sent each op's inverse (`opsFor`).
+    const key = sight ? `${seatKeyOf(peer)}\u0000${from}\u0000${last}\u0000${peer.opFormat ?? 1}` : undefined;
     const kept = key !== undefined ? sight!.texts.get(key) : undefined;
     if (kept !== undefined) {
       if (kept.length > 0) sayText(peer, kept);
@@ -986,7 +1029,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     }
     // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
     const after = (ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq >= last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from)).filter((op) => op.seq <= last);
-    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: last, ops: wire.shown(seat, after) } satisfies LiveServerMessage) : "";
+    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: last, ops: opsFor(peer.opFormat, wire.shown(seat, after)) } satisfies LiveServerMessage) : "";
     if (key !== undefined) sight!.texts.set(key, text);
     if (text.length > 0) sayText(peer, text);
   };
@@ -1203,6 +1246,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             return {};
           }
           if (typeof message.build === "string" && message.build.length > 0) peer.build = message.build.slice(0, 64);
+          // The op format it reads, said or not: a hello again on the same socket says it again.
+          if (typeof message.opFormat === "number" && Number.isInteger(message.opFormat) && message.opFormat > 0) peer.opFormat = message.opFormat;
+          else delete peer.opFormat;
           const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
           peer.cursor = wire.lastSeq();
           // Its own key, built from the seat, so the client can leave itself out of who is here (FR-47).
@@ -1353,7 +1399,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     },
     async post(text, asked) {
       const said = answering(asked);
-      let body: { calls?: unknown; undo?: unknown; intent?: unknown; batch?: unknown; base?: unknown; via?: unknown; lineage?: unknown };
+      let body: { calls?: unknown; undo?: unknown; intent?: unknown; batch?: unknown; base?: unknown; via?: unknown; lineage?: unknown; opFormat?: unknown };
       try {
         body = text.length === 0 ? {} : (JSON.parse(text) as typeof body);
       } catch {
@@ -1361,6 +1407,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       }
       if (!body || typeof body !== "object") return reply(400, { error: "A change is one JSON object: { calls } to make, or { undo } to take back.", reason: "invalid" });
       const undo = Array.isArray(body.undo) ? (body.undo as string[]) : undefined;
+      // The op format the answer is read in: the body's word (`openRemote` says it there), else the request's.
+      const reads = typeof body.opFormat === "number" ? body.opFormat : asked.opFormat;
       const change: Change = {
         t: undo ? "undo" : "call",
         calls: !undo && Array.isArray(body.calls) ? (body.calls as MutationCall[]) : [],
@@ -1380,9 +1428,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         if (unsavedIn(claim.answered)) {
           const flushed = await durable([]);
           if (!("saved" in flushed)) return reply(503, { error: UNSAVED, refused: true, reason: "unavailable", ...said });
-          return { ...reply(200, { ops: wire.shown(asked.seat, claim.answered), batch: change.batch, ...said }), landed: flushed.saved };
+          return { ...reply(200, { ops: opsFor(reads, wire.shown(asked.seat, claim.answered)), batch: change.batch, ...said }), landed: flushed.saved };
         }
-        return reply(200, { ops: wire.shown(asked.seat, claim.answered), batch: change.batch, ...said });
+        return reply(200, { ops: opsFor(reads, wire.shown(asked.seat, claim.answered)), batch: change.batch, ...said });
       }
       /*
        * THE HOST'S LIMITS, BEFORE ANYTHING IS JUDGED. Busy is 429 and the
@@ -1408,20 +1456,22 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       // Not durable: refused `unavailable`, which the client keeps and sends again.
       if (!landing.saved) return reply(503, { error: UNSAVED, refused: true, reason: "unavailable", ...said });
       // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
-      return { ...reply(200, { ops: wire.shown(asked.seat, landing.result.ops), batch: landing.result.batch, ...said }), landed: landing.saved };
+      return { ...reply(200, { ops: opsFor(reads, wire.shown(asked.seat, landing.result.ops)), batch: landing.result.batch, ...said }), landed: landing.saved };
     },
     state(asked) {
       const seen = wire.seenFor(asked.seat);
+      const opened = openedLog(asked.seat);
       return reply(200, {
         ...answering(asked),
         snapshot: seen.snapshot(),
-        ...openedLog(asked.seat),
+        ...opened,
+        log: opsFor(asked.opFormat, opened.log),
         migrated: [...(options.migrated ?? [])],
         enabledModules: wire.enabledModules(),
       });
     },
     since(seq, asked) {
-      return reply(200, { ops: wire.since(asked.seat, seq), ...answering(asked) });
+      return reply(200, { ops: opsFor(asked.opFormat, wire.since(asked.seat, seq)), ...answering(asked) });
     },
     declared(peers) {
       for (const peer of peers) {

@@ -16,11 +16,17 @@ describe("stored formats carry their version", () => {
     expect(formatStamp()).toEqual({ framework: FRAMEWORK_VERSION, formats: { snapshot: FORMATS.snapshot, op: FORMATS.op } });
   });
 
-  it("what 0.1.0 wrote, unstamped, reads as format 1 and comes up unchanged", () => {
+  it("what 0.1.0 wrote, unstamped, reads as format 1 and comes up to this build's", () => {
     expect(() => assertReadable(null)).not.toThrow();
     expect(() => assertReadable({ framework: "0.1.0" })).not.toThrow();
     expect(upgradeSnapshot(fixture.snapshot, 1)).toEqual(fixture.snapshot);
-    for (const op of fixture.ops) expect(upgradeOp(op, 1)).toEqual(op);
+    // Op format 2 keeps no inverse: format 1's, its primitives' own, is dropped and nothing else moves.
+    for (const op of fixture.ops) {
+      const { inverse, ...rest } = op;
+      expect(inverse).toBeDefined();
+      expect(upgradeOp(op, 1)).toEqual(rest);
+      expect(upgradeOp(upgradeOp(op, 1), 2)).toEqual(rest);
+    }
   });
 
   it("a newer format is reported, not folded", () => {

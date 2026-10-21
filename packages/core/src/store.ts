@@ -4,7 +4,8 @@ import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, diffTouched, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
-import { invert, normalize, writesOf, type Primitive } from "./graph/primitives.js";
+import { normalize, writesOf, type Primitive } from "./graph/primitives.js";
+import { bareOp, inverseOf } from "./ops/inverse.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
 import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
 import type { GraphSnapshot } from "./graph/types.js";
@@ -277,7 +278,7 @@ export interface PreviewOptions extends ApplyOptions {
 /**
  * A BATCH AS IT WOULD BE KEPT, AND NOT KEPT (FR-56): `applyAll`'s answer,
  * rehearsed. Its ops are the ones the log would hold — author, channel,
- * sentence, primitives, inverse, the seq each would take — save their ids,
+ * sentence, primitives, the seq each would take — save their ids,
  * `preview:<n>`, which the store never mints; `batch` is the one given, or
  * `preview`. `kept` says so to whoever is handed it.
  */
@@ -306,8 +307,6 @@ export interface AppendOp {
   readonly id?: string;
   readonly batch?: string;
   readonly batchIntent?: string;
-  /** Defaults to the primitives inverted, newest first. */
-  readonly inverse?: readonly Primitive[];
   readonly reads?: readonly string[];
   /** Defaults to the ids the primitives write. */
   readonly writes?: readonly string[];
@@ -738,7 +737,6 @@ export class Store<S extends AnySchema> {
       intent: capitalize(said),
       mutation: null,
       primitives: [],
-      inverse: [],
       reads: [],
       writes: [],
       at: this.now(),
@@ -1475,7 +1473,6 @@ export class Store<S extends AnySchema> {
            * inverse quietly does nothing. See `normalize` in primitives.ts.
            */
           primitives: compiled.primitives.map(normalize),
-          inverse: [...compiled.primitives].reverse().map(normalize).map(invert),
           reads: compiled.reads,
           writes: compiled.writes,
           // Which records its sentence read, so a reader who may not see one is not handed the sentence (FR-55).
@@ -1532,15 +1529,16 @@ export class Store<S extends AnySchema> {
    *
    * So: the primitives land, the op is appended with its own id, author and
    * sequence intact, and the subscribers hear about it exactly as they hear
-   * about a local change. Undo still works on it, because an op carries its
-   * own inverse.
+   * about a local change. Undo still works on it, because an op's
+   * primitives say what puts it back (`inverseOf`); one from a format-1
+   * sender, inverse and all, lands as format 2.
    *
    * Ops already in the log are skipped by id, so receiving the same batch
    * twice — a poll that overlaps, a reconnect — is not a second change.
    *
    * `seq` is the position in THIS log and is renumbered on the way in; the
-   * op keeps everything that identifies it (its id, its author, its intent,
-   * its primitives and its inverse). A log is contiguous by construction —
+   * op keeps everything that identifies it (its id, its author, its intent
+   * and its primitives). A log is contiguous by construction —
    * that is what makes undo and replay work — and an incoming op carries
    * the sender's numbering, which cannot be this one's the moment this
    * store has applied anything of its own. Whoever is tracking the sender's
@@ -1579,7 +1577,7 @@ export class Store<S extends AnySchema> {
     }
     const seq = this.log.length;
     for (const [index, op] of fresh.entries()) {
-      const here = { ...op, seq: seq + index };
+      const here = bareOp({ ...op, seq: seq + index });
       this.log.append(here);
       landed.push(here);
     }
@@ -1594,7 +1592,7 @@ export class Store<S extends AnySchema> {
    * already made and skips the ones it has, these are new here, so the
    * store fills in what the host left out the way it fills its own: the
    * seq, an id, one batch for the call (`options.batch`, else a fresh one),
-   * the time, the inverse (from the primitives), what they write, and no
+   * the time, what they write, and no
    * mutation. What the host did say is kept.
    *
    * Each op lands as a write (a default is filled in on the way in, as a
@@ -1621,7 +1619,6 @@ export class Store<S extends AnySchema> {
         ...given("batchIntent", made.batchIntent),
         mutation: made.mutation ?? null,
         primitives,
-        inverse: made.inverse ?? [...primitives].reverse().map(invert),
         reads: made.reads ?? [],
         writes: made.writes ?? [...new Set(primitives.flatMap(writesOf))],
         at: made.at ?? this.now(),
@@ -1677,7 +1674,6 @@ export class Store<S extends AnySchema> {
         intent,
         mutation: null,
         primitives: recorded,
-        inverse: [...recorded].reverse().map(invert),
         reads: [],
         writes: [...new Set(recorded.flatMap(writesOf))],
         at: this.now(),
@@ -1835,8 +1831,7 @@ export class Store<S extends AnySchema> {
         intent: `Undo: ${target.intent}`,
         ...given("batchIntent", options.intent),
         mutation: null,
-        primitives: target.inverse,
-        inverse: [...target.inverse].reverse().map(invert),
+        primitives: inverseOf(target),
         reads: target.reads,
         writes: target.writes,
         at: this.now(),
@@ -1989,7 +1984,7 @@ export class Store<S extends AnySchema> {
     try {
       // 1. Back to the confirmed prefix, putting back exactly what each op took.
       // In place: what a pending op took out goes back where it stood, or this copy and the server's disagree on order.
-      for (const op of [...tail].reverse()) this.graph.applyPrimitives(op.inverse, { restoring: true, inPlace: true });
+      for (const op of [...tail].reverse()) this.graph.applyPrimitives(inverseOf(op), { restoring: true, inPlace: true });
       this.log.truncate(cut);
 
       // 2. What the server says, in its order.
@@ -2001,7 +1996,7 @@ export class Store<S extends AnySchema> {
         } catch (error) {
           throw new ReceiveError(op, error);
         }
-        const here = { ...op, seq: this.log.length };
+        const here = bareOp({ ...op, seq: this.log.length });
         this.log.append(here);
         known.add(op.id);
         landed.push(here);

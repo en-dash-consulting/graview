@@ -1,6 +1,5 @@
 import {
   Graph,
-  invert,
   normalize,
   writesOf,
   type AnySchema,
@@ -159,7 +158,7 @@ export const SEED_SYNC_AUTHOR: Principal = { kind: "system", id: "ship:sync-seed
 
 /**
  * Content steps as ONE OPERATION against a live graph: authored, stating
- * what it did, carrying its inverse — the same shape a migration run
+ * what it did, put back by its own primitives — the same shape a migration run
  * appends, so the activity shows it, `undo` takes it back, and a host's
  * adapter persists it like any other change. Null when the steps come to
  * nothing against this graph, which is the honest answer to a second run.
@@ -188,7 +187,6 @@ export function contentOperation(
     intent: options.intent ?? `seed sync: ${steps.map(sayStep).join("; ")}`,
     mutation: null,
     primitives,
-    inverse: [...primitives].reverse().map(invert),
     reads: [],
     writes: [...new Set(primitives.flatMap(writesOf))],
     at,

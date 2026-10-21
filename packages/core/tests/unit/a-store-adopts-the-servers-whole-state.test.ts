@@ -62,7 +62,7 @@ describe("a store adopts the server's whole state", () => {
   it("swaps the graph and the log, re-applies the pending batches on top, and tells subscribers once", () => {
     const { server, client } = pair();
     // This copy drifted: an op the server never had sits in its confirmed prefix.
-    client.append([{ intent: "Drifted", author: { kind: "system", id: "drift" }, mutation: null, primitives: [{ op: "add-node", node: { id: "ghost", kind: "task", label: "Ghost", done: false } as never }], inverse: [{ op: "remove-node", node: { id: "ghost", kind: "task", label: "Ghost", done: false } as never }] }]);
+    client.append([{ intent: "Drifted", author: { kind: "system", id: "drift" }, mutation: null, primitives: [{ op: "add-node", node: { id: "ghost", kind: "task", label: "Ghost", done: false } as never }] }]);
     // Two presses here, neither answered; one the server has already refused.
     const mine = client.apply({ name: "rename", args: { id: "t1", label: "Pay it" } });
     const refused = client.apply({ name: "add", args: { id: "t9", label: "Refused" } });

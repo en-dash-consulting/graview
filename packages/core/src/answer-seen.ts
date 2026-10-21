@@ -111,7 +111,7 @@ export function answerSeenBy<
       ? ops.flatMap((op) => op.primitives)
       : lens.timeline
         ? servePrimitives(answer.primitives as readonly Primitive[], lens.timeline, { served: (node, writer) => lens.servedWith(node, writer), edgeClean: (edge) => !namesUnseen(edge, lens.sees), sees: lens.sees }, actingAs(principal).id)
-        : redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, inverse: [], reads: [], writes: [], at: "" }], lens)[0]!.primitives;
+        : redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, reads: [], writes: [], at: "" }], lens)[0]!.primitives;
   }
   // What a change wrote of a field the seat may not see is no part of what it is told (Roadmap f-field-sight).
   if (lens.kept && out["primitives"]) out["primitives"] = withoutKeptFields(out["primitives"] as readonly Primitive[], lens);
