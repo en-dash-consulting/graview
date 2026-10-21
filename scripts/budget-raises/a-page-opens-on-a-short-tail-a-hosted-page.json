@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 160,
+  "gzipped": 60,
+  "changeset": "a-page-opens-on-a-short-tail.md",
+  "note": "Raised when a page came to open on the snapshot and a short tail of the log (`openTail`): the page's `FieldRevisions` reads a tail with the horizon it begins at, so a field written before the tail is at the seq before it and editing it is no false conflict, and a claim is stale only when the field was written after it. The store and the remote are on every page, so this is up front. Measured at 587_149 / 203_890 against a budget of 587_015 / 204_315 minified and gzipped."
+}
