@@ -86,6 +86,24 @@ describe("the scene's way back", () => {
     expect(offered(board)?.sentence).toBe('Took back “Rename to "Later"”');
   });
 
+  /*
+   * THE KEY IS SAID ON THE OFFER. A keyboard person on the scene opened
+   * Activity at the far end of the bar and found the turn — eight to ten
+   * keys where the pointer took two (the journeys' undo) — while ⌘Z took it
+   * back all along, said nowhere a screen reader or a person reading the
+   * offer would find it.
+   */
+  it("says on its Take back that ⌘Z or Ctrl+Z does the same", async () => {
+    const store = fresh();
+    const board = createNoticeBoard();
+    await scene(store, board);
+    await renameTo(store, "Later");
+    expect(offered(board)?.action).toMatchObject({ label: "Take back", keys: "Meta+Z Control+Z" });
+    const take = [...document.querySelectorAll<HTMLButtonElement>('[data-testid="notice-action"]')].find((one) => one.textContent === "Take back")!;
+    expect(take.getAttribute("aria-keyshortcuts")).toBe("Meta+Z Control+Z");
+    expect(take.title).toMatch(/⌘Z or Ctrl\+Z/);
+  });
+
   it("does not offer a change made before the scene was drawn", async () => {
     const store = fresh();
     store.apply({ name: "rename-item", args: { id: "i1", label: "Earlier" } }, { author: nina });

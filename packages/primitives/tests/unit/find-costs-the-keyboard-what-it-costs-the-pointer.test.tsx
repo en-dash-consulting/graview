@@ -115,4 +115,29 @@ describe("Find from the keyboard, at the pointer's cost", () => {
     place.remove();
     await done();
   });
+
+  /*
+   * ON A PHONE THE LINE FOLDS "Sort" INTO "Arrange", and the keys went to
+   * the first button the line drew — the folded Sort, which cannot be
+   * stood on — so the keyboard stayed in the box, and the next key typed
+   * into it (the journeys' refused act on rota, on a phone: 24 keys).
+   */
+  it("lands on the first of the line's controls that is drawn, past one folded away", async () => {
+    const { key, done } = await strip(40, "talks");
+    const place = document.createElement("div");
+    place.setAttribute("data-graview-view", "aggregate:talk");
+    place.tabIndex = 0;
+    place.innerHTML = '<div role="group" aria-label="Arrange"><button type="button" data-testid="arrange-sort">Sort</button><button type="button" data-testid="arrange-add">Filter</button></div>';
+    const sort = place.querySelector<HTMLButtonElement>('[data-testid="arrange-sort"]')!;
+    // Folded away, as the narrow line's CSS folds it: not drawn, so not a place for the keys.
+    Object.defineProperty(sort, "checkVisibility", { value: () => false });
+    document.body.append(place);
+    await key("Enter");
+    await act(async () => {
+      await new Promise((done) => setTimeout(done, 120));
+    });
+    expect(document.activeElement?.getAttribute("data-testid")).toBe("arrange-add");
+    place.remove();
+    await done();
+  });
 });

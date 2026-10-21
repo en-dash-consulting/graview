@@ -31,4 +31,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The surfaces Walkthrough XIII had no time for are walked](./the-surfaces-walk-xiii-did-not-reach.md) | pending |
 | [A store too large for Safari's localStorage persists, in IndexedDB](./a-large-store-persists-in-safari.md) | completed |
 | [The watch hears a page whose module rejected before it drew](./the-watch-hears-a-rejected-top-level-await.md) | completed |
-| [The keyboard's last costs over twice the pointer: relate and repair on the pages, undo on the scene, a district's refused job](./the-keyboard-costs-the-rest.md) | pending |
+| [The keyboard's last costs over twice the pointer: relate and repair on the pages, undo on the scene, a district's refused job](./the-keyboard-costs-the-rest.md) | completed |

@@ -1495,8 +1495,13 @@ export const JOBS = {
         await pressAct(person, job.act, job.title);
         await answerAsks(person, { choose: [prep.other.label] });
       } else {
-        await pressAct(person, job.act, job.title);
         const form = page.locator(`form[data-testid="form-${job.act}"]`);
+        /*
+         * A FORM THE PAGE ALREADY HOLDS OPEN is answered where it stands: a
+         * page that draws every act's form (the garden's plot) was walked
+         * as if its submit were the act, pressed empty, and then answered.
+         */
+        if (!(await form.first().isVisible().catch(() => false))) await pressAct(person, job.act, job.title);
         if (!(await appears(form))) throw new DeadEnd(`"${job.title}" opens no form`);
         await fillForm(person, form, { choose: [prep.other.label] });
       }
@@ -1536,6 +1541,27 @@ export const JOBS = {
     },
     async run(person, ctx, _job, prep) {
       const page = person.page;
+      /*
+       * FROM THE KEYBOARD, THE KEY THE PAGE SAYS TAKES IT BACK. The offer
+       * that comes with a change says ⌘Z or Ctrl+Z on its Take back
+       * (`aria-keyshortcuts`); a keyboard person who reads it presses the
+       * key, where the walk opened Activity at the far end of the bar — eight
+       * to ten keys for the pointer's two. Not from inside a text field,
+       * where the key is the field's own undo.
+       */
+      if (person.input === "keyboard") {
+        const said = await page.evaluate(() =>
+          [...document.querySelectorAll("[aria-keyshortcuts]")].some((el) => el.getClientRects().length > 0 && /(^|\s)(Meta|Control)\+Z(\s|$)/.test(el.getAttribute("aria-keyshortcuts") ?? "")),
+        );
+        if (said) {
+          const before = person.presses;
+          await person.key(process.platform === "darwin" ? "Meta+Z" : "Control+Z");
+          person.note("⌘Z", before);
+          await person.settle(250);
+          const taken = await inStore(page, ctx.kinds, (store, batch) => store.batches().find((one) => one.id === batch)?.undone === true, prep.batch);
+          if (taken) return { via: "the key the offer says" };
+        }
+      }
       const opener = page.getByRole("button", { name: /^Activity$/ }).or(page.locator('[data-testid="activity-button"]')).locator("visible=true").first();
       if (ctx.face === "scene" && (await opener.isVisible().catch(() => false))) await person.press(opener, "Activity");
       const undo = page
@@ -1688,7 +1714,13 @@ export const JOBS = {
       const page = person.page;
       const before = await inStore(page, ctx.kinds, lastBatch);
       if (ctx.face === "scene" && !prep.subject) {
-        await pressDistrict(person, prep.kind, prep.plural).catch(() => {});
+        /*
+         * FROM THE KEYBOARD, BY NAME, as narrowing goes: "/", the kind's
+         * name, Enter, and the keyboard is in the district, whose own key
+         * opens its acts and says what is withheld — where a Tab walk across
+         * every district before it cost eleven keys for the pointer's two.
+         */
+        await (person.input === "keyboard" ? goByFind(person, prep.kind, prep.plural) : pressDistrict(person, prep.kind, prep.plural)).catch(() => {});
       }
       if (ctx.face === "pages" && !prep.subject) await openKindPage(person, prep.plural).catch(() => {});
       if (ctx.face === "scene") await openActs(person);
@@ -1881,29 +1913,33 @@ export function regressionsOf(previous, current) {
 
 /**
  * WHY THE KEYBOARD COSTS MORE THAN TWICE THE POINTER, where it still does —
- * by job, and by job on one face — said as a reader would be told it. A job
- * on a face named here may cost the keyboard more than twice the pointer's
- * presses; any other is held to twice (`keyboardChecks`). What a skip, a
- * group that is one stop, or a key could take off has been taken off
- * (walks XI and XII); what is left is the shape of the page.
+ * by job, by job on one face, and by job on one face in one app ("<app>
+ * <job>/<face>") where it is that app's own design — said as a reader would
+ * be told it. A job named here may cost the keyboard more than twice the
+ * pointer's presses; any other is held to twice (`keyboardChecks`). What a
+ * skip, a group that is one stop, or a key could take off has been taken
+ * off (walks XI and XII, and the acts made one stop, an act's form opened at
+ * what it asks, ⌘Z said on the scene's offer, a district reached by its name
+ * — 0.1.45); what is left is the shape of the page.
  */
 export const KEYBOARD_WHY = {
   make: "a form is answered field by field: the pointer goes straight to each field it needs, and the keyboard passes the ones it does not, and crosses the bar to the act that opens it",
   "find/pages": "Find on the pages answers on a page of its own: the keyboard goes on from the box past the bar's tools to the row, where the pointer presses the row it reads",
-  "relate/pages": "a record's act asks in a form, whose choice is one field among the form's others, Tabbed to in turn, and sent by its button; the pointer presses each",
+  "seedbed relate/pages": "the garden's plot page draws every act's form open, as its chapter shows: the caretaker's choice is a field among the sowing's above it, Tabbed past in turn, where the pointer presses the one it wants",
+  "discography relate/pages": "two of a song's acts begin with P (\"Place it in an era\", \"Put it on a release\"), so the letter is pressed twice among its one stop of acts, and a choice is sent by its button: one key over twice the pointer's four",
   narrow: "a kind's list is a place on the bar, reached across it, and its \"Filter\" stands after the list's own chips; the pointer presses each where it is drawn",
   "several/pages": "a kind's list is a place on the bar, reached across it; into the records is one skip, and the boxes are one stop",
-  "undo/scene": "Activity is a tool at the bar's far end, past every place the bar names; the pointer presses it where it is",
-  "repair/pages": "the problems are a page of their own: the keyboard skips to them, then Tabs to the repair, where the pointer presses the count and the repair",
-  refused: "a right-click opens a record's acts where the pointer is, and says what is withheld; the keyboard is first taken to the record — a skip, or a district across the bar — and then presses its acts' key",
+  "repair/pages": "the problems are a page of their own, their count a tool at the bar's far end, crossed to before the page's repair, where the pointer presses the count and the repair; a repair's question, opened, has the keyboard in it",
+  "refused/scene": "a record chosen from the address is where the pointer right-clicks it, and its menu says what is withheld; the keyboard first skips to the chosen card, then presses its acts' key — three for one",
+  "refused/pages": "a kind's list is a place on the bar, reached across it, where the pointer presses its name and reads what is withheld",
 };
 
 const jobKind = (jobId) => (jobId.startsWith("make-") ? "make" : jobId);
 
-/** Why a job on a face may cost the keyboard more than twice the pointer, or null where it may not. */
-export function keyboardWhy(jobId, face) {
+/** Why a job on a face, in an app, may cost the keyboard more than twice the pointer, or null where it may not. */
+export function keyboardWhy(jobId, face, app) {
   const job = jobKind(jobId);
-  return KEYBOARD_WHY[`${job}/${face}`] ?? KEYBOARD_WHY[job] ?? null;
+  return (app !== undefined ? KEYBOARD_WHY[`${app} ${job}/${face}`] : undefined) ?? KEYBOARD_WHY[`${job}/${face}`] ?? KEYBOARD_WHY[job] ?? null;
 }
 
 /**
@@ -1935,7 +1971,7 @@ export function keyboardChecks(report) {
             within.push(said);
             continue;
           }
-          const why = keyboardWhy(jobId, face);
+          const why = keyboardWhy(jobId, face, app);
           if (why) named.set(why, [...(named.get(why) ?? []), said]);
           else unnamed.push(said);
         }
