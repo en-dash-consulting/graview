@@ -1,5 +1,23 @@
 # graview
 
+## 0.1.42
+
+### Patch Changes
+
+- Updated dependencies [a5bbda0]
+- Updated dependencies [caf67fd]
+- Updated dependencies [4fe0969]
+- Updated dependencies [5a68fac]
+- Updated dependencies [3aff737]
+- Updated dependencies [f6b5bb7]
+- Updated dependencies [93fccf0]
+- Updated dependencies [6809e5a]
+  - @graview/core@0.1.42
+  - @graview/guest@0.1.42
+  - @graview/skills@0.1.42
+  - @graview/ship@0.1.42
+  - @graview/tools@0.1.42
+
 ## 0.1.41
 
 ### Patch Changes

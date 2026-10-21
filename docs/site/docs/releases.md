@@ -45,7 +45,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.41
 
-Published October 21, 2026 · the current version
+Published October 21, 2026
 
 The app bar holds still at every width.
 
