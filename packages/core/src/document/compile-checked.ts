@@ -43,7 +43,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   // The checker's sentence for an accent (FR-126) says what the compile's did, and more: once is enough.
   const said = own.some((f) => f.code === "brand-accent") ? compiled.findings.filter((f) => !(f.code === "brand" && f.path === "brand.accent")) : compiled.findings;
   const findings: Finding[] = [...said, ...own, ...viewBraces(document.views, "views", undefined, document.lenses)];
-  const check = checkApp(app);
+  const check = checkApp(app, options.views ? { views: options.views } : {});
   for (const f of check.findings) {
     // Located and said in the document's own words: `acts.finish.on`, never `defineMutation("finish")`.
     const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: inDocumentText(f.message, document), ...(f.fix ? { fix: inDocumentText(f.fix, document) } : {}) } as const;

@@ -379,6 +379,8 @@ export {
   primaryOf,
   supportingKinds,
   orderKinds,
+  arrangedEntries,
+  viewReference,
   OVERVIEW_PATH,
   OVERVIEW_SLUG,
   pagesTitle,
@@ -388,10 +390,11 @@ export {
 // A place's address under a host's base path, and back (FR-106).
 export { addressOf, basePathOf, pathWithin } from "./address.js";
 // Every place an app has (`placesOf`, `placesFrom`) is `@graview/core/seat`'s, and judging the arrangement (`arrangementFindings`) `@graview/core/check`'s (FR-179).
-export type { DeclaredLenses, DrawnLens, Opening, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
+export type { ArrangedEntry, DeclaredLenses, DrawnLens, Opening, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
 export type { AppPlace } from "./app-places.js";
 export type {
   Cardinality,
+  HostView,
   PagesArrangement,
   KindList,
   KindListGroup,

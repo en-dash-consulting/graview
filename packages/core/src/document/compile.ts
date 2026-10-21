@@ -1,3 +1,4 @@
+import type { HostView } from "../views/types.js";
 import { derivedActOf } from "../mutations/derived-names.js";
 import { documentRelationActOf } from "./relation-acts.js";
 import { brandOf } from "./brand.js";
@@ -74,6 +75,12 @@ export interface CompileOptions {
    * checked compile (`@graview/core/check`); a page draws what it is given.
    */
   readonly fonts?: readonly string[];
+  /**
+   * The views the host keeps (`HostView`): what `view:<name>` in `pages`
+   * may name. Read by the checked compile; unsaid, a view the declaration
+   * names is a note, drawn once the host registers it.
+   */
+  readonly views?: readonly HostView[];
 }
 
 const BUILTIN_REFS = new Set(["subject", "now", "today", "me"]);

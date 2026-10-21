@@ -51,6 +51,10 @@ are. The face says it; a design never rebuilds it by matching
 - **`placeHere(context, path, { registry, base })`** says the same of a path
   for a bar drawn OUTSIDE the face's router, told where it is by
   `steering.at` or `onNavigate`.
+- **Its own tabs, in the arrangement's order.** `arrangedEntries(kinds,
+  pages.order, views.places())` (`@graview/core`) is the kinds' lists with
+  a host's view named `view:<name>` at its place among them; leave out a
+  kind `pages.hide` names unless it is where the person is.
 - **The trail.** Each derived list, record and picture opens with one: a
   `nav` called "You are here", the section and the kind's list as links,
   the page itself last with `aria-current="page"`, out of sight because

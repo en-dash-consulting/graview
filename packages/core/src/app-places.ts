@@ -1,8 +1,8 @@
 import type { GraviewApp } from "./app.js";
-import { declaredLenses, MOST_STANDING, openingOf, orderKinds, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, type PlaceFinding, type ShippedLensName } from "./places.js";
+import { arrangedEntries, declaredLenses, MOST_STANDING, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, viewReference, type PlaceFinding, type ShippedLensName } from "./places.js";
 import type { AnySchema } from "./schema/schema.js";
 import { allLabel, nounOf, pluralLabel, pluralOf } from "./schema/define-node.js";
-import { kindPath, onePerPicture, placePath, sharesItsName, type PagesArrangement, type Place } from "./views/types.js";
+import { kindPath, onePerPicture, placePath, placeSlug, samePicture, sharesItsName, type HostView, type PagesArrangement, type Place } from "./views/types.js";
 
 /*
  * EVERY PLACE AN APP HAS, AND WHAT ITS ARRANGEMENT ASKS THAT IT CANNOT
@@ -14,8 +14,15 @@ import { kindPath, onePerPicture, placePath, sharesItsName, type PagesArrangemen
  */
 
 
-/** What the arrangement asks that the declaration cannot honor: kinds and places that do not exist, and lenses kept off the lists that cannot be. */
-export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, places: readonly Place[] = placesOfLenses(app)): readonly PlaceFinding[] {
+/**
+ * What the arrangement asks that the declaration cannot honor: kinds and
+ * places that do not exist, and lenses kept off the lists that cannot be.
+ * `views` are the host's (`HostView`), when it says them: a `view:<name>`
+ * none of them is, is a warning; unsaid, a view the app's own registry does
+ * not hold is only a note — the host registers its views as the page opens.
+ */
+export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, options: { readonly views?: readonly HostView[] } = {}): readonly PlaceFinding[] {
+  const places = placesOfLenses(app, options.views);
   const pages = app.pages;
   const findings: PlaceFinding[] = [];
   /* A LENS KEPT OFF THE LISTS says so with true, and is a place to keep off them: it has a title. */
@@ -62,8 +69,41 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
     });
   }
   const kinds = app.schema.kinds as readonly string[];
+  /*
+   * A HOST'S VIEW BY NAME (`view:<name>`), in the order, the first place or
+   * on the bar: where the host is not here to say its views, a name the
+   * app's own registry does not hold is drawn once the host registers it.
+   */
+  const viewWords: [word: string, path: string][] = [
+    ...(pages.order ?? []).map((word, index): [string, string] => [word, `pages.order.${index}`]),
+    ...(pages.primary ?? []).map((word, index): [string, string] => [word, `pages.primary.${index}`]),
+    ...(pages.first !== undefined ? [[pages.first, "pages.first"] as [string, string]] : []),
+  ];
+  for (const [word, path] of viewWords) {
+    const name = viewReference(word);
+    if (name === undefined || places.some((place) => place.name === name)) continue;
+    const said = options.views?.find((view) => view.name === name);
+    findings.push(
+      options.views
+        ? {
+            severity: "warning",
+            code: "pages-view-unknown",
+            path,
+            message: said ? `${path} names the view "${name}", which is not a picture of a kind (it ${said.attach === "home" ? "is the home's" : "draws one record"}), so it is passed over.` : `${path} names the view "${name}", which this app's host does not keep, so it is passed over.`,
+            fix: `Name a view the host keeps by its name (${options.views.filter((view) => view.attach !== "home" && view.cardinality !== "one").map((view) => `"view:${view.name}"`).join(", ") || "it keeps none"}), or take it out.`,
+          }
+        : {
+            severity: "note",
+            code: "pages-view-not-drawn-here",
+            path,
+            message: `${path} names the view "${name}", which the host registers as the page opens: not drawn here yet, it stands where it is named once it is, and is passed over until then.`,
+            fix: `Nothing to change if the host keeps a view by that name. Its manifest's "name" is what follows "view:".`,
+          },
+    );
+  }
   for (const part of ["order", "hide"] as const) {
     (pages[part] ?? []).forEach((kind, index) => {
+      if (part === "order" && viewReference(kind) !== undefined) return;
       if (!kinds.includes(kind)) {
         findings.push({ severity: "warning", code: "pages-kind-unknown", path: `pages.${part}.${index}`, message: `pages.${part} names "${kind}", which is not a kind, so it is passed over.`, fix: `Use one of: ${kinds.join(", ")}.` });
       }
@@ -71,7 +111,7 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
   }
   (pages.primary ?? []).forEach((word, index) => {
     const opening = openingOf(word, app.schema, places);
-    if (opening === undefined || opening.to === "home") {
+    if ((opening === undefined && viewReference(word) === undefined) || opening?.to === "home") {
       findings.push({
         severity: "warning",
         code: "pages-primary-unknown",
@@ -105,7 +145,7 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
       fix: `Name the ${MOST_STANDING - 1} a person reaches for most.`,
     });
   }
-  if (pages.first !== undefined && openingOf(pages.first, app.schema, places) === undefined) {
+  if (pages.first !== undefined && openingOf(pages.first, app.schema, places) === undefined && viewReference(pages.first) === undefined) {
     findings.push({
       severity: "warning",
       code: "pages-first-unknown",
@@ -129,14 +169,20 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
   return findings;
 }
 
-/** The places a declaration's lenses make, with any its registered views name. */
-function placesOfLenses<S extends AnySchema>(app: GraviewApp<S>): readonly Place[] {
+/** A host's view as a place: a titled picture of a kind, by its manifest name. */
+function placeOfView(view: HostView): Place | undefined {
+  if (view.attach === "home" || view.cardinality === "one" || !view.title) return undefined;
+  return { kind: view.attach, title: view.title, as: placeSlug(view.title), name: view.name, lens: "view", ...(view.hidden ? { hidden: true } : {}) };
+}
+
+/** The places a declaration's lenses make, with any its registered views name, and the host's views it is told of. */
+function placesOfLenses<S extends AnySchema>(app: GraviewApp<S>, views: readonly HostView[] = []): readonly Place[] {
   const out: Place[] = [];
   for (const lens of declaredLenses(app).drawn) {
     // One picture over several kinds is a place on each, and says so (`over`): every list names it once.
     for (const kind of lens.kinds) out.push({ kind, title: lens.title, as: lens.as, ...(lens.across ? { across: lens.across } : {}), ...(lens.kinds.length > 1 ? { over: lens.kinds } : {}), ...(lens.hidden ? { hidden: true } : {}) });
   }
-  for (const place of app.views?.places?.() ?? []) {
+  for (const place of [...(app.views?.places?.() ?? []), ...views.flatMap((view) => placeOfView(view) ?? [])]) {
     if (!out.some((held) => held.kind === place.kind && held.as === place.as)) out.push(place);
   }
   return out;
@@ -162,6 +208,8 @@ export interface AppPlace {
   readonly stop: string;
   /** Which shipped lens draws it, when a declared lens does. */
   readonly lens?: ShippedLensName;
+  /** The host's name for it, when it is a view the host keeps (its manifest's `name`): what `view:<name>` names. */
+  readonly view?: string;
   /** A kind left off the home by `pages.hide`, or a lens kept off the lists (`hidden`); still reachable at its address. */
   readonly hidden?: boolean;
   /** Where the app opens (`pages.first`). */
@@ -173,10 +221,12 @@ export interface AppPlace {
  * (and each place its registered views name, when the app carries them),
  * and each kind — in the arrangement's order. What Graview Cloud's
  * connector lists when an app is opened, and what a chat can send somebody
- * to.
+ * to. `views` are the host's own (its kept script views' manifests): each
+ * titled picture of a kind is a place, `name` its manifest's, listed where
+ * `pages.order` names it (`view:<name>`) and first where `pages.first` does.
  */
-export function placesOf<S extends AnySchema>(app: GraviewApp<S>): readonly AppPlace[] {
-  return placesFrom(app.schema, placesOfLenses(app), { ...(app.pages ? { pages: app.pages } : {}), lenses: declaredLenses(app).drawn, home: (app.home?.length ?? 0) > 0 });
+export function placesOf<S extends AnySchema>(app: GraviewApp<S>, options: { readonly views?: readonly HostView[] } = {}): readonly AppPlace[] {
+  return placesFrom(app.schema, placesOfLenses(app, options.views), { ...(app.pages ? { pages: app.pages } : {}), lenses: declaredLenses(app).drawn, home: (app.home?.length ?? 0) > 0 });
 }
 
 /**
@@ -196,7 +246,10 @@ export function placesFrom(
   const places = lensPlaces.filter((place) => kindsDeclared.includes(place.kind));
   const opening = openingOf(pages?.first, schema, places);
   const hidden = new Set(pages?.hide ?? []);
-  const kinds = orderKinds(kindsDeclared, pages?.order);
+  // The kinds and the host's views `order` names, in its order: a view it names is listed there, among the kinds, not with the other pictures.
+  const arranged = arrangedEntries(kindsDeclared, pages?.order, places);
+  const kinds = arranged.flatMap((entry) => (entry.view ? [] : [entry.kind]));
+  const ordered = arranged.flatMap((entry) => (entry.view ? [entry.view] : []));
   const out: AppPlace[] = [
     { slug: "home", title: "Home", kind: null, cardinality: "many", address: "/", stop: "#", ...(opening?.to === "home" || (opening === undefined && options.home) ? { first: true } : {}) },
     // The scene, a place like the others (FR-132): its stop rides on its address.
@@ -204,10 +257,10 @@ export function placesFrom(
   ];
   // A picture over several kinds once, under the first of them in the arrangement's order.
   const byKind = onePerPicture([...places].sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind)));
-  for (const place of byKind) {
+  const entryOf = (place: Place): AppPlace => {
     const lens = options.lenses?.find((one) => one.as === place.as && one.kinds.includes(place.kind));
     const shared = sharesItsName(place, places);
-    out.push({
+    return {
       slug: place.as,
       title: place.title,
       kind: place.kind,
@@ -216,11 +269,18 @@ export function placesFrom(
       address: placePath(place.as, shared ? kindPath(schema, place.kind).slice(1) : undefined),
       stop: shared ? `#focus=aggregate:${place.kind}&in.view=${encodeURIComponent(place.as)}` : `#view=${encodeURIComponent(place.as)}`,
       ...(lens ? { lens: lens.lens } : {}),
+      ...(place.name !== undefined ? { view: place.name } : {}),
       ...(place.hidden ? { hidden: true } : {}),
       ...(opening?.to === "place" && opening.place.as === place.as && (opening.place.kind === place.kind || place.over?.includes(opening.place.kind)) ? { first: true } : {}),
-    });
-  }
-  for (const kind of kinds) {
+    };
+  };
+  for (const place of byKind) if (!ordered.some((view) => samePicture(view, place))) out.push(entryOf(place));
+  for (const entry of arranged) {
+    if (entry.view) {
+      out.push(entryOf(entry.view));
+      continue;
+    }
+    const kind = entry.kind;
     out.push({
       slug: kindPath(schema, kind).slice(1),
       title: pluralLabel(schema, kind),

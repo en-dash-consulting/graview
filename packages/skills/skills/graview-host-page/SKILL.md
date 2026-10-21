@@ -121,6 +121,20 @@ same `draftView`, `onDrawn` and `setDraftView`. A framed guest view holds
 the attribute back until it has drawn, or until `limits.readyMs` passes.
 Writing the view itself is `graview-worker-view`.
 
+## A view the host keeps, in the places
+
+The declaration names a kept view as `view:<its manifest name>` in
+`pages.order`, `pages.first` and `pages.primary`; the page lists it among
+the lists where it is ordered once `registerWorkerView` has registered it
+under that name. The host knows its views and the declaration does not, so
+it hands their manifests (`HostView`: `name`, `title`, `attach`) as
+`views` to `editDocument` (a title resolves: `"To do"` is written
+`view:to-do`), `compileDocument` (a name it does not keep is a warning;
+unsaid, a note) and `placesOf(app, { views })` (each listed with `view`).
+The place menu's Hide on a kind's list reaches `keptViews.lens` as
+`{ op: "set-lens-hidden", title: "<kind>", hidden }`: written into
+`pages.hide`, as any declared lens's is.
+
 ## Pictures of places, with no product
 
 `graview preview <document.json>` serves the store and Graview's own faces

@@ -33,8 +33,8 @@ import {
   type FieldType,
   type GraviewDocument,
 } from "./schema.js";
-import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES, unknownLensOption } from "../places.js";
-import { placeSlug, type KindList } from "../views/types.js";
+import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES, unknownLensOption, viewReference } from "../places.js";
+import { placeSlug, VIEW_REFERENCE, type HostView, type KindList } from "../views/types.js";
 import { documentListFields, kindListFindings, kindListWords, listGroup, listSort, sortTypeOfDocumentField } from "../kind-list.js";
 import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
@@ -91,6 +91,13 @@ export type EditOutcome =
 export interface EditOptions {
   /** Web fonts the host serves itself, beyond `DOCUMENT_FONTS`: what `compileDocument(…, { fonts })` is told, so an edit takes what a compile would. */
   readonly fonts?: readonly string[];
+  /**
+   * The views the host keeps (`HostView`; a script view's manifest is one):
+   * what `arrange-pages` may name in `order`, `first` and `primary` — by
+   * its manifest name or its title, written as `view:<name>`. Unsaid, only
+   * `view:<name>` names one, taken on the host's word.
+   */
+  readonly views?: readonly HostView[];
 }
 
 /** The ops, for tool schemas and the guide. */
@@ -248,7 +255,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "arrange-pages": z
       .object({
         op: z.literal("arrange-pages"),
-        order: z.union([z.array(kindName).max(40), z.null()]).optional(),
+        // A kind, or a view the host keeps: `view:<its name>`, or its title where the host says its views.
+        order: z.union([z.array(z.string().min(1).max(80)).max(40), z.null()]).optional(),
         hide: z.union([z.array(kindName).max(40), z.null()]).optional(),
         first: z.union([z.string().min(1).max(80), z.null()]).optional(),
         primary: z.union([z.array(z.string().min(1).max(80)).max(40), z.null()]).optional(),
@@ -1126,6 +1134,9 @@ class Editor {
    * the page list or the home's gallery. A lens a custom home links to.
    */
   private setLensHidden(i: number, e: Doc) {
+    // A KIND'S LIST, where no lens has the title: kept off the bar's places and the front page (`pages.hide`), still at its address.
+    const kind = e.on === undefined ? this.listNamed(e.title) : undefined;
+    if (kind !== undefined) return this.setListHidden(i, kind, e.hidden);
     const index = this.lensIndex(i, e.title, e.on);
     if (index < 0) return;
     const lens: Doc = this.doc.lenses[index];
@@ -1139,6 +1150,34 @@ class Editor {
     else delete lens["hidden"];
     if (was === e.hidden) this.said.push(e.hidden ? `The lens "${title}" was already kept off the lists.` : `The lens "${title}" was already listed.`);
     else this.said.push(e.hidden ? `The lens "${title}" is kept off the bar and the page list; a link or navigate still reaches it.` : `The lens "${title}" is listed on the bar and the page list again.`);
+  }
+
+  /** The kind whose list a title names — the kind's name or its plural — where no lens is called that. */
+  private listNamed(title: string): string | undefined {
+    const lenses: Doc[] = this.doc.lenses ?? [];
+    if (lenses.some((lens) => isObject(lens) && typeof lens["title"] === "string" && placeSlug(lens["title"]) === placeSlug(title))) return undefined;
+    return Object.keys(this.doc.kinds).find((kind) => kind === title || placeSlug(pluralWords(this.doc, kind)) === placeSlug(title));
+  }
+
+  /** A kind's list kept off the bar's places and the front page, or put back on them. */
+  private setListHidden(i: number, kind: string, hidden: boolean) {
+    const plural = pluralWords(this.doc, kind);
+    const primary: readonly string[] = Array.isArray(this.doc.pages?.primary) ? this.doc.pages.primary : [];
+    if (hidden && primary.some((word) => word === kind || placeSlug(word) === placeSlug(plural))) {
+      return this.fail(i, "hidden", `pages.primary stands the list of ${plural} on the bar, so it cannot be kept off the lists`, 'take it out of "primary" with arrange-pages first');
+    }
+    const pages = (this.doc.pages ??= {});
+    const was: readonly string[] = Array.isArray(pages.hide) ? pages.hide : [];
+    if (was.includes(kind) === hidden) {
+      if (Object.keys(pages).length === 0) delete this.doc.pages;
+      this.said.push(hidden ? `The list of ${plural} was already kept off the lists.` : `The list of ${plural} was already listed.`);
+      return;
+    }
+    const hide = hidden ? [...was, kind] : was.filter((one) => one !== kind);
+    if (hide.length > 0) pages.hide = hide;
+    else delete pages.hide;
+    if (Object.keys(pages).length === 0) delete this.doc.pages;
+    this.said.push(hidden ? `The list of ${plural} is kept off the bar's places and the front page; its address and the links to it still reach it.` : `The list of ${plural} is listed on the bar's places and the front page again.`);
   }
 
   private removeLens(i: number, e: Doc) {
@@ -1169,22 +1208,39 @@ class Editor {
         if (!offered.includes(key)) return this.fail(i, `filters.${kind}.${n}`, `${kind} cannot be filtered by "${key}"`, `name one of ${offered.join(", ")}`);
       }
     }
-    for (const [n, word] of (e.primary ?? []).entries()) {
-      if (typeof word !== "string" || !this.opens(word) || word.trim().toLowerCase() === "home") {
-        const titles = (this.doc.lenses ?? []).flatMap((lens: Doc) => (isObject(lens) && typeof lens["title"] === "string" ? [`"${lens["title"]}"`] : []));
-        return this.fail(i, `primary.${n}`, `"${word}" is not a kind or a place to stand on the bar (Home always does)`, `name a kind (${Object.keys(this.doc.kinds).join(", ")}) or a place (${titles.join(", ") || "none is declared"})`);
-      }
-    }
+    const titles = (this.doc.lenses ?? []).flatMap((lens: Doc) => (isObject(lens) && typeof lens["title"] === "string" ? [`"${lens["title"]}"`] : []));
     const kinds = Object.keys(this.doc.kinds);
-    for (const part of ["order", "hide"] as const) {
-      for (const [n, kind] of (e[part] ?? []).entries()) {
-        if (!kinds.includes(kind)) return this.fail(i, `${part}.${n}`, `"${kind}" is not a kind this app has; it has ${kinds.join(", ")}`);
-        if (e[part].indexOf(kind) !== n) return this.fail(i, `${part}.${n}`, `"${kind}" is named twice`);
+    // A host's view is named as `view:<its name>`; by its title or name too where the host says its views (`EditOptions.views`).
+    const viewsSaid = this.viewsSaid();
+    const primary: string[] = [];
+    for (const [n, word] of (e.primary ?? []).entries()) {
+      if (typeof word === "string" && this.opens(word) && word.trim().toLowerCase() !== "home") {
+        primary.push(word);
+        continue;
       }
+      const view = typeof word === "string" ? this.viewNamed(i, `primary.${n}`, word) : undefined;
+      if (view === null) return;
+      if (view === undefined) return this.fail(i, `primary.${n}`, `"${word}" is not a kind or a place to stand on the bar (Home always does)`, `name a kind (${kinds.join(", ")}), a place (${titles.join(", ") || "none is declared"}) or ${viewsSaid}`);
+      primary.push(view);
     }
+    const order: string[] = [];
+    for (const [n, word] of (e.order ?? []).entries()) {
+      const view = kinds.includes(word) ? word : this.viewNamed(i, `order.${n}`, word);
+      if (view === null) return;
+      if (view === undefined) return this.fail(i, `order.${n}`, `"${word}" is not a kind this app has, nor a view its host keeps; it has ${kinds.join(", ")}`, `name a kind or ${viewsSaid}`);
+      if (order.includes(view)) return this.fail(i, `order.${n}`, `"${word}" is named twice`);
+      order.push(view);
+    }
+    for (const [n, kind] of (e.hide ?? []).entries()) {
+      if (!kinds.includes(kind)) return this.fail(i, `hide.${n}`, `"${kind}" is not a kind this app has; it has ${kinds.join(", ")}`);
+      if (e.hide.indexOf(kind) !== n) return this.fail(i, `hide.${n}`, `"${kind}" is named twice`);
+    }
+    let first: string | null | undefined = e.first;
     if (typeof e.first === "string" && !this.opens(e.first)) {
-      const titles = (this.doc.lenses ?? []).flatMap((lens: Doc) => (isObject(lens) && typeof lens["title"] === "string" ? [`"${lens["title"]}"`] : []));
-      return this.fail(i, "first", `"${e.first}" is not a place, a kind or "home"`, `name a place (${titles.join(", ") || "none is declared"}), a kind (${kinds.join(", ")}) or "home"`);
+      const view = this.viewNamed(i, "first", e.first);
+      if (view === null) return;
+      if (view === undefined) return this.fail(i, "first", `"${e.first}" is not a place, a kind, a view its host keeps or "home"`, `name a place (${titles.join(", ") || "none is declared"}), a kind (${kinds.join(", ")}), ${viewsSaid} or "home"`);
+      first = view;
     }
     const pages = (this.doc.pages ??= {});
     const said: string[] = [];
@@ -1193,17 +1249,18 @@ class Editor {
         delete pages.order;
         said.push("the kinds go back to the order they were declared in");
       } else {
-        pages.order = [...e.order];
-        said.push(`${listOf(e.order.map((k: string) => pluralWords(this.doc, k)))} come first, in that order`);
+        pages.order = order;
+        const one = order.length === 1 && viewReference(order[0]!) !== undefined;
+        said.push(`${listOf(order.map((word) => (viewReference(word) !== undefined ? this.viewWords(word) : pluralWords(this.doc, word))))} ${one ? "comes first" : "come first, in that order"}`);
       }
     }
     if (e.hide !== undefined) {
       if (e.hide === null || e.hide.length === 0) {
         delete pages.hide;
-        said.push("the front page shows every kind");
+        said.push("the places and the front page show every kind");
       } else {
         pages.hide = [...e.hide];
-        said.push(`the front page leaves off ${listOf(e.hide.map((k: string) => pluralWords(this.doc, k)))}`);
+        said.push(`the places and the front page leave off ${listOf(e.hide.map((k: string) => pluralWords(this.doc, k)))}`);
       }
     }
     if (e.first !== undefined) {
@@ -1212,8 +1269,8 @@ class Editor {
         else pages.first = e.first;
         said.push("the app opens at its home");
       } else {
-        pages.first = e.first;
-        said.push(`the app opens on "${e.first}"`);
+        pages.first = first;
+        said.push(`the app opens on ${viewReference(first!) !== undefined ? this.viewWords(first!) : `"${first}"`}`);
       }
     }
     if (e.primary !== undefined) {
@@ -1221,8 +1278,8 @@ class Editor {
         delete pages.primary;
         said.push("the bar stands up the main kinds and their pictures");
       } else {
-        pages.primary = [...e.primary];
-        said.push(`the bar stands up ${listOf(e.primary.map((word: string) => `"${word}"`))} beside Home`);
+        pages.primary = primary;
+        said.push(`the bar stands up ${listOf(primary.map((word: string) => (viewReference(word) !== undefined ? this.viewWords(word) : `"${word}"`)))} beside Home`);
       }
     }
     // What the bar's switch calls the two faces (FR-137); the scene's address stays /places/overview.
@@ -1359,6 +1416,44 @@ class Editor {
   }
 
   /** Whether `first` names something the app can open on: home, a kind or its plural, a titled lens. */
+  /**
+   * A HOST'S VIEW, NAMED IN THE ARRANGEMENT: `view:<its manifest name>`,
+   * or — where the host says its views (`EditOptions.views`) — its title
+   * or name, written as `view:<name>`. Undefined for a word that is no
+   * view; null once it is refused.
+   */
+  private viewNamed(i: number, path: string, word: string): string | null | undefined {
+    const name = viewReference(word.trim());
+    const views = this.options.views?.filter((view) => view.attach !== "home" && view.cardinality !== "one" && Boolean(view.title));
+    if (!views) {
+      if (name === undefined) return undefined;
+      // On the host's word: drawn where it is named once the host registers it (`graview check` says so).
+      this.pending.add(name);
+      return VIEW_REFERENCE + name;
+    }
+    const view = name !== undefined ? views.find((one) => one.name === name) : (views.find((one) => one.title === word.trim() || one.name === word.trim()) ?? views.find((one) => placeSlug(one.title!) === placeSlug(word)));
+    if (view) return VIEW_REFERENCE + view.name;
+    if (name === undefined) return undefined;
+    return (this.fail(i, path, `the host keeps no view named "${name}"`, `name one of ${views.map((one) => `"${VIEW_REFERENCE}${one.name}" (${one.title})`).join(", ") || "none: the host keeps no picture of a kind"}`), null);
+  }
+
+  /** The views this edit names on the host's word, said once they are written. */
+  private readonly pending = new Set<string>();
+
+  /** What a fix says a view is named by. */
+  private viewsSaid(): string {
+    const views = this.options.views?.filter((view) => view.attach !== "home" && view.cardinality !== "one" && Boolean(view.title));
+    if (!views) return `a view its host keeps, as "${VIEW_REFERENCE}<its name>"`;
+    return views.length > 0 ? `a view its host keeps (${views.map((one) => `"${one.title}"`).join(", ")})` : "a view (its host keeps none)";
+  }
+
+  /** A host's view in a sentence: its title, where the host said it. */
+  private viewWords(word: string): string {
+    const name = viewReference(word)!;
+    const title = this.options.views?.find((view) => view.name === name)?.title;
+    return `the view "${title ?? name}"${this.pending.has(name) ? " (once the host registers it)" : ""}`;
+  }
+
   private opens(first: string): boolean {
     const word = first.trim();
     if (word.toLowerCase() === "home" || word === "/") return true;

@@ -112,7 +112,7 @@ export const WIRE = [
   { method: "GET", path: "/graview/who", says: "who is here right now" },
   { method: "POST", path: "/graview/leave", says: "say you have gone — only ever yourself" },
   { method: "GET", path: SUBSCRIPTIONS_PATH, says: "the asking seat's own subscriptions (Notify me); POST `{ add: { when, alsoMine? } }` keeps one for the seat's person, `{ remove: id }` takes one of theirs away; 400 with a sentence when it could never be told anything, 403 for a seat with no id" },
-  { method: "GET", path: VIEWS_PATH, says: "the views the asking seat may tidy from the place menu: what is hidden, what was deleted in the last thirty days, and `may`; POST `{ hide | show | remove | restore: name }` for a script view the host keeps, `{ lens: set-lens-hidden | remove-lens }` for a declared lens where the host writes the declaration; answered with the state after it, 403 with a sentence where the seat may not" },
+  { method: "GET", path: VIEWS_PATH, says: "the views the asking seat may tidy from the place menu: what is hidden, what was deleted in the last thirty days, and `may`; POST `{ hide | show | remove | restore: name }` for a script view the host keeps, `{ lens: set-lens-hidden | remove-lens }` for a declared lens (set-lens-hidden on a kind for its list) where the host writes the declaration; answered with the state after it, 403 with a sentence where the seat may not" },
   { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence, declaration and reload; 426 to a plain request" },
 ] as const;
 
