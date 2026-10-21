@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 3288,
+  "gzipped": 1195,
+  "note": "Raised when a page came to say where you are (Roadmap gv-pages-where-am-i): each derived list, record and picture opens with a trail (`PageTrail`, a nav called \"You are here\": the section `registry.section` names, the kind's list, the page itself current), and `usePlaceHere()` and `placeHere()` say the same to a design's own shell. Measured at 2_488_874 / 842_227 against a budget of 2_485_586 / 841_032: 3_288 / 1_195 more."
+}

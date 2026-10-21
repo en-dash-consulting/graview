@@ -166,7 +166,7 @@ const REASONS: readonly HeadlessFailureReason[] = ["manifest", "source", "refuse
 /** A transcript as an isolate said it, held to its shape: anything else is no transcript. */
 function transcriptOf(value: unknown): HeadlessTranscript | undefined {
   if (!isRecord(value)) return undefined;
-  const { renders, css, asked, went, ms, logs, messages } = value;
+  const { renders, css, asked, went, ms, logs, messages, gestures } = value;
   if (!Array.isArray(renders) || !renders.every(Array.isArray) || !Array.isArray(asked) || !Array.isArray(went) || !Array.isArray(logs)) return undefined;
   if (typeof ms !== "number" || typeof messages !== "number" || (css !== undefined && typeof css !== "string")) return undefined;
   return {
@@ -183,7 +183,23 @@ function transcriptOf(value: unknown): HeadlessTranscript | undefined {
     ms,
     logs: logs.map(String).slice(0, 50),
     messages,
+    ...(Array.isArray(gestures) ? { gestures: gestures.filter(isRecord).slice(0, 32).map((one) => ({ event: String(one["event"]), selector: String(one["selector"]) })) } : {}),
   };
+}
+
+/**
+ * WHAT ITS GESTURES NEED (0.1.42): a view that listens for a wheel, a drag
+ * or a pinch hears one only where its manifest says `gestures: true`; and
+ * one that says it and listens for none has nothing for the host to send.
+ */
+function gestureProblems(manifest: WorkerViewManifest, transcript: HeadlessTranscript): { at: string; says: string }[] {
+  const bound = transcript.gestures ?? [];
+  if (bound.length > 0 && manifest.gestures !== true) {
+    const said = bound.map((one) => `${one.event} on "${one.selector}"`).join(", ");
+    return [{ at: "gestures", says: `It listens for ${said}, and its manifest does not say "gestures": true: the host forwards no wheel, drag or pinch, and the page scrolls under it. Say "gestures": true in the manifest.` }];
+  }
+  if (bound.length === 0 && manifest.gestures === true) return [{ at: "gestures", says: 'Its manifest says "gestures": true, and it listens for no wheel, drag or pinch: graview.on("wheel" | "drag" | "pinch", selector, …) is where the host sends one.' }];
+  return [];
 }
 
 /** The seat a description is for, said as `describePlace` says it. */
@@ -293,7 +309,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     const known = "place" in went ? placeNamed(input.places, went.place) !== undefined || (input.lists ?? []).includes(went.place) : true;
     if (!outcome.ok && known) narrowing.push({ at: "navigate", says: outcome.says });
   }
-  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing];
+  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript)];
   const title = manifest.title ?? manifest.name;
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 
 /**
  * WHEN something is true, as a construct the framework owns rather than one

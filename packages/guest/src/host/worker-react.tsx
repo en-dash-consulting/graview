@@ -6,13 +6,21 @@ import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
 import type { GuestBrand } from "./theme.js";
 import { untilItArrives, workerChunk } from "./arrive.js";
-import type { WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits } from "./view.js";
+import type { WorkerView, WorkerViewFailure, WorkerViewLimits } from "./view.js";
+import { codeOf, type WorkerViewCode, type WorkerViewLoad } from "./code-of.js";
 
 /** A worker view as an app registers it: its manifest, its code, and how far it may go. */
 export interface WorkerViewDefinition {
   readonly manifest: WorkerViewManifest;
-  /** Its code: `{ source }`, a plain script against the `graview` global (FR-96), or a whole worker script. */
-  readonly worker: WorkerViewCode;
+  /**
+   * Its code: `{ source }`, a plain script against the `graview` global
+   * (FR-96), or a whole worker script — or a function answering either,
+   * asked only when the view is first drawn (Roadmap f-heavy-apps-fast):
+   * the manifest is what registers it, as a place and in every menu, so a
+   * host with many views fetches only the code of the ones a person opens.
+   * Code that never arrives is refused `source` and the kind's face drawn.
+   */
+  readonly worker: WorkerViewCode | WorkerViewLoad;
   readonly limits?: WorkerViewLimits;
   /** Who made it, said under it ("Made by Claude for Nick"). */
   readonly author?: string;
@@ -102,6 +110,8 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
     if (!element) return;
     /* Where a record's file is fetched: the definition's word, else where the page's host serves its files (0.1.36). */
     const file = definition.file ?? (latest.current.hostFiles?.src ? (href: string) => latest.current.hostFiles?.src?.(href) ?? href : undefined);
+    /* Code fetched when drawn: asked now, beside the worker's host, not after it (the host judges what arrives, and says so where it does not). */
+    if (typeof definition.worker === "function") void codeOf(definition.worker).catch(() => undefined);
     const stop = untilItArrives(workerChunk, ({ mountWorkerView }) => {
       mounted.current = mountWorkerView(element, {
         manifest: definition.manifest,

@@ -17,7 +17,7 @@ import type { ResolvedBlock } from "./blocks.js";
 import { resolveFor, type ResolveForOptions } from "./resolve-for.js";
 import { computedValues, withComputed, type ComputedRecord, type PlainComputed } from "./computed-values.js";
 import { computedOf } from "./computed.js";
-import { isInlineSvg, markHref } from "../theme/marks.js";
+import { isInlineSvg, logoOf, markHref } from "../theme/marks.js";
 import { markdownWords } from "../excerpt-of.js";
 
 /*
@@ -194,7 +194,8 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     if (at.kind === null) {
       const brand = app.brand;
       const name = brand?.name ?? app.name;
-      const logo = brand?.logo && markHref(brand.logo) ? brand.logo : undefined;
+      const light = logoOf(brand)?.light;
+      const logo = light && markHref(light) ? light : undefined;
       masthead = {
         name,
         ...(brand?.subtitle ? { subtitle: brand.subtitle } : {}),

@@ -8,8 +8,13 @@ import { createContext, useContext, useLayoutEffect, useSyncExternalStore } from
  * `"places"` is too: a shell with a rail of its own keeps the bar — the
  * switch, Find, the standing, who is here, the person — and the bar names
  * no place (`{ without: ["places"] }`).
+ *
+ * `"trail"` is the line that says where a page is ("Plan › Steps ›" over
+ * "Consolidate"): a derived page draws it at its head, a shell that places
+ * `<PageTrail>` says where it goes instead, and `{ without: ["trail"] }`
+ * goes without it.
  */
-export type FaceControl = "find" | "undo" | "bar" | "places";
+export type FaceControl = "find" | "undo" | "bar" | "places" | "trail";
 
 export interface Placed {
   readonly count: (control: FaceControl) => number;

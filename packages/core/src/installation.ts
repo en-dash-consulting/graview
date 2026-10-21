@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import { defineMutation } from "./mutations/define-mutation.js";
 import { nodeRef } from "./mutations/node-ref.js";

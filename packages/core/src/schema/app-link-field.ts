@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import { APP_ADDRESS, markAppLink } from "./app-link.js";
 
 /*

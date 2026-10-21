@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1197,
+  "gzipped": 356,
+  "changeset": "importing-the-framework-builds-nothing-it-does-not-use.md",
+  "note": "Raised when the document format came to build its shapes on first use (Roadmap f-smaller-worker): each exported shape is `z.lazy` over the set built the first time one parses, which brings zod/mini's lazy schema and fifteen small wrappers up front, so a Worker that imports the format and never reads a document builds none of it. Measured at 588_208 / 204_202 against 587_011 / 203_846 minified and gzipped."
+}

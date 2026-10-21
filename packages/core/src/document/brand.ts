@@ -3,6 +3,7 @@ import { documentSchemes } from "../theme/accent.js";
 import { stackOf } from "../theme/fonts.js";
 import type { Brand } from "../theme/types.js";
 import { warning, type Finding } from "./findings.js";
+import { logoParts } from "./logo.js";
 import type { GraviewDocument } from "./schema.js";
 
 /*
@@ -21,7 +22,7 @@ export function brandOf(document: GraviewDocument, findings: Finding[]): Brand {
   // A color that cannot be read is not a reason to refuse an app: it wears the default colors and says why.
   // The checker says which pair, its ratio and a shade that would pass (brand-check.ts, FR-126); a page says only this.
   if (derived && !derived.ok) findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colors: ${derived.why}`, "pick a color further from orange-red, or a darker one"));
-  const logo = typeof spec.logo === "string" ? { src: spec.logo } : spec.logo;
+  const logo = logoParts(spec.logo);
   const name = spec.name ?? document.name;
   // A face is written into a style sheet, so one that could end its rule or load is left out even where the checker never ran.
   const typography = spec.typography
@@ -37,7 +38,7 @@ export function brandOf(document: GraviewDocument, findings: Finding[]): Brand {
     ...(spec.currency ? { currency: spec.currency } : {}),
     ...(spec.locale ? { locale: spec.locale } : {}),
     ...(spec.timeZone ? { timeZone: spec.timeZone } : {}),
-    ...(logo ? { logo: logo.src, logoAlt: logo.alt ?? name } : {}),
+    ...(logo ? { logo: logo.dark || logo.darkFallback === "invert" ? { light: logo.light, ...(logo.dark ? { dark: logo.dark } : { darkFallback: "invert" as const }) } : logo.light, logoAlt: logo.alt ?? name } : {}),
     ...(spec.favicon ? { favicon: spec.favicon } : {}),
     ...(document.description ? { subtitle: document.description } : {}),
     ...(typography ? { typography } : {}),

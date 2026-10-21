@@ -1,0 +1,6 @@
+{
+  "budget": "embed without the studio",
+  "minified": 987,
+  "gzipped": 318,
+  "note": "Raised when a brand's logo came to have one for each scheme: `AppMark` draws both, each marked for its scheme, and the theme's sheet hides the other's and inverts a fallback the brand asked for in the dark alone. Measured at 725_090 / 193_719 to 193_723 across runs (the chunks gzip a few bytes apart) against 724_103 / 193_406: 987 / 313 to 317 more."
+}

@@ -40,6 +40,7 @@ import {
   rule,
 } from "./page-typography.js";
 import { PageMain, PageTitle } from "./page-shell.js";
+import { HeadTrail } from "./place-here.js";
 import { capitalize } from "./page-typography.js";
 
 /**
@@ -489,6 +490,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     <Frame context={context}>
       <div style={{ display: "grid", gap: 12 }}>
         <header style={{ display: "grid", gap: 4 }}>
+          {/* The section the list is in, when the app named one (Roadmap gv-pages-where-am-i): nothing else stands before a kind's list. */}
+          {bare ? null : <HeadTrail context={context} />}
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", columnGap: 10, rowGap: 4, minWidth: 0 }}>
             <KindMark kind={kind} brand={brand} schema={store.schema} size={8} />
             <PageTitle context={context}>{plural}</PageTitle>

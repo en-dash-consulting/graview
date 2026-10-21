@@ -16,7 +16,8 @@
  *   graview.render(markup)   draw: a string of HTML, `graview.html`…`` or nodes
  *   graview.style(css)       the view's one stylesheet
  *   graview.on(type, selector, fn)   hear the viewer: click, input, change, keydown, toggle;
- *                            and acted, what became of an act a press or a field's save asked for
+ *                            and acted, what became of an act a press or a field's save asked for;
+ *                            wheel, drag and pinch, where the manifest says gestures: true
  *   graview.act(name, args)  ask for an act; resolves with the host's answer
  *   graview.navigate(to)     go to a record (its id), else a place by that slug, or a place or a kind's list
  *                            ({ place: slug, where: { stage: "building" }, section: "shipping-soon" })

@@ -223,7 +223,7 @@ export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitProp
  * time a view draws.
  */
 export { mountWorkerView } from "./view.js";
-export type { MountWorkerViewOptions, WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits } from "./view.js";
+export type { MountWorkerViewOptions, WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits, WorkerViewLoad } from "./view.js";
 export type { ViewRefusal } from "./open-draw.js";
 export type { OpenRefusal, OpenRefusalReason } from "./open-judge.js";
 export type { CssRefusal, CssRefusalReason } from "./css.js";

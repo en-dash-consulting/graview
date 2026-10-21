@@ -25,6 +25,7 @@ import {
   wide,
 } from "./page-typography.js";
 import { PageMain, PageTitle } from "./page-shell.js";
+import { HeadTrail } from "./place-here.js";
 import { SpecLinks } from "@graview/primitives/pages";
 
 
@@ -573,6 +574,8 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         * links two lines down.
         */}
       <header style={{ display: "grid", gap: 12 }}>
+        {/* The section the picture is in, when the app named one (Roadmap gv-pages-where-am-i). */}
+        <HeadTrail context={context} />
         <PageTitle context={context}>{place.title}</PageTitle>
         {/*
           * WHAT THE PICTURE IS, NOT WHAT ONE OF ITS MEMBERS IS: how much is

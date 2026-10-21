@@ -69,6 +69,8 @@ export interface PreviewOptions {
    * embed's `draftView`, marked as a draft. It is written nowhere.
    */
   readonly draftView?: { readonly manifest: unknown; readonly source: string };
+  /** What an open carries of the log: at most this many of the latest ops (`serveStore`'s `openTail`). The whole log by default. */
+  readonly openTail?: number;
 }
 
 export interface Preview {
@@ -214,6 +216,7 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     app: app as never,
     adapter: (options.adapter ?? createMemoryAdapter()) as never,
     ...(options.seed ? { seed: options.seed } : {}),
+    ...(options.openTail !== undefined ? { openTail: options.openTail } : {}),
     port: options.port ?? 0,
     host,
     // On loopback only this machine reaches it; any other host is refused above unless the network is said to be trusted.

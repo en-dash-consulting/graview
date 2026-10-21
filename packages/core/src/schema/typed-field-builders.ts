@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import { markTyped, PHONE } from "./typed-fields.js";
 
 /*

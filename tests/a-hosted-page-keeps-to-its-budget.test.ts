@@ -119,7 +119,10 @@ describe("a hosted page", () => {
     // 957 KB since a focused record's words came to get ground of their own (0.1.40): the band laid out by relation with a caption's room, captions leveled over a row's tallest card, a tie's words only where no caption says them, one count per district: the scene face measured 978_975 B, 1_460 more than before it (977_515). Nothing up front changed.
     // 958 KB once the focused scene's words were merged onto the two raises above: each measured alone, together 980_457 B.
     // 959 KB since the bar came to hold still at every width: the app's name read unwrapped off a ruler of its own (`nameGiven`), the row weighed with the name as it would stand on one line: the scene face measured 980_995 B, 538 more than before it (980_457).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(959 * 1024);
+    // 960 KB since a brand's logo came to have one for each scheme: the mark drawn for each, the theme's rule that hides the other scheme's and inverts a fallback asked for in the dark: the scene face measured 982_536 B, 1_541 more than before it (980_995).
+    // 960 KB since the document format came to build its shapes on first use (Roadmap f-smaller-worker): zod/mini's lazy schema and the fifteen wrappers over the shapes: the scene face measured 982_187 B, 1_192 more than before it (980_995).
+    // 961 KB once both of 0.1.42's 960 KB raises above were merged: together 983_734 B.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(961 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

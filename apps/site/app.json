@@ -131,6 +131,8 @@
         "records": { "type": "integer", "min": 0, "description": "How many records its seed holds." },
         "relations": { "type": "integer", "min": 0, "description": "How many relations its seed holds." },
         "check": { "type": "list", "of": "string", "description": "What graview check --document says about its declaration, line by line." },
+        "made": { "type": "string", "description": "How it was made, where an agent running the prompt alone is not the whole story." },
+        "face": { "type": "list", "of": "string", "description": "Its face of its own, where it has one: each file under face/, its path on the first line and the file after it." },
         "position": { "type": "integer", "required": true, "min": 0, "description": "Where recipes.json lists it." }
       },
       "glance": ["task", "records"]

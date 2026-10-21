@@ -1,4 +1,4 @@
-import { humanizeField, labelOf, weekdayAsRead, type Arrangement, type Violation } from "@graview/core";
+import { humanizeField, labelOf, logoOf, weekdayAsRead, type Arrangement, type Violation } from "@graview/core";
 import { KindFigure, useMarkup } from "@graview/primitives";
 import {
   ListPage,
@@ -158,7 +158,7 @@ const CSS = `
 function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
   const { store, brand } = context;
   useStoreTick(store);
-  const logo = useMarkup(brand?.logo);
+  const logo = useMarkup(logoOf(brand)?.light);
   const here = useLocation().pathname;
   const problems = store.violations(context.invariantContext).length;
   // Derived and narrowed by the seat: a viewer sees the roster, and the

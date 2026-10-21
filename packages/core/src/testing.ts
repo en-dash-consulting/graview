@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
-import { z } from "zod";
+import * as z from "zod";
 import { defineApp, type GraviewApp } from "./app.js";
 import { declareInstallation } from "./installation.js";
 import { bindSchema } from "./bind.js";

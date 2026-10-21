@@ -31,7 +31,7 @@ import {
 } from "@graview/core";
 import { expressionRule } from "@graview/core/document";
 import { isMarkdownField } from "@graview/core/words";
-import { z } from "zod";
+import * as z from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
 import { fieldTypeOf, lensNodeId } from "./from-declaration.js";
 

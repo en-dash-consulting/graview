@@ -17,9 +17,9 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [Working with a model](https://graview.dev/docs/agents.html): The seat, the typed tools, what a model reads, and the studio.
 - [Live demos](https://graview.dev/docs/demos.html): Every surface of the garden, running on the page, and the example apps.
 - [Packages (14)](https://graview.dev/docs/packages.html): What each ships and what each exports.
-- [Skills (26)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
+- [Skills (28)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.html): create, check, types, docs, describe, lens, figure, serve, skills.
-- [What check says (108)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
+- [What check says (110)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
 - [Releases](https://graview.dev/docs/releases.html): What came in each version, and what to know before upgrading.
 - [The garden, grown](https://graview.dev/progression.html): Sixteen live chapters, from one kind to a product.

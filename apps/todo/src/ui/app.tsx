@@ -9,6 +9,7 @@ import {
 import { AgentSeat, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
 import type { HostFiles, PresenceChannel, Principal, SubscriptionStore } from "@graview/core";
+import type { HistoryHost } from "@graview/core/history";
 import type { HostAi, ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useState } from "react";
 import example from "../data/example.json";
@@ -104,6 +105,8 @@ export interface TodoAppProps {
   readonly files?: HostFiles;
   /** Where "Notify me" is kept: the host's store (`subscriptions` on the provider). */
   readonly subscriptions?: SubscriptionStore;
+  /** What the host keeps outside the log for playback (`history` on the provider): a harness hands an archive here. */
+  readonly history?: HistoryHost;
 }
 
 export function TodoApp({
@@ -121,6 +124,7 @@ export function TodoApp({
   ai,
   files,
   subscriptions,
+  history,
 }: TodoAppProps) {
   const created = useMemo(() => store ?? createTodoUiStore(), [store]);
   const views = useMemo(() => todoViews(), []);
@@ -141,6 +145,7 @@ export function TodoApp({
       {...(presence ? { presence } : {})}
       {...(ai ? { ai } : {})}
       {...(subscriptions ? { subscriptions } : {})}
+      {...(history ? { history } : {})}
     >
       <TodoShell
         remembers={remembers}

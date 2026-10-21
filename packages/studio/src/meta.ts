@@ -1,6 +1,6 @@
 import { createSchema, defineNode, isLinkedTarget, nodeRef, type AnyMutationDefinition, type GraviewApp } from "@graview/core";
 import { FIELD_TYPES as DOCUMENT_FIELD_TYPES, renameIn, type DeclaredKinds, type NameChange } from "@graview/core/document";
-import { z } from "zod";
+import * as z from "zod";
 
 /*
  * THE DECLARATION, DECLARED.

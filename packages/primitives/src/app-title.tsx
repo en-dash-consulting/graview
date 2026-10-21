@@ -1,4 +1,4 @@
-import { emojiMark, isInlineSvg, markHref, svgProblem, type Brand } from "@graview/core";
+import { emojiMark, isInlineSvg, logoOf, markHref, svgProblem, type Brand } from "@graview/core";
 import { useEffect, type CSSProperties } from "react";
 import { useMarkup } from "./markup.js";
 
@@ -18,18 +18,46 @@ import { useMarkup } from "./markup.js";
 
 /** The brand's mark alone, `size` pixels tall — its logo, or with none its page icon's emoji; nothing when there is none, or none that may be drawn. */
 export function AppMark({ brand, size = 22 }: { readonly brand: Brand | undefined; readonly size?: number }) {
-  const logo = brand?.logo;
-  const inline = logo !== undefined && isInlineSvg(logo) && svgProblem(logo) === null ? logo : undefined;
-  const markup = useMarkup(inline);
+  const logo = logoOf(brand);
+  const light = drawable(logo?.light);
+  // A dark one only beside a light one that can be drawn: the light one is what every scheme without its own draws.
+  const dark = light ? drawable(logo?.dark) : undefined;
+  const lightMarkup = useMarkup(light !== undefined && isInlineSvg(light) ? light : undefined);
+  const darkMarkup = useMarkup(dark !== undefined && isInlineSvg(dark) ? dark : undefined);
   const box: CSSProperties = { display: "inline-flex", flex: "0 0 auto", height: size, color: "var(--graview-accent)" };
   // No logo: the page icon's emoji stands in, drawn as text and said by the name beside it.
   const emoji = emojiMark(brand);
   if (emoji) return <span className="graview-logo graview-emoji-mark" data-testid="app-mark" aria-hidden style={{ ...box, alignItems: "center", fontSize: `${(size * 0.86) / 16}rem`, lineHeight: 1 }}>{emoji}</span>;
-  if (!logo || !markHref(logo)) return null;
+  if (!light) return null;
   const alt = brand?.logoAlt ?? brand?.name ?? "";
   const said = alt !== "" && alt !== brand?.name;
-  if (inline) return <span className="graview-logo" data-testid="app-mark" style={box} {...(said ? { role: "img", "aria-label": alt } : { "aria-hidden": true })} dangerouslySetInnerHTML={markup} />;
-  return <img className="graview-logo" data-testid="app-mark" src={logo} alt={said ? alt : ""} style={{ ...box, width: "auto" }} />;
+  const named = said ? { role: "img", "aria-label": alt } : { "aria-hidden": true };
+  /*
+   * ONE FOR EACH SCHEME: both are in the page, and the theme's sheet —
+   * written for the scheme the page is in — hides the other's
+   * (`[data-graview-scheme-only]`, theme.ts), so the mark is right however
+   * the scheme was chosen and switches with it.
+   */
+  if (dark) {
+    const face = (mark: string, markup: ReturnType<typeof useMarkup>, scheme: "light" | "dark") =>
+      isInlineSvg(mark) ? <span className="graview-logo-face" data-graview-scheme-only={scheme} dangerouslySetInnerHTML={markup} /> : <img className="graview-logo-face" data-graview-scheme-only={scheme} src={mark} alt="" />;
+    return (
+      <span className="graview-logo" data-testid="app-mark" style={box} {...named}>
+        {face(light, lightMarkup, "light")}
+        {face(dark, darkMarkup, "dark")}
+      </span>
+    );
+  }
+  // Only a light one, and the brand asked: in the dark scheme alone it is inverted and screened onto the ground (theme.ts).
+  const fallback = logo?.darkFallback === "invert" ? { "data-graview-logo-fallback": "invert" } : {};
+  if (isInlineSvg(light)) return <span className="graview-logo" data-testid="app-mark" style={box} {...fallback} {...named} dangerouslySetInnerHTML={lightMarkup} />;
+  return <img className="graview-logo" data-testid="app-mark" src={light} alt={said ? alt : ""} {...fallback} style={{ ...box, width: "auto" }} />;
+}
+
+/** A mark that may be drawn: inline SVG that could not act, or an address an image is drawn from. */
+function drawable(mark: string | undefined): string | undefined {
+  if (!mark || !markHref(mark)) return undefined;
+  return isInlineSvg(mark) && svgProblem(mark) !== null ? undefined : mark;
 }
 
 /**

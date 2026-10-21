@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 482,
+  "gzipped": 192,
+  "note": "Raised when Undo and Find came to stand at a design bar's own height: the Find box's look moved from its style attribute to rules behind `:where` (`.graview-find`, `.graview-find-box`, `--graview-control-height`) a design's one class outweighs, with `className` and `size` on `PageFind`. Measured at 624_190 / 229_659 against 623_708 / 229_467: 482 / 192 more."
+}

@@ -348,7 +348,16 @@ ${/* Headings take the display face when a brand supplies one,
 h1, h2, h3, h4 { font-family: var(--graview-font-display); font-weight: var(--graview-weight-display); }
 h1, h2 { letter-spacing: ${DISPLAY_TRACKING}; }
 ${/* The app's mark (FR-124) is as tall as the box it is drawn in; its own width follows. */ ""}
-.graview-logo > svg { display: block; height: 100%; width: auto; }
+.graview-logo > svg, .graview-logo-face > svg { display: block; height: 100%; width: auto; }
+.graview-logo-face { display: inline-flex; height: 100%; width: auto; }
+${/*
+ * A LOGO FOR EACH SCHEME: this sheet is written for one, so it hides the
+ * other's; and a light logo the brand asked to invert (`darkFallback`) is
+ * inverted and screened onto the ground in the dark scheme alone — a JPG on
+ * white is no longer a white slab there.
+ */ ""}
+${root} [data-graview-scheme-only="${scheme === "dark" ? "light" : "dark"}"] { display: none; }
+${scheme === "dark" ? `${root} [data-graview-logo-fallback="invert"] { filter: invert(1) hue-rotate(180deg); mix-blend-mode: screen; }` : ""}
 code, kbd, samp { font-family: var(--graview-font-mono); }
 
 ${/*

@@ -682,7 +682,7 @@ async function opening<S extends AnySchema>(
 
   let seen = state.log.at(-1)?.seq ?? (state.horizon ?? 0) - 1;
   /** Every field's revision as the server's ops this client has say it (FR-05). */
-  let revisions = FieldRevisions.of(state.log);
+  let revisions = FieldRevisions.of(state.log, { horizon: state.horizon ?? 0 });
 
   /*
    * PRESENCE, beside the log and never in it. `mine` is the last word this
@@ -825,7 +825,7 @@ async function opening<S extends AnySchema>(
           provisional.clear();
           for (const op of adopted.pending) provisional.add(op.batch);
           seen = next.log.at(-1)?.seq ?? (next.horizon ?? 0) - 1;
-          revisions = FieldRevisions.of(next.log);
+          revisions = FieldRevisions.of(next.log, { horizon: next.horizon ?? 0 });
           tally.resyncs++;
           for (const batch of answered) tellAnswered(batch, next.log);
         })

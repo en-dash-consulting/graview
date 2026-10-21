@@ -16,7 +16,7 @@
 import { RemoteRootElement, remoteId, updateRemoteElementAttribute } from "@remote-dom/core/elements";
 import type { Unsent } from "../channel.js";
 import { HTML_ELEMENTS, UNNAMED_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
-import { navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestDroppedFile, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
+import { GUEST_GESTURES, navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestDroppedFile, type GuestGesture, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
 import type { Hardening } from "./harden.js";
 import { createListenerLedger } from "./listeners.js";
 
@@ -53,7 +53,39 @@ export interface ViewEvent {
    * when it was refused (FR-191).
    */
   readonly pressed?: GuestPressed;
+  /**
+   * A GESTURE (0.1.42), for a view whose manifest says `gestures: true`:
+   * on `wheel`, `drag` and `pinch`, where the pointer is (`x`, `y`, CSS
+   * pixels from the top left of `element`) and `element`'s size (`width`,
+   * `height`). On `wheel`, `deltaX`, `deltaY` and `deltaMode`, summed over
+   * the frame, and `ctrlKey` and `metaKey`. On `drag`, `phase` (`start`,
+   * `move`, `end`), `pointerId`, `button`, `pressure` and `dx`, `dy` since
+   * the view last heard of that pointer. On `pinch`, `phase` (`start`,
+   * `change`, `end`), `scale` — the factor since the view last heard — and
+   * `rotation` in degrees: Safari's gesture, or a trackpad's pinch (a wheel
+   * with Control held) where the view listens for `pinch`.
+   */
+  readonly x?: number;
+  readonly y?: number;
+  readonly width?: number;
+  readonly height?: number;
+  readonly deltaX?: number;
+  readonly deltaY?: number;
+  readonly deltaMode?: number;
+  readonly ctrlKey?: boolean;
+  readonly metaKey?: boolean;
+  readonly phase?: "start" | "move" | "change" | "end";
+  readonly pointerId?: number;
+  readonly button?: number;
+  readonly pressure?: number;
+  readonly dx?: number;
+  readonly dy?: number;
+  readonly scale?: number;
+  readonly rotation?: number;
 }
+
+/** What the host tells of an event, beyond its name and target: each copied onto the view's event when it is said. */
+const SAID = ["value", "checked", "key", "pressed", "files", "refused", "x", "y", "width", "height", "deltaX", "deltaY", "deltaMode", "ctrlKey", "metaKey", "phase", "pointerId", "button", "pressure", "dx", "dy", "scale", "rotation"] as const;
 
 export type Drawable = string | Html | Node | readonly (string | Html | Node)[] | null | undefined;
 
@@ -157,7 +189,9 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     const target = byId(message.target);
     if (!target) return;
     const event = new DomEvent(message.event, { bubbles: true });
-    for (const key of ["value", "checked", "key", "pressed", "files", "refused"] as const) if (message[key] !== undefined) Object.defineProperty(event, key, { value: message[key], enumerable: true });
+    const said: Record<string, unknown> = {};
+    for (const key of SAID) if (message[key] !== undefined) said[key] = message[key];
+    for (const key of Object.keys(said)) Object.defineProperty(event, key, { value: said[key], enumerable: true });
     target.dispatchEvent(event);
     for (const one of delegated) {
       if (one.type !== message.event) continue;
@@ -169,7 +203,7 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
       }
       for (let at: Element | null = target; at && at !== (root as unknown as Element); at = at.parentNode as Element | null) {
         if (!matching.has(at)) continue;
-        one.listener(Object.freeze({ type: message.event, target, element: at, ...(message.value !== undefined ? { value: message.value } : {}), ...(message.checked !== undefined ? { checked: message.checked } : {}), ...(message.key !== undefined ? { key: message.key } : {}), ...(message.pressed !== undefined ? { pressed: message.pressed } : {}), ...(message.files !== undefined ? { files: message.files } : {}), ...(message.refused !== undefined ? { refused: message.refused } : {}) }));
+        one.listener(Object.freeze({ type: message.event, target, element: at, ...said }));
         break;
       }
     }
@@ -326,6 +360,29 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
 
   let styled: string | undefined;
 
+  /*
+   * WHERE IT LISTENS FOR A GESTURE (0.1.42): every wheel, drag and pinch
+   * selector, said to the host as a whole once a microtask after it moves,
+   * so the host takes a wheel from the page only over what the view hears.
+   */
+  const gestures = new Set<string>(GUEST_GESTURES);
+  let gesturesSaid = "[]";
+  let gesturesDue = false;
+  const sayGestures = () => {
+    if (gesturesDue) return;
+    gesturesDue = true;
+    io.microtask(() => {
+      gesturesDue = false;
+      const bound = [...new Map([...delegated].filter((one) => gestures.has(one.type)).map((one) => [`${one.type} ${one.selector}`, { event: one.type as GuestGesture, selector: one.selector }])).entries()]
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([, one]) => one);
+      const said = JSON.stringify(bound);
+      if (said === gesturesSaid) return;
+      gesturesSaid = said;
+      io.send({ type: "gestures", bound });
+    });
+  };
+
   const view: GraviewView = Object.freeze({
     get props() {
       return current;
@@ -349,7 +406,11 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
         heardOf.add(type);
         io.send({ type: "hears", events: [type] });
       }
-      return () => void delegated.delete(one);
+      if (gestures.has(type)) sayGestures();
+      return () => {
+        delegated.delete(one);
+        if (gestures.has(type)) sayGestures();
+      };
     },
     act: (name: string, args: ActArgs = {}) => io.act(name, args),
     navigate(to: GuestNavigateTo) {

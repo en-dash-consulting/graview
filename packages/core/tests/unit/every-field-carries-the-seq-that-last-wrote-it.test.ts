@@ -78,4 +78,34 @@ describe("field revisions", () => {
     ]);
     expect(revisions.baseFor(made.ops, writtenBy(earlier.ops))).toEqual([{ node: "t1", field: "label", rev: 0 }]);
   });
+
+  /*
+   * A LOG THAT BEGINS AT A HORIZON (FR-23, Roadmap f-heavy-apps-fast): a
+   * page opened on the snapshot and a short tail knows nothing of a field
+   * written before the tail, only that it was written before it. It is at
+   * the seq before the horizon, and the server, holding the whole log,
+   * takes a claim at or after a field's revision as seen: only a write
+   * since the claim is stale.
+   */
+  it("puts a field no op of a tail wrote at the seq before the tail, and takes a claim at or after a field's revision as seen", () => {
+    const store = new Store({ schema, mutations: [add, rename, annotate], snapshot: seed });
+    for (const label of ["A", "B", "C"]) store.apply({ name: "rename", args: { id: "t1", label } });
+    store.apply({ name: "annotate", args: { id: "t1", note: "Soon" } });
+    const whole = FieldRevisions.of(store.log.all());
+    const tail = FieldRevisions.of(store.log.all().slice(3), { horizon: 3 });
+    // The label was last written at seq 2, before the tail: the tail says "before 3".
+    expect(tail.of("t1", "label")).toBe(2);
+    expect(tail.of("t1", "note")).toBe(3);
+    expect(tail.of("t1", "nothing")).toBe(2);
+    const claims = [
+      { node: "t1", field: "label", rev: tail.of("t1", "label") },
+      { node: "t1", field: "note", rev: tail.of("t1", "note") },
+    ];
+    // The whole log does not call the tail's claims stale; a write since a claim is.
+    expect(whole.stale(claims)).toEqual([]);
+    expect(whole.stale([{ node: "t1", field: "label", rev: 1 }])).toEqual([{ node: "t1", field: "label", rev: 1 }]);
+    store.apply({ name: "rename", args: { id: "t1", label: "D" } });
+    expect(FieldRevisions.of(store.log.all()).stale(claims)).toEqual([claims[0]]);
+    expect(FieldRevisions.of([], { horizon: 0 }).of("t1", "label")).toBe(NEVER_WRITTEN);
+  });
 });

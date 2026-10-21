@@ -18,10 +18,11 @@ import type { GoTo } from "@graview/react/provider";
 import type { GuestPictureHand } from "./pictures.js";
 import type { GuestMedia } from "./media.js";
 import type { GuestDrops } from "./drop.js";
+import type { GuestGestures } from "./gestures.js";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
-/** A worker view's code: its own source, which the host makes a worker of, or a whole worker script. */
-export type WorkerViewCode = GuestWorkerSource | { readonly source: string };
+import { codeOf, type WorkerViewCode, type WorkerViewLoad } from "./code-of.js";
+export type { WorkerViewCode, WorkerViewLoad } from "./code-of.js";
 
 /**
  * Why a worker view is not shown (FR-94). Past any limit the host stops
@@ -37,6 +38,8 @@ const picturesChunk = retryingImport(() => import("./pictures.js"));
 const mediaChunk = retryingImport(() => import("./media.js"));
 /* Files dropped on what the view drew (FR-193), fetched with the first `data-drop` a view whose manifest accepts files draws. */
 const dropChunk = retryingImport(() => import("./drop.js"));
+/* A wheel, a drag and a pinch over what the view drew (0.1.42), fetched only for a view whose manifest says gestures and that listens for one. */
+const gesturesChunk = retryingImport(() => import("./gestures.js"));
 
 export type WorkerViewFailure =
   /** Its manifest names a kind, an edge or an act the app does not declare (FR-91): it was never started. */
@@ -115,7 +118,7 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * in front of it. `{ script }` or `{ url }` is a whole worker script
    * already, its runtime first (`@graview/guest/worker/view`).
    */
-  readonly worker: WorkerViewCode;
+  readonly worker: WorkerViewCode | WorkerViewLoad;
   readonly store: Store<S>;
   /** The viewer: what is pushed is what they may see, and what is asked for is applied as them. */
   readonly principal: Principal;
@@ -347,16 +350,17 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     queueMicrotask(() => fail("manifest", findings.join(" ")));
     return handle();
   }
-  const code = options.worker;
-  const bytes = "source" in code ? new TextEncoder().encode(code.source).length : "script" in code ? new TextEncoder().encode(code.script).length : 0;
-  if (bytes > limits.maxSourceBytes) {
-    queueMicrotask(() => fail("source"));
-    return handle();
-  }
-  /* A view's own source may load nothing (FR-96): refused before it runs, with why. */
-  const unloadable = "source" in code ? checkViewSource(code.source) : [];
-  if (unloadable.length > 0) {
-    queueMicrotask(() => fail("source", unloadable.join(" ")));
+  /* Its code is longer than it may be, or its own source loads something (FR-96): refused before it runs, with why. */
+  const refusedCode = (code: WorkerViewCode): [WorkerViewFailure, string?] | undefined => {
+    const bytes = "source" in code ? new TextEncoder().encode(code.source).length : "script" in code ? new TextEncoder().encode(code.script).length : 0;
+    if (bytes > limits.maxSourceBytes) return ["source"];
+    const unloadable = "source" in code ? checkViewSource(code.source) : [];
+    return unloadable.length > 0 ? ["source", unloadable.join(" ")] : undefined;
+  };
+  const given = options.worker;
+  const refusedNow = typeof given === "function" ? undefined : refusedCode(given);
+  if (refusedNow) {
+    queueMicrotask(() => fail(...refusedNow));
     return handle();
   }
 
@@ -411,6 +415,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     pictures?.dispose();
     media?.dispose();
     drops?.dispose();
+    gestures?.dispose();
   };
 
   let port: MessagePort | undefined;
@@ -556,6 +561,35 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         drops.refresh();
       },
       () => options.onProblem?.(`The view "${manifest.title ?? manifest.name}" takes files, and the host's drop could not be loaded.`),
+    );
+  };
+  /*
+   * A WHEEL, A DRAG AND A PINCH (0.1.42, gestures.ts): fetched the first
+   * time the view says it listens for one, and told again wherever it moves
+   * where it listens. Only a view whose manifest says gestures hears one; any
+   * other is told why, in its console and to the host. A host whose gestures
+   * did not arrive forwards none, and the page scrolls as it would.
+   */
+  let gestures: GuestGestures | undefined;
+  let gesturesBound: readonly unknown[] = [];
+  let gesturesAsked = false;
+  const bindGestures = (bound: readonly unknown[]) => {
+    gesturesBound = bound;
+    gestures?.bind(bound);
+    if (gesturesAsked || bound.length === 0) return;
+    gesturesAsked = true;
+    void gesturesChunk().then(
+      ({ createGuestGestures, unheardWords }) => {
+        if (failed) return;
+        if (manifest.gestures !== true) {
+          const said = unheardWords(manifest.title ?? manifest.name);
+          port?.postMessage({ type: "notice", text: said });
+          return options.onProblem?.(said);
+        }
+        gestures = createGuestGestures(shadow, { root: () => shadow.querySelector("[data-graview-view-root]") ?? undefined, idOf: (one) => drawing?.renderer.idOf(one), send });
+        gestures.bind(gesturesBound);
+      },
+      () => {},
     );
   };
   /* A file on a record the view was shown, as the record keeps it: one it may hand back to an act. */
@@ -714,6 +748,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         onHears: (events) => {
           if (events.includes("drop")) hearsDrop = true;
         },
+        /* Where it listens for a gesture (0.1.42): heard only where its manifest says gestures. */
+        onGestures: bindGestures,
         onRender: (records) => {
           drew = true;
           draw(["render", records]);
@@ -747,21 +783,40 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       push();
     },
   }));
-  if ("source" in code) {
-    void (manifest.pictures ? Promise.all([viewScript(code.source), picturesReady]).then(([script]) => script) : viewScript(code.source)).then(
-      (script) => {
-        if (!failed) begin({ script });
+  const run = (code: WorkerViewCode) => {
+    if ("source" in code) {
+      void (manifest.pictures ? Promise.all([viewScript(code.source), picturesReady]).then(([script]) => script) : viewScript(code.source)).then(
+        (script) => {
+          if (!failed) begin({ script });
+        },
+        () => fail("start", "the view's runtime could not be loaded"),
+      );
+    } else if (!manifest.pictures) begin(code);
+    else
+      void picturesReady.then(
+        () => {
+          if (!failed) begin(code);
+        },
+        () => fail("start", "the view's pictures could not be loaded"),
+      );
+  };
+  /*
+   * CODE FETCHED WHEN THE VIEW IS DRAWN (Roadmap f-heavy-apps-fast): a host
+   * hands `worker` as a function, asked once per function however often the
+   * view is drawn, and again after it rejected. Judged as handed code is
+   * once it arrives; one that never does is refused `source` in words.
+   */
+  if (typeof given === "function")
+    void codeOf(given).then(
+      (code) => {
+        if (failed) return;
+        const refused = refusedCode(code);
+        if (refused) fail(...refused);
+        else run(code);
       },
-      () => fail("start", "the view's runtime could not be loaded"),
+      (error: unknown) => fail("source", `Its code did not arrive${error instanceof Error && error.message ? `: ${error.message}` : ""}.`),
     );
-  } else if (!manifest.pictures) begin(code);
-  else
-    void picturesReady.then(
-      () => {
-        if (!failed) begin(code);
-      },
-      () => fail("start", "the view's pictures could not be loaded"),
-    );
+  else run(given);
 
   return handle();
 

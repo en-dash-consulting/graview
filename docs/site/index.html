@@ -1921,8 +1921,24 @@ main.page > section.tour-intro { padding-top: 64px; }
           <p class="recipe-links"><a href="docs/recipes/dependencies.html">Open it, live &rarr;</a><a href="recipes/dependencies/app.json">app.json</a><a href="recipes/dependencies/seed.json">seed.json</a></p>
         </div>
       </li>
+      <li class="recipe-row">
+        <div>
+          <h3>Your architecture, with a face of its own</h3>
+          <p class="recipe-prompt">Read https://graview.dev/start.md, then turn this repo's <b>architecture</b> into a Graview app.</p>
+        </div>
+        <div>
+          <p class="recipe-blurb">The zones the modules group into, what each module imports, who owns each zone, and the modules no zone holds yet, with a product face of its own over the running preview.</p>
+          <dl>
+            <dt>Kinds</dt><dd>zones, modules, people</dd>
+            <dt>Rules</dt><dd>Every module is in a zone; Every zone has an owner</dd>
+            <dt>Seed</dt><dd>30 records and 46 relations, read out of Larkspur</dd>
+            <dt>Check</dt><dd>clean, on every push</dd>
+          </dl>
+          <p class="recipe-links"><a href="docs/recipes/architecture.html">Open it, live &rarr;</a><a href="recipes/architecture/app.json">app.json</a><a href="recipes/architecture/seed.json">seed.json</a></p>
+        </div>
+      </li>
     </ol>
-    <p class="sm dim recipes-note">How these were made: an agent ran each prompt once, with nothing but the prompt and <a class="inl" href="start.md">start.md</a>, at the root of Larkspur, a made-up repository written for the purpose (<code>scripts/fixtures/recipes/larkspur.mjs</code>). CI does not run an agent. On every push it checks the declaration that run produced, loads its seed, and opens each recipe&rsquo;s page in a browser to see the app mount.</p>
+    <p class="sm dim recipes-note">How these were made: an agent ran each prompt once, with nothing but the prompt and <a class="inl" href="start.md">start.md</a>, at the root of Larkspur, a made-up repository written for the purpose (<code>scripts/fixtures/recipes/larkspur.mjs</code>); the architecture recipe, and the face of its own beside it, were written by hand over Larkspur, as its page says. CI does not run an agent. On every push it checks the declaration that run produced, loads its seed, and opens each recipe&rsquo;s page in a browser to see the app mount.</p>
     <!-- site-recipes:end -->
   </section>
 

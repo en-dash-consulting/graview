@@ -314,6 +314,16 @@ views: (schema, registry) => registerWorkerView(registry, packages),   // the em
 pages.surface("home", workerHome(frontPage));                         // a view of the home
 ```
 
+A host with many views need not fetch every one's code before the page
+draws. `worker` may be a function answering the code — `worker: () =>
+fetch(sourceUrl).then((r) => r.text()).then((source) => ({ source }))` —
+asked only when the view is first drawn, beside the worker's host, once
+however often it is drawn and again after it rejected. The manifest is what
+registers the view, as a place and in every menu, so only the places a
+person opens fetch their code. What arrives is judged as handed code is;
+code that never arrives is refused `source` ("Its code did not arrive: …")
+and the kind's own face is drawn.
+
 It is handed the viewer's sight and nothing more, cut to the kind it
 attaches to (the members the face hands it, or every one the viewer sees)
 and the kinds and edges it reads: a record the viewer may not see is in
@@ -533,7 +543,46 @@ names no record the view was shown.
 Every event a view hears is `{ type, target, element }` and what that
 event carries: `value` and `checked` (`input`, `change`), `key`
 (`keydown`), `pressed` (a press on `data-act`, and `acted`), `files` and
-`refused` (`drop`).
+`refused` (`drop`), and a gesture's fields (`wheel`, `drag`, `pinch`).
+
+### A wheel, a drag and a pinch
+
+A view whose manifest says `gestures: true` hears a wheel, a drag and a
+pinch over what it listens on — a map it pans and zooms, a timeline it
+scrubs:
+
+```js
+graview.on("wheel", ".map", (e) => zoom(e.x, e.y, Math.exp(-e.deltaY / 500)));
+graview.on("pinch", ".map", (e) => zoom(e.x, e.y, e.scale));
+graview.on("drag", ".map", (e) => e.phase !== "start" && pan(e.dx, e.dy));
+```
+
+Each carries where the pointer is, `x` and `y` in CSS pixels from the top
+left of the element the selector matched, and that element's `width` and
+`height`, since a worker has no layout to ask. A `wheel` has `deltaX`,
+`deltaY`, `deltaMode`, `ctrlKey` and `metaKey`. A `drag` — `pointerdown`,
+`pointermove`, `pointerup` on what it listens on, the pointer captured
+there — has `phase` (`start`, `move`, `end`), `pointerId`, `button`,
+`pressure`, and `dx` and `dy` since the view last heard of that pointer. A
+`pinch` — Safari's `gesturestart`, `gesturechange` and `gestureend`, or a
+trackpad's pinch, which every engine says as a wheel with Control held —
+has `phase` (`start`, `change`, `end`), `scale`, the factor since the view
+last heard, and `rotation` in degrees. A Control-wheel goes as a `pinch`
+where the view listens for one there, and as a `wheel` with `ctrlKey`
+where it does not.
+
+The host sends at most one of each an animation frame, the deltas between
+summed (a pinch's scale multiplied); a drag's start and end go at once. It
+takes a wheel and a gesture from the page (`preventDefault`) only over an
+element the view listens on for it, so the page scrolls and zooms
+everywhere else, and a view that did not opt in changes nothing about the
+page at all. A drag takes nothing: a view that drags on a phone says
+`touch-action: none` in its stylesheet. The runtime tells the host where
+it listens (`{ type: "gestures", bound: [{ event, selector }] }`) whenever
+that moves; the host fetches its gestures only for a view that opted in
+and listens for one. A view that listens for a gesture without the flag is
+told in its console, and its headless run says so, as it says a flag with
+nothing to hear.
 
 ### What the host page allows
 

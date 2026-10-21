@@ -1,4 +1,4 @@
-import { z as classic } from "zod";
+import * as classic from "zod";
 import * as z from "../schema/zod.js";
 import { defOf } from "../schema/zod.js";
 

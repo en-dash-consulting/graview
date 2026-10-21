@@ -54,6 +54,22 @@
  * And an act may be asked for several times as one change, one undo:
  * `{ type: "act", …, name, args: [args, …] }`.
  *
+ * A WORKER VIEW THAT TAKES GESTURES (0.1.42) — its manifest saying
+ * `gestures: true` — says where it listens for a wheel, a drag and a pinch,
+ * and hears each, at most once an animation frame, its deltas coalesced:
+ *
+ *   guest → host     { type: "gestures", nonce, bound: [{ event, selector }, …] } (over the port: where `graview.on("wheel" | "drag" | "pinch", selector, …)` listens, all of it, again whenever it moves)
+ *   host  → guest    { type: "dom-event", target, event: "wheel", deltaX, deltaY, deltaMode, ctrlKey, metaKey, x, y, width, height }
+ *   host  → guest    { type: "dom-event", target, event: "drag", phase, pointerId, button, pressure, x, y, dx, dy, width, height }
+ *   host  → guest    { type: "dom-event", target, event: "pinch", phase, scale, rotation, x, y, width, height }
+ *
+ * `x` and `y` are where the pointer is, in CSS pixels from the top left of
+ * the element the selector matched, and `width` and `height` that
+ * element's size, so a view maps them to its own coordinates without a
+ * layout of its own. The host takes a wheel or a pinch from the page — its
+ * `preventDefault` — only over an element a view that opted in listens on;
+ * everywhere else the page scrolls and zooms as it always did.
+ *
  * The host draws a stylesheet only as the open kit allows (host/css.ts),
  * and numbers each props push (`push`) so the runtime can say when it has
  * drawn it.
@@ -332,7 +348,8 @@ export interface GuestDomEvent {
    * became of an act a press or a field saved as it is typed asked for, on
    * the element bound to it (FR-191); or `drop`, files the person dropped
    * on (or picked for) an element marked `data-drop`, stored by the host
-   * (FR-193).
+   * (FR-193); or `wheel`, `drag` and `pinch`, a gesture over an element a
+   * view whose manifest says `gestures: true` listens on (0.1.42).
    */
   readonly event: string;
   readonly value?: string;
@@ -349,6 +366,41 @@ export interface GuestDomEvent {
   readonly files?: readonly GuestDroppedFile[];
   /** On `drop`: each file the host would not take, and why, in a sentence. */
   readonly refused?: readonly string[];
+  /** On `wheel`, `drag` and `pinch` (0.1.42): where the pointer is, in CSS pixels from the top left of the element the view listens on. */
+  readonly x?: number;
+  readonly y?: number;
+  /** On `wheel`, `drag` and `pinch`: the size of the element the view listens on, in CSS pixels. */
+  readonly width?: number;
+  readonly height?: number;
+  /** On `wheel`: how far it scrolled since the view last heard, summed over the frame, in `deltaMode`'s units (0 pixels, 1 lines, 2 pages). */
+  readonly deltaX?: number;
+  readonly deltaY?: number;
+  readonly deltaMode?: number;
+  /** On `wheel`: whether Control or Meta was held. A trackpad's pinch is a wheel with Control held, heard as `pinch` where the view listens for it. */
+  readonly ctrlKey?: boolean;
+  readonly metaKey?: boolean;
+  /** On `drag` and `pinch`: `start`, `move` (a drag) or `change` (a pinch), and `end`. */
+  readonly phase?: "start" | "move" | "change" | "end";
+  /** On `drag`: which pointer, its button when it went down, and how hard it presses (0 to 1). */
+  readonly pointerId?: number;
+  readonly button?: number;
+  readonly pressure?: number;
+  /** On `drag`: how far it moved since the view last heard of this pointer, in CSS pixels. */
+  readonly dx?: number;
+  readonly dy?: number;
+  /** On `pinch`: the factor it grew by since the view last heard (above 1 apart, below 1 together), and its turn in degrees. */
+  readonly scale?: number;
+  readonly rotation?: number;
+}
+
+/** The gestures a view may listen for, with `gestures: true` in its manifest (0.1.42). */
+export const GUEST_GESTURES = ["wheel", "drag", "pinch"] as const;
+export type GuestGesture = (typeof GUEST_GESTURES)[number];
+
+/** Where a view listens for a gesture: the event, and the selector `graview.on` was given. */
+export interface GuestGestureBinding {
+  readonly event: GuestGesture;
+  readonly selector: string;
 }
 
 /**
@@ -401,6 +453,8 @@ export type HostMessage =
 export type GuestRequest =
   /** An act, or several of it as one change and one undo (`args` a list, FR-193). */
   | { readonly type: "act"; readonly nonce: string; readonly id: string | number; readonly name: string; readonly args: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[] }
+  /** Where a worker view's `graview.on` listens for a wheel, a drag or a pinch, all of it, again whenever it moves (0.1.42). */
+  | { readonly type: "gestures"; readonly nonce: string; readonly bound: readonly GuestGestureBinding[] }
   /** The events a worker view's `graview.on` listens for, each said once (FR-193): a view that hears `drop` is left the drop. */
   | { readonly type: "hears"; readonly nonce: string; readonly events: readonly string[] }
   | { readonly type: "navigate"; readonly nonce: string; readonly to: string; readonly where?: GuestWhere; readonly section?: string }
