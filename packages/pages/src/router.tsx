@@ -22,6 +22,7 @@ import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, regist
 const ANYONE = { kind: "human" } as const;
 import { OwnBarFind } from "./page-shell.js";
 import { recordPath } from "./registry.js";
+import { PlaceHereContext, type PlaceHereRoot } from "./place-here.js";
 
 /**
  * A LIST CUT SHORT SAYS WHERE THE REST IS. A list of cards is never a box
@@ -490,10 +491,13 @@ export function PagesRoutes<S extends AnySchema>({
   const inside: PageContext<S> = own ? { ...under, framed: true } : context;
   /* The own bar's Find slot, where the face's root puts the one Find box (an embed's bar keeps its own). */
   const [barFind, setBarFind] = useState<BarFind | null>(null);
+  // Where the face is, for a shell's `usePlaceHere()` and each page's trail: read as the pages read the store.
+  const placeRoot = useMemo<PlaceHereRoot>(() => ({ context: inside as unknown as PlaceHereRoot["context"], registry: registry as PlaceHereRoot["registry"] }), [inside, registry]);
   const told = useMemo(() => ({ onFind: setBarFind, find: !(registry?.without().has("find") ?? false), places: !(registry?.without().has("places") ?? false) }), [registry]);
   const routes = (
     // The routed face holds the keyboard the way the scene does, and offers Find and the way back, whichever shell an app draws.
     // Going somewhere is this face's own for all it draws, the menu at the pointer too (FR-184): its "Draw a panel" lands on `/~draft`.
+    <PlaceHereContext.Provider value={placeRoot}>
     <GoesByAddress context={context}>
     <FaceRoot context={context} registry={registry}>
     {frame(<>
@@ -548,6 +552,7 @@ export function PagesRoutes<S extends AnySchema>({
     </>)}
     </FaceRoot>
     </GoesByAddress>
+    </PlaceHereContext.Provider>
   );
   // Only a design under the bar hands the bar its Find: the derived shell draws its own in the bar, and so says it before any script runs.
   if (context.embedded || !own || ownsTheWindow) return routes;

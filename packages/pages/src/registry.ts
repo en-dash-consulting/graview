@@ -50,8 +50,30 @@ export interface RouteRegistration<P = unknown> {
   readonly component: P;
 }
 
+/**
+ * THE PART OF THE APP A KIND'S PAGES BELONG TO, as a design names its own
+ * tabs: "Plan" over change plans and their steps. The trail on a page says
+ * it first ("Plan › Steps › Consolidate"), and `usePlaceHere().section`
+ * names it, so a design's shell lights its own tab on a kind's derived
+ * pages. `path` is the section's own address on this face (a route the app
+ * registered, a place, a list), basename-relative; without one the trail
+ * says the section and links nowhere.
+ */
+export interface PageSection {
+  readonly label: string;
+  readonly path?: string;
+}
+
 export interface PageRegistry<S extends AnySchema, P = unknown> {
   register<K extends KindOfSchema<S>>(kind: K, page: PageType, component: P): PageRegistry<S, P>;
+  /**
+   * THE SECTION A KIND'S PAGES ARE IN (Roadmap gv-pages-where-am-i): one
+   * kind or several, under one label — its list, its records and its
+   * pictures. Said again for a kind, the last one holds.
+   */
+  section<K extends KindOfSchema<S>>(kinds: K | readonly K[], label: string, options?: { readonly path?: string }): PageRegistry<S, P>;
+  /** The section a kind's pages are in, when one was said. */
+  sectionOf(kind: string): PageSection | undefined;
   surface(surface: "shell", component: ShellComponent<S>, options?: ShellOptions): PageRegistry<S, P>;
   surface(surface: SurfaceType, component: P): PageRegistry<S, P>;
   /**
@@ -87,6 +109,7 @@ export function createPageRegistry<S extends AnySchema, P = ComponentType<never>
   const surfaces = new Map<SurfaceType, P>();
   const registrations: PageRegistration<P>[] = [];
   const routed: RouteRegistration<P>[] = [];
+  const sections = new Map<string, PageSection>();
   let goesWithout: ReadonlySet<FaceControl> = new Set();
 
   const registry: PageRegistry<S, P> = {
@@ -94,6 +117,15 @@ export function createPageRegistry<S extends AnySchema, P = ComponentType<never>
       entries.set(`${kind}|${page}`, component);
       registrations.push({ kind, page, component });
       return registry;
+    },
+    section(kinds, label, options) {
+      const at = options?.path === undefined ? undefined : options.path.startsWith("/") ? options.path : `/${options.path}`;
+      const section: PageSection = at === undefined ? { label } : { label, path: at };
+      for (const kind of (typeof kinds === "string" ? [kinds] : kinds) as readonly string[]) sections.set(kind, section);
+      return registry;
+    },
+    sectionOf(kind) {
+      return sections.get(kind);
     },
     surface(surface: SurfaceType, component: P | ShellComponent<S>, options?: ShellOptions) {
       surfaces.set(surface, component as P);

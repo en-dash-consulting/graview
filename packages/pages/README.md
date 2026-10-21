@@ -31,6 +31,15 @@ this package serves lists, records, forms, problems and history as ordinary link
   drawing only what is its own; `surface("shell", Shell, { without: ["bar"] })`
   makes it the whole window. Each page's own title is said a level under the app's name. See
   `apps/todo` for both mounted from one declaration (`/` scene, `/pages` routed).
+- **A page says where you are.** Each derived list, record and picture opens with a trail —
+  a `nav` called "You are here": the section the kind's pages are in, the kind's list, and
+  the page itself last, `aria-current="page"` and out of sight, since its heading says it —
+  on one line at a phone's width, its links under the face's base. `registry.section(kinds,
+  label, { path })` names the section ("Plan" over change plans and their steps), and
+  `sectionOf(kind)` reads it back. A design's own shell asks `usePlaceHere()` — `{ as, kind,
+  id, label, section, trail }` — to light its own tab and draw its own trail, or places
+  `<PageTrail />`, which the derived pages then leave to it; `without: ["trail"]` goes
+  without. A bar outside the face's router reads `placeHere(context, path)`.
 - **The scene may live elsewhere.** A page's links into the scene go to `/` unless the
   host says where the scene is: set `sceneHref` in the PagesApp context
   (`sceneHref: "/scene/places/overview"`) when it is not at `/`, and pass the same to

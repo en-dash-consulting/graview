@@ -1,6 +1,6 @@
 ---
 name: graview-pages
-description: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
+description: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).
 ---
 
 # The pages face
@@ -38,7 +38,9 @@ The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, P
 holds the home, the Lists, the Pictures (standing on a wide bar, else
 under More, as an empty kind is) — Find, standing, person.
 A shell with a rail of its own says `surface("shell", Shell, { without:
-["places"] })`: the bar keeps all that and names no place.
+["places"] })`: the bar keeps all that and names no place. Each list,
+record and picture opens with a trail (`nav` "You are here": the
+section, the kind's list, the page itself current), its hrefs under the base.
 
 **Arrange it, declared**: `pages: { order: ["offer",
 "package"], hide: ["party"], first: "The offers" }`. `order` sorts
@@ -146,50 +148,9 @@ Rules for a page at this rung:
 
 ## Rung two: a product design
 
-The registry has three surfaces and two page types, and replacing all of them
-is a product:
-
-```tsx
-createPageRegistry<S, PageComponent<S>>(schema)
-  .surface("shell", Shell)        // the design's own, under the bar
-  .surface("home", Home)
-  .surface("problems", Problems)
-  .register("plot", "list", Plots).register("plot", "record", PlotRecord)
-  .register("gardener", "list", Gardeners).register("gardener", "record", GardenerRecord)
-  // ... every kind
-```
-
-The shell surface receives `{ context, children }`. `apps/todo/src/ui/design.tsx` is the finished
-example: all a person tries there works: sort, filter and group come from `ArrangeBar` and live
-in `useSearchParams` in the shared words (a list you arranged is a link); a record edits where it is
-shown, heading included, through `editableFields(store, id)`; an act's form
-opens where the act is, prefilled, with the store's own refusal said at the
-press; the problems page is an inbox, its repairs ordered by
-`rankedRepairs`; and every empty state offers the way out of itself.
-`apps/seedbed/src/ui/design.tsx` is the other end: an almanac drawn on the
-page and in the scene's lens from one model.
-
-What every design must keep doing:
-
-- **Read the graph through one model.** `readGarden(store)` turns nodes,
-  edges and violations into the design's words; every page reads it and none
-  reaches for `store.graph`. The scene's lens reads the same model.
-- **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`,
-  `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with
-  `color-mix` for the design's own paper. Never a color that works in one
-  scheme only.
-- **Keep landmarks and targets honest.** One `main` — a `section` when
-  `context.embedded`, and UNNAMED, or a page holding two embeds has two
-  regions with one name. Controls at least 24px, AA contrast.
-  Every size in `rem`: at 200% text a flex or grid item's automatic minimum
-  is its CONTENT's, so one un-wrappable row pushes the whole column off the
-  screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on
-  the row. Measure rather than trust: `-ink-faint` fails AA on an 11px
-  label, and the accent fails on the warning ground. `node
-  scripts/verify-pages.mjs` runs axe over every route, both widths, both
-  schemes.
-- **Withhold, do not hide.** Rule 7, on every surface: struck through with
-  the policy's sentence, not dropped.
+Replacing every surface — the shell under the bar, the home, the problems,
+each kind's list and record — is a product: `graview-pages-design`, with
+its own tabs lit from the section a kind's pages are in.
 
 ## On somebody else's page
 

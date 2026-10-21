@@ -4,6 +4,7 @@ import {
   DerivedForm,
   PageMain,
   pageStyles,
+  PageTrail,
   recordFacts,
   Repairs,
   spatialHref,
@@ -60,7 +61,8 @@ function PlotPage({ context }: { context: PageContext<S> }) {
   return (
     <PageMain context={context} data-testid="plot-page">
       <header style={{ display: "grid", gap: 10 }}>
-        <p style={pageStyles.eyebrow}>A plot in the garden</p>
+        {/* Where it is, as the derived pages say it: the garden, the plots, then this plot under its heading. */}
+        <PageTrail />
         <h1 style={pageStyles.h1}>{plot.label}</h1>
         <p style={pageStyles.lede}>
           {plot.beds} {plot.beds === 1 ? "bed" : "beds"},{" "}
@@ -99,9 +101,10 @@ function PlotPage({ context }: { context: PageContext<S> }) {
   );
 }
 
-/** The garden's pages: every default page, with the plot's record in its own words. */
+/** The garden's pages: every default page, with the plot's record in its own words, and the beds and what grows in them one section. */
 export function seedbedPages(schema: AnySchema) {
   const registry = createPageRegistry<S, PageComponent<S>>(schema as never);
   // The plot's own page, where the declaration has plots: the studio's schema has kinds, not plots.
-  return (schema.kinds as readonly string[]).includes("plot") ? registry.register("plot", "record", PlotPage as PageComponent<S>) : registry;
+  if (!(schema.kinds as readonly string[]).includes("plot")) return registry;
+  return registry.register("plot", "record", PlotPage as PageComponent<S>).section((["plot", "planting"] as const).filter((kind) => (schema.kinds as readonly string[]).includes(kind)) as never, "The garden");
 }
