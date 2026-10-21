@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.44",
+      "date": "2026-10-21",
+      "headline": "A compacted store shows a seat only what it may see, history judged for one seat, and views that stand in the nav.",
+      "summary": "- **A security fix for compacted stores.** A store opened from a checkpoint could serve a seat the id of a record removed before the checkpoint, inside a field of a record the seat may see. The checkpoint now keeps what it needs to judge that, and an older checkpoint fails closed.\n- **History judged for one seat.** `archivedSeenBy` serves a range of the archive, with its checkpoints, as one seat may see it.\n- **A view stands in the nav.** A view the host keeps can be ordered among the places and opened first; a kind kept off the places leaves the Pages drop-down and stays reachable at its address.\n- **The two-scheme logo** has a capability id and one public reader.\n- **The Nightly's engines leg looks twice** before it fails, and keeps its verdicts.",
+      "compatibility": "Checkpoints gain `removed` and `writers` (optional; older builds ignore them); a store opened on an older checkpoint fails closed for a seat whose sight is not total, so a host mends each once. `view:<name>` in `pages.order`, `first` and `primary`; `editDocument`, `compileDocument` and `placesOf` take `views`; a kind in `pages.hide` leaves the bar's places. `FR-197`, `FR-198` and `FR-199` in `capabilities().shipped`. About 2 KB more up front.",
+      "published": true
+    },
+    {
       "version": "0.1.43",
       "date": "2026-10-21",
       "headline": "A change carries its value once less: smaller histories for every app.",

@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.44`](https://graview.dev/docs/releases.html#v0-1-44)
 - [`0.1.43`](https://graview.dev/docs/releases.html#v0-1-43)
 - [`0.1.42`](https://graview.dev/docs/releases.html#v0-1-42)
 - [`0.1.41`](https://graview.dev/docs/releases.html#v0-1-41)
@@ -44,6 +45,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.44
+
+Published October 21, 2026 · the current version
+
+A compacted store shows a seat only what it may see, history judged for one seat, and views that stand in the nav.
+
+- **A security fix for compacted stores.** A store opened from a checkpoint could serve a seat the id of a record removed before the checkpoint, inside a field of a record the seat may see. The checkpoint now keeps what it needs to judge that, and an older checkpoint fails closed.
+- **History judged for one seat.** `archivedSeenBy` serves a range of the archive, with its checkpoints, as one seat may see it.
+- **A view stands in the nav.** A view the host keeps can be ordered among the places and opened first; a kind kept off the places leaves the Pages drop-down and stays reachable at its address.
+- **The two-scheme logo** has a capability id and one public reader.
+- **The Nightly's engines leg looks twice** before it fails, and keeps its verdicts.
+
+**Before you upgrade:** Checkpoints gain `removed` and `writers` (optional; older builds ignore them); a store opened on an older checkpoint fails closed for a seat whose sight is not total, so a host mends each once. `view:<name>` in `pages.order`, `first` and `primary`; `editDocument`, `compileDocument` and `placesOf` take `views`; a kind in `pages.hide` leaves the bar's places. `FR-197`, `FR-198` and `FR-199` in `capabilities().shipped`. About 2 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.44) · [The full changelog for 0.1.44](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0144)
 
 ## 0.1.43
 
