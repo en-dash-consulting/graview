@@ -1,0 +1,7 @@
+---
+"@graview/core": patch
+---
+
+A host reads any logo a document gives, and knows the logo for each scheme is shipped (FR-197). Graview Cloud, after 0.1.42: `brand.logo` took a third form, `{ light, dark?, alt?, darkFallback?: "invert" }`, but `capabilities().shipped` named nothing for it, so a host that refuses a document needing a seam its build does not ship could not refuse this one — and a rollback below 0.1.42 would leave an app with such a logo unable to open. And `logoOf` reads only the compiled brand, so a host that drew the logo from the document read the string, `{ src, alt }` and the object itself. Now the object logo is FR-197, and `logoOfDocument(logo)` on `@graview/core/document` reads any of the three forms into `{ light, dark?, alt?, darkFallback? }` (`DocumentLogo`), keeping only what the compile keeps: an empty mark is no logo, and a fallback other than `"invert"` is left out.
+
+Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `capabilities().shipped` gains FR-197. Additive on `@graview/core/document` (`logoOfDocument` and the type `DocumentLogo`). What Graview Cloud does: `needsUnshipped` refuses a document whose `brand.logo` is an object with `light` unless `capabilities().shipped` has FR-197 ("This deployment's Graview cannot hold a logo for each scheme yet; give one logo."), and reads a document's logo with `logoOfDocument(document.brand?.logo)`.
