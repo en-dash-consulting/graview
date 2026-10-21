@@ -151,3 +151,23 @@ export function measure(entry, runs = 5) {
   const samples = Array.from({ length: runs }, () => measureOnce(entry));
   return { cpu: median(samples.map((s) => s.cpu)), wall: median(samples.map((s) => s.wall)) };
 }
+
+/*
+ * HOW FAST THIS MACHINE IS. CPU milliseconds depend on the machine: CI's
+ * shared runners loaded the names Cloud's worker imports in 87.6 ms where
+ * this checkout's Mac took 29.5. A fixed reference — the whole of zod,
+ * bundled as `import { z } from "zod"` keeps it — is loaded the same way, and
+ * the budgets stretch by how much slower it was here than when they were set
+ * (never shrink): a regression is the framework growing against the
+ * reference, not a slower runner.
+ */
+export const REFERENCE = join(ROOT, "packages/core/tests/fixtures/zod-whole.mjs");
+/** What the reference took on the machine the budgets were set on (2026-10-21, median of 7). */
+export const REFERENCE_CPU = 12;
+
+/** How many times slower than the budgets' machine this one loads the reference; at least 1. */
+export async function machineFactor(dir) {
+  const reference = await bundleEntry(REFERENCE, dir);
+  const { cpu } = measure(reference.file, 5);
+  return Math.max(1, cpu / REFERENCE_CPU);
+}
