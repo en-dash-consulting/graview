@@ -36,6 +36,9 @@ declaration plus one persistence adapter is a running deployment.
   adapter writes them to `archive/`). The next open loads the checkpoint and the tail, undo
   stops at the horizon and says so, and `exportBundle(app, store, { full: true })` still
   carries every op. The browser adapter keeps no epochs, so it keeps no checkpoint either.
+  A host that keeps its whole log can still open a page on a short tail of it: `openTail: 200`
+  (on `serveStore`, `createStoreHandler` or `liveProtocol`) serves the snapshot and the latest
+  200 ops with the horizon they begin at, and the page's undo stops there, as on a compacted store.
 - **`health(store)`** — coherence, not liveness: dangling edges, standing, sizes.
 - **`serveStore` / `openRemote`** — the store behind HTTP, and the other end of the wire. A
   client sends CALLS, never primitives; the server applies them through an ordinary `Store`

@@ -314,6 +314,16 @@ views: (schema, registry) => registerWorkerView(registry, packages),   // the em
 pages.surface("home", workerHome(frontPage));                         // a view of the home
 ```
 
+A host with many views need not fetch every one's code before the page
+draws. `worker` may be a function answering the code — `worker: () =>
+fetch(sourceUrl).then((r) => r.text()).then((source) => ({ source }))` —
+asked only when the view is first drawn, beside the worker's host, once
+however often it is drawn and again after it rejected. The manifest is what
+registers the view, as a place and in every menu, so only the places a
+person opens fetch their code. What arrives is judged as handed code is;
+code that never arrives is refused `source` ("Its code did not arrive: …")
+and the kind's own face is drawn.
+
 It is handed the viewer's sight and nothing more, cut to the kind it
 attaches to (the members the face hands it, or every one the viewer sees)
 and the kinds and edges it reads: a record the viewer may not see is in

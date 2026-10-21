@@ -152,6 +152,10 @@ pages.surface("home", workerHome({ manifest: front, worker: { source: frontSourc
 A view with `attach: "home"` given to `registerWorkerView` is the home's own
 view: the routed home's body, the page the app opens on — full width under
 the bar on a desk too — and the app's declared home is drawn if it fails.
+A host with many views hands each one's code as a function (`worker: () =>
+fetch(url).then((r) => r.text()).then((source) => ({ source }))`): the
+manifest registers the place, and the code is fetched only when the view
+is first drawn.
 
 ## Then find out whether it worked
 

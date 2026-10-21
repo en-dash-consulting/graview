@@ -266,6 +266,18 @@ export interface LiveProtocolOptions<S extends AnySchema> {
    * When it starts or ends, the host calls `heldChanged` with its sockets.
    */
   readonly held?: () => string | undefined;
+  /**
+   * WHAT AN OPEN CARRIES OF THE LOG (Roadmap f-heavy-apps-fast): at most
+   * this many of the latest ops, said with the `horizon` they begin at, in
+   * `GET /graview/state` and in the welcome of a socket that has nothing.
+   * The host keeps its whole log — its undo, its export, its history —
+   * and the page's store opens as on a compacted one (FR-23): it draws the
+   * snapshot, undoes back to the horizon and says so past it, and reads a
+   * field written before the tail as written before it, which this wire
+   * takes as seen (no false conflict). `/graview/since` and a socket's
+   * catching up are unchanged. Absent, an open carries the whole log.
+   */
+  readonly openTail?: number;
 }
 
 /** A change the host's `admit` answered: thrown through the store, which puts the change back. */
@@ -886,6 +898,17 @@ const lost = (peer: LivePeer): void => {
 export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S>): LiveProtocol<S> {
   const { store } = options;
   const wire = wireOf(store, options.withheldKey);
+  /**
+   * The log an open carries for this seat (`openTail`): the latest ops and
+   * the seq they begin at, or the whole log and the store's own horizon.
+   */
+  const openedLog = (seat: Principal): { log: Operation[]; horizon?: number } => {
+    const log = wire.seenLog(seat);
+    const kept = options.openTail;
+    if (kept === undefined || !(kept >= 0) || log.length <= kept) return { log, ...wire.horizonOf() };
+    const tail = log.slice(log.length - Math.floor(kept));
+    return { log: tail, horizon: tail[0]?.seq ?? store.log.length };
+  };
   /** A call that names no batch lands in one minted here, outside the shape a client may name. */
   const mintServed = serverBatchIds();
 
@@ -1198,10 +1221,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
               state: {
                 version: options.version ?? 1,
                 snapshot: seen.snapshot(),
-                log: wire.seenLog(seat),
+                ...openedLog(seat),
                 migrated: [...(options.migrated ?? [])],
                 enabledModules: wire.enabledModules(),
-                ...wire.horizonOf(),
               },
             });
           } else {
@@ -1393,10 +1415,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       return reply(200, {
         ...answering(asked),
         snapshot: seen.snapshot(),
-        log: wire.seenLog(asked.seat),
+        ...openedLog(asked.seat),
         migrated: [...(options.migrated ?? [])],
         enabledModules: wire.enabledModules(),
-        ...wire.horizonOf(),
       });
     },
     since(seq, asked) {

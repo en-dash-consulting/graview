@@ -21,8 +21,8 @@ import type { GuestDrops } from "./drop.js";
 import type { GuestGestures } from "./gestures.js";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
-/** A worker view's code: its own source, which the host makes a worker of, or a whole worker script. */
-export type WorkerViewCode = GuestWorkerSource | { readonly source: string };
+import { codeOf, type WorkerViewCode, type WorkerViewLoad } from "./code-of.js";
+export type { WorkerViewCode, WorkerViewLoad } from "./code-of.js";
 
 /**
  * Why a worker view is not shown (FR-94). Past any limit the host stops
@@ -118,7 +118,7 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * in front of it. `{ script }` or `{ url }` is a whole worker script
    * already, its runtime first (`@graview/guest/worker/view`).
    */
-  readonly worker: WorkerViewCode;
+  readonly worker: WorkerViewCode | WorkerViewLoad;
   readonly store: Store<S>;
   /** The viewer: what is pushed is what they may see, and what is asked for is applied as them. */
   readonly principal: Principal;
@@ -350,16 +350,17 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     queueMicrotask(() => fail("manifest", findings.join(" ")));
     return handle();
   }
-  const code = options.worker;
-  const bytes = "source" in code ? new TextEncoder().encode(code.source).length : "script" in code ? new TextEncoder().encode(code.script).length : 0;
-  if (bytes > limits.maxSourceBytes) {
-    queueMicrotask(() => fail("source"));
-    return handle();
-  }
-  /* A view's own source may load nothing (FR-96): refused before it runs, with why. */
-  const unloadable = "source" in code ? checkViewSource(code.source) : [];
-  if (unloadable.length > 0) {
-    queueMicrotask(() => fail("source", unloadable.join(" ")));
+  /* Its code is longer than it may be, or its own source loads something (FR-96): refused before it runs, with why. */
+  const refusedCode = (code: WorkerViewCode): [WorkerViewFailure, string?] | undefined => {
+    const bytes = "source" in code ? new TextEncoder().encode(code.source).length : "script" in code ? new TextEncoder().encode(code.script).length : 0;
+    if (bytes > limits.maxSourceBytes) return ["source"];
+    const unloadable = "source" in code ? checkViewSource(code.source) : [];
+    return unloadable.length > 0 ? ["source", unloadable.join(" ")] : undefined;
+  };
+  const given = options.worker;
+  const refusedNow = typeof given === "function" ? undefined : refusedCode(given);
+  if (refusedNow) {
+    queueMicrotask(() => fail(...refusedNow));
     return handle();
   }
 
@@ -782,21 +783,40 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       push();
     },
   }));
-  if ("source" in code) {
-    void (manifest.pictures ? Promise.all([viewScript(code.source), picturesReady]).then(([script]) => script) : viewScript(code.source)).then(
-      (script) => {
-        if (!failed) begin({ script });
+  const run = (code: WorkerViewCode) => {
+    if ("source" in code) {
+      void (manifest.pictures ? Promise.all([viewScript(code.source), picturesReady]).then(([script]) => script) : viewScript(code.source)).then(
+        (script) => {
+          if (!failed) begin({ script });
+        },
+        () => fail("start", "the view's runtime could not be loaded"),
+      );
+    } else if (!manifest.pictures) begin(code);
+    else
+      void picturesReady.then(
+        () => {
+          if (!failed) begin(code);
+        },
+        () => fail("start", "the view's pictures could not be loaded"),
+      );
+  };
+  /*
+   * CODE FETCHED WHEN THE VIEW IS DRAWN (Roadmap f-heavy-apps-fast): a host
+   * hands `worker` as a function, asked once per function however often the
+   * view is drawn, and again after it rejected. Judged as handed code is
+   * once it arrives; one that never does is refused `source` in words.
+   */
+  if (typeof given === "function")
+    void codeOf(given).then(
+      (code) => {
+        if (failed) return;
+        const refused = refusedCode(code);
+        if (refused) fail(...refused);
+        else run(code);
       },
-      () => fail("start", "the view's runtime could not be loaded"),
+      (error: unknown) => fail("source", `Its code did not arrive${error instanceof Error && error.message ? `: ${error.message}` : ""}.`),
     );
-  } else if (!manifest.pictures) begin(code);
-  else
-    void picturesReady.then(
-      () => {
-        if (!failed) begin(code);
-      },
-      () => fail("start", "the view's pictures could not be loaded"),
-    );
+  else run(given);
 
   return handle();
 

@@ -1571,7 +1571,7 @@ graview.navigate({ place: "features", where: { stage: "building" }, section: "Sh
 <div class="code" data-scroller><pre><code class="language-ts">import { registerWorkerView, workerHome } from "@graview/guest/host/views";
 views: (schema, registry) =&gt; registerWorkerView(registry, { manifest, worker: { source } }),
 pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));</code></pre></div>
-<p>A view with <code>attach: "home"</code> given to <code>registerWorkerView</code> is the home's own view: the routed home's body, the page the app opens on — full width under the bar on a desk too — and the app's declared home is drawn if it fails.</p>
+<p>A view with <code>attach: "home"</code> given to <code>registerWorkerView</code> is the home's own view: the routed home's body, the page the app opens on — full width under the bar on a desk too — and the app's declared home is drawn if it fails. A host with many views hands each one's code as a function (<code>worker: () =&gt; fetch(url).then((r) =&gt; r.text()).then((source) =&gt; ({ source }))</code>): the manifest registers the place, and the code is fetched only when the view is first drawn.</p>
 <h3>Then find out whether it worked</h3>
 <ol>
 <li><code>graview check</code> the app the view names: a manifest is only as sound as the declaration it reads. <code>checkManifest(manifest, store)</code> and <code>checkViewSource(source)</code> from <code>@graview/guest/host/views</code> must both say nothing.</li>
