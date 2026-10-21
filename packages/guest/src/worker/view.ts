@@ -5,7 +5,7 @@
  * (worker/index.ts) it keeps how to hear the host, boots Remote DOM's
  * polyfill and hardens the worker before a line of the view runs; unlike
  * it, it defines no components. A view draws plain HTML and SVG, and gives
- * one stylesheet, and the host draws what the open kit allows of them
+ * stylesheets, and the host draws what the open kit allows of them
  * (open-kit.ts, host/open-render.ts, host/css.ts).
  *
  * What a view is handed is one global, `graview`, kept through hardening
@@ -14,7 +14,7 @@
  *   graview.props            what the host last pushed: the viewer's sight
  *   graview.onProps(fn)      called with every push (and at once, if there is one)
  *   graview.render(markup)   draw: a string of HTML, `graview.html`…`` or nodes
- *   graview.style(css)       the view's one stylesheet
+ *   graview.style(css)       add a stylesheet after the ones before it
  *   graview.on(type, selector, fn)   hear the viewer: click, input, change, keydown, toggle;
  *                            and acted, what became of an act a press or a field's save asked for;
  *                            wheel, drag and pinch, where the manifest says gestures: true

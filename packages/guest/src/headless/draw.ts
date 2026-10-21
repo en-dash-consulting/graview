@@ -1,4 +1,4 @@
-import { sanitizeStylesheet } from "../host/css.js";
+import { sanitizeStylesheets } from "../host/css.js";
 import { createOpenRenderer } from "../host/open-render.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { createTree, type TreeElement } from "./tree.js";
@@ -18,11 +18,11 @@ export interface DrawnTranscript {
   readonly size: number;
   /** It went past `maxNodes`. */
   readonly over: boolean;
-  /** The stylesheet as a page would draw it. */
+  /** The stylesheets as a page would draw them, one after another. */
   readonly css: string;
 }
 
-export function drawTranscript(renders: readonly unknown[], css: string | undefined, options: { readonly maxNodes: number; readonly origin?: string; readonly imageOrigins?: readonly string[]; readonly asset?: (path: string) => string | undefined }): DrawnTranscript {
+export function drawTranscript(renders: readonly unknown[], sheets: readonly string[] | undefined, options: { readonly maxNodes: number; readonly origin?: string; readonly imageOrigins?: readonly string[]; readonly asset?: (path: string) => string | undefined }): DrawnTranscript {
   const { root } = createTree();
   let over = false;
   const renderer = createOpenRenderer(root as unknown as Node, {
@@ -36,8 +36,8 @@ export function drawTranscript(renders: readonly unknown[], css: string | undefi
   for (const batch of renders) renderer.apply(batch);
   const refused: ViewRefusal[] = [...renderer.refused];
   let kept = "";
-  if (typeof css === "string") {
-    const judged = sanitizeStylesheet(css);
+  if (sheets) {
+    const judged = sanitizeStylesheets(sheets);
     kept = judged.css;
     for (const one of judged.refused) refused.push({ reason: "css", name: "stylesheet", css: one });
   }

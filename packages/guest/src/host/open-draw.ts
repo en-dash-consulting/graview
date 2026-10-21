@@ -1,5 +1,5 @@
 import type { GuestDomEvent } from "../protocol.js";
-import { sanitizeStylesheet, type CssRefusal } from "./css.js";
+import { sanitizeStylesheets, type CssRefusal } from "./css.js";
 import type { OpenNamespace, OpenRefusal } from "./open-judge.js";
 import { createOpenRenderer, type OpenRenderer } from "./open-render.js";
 
@@ -54,12 +54,12 @@ export type ViewRefusal = OpenRefusal | { readonly reason: "css"; readonly name:
 export interface OpenDrawing {
   /** Draw one batch of the view's mutation records; false if `spent` stopped it partway (OpenRenderer.apply). */
   apply(records: unknown, spent?: () => boolean): boolean;
-  /** Draw the view's one stylesheet, as the open kit allows it. */
-  style(css: string): void;
+  /** Draw the view's stylesheets, every one it gave, in order, as the open kit allows them. */
+  style(sheets: readonly string[]): void;
   readonly renderer: OpenRenderer;
   /** What was refused of the drawing and the stylesheet (the last 200 of each). */
   readonly refused: readonly ViewRefusal[];
-  /** The stylesheet as drawn. */
+  /** The view's stylesheets as drawn, one after another. */
   readonly css: string;
   dispose(): void;
 }
@@ -128,7 +128,8 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
   return {
     apply: (records, spent) => renderer.apply(records, spent),
     style(given) {
-      const judged = sanitizeStylesheet(given);
+      const judged = sanitizeStylesheets(given);
+      cssRefused.length = 0;
       for (const one of judged.refused) {
         cssRefused.push({ reason: "css", name: "stylesheet", css: one });
         if (cssRefused.length > 200) cssRefused.shift();

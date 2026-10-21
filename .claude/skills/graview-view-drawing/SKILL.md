@@ -19,7 +19,10 @@ HTML's sectioning, headings, text, lists, tables, `details`/`summary`,
 `clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`.
 Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and
 each element's own. CSS for layout, grid, flex, color, type, transitions,
-`@keyframes`, `@media`, `@supports` and `@container`.
+`@keyframes`, `@media`, `@supports` and `@container`. Each
+`graview.style(css)` adds a sheet after the last (a shared design system's,
+then the view's own), each judged alone; a sheet given again is not added
+twice, so say what changes per push in a class or a `style` attribute.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`,
 `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image` and `foreignObject`; any

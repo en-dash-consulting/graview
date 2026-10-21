@@ -166,12 +166,12 @@ const REASONS: readonly HeadlessFailureReason[] = ["manifest", "source", "refuse
 /** A transcript as an isolate said it, held to its shape: anything else is no transcript. */
 function transcriptOf(value: unknown): HeadlessTranscript | undefined {
   if (!isRecord(value)) return undefined;
-  const { renders, css, asked, went, ms, logs, messages, gestures } = value;
+  const { renders, sheets, asked, went, ms, logs, messages, gestures } = value;
   if (!Array.isArray(renders) || !renders.every(Array.isArray) || !Array.isArray(asked) || !Array.isArray(went) || !Array.isArray(logs)) return undefined;
-  if (typeof ms !== "number" || typeof messages !== "number" || (css !== undefined && typeof css !== "string")) return undefined;
+  if (typeof ms !== "number" || typeof messages !== "number" || (sheets !== undefined && !(Array.isArray(sheets) && sheets.every((one) => typeof one === "string")))) return undefined;
   return {
     renders: renders as unknown[][],
-    ...(typeof css === "string" ? { css } : {}),
+    ...(Array.isArray(sheets) ? { sheets: sheets as string[] } : {}),
     asked: asked.filter(isRecord).map((one) => ({ name: String(one["name"]), args: one["args"] })),
     went: went.filter(isRecord).flatMap((one): HeadlessTranscript["went"][number][] => {
       const section = typeof one["section"] === "string" ? { section: one["section"] } : {};

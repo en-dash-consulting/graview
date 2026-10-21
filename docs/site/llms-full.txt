@@ -2018,7 +2018,7 @@ The worker entry carries Remote DOM (`@remote-dom/core` and its polyfill, MIT, p
 
 ### A worker view on the open kit
 
-A view that needs more than the kit's components — a card grid, a chart, an animated ring — draws plain HTML, SVG and one stylesheet instead. What keeps it safe is what it can reach, not what it can draw: it runs in the same hardened classic worker, and the host draws what it says into a shadow root inside a region of the host's own — `contain: layout paint style`, `isolation: isolate`, `overflow: clip` — keeping only what the open kit allows. The view is one plain script with no imports and no build; the host puts the view's runtime in front of it.
+A view that needs more than the kit's components — a card grid, a chart, an animated ring — draws plain HTML, SVG and stylesheets instead. What keeps it safe is what it can reach, not what it can draw: it runs in the same hardened classic worker, and the host draws what it says into a shadow root inside a region of the host's own — `contain: layout paint style`, `isolation: isolate`, `overflow: clip` — keeping only what the open kit allows. The view is one plain script with no imports and no build; the host puts the view's runtime in front of it.
 
 ```ts
 import { mountWorkerView } from "@graview/guest/host/worker";
@@ -2041,6 +2041,8 @@ A delegated listener is handed `event.element`, the element its selector matched
 ```js
 graview.on("click", "button[data-go]", (event) => graview.navigate(event.element.getAttribute("data-go")));
 ```
+
+Each `graview.style(css)` adds a sheet after the ones before it — the app's shared design system first, then the view's own — and every one is drawn, in that order, on the page and in a headless run alike. Each is judged on its own, so one left open swallows nothing after it, and all of them share one budget (64 000 characters); a sheet given again is the one already there, so a view that styles on every push adds nothing.
 
 The worker's elements are Remote DOM's polyfill, which has no `closest`, `matches` or `dataset`; calling one throws a sentence that names `event.element` as the way.
 
@@ -4943,7 +4945,7 @@ A worker view (`graview-worker-view`: its manifest, its global, its writes and i
 
 ### What it may draw
 
-HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, transitions, `@keyframes`, `@media`, `@supports` and `@container`.
+HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, transitions, `@keyframes`, `@media`, `@supports` and `@container`. Each `graview.style(css)` adds a sheet after the last (a shared design system's, then the view's own), each judged alone; a sheet given again is not added twice, so say what changes per push in a class or a `style` attribute.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image` and `foreignObject`; any `href`, `srcset` or `on*` attribute; `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` is kept — a header held in place sticks within the view, whose region is painted contained — and `all` takes its keywords (`button.toggle { all: unset }` takes the browser's chrome off a toggle). What the host leaves out it lists in `refused`; `graview.refused` is the runtime's own early word on the last render.
 
@@ -5271,7 +5273,7 @@ A manifest that names a kind, an edge or an act the app does not declare is refu
 ### The global
 
 ```js
-graview.style(css)              // the view's one stylesheet
+graview.style(css)              // a stylesheet, after any before it
 graview.onProps((props) => …)   // every push of what it is shown (and at once)
 graview.props                   // the last push
 graview.render(markup)          // draw: a string, graview.html`…`, or nodes
@@ -5292,7 +5294,7 @@ graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute(
 
 With `gestures: true`, `graview.on("wheel" | "drag" | "pinch", selector, fn)` hears them over what the selector matches, at most once a frame with the deltas summed. Each carries `x`, `y` (pixels from the matched element's top left) and its `width`, `height`. A `wheel` has `deltaX`, `deltaY`, `deltaMode`, `ctrlKey`, `metaKey`; a `drag` has `phase` (`start`, `move`, `end`), `pointerId`, `button`, `pressure` and `dx`, `dy` since the last; a `pinch` (Safari's, or a trackpad's Control-wheel) has `phase`, `scale` since the last and `rotation`. The page scrolls everywhere else; say `touch-action: none` on what drags. Without the flag the check says so.
 
-HTML, SVG and one stylesheet, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, and the only images a view may show (the app's logo, the app's own images, the pictures on records) are `graview-view-drawing`. What the host leaves out it lists in `refused`.
+HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, and the only images a view may show (the app's logo, the app's own images, the pictures on records) are `graview-view-drawing`. What the host leaves out it lists in `refused`.
 
 ### Links
 

@@ -43,8 +43,8 @@ export interface HeadlessInput {
 export interface HeadlessTranscript {
   /** Each batch of Remote DOM mutation records it sent. */
   readonly renders: readonly unknown[][];
-  /** Its stylesheet, as it gave it. */
-  readonly css?: string;
+  /** Its stylesheets, every one it gave, in order, as it gave them. */
+  readonly sheets?: readonly string[];
   /** The acts it asked for from its code. Nothing is applied in a headless run. */
   readonly asked: readonly { readonly name: string; readonly args: unknown }[];
   /** Where it asked to go: narrowed (`where`) and to a section, as it asked. */

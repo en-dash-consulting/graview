@@ -233,7 +233,7 @@ MIT, pinned); the frame guest and the host do not.
 ## A worker view on the open kit
 
 A view that needs more than the kit's components — a card grid, a chart,
-an animated ring — draws plain HTML, SVG and one stylesheet instead. What
+an animated ring — draws plain HTML, SVG and stylesheets instead. What
 keeps it safe is what it can reach, not what it can draw: it runs in the
 same hardened classic worker, and the host draws what it says into a
 shadow root inside a region of the host's own — `contain: layout paint
@@ -264,6 +264,13 @@ element's `data-*`:
 ```js
 graview.on("click", "button[data-go]", (event) => graview.navigate(event.element.getAttribute("data-go")));
 ```
+
+Each `graview.style(css)` adds a sheet after the ones before it — the
+app's shared design system first, then the view's own — and every one is
+drawn, in that order, on the page and in a headless run alike. Each is
+judged on its own, so one left open swallows nothing after it, and all of
+them share one budget (64 000 characters); a sheet given again is the one
+already there, so a view that styles on every push adds nothing.
 
 The worker's elements are Remote DOM's polyfill, which has no `closest`,
 `matches` or `dataset`; calling one throws a sentence that names

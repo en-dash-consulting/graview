@@ -51,7 +51,7 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
     if (!acts.has(asked.name)) return { ok: false, reason: "act", detail: `It asks for the act "${asked.name}", which its manifest does not name.` };
   }
   /* Nothing loads in a run: the app's own image is drawn as the path the live host resolves, where the host says it does. */
-  const drawn = drawTranscript(transcript.renders, transcript.css, { maxNodes: limits.maxNodes, ...(input.origin ? { origin: input.origin } : {}), ...(input.imageOrigins ? { imageOrigins: input.imageOrigins } : {}), ...(input.assets ? { asset: (path: string) => path } : {}) });
+  const drawn = drawTranscript(transcript.renders, transcript.sheets, { maxNodes: limits.maxNodes, ...(input.origin ? { origin: input.origin } : {}), ...(input.imageOrigins ? { imageOrigins: input.imageOrigins } : {}), ...(input.assets ? { asset: (path: string) => path } : {}) });
   if (drawn.over) return { ok: false, reason: "nodes", detail: `It drew more than the ${limits.maxNodes.toLocaleString("en-US")} things a view may draw.` };
   // A kind's list is somewhere a view may go by name too, by its plural or the kind's name.
   const goes = [...input.places, ...(input.lists ?? []).filter((slug) => !input.places.some((place) => place.as === slug)).map((slug) => ({ as: slug }))];

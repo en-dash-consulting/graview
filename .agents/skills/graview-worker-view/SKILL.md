@@ -39,7 +39,7 @@ refused before the view starts.
 ## The global
 
 ```js
-graview.style(css)              // the view's one stylesheet
+graview.style(css)              // a stylesheet, after any before it
 graview.onProps((props) => …)   // every push of what it is shown (and at once)
 graview.props                   // the last push
 graview.render(markup)          // draw: a string, graview.html`…`, or nodes
@@ -85,7 +85,7 @@ since the last and `rotation`. The page scrolls everywhere else; say
 `touch-action: none` on what drags. Without the flag the check says so.
 
 
-HTML, SVG and one stylesheet, drawn with the app's `--graview-*` tokens so
+HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so
 light and dark follow the app's toggle; nothing that loads or escapes. What
 the host keeps, the tokens, and the only images a view may show (the app's
 logo, the app's own images, the pictures on records) are

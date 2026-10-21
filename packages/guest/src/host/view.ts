@@ -277,7 +277,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let failed = false;
   let counted: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   /* What came before the drawing's module did: drawn, in order, once it has. */
-  const waiting: (["render", unknown] | ["style", string])[] = [];
+  const waiting: (["render", unknown] | ["style", readonly string[]])[] = [];
   const tally = () => {
     if (!session) return;
     const now = session.stats;
@@ -463,7 +463,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const budget = createDrawBudget(limits.drawMs, () => clock.now());
   /* The fields the view marked `data-prefill`, filled by the host from the record after each batch it draws (FR-150, press.ts). */
   let refill = () => {};
-  const draw = (one: ["render", unknown] | ["style", string]) => {
+  const draw = (one: ["render", unknown] | ["style", readonly string[]]) => {
     if (failed) return;
     if (!drawing) return void waiting.push(one);
     const live = drawing;
@@ -762,7 +762,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         },
         /* Past the message allowance, a view is stopped, not read on (FR-94). */
         onFlood: () => fail("flood"),
-        onStyle: (css) => draw(["style", css]),
+        onStyle: (sheets) => draw(["style", sheets]),
         places: () => [...new Set([...guestPlacesOf(options.places?.() ?? []).map((place) => place.as), ...lists().map((list) => list.slug)])],
         ...(options.limits ? { limits: options.limits } : {}),
         limiter,

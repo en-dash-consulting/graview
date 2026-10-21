@@ -7,7 +7,8 @@
  *
  *   showcase  a styled card grid, an SVG bar chart and a CSS-animated
  *             progress ring, drawn from the app's theme tokens, checked in
- *             light and again after the app's toggle to dark;
+ *             light and again after the app's toggle to dark, from two
+ *             stylesheets, a shared one and its own;
  *   escapes   every way out a view might try — a url() in every property
  *             that takes one, @import, @font-face, an escaped url, SVG
  *             <image href> and <use> of another document, <a href="https:">,
@@ -72,6 +73,11 @@ graview.style(\`
 .card { background: var(--graview-panel); color: var(--graview-ink); border: 1px solid var(--graview-edge); border-radius: 12px; padding: 12px; }
 .card h3 { margin: 0 0 4px; font: 600 15px/1.3 var(--graview-font-body); }
 .muted { color: var(--graview-ink-muted); margin: 0; }
+.card h3 { letter-spacing: 1px; }
+\`);
+/* The view's own sheet, after the shared one: both are drawn, this one second (Threat Watch, 2026-10-21). */
+graview.style(\`
+.card h3 { letter-spacing: 2px; }
 .chart stop { stop-color: var(--graview-accent); }
 .chart .bar { fill: url(#barFill); }
 .chart text { fill: var(--graview-ink); font: 10px var(--graview-font-body); }
@@ -294,6 +300,8 @@ main { display: grid; gap: 16px; padding: 16px; }
           barFill: getComputedStyle(bar).fill,
           animation: getComputedStyle(ring).animationName,
           svgNamespace: root.querySelector(".chart").namespaceURI,
+          sheets: root.querySelectorAll("style[data-graview-view-style]").length,
+          spacing: getComputedStyle(root.querySelector(".card h3")).letterSpacing,
         };
       });
     const turned = () => app.evaluate(() => getComputedStyle(document.querySelector("#showcase [data-worker-view]").shadowRoot.querySelector(".ring")).transform);
@@ -303,6 +311,7 @@ main { display: grid; gap: 16px; padding: 16px; }
     const after = await turned();
     claim("a worker view draws a styled card grid, an SVG bar chart and a CSS-animated progress ring", light.cards === 2 && light.bars === 4 && light.grid === "grid" && light.svgNamespace === "http://www.w3.org/2000/svg" && light.animation === "spin", light);
     claim("in light, the cards take the app's panel and edge, and the ring and the bars the app's accent", light.cardBackground === light.panel && light.cardBorder === light.edge && light.ring === light.accent && light.stop === light.accent && /url\(/.test(light.barFill), light);
+    claim("a view that calls graview.style twice draws both sheets, the second after the first: the cards from the shared one, the ring from its own, and its own rule winning where both say one", light.sheets === 1 && light.cardBackground === light.panel && light.animation === "spin" && light.spacing === "2px", light);
     claim("the progress ring turns: its keyframes are drawn and running", before !== after && before !== "none", { before, after });
     await app.evaluate(() => window.__host.scheme("dark"));
     await tab.waitForTimeout(200);
