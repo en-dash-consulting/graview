@@ -21,16 +21,20 @@
  *    stays Find's — and no reader is asked which machine answers. Firefox
  *    is launched with WebGPU off and the page driven.
  *
- *   node scripts/verify-engines.mjs [--engines=chromium,webkit,firefox]
+ * A cell that fails is looked at again alone (lib/second-look.mjs): failing
+ * twice is red, holding the second time is a flake in docs/flakes.json.
+ *
+ *   node scripts/verify-engines.mjs [--engines=chromium,webkit,firefox] [--strict]
  */
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { firefox } from "playwright";
 import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { lookTwice, recordFlakes } from "./lib/second-look.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const chosen =
@@ -104,64 +108,122 @@ for (const port of ["gauntlet", "todo", "seedbed"].map(portFor)) {
 
 const matrix = { at: new Date().toISOString(), engines: {}, degradation: null, capability: null };
 
+/*
+ * A SECOND LOOK, ALONE (lib/second-look.mjs). A cell — one engine and one
+ * harness — that fails is run once more on its own before the matrix goes
+ * red: Firefox's audit failed once on 0.1.43's branch Nightly and held on
+ * the re-run and locally, and that cost a manual re-run. Failing twice is
+ * a failure; holding the second time is a flake, written to
+ * docs/flakes.json by name with what it missed and raised as a warning in
+ * CI. `--strict` (or GRAVIEW_STRICT=1) takes one look only.
+ *
+ * GRAVIEW_ENGINES_FAIL_ONCE=<engine>/<cell>[,…] fails a cell's first look on
+ * purpose (GRAVIEW_ENGINES_FAIL_TWICE both looks), so the second look can be
+ * watched holding a flake and refusing a failure without waiting for one.
+ */
+const strict = process.argv.includes("--strict") || process.env.GRAVIEW_STRICT === "1";
+const forced = (variable) => new Set((process.env[variable] ?? "").split(",").map((one) => one.trim()).filter(Boolean));
+const failOnce = forced("GRAVIEW_ENGINES_FAIL_ONCE");
+const failTwice = forced("GRAVIEW_ENGINES_FAIL_TWICE");
+const flaked = [];
+
+async function cell(engine, name, check) {
+  const id = `${engine}/${name}`;
+  const judged = await lookTwice(
+    async (look) => {
+      if (look === 2) say(`  ${name}: FAIL — looking again, alone …`);
+      if (failTwice.has(id)) return { ok: false, error: "failed on purpose (GRAVIEW_ENGINES_FAIL_TWICE)" };
+      if (look === 1 && failOnce.has(id)) return { ok: false, error: "failed on purpose (GRAVIEW_ENGINES_FAIL_ONCE)" };
+      return check();
+    },
+    { strict },
+  );
+  if (judged.verdict === "flaky") flaked.push({ name: `engines ${id}`, missed: judged.missed });
+  return judged;
+}
+
+/*
+ * Each harness's own report is kept per engine as well (docs/engines/<engine>/),
+ * since the next engine's run writes over docs/audit.json: a cell that fails
+ * names its screen in the artifact the Nightly uploads.
+ */
+const keepReport = (engine, file) => {
+  const from = resolve(repoRoot, file);
+  if (!existsSync(from)) return;
+  const into = resolve(repoRoot, "docs/engines", engine);
+  mkdirSync(into, { recursive: true });
+  copyFileSync(from, resolve(into, basename(file)));
+};
+
+const cellSaid = (result) => (result.ok ? (result.verdict === "flaky" ? "ok (held the second time — a flake)" : "ok") : "FAIL");
+
 for (const engine of chosen) {
   say(`\n=== ${engine} ===`);
   const results = {};
 
   say(`  audit-ui …`);
-  clearReport("docs/audit.json");
-  const audit = await run(["scripts/audit-ui.mjs", `--engine=${engine}`]);
-  const auditReport = readReport("docs/audit.json");
-  const auditErrors = (auditReport?.screens ?? [])
-    .filter((s) => s.error)
-    .map((s) => `${s.app}/${s.state}: ${s.error}`);
-  results.audit = auditReport
-    ? {
-        ok: audit.code === 0 && auditErrors.length === 0,
-        screens: auditReport.screens.length,
-        ...(auditErrors.length > 0 ? { errors: auditErrors } : {}),
-      }
-    : { ok: false, error: `audit wrote no report — ${audit.tail.slice(-300)}` };
-  say(`  audit: ${results.audit.ok ? "ok" : "FAIL"} (${results.audit.screens ?? "no"} screens)`);
+  results.audit = await cell(engine, "audit", async () => {
+    clearReport("docs/audit.json");
+    const audit = await run(["scripts/audit-ui.mjs", `--engine=${engine}`]);
+    keepReport(engine, "docs/audit.json");
+    const auditReport = readReport("docs/audit.json");
+    const auditErrors = (auditReport?.screens ?? [])
+      .filter((s) => s.error)
+      .map((s) => `${s.app}/${s.state}: ${s.error}`);
+    return auditReport
+      ? {
+          ok: audit.code === 0 && auditErrors.length === 0,
+          screens: auditReport.screens.length,
+          ...(auditErrors.length > 0 ? { errors: auditErrors } : {}),
+        }
+      : { ok: false, error: `audit wrote no report — ${audit.tail.slice(-300)}` };
+  });
+  say(`  audit: ${cellSaid(results.audit)} (${results.audit.screens ?? "no"} screens)`);
 
   say(`  verify-pages (390×844 first) …`);
-  clearReport("docs/pages-face.json");
-  const pages = await run(["scripts/verify-pages.mjs", `--engine=${engine}`]);
-  const pagesReport = readReport("docs/pages-face.json");
-  // The pages harness judges its own checks (a check can carry a `false`
-  // field that is the RIGHT answer — "still a form: false" after saving);
-  // this reads its verdict rather than grepping its report for the word.
-  results.pages = pagesReport
-    ? {
-        ok: pages.code === 0 && pagesReport.passed !== false,
-        ...(pagesReport.error ? { error: pagesReport.error } : {}),
-      }
-    : { ok: false, error: `pages wrote no report — ${pages.tail.slice(-300)}` };
-  say(`  pages: ${results.pages.ok ? "ok" : "FAIL"}`);
+  results.pages = await cell(engine, "pages", async () => {
+    clearReport("docs/pages-face.json");
+    const pages = await run(["scripts/verify-pages.mjs", `--engine=${engine}`]);
+    keepReport(engine, "docs/pages-face.json");
+    const pagesReport = readReport("docs/pages-face.json");
+    // The pages harness judges its own checks (a check can carry a `false`
+    // field that is the RIGHT answer — "still a form: false" after saving);
+    // this reads its verdict rather than grepping its report for the word.
+    return pagesReport
+      ? {
+          ok: pages.code === 0 && pagesReport.passed !== false,
+          ...(pagesReport.error ? { error: pagesReport.error } : {}),
+        }
+      : { ok: false, error: `pages wrote no report — ${pages.tail.slice(-300)}` };
+  });
+  say(`  pages: ${cellSaid(results.pages)}`);
 
   say(`  survey-ui (one pass, todo) …`);
-  clearReport("docs/survey.json");
-  const survey = await run(["scripts/survey-ui.mjs", "todo", `--engine=${engine}`]);
-  const surveyReport = readReport("docs/survey.json");
-  // The exit code AND the shots: a survey that photographed nothing, or
-  // errored per shot, must not read as an engine holding.
-  const shotErrors = (surveyReport?.shots ?? [])
-    .filter((shot) => shot.error)
-    .map((shot) => `${shot.app}/${shot.state}/${shot.scheme}: ${shot.error}`);
-  results.survey = surveyReport
-    ? {
-        ok: survey.code === 0 && shotErrors.length === 0 && surveyReport.shots.length > 0,
-        shots: surveyReport.shots.length,
-        ...(shotErrors.length > 0 ? { errors: shotErrors.slice(0, 5) } : {}),
-      }
-    : { ok: false, error: `survey wrote no report — ${survey.tail.slice(-300)}` };
-  say(`  survey: ${results.survey.ok ? "ok" : "FAIL"}`);
+  results.survey = await cell(engine, "survey", async () => {
+    clearReport("docs/survey.json");
+    const survey = await run(["scripts/survey-ui.mjs", "todo", `--engine=${engine}`]);
+    keepReport(engine, "docs/survey.json");
+    const surveyReport = readReport("docs/survey.json");
+    // The exit code AND the shots: a survey that photographed nothing, or
+    // errored per shot, must not read as an engine holding.
+    const shotErrors = (surveyReport?.shots ?? [])
+      .filter((shot) => shot.error)
+      .map((shot) => `${shot.app}/${shot.state}/${shot.scheme}: ${shot.error}`);
+    return surveyReport
+      ? {
+          ok: survey.code === 0 && shotErrors.length === 0 && surveyReport.shots.length > 0,
+          shots: surveyReport.shots.length,
+          ...(shotErrors.length > 0 ? { errors: shotErrors.slice(0, 5) } : {}),
+        }
+      : { ok: false, error: `survey wrote no report — ${survey.tail.slice(-300)}` };
+  });
+  say(`  survey: ${cellSaid(results.survey)}`);
 
   say(`  the keyboard after a pane goes …`);
-  results.keyboardSurvivesThePane = await verifyKeyboardSurvivesThePane(engine, () =>
-    launchEngine(engine, { headless: true }),
+  results.keyboardSurvivesThePane = await cell(engine, "keyboardSurvivesThePane", () =>
+    verifyKeyboardSurvivesThePane(engine, () => launchEngine(engine, { headless: true })),
   );
-  say(`  keyboard: ${results.keyboardSurvivesThePane.ok ? "ok" : "FAIL"} (${results.keyboardSurvivesThePane.tabbedTo?.join(" → ") ?? "-"})`);
+  say(`  keyboard: ${cellSaid(results.keyboardSurvivesThePane)} (${results.keyboardSurvivesThePane.tabbedTo?.join(" → ") ?? "-"})`);
 
   matrix.engines[engine] = results;
 }
@@ -338,12 +400,12 @@ async function verifyLocalFallback() {
 }
 
 say(`\n=== degradation: altitude morph without @property (Firefox, feature off) ===`);
-matrix.degradation = await verifyAltitudeCut();
-say(`  ${matrix.degradation.ok ? "ok — clean cut" : `FAIL ${JSON.stringify(matrix.degradation)}`}`);
+matrix.degradation = await cell("firefox", "degradation", verifyAltitudeCut);
+say(`  ${matrix.degradation.ok ? `${cellSaid(matrix.degradation)} — clean cut` : `FAIL ${JSON.stringify(matrix.degradation)}`}`);
 
 say(`\n=== capability: an on-device model without WebGPU/Prompt API (Firefox, WebGPU off) ===`);
-matrix.capability = await verifyLocalFallback();
-say(`  ${matrix.capability.ok ? "ok — no quick ask drawn for a model this browser cannot run, ⌘K is Find's, no chooser" : `FAIL ${JSON.stringify(matrix.capability)}`}`);
+matrix.capability = await cell("firefox", "capability", verifyLocalFallback);
+say(`  ${matrix.capability.ok ? `${cellSaid(matrix.capability)} — no quick ask drawn for a model this browser cannot run, ⌘K is Find's, no chooser` : `FAIL ${JSON.stringify(matrix.capability)}`}`);
 
 /* ------------------------------------------------------------ the verdict */
 
@@ -351,16 +413,25 @@ const engineOk = Object.values(matrix.engines).every((results) =>
   Object.values(results).every((r) => r.ok),
 );
 matrix.passed = engineOk && matrix.degradation.ok && matrix.capability.ok;
+matrix.flaky = flaked.map((one) => ({ cell: one.name.replace(/^engines /, ""), missed: one.missed }));
 
 writeFileSync(resolve(repoRoot, "docs/engine-matrix.json"), `${JSON.stringify(matrix, null, 2)}\n`);
 say(`\nwrote docs/engine-matrix.json`);
+const short = (r) => (r.ok ? (r.verdict === "flaky" ? "flaky" : "ok") : "FAIL");
 for (const [engine, results] of Object.entries(matrix.engines)) {
   say(
     `${engine.padEnd(9)} ${Object.entries(results)
-      .map(([name, r]) => `${name}:${r.ok ? "ok" : "FAIL"}`)
+      .map(([name, r]) => `${name}:${short(r)}`)
       .join("  ")}`,
   );
 }
-say(`degradation:${matrix.degradation.ok ? "ok" : "FAIL"}  capability:${matrix.capability.ok ? "ok" : "FAIL"}`);
+say(`degradation:${short(matrix.degradation)}  capability:${short(matrix.capability)}`);
+
+/* A cell that failed and then held alone is a flake: kept by name, and said where CI shows a warning. */
+for (const flake of recordFlakes(repoRoot, flaked)) {
+  const claims = flake.missed.length > 0 ? flake.missed.join(", ") : "no claim named";
+  say(`flaky ${flake.harness}: failed once (${claims}) and held when run again alone (docs/flakes.json)`);
+  if (process.env.GITHUB_ACTIONS) say(`::warning title=Flaky harness: ${flake.harness}::failed once (${claims}) and held when run again alone; fix its wait (docs/flakes.json)`);
+}
 say(matrix.passed ? "\nevery engine holds" : "\nAN ENGINE DOES NOT HOLD");
 process.exit(matrix.passed ? 0 : 1);
