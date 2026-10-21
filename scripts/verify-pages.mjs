@@ -1124,7 +1124,10 @@ async function aRecordPageSaysWhereItIs() {
           };
         });
         await page.click('nav[aria-label="You are here"] a[href="/pages/gardeners"]').catch(() => {});
-        await page.waitForFunction(() => location.pathname === "/pages/gardeners", undefined, { timeout: 10_000 }).catch(() => {});
+        // The address moves before the list is drawn: wait for the page it went to, not only its path (WebKit read the record's heading still standing).
+        await page
+          .waitForFunction(() => location.pathname === "/pages/gardeners" && (document.querySelector("[data-graview-page-title]")?.textContent ?? "").trim() === "Gardeners", undefined, { timeout: 10_000 })
+          .catch(() => {});
         const went = await page.evaluate(() => ({ path: location.pathname, heading: (document.querySelector("[data-graview-page-title]")?.textContent ?? "").trim() }));
         await page.goto(`${at("seedbed")}/pages/plantings/beans?chapter=9`, { waitUntil: "networkidle" });
         await page.waitForSelector('nav[aria-label="You are here"]', { timeout: 15_000 }).catch(() => {});
