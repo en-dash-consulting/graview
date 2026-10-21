@@ -47,7 +47,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.43
 
-Published October 21, 2026 · the current version
+Published October 21, 2026
 
 A change carries its value once less: smaller histories for every app.
 
