@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker",
+  "minified": 197,
+  "gzipped": 157,
+  "note": "Raised when a worker view came to hear a wheel, a drag and a pinch (0.1.42, TrueNorth's architecture map): the session reads a view's `gestures` and hands it on. Measured at 22_311 / 9_235 against 22_114 / 9_078: 197 / 157 more."
+}

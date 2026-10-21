@@ -30,6 +30,7 @@ Every view comes with a manifest the host enforces:
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
+- `gestures: true` lets it hear a wheel, a drag and a pinch (below).
 - `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path, and lets the view place a record's video (`<graview-video>`) and open the host's full-screen viewer: `graview-view-drawing` says how a view shows them.
 
 A manifest that names a kind, an edge or an act the app does not declare is
@@ -71,7 +72,18 @@ carries `value`, `checked`, `key`, `pressed` for a bound press, and
 graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
 ```
 
-## What it may draw
+## Gestures
+
+With `gestures: true`, `graview.on("wheel" | "drag" | "pinch", selector,
+fn)` hears them over what the selector matches, at most once a frame with
+the deltas summed. Each carries `x`, `y` (pixels from the matched element's
+top left) and its `width`, `height`. A `wheel` has `deltaX`, `deltaY`,
+`deltaMode`, `ctrlKey`, `metaKey`; a `drag` has `phase` (`start`, `move`,
+`end`), `pointerId`, `button`, `pressure` and `dx`, `dy` since the last;
+a `pinch` (Safari's, or a trackpad's Control-wheel) has `phase`, `scale`
+since the last and `rotation`. The page scrolls everywhere else; say
+`touch-action: none` on what drags. Without the flag the check says so.
+
 
 HTML, SVG and one stylesheet, drawn with the app's `--graview-*` tokens so
 light and dark follow the app's toggle; nothing that loads or escapes. What
@@ -125,7 +137,9 @@ and a note typed and pressed in. `examples/front-page.js` is a home: a
 headline, a figure, an SVG ring and cards linking to a place.
 `examples/a-record.js` is a view of one record: a deliverable's subject
 and its draft as paragraphs, read off `props.node`, and "Edit draft"
-with the draft prefilled. Each opens with its manifest.
+with the draft prefilled. `examples/a-map-that-pans-and-zooms.js` is an
+SVG map whose viewBox a wheel and a pinch zoom around the pointer and a
+drag pans. Each opens with its manifest.
 
 ## Registering it
 

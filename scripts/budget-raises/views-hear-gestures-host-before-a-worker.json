@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 211,
+  "gzipped": 136,
+  "note": "Raised when a worker view came to hear a wheel, a drag and a pinch (0.1.42, TrueNorth's architecture map): the session reads a view's `gestures` and hands it to the host, which fetches its gestures when a view first listens for one. Measured at 23_269 / 10_926 against 23_058 / 10_790: 211 / 136 more."
+}

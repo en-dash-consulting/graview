@@ -71,6 +71,7 @@ const runtime = createViewRuntime({
     transcript.messages += 1;
     if (request.type === "render") transcript.renders.push(plain(request.records) as unknown[]);
     else if (request.type === "style") transcript.css = String(request.css);
+    else if (request.type === "gestures") transcript.gestures = plain(request.bound) as { event: string; selector: string }[];
     else if (request.type === "navigate" && "place" in request)
       transcript.went.push({ place: String(request.place), ...(request.where !== undefined ? { where: plain(request.where) } : {}), ...(request.section !== undefined ? { section: String(request.section) } : {}) });
     else if (request.type === "navigate" && "to" in request)
