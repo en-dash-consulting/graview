@@ -19,7 +19,12 @@
  *   spoofer   a stylesheet that spells `:host` past a CDC or CDO, to lift
  *             the region's containment and paint over the app's own bar;
  *   speaker   landmarks and notices by element, by role and by a named
- *             section, read back from each engine's accessibility tree.
+ *             section, read back from each engine's accessibility tree;
+ *   controls  a view's own accessible controls — a span with
+ *             role="checkbox" and aria-checked, ticked by a press, a
+ *             switch, tabs, a radio group, a slider — read back from the
+ *             accessibility tree, and the same view run headless, drawn
+ *             attribute for attribute as the page drew it.
  *
  * The page is served with NO content security policy (`--policy=page`), so
  * nothing but the open kit stands between a view and the network: every
@@ -174,6 +179,32 @@ out.stuck = graview.hardening.stuck;
 graview.onProps(() => graview.render(graview.html\`<pre id="probed">\${JSON.stringify(out)}</pre>\`));
 `);
 
+
+  /*
+   * A view's own accessible controls (Threat Watch, 2026-10-21): the checkbox Graview Cloud filed — a span with role="checkbox"
+   * and aria-checked, ticked by a press — a switch, a pressed toggle, a disclosure that says what it controls, tabs and their
+   * panel, a radio group and a slider, each read back from the engine's accessibility tree, and the same view run headless.
+   */
+  const controlsSource = `
+var DONE = { "step:1": true };
+graview.style(".box { display: inline-block; width: 20px; height: 20px; border: 2px solid #94a3b8; } .box[aria-checked=true] { background: rgb(5, 122, 85); }");
+function draw() {
+  graview.render(graview.html\`<div class="gx" role="group" aria-label="Steps">
+    \${["step:1", "step:2"].map(function (id) { return graview.html\`<div class="it" data-key="\${id}"><span class="box" role="checkbox" aria-checked="\${DONE[id] ? "true" : "false"}" aria-label="\${"Tick " + id}" tabindex="0" data-ck="\${id}"></span></div>\`; })}
+    <span class="sw" role="switch" aria-checked="true" tabindex="0" aria-label="Only live threats"></span>
+    <span role="button" aria-pressed="true" tabindex="0">Bold</span>
+    <span role="button" aria-expanded="false" aria-controls="more-steps" tabindex="0">Show all</span><div id="more-steps" hidden>More</div>
+    <div role="tablist" aria-label="Audience"><span role="tab" id="tab-dev" aria-selected="true" aria-controls="panel-dev" tabindex="0">Developers</span><span role="tab" id="tab-ops" aria-selected="false" tabindex="-1">IT and ops</span></div>
+    <div role="tabpanel" id="panel-dev" aria-labelledby="tab-dev">The developers' steps</div>
+    <div role="radiogroup" aria-label="Urgency"><span role="radio" aria-checked="true" tabindex="0">Now</span><span role="radio" aria-checked="false" tabindex="-1">Today</span></div>
+    <span role="slider" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" aria-valuetext="40 percent" aria-label="Done" tabindex="0"></span>
+    <p id="controls-done">drawn</p></div>\`);
+}
+graview.onProps(draw);
+graview.on("click", "[data-ck]", function (event) { var id = event.element.getAttribute("data-ck"); DONE[id] = !DONE[id]; draw(); });
+`;
+  const controlsJs = await viewScript(controlsSource);
+
   const widgetJs = (
     await build({
       stdin: {
@@ -182,7 +213,7 @@ import { mountWorkerView } from "./packages/guest/dist/host/worker.js";
 ${SHOWROOM}
 const failures = [];
 const views = {};
-for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER], ["speaker", SPEAKER]]) {
+for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER], ["speaker", SPEAKER], ["controls", CONTROLS]]) {
   views[name] = mountWorkerView(document.getElementById(name), { manifest: { name, attach: "car", cardinality: "many", reads: { kinds: ["shopper"] } }, worker: { script }, store, principal: bethan, onFailure: (reason, detail) => failures.push([name, reason, detail]) });
 }
 window.__host = {
@@ -204,14 +235,14 @@ window.__host = {
       define: { "process.env.NODE_ENV": '"production"' },
     })
   ).outputFiles[0].text;
-  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)}; const SPEAKER = ${JSON.stringify(speakerJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
+  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)}; const SPEAKER = ${JSON.stringify(speakerJs)}; const CONTROLS = ${JSON.stringify(controlsJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
   const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>The app</title><style>${TOKENS(core)}
 body { margin: 0; background: var(--graview-ground); color: var(--graview-ink); font-family: var(--graview-font-body); }
 #bar { height: 48px; display: flex; align-items: center; padding: 0 12px; border-bottom: 1px solid var(--graview-edge); }
 main { display: grid; gap: 16px; padding: 16px; }
 #showcase, #escapes, #prober { border: 1px dashed var(--graview-edge); }
 .probe-panel { background-color: var(--graview-panel); border-top: 1px solid var(--graview-edge); color: var(--graview-accent); }
-</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div><div id="speaker"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
+</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div><div id="speaker"></div><div id="controls"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
 
   const attacker = { requests: [], connections: 0 };
   const servers = [
@@ -271,6 +302,7 @@ main { display: grid; gap: 16px; padding: 16px; }
     await waitFor("prober", "#probed", "the prober");
     await waitFor("spoofer", "#cover", "the spoofer");
     await waitFor("speaker", "#said-done", "the speaker");
+    await waitFor("controls", "#controls-done", "the controls");
     /* Long enough for anything kept to have been fetched: images, fonts, a preconnect. */
     await tab.waitForTimeout(1_500);
 
@@ -420,6 +452,69 @@ main { display: grid; gap: 16px; padding: 16px; }
       "nothing a view draws speaks with a landmark or a notice's role in the accessibility tree (nav, header, footer, aside, search, a named section, output, or role=…), and its words are still drawn",
       tree?.role !== undefined && spoken.length === 0 && ["Main menu", "The app", "Footer", "Aside", "Search", "Named by title", "Saved", "Presentational"].every((words) => said.includes(words)),
       { root: tree?.role, spoken, roles: [...new Set(roles)] },
+    );
+    // ── a view's own accessible controls ──
+    const controlsRegion = await app.evaluateHandle(() => document.querySelector("#controls [data-worker-view]"));
+    const controlsTree = proxied ? undefined : await tab.accessibility.snapshot({ root: controlsRegion, interestingOnly: false });
+    const spokenControls = [];
+    const walkControls = (node) => {
+      for (const child of node?.children ?? []) {
+        spokenControls.push({ role: String(child.role).toLowerCase(), name: child.name, checked: child.checked, pressed: child.pressed, expanded: child.expanded, selected: child.selected, valuetext: child.valuetext });
+        walkControls(child);
+      }
+    };
+    walkControls(controlsTree);
+    const one = (role, name) => spokenControls.find((node) => node.role === role && (name === undefined || node.name === name));
+    const drawnControls = () =>
+      app.evaluate(() => {
+        const region = document.querySelector("#controls [data-worker-view]");
+        const root = region.shadowRoot.querySelector("[data-graview-view-root]");
+        return {
+          failed: region.getAttribute("data-worker-view-failed"),
+          fallback: Boolean(region.shadowRoot.querySelector("[data-graview-fallback]")),
+          ticked: [...root.querySelectorAll("[data-ck]")].map((box) => box.getAttribute("aria-checked")),
+          background: getComputedStyle(root.querySelector('[data-ck="step:1"]')).backgroundColor,
+          attributes: [...root.querySelectorAll("*")].map((element) => [element.localName, [...element.attributes].filter((one) => one.name !== "autocomplete").map((one) => [one.name, one.value]).sort(([a], [b]) => (a < b ? -1 : 1))]),
+        };
+      });
+    const controlsBefore = await drawnControls();
+    claim(
+      'a view\'s <span role="checkbox" aria-checked> is drawn as the view drew it, not stopped and not replaced, with its state styled by its own [aria-checked] rule',
+      controlsBefore.failed === null && !controlsBefore.fallback && controlsBefore.ticked.join(",") === "true,false" && controlsBefore.background === "rgb(5, 122, 85)",
+      controlsBefore,
+    );
+    if (!proxied) claim(
+      "the engine's accessibility tree says each of the view's own controls with its state: a checked checkbox and an unchecked one, a switch on, a pressed button (a button, where WebKit's tree says no state of one), a collapsed disclosure, the selected tab, the checked radio and the slider's value",
+      one("checkbox", "Tick step:1")?.checked === true && one("checkbox", "Tick step:2") !== undefined && one("checkbox", "Tick step:2").checked !== true && one("switch")?.checked === true && spokenControls.some((node) => node.name === "Bold" && (node.pressed === true || /toggle/.test(node.role) || (ENGINE === "webkit" && node.role === "button"))) &&
+        one("button", "Show all") !== undefined && one("button", "Show all").expanded !== true && one("tab", "Developers")?.selected === true && one("radio", "Now")?.checked === true && (one("slider")?.valuetext === "40 percent" || one("slider") !== undefined),
+      { controls: spokenControls.filter((node) => node.name) },
+    );
+    await app.evaluate(() => document.querySelector("#controls [data-worker-view]").shadowRoot.querySelector('[data-ck="step:2"]').click());
+    let controlsAfter = await drawnControls();
+    for (let i = 0; i < 20 && controlsAfter.ticked.join(",") !== "true,true"; i += 1) {
+      await tab.waitForTimeout(50);
+      controlsAfter = await drawnControls();
+    }
+    claim("a press on the view's checkbox ticks it: the view draws aria-checked again and the page keeps it", controlsAfter.ticked.join(",") === "true,true" && controlsAfter.failed === null, controlsAfter.ticked);
+    /* The same view, run headless in this process as Graview Cloud's propose_view runs it, drawn into the run's tree and set beside the page's. */
+    const guestHeadless = await import(resolve(repoRoot, "packages/guest/dist/headless/index.js"));
+    const guestNode = await import(resolve(repoRoot, "packages/guest/dist/headless/node.js"));
+    const runStore = new core.Store({ schema: core.createSchema([core.defineNode("car", { fields: core.z.object({ label: core.z.string() }), plural: "Cars" })]), mutations: [], policy: { grants: [] }, snapshot: { nodes: [{ id: "car:golf", kind: "car", label: "Golf" }], edges: [] } });
+    const ran = await guestHeadless.runWorkerViewHeadless({ store: runStore, principal: { kind: "human", id: "u:bethan" }, run: guestNode.nodeIsolate(), manifest: { name: "controls", attach: "car", cardinality: "many" }, source: controlsSource });
+    const runTree = ran.ok ? guestHeadless.drawTranscript(ran.transcript.renders, ran.transcript.sheets, { maxNodes: 5_000 }).root : undefined;
+    const runAttributes = [];
+    const walkRun = (node) => {
+      for (const child of node?.childNodes ?? []) {
+        if (child.nodeType !== 1) continue;
+        runAttributes.push([child.localName, [...child.attributes].filter(([name]) => name !== "autocomplete").sort(([a], [b]) => (a < b ? -1 : 1))]);
+        walkRun(child);
+      }
+    };
+    walkRun(runTree);
+    claim(
+      "the same view run headless says it runs with no problem, and draws element for element and attribute for attribute what the page drew",
+      ran.ok && ran.description.problems.length === 0 && JSON.stringify(runAttributes) === JSON.stringify(controlsBefore.attributes),
+      ran.ok ? { problems: ran.description.problems, headless: runAttributes.length, page: controlsBefore.attributes.length } : ran,
     );
     const refused = await app.evaluate(() => window.__host.refused().escapes);
     claim("what was not drawn was written down as refused", refused.length >= URL_PROPERTIES.length + 8, { count: refused.length });

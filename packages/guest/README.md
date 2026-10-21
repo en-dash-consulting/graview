@@ -299,9 +299,16 @@ an SVG image in an `img` runs no script and loads nothing. No `<script>`,
 `<output>` as `<span>`. Each holds what it held and is marked
 `data-graview-as`, and the view's selectors for those names are read as
 that attribute. A `<section>` is never named, and `role` takes no landmark
-or notice's role. `guest-sandbox --transport=open` serves a page with no
+or notice's role. Every other role and every `aria-*` state and property
+is kept, so a view builds the controls a person reaches by keyboard and
+assistive technology — `<span role="checkbox" aria-checked="true"
+tabindex="0">`, a `switch`, `aria-pressed`, `aria-expanded` with
+`aria-controls` naming an id it drew, tabs, a radio group, a `slider` — and
+a headless run draws them element for element as the page does, refusing
+what the page refuses. `guest-sandbox --transport=open` serves a page with no
 content security policy, tries every way out, and finds no request leaving
-it in Chromium, WebKit or Firefox.
+it in Chromium, WebKit or Firefox; and it reads a view's own controls back
+from each engine's accessibility tree with their states.
 
 ### A worker view is a place
 

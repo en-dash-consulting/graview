@@ -42,6 +42,12 @@ your stylesheet still matches. A `section` is never named (no `aria-label`
 or `title`), so it stays out of the landmarks. `role` takes no landmark or
 notice's role (`navigation`, `region`, `status`, `alert`, …).
 
+A control of your own keeps its role and state, and every `aria-*`:
+`<span role="checkbox" aria-checked="true" tabindex="0">`, `switch`,
+`aria-pressed`, `aria-expanded` with `aria-controls` naming an id you
+drew, tabs (`aria-selected`), `slider` (`aria-valuenow`). Hear Space and
+Enter on `keydown`. A headless run draws them as the page does.
+
 ## The app's look
 
 **Draw with the app's tokens**, so light and dark follow the app's own

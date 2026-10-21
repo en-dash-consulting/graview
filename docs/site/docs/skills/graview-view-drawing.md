@@ -18,6 +18,8 @@ Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `sty
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They lose their landmark or status role, and a selector for them in your stylesheet still matches. A `section` is never named (no `aria-label` or `title`), so it stays out of the landmarks. `role` takes no landmark or notice's role (`navigation`, `region`, `status`, `alert`, …).
 
+A control of your own keeps its role and state, and every `aria-*`: `<span role="checkbox" aria-checked="true" tabindex="0">`, `switch`, `aria-pressed`, `aria-expanded` with `aria-controls` naming an id you drew, tabs (`aria-selected`), `slider` (`aria-valuenow`). Hear Space and Enter on `keydown`. A headless run draws them as the page does.
+
 ### The app's look
 
 **Draw with the app's tokens**, so light and dark follow the app's own toggle: `var(--graview-panel)`, `--graview-ground`, `--graview-ink`, `--graview-ink-muted`, `--graview-edge`, `--graview-accent`, `--graview-font-body`, `--graview-font-display` (headings, as the app's), `--graview-font-mono`, `--graview-radius`. Presentation attributes do not take `var()`; put paints in the stylesheet (`.bar { fill: var(--graview-accent) }`). For what the view computes, `props.theme` says the same tokens as values, with `scheme`, the app's `name` and its `logo`. A brand change or the app's toggle pushes `theme` again.
