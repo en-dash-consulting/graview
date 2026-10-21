@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import type { GraphReader } from "../graph/types.js";
 import type { Primitive } from "../graph/primitives.js";
 import type { CompiledDocument } from "./compile.js";
@@ -32,78 +32,91 @@ const ITEM = "item";
 
 export const TEMPLATE_QUESTION_TYPES = ["string", "text", "number", "date", "list", "choice"] as const;
 
-const QuestionSpec = z
-  .object({
-    id: z
-      .string()
-      .regex(QUESTION_ID, 'question ids are one word or camelCase, like "budget" or "startDate"')
-      .refine((id) => id !== ITEM, `"${ITEM}" is kept for the current entry of a forEach`),
-    ask: z.string().min(1).max(200),
-    type: z.enum(TEMPLATE_QUESTION_TYPES),
-    options: z.array(z.string().min(1).max(80)).min(1).max(50).optional(),
-    default: z.unknown().optional(),
-    optional: z.boolean().optional(),
-  })
-  .strict()
-  .superRefine((q, ctx) => {
-    if (q.type === "choice" && !q.options) ctx.addIssue({ code: "custom", message: 'a choice question lists its "options"', path: ["options"] });
-    if (q.options && q.type !== "choice" && q.type !== "list") ctx.addIssue({ code: "custom", message: '"options" belongs only on a choice or list question', path: ["options"] });
-  });
-export type TemplateQuestion = z.infer<typeof QuestionSpec>;
-
-const SetupStepSpec = z
-  .object({
-    act: z.string().regex(KEBAB, 'act names are lower-case words joined by hyphens, like "add-category"'),
-    args: z.record(z.string(), z.unknown()).default({}),
-    /** A rule-language expression over the answers; the step runs only when it is true. */
-    if: z.string().min(1).max(500).optional(),
-    /** `$<listQuestion>`: run the act once per entry, with `$item` bound to the entry. */
-    forEach: z.string().regex(/^\$[a-z][A-Za-z0-9]*$/, 'forEach names a list question, like "$categories"').optional(),
-  })
-  .strict();
-export type TemplateSetupStep = z.infer<typeof SetupStepSpec>;
-
-const SeedNodeSpec = z.object({ id: z.string().min(1).max(200), kind: z.string().min(1) }).catchall(z.unknown());
-export type TemplateSeedNode = z.infer<typeof SeedNodeSpec>;
-
-const SeedSpec = z
-  .object({
-    nodes: z.array(SeedNodeSpec).max(500),
-    edges: z.array(z.object({ kind: z.string().min(1), from: z.string().min(1), to: z.string().min(1) }).strict()).max(2000).default([]),
-    /** The day the examples were written against; their dates move with the calendar. */
-    anchor: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  })
-  .strict();
-export type TemplateSeed = z.infer<typeof SeedSpec>;
-
-export const TemplateSpec = z
-  .object({
-    format: z.literal(TEMPLATE_FORMAT),
-    formatVersion: z.literal(TEMPLATE_FORMAT_VERSION),
-    id: z.string().regex(KEBAB, 'template ids are lower-case words joined by hyphens, like "vendor-shortlist"'),
-    version: z.number().int().min(1),
-    title: z.string().min(1).max(80),
-    pitch: z.string().min(1).max(200),
-    useCases: z.array(z.string().min(1).max(40)).max(20),
-    document: z.record(z.string(), z.unknown()),
-    seed: SeedSpec.optional(),
-    questions: z.array(QuestionSpec).max(12),
-    setup: z.array(SetupStepSpec).max(50),
-    readme: z.string().min(1).max(20_000),
-    screenshots: z.array(z.string().min(1)).max(10),
-    author: z.object({ workspace: z.string().min(1), name: z.string().min(1) }).strict(),
-    remixedFrom: z.union([z.string().min(1), z.null()]),
-    license: z.string().min(1).max(40),
-  })
-  .strict()
-  .superRefine((t, ctx) => {
-    const seen = new Set<string>();
-    t.questions.forEach((q, i) => {
-      if (seen.has(q.id)) ctx.addIssue({ code: "custom", message: `two questions are called "${q.id}"`, path: ["questions", i, "id"] });
-      seen.add(q.id);
+/*
+ * A template's shape, built the first time one is read rather than when the
+ * module loads (`TemplateSpec` is `z.lazy` over it): what imports the
+ * document format and never reads a template builds none of it.
+ */
+function buildShapes() {
+  const QuestionSpec = z
+    .object({
+      id: z
+        .string()
+        .regex(QUESTION_ID, 'question ids are one word or camelCase, like "budget" or "startDate"')
+        .refine((id) => id !== ITEM, `"${ITEM}" is kept for the current entry of a forEach`),
+      ask: z.string().min(1).max(200),
+      type: z.enum(TEMPLATE_QUESTION_TYPES),
+      options: z.array(z.string().min(1).max(80)).min(1).max(50).optional(),
+      default: z.unknown().optional(),
+      optional: z.boolean().optional(),
+    })
+    .strict()
+    .superRefine((q, ctx) => {
+      if (q.type === "choice" && !q.options) ctx.addIssue({ code: "custom", message: 'a choice question lists its "options"', path: ["options"] });
+      if (q.options && q.type !== "choice" && q.type !== "list") ctx.addIssue({ code: "custom", message: '"options" belongs only on a choice or list question', path: ["options"] });
     });
-  });
-export type GraviewTemplate = z.infer<typeof TemplateSpec>;
+
+  const SetupStepSpec = z
+    .object({
+      act: z.string().regex(KEBAB, 'act names are lower-case words joined by hyphens, like "add-category"'),
+      args: z.record(z.string(), z.unknown()).default({}),
+      /** A rule-language expression over the answers; the step runs only when it is true. */
+      if: z.string().min(1).max(500).optional(),
+      /** `$<listQuestion>`: run the act once per entry, with `$item` bound to the entry. */
+      forEach: z.string().regex(/^\$[a-z][A-Za-z0-9]*$/, 'forEach names a list question, like "$categories"').optional(),
+    })
+    .strict();
+
+  const SeedNodeSpec = z.object({ id: z.string().min(1).max(200), kind: z.string().min(1) }).catchall(z.unknown());
+
+  const SeedSpec = z
+    .object({
+      nodes: z.array(SeedNodeSpec).max(500),
+      edges: z.array(z.object({ kind: z.string().min(1), from: z.string().min(1), to: z.string().min(1) }).strict()).max(2000).default([]),
+      /** The day the examples were written against; their dates move with the calendar. */
+      anchor: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    })
+    .strict();
+
+  const TemplateSpec = z
+    .object({
+      format: z.literal(TEMPLATE_FORMAT),
+      formatVersion: z.literal(TEMPLATE_FORMAT_VERSION),
+      id: z.string().regex(KEBAB, 'template ids are lower-case words joined by hyphens, like "vendor-shortlist"'),
+      version: z.number().int().min(1),
+      title: z.string().min(1).max(80),
+      pitch: z.string().min(1).max(200),
+      useCases: z.array(z.string().min(1).max(40)).max(20),
+      document: z.record(z.string(), z.unknown()),
+      seed: SeedSpec.optional(),
+      questions: z.array(QuestionSpec).max(12),
+      setup: z.array(SetupStepSpec).max(50),
+      readme: z.string().min(1).max(20_000),
+      screenshots: z.array(z.string().min(1)).max(10),
+      author: z.object({ workspace: z.string().min(1), name: z.string().min(1) }).strict(),
+      remixedFrom: z.union([z.string().min(1), z.null()]),
+      license: z.string().min(1).max(40),
+    })
+    .strict()
+    .superRefine((t, ctx) => {
+      const seen = new Set<string>();
+      t.questions.forEach((q, i) => {
+        if (seen.has(q.id)) ctx.addIssue({ code: "custom", message: `two questions are called "${q.id}"`, path: ["questions", i, "id"] });
+        seen.add(q.id);
+      });
+    });
+  return { QuestionSpec, SetupStepSpec, SeedNodeSpec, SeedSpec, TemplateSpec };
+}
+let shapes: ReturnType<typeof buildShapes> | undefined;
+type Shapes = ReturnType<typeof buildShapes>;
+const templateShapes = (): Shapes => (shapes ??= buildShapes());
+
+export const TemplateSpec = z.lazy(() => templateShapes().TemplateSpec);
+export type TemplateQuestion = z.infer<Shapes["QuestionSpec"]>;
+export type TemplateSetupStep = z.infer<Shapes["SetupStepSpec"]>;
+export type TemplateSeedNode = z.infer<Shapes["SeedNodeSpec"]>;
+export type TemplateSeed = z.infer<Shapes["SeedSpec"]>;
+export type GraviewTemplate = z.infer<Shapes["TemplateSpec"]>;
 
 /** Whether some JSON says it is a template (rather than a bare document). Says nothing about whether it is a good one. */
 export function isGraviewTemplate(raw: unknown): boolean {

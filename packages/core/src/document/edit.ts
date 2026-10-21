@@ -1,6 +1,6 @@
 import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived, givenWhenNeverTidied, RELATION_ACTS, relationActName, relationActsOf } from "../mutations/derived-names.js";
 import { documentRelations, givesRelationAct, renamedRelationAct } from "./relation-acts.js";
-import { z } from "zod";
+import * as z from "zod";
 import type { Expr } from "./expr/parse.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
 import { printExpr } from "./expr/print.js";
@@ -147,129 +147,138 @@ const MAX_EDITS = 50;
 
 // ── shapes ─────────────────────────────────────────────────────────────────
 
-const kindName = z.string().regex(NAME, 'kind names are lower-case words joined by hyphens, like "guest-list"');
-const listKey = z.string().min(1).max(120);
-const listDirection = z.enum(["asc", "desc"]).optional();
-const listSortShape = z.union([listKey, z.object({ by: listKey, direction: listDirection, then: z.union([listKey, z.object({ by: listKey, direction: listDirection }).strict()]).optional() }).strict()]);
-const listGroupShape = z.union([listKey, z.object({ by: listKey, order: z.array(z.string().min(1).max(80)).max(40).optional(), closed: z.array(z.string().min(1).max(80)).max(40).optional() }).strict()]);
-const fieldName = z.string().regex(FIELD_NAME, 'field names are one word or camelCase, like "dueDate"');
-const edgeName = z.string().regex(EDGE_NAME, 'relation names are one camelCase word, like "tendedBy"');
-const actName = z.string().regex(NAME, 'act names are lower-case words joined by hyphens, like "mark-paid"');
-const lensTitle = z.string().min(1).max(80);
+/*
+ * Each op's shape, built the first time an edit is read rather than when the
+ * module loads: a Worker or a page that imports the document format and
+ * never edits one does not build sixty zod schemas to get there.
+ */
+function buildShapes(): Record<EditOp, z.ZodType> {
+  const kindName = z.string().regex(NAME, 'kind names are lower-case words joined by hyphens, like "guest-list"');
+  const listKey = z.string().min(1).max(120);
+  const listDirection = z.enum(["asc", "desc"]).optional();
+  const listSortShape = z.union([listKey, z.object({ by: listKey, direction: listDirection, then: z.union([listKey, z.object({ by: listKey, direction: listDirection }).strict()]).optional() }).strict()]);
+  const listGroupShape = z.union([listKey, z.object({ by: listKey, order: z.array(z.string().min(1).max(80)).max(40).optional(), closed: z.array(z.string().min(1).max(80)).max(40).optional() }).strict()]);
+  const fieldName = z.string().regex(FIELD_NAME, 'field names are one word or camelCase, like "dueDate"');
+  const edgeName = z.string().regex(EDGE_NAME, 'relation names are one camelCase word, like "tendedBy"');
+  const actName = z.string().regex(NAME, 'act names are lower-case words joined by hyphens, like "mark-paid"');
+  const lensTitle = z.string().min(1).max(80);
 
-const SHAPES: Record<EditOp, z.ZodType> = {
-  "add-kind": z.object({ op: z.literal("add-kind"), kind: kindName, act: z.boolean().optional() }).passthrough(),
-  "rename-kind": z.object({ op: z.literal("rename-kind"), kind: kindName, to: kindName, noun: z.string().min(1).max(40).optional(), plural: z.string().min(1).max(40).optional() }).strict(),
-  "remove-kind": z.object({ op: z.literal("remove-kind"), kind: kindName }).strict(),
-  "add-field": z.object({ op: z.literal("add-field"), kind: kindName, field: fieldName, fill: z.unknown().optional(), spec: z.record(z.string(), z.unknown()).optional() }).passthrough(),
-  "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
-  "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date", "image", "video", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
-  "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional() }).strict(),
-  "set-format": z.object({ op: z.literal("set-format"), kind: kindName, field: fieldName, format: z.union([z.enum(["money", "percent", "duration", "markdown"]), z.null()]).optional(), unit: z.union([z.string().min(1).max(12), z.null()]).optional() }).strict(),
-  "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
-  "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
-  "set-default": z.object({ op: z.literal("set-default"), kind: kindName, field: fieldName, default: z.unknown() }).strict(),
-  "set-repeats": z.object({ op: z.literal("set-repeats"), kind: kindName, field: fieldName, repeats: z.boolean() }).strict(),
-  "remove-field": z.object({ op: z.literal("remove-field"), kind: kindName, field: fieldName }).strict(),
-  "add-relation": z.object({ op: z.literal("add-relation"), kind: kindName, relation: edgeName }).passthrough(),
-  "rename-relation": z.object({ op: z.literal("rename-relation"), kind: kindName, relation: edgeName, to: edgeName }).strict(),
-  "remove-relation": z.object({ op: z.literal("remove-relation"), kind: kindName, relation: edgeName }).strict(),
-  "add-act": z.object({ op: z.literal("add-act"), act: actName, replace: z.boolean().optional() }).passthrough(),
-  "remove-act": z.object({ op: z.literal("remove-act"), act: actName }).strict(),
-  "add-rule": z.object({ op: z.literal("add-rule"), rule: actName, replace: z.boolean().optional() }).passthrough(),
-  "remove-rule": z.object({ op: z.literal("remove-rule"), rule: actName }).strict(),
-  "set-brand": z
-    .object({
-      op: z.literal("set-brand"),
-      accent: z.union([z.string(), z.null()]).optional(),
-      name: z.union([z.string().min(1).max(60), z.null()]).optional(),
-      currency: z.union([z.string(), z.null()]).optional(),
-      locale: z.union([z.string(), z.null()]).optional(),
-      // An IANA time zone its instants are said in (Roadmap f-app-time-zone).
-      timeZone: z.union([z.string().min(1).max(64), z.null()]).optional(),
-      // The rest of the brand (FR-124, FR-125): each as the document holds it, null to clear it.
-      logo: z.union([z.string().min(1), z.object({ src: z.string().min(1), alt: z.string().min(1).max(120).optional() }).strict(), z.null()]).optional(),
-      favicon: z.union([z.string().min(1), z.object({ emoji: z.string() }).strict(), z.null()]).optional(),
-      typography: z.union([z.object({ display: z.union([z.string().min(1).max(200), z.null()]).optional(), body: z.union([z.string().min(1).max(200), z.null()]).optional(), mono: z.union([z.string().min(1).max(200), z.null()]).optional() }).strict(), z.null()]).optional(),
-      shape: z.union([z.object({ radius: z.union([z.number().min(0).max(32), z.null()]).optional(), density: z.union([z.number().min(0.75).max(1.5), z.null()]).optional() }).strict(), z.null()]).optional(),
-      accents: z.union([z.record(z.string(), z.union([z.number().min(0).max(360), z.null()])), z.null()]).optional(),
-      scheme: z.union([z.enum(["light", "dark", "auto"]), z.null()]).optional(),
-    })
-    .strict(),
-  "set-name": z.object({ op: z.literal("set-name"), name: z.string().min(1).max(80) }).strict(),
-  "set-description": z.object({ op: z.literal("set-description"), description: z.union([z.string().min(1).max(500), z.null()]) }).strict(),
-  "set-label": z.object({ op: z.literal("set-label"), kind: kindName, field: fieldName.optional(), label: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
-  "set-describe": z.object({ op: z.literal("set-describe"), kind: kindName, describe: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
-  // A kind's slot; the front page (`slot: "home"`, no kind); or a blocks lens's blocks, by its title (FR-84).
-  "set-view": z.object({ op: z.literal("set-view"), kind: kindName.optional(), slot: z.enum([...VIEW_SLOTS, "home"]).optional(), lens: lensTitle.optional(), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
-  "set-glance": z.object({ op: z.literal("set-glance"), kind: kindName, fields: z.array(fieldName).max(20) }).strict(),
-  // How a record's page orders and groups its facts (FR-148): these first, then each group under its title; none of either takes the choice away.
-  "set-page-fields": z
-    .object({
-      op: z.literal("set-page-fields"),
-      kind: kindName,
-      fields: z.array(fieldName).max(40),
-      groups: z.union([z.array(z.object({ title: z.string().min(1).max(60), fields: z.array(fieldName).min(1).max(40) }).strict()).max(12), z.null()]).optional(),
-    })
-    .strict(),
-  "add-lens": z
-    .object({
-      op: z.literal("add-lens"),
-      title: lensTitle,
-      lens: z.string().min(1).max(40).optional(),
-      on: kindName.optional(),
-      bindings: z.record(z.string(), z.unknown()).optional(),
-      options: z.record(z.string(), z.unknown()).optional(),
-      // False: the place's page leaves off the forms that begin its kind.
-      create: z.boolean().optional(),
-      at: z.number().int().min(0).optional(),
-      replace: lensTitle.optional(),
-    })
-    .strict(),
-  "remove-lens": z.object({ op: z.literal("remove-lens"), title: lensTitle, on: kindName.optional() }).strict(),
-  // A lens kept off the bar's places, the page list and the home's gallery, still reached by its address, a link or navigate.
-  "set-lens-hidden": z.object({ op: z.literal("set-lens-hidden"), title: lensTitle, on: kindName.optional(), hidden: z.boolean() }).strict(),
-  "set-home": z.object({ op: z.literal("set-home"), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
-  "arrange-pages": z
-    .object({
-      op: z.literal("arrange-pages"),
-      order: z.union([z.array(kindName).max(40), z.null()]).optional(),
-      hide: z.union([z.array(kindName).max(40), z.null()]).optional(),
-      first: z.union([z.string().min(1).max(80), z.null()]).optional(),
-      primary: z.union([z.array(z.string().min(1).max(80)).max(40), z.null()]).optional(),
-      scene: z.union([z.string().min(1).max(40), z.null()]).optional(),
-      pages: z.union([z.string().min(1).max(40), z.null()]).optional(),
-      // What a kind's list offers to filter by: `{ "request": ["status", "became.stage"] }`; null or [] gives a kind back its derived filters.
-      filters: z.record(kindName, z.union([z.array(z.string().min(1).max(120)).max(40), z.null()])).optional(),
-      // The order a kind's list opens in: `{ "feature": { "by": "score", "direction": "desc", "then": "label" } }` or a key; null gives it back its own.
-      sort: z.record(kindName, z.union([listSortShape, z.null()])).optional(),
-      // How a kind's list opens grouped: `{ "request": { "by": "status", "order": [...], "closed": ["done"] } }` or a field; null opens it ungrouped.
-      group: z.record(kindName, z.union([listGroupShape, z.null()])).optional(),
-      // The scene's word as a chat or a tool written before 0.1.17 sends it (FR-132's key, RESPELLED as `scene`).
-      overview: z.union([z.string().min(1).max(40), z.null()]).optional(),
-    })
-    .strict(),
-  "set-computed": z
-    .object({
-      op: z.literal("set-computed"),
-      kind: kindName,
-      name: fieldName,
-      expr: z.union([z.string().min(1).max(2000), z.null()]).optional(),
-      label: z.union([z.string().min(1).max(60), z.null()]).optional(),
-      description: z.union([z.string().min(1).max(500), z.null()]).optional(),
-    })
-    .strict(),
-  // Who the people are, and who may do and see what (FR-170): a grant and a sight as the document holds one.
-  "set-people": z.object({ op: z.literal("set-people"), kind: kindName, people: z.boolean() }).strict(),
-  // Whether a kind's records are archived and merged, or only kept and removed (FR-173).
-  "set-archives": z.object({ op: z.literal("set-archives"), kind: kindName, archives: z.boolean() }).strict(),
-  // What the app's own actor may do on its own to a kind, or to one relation of it (`@graview/core/tidying`).
-  "set-tidying": z.object({ op: z.literal("set-tidying"), kind: kindName, relation: z.optional(z.string()), tidying: z.enum(["never", "no-links", "allowed"]) }).strict(),
-  "add-grant": z.object({ op: z.literal("add-grant") }).passthrough(),
-  "remove-grant": z.object({ op: z.literal("remove-grant") }).passthrough(),
-  "add-sight": z.object({ op: z.literal("add-sight") }).passthrough(),
-  "remove-sight": z.object({ op: z.literal("remove-sight") }).passthrough(),
-};
+  return {
+    "add-kind": z.object({ op: z.literal("add-kind"), kind: kindName, act: z.boolean().optional() }).passthrough(),
+    "rename-kind": z.object({ op: z.literal("rename-kind"), kind: kindName, to: kindName, noun: z.string().min(1).max(40).optional(), plural: z.string().min(1).max(40).optional() }).strict(),
+    "remove-kind": z.object({ op: z.literal("remove-kind"), kind: kindName }).strict(),
+    "add-field": z.object({ op: z.literal("add-field"), kind: kindName, field: fieldName, fill: z.unknown().optional(), spec: z.record(z.string(), z.unknown()).optional() }).passthrough(),
+    "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
+    "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date", "image", "video", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
+    "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional() }).strict(),
+    "set-format": z.object({ op: z.literal("set-format"), kind: kindName, field: fieldName, format: z.union([z.enum(["money", "percent", "duration", "markdown"]), z.null()]).optional(), unit: z.union([z.string().min(1).max(12), z.null()]).optional() }).strict(),
+    "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
+    "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
+    "set-default": z.object({ op: z.literal("set-default"), kind: kindName, field: fieldName, default: z.unknown() }).strict(),
+    "set-repeats": z.object({ op: z.literal("set-repeats"), kind: kindName, field: fieldName, repeats: z.boolean() }).strict(),
+    "remove-field": z.object({ op: z.literal("remove-field"), kind: kindName, field: fieldName }).strict(),
+    "add-relation": z.object({ op: z.literal("add-relation"), kind: kindName, relation: edgeName }).passthrough(),
+    "rename-relation": z.object({ op: z.literal("rename-relation"), kind: kindName, relation: edgeName, to: edgeName }).strict(),
+    "remove-relation": z.object({ op: z.literal("remove-relation"), kind: kindName, relation: edgeName }).strict(),
+    "add-act": z.object({ op: z.literal("add-act"), act: actName, replace: z.boolean().optional() }).passthrough(),
+    "remove-act": z.object({ op: z.literal("remove-act"), act: actName }).strict(),
+    "add-rule": z.object({ op: z.literal("add-rule"), rule: actName, replace: z.boolean().optional() }).passthrough(),
+    "remove-rule": z.object({ op: z.literal("remove-rule"), rule: actName }).strict(),
+    "set-brand": z
+      .object({
+        op: z.literal("set-brand"),
+        accent: z.union([z.string(), z.null()]).optional(),
+        name: z.union([z.string().min(1).max(60), z.null()]).optional(),
+        currency: z.union([z.string(), z.null()]).optional(),
+        locale: z.union([z.string(), z.null()]).optional(),
+        // An IANA time zone its instants are said in (Roadmap f-app-time-zone).
+        timeZone: z.union([z.string().min(1).max(64), z.null()]).optional(),
+        // The rest of the brand (FR-124, FR-125): each as the document holds it, null to clear it.
+        logo: z.union([z.string().min(1), z.object({ src: z.string().min(1), alt: z.string().min(1).max(120).optional() }).strict(), z.null()]).optional(),
+        favicon: z.union([z.string().min(1), z.object({ emoji: z.string() }).strict(), z.null()]).optional(),
+        typography: z.union([z.object({ display: z.union([z.string().min(1).max(200), z.null()]).optional(), body: z.union([z.string().min(1).max(200), z.null()]).optional(), mono: z.union([z.string().min(1).max(200), z.null()]).optional() }).strict(), z.null()]).optional(),
+        shape: z.union([z.object({ radius: z.union([z.number().min(0).max(32), z.null()]).optional(), density: z.union([z.number().min(0.75).max(1.5), z.null()]).optional() }).strict(), z.null()]).optional(),
+        accents: z.union([z.record(z.string(), z.union([z.number().min(0).max(360), z.null()])), z.null()]).optional(),
+        scheme: z.union([z.enum(["light", "dark", "auto"]), z.null()]).optional(),
+      })
+      .strict(),
+    "set-name": z.object({ op: z.literal("set-name"), name: z.string().min(1).max(80) }).strict(),
+    "set-description": z.object({ op: z.literal("set-description"), description: z.union([z.string().min(1).max(500), z.null()]) }).strict(),
+    "set-label": z.object({ op: z.literal("set-label"), kind: kindName, field: fieldName.optional(), label: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
+    "set-describe": z.object({ op: z.literal("set-describe"), kind: kindName, describe: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
+    // A kind's slot; the front page (`slot: "home"`, no kind); or a blocks lens's blocks, by its title (FR-84).
+    "set-view": z.object({ op: z.literal("set-view"), kind: kindName.optional(), slot: z.enum([...VIEW_SLOTS, "home"]).optional(), lens: lensTitle.optional(), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
+    "set-glance": z.object({ op: z.literal("set-glance"), kind: kindName, fields: z.array(fieldName).max(20) }).strict(),
+    // How a record's page orders and groups its facts (FR-148): these first, then each group under its title; none of either takes the choice away.
+    "set-page-fields": z
+      .object({
+        op: z.literal("set-page-fields"),
+        kind: kindName,
+        fields: z.array(fieldName).max(40),
+        groups: z.union([z.array(z.object({ title: z.string().min(1).max(60), fields: z.array(fieldName).min(1).max(40) }).strict()).max(12), z.null()]).optional(),
+      })
+      .strict(),
+    "add-lens": z
+      .object({
+        op: z.literal("add-lens"),
+        title: lensTitle,
+        lens: z.string().min(1).max(40).optional(),
+        on: kindName.optional(),
+        bindings: z.record(z.string(), z.unknown()).optional(),
+        options: z.record(z.string(), z.unknown()).optional(),
+        // False: the place's page leaves off the forms that begin its kind.
+        create: z.boolean().optional(),
+        at: z.number().int().min(0).optional(),
+        replace: lensTitle.optional(),
+      })
+      .strict(),
+    "remove-lens": z.object({ op: z.literal("remove-lens"), title: lensTitle, on: kindName.optional() }).strict(),
+    // A lens kept off the bar's places, the page list and the home's gallery, still reached by its address, a link or navigate.
+    "set-lens-hidden": z.object({ op: z.literal("set-lens-hidden"), title: lensTitle, on: kindName.optional(), hidden: z.boolean() }).strict(),
+    "set-home": z.object({ op: z.literal("set-home"), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
+    "arrange-pages": z
+      .object({
+        op: z.literal("arrange-pages"),
+        order: z.union([z.array(kindName).max(40), z.null()]).optional(),
+        hide: z.union([z.array(kindName).max(40), z.null()]).optional(),
+        first: z.union([z.string().min(1).max(80), z.null()]).optional(),
+        primary: z.union([z.array(z.string().min(1).max(80)).max(40), z.null()]).optional(),
+        scene: z.union([z.string().min(1).max(40), z.null()]).optional(),
+        pages: z.union([z.string().min(1).max(40), z.null()]).optional(),
+        // What a kind's list offers to filter by: `{ "request": ["status", "became.stage"] }`; null or [] gives a kind back its derived filters.
+        filters: z.record(kindName, z.union([z.array(z.string().min(1).max(120)).max(40), z.null()])).optional(),
+        // The order a kind's list opens in: `{ "feature": { "by": "score", "direction": "desc", "then": "label" } }` or a key; null gives it back its own.
+        sort: z.record(kindName, z.union([listSortShape, z.null()])).optional(),
+        // How a kind's list opens grouped: `{ "request": { "by": "status", "order": [...], "closed": ["done"] } }` or a field; null opens it ungrouped.
+        group: z.record(kindName, z.union([listGroupShape, z.null()])).optional(),
+        // The scene's word as a chat or a tool written before 0.1.17 sends it (FR-132's key, RESPELLED as `scene`).
+        overview: z.union([z.string().min(1).max(40), z.null()]).optional(),
+      })
+      .strict(),
+    "set-computed": z
+      .object({
+        op: z.literal("set-computed"),
+        kind: kindName,
+        name: fieldName,
+        expr: z.union([z.string().min(1).max(2000), z.null()]).optional(),
+        label: z.union([z.string().min(1).max(60), z.null()]).optional(),
+        description: z.union([z.string().min(1).max(500), z.null()]).optional(),
+      })
+      .strict(),
+    // Who the people are, and who may do and see what (FR-170): a grant and a sight as the document holds one.
+    "set-people": z.object({ op: z.literal("set-people"), kind: kindName, people: z.boolean() }).strict(),
+    // Whether a kind's records are archived and merged, or only kept and removed (FR-173).
+    "set-archives": z.object({ op: z.literal("set-archives"), kind: kindName, archives: z.boolean() }).strict(),
+    // What the app's own actor may do on its own to a kind, or to one relation of it (`@graview/core/tidying`).
+    "set-tidying": z.object({ op: z.literal("set-tidying"), kind: kindName, relation: z.optional(z.string()), tidying: z.enum(["never", "no-links", "allowed"]) }).strict(),
+    "add-grant": z.object({ op: z.literal("add-grant") }).passthrough(),
+    "remove-grant": z.object({ op: z.literal("remove-grant") }).passthrough(),
+    "add-sight": z.object({ op: z.literal("add-sight") }).passthrough(),
+    "remove-sight": z.object({ op: z.literal("remove-sight") }).passthrough(),
+  };
+}
+let shapes: Record<EditOp, z.ZodType> | undefined;
+const opShapes = (): Record<EditOp, z.ZodType> => (shapes ??= buildShapes());
 
 // ── the document as something to change ──────────────────────────────────────
 
@@ -724,7 +733,7 @@ class Editor {
       this.fail(i, "op", `${op === undefined ? "an edit names its op" : `"${String(op)}" is not an edit Graview knows`}`, `one of ${EDIT_OPS.join(", ")}`);
       return;
     }
-    const parsed = SHAPES[op as EditOp].safeParse(edit);
+    const parsed = opShapes()[op as EditOp].safeParse(edit);
     if (!parsed.success) {
       this.refuse(i, parsed.error.issues, op);
       return;

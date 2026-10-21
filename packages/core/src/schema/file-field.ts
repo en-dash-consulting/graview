@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 import { fileRefusal, fileShape, isFileValue, isImage, isVideo, markFile, type FileValue } from "./files.js";
 
 /*

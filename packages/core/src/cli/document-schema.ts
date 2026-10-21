@@ -41,26 +41,29 @@ export const NAMING =
 const INHERITED = Object.getOwnPropertyNames(Object.prototype);
 
 type Json = Record<string, unknown>;
+/** The shape a lazily built one stands for: what the override is handed as it walks the document's shape. */
+const built = (lazy: z.ZodMiniLazy): unknown => lazy._zod.innerType;
 const at = (schema: Json, ...path: string[]): Json => path.reduce<Json>((node, key) => (node[key] ?? {}) as Json, schema);
 
 export function documentJsonSchema(version: string): Json {
-  const schema = z.toJSONSchema(DocumentSpec, {
+  const [documentSpec, kindSpec, fieldSpec] = [built(DocumentSpec), built(KindSpec), built(FieldSpec)];
+  const schema = z.toJSONSchema(documentSpec as z.ZodMiniType, {
     io: "input",
     unrepresentable: "any",
     override: ({ zodSchema, jsonSchema }) => {
       const json = jsonSchema as Json;
-      if (zodSchema === (DocumentSpec as unknown)) {
+      if (zodSchema === documentSpec) {
         Object.assign(at(json, "properties", "kinds"), { minProperties: 1, maxProperties: 40, description: `The kinds of record, by name. ${NAMING}` });
         for (const what of ["kinds", "acts", "rules"]) Object.assign(at(json, "properties", what, "propertyNames"), { description: NAMING });
       }
-      if (zodSchema === (KindSpec as unknown)) {
+      if (zodSchema === kindSpec) {
         Object.assign(at(json, "properties", "fields"), { minProperties: 1, description: `The kind's fields, by name. ${NAMING}` });
         Object.assign(at(json, "properties", "fields", "propertyNames"), { not: { enum: ["id", "kind", ...INHERITED] }, description: NAMING });
         Object.assign(at(json, "properties", "edges", "propertyNames"), { not: { enum: INHERITED }, description: NAMING });
         Object.assign(at(json, "properties", "edges"), { description: `The kind's relations, by name. ${NAMING}` });
         Object.assign(at(json, "properties", "computed"), { maxProperties: 20 });
       }
-      if (zodSchema === (FieldSpec as unknown)) {
+      if (zodSchema === fieldSpec) {
         json["allOf"] = [
           // An enum lists its options, and only an enum has them.
           { if: { properties: { type: { const: "enum" } } }, then: { required: ["options"] }, else: { not: { required: ["options"] } } },
@@ -84,7 +87,7 @@ export function documentJsonSchema(version: string): Json {
     },
   };
   // A connection is read loosely by the compiler and judged by the checker (`connection-findings.ts`): its whole shape, said here for an editor.
-  const { $schema: _connection, ...connection } = z.toJSONSchema(ConnectionSpec, { io: "input", unrepresentable: "any" }) as Json;
+  const { $schema: _connection, ...connection } = z.toJSONSchema(built(ConnectionSpec) as z.ZodMiniType, { io: "input", unrepresentable: "any" }) as Json;
   properties["connections"] = {
     description: "Other systems this app is kept in step with, by name: today, Google calendars. `graview serve` and `graview preview` run them, with credentials from the environment; none is ever written here.",
     type: "object",
