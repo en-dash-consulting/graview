@@ -1,4 +1,3 @@
-import { inverseOf } from "./inverse.js";
 import { UNSET, writesOf, type Primitive } from "../graph/primitives.js";
 import type { AnyGraphNode, GraphEdge } from "../graph/types.js";
 import { actingAs } from "../permissions/policy.js";
@@ -249,7 +248,12 @@ export function whole(op: Operation, lens: SeatLens, served?: readonly Primitive
    * the op reads as it would had there been no such link. One that did
    * nothing else is withheld: who made it and why are not the seat's.
    */
-  let putBack = inverseOf(op);
+  /*
+   * WHAT WOULD PUT IT BACK names exactly what its primitives name — an
+   * inverse is the same primitives turned round — so they are judged in
+   * its place, unless a format-1 op kept an inverse of its own.
+   */
+  let putBack: readonly Primitive[] = op.inverse ?? op.primitives;
   if (served && served.length < op.primitives.length) {
     if (!served.length) return;
     putBack = putBack.filter((one) => touchedBy(one).every(lens.shows));

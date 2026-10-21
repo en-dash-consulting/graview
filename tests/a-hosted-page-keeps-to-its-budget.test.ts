@@ -122,7 +122,8 @@ describe("a hosted page", () => {
     // 960 KB since a brand's logo came to have one for each scheme: the mark drawn for each, the theme's rule that hides the other scheme's and inverts a fallback asked for in the dark: the scene face measured 982_536 B, 1_541 more than before it (980_995).
     // 960 KB since the document format came to build its shapes on first use (Roadmap f-smaller-worker): zod/mini's lazy schema and the fifteen wrappers over the shapes: the scene face measured 982_187 B, 1_192 more than before it (980_995).
     // 961 KB once both of 0.1.42's 960 KB raises above were merged: together 983_734 B.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(961 * 1024);
+    // 962 KB since an op carries its value once less (op format 2): the scene face measured 984_496 B, 560 more — the inverse worked out where it is read, a format-1 one dropped, and the format said on the wire.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(962 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
