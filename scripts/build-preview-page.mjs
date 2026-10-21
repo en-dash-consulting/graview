@@ -56,6 +56,8 @@ const built = await esbuild.build({
   entryNames: "[name]",
   chunkNames: "chunk.[hash]",
   define: { "process.env.NODE_ENV": '"production"' },
+  // Every workspace source is written for the automatic runtime; said here, since a door a plain script opens (`import("@graview/embed/form")`) is not read with its package's tsconfig.
+  jsx: "automatic",
   plugins: [englishOnly, noStudio, workspaceSources(repo)],
   metafile: true,
   write: false,

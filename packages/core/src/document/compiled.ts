@@ -709,6 +709,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     ...(document.settings ? { settings: document.settings as never } : {}),
     // The calendars and other systems it is kept in step with: data a host runs (`runConnections`).
     ...(document.connections ? { connections: document.connections as never } : {}),
+    // Its forms for visitors (Roadmap f-public-forms): data a host draws alone.
+    ...(document.forms ? { forms: document.forms as never } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
     ...(plan.viewSpecs ? { viewSpecs: plan.viewSpecs as never } : {}),
     // And its home view, about no one record, is the app's home (FR-81).

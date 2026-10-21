@@ -609,7 +609,9 @@ export function DerivedForm<S extends AnySchema>({
   const seat = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
   const subject = mutation.subject && prefilled[mutation.subject.arg];
   const kept = seat ? keptArguments(store, seat, mutation, typeof subject === "string" ? subject : undefined) : undefined;
-  const fields = formFields(mutation.input).filter((spec) => (only === undefined || only.includes(spec.name)) && !kept?.has(spec.name));
+  // Asked in the order `only` names them, where it names them: a visitor's form asks in the declaration's order.
+  const all = formFields(mutation.input);
+  const fields = (only === undefined ? all : only.flatMap((name) => all.find((spec) => spec.name === name) ?? [])).filter((spec) => !kept?.has(spec.name));
   const words: Words = (name) => argumentWords(store.schema, mutation, name);
   /*
    * AN END MOVES WITH ITS START (Roadmap f-date-inputs): a start typed or

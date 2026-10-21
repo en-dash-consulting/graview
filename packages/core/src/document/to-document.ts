@@ -183,6 +183,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     ...(app.pages ? { pages: app.pages as GraviewDocument["pages"] } : {}),
     ...(app.settings ? { settings: app.settings as unknown as Record<string, unknown>[] } : {}),
     ...(app.connections ? { connections: app.connections as GraviewDocument["connections"] } : {}),
+    ...(app.forms ? { forms: structuredClone(app.forms) as GraviewDocument["forms"] } : {}),
     // View specs are already data: they are the document's views (FR-03).
     ...((app.viewSpecs && Object.keys(app.viewSpecs).length > 0) || app.home ? { views: { ...(app.viewSpecs ?? {}), ...(app.home ? { home: app.home } : {}) } as unknown as GraviewDocument["views"] } : {}),
     // The palette is code; the app's money, locale and time zone are data, and go across (FR-100).

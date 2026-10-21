@@ -12,6 +12,10 @@
     "./static": {
       "types": "./dist/static.d.ts",
       "default": "./dist/static.js"
+    },
+    "./visitor-form": {
+      "types": "./dist/visitor-form.d.ts",
+      "default": "./dist/visitor-form.js"
     }
   },
   "scripts": {

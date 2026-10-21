@@ -198,6 +198,22 @@ export const BASES = [
     load: "first",
   },
   {
+    name: "a visitor's form alone",
+    entry: `import { mount } from "@graview/embed/form"; globalThis.mount = mount;`,
+    /*
+     * An RSVP or a sign-up link (Roadmap f-public-forms): one act's form for
+     * somebody with no account — the store, the derived form and the theme,
+     * and no bar, no notices, no first look, no lists, no scene, no studio.
+     * It shares the derived form with the pages face, so it carries what
+     * the routed face's form controls import (`@graview/primitives/pages`).
+     * Set at 373_310 / 143_118, the budget just above it.
+     */
+    minified: 380_000,
+    gzipped: 146_000,
+    load: "first",
+    lacks: ["@graview/studio", "@graview/guest"],
+  },
+  {
     name: "embed without the studio",
     entry: `import { mount } from "@graview/embed"; globalThis.mount = mount;`,
     /*

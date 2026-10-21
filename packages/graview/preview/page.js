@@ -16,9 +16,43 @@ import { mount, preload } from "@graview/embed";
 import { openRemote, remoteViews } from "@graview/ship/browser";
 
 const root = document.getElementById("graview-app");
+/*
+ * A FORM FOR A VISITOR (Roadmap f-public-forms), at `/forms/<name>`: the
+ * server hands a visitor minted for this page in place of the preview's
+ * seat, and the form is drawn alone — `@graview/embed/form`, fetched only
+ * here — over the store that visitor is served.
+ */
+const formAt = /^\/forms\/([^/]+)\/?$/.exec(location.pathname);
 // The face this page opens on, fetched now beside the document and the store, as Graview Cloud's shell fetches it (FR-57).
-const facing = preload("pages");
+const facing = formAt ? import("@graview/embed/form") : preload("pages");
 try {
+  if (formAt) await visitorForm(decodeURIComponent(formAt[1]));
+  else await whole();
+} catch (error) {
+  const said = document.createElement("pre");
+  said.setAttribute("role", "alert");
+  said.style.cssText = "margin:2rem;font:14px/1.5 ui-monospace,monospace;white-space:pre-wrap";
+  said.textContent = error instanceof Error ? error.message : String(error);
+  root.replaceChildren(said);
+  window.__graviewFailed = said.textContent;
+}
+
+async function visitorForm(name) {
+  const response = await fetch(`/graview/document?form=${encodeURIComponent(name)}`);
+  const handed = await response.json();
+  if (!response.ok) throw new Error(handed.error ?? `The preview server did not hand over the form (${response.status}).`);
+  const compiled = await appFromOrCompile(handed);
+  if (!compiled.ok) throw new Error(sayFindings(compiled.findings));
+  const app = compiled.app;
+  const principal = handed.principal;
+  const remote = await openRemote({ app, url: location.origin, principal, ...(handed.state ? { state: handed.state, openTimeoutMs: 0 } : { openTimeoutMs: 3000 }) });
+  document.title = app.forms?.[name]?.title ?? app.name;
+  const { mount: mountForm } = await facing;
+  window.__graview = mountForm(root, { app, form: name, principal, remote, height: "100dvh", onSubmitted: () => (window.__graviewSubmitted = true) });
+  window.__graviewReady = true;
+}
+
+async function whole() {
   const response = await fetch("/graview/document");
   if (!response.ok) throw new Error(`The preview server did not hand over the document (${response.status}).`);
   const handed = await response.json();
@@ -79,11 +113,4 @@ try {
   void handle.drawn().then(() => {
     window.__graviewReady = true;
   });
-} catch (error) {
-  const said = document.createElement("pre");
-  said.setAttribute("role", "alert");
-  said.style.cssText = "margin:2rem;font:14px/1.5 ui-monospace,monospace;white-space:pre-wrap";
-  said.textContent = error instanceof Error ? error.message : String(error);
-  root.replaceChildren(said);
-  window.__graviewFailed = said.textContent;
 }

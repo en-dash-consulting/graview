@@ -509,6 +509,27 @@ and `data-graview-drawn` (`DRAWN_ATTRIBUTE`) on its root — and takes a
 as the whole embed draws one, the worker's host fetched only when a draft
 is handed.
 
+## A form for a visitor
+
+`@graview/embed/form` draws one act's form alone — the declaration's
+`forms.<name>` — for somebody who never joins the workspace: an RSVP, a
+sign-up. No bar, no lists, no record, no seat. The host mints a visitor per
+answer and hands its id; the form runs as that visitor (`formVisitor` from
+`@graview/core/forms`: the form's role, named "a visitor via the RSVP
+form") over the store as they are served it, and says the answer was
+received in the declaration's words:
+
+```ts
+import { mount } from "@graview/embed/form";
+const remote = await openRemote({ app, url, principal: formVisitor(app, "rsvp", token) });
+mount(el, { app, form: "rsvp", principal: token, remote, height: "100dvh", onSubmitted });
+```
+
+`principal` is the minted id (`"form:<token>"`) or the visitor whole. A form
+the declaration has not got is refused by its name. `graview preview` serves
+each form at `/forms/<name>`. The `graview-visitor-forms` skill says the
+declaration and its grant.
+
 Bundled for the browser without React, the pages face alone is about 500 KB
 minified (165 KB gzipped); the whole embed loads about 750 KB (190 KB) before a
 face is fetched, and every face about 1.28 MB (370 KB);

@@ -127,6 +127,11 @@ yesterday and now the button is gone.
      (`kind`, `people`), `add-grant` / `remove-grant`, `add-sight` /
      `remove-sight` (a removal names it by roles and acts or kinds).
 
+10. **Open one act to people with no account.** An RSVP or a sign-up is
+    a grant to a `visitor` role the host mints per answer, a sight that
+    never names it, and `forms.<name>` saying the act: the
+    `graview-visitor-forms` skill.
+
 ## Worked examples
 
 - `packages/core/tests/unit/permissions.test.ts` — grants by role, by mutation

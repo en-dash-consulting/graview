@@ -1,6 +1,6 @@
 # graview-sync
 
-`graview-sync` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
+`graview-sync` is one of Graview's 29 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app in step with another system — a graph projected from it as a snapshot, a SyncEngine that sends this app's acts back and holds a field both sides changed, a remote that speaks MCP behind a door on the dev server, and a Google calendar declared as a connection — and verify the first run sends nothing and a conflict is held rather than assuming the two agree.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 

@@ -471,5 +471,6 @@ export type {
 export type { Beginning, KindBeginning } from "./beginning.js";
 export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
+export type { VisitorFormDeclaration } from "./visitor-form-shape.js";
 export { foldPresence, nextExpiry, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
 export type { Participant, Presence, PresenceChannel, PresenceRobot } from "./presence.js";

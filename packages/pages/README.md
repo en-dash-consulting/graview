@@ -71,6 +71,11 @@ this package serves lists, records, forms, problems and history as ordinary link
   every page. Still derivation: nothing here is a per-app template, and an app overrides a
   cell the same way it overrides a view.
 
+- **A form for a visitor.** `@graview/pages/visitor-form`'s `VisitorFormPage` draws one
+  act's form alone — the declaration's `forms.<name>`, its title, intro and the fields it
+  names — over the store as the visitor is served it, runs the act as them, and says it was
+  received in the declaration's own words. `@graview/embed/form` mounts it.
+
 - **A page is also a string (FR-174).** `@graview/pages/static` renders a place without a
   browser: `renderPlace(store, declaration, place, { viewer, look })` answers `{ html, css,
   title, found }` — a list, a record, a declared place or the home as one self-contained

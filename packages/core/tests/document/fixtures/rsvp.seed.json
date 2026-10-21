@@ -1,0 +1,9 @@
+{
+  "nodes": [
+    { "id": "table-rose", "kind": "table", "name": "Rose table" },
+    { "id": "guest-grace", "kind": "guest", "name": "Grace Hopper", "email": "grace@example.com", "coming": "yes", "note": "Arriving late." }
+  ],
+  "edges": [
+    { "id": "edge-grace-rose", "kind": "table", "from": "guest-grace", "to": "table-rose" }
+  ]
+}
