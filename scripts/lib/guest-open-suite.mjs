@@ -205,6 +205,19 @@ graview.on("click", "[data-ck]", function (event) { var id = event.element.getAt
 `;
   const controlsJs = await viewScript(controlsSource);
 
+  /*
+   * A view's links out (Threat Watch, 2026-10-21): to the car's own page and its dealer's address, which the view was handed, and
+   * two it made — the car's page with what it read added, and a javascript: one — which are refused.
+   */
+  const linkerSource = `
+graview.onProps(function (props) {
+  var car = (props.nodes || []).find(function (node) { return node.kind === "car"; }) || {};
+  graview.render(graview.html\`<p><a id="out-site" href="\${car.site}">The Golf's page</a> · <a id="out-mail" href="\${car.dealer}">Write to the dealer</a>
+    · <a id="out-leak" href="\${car.site + "?read=" + car.label}">Leaked</a> · <a id="out-js" href="javascript:alert(1)">Script</a></p><p id="linker-done">drawn</p>\`);
+});
+`;
+  const linkerJs = await viewScript(linkerSource);
+
   const widgetJs = (
     await build({
       stdin: {
@@ -213,7 +226,7 @@ import { mountWorkerView } from "./packages/guest/dist/host/worker.js";
 ${SHOWROOM}
 const failures = [];
 const views = {};
-for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER], ["speaker", SPEAKER], ["controls", CONTROLS]]) {
+for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER], ["speaker", SPEAKER], ["controls", CONTROLS], ["linker", LINKER]]) {
   views[name] = mountWorkerView(document.getElementById(name), { manifest: { name, attach: "car", cardinality: "many", reads: { kinds: ["shopper"] } }, worker: { script }, store, principal: bethan, onFailure: (reason, detail) => failures.push([name, reason, detail]) });
 }
 window.__host = {
@@ -235,14 +248,14 @@ window.__host = {
       define: { "process.env.NODE_ENV": '"production"' },
     })
   ).outputFiles[0].text;
-  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)}; const SPEAKER = ${JSON.stringify(speakerJs)}; const CONTROLS = ${JSON.stringify(controlsJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
+  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)}; const SPEAKER = ${JSON.stringify(speakerJs)}; const CONTROLS = ${JSON.stringify(controlsJs)}; const LINKER = ${JSON.stringify(linkerJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
   const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>The app</title><style>${TOKENS(core)}
 body { margin: 0; background: var(--graview-ground); color: var(--graview-ink); font-family: var(--graview-font-body); }
 #bar { height: 48px; display: flex; align-items: center; padding: 0 12px; border-bottom: 1px solid var(--graview-edge); }
 main { display: grid; gap: 16px; padding: 16px; }
 #showcase, #escapes, #prober { border: 1px dashed var(--graview-edge); }
 .probe-panel { background-color: var(--graview-panel); border-top: 1px solid var(--graview-edge); color: var(--graview-accent); }
-</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div><div id="speaker"></div><div id="controls"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
+</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div><div id="speaker"></div><div id="controls"></div><div id="linker"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
 
   const attacker = { requests: [], connections: 0 };
   const servers = [
@@ -303,6 +316,7 @@ main { display: grid; gap: 16px; padding: 16px; }
     await waitFor("spoofer", "#cover", "the spoofer");
     await waitFor("speaker", "#said-done", "the speaker");
     await waitFor("controls", "#controls-done", "the controls");
+    await waitFor("linker", "#linker-done", "the linker");
     /* Long enough for anything kept to have been fetched: images, fonts, a preconnect. */
     await tab.waitForTimeout(1_500);
 
@@ -401,7 +415,7 @@ main { display: grid; gap: 16px; padding: 16px; }
     claim("image-set() is refused", !kept("/css/image-set") && hit("/css/image-set").length === 0, { hits: hit("/css/image-set") });
     claim("SVG <image href> and <image xlink:href> are not drawn, nor <feImage>", !escapes.tags.includes("image") && !escapes.tags.includes("feImage") && hit("/svg/image").length + hit("/svg/xlink").length + hit("/svg/feimage").length === 0, escapes.tags);
     claim("SVG <use> of another document is drawn with no reference", !kept("/svg/use") && hit("/svg/use").length === 0, { hits: hit("/svg/use") });
-    claim('<a href="https:…"> is drawn as text, with no href, and pressing it goes nowhere', escapes.link && escapes.link.href === null && escapes.link.text === "a link out" && hit("/link").length === 0 && tab.url() === `${HOST}/`, { link: escapes.link, url: tab.url() });
+    claim('<a href="https:…"> to an address the view made is drawn as text, with no href, and pressing it goes nowhere', escapes.link && escapes.link.href === null && escapes.link.text === "a link out" && hit("/link").length === 0 && tab.url() === `${HOST}/`, { link: escapes.link, url: tab.url() });
     claim("srcset is not drawn", !escapes.attributes.some((one) => / (srcset|sizes)=/.test(one)) && hit("/img/srcset").length === 0, { hits: hit("/img/srcset") });
     claim("an <img> with an address is drawn with none", !kept("/img/src") && hit("/img/src").length === 0, { hits: hit("/img/src") });
     claim("a <link rel=preconnect> built in code is not drawn, and nothing connected to its host", !escapes.tags.includes("link") && hit("/preconnect").length === 0, { tags: escapes.tags });
@@ -529,6 +543,58 @@ main { display: grid; gap: 16px; padding: 16px; }
     // ── the view's own worker ──
     const probed = JSON.parse(await app.evaluate(() => document.querySelector("#prober [data-worker-view]").shadowRoot.querySelector("#probed").textContent));
     claim("inside the view's worker, the network, storage, channels, nested workers and code from text are gone, and graview is kept frozen", Object.values(probed.absent).every(Boolean) && probed.graviewFrozen && probed.graviewKept && probed.replace !== "number" && probed.functionMakesNothing === "EvalError" && probed.stuck.length === 0, probed);
+    // ── a view's links out, pressed: after the page's requests are counted, since a link out is a request the person makes ──
+    const linked = await app.evaluate(() => {
+      const root = document.querySelector("#linker [data-worker-view]").shadowRoot;
+      const one = (id) => {
+        const anchor = root.getElementById(id);
+        return anchor && { href: anchor.getAttribute("href"), target: anchor.getAttribute("target"), rel: anchor.getAttribute("rel"), referrer: anchor.getAttribute("referrerpolicy"), after: getComputedStyle(anchor, "::after").content };
+      };
+      return { site: one("out-site"), mail: one("out-mail"), leak: one("out-leak"), script: one("out-js") };
+    });
+    const linkerRefused = await app.evaluate(() => window.__host.refused().linker.filter((one) => one.element === "a").map((one) => one.address));
+    claim(
+      "a view's link to an address it was handed — the car's own https: page and its dealer's mailto: — is drawn, to open in a new tab, with no opener and no referrer, and an arrow after it",
+      linked.site?.href === "https://cars.example/golf" && linked.mail?.href === "mailto:sales@cars.example" && [linked.site, linked.mail].every((one) => one.target === "_blank" && one.rel === "noopener noreferrer" && one.referrer === "no-referrer" && /↗/.test(one.after)),
+      linked,
+    );
+    claim(
+      "a view's link to an address it made — the car's page with what the view read added, and javascript: — is drawn with no href, and written down as refused",
+      linked.leak?.href === null && linked.script?.href === null && linkerRefused.includes("https://cars.example/golf?read=Golf") && linkerRefused.includes("javascript:alert(1)"),
+      { linked, refused: linkerRefused },
+    );
+    if (!proxied) {
+      const linkTree = await tab.accessibility.snapshot({ root: await app.evaluateHandle(() => document.querySelector("#linker [data-worker-view]")), interestingOnly: false });
+      const named = [];
+      const walkLinks = (node) => {
+        for (const child of node?.children ?? []) {
+          if (String(child.role).toLowerCase() === "link") named.push(child.name);
+          walkLinks(child);
+        }
+      };
+      walkLinks(linkTree);
+      claim("each link out is a link in the engine's accessibility tree, and its name says it opens elsewhere", named.length === 2 && named.every((name) => /opens in a new tab|↗/.test(name)), named);
+      /* Pressed, it opens in a tab of its own, and this page stays where it was: answered here, so nothing leaves the test. */
+      await context.route("https://cars.example/**", (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>The Golf</title><p id=there>there</p>" }));
+      const [opened] = await Promise.all([context.waitForEvent("page", { timeout: 10_000 }).catch(() => undefined), tab.locator("#linker #out-site").click()]);
+      if (opened) await opened.waitForLoadState("load").catch(() => {});
+      const there = opened ? await opened.evaluate(() => ({ url: location.href, opener: window.opener === null, referrer: document.referrer })).catch((error) => ({ error: String(error) })) : undefined;
+      claim(
+        "pressing a link out opens its address in a new tab that has no hold on this page and was told nothing of it, and this page stays where it was",
+        there?.url === "https://cars.example/golf" && there.opener === true && there.referrer === "" && tab.url() === `${HOST}/`,
+        { there, url: tab.url() },
+      );
+      await opened?.close().catch(() => {});
+    }
+    /* The same view run headless, as Graview Cloud's propose_view runs it: the same links drawn, the same two refused and said. */
+    const linkStore = new core.Store({ schema: core.createSchema([core.defineNode("car", { fields: core.z.object({ label: core.z.string(), site: core.z.string(), dealer: core.z.string() }), plural: "Cars" })]), mutations: [], policy: { grants: [] }, snapshot: { nodes: [{ id: "car:golf", kind: "car", label: "Golf", site: "https://cars.example/golf", dealer: "mailto:sales@cars.example" }], edges: [] } });
+    const linkRun = await guestHeadless.runWorkerViewHeadless({ store: linkStore, principal: { kind: "human", id: "u:bethan" }, run: guestNode.nodeIsolate(), manifest: { name: "linker", attach: "car", cardinality: "many" }, source: linkerSource });
+    const linkSaid = linkRun.ok ? linkRun.description.problems.map((problem) => problem.says) : [];
+    claim(
+      "the same view run headless refuses the same two links and says each — no address it was handed, a scheme no link takes — and nothing else",
+      linkRun.ok && linkSaid.length === 2 && linkSaid.some((said) => said.includes('"https://cars.example/golf?read=Golf" was not drawn: it is no address this view was handed')) && linkSaid.some((said) => said.includes('"javascript:alert(1)" was not drawn: a view links only to an https:, mailto: or tel: address')),
+      linkRun.ok ? linkSaid : linkRun,
+    );
     const failures = await app.evaluate(() => window.__host.failures);
     claim("no view failed", failures.length === 0, failures);
     claim("the page throws nothing", report.pageErrors.length === 0, report.pageErrors);

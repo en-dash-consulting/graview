@@ -94,7 +94,8 @@ logo, the app's own images, the pictures on records) are
 ## Links
 
 `<a data-record="offer:7">` and `<a data-place="the-packages">` are links
-the host follows, on both faces. `<a href="https://…">` is drawn as text.
+the host follows, on both faces. An `<a href>` goes out only to an
+address a record was handed (`graview-view-drawing`).
 A destination is a record's id, else a place by its slug or its title
 (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's
 list (`features` or `feature`); any other says why, naming the places.

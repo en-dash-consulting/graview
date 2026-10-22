@@ -45,7 +45,7 @@ export interface OpenRefusal {
   readonly element?: string;
   readonly name?: string;
   readonly css?: CssRefusal;
-  /** The address an image asked for and was refused, as far as 200 characters: said, so its author knows which. */
+  /** The address an image or a link asked for and was refused, as far as 200 characters: said, so its author knows which. */
   readonly address?: string;
   /** How long that address was, in characters, where it was refused for its length: a view's own `data:` image past `OPEN_MAX_IMAGE`. */
   readonly length?: number;
@@ -132,6 +132,14 @@ export interface JudgeContext {
    * `src` the view changed is judged as any image a view makes.
    */
   readonly picture?: (value: string) => string | undefined;
+  /**
+   * A LINK OUT, AS THE HOST ALLOWS IT (2026-10-21): the address the host
+   * draws for an `<a href>` the view gave — one a record it was shown holds,
+   * or an `https:` address on an origin the host lists (`judgeLink`,
+   * host/external-links.ts) — or undefined to refuse it. Without it, no
+   * `href` is drawn.
+   */
+  readonly link?: (value: string) => string | undefined;
 }
 
 /** What a host draws besides `data:` images, as a refusal says it: the origins it lists, and whether it says where the app's own images live. */
@@ -214,7 +222,7 @@ export function judgeAttribute(
   if (namespace === "html" && UNNAMED_ELEMENTS[element]?.includes(found.name)) return { refused: { reason: "attribute", element, name } };
   if (value === null) return { name: found.name, value: null };
   const judged = judgeValue(found.name, found.kind, value, context);
-  if ("refused" in judged) return { refused: { ...judged.refused, element, ...(found.kind === "image" && judged.refused.reason === "url" ? { address: value.slice(0, 200), ...(value.length > OPEN_MAX_IMAGE ? { length: value.length } : {}) } : {}) } };
+  if ("refused" in judged) return { refused: { ...judged.refused, element, ...(found.kind === "image" && judged.refused.reason === "url" ? { address: value.slice(0, 200), ...(value.length > OPEN_MAX_IMAGE ? { length: value.length } : {}) } : {}), ...(found.kind === "link" ? { address: value.slice(0, 200) } : {}) } };
   /* What the app's chrome and notices speak with stays the app's (ADR 0007: a view never uses the app's bar or notices). */
   if (found.name === "role" && judged.value.split(/\s+/).some((role) => (REFUSED_ROLES as readonly string[]).includes(role.toLowerCase()))) return { refused: { reason: "value", element, name } };
   if (found.name === "aria-live" && !["polite", "off"].includes(judged.value.toLowerCase())) return { refused: { reason: "value", element, name } };
@@ -245,6 +253,10 @@ function judgeValue(name: string, kind: OpenAttribute, value: string, context: J
     const listed = listedImage(value, context.imageOrigins);
     if (listed) return { value: listed };
     return refused("url");
+  }
+  if (kind === "link") {
+    const drawn = context.link?.(value);
+    return drawn === undefined ? refused("url") : { value: drawn };
   }
   if (value.length > OPEN_MAX_ATTRIBUTE) return refused("value");
   if (typeof kind === "object") {

@@ -22,7 +22,7 @@ export interface DrawnTranscript {
   readonly css: string;
 }
 
-export function drawTranscript(renders: readonly unknown[], sheets: readonly string[] | undefined, options: { readonly maxNodes: number; readonly origin?: string; readonly imageOrigins?: readonly string[]; readonly asset?: (path: string) => string | undefined }): DrawnTranscript {
+export function drawTranscript(renders: readonly unknown[], sheets: readonly string[] | undefined, options: { readonly maxNodes: number; readonly origin?: string; readonly imageOrigins?: readonly string[]; readonly asset?: (path: string) => string | undefined; readonly link?: (value: string) => string | undefined }): DrawnTranscript {
   const { root } = createTree();
   let over = false;
   const renderer = createOpenRenderer(root as unknown as Node, {
@@ -30,6 +30,7 @@ export function drawTranscript(renders: readonly unknown[], sheets: readonly str
     origin: options.origin ?? "null",
     ...(options.imageOrigins ? { imageOrigins: options.imageOrigins } : {}),
     ...(options.asset ? { asset: options.asset } : {}),
+    ...(options.link ? { link: options.link } : {}),
     maxNodes: options.maxNodes,
     onOverBudget: () => (over = true),
   });

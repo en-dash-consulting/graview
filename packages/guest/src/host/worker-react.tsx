@@ -38,6 +38,8 @@ export interface WorkerViewDefinition {
   readonly file?: (href: string) => string | undefined;
   /** The `https:` origins its images may come from by address (WorkerViewOptions.images): none by default. */
   readonly images?: { readonly origins: readonly string[] };
+  /** The `https:` origins its links may go to beyond what it was handed (WorkerViewOptions.links): none by default. */
+  readonly links?: { readonly origins: readonly string[] };
   /**
    * A VIEW PROPOSED AND NOT KEPT (FR-187): drawn where it attaches under
    * one line, "Draft — <title> · not kept", as the seat's drawn panel is
@@ -131,6 +133,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         ...(definition.asset ? { asset: definition.asset } : {}),
         ...(file ? { file } : {}),
         ...(definition.images ? { images: definition.images } : {}),
+        ...(definition.links ? { links: definition.links } : {}),
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
         files: () => latest.current.hostFiles,
       });

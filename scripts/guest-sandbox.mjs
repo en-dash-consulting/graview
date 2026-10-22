@@ -178,7 +178,7 @@ const bundle = async (contents, format = "esm") =>
 /** Bethan's showroom: anyone sees the cars, staff see everybody, a shopper sees herself and what is hers. */
 const SHOWROOM = `
 import { bindSchema, createSchema, defineNode, nodeRef, Store, z } from "./packages/core/dist/index.js";
-const car = defineNode("car", { fields: z.object({ label: z.string() }), plural: "Cars" });
+const car = defineNode("car", { fields: z.object({ label: z.string(), site: z.string().optional(), dealer: z.string().optional() }), plural: "Cars" });
 const shopper = defineNode("shopper", { fields: z.object({ label: z.string(), email: z.string() }), plural: "Shoppers" });
 const enquiry = defineNode("enquiry", { fields: z.object({ label: z.string() }), plural: "Enquiries",
   edges: { from: { to: ["shopper"], cardinality: "one" }, about: { to: ["car"] } } });
@@ -194,7 +194,7 @@ const store = new Store({ schema, mutations: [ask, retire],
   policy: { grants: [{ roles: ["shopper"], mutations: ["ask"], self: true }, { roles: ["staff"], mutations: "*" }],
     sees: [{ roles: "*", kinds: ["car"] }, { roles: ["staff"], kinds: ["shopper", "enquiry"] }, { roles: ["shopper"], kinds: ["shopper", "enquiry"], own: true }] },
   snapshot: { nodes: [
-    { id: "car:golf", kind: "car", label: "Golf" },
+    { id: "car:golf", kind: "car", label: "Golf", site: "https://cars.example/golf", dealer: "mailto:sales@cars.example" },
     { id: "shopper:bethan", kind: "shopper", label: "Bethan Okonkwo", email: "bethan@mail.example" },
     { id: "shopper:freya", kind: "shopper", label: "Freya Davies", email: "freya@mail.example" },
     { id: "enquiry:1", kind: "enquiry", label: "Finance on the Golf" } ],

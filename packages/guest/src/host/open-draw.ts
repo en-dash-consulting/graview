@@ -3,6 +3,9 @@ import { sanitizeStylesheets, type CssRefusal } from "./css.js";
 import type { OpenNamespace, OpenRefusal } from "./open-judge.js";
 import { createOpenRenderer, type OpenRenderer } from "./open-render.js";
 
+/* A view's link out, judged and said: fetched with the drawing, so a page that draws no open-kit view loads none of it. */
+export { handedLinks, judgeLink, linkRefusedWords } from "./external-links.js";
+
 /*
  * A WORKER VIEW'S REGION, DRAWN (FR-90): the open kit's renderer and
  * stylesheet in a shadow root the host owns, and the viewer's clicks,
@@ -16,6 +19,7 @@ export const REGION_CSS = `
 :host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }
 [data-graview-view-root] { color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
 [data-graview-view-root] [data-graview-link] { cursor: pointer; }
+[data-graview-view-root] a[href]::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
 `;
 
 /** The keys a view hears: enough to move and choose, never what the viewer types into the app elsewhere. */
@@ -31,6 +35,8 @@ export interface OpenDrawingOptions {
   readonly imageOrigins?: readonly string[];
   /** What the page draws for a record's picture the host handed the view (JudgeContext.picture). */
   readonly picture?: (value: string) => string | undefined;
+  /** The address the page draws for a view's link out, where the host allows it (JudgeContext.link). */
+  readonly link?: (value: string) => string | undefined;
   /** Something the view drew was refused, as it was. */
   readonly onRefused?: (refusal: OpenRefusal) => void;
   readonly maxNodes?: number;
@@ -81,6 +87,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
     ...(options.asset ? { asset: options.asset } : {}),
     ...(options.imageOrigins ? { imageOrigins: options.imageOrigins } : {}),
     ...(options.picture ? { picture: options.picture } : {}),
+    ...(options.link ? { link: options.link } : {}),
     ...(options.onRefused ? { onRefused: options.onRefused } : {}),
     ...(options.maxNodes !== undefined ? { maxNodes: options.maxNodes } : {}),
     ...(options.onOverBudget ? { onOverBudget: options.onOverBudget } : {}),

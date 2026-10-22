@@ -9,8 +9,9 @@ export { nowhere, placesSaid, quoted, whereOfWords } from "./links-words.js";
 /*
  * LINKS STAY IN THE APP (FR-93).
  *
- * A worker view's link has no address of the page's: the open kit draws no
- * `href` at all (FR-90), so `<a href="https://…">` is text. What a view may
+ * A worker view's link has no address of the page's: the open kit draws an
+ * `href` only out of the app, to an address the view was handed (2026-10-21,
+ * host/external-links.ts), and never one of the app's. What a view may
  * link to is a record, a named place or a kind's list of this app —
  * `<a data-record="id">`, `<a data-place="slug">` — and the host makes that
  * a link: focusable, a link to assistive technology, and followed by the

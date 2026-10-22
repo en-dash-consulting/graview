@@ -28,6 +28,8 @@ export interface HeadlessInput {
   readonly accepts?: readonly { readonly kind: string; readonly field: string }[];
   /** The `https:` origins the host lists for a view's images (WorkerViewOptions.images). */
   readonly imageOrigins?: readonly string[];
+  /** The `https:` origins the host lists for a view's links beyond what it was handed (WorkerViewOptions.links). */
+  readonly linkOrigins?: readonly string[];
   /** The live host says where the app's own images live (WorkerViewOptions.asset): an image by that path is drawn. */
   readonly assets?: boolean;
   /** The app's page's origin, so the page's own address for one of its images is that image. */

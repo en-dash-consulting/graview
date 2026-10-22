@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 30,
+  "gzipped": 11,
+  "note": "Raised when a worker view came to link out to an address it was handed (Roadmap feature:views-can-t-draw-an-external-link-even-to-a-record-s-own-url-field): a registered view's definition hands the host's `links.origins` to the view it mounts. Measured at 29_380 / 13_547 against 29_350 / 13_536 minified and gzipped."
+}

@@ -194,6 +194,17 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * console and to `onProblem`. None by default: a view loads nothing.
    */
   readonly images?: { readonly origins: readonly string[] };
+  /**
+   * WHERE A VIEW'S LINKS MAY GO BEYOND WHAT IT WAS HANDED (2026-10-21): the
+   * `https:` origins the host lists (`["https://nvd.nist.gov"]`). A view's
+   * `<a href>` is drawn where its address is one a record it was shown
+   * holds — a `url` field, a `mailto:`, a `tel:` — and, with this, any
+   * `https:` address on one of these origins. Anything else is refused and
+   * said once, in the view's console and to `onProblem`. None by default:
+   * a view's address is data it can write, so an open list would let it
+   * carry what it reads out of the app in a link a person presses.
+   */
+  readonly links?: { readonly origins: readonly string[] };
   /** Who made it, said under the region (ADR 0007: "Made by Claude for Nick"). Nothing by default. */
   readonly author?: string;
   /**
@@ -608,7 +619,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     element.setAttribute("aria-haspopup", "dialog");
     wantMedia();
   };
-  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, createSaver, fillPrefills, judgePress, prefillOf }]) => {
+  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, prefillOf }]) => {
     if (failed) return;
     const reader = createPressReader();
     /* The view hears what became of an act a press or a save asked for as `acted` on the element bound to it (FR-191). */
@@ -638,14 +649,30 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       media?.refresh(shadow);
       drops?.refresh();
     };
+    /* The addresses a link out may go to: what the records the view was last shown hold, worked out once a push. */
+    let handedFor: GuestProps | undefined;
+    let handedNow: ReadonlySet<string> = new Set();
+    const handed = () => {
+      if (handedFor !== lastProps) [handedFor, handedNow] = [lastProps, handedLinks(lastProps)];
+      return handedNow;
+    };
+    const toldLinks = new Set<string>();
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
+      link: (value) => judgeLink(value, { handed: handed(), ...(options.links ? { origins: options.links.origins } : {}) }),
       ...(options.asset ? { asset: options.asset } : {}),
       ...(options.images ? { imageOrigins: options.images.origins } : {}),
       /* A record's picture the host handed is drawn as handed, at any size (FR-192). */
       ...(manifest.pictures ? { picture: (value: string) => pictures?.drawn(value) } : {}),
       /* An image's address refused is said once, with why and what would do — not left to be found in `refused`. */
       onRefused: (refusal) => {
+        /* A link out refused is said once, with why and what a view links to. */
+        if (refusal.reason === "url" && refusal.element === "a" && refusal.address !== undefined && !toldLinks.has(refusal.address)) {
+          toldLinks.add(refusal.address);
+          const said = linkRefusedWords(refusal.address, options.links?.origins);
+          port?.postMessage({ type: "notice", text: said });
+          return options.onProblem?.(said);
+        }
         if (refusal.reason !== "url" || refusal.element !== "img" || refusal.address === undefined || toldImages.has(refusal.address)) return;
         toldImages.add(refusal.address);
         const said = imageRefusedWords(refusal.address, { ...(options.images ? { origins: options.images.origins } : {}), assets: options.asset !== undefined }, refusal.length);
@@ -682,6 +709,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           event.stopPropagation();
           links.follow(anchor);
         }
+        /* A link out opens in its own tab, as the browser opens it: the face around the view does not also take the press for one on the card. */
+        const out = at.closest("a[href]");
+        if (out && root.contains(out) && !out.hasAttribute("data-graview-link") && event.type === "click") event.stopPropagation();
         /* The viewer's own press opens the host's full-screen viewer: a click, or Enter or Space on what is not a button (which clicks of itself). */
         const lightbox = at.closest("[data-lightbox]");
         const key = event.type === "keydown" ? (event as KeyboardEvent).key : undefined;

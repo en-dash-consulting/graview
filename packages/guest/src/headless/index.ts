@@ -104,6 +104,8 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   readonly limits?: HeadlessLimits;
   /** The `https:` origins a view's images may come from by address, as the live host lists them (WorkerViewOptions.images). */
   readonly images?: { readonly origins: readonly string[] };
+  /** The `https:` origins a view's links may go to beyond what it was handed, as the live host lists them (WorkerViewOptions.links). */
+  readonly links?: { readonly origins: readonly string[] };
   /**
    * Where the app's own images live, as the live host says it
    * (WorkerViewOptions.asset): given, an image by the path `add_image`
@@ -255,6 +257,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     ...(manifest.accepts ? { accepts: manifest.accepts.map(({ kind, field }) => ({ kind, field })) } : {}),
     places: places.map((place) => ({ as: place.as, title: place.title })),
     ...(options.images ? { imageOrigins: [...options.images.origins] } : {}),
+    ...(options.links ? { linkOrigins: [...options.links.origins] } : {}),
     ...(options.asset ? { assets: true } : {}),
     ...(options.origin ? { origin: options.origin } : {}),
     lists: listsOf(store.schema, new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds])).flatMap((list) => [list.slug, list.kind]),

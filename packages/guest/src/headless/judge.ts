@@ -1,6 +1,7 @@
 import type { DescribedPart, DescribedProblem } from "@graview/core/describe";
 import { placeNamed, placesSaid, quoted } from "../host/links-words.js";
 import type { ViewRefusal } from "../host/open-draw.js";
+import { handedLinks, judgeLink, linkRefusedWords } from "../host/external-links.js";
 import { imageRefusedWords, type ImageHost } from "../host/open-judge.js";
 import { describeDrawing } from "./describe.js";
 import { drawTranscript } from "./draw.js";
@@ -20,7 +21,7 @@ export type Judged =
   | { readonly ok: false; readonly reason: HeadlessFailureReason; readonly detail: string };
 
 /** One refusal of the open kit's, said to the author of the view, offering only what its host draws. */
-export function sayRefusal(refusal: ViewRefusal, host: ImageHost = {}): DescribedProblem {
+export function sayRefusal(refusal: ViewRefusal, host: ImageHost & { readonly linkOrigins?: readonly string[] } = {}): DescribedProblem {
   const element = "element" in refusal && refusal.element ? `<${refusal.element}>` : "";
   const name = refusal.name ? ` ${refusal.name}` : "";
   switch (refusal.reason) {
@@ -31,6 +32,7 @@ export function sayRefusal(refusal: ViewRefusal, host: ImageHost = {}): Describe
     case "value":
       return { at: `drawing ${element}${name}`, says: `Not drawn: the value of${name} is not one the open kit takes.` };
     case "url":
+      if ("element" in refusal && refusal.element === "a" && refusal.address !== undefined) return { at: `drawing ${element}${name}`, says: `Not drawn: ${linkRefusedWords(refusal.address, host.linkOrigins)}` };
       return { at: `drawing ${element}${name}`, says: refusal.address !== undefined && "element" in refusal && refusal.element === "img" ? `Not drawn: ${imageRefusedWords(refusal.address, host, "length" in refusal ? refusal.length : undefined)}` : `Not drawn: an address. A view loads nothing; an image is a data: image.` };
     case "child":
       return { at: `drawing ${element}`, says: `Not drawn: ${element} holds nothing.` };
@@ -50,8 +52,10 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   for (const asked of transcript.asked) {
     if (!acts.has(asked.name)) return { ok: false, reason: "act", detail: `It asks for the act "${asked.name}", which its manifest does not name.` };
   }
+  /* A link out goes where the records the view was shown say, or to an origin the host lists, as on the page. */
+  const handed = handedLinks(input.props);
   /* Nothing loads in a run: the app's own image is drawn as the path the live host resolves, where the host says it does. */
-  const drawn = drawTranscript(transcript.renders, transcript.sheets, { maxNodes: limits.maxNodes, ...(input.origin ? { origin: input.origin } : {}), ...(input.imageOrigins ? { imageOrigins: input.imageOrigins } : {}), ...(input.assets ? { asset: (path: string) => path } : {}) });
+  const drawn = drawTranscript(transcript.renders, transcript.sheets, { maxNodes: limits.maxNodes, ...(input.origin ? { origin: input.origin } : {}), ...(input.imageOrigins ? { imageOrigins: input.imageOrigins } : {}), ...(input.assets ? { asset: (path: string) => path } : {}), link: (value: string) => judgeLink(value, { handed, ...(input.linkOrigins ? { origins: input.linkOrigins } : {}) }) });
   if (drawn.over) return { ok: false, reason: "nodes", detail: `It drew more than the ${limits.maxNodes.toLocaleString("en-US")} things a view may draw.` };
   // A kind's list is somewhere a view may go by name too, by its plural or the kind's name.
   const goes = [...input.places, ...(input.lists ?? []).filter((slug) => !input.places.some((place) => place.as === slug)).map((slug) => ({ as: slug }))];
@@ -59,7 +63,7 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   for (const act of said.acts) {
     if (!acts.has(act)) return { ok: false, reason: "act", detail: `It binds a press to the act "${act}" (data-act), which its manifest does not name.` };
   }
-  const problems: DescribedProblem[] = [...drawn.refused.map((one) => sayRefusal(one, { ...(input.imageOrigins ? { origins: input.imageOrigins } : {}), assets: input.assets === true })), ...said.problems];
+  const problems: DescribedProblem[] = [...drawn.refused.map((one) => sayRefusal(one, { ...(input.imageOrigins ? { origins: input.imageOrigins } : {}), assets: input.assets === true, ...(input.linkOrigins ? { linkOrigins: input.linkOrigins } : {}) })), ...said.problems];
   for (const went of transcript.went) {
     /* A bare string is a record first, then a place by that slug, as the host follows it. */
     if ("record" in went && !(input.props.node?.id === went.record || (input.props.nodes ?? []).some((node) => node.id === went.record) || placeNamed(goes, went.record))) problems.push({ at: "navigate", says: `It goes to ${quoted(went.record)}, which this seat was not shown and is no place of this app: the host will not follow it. A view goes to a record by its id, or to a place by its slug.${placesSaid(goes)}` });

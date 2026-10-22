@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 2457,
+  "gzipped": 946,
+  "note": "Raised when a worker view came to link out to an address it was handed (Roadmap feature:views-can-t-draw-an-external-link-even-to-a-record-s-own-url-field): the drawing judges an `<a href>` against the addresses the records it was shown hold and the origins the host lists, says a refused one in a sentence, and draws a kept one to open in a new tab with no opener and no referrer (`host/external-links.ts`, fetched with the drawing). Measured at 184_563 / 70_264 against 182_106 / 69_318 minified and gzipped."
+}

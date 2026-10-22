@@ -183,6 +183,12 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
     if (judged.as) element.setAttribute("data-graview-as", judged.as);
     /* An image asks with no referrer, set before its source is: an origin the host lists for images learns nothing of the page it is drawn on. */
     if (judged.namespace === "html" && judged.name === "img") element.setAttribute("referrerpolicy", "no-referrer");
+    /* A link out opens in a tab of its own, with no hold on this page and nothing said of it: set before its address is, and never the view's to change. */
+    if (judged.namespace === "html" && judged.name === "a") {
+      element.setAttribute("target", "_blank");
+      element.setAttribute("rel", "noopener noreferrer");
+      element.setAttribute("referrerpolicy", "no-referrer");
+    }
     const drawn: Drawn = { dom: element, name: judged.name, namespace: judged.namespace, children: [], id, parent };
     byId.set(id, drawn);
     ids.set(element, id);
