@@ -25,7 +25,8 @@ Every view comes with a manifest the host enforces:
 ```
 
 - `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
-- `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`). Its place flows with the page, as long as the view draws: no frame of its own scrolls inside the page, so a view sets no height to fill one.
+- `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
+- A view is as tall as what it draws, which the host measures: set no height to fill a box. On Pages its place, the home and a record's page flow with the page at that height, nothing scrolling inside. On the Scene a view of many is a card held to its box: what fits, the foot faded where there is more, and Open to its place. `flows: false` keeps its place's frame on Pages, for a fixed canvas such as a map; `scene: { maxHeight }` holds its Scene card lower (80 to 4000 pixels).
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.

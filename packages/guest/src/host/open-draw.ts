@@ -21,7 +21,7 @@ export { handedLinks, judgeLink, linkRefusedWords } from "./external-links.js";
  */
 export const REGION_CSS = `
 :host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }
-[data-graview-view-root] { color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
+[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
 [data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }
 [data-graview-view-root] a[href]::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
 `;

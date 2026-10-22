@@ -4,7 +4,7 @@ import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } f
 import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { afterFirstDraw, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { afterFirstDraw, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, useNavigation, type ErrorReport, type PageDoor, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
@@ -579,6 +579,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const arrangement = (views as ReactViewRegistry<S>).arrangement?.();
   const onPages = shown === "pages";
   const hrefOf = address ? addressAt : undefined;
+  /* Where the scene's preview of a view sends a reader for the whole of it (Roadmap f-view-content-height): its place, on the pages. */
+  const pageDoor = useMemo<PageDoor>(() => ({ open: toPage, ...(address ? { href: (path: string) => addressOf(path, props.basePath === undefined ? {} : { basePath: props.basePath }) } : {}) }), [toPage, address, props.basePath]);
 
   /*
    * THE EMBED IS ITSELF A LANDMARK.
@@ -668,7 +670,9 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
                 props={{ ...props, onNavigate, ...(address ? {} : { path: pagesAt.current.path }) } as never}
               />
             ) : (
-              <SceneFace address={address} auto={auto} scheme={scheme} scope={scope} quickAsk={quickAskOf(props.quickAsk)} />
+              <PageDoorContext.Provider value={pageDoor}>
+                <SceneFace address={address} auto={auto} scheme={scheme} scope={scope} quickAsk={quickAskOf(props.quickAsk)} />
+              </PageDoorContext.Provider>
             )}
             <Drawn asked={face} shown={shown} onDrawn={drawn} />
           </Suspense>
