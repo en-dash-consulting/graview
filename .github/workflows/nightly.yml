@@ -45,7 +45,7 @@ on:
 
 concurrency:
   # One run at a time per branch: a branch's Nightly before its merge no
-  # longer waits behind, or is cancelled by, another branch's.
+  # longer waits behind, or is canceled by, another branch's.
   group: nightly-${{ github.ref }}
   cancel-in-progress: false
 
