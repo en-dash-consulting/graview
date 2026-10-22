@@ -33,7 +33,9 @@ handed — its own url, `mailto:`, `tel:` (below). A destination
 is a record's id, else a place by its slug or its title
 (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's
 list (`features` or `feature`); any other says why, naming the places.
-From code, `graview.navigate("offer:7")` goes by the same rules.
+A titled view of many is a place too, at `/places/<its title as a slug>`:
+`data-place="live-threats"` reaches the view "Live threats", and the check
+knows it when its host hands the views it keeps. From code, `graview.navigate("offer:7")` goes by the same rules.
 
 ## Links out
 

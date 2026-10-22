@@ -169,8 +169,14 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, opt
   return findings;
 }
 
-/** A host's view as a place: a titled picture of a kind, by its manifest name. */
-function placeOfView(view: HostView): Place | undefined {
+/**
+ * A HOST'S VIEW AS A PLACE: a titled picture of a kind, by its manifest
+ * name, at `/places/<its title as a slug>` — none for the home's view, a
+ * view of one record, or a view with no title. What the router reads, and
+ * what a headless check of a view's links reads to know the places of the
+ * views the host keeps (`runWorkerViewHeadless`'s `views`).
+ */
+export function viewPlaceOf(view: HostView): Place | undefined {
   if (view.attach === "home" || view.cardinality === "one" || !view.title) return undefined;
   return { kind: view.attach, title: view.title, as: placeSlug(view.title), name: view.name, lens: "view", ...(view.hidden ? { hidden: true } : {}) };
 }
@@ -182,7 +188,7 @@ function placesOfLenses<S extends AnySchema>(app: GraviewApp<S>, views: readonly
     // One picture over several kinds is a place on each, and says so (`over`): every list names it once.
     for (const kind of lens.kinds) out.push({ kind, title: lens.title, as: lens.as, ...(lens.across ? { across: lens.across } : {}), ...(lens.kinds.length > 1 ? { over: lens.kinds } : {}), ...(lens.hidden ? { hidden: true } : {}) });
   }
-  for (const place of [...(app.views?.places?.() ?? []), ...views.flatMap((view) => placeOfView(view) ?? [])]) {
+  for (const place of [...(app.views?.places?.() ?? []), ...views.flatMap((view) => viewPlaceOf(view) ?? [])]) {
     if (!out.some((held) => held.kind === place.kind && held.as === place.as)) out.push(place);
   }
   return out;

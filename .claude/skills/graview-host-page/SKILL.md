@@ -130,7 +130,11 @@ under that name. The host knows its views and the declaration does not, so
 it hands their manifests (`HostView`: `name`, `title`, `attach`) as
 `views` to `editDocument` (a title resolves: `"To do"` is written
 `view:to-do`), `compileDocument` (a name it does not keep is a warning;
-unsaid, a note) and `placesOf(app, { views })` (each listed with `view`).
+unsaid, a note), `placesOf(app, { views })` (each listed with `view`),
+`describePlace(…, { views })` (a titled view's `/places/<slug>` described
+as a view's place) and `runWorkerViewHeadless({ …, views })`, whose check
+then knows a link to a titled view's place; unsaid, it says such a link
+as a doubt, not as going nowhere.
 The place menu's Hide on a kind's list reaches `keptViews.lens` as
 `{ op: "set-lens-hidden", title: "<kind>", hidden }`: written into
 `pages.hide`, as any declared lens's is.

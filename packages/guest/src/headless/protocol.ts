@@ -36,6 +36,8 @@ export interface HeadlessInput {
   readonly origin?: string;
   /** The app's places, by slug, each with its title: a view may name one by either. */
   readonly places: readonly NamedPlace[];
+  /** The host did not hand the run the views it keeps: a titled view's place may be missing from `places`, so a name none of them is, is said as a doubt. */
+  readonly placesUnsure?: boolean;
   /** The kinds' lists the seat sees, by their plural's slug and by the kind's name: where a view may go by name besides a place. */
   readonly lists?: readonly string[];
   readonly limits: { readonly maxNodes: number; readonly messages: number; readonly pushMs: number };

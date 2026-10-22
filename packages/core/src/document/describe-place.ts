@@ -101,7 +101,8 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   const seen = store.seenBy(principal);
   const schema = seen.schema as AnySchema;
   const graph = seen.graph as unknown as GraphReader;
-  const places = placesOf(app as never);
+  // A titled view of many the host keeps is a place of the app's, by the slug the router gives it.
+  const places = placesOf(app as never, options.views ? { views: options.views } : {});
   const asked = typeof place === "string" ? place.trim() : place.slug;
   const found = typeof place === "string" ? places.find((one) => one.slug === asked || one.title === asked || one.address === asked) : places.find((one) => one.slug === place.slug && one.kind === place.kind) ?? place;
   const record = !found && typeof place === "string" ? graph.getNode(asked) : undefined;
@@ -227,7 +228,17 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     const at = found!;
     described = { slug: at.slug, title: at.title, kind: at.kind, address: at.address };
     const lens = at.lens ? declaredLenses(app as never).drawn.find((one) => one.as === at.slug && (at.kind === null || one.kinds.includes(at.kind))) : undefined;
-    if (at.kind === null) {
+    if (at.view !== undefined && !lens) {
+      /*
+       * A VIEW'S OWN PLACE (`/places/<slug>`, a titled view of many the host
+       * keeps): drawn by the view alone, as a lens's place is by the lens —
+       * whether it flows with the page or keeps a frame, as the host said,
+       * and what it drew when the host ran it headless.
+       */
+      const view = options.views?.find((one) => one.name === at.view);
+      drawnBy = `view:${at.view}`;
+      parts.push({ t: "view", name: at.view, title: view?.title ?? at.title, ...(typeof view?.flows === "boolean" ? { flows: view.flows } : {}), ...(view?.parts ? { parts: view.parts } : {}) });
+    } else if (at.kind === null) {
       const brand = app.brand;
       const name = brand?.name ?? app.name;
       const light = logoOf(brand)?.light;
@@ -374,7 +385,7 @@ export function placeText(description: Omit<PlaceDescription, "text">): string {
           if (part.more) lines.push(`${indent}and ${part.more} more`);
           break;
         case "view":
-          lines.push(`${indent}[the view "${part.title ?? part.name}"${part.replaces ? ", in place of the page" : ""}]`);
+          lines.push(`${indent}[the view "${part.title ?? part.name}"${part.replaces ? ", in place of the page" : ""}${part.flows === true ? ", flowing with the page" : part.flows === false ? ", in a frame of its own" : ""}]`);
           if (part.parts) walk(part.parts, `${indent}  `);
           break;
       }
