@@ -1,0 +1,6 @@
+{
+  "budget": "a worker view's runtime",
+  "minified": 32,
+  "gzipped": 0,
+  "note": "Held for the 0.1.45 view fixes merged: each branch's runtime fit the runtime's margin alone, and together the runtime came to 11 B minified over it (61_502 / 21_284)."
+}
