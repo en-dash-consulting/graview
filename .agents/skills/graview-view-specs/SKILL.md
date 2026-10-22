@@ -37,6 +37,12 @@ fields, edges, label, roles — is `graview-node-kind`.
    or a listed record. The scaffold's `views()` draws them
    (`registerViewSpecs`); so does the embed, by itself.
 
+   A row is a link to its record, so it is always named: one whose blocks
+   show no `title`, no `headline` and no words holding the record's whole
+   name (`{severity} · {status}` alone) is drawn with the name first, and
+   `describe_place` says it so. Lead with `{ "title": "{name}" }` to choose
+   how the name reads.
+
    A kind that also has a worker view of one record draws, on its record
    page, the view, then the `page` blocks, then the facts they did not say.
    A view whose manifest says `replaces: "page"` is the whole page: the

@@ -553,6 +553,34 @@ export function resolveBlocks(blocks: readonly SpecBlock[], ctx: BlockContext): 
   return blocks.map((block, i) => ({ ...resolveOne(block, ctx, i === first), key: block.key }) as ResolvedBlock);
 }
 
+/**
+ * WHETHER A RECORD'S ROW NAMES IT. A row is a link to its record, and a link
+ * needs a name: a row declared as `{severity} · {status}` alone drew a list
+ * of facts with no record named in it, while `describe_place` said each
+ * record's title. Its blocks name it when they show a title or a headline,
+ * or words that hold its whole name (`{name} for {fills.name}`); a row that
+ * does not is drawn with the record's name first, and said so.
+ */
+export function blocksName(resolved: readonly ResolvedBlock[], label: string): boolean {
+  const name = label.trim().toLowerCase();
+  return resolved.some((block) => {
+    switch (block.t) {
+      case "title":
+      case "headline":
+        return block.text.trim() !== "";
+      case "text":
+      case "badge":
+        return name !== "" && block.text.toLowerCase().includes(name);
+      case "group":
+        return blocksName(block.blocks, label);
+      case "when":
+        return block.shown && blocksName(block.blocks, label);
+      default:
+        return false;
+    }
+  });
+}
+
 /** What a record's blocks said, once worked out: what a view drawn around them must not say again (FR-141). */
 export interface BlocksSaid {
   /** The record's fields a shown block says: a `field` block's, and every name a shown template or figure reads. */

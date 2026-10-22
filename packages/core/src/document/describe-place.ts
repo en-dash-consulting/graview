@@ -20,6 +20,9 @@ import { computedValues, withComputed, type ComputedRecord, type PlainComputed }
 import { computedOf } from "./computed.js";
 import { isInlineSvg, logoOf, markHref } from "../theme/marks.js";
 import { markdownWords } from "../excerpt-of.js";
+import { visitorForm, type VisitorForm } from "../mutations/visitor-form.js";
+import { creatingActs, describeActForm, describeVisitorForm, formLines } from "./describe-forms.js";
+import type { DescribedForm } from "./described.js";
 
 /*
  * WHAT A PLACE SHOWS, WITHOUT A BROWSER (FR-89).
@@ -107,7 +110,11 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   const asked = typeof place === "string" ? place.trim() : place.slug;
   const found = typeof place === "string" ? places.find((one) => one.slug === asked || one.title === asked || one.address === asked) : places.find((one) => one.slug === place.slug && one.kind === place.kind) ?? place;
   const record = !found && typeof place === "string" ? graph.getNode(asked) : undefined;
-  if (!found && !record) return { ok: false, error: `"${asked}" is not a place this app has, nor a record this seat can see.`, places: places.map((one) => one.slug) };
+  // A visitor's form (`forms.<name>`), by its address: `/forms/<name>`, or `forms/<name>`.
+  const formName = !found && !record ? /^\/?forms\/(.+)$/.exec(asked)?.[1] : undefined;
+  const visitor = formName !== undefined ? visitorForm(app, formName) : undefined;
+  if (visitor) return { ok: true, description: visitorFormPlace(schema, visitor, width) };
+  if (!found && !record) return { ok: false, error: `"${asked}" is not a place this app has, nor a record this seat can see.`, places: [...places.map((one) => one.slug), ...Object.keys(app.forms ?? {}).map((name) => `forms/${name}`)] };
 
   const problems: DescribedProblem[] = [];
   const views = (app.viewSpecs ?? {}) as Readonly<Record<string, { card?: readonly unknown[]; row?: readonly unknown[]; page?: readonly unknown[] }>>;
@@ -124,8 +131,13 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     if (spec) {
       const said = resolved(node, { slot: as });
       const [first, ...rest] = said;
-      // A card's first title is its panel's title; a row's leads its line.
-      const titled = first?.t === "title";
+      /*
+       * A card's first title is its panel's title; a row's — or its first
+       * headline — leads its line. A row whose blocks name the record
+       * nowhere is drawn with the record's name first (`blocksName`), and
+       * said with it: the title is what leads the line either way.
+       */
+      const titled = first?.t === "title" || (as === "row" && first?.t === "headline");
       return { id: node.id, kind: node.kind, title: titled ? first.text : title, parts: say(titled ? rest : said, depth, `views.${node.kind}.${as}`, ` (${node.id})`, titled ? 1 : 0) };
     }
     if (as === "row") return { id: node.id, kind: node.kind, title, parts: [] };
@@ -203,6 +215,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   let masthead: DescribedMasthead | undefined;
   let drawnBy: PlaceDescription["drawnBy"];
   let described: PlaceDescription["place"];
+  let forms: readonly DescribedForm[] = [];
   if (record) {
     // A record's page: its page spec's blocks, then its facts, as the routed face lays it.
     drawnBy = "record";
@@ -229,6 +242,8 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     const at = found!;
     described = { slug: at.slug, title: at.title, kind: at.kind, address: at.address };
     const lens = at.lens ? declaredLenses(app as never).drawn.find((one) => one.as === at.slug && (at.kind === null || one.kinds.includes(at.kind))) : undefined;
+    // Where a kind's records are listed, the acts that make one are offered — unless the lens's page leaves them off (`create: false`): each form said field by field, as this seat is asked it.
+    if (at.kind !== null && lens?.create !== false && at.view === undefined) forms = creatingActs(store, principal, at.kind).map((act) => describeActForm(store, principal, act));
     if (at.view !== undefined && !lens) {
       /*
        * A VIEW'S OWN PLACE (`/places/<slug>`, a titled view of many the host
@@ -320,8 +335,24 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   const variant = width < PHONE ? "phone" : "wide";
   // The home is about no one record, and so are the app's facts: said beside it, worked out over this seat's graph.
   const facts = described.kind === null ? factsOf(schema, graph) : [];
-  const description: Omit<PlaceDescription, "text"> = { ...(masthead ? { masthead } : {}), ...(facts.length > 0 ? { facts } : {}), place: described, seat, width, variant, drawnBy: drawnBy!, parts, problems };
+  const description: Omit<PlaceDescription, "text"> = { ...(masthead ? { masthead } : {}), ...(facts.length > 0 ? { facts } : {}), place: described, seat, width, variant, drawnBy: drawnBy!, parts, ...(forms.length > 0 ? { forms } : {}), problems };
   return { ok: true, description: { ...description, text: placeText(description) } };
+}
+
+/** A visitor's form's own place (`/forms/<name>`): its title, its words, and what it asks — as the visitor the host mints is asked it, whoever asks. */
+function visitorFormPlace(schema: AnySchema, form: VisitorForm, width: number): PlaceDescription {
+  const parts: DescribedPart[] = [{ t: "heading", level: 1, text: form.title }, ...(form.intro ? [{ t: "text" as const, text: form.intro }] : [])];
+  const description: Omit<PlaceDescription, "text"> = {
+    place: { slug: `forms/${form.name}`, title: form.title, kind: null, address: `/forms/${form.name}` },
+    seat: `a visitor (${form.role})`,
+    width,
+    variant: width < PHONE ? "phone" : "wide",
+    drawnBy: "form",
+    parts,
+    forms: [describeVisitorForm(schema, form)],
+    problems: [],
+  };
+  return { ...description, text: placeText(description) };
 }
 
 /**
@@ -393,6 +424,8 @@ export function placeText(description: Omit<PlaceDescription, "text">): string {
     }
   };
   walk(description.parts, "");
+  // Each form it offers, field by field in the order asked; a star is one that must be answered.
+  for (const form of description.forms ?? []) lines.push(...formLines(form));
   if (description.facts) {
     lines.push("Facts of the whole graph (what fact('<name>') reads):");
     for (const fact of description.facts) lines.push(`- ${fact.label} (${fact.name}): ${fact.value ?? `not worked out — ${fact.refused}`}`);

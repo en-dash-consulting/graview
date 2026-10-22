@@ -31,7 +31,7 @@ told afterwards.
 
    `act` makes a record or acts on none — a visitor is shown no record to
    pick. `fields` is the order asked; unsaid, every argument a visitor
-   could fill. `say` is what the visitor reads under "Received — thank
+   could fill, its name first and then what must be answered. `say` is what the visitor reads under "Received — thank
    you." `submit` is the button (the act's title, unsaid). `role` is the
    role the visitor holds: `visitor`, unsaid.
 
@@ -95,6 +95,11 @@ served, or a field their sight keeps from them); and as warnings,
 `form-visitor-sees` (a sight serves the visitor a kind — to everybody, or by
 name where no picker asks for it) and `form-visitor-may-more` (the role may
 run acts no form opens). Report what it said.
+
+**Read what it asks.** `describe_place` with `forms/<name>` (or
+`graview describe <entry> --place forms/<name>`) says each field in the
+order asked: its label, a star where it must be answered, what it takes and
+its choices — as the visitor is asked it.
 
 **And try it.** Open `/forms/<name>` under `graview preview`, answer, and
 read the store as the host: the record is there, its author "a visitor via
