@@ -48,7 +48,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.44
 
-Published October 21, 2026 · the current version
+Published October 21, 2026
 
 A compacted store shows a seat only what it may see, history judged for one seat, and views that stand in the nav.
 
