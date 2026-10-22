@@ -22,7 +22,7 @@ Every view comes with a manifest the host enforces:
 
 - `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
 - `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
-- A view is as tall as what it draws, which the host measures: set no height to fill a box. On Pages its place, the home and a record's page flow with the page at that height, nothing scrolling inside. On the Scene a view of many is a card held to its box: what fits, the foot faded where there is more, and Open to its place. `flows: false` keeps its place's frame on Pages, for a fixed canvas such as a map; `scene: { maxHeight }` holds its Scene card lower (80 to 4000 pixels).
+- A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page, nothing scrolling inside. On the Scene a view of many is a card held to its box, faded where there is more, with Open to its place. `flows: false` keeps a frame on Pages (a map); `scene: { maxHeight }` holds the card lower (80–4000px).
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
@@ -50,7 +50,7 @@ graview.navigate({ place: "features", where: { stage: "building" }, section: "Sh
 
 ### Links and buttons, by default
 
-To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<button>` (`data-act` to run an act). Style either freely: the host resets both to the words around them, and your class wins. A `<div>` or `<span>` with only `graview.on("click")` is reached by no keyboard and named nothing; given `role="button"` (or checkbox, switch, tab, `aria-pressed`, `aria-expanded`) the host gives it the keyboard, and Enter or Space is heard as a click. Whatever has the keyboard shows the host's ring: restyle it with `--graview-focus-color`, never `outline: none`. `class="graview-sr"` is words for a screen reader alone; an `<svg>` with no role, `aria-label` or `<title>` is hidden from one.
+To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<button>` (`data-act` to run an act). Style either freely: the host resets both to the words around them, and your class wins. A `<div>` or `<span>` with only `graview.on("click")` is reached by no keyboard and named nothing; with `role="button"` (checkbox, switch, tab, `aria-pressed`, `aria-expanded`) the host gives it the keyboard and hears Enter or Space as a click. The keyboard shows the host's ring: restyle it with `--graview-focus-color`, never `outline: none`. `class="graview-sr"` is words for a screen reader alone; an `<svg>` with no role, `aria-label` or `<title>` is hidden from one.
 
 ### Gestures
 
