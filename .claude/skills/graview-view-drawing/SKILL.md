@@ -19,11 +19,14 @@ HTML's sectioning, headings, text, lists, tables, `details`/`summary`,
 `clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`.
 Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and
 each element's own. CSS for layout, grid, flex, color, type, transitions,
-`@keyframes`, `@media`, `@supports` and `@container`.
+`@keyframes`, `@media`, `@supports` and `@container`. Each
+`graview.style(css)` adds a sheet after the last (a shared design system's,
+then the view's own), each judged alone; a sheet given again is not added
+twice, so say what changes per push in a class or a `style` attribute.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`,
 `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image` and `foreignObject`; any
-`href`, `srcset` or `on*` attribute; `src` on anything but `img`, and on
+`srcset` or `on*` attribute; `href` but a link out (below); `src` on anything but `img`, and on
 `img` any address but the ones below. In CSS: `url()` except `url(#id)` on
 `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`;
 `image-set()`, `attr()` and other unlisted functions; `position: fixed`;
@@ -39,6 +42,12 @@ your stylesheet still matches. A `section` is never named (no `aria-label`
 or `title`), so it stays out of the landmarks. `role` takes no landmark or
 notice's role (`navigation`, `region`, `status`, `alert`, …).
 
+A control of your own keeps its role and state, and every `aria-*`:
+`<span role="checkbox" aria-checked="true" tabindex="0">`, `switch`,
+`aria-pressed`, `aria-expanded` with `aria-controls` naming an id you
+drew, tabs (`aria-selected`), `slider` (`aria-valuenow`). Hear Space and
+Enter on `keydown`. A headless run draws them as the page does.
+
 ## The app's look
 
 **Draw with the app's tokens**, so light and dark follow the app's own
@@ -52,6 +61,16 @@ take `var()`; put paints in the stylesheet
 `name` and its `logo`. A brand change or the app's toggle pushes `theme`
 again.
 
+## Links out
+
+`<a href="${node.url}">` is drawn where the address is one a record the
+view was shown holds, as it holds it — an `https:` page, a `mailto:`, a
+`tel:` — or an `https:` address on an origin the host lists (`links: {
+origins }` on the view's definition and a headless run). The host opens it
+in a new tab, no opener, no referrer, marked ↗. An address you build,
+`javascript:`, `data:` or `http:` is refused: a link a view made could
+carry what it reads out.
+
 ## The images a view may show
 
 An `img`'s `src` is drawn only when it is one of these; any other address
@@ -59,8 +78,7 @@ An `img`'s `src` is drawn only when it is one of these; any other address
 said once in the view's console and the host's problems, with the address:
 
 - **A `data:` image** the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or
-  SVG, at most 512,000 characters as its URL. Keep it small; it is part
-  of the view's source.
+  SVG, at most 512,000 characters as its URL.
 - **The app's logo**: `<img src="${props.theme.logo}">`. The host made it
   from the brand's mark (a `blob:` URL of the page, or a `data:` image
   where the page's policy refuses `blob:`). Absent when the brand has none.
@@ -84,9 +102,7 @@ said once in the view's console and the host's problems, with the address:
   it as handed; it is absent on the first push, and a push follows when
   it is ready. `left` says why a picture will never come: past
   one picture's byte budget or the view's, or what the host answered when
-  it was not loaded. A host that serves the app under a base says where a
-  record's files are (`file` on the view's definition, else the page's
-  `files.src`, which `filesAt` under the base derives). A document, and an
+  it was not loaded. A document, and an
   SVG, has no `src`: show its name, type and size.
 
 ```js
@@ -119,8 +135,7 @@ whose manifest says `pictures`:
 
 A record the view was not shown, a field with no video, or a view without
 `pictures` draws nothing, and says why in its console and the host's
-problems. A headless run says a placed video as "The waves at dusk, a
-45-second video".
+problems.
 
 ## Files a person drops on it
 
@@ -163,8 +178,6 @@ against its size.
    with a stand-in `src` (a blank image), so its `<img>` is drawn and
    judged; only the page shows its pixels. A picture the page would
    leave out comes with `left`, and the run says it among its problems.
-   The budget is spent in order, the records linked to a view's own by an
-   edge it reads first: a station's sheet on that camera's detections.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or
    `graview.refused` in its console): every element, attribute and
    address the host left out, and why.

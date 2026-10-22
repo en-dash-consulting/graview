@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 43,
+  "gzipped": 5,
+  "note": "Raised when a worker view's every stylesheet came to be drawn (Roadmap feature:views-a-second-graview-style-call-silently-drops-the-first-stylesheet): the session takes a style message's list of sheets, each held to be text, where it took one. Measured at 29_350 / 13_536 against 29_307 / 13_531 minified and gzipped."
+}

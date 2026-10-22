@@ -107,6 +107,8 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   readonly limits?: HeadlessLimits;
   /** The `https:` origins a view's images may come from by address, as the live host lists them (WorkerViewOptions.images). */
   readonly images?: { readonly origins: readonly string[] };
+  /** The `https:` origins a view's links may go to beyond what it was handed, as the live host lists them (WorkerViewOptions.links). */
+  readonly links?: { readonly origins: readonly string[] };
   /**
    * Where the app's own images live, as the live host says it
    * (WorkerViewOptions.asset): given, an image by the path `add_image`
@@ -183,12 +185,12 @@ const REASONS: readonly HeadlessFailureReason[] = ["manifest", "source", "refuse
 /** A transcript as an isolate said it, held to its shape: anything else is no transcript. */
 function transcriptOf(value: unknown): HeadlessTranscript | undefined {
   if (!isRecord(value)) return undefined;
-  const { renders, css, asked, went, ms, logs, messages, gestures, pressed } = value;
+  const { renders, sheets, asked, went, ms, logs, messages, gestures, pressed } = value;
   if (!Array.isArray(renders) || !renders.every(Array.isArray) || !Array.isArray(asked) || !Array.isArray(went) || !Array.isArray(logs)) return undefined;
-  if (typeof ms !== "number" || typeof messages !== "number" || (css !== undefined && typeof css !== "string")) return undefined;
+  if (typeof ms !== "number" || typeof messages !== "number" || (sheets !== undefined && !(Array.isArray(sheets) && sheets.every((one) => typeof one === "string")))) return undefined;
   return {
     renders: renders as unknown[][],
-    ...(typeof css === "string" ? { css } : {}),
+    ...(Array.isArray(sheets) ? { sheets: sheets as string[] } : {}),
     asked: asked.filter(isRecord).map((one) => ({ name: String(one["name"]), args: one["args"] })),
     went: went.filter(isRecord).flatMap((one): HeadlessTranscript["went"][number][] => {
       const section = typeof one["section"] === "string" ? { section: one["section"] } : {};
@@ -275,6 +277,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     ...(manifest.accepts ? { accepts: manifest.accepts.map(({ kind, field }) => ({ kind, field })) } : {}),
     places: places.map((place) => ({ as: place.as, title: place.title })),
     ...(options.images ? { imageOrigins: [...options.images.origins] } : {}),
+    ...(options.links ? { linkOrigins: [...options.links.origins] } : {}),
     ...(options.asset ? { assets: true } : {}),
     ...(options.origin ? { origin: options.origin } : {}),
     lists: listsOf(store.schema, new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds])).flatMap((list) => [list.slug, list.kind]),

@@ -968,6 +968,29 @@ export function sanitizeStylesheet(css: string, maxLength = OPEN_MAX_STYLESHEET)
   return { css: kept.join("\n"), refused };
 }
 
+/**
+ * A VIEW'S STYLESHEETS, judged in the order it gave them: each on its own,
+ * as one sheet is, so a sheet left open swallows nothing after it, and all
+ * of them held to one budget between them. A sheet that would go past it
+ * is refused for its size and the ones before it are drawn.
+ */
+export function sanitizeStylesheets(sheets: readonly string[], maxLength = OPEN_MAX_STYLESHEET): SanitizedCss {
+  const kept: string[] = [];
+  const refused: CssRefusal[] = [];
+  let spent = 0;
+  for (const sheet of sheets) {
+    if (spent + sheet.length > maxLength) {
+      refused.push({ reason: "size" });
+      continue;
+    }
+    spent += sheet.length;
+    const judged = sanitizeStylesheet(sheet, maxLength);
+    if (judged.css) kept.push(judged.css);
+    refused.push(...judged.refused);
+  }
+  return { css: kept.join("\n"), refused };
+}
+
 /** A `style` attribute, judged: declarations only. */
 export function sanitizeDeclarations(css: string, maxLength = OPEN_MAX_STYLESHEET): SanitizedCss {
   const refused: CssRefusal[] = [];

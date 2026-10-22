@@ -96,6 +96,7 @@ export interface GraviewView {
   readonly props: GuestProps | undefined;
   onProps(listener: (props: GuestProps) => void): () => void;
   render(content: Drawable): void;
+  /** Add a stylesheet after the ones before it; a sheet given again is the one already there. */
   style(css: string): void;
   on(type: string, selector: string, listener: (event: ViewEvent) => void): () => void;
   /** Ask for an act; with a list of arguments, several of it as one change that one undo takes back (FR-193). */
@@ -360,7 +361,7 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     morph(root as unknown as Node, next);
   }
 
-  let styled: string | undefined;
+  const sheets: string[] = [];
 
   /*
    * WHERE IT LISTENS FOR A GESTURE (0.1.42): every wheel, drag and pinch
@@ -395,10 +396,11 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
       return () => void propsListeners.delete(listener);
     },
     render,
+    /* Every sheet the view gave, in order, sent as the whole list: a design system's sheet and then the view's own are both drawn. */
     style(css: string) {
-      if (typeof css !== "string" || css === styled) return;
-      styled = css;
-      io.send({ type: "style", css });
+      if (typeof css !== "string" || sheets.includes(css)) return;
+      sheets.push(css);
+      io.send({ type: "style", sheets: [...sheets] });
     },
     on(type: string, selector: string, listener: (event: ViewEvent) => void) {
       const one = { type, selector, listener };

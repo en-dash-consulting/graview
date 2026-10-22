@@ -28,6 +28,8 @@ export interface HeadlessInput {
   readonly accepts?: readonly { readonly kind: string; readonly field: string }[];
   /** The `https:` origins the host lists for a view's images (WorkerViewOptions.images). */
   readonly imageOrigins?: readonly string[];
+  /** The `https:` origins the host lists for a view's links beyond what it was handed (WorkerViewOptions.links). */
+  readonly linkOrigins?: readonly string[];
   /** The live host says where the app's own images live (WorkerViewOptions.asset): an image by that path is drawn. */
   readonly assets?: boolean;
   /** The app's page's origin, so the page's own address for one of its images is that image. */
@@ -45,8 +47,8 @@ export interface HeadlessInput {
 export interface HeadlessTranscript {
   /** Each batch of Remote DOM mutation records it sent. */
   readonly renders: readonly unknown[][];
-  /** Its stylesheet, as it gave it. */
-  readonly css?: string;
+  /** Its stylesheets, every one it gave, in order, as it gave them. */
+  readonly sheets?: readonly string[];
   /** The acts it asked for from its code. Nothing is applied in a headless run. */
   readonly asked: readonly { readonly name: string; readonly args: unknown }[];
   /** Where it asked to go: narrowed (`where`) and to a section, as it asked. */

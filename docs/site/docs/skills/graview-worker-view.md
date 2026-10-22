@@ -34,7 +34,7 @@ A manifest that names a kind, an edge or an act the app does not declare is refu
 ### The global
 
 ```js
-graview.style(css)              // the view's one stylesheet
+graview.style(css)              // a stylesheet, after any before it
 graview.onProps((props) => …)   // every push of what it is shown (and at once)
 graview.props                   // the last push
 graview.render(markup)          // draw: a string, graview.html`…`, or nodes
@@ -55,11 +55,11 @@ graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute(
 
 With `gestures: true`, `graview.on("wheel" | "drag" | "pinch", selector, fn)` hears them over what the selector matches, at most once a frame with the deltas summed. Each carries `x`, `y` (pixels from the matched element's top left) and its `width`, `height`. A `wheel` has `deltaX`, `deltaY`, `deltaMode`, `ctrlKey`, `metaKey`; a `drag` has `phase` (`start`, `move`, `end`), `pointerId`, `button`, `pressure` and `dx`, `dy` since the last; a `pinch` (Safari's, or a trackpad's Control-wheel) has `phase`, `scale` since the last and `rotation`. The page scrolls everywhere else; say `touch-action: none` on what drags. Without the flag the check says so.
 
-HTML, SVG and one stylesheet, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, and the only images a view may show (the app's logo, the app's own images, the pictures on records) are `graview-view-drawing`. What the host leaves out it lists in `refused`.
+HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, and the only images a view may show (the app's logo, the app's own images, the pictures on records) are `graview-view-drawing`. What the host leaves out it lists in `refused`.
 
 ### Links
 
-`<a data-record="offer:7">`, `<a data-place="the-packages">` and a whole card or row with `data-record` are links the host follows on a click, a phone's tap and Enter, to what the viewer may see; `<a href>` is text. A card, what a tap inside it reaches, and going narrowed or to a section are `graview-view-links`.
+`<a data-record="offer:7">`, `<a data-place="the-packages">` and a whole card or row with `data-record` are links the host follows on a click, a phone's tap and Enter, to what the viewer may see. An `<a href>` goes out only to an address a record was handed (`graview-view-drawing`). A card, what a tap inside it reaches, and going narrowed or to a section are `graview-view-links`.
 
 ### Writes
 

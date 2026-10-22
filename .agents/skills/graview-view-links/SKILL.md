@@ -6,15 +6,16 @@ description: Send a person from a Graview worker view to a record, a place or a 
 # Links in a worker view
 
 A worker view (`graview-worker-view`: its manifest, its global, its limits)
-has no address of the page's to link to: an `href` is never drawn. What it
-may link to is a record, a named place or a kind's list of this app, and
+has no address of the page's to link to: an `href` it built is never
+drawn. What it may link to is a record, a named place or a kind's list of this app, and
 the host makes that a link and follows it, on both faces, only to what the
 viewer may see.
 
 ## A link
 
 `<a data-record="offer:7">` and `<a data-place="the-packages">` are links
-the host follows. `<a href="https://…">` is drawn as text. A destination
+the host follows. `<a href>` goes out only to an address a record was
+handed — its own url, `mailto:`, `tel:` (`graview-view-drawing`). A destination
 is a record's id, else a place by its slug or its title
 (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's
 list (`features` or `feature`); any other says why, naming the places.

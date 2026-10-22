@@ -126,7 +126,7 @@ describe("a worker view past its limits", () => {
 
   it("is stopped when it floods the host with messages, at the allowance", async () => {
     const { failures, worker, say } = started({ messages: 20, messageWindowMs: 1_000 });
-    for (let i = 0; i < 500; i += 1) say!({ type: "style", css: `.x${i} { color: red }` });
+    for (let i = 0; i < 500; i += 1) say!({ type: "style", sheets: [`.x${i} { color: red }`] });
     await until(() => failures.length > 0);
     expect(failures[0]).toMatchObject({ reason: "flood", detail: "It sent more than 20 messages in 1,000 ms." });
     expect(worker!.terminated).toBe(true);

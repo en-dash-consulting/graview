@@ -233,7 +233,7 @@ MIT, pinned); the frame guest and the host do not.
 ## A worker view on the open kit
 
 A view that needs more than the kit's components — a card grid, a chart,
-an animated ring — draws plain HTML, SVG and one stylesheet instead. What
+an animated ring — draws plain HTML, SVG and stylesheets instead. What
 keeps it safe is what it can reach, not what it can draw: it runs in the
 same hardened classic worker, and the host draws what it says into a
 shadow root inside a region of the host's own — `contain: layout paint
@@ -265,6 +265,13 @@ element's `data-*`:
 graview.on("click", "button[data-go]", (event) => graview.navigate(event.element.getAttribute("data-go")));
 ```
 
+Each `graview.style(css)` adds a sheet after the ones before it — the
+app's shared design system first, then the view's own — and every one is
+drawn, in that order, on the page and in a headless run alike. Each is
+judged on its own, so one left open swallows nothing after it, and all of
+them share one budget (64 000 characters); a sheet given again is the one
+already there, so a view that styles on every push adds nothing.
+
 The worker's elements are Remote DOM's polyfill, which has no `closest`,
 `matches` or `dataset`; calling one throws a sentence that names
 `event.element` as the way.
@@ -285,16 +292,47 @@ absolute, and no selector that reaches out of the shadow tree (`:host`,
 `::slotted`). An image is a `data:` image or a `blob:` of the page's own;
 an SVG image in an `img` runs no script and loads nothing. No `<script>`,
 `<iframe>`, `<object>`, `<embed>`, `<link>`, `<meta>`, `<base>`, `<style>`,
-`<form>`, SVG `<image>` or `<foreignObject>`, no `src`, `href`, `srcset`,
-`formaction` or `on*` attribute is drawn; what is not drawn is in
+`<form>`, SVG `<image>` or `<foreignObject>`, no `src`, `srcset`,
+`formaction` or `on*` attribute, and no `href` but a link out to an address
+the view was handed (below), is drawn; what is not drawn is in
 `refused`, with why. A view never speaks as the app's chrome. `<nav>`,
 `<header>`, `<footer>`, `<aside>` and `<search>` are drawn as `<div>`, and
 `<output>` as `<span>`. Each holds what it held and is marked
 `data-graview-as`, and the view's selectors for those names are read as
 that attribute. A `<section>` is never named, and `role` takes no landmark
-or notice's role. `guest-sandbox --transport=open` serves a page with no
+or notice's role. Every other role and every `aria-*` state and property
+is kept, so a view builds the controls a person reaches by keyboard and
+assistive technology — `<span role="checkbox" aria-checked="true"
+tabindex="0">`, a `switch`, `aria-pressed`, `aria-expanded` with
+`aria-controls` naming an id it drew, tabs, a radio group, a `slider` — and
+a headless run draws them element for element as the page does, refusing
+what the page refuses. `guest-sandbox --transport=open` serves a page with no
 content security policy, tries every way out, and finds no request leaving
-it in Chromium, WebKit or Firefox.
+it in Chromium, WebKit or Firefox; and it reads a view's own controls back
+from each engine's accessibility tree with their states.
+
+### A link out goes only where the view was handed
+
+`<a href="${record.url}">` is drawn where its address is one a record the
+view was shown holds, as the record holds it — an `https:` page, a
+`mailto:`, a `tel:` — and, where the host lists origins for links
+(`links: { origins: ["https://nvd.nist.gov"] }` on `mountWorkerView`, a
+registered view's definition and a headless run), any `https:` address on
+one of them. The host draws it to open in a new tab, `rel="noopener
+noreferrer"` with no referrer, so the page is never navigated, the tab it
+opens has no hold on it and is told nothing of it, and it marks the link
+with an arrow and "(opens in a new tab)" in its accessible name. Anything
+else — an address the view built, `javascript:`, `data:`, `http:` — is drawn
+with no `href` and said once, in the view's console and to the host's
+problems, as a headless run says it.
+
+Why handed, and not any `https:` address: a view reads what the seat sees
+and can write any string, so a link it made is a way out —
+`https://elsewhere.example/?d=` and whatever it read, one press away,
+however the link looks. An address the view was handed carries nothing the
+view chose but which of them it links. A list of origins is the host's
+choice for the place, as it is for images; a manifest cannot widen it,
+since the manifest is the view author's own word.
 
 ### A worker view is a place
 
@@ -442,8 +480,8 @@ read.
 
 ### Links stay in the app
 
-A worker view links to a record or a named place of this app, and nowhere
-else. The open kit draws no `href`, so `<a href="https://…">` is text;
+A worker view links to a record or a named place of this app, or out to an
+address it was handed, and nowhere else.
 `<a data-record="offer:coaching">` and `<a data-place="the-packages">` are
 made links by the host — focusable, a link to assistive technology — and
 followed by it on a press or Enter, to a record the viewer may see or a
