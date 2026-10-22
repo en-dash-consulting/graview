@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.47`](https://graview.dev/docs/releases.html#v0-1-47)
 - [`0.1.46`](https://graview.dev/docs/releases.html#v0-1-46)
 - [`0.1.45`](https://graview.dev/docs/releases.html#v0-1-45)
 - [`0.1.44`](https://graview.dev/docs/releases.html#v0-1-44)
@@ -48,9 +49,27 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.46
+## 0.1.47
 
 Published October 22, 2026 · the current version
+
+Custom views work by keyboard with real links and buttons, are as tall as they draw, and can be audited for accessibility; a place is said drawn once its lens has drawn.
+
+- **Views work by keyboard by default.** A control a view draws is reached by Tab and pressed by Enter and Space without scrolling the page; whatever has the keyboard shows a ring a view can restyle but not remove; `.graview-sr` is words for a screen reader alone; an unlabeled `<svg>` is hidden from one; focus stays on a keyed element across a render.
+- **Real `<a>` and `<button>`.** Both start as plain words a view styles freely; `<button data-record>` goes where it says; `a[data-record]` and `a[data-place]` carry a real `href`, so a new tab, a middle click and copy link work. An embed that keeps its own addresses hands them in with `hrefOf`.
+- **A view is as tall as it draws.** The host measures it. On Pages it flows with the page; on the Scene a view of many or of one record is a card held to its box, faded where there is more, with Open (or Expand where there are no pages). `flows: false` and `scene.maxHeight` are new in the manifest.
+- **An accessibility audit of a drawn view.** `auditView` on `@graview/guest/audit`, `graview view check --audit`, and `audit: true` on a headless run: keyboard reach, names, state, nesting, images, scroll boxes, and in a browser the focus ring and contrast, each against its WCAG 2.2 criterion.
+- **Checks know a view's place.** A link to a titled view's place is no longer flagged as going nowhere when the host hands the check its views, and `describePlace` describes such a place.
+- **A place is said drawn once its lens has drawn.** `data-graview-drawn` and `onDrawn` wait for a declared lens's rows, so `graview shots` and `graview preview` no longer photograph a blank place; a full-page shot shows the whole of a long place.
+- **Find hands the keyboard to a place at once.** Enter on a kind in Find no longer leaves the keyboard in the Find box while the place's line is still coming, where the next key a person typed went on a slow machine.
+
+**Before you upgrade:** Additive in the manifest (`flows`, `scene.maxHeight`) and the API (`auditView`, `GoTo.href`, `hrefOf` on the embed and `PagesApp`, `lazyPart`, `PartsWatch`, `viewPlaceOf`, `views` on `runWorkerViewHeadless`). A view's links now carry an `href` and lose the role and tab stop the host added; buttons and host links are reset to their words at zero specificity; Enter and Space on a pressable element are heard as a click; a one-record view on the Scene is a card rather than scrolling inside its box; a framed place's scroll box takes the keyboard and is named. `data-graview-drawn` comes later than before, when a lens draws. Ops, stored formats and the wire are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.47) · [The full changelog for 0.1.47](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0147)
+
+## 0.1.46
+
+Published October 22, 2026
 
 Built-in views share one type scale and one heading per page, a view's own place flows with the page, and the home may keep the line under the name off.
 
