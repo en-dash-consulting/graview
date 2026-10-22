@@ -59,3 +59,29 @@ export function markBleeds<V extends object>(view: V): V {
 export function bleeds(view: unknown): boolean {
   return typeof view === "function" && (view as { [BLEEDS]?: boolean })[BLEEDS] === true;
 }
+
+/**
+ * The mark a view of a kind's members carries when the Scene draws it as a
+ * PREVIEW (Roadmap f-view-content-height): a worker view, which is as tall
+ * as what it draws. The Scene draws it as a card — its title, as much of
+ * it as fits, at most its content height and at most `maxHeight`, faded at
+ * the foot where there is more, and Open, to its place — never as the
+ * whole of it, standing taller than everything around it.
+ */
+export const PREVIEWS: unique symbol = Symbol.for("graview.previews");
+
+/** How a previewed view is held on the Scene: the tallest it is drawn, in pixels, where it says. */
+export interface ScenePreviewing {
+  readonly maxHeight?: number;
+}
+
+/** Marks a view as drawn on the Scene as a preview. Returns the same component. */
+export function markPreviews<V extends object>(view: V, how: ScenePreviewing = {}): V {
+  Object.defineProperty(view, PREVIEWS, { value: how, enumerable: false });
+  return view;
+}
+
+/** How a view is previewed on the Scene, or `undefined` where it is drawn whole. */
+export function previewOf(view: unknown): ScenePreviewing | undefined {
+  return typeof view === "function" ? (view as { [PREVIEWS]?: ScenePreviewing })[PREVIEWS] : undefined;
+}

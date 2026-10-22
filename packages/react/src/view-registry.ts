@@ -168,4 +168,4 @@ export function layerViews<S extends AnySchema>(base: ReactViewRegistry<S>, over
 
 export type { Cardinality, Fidelity, ViewCell };
 
-export { BLEEDS, bleeds, DEFAULT_VIEW, isDefaultView, markBleeds, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage } from "./view-marks.js";
+export { BLEEDS, bleeds, DEFAULT_VIEW, isDefaultView, markBleeds, markDefaultView, markPreviews, markReplacesPage, PREVIEWS, previewOf, REPLACES_PAGE, replacesPage, type ScenePreviewing } from "./view-marks.js";

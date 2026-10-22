@@ -1,5 +1,5 @@
 import type { AnySchema, KindOfSchema, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useContext, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
@@ -105,8 +105,10 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
   const holder = useRef<HTMLDivElement>(null);
   const mounted = useRef<WorkerView | null>(null);
   const hostFiles = useHostFiles();
-  const latest = useRef({ input, goTo, places, onFailure, brand, hostFiles });
-  latest.current = { input, goTo, places, onFailure, brand, hostFiles };
+  /* Where the face that holds the view to a box hears how tall it drew (the Scene's preview): the host measures, the view never says. */
+  const told = useContext(ViewContentHeight);
+  const latest = useRef({ input, goTo, places, onFailure, brand, hostFiles, told });
+  latest.current = { input, goTo, places, onFailure, brand, hostFiles, told };
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
@@ -136,6 +138,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         ...(definition.links ? { links: definition.links } : {}),
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
         files: () => latest.current.hostFiles,
+        onContentHeight: (height) => latest.current.told?.(height),
       });
     });
     return () => {
@@ -278,9 +281,17 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
    * place drawn from blocks does: it is drawn in the page's column as long
    * as it is, never a frame most of the window tall that scrolls inside
    * itself under the page's own scroll — on a phone, a box that traps the
-   * thumb. The frame stays for the lenses that need one: a board, a calendar.
+   * thumb. The frame stays for the lenses that need one: a board, a calendar
+   * — and for a view whose manifest says `flows: false`, a fixed canvas.
    */
-  (view as { flows?: boolean }).flows = true;
+  (view as { flows?: boolean }).flows = manifest.flows !== false;
+  /*
+   * ON THE SCENE, A PREVIEW (Roadmap f-view-content-height): a view of the
+   * members is as tall as it draws, so the Scene draws it as a card held to
+   * its box — at most its measured content height, at most `scene.maxHeight`
+   * — faded where there is more, with Open to its place.
+   */
+  if (manifest.cardinality === "many") markPreviews(view, manifest.scene?.maxHeight !== undefined ? { maxHeight: manifest.scene.maxHeight } : {});
   views.register(manifest.attach as KindOfSchema<S>, cell, view as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
   return views;
 }

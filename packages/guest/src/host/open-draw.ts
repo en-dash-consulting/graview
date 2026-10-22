@@ -29,7 +29,7 @@ export { handedLinks, judgeLink, linkRefusedWords } from "./external-links.js";
  */
 export const REGION_CSS = `
 :host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }
-[data-graview-view-root] { color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
+[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
 :where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }
 :where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }
 [data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }

@@ -1,4 +1,4 @@
-import { pluralLabel, counted, type AnySchema, type Fidelity, type NodeOfSchema } from "@graview/core";
+import { pluralLabel, counted, placeSlug, type AnySchema, type Fidelity, type NodeOfSchema } from "@graview/core";
 import { aggregateId, isAggregateId, kindCardId, kindOfCard, withFocus } from "@graview/layout/view";
 import { PLANE_STYLES } from "@graview/render";
 import { memo, useMemo, useRef, type ReactNode } from "react";
@@ -6,7 +6,9 @@ import { useFlagged, useImplicated } from "./emphasis.js";
 import { useNavigation } from "./hooks.js";
 import { foundIds, useFound, useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
 import { POPOVER_STYLE, usePopover } from "./popover.js";
+import { ScenePreview } from "./scene-preview.js";
 import { ViewBoundary } from "./view-boundary.js";
+import { previewOf } from "./view-marks.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 import type { SceneNode } from "./scene-node.js";
 
@@ -302,6 +304,12 @@ export function ResolvedView<S extends AnySchema>({
 
   if (!Component) return <MissingView node={node} props={props} />;
   /*
+   * A VIEW AS TALL AS WHAT IT DRAWS IS PREVIEWED HERE (Roadmap
+   * f-view-content-height): a worker view of the members, drawn as a card
+   * held to its box with Open to its place, never as the whole of itself.
+   */
+  const preview = cell.cardinality === "many" ? previewOf(Component) : undefined;
+  /*
    * DRAWN AGAIN ONLY WHEN WHAT IT DRAWS CHANGED.
    *
    * A host re-renders on every frame of a flight, a pan and a zoom — the
@@ -354,7 +362,19 @@ export function ResolvedView<S extends AnySchema>({
         {/* The graph goes in by identity, not by a string: a label edited in
             place changes no id and no count, and a picture that missed it
             would be the one thing a graph view must never be — out of date. */}
-        <Drawn signature={signature} graph={graph} draw={() => <Component {...props} />} />
+        <Drawn
+          signature={signature}
+          graph={graph}
+          draw={() =>
+            preview ? (
+              <ScenePreview title={props.label ?? node.kind} as={registration?.title ? placeSlug(registration.title) : undefined} maxHeight={preview.maxHeight}>
+                <Component {...props} />
+              </ScenePreview>
+            ) : (
+              <Component {...props} />
+            )
+          }
+        />
       </ViewBoundary>
     </ViewModeProvider>
   );

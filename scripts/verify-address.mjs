@@ -53,7 +53,13 @@
  *   `pages.first` name as `view:to-do` is where the bare address opens,
  *   stands first among the Pages drop-down's lists, while a kind
  *   `pages.hide` names is out of the drop-down and still opens at its
- *   address (Roadmap q-custom-views-in-nav);
+ *   address (Roadmap q-custom-views-in-nav); a view of that app eighty
+ *   entries long is a card on the Scene, held to its box and the window,
+ *   at the content height its host measured, faded at its foot with Open —
+ *   nothing in it scrolls — and Open lands on its place on Pages, where it
+ *   flows whole, while a view that says `flows: false` keeps its place's
+ *   frame and its preview keeps to its `scene.maxHeight` (Roadmap
+ *   f-view-content-height);
  *   and views that say `bleed: true` — the home's, a record's — span the
  *   phone's width less its safe areas, where the page's 20px gutter stood
  *   either side of them, and are the column's width at a desk; a record
@@ -93,6 +99,11 @@ const VIEWS_BASE = "/apps/a4";
 const TO_DO = { name: "to-do", title: "To do", attach: "task", cardinality: "many" };
 const TO_DO_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<ul class="to-do">\${props.nodes.map((task) => graview.html\`<li>\${task.label}</li>\`)}</ul>\`));`;
 const VIEWS_PAGES = { order: ["view:to-do", "task"], first: "view:to-do", hide: ["person"] };
+/** A view of the tasks far taller than a screen, and one that is a fixed canvas (Roadmap f-view-content-height). */
+const THE_LOG = { name: "the-log", title: "The log", attach: "task", cardinality: "many" };
+const THE_LOG_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<ol class="log">\${Array.from({ length: 80 }, (_, at) => graview.html\`<li>Entry \${at + 1} of the log</li>\`)}</ol>\`));`;
+const THE_MAP = { name: "the-map", title: "The map", attach: "task", cardinality: "many", flows: false, scene: { maxHeight: 320 } };
+const THE_MAP_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="map" style="height:1200px">A map of \${props.nodes.length} tasks</div>\`));`;
 /** Where the tasks are served with views that bleed to a phone's edges, and page slots beside a record's view. */
 const FITTED_BASE = "/apps/a5";
 /** A page slot on each kind: the task's under a view that sits above the page, the person's under one that replaces it. */
@@ -214,7 +225,15 @@ async function buildHost() {
           // As Cloud's shell: the Graview on a desk, the pages on a phone; the kept view's app on the pages at both.
           face: article || kept || fitted ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
           // A view the host keeps, registered by its manifest's name as Cloud registers a chat's view.
-          ...(kept ? { views: (schema, registry) => registerWorkerView(registry, { manifest: ${JSON.stringify(TO_DO)}, worker: { source: ${JSON.stringify(TO_DO_SOURCE)} } }) } : {}),
+          ...(kept
+            ? {
+                views: (schema, registry) =>
+                  [[${JSON.stringify(TO_DO)}, ${JSON.stringify(TO_DO_SOURCE)}], [${JSON.stringify(THE_LOG)}, ${JSON.stringify(THE_LOG_SOURCE)}], [${JSON.stringify(THE_MAP)}, ${JSON.stringify(THE_MAP_SOURCE)}]].reduce(
+                    (views, [manifest, source]) => registerWorkerView(views, { manifest, worker: { source } }),
+                    registry,
+                  ),
+              }
+            : {}),
           // Kept views that bleed to a phone's edges, and a record view beside its kind's page slot or in place of it.
           ...(fitted
             ? {
@@ -598,6 +617,67 @@ try {
         one.hiddenKind = { opened: hiddenList, places: await places() };
       } catch (error) {
         one.keptError = String(error?.message ?? error);
+      }
+      /*
+       * A TALL VIEW ON THE SCENE IS A CARD (Roadmap f-view-content-height):
+       * the log, eighty entries, drawn as its place on the Scene — no taller
+       * than the box the Scene gave it, inside the window, faded at its foot
+       * with Open — at the content height its host measured, with nothing
+       * between the view and the card that scrolls; Open lands on its place
+       * on Pages, where it flows whole. The map says `flows: false` and
+       * `scene.maxHeight`: its preview is held to that, and its place keeps
+       * a frame.
+       */
+      try {
+        const preview = (name) =>
+          tab.evaluate((name) => {
+            const card = document.querySelector(`[data-graview-preview="${name}"]`);
+            const region = card?.querySelector("[data-worker-view]");
+            if (!card || !region) return null;
+            const box = card.getBoundingClientRect();
+            const host = card.closest("[data-graview-view]")?.getBoundingClientRect();
+            const bar = document.querySelector("header")?.getBoundingClientRect();
+            const body = card.querySelector("[data-graview-preview-body]");
+            const open = card.querySelector("[data-graview-preview-open]");
+            const scrolls = (el) => /^(auto|scroll)$/.test(getComputedStyle(el).overflowY);
+            const scrollers = [];
+            for (let el = region; el && el !== card.parentElement; el = el.parentElement) if (scrolls(el)) scrollers.push(el.tagName.toLowerCase());
+            for (const el of card.querySelectorAll("*")) if (scrolls(el)) scrollers.push(el.tagName.toLowerCase());
+            return {
+              height: Math.round(box.height),
+              top: Math.round(box.top),
+              bottom: Math.round(box.bottom),
+              hostHeight: host ? Math.round(host.height) : null,
+              barBottom: bar ? Math.round(bar.bottom) : 0,
+              window: innerHeight,
+              measured: Number(region.getAttribute("data-graview-content-height") ?? NaN),
+              told: Number(body?.getAttribute("data-graview-content-height") ?? NaN),
+              shown: body?.clientHeight ?? null,
+              more: body?.hasAttribute("data-graview-more") ?? false,
+              fade: card.querySelector("[data-graview-preview-fade]") !== null,
+              open: open ? { href: open.getAttribute("href"), name: open.getAttribute("aria-label"), visible: open.getBoundingClientRect().height > 0 } : null,
+              scrollers,
+            };
+          }, name);
+        const drawnOnScene = (name) => tab.waitForFunction((name) => Number(document.querySelector(`[data-graview-preview="${name}"] [data-worker-view]`)?.getAttribute("data-graview-content-height") ?? 0) > 0, name, { timeout: 20_000 });
+        await go(`${VIEWS_BASE}/places/overview#focus=aggregate%3Atask&in.view=the-log`);
+        await drawnOnScene("the-log");
+        await tab.waitForTimeout(400);
+        const log = await preview("the-log");
+        await tab.click('[data-graview-preview="the-log"] [data-graview-preview-open]');
+        const landed = await settled();
+        await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="the-log"]')?.shadowRoot?.querySelector(".log li")), null, { timeout: 20_000 }).catch(() => null);
+        const entries = await tab.evaluate(() => document.querySelector('[data-worker-view="the-log"]')?.shadowRoot?.querySelectorAll(".log li").length ?? 0);
+        const logFrame = await placeFrame('[data-worker-view="the-log"]');
+        await go(`${VIEWS_BASE}/places/overview#focus=aggregate%3Atask&in.view=the-map`);
+        await drawnOnScene("the-map");
+        await tab.waitForTimeout(400);
+        const map = await preview("the-map");
+        await go(`${VIEWS_BASE}/places/the-map`);
+        await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="the-map"]')?.shadowRoot?.querySelector(".map")), null, { timeout: 20_000 }).catch(() => null);
+        one.tallView = { log, landed: { ...landed, entries, frame: logFrame }, map, mapFrame: await placeFrame('[data-worker-view="the-map"]') };
+      } catch (error) {
+        one.tallError = String(error?.message ?? error);
       }
       /*
        * A VIEW DRAWN EDGE TO EDGE ON A PHONE (bleed), and a record page's
@@ -1038,6 +1118,42 @@ try {
   report.checks.aTitledViewsPlaceFlowsWithThePageWhileABoardKeepsItsFrame = {
     seen: Object.fromEntries(pagesAt.map(([name, one]) => [name, one.keptError || one.cardsError ? { error: one.keptError ?? one.cardsError } : { view: one.keptView.frame, board: one.boardFrame }])),
     ok: keptHold(({ keptView, boardFrame, cardsError }) => !cardsError && keptView.frame?.flows === true && !keptView.frame.scrolls && keptView.frame.height === null && keptView.frame.scrollers.length === 0 && boardFrame?.flows === false && boardFrame.scrolls && boardFrame.height !== null),
+  };
+  /*
+   * Roadmap f-view-content-height: a worker view far taller than a screen is
+   * drawn on the Scene as a card held to the box the Scene gave it and to
+   * the window, at the content height its host measured, faded with Open —
+   * nothing in it scrolls — and Open lands on its place, flowing whole.
+   */
+  const tallSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.tallError ? { error: one.tallError } : one.tallView]));
+  const tallHold = (test) => pagesAt.length === engines.length * SIZES.length && pagesAt.every(([, one]) => !one.tallError && one.tallView?.log && one.tallView?.map && test(one.tallView));
+  report.checks.aTallViewOnTheSceneIsDrawnBoundedWithOpenAndOpenLandsOnItsPlace = {
+    seen: tallSeen,
+    ok: tallHold(
+      ({ log, landed }) =>
+        log.measured > log.window &&
+        log.told === log.measured &&
+        log.height <= log.hostHeight &&
+        log.top >= log.barBottom &&
+        log.bottom <= log.window &&
+        log.shown < log.measured &&
+        log.more &&
+        log.fade &&
+        log.scrollers.length === 0 &&
+        log.open?.visible === true &&
+        log.open.href === `${VIEWS_BASE}/places/the-log` &&
+        log.open.name === "Open The log" &&
+        landed.path === `${VIEWS_BASE}/places/the-log` &&
+        landed.face === "pages" &&
+        landed.heading === "The log" &&
+        landed.entries === 80 &&
+        landed.frame?.flows === true &&
+        landed.frame.scrollers.length === 0,
+    ),
+  };
+  report.checks.aViewThatSaysFlowsFalseKeepsItsFrameAndItsScenePreviewKeepsToItsMaxHeight = {
+    seen: tallSeen,
+    ok: tallHold(({ map, mapFrame }) => map.shown <= 320 && map.more && map.scrollers.length === 0 && mapFrame?.flows === false && mapFrame.scrolls && mapFrame.height !== null),
   };
   report.checks.aHiddenKindIsNotInTheDropDownAndStillOpensAtItsAddress = {
     seen: { list: keptSeen("keptView"), atItsAddress: keptSeen("hiddenKind") },

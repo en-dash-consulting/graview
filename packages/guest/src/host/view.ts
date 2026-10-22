@@ -223,6 +223,14 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * offered: this host takes no files.
    */
   readonly files?: () => HostFiles | undefined;
+  /**
+   * THE VIEW'S CONTENT HEIGHT (Roadmap f-view-content-height): how tall
+   * what it drew is, in CSS pixels, each time that changes — measured by
+   * the host on the drawn root, never said by the view — and `undefined`
+   * once it stops being drawn. What a face that holds the view to a box
+   * (the Scene's preview of a place) sizes it by.
+   */
+  readonly onContentHeight?: (height: number | undefined) => void;
 }
 
 export interface WorkerView {
@@ -236,6 +244,8 @@ export interface WorkerView {
   readonly stats: Readonly<GuestStats>;
   /** What of the view's drawing and stylesheet was refused. */
   readonly refused: readonly ViewRefusal[];
+  /** How tall what it drew is, in CSS pixels, as the host last measured it (`onContentHeight`); `undefined` before it draws. */
+  readonly contentHeight: number | undefined;
   dispose(): void;
 }
 
@@ -307,6 +317,38 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     counted = { ...now };
   };
   let unwatch = () => {};
+  /*
+   * THE CONTENT HEIGHT (Roadmap f-view-content-height): the drawn root's
+   * own height, watched — the root is a block formatting context
+   * (`REGION_CSS`), so its height holds its children's margins — kept on
+   * the region (`data-graview-content-height`) and told to the face. The
+   * size the layout gave it, not its drawn box: a Scene's plane scales the
+   * box, never what the view drew.
+   */
+  let contentHeight: number | undefined;
+  let heights: ResizeObserver | undefined;
+  const watchHeight = () => {
+    const root = shadow.querySelector<HTMLElement>("[data-graview-view-root]");
+    const Observer = window.ResizeObserver;
+    if (heights || !root || typeof Observer !== "function") return;
+    heights = new Observer((entries) => {
+      const box = entries[entries.length - 1]?.borderBoxSize?.[0];
+      const height = Math.ceil(box ? box.blockSize : root.offsetHeight);
+      if (height === contentHeight) return;
+      contentHeight = height;
+      region.setAttribute("data-graview-content-height", String(height));
+      options.onContentHeight?.(height);
+    });
+    heights.observe(root);
+  };
+  const unwatchHeight = () => {
+    if (!heights) return;
+    heights.disconnect();
+    heights = undefined;
+    contentHeight = undefined;
+    region.removeAttribute("data-graview-content-height");
+    options.onContentHeight?.(undefined);
+  };
   /* The interval that times each push (FR-94), once the view is ready. */
   let timing = 0;
   /* What the person typed into a field saved as it is typed and not yet saved (FR-191, press.ts): saved as the view goes. */
@@ -325,6 +367,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     if (failed) return;
     failed = true;
     stop();
+    unwatchHeight();
     drawing?.dispose();
     const said = why(reason, limits, detail);
     region.removeAttribute("data-worker-view-drawn");
@@ -746,6 +789,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
     });
     for (const one of waiting.splice(0)) draw(one);
+    watchHeight();
     mark();
   },
   // The drawing did not arrive (the network away as it was drawn): the plain face says so, and it is asked for again as the view is drawn again (FR-139).
@@ -878,9 +922,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       get refused() {
         return drawing?.refused ?? [];
       },
+      get contentHeight() {
+        return contentHeight;
+      },
       dispose() {
         failed = true;
         stop();
+        heights?.disconnect();
         drawing?.dispose();
         region.remove();
         author?.remove();

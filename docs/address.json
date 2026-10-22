@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T01:04:14.489Z",
+  "at": "2026-10-22T13:47:57.027Z",
   "engines": [
     "chromium",
     "webkit",
@@ -12,7 +12,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -27,7 +27,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -44,7 +44,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5688/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -59,7 +59,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5688/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -78,7 +78,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -93,7 +93,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -110,7 +110,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5688/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -125,7 +125,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5688/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -144,7 +144,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 1,
@@ -159,7 +159,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 1,
@@ -176,7 +176,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5688/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 2,
@@ -191,7 +191,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5688/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 2,
@@ -215,7 +215,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -231,7 +231,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -249,7 +249,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -265,7 +265,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -285,7 +285,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -301,7 +301,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -319,7 +319,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -335,7 +335,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -355,7 +355,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 3,
@@ -371,7 +371,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 3,
@@ -389,7 +389,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 4,
@@ -405,7 +405,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 4,
@@ -430,7 +430,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -445,7 +445,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -462,7 +462,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/open-questions",
+              "href": "http://localhost:5688/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 7,
@@ -477,7 +477,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2",
+              "href": "http://localhost:5688/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 7,
@@ -496,7 +496,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -511,7 +511,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -528,7 +528,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/open-questions",
+              "href": "http://localhost:5688/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 7,
@@ -543,7 +543,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2",
+              "href": "http://localhost:5688/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 7,
@@ -562,7 +562,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 5,
@@ -577,7 +577,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 5,
@@ -594,7 +594,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/open-questions",
+              "href": "http://localhost:5688/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 6,
@@ -609,7 +609,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2",
+              "href": "http://localhost:5688/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 6,
@@ -637,10 +637,9 @@
               "region": "A proposal",
               "heading": "A proposal",
               "landmarks": [
-                "A proposal · The app’s places",
-                "A proposal · Ask A proposal"
+                "A proposal · The app’s places"
               ],
-              "old": 2,
+              "old": 4,
               "renamed": 0,
               "sameDocument": false
             },
@@ -649,11 +648,10 @@
               "region": "A proposal, renamed",
               "heading": "A proposal, renamed",
               "landmarks": [
-                "A proposal, renamed · The app’s places",
-                "A proposal, renamed · Ask A proposal, renamed"
+                "A proposal, renamed · The app’s places"
               ],
               "old": 0,
-              "renamed": 2,
+              "renamed": 4,
               "sameDocument": true
             }
           },
@@ -663,10 +661,9 @@
               "region": "A proposal",
               "heading": "A proposal",
               "landmarks": [
-                "A proposal · What the scene shows",
-                "A proposal · Ask A proposal"
+                "A proposal · What the scene shows"
               ],
-              "old": 2,
+              "old": 4,
               "renamed": 0,
               "sameDocument": false
             },
@@ -675,11 +672,10 @@
               "region": "A proposal, renamed",
               "heading": "A proposal, renamed",
               "landmarks": [
-                "A proposal, renamed · What the scene shows",
-                "A proposal, renamed · Ask A proposal, renamed"
+                "A proposal, renamed · What the scene shows"
               ],
               "old": 0,
-              "renamed": 2,
+              "renamed": 4,
               "sameDocument": true
             }
           }
@@ -691,10 +687,9 @@
               "region": "A proposal",
               "heading": "A proposal",
               "landmarks": [
-                "A proposal · The app’s places",
-                "A proposal · Ask A proposal"
+                "A proposal · The app’s places"
               ],
-              "old": 2,
+              "old": 4,
               "renamed": 0,
               "sameDocument": false
             },
@@ -703,11 +698,10 @@
               "region": "A proposal, renamed",
               "heading": "A proposal, renamed",
               "landmarks": [
-                "A proposal, renamed · The app’s places",
-                "A proposal, renamed · Ask A proposal, renamed"
+                "A proposal, renamed · The app’s places"
               ],
               "old": 0,
-              "renamed": 2,
+              "renamed": 4,
               "sameDocument": true
             }
           },
@@ -717,10 +711,9 @@
               "region": "A proposal",
               "heading": "A proposal",
               "landmarks": [
-                "A proposal · What the scene shows",
-                "A proposal · Ask A proposal"
+                "A proposal · What the scene shows"
               ],
-              "old": 2,
+              "old": 4,
               "renamed": 0,
               "sameDocument": false
             },
@@ -729,11 +722,10 @@
               "region": "A proposal, renamed",
               "heading": "A proposal, renamed",
               "landmarks": [
-                "A proposal, renamed · What the scene shows",
-                "A proposal, renamed · Ask A proposal, renamed"
+                "A proposal, renamed · What the scene shows"
               ],
               "old": 0,
-              "renamed": 2,
+              "renamed": 4,
               "sameDocument": true
             }
           }
@@ -745,10 +737,9 @@
               "region": "A proposal",
               "heading": "A proposal",
               "landmarks": [
-                "A proposal · The app’s places",
-                "A proposal · Ask A proposal"
+                "A proposal · The app’s places"
               ],
-              "old": 2,
+              "old": 4,
               "renamed": 0,
               "sameDocument": false
             },
@@ -757,11 +748,10 @@
               "region": "A proposal, renamed",
               "heading": "A proposal, renamed",
               "landmarks": [
-                "A proposal, renamed · The app’s places",
-                "A proposal, renamed · Ask A proposal, renamed"
+                "A proposal, renamed · The app’s places"
               ],
               "old": 0,
-              "renamed": 2,
+              "renamed": 4,
               "sameDocument": true
             }
           },
@@ -771,10 +761,9 @@
               "region": "A proposal",
               "heading": "A proposal",
               "landmarks": [
-                "A proposal · What the scene shows",
-                "A proposal · Ask A proposal"
+                "A proposal · What the scene shows"
               ],
-              "old": 2,
+              "old": 4,
               "renamed": 0,
               "sameDocument": false
             },
@@ -783,11 +772,10 @@
               "region": "A proposal, renamed",
               "heading": "A proposal, renamed",
               "landmarks": [
-                "A proposal, renamed · What the scene shows",
-                "A proposal, renamed · Ask A proposal, renamed"
+                "A proposal, renamed · What the scene shows"
               ],
               "old": 0,
-              "renamed": 2,
+              "renamed": 4,
               "sameDocument": true
             }
           }
@@ -799,7 +787,7 @@
       "seen": {
         "chromium": {
           "place": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 2,
@@ -814,7 +802,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 4,
@@ -830,7 +818,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 6,
@@ -847,7 +835,7 @@
         },
         "webkit": {
           "place": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 2,
@@ -862,7 +850,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 4,
@@ -878,7 +866,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 6,
@@ -895,7 +883,7 @@
         },
         "firefox": {
           "place": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 1,
@@ -910,7 +898,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 3,
@@ -926,7 +914,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 5,
@@ -1601,7 +1589,7 @@
             "fragment": false,
             "length": 10,
             "pushes": 3,
-            "replaces": 2,
+            "replaces": 1,
             "face": "pages",
             "heading": "The board",
             "place": true,
@@ -1681,7 +1669,7 @@
             "fragment": false,
             "length": 10,
             "pushes": 3,
-            "replaces": 2,
+            "replaces": 1,
             "face": "pages",
             "heading": "The board",
             "place": true,
@@ -1761,7 +1749,7 @@
             "fragment": false,
             "length": 10,
             "pushes": 3,
-            "replaces": 2,
+            "replaces": 1,
             "face": "pages",
             "heading": "The board",
             "place": true,
@@ -1841,7 +1829,7 @@
             "fragment": false,
             "length": 10,
             "pushes": 3,
-            "replaces": 2,
+            "replaces": 1,
             "face": "pages",
             "heading": "The board",
             "place": true,
@@ -1921,7 +1909,7 @@
             "fragment": false,
             "length": 9,
             "pushes": 3,
-            "replaces": 2,
+            "replaces": 1,
             "face": "pages",
             "heading": "The board",
             "place": true,
@@ -2001,7 +1989,7 @@
             "fragment": false,
             "length": 9,
             "pushes": 3,
-            "replaces": 2,
+            "replaces": 1,
             "face": "pages",
             "heading": "The board",
             "place": true,
@@ -3665,25 +3653,25 @@
       "seen": {
         "chromium 1440×900 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
-            "heading": "The board"
+            "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3692,25 +3680,25 @@
         },
         "chromium 390×844 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
-            "heading": "The board"
+            "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3719,25 +3707,25 @@
         },
         "webkit 1440×900 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
-            "heading": "The board"
+            "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3746,25 +3734,25 @@
         },
         "webkit 390×844 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
-            "heading": "The board"
+            "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3773,25 +3761,25 @@
         },
         "firefox 1440×900 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
-            "heading": "The board"
+            "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": null
@@ -3800,30 +3788,2711 @@
         },
         "firefox 390×844 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
-            "heading": "The board"
+            "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": null
           },
           "writes": []
+        }
+      },
+      "ok": true
+    },
+    "aBoardsCardLinksUnderTheBaseAndItsMenuMovesIt": {
+      "seen": {
+        "chromium 1440×900": {
+          "href": "/apps/a1/tasks/t1",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorWrite the brieftaskIs connected to nothing yetMove to ›Set the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "move-to",
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a1/tasks/t1",
+          "movedTo": "done"
+        },
+        "chromium 390×844": {
+          "href": "/apps/a1/tasks/t1",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorWrite the brieftaskIs connected to nothing yetMove to ›Set the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "move-to",
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a1/tasks/t1",
+          "movedTo": "done"
+        },
+        "webkit 1440×900": {
+          "href": "/apps/a1/tasks/t1",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorWrite the brieftaskIs connected to nothing yetMove to ›Set the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "move-to",
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a1/tasks/t1",
+          "movedTo": "done"
+        },
+        "webkit 390×844": {
+          "href": "/apps/a1/tasks/t1",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorWrite the brieftaskIs connected to nothing yetMove to ›Set the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "move-to",
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a1/tasks/t1",
+          "movedTo": "done"
+        },
+        "firefox 1440×900": {
+          "href": "/apps/a1/tasks/t1",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorWrite the brieftaskIs connected to nothing yetMove to ›Set the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "move-to",
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a1/tasks/t1",
+          "movedTo": "done"
+        },
+        "firefox 390×844": {
+          "href": "/apps/a1/tasks/t1",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorWrite the brieftaskIs connected to nothing yetMove to ›Set the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "move-to",
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a1/tasks/t1",
+          "movedTo": "done"
+        }
+      },
+      "ok": true
+    },
+    "aBlocksLensCardLinksUnderTheBaseAndItsMenuListsItsActs": {
+      "seen": {
+        "chromium 1440×900": {
+          "href": "/apps/a3/tasks/t2",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorBook the halltaskIs connected to nothing yetSet the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a3/tasks/t2"
+        },
+        "chromium 390×844": {
+          "href": "/apps/a3/tasks/t2",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorBook the halltaskIs connected to nothing yetSet the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a3/tasks/t2"
+        },
+        "webkit 1440×900": {
+          "href": "/apps/a3/tasks/t2",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorBook the halltaskIs connected to nothing yetSet the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a3/tasks/t2"
+        },
+        "webkit 390×844": {
+          "href": "/apps/a3/tasks/t2",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorBook the halltaskIs connected to nothing yetSet the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a3/tasks/t2"
+        },
+        "firefox 1440×900": {
+          "href": "/apps/a3/tasks/t2",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorBook the halltaskIs connected to nothing yetSet the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a3/tasks/t2"
+        },
+        "firefox 390×844": {
+          "href": "/apps/a3/tasks/t2",
+          "menu": {
+            "title": "Inspector",
+            "text": "InspectorBook the halltaskIs connected to nothing yetSet the status …☆Change the task …☆Archive the task☆Leave this one alone☆Merge into another task …☆Assign …☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+            "rows": [
+              "open",
+              "open-in-a-new-tab",
+              "in-the-scene",
+              "notify-me"
+            ],
+            "acts": [
+              "Set the status",
+              "Change the task",
+              "Archive the task",
+              "Leave this one alone",
+              "Merge into another task",
+              "Assign",
+              "Remove the task"
+            ]
+          },
+          "opened": "/apps/a3/tasks/t2"
+        }
+      },
+      "ok": true
+    },
+    "openInANewTabKeepsTheBase": {
+      "seen": {
+        "chromium 1440×900": {
+          "board": "/apps/a1/tasks/t1",
+          "blocks": "/apps/a3/tasks/t2"
+        },
+        "chromium 390×844": {
+          "board": "/apps/a1/tasks/t1",
+          "blocks": "/apps/a3/tasks/t2"
+        },
+        "webkit 1440×900": {
+          "board": "/apps/a1/tasks/t1",
+          "blocks": "/apps/a3/tasks/t2"
+        },
+        "webkit 390×844": {
+          "board": "/apps/a1/tasks/t1",
+          "blocks": "/apps/a3/tasks/t2"
+        },
+        "firefox 1440×900": {
+          "board": "/apps/a1/tasks/t1",
+          "blocks": "/apps/a3/tasks/t2"
+        },
+        "firefox 390×844": {
+          "board": "/apps/a1/tasks/t1",
+          "blocks": "/apps/a3/tasks/t2"
+        }
+      },
+      "ok": true
+    },
+    "aRegisteredViewOrderedFirstOpensFirstAndStandsInTheDropDown": {
+      "seen": {
+        "chromium 1440×900": {
+          "opened": {
+            "path": "/apps/a4/places/to-do",
+            "hash": "",
+            "fragment": false,
+            "length": 24,
+            "pushes": 0,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "To do",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "drawn": [
+            "Write the brief",
+            "Book the hall"
+          ],
+          "frame": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "places": {
+            "all": [
+              "/",
+              "/places/to-do",
+              "/tasks",
+              "/places/the-board",
+              "/places/the-log",
+              "/places/the-map",
+              "/map"
+            ],
+            "lists": [],
+            "current": "To do"
+          }
+        },
+        "chromium 390×844": {
+          "opened": {
+            "path": "/apps/a4/places/to-do",
+            "hash": "",
+            "fragment": false,
+            "length": 22,
+            "pushes": 0,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "To do",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "drawn": [
+            "Write the brief",
+            "Book the hall"
+          ],
+          "frame": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "places": {
+            "all": [
+              "/",
+              "/places/to-do",
+              "/tasks",
+              "/places/the-board",
+              "/places/the-log",
+              "/places/the-map",
+              "/map"
+            ],
+            "lists": [
+              "/places/to-do",
+              "/tasks"
+            ],
+            "current": "To do"
+          }
+        },
+        "webkit 1440×900": {
+          "opened": {
+            "path": "/apps/a4/places/to-do",
+            "hash": "",
+            "fragment": false,
+            "length": 24,
+            "pushes": 0,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "To do",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "drawn": [
+            "Write the brief",
+            "Book the hall"
+          ],
+          "frame": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "places": {
+            "all": [
+              "/",
+              "/places/to-do",
+              "/tasks",
+              "/places/the-board",
+              "/places/the-log",
+              "/places/the-map",
+              "/map"
+            ],
+            "lists": [],
+            "current": "To do"
+          }
+        },
+        "webkit 390×844": {
+          "opened": {
+            "path": "/apps/a4/places/to-do",
+            "hash": "",
+            "fragment": false,
+            "length": 22,
+            "pushes": 0,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "To do",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "drawn": [
+            "Write the brief",
+            "Book the hall"
+          ],
+          "frame": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "places": {
+            "all": [
+              "/",
+              "/places/to-do",
+              "/tasks",
+              "/places/the-board",
+              "/places/the-log",
+              "/places/the-map",
+              "/map"
+            ],
+            "lists": [
+              "/places/to-do",
+              "/tasks"
+            ],
+            "current": "To do"
+          }
+        },
+        "firefox 1440×900": {
+          "opened": {
+            "path": "/apps/a4/places/to-do",
+            "hash": "",
+            "fragment": false,
+            "length": 22,
+            "pushes": 0,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "To do",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "drawn": [
+            "Write the brief",
+            "Book the hall"
+          ],
+          "frame": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "places": {
+            "all": [
+              "/",
+              "/places/to-do",
+              "/tasks",
+              "/places/the-board",
+              "/places/the-log",
+              "/places/the-map",
+              "/map"
+            ],
+            "lists": [],
+            "current": "To do"
+          }
+        },
+        "firefox 390×844": {
+          "opened": {
+            "path": "/apps/a4/places/to-do",
+            "hash": "",
+            "fragment": false,
+            "length": 20,
+            "pushes": 0,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "To do",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "drawn": [
+            "Write the brief",
+            "Book the hall"
+          ],
+          "frame": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "places": {
+            "all": [
+              "/",
+              "/places/to-do",
+              "/tasks",
+              "/places/the-board",
+              "/places/the-log",
+              "/places/the-map",
+              "/map"
+            ],
+            "lists": [
+              "/places/to-do",
+              "/tasks"
+            ],
+            "current": "To do"
+          }
+        }
+      },
+      "ok": true
+    },
+    "aTitledViewsPlaceFlowsWithThePageWhileABoardKeepsItsFrame": {
+      "seen": {
+        "chromium 1440×900": {
+          "view": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "board": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "chromium 390×844": {
+          "view": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "board": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "webkit 1440×900": {
+          "view": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "board": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "webkit 390×844": {
+          "view": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "board": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "firefox 1440×900": {
+          "view": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "board": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "firefox 390×844": {
+          "view": {
+            "flows": true,
+            "scrolls": false,
+            "height": null,
+            "scrollers": []
+          },
+          "board": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        }
+      },
+      "ok": true
+    },
+    "aTallViewOnTheSceneIsDrawnBoundedWithOpenAndOpenLandsOnItsPlace": {
+      "seen": {
+        "chromium 1440×900": {
+          "log": {
+            "height": 656,
+            "top": 83,
+            "bottom": 739,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 597,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 27,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 222,
+            "bottom": 601,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "chromium 390×844": {
+          "log": {
+            "height": 564,
+            "top": 124,
+            "bottom": 688,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 505,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 25,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 216,
+            "bottom": 595,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "webkit 1440×900": {
+          "log": {
+            "height": 656,
+            "top": 83,
+            "bottom": 739,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 597,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 27,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 222,
+            "bottom": 601,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "webkit 390×844": {
+          "log": {
+            "height": 564,
+            "top": 124,
+            "bottom": 688,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 505,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 25,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 216,
+            "bottom": 595,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "firefox 1440×900": {
+          "log": {
+            "height": 656,
+            "top": 83,
+            "bottom": 739,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 597,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 25,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 222,
+            "bottom": 601,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "firefox 390×844": {
+          "log": {
+            "height": 564,
+            "top": 124,
+            "bottom": 688,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 505,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 23,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 216,
+            "bottom": 596,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        }
+      },
+      "ok": true
+    },
+    "aViewThatSaysFlowsFalseKeepsItsFrameAndItsScenePreviewKeepsToItsMaxHeight": {
+      "seen": {
+        "chromium 1440×900": {
+          "log": {
+            "height": 656,
+            "top": 83,
+            "bottom": 739,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 597,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 27,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 222,
+            "bottom": 601,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "chromium 390×844": {
+          "log": {
+            "height": 564,
+            "top": 124,
+            "bottom": 688,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 505,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 25,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 216,
+            "bottom": 595,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "webkit 1440×900": {
+          "log": {
+            "height": 656,
+            "top": 83,
+            "bottom": 739,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 597,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 27,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 222,
+            "bottom": 601,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "webkit 390×844": {
+          "log": {
+            "height": 564,
+            "top": 124,
+            "bottom": 688,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 505,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 25,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 216,
+            "bottom": 595,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "firefox 1440×900": {
+          "log": {
+            "height": 656,
+            "top": 83,
+            "bottom": 739,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 597,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 25,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 222,
+            "bottom": 601,
+            "hostHeight": 656,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        },
+        "firefox 390×844": {
+          "log": {
+            "height": 564,
+            "top": 124,
+            "bottom": 688,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1652,
+            "told": 1652,
+            "shown": 505,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-log",
+              "name": "Open The log",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/places/the-log",
+            "hash": "",
+            "fragment": false,
+            "length": 23,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The log",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80,
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            }
+          },
+          "map": {
+            "height": 379,
+            "top": 216,
+            "bottom": 596,
+            "hostHeight": 564,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1200,
+            "told": 1200,
+            "shown": 320,
+            "more": true,
+            "fade": true,
+            "open": {
+              "href": "/apps/a4/places/the-map",
+              "name": "Open The map",
+              "visible": true
+            },
+            "scrollers": []
+          },
+          "mapFrame": {
+            "flows": false,
+            "scrolls": true,
+            "height": "min(72vh, 760px)",
+            "scrollers": [
+              "place-lens"
+            ]
+          }
+        }
+      },
+      "ok": true
+    },
+    "aHiddenKindIsNotInTheDropDownAndStillOpensAtItsAddress": {
+      "seen": {
+        "list": {
+          "chromium 1440×900": {
+            "opened": {
+              "path": "/apps/a4/places/to-do",
+              "hash": "",
+              "fragment": false,
+              "length": 24,
+              "pushes": 0,
+              "replaces": 2,
+              "face": "pages",
+              "heading": "To do",
+              "place": true,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "drawn": [
+              "Write the brief",
+              "Book the hall"
+            ],
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [],
+              "current": "To do"
+            }
+          },
+          "chromium 390×844": {
+            "opened": {
+              "path": "/apps/a4/places/to-do",
+              "hash": "",
+              "fragment": false,
+              "length": 22,
+              "pushes": 0,
+              "replaces": 2,
+              "face": "pages",
+              "heading": "To do",
+              "place": true,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "drawn": [
+              "Write the brief",
+              "Book the hall"
+            ],
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [
+                "/places/to-do",
+                "/tasks"
+              ],
+              "current": "To do"
+            }
+          },
+          "webkit 1440×900": {
+            "opened": {
+              "path": "/apps/a4/places/to-do",
+              "hash": "",
+              "fragment": false,
+              "length": 24,
+              "pushes": 0,
+              "replaces": 2,
+              "face": "pages",
+              "heading": "To do",
+              "place": true,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "drawn": [
+              "Write the brief",
+              "Book the hall"
+            ],
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [],
+              "current": "To do"
+            }
+          },
+          "webkit 390×844": {
+            "opened": {
+              "path": "/apps/a4/places/to-do",
+              "hash": "",
+              "fragment": false,
+              "length": 22,
+              "pushes": 0,
+              "replaces": 2,
+              "face": "pages",
+              "heading": "To do",
+              "place": true,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "drawn": [
+              "Write the brief",
+              "Book the hall"
+            ],
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [
+                "/places/to-do",
+                "/tasks"
+              ],
+              "current": "To do"
+            }
+          },
+          "firefox 1440×900": {
+            "opened": {
+              "path": "/apps/a4/places/to-do",
+              "hash": "",
+              "fragment": false,
+              "length": 22,
+              "pushes": 0,
+              "replaces": 2,
+              "face": "pages",
+              "heading": "To do",
+              "place": true,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "drawn": [
+              "Write the brief",
+              "Book the hall"
+            ],
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [],
+              "current": "To do"
+            }
+          },
+          "firefox 390×844": {
+            "opened": {
+              "path": "/apps/a4/places/to-do",
+              "hash": "",
+              "fragment": false,
+              "length": 20,
+              "pushes": 0,
+              "replaces": 2,
+              "face": "pages",
+              "heading": "To do",
+              "place": true,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "drawn": [
+              "Write the brief",
+              "Book the hall"
+            ],
+            "frame": {
+              "flows": true,
+              "scrolls": false,
+              "height": null,
+              "scrollers": []
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [
+                "/places/to-do",
+                "/tasks"
+              ],
+              "current": "To do"
+            }
+          }
+        },
+        "atItsAddress": {
+          "chromium 1440×900": {
+            "opened": {
+              "path": "/apps/a4/people",
+              "hash": "",
+              "fragment": false,
+              "length": 25,
+              "pushes": 0,
+              "replaces": 1,
+              "face": "pages",
+              "heading": "People",
+              "place": false,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/people",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [],
+              "current": "People"
+            }
+          },
+          "chromium 390×844": {
+            "opened": {
+              "path": "/apps/a4/people",
+              "hash": "",
+              "fragment": false,
+              "length": 23,
+              "pushes": 0,
+              "replaces": 1,
+              "face": "pages",
+              "heading": "People",
+              "place": false,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/people",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [
+                "/places/to-do",
+                "/tasks",
+                "/people"
+              ],
+              "current": "People"
+            }
+          },
+          "webkit 1440×900": {
+            "opened": {
+              "path": "/apps/a4/people",
+              "hash": "",
+              "fragment": false,
+              "length": 25,
+              "pushes": 0,
+              "replaces": 1,
+              "face": "pages",
+              "heading": "People",
+              "place": false,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/people",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [],
+              "current": "People"
+            }
+          },
+          "webkit 390×844": {
+            "opened": {
+              "path": "/apps/a4/people",
+              "hash": "",
+              "fragment": false,
+              "length": 23,
+              "pushes": 0,
+              "replaces": 1,
+              "face": "pages",
+              "heading": "People",
+              "place": false,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/people",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [
+                "/places/to-do",
+                "/tasks",
+                "/people"
+              ],
+              "current": "People"
+            }
+          },
+          "firefox 1440×900": {
+            "opened": {
+              "path": "/apps/a4/people",
+              "hash": "",
+              "fragment": false,
+              "length": 23,
+              "pushes": 0,
+              "replaces": 1,
+              "face": "pages",
+              "heading": "People",
+              "place": false,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/people",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [],
+              "current": "People"
+            }
+          },
+          "firefox 390×844": {
+            "opened": {
+              "path": "/apps/a4/people",
+              "hash": "",
+              "fragment": false,
+              "length": 21,
+              "pushes": 0,
+              "replaces": 1,
+              "face": "pages",
+              "heading": "People",
+              "place": false,
+              "scenePressed": false,
+              "homeView": false
+            },
+            "places": {
+              "all": [
+                "/",
+                "/places/to-do",
+                "/tasks",
+                "/people",
+                "/places/the-board",
+                "/places/the-log",
+                "/places/the-map",
+                "/map"
+              ],
+              "lists": [
+                "/places/to-do",
+                "/tasks",
+                "/people"
+              ],
+              "current": "People"
+            }
+          }
+        }
+      },
+      "ok": true
+    },
+    "aViewThatBleedsSpansAPhoneLessItsSafeAreasAndTheColumnAtADesk": {
+      "seen": {
+        "chromium 1440×900": {
+          "home": {
+            "left": 140,
+            "width": 1160,
+            "column": 1160,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 340,
+            "width": 760,
+            "column": 760,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              323,
+              378
+            ],
+            "slot": [
+              390,
+              470
+            ],
+            "facts": [
+              524,
+              635
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "chromium 390×844": {
+          "home": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              363,
+              418
+            ],
+            "slot": [
+              430,
+              502
+            ],
+            "facts": [
+              556,
+              668
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "webkit 1440×900": {
+          "home": {
+            "left": 140,
+            "width": 1160,
+            "column": 1160,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 340,
+            "width": 760,
+            "column": 760,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              322,
+              377
+            ],
+            "slot": [
+              389,
+              467
+            ],
+            "facts": [
+              521,
+              631
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "webkit 390×844": {
+          "home": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              361,
+              416
+            ],
+            "slot": [
+              428,
+              500
+            ],
+            "facts": [
+              554,
+              664
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "firefox 1440×900": {
+          "home": {
+            "left": 140,
+            "width": 1160,
+            "column": 1160,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 340,
+            "width": 760,
+            "column": 760,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              323,
+              378
+            ],
+            "slot": [
+              390,
+              470
+            ],
+            "facts": [
+              524,
+              636
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "firefox 390×844": {
+          "home": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              363,
+              418
+            ],
+            "slot": [
+              430,
+              502
+            ],
+            "facts": [
+              556,
+              668
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        }
+      },
+      "ok": true
+    },
+    "aRecordPagesSlotIsDrawnUnderItsViewAndAboveTheFacts": {
+      "seen": {
+        "chromium 1440×900": {
+          "home": {
+            "left": 140,
+            "width": 1160,
+            "column": 1160,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 340,
+            "width": 760,
+            "column": 760,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              323,
+              378
+            ],
+            "slot": [
+              390,
+              470
+            ],
+            "facts": [
+              524,
+              635
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "chromium 390×844": {
+          "home": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              363,
+              418
+            ],
+            "slot": [
+              430,
+              502
+            ],
+            "facts": [
+              556,
+              668
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "webkit 1440×900": {
+          "home": {
+            "left": 140,
+            "width": 1160,
+            "column": 1160,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 340,
+            "width": 760,
+            "column": 760,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              322,
+              377
+            ],
+            "slot": [
+              389,
+              467
+            ],
+            "facts": [
+              521,
+              631
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "webkit 390×844": {
+          "home": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              361,
+              416
+            ],
+            "slot": [
+              428,
+              500
+            ],
+            "facts": [
+              554,
+              664
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "firefox 1440×900": {
+          "home": {
+            "left": 140,
+            "width": 1160,
+            "column": 1160,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 340,
+            "width": 760,
+            "column": 760,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              323,
+              378
+            ],
+            "slot": [
+              390,
+              470
+            ],
+            "facts": [
+              524,
+              636
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "firefox 390×844": {
+          "home": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              363,
+              418
+            ],
+            "slot": [
+              430,
+              502
+            ],
+            "facts": [
+              556,
+              668
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        }
+      },
+      "ok": true
+    },
+    "aViewThatReplacesThePageDrawsAloneAndItsSlotIsNot": {
+      "seen": {
+        "chromium 1440×900": {
+          "home": {
+            "left": 140,
+            "width": 1160,
+            "column": 1160,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 340,
+            "width": 760,
+            "column": 760,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              323,
+              378
+            ],
+            "slot": [
+              390,
+              470
+            ],
+            "facts": [
+              524,
+              635
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "chromium 390×844": {
+          "home": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              363,
+              418
+            ],
+            "slot": [
+              430,
+              502
+            ],
+            "facts": [
+              556,
+              668
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "webkit 1440×900": {
+          "home": {
+            "left": 140,
+            "width": 1160,
+            "column": 1160,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 340,
+            "width": 760,
+            "column": 760,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              322,
+              377
+            ],
+            "slot": [
+              389,
+              467
+            ],
+            "facts": [
+              521,
+              631
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "webkit 390×844": {
+          "home": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              361,
+              416
+            ],
+            "slot": [
+              428,
+              500
+            ],
+            "facts": [
+              554,
+              664
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "firefox 1440×900": {
+          "home": {
+            "left": 140,
+            "width": 1160,
+            "column": 1160,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 340,
+            "width": 760,
+            "column": 760,
+            "safeLeft": 0,
+            "safeWidth": 1440,
+            "viewport": 1440,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              323,
+              378
+            ],
+            "slot": [
+              390,
+              470
+            ],
+            "facts": [
+              524,
+              636
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
+        },
+        "firefox 390×844": {
+          "home": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "record": {
+            "left": 0,
+            "width": 390,
+            "column": 350,
+            "safeLeft": 0,
+            "safeWidth": 390,
+            "viewport": 390,
+            "sideScroll": false
+          },
+          "order": {
+            "view": [
+              363,
+              418
+            ],
+            "slot": [
+              430,
+              502
+            ],
+            "facts": [
+              556,
+              668
+            ],
+            "slotSays": "Read the sourcesEach source, in turn."
+          },
+          "replaced": {
+            "drawn": "Ada",
+            "slot": false,
+            "saysSlot": false,
+            "facts": false
+          }
         }
       },
       "ok": true
