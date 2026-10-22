@@ -12,7 +12,7 @@ A worker view (`graview-worker-view`: its manifest, its global, its limits) has 
 
 ### A link
 
-`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows. `<a href>` goes out only to an address a record was handed — its own url, `mailto:`, `tel:` (below). A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places. From code, `graview.navigate("offer:7")` goes by the same rules.
+`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows. `<a href>` goes out only to an address a record was handed — its own url, `mailto:`, `tel:` (below). A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places. A titled view of many is a place too, at `/places/<its title as a slug>`: `data-place="live-threats"` reaches the view "Live threats", and the check knows it when its host hands the views it keeps. From code, `graview.navigate("offer:7")` goes by the same rules.
 
 ### Links out
 

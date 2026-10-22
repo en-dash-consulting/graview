@@ -1,6 +1,6 @@
 import { PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
 import { judgeDestination, type Arrival, type GuestList } from "../host/links.js";
-import { whereOfWords, type Destination } from "../host/links-words.js";
+import { placeNamed, unsureOfViews, whereOfWords, type Destination } from "../host/links-words.js";
 import type { WorkerViewManifest } from "../host/manifest.js";
 import { isEntry, isPress, linkPressed, notPressable, opensOnPress } from "../host/pressable.js";
 import { judgePress, prefillOf } from "../host/press.js";
@@ -63,6 +63,8 @@ export interface HeadlessPressContext<S extends AnySchema> {
   readonly shown: ReadonlySet<string>;
   readonly places: readonly GuestPlace[];
   readonly lists: readonly GuestList[];
+  /** The host did not hand the run the views it keeps: a link to a name none of `places` is, is said as a doubt. */
+  readonly placesUnsure?: boolean;
   /** What the person typed, or picked, by the field's name. Every other field holds what the view left in it. */
   readonly typed?: Readonly<Record<string, string | number | boolean>>;
 }
@@ -152,8 +154,11 @@ export function judgeHeadlessPress<S extends AnySchema>(pressed: NonNullable<Hea
       const narrowed = "filter" in arrival && arrival.filter ? `, narrowed to ${arrival.filter}` : "";
       said.push(`It opens ${"record" in arrival ? `the record "${arrival.record}"` : "place" in arrival ? `the place "${arrival.place}"` : `the list of ${arrival.list}`}${narrowed}${arrival.section ? `, at "${arrival.section}"` : ""}.`);
     } else {
-      out.lost = judged.says;
-      said.push(`It lands in a link that goes nowhere: ${judged.says}`);
+      /* Where nothing it was told of is named, and the host did not say its views, a titled view's place may be what it names. */
+      const asked = "place" in to ? to.place : to.record;
+      const unknown = !("record" in to && context.shown.has(to.record)) && !placeNamed(context.places, asked) && !context.lists.some((one) => one.slug === asked || one.kind === asked);
+      out.lost = context.placesUnsure && unknown ? `${judged.says}${unsureOfViews}` : judged.says;
+      said.push(`It lands in a link that goes nowhere: ${out.lost}`);
     }
   }
 

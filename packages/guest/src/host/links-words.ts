@@ -53,6 +53,15 @@ export function guestPlacesOf(places: readonly unknown[]): { readonly as: string
 export const placesSaid = (places: readonly (string | NamedPlace)[]) =>
   ` Its places: ${places.map((place) => (typeof place === "string" ? `"${place}"` : place.title && place.title !== place.as ? `"${place.as}" (${place.title})` : `"${place.as}"`)).join(", ") || "none"}.`;
 
+/**
+ * WHAT A HEADLESS RUN SAYS OF A PLACE IT CANNOT FIND, when its host did not
+ * hand it the views it keeps (`runWorkerViewHeadless`'s `views`): a titled
+ * view's place (`/places/<slug>`) is a place of the app the run was not
+ * told of, so the run says what it does not know rather than that the
+ * place is not there (Roadmap f-check-view-places).
+ */
+export const unsureOfViews = " This run was not handed the views the host keeps, so a titled view's place is not among these: if it names one, the link goes there.";
+
 /** At most 80 characters of what a view asked for, ending "…" where it was cut: the sentence reaches the host's problems, and a view may ask for anything. */
 export const quoted = (asked: string) => `"${asked.length > 80 ? `${asked.slice(0, 79)}…` : asked}"`;
 

@@ -34,16 +34,22 @@ export type DescribedPart =
       readonly more?: number;
     }
   /**
-   * A view the host keeps, where a record's page draws it (`DescribePlaceOptions.views`):
-   * by its manifest's name, with what it drew when the host said (`parts`, a headless run's).
-   * `replaces`: it is the whole page, and nothing of the record's own is drawn beside it.
+   * A view the host keeps, where a record's page draws it, or the whole of
+   * a titled view's own place (`DescribePlaceOptions.views`): by its
+   * manifest's name, with what it drew when the host said (`parts`, a
+   * headless run's). `replaces`: it is the whole page, and nothing of the
+   * record's own is drawn beside it. `flows`: on its own place, whether it
+   * flows with the page (`true`) or keeps a frame of its own (`false`), as
+   * the host said; unsaid when the host did not.
    */
-  | { readonly t: "view"; readonly name: string; readonly title?: string; readonly replaces?: true; readonly parts?: readonly DescribedPart[] };
+  | { readonly t: "view"; readonly name: string; readonly title?: string; readonly replaces?: true; readonly flows?: boolean; readonly parts?: readonly DescribedPart[] };
 
 /**
  * A VIEW THE HOST KEEPS, as `describePlace` is told of it: its manifest's
- * `name`, `title`, `attach`, `cardinality` and `replaces` — and, where the
- * host ran it headless, what it drew (`parts`).
+ * `name`, `title`, `attach`, `cardinality`, `replaces` and `flows` — and,
+ * where the host ran it headless, what it drew (`parts`). A titled view of
+ * many is a place of its own (`/places/<its title as a slug>`), which
+ * `describePlace` describes by its slug or title.
  */
 export interface DescribedHostView {
   readonly name: string;
@@ -51,6 +57,10 @@ export interface DescribedHostView {
   readonly attach: string;
   readonly cardinality: "one" | "many";
   readonly replaces?: "page";
+  /** Whether its place flows with the page (`true`) or keeps a frame (`false`), when the manifest says. */
+  readonly flows?: boolean;
+  /** Kept off the lists by the host; its place is still at its address. */
+  readonly hidden?: boolean;
   readonly parts?: readonly DescribedPart[];
 }
 
