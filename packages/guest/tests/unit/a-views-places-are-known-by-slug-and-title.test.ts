@@ -36,6 +36,8 @@ const home = (links: readonly string[]): Promise<HeadlessResult> =>
     source: `graview.onProps(() => graview.render(graview.html\`<nav>${links.map((place) => `<a data-place="${place}">${place}</a>`).join("")}</nav>\`));`,
     // As a host lists them: `placesOf`, a slug each, as Graview Cloud hands them.
     places: placesOf(app),
+    // And the views it keeps, none here: a place none of these is, is then certainly no place of the app.
+    views: [],
   });
 
 const problems = async (links: readonly string[]) => {

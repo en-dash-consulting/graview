@@ -1,5 +1,5 @@
 import type { DescribedPart, DescribedProblem } from "@graview/core/describe";
-import { placeNamed, placesSaid, quoted } from "../host/links-words.js";
+import { placeNamed, placesSaid, quoted, unsureOfViews } from "../host/links-words.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { handedLinks, judgeLink, linkRefusedWords } from "../host/external-links.js";
 import { imageRefusedWords, type ImageHost } from "../host/open-judge.js";
@@ -60,15 +60,23 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   if (drawn.over) return { ok: false, reason: "nodes", detail: `It drew more than the ${limits.maxNodes.toLocaleString("en-US")} things a view may draw.` };
   // A kind's list is somewhere a view may go by name too, by its plural or the kind's name.
   const goes = [...input.places, ...(input.lists ?? []).filter((slug) => !input.places.some((place) => place.as === slug)).map((slug) => ({ as: slug }))];
-  const said = describeDrawing(drawn.root, { props: input.props, places: goes, ...(input.accepts ? { accepts: input.accepts } : {}) });
+  const unsure = input.placesUnsure === true;
+  const said = describeDrawing(drawn.root, { props: input.props, places: goes, ...(unsure ? { placesUnsure: true } : {}), ...(input.accepts ? { accepts: input.accepts } : {}) });
   for (const act of said.acts) {
     if (!acts.has(act)) return { ok: false, reason: "act", detail: `It binds a press to the act "${act}" (data-act), which its manifest does not name.` };
   }
   const problems: DescribedProblem[] = [...drawn.refused.map((one) => sayRefusal(one, { ...(input.imageOrigins ? { origins: input.imageOrigins } : {}), assets: input.assets === true, ...(input.linkOrigins ? { linkOrigins: input.linkOrigins } : {}) })), ...said.problems];
   for (const went of transcript.went) {
     /* A bare string is a record first, then a place by that slug, as the host follows it. */
-    if ("record" in went && !(input.props.node?.id === went.record || (input.props.nodes ?? []).some((node) => node.id === went.record) || placeNamed(goes, went.record))) problems.push({ at: "navigate", says: `It goes to ${quoted(went.record)}, which this seat was not shown and is no place of this app: the host will not follow it. A view goes to a record by its id, or to a place by its slug.${placesSaid(goes)}` });
-    if ("place" in went && !placeNamed(goes, went.place)) problems.push({ at: "navigate", says: `It goes to the place ${quoted(went.place)}, which this app does not have.${placesSaid(goes)}` });
+    if ("record" in went && !(input.props.node?.id === went.record || (input.props.nodes ?? []).some((node) => node.id === went.record) || placeNamed(goes, went.record)))
+      problems.push({
+        at: "navigate",
+        says: unsure
+          ? `It goes to ${quoted(went.record)}, which this seat was not shown and is none of the places this run was told of. A view goes to a record by its id, or to a place by its slug.${placesSaid(goes)}${unsureOfViews}`
+          : `It goes to ${quoted(went.record)}, which this seat was not shown and is no place of this app: the host will not follow it. A view goes to a record by its id, or to a place by its slug.${placesSaid(goes)}`,
+      });
+    if ("place" in went && !placeNamed(goes, went.place))
+      problems.push({ at: "navigate", says: unsure ? `It goes to the place ${quoted(went.place)}, which is none of the places this run was told of.${placesSaid(goes)}${unsureOfViews}` : `It goes to the place ${quoted(went.place)}, which this app does not have.${placesSaid(goes)}` });
   }
   return { ok: true, parts: said.parts, problems, drawn };
 }

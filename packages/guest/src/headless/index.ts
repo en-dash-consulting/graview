@@ -104,6 +104,17 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   readonly theme?: GuestTheme;
   /** The app's named places, which the view may link to (FR-93). */
   readonly places?: readonly (GuestPlace | { readonly slug: string; readonly title: string; readonly kind: string | null })[];
+  /**
+   * THE VIEWS THE HOST KEEPS (Roadmap f-check-view-places), by their
+   * manifests — the same list `describePlace` and `placesOf` take: each
+   * titled view of many is a place at `/places/<its title as a slug>`, as
+   * the router gives it, and a `data-place` or `graview.navigate` naming
+   * one is no problem. Handed (even empty), a name none of the places is
+   * is said as going nowhere; left out, the run does not know the host's
+   * views' places, and says such a name as a doubt rather than as certain.
+   * The view being run is a place of its own when it is titled, either way.
+   */
+  readonly views?: readonly { readonly name: string; readonly title?: string; readonly attach: string; readonly cardinality?: "one" | "many"; readonly hidden?: boolean }[];
   readonly limits?: HeadlessLimits;
   /** The `https:` origins a view's images may come from by address, as the live host lists them (WorkerViewOptions.images). */
   readonly images?: { readonly origins: readonly string[] };
@@ -255,7 +266,11 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   if (unloadable.length > 0) return failed("source", unloadable.join(" "));
 
   /* A guest's places or an app's as `placesOf` lists them: each by its slug and title, never "undefined" (2026-10-15). */
-  const places = guestPlacesOf(options.places ?? []);
+  /* And each titled view's place — the host's kept views', and this view's own — by the slug the router gives it (`viewPlaceOf`). */
+  const { viewPlaceOf } = await import("@graview/core/seat");
+  const viewPlaces = [...(options.views ?? []), manifest].flatMap((view) => viewPlaceOf(view) ?? []).map((place) => ({ as: place.as, title: place.title, kind: place.kind }));
+  const places = guestPlacesOf([...(options.places ?? []), ...viewPlaces]);
+  const placesUnsure = options.views === undefined;
   const shown = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places });
   /*
    * A view that asks for pictures (FR-175) is handed each file without the
@@ -276,6 +291,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     acts: manifestActs(manifest).map((one) => one.as ?? one.act),
     ...(manifest.accepts ? { accepts: manifest.accepts.map(({ kind, field }) => ({ kind, field })) } : {}),
     places: places.map((place) => ({ as: place.as, title: place.title })),
+    ...(placesUnsure ? { placesUnsure: true } : {}),
     ...(options.images ? { imageOrigins: [...options.images.origins] } : {}),
     ...(options.links ? { linkOrigins: [...options.links.origins] } : {}),
     ...(options.asset ? { assets: true } : {}),
@@ -335,7 +351,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     if (!outcome.ok && known) narrowing.push({ at: "navigate", says: outcome.says });
   }
   const typed = typeof options.press === "object" && options.press.typed ? { typed: options.press.typed } : {};
-  const pressed = pressedAt ? judgeHeadlessPress(pressedAt, judged.drawn, transcript, { store, principal, manifest, shown: shownIds, places, lists, ...typed }) : undefined;
+  const pressed = pressedAt ? judgeHeadlessPress(pressedAt, judged.drawn, transcript, { store, principal, manifest, shown: shownIds, places, lists, ...(placesUnsure ? { placesUnsure: true } : {}), ...typed }) : undefined;
   /* A press that lands on nothing, or in a link that goes nowhere, is a problem with the view; one the seat is refused is the answer asked for. */
   const pressProblems = pressed && (!pressed.element || pressed.lost) ? [{ at: `press "${pressed.selector}"`, says: pressed.lost ?? pressed.says }] : [];
   const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems];

@@ -96,6 +96,8 @@ export async function view(argv: readonly string[]): Promise<number> {
     run: nodeIsolate(),
     // Each slug once: a picture over several kinds is one place to a view.
     places: (app.views?.places?.() ?? []).filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map((place) => ({ as: place.as, title: place.title, kind: place.kind })),
+    // The app's registered views' places are its places above: there is no host here keeping others, so a name none of them is goes nowhere.
+    views: [],
     ...(width ? { width: Number(width) } : {}),
     ...(pressAt ? { press: { selector: pressAt, typed } } : {}),
   });

@@ -18,4 +18,4 @@
 export { answerSeenBy } from "./answer-seen.js";
 export { archivedSeenBy, type ArchivedSeen } from "./archived-seen.js";
 export { beginning } from "./beginning.js";
-export { placesFrom, placesOf } from "./app-places.js";
+export { placesFrom, placesOf, viewPlaceOf } from "./app-places.js";
