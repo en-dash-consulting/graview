@@ -1,0 +1,8 @@
+---
+"@graview/core": patch
+"@graview/tools": patch
+---
+
+A derived edit given a field another act writes names that act, and a number given as its digits is that number. On Threat Watch, on Graview Cloud, `edit-threat` refused `whatToDo` with the arguments it takes and nothing more, though `set-verdict` writes it, so an agent had no way to learn where the field goes. A derived edit now carries `writtenBy`, each field of its kind it leaves to another act and the acts that write it, and its refusal says so: "whatToDo is set by set-verdict; it takes "id", "name", "score"". An argument no act writes is said as one it does not take, as before. A number field given "8.6" was refused as "expected number"; at the one boundary every act's arguments cross, a string that is exactly a number, given for an argument whose schema is a number, is read as that number and nothing is said, for every act — derived or declared, a document's or TypeScript's. Anything else — "8.6 high", " 8", "", "eight" — is refused as before, and a text field given digits keeps them as text. The inline AI's sentence for a proposal reads its arguments the same way. `numbersSpelled` is on `@graview/core`. `core`'s tests refuse `whatToDo` on `edit-threat` naming `set-verdict`, still refuse a stray argument as one the edit does not take, read "8.6" as 8.6 and refuse what is not exactly a number.
+
+Compatibility: additive in the API — `writtenBy` on a mutation definition and `numbersSpelled` on `@graview/core`. A behavior change in acts: a string that is exactly a number is accepted for a number argument rather than refused, and a derived edit's refusal of a field another act writes names that act. The declaration, the wire, the stored formats and the derived tools' schemas are unchanged.

@@ -1,3 +1,4 @@
+import { lowerFirst } from "../capital.js";
 import { InvalidArguments } from "./invalid-arguments.js";
 import type { AnySchema } from "../schema/schema.js";
 import { fieldWords, humanizeField } from "../schema/define-node.js";
@@ -58,7 +59,7 @@ export function failureWords(
     const mutation = mutations.find((one) => one.name === error.mutation);
     const said = error.issues.map((issue) => {
       const field = issue.path.length > 0 ? argumentWords(schema, mutation, String(issue.path[0])).label : undefined;
-      return field ? `${field} — ${issue.message.replace(/^./, (first) => first.toLowerCase())}` : issue.message;
+      return field ? `${field} — ${lowerFirst(issue.message)}` : issue.message;
     });
     return `Not yet: ${said.join("; ")}.`;
   }

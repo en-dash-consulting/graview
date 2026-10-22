@@ -1,0 +1,1185 @@
+{
+  "at": "2026-10-22T18:49:43.391Z",
+  "engines": [
+    "chromium",
+    "webkit",
+    "firefox"
+  ],
+  "checks": {
+    "noAskBoxOnTheScene": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "theBarOpensBesideTheSelection": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "itCompletesActsPlacesRecordsAndShow": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "anAnswerIsACardBesideTheRecordItsChangeAGhost": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "aFollowUpOnTheCardReplacesTheAnswer": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "escapePutsItAwayWithTheKeyboardBack": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "activityKeepsEachAskOnce": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "aShowRowDrawsAPanelKeptAsALens": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "theMenuOpensItOnWhatItWasOpenedOn": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "onPagesTheCardStandsByTheRecordsHeading": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "aiOffHidesTheQuickAskCleanly": {
+      "engines": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    }
+  },
+  "byEngine": {
+    "chromium": {
+      "noAskBoxOnTheScene": {
+        "askBox": false,
+        "marker": "scene",
+        "ok": true
+      },
+      "theBarOpensBesideTheSelection": {
+        "bar": {
+          "mode": "bar",
+          "beside": "t-deposit",
+          "side": "right",
+          "about": "About Pay the deposit",
+          "label": "Ask about Pay the deposit",
+          "rows": [
+            {
+              "kind": "act",
+              "text": "Give it a new date · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Finish it · do it"
+            },
+            {
+              "kind": "act",
+              "text": "Note why this is here · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Move it to another list · asks more"
+            },
+            {
+              "kind": "show",
+              "text": "Show a list of tasks · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show tasks by due · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show a calendar of tasks · a panel"
+            },
+            {
+              "kind": "place",
+              "text": "Go to The lists"
+            },
+            {
+              "kind": "place",
+              "text": "Go to What is left"
+            },
+            {
+              "kind": "place",
+              "text": "Go to Who may do what"
+            }
+          ],
+          "asked": null,
+          "answer": null,
+          "answers": 0,
+          "offers": [],
+          "ghostOnTheCard": false,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "itCompletesActsPlacesRecordsAndShow": {
+        "shows": [
+          {
+            "kind": "show",
+            "text": "Show a list of tasks · a panel"
+          },
+          {
+            "kind": "show",
+            "text": "Show tasks by due · a panel"
+          },
+          {
+            "kind": "show",
+            "text": "Show a calendar of tasks · a panel"
+          },
+          {
+            "kind": "ask",
+            "text": "Ask: ‘show’"
+          }
+        ],
+        "places": [
+          {
+            "kind": "place",
+            "text": "Open The week · a view you have"
+          },
+          {
+            "kind": "record",
+            "text": "This week · Lists"
+          },
+          {
+            "kind": "ask",
+            "text": "Ask: ‘week’"
+          }
+        ],
+        "records": [
+          {
+            "kind": "record",
+            "text": "Book the van · Tasks"
+          },
+          {
+            "kind": "ask",
+            "text": "Ask: ‘van’"
+          }
+        ],
+        "asking": [
+          {
+            "kind": "ask",
+            "text": "Ask: ‘what is left to do here?’"
+          }
+        ],
+        "ok": true
+      },
+      "anAnswerIsACardBesideTheRecordItsChangeAGhost": {
+        "card": {
+          "mode": "answer",
+          "beside": "t-deposit",
+          "side": "right",
+          "about": "About Pay the deposit",
+          "label": "Answer about Pay the deposit",
+          "rows": [],
+          "asked": "“what is left to do here?”",
+          "answer": "About Pay the deposit: an answer to “what is left to do here?”, as drafted.",
+          "answers": 1,
+          "offers": [],
+          "ghostOnTheCard": true,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "before": {
+          "done": false,
+          "batch": null,
+          "via": null,
+          "interaction": null
+        },
+        "notMade": {
+          "done": false,
+          "batch": null,
+          "via": null,
+          "interaction": null
+        },
+        "accepted": {
+          "done": true,
+          "batch": "batch:086u1x5w6r5c:1",
+          "via": "ai:ai-mvjwb6ho-zrhv24",
+          "interaction": "ai-mvjwb6ho-zrhv24"
+        },
+        "undone": {
+          "done": false,
+          "batch": "undo:086u1x5w6r5c:2",
+          "via": null,
+          "interaction": null
+        },
+        "ok": true
+      },
+      "aFollowUpOnTheCardReplacesTheAnswer": {
+        "followed": {
+          "mode": "answer",
+          "beside": "t-deposit",
+          "side": "right",
+          "about": "About Pay the deposit",
+          "label": "Answer about Pay the deposit",
+          "rows": [],
+          "asked": "“and after that?”",
+          "answer": "About Pay the deposit: an answer to “and after that?”, as drafted.",
+          "answers": 1,
+          "offers": [],
+          "ghostOnTheCard": true,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "escapePutsItAwayWithTheKeyboardBack": {
+        "away": {
+          "card": false,
+          "keyboard": "DIV"
+        },
+        "ok": true
+      },
+      "activityKeepsEachAskOnce": {
+        "asks": [
+          "you asked AI to answer “and after that?” · Pay the depositOffered Finish it, Archive the task, Waits for: Get the second quoteOffered, not yet takenstub-thinkingAsk again",
+          "you asked AI to answer “what is left to do here?” · Pay the depositTook Finish it, Archive the task, Waits for: Get the second quotestub-thinkingAsk again"
+        ],
+        "ok": true
+      },
+      "aShowRowDrawsAPanelKeptAsALens": {
+        "drawn": {
+          "keep": true,
+          "card": false
+        },
+        "kept": true,
+        "ok": true
+      },
+      "theMenuOpensItOnWhatItWasOpenedOn": {
+        "fromTheMenu": {
+          "mode": "bar",
+          "beside": "t-book",
+          "side": "right",
+          "about": "About Book the van",
+          "label": "Ask about Book the van",
+          "rows": [
+            {
+              "kind": "act",
+              "text": "Mark it done · do it"
+            },
+            {
+              "kind": "act",
+              "text": "Note why this is here · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Move it to another list · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Rename · asks more"
+            },
+            {
+              "kind": "show",
+              "text": "Show a list of tasks · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show tasks by due · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show a calendar of tasks · a panel"
+            },
+            {
+              "kind": "place",
+              "text": "Go to The lists"
+            },
+            {
+              "kind": "place",
+              "text": "Go to What is left"
+            },
+            {
+              "kind": "place",
+              "text": "Go to Who may do what"
+            }
+          ],
+          "asked": null,
+          "answer": null,
+          "answers": 0,
+          "offers": [],
+          "ghostOnTheCard": false,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "onPagesTheCardStandsByTheRecordsHeading": {
+        "pagesBox": {
+          "askBox": false,
+          "marker": "pages"
+        },
+        "pagesBar": {
+          "mode": "bar",
+          "beside": "page",
+          "side": "below",
+          "about": "About Pay the deposit",
+          "label": "Ask about Pay the deposit",
+          "rows": [
+            {
+              "kind": "act",
+              "text": "Give it a new date · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Finish it · do it"
+            },
+            {
+              "kind": "act",
+              "text": "Note why this is here · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Move it to another list · asks more"
+            },
+            {
+              "kind": "show",
+              "text": "Show a list of tasks · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show tasks by due · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show a calendar of tasks · a panel"
+            },
+            {
+              "kind": "place",
+              "text": "Go to The lists"
+            },
+            {
+              "kind": "place",
+              "text": "Go to What is left"
+            },
+            {
+              "kind": "place",
+              "text": "Go to Who may do what"
+            }
+          ],
+          "asked": null,
+          "answer": null,
+          "answers": 0,
+          "offers": [],
+          "ghostOnTheCard": false,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "pagesAnswer": {
+          "mode": "answer",
+          "beside": "page",
+          "side": "below",
+          "about": "About Pay the deposit",
+          "label": "Answer about Pay the deposit",
+          "rows": [],
+          "asked": "“what is left to do here?”",
+          "answer": "About Pay the deposit: an answer to “what is left to do here?”, as drafted.",
+          "answers": 1,
+          "offers": [],
+          "ghostOnTheCard": true,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "aiOffHidesTheQuickAskCleanly": {
+        "off": {
+          "scene": {
+            "marker": false,
+            "card": false,
+            "askBox": false,
+            "menuRow": false,
+            "find": true
+          },
+          "pages": {
+            "marker": false,
+            "card": false,
+            "askBox": false,
+            "menuRow": false,
+            "find": true
+          }
+        },
+        "ok": true
+      }
+    },
+    "webkit": {
+      "noAskBoxOnTheScene": {
+        "askBox": false,
+        "marker": "scene",
+        "ok": true
+      },
+      "theBarOpensBesideTheSelection": {
+        "bar": {
+          "mode": "bar",
+          "beside": "t-deposit",
+          "side": "right",
+          "about": "About Pay the deposit",
+          "label": "Ask about Pay the deposit",
+          "rows": [
+            {
+              "kind": "act",
+              "text": "Give it a new date · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Finish it · do it"
+            },
+            {
+              "kind": "act",
+              "text": "Note why this is here · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Move it to another list · asks more"
+            },
+            {
+              "kind": "show",
+              "text": "Show a list of tasks · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show tasks by due · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show a calendar of tasks · a panel"
+            },
+            {
+              "kind": "place",
+              "text": "Go to The lists"
+            },
+            {
+              "kind": "place",
+              "text": "Go to What is left"
+            },
+            {
+              "kind": "place",
+              "text": "Go to Who may do what"
+            }
+          ],
+          "asked": null,
+          "answer": null,
+          "answers": 0,
+          "offers": [],
+          "ghostOnTheCard": false,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "itCompletesActsPlacesRecordsAndShow": {
+        "shows": [
+          {
+            "kind": "show",
+            "text": "Show a list of tasks · a panel"
+          },
+          {
+            "kind": "show",
+            "text": "Show tasks by due · a panel"
+          },
+          {
+            "kind": "show",
+            "text": "Show a calendar of tasks · a panel"
+          },
+          {
+            "kind": "ask",
+            "text": "Ask: ‘show’"
+          }
+        ],
+        "places": [
+          {
+            "kind": "place",
+            "text": "Open The week · a view you have"
+          },
+          {
+            "kind": "record",
+            "text": "This week · Lists"
+          },
+          {
+            "kind": "ask",
+            "text": "Ask: ‘week’"
+          }
+        ],
+        "records": [
+          {
+            "kind": "record",
+            "text": "Book the van · Tasks"
+          },
+          {
+            "kind": "ask",
+            "text": "Ask: ‘van’"
+          }
+        ],
+        "asking": [
+          {
+            "kind": "ask",
+            "text": "Ask: ‘what is left to do here?’"
+          }
+        ],
+        "ok": true
+      },
+      "anAnswerIsACardBesideTheRecordItsChangeAGhost": {
+        "card": {
+          "mode": "answer",
+          "beside": "t-deposit",
+          "side": "right",
+          "about": "About Pay the deposit",
+          "label": "Answer about Pay the deposit",
+          "rows": [],
+          "asked": "“what is left to do here?”",
+          "answer": "About Pay the deposit: an answer to “what is left to do here?”, as drafted.",
+          "answers": 1,
+          "offers": [],
+          "ghostOnTheCard": true,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "before": {
+          "done": false,
+          "batch": null,
+          "via": null,
+          "interaction": null
+        },
+        "notMade": {
+          "done": false,
+          "batch": null,
+          "via": null,
+          "interaction": null
+        },
+        "accepted": {
+          "done": true,
+          "batch": "batch:65185t3c6e6u:1",
+          "via": "ai:ai-mvjwblrq-6zlegf",
+          "interaction": "ai-mvjwblrq-6zlegf"
+        },
+        "undone": {
+          "done": false,
+          "batch": "undo:65185t3c6e6u:2",
+          "via": null,
+          "interaction": null
+        },
+        "ok": true
+      },
+      "aFollowUpOnTheCardReplacesTheAnswer": {
+        "followed": {
+          "mode": "answer",
+          "beside": "t-deposit",
+          "side": "right",
+          "about": "About Pay the deposit",
+          "label": "Answer about Pay the deposit",
+          "rows": [],
+          "asked": "“and after that?”",
+          "answer": "About Pay the deposit: an answer to “and after that?”, as drafted.",
+          "answers": 1,
+          "offers": [],
+          "ghostOnTheCard": true,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "escapePutsItAwayWithTheKeyboardBack": {
+        "away": {
+          "card": false,
+          "keyboard": "DIV"
+        },
+        "ok": true
+      },
+      "activityKeepsEachAskOnce": {
+        "asks": [
+          "you asked AI to answer “and after that?” · Pay the depositOffered Finish it, Archive the task, Waits for: Get the second quoteOffered, not yet takenstub-thinkingAsk again",
+          "you asked AI to answer “what is left to do here?” · Pay the depositTook Finish it, Archive the task, Waits for: Get the second quotestub-thinkingAsk again"
+        ],
+        "ok": true
+      },
+      "aShowRowDrawsAPanelKeptAsALens": {
+        "drawn": {
+          "keep": true,
+          "card": false
+        },
+        "kept": true,
+        "ok": true
+      },
+      "theMenuOpensItOnWhatItWasOpenedOn": {
+        "fromTheMenu": {
+          "mode": "bar",
+          "beside": "t-book",
+          "side": "right",
+          "about": "About Book the van",
+          "label": "Ask about Book the van",
+          "rows": [
+            {
+              "kind": "act",
+              "text": "Mark it done · do it"
+            },
+            {
+              "kind": "act",
+              "text": "Note why this is here · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Move it to another list · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Rename · asks more"
+            },
+            {
+              "kind": "show",
+              "text": "Show a list of tasks · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show tasks by due · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show a calendar of tasks · a panel"
+            },
+            {
+              "kind": "place",
+              "text": "Go to The lists"
+            },
+            {
+              "kind": "place",
+              "text": "Go to What is left"
+            },
+            {
+              "kind": "place",
+              "text": "Go to Who may do what"
+            }
+          ],
+          "asked": null,
+          "answer": null,
+          "answers": 0,
+          "offers": [],
+          "ghostOnTheCard": false,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "onPagesTheCardStandsByTheRecordsHeading": {
+        "pagesBox": {
+          "askBox": false,
+          "marker": "pages"
+        },
+        "pagesBar": {
+          "mode": "bar",
+          "beside": "page",
+          "side": "above",
+          "about": "About Pay the deposit",
+          "label": "Ask about Pay the deposit",
+          "rows": [
+            {
+              "kind": "act",
+              "text": "Give it a new date · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Finish it · do it"
+            },
+            {
+              "kind": "act",
+              "text": "Note why this is here · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Move it to another list · asks more"
+            },
+            {
+              "kind": "show",
+              "text": "Show a list of tasks · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show tasks by due · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show a calendar of tasks · a panel"
+            },
+            {
+              "kind": "place",
+              "text": "Go to The lists"
+            },
+            {
+              "kind": "place",
+              "text": "Go to What is left"
+            },
+            {
+              "kind": "place",
+              "text": "Go to Who may do what"
+            }
+          ],
+          "asked": null,
+          "answer": null,
+          "answers": 0,
+          "offers": [],
+          "ghostOnTheCard": false,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "pagesAnswer": {
+          "mode": "answer",
+          "beside": "page",
+          "side": "above",
+          "about": "About Pay the deposit",
+          "label": "Answer about Pay the deposit",
+          "rows": [],
+          "asked": "“what is left to do here?”",
+          "answer": "About Pay the deposit: an answer to “what is left to do here?”, as drafted.",
+          "answers": 1,
+          "offers": [],
+          "ghostOnTheCard": true,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "aiOffHidesTheQuickAskCleanly": {
+        "off": {
+          "scene": {
+            "marker": false,
+            "card": false,
+            "askBox": false,
+            "menuRow": false,
+            "find": true
+          },
+          "pages": {
+            "marker": false,
+            "card": false,
+            "askBox": false,
+            "menuRow": false,
+            "find": true
+          }
+        },
+        "ok": true
+      }
+    },
+    "firefox": {
+      "noAskBoxOnTheScene": {
+        "askBox": false,
+        "marker": "scene",
+        "ok": true
+      },
+      "theBarOpensBesideTheSelection": {
+        "bar": {
+          "mode": "bar",
+          "beside": "t-deposit",
+          "side": "right",
+          "about": "About Pay the deposit",
+          "label": "Ask about Pay the deposit",
+          "rows": [
+            {
+              "kind": "act",
+              "text": "Give it a new date · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Finish it · do it"
+            },
+            {
+              "kind": "act",
+              "text": "Note why this is here · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Move it to another list · asks more"
+            },
+            {
+              "kind": "show",
+              "text": "Show a list of tasks · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show tasks by due · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show a calendar of tasks · a panel"
+            },
+            {
+              "kind": "place",
+              "text": "Go to The lists"
+            },
+            {
+              "kind": "place",
+              "text": "Go to What is left"
+            },
+            {
+              "kind": "place",
+              "text": "Go to Who may do what"
+            }
+          ],
+          "asked": null,
+          "answer": null,
+          "answers": 0,
+          "offers": [],
+          "ghostOnTheCard": false,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "itCompletesActsPlacesRecordsAndShow": {
+        "shows": [
+          {
+            "kind": "show",
+            "text": "Show a list of tasks · a panel"
+          },
+          {
+            "kind": "show",
+            "text": "Show tasks by due · a panel"
+          },
+          {
+            "kind": "show",
+            "text": "Show a calendar of tasks · a panel"
+          },
+          {
+            "kind": "ask",
+            "text": "Ask: ‘show’"
+          }
+        ],
+        "places": [
+          {
+            "kind": "place",
+            "text": "Open The week · a view you have"
+          },
+          {
+            "kind": "record",
+            "text": "This week · Lists"
+          },
+          {
+            "kind": "ask",
+            "text": "Ask: ‘week’"
+          }
+        ],
+        "records": [
+          {
+            "kind": "record",
+            "text": "Book the van · Tasks"
+          },
+          {
+            "kind": "ask",
+            "text": "Ask: ‘van’"
+          }
+        ],
+        "asking": [
+          {
+            "kind": "ask",
+            "text": "Ask: ‘what is left to do here?’"
+          }
+        ],
+        "ok": true
+      },
+      "anAnswerIsACardBesideTheRecordItsChangeAGhost": {
+        "card": {
+          "mode": "answer",
+          "beside": "t-deposit",
+          "side": "right",
+          "about": "About Pay the deposit",
+          "label": "Answer about Pay the deposit",
+          "rows": [],
+          "asked": "“what is left to do here?”",
+          "answer": "About Pay the deposit: an answer to “what is left to do here?”, as drafted.",
+          "answers": 1,
+          "offers": [],
+          "ghostOnTheCard": true,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "before": {
+          "done": false,
+          "batch": null,
+          "via": null,
+          "interaction": null
+        },
+        "notMade": {
+          "done": false,
+          "batch": null,
+          "via": null,
+          "interaction": null
+        },
+        "accepted": {
+          "done": true,
+          "batch": "batch:184h5s6t5a6n:1",
+          "via": "ai:ai-mvjwc2xv-3831g8",
+          "interaction": "ai-mvjwc2xv-3831g8"
+        },
+        "undone": {
+          "done": false,
+          "batch": "undo:184h5s6t5a6n:2",
+          "via": null,
+          "interaction": null
+        },
+        "ok": true
+      },
+      "aFollowUpOnTheCardReplacesTheAnswer": {
+        "followed": {
+          "mode": "answer",
+          "beside": "t-deposit",
+          "side": "right",
+          "about": "About Pay the deposit",
+          "label": "Answer about Pay the deposit",
+          "rows": [],
+          "asked": "“and after that?”",
+          "answer": "About Pay the deposit: an answer to “and after that?”, as drafted.",
+          "answers": 1,
+          "offers": [],
+          "ghostOnTheCard": true,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "escapePutsItAwayWithTheKeyboardBack": {
+        "away": {
+          "card": false,
+          "keyboard": "DIV"
+        },
+        "ok": true
+      },
+      "activityKeepsEachAskOnce": {
+        "asks": [
+          "you asked AI to answer “and after that?” · Pay the depositOffered Finish it, Archive the task, Waits for: Get the second quoteOffered, not yet takenstub-thinkingAsk again",
+          "you asked AI to answer “what is left to do here?” · Pay the depositTook Finish it, Archive the task, Waits for: Get the second quotestub-thinkingAsk again"
+        ],
+        "ok": true
+      },
+      "aShowRowDrawsAPanelKeptAsALens": {
+        "drawn": {
+          "keep": true,
+          "card": false
+        },
+        "kept": true,
+        "ok": true
+      },
+      "theMenuOpensItOnWhatItWasOpenedOn": {
+        "fromTheMenu": {
+          "mode": "bar",
+          "beside": "t-book",
+          "side": "right",
+          "about": "About Book the van",
+          "label": "Ask about Book the van",
+          "rows": [
+            {
+              "kind": "act",
+              "text": "Mark it done · do it"
+            },
+            {
+              "kind": "act",
+              "text": "Note why this is here · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Move it to another list · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Rename · asks more"
+            },
+            {
+              "kind": "show",
+              "text": "Show a list of tasks · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show tasks by due · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show a calendar of tasks · a panel"
+            },
+            {
+              "kind": "place",
+              "text": "Go to The lists"
+            },
+            {
+              "kind": "place",
+              "text": "Go to What is left"
+            },
+            {
+              "kind": "place",
+              "text": "Go to Who may do what"
+            }
+          ],
+          "asked": null,
+          "answer": null,
+          "answers": 0,
+          "offers": [],
+          "ghostOnTheCard": false,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "onPagesTheCardStandsByTheRecordsHeading": {
+        "pagesBox": {
+          "askBox": false,
+          "marker": "pages"
+        },
+        "pagesBar": {
+          "mode": "bar",
+          "beside": "page",
+          "side": "below",
+          "about": "About Pay the deposit",
+          "label": "Ask about Pay the deposit",
+          "rows": [
+            {
+              "kind": "act",
+              "text": "Give it a new date · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Finish it · do it"
+            },
+            {
+              "kind": "act",
+              "text": "Note why this is here · asks more"
+            },
+            {
+              "kind": "act",
+              "text": "Move it to another list · asks more"
+            },
+            {
+              "kind": "show",
+              "text": "Show a list of tasks · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show tasks by due · a panel"
+            },
+            {
+              "kind": "show",
+              "text": "Show a calendar of tasks · a panel"
+            },
+            {
+              "kind": "place",
+              "text": "Go to The lists"
+            },
+            {
+              "kind": "place",
+              "text": "Go to What is left"
+            },
+            {
+              "kind": "place",
+              "text": "Go to Who may do what"
+            }
+          ],
+          "asked": null,
+          "answer": null,
+          "answers": 0,
+          "offers": [],
+          "ghostOnTheCard": false,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "pagesAnswer": {
+          "mode": "answer",
+          "beside": "page",
+          "side": "below",
+          "about": "About Pay the deposit",
+          "label": "Answer about Pay the deposit",
+          "rows": [],
+          "asked": "“what is left to do here?”",
+          "answer": "About Pay the deposit: an answer to “what is left to do here?”, as drafted.",
+          "answers": 1,
+          "offers": [],
+          "ghostOnTheCard": true,
+          "keyboard": "quick-ask-input",
+          "overIt": false,
+          "inTheWindow": true
+        },
+        "ok": true
+      },
+      "aiOffHidesTheQuickAskCleanly": {
+        "off": {
+          "scene": {
+            "marker": false,
+            "card": false,
+            "askBox": false,
+            "menuRow": false,
+            "find": true
+          },
+          "pages": {
+            "marker": false,
+            "card": false,
+            "askBox": false,
+            "menuRow": false,
+            "find": true
+          }
+        },
+        "ok": true
+      }
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

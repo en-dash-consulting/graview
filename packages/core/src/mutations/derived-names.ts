@@ -77,3 +77,24 @@ export function relationActTitles(act: RelationActName, ends: { readonly to: str
   const near = ends.one ? `${act === "connect" ? "Set" : "Clear"} the ${ends.to}` : `${act === "connect" ? "Link" : "Unlink"} ${withA(ends.to)}`;
   return { title: `${near}${tail}`, fromTheOtherEnd: `${act === "connect" ? "Link" : "Unlink"} ${withA(ends.from)}${tail}` };
 }
+
+/**
+ * A cardinality-one relation a kind holds to its own kind — a threat part
+ * of another — read "Set the threat", which says nothing of which threat.
+ * Its own words say it instead: a description that names the record ("The
+ * family it belongs to") is the act's noun, "Set the family it belongs
+ * to"; without one, the relation's words follow, "Set the threat (part
+ * of)". Undefined for any other relation, whose titles stay as they read.
+ */
+export function ownKindWords(
+  kind: string,
+  relation: string,
+  edge: { readonly to: readonly string[] | "*"; readonly cardinality?: string | undefined; readonly description?: string | undefined },
+  spoken: (relation: string) => string,
+): { readonly to: string } | { readonly also: string } | undefined {
+  if (edge.cardinality !== "one" || edge.to === "*" || edge.to.length !== 1 || edge.to[0] !== kind) return undefined;
+  const said = edge.description?.trim().replace(/\.$/, "");
+  // A name for the record, not a sentence about it: "The family it belongs to", one clause, a few words.
+  if (said && /^the\s+\S/i.test(said) && !/[.;:!?,()]/.test(said) && said.split(/\s+/).length <= 8) return { to: said.replace(/^the\s+/i, "") };
+  return { also: spoken(relation) };
+}

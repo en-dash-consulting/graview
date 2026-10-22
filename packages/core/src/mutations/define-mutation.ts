@@ -60,9 +60,53 @@ export function argumentsTaken(definition: { readonly creates?: readonly string[
   return takesAnId(definition) ? [...keys, "id"] : keys;
 }
 
-/** "does not take "color"; it takes "id", "quote"" — the one sentence for an argument an act does not take. */
-const doesNotTake = (stray: readonly string[], takes: readonly string[]): string =>
-  `does not take ${stray.map((key) => `"${key}"`).join(", ")}; it takes ${takes.length > 0 ? takes.map((key) => `"${key}"`).join(", ") : "nothing"}`;
+/**
+ * "does not take "color"; it takes "id", "quote"" — the one sentence for an
+ * argument an act does not take. A field another act writes is said with
+ * that act (`writtenBy`): "whatToDo is set by set-verdict", so the caller
+ * learns where it goes rather than only where it does not.
+ */
+const doesNotTake = (stray: readonly string[], takes: readonly string[], writtenBy: Readonly<Record<string, readonly string[]>> = {}): string => {
+  const elsewhere = stray.filter((key) => writtenBy[key]?.length);
+  const other = stray.filter((key) => !writtenBy[key]?.length);
+  const said = [
+    ...(other.length > 0 ? [`does not take ${other.map((key) => `"${key}"`).join(", ")}`] : []),
+    ...elsewhere.map((key) => `${key} is set by ${writtenBy[key]!.join(" or ")}`),
+  ];
+  return `${said.join("; ")}; it takes ${takes.length > 0 ? takes.map((key) => `"${key}"`).join(", ") : "nothing"}`;
+};
+
+/** The schema under its optional, nullable and default wrappers. */
+function bareSchema(schema: unknown): { readonly type?: string } | undefined {
+  let def = (schema as { _zod?: { def?: { type?: string; innerType?: unknown } } } | undefined)?._zod?.def;
+  for (let depth = 0; def?.innerType && depth < 8; depth++) def = (def.innerType as { _zod?: { def?: { type?: string; innerType?: unknown } } })._zod?.def;
+  return def;
+}
+
+/** A string that is exactly a number, as JSON writes one: "8.6", "-3", "1e3"; never " 8", "8 kg" or "". */
+const NUMBER_SPELLED = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+
+/**
+ * A NUMBER GIVEN AS ITS DIGITS IS THAT NUMBER. An agent writing JSON, a
+ * form read as text, a CSV — each hands a number field "8.6", and the act
+ * refused it as "expected number". At the one boundary every act's
+ * arguments cross, a string that is exactly a number, given for an
+ * argument whose schema is a number, is read as that number and nothing is
+ * said; anything else is left for the schema to refuse as before.
+ */
+export function numbersSpelled(input: unknown, given: unknown): unknown {
+  const shape = (input as { shape?: Record<string, unknown> } | undefined)?.shape;
+  if (!shape || typeof given !== "object" || given === null || Array.isArray(given)) return given;
+  let read: Record<string, unknown> | undefined;
+  for (const [key, value] of Object.entries(given as Record<string, unknown>)) {
+    if (typeof value !== "string" || !NUMBER_SPELLED.test(value) || bareSchema(shape[key])?.type !== "number") continue;
+    const number = Number(value);
+    if (!Number.isFinite(number)) continue;
+    read ??= { ...(given as Record<string, unknown>) };
+    read[key] = number;
+  }
+  return read ?? given;
+}
 
 function requestedId(rawArgs: unknown): string | undefined {
   if (typeof rawArgs !== "object" || rawArgs === null) return undefined;
@@ -196,7 +240,7 @@ export function compileMutation<S extends AnySchema>(
    * its next call, needs exactly the id it asked for or an honest no.
    */
   const requested = takesAnId(definition) ? requestedId(rawArgs) : undefined;
-  const given = requested === undefined ? rawArgs : withoutId(rawArgs as Record<string, unknown>);
+  const given = numbersSpelled(definition.input, requested === undefined ? rawArgs : withoutId(rawArgs as Record<string, unknown>));
   /*
    * AN ARGUMENT THE ACT DOES NOT TAKE IS REFUSED, by every act (FR-121; a
    * derived edit since FR-110). A plain `z.object` strips what it does not
@@ -209,7 +253,7 @@ export function compileMutation<S extends AnySchema>(
   const taken = argumentsTaken(definition);
   if (taken && typeof given === "object" && given !== null && !Array.isArray(given)) {
     const stray = Object.keys(given).filter((key) => !taken.includes(key) && (given as Record<string, unknown>)[key] !== undefined);
-    if (stray.length > 0) throw new InvalidArguments(definition.name, [{ path: [], message: doesNotTake(stray, taken) }]);
+    if (stray.length > 0) throw new InvalidArguments(definition.name, [{ path: [], message: doesNotTake(stray, taken, definition.writtenBy) }]);
   }
   const parsed = definition.input.safeParse(given);
   if (!parsed.success) {
@@ -218,7 +262,7 @@ export function compileMutation<S extends AnySchema>(
     throw new InvalidArguments(
       definition.name,
       parsed.error.issues.map((issue) =>
-        issue.code === "unrecognized_keys" && takes.length > 0 ? { ...issue, message: doesNotTake(issue.keys, takes) } : issue,
+        issue.code === "unrecognized_keys" && takes.length > 0 ? { ...issue, message: doesNotTake(issue.keys, takes, definition.writtenBy) } : issue,
       ),
     );
   }

@@ -9,7 +9,7 @@ import { formatWords } from "./format-words.js";
 import { respellDocument } from "./respell.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
-import { capitalize } from "../capital.js";
+import { capitalize, lowerFirst } from "../capital.js";
 import { kindListWords, sortTypeOfDocumentField } from "../kind-list.js";
 import type { KindList } from "../views/types.js";
 import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, archivesSentence, tidyingSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
@@ -270,7 +270,7 @@ function computedSentences(plural: string, was: Record<string, unknown> | undefi
   const exprOf = (c: unknown) => (typeof c === "string" ? c : (c as { expr?: string } | undefined)?.expr);
   for (const name of keys(now)) {
     if (was?.[name] === undefined) out.push(`${said} work out "${name}".`);
-    else if (exprOf(was[name]) !== exprOf(now![name])) out.push(`How ${plural.charAt(0).toLowerCase()}${plural.slice(1)} work out "${name}" changes.`);
+    else if (exprOf(was[name]) !== exprOf(now![name])) out.push(`How ${lowerFirst(plural)} work out "${name}" changes.`);
     else if (!same(typeof was[name] === "string" ? { expr: was[name] } : was[name], typeof now![name] === "string" ? { expr: now![name] } : now![name])) out.push(`${said}' "${name}" is described differently.`);
   }
   for (const name of keys(was)) if (now?.[name] === undefined) out.push(`${said} no longer work out "${name}".`);

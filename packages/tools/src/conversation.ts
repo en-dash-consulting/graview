@@ -15,7 +15,7 @@ import {
   type Store,
   type Violation,
 } from "@graview/core";
-import { argumentWords, readableFields, tellApart } from "@graview/core/words";
+import { argumentWords, lowerFirst, readableFields, tellApart } from "@graview/core/words";
 import { search } from "@graview/core/search";
 import { formFields, type FormField } from "@graview/core/forms";
 import type { HostAi } from "./ai.js";
@@ -581,7 +581,7 @@ export function graphResponder<S extends AnySchema>(
        * is a make somebody spelled with a capital. A bare value says what it
        * is, "make Tesla", "phone (555) 298-1878", or a VIN reads as noise.
        */
-      const quietly = (label: string) => (label === label.toUpperCase() ? label : label.charAt(0).toLowerCase() + label.slice(1));
+      const quietly = (label: string) => (label === label.toUpperCase() ? label : lowerFirst(label));
       /*
        * SAID, NOT PRINTED: a day as a person says one ("due Sep 1, 2026", not
        * "due 2026-09-01"), and a one-word yes/no as the state it is

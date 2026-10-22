@@ -5,7 +5,7 @@ import { valueWords } from "../schema/value-words.js";
 import { evaluateExpr, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";
-import { capitalized, EMPTY_GRAPH, formatMoney, formatValue, namerOf, type Money, type TemplatePart } from "./template.js";
+import { capitalized, EMPTY_GRAPH, formatMoney, formatValue, headlineSaid, namerOf, type Money, type TemplatePart } from "./template.js";
 import { parseTemplate } from "./template-parse.js";
 import { fieldSpecOf } from "./field-spec.js";
 import { linkedRefsOf, type LinkedRecordRef, type LinkedRelation } from "../schema/linked.js";
@@ -533,7 +533,8 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
     case "headline": {
       const said = say(block.parts, ctx);
       const level = Math.min(6, Math.max(1, (first ? ctx.firstHeading : undefined) ?? ctx.heading ?? 3));
-      return withProblem({ t: "headline", level, text: said.text }, said.problem);
+      // Opening on a count in words, it starts as a sentence does: "Seventy-two indicators", not "seventy-two indicators".
+      return withProblem({ t: "headline", level, text: block.parts ? headlineSaid(block.parts, said.text) : said.text }, said.problem);
     }
     case "number": {
       const judged = judge(block.value, ctx);
