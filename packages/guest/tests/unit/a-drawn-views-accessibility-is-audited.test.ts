@@ -98,7 +98,7 @@ describe("an audit of a drawn view", () => {
     expect(audit(`<p><svg viewBox="0 0 10 10"><circle r="4"/></svg> Critical</p><svg role="img" aria-label="Severity"><circle r="4"/></svg>`).problems).toEqual([]);
   });
 
-  it("flags a box that says it scrolls and takes no keyboard, and passes a labelled one", () => {
+  it("flags a box that says it scrolls and takes no keyboard, and passes a labeled one", () => {
     expect(rules(audit(`<div style="overflow-y: auto; max-height: 80px"><p>Long</p></div>`))).toEqual(["scroll-region"]);
     expect(audit(`<div style="overflow: auto" tabindex="0" role="group" aria-label="Every threat"><p>Long</p></div>`).problems).toEqual([]);
   });

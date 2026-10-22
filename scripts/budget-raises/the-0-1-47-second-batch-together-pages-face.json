@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 336,
+  "gzipped": 127,
+  "note": "Raised when the second half of 0.1.47 came together: a view's link carrying the host's address (`hrefOf` through the pages' router, #357) on top of the first batch measured 640_585 / 235_321 against the 640_249 / 235_194 the first batch was raised to: 336 / 127 more."
+}
