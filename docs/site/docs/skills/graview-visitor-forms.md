@@ -16,7 +16,7 @@ An RSVP link is a page with nothing on it but the question. The visitor has no a
 
 ```json "forms": { "rsvp": { "act": "add-guest", "title": "RSVP", "intro": "Tell us whether you can come on June 14.", "fields": ["name", "email", "coming", "note"], "say": "The hosts will write to you a week before." } } ```
 
-`act` makes a record or acts on none — a visitor is shown no record to pick. `fields` is the order asked; unsaid, every argument a visitor could fill. `say` is what the visitor reads under "Received — thank you." `submit` is the button (the act's title, unsaid). `role` is the role the visitor holds: `visitor`, unsaid.
+`act` makes a record or acts on none — a visitor is shown no record to pick. `fields` is the order asked; unsaid, every argument a visitor could fill, its name first and then what must be answered. `say` is what the visitor reads under "Received — thank you." `submit` is the button (the act's title, unsaid). `role` is the role the visitor holds: `visitor`, unsaid.
 
 1. **Grant the role the act, and name it in no sight.**
 
@@ -47,6 +47,8 @@ npx graview check ./app.gdd.json
 ```
 
 A form is held to what a visitor can do: `form-unknown-act`, `form-act-on-a-record`, `form-without-sight` (no policy, or one that says nothing of who sees what: the visitor would be served every record), `form-act-not-granted`, `form-field-unknown`, `form-omits-required`, `form-field-unfillable` (a required picker over records the visitor is not served, or a field their sight keeps from them); and as warnings, `form-visitor-sees` (a sight serves the visitor a kind — to everybody, or by name where no picker asks for it) and `form-visitor-may-more` (the role may run acts no form opens). Report what it said.
+
+**Read what it asks.** `describe_place` with `forms/<name>` (or `graview describe <entry> --place forms/<name>`) says each field in the order asked: its label, a star where it must be answered, what it takes and its choices — as the visitor is asked it.
 
 **And try it.** Open `/forms/<name>` under `graview preview`, answer, and read the store as the host: the record is there, its author "a visitor via the … form". Then read `store.seenBy(visitor).snapshot()` — it should be empty — and the answers the page was sent should name no record.
 

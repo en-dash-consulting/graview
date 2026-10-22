@@ -385,11 +385,11 @@ const READ_TOOLS: readonly ToolDefinition[] = [
     name: "describe_place",
     title: "Say what a place shows",
     description:
-      "Say what one place of the app shows you, as a person in your seat would see it: its headings, its figures as drawn, its lists with each record's title and what its card or row says, the headings a list is grouped under, what an empty list says, and any block that could not be worked out. Pass a place's slug (\"home\", a lens's address like \"the-offers\", a kind's like \"offers\") or a record's id, and width 390 for a phone. Use it after a change to check what somebody now sees, instead of guessing.",
+      "Say what one place of the app shows you, as a person in your seat would see it: its headings, its figures as drawn, its lists with each record's title and what its card or row says, the headings a list is grouped under, what an empty list says, the forms it offers (each field in the order asked, its label, whether it must be answered, what it takes and its choices), and any block that could not be worked out. Pass a place's slug (\"home\", a lens's address like \"the-offers\", a kind's like \"offers\"), a record's id, or a visitor form's \"forms/<name>\", and width 390 for a phone. Use it after a change to check what somebody now sees, instead of guessing.",
     inputSchema: {
       type: "object",
       properties: {
-        place: { type: "string", description: "\"home\", a place's slug, or a record's id." },
+        place: { type: "string", description: "\"home\", a place's slug, a record's id, or \"forms/<name>\" for a visitor form." },
         width: { type: "number", description: "The screen's width in CSS pixels; 390 is a phone, 1440 when unsaid." },
       },
       required: ["place"],

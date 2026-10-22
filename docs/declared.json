@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T01:45:25.429Z",
+  "at": "2026-10-22T18:43:32.220Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/every-lens.gdd.json",
   "checks": {
@@ -144,7 +144,6 @@
         "/shifts",
         "/members",
         "/places/the-week",
-        "/rooms",
         "/places/the-month",
         "/places/who-covers-what",
         "/places/the-floor",
@@ -167,9 +166,10 @@
       ],
       "ok": true
     },
-    "theHiddenKindIsReachedByLinkNavAndSearch": {
+    "theHiddenKindLeavesTheNavAndIsReachedByLinkAndSearch": {
       "byLink": true,
-      "byNav": true,
+      "inNav": false,
+      "listedWhileOn": true,
       "bySearch": true,
       "ok": true
     },
@@ -180,8 +180,8 @@
           "headings": [
             "h2 A small start, on three fronts.",
             "h3 The offers",
-            "h3 The way in",
-            "h3 For afterwards",
+            "h3 The way in 3",
+            "h3 For afterwards 1",
             "h3 Open questions"
           ],
           "figures": [
@@ -210,8 +210,8 @@
           "headings": [
             "h2 A small start, on three fronts.",
             "h3 The offers",
-            "h3 The way in",
-            "h3 For afterwards",
+            "h3 The way in 3",
+            "h3 For afterwards 1",
             "h3 Open questions"
           ],
           "figures": [
@@ -240,8 +240,8 @@
           "headings": [
             "h2 A small start, on three fronts.",
             "h3 The offers",
-            "h3 The way in",
-            "h3 For afterwards",
+            "h3 The way in 3",
+            "h3 For afterwards 1",
             "h3 Open questions"
           ],
           "figures": [
@@ -270,8 +270,8 @@
           "headings": [
             "h2 A small start, on three fronts.",
             "h3 The offers",
-            "h3 The way in",
-            "h3 For afterwards",
+            "h3 The way in 3",
+            "h3 For afterwards 1",
             "h3 Open questions"
           ],
           "figures": [
@@ -306,8 +306,8 @@
           "headings": [
             "h2 A small start, on three fronts.",
             "h3 The offers",
-            "h3 The way in",
-            "h3 For afterwards",
+            "h3 The way in 3",
+            "h3 For afterwards 1",
             "h3 Open questions"
           ],
           "figures": [
@@ -337,8 +337,8 @@
           "headings": [
             "h2 A small start, on three fronts.",
             "h3 The offers",
-            "h3 The way in",
-            "h3 For afterwards",
+            "h3 The way in 3",
+            "h3 For afterwards 1",
             "h3 Open questions"
           ],
           "figures": [
@@ -368,8 +368,8 @@
           "headings": [
             "h2 A small start, on three fronts.",
             "h3 The offers",
-            "h3 The way in",
-            "h3 For afterwards",
+            "h3 The way in 3",
+            "h3 For afterwards 1",
             "h3 Open questions"
           ],
           "figures": [
@@ -399,8 +399,8 @@
           "headings": [
             "h2 A small start, on three fronts.",
             "h3 The offers",
-            "h3 The way in",
-            "h3 For afterwards",
+            "h3 The way in 3",
+            "h3 For afterwards 1",
             "h3 Open questions"
           ],
           "figures": [
@@ -463,8 +463,8 @@
           "onPage": {
             "present": true,
             "headings": [
-              "h3 The way in",
-              "h3 For afterwards"
+              "h3 The way in 3",
+              "h3 For afterwards 1"
             ],
             "figures": [
               "$8,400",
@@ -485,8 +485,8 @@
           "onPicture": {
             "present": true,
             "headings": [
-              "h4 The way in",
-              "h4 For afterwards"
+              "h4 The way in 3",
+              "h4 For afterwards 1"
             ],
             "figures": [
               "$8,400",
@@ -509,8 +509,8 @@
           "onPage": {
             "present": true,
             "headings": [
-              "h3 The way in",
-              "h3 For afterwards"
+              "h3 The way in 3",
+              "h3 For afterwards 1"
             ],
             "figures": [
               "$8,400",
@@ -531,8 +531,8 @@
           "onPicture": {
             "present": true,
             "headings": [
-              "h4 The way in",
-              "h4 For afterwards"
+              "h4 The way in 3",
+              "h4 For afterwards 1"
             ],
             "figures": [
               "$8,400",
@@ -555,8 +555,8 @@
           "onPage": {
             "present": true,
             "headings": [
-              "h3 The way in",
-              "h3 For afterwards"
+              "h3 The way in 3",
+              "h3 For afterwards 1"
             ],
             "figures": [
               "$8,400",
@@ -577,8 +577,8 @@
           "onPicture": {
             "present": true,
             "headings": [
-              "h4 The way in",
-              "h4 For afterwards"
+              "h4 The way in 3",
+              "h4 For afterwards 1"
             ],
             "figures": [
               "$8,400",
@@ -601,8 +601,8 @@
           "onPage": {
             "present": true,
             "headings": [
-              "h3 The way in",
-              "h3 For afterwards"
+              "h3 The way in 3",
+              "h3 For afterwards 1"
             ],
             "figures": [
               "$8,400",
@@ -623,8 +623,8 @@
           "onPicture": {
             "present": true,
             "headings": [
-              "h4 The way in",
-              "h4 For afterwards"
+              "h4 The way in 3",
+              "h4 For afterwards 1"
             ],
             "figures": [
               "$8,400",
@@ -847,10 +847,10 @@
           "onPage": {
             "present": true,
             "headings": [
-              "h3 What hurts",
-              "h3 What they could do",
-              "h3 What they asked for",
-              "h3 What is simply true"
+              "h3 What hurts 3",
+              "h3 What they could do 1",
+              "h3 What they asked for 1",
+              "h3 What is simply true 1"
             ],
             "figures": [],
             "listed": [
@@ -874,10 +874,10 @@
           "onPicture": {
             "present": true,
             "headings": [
-              "h4 What hurts",
-              "h4 What they could do",
-              "h4 What they asked for",
-              "h4 What is simply true"
+              "h4 What hurts 3",
+              "h4 What they could do 1",
+              "h4 What they asked for 1",
+              "h4 What is simply true 1"
             ],
             "figures": [],
             "listed": [
@@ -903,10 +903,10 @@
           "onPage": {
             "present": true,
             "headings": [
-              "h3 What hurts",
-              "h3 What they could do",
-              "h3 What they asked for",
-              "h3 What is simply true"
+              "h3 What hurts 3",
+              "h3 What they could do 1",
+              "h3 What they asked for 1",
+              "h3 What is simply true 1"
             ],
             "figures": [],
             "listed": [
@@ -930,10 +930,10 @@
           "onPicture": {
             "present": true,
             "headings": [
-              "h4 What hurts",
-              "h4 What they could do",
-              "h4 What they asked for",
-              "h4 What is simply true"
+              "h4 What hurts 3",
+              "h4 What they could do 1",
+              "h4 What they asked for 1",
+              "h4 What is simply true 1"
             ],
             "figures": [],
             "listed": [
@@ -959,10 +959,10 @@
           "onPage": {
             "present": true,
             "headings": [
-              "h3 What hurts",
-              "h3 What they could do",
-              "h3 What they asked for",
-              "h3 What is simply true"
+              "h3 What hurts 3",
+              "h3 What they could do 1",
+              "h3 What they asked for 1",
+              "h3 What is simply true 1"
             ],
             "figures": [],
             "listed": [
@@ -986,10 +986,10 @@
           "onPicture": {
             "present": true,
             "headings": [
-              "h4 What hurts",
-              "h4 What they could do",
-              "h4 What they asked for",
-              "h4 What is simply true"
+              "h4 What hurts 3",
+              "h4 What they could do 1",
+              "h4 What they asked for 1",
+              "h4 What is simply true 1"
             ],
             "figures": [],
             "listed": [
@@ -1015,10 +1015,10 @@
           "onPage": {
             "present": true,
             "headings": [
-              "h3 What hurts",
-              "h3 What they could do",
-              "h3 What they asked for",
-              "h3 What is simply true"
+              "h3 What hurts 3",
+              "h3 What they could do 1",
+              "h3 What they asked for 1",
+              "h3 What is simply true 1"
             ],
             "figures": [],
             "listed": [
@@ -1042,10 +1042,10 @@
           "onPicture": {
             "present": true,
             "headings": [
-              "h4 What hurts",
-              "h4 What they could do",
-              "h4 What they asked for",
-              "h4 What is simply true"
+              "h4 What hurts 3",
+              "h4 What they could do 1",
+              "h4 What they asked for 1",
+              "h4 What is simply true 1"
             ],
             "figures": [],
             "listed": [
@@ -1216,6 +1216,7 @@
             ]
           ],
           "moves": 4,
+          "buttons": 0,
           "spills": false
         },
         "scene 1440×900 light": {
@@ -1245,6 +1246,7 @@
             ]
           ],
           "moves": 4,
+          "buttons": 0,
           "spills": false
         },
         "pages 1440×900 dark": {
@@ -1274,6 +1276,7 @@
             ]
           ],
           "moves": 4,
+          "buttons": 0,
           "spills": false
         },
         "scene 1440×900 dark": {
@@ -1303,6 +1306,7 @@
             ]
           ],
           "moves": 4,
+          "buttons": 0,
           "spills": false
         },
         "pages 390×844 light": {
@@ -1332,6 +1336,7 @@
             ]
           ],
           "moves": 4,
+          "buttons": 0,
           "spills": false
         },
         "scene 390×844 light": {
@@ -1361,6 +1366,7 @@
             ]
           ],
           "moves": 4,
+          "buttons": 0,
           "spills": false
         },
         "pages 390×844 dark": {
@@ -1390,6 +1396,7 @@
             ]
           ],
           "moves": 4,
+          "buttons": 0,
           "spills": false
         },
         "scene 390×844 dark": {
@@ -1419,6 +1426,7 @@
             ]
           ],
           "moves": 4,
+          "buttons": 0,
           "spills": false
         }
       },
@@ -1493,15 +1501,12 @@
       },
       "ok": true
     },
-    "aCardMovedByTheKeyboardIsTheActAndUndoPutsItBack": {
+    "aCardCarriedByTheKeyboardIsTheActAndUndoPutsItBack": {
       "boards": {
         "pages 1440×900 light": {
           "reached": true,
-          "offered": [
-            "Doing",
-            "Done"
-          ],
-          "focusedFirst": true,
+          "pickedUp": "Write the brief, picked up. Todo, 1 of 2. Arrow keys move it, Space drops it, Escape puts it back.",
+          "carried": "Doing, 1 of 2.",
           "after": [
             [
               "todo",
@@ -1555,11 +1560,8 @@
         },
         "scene 1440×900 light": {
           "reached": true,
-          "offered": [
-            "Doing",
-            "Done"
-          ],
-          "focusedFirst": true,
+          "pickedUp": "Write the brief, picked up. Todo, 1 of 2. Arrow keys move it, Space drops it, Escape puts it back.",
+          "carried": "Doing, 1 of 2.",
           "after": [
             [
               "todo",
@@ -1613,11 +1615,8 @@
         },
         "pages 1440×900 dark": {
           "reached": true,
-          "offered": [
-            "Doing",
-            "Done"
-          ],
-          "focusedFirst": true,
+          "pickedUp": "Write the brief, picked up. Todo, 1 of 2. Arrow keys move it, Space drops it, Escape puts it back.",
+          "carried": "Doing, 1 of 2.",
           "after": [
             [
               "todo",
@@ -1671,11 +1670,8 @@
         },
         "scene 1440×900 dark": {
           "reached": true,
-          "offered": [
-            "Doing",
-            "Done"
-          ],
-          "focusedFirst": true,
+          "pickedUp": "Write the brief, picked up. Todo, 1 of 2. Arrow keys move it, Space drops it, Escape puts it back.",
+          "carried": "Doing, 1 of 2.",
           "after": [
             [
               "todo",
@@ -1729,11 +1725,8 @@
         },
         "pages 390×844 light": {
           "reached": true,
-          "offered": [
-            "Doing",
-            "Done"
-          ],
-          "focusedFirst": true,
+          "pickedUp": "Write the brief, picked up. Todo, 1 of 2. Arrow keys move it, Space drops it, Escape puts it back.",
+          "carried": "Doing, 1 of 2.",
           "after": [
             [
               "todo",
@@ -1787,11 +1780,8 @@
         },
         "scene 390×844 light": {
           "reached": true,
-          "offered": [
-            "Doing",
-            "Done"
-          ],
-          "focusedFirst": true,
+          "pickedUp": "Write the brief, picked up. Todo, 1 of 2. Arrow keys move it, Space drops it, Escape puts it back.",
+          "carried": "Doing, 1 of 2.",
           "after": [
             [
               "todo",
@@ -1845,11 +1835,8 @@
         },
         "pages 390×844 dark": {
           "reached": true,
-          "offered": [
-            "Doing",
-            "Done"
-          ],
-          "focusedFirst": true,
+          "pickedUp": "Write the brief, picked up. Todo, 1 of 2. Arrow keys move it, Space drops it, Escape puts it back.",
+          "carried": "Doing, 1 of 2.",
           "after": [
             [
               "todo",
@@ -1903,11 +1890,8 @@
         },
         "scene 390×844 dark": {
           "reached": true,
-          "offered": [
-            "Doing",
-            "Done"
-          ],
-          "focusedFirst": true,
+          "pickedUp": "Write the brief, picked up. Todo, 1 of 2. Arrow keys move it, Space drops it, Escape puts it back.",
+          "carried": "Doing, 1 of 2.",
           "after": [
             [
               "todo",
@@ -1988,6 +1972,7 @@
             ]
           ],
           "moves": 0,
+          "buttons": 0,
           "spills": false
         },
         "scene 1440×900 light": {
@@ -2014,6 +1999,7 @@
             ]
           ],
           "moves": 0,
+          "buttons": 0,
           "spills": false
         },
         "pages 1440×900 dark": {
@@ -2040,6 +2026,7 @@
             ]
           ],
           "moves": 0,
+          "buttons": 0,
           "spills": false
         },
         "scene 1440×900 dark": {
@@ -2066,6 +2053,7 @@
             ]
           ],
           "moves": 0,
+          "buttons": 0,
           "spills": false
         },
         "pages 390×844 light": {
@@ -2092,6 +2080,7 @@
             ]
           ],
           "moves": 0,
+          "buttons": 0,
           "spills": false
         },
         "scene 390×844 light": {
@@ -2118,6 +2107,7 @@
             ]
           ],
           "moves": 0,
+          "buttons": 0,
           "spills": false
         },
         "pages 390×844 dark": {
@@ -2144,6 +2134,7 @@
             ]
           ],
           "moves": 0,
+          "buttons": 0,
           "spills": false
         },
         "scene 390×844 dark": {
@@ -2170,6 +2161,7 @@
             ]
           ],
           "moves": 0,
+          "buttons": 0,
           "spills": false
         }
       },
@@ -2204,6 +2196,7 @@
           ]
         ],
         "moves": 4,
+        "buttons": 0,
         "spills": false
       },
       "ok": true
@@ -2354,6 +2347,18 @@
       "bare": false,
       "ok": true
     },
+    "aCreatingFormAsksTheNameFirstThoughItsFieldsAreKeptSorted": {
+      "asked": [
+        "Name",
+        "Amount",
+        "Effort",
+        "Fee",
+        "Margin",
+        "Stage",
+        "Weight"
+      ],
+      "ok": true
+    },
     "aMoneyFormShowsItsCurrencyAndTakesAnAmountAsWritten": {
       "box": {
         "type": "text",
@@ -2362,6 +2367,305 @@
         "symbol": "$"
       },
       "made": "said",
+      "ok": true
+    },
+    "theDrawnHomeIsHomeWhenPagesFirstNamesAnotherPlace": {
+      "landed": {
+        "face": "scene",
+        "path": "/places/overview",
+        "stop": "#focus=aggregate%3Aweek&in.view=this-week"
+      },
+      "home": {
+        "where": {
+          "face": "pages",
+          "path": "/",
+          "stop": "#focus=aggregate%3Aweek&in.view=this-week"
+        },
+        "headline": "Two findings, worst first"
+      },
+      "ok": true
+    },
+    "aCardSaysItsGlanceAndNothingMore": {
+      "findingText": "A token is written to the logCriticalSecurity",
+      "ok": true
+    },
+    "aChoiceAnotherChipSharesSaysItsField": {
+      "riskText": "Card data leaksLikelihood: lowImpact: highBilling",
+      "ok": true
+    },
+    "aPlaceNamedAsAListIsOnTheBarOnce": {
+      "bar": [
+        {
+          "path": "/",
+          "text": "Home"
+        },
+        {
+          "path": "/findings",
+          "text": "Findings"
+        },
+        {
+          "path": "/modules",
+          "text": "Modules"
+        },
+        {
+          "path": "/tasks",
+          "text": "Tasks"
+        },
+        {
+          "path": "/insights",
+          "text": "Insights"
+        },
+        {
+          "path": "/risks",
+          "text": "Risks"
+        },
+        {
+          "path": "/root-causes",
+          "text": "All root causes"
+        },
+        {
+          "path": "/weeks",
+          "text": "Weeks"
+        },
+        {
+          "path": "/places/root-causes",
+          "text": "Root causes"
+        },
+        {
+          "path": "/places/this-week",
+          "text": "This week"
+        },
+        {
+          "path": "/map",
+          "text": "Connections"
+        }
+      ],
+      "byLink": true,
+      "ok": true
+    },
+    "aNestedHeadlineIsASectionHeadingAndTheAppsLineIsSaidOnce": {
+      "home": {
+        "1440×900": {
+          "headlines": [
+            "h2 1 The review, at a glance",
+            "h3 2 Where the problems are, by the part of the app",
+            "h3 2 When they are planned, now or later"
+          ],
+          "lines": 1
+        },
+        "390×844": {
+          "headlines": [
+            "h2 1 The review, at a glance",
+            "h3 2 Where the problems are, by the part of the app",
+            "h3 2 When they are planned, now or later"
+          ],
+          "lines": 1
+        }
+      },
+      "ok": true
+    },
+    "aRowGroupLaysTextAndColumnsSideBySideAndWrapsOnAPhone": {
+      "rows": {
+        "1440×900": {
+          "texts": {
+            "tops": [
+              338,
+              338,
+              338,
+              338
+            ],
+            "lefts": [
+              140,
+              434,
+              728,
+              1022
+            ],
+            "widths": [
+              278,
+              278,
+              278,
+              278
+            ],
+            "spills": false
+          },
+          "columns": {
+            "tops": [
+              395,
+              395
+            ],
+            "lefts": [
+              140,
+              728
+            ],
+            "widths": [
+              572,
+              572
+            ],
+            "spills": false
+          },
+          "spills": false
+        },
+        "390×844": {
+          "texts": {
+            "tops": [
+              636,
+              686,
+              737,
+              788
+            ],
+            "lefts": [
+              20,
+              20,
+              20,
+              20
+            ],
+            "widths": [
+              350,
+              350,
+              350,
+              350
+            ],
+            "spills": false
+          },
+          "columns": {
+            "tops": [
+              844,
+              1026
+            ],
+            "lefts": [
+              20,
+              20
+            ],
+            "widths": [
+              350,
+              350
+            ],
+            "spills": false
+          },
+          "spills": false
+        }
+      },
+      "ok": true
+    },
+    "aListOfRowsGivesEachRecordTheListsWidthAndItsWholeName": {
+      "listed": {
+        "1440×900": {
+          "width": 1160,
+          "rows": [
+            {
+              "width": 1160,
+              "chip": false,
+              "whole": true
+            },
+            {
+              "width": 1160,
+              "chip": false,
+              "whole": true
+            },
+            {
+              "width": 1160,
+              "chip": false,
+              "whole": true
+            },
+            {
+              "width": 1160,
+              "chip": false,
+              "whole": true
+            }
+          ]
+        },
+        "390×844": {
+          "width": 350,
+          "rows": [
+            {
+              "width": 350,
+              "chip": false,
+              "whole": true
+            },
+            {
+              "width": 350,
+              "chip": false,
+              "whole": true
+            },
+            {
+              "width": 350,
+              "chip": false,
+              "whole": true
+            },
+            {
+              "width": 350,
+              "chip": false,
+              "whole": true
+            }
+          ]
+        }
+      },
+      "ok": true
+    },
+    "badgesThatFollowOneAnotherSitOnOneLineOnACardAndAPage": {
+      "badges": {
+        "1440×900": {
+          "card": [
+            296,
+            296,
+            296
+          ],
+          "page": [
+            354,
+            354,
+            354
+          ]
+        },
+        "390×844": {
+          "card": [
+            317,
+            317,
+            317
+          ],
+          "page": [
+            416,
+            416,
+            416
+          ]
+        }
+      },
+      "ok": true
+    },
+    "aCareerCalendarSpansItsRecordsFirstToLast": {
+      "span": "The career · 1962–2023",
+      "ok": true
+    },
+    "aCoverageWithNothingLinkedSaysSoAndListsNoRows": {
+      "said": "No genres yet: link songs to genres.",
+      "songs": 0,
+      "ok": true
+    },
+    "aCoverageListsItsRowsInTheOrderItIsTold": {
+      "first": [
+        "release-love-me-do",
+        "release-please-please-me",
+        "release-with-the-beatles",
+        "release-a-hard-day-s-night"
+      ],
+      "last": "release-now-and-then",
+      "ok": true
+    },
+    "aListPastAPageShowsTheRestWhenAskedUnderTheRecordsTheyAreLinkedTo": {
+      "before": {
+        "listed": 100,
+        "button": "Show 58 more"
+      },
+      "after": {
+        "listed": 158,
+        "button": false,
+        "headings": [
+          "Harrison",
+          "Lennon",
+          "McCartney",
+          "Starkey"
+        ],
+        "focus": "A"
+      },
       "ok": true
     },
     "noPageThrew": {
