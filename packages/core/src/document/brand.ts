@@ -41,6 +41,7 @@ export function brandOf(document: GraviewDocument, findings: Finding[]): Brand {
     ...(logo ? { logo: logo.dark || logo.darkFallback === "invert" ? { light: logo.light, ...(logo.dark ? { dark: logo.dark } : { darkFallback: "invert" as const }) } : logo.light, logoAlt: logo.alt ?? name } : {}),
     ...(spec.favicon ? { favicon: spec.favicon } : {}),
     ...(document.description ? { subtitle: document.description } : {}),
+    ...(spec.subtitle === false ? { subtitleDrawn: false as const } : {}),
     ...(typography ? { typography } : {}),
     ...(spec.shape ? { shape: spec.shape } : {}),
     ...(spec.accents ? { accents: spec.accents } : {}),
