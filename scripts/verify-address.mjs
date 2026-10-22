@@ -96,7 +96,7 @@ const VIEWS_PAGES = { order: ["view:to-do", "task"], first: "view:to-do", hide: 
 /** Where the tasks are served with views that bleed to a phone's edges, and page slots beside a record's view. */
 const FITTED_BASE = "/apps/a5";
 /** A page slot on each kind: the task's under a view that sits above the page, the person's under one that replaces it. */
-const FITTED_VIEWS = { task: { page: [{ headline: "Read the sources" }, { text: "Where it stands: {status}" }] }, person: { page: [{ headline: "Who they are" }] } };
+const FITTED_VIEWS = { task: { page: [{ headline: "Read the sources" }, { text: "Each source, in turn." }] }, person: { page: [{ headline: "Who they are" }] } };
 const HERO = { name: "hero", attach: "home", cardinality: "many", bleed: true };
 const HERO_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="hero">The things to do</div>\`));`;
 const BRIEF = { name: "brief", attach: "task", cardinality: "one", bleed: true };
@@ -1023,6 +1023,15 @@ try {
   report.checks.aViewThatBleedsSpansAPhoneLessItsSafeAreasAndTheColumnAtADesk = {
     seen: fittedSeen,
     ok: fittedHold((fitted, name) => spans(fitted.home, name) && spans(fitted.record, name)),
+  };
+  /* Roadmap feature:page-slot-blocks-on-a-kind-with-a-record-view-…: the view, then the slot's blocks, then the facts; a view that replaces the page draws alone. */
+  report.checks.aRecordPagesSlotIsDrawnUnderItsViewAndAboveTheFacts = {
+    seen: fittedSeen,
+    ok: fittedHold(({ order }) => /Read the sources/.test(order.slotSays ?? "") && /Each source/.test(order.slotSays ?? "") && order.slot[0] >= order.view[1] && order.facts[0] >= order.slot[1]),
+  };
+  report.checks.aViewThatReplacesThePageDrawsAloneAndItsSlotIsNot = {
+    seen: fittedSeen,
+    ok: fittedHold(({ replaced }) => replaced.drawn === "Ada" && !replaced.slot && !replaced.saysSlot && !replaced.facts),
   };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);

@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 71,
+  "gzipped": 23,
+  "note": "Raised when a record view that sits above the page came to say what the kind's page slot under it says (Threat Watch on Graview Cloud): `registerWorkerView` hands the slot's `says` on, so the record page leaves out the facts the slot already said. Measured at 29_666 / 13_624 against 29_595 / 13_601 minified and gzipped."
+}

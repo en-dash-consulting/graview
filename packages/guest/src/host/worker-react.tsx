@@ -261,6 +261,14 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
   const draft = definition.draft === true;
   const view = workerView(definition, { ...(before && !draft ? { fallback: before } : {}), ...(one && manifest.replaces !== "page" && before ? { beside: before } : {}) });
   if (one && manifest.replaces === "page") markReplacesPage(view);
+  /*
+   * THE KIND'S PAGE SLOT, UNDER IT (Roadmap feature:page-slot-blocks-…): a
+   * view beside what was drawn before draws that under it — the kind's page
+   * blocks, where it has them — so what those blocks say is said by this
+   * view too, and the record page does not say it again among the facts.
+   */
+  const says = (before as { says?: unknown } | undefined)?.says;
+  if (one && manifest.replaces !== "page" && typeof says === "function") (view as { says?: unknown }).says = says;
   if (manifest.bleed === true) markBleeds(view);
   views.register(manifest.attach as KindOfSchema<S>, cell, view as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
   return views;
