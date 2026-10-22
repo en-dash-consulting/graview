@@ -1,6 +1,6 @@
 # graview-worker-view
 
-`graview-worker-view` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+`graview-worker-view` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -25,8 +25,8 @@ Every view comes with a manifest the host enforces:
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
-- A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
-- `gestures: true` lets it hear a wheel, a drag and a pinch (below).
+- A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`).
+- `gestures: true` lets it hear a wheel, a drag and a pinch (below). `bleed: true` draws it edge to edge on a phone (`graview-view-drawing`).
 - `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path, and lets the view place a record's video (`<graview-video>`) and open the host's full-screen viewer: `graview-view-drawing` says how a view shows them.
 
 A manifest that names a kind, an edge or an act the app does not declare is refused before the view starts.
@@ -34,7 +34,7 @@ A manifest that names a kind, an edge or an act the app does not declare is refu
 ### The global
 
 ```js
-graview.style(css)              // the view's one stylesheet
+graview.style(css)              // a stylesheet, after any before it
 graview.onProps((props) => …)   // every push of what it is shown (and at once)
 graview.props                   // the last push
 graview.render(markup)          // draw: a string, graview.html`…`, or nodes
@@ -55,13 +55,11 @@ graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute(
 
 With `gestures: true`, `graview.on("wheel" | "drag" | "pinch", selector, fn)` hears them over what the selector matches, at most once a frame with the deltas summed. Each carries `x`, `y` (pixels from the matched element's top left) and its `width`, `height`. A `wheel` has `deltaX`, `deltaY`, `deltaMode`, `ctrlKey`, `metaKey`; a `drag` has `phase` (`start`, `move`, `end`), `pointerId`, `button`, `pressure` and `dx`, `dy` since the last; a `pinch` (Safari's, or a trackpad's Control-wheel) has `phase`, `scale` since the last and `rotation`. The page scrolls everywhere else; say `touch-action: none` on what drags. Without the flag the check says so.
 
-HTML, SVG and one stylesheet, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, and the only images a view may show (the app's logo, the app's own images, the pictures on records) are `graview-view-drawing`. What the host leaves out it lists in `refused`.
+HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, and the only images a view may show (the app's logo, the app's own images, the pictures on records) are `graview-view-drawing`. What the host leaves out it lists in `refused`.
 
 ### Links
 
-`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows, on both faces. `<a href="https://…">` is drawn as text. A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places.
-
-A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in navigate, `data-filter="stage:building"` on a link — the words the list's own arranging line writes, so the address is `/features?filter= stage%3Abuilding` and can be shared. A lens narrows the records it is handed; a blocks lens lists what its own `where` says. Any destination may take a **section**, a heading's words or an element's id (`section: "Every feature"`, `data-section`): the page scrolls there and gives it the keyboard (`#every-feature`). On the scene a list is the kind's stop narrowed (`in.filter`); a section is looked for there too. A filter on a field the kind lacks, or a choice it lacks, goes nowhere and says why (`Features have no field "stag" to filter by; they filter by …`), so link to the list narrowed rather than to a lens per filter; a lens kept only as a link target can be hidden (set-lens-hidden, `graview-pages`).
+`<a data-record="offer:7">`, `<a data-place="the-packages">` and a whole card or row with `data-record` are links the host follows on a click, a phone's tap and Enter, to what the viewer may see. An `<a href>` goes out only to an address a record was handed. A card, a link out, what a tap inside it reaches, and going narrowed or to a section are `graview-view-links`.
 
 ### Writes
 
@@ -91,7 +89,7 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or the one `--record <id>` names. Run it on an empty seed too. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
 3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means the view never ran: a page with a Content-Security-Policy needs `worker-src blob:` and `style-src 'unsafe-inline'`, and the note under the plain face names what it lacks.
 4. Toggle the app to dark. Does the view restyle?
-5. Follow each link, narrowed and to a section, and see it land where it says. A view that writes is pressed as `graview-view-forms` says.
+5. Follow each link, and tap each card on a phone, as `graview-view-links` says. A view that writes is pressed as `graview-view-forms` says.
 
 ### What the check cannot see
 

@@ -124,8 +124,8 @@ export interface GuestHostOptions<S extends AnySchema> {
    * `render` is dropped unread: a frame guest draws in its own document.
    */
   readonly onRender?: (records: readonly unknown[]) => void;
-  /** An open-kit view's stylesheet (FR-90). Without it, a `style` is dropped unread. */
-  readonly onStyle?: (css: string) => void;
+  /** An open-kit view's stylesheets, every one it gave, in order (FR-90). Without it, a `style` is dropped unread. */
+  readonly onStyle?: (sheets: readonly string[]) => void;
   /** An open-kit view's runtime has drawn a push (FR-94). Without it, a `pushed` is dropped unread. */
   readonly onPushed?: (push: number, ms: number) => void;
   /** A message came past the allowance: the host stops a view that floods, rather than reading on (FR-94). */
@@ -409,8 +409,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         options.onRender(data.records);
         return;
       }
-      if (data.type === "style" && typeof data.css === "string" && options.onStyle) {
-        options.onStyle(data.css);
+      if (data.type === "style" && Array.isArray(data.sheets) && data.sheets.every((one) => typeof one === "string") && options.onStyle) {
+        options.onStyle(data.sheets);
         return;
       }
       if (data.type === "hears" && Array.isArray(data.events) && options.onHears) {

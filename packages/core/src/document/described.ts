@@ -31,7 +31,27 @@ export type DescribedPart =
       /** What it says when it lists nothing. */
       readonly empty?: string;
       readonly more?: number;
-    };
+    }
+  /**
+   * A view the host keeps, where a record's page draws it (`DescribePlaceOptions.views`):
+   * by its manifest's name, with what it drew when the host said (`parts`, a headless run's).
+   * `replaces`: it is the whole page, and nothing of the record's own is drawn beside it.
+   */
+  | { readonly t: "view"; readonly name: string; readonly title?: string; readonly replaces?: true; readonly parts?: readonly DescribedPart[] };
+
+/**
+ * A VIEW THE HOST KEEPS, as `describePlace` is told of it: its manifest's
+ * `name`, `title`, `attach`, `cardinality` and `replaces` — and, where the
+ * host ran it headless, what it drew (`parts`).
+ */
+export interface DescribedHostView {
+  readonly name: string;
+  readonly title?: string;
+  readonly attach: string;
+  readonly cardinality: "one" | "many";
+  readonly replaces?: "page";
+  readonly parts?: readonly DescribedPart[];
+}
 
 export interface DescribedProblem {
   /** Where: the block's path in the declaration (`views.home.3`, `lenses.1.options.blocks.0`, `views.offer.card.5`), with the record it was about. */

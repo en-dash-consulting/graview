@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 284,
+  "gzipped": 80,
+  "note": "Raised when a worker view's every stylesheet came to be drawn (Roadmap feature:views-a-second-graview-style-call-silently-drops-the-first-stylesheet): the drawing judges each sheet the view gave on its own, in order, under one budget between them (`sanitizeStylesheets`), and the view's runtime the host carries as text keeps the list. Measured at 182_106 / 69_318 against 181_822 / 69_238 minified and gzipped."
+}

@@ -1,5 +1,5 @@
 import { dayAsRead, dayOfMonthAsRead, fieldWords, humanizeField, labelOf, logoOf, type Arrangement, type Principal, type Violation } from "@graview/core";
-import { KindFigure, NotifyButton, RecordInteractionsDoor, useMarkup } from "@graview/primitives";
+import { KindFigure, NotifyButton, RecordInteractionsDoor, ROVING_ITEM, useMarkup, useRoving } from "@graview/primitives";
 import {
   DerivedForm,
   ListPage,
@@ -899,14 +899,17 @@ function Acts({
   /** The act just done here, so its "Notify me" stands beside the acts (Roadmap f-notify-subscriptions). */
   const [did, setDid] = useState<string | null>(null);
   const controls = useRef<HTMLDivElement | null>(null);
-  const form = useRef<HTMLDivElement | null>(null);
   /*
-   * THE KEYBOARD GOES INTO THE FORM AN ACT OPENS, and back to the act when
-   * the form is sent or put away with Escape: a reader heard "expanded"
-   * and then had to find the form by hand, and a form sent from the
-   * keyboard left it nowhere.
+   * THE KEYBOARD GOES INTO THE FORM AN ACT OPENS, at what it asks
+   * (`autoFocus`), and back to the act when the form is sent or put away
+   * with Escape: a reader heard "expanded" and then had to find the form by
+   * hand, and a form sent from the keyboard left it nowhere. A form that
+   * stands open on an empty list is where the page begins, not a press, and
+   * takes nothing.
    */
-  const into = () => requestAnimationFrame(() => form.current?.querySelector<HTMLElement>("input:not([type=hidden]), select, textarea, button")?.focus());
+  const [pressed, setPressed] = useState(false);
+  // The acts are one stop for Tab: the arrows go along them, a letter to the next that begins with it.
+  const roving = useRoving<HTMLDivElement>({ flow: "both", letters: true });
   const backTo = (id: string) =>
     requestAnimationFrame(() => controls.current?.querySelector<HTMLElement>(`[data-affordance="${id.replace(/["\\]/g, "\\$&")}"]`)?.focus());
   // What takes the record away — archive, merge, remove — waits one press behind the rest (FR-173).
@@ -920,7 +923,18 @@ function Acts({
           <h2 className="th-h2">{title}</h2>
         </header>
       ) : null}
-      <div className="th-controls" ref={controls}>
+      <div
+        className="th-controls"
+        role="toolbar"
+        aria-label={title ?? "What can be done"}
+        ref={(element) => {
+          controls.current = element;
+          roving.ref.current = element;
+        }}
+        onKeyDown={roving.onKeyDown}
+        onFocus={roving.onFocus}
+        data-graview-roving={roving["data-graview-roving"]}
+      >
         {shown.map((affordance) => (
           <button
             key={affordance.id}
@@ -928,6 +942,7 @@ function Acts({
             className={`th-btn${open === affordance.id ? " on" : ""}`}
             data-affordance={affordance.id}
             data-rank={affordance.rank}
+            {...{ [ROVING_ITEM]: "" }}
             // The act it runs, so a right-click on it offers "Notify me when someone does this".
             data-graview-act={affordance.mutation}
             autoFocus={more && affordance === aside[0]}
@@ -936,7 +951,7 @@ function Acts({
               setFailed(null);
               if (affordance.open.length > 0) {
                 setOpen(open === affordance.id ? null : affordance.id);
-                if (open !== affordance.id) into();
+                setPressed(true);
                 return;
               }
               try {
@@ -954,7 +969,7 @@ function Acts({
           </button>
         ))}
         {shown.length < actions.affordances.length ? (
-          <button type="button" className="th-btn th-quiet" aria-expanded={false} onClick={() => setMore(true)}>
+          <button type="button" className="th-btn th-quiet" aria-expanded={false} onClick={() => setMore(true)} {...{ [ROVING_ITEM]: "" }}>
             Show {actions.affordances.length - shown.length} more
           </button>
         ) : null}
@@ -963,7 +978,6 @@ function Acts({
         open === affordance.id ? (
           <div
             key={affordance.id}
-            ref={form}
             onKeyDown={(event) => {
               if (event.key !== "Escape" || event.defaultPrevented) return;
               event.preventDefault();
@@ -974,6 +988,7 @@ function Acts({
             <Ask
               affordance={affordance}
               context={context}
+              takesKeyboard={pressed}
               onDone={() => {
                 setOpen(null);
                 setDid(affordance.mutation);
@@ -1010,10 +1025,13 @@ function Ask({
   affordance,
   context,
   onDone,
+  takesKeyboard = false,
 }: {
   affordance: Affordance;
   context: Ctx;
   onDone: () => void;
+  /** Opened by a press: the keyboard goes to what it asks. */
+  takesKeyboard?: boolean;
 }) {
   const { store, principal } = context;
   const mutation = store.allMutations().find((candidate) => candidate.name === affordance.mutation);
@@ -1027,6 +1045,7 @@ function Ask({
         open={affordance.open}
         label={affordance.label}
         {...(principal ? { principal } : {})}
+        autoFocus={takesKeyboard}
         onDone={onDone}
       />
     </div>
@@ -1094,6 +1113,8 @@ function Repairs({ context, repairs }: { context: Ctx; repairs: readonly { mutat
             only={opened.missing ?? []}
             label={opened.label}
             {...(principal ? { principal } : {})}
+            // Pressed, the repair's question takes the keyboard.
+            autoFocus
             onDone={() => setOpen(null)}
           />
         </div>

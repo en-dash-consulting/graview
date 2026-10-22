@@ -49,7 +49,7 @@ const session = createGuestHost({
     channel.port1.postMessage(message);
   },
   onRender: (records) => drawing.apply(records),
-  onStyle: (css) => drawing.style(css),
+  onStyle: (sheets) => drawing.style(sheets),
   onPushed: (push) => pushed.push(push),
   input: () => ({ nodes: store.graph.allNodes().map(({ id }) => ({ id })) }),
 });

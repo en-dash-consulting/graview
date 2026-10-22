@@ -1,5 +1,5 @@
 import { humanizeField, labelOf, logoOf, weekdayAsRead, type Arrangement, type Violation } from "@graview/core";
-import { KindFigure, useMarkup } from "@graview/primitives";
+import { KindFigure, ROVING_ITEM, useMarkup, useRoving } from "@graview/primitives";
 import {
   ListPage,
   createPageRegistry,
@@ -701,6 +701,14 @@ function Acts({
   );
   const [failed, setFailed] = useState<string | null>(null);
   const [more, setMore] = useState(false);
+  /*
+   * THE KEYBOARD GOES INTO THE FORM AN ACT OPENS, at what it asks — a form
+   * standing open on an empty list is where the page begins, and takes
+   * nothing — and the acts are one stop for Tab: the arrows go along them,
+   * a letter to the next that begins with it.
+   */
+  const [pressed, setPressed] = useState(false);
+  const roving = useRoving<HTMLDivElement>({ flow: "both", letters: true });
   // What takes the record away — archive, merge, remove — waits one press behind the rest (FR-173).
   const aside = actions.affordances.filter((affordance) => affordance.destructive || affordance.setsAside);
   const shown = more || aside.length < 2 ? actions.affordances : actions.affordances.filter((affordance) => !aside.includes(affordance));
@@ -713,7 +721,7 @@ function Acts({
         </header>
       ) : null}
       {actions.affordances.length > 0 ? (
-        <div className="ro-controls">
+        <div className="ro-controls" role="toolbar" aria-label={title ?? "What can be done"} {...roving}>
           {shown.map((affordance) => (
             <button
               key={affordance.id}
@@ -721,12 +729,14 @@ function Acts({
               className={`ro-btn${open === affordance.id ? " on" : ""}`}
               data-affordance={affordance.id}
               data-rank={affordance.rank}
+              {...{ [ROVING_ITEM]: "" }}
               autoFocus={more && affordance === aside[0]}
               aria-expanded={open === affordance.id}
               onClick={() => {
                 setFailed(null);
                 if (affordance.open.length > 0) {
                   setOpen(open === affordance.id ? null : affordance.id);
+                  setPressed(true);
                   return;
                 }
                 try {
@@ -740,7 +750,7 @@ function Acts({
             </button>
           ))}
           {shown.length < actions.affordances.length ? (
-            <button type="button" className="ro-btn ro-quiet" aria-expanded={false} onClick={() => setMore(true)}>
+            <button type="button" className="ro-btn ro-quiet" aria-expanded={false} onClick={() => setMore(true)} {...{ [ROVING_ITEM]: "" }}>
               Show {actions.affordances.length - shown.length} more
             </button>
           ) : null}
@@ -748,7 +758,7 @@ function Acts({
       ) : null}
       {actions.affordances.map((affordance) =>
         open === affordance.id ? (
-          <Ask key={affordance.id} affordance={affordance} context={context} onDone={() => setOpen(null)} />
+          <Ask key={affordance.id} affordance={affordance} context={context} takesKeyboard={pressed} onDone={() => setOpen(null)} />
         ) : null,
       )}
       {failed ? <p className="ro-warn ro-quiet">{failed}</p> : null}
@@ -776,7 +786,7 @@ function Acts({
   );
 }
 
-function Ask({ affordance, context, onDone }: { affordance: Affordance; context: Ctx; onDone: () => void }) {
+function Ask({ affordance, context, onDone, takesKeyboard = false }: { affordance: Affordance; context: Ctx; onDone: () => void; takesKeyboard?: boolean }) {
   const { store, principal } = context;
   const mutation = store.allMutations().find((candidate) => candidate.name === affordance.mutation);
   if (!mutation) return null;
@@ -789,6 +799,8 @@ function Ask({ affordance, context, onDone }: { affordance: Affordance; context:
         open={affordance.open}
         label={affordance.label}
         {...(principal ? { principal } : {})}
+        // Opened by a press: the keyboard goes to what it asks.
+        autoFocus={takesKeyboard}
         onDone={onDone}
       />
     </div>
@@ -862,6 +874,8 @@ function Repairs({
             only={opened.missing ?? []}
             label={opened.label}
             {...(principal ? { principal } : {})}
+            // Pressed, the repair's question takes the keyboard.
+            autoFocus
             onDone={() => setOpen(null)}
           />
         </div>

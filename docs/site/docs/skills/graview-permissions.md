@@ -1,6 +1,6 @@
 # graview-permissions
 
-`graview-permissions` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
+`graview-permissions` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -45,6 +45,8 @@ The coach sees "Show the installation" in the person's menu on the app bar and t
 1. **Say who sees what, for every kind — and which fields.** `sees` keeps records (and, with `hide` or `fields`, some of their fields) from seats the way grants keep acts. It is a job of its own: the `graview-sight` skill.
 
 1. **Say which kind is the people.** `people: true` on one kind (a document's `"people": true`; the installation's `user` says it): a record of it whose id is a principal's id IS that person. Then: - `{ roles: ["participant"], kinds: ["match"], via: "givenBy" }` shows a seat a match only where `givenBy` joins it to their own record — each Secret Santa giver sees their match, not the one they receive in (`own` would show both). - `{ mutations: ["take-back"], ownEnd: true }` holds a connect or sever to the seat's own end of the link: a voter takes back their own vote. Every link the act touches is held, so a connect on a relation of one that would replace somebody else's is refused. - A document act's `"to": "$me"` (or `"set": { "champion": "$me" }`) is the acting person's record — the tool stops asking who, a seat with no record is refused with a sentence, and only that person can undo it. - A document says each by a named edit, previewed in words: `set-people` (`kind`, `people`), `add-grant` / `remove-grant`, `add-sight` / `remove-sight` (a removal names it by roles and acts or kinds).
+
+1. **Open one act to people with no account.** An RSVP or a sign-up is a grant to a `visitor` role the host mints per answer, a sight that never names it, and `forms.<name>` saying the act: the `graview-visitor-forms` skill.
 
 ### Worked examples
 

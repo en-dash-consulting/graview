@@ -156,7 +156,8 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
       const at = document.activeElement;
       const free = !at || at === document.body || at === document.documentElement || at === input.current || at === place;
       if (!free) return;
-      const line = place?.querySelector<HTMLElement>('[role="group"][aria-label="Arrange"] :is(button, input)');
+      // The first the line draws: on a phone it folds Sort into "Arrange", and a folded control takes no keys.
+      const line = [...(place?.querySelectorAll<HTMLElement>('[role="group"][aria-label="Arrange"] :is(button, input)') ?? [])].find((one) => one.checkVisibility?.() ?? true);
       if (line) return line.focus({ preventScroll: true });
       /*
        * The line comes with the place's picture, which may be fetched the

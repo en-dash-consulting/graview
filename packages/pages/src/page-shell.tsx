@@ -151,7 +151,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
                 },
               },
               ...(onRecord
-                ? [{ label: "Skip to what can be done", testid: "acts", go: () => void focusInto(document.querySelector<HTMLElement>("main [data-affordance]:not([disabled])") ?? document.querySelector<HTMLElement>("main")) }]
+                ? [{ label: "Skip to what can be done", testid: "acts", go: () => void focusInto(document.querySelector<HTMLElement>("main [data-affordance]:not([disabled]):not([tabindex='-1'])") ?? document.querySelector<HTMLElement>("main [data-affordance]:not([disabled])") ?? document.querySelector<HTMLElement>("main")) }]
                 : []),
             ]}
           />
@@ -192,11 +192,31 @@ export function PageMain<S extends AnySchema>({
   // Somebody above owns the landmark: the host page, or the app's own shell.
   const Tag = (context.embedded || context.framed ? "section" : "main") as "main";
   return (
-    <Tag style={{ ...column, ...style }} {...rest}>
+    <Tag style={{ ...column, ...style }} data-graview-page-main="" {...rest}>
       {children}
     </Tag>
   );
 }
+
+/**
+ * A VIEW DRAWN EDGE TO EDGE ON A PHONE (a worker view's `bleed: true`).
+ * On a face 680 pixels wide or less the page's column fills it, so its
+ * side gutter is all that stands between the view and the edge: the view's
+ * box takes the gutter back, less the device's safe areas, and is that much
+ * wider — what it draws is not clipped short of the edge. Wider than that
+ * it is the column's width, as any view is.
+ */
+export function Bleed({ when, children }: { readonly when: boolean; readonly children: ReactNode }) {
+  if (!when) return <>{children}</>;
+  return (
+    <div data-graview-bleed="" style={{ display: "grid", minWidth: 0 }}>
+      <style>{BLEED_CSS}</style>
+      {children}
+    </div>
+  );
+}
+
+const BLEED_CSS = `@media (max-width:680px){[data-graview-bleed]{margin-inline:min(0px,calc(env(safe-area-inset-left,0px) - var(--graview-page-gutter,20px))) min(0px,calc(env(safe-area-inset-right,0px) - var(--graview-page-gutter,20px)))}}`;
 
 /**
  * A PAGE'S OWN TITLE (FR-131): said under the app's name, which the bar

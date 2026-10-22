@@ -100,6 +100,14 @@ function Stack({ notices, at, anchor, board }: { readonly notices: readonly Held
   );
 }
 
+/** "Meta+Z Control+Z" as a person reads it: "⌘Z or Ctrl+Z". */
+const keysSaid = (keys: string) =>
+  keys
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((key) => key.replace(/^Meta\+/, "⌘").replace(/^Control\+/, "Ctrl+").replace(/^Alt\+/, "Alt+"))
+    .join(" or ");
+
 function NoticeCard({ notice, board }: { readonly notice: HeldNotice; readonly board: NoticeBoard }) {
   const tone = notice.tone ?? "info";
   const acts = [...(notice.action ? [notice.action] : []), ...(notice.actions ?? [])];
@@ -151,6 +159,7 @@ function NoticeCard({ notice, board }: { readonly notice: HeldNotice; readonly b
                 key={act.label}
                 type="button"
                 data-testid="notice-action"
+                {...(act.keys ? { "aria-keyshortcuts": act.keys, title: `${act.label} — ${keysSaid(act.keys)}` } : {})}
                 onClick={() => {
                   close();
                   act.onSelect?.();

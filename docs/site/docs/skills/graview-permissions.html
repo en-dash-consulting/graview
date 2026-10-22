@@ -1520,7 +1520,7 @@ main.page > section.tour-intro { padding-top: 64px; }
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-permissions</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-permissions</code> is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-permissions</code> is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1562,6 +1562,9 @@ main.page > section.tour-intro { padding-top: 64px; }
 </ol>
 <ol>
 <li><strong>Say which kind is the people.</strong> <code>people: true</code> on one kind (a document's <code>"people": true</code>; the installation's <code>user</code> says it): a record of it whose id is a principal's id IS that person. Then: - <code>{ roles: ["participant"], kinds: ["match"], via: "givenBy" }</code> shows a seat a match only where <code>givenBy</code> joins it to their own record — each Secret Santa giver sees their match, not the one they receive in (<code>own</code> would show both). - <code>{ mutations: ["take-back"], ownEnd: true }</code> holds a connect or sever to the seat's own end of the link: a voter takes back their own vote. Every link the act touches is held, so a connect on a relation of one that would replace somebody else's is refused. - A document act's <code>"to": "$me"</code> (or <code>"set": { "champion": "$me" }</code>) is the acting person's record — the tool stops asking who, a seat with no record is refused with a sentence, and only that person can undo it. - A document says each by a named edit, previewed in words: <code>set-people</code> (<code>kind</code>, <code>people</code>), <code>add-grant</code> / <code>remove-grant</code>, <code>add-sight</code> / <code>remove-sight</code> (a removal names it by roles and acts or kinds).</li>
+</ol>
+<ol>
+<li><strong>Open one act to people with no account.</strong> An RSVP or a sign-up is a grant to a <code>visitor</code> role the host mints per answer, a sight that never names it, and <code>forms.&lt;name&gt;</code> saying the act: the <code>graview-visitor-forms</code> skill.</li>
 </ol>
 <h3>Worked examples</h3>
 <ul>

@@ -1,5 +1,5 @@
 import type { AnySchema, KindOfSchema, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, isDefaultView, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useContext, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
@@ -38,6 +38,8 @@ export interface WorkerViewDefinition {
   readonly file?: (href: string) => string | undefined;
   /** The `https:` origins its images may come from by address (WorkerViewOptions.images): none by default. */
   readonly images?: { readonly origins: readonly string[] };
+  /** The `https:` origins its links may go to beyond what it was handed (WorkerViewOptions.links): none by default. */
+  readonly links?: { readonly origins: readonly string[] };
   /**
    * A VIEW PROPOSED AND NOT KEPT (FR-187): drawn where it attaches under
    * one line, "Draft — <title> · not kept", as the seat's drawn panel is
@@ -131,6 +133,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         ...(definition.asset ? { asset: definition.asset } : {}),
         ...(file ? { file } : {}),
         ...(definition.images ? { images: definition.images } : {}),
+        ...(definition.links ? { links: definition.links } : {}),
         /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
         files: () => latest.current.hostFiles,
       });
@@ -244,7 +247,9 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
     if (!views.home) throw new Error(`The worker view "${manifest.name}" is the home's body: draw it with workerHome, on the home.`);
     // A draft that fails says why in its place (FR-187): the app's own home standing there would picture the proposal as fine.
     const declared = definition.draft ? undefined : (views.homeView?.() as ViewComponent<AnySchema> | undefined);
-    views.home(workerView(definition, declared ? { fallback: declared } : {}) as unknown as ViewComponent<S>);
+    const home = workerView(definition, declared ? { fallback: declared } : {});
+    // Edge to edge on a phone, where its manifest says so: the pages face takes the gutter back for it.
+    views.home((manifest.bleed === true ? markBleeds(home) : home) as unknown as ViewComponent<S>);
     return views;
   }
   const cell = { cardinality: manifest.cardinality, fidelity: "full" } as const;
@@ -258,7 +263,17 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
   /* A draft (FR-187): no fallback, so a failure is said in its place, and no name, so nothing tidies it and the place menu offers it nothing to keep. */
   const draft = definition.draft === true;
   const view = workerView(definition, { ...(before && !draft ? { fallback: before } : {}), ...(one && manifest.replaces !== "page" && before ? { beside: before } : {}) });
-  views.register(manifest.attach as KindOfSchema<S>, cell, (one && manifest.replaces === "page" ? markReplacesPage(view) : view) as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
+  if (one && manifest.replaces === "page") markReplacesPage(view);
+  /*
+   * THE KIND'S PAGE SLOT, UNDER IT (Roadmap feature:page-slot-blocks-…): a
+   * view beside what was drawn before draws that under it — the kind's page
+   * blocks, where it has them — so what those blocks say is said by this
+   * view too, and the record page does not say it again among the facts.
+   */
+  const says = (before as { says?: unknown } | undefined)?.says;
+  if (one && manifest.replaces !== "page" && typeof says === "function") (view as { says?: unknown }).says = says;
+  if (manifest.bleed === true) markBleeds(view);
+  views.register(manifest.attach as KindOfSchema<S>, cell, view as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
   return views;
 }
 

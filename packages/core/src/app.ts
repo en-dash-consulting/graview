@@ -11,6 +11,7 @@ import type { AnySchema } from "./schema/schema.js";
 import type { ViewRegistry } from "./views/types.js";
 import type { HomeView, ViewSpecsByKind } from "./document/views.js";
 import type { PagesArrangement } from "./views/types.js";
+import type { VisitorFormDeclaration } from "./visitor-form-shape.js";
 
 /**
  * Everything one application declares, in one object. `graview check` and
@@ -251,6 +252,14 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * host hands them its own tokens.
    */
   readonly connections?: Readonly<Record<string, ConnectionSpec>>;
+  /**
+   * FORMS FOR VISITORS, by name (Roadmap f-public-forms): one act each,
+   * drawn alone for somebody with no account (`@graview/embed/form`) and
+   * run as a visitor the host mints per submission (`formVisitor`). What
+   * the visitor may do and see is the policy's, as for anybody: grant the
+   * form's role (`visitor`) its act, and name it in no sight.
+   */
+  readonly forms?: Readonly<Record<string, VisitorFormDeclaration>>;
 }
 
 /**

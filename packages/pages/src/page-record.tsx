@@ -1,8 +1,8 @@
 import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
-import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, useLined } from "@graview/primitives/pages";
-import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
+import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
@@ -29,7 +29,7 @@ import {
   rule,
   whoDid,
 } from "./page-typography.js";
-import { PageMain, PageTitle } from "./page-shell.js";
+import { Bleed, PageMain, PageTitle } from "./page-shell.js";
 import { HeadTrail } from "./place-here.js";
 import { capitalize } from "./page-typography.js";
 
@@ -63,6 +63,13 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const [doneAct, setDoneAct] = useState<string | null>(null);
   const actsHeading = useRef<HTMLHeadingElement | null>(null);
   const actForm = useRef<HTMLDivElement | null>(null);
+  /*
+   * THE ACTS ARE ONE STOP FOR TAB (`useRoving`), as a chosen card's are on
+   * the scene: the arrows go along them and a letter to the next that
+   * begins with it, where each act was a Tab stop of its own and the tenth
+   * was ten Tabs from the first (the journeys' relate on the pages).
+   */
+  const roving = useRoving<HTMLDivElement>({ flow: "both", letters: true });
   /** The act that opened the form, given the keyboard back. */
   const backTo = (asked: string) => {
     const opener = actsHeading.current?.parentElement?.querySelector<HTMLElement>(`[data-affordance="${asked.replace(/["\\]/g, "\\$&")}"]`);
@@ -187,7 +194,10 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
       {PageView && node ? (
         <section data-testid="record-view" style={{ display: "grid", minWidth: 0 }}>
           <DefaultViewElsewhere>
-            <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
+            {/* Edge to edge on a phone, where the view says `bleed` (Bleed). */}
+            <Bleed when={bleeds(ownPage)}>
+              <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
+            </Bleed>
           </DefaultViewElsewhere>
         </section>
       ) : null}
@@ -334,7 +344,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
       {!whole && (offered.length > 0 || facts.actions.withheld.length > 0) ? (
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-actions">
           <h2 style={h2} ref={actsHeading} tabIndex={-1}>What can be done</h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <div role="toolbar" aria-label="What can be done" {...roving} style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {shown.map((affordance) => {
               const opened = open === affordance.id;
               return (
@@ -352,18 +362,11 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   data-rank={affordance.rank}
                   // The act it runs, so a right-click on it can offer "Notify me when someone does this" (Roadmap f-notify-subscriptions).
                   data-graview-act={affordance.mutation}
+                  {...{ [ROVING_ITEM]: "" }}
                   // Shown by "Show N more", the first of them takes the keyboard, never <body>.
                   autoFocus={more && affordance === aside[0]}
                   aria-expanded={opened}
-                  onClick={() => {
-                    setOpen(opened ? null : affordance.id);
-                    /*
-                     * THE KEYBOARD GOES INTO THE FORM IT OPENED, as a list's
-                     * own beginning does: a reader heard "expanded" and then
-                     * had to find the form by hand, past every act after it.
-                     */
-                    if (!opened) requestAnimationFrame(() => actForm.current?.querySelector<HTMLElement>("input:not([type=hidden]), select, textarea, button")?.focus());
-                  }}
+                  onClick={() => setOpen(opened ? null : affordance.id)}
                   style={{
                     ...button,
                     ...(opened
@@ -376,7 +379,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               );
             })}
             {shown.length < offered.length ? (
-              <button type="button" aria-expanded={false} onClick={() => setMore(true)} style={{ ...button, ...quiet }} data-testid="record-actions-more">
+              <button type="button" aria-expanded={false} onClick={() => setMore(true)} style={{ ...button, ...quiet }} data-testid="record-actions-more" {...{ [ROVING_ITEM]: "" }}>
                 Show {offered.length - shown.length} more
               </button>
             ) : null}
@@ -416,6 +419,13 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   open={affordance.open}
                   // The button says what the heading says: this end's words.
                   label={affordance.label}
+                  /*
+                   * THE KEYBOARD GOES INTO THE FORM IT OPENED, at what it
+                   * asks, as a list's own beginning does: a reader heard
+                   * "expanded" and then had to find the form by hand, past
+                   * every act after it.
+                   */
+                  autoFocus
                   onDone={() => {
                     setOpen(null);
                     setDoneAct(affordance.mutation);

@@ -1,6 +1,6 @@
 # graview-tidying
 
-`graview-tidying` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.
+`graview-tidying` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 

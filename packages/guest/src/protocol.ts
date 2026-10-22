@@ -32,7 +32,7 @@
  * the kit's components, so its records name native elements and their
  * attributes, and it says two things more and hears one:
  *
- *   guest → host     { type: "style", nonce, css }                   (over the port: its one stylesheet)
+ *   guest → host     { type: "style", nonce, sheets }                (over the port: its stylesheets, in order)
  *   guest → host     { type: "pushed", nonce, push, ms }             (over the port: the runtime has drawn push `push`, in `ms`)
  *   host  → guest    { type: "dom-event", target, event, … }         (over the port: the viewer clicked, typed or chose on what it drew)
  *   host  → guest    { type: "notice", text }                        (over the port: something it did went nowhere, and why, for its console)
@@ -469,8 +469,8 @@ export type GuestRequest =
   | { readonly type: "render"; readonly nonce: string; readonly records: readonly unknown[] }
   /** The runtime's answer to a heartbeat, with the beat it was asked. */
   | { readonly type: "heartbeat"; readonly nonce: string; readonly beat: number }
-  /** An open-kit view's one stylesheet (FR-90): the host draws what the open kit allows of it. */
-  | { readonly type: "style"; readonly nonce: string; readonly css: string }
+  /** An open-kit view's stylesheets, every one it gave, in order (FR-90): the host draws what the open kit allows of each. */
+  | { readonly type: "style"; readonly nonce: string; readonly sheets: readonly string[] }
   /** An open-kit view's runtime has drawn props push `push`, its listeners taking `ms` (FR-94). */
   | { readonly type: "pushed"; readonly nonce: string; readonly push: number; readonly ms: number };
 

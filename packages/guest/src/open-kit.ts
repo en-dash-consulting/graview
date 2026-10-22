@@ -53,8 +53,12 @@
  *             the host page's own origin
  *   fragment  a reference to an element of the view's own drawing: `#id`
  *   style     a declaration list, sanitized as a stylesheet's declarations
+ *   link      a link out's address: `https:`, `mailto:` or `tel:`, drawn only
+ *             where the host allows it — an address a record the view was
+ *             shown holds, or an `https:` address on an origin the host lists
+ *             (host/external-links.ts)
  */
-export type OpenAttribute = "text" | "number" | "boolean" | "css" | "geometry" | "image" | "fragment" | "style" | { readonly oneOf: readonly string[] };
+export type OpenAttribute = "text" | "number" | "boolean" | "css" | "geometry" | "image" | "fragment" | "style" | "link" | { readonly oneOf: readonly string[] };
 
 export interface OpenElement {
   /** The attributes this element takes beyond its namespace's global ones, by canonical name. */
@@ -97,8 +101,14 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
   data: { attributes: { value: "text" } },
   del: { attributes: { datetime: "text" } },
   ins: { attributes: { datetime: "text" } },
-  /* A link goes to a record or a place of this app, never to an address (FR-93): it has no `href` to give. */
-  a: none,
+  /*
+   * A link goes to a record or a place of this app (FR-93, `data-record`,
+   * `data-place`), or out to an address the view was handed (2026-10-21):
+   * an `href` the host draws only where it is a record's own value, or on
+   * an origin the host lists, opening in a new tab with no opener and no
+   * referrer (host/external-links.ts).
+   */
+  a: { attributes: { href: "link" } },
   // lists
   ul: none, menu: none, dl: none, dt: none, dd: none,
   ol: { attributes: { start: "number", reversed: "boolean", type: { oneOf: ["1", "a", "A", "i", "I"] } } },
@@ -213,7 +223,7 @@ export const SVG_ELEMENTS: Readonly<Record<string, OpenElement>> = {
 export const NEVER_DRAWN = {
   html: ["script", "iframe", "frame", "frameset", "object", "embed", "applet", "portal", "link", "meta", "base", "style", "form", "template", "slot", "noscript", "audio", "video", "source", "track", "picture", "canvas", "dialog", "datalist", "main", "html", "head", "body", "title"],
   svg: ["image", "feImage", "filter", "foreignObject", "a", "script", "style", "animate", "animateMotion", "animateTransform", "set", "discard", "view", "switch", "cursor", "font-face"],
-  attributes: ["src (outside img)", "href", "xlink:href (outside a #fragment)", "srcset", "sizes", "action", "formaction", "ping", "poster", "background", "on*", "popover", "popovertarget", "autofocus", "accesskey", "contenteditable", "is", "nonce", "autocomplete", "form", "list"],
+  attributes: ["src (outside img)", "href (outside a, and on a any address the view was not handed)", "target", "rel", "download", "xlink:href (outside a #fragment)", "srcset", "sizes", "action", "formaction", "ping", "poster", "background", "on*", "popover", "popovertarget", "autofocus", "accesskey", "contenteditable", "is", "nonce", "autocomplete", "form", "list"],
 } as const;
 
 /** Roles that would make a view speak as the app's own chrome or notices. */

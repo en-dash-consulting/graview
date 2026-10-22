@@ -1,6 +1,6 @@
 # graview-lists
 
-`graview-lists` is one of Graview's 28 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
+`graview-lists` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 

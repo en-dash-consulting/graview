@@ -82,6 +82,7 @@ export default defineConfig({
       "@graview/primitives/scene": fileURLToPath(new URL("./packages/primitives/src/scene.ts", import.meta.url)),
       "@graview/primitives": src("primitives"),
       "@graview/pages/static": fileURLToPath(new URL("./packages/pages/src/static.ts", import.meta.url)),
+      "@graview/pages/visitor-form": fileURLToPath(new URL("./packages/pages/src/visitor-form.tsx", import.meta.url)),
       "@graview/pages": src("pages"),
       "@graview/ship/browser": fileURLToPath(new URL("./packages/ship/src/browser.ts", import.meta.url)),
       "@graview/ship/runtime": fileURLToPath(new URL("./packages/ship/src/runtime.ts", import.meta.url)),
@@ -90,6 +91,7 @@ export default defineConfig({
       // The subpath first, or the bare-name alias swallows it.
       "@graview/embed/pages": fileURLToPath(new URL("./packages/embed/src/pages.tsx", import.meta.url)),
       "@graview/embed/first-draw": fileURLToPath(new URL("./packages/embed/src/first-draw.ts", import.meta.url)),
+      "@graview/embed/form": fileURLToPath(new URL("./packages/embed/src/form.tsx", import.meta.url)),
       "@graview/embed": src("embed"),
       // The subpaths first, or the bare-name alias swallows them.
       "@graview/guest/host/frame": fileURLToPath(new URL("./packages/guest/src/host/frame.ts", import.meta.url)),

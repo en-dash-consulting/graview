@@ -28,6 +28,8 @@ export interface HeadlessInput {
   readonly accepts?: readonly { readonly kind: string; readonly field: string }[];
   /** The `https:` origins the host lists for a view's images (WorkerViewOptions.images). */
   readonly imageOrigins?: readonly string[];
+  /** The `https:` origins the host lists for a view's links beyond what it was handed (WorkerViewOptions.links). */
+  readonly linkOrigins?: readonly string[];
   /** The live host says where the app's own images live (WorkerViewOptions.asset): an image by that path is drawn. */
   readonly assets?: boolean;
   /** The app's page's origin, so the page's own address for one of its images is that image. */
@@ -37,14 +39,16 @@ export interface HeadlessInput {
   /** The kinds' lists the seat sees, by their plural's slug and by the kind's name: where a view may go by name besides a place. */
   readonly lists?: readonly string[];
   readonly limits: { readonly maxNodes: number; readonly messages: number; readonly pushMs: number };
+  /** Press what this selector matches, once it has drawn: the view hears the click as it would on a page (0.1.45). */
+  readonly press?: { readonly selector: string };
 }
 
 /** What the view said, in order: every message the host would have heard. */
 export interface HeadlessTranscript {
   /** Each batch of Remote DOM mutation records it sent. */
   readonly renders: readonly unknown[][];
-  /** Its stylesheet, as it gave it. */
-  readonly css?: string;
+  /** Its stylesheets, every one it gave, in order, as it gave them. */
+  readonly sheets?: readonly string[];
   /** The acts it asked for from its code. Nothing is applied in a headless run. */
   readonly asked: readonly { readonly name: string; readonly args: unknown }[];
   /** Where it asked to go: narrowed (`where`) and to a section, as it asked. */
@@ -57,6 +61,13 @@ export interface HeadlessTranscript {
   readonly messages: number;
   /** Where it listens for a wheel, a drag or a pinch, as it last said it (0.1.42). */
   readonly gestures?: readonly { readonly event: string; readonly selector: string }[];
+  /**
+   * The press the run was asked to make (0.1.45): its selector, the id of
+   * the element it matched (none when it matched nothing), and how many
+   * acts asked, places gone to and batches drawn there were before it, so
+   * what came after is what the press did.
+   */
+  readonly pressed?: { readonly selector: string; readonly target?: string; readonly asked: number; readonly went: number; readonly renders: number };
 }
 
 /**

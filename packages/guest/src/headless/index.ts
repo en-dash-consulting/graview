@@ -35,6 +35,7 @@ import { checkViewSource } from "../host/view-source.js";
 import type { WorkerViewLimits } from "../host/view.js";
 import type { GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { judgeTranscript } from "./judge.js";
+import { judgeHeadlessPress, type HeadlessPress } from "./press.js";
 import { HEADLESS_ENTRY, HEADLESS_VIEW, type HeadlessFailureReason, type HeadlessInput, type HeadlessTranscript } from "./protocol.js";
 import { HEADLESS_RUNTIME } from "./runtime.generated.js";
 
@@ -43,6 +44,8 @@ export type { DescribeDrawingContext, DescribedDrawing } from "./describe.js";
 export { drawTranscript } from "./draw.js";
 export type { DrawnTranscript } from "./draw.js";
 export { judgeTranscript, sayRefusal } from "./judge.js";
+export { judgeHeadlessPress } from "./press.js";
+export type { HeadlessPress, HeadlessPressContext } from "./press.js";
 export type { Judged } from "./judge.js";
 export { PICTURE_STAND_IN } from "../host/pictures.js";
 export type { ImageHost } from "../host/open-judge.js";
@@ -104,6 +107,8 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   readonly limits?: HeadlessLimits;
   /** The `https:` origins a view's images may come from by address, as the live host lists them (WorkerViewOptions.images). */
   readonly images?: { readonly origins: readonly string[] };
+  /** The `https:` origins a view's links may go to beyond what it was handed, as the live host lists them (WorkerViewOptions.links). */
+  readonly links?: { readonly origins: readonly string[] };
   /**
    * Where the app's own images live, as the live host says it
    * (WorkerViewOptions.asset): given, an image by the path `add_image`
@@ -120,6 +125,18 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
    * "phone" and "wide", never what is listed.
    */
   readonly width?: number;
+  /**
+   * PRESS IT (0.1.45): once it has drawn, press the first element this
+   * selector matches, as `graview.on` matches one — a card, a button bound
+   * to an act, a `<span role="button">` — and say what the live host would
+   * do there (`HeadlessDescribed.pressed`): the link it follows, the act it
+   * asks for with the arguments it carries and whether this seat's store
+   * would apply it, or the refusal; and what the view's code did when it
+   * heard the click. Nothing is applied. `typed` is what the person typed
+   * or picked, by field name; every other field holds what the view left
+   * in it, or what the host fills from the record.
+   */
+  readonly press?: string | { readonly selector: string; readonly typed?: Readonly<Record<string, string | number | boolean>> };
 }
 
 /** Why a view will not do, and a sentence saying it. */
@@ -140,6 +157,8 @@ export interface HeadlessDescribed {
   readonly props: GuestProps;
   /** What it sent: every batch it drew, its stylesheet, the acts it asked for and where it asked to go. */
   readonly transcript: HeadlessTranscript;
+  /** What the press `options.press` asked for would do, judged as the live host would: the description is of what it drew before it. */
+  readonly pressed?: HeadlessPress;
 }
 
 export type HeadlessResult = HeadlessDescribed | HeadlessFailure;
@@ -166,12 +185,12 @@ const REASONS: readonly HeadlessFailureReason[] = ["manifest", "source", "refuse
 /** A transcript as an isolate said it, held to its shape: anything else is no transcript. */
 function transcriptOf(value: unknown): HeadlessTranscript | undefined {
   if (!isRecord(value)) return undefined;
-  const { renders, css, asked, went, ms, logs, messages, gestures } = value;
+  const { renders, sheets, asked, went, ms, logs, messages, gestures, pressed } = value;
   if (!Array.isArray(renders) || !renders.every(Array.isArray) || !Array.isArray(asked) || !Array.isArray(went) || !Array.isArray(logs)) return undefined;
-  if (typeof ms !== "number" || typeof messages !== "number" || (css !== undefined && typeof css !== "string")) return undefined;
+  if (typeof ms !== "number" || typeof messages !== "number" || (sheets !== undefined && !(Array.isArray(sheets) && sheets.every((one) => typeof one === "string")))) return undefined;
   return {
     renders: renders as unknown[][],
-    ...(typeof css === "string" ? { css } : {}),
+    ...(Array.isArray(sheets) ? { sheets: sheets as string[] } : {}),
     asked: asked.filter(isRecord).map((one) => ({ name: String(one["name"]), args: one["args"] })),
     went: went.filter(isRecord).flatMap((one): HeadlessTranscript["went"][number][] => {
       const section = typeof one["section"] === "string" ? { section: one["section"] } : {};
@@ -184,6 +203,9 @@ function transcriptOf(value: unknown): HeadlessTranscript | undefined {
     logs: logs.map(String).slice(0, 50),
     messages,
     ...(Array.isArray(gestures) ? { gestures: gestures.filter(isRecord).slice(0, 32).map((one) => ({ event: String(one["event"]), selector: String(one["selector"]) })) } : {}),
+    ...(isRecord(pressed) && typeof pressed["selector"] === "string" && [pressed["asked"], pressed["went"], pressed["renders"]].every((n) => typeof n === "number")
+      ? { pressed: { selector: pressed["selector"], ...(typeof pressed["target"] === "string" ? { target: pressed["target"] } : {}), asked: pressed["asked"] as number, went: pressed["went"] as number, renders: pressed["renders"] as number } }
+      : {}),
   };
 }
 
@@ -255,10 +277,12 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     ...(manifest.accepts ? { accepts: manifest.accepts.map(({ kind, field }) => ({ kind, field })) } : {}),
     places: places.map((place) => ({ as: place.as, title: place.title })),
     ...(options.images ? { imageOrigins: [...options.images.origins] } : {}),
+    ...(options.links ? { linkOrigins: [...options.links.origins] } : {}),
     ...(options.asset ? { assets: true } : {}),
     ...(options.origin ? { origin: options.origin } : {}),
     lists: listsOf(store.schema, new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds])).flatMap((list) => [list.slug, list.kind]),
     limits: { maxNodes: limits.maxNodes, messages: limits.messages, pushMs: limits.pushMs },
+    ...(options.press !== undefined ? { press: { selector: typeof options.press === "string" ? options.press : options.press.selector } } : {}),
   };
 
   /* The isolate, the host's: past `runMs` it is stopped, whatever its runner does. */
@@ -291,8 +315,9 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   }
   if (!transcript) return failed("isolate", "The isolate answered without what the view sent.");
 
-  /* Judged again here, from the transcript alone. */
-  const judged = judgeTranscript(transcript, input);
+  /* Judged again here, from the transcript alone — what it drew before a press it was asked for, and every act it asked for. */
+  const pressedAt = options.press !== undefined ? transcript.pressed : undefined;
+  const judged = judgeTranscript(pressedAt ? { ...transcript, renders: transcript.renders.slice(0, pressedAt.renders) } : transcript, input);
   if (!judged.ok) return failed(judged.reason, judged.detail, transcript);
   /*
    * A FILTER OR A SECTION IT ASKED FOR, held to the kind here, where the
@@ -309,7 +334,11 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     const known = "place" in went ? placeNamed(input.places, went.place) !== undefined || (input.lists ?? []).includes(went.place) : true;
     if (!outcome.ok && known) narrowing.push({ at: "navigate", says: outcome.says });
   }
-  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript)];
+  const typed = typeof options.press === "object" && options.press.typed ? { typed: options.press.typed } : {};
+  const pressed = pressedAt ? judgeHeadlessPress(pressedAt, judged.drawn, transcript, { store, principal, manifest, shown: shownIds, places, lists, ...typed }) : undefined;
+  /* A press that lands on nothing, or in a link that goes nowhere, is a problem with the view; one the seat is refused is the answer asked for. */
+  const pressProblems = pressed && (!pressed.element || pressed.lost) ? [{ at: `press "${pressed.selector}"`, says: pressed.lost ?? pressed.says }] : [];
+  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing, ...gestureProblems(manifest, transcript), ...pressProblems];
   const title = manifest.title ?? manifest.name;
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;
@@ -323,5 +352,5 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     problems,
   };
   const { placeText } = await import("@graview/core/describe");
-  return { ok: true, description: { ...description, text: placeText(description) }, props, transcript };
+  return { ok: true, description: { ...description, text: placeText(description) }, props, transcript, ...(pressed ? { pressed } : {}) };
 }

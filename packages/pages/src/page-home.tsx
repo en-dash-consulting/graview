@@ -1,5 +1,5 @@
 import { counted as countOf, isCurrent, numberAsRead, type AnySchema } from "@graview/core";
-import type { ViewProps } from "@graview/react/provider";
+import { bleeds, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
 import { HomeLine } from "@graview/primitives/pages";
@@ -21,7 +21,7 @@ import {
   whoDid,
   wide,
 } from "./page-typography.js";
-import { PageMain, PageTitle } from "./page-shell.js";
+import { Bleed, PageMain, PageTitle } from "./page-shell.js";
 
 
 /**
@@ -103,7 +103,10 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
             </Link>
           ) : null}
           <HomeLine.Provider value={placesItsLine ? line : null}>
-            <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} />
+            {/* Edge to edge on a phone, where the view says `bleed` (Bleed). */}
+            <Bleed when={bleeds(HomeView)}>
+              <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} />
+            </Bleed>
           </HomeLine.Provider>
         </div>
       </PageMain>

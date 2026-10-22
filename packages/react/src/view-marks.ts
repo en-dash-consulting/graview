@@ -40,3 +40,22 @@ export function markReplacesPage<V extends object>(view: V): V {
 export function replacesPage(view: unknown): boolean {
   return typeof view === "function" && (view as { [REPLACES_PAGE]?: boolean })[REPLACES_PAGE] === true;
 }
+
+/**
+ * The mark a view carries when it is drawn edge to edge on a phone (a
+ * worker view whose manifest says `bleed: true`): the pages face takes the
+ * page's side gutter back for it there, keeping the safe areas, so the view
+ * is the phone's width. At a desk it is the column's width, as any view is.
+ */
+export const BLEEDS: unique symbol = Symbol.for("graview.bleeds");
+
+/** Marks a view as drawn edge to edge on a phone. Returns the same component. */
+export function markBleeds<V extends object>(view: V): V {
+  Object.defineProperty(view, BLEEDS, { value: true, enumerable: false });
+  return view;
+}
+
+/** Whether a view is drawn edge to edge on a phone. */
+export function bleeds(view: unknown): boolean {
+  return typeof view === "function" && (view as { [BLEEDS]?: boolean })[BLEEDS] === true;
+}

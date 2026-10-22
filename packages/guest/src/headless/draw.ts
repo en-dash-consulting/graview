@@ -1,4 +1,4 @@
-import { sanitizeStylesheet } from "../host/css.js";
+import { sanitizeStylesheets } from "../host/css.js";
 import { createOpenRenderer } from "../host/open-render.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { createTree, type TreeElement } from "./tree.js";
@@ -18,11 +18,13 @@ export interface DrawnTranscript {
   readonly size: number;
   /** It went past `maxNodes`. */
   readonly over: boolean;
-  /** The stylesheet as a page would draw it. */
+  /** The stylesheets as a page would draw them, one after another. */
   readonly css: string;
+  /** The element drawn for a view's id: what a press the run made landed on (0.1.45). */
+  elementOf(id: string): TreeElement | undefined;
 }
 
-export function drawTranscript(renders: readonly unknown[], css: string | undefined, options: { readonly maxNodes: number; readonly origin?: string; readonly imageOrigins?: readonly string[]; readonly asset?: (path: string) => string | undefined }): DrawnTranscript {
+export function drawTranscript(renders: readonly unknown[], sheets: readonly string[] | undefined, options: { readonly maxNodes: number; readonly origin?: string; readonly imageOrigins?: readonly string[]; readonly asset?: (path: string) => string | undefined; readonly link?: (value: string) => string | undefined }): DrawnTranscript {
   const { root } = createTree();
   let over = false;
   const renderer = createOpenRenderer(root as unknown as Node, {
@@ -30,16 +32,17 @@ export function drawTranscript(renders: readonly unknown[], css: string | undefi
     origin: options.origin ?? "null",
     ...(options.imageOrigins ? { imageOrigins: options.imageOrigins } : {}),
     ...(options.asset ? { asset: options.asset } : {}),
+    ...(options.link ? { link: options.link } : {}),
     maxNodes: options.maxNodes,
     onOverBudget: () => (over = true),
   });
   for (const batch of renders) renderer.apply(batch);
   const refused: ViewRefusal[] = [...renderer.refused];
   let kept = "";
-  if (typeof css === "string") {
-    const judged = sanitizeStylesheet(css);
+  if (sheets) {
+    const judged = sanitizeStylesheets(sheets);
     kept = judged.css;
     for (const one of judged.refused) refused.push({ reason: "css", name: "stylesheet", css: one });
   }
-  return { root, refused, size: renderer.size, over, css: kept };
+  return { root, refused, size: renderer.size, over, css: kept, elementOf: (id) => renderer.elementOf(id) as unknown as TreeElement | undefined };
 }

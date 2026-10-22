@@ -29,6 +29,12 @@ export interface NoticeAction {
   /** A link: followed (`target` where it opens elsewhere), and the notice closes. */
   readonly href?: string;
   readonly target?: string;
+  /**
+   * The keys that do the same from anywhere, as `aria-keyshortcuts` names
+   * them ("Meta+Z Control+Z"): said on the control, to a screen reader and
+   * in its title, so a person reading the offer learns the key once.
+   */
+  readonly keys?: string;
 }
 
 export interface Notice {

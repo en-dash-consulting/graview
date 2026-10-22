@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 186,
+  "gzipped": 49,
+  "changeset": "a-view-that-bleeds-is-the-phones-width.md",
+  "note": "Raised when a worker view came to be drawn edge to edge on a phone (`bleed: true`): up front, the mark `registerWorkerView` puts on a view whose manifest says it, and the record page and the home reading it. 186 / 49 more than before it (592_638 / 206_026): measured at 592_824 / 206_075 (0.2 KB)."
+}

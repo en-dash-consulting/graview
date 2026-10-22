@@ -2,6 +2,8 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { createMemoryAdapter, memoryViews, placeSlug, type AnySchema, type GraviewApp, type LensTidyEdit, type PersistenceAdapter, type Principal, type RemovedView, type Store } from "@graview/core";
 import { editDocument } from "@graview/core/document";
+import { formVisitor } from "@graview/core/forms";
+import { randomUUID } from "node:crypto";
 import { compileDocument } from "@graview/core/check";
 import { sayFindings, serializeCompiled } from "@graview/core/compiled";
 import { runConnections, type RunConnectionsOptions, type RunningConnections } from "./connections.js";
@@ -195,9 +197,33 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     return answered.ok ? answered.text() : undefined;
   };
 
+  /*
+   * A FORM FOR A VISITOR (Roadmap f-public-forms), at `/forms/<name>`: the
+   * page asks for the document with `?form=<name>` and is handed a visitor
+   * minted for this one answer (`form:<uuid>`) in place of the preview's
+   * seat, with the state that visitor is served — which, for a form
+   * `graview check` passes, is nothing of the app. Abuse limits and who may
+   * open the form are a host's, not the preview's.
+   */
+  const formHanded = async (name: string): Promise<Response> => {
+    if (!app.forms?.[name]) {
+      const forms = Object.keys(app.forms ?? {});
+      return new Response(JSON.stringify({ error: `There is no form called "${name}"${forms.length ? `: the forms are ${forms.join(", ")}` : ": the app declares none"}.` }), { status: 404, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+    }
+    const visitor = formVisitor(app, name, `form:${randomUUID()}`);
+    const said = JSON.parse(handed) as Record<string, unknown>;
+    const answered = opened ? await opened.handle(new Request(`http://localhost${STATE_PATH}`, { headers: seatHeaders(visitor) })) : undefined;
+    const state = answered?.ok ? JSON.parse(await answered.text()) : undefined;
+    const { draftView: _draft, ...rest } = said;
+    return new Response(JSON.stringify({ ...rest, principal: visitor, form: name, ...(state === undefined ? {} : { state }) }), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+  };
+
   const answer = async (request: Request): Promise<Response | undefined> => {
     if (request.method !== "GET" && request.method !== "HEAD") return undefined;
-    const path = decodeURIComponent(new URL(request.url).pathname);
+    const url = new URL(request.url);
+    const path = decodeURIComponent(url.pathname);
+    const form = url.searchParams.get("form");
+    if (path === "/graview/document" && form !== null) return formHanded(form);
     if (path === "/graview/document") {
       const [state, views] = await Promise.all([stateNow(), viewsNow()]);
       const more = `${state === undefined ? "" : `,"state":${state}`}${views === undefined ? "" : `,"views":${views}`}`;
@@ -207,6 +233,11 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     if (path.startsWith("/graview/")) return undefined;
     const file = normalize(join(root, path));
     const served = file.startsWith(root + sep) && extname(file) !== "" && existsSync(file) && statSync(file).isFile() ? file : index;
+    // A visitor's form fetches no document as the preview's own seat: its head's preload of it, which the whole face reads, would hand the page every record.
+    if (served === index && /^\/forms\//.test(path)) {
+      const page = readFileSync(index, "utf8").replace(/<link rel="preload" href="\/graview\/document"[^>]*>\n?/g, "");
+      return new Response(page, { headers: { "content-type": TYPES[".html"]!, "cache-control": "no-store" } });
+    }
     return new Response(readFileSync(served), {
       headers: { "content-type": TYPES[extname(served)] ?? "application/octet-stream", "cache-control": served === index ? "no-store" : "max-age=31536000, immutable" },
     });

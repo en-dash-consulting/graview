@@ -1,0 +1,53 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Garden party",
+  "description": "Who is coming to the garden party, answered by people who never join the workspace.",
+  "kinds": {
+    "guest": {
+      "noun": "guest",
+      "plural": "guests",
+      "description": "Somebody who answered the invitation.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "email": { "type": "email", "description": "where to write to them" },
+        "coming": { "type": "enum", "options": ["yes", "no", "maybe"], "required": true },
+        "note": { "type": "text", "description": "anything the hosts should know" }
+      },
+      "edges": {
+        "table": { "to": ["table"], "cardinality": "one", "description": "where they sit", "inverse": "who sits here" }
+      }
+    },
+    "table": {
+      "noun": "table",
+      "plural": "tables",
+      "description": "Where guests sit.",
+      "fields": {
+        "name": { "type": "string", "required": true }
+      }
+    }
+  },
+  "acts": {
+    "add-guest": { "title": "Answer the invitation", "description": "Say whether you can come.", "creates": "guest" },
+    "add-table": { "title": "Add a table", "description": "Set out another table.", "creates": "table" }
+  },
+  "roles": ["host", "visitor"],
+  "policy": {
+    "grants": [
+      { "roles": ["host"], "mutations": "*" },
+      { "roles": ["visitor"], "mutations": ["add-guest"], "describe": "Anybody with the link may answer the invitation." }
+    ],
+    "sees": [
+      { "roles": ["host"], "kinds": ["guest", "table"] }
+    ]
+  },
+  "forms": {
+    "rsvp": {
+      "act": "add-guest",
+      "title": "RSVP",
+      "intro": "Tell us whether you can come to the garden party on June 14.",
+      "fields": ["name", "email", "coming", "note"],
+      "say": "Thank you — the hosts will write to you a week before."
+    }
+  }
+}

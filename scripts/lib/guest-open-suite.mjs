@@ -7,7 +7,8 @@
  *
  *   showcase  a styled card grid, an SVG bar chart and a CSS-animated
  *             progress ring, drawn from the app's theme tokens, checked in
- *             light and again after the app's toggle to dark;
+ *             light and again after the app's toggle to dark, from two
+ *             stylesheets, a shared one and its own;
  *   escapes   every way out a view might try — a url() in every property
  *             that takes one, @import, @font-face, an escaped url, SVG
  *             <image href> and <use> of another document, <a href="https:">,
@@ -18,7 +19,12 @@
  *   spoofer   a stylesheet that spells `:host` past a CDC or CDO, to lift
  *             the region's containment and paint over the app's own bar;
  *   speaker   landmarks and notices by element, by role and by a named
- *             section, read back from each engine's accessibility tree.
+ *             section, read back from each engine's accessibility tree;
+ *   controls  a view's own accessible controls — a span with
+ *             role="checkbox" and aria-checked, ticked by a press, a
+ *             switch, tabs, a radio group, a slider — read back from the
+ *             accessibility tree, and the same view run headless, drawn
+ *             attribute for attribute as the page drew it.
  *
  * The page is served with NO content security policy (`--policy=page`), so
  * nothing but the open kit stands between a view and the network: every
@@ -72,6 +78,11 @@ graview.style(\`
 .card { background: var(--graview-panel); color: var(--graview-ink); border: 1px solid var(--graview-edge); border-radius: 12px; padding: 12px; }
 .card h3 { margin: 0 0 4px; font: 600 15px/1.3 var(--graview-font-body); }
 .muted { color: var(--graview-ink-muted); margin: 0; }
+.card h3 { letter-spacing: 1px; }
+\`);
+/* The view's own sheet, after the shared one: both are drawn, this one second (Threat Watch, 2026-10-21). */
+graview.style(\`
+.card h3 { letter-spacing: 2px; }
 .chart stop { stop-color: var(--graview-accent); }
 .chart .bar { fill: url(#barFill); }
 .chart text { fill: var(--graview-ink); font: 10px var(--graview-font-body); }
@@ -168,6 +179,45 @@ out.stuck = graview.hardening.stuck;
 graview.onProps(() => graview.render(graview.html\`<pre id="probed">\${JSON.stringify(out)}</pre>\`));
 `);
 
+
+  /*
+   * A view's own accessible controls (Threat Watch, 2026-10-21): the checkbox Graview Cloud filed — a span with role="checkbox"
+   * and aria-checked, ticked by a press — a switch, a pressed toggle, a disclosure that says what it controls, tabs and their
+   * panel, a radio group and a slider, each read back from the engine's accessibility tree, and the same view run headless.
+   */
+  const controlsSource = `
+var DONE = { "step:1": true };
+graview.style(".box { display: inline-block; width: 20px; height: 20px; border: 2px solid #94a3b8; } .box[aria-checked=true] { background: rgb(5, 122, 85); }");
+function draw() {
+  graview.render(graview.html\`<div class="gx" role="group" aria-label="Steps">
+    \${["step:1", "step:2"].map(function (id) { return graview.html\`<div class="it" data-key="\${id}"><span class="box" role="checkbox" aria-checked="\${DONE[id] ? "true" : "false"}" aria-label="\${"Tick " + id}" tabindex="0" data-ck="\${id}"></span></div>\`; })}
+    <span class="sw" role="switch" aria-checked="true" tabindex="0" aria-label="Only live threats"></span>
+    <span role="button" aria-pressed="true" tabindex="0">Bold</span>
+    <span role="button" aria-expanded="false" aria-controls="more-steps" tabindex="0">Show all</span><div id="more-steps" hidden>More</div>
+    <div role="tablist" aria-label="Audience"><span role="tab" id="tab-dev" aria-selected="true" aria-controls="panel-dev" tabindex="0">Developers</span><span role="tab" id="tab-ops" aria-selected="false" tabindex="-1">IT and ops</span></div>
+    <div role="tabpanel" id="panel-dev" aria-labelledby="tab-dev">The developers' steps</div>
+    <div role="radiogroup" aria-label="Urgency"><span role="radio" aria-checked="true" tabindex="0">Now</span><span role="radio" aria-checked="false" tabindex="-1">Today</span></div>
+    <span role="slider" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" aria-valuetext="40 percent" aria-label="Done" tabindex="0"></span>
+    <p id="controls-done">drawn</p></div>\`);
+}
+graview.onProps(draw);
+graview.on("click", "[data-ck]", function (event) { var id = event.element.getAttribute("data-ck"); DONE[id] = !DONE[id]; draw(); });
+`;
+  const controlsJs = await viewScript(controlsSource);
+
+  /*
+   * A view's links out (Threat Watch, 2026-10-21): to the car's own page and its dealer's address, which the view was handed, and
+   * two it made — the car's page with what it read added, and a javascript: one — which are refused.
+   */
+  const linkerSource = `
+graview.onProps(function (props) {
+  var car = (props.nodes || []).find(function (node) { return node.kind === "car"; }) || {};
+  graview.render(graview.html\`<p><a id="out-site" href="\${car.site}">The Golf's page</a> · <a id="out-mail" href="\${car.dealer}">Write to the dealer</a>
+    · <a id="out-leak" href="\${car.site + "?read=" + car.label}">Leaked</a> · <a id="out-js" href="javascript:alert(1)">Script</a></p><p id="linker-done">drawn</p>\`);
+});
+`;
+  const linkerJs = await viewScript(linkerSource);
+
   const widgetJs = (
     await build({
       stdin: {
@@ -176,7 +226,7 @@ import { mountWorkerView } from "./packages/guest/dist/host/worker.js";
 ${SHOWROOM}
 const failures = [];
 const views = {};
-for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER], ["speaker", SPEAKER]]) {
+for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER], ["speaker", SPEAKER], ["controls", CONTROLS], ["linker", LINKER]]) {
   views[name] = mountWorkerView(document.getElementById(name), { manifest: { name, attach: "car", cardinality: "many", reads: { kinds: ["shopper"] } }, worker: { script }, store, principal: bethan, onFailure: (reason, detail) => failures.push([name, reason, detail]) });
 }
 window.__host = {
@@ -198,14 +248,14 @@ window.__host = {
       define: { "process.env.NODE_ENV": '"production"' },
     })
   ).outputFiles[0].text;
-  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)}; const SPEAKER = ${JSON.stringify(speakerJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
+  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)}; const SPEAKER = ${JSON.stringify(speakerJs)}; const CONTROLS = ${JSON.stringify(controlsJs)}; const LINKER = ${JSON.stringify(linkerJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
   const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>The app</title><style>${TOKENS(core)}
 body { margin: 0; background: var(--graview-ground); color: var(--graview-ink); font-family: var(--graview-font-body); }
 #bar { height: 48px; display: flex; align-items: center; padding: 0 12px; border-bottom: 1px solid var(--graview-edge); }
 main { display: grid; gap: 16px; padding: 16px; }
 #showcase, #escapes, #prober { border: 1px dashed var(--graview-edge); }
 .probe-panel { background-color: var(--graview-panel); border-top: 1px solid var(--graview-edge); color: var(--graview-accent); }
-</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div><div id="speaker"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
+</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div><div id="speaker"></div><div id="controls"></div><div id="linker"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
 
   const attacker = { requests: [], connections: 0 };
   const servers = [
@@ -265,6 +315,8 @@ main { display: grid; gap: 16px; padding: 16px; }
     await waitFor("prober", "#probed", "the prober");
     await waitFor("spoofer", "#cover", "the spoofer");
     await waitFor("speaker", "#said-done", "the speaker");
+    await waitFor("controls", "#controls-done", "the controls");
+    await waitFor("linker", "#linker-done", "the linker");
     /* Long enough for anything kept to have been fetched: images, fonts, a preconnect. */
     await tab.waitForTimeout(1_500);
 
@@ -294,6 +346,8 @@ main { display: grid; gap: 16px; padding: 16px; }
           barFill: getComputedStyle(bar).fill,
           animation: getComputedStyle(ring).animationName,
           svgNamespace: root.querySelector(".chart").namespaceURI,
+          sheets: root.querySelectorAll("style[data-graview-view-style]").length,
+          spacing: getComputedStyle(root.querySelector(".card h3")).letterSpacing,
         };
       });
     const turned = () => app.evaluate(() => getComputedStyle(document.querySelector("#showcase [data-worker-view]").shadowRoot.querySelector(".ring")).transform);
@@ -303,6 +357,7 @@ main { display: grid; gap: 16px; padding: 16px; }
     const after = await turned();
     claim("a worker view draws a styled card grid, an SVG bar chart and a CSS-animated progress ring", light.cards === 2 && light.bars === 4 && light.grid === "grid" && light.svgNamespace === "http://www.w3.org/2000/svg" && light.animation === "spin", light);
     claim("in light, the cards take the app's panel and edge, and the ring and the bars the app's accent", light.cardBackground === light.panel && light.cardBorder === light.edge && light.ring === light.accent && light.stop === light.accent && /url\(/.test(light.barFill), light);
+    claim("a view that calls graview.style twice draws both sheets, the second after the first: the cards from the shared one, the ring from its own, and its own rule winning where both say one", light.sheets === 1 && light.cardBackground === light.panel && light.animation === "spin" && light.spacing === "2px", light);
     claim("the progress ring turns: its keyframes are drawn and running", before !== after && before !== "none", { before, after });
     await app.evaluate(() => window.__host.scheme("dark"));
     await tab.waitForTimeout(200);
@@ -360,7 +415,7 @@ main { display: grid; gap: 16px; padding: 16px; }
     claim("image-set() is refused", !kept("/css/image-set") && hit("/css/image-set").length === 0, { hits: hit("/css/image-set") });
     claim("SVG <image href> and <image xlink:href> are not drawn, nor <feImage>", !escapes.tags.includes("image") && !escapes.tags.includes("feImage") && hit("/svg/image").length + hit("/svg/xlink").length + hit("/svg/feimage").length === 0, escapes.tags);
     claim("SVG <use> of another document is drawn with no reference", !kept("/svg/use") && hit("/svg/use").length === 0, { hits: hit("/svg/use") });
-    claim('<a href="https:…"> is drawn as text, with no href, and pressing it goes nowhere', escapes.link && escapes.link.href === null && escapes.link.text === "a link out" && hit("/link").length === 0 && tab.url() === `${HOST}/`, { link: escapes.link, url: tab.url() });
+    claim('<a href="https:…"> to an address the view made is drawn as text, with no href, and pressing it goes nowhere', escapes.link && escapes.link.href === null && escapes.link.text === "a link out" && hit("/link").length === 0 && tab.url() === `${HOST}/`, { link: escapes.link, url: tab.url() });
     claim("srcset is not drawn", !escapes.attributes.some((one) => / (srcset|sizes)=/.test(one)) && hit("/img/srcset").length === 0, { hits: hit("/img/srcset") });
     claim("an <img> with an address is drawn with none", !kept("/img/src") && hit("/img/src").length === 0, { hits: hit("/img/src") });
     claim("a <link rel=preconnect> built in code is not drawn, and nothing connected to its host", !escapes.tags.includes("link") && hit("/preconnect").length === 0, { tags: escapes.tags });
@@ -412,6 +467,69 @@ main { display: grid; gap: 16px; padding: 16px; }
       tree?.role !== undefined && spoken.length === 0 && ["Main menu", "The app", "Footer", "Aside", "Search", "Named by title", "Saved", "Presentational"].every((words) => said.includes(words)),
       { root: tree?.role, spoken, roles: [...new Set(roles)] },
     );
+    // ── a view's own accessible controls ──
+    const controlsRegion = await app.evaluateHandle(() => document.querySelector("#controls [data-worker-view]"));
+    const controlsTree = proxied ? undefined : await tab.accessibility.snapshot({ root: controlsRegion, interestingOnly: false });
+    const spokenControls = [];
+    const walkControls = (node) => {
+      for (const child of node?.children ?? []) {
+        spokenControls.push({ role: String(child.role).toLowerCase(), name: child.name, checked: child.checked, pressed: child.pressed, expanded: child.expanded, selected: child.selected, valuetext: child.valuetext });
+        walkControls(child);
+      }
+    };
+    walkControls(controlsTree);
+    const one = (role, name) => spokenControls.find((node) => node.role === role && (name === undefined || node.name === name));
+    const drawnControls = () =>
+      app.evaluate(() => {
+        const region = document.querySelector("#controls [data-worker-view]");
+        const root = region.shadowRoot.querySelector("[data-graview-view-root]");
+        return {
+          failed: region.getAttribute("data-worker-view-failed"),
+          fallback: Boolean(region.shadowRoot.querySelector("[data-graview-fallback]")),
+          ticked: [...root.querySelectorAll("[data-ck]")].map((box) => box.getAttribute("aria-checked")),
+          background: getComputedStyle(root.querySelector('[data-ck="step:1"]')).backgroundColor,
+          attributes: [...root.querySelectorAll("*")].map((element) => [element.localName, [...element.attributes].filter((one) => one.name !== "autocomplete").map((one) => [one.name, one.value]).sort(([a], [b]) => (a < b ? -1 : 1))]),
+        };
+      });
+    const controlsBefore = await drawnControls();
+    claim(
+      'a view\'s <span role="checkbox" aria-checked> is drawn as the view drew it, not stopped and not replaced, with its state styled by its own [aria-checked] rule',
+      controlsBefore.failed === null && !controlsBefore.fallback && controlsBefore.ticked.join(",") === "true,false" && controlsBefore.background === "rgb(5, 122, 85)",
+      controlsBefore,
+    );
+    if (!proxied) claim(
+      "the engine's accessibility tree says each of the view's own controls with its state: a checked checkbox and an unchecked one, a switch on, a pressed button (a button, where WebKit's tree says no state of one), a collapsed disclosure, the selected tab, the checked radio and the slider's value",
+      one("checkbox", "Tick step:1")?.checked === true && one("checkbox", "Tick step:2") !== undefined && one("checkbox", "Tick step:2").checked !== true && one("switch")?.checked === true && spokenControls.some((node) => node.name === "Bold" && (node.pressed === true || /toggle/.test(node.role) || (ENGINE === "webkit" && node.role === "button"))) &&
+        one("button", "Show all") !== undefined && one("button", "Show all").expanded !== true && one("tab", "Developers")?.selected === true && one("radio", "Now")?.checked === true && (one("slider")?.valuetext === "40 percent" || one("slider") !== undefined),
+      { controls: spokenControls.filter((node) => node.name) },
+    );
+    await app.evaluate(() => document.querySelector("#controls [data-worker-view]").shadowRoot.querySelector('[data-ck="step:2"]').click());
+    let controlsAfter = await drawnControls();
+    for (let i = 0; i < 20 && controlsAfter.ticked.join(",") !== "true,true"; i += 1) {
+      await tab.waitForTimeout(50);
+      controlsAfter = await drawnControls();
+    }
+    claim("a press on the view's checkbox ticks it: the view draws aria-checked again and the page keeps it", controlsAfter.ticked.join(",") === "true,true" && controlsAfter.failed === null, controlsAfter.ticked);
+    /* The same view, run headless in this process as Graview Cloud's propose_view runs it, drawn into the run's tree and set beside the page's. */
+    const guestHeadless = await import(resolve(repoRoot, "packages/guest/dist/headless/index.js"));
+    const guestNode = await import(resolve(repoRoot, "packages/guest/dist/headless/node.js"));
+    const runStore = new core.Store({ schema: core.createSchema([core.defineNode("car", { fields: core.z.object({ label: core.z.string() }), plural: "Cars" })]), mutations: [], policy: { grants: [] }, snapshot: { nodes: [{ id: "car:golf", kind: "car", label: "Golf" }], edges: [] } });
+    const ran = await guestHeadless.runWorkerViewHeadless({ store: runStore, principal: { kind: "human", id: "u:bethan" }, run: guestNode.nodeIsolate(), manifest: { name: "controls", attach: "car", cardinality: "many" }, source: controlsSource });
+    const runTree = ran.ok ? guestHeadless.drawTranscript(ran.transcript.renders, ran.transcript.sheets, { maxNodes: 5_000 }).root : undefined;
+    const runAttributes = [];
+    const walkRun = (node) => {
+      for (const child of node?.childNodes ?? []) {
+        if (child.nodeType !== 1) continue;
+        runAttributes.push([child.localName, [...child.attributes].filter(([name]) => name !== "autocomplete").sort(([a], [b]) => (a < b ? -1 : 1))]);
+        walkRun(child);
+      }
+    };
+    walkRun(runTree);
+    claim(
+      "the same view run headless says it runs with no problem, and draws element for element and attribute for attribute what the page drew",
+      ran.ok && ran.description.problems.length === 0 && JSON.stringify(runAttributes) === JSON.stringify(controlsBefore.attributes),
+      ran.ok ? { problems: ran.description.problems, headless: runAttributes.length, page: controlsBefore.attributes.length } : ran,
+    );
     const refused = await app.evaluate(() => window.__host.refused().escapes);
     claim("what was not drawn was written down as refused", refused.length >= URL_PROPERTIES.length + 8, { count: refused.length });
 
@@ -425,6 +543,58 @@ main { display: grid; gap: 16px; padding: 16px; }
     // ── the view's own worker ──
     const probed = JSON.parse(await app.evaluate(() => document.querySelector("#prober [data-worker-view]").shadowRoot.querySelector("#probed").textContent));
     claim("inside the view's worker, the network, storage, channels, nested workers and code from text are gone, and graview is kept frozen", Object.values(probed.absent).every(Boolean) && probed.graviewFrozen && probed.graviewKept && probed.replace !== "number" && probed.functionMakesNothing === "EvalError" && probed.stuck.length === 0, probed);
+    // ── a view's links out, pressed: after the page's requests are counted, since a link out is a request the person makes ──
+    const linked = await app.evaluate(() => {
+      const root = document.querySelector("#linker [data-worker-view]").shadowRoot;
+      const one = (id) => {
+        const anchor = root.getElementById(id);
+        return anchor && { href: anchor.getAttribute("href"), target: anchor.getAttribute("target"), rel: anchor.getAttribute("rel"), referrer: anchor.getAttribute("referrerpolicy"), after: getComputedStyle(anchor, "::after").content };
+      };
+      return { site: one("out-site"), mail: one("out-mail"), leak: one("out-leak"), script: one("out-js") };
+    });
+    const linkerRefused = await app.evaluate(() => window.__host.refused().linker.filter((one) => one.element === "a").map((one) => one.address));
+    claim(
+      "a view's link to an address it was handed — the car's own https: page and its dealer's mailto: — is drawn, to open in a new tab, with no opener and no referrer, and an arrow after it",
+      linked.site?.href === "https://cars.example/golf" && linked.mail?.href === "mailto:sales@cars.example" && [linked.site, linked.mail].every((one) => one.target === "_blank" && one.rel === "noopener noreferrer" && one.referrer === "no-referrer" && /↗/.test(one.after)),
+      linked,
+    );
+    claim(
+      "a view's link to an address it made — the car's page with what the view read added, and javascript: — is drawn with no href, and written down as refused",
+      linked.leak?.href === null && linked.script?.href === null && linkerRefused.includes("https://cars.example/golf?read=Golf") && linkerRefused.includes("javascript:alert(1)"),
+      { linked, refused: linkerRefused },
+    );
+    if (!proxied) {
+      const linkTree = await tab.accessibility.snapshot({ root: await app.evaluateHandle(() => document.querySelector("#linker [data-worker-view]")), interestingOnly: false });
+      const named = [];
+      const walkLinks = (node) => {
+        for (const child of node?.children ?? []) {
+          if (String(child.role).toLowerCase() === "link") named.push(child.name);
+          walkLinks(child);
+        }
+      };
+      walkLinks(linkTree);
+      claim("each link out is a link in the engine's accessibility tree, and its name says it opens elsewhere", named.length === 2 && named.every((name) => /opens in a new tab|↗/.test(name)), named);
+      /* Pressed, it opens in a tab of its own, and this page stays where it was: answered here, so nothing leaves the test. */
+      await context.route("https://cars.example/**", (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>The Golf</title><p id=there>there</p>" }));
+      const [opened] = await Promise.all([context.waitForEvent("page", { timeout: 10_000 }).catch(() => undefined), tab.locator("#linker #out-site").click()]);
+      if (opened) await opened.waitForLoadState("load").catch(() => {});
+      const there = opened ? await opened.evaluate(() => ({ url: location.href, opener: window.opener === null, referrer: document.referrer })).catch((error) => ({ error: String(error) })) : undefined;
+      claim(
+        "pressing a link out opens its address in a new tab that has no hold on this page and was told nothing of it, and this page stays where it was",
+        there?.url === "https://cars.example/golf" && there.opener === true && there.referrer === "" && tab.url() === `${HOST}/`,
+        { there, url: tab.url() },
+      );
+      await opened?.close().catch(() => {});
+    }
+    /* The same view run headless, as Graview Cloud's propose_view runs it: the same links drawn, the same two refused and said. */
+    const linkStore = new core.Store({ schema: core.createSchema([core.defineNode("car", { fields: core.z.object({ label: core.z.string(), site: core.z.string(), dealer: core.z.string() }), plural: "Cars" })]), mutations: [], policy: { grants: [] }, snapshot: { nodes: [{ id: "car:golf", kind: "car", label: "Golf", site: "https://cars.example/golf", dealer: "mailto:sales@cars.example" }], edges: [] } });
+    const linkRun = await guestHeadless.runWorkerViewHeadless({ store: linkStore, principal: { kind: "human", id: "u:bethan" }, run: guestNode.nodeIsolate(), manifest: { name: "linker", attach: "car", cardinality: "many" }, source: linkerSource });
+    const linkSaid = linkRun.ok ? linkRun.description.problems.map((problem) => problem.says) : [];
+    claim(
+      "the same view run headless refuses the same two links and says each — no address it was handed, a scheme no link takes — and nothing else",
+      linkRun.ok && linkSaid.length === 2 && linkSaid.some((said) => said.includes('"https://cars.example/golf?read=Golf" was not drawn: it is no address this view was handed')) && linkSaid.some((said) => said.includes('"javascript:alert(1)" was not drawn: a view links only to an https:, mailto: or tel: address')),
+      linkRun.ok ? linkSaid : linkRun,
+    );
     const failures = await app.evaluate(() => window.__host.failures);
     claim("no view failed", failures.length === 0, failures);
     claim("the page throws nothing", report.pageErrors.length === 0, report.pageErrors);
