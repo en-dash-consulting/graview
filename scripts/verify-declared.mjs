@@ -955,7 +955,7 @@ try {
     const after = await home.evaluate(() => ({
       listed: document.querySelectorAll("[data-graview-listed]").length,
       button: document.querySelector("[data-graview-show-more]") !== null,
-      headings: [...document.querySelectorAll(".graview-spec-list-heading")].map((heading) => heading.textContent),
+      headings: [...document.querySelectorAll(".graview-spec-list-heading")].map((heading) => heading.firstChild?.textContent?.trim()), // The label, less the count beside it.
       focus: document.activeElement?.tagName ?? null,
     }));
     await home.close();

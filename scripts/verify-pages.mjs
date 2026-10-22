@@ -837,8 +837,8 @@ async function aListReadsOnOneScale() {
       await page.waitForTimeout(500);
       const read = await page.evaluate((root) => {
         const px = (element) => (element ? Number.parseFloat(getComputedStyle(element).fontSize) : null);
-        // The four steps of the theme's scale, at this root.
-        const steps = [0.833, 1, 1.2, 1.728].map((step) => step * root);
+        // The steps of the theme's scale, at this root: a minor third apart, the title one step down (1.44) on a phone.
+        const steps = [0.833, 1, 1.2, 1.44, 1.728].map((step) => step * root);
         const rows = [...document.querySelectorAll('[data-testid="records"] li')].slice(0, 60);
         const names = rows.map((row) => row.querySelector("a"));
         const glances = rows.map((row) => row.querySelector(".graview-row-glance")).filter(Boolean);

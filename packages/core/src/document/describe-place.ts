@@ -145,7 +145,8 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
           return;
         case "text":
           // A Markdown field drawn as prose is said as its words (FR-180).
-          out.push({ t: "text", text: block.markdown ? markdownWords(block.text) : block.text, ...(block.tone ? { tone: block.tone } : {}) });
+          // A line of facts with a choice in it is said as it is drawn (`runs`): each choice as it reads, a chip a space from what is beside it, two runs of words a dot apart.
+          out.push({ t: "text", text: block.markdown ? markdownWords(block.text) : block.runs ? runsSaid(block.runs) : block.text, ...(block.tone ? { tone: block.tone } : {}) });
           return;
         case "badge":
           out.push({ t: "badge", text: block.text });
@@ -183,8 +184,9 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
           }
           const next = depth + 1;
           const as = next > MAX_LIST_DEPTH ? "name" : block.as;
+          // A group's heading is drawn with how many it holds — every one listed, not only the page drawn — and said so.
           const groups = (block.groups ?? [{ value: null, members: block.members }]).map((group) => ({
-            ...("heading" in group && group.heading ? { heading: group.heading } : {}),
+            ...("heading" in group && group.heading ? { heading: group.heading, count: (block.everyGroup?.find((every) => every.value === group.value) ?? group).members.length } : {}),
             items: group.members.map((node) => item(node, as, next)),
           }));
           out.push({ t: "list", as, columns: as === "card" ? columns : 1, groups, ...(block.more > 0 ? { more: block.more } : {}) });
@@ -362,7 +364,7 @@ export function placeText(description: Omit<PlaceDescription, "text">): string {
             break;
           }
           for (const group of part.groups) {
-            if (group.heading) lines.push(`${indent}${group.heading}:`);
+            if (group.heading) lines.push(`${indent}${group.heading}${group.count !== undefined ? ` (${group.count})` : ""}:`);
             for (const one of group.items) {
               lines.push(`${indent}${group.heading ? "  " : ""}- ${one.title}`);
               walk(one.parts, `${indent}${group.heading ? "    " : "  "}`);
@@ -388,4 +390,9 @@ export function placeText(description: Omit<PlaceDescription, "text">): string {
     for (const problem of description.problems) lines.push(`- ${problem.at}: ${problem.says}`);
   }
   return lines.join("\n");
+}
+
+/** A line of facts as its face draws it: a chip a space from what is beside it, two runs of words a dot apart. */
+function runsSaid(runs: readonly { readonly text: string; readonly field?: string }[]): string {
+  return runs.map((run, at) => (at === 0 ? "" : run.field === undefined && runs[at - 1]!.field === undefined ? " · " : " ") + run.text).join("");
 }

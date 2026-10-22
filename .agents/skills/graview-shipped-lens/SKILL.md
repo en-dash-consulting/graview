@@ -69,6 +69,12 @@ when the bindings do not (reach; a coverage over its columns).
   blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }`.
   Nothing in it runs; a chat can write it. Write code only for what
   blocks cannot say: a grid of cells, positions.
+  Its page already has a header: the place's title, then a line (how
+  many it holds), then "All … as a list →". Do not open with a headline
+  repeating either. A first `headline` becomes that line, in place of the
+  count, and is not drawn again; open with `text` for an intro. Groups
+  head with label and count, rows sit on the title's edge, and a row's
+  `{status} · {type} · on {date}` draws its choices as chips.
 
 Any titled place may say `create: false` when it is read, not written (its
 page drops the forms that add one), `hidden: true` to keep it off the

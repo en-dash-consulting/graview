@@ -1,5 +1,6 @@
 import { minutesAsRead, type AnySchema, type DrawnLens } from "@graview/core";
 import type { ViewComponent, ViewProps } from "@graview/react/provider";
+import { useContext, type ReactNode } from "react";
 import { createBoardLens, type BoardOptions } from "./lens/board.js";
 import type { CalendarOptions } from "./lens/calendar-options.js";
 import { createCalendarLens } from "./lens/calendar-view.js";
@@ -10,7 +11,7 @@ import type { PlanLensOptions } from "./lens/plan-state.js";
 import { reachLens } from "./lens/reach.js";
 import { createTimelineLens, type TimelineOptions } from "./lens/timeline.js";
 import { Panel } from "./primitives/index.js";
-import { compileBlocks, SpecPlace, type SpecBlock } from "./spec-views.js";
+import { compileBlocks, PlacePageHead, SpecPlace, type SpecBlock } from "./spec-views.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -73,9 +74,21 @@ function blocksLens(blocks: readonly SpecBlock[], view: string): ViewComponent<A
   return (props: ViewProps<AnySchema>) => {
     const place = <SpecPlace blocks={blocks} slot="place" view={view} heading={props.mode === "fullscreen" ? 2 : 3} />;
     if (props.fidelity === "glyph") return <span className="graview-spec-title">{props.label}</span>;
-    // On a page it stands in the page's frame for a picture, which has no padding of its own.
-    return props.mode === "fullscreen" ? <div style={{ padding: "14px 16px" }}>{place}</div> : <Panel title={props.label ?? ""}>{place}</Panel>;
+    if (props.mode !== "fullscreen") return <Panel title={props.label ?? ""}>{place}</Panel>;
+    /*
+     * ON ITS PLACE'S PAGE IT IS THE PAGE'S COLUMN: its words, its groups
+     * and its rows start on the edge the title starts on. It was inset 16
+     * pixels inside the column, so every left edge under the heading missed
+     * the heading's. Anywhere else full size — the scene's frame, a gallery's
+     * picture — it stands in a frame with no padding of its own, and takes
+     * some.
+     */
+    return <InColumn>{place}</InColumn>;
   };
+}
+
+function InColumn({ children }: { readonly children: ReactNode }) {
+  return useContext(PlacePageHead) ? <>{children}</> : <div style={{ padding: "12px 16px" }}>{children}</div>;
 }
 export function declaredLensView(lens: DrawnLens): ViewComponent<AnySchema> {
   let view = MADE.get(lens);

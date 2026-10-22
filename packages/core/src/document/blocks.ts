@@ -227,7 +227,7 @@ export type ResolvedBlock = (Unkeyed | ResolvedList) & { readonly key: string };
 type Unkeyed =
   | { readonly t: "title"; readonly text: string; readonly problem?: string }
   /** `markdown`: the text is a Markdown field as written (FR-180), drawn as prose; said by a describer as its words. */
-  | { readonly t: "text"; readonly text: string; readonly tone?: ViewTone; readonly markdown?: true; readonly problem?: string }
+  | { readonly t: "text"; readonly text: string; readonly tone?: ViewTone; readonly markdown?: true; readonly runs?: readonly MetaRun[]; readonly problem?: string }
   | { readonly t: "badge"; readonly text: string; readonly tone: ViewTone; readonly problem?: string }
   /** `app`: another app's address (FR-171), drawn as the app the host's `resolveApp` names. */
   | { readonly t: "field"; readonly field: string; readonly label: string; readonly text: string; readonly href?: string; readonly app?: string; readonly linked?: { readonly relation: LinkedRelation; readonly refs: readonly LinkedRecordRef[] }; readonly problem?: string }
@@ -242,6 +242,19 @@ type Unkeyed =
   | { readonly t: "figure" }
   | { readonly t: "headline"; readonly level: number; readonly text: string; readonly problem?: string }
   | { readonly t: "number"; readonly text: string; readonly label?: string; readonly emphasis?: FigureEmphasis; readonly problem?: string };
+
+/**
+ * ONE FACT OF A META LINE (`runs` on a resolved text block): a choice said
+ * as a chip — `field` names it — or quiet words. Only a card's or a row's
+ * line of facts joined by " · " has runs, and only when one of them is a
+ * choice field named bare (`{severity} · {status} · disclosed {disclosed}`):
+ * a face draws the choices as small badges and the rest as the words after
+ * them, in the order written. `text` is still the whole line, as said.
+ */
+export interface MetaRun {
+  readonly text: string;
+  readonly field?: string;
+}
 
 /** A group of a list: a choice and its records, or a linked record (its id the value) and the records linked to it. */
 export interface ListGroupOf {
@@ -325,6 +338,51 @@ function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext, prose?: 
     })
     .join("");
   return { text, ...(problem ? { problem } : {}), ...(markdown ? { markdown } : {}) };
+}
+
+/** What joins the facts of a meta line: the separator a describe line and a glance write. */
+const META_JOIN = " · ";
+
+/**
+ * A CARD'S OR A ROW'S LINE OF FACTS, AS RUNS (`MetaRun`): the template cut
+ * at each " · " it writes, each piece said on its own. A piece that is a
+ * choice field named bare is a chip, said as its choice reads (`valueWords`:
+ * "Supply chain", never "supply-chain"); a piece that says nothing is left
+ * out. Nothing when no piece is a choice — the line stays a line.
+ */
+function metaRuns(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext): readonly MetaRun[] | undefined {
+  if (!parts || !ctx.node) return undefined;
+  const pieces: TemplatePart[][] = [[]];
+  for (const part of parts) {
+    if (part.text === undefined) {
+      pieces[pieces.length - 1]!.push(part);
+      continue;
+    }
+    const cut = part.text.split(META_JOIN);
+    cut.forEach((text, at) => {
+      if (at > 0) pieces.push([]);
+      if (text !== "") pieces[pieces.length - 1]!.push({ text });
+    });
+  }
+  if (pieces.length < 2) return undefined;
+  const choiceOf = (piece: readonly TemplatePart[]): string | undefined => {
+    const [only] = piece;
+    if (piece.length !== 1 || !only || only.format || only.expr?.t !== "ident") return undefined;
+    return ctx.fields[only.expr.name]?.type === "enum" ? only.expr.name : undefined;
+  };
+  let chips = 0;
+  const runs = pieces.flatMap((piece): MetaRun[] => {
+    const field = choiceOf(piece);
+    if (field) {
+      const value = Object.hasOwn(ctx.node!, field) ? ctx.node![field] : undefined;
+      if (value === undefined || value === null || value === "") return [];
+      chips++;
+      return [{ text: valueWords(ctx.definition, field, value), field }];
+    }
+    const text = say(piece, ctx).text.trim();
+    return text === "" || text === NOTHING ? [] : [{ text }];
+  });
+  return chips > 0 ? runs : undefined;
 }
 
 function toneWord(tone: Tone | undefined, ctx: BlockContext): ViewTone | undefined {
@@ -411,7 +469,8 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
     case "text": {
       const said = say(block.parts, ctx, true);
       const tone = toneWord(block.tone, ctx);
-      return withProblem({ t: "text", text: said.text, ...(tone ? { tone } : {}), ...(said.markdown ? { markdown: said.markdown } : {}) }, said.problem);
+      const runs = ctx.glance && !said.problem ? metaRuns(block.parts, ctx) : undefined;
+      return withProblem({ t: "text", text: said.text, ...(tone ? { tone } : {}), ...(said.markdown ? { markdown: said.markdown } : {}), ...(runs ? { runs } : {}) }, said.problem);
     }
     case "badge": {
       const said = say(block.parts, ctx);

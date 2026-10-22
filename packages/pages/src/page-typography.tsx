@@ -13,6 +13,7 @@ import {
   type PagesArrangement,
 } from "@graview/core";
 import { excerptOf, readableFields } from "@graview/core/words";
+import { Fragment } from "react";
 
 
 /*
@@ -103,8 +104,13 @@ export const link: React.CSSProperties = {
   textUnderlineOffset: "0.2em",
   display: "inline-flex",
   alignItems: "center",
+  // A flex box drops the space between its words and a mark after them: "a list→". The gap is that space, kept.
+  columnGap: "0.3em",
   minHeight: 24,
 };
+/** A link that leads on (`Onward` draws its words and its mark): undecorated itself, its words underlined, the arrow not. */
+export const onward: React.CSSProperties = { ...link, textDecoration: "none" };
+export { Onward } from "./onward.js";
 /*
  * An UNDERLINED link is a target and an undecorated one is the same target.
  *
@@ -150,6 +156,7 @@ export const ROWS_CSS = `.graview-list{container-type:inline-size}
 .graview-row-glance,.graview-row>[data-testid=search-why]{font-size:var(--graview-text-small);line-height:1.5;color:var(--graview-ink-muted)}
 .graview-row>[data-testid=search-why]{grid-column:1/-1}
 .graview-row-glance{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.graview-chip{display:inline-block;padding:0 .5em;border-radius:var(--graview-radius-sm);background:color-mix(in srgb,var(--graview-ink) 7%,transparent);color:var(--graview-ink);font-weight:500;line-height:1.6;white-space:nowrap}
 .graview-group-head{display:flex;gap:.5em;align-items:baseline;margin:0;padding:.375rem 0;font-family:var(--graview-font-body);font-size:var(--graview-text-small);font-weight:var(--graview-weight-label);line-height:1.3;letter-spacing:.02em;scroll-margin-top:4rem}
 .graview-group-head>span{color:var(--graview-ink-muted);font-weight:var(--graview-weight-body)}
 .graview-group-toggle{display:inline-flex;gap:.5em;align-items:center;min-height:2.75rem;margin:-.375rem 0;padding:0 .5rem 0 0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;text-align:start;cursor:pointer;border-radius:var(--graview-radius-sm)}
@@ -229,12 +236,58 @@ export function glance(
   definition: AnyNodeDefinition | undefined,
   said: string,
 ): string {
+  return glanceRuns(node, definition, said).map((run) => run.text).join(" · ");
+}
+
+/** One fact of a glance: its words, and its field's key where the field is a choice (drawn as a chip, `Glance`). */
+export interface GlanceRun {
+  readonly text: string;
+  readonly choice?: string;
+}
+
+/** A node's glance as its facts, each marked where it is a choice (`isChoice`), in the glance's own order. */
+export function glanceRuns(
+  node: Record<string, unknown>,
+  definition: AnyNodeDefinition | undefined,
+  said: string,
+  isChoice: (key: string) => boolean = () => false,
+): readonly GlanceRun[] {
   // A bare number says nothing on its own — "12 · 8" is not a sentence —
   // so each fact is read the way it stands alone, the same words a card uses.
   return readableFields(node, definition, { limit: 3, said: [said], glance: true })
     // A record's prose is said by its start on a glance — its first paragraph or a line's worth, Markdown's syntax taken out (FR-180) — and whole on its page.
-    .map((field) => (field.long ? excerptOf(field.stored, { markdown: field.markdown, most: 100 }) : field.alone))
-    .join(" · ");
+    .map((field) => (field.long ? { text: excerptOf(field.stored, { markdown: field.markdown, most: 100 }) } : isChoice(field.key) ? { text: field.alone, choice: field.key } : { text: field.alone }));
+}
+
+/**
+ * A GLANCE, DRAWN: its choices as small chips, its other facts quiet words
+ * after them, in the order the glance says them — so a status no longer
+ * reads like the date beside it. Two facts in words keep the dot between
+ * them, in the words; a chip stands a space from what is beside it — never
+ * a dot of its own, which a screen reader says as a word.
+ */
+export function Glance({ runs }: { readonly runs: readonly GlanceRun[] }) {
+  return (
+    <>
+      {runs.map((run, at) => {
+        const after = at === 0 ? "" : run.choice === undefined && runs[at - 1]!.choice === undefined ? " · " : " ";
+        return (
+          <Fragment key={at}>
+            {run.choice !== undefined ? (
+              <>
+                {after}
+                <span className="graview-chip" data-graview-field={run.choice}>
+                  {run.text}
+                </span>
+              </>
+            ) : (
+              `${after}${run.text}`
+            )}
+          </Fragment>
+        );
+      })}
+    </>
+  );
 }
 
 /** The plural, as declared. */

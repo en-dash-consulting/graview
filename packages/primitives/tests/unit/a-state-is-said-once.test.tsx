@@ -73,7 +73,7 @@ describe("a row under a grouped list's heading", () => {
 
   it("does not repeat the heading's value, and still says its name", () => {
     const html = lens("Hard lines");
-    expect(html).toMatch(/class="graview-spec-list-heading"[^>]*>Hard</);
+    expect(html).toMatch(/class="graview-spec-list-heading"[^>]*>Hard <span class="graview-spec-list-count">/);
     expect(html).toContain("No default hierarchy");
     expect(html).not.toMatch(/class="graview-spec-badge"[^>]*>hard</);
   });

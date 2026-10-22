@@ -1,0 +1,348 @@
+{
+  "nodes": [
+    {
+      "id": "t-nx",
+      "kind": "threat",
+      "name": "GitHub internal repositories breach via Nx Console",
+      "type": "supply-chain",
+      "severity": "high",
+      "status": "contained",
+      "disclosed": "2026-05-18",
+      "verdict": "Only if you installed the Nx Console extension between May 14 and May 18, 2026.",
+      "summary": "A poisoned **Nx Console** release read tokens from developers' machines."
+    },
+    {
+      "id": "t-trivy",
+      "kind": "threat",
+      "name": "Trivy scanner and GitHub Actions compromise",
+      "type": "supply-chain",
+      "severity": "critical",
+      "status": "resolved",
+      "disclosed": "2026-03-19",
+      "verdict": "Yes, if a workflow pinned the Trivy action by tag rather than by commit."
+    },
+    {
+      "id": "t-chalk",
+      "kind": "threat",
+      "name": "chalk and debug npm hijack",
+      "type": "supply-chain",
+      "severity": "high",
+      "status": "resolved",
+      "disclosed": "2025-09-08",
+      "verdict": "Only if your lockfile resolved one of the eighteen poisoned versions."
+    },
+    {
+      "id": "t-drift",
+      "kind": "threat",
+      "name": "Salesloft Drift OAuth token theft (UNC6395)",
+      "type": "supply-chain",
+      "severity": "high",
+      "status": "resolved",
+      "disclosed": "2025-08-26"
+    },
+    {
+      "id": "t-amazonq",
+      "kind": "threat",
+      "name": "Amazon Q Developer extension 1.84.0 tampering",
+      "type": "supply-chain",
+      "severity": "medium",
+      "status": "resolved",
+      "disclosed": "2025-07-23"
+    },
+    {
+      "id": "t-tj",
+      "kind": "threat",
+      "name": "tj-actions/changed-files compromise",
+      "type": "supply-chain",
+      "severity": "high",
+      "status": "resolved",
+      "disclosed": "2025-03-14"
+    },
+    {
+      "id": "t-shai",
+      "kind": "threat",
+      "name": "The Shai-Hulud worm family",
+      "type": "worm",
+      "severity": "critical",
+      "status": "active",
+      "disclosed": "2025-09-15",
+      "verdict": "Yes, if you build JavaScript or Python. A fresh wave hit npm on Oct 8, 2026."
+    },
+    {
+      "id": "t-glass",
+      "kind": "threat",
+      "name": "GlassWorm: self-spreading VS Code extension worm",
+      "type": "worm",
+      "severity": "high",
+      "status": "monitoring",
+      "disclosed": "2025-10-18",
+      "verdict": "Only if you installed one of the listed VS Code extension versions."
+    },
+    {
+      "id": "t-antv",
+      "kind": "threat",
+      "name": "Mini Shai-Hulud: @antv wave",
+      "type": "worm",
+      "severity": "high",
+      "status": "contained",
+      "disclosed": "2026-05-19"
+    },
+    {
+      "id": "t-akira",
+      "kind": "threat",
+      "name": "Akira ransomware",
+      "type": "ransomware",
+      "severity": "high",
+      "status": "active",
+      "disclosed": "2024-04-18",
+      "verdict": "Yes, if you have VPNs without MFA or unpatched backup servers."
+    },
+    {
+      "id": "t-safepay",
+      "kind": "threat",
+      "name": "SafePay ransomware",
+      "type": "ransomware",
+      "severity": "high",
+      "status": "active",
+      "disclosed": "2026-10-20",
+      "verdict": "Worth checking if you have internet-facing firewalls or VPNs without MFA."
+    },
+    {
+      "id": "t-ivanti",
+      "kind": "threat",
+      "name": "Ivanti Connect Secure zero-day (CVE-2026-104935)",
+      "type": "zero-day",
+      "severity": "critical",
+      "status": "active",
+      "disclosed": "2026-10-13",
+      "verdict": "Yes, urgently, if you run Ivanti Connect Secure."
+    },
+    {
+      "id": "t-arcane",
+      "kind": "threat",
+      "name": "ArcaneDoor: Cisco ASA and FTD zero-days (CVE-2025-20333, CVE-2025-20362)",
+      "type": "zero-day",
+      "severity": "critical",
+      "status": "monitoring",
+      "disclosed": "2025-09-25"
+    },
+    {
+      "id": "t-log4",
+      "kind": "threat",
+      "name": "Log4Shell",
+      "type": "zero-day",
+      "severity": "critical",
+      "status": "monitoring",
+      "disclosed": "2021-12-09"
+    },
+    {
+      "id": "r-lock",
+      "kind": "remediation",
+      "step": "Search lockfiles for the poisoned versions",
+      "audience": "developers",
+      "phase": "check",
+      "urgency": "now",
+      "order": 1
+    },
+    {
+      "id": "r-cool",
+      "kind": "remediation",
+      "step": "Wait three days before installing a new package version",
+      "audience": "developers",
+      "phase": "harden",
+      "urgency": "ongoing",
+      "order": 4
+    },
+    {
+      "id": "r-scripts",
+      "kind": "remediation",
+      "step": "Install without lifecycle scripts in CI",
+      "audience": "developers",
+      "phase": "harden",
+      "urgency": "this-week",
+      "order": 3
+    },
+    {
+      "id": "r-rotate",
+      "kind": "remediation",
+      "step": "Rotate npm, GitHub and cloud tokens on affected machines",
+      "audience": "developers",
+      "phase": "eradicate",
+      "urgency": "today",
+      "order": 2
+    },
+    {
+      "id": "r-vpn",
+      "kind": "remediation",
+      "step": "Require MFA on every VPN and remote-access login",
+      "audience": "it-ops",
+      "phase": "harden",
+      "urgency": "this-week",
+      "order": 3
+    },
+    {
+      "id": "r-patch",
+      "kind": "remediation",
+      "step": "Patch Ivanti Connect Secure and run the external integrity checker",
+      "audience": "it-ops",
+      "phase": "contain",
+      "urgency": "now",
+      "order": 1
+    },
+    {
+      "id": "r-hunt",
+      "kind": "remediation",
+      "step": "Hunt for the published indicators in endpoint logs",
+      "audience": "security",
+      "phase": "check",
+      "urgency": "today",
+      "order": 1
+    },
+    {
+      "id": "r-phish",
+      "kind": "remediation",
+      "step": "Tell people the help desk will never ask for an MFA code",
+      "audience": "everyone",
+      "phase": "harden",
+      "urgency": "ongoing",
+      "order": 1
+    },
+    {
+      "id": "s-cisa",
+      "kind": "source",
+      "title": "Ivanti Connect Secure emergency directive",
+      "publisher": "CISA",
+      "sourceType": "advisory",
+      "published": "2026-10-14",
+      "url": "https://example.com/s-cisa"
+    },
+    {
+      "id": "s-wiz",
+      "kind": "source",
+      "title": "Shai-Hulud returns: the October wave",
+      "publisher": "Wiz Research",
+      "sourceType": "research",
+      "published": "2026-10-09",
+      "url": "https://example.com/s-wiz"
+    },
+    {
+      "id": "s-nx",
+      "kind": "source",
+      "title": "Nx Console postmortem",
+      "publisher": "Nx",
+      "sourceType": "postmortem",
+      "published": "2026-05-20",
+      "url": "https://example.com/s-nx"
+    },
+    {
+      "id": "s-krebs",
+      "kind": "source",
+      "title": "Akira's favorite ways in",
+      "publisher": "KrebsOnSecurity",
+      "sourceType": "news",
+      "published": "2024-06-02",
+      "url": "https://example.com/s-krebs"
+    },
+    {
+      "id": "s-tj",
+      "kind": "source",
+      "title": "tj-actions/changed-files incident report",
+      "publisher": "StepSecurity",
+      "sourceType": "research",
+      "published": "2025-03-15",
+      "url": "https://example.com/s-tj"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "kind": "mitigates",
+      "from": "r-lock",
+      "to": "t-shai"
+    },
+    {
+      "id": "e2",
+      "kind": "mitigates",
+      "from": "r-lock",
+      "to": "t-chalk"
+    },
+    {
+      "id": "e3",
+      "kind": "mitigates",
+      "from": "r-cool",
+      "to": "t-shai"
+    },
+    {
+      "id": "e4",
+      "kind": "mitigates",
+      "from": "r-scripts",
+      "to": "t-shai"
+    },
+    {
+      "id": "e5",
+      "kind": "mitigates",
+      "from": "r-rotate",
+      "to": "t-nx"
+    },
+    {
+      "id": "e6",
+      "kind": "mitigates",
+      "from": "r-vpn",
+      "to": "t-akira"
+    },
+    {
+      "id": "e7",
+      "kind": "mitigates",
+      "from": "r-vpn",
+      "to": "t-safepay"
+    },
+    {
+      "id": "e8",
+      "kind": "mitigates",
+      "from": "r-patch",
+      "to": "t-ivanti"
+    },
+    {
+      "id": "e9",
+      "kind": "mitigates",
+      "from": "r-hunt",
+      "to": "t-ivanti"
+    },
+    {
+      "id": "e10",
+      "kind": "mitigates",
+      "from": "r-phish",
+      "to": "t-akira"
+    },
+    {
+      "id": "c0",
+      "kind": "covers",
+      "from": "s-cisa",
+      "to": "t-ivanti"
+    },
+    {
+      "id": "c1",
+      "kind": "covers",
+      "from": "s-wiz",
+      "to": "t-shai"
+    },
+    {
+      "id": "c2",
+      "kind": "covers",
+      "from": "s-nx",
+      "to": "t-nx"
+    },
+    {
+      "id": "c3",
+      "kind": "covers",
+      "from": "s-krebs",
+      "to": "t-akira"
+    },
+    {
+      "id": "c4",
+      "kind": "covers",
+      "from": "s-tj",
+      "to": "t-tj"
+    }
+  ]
+}

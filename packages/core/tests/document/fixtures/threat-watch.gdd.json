@@ -1,0 +1,356 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Threat Watch",
+  "description": "The threats worth knowing about, how bad each is, and what to do.",
+  "brand": {
+    "accent": "#1d4ed8",
+    "typography": {
+      "body": "Inter",
+      "display": "Space Grotesk"
+    },
+    "shape": {
+      "radius": 8
+    }
+  },
+  "roles": [
+    "owner"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner"
+        ],
+        "mutations": "*"
+      }
+    ]
+  },
+  "kinds": {
+    "threat": {
+      "noun": "threat",
+      "plural": "threats",
+      "description": "An incident, campaign or vulnerability people should know about.",
+      "describe": "{severity} · {status} · {type}",
+      "glance": [
+        "severity",
+        "status",
+        "type",
+        "disclosed"
+      ],
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "type": {
+          "type": "enum",
+          "options": [
+            "supply-chain",
+            "worm",
+            "ransomware",
+            "zero-day"
+          ],
+          "default": "supply-chain",
+          "required": true
+        },
+        "severity": {
+          "type": "enum",
+          "options": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ],
+          "default": "high",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "active",
+            "monitoring",
+            "contained",
+            "resolved"
+          ],
+          "default": "active",
+          "required": true
+        },
+        "disclosed": {
+          "type": "date",
+          "description": "When it became public"
+        },
+        "verdict": {
+          "type": "text",
+          "description": "Should I be concerned? One or two plain sentences."
+        },
+        "summary": {
+          "type": "text",
+          "format": "markdown",
+          "description": "What happened"
+        }
+      }
+    },
+    "remediation": {
+      "noun": "remediation",
+      "plural": "remediations",
+      "label": "{step}",
+      "description": "A step to check, contain, clean up or harden.",
+      "glance": [
+        "audience",
+        "phase",
+        "urgency"
+      ],
+      "fields": {
+        "step": {
+          "type": "string",
+          "required": true
+        },
+        "audience": {
+          "type": "enum",
+          "options": [
+            "developers",
+            "it-ops",
+            "security",
+            "everyone"
+          ],
+          "default": "developers",
+          "required": true
+        },
+        "phase": {
+          "type": "enum",
+          "options": [
+            "check",
+            "contain",
+            "eradicate",
+            "harden"
+          ],
+          "default": "check",
+          "required": true
+        },
+        "urgency": {
+          "type": "enum",
+          "options": [
+            "now",
+            "today",
+            "this-week",
+            "ongoing"
+          ],
+          "default": "today",
+          "required": true
+        },
+        "order": {
+          "type": "integer",
+          "min": 1,
+          "max": 99
+        }
+      },
+      "edges": {
+        "mitigates": {
+          "to": [
+            "threat"
+          ],
+          "description": "the threats this step answers",
+          "inverse": "what to do"
+        }
+      }
+    },
+    "source": {
+      "noun": "source",
+      "plural": "sources",
+      "label": "{title}",
+      "description": "An advisory, postmortem or analysis.",
+      "glance": [
+        "publisher",
+        "sourceType",
+        "published"
+      ],
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "publisher": {
+          "type": "string"
+        },
+        "sourceType": {
+          "type": "enum",
+          "options": [
+            "advisory",
+            "postmortem",
+            "research",
+            "news"
+          ],
+          "default": "research"
+        },
+        "published": {
+          "type": "date"
+        },
+        "url": {
+          "type": "url"
+        }
+      },
+      "edges": {
+        "covers": {
+          "to": [
+            "threat"
+          ],
+          "description": "what it covers",
+          "inverse": "sources"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-threat": {
+      "title": "Add a threat",
+      "creates": "threat"
+    },
+    "add-remediation": {
+      "title": "Add a remediation",
+      "creates": "remediation"
+    },
+    "add-source": {
+      "title": "Add a source",
+      "creates": "source"
+    }
+  },
+  "views": {
+    "threat": {
+      "card": [
+        {
+          "headline": "{name}"
+        },
+        {
+          "badge": "{severity}",
+          "tone": {
+            "expr": "if(severity == 'critical', 'bad', if(severity == 'high', 'warn', 'neutral'))"
+          }
+        },
+        {
+          "text": "{verdict}"
+        },
+        {
+          "text": "{type} · {status} · disclosed {disclosed}"
+        }
+      ],
+      "row": [
+        {
+          "headline": "{name}"
+        },
+        {
+          "text": "{severity} · {status} · {type} · disclosed {disclosed}"
+        }
+      ]
+    },
+    "remediation": {
+      "row": [
+        {
+          "headline": "{step}"
+        },
+        {
+          "text": "{urgency} · {phase} · for {out('mitigates')|and}"
+        }
+      ]
+    }
+  },
+  "lenses": [
+    {
+      "name": "blocks",
+      "title": "Active now",
+      "on": "threat",
+      "create": false,
+      "options": {
+        "blocks": [
+          {
+            "headline": "Right now, {count(all('threat') where status == 'active')|words} threats are active."
+          },
+          {
+            "text": "Live campaigns and unpatched zero-days, most severe first."
+          },
+          {
+            "as": "card",
+            "empty": "Nothing active right now.",
+            "list": "all('threat') where status == 'active'",
+            "sort": {
+              "by": "severity",
+              "direction": "choices"
+            }
+          },
+          {
+            "title": "Recently contained"
+          },
+          {
+            "as": "row",
+            "empty": "Nothing recently contained.",
+            "list": "all('threat') where status == 'contained'",
+            "sort": {
+              "by": "disclosed",
+              "direction": "desc"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "blocks",
+      "title": "By type",
+      "on": "threat",
+      "create": false,
+      "options": {
+        "blocks": [
+          {
+            "text": "Grouped by how they work, newest first."
+          },
+          {
+            "as": "row",
+            "list": "all('threat')",
+            "sort": {
+              "by": "disclosed",
+              "direction": "desc"
+            },
+            "group": {
+              "by": "type",
+              "headings": {
+                "supply-chain": "Supply-chain compromises",
+                "worm": "Self-spreading worms",
+                "ransomware": "Ransomware",
+                "zero-day": "Zero-days"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "blocks",
+      "title": "What to do",
+      "on": "remediation",
+      "create": false,
+      "options": {
+        "blocks": [
+          {
+            "text": "Grouped by who does it. Steps run check → contain → eradicate → harden."
+          },
+          {
+            "as": "row",
+            "list": "all('remediation')",
+            "sort": {
+              "by": "order",
+              "direction": "asc"
+            },
+            "group": {
+              "by": "audience",
+              "headings": {
+                "developers": "Developers",
+                "it-ops": "IT and operations",
+                "security": "Security teams",
+                "everyone": "Everyone"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

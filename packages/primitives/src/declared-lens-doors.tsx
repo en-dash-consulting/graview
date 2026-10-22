@@ -56,6 +56,12 @@ function doorFor<S extends AnySchema>(lens: DrawnLens): ViewComponent<S> {
   };
   // A place drawn from blocks is a page's own column of words and cards: it flows with the page, never a box that scrolls inside itself.
   if (lens.lens === "blocks") (Door as { flows?: boolean }).flows = true;
+  /*
+   * A place drawn from blocks that opens with a headline hands it to its page (`lede`): the page says it
+   * as the line under its title, in place of its count, and the lens leaves it out (`PlacePageHead`).
+   */
+  const opening = lens.lens === "blocks" ? (lens.options as { blocks?: readonly { headline?: unknown }[] }).blocks?.[0] : undefined;
+  if (typeof opening?.headline === "string") (Door as { lede?: unknown }).lede = opening;
   // A place declared `"create": false` is read, not written: its page offers no form to begin its kind.
   if (lens.create === false) (Door as { creates?: boolean }).creates = false;
   return Door;

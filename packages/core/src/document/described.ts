@@ -27,7 +27,8 @@ export type DescribedPart =
       readonly as: "card" | "row" | "name";
       /** The columns a card list makes at this width; a row list is one. */
       readonly columns: number;
-      readonly groups: readonly { readonly heading?: string; readonly items: readonly DescribedItem[] }[];
+      /** `count`: how many records a group with a heading holds, every one listed — drawn beside its heading. */
+      readonly groups: readonly { readonly heading?: string; readonly count?: number; readonly items: readonly DescribedItem[] }[];
       /** What it says when it lists nothing. */
       readonly empty?: string;
       readonly more?: number;

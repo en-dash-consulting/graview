@@ -17,7 +17,7 @@ import {
   type NodeOfSchema,
 } from "@graview/core";
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
-import { firstPicture, withComputed } from "@graview/core/blocks";
+import { fieldSpecOf, firstPicture, withComputed } from "@graview/core/blocks";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -31,7 +31,9 @@ import { beginningsFrom, WhyLine } from "./page-search.js";
 import {
   KindMark,
   ROWS_CSS,
+  Glance,
   glance,
+  glanceRuns,
   lede,
   link,
   plain,
@@ -307,6 +309,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     for (const key of pinned) delete read[key];
     return read;
   };
+  // A glance's choice is drawn as a chip (`Glance`): a field the declaration makes a choice of values.
+  const isChoice = (key: string) => fieldSpecOf((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key])?.type === "enum";
   const row = (node: (typeof members)[number]) => {
     const label = labelOf(definition, node);
     if (ownRowOf) {
@@ -325,16 +329,16 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
        */
       const rowSays = pageSays(ownRow, node as never, store.graph as never);
       const rest = Object.fromEntries(Object.entries(unsaid(node)).filter(([key]) => !rowSays?.fields.has(key)));
-      const facts = rowSays ? glance(rest, definition, rowSays.title ?? label) : "";
+      const facts = rowSays ? glanceRuns(rest, definition, rowSays.title ?? label, isChoice) : [];
       return (
         <li key={node.id} data-testid="record-row" data-graview-record={node.id} style={{ position: "relative", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 16, rowGap: 2, paddingBlock: 10, borderTop: "1px solid var(--graview-edge)" }} {...chooseAt(node.id)}>
           {box(node, label)}
           <div style={{ flex: "1 1 14rem", minWidth: 0 }}>
             <RowView node={node as never} cardinality="one" fidelity="glyph" mode="fullscreen" selected={false} {...(flagged.has(node.id) ? { flagged: [node.id] } : {})} />
           </div>
-          {facts ? (
+          {facts.length > 0 ? (
             <span style={{ ...quiet, flex: "0 1 auto", minWidth: 0, overflowWrap: "anywhere" }} data-testid="record-glance">
-              {facts}
+              <Glance runs={facts} />
             </span>
           ) : null}
           {/* The line is the link: stretched over the row, named by the record, under any link the row itself draws. */}
@@ -343,7 +347,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
       );
     }
     // A glance may say a computed field (FR-83), worked out over what this seat sees.
-    const said = glance(unsaid(node), definition, label);
+    const runs = glanceRuns(unsaid(node), definition, label, isChoice);
+    const said = runs.length > 0;
     // Found by the words in a field rather than the name: say which, as the Find box does.
     const why = typed.words ? matchNode(definition, node, typed.words) : undefined;
     // Its first picture, small, beside its name (FR-162) — not down a large list's index.
@@ -370,7 +375,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
         )}
         {said || app ? (
           <span className="graview-row-glance">
-            {said}
+            <Glance runs={runs} />
             {said && app ? " · " : null}
             {app ? <AppLink address={app} /> : null}
           </span>
@@ -826,12 +831,19 @@ const anchorOf = (): HTMLElement | null => document.querySelector<HTMLElement>("
 /*
  * THE BOXES' COLUMN on the framework's list: at each row's start, over the
  * row's own link; on a phone, only once a long press has chosen something,
- * so a list read on a phone is the list it was.
+ * so a list read on a phone is the list it was. On a desk wide enough for
+ * the page's column to have a margin, the column hangs in that margin: the
+ * rows' names start on the edge the title does, not 34 pixels in from it
+ * for a box that is not shown until the row is reached.
  */
 const LIST_CHOOSING_CSS = `
 .graview-list[data-graview-choosable]{outline:none}
 .graview-list [data-graview-choose]{position:relative;padding-left:34px}
 .graview-choose-at{position:absolute;left:2px;top:0;bottom:0;z-index:${LOCAL_LAYERS.raised};display:flex;align-items:center}
+@media (min-width: 900px) and (pointer: fine){
+.graview-list [data-graview-choose]{padding-left:0}
+.graview-choose-at{left:-34px}
+}
 @media (pointer: coarse){
 .graview-list:not([data-graview-choosing]) [data-graview-choose]{padding-left:0}
 .graview-list:not([data-graview-choosing]) .graview-choose-at{display:none}
