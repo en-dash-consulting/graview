@@ -17,6 +17,8 @@
  *   live, and the command's store holds it;
  *   `graview shots` writes a PNG for each named place, and refuses a place
  *   the app has not got, naming the ones it has;
+ *   and a full-page picture of a place taller than the window is the whole
+ *   place, its last row in it, though the place scrolls inside the embed;
  *   and pictures an app declared in code, a draft view's place named by its
  *   title;
  *   and pictures a declared lens's place with the lens drawn in it, not its
@@ -157,6 +159,62 @@ try {
     report.checks.shotsWritesAPngForEachNamedPlace = { status: taken.status, said: taken.stdout.trim().split("\n").at(-1), pngs, ok: taken.status === 0 && pngs.every(Boolean) };
     const refused = run("nowhere");
     report.checks.shotsRefusesAPlaceTheAppHasNot = { status: refused.status, said: refused.stderr.trim(), ok: refused.status === 2 && refused.stderr.includes('no place called "nowhere"') && refused.stderr.includes("people") };
+  }
+
+  /*
+   * ---- graview shots of a place taller than the window: the whole place,
+   * not the window's worth. The page scrolls inside the embed's box, which
+   * Playwright's fullPage does not see; Threat Watch's By type (fourteen
+   * threats in four groups) is about 1,400 pixels on a desk.
+   */
+  {
+    const out = join(shotsDir, "long");
+    const taken = spawnSync(
+      process.execPath,
+      [CLI, "shots", "packages/core/tests/document/fixtures/threat-watch.gdd.json", "--seed", "packages/core/tests/document/fixtures/threat-watch.seed.json", "--places", "By type", "--scheme", "light", "--width", "1280", "--out", out, "--port", String(portFor("preview-shots"))],
+      { cwd: repoRoot, encoding: "utf8", timeout: 180_000 },
+    );
+    const file = join(out, "by-type-light-1280.png");
+    let picture = null;
+    if (existsSync(file)) {
+      // The picture read back in the browser: its size, and the lowest row of pixels that is not the page's ground.
+      const page = await browser.newPage();
+      picture = await page.evaluate(async (src) => {
+        const image = new Image();
+        image.src = src;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0);
+        const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
+        const ground = data.slice((200 * width + 8) * 4, (200 * width + 8) * 4 + 3);
+        let lowestInk = -1;
+        for (let y = height - 1; y >= 0 && lowestInk < 0; y--) {
+          for (let x = 40; x < width - 40; x++) {
+            const i = (y * width + x) * 4;
+            if (Math.abs(data[i] - ground[0]) + Math.abs(data[i + 1] - ground[1]) + Math.abs(data[i + 2] - ground[2]) > 60) {
+              lowestInk = y;
+              break;
+            }
+          }
+        }
+        return { width, height, lowestInk };
+      }, `data:image/png;base64,${readFileSync(file).toString("base64")}`);
+      await page.close();
+    }
+    /*
+     * Taller than the window (900 on a desk), and its last row drawn in it:
+     * ink below the window's foot, with no more than the page's own bottom
+     * margin under it — a picture cut at the window has ink to its edge.
+     */
+    report.checks.aFullPagePictureOfALongPlaceShowsTheWholePlace = {
+      status: taken.status,
+      said: (taken.stdout.trim().split("\n").at(-1) ?? "") + taken.stderr.trim(),
+      picture,
+      ok: taken.status === 0 && picture !== null && picture.height > 900 && picture.lowestInk > 900 && picture.height - picture.lowestInk > 24 && picture.height - picture.lowestInk < 240,
+    };
   }
 
   /* ---- graview shots of an app declared in code (W-245), its draft view's place named by its title (W-243) */
