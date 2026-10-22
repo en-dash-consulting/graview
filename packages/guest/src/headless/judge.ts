@@ -3,7 +3,7 @@ import { placeNamed, placesSaid, quoted } from "../host/links-words.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { imageRefusedWords, type ImageHost } from "../host/open-judge.js";
 import { describeDrawing } from "./describe.js";
-import { drawTranscript } from "./draw.js";
+import { drawTranscript, type DrawnTranscript } from "./draw.js";
 import type { HeadlessFailureReason, HeadlessInput, HeadlessTranscript } from "./protocol.js";
 
 /*
@@ -16,7 +16,8 @@ import type { HeadlessFailureReason, HeadlessInput, HeadlessTranscript } from ".
  */
 
 export type Judged =
-  | { readonly ok: true; readonly parts: readonly DescribedPart[]; readonly problems: readonly DescribedProblem[] }
+  /** `drawn`: the drawing itself, for the host to read a press against (0.1.45). */
+  | { readonly ok: true; readonly parts: readonly DescribedPart[]; readonly problems: readonly DescribedProblem[]; readonly drawn: DrawnTranscript }
   | { readonly ok: false; readonly reason: HeadlessFailureReason; readonly detail: string };
 
 /** One refusal of the open kit's, said to the author of the view, offering only what its host draws. */
@@ -65,5 +66,5 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
     if ("record" in went && !(input.props.node?.id === went.record || (input.props.nodes ?? []).some((node) => node.id === went.record) || placeNamed(goes, went.record))) problems.push({ at: "navigate", says: `It goes to ${quoted(went.record)}, which this seat was not shown and is no place of this app: the host will not follow it. A view goes to a record by its id, or to a place by its slug.${placesSaid(goes)}` });
     if ("place" in went && !placeNamed(goes, went.place)) problems.push({ at: "navigate", says: `It goes to the place ${quoted(went.place)}, which this app does not have.${placesSaid(goes)}` });
   }
-  return { ok: true, parts: said.parts, problems };
+  return { ok: true, parts: said.parts, problems, drawn };
 }

@@ -608,7 +608,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     element.setAttribute("aria-haspopup", "dialog");
     wantMedia();
   };
-  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, createSaver, fillPrefills, judgePress, prefillOf }]) => {
+  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf }]) => {
     if (failed) return;
     const reader = createPressReader();
     /* The view hears what became of an act a press or a save asked for as `acted` on the element bound to it (FR-191). */
@@ -634,6 +634,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     };
     const prefilled = new WeakSet<Element>();
     refill = () => {
+      /* A card bound to a record is a link once it is drawn whole: whether it holds a field is known only then (pressable.ts). */
+      links.refresh(shadow);
+      markPresses(shadow);
       fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
       media?.refresh(shadow);
       drops?.refresh();
@@ -657,12 +660,12 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       send,
       onFieldSet: (field) => reader.filled(field),
       onAttribute: (element, name) => {
-        if (element.localName === "a" && (name === "data-record" || name === "data-place")) links.link(element);
+        if (name === "data-record" || name === "data-place") links.link(element);
         if (name === "data-lightbox") marksMedia(element);
         if (name === "data-drop") wantDrops();
       },
       decorate: (element) => {
-        if (element.localName === "a") links.link(element);
+        if (element.hasAttribute("data-record") || element.hasAttribute("data-place")) links.link(element);
         marksMedia(element);
         if (element.hasAttribute("data-drop")) wantDrops();
       },
@@ -674,14 +677,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       before: (event, at, root) => {
         reader.heard(event, at);
         saver.heard(event, at, root);
-        /* A link the view drew goes where it says, if that is a record or a place of this app. */
-        const anchor = at.closest("a[data-graview-link]");
-        if (anchor && root.contains(anchor) && (event.type === "click" || (event.type === "keydown" && (event as KeyboardEvent).key === "Enter"))) {
-          /* Followed here, and nowhere else: the face around the view does not also take the press for a press on the card. */
-          event.preventDefault();
-          event.stopPropagation();
-          links.follow(anchor);
-        }
+        /* A link the view drew — an <a>, a card, a row — goes where it says, if that is a record or a place of this app: on a click, a tap or Enter, from anywhere inside it but a press of its own. */
+        links.pressed(event, at, root);
         /* The viewer's own press opens the host's full-screen viewer: a click, or Enter or Space on what is not a button (which clicks of itself). */
         const lightbox = at.closest("[data-lightbox]");
         const key = event.type === "keydown" ? (event as KeyboardEvent).key : undefined;
@@ -695,6 +692,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         const press = reader.press(event, at, root);
         if (!press || !session) return;
         event.stopPropagation();
+        /* Space on a press is the press, never the page scrolling under it. */
+        if (event.type === "keydown") event.preventDefault();
         const outcome = session.pressed(judgePress(options.store, manifest, shown, press));
         tally();
         const pressed = { as: press.as, ...outcome };

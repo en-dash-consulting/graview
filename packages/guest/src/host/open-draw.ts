@@ -11,11 +11,15 @@ import { createOpenRenderer, type OpenRenderer } from "./open-render.js";
  * page that draws none loads none of the sanitizer.
  */
 
-/** The host's own rules for the region: what a view's stylesheet cannot reach, because it cannot write `:host`. */
+/**
+ * The host's own rules for the region: what a view's stylesheet cannot reach, because it cannot write `:host`.
+ * A link or a press the host made — a card as much as an `<a>`, a `<span role="button">` as much as a button — looks pressable, which is what iOS makes a tap a click on,
+ * is not held for a double tap's zoom, and flashes faintly under the finger (pressable.ts).
+ */
 export const REGION_CSS = `
 :host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }
 [data-graview-view-root] { color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
-[data-graview-view-root] [data-graview-link] { cursor: pointer; }
+[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }
 `;
 
 /** The keys a view hears: enough to move and choose, never what the viewer types into the app elsewhere. */

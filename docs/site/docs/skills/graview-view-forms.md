@@ -1,6 +1,6 @@
 # graview-view-forms
 
-`graview-view-forms` is one of Graview's 29 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
+`graview-view-forms` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Let a Graview worker view change records — a bound press (data-act), the fields a person types into, a record's own text filled to edit (data-prefill), a field that saves as it is typed (data-save) and the view hearing what became of each act (acted) — and prove a press applies and a field the view filled is refused, rather than assuming the form works.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -22,6 +22,10 @@ An element with `data-act` is a press. Its arguments come only from three places
 ```
 
 A field the view filled (`value="…"`) is the view's until the person empties it, and a press carrying it is refused. A radio or a select is the person's pick, not their words: its value goes only if it is one the act declares (an enum's option) or a record the view was shown. A view may empty a field after a press. A press on an act the seat may not run there is refused, and the view hears why.
+
+### What can be pressed
+
+Any element with `data-act` is a press, not only a `<button>`: a `<span role="button">`, a `<div>`, a card's badge, an SVG `<g>`. A click on it or on anything inside it presses it, and a phone's tap is a click. One that does not press of itself is given the keyboard (`tabindex="0"`), is a button to assistive technology unless it says another role, is drawn with a pointer and `touch-action: manipulation`, and Enter or Space on it presses it, as on a button. Three things are never pressed, and the check says so: an `<option>` (bind its `select`, with `data-save="change"`), a `<label>` (a press on it presses its field too), and a field to type into or pick from that does not save (a click into it is not a press). Inside a card that opens (`graview-view-links`) a press is its own: it never opens the card.
 
 ### A record's own text, to edit
 
@@ -60,13 +64,14 @@ Say the refusal's `message` as it is: it is the policy's sentence, or the host's
 ### Then find out whether it worked
 
 1. `graview check` the app the view writes to: a form is only as sound as the acts it asks for. `checkManifest(manifest, store)` from `@graview/guest/host/views` must say nothing; it refuses an act the app does not declare.
-2. Run it headless as a member who may see less than you: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It reports `act` for an act its manifest does not name, and says when a field's `data-save` would save nothing: no `data-act` or `name`, no fieldset bound to a record, a `data-save` other than `input` or `change`, a `data-debounce` it does not read, or a `data-save` on what is not a field.
-3. Open it on both faces as that member. Press each bound button with typed words, then again with a field the view filled. The first applies and the second is refused. A prefilled field is filled only for a seat that may write it: open it as one who may not, and it is empty.
-4. Type into a field that saves, stop, and see "Saved"; type again and leave it at once, and see the save land without the pause.
+2. Run it headless as a member who may see less than you: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It reports `act` for an act its manifest does not name, and says when a field's `data-save` would save nothing: no `data-act` or `name`, no fieldset bound to a record, a `data-save` other than `input` or `change`, a `data-debounce` it does not read, or a `data-save` on what is not a field, or a `data-act` on what can never be pressed.
+3. Press it headless: `--press "<selector>"` (with `--type note="…"` for what the person typed), or `runWorkerViewHeadless(…, { press: { selector, typed } })`. It presses the first element the selector matches and says what the host would do: the act and the arguments it carries, and whether this seat may (rehearsed, never applied), or the refusal the view would hear; the link it follows; and what the view's code did on the click.
+4. Open it on both faces as that member, and on a phone. Press each with typed words, then again with a field the view filled. The first applies and the second is refused. A prefilled field is filled only for a seat that may write it: open it as one who may not, and it is empty.
+5. Type into a field that saves, stop, and see "Saved"; type again and leave it at once, and see the save land without the pause.
 
 ### What the check cannot see
 
-`graview check` judges the declaration, not the form. It cannot see a field named for the wrong argument, a button that says "Save" over an act that sends, or a view that says "Saved" without waiting for `acted`. A headless run presses nothing and lets no pause pass, so it cannot see a save land; only pressing and typing on the faces, as a seat with narrow sight, does. Nor can it see a form that asks for what the person should not have to type.
+`graview check` judges the declaration, not the form. It cannot see a field named for the wrong argument, a button that says "Save" over an act that sends, or a view that says "Saved" without waiting for `acted`. A headless run presses once, when asked, and lets no pause pass, so it cannot see a save land or a press that a field covers; only pressing and typing on the faces, on a phone too, as a seat with narrow sight, does. Nor can it see a form that asks for what the person should not have to type.
 
 ---
 

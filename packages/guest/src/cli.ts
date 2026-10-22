@@ -24,11 +24,14 @@ import { plainNode } from "./host/session.js";
 
 export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest <manifest.json>
                      [--seed <file>] [--record <id>] [--as <id>] [--roles a,b]
-                     [--width <px>] [--json]
+                     [--width <px>] [--press <selector> [--type name=value]…] [--json]
       run a worker view once, headless, with no network, seated as one
       member (the system, unless --as or --roles say who), and say what it
       drew, or why it will not do; a view of one record is run over the
-      record --record names, or the first of its kind the seat sees
+      record --record names, or the first of its kind the seat sees;
+      --press presses what the selector matches and says what the host
+      would do — the link it follows, the act it asks for and whether the
+      seat may — with --type's words typed into the fields they name
 `;
 
 function flag(argv: readonly string[], name: string): string | undefined {
@@ -63,6 +66,9 @@ export async function view(argv: readonly string[]): Promise<number> {
   const as = flag(argv, "--as");
   const principal: Principal = as || roles.length > 0 ? { kind: "human", id: as ?? "graview-view-check", ...(roles.length > 0 ? { roles } : {}) } : { kind: "system", id: "graview-view-check" };
   const width = flag(argv, "--width");
+  /* A press to check (0.1.45): what the selector matches, with the words the person typed by field name. */
+  const pressAt = flag(argv, "--press");
+  const typed = Object.fromEntries(argv.flatMap((one, at) => (one === "--type" && argv[at + 1]?.includes("=") ? [[argv[at + 1]!.slice(0, argv[at + 1]!.indexOf("=")), argv[at + 1]!.slice(argv[at + 1]!.indexOf("=") + 1)]] : [])));
   const manifest = readJson(manifestAt) as WorkerViewManifest;
   /* A view of one record is run over one (W-242): the one --record names, or the first of its kind the seat sees. */
   let over = "";
@@ -91,15 +97,16 @@ export async function view(argv: readonly string[]): Promise<number> {
     // Each slug once: a picture over several kinds is one place to a view.
     places: (app.views?.places?.() ?? []).filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map((place) => ({ as: place.as, title: place.title, kind: place.kind })),
     ...(width ? { width: Number(width) } : {}),
+    ...(pressAt ? { press: { selector: pressAt, typed } } : {}),
   });
   if (argv.includes("--json")) {
-    process.stdout.write(`${JSON.stringify(result.ok ? result.description : { reason: result.reason, detail: result.detail }, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify(result.ok ? (result.pressed ? { ...result.description, pressed: result.pressed } : result.description) : { reason: result.reason, detail: result.detail }, null, 2)}\n`);
     return result.ok ? 0 : 1;
   }
   if (!result.ok) {
     process.stdout.write(`${file} will not do (${result.reason}): ${result.detail}\n`);
     return 1;
   }
-  process.stdout.write(`${over}${result.description.text}\n`);
+  process.stdout.write(`${over}${result.description.text}\n${result.pressed ? `\n${result.pressed.says}\n` : ""}`);
   return 0;
 }

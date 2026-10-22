@@ -68,6 +68,12 @@
  *           drag, a burst in one frame is heard once, and the page scrolls
  *           off the map and under a view that did not opt in
  *           (scripts/lib/guest-gestures-suite.mjs).
+ *   taps    a press and a phone's tap on a worker view (0.1.45): Threat
+ *           Watch's home drawn as cards bound to a record with no <a>
+ *           anywhere, each opened by a click, Enter, and on a phone by a tap
+ *           on its heading or a badge inside it, while a tap on the view's
+ *           own toggle toggles it and opens nothing
+ *           (scripts/lib/guest-taps-suite.mjs).
  *   worker  a classic worker the host starts from a blob: URL, inside a
  *           chat's widget framed the way Claude or ChatGPT frames one
  *           (scripts/lib/widget-policies.mjs, from Graview Cloud's spike);
@@ -106,6 +112,7 @@ import { brandSuite } from "./lib/guest-brand-suite.mjs";
 import { picturesSuite } from "./lib/guest-pictures-suite.mjs";
 import { dropSuite } from "./lib/guest-drop-suite.mjs";
 import { gesturesSuite } from "./lib/guest-gestures-suite.mjs";
+import { tapsSuite } from "./lib/guest-taps-suite.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(resolve(repoRoot, "package.json"));
@@ -118,7 +125,7 @@ const arg = (name) => process.argv.find((one) => one.startsWith(`--${name}=`))?.
 if (!arg("transport") && !arg("engine") && !arg("policy")) {
   /* `--quick` (GRAVIEW_QUICK): one engine per transport and policy, crossed so both engines still run. */
   const runs = process.env.GRAVIEW_QUICK
-    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"], ["--transport=open", "--policy=page", "--engine=firefox"], ["--transport=place", "--engine=chromium"], ["--transport=record", "--engine=firefox"], ["--transport=writes", "--engine=webkit"], ["--transport=limits", "--engine=firefox"], ["--transport=plain", "--engine=chromium"], ["--transport=client", "--engine=webkit"], ["--transport=brand", "--policy=chatgpt", "--engine=firefox"], ["--transport=pictures", "--engine=webkit"], ["--transport=drop", "--engine=chromium"], ["--transport=gestures", "--engine=webkit"]]
+    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"], ["--transport=open", "--policy=page", "--engine=firefox"], ["--transport=place", "--engine=chromium"], ["--transport=record", "--engine=firefox"], ["--transport=writes", "--engine=webkit"], ["--transport=limits", "--engine=firefox"], ["--transport=plain", "--engine=chromium"], ["--transport=client", "--engine=webkit"], ["--transport=brand", "--policy=chatgpt", "--engine=firefox"], ["--transport=pictures", "--engine=webkit"], ["--transport=drop", "--engine=chromium"], ["--transport=gestures", "--engine=webkit"], ["--transport=taps", "--engine=webkit"]]
     : [
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=frame", `--engine=${engine}`]),
         ...["claude", "chatgpt"].flatMap((policy) => ["chromium", "webkit"].map((engine) => ["--transport=worker", `--policy=${policy}`, `--engine=${engine}`])),
@@ -134,6 +141,7 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=pictures", `--engine=${engine}`]),
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=drop", `--engine=${engine}`]),
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=gestures", `--engine=${engine}`]),
+        ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=taps", `--engine=${engine}`]),
       ];
   // Each run listens on the same three ports: somebody else's server on one of them is said once, before any run.
   await vacant(portFor("guest-host"), portFor("guest-sandbox"), portFor("guest-attacker"));
@@ -150,7 +158,7 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
 const TRANSPORT = arg("transport") ?? "frame";
 const ENGINE = arg("engine") ?? "chromium";
 const POLICY = arg("policy") ?? (TRANSPORT === "open" || TRANSPORT === "brand" ? "page" : "claude");
-if (!["frame", "worker", "open", "place", "record", "writes", "limits", "plain", "client", "brand", "pictures", "drop", "gestures"].includes(TRANSPORT)) throw new Error(`--transport is frame, worker, open, place, record, writes, limits, plain, client, brand, pictures, drop or gestures, not ${TRANSPORT}`);
+if (!["frame", "worker", "open", "place", "record", "writes", "limits", "plain", "client", "brand", "pictures", "drop", "gestures", "taps"].includes(TRANSPORT)) throw new Error(`--transport is frame, worker, open, place, record, writes, limits, plain, client, brand, pictures, drop, gestures or taps, not ${TRANSPORT}`);
 if (TRANSPORT === "worker" && !POLICIES[POLICY]) throw new Error(`--policy is one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
 if ((TRANSPORT === "open" || TRANSPORT === "brand") && POLICY !== "page" && !POLICIES[POLICY]) throw new Error(`--policy is page or one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
 const HOST_PORT = portFor("guest-host");
@@ -159,7 +167,7 @@ const SILENT_MS = 1_500;
 const GUEST_PORT = portFor("guest-sandbox");
 const HOST = `http://127.0.0.1:${HOST_PORT}`;
 const GUEST = `http://localhost:${GUEST_PORT}`;
-const VERDICT = `docs/guest-sandbox${TRANSPORT === "frame" ? "" : ["place", "record", "writes", "limits", "plain", "client", "pictures", "drop", "gestures"].includes(TRANSPORT) ? `-${TRANSPORT}` : `-${TRANSPORT}-${POLICY}`}${ENGINE === "chromium" ? "" : `-${ENGINE}`}.json`;
+const VERDICT = `docs/guest-sandbox${TRANSPORT === "frame" ? "" : ["place", "record", "writes", "limits", "plain", "client", "pictures", "drop", "gestures", "taps"].includes(TRANSPORT) ? `-${TRANSPORT}` : `-${TRANSPORT}-${POLICY}`}${ENGINE === "chromium" ? "" : `-${ENGINE}`}.json`;
 
 const bundle = async (contents, format = "esm") =>
   (
@@ -965,6 +973,7 @@ try {
   else if (TRANSPORT === "pictures") await picturesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT });
   else if (TRANSPORT === "drop") await dropSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, engine: ENGINE });
   else if (TRANSPORT === "gestures") await gesturesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT });
+  else if (TRANSPORT === "taps") await tapsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, engine: ENGINE });
   else if (TRANSPORT === "brand") await brandSuite({ repoRoot, build, browser, claim, report, POLICY, HOST, GUEST, HOST_PORT, GUEST_PORT });
   else if (TRANSPORT === "place") await placeSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT });
   else if (TRANSPORT === "record") await recordSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, engine: ENGINE });

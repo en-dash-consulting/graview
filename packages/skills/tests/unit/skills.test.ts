@@ -67,6 +67,7 @@ describe("the skills package", () => {
       "graview-tidying",
       "graview-view-drawing",
       "graview-view-forms",
+      "graview-view-links",
       "graview-view-specs",
       "graview-visitor-forms",
       "graview-worker-view",

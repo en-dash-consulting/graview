@@ -52,7 +52,8 @@ A skill that cannot verify its own outcome says so. That is the rule, and the sk
 | `graview-host-page` | Host an app as the page itself: the address bar, a chat's widget, the host's menu and news, when a place has drawn, a view proposed and not kept, and pictures of places |
 | `graview-port-app` | Port an existing application onto Graview, deciding what is a node and what is a field |
 | `graview-studio` | Open the declaration as a graph, change it with acts, check before applying, migrate, and write it back as the scaffold's files |
-| `graview-worker-view` | Write a worker view: one plain script with a manifest the host enforces, its links, its limits, and a headless run |
+| `graview-worker-view` | Write a worker view: one plain script with a manifest the host enforces, its limits, and a headless run |
+| `graview-view-links` | Link from a worker view to a record, a place or a list: an `<a>`, or a whole card or row that opens on a click, a phone's tap and Enter, narrowed and to a section |
 | `graview-view-forms` | Let a worker view change records: a bound press, a record's text filled to edit, a field that saves as it is typed, and hearing what became of each |
 | `graview-view-drawing` | Draw in a worker view: what the host keeps, the app's tokens, the images a view may show — the logo, the app's own images, the pictures on records — and a record's video the host plays, with its full-screen viewer |
 
