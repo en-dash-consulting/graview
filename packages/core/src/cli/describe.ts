@@ -140,7 +140,7 @@ export function describeApp<S extends AnySchema>(
       `${lensesDeclared.drawn.length} declared ${lensesDeclared.drawn.length === 1 ? "lens draws" : "lenses draw"} as places, with no view of the app's own: ${list(
         lensesDeclared.drawn.map((lens) => {
           const at = everywhere.find((place) => place.slug === lens.as && (place.kind === lens.kinds[0] || (lens.kinds[0] !== undefined && place.over?.includes(lens.kinds[0]))));
-          return `"${lens.title}" (the ${lens.lens} over ${list(lens.kinds.map((kind) => pluralOf(app.schema, kind)))}${lens.across ? ` across ${pluralOf(app.schema, lens.across)}` : ""}, at ${at?.address ?? placePath(lens.as)})`;
+          return `"${lens.title}" (the ${lens.lens} over ${list(lens.kinds.map((kind) => pluralOf(app.schema, kind)))}${lens.across ? ` across ${pluralOf(app.schema, lens.across)}` : ""}, at ${at?.address ?? placePath(lens.as)}${lens.hidden ? "; hidden: kept off the bar and the page list, reached by its address" : ""})`;
         }),
       )}.`,
     );

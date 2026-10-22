@@ -4754,10 +4754,10 @@ The checker holds every titled lens and says, at its path, what it will not draw
 
 - `lens-option-unknown` — a key the lens does not take, in one sentence and its fix: "The columns lens takes no option "shade", so "Work" ignores it." / "Use one of: sort, search, filters, move, collapsed, cap, hidden." A declaration carrying one still compiles, with the warning; **`add-lens` refuses it** at `edits.<i>.options.<key>`, and a change sent as a JSON patch or a whole document is judged by `lensOptionsRefused(stored, proposed)` (`@graview/core/document`): an error for each such key the same lens did not already carry.
 - `lens-cannot-draw` — it binds no kind, its board's column field is not a choice, its timeline has no columns, its calendar's `today` is not a date or its `range` not one it opens at, it stands on what is not a kind, or its title has nothing to make an address of.
-- `lens-not-shipped` — a title on a lens the framework does not draw; `lens-title-taken` — two pictures on one kind under one title; `lens-options-not-an-object`, `lens-sort`, `lens-horizon`, `lens-create` and `lens-hidden-untitled` say the rest.
+- `lens-not-shipped` — a title on a lens the framework does not draw; `lens-title-taken` — two pictures on one kind under one title. `add-lens` names the lens that holds the title, hidden or not (hiding frees no title); `"replace": "<that title>"` draws yours in its place, kept off the lists if that one was, until set-lens-hidden shows it; `lens-options-not-an-object`, `lens-sort`, `lens-horizon`, `lens-create` and `lens-hidden-untitled` say the rest.
 - The bindings themselves: `lens-role-unbound`, `lens-binding-missing-field` and `lens-binding-undeclared-kind`.
 
-`graview describe` lists the places that draw. Report the output, then open each place on both faces and look.
+`graview describe` lists the places that draw, saying which are hidden. Report the output, then open each place on both faces and look.
 
 ### What the check cannot see
 
