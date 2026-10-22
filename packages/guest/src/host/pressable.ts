@@ -36,6 +36,12 @@
  *     technology unless it says another role, is drawn as something to
  *     press, and Enter or Space on it presses it, as on a button; a tap on
  *     it, or on anything inside it, is its click.
+ *   · A CONTROL THE VIEW DREW ITSELF (`isKeyControl`, 0.1.47) — `role` of
+ *     button, checkbox, switch or tab, or `aria-pressed` or `aria-expanded`,
+ *     on what does not press of itself — is given the keyboard where it has
+ *     none and drawn as something to press, and Enter or Space on it is told
+ *     to the view as a click after the key, as a button's is, with the
+ *     page kept from scrolling.
  */
 
 /** As much of an element as is read here: what a page's element and a headless tree's both have. */
@@ -82,6 +88,30 @@ export function notPressable(element: PressedElement): string | undefined {
 
 /** Whether the host makes a press of the element: bound to an act, pressable, and not a field that saves as it is typed. */
 export const isPress = (element: PressedElement): boolean => element.hasAttribute("data-act") && notPressable(element) === undefined && !(isField(element) && element.hasAttribute("data-save"));
+
+/** The roles of a control the view drew that the host gives Enter and Space (0.1.47). */
+const KEY_ROLES = new Set(["button", "checkbox", "switch", "tab"]);
+
+/**
+ * WHETHER THE ELEMENT IS A CONTROL THE VIEW DREW ITSELF (0.1.47): a
+ * `<div role="button">`, a `<span role="checkbox">`, a tab, a toggle that
+ * says `aria-pressed`, a disclosure that says `aria-expanded` — one the view
+ * hears with `graview.on("click")` and that does not press of itself. The
+ * host gives it the keyboard, and Enter or Space on it is told to the view
+ * as a click, as a button's is. `role` is the role the view gave it, not one
+ * the host did.
+ */
+export function isKeyControl(element: PressedElement, role: string | null = element.getAttribute("role")): boolean {
+  if (clicksItself(element) || isField(element) || isHtml(element, "label", "option") || element.hasAttribute("data-graview-link")) return false;
+  return KEY_ROLES.has(role ?? "") || element.hasAttribute("aria-pressed") || element.hasAttribute("aria-expanded");
+}
+
+/** Whether the element takes the keyboard of itself: a control, a field, a link with an address, an element that says it is to be edited. */
+export function focusable(element: PressedElement): boolean {
+  if (isHtml(element, "button", "input", "select", "textarea", "summary", "iframe")) return true;
+  if (element.localName === "a" && element.hasAttribute("href")) return true;
+  return element.hasAttribute("tabindex") || (element.getAttribute("contenteditable") ?? "false") !== "false";
+}
 
 /** Whether the host gives the element a role when it makes it a link or a button: it has none, and none of its own. */
 export const takesRole = (element: PressedElement): boolean => !element.hasAttribute("role") && (element.namespaceURI !== HTML || GENERIC.has(element.localName));

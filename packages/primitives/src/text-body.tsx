@@ -1,5 +1,5 @@
-import { partArriving } from "@graview/react/provider";
-import { lazy, Suspense, type CSSProperties } from "react";
+import { lazyPart } from "@graview/react/provider";
+import { Suspense, type CSSProperties } from "react";
 
 /*
  * PROSE KEEPS ITS SHAPE (FR-146).
@@ -85,7 +85,7 @@ const BLOCK: CSSProperties = { margin: 0 };
 const LIST: CSSProperties = { margin: 0, paddingInlineStart: "1.6em", display: "grid", gap: "0.3em" };
 
 /* The Markdown renderer, fetched with the first Markdown a page draws (FR-180). */
-const MarkdownBody = lazy(partArriving(() => import("./markdown-body.js")));
+const MarkdownBody = lazyPart(() => import("./markdown-body.js"));
 
 /**
  * Plain text drawn with its paragraphs, line breaks and lists kept: <p>,

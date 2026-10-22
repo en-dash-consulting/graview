@@ -34,6 +34,10 @@ import { plainNode, readAcross, type GuestViewInput } from "./session.js";
  *                what it listens on (`graview.on("wheel" | "drag" |
  *                "pinch", …)`), once a frame, and takes a wheel from the
  *                page only there (gestures.ts)
+ *   flows        false: a fixed canvas (a map, a chart) keeps the place's
+ *                frame on Pages; left out, its place flows with the page
+ *   scene        { maxHeight }: the tallest its preview on the Scene is
+ *                drawn, in pixels; left out, the box the Scene gives it
  *
  * What it is handed is the viewer's sight — never more — cut down to the
  * kind it is attached to and what it reads. A record the viewer may not see
@@ -114,6 +118,24 @@ export interface WorkerViewManifest {
    * included.
    */
   readonly bleed?: boolean;
+  /**
+   * WHETHER ITS PLACE FLOWS WITH THE PAGE (Roadmap f-view-content-height).
+   * Left out, a titled view's place on Pages is drawn in the page's column
+   * as tall as the view draws — its content height, which the host measures
+   * and the view never says — with no frame that scrolls inside the page.
+   * `false` is a view that is a fixed canvas, a map or a chart drawn to a
+   * box: its place keeps the frame a board or a calendar is drawn in.
+   */
+  readonly flows?: boolean;
+  /**
+   * HOW IT IS DRAWN ON THE SCENE (Roadmap f-view-content-height). A view of
+   * a kind's members is drawn there as a card like the Scene's other
+   * pictures: its title, as much of the view as fits — at most its content
+   * height, at most the box the Scene gives it — faded at the foot where
+   * there is more, and Open, to its place. `maxHeight` holds that preview
+   * lower, in pixels (80 to 4000).
+   */
+  readonly scene?: { readonly maxHeight?: number };
 }
 
 /** A field files dropped on a view go in (FR-193): a kind, and its image, video or file field. */
@@ -156,6 +178,17 @@ function picturesProblems(pictures: unknown): readonly string[] {
   return problems;
 }
 
+/** What `scene` says wrongly, in sentences; empty when it is sound. */
+function sceneProblems(scene: unknown): readonly string[] {
+  if (scene === undefined) return [];
+  if (typeof scene !== "object" || scene === null || Array.isArray(scene)) return ['The view\'s scene is { "maxHeight": <the tallest its preview on the Scene is drawn, in pixels> }.'];
+  const { maxHeight, ...rest } = scene as { maxHeight?: unknown };
+  const problems: string[] = [];
+  if (Object.keys(rest).length > 0) problems.push(`The view's scene says ${Object.keys(rest).map((key) => `"${key}"`).join(", ")}: only "maxHeight" is read.`);
+  if (maxHeight !== undefined && !(Number.isInteger(maxHeight) && (maxHeight as number) >= 80 && (maxHeight as number) <= 4_000)) problems.push("The view's scene maxHeight is a whole number of pixels from 80 to 4000.");
+  return problems;
+}
+
 /** An act of a manifest, said in full. */
 export function manifestActs(manifest: WorkerViewManifest): readonly ManifestAct[] {
   return (manifest.acts ?? []).map((one) => (typeof one === "string" ? { act: one } : one));
@@ -180,6 +213,10 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   else if (manifest.replaces === "page" && (manifest.attach === "home" || manifest.cardinality !== "one")) findings.push('Only a view of one record replaces its page: replaces "page" needs cardinality one on a kind.');
   if (manifest.gestures !== undefined && typeof manifest.gestures !== "boolean") findings.push(`The view's gestures is "${String(manifest.gestures)}": it is true, or left out.`);
   if (manifest.bleed !== undefined && typeof manifest.bleed !== "boolean") findings.push(`The view's bleed is "${String(manifest.bleed)}": it is true, or left out.`);
+  if (manifest.flows !== undefined && typeof manifest.flows !== "boolean") findings.push(`The view's flows is "${String(manifest.flows)}": it is false for a view that keeps its place's frame, or left out.`);
+  else if (manifest.flows === false && (manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push("Only a view that is a place keeps a frame: flows false needs a title and cardinality many on a kind.");
+  findings.push(...sceneProblems(manifest.scene));
+  if (manifest.scene !== undefined && (manifest.attach === "home" || manifest.cardinality !== "many")) findings.push("Only a view of a kind's members is drawn on the Scene as a card: scene needs cardinality many on a kind.");
   findings.push(...picturesProblems(manifest.pictures));
   findings.push(...acceptsProblems(manifest.accepts, store));
   for (const kind of manifest.reads?.kinds ?? []) if (!kinds.has(kind)) findings.push(`The view reads "${kind}", which is no kind of this app.`);

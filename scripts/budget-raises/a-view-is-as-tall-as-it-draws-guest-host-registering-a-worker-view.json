@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 1411,
+  "gzipped": 352,
+  "note": "Raised when a worker view came to be as tall as it draws (Roadmap f-view-content-height): the host measures the drawn root and tells the face (`onContentHeight`), `registerWorkerView` marks a view of the members previewed on the Scene and keeps a place's frame for `flows: false`, and `checkManifest` judges `flows` and `scene.maxHeight` in sentences. Measured at 31_161 / 14_001 against 29_750 / 13_649 minified and gzipped."
+}

@@ -25,7 +25,8 @@ Every view comes with a manifest the host enforces:
 ```
 
 - `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
-- `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`). Its place flows with the page, as long as the view draws: no frame of its own scrolls inside the page, so a view sets no height to fill one.
+- `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
+- A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page, nothing scrolling inside. On the Scene a view of many is a card held to its box, faded where there is more, with Open to its place. `flows: false` keeps a frame on Pages (a map); `scene: { maxHeight }` holds the card lower (80–4000px).
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
@@ -68,9 +69,18 @@ carries `value`, `checked`, `key`, `pressed` for a bound press, and
 `element`, what the selector matched: read its `data-*`. Elements lack
 `closest`, `matches` and `dataset`.
 
-```js
-graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
-```
+## Links and buttons, by default
+
+To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a
+`<button>` (`data-act` to run an act). Style either freely: the host
+resets both to the words around them, and your class wins. A `<div>` or
+`<span>` with only `graview.on("click")` is reached by no keyboard and
+named nothing; with `role="button"` (checkbox, switch, tab,
+`aria-pressed`, `aria-expanded`) the host gives it the keyboard and hears
+Enter or Space as a click. The keyboard shows the host's ring: restyle it
+with `--graview-focus-color`, never `outline: none`.
+`class="graview-sr"` is words for a screen reader alone; an `<svg>` with no
+role, `aria-label` or `<title>` is hidden from one.
 
 ## Gestures
 

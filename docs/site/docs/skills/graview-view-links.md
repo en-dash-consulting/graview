@@ -8,11 +8,13 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Links in a worker view
 
-A worker view (`graview-worker-view`: its manifest, its global, its limits) has no address of the page's to link to: an `href` it built is never drawn. What it may link to is a record, a named place or a kind's list of this app, and the host makes that a link and follows it, on both faces, only to what the viewer may see.
+A worker view (`graview-worker-view`: its manifest, its global, its limits) writes no address of the page's: an `href` it built is never drawn. What it may link to is a record, a named place or a kind's list of this app, and the host makes that a link and follows it, on both faces, only to what the viewer may see.
+
+**Go somewhere with a link, do something with a button.** `<a data-record>` or `<a data-place>` to go; `<button>`, or `<button data-act>` (`graview-view-forms`), to do. Style both as you like: the host resets a button and a link it made to the words around them at no specificity, so your own class always wins. A `<div>` or `<span>` with a `graview.on("click")` handler is reached by no keyboard and is nothing to a screen reader: do not draw one. A list of records is a list of `<a data-record>`, never `graview.on("click", "[data-id]", … navigate)`.
 
 ### A link
 
-`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows. `<a href>` goes out only to an address a record was handed — its own url, `mailto:`, `tel:` (below). A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places. A titled view of many is a place too, at `/places/<its title as a slug>`: `data-place="live-threats"` reaches the view "Live threats", and the check knows it when its host hands the views it keeps. From code, `graview.navigate("offer:7")` goes by the same rules.
+`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows. On the routed pages the host gives each the address it goes to as its `href` (`/a/<app>/offers/offer%3A7`), so it shows on hover, copies, and opens in a new tab on Cmd- or Ctrl-click or a middle click; a plain click, a tap and Enter stay in the app. On the scene, which has no addresses, it is given the keyboard and a link's role instead. A `<button data-record>` goes there too. `<a href>` goes out only to an address a record was handed — its own url, `mailto:`, `tel:` (below). A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places. A titled view of many is a place too, at `/places/<its title as a slug>`: `data-place="live-threats"` reaches the view "Live threats", and the check knows it when its host hands the views it keeps. From code, `graview.navigate("offer:7")` goes by the same rules.
 
 ### Links out
 
@@ -31,7 +33,7 @@ Any element with `data-record` or `data-place` is a link, not only an `<a>`:
 </div>
 ```
 
-The host gives it the keyboard (`tabindex="0"`), makes it a link to assistive technology (`role="link"`; a list's item or a table's row keeps its own role), draws it with a pointer, `touch-action: manipulation` and a faint tap highlight, and follows it on a click, on Enter, and on a phone's tap. A press anywhere inside it opens it — its heading, a badge, a line — unless it lands on something with a press of its own: a button, a field, a `data-act`, a lightbox, a drop target, a control's `role`, another link. So "More" above toggles and opens nothing.
+The host gives it the keyboard (`tabindex="0"`), makes it a link to assistive technology (`role="link"`; a list's item keeps its own role, and a table's row keeps its role and gives the keyboard to its first cell, where Enter opens the row), draws it with a pointer, `touch-action: manipulation` and a faint tap highlight, and follows it on a click, on Enter, and on a phone's tap. A press anywhere inside it opens it — its heading, a badge, a line — unless it lands on something with a press of its own: a button, a field, a `data-act`, a lightbox, a drop target, a control's `role`, another link. So "More" above toggles and opens nothing.
 
 It is no link when it is a press scope: a `fieldset` or `role="group"` (the record a form's acts are done to), an element with `data-act`, `data-lightbox`, `data-drop` or `data-field`, a field, or an element that holds a field to type into or pick from (a checkbox inside leaves its row a link). Link such a card's title instead: `<h3><a data-record="…">`.
 
@@ -49,7 +51,7 @@ A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in 
 
 1. `graview check` the app the view links into: a link is only as sound as the records and places it names.
 2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says every `data-record` or `data-place` that names nothing the seat was shown and no place, and every filter that goes nowhere. `--press ".card h3"` presses there and says where the host would go, or that the press is a button's of its own.
-3. Open it on a phone, 390 pixels wide with touch: tap a card's heading and a badge inside it, and see the record's page; tap a toggle inside it, and see it toggle and stay. On a desk, Tab to a card and press Enter.
+3. Open it on a phone, 390 pixels wide with touch: tap a card's heading and a badge inside it, and see the record's page; tap a toggle inside it, and see it toggle and stay. On a desk, Tab through the view: every link and button is reached, with a ring; Enter on a card opens it, and Cmd-click on an `<a data-record>` opens it in a new tab.
 4. Follow each link narrowed and to a section, and see it land where it says.
 
 ### What the check cannot see

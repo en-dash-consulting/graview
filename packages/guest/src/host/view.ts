@@ -13,7 +13,7 @@ import { createDrawBudget } from "./draw-budget.js";
 import { checkViewSource } from "./view-source.js";
 import { viewScript } from "./view-script.js";
 import { createLinks, listsOf, type Arrival, type Destination } from "./links.js";
-import { arriveAt } from "./arrive-at.js";
+import { addressAt, arriveAt } from "./arrive-at.js";
 import type { GoTo } from "@graview/react/provider";
 import type { GuestPictureHand } from "./pictures.js";
 import type { GuestMedia } from "./media.js";
@@ -134,7 +134,16 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * the app (FR-93).
    */
   readonly onNavigate?: (to: Arrival) => void;
-  /** The face's own way of going (`useGoTo`), read when the view goes: where `onNavigate` is not given, the arrival is gone to by it. */
+  /**
+   * The address a destination arrives at, as this host writes it — a path
+   * on the page's own origin, `/a/<app>/threats/threat:x` — which an
+   * `<a data-record>` or `<a data-place>` the view drew carries as its
+   * `href`, so it opens in a new tab and is copied as a link is (0.1.47).
+   * Where neither this nor `goTo`'s `href` gives one, the link has no
+   * address and is given the keyboard and a link's role instead.
+   */
+  readonly hrefOf?: (to: Arrival) => string | undefined;
+  /** The face's own way of going (`useGoTo`), read when the view goes: where `onNavigate` is not given, the arrival is gone to by it, and its `href` is a link's address. */
   readonly goTo?: () => GoTo | undefined;
   /** The app's named places: what the view is told of, and may link to by slug. None by default. */
   readonly places?: () => readonly GuestPlace[];
@@ -214,6 +223,14 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * offered: this host takes no files.
    */
   readonly files?: () => HostFiles | undefined;
+  /**
+   * THE VIEW'S CONTENT HEIGHT (Roadmap f-view-content-height): how tall
+   * what it drew is, in CSS pixels, each time that changes — measured by
+   * the host on the drawn root, never said by the view — and `undefined`
+   * once it stops being drawn. What a face that holds the view to a box
+   * (the Scene's preview of a place) sizes it by.
+   */
+  readonly onContentHeight?: (height: number | undefined) => void;
 }
 
 export interface WorkerView {
@@ -227,6 +244,8 @@ export interface WorkerView {
   readonly stats: Readonly<GuestStats>;
   /** What of the view's drawing and stylesheet was refused. */
   readonly refused: readonly ViewRefusal[];
+  /** How tall what it drew is, in CSS pixels, as the host last measured it (`onContentHeight`); `undefined` before it draws. */
+  readonly contentHeight: number | undefined;
   dispose(): void;
 }
 
@@ -298,6 +317,38 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     counted = { ...now };
   };
   let unwatch = () => {};
+  /*
+   * THE CONTENT HEIGHT (Roadmap f-view-content-height): the drawn root's
+   * own height, watched — the root is a block formatting context
+   * (`REGION_CSS`), so its height holds its children's margins — kept on
+   * the region (`data-graview-content-height`) and told to the face. The
+   * size the layout gave it, not its drawn box: a Scene's plane scales the
+   * box, never what the view drew.
+   */
+  let contentHeight: number | undefined;
+  let heights: ResizeObserver | undefined;
+  const watchHeight = () => {
+    const root = shadow.querySelector<HTMLElement>("[data-graview-view-root]");
+    const Observer = window.ResizeObserver;
+    if (heights || !root || typeof Observer !== "function") return;
+    heights = new Observer((entries) => {
+      const box = entries[entries.length - 1]?.borderBoxSize?.[0];
+      const height = Math.ceil(box ? box.blockSize : root.offsetHeight);
+      if (height === contentHeight) return;
+      contentHeight = height;
+      region.setAttribute("data-graview-content-height", String(height));
+      options.onContentHeight?.(height);
+    });
+    heights.observe(root);
+  };
+  const unwatchHeight = () => {
+    if (!heights) return;
+    heights.disconnect();
+    heights = undefined;
+    contentHeight = undefined;
+    region.removeAttribute("data-graview-content-height");
+    options.onContentHeight?.(undefined);
+  };
   /* The interval that times each push (FR-94), once the view is ready. */
   let timing = 0;
   /* What the person typed into a field saved as it is typed and not yet saved (FR-191, press.ts): saved as the view goes. */
@@ -316,6 +367,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     if (failed) return;
     failed = true;
     stop();
+    unwatchHeight();
     drawing?.dispose();
     const said = why(reason, limits, detail);
     region.removeAttribute("data-worker-view-drawn");
@@ -490,6 +542,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     lists,
     schema: options.store.schema,
     ...(options.onNavigate ? { onNavigate: options.onNavigate } : options.goTo ? { onNavigate: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
+    /* A link's address: the host's own, or the face's where the face is how the view goes (0.1.47). */
+    ...(options.hrefOf ? { hrefOf: options.hrefOf } : !options.onNavigate && options.goTo ? { hrefOf: (to: Arrival) => addressAt(options.goTo!(), to) } : {}),
     /* Said in the view's console, and to the host. */
     onLost: (said) => {
       port?.postMessage({ type: "notice", text: said });
@@ -619,7 +673,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     element.setAttribute("aria-haspopup", "dialog");
     wantMedia();
   };
-  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf }]) => {
+  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf, quietPictures }]) => {
     if (failed) return;
     const reader = createPressReader();
     /* The view hears what became of an act a press or a save asked for as `acted` on the element bound to it (FR-191). */
@@ -648,6 +702,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       /* A card bound to a record is a link once it is drawn whole: whether it holds a field is known only then (pressable.ts). */
       links.refresh(shadow);
       markPresses(shadow);
+      quietPictures(shadow);
       fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
       media?.refresh(shadow);
       drops?.refresh();
@@ -734,6 +789,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
     });
     for (const one of waiting.splice(0)) draw(one);
+    watchHeight();
     mark();
   },
   // The drawing did not arrive (the network away as it was drawn): the plain face says so, and it is asked for again as the view is drawn again (FR-139).
@@ -866,9 +922,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       get refused() {
         return drawing?.refused ?? [];
       },
+      get contentHeight() {
+        return contentHeight;
+      },
       dispose() {
         failed = true;
         stop();
+        heights?.disconnect();
         drawing?.dispose();
         region.remove();
         author?.remove();

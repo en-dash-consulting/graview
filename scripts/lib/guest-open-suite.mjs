@@ -488,7 +488,8 @@ main { display: grid; gap: 16px; padding: 16px; }
           fallback: Boolean(region.shadowRoot.querySelector("[data-graview-fallback]")),
           ticked: [...root.querySelectorAll("[data-ck]")].map((box) => box.getAttribute("aria-checked")),
           background: getComputedStyle(root.querySelector('[data-ck="step:1"]')).backgroundColor,
-          attributes: [...root.querySelectorAll("*")].map((element) => [element.localName, [...element.attributes].filter((one) => one.name !== "autocomplete").map((one) => [one.name, one.value]).sort(([a], [b]) => (a < b ? -1 : 1))]),
+          /* What the view drew: the host's own marks of a link or a press it made (0.1.47 marks a control the view hears itself) are the page's, not the view's. */
+          attributes: [...root.querySelectorAll("*")].map((element) => [element.localName, [...element.attributes].filter((one) => one.name !== "autocomplete" && one.name !== "data-graview-press" && one.name !== "data-graview-link").map((one) => [one.name, one.value]).sort(([a], [b]) => (a < b ? -1 : 1))]),
         };
       });
     const controlsBefore = await drawnControls();

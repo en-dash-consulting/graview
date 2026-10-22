@@ -1,6 +1,6 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { ManifestAct, WorkerViewManifest } from "./manifest.js";
-import { clicksItself, isPress, takesRole } from "./pressable.js";
+import { clicksItself, focusable, isKeyControl, isPress, takesRole } from "./pressable.js";
 import { declaredValues, entryFor, refuse, type Judged, type Prefilled, type Press, type PressedField } from "./writes.js";
 
 /*
@@ -138,33 +138,68 @@ export function createPressReader(trusted: (event: Event) => boolean = (event) =
   return reader;
 }
 
-/* What the host gave the keyboard or a role, so it is taken back when the element stops being a press. */
-const marked = new WeakMap<Element, { readonly tab: boolean; readonly role: boolean }>();
+/* What the host gave the keyboard or a role, so it is taken back when the element stops being a press; and whether it was bound to an act. */
+const marked = new WeakMap<Element, { readonly tab: boolean; readonly role: boolean; readonly bound: boolean }>();
+
+const unmark = (element: Element, had: { readonly tab: boolean; readonly role: boolean }) => {
+  if (had.tab) element.removeAttribute("tabindex");
+  if (had.role && element.getAttribute("role") === "button") element.removeAttribute("role");
+  element.removeAttribute("data-graview-press");
+  marked.delete(element);
+};
 
 /**
  * EVERY PRESS THE VIEW DREW, MADE ONE (0.1.45): each element under `root`
  * bound to an act that does not press of itself — a `<span role="button">`,
  * a `<div>`, an SVG `<g>` — is given the keyboard, is a button to assistive
  * technology unless it says a role of its own, and is drawn as something to
- * press (`data-graview-press`, open-draw.ts). Run after each batch the view
- * draws.
+ * press (`data-graview-press`, open-draw.ts). And each control the view drew
+ * itself and hears with `graview.on("click")` (`isKeyControl`, 0.1.47) — a
+ * `role="button"`, `"checkbox"`, `"switch"` or `"tab"`, an `aria-pressed`,
+ * an `aria-expanded` — is given the keyboard where it has none and drawn as
+ * something to press, so Enter and Space reach it (open-draw.ts). Run after
+ * each batch the view draws.
  */
 export function markPresses(root: ParentNode): void {
-  for (const element of root.querySelectorAll("[data-act], [data-graview-press]")) {
-    const press = isPress(element) && !clicksItself(element) && !isField(element);
+  for (const element of root.querySelectorAll("[data-act], [data-graview-press], [role], [aria-pressed], [aria-expanded]")) {
     const had = marked.get(element);
-    if (press && !had) {
-      const tab = !element.hasAttribute("tabindex");
-      const role = takesRole(element);
+    const bound = isPress(element) && !clicksItself(element) && !isField(element);
+    /* The role the view gave it, not the button's the host did. */
+    const control = !bound && isKeyControl(element, had?.role ? null : element.getAttribute("role"));
+    if (had && (had.bound !== bound || !(bound || control))) unmark(element, had);
+    if ((bound || control) && !marked.has(element)) {
+      const tab = !focusable(element);
+      const role = bound && takesRole(element);
       if (tab) element.setAttribute("tabindex", "0");
       if (role) element.setAttribute("role", "button");
       element.setAttribute("data-graview-press", "");
-      marked.set(element, { tab, role });
-    } else if (!press && had) {
-      if (had.tab) element.removeAttribute("tabindex");
-      if (had.role && element.getAttribute("role") === "button") element.removeAttribute("role");
-      element.removeAttribute("data-graview-press");
-      marked.delete(element);
+      marked.set(element, { tab, role, bound });
+    }
+  }
+}
+
+/* The pictures the host said nothing of, so it takes that back when one is given a name or a press. */
+const quieted = new WeakSet<Element>();
+
+/**
+ * A PICTURE THAT SAYS NOTHING IS SAID NOTHING OF (0.1.47): an `<svg>` the
+ * view gave no role, no `aria-label` or `aria-labelledby` and no `<title>`
+ * — an icon beside words, a decoration — is hidden from assistive
+ * technology (`aria-hidden="true"`), unless something inside it takes the
+ * keyboard or is a link or a press. Run after each batch, once links and
+ * presses are marked.
+ */
+export function quietPictures(root: ParentNode): void {
+  for (const svg of root.querySelectorAll("svg")) {
+    const says = svg.hasAttribute("role") || svg.hasAttribute("aria-label") || svg.hasAttribute("aria-labelledby") || [...svg.children].some((child) => child.localName === "title");
+    const holds = svg.hasAttribute("tabindex") || svg.hasAttribute("data-graview-link") || svg.hasAttribute("data-graview-press") || svg.querySelector("[tabindex], [data-graview-link], [data-graview-press], a") !== null;
+    const quiet = !says && !holds;
+    if (quiet && !quieted.has(svg) && !svg.hasAttribute("aria-hidden")) {
+      svg.setAttribute("aria-hidden", "true");
+      quieted.add(svg);
+    } else if (!quiet && quieted.has(svg)) {
+      svg.removeAttribute("aria-hidden");
+      quieted.delete(svg);
     }
   }
 }

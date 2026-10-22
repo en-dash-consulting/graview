@@ -35,7 +35,18 @@ export interface GoTo {
    * of the picture already, and says nothing.
    */
   draft?(): void;
+  /**
+   * THE ADDRESS GOING THERE ARRIVES AT (0.1.47), on a face whose places are
+   * addresses: a path on the page's own origin, with the face's base, its
+   * filter and its section — what a worker view's `<a data-record>` carries
+   * as its `href`, so it opens in a new tab and is copied as a link is. The
+   * scene has none: going there is a picture, not an address.
+   */
+  href?(to: GoToTarget, also?: GoToAlso): string | undefined;
 }
+
+/** Where a destination is: a record by id, a named place by slug, a kind's list by the kind's name. */
+export type GoToTarget = { readonly record: string } | { readonly place: string } | { readonly list: string };
 
 /** Where on the page a destination is, and what it is narrowed to. */
 export interface GoToAlso {

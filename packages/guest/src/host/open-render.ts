@@ -66,8 +66,8 @@ interface Drawn {
   readonly refused?: true;
   readonly text?: true;
   readonly id?: string;
-  /** What it was drawn in. */
-  readonly parent?: Drawn;
+  /** What it was drawn in: another element, where the view moved it. */
+  parent?: Drawn;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -84,6 +84,8 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
   byId.set(ROOT_ID, root);
   let size = 0;
   let over = false;
+  /* What a batch took out, by id, until it ends: put back as it was if the view only moved it. */
+  const detached = new Map<string, Drawn>();
 
   const refuse = (refusal: OpenRefusal) => {
     refused.push(refusal);
@@ -218,7 +220,22 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
         if (target.text) return refuse({ reason: "record" });
         const index = Number(record[3]);
         const at = Number.isInteger(index) && index >= 0 && index <= target.children.length ? index : target.children.length;
-        const built = build(record[2], target);
+        const raw = record[2];
+        const moved = isRecord(raw) && typeof raw["id"] === "string" ? detached.get(raw["id"]) : undefined;
+        /*
+         * A KEYED ELEMENT MOVED (0.1.47): the view's runtime keeps an element
+         * with the same key (`data-key`) and moves it, which is a removal and
+         * an insertion of the same node. Put back where it was judged to stand
+         * — the same namespace, in an element that holds children — it is the
+         * same element on the page, with what the host knows of it: what the
+         * person typed, the keyboard, the links and presses it was made.
+         */
+        let built: Drawn;
+        if (moved && moved.parent?.namespace === target.namespace && !isEmptyElement(target.namespace!, target.name!)) {
+          detached.delete(raw["id"] as string);
+          moved.parent = target;
+          built = moved;
+        } else built = build(raw, target);
         target.dom.insertBefore(built.dom, target.children[at]?.dom ?? null);
         target.children.splice(at, 0, built);
         if (target.namespace === "html" && target.name === "textarea") options.onFieldSet?.(target.dom as Element);
@@ -230,7 +247,9 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
         if (!gone) return refuse({ reason: "record" });
         target.children.splice(index, 1);
         gone.dom.parentNode?.removeChild(gone.dom);
-        forget(gone);
+        /* Kept until the batch ends: a node the view moved is taken out and put back in one batch, and is put back as it was drawn. */
+        if (gone.id !== undefined && !gone.refused) detached.set(gone.id, gone);
+        else forget(gone);
         return;
       }
       case UPDATE_TEXT: {
@@ -259,12 +278,18 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
         refuse({ reason: "record" });
         return true;
       }
-      for (let index = 0; index < records.length; index += 1) {
-        /* Asked every 32 records: often enough that no batch holds the page past its budget by much. */
-        if (spent && index % 32 === 0 && spent()) return false;
-        one(records[index]);
+      try {
+        for (let index = 0; index < records.length; index += 1) {
+          /* Asked every 32 records: often enough that no batch holds the page past its budget by much. */
+          if (spent && index % 32 === 0 && spent()) return false;
+          one(records[index]);
+        }
+        return true;
+      } finally {
+        /* What was taken out and not put back in this batch is gone. */
+        for (const gone of detached.values()) forget(gone);
+        detached.clear();
       }
-      return true;
     },
     get refused() {
       return refused;

@@ -262,8 +262,23 @@ matched at or above what was pressed (`event.target`), so it reads that
 element's `data-*`:
 
 ```js
-graview.on("click", "button[data-go]", (event) => graview.navigate(event.element.getAttribute("data-go")));
+graview.on("click", "button[data-more]", (event) => toggle(event.element.getAttribute("data-more")));
 ```
+
+To go somewhere, draw `<a data-record>` or `<a data-place>` rather than
+hearing a click and navigating; to do something, a `<button>`. The region
+resets a button and a link the host made to the words around them at no
+specificity, so a view's own class always wins. A control the view hears
+itself — `role="button"`, `"checkbox"`, `"switch"` or `"tab"`,
+`aria-pressed`, `aria-expanded` — is given the keyboard where it has none,
+and Enter or Space on it is told to the view as the key and then a
+`click`. Whatever has the keyboard shows the host's ring, which a view
+restyles with `--graview-focus-color`, `--graview-focus-width` and
+`--graview-focus-offset` and cannot take away with `outline: none`;
+`class="graview-sr"` is words for assistive technology alone; an `<svg>`
+with no role, `aria-label` or `<title>` is hidden from it; and an element
+with a `data-key` keeps the keyboard when the view draws it again
+elsewhere.
 
 Each `graview.style(css)` adds a sheet after the ones before it — the
 app's shared design system first, then the view's own — and every one is
@@ -495,7 +510,12 @@ definition) — naming the places there are. The
 props list the app's places (`places`, each with its slug and title). On
 the Graview face a record is focused and chosen and a place is drawn; on
 the pages face each goes to its own address — through `useGoTo` in
-`@graview/react`, which the routed face provides. The kit's `gv-link`
+`@graview/react`, which the routed face provides — and an `<a data-record>`
+or `<a data-place>` carries that address as its `href` (`GoTo.href`, or
+the address option on `mountWorkerView`): a plain click, a tap and Enter are followed
+in the app, and a click with Cmd, Ctrl or Shift, or a middle click, opens
+it as the browser opens any link. Where there is no address (the scene),
+the host gives the link the keyboard and a link's role instead. The kit's `gv-link`
 keeps `links.origins`: it is the kit's one deliberate way out, to the
 origins a host lists, and an open-kit view has none.
 

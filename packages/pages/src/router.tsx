@@ -4,12 +4,12 @@ import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
 import { narrowedPath } from "@graview/core/navigate";
 import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
-import { GoToContext, GraviewProvider, partArriving, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
+import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageQuickAsk } from "./quick-ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
-const DraftPage = lazy(partArriving(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage }))));
+const DraftPage = lazyPart(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
 import { FaceControlsRoot } from "./face-controls.js";
 import { PagesContextMenu } from "./context-menu.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
@@ -385,24 +385,37 @@ function ScrollReset() {
  */
 function GoesByAddress<S extends AnySchema>({ context, children }: { readonly context: PageContext<S>; readonly children: ReactNode }) {
   const navigate = useNavigate();
-  const goTo = useMemo<GoTo>(
-    () => ({
-      record: (id, also) => {
-        const node = context.store.graph.getNode(id);
-        if (node) navigate(narrowedPath(recordPath(context.store.schema, node.kind, id), { section: also?.section }));
-      },
-      place: (as, also) => {
-        const place = context.views?.places().find((candidate) => candidate.as === as);
-        if (place) navigate(narrowedPath(pathOfPlace(context, place), also));
-      },
-      list: (kind, also) => {
-        if (context.store.schema.tryDefinition(kind)) navigate(narrowedPath(`/${pluralSlug(context.store.schema, kind)}`, also));
-      },
+  /* The address carries the base, as a listed record's link does (RecordLinks, FR-189). */
+  const base = useHref("/").replace(/\/$/, "");
+  const goTo = useMemo<GoTo>(() => {
+    /** The face's path for a destination, basename-relative; none for one it does not have. */
+    const pathOf = (to: GoToTarget, also?: GoToAlso): string | undefined => {
+      if ("record" in to) {
+        const node = context.store.graph.getNode(to.record);
+        return node ? narrowedPath(recordPath(context.store.schema, node.kind, to.record), { section: also?.section }) : undefined;
+      }
+      if ("place" in to) {
+        const place = context.views?.places().find((candidate) => candidate.as === to.place);
+        return place ? narrowedPath(pathOfPlace(context, place), also) : undefined;
+      }
+      return context.store.schema.tryDefinition(to.list) ? narrowedPath(`/${pluralSlug(context.store.schema, to.list)}`, also) : undefined;
+    };
+    const go = (path: string | undefined) => {
+      if (path !== undefined) navigate(path);
+    };
+    return {
+      record: (id, also) => go(pathOf({ record: id }, also)),
+      place: (as, also) => go(pathOf({ place: as }, also)),
+      list: (kind, also) => go(pathOf({ list: kind }, also)),
       // A view drawn stands in the main column, at its own address, as the seat's does.
       draft: () => navigate("/~draft"),
-    }),
-    [context, navigate],
-  );
+      // What a view's <a data-record> carries as its href: this face's address for it (0.1.47).
+      href: (to, also) => {
+        const path = pathOf(to, also);
+        return path === undefined ? undefined : `${base}${path}`;
+      },
+    };
+  }, [context, navigate, base]);
   return <GoToContext.Provider value={goTo}>{children}</GoToContext.Provider>;
 }
 

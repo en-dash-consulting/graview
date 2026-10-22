@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 1570,
+  "gzipped": 420,
+  "note": "Raised when a worker view came to be as tall as it draws (Roadmap f-view-content-height): the host watches the drawn root's height and keeps it on the region (`data-graview-content-height`), the root a block of its own so its height holds its children's margins, and the manifest's `flows` and `scene.maxHeight` judged. Measured at 189_686 / 72_235 against 188_116 / 71_815 minified and gzipped."
+}

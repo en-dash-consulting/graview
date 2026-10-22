@@ -50,7 +50,7 @@ beforeAll(() => fetchDeclaredLenses());
 
 const settle = () => act(async () => new Promise((done) => setTimeout(done, 60)));
 
-async function rendered(path: string) {
+async function rendered(path: string, basename?: string) {
   let goTo: GoTo | undefined;
   const views = declaredViews(app);
   // A custom home, as a worker view's is: it reaches the face's way of going.
@@ -64,7 +64,7 @@ async function rendered(path: string) {
   document.body.appendChild(host);
   const root = createRoot(host);
   const context = { store: store(), views, principal: keeper };
-  await act(async () => root.render(<PagesApp context={context} initialPath={path} onNavigate={(to) => told.push(to)} />));
+  await act(async () => root.render(<PagesApp context={context} initialPath={path} {...(basename ? { basename } : {})} onNavigate={(to) => told.push(to)} />));
   await settle();
   const done = async () => {
     await act(async () => root.unmount());
@@ -130,6 +130,29 @@ describe("a lens kept off the lists, on the routed face", () => {
     const { host, done } = await rendered("/places/by-day");
     expect(host.querySelector("[data-graview-page-title]")?.textContent).toContain("By day");
     expect(host.querySelector('[data-testid="place-lens"]')?.textContent).toContain("Monday door");
+    await done();
+  });
+});
+
+describe("a view's link, on the routed face (0.1.47)", () => {
+  it("carries the address going there arrives at, under the face's base: a record, a list narrowed and to a section, a lens", async () => {
+    const { done, told, go } = await rendered("/", "/a/hall");
+    const record = go().href?.({ record: "s1" });
+    const list = go().href?.({ list: "shift" }, { filter: "day:mon", section: "Shifts" });
+    const lens = go().href?.({ place: "by-day" }, { filter: "day:fri" });
+    await act(async () => go().record("s1"));
+    await settle();
+    expect(record).toBe(`/a/hall${told.at(-1)}`);
+    expect(list).toBe("/a/hall/shifts?filter=day%3Amon#shifts");
+    expect(lens).toBe("/a/hall/places/by-day?filter=day%3Afri");
+    await done();
+  });
+
+  it("carries none for what the face does not have: a record that is not there, a place or a kind it has not", async () => {
+    const { done, go } = await rendered("/");
+    expect(go().href?.({ record: "nobody" })).toBeUndefined();
+    expect(go().href?.({ place: "no-such-place" })).toBeUndefined();
+    expect(go().href?.({ list: "no-such-kind" })).toBeUndefined();
     await done();
   });
 });

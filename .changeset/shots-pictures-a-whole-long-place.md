@@ -1,0 +1,8 @@
+---
+"@graview/ship": patch
+"graview": patch
+---
+
+`graview shots` pictures the whole of a place taller than the window, not the window's worth. Threat Watch's "By type" — fourteen threats in four groups, about 1,400 pixels on a desk — came out 900 pixels tall, cut off after the worms with Ransomware and Zero-days missing, because the page the preview serves is the app's embed: a box the window's height with the bar on top, the place scrolling inside it (`[data-embed-content]`) rather than the document, and Playwright's full-page picture measures only the document. The box is deliberate — the bar stays where it is, the scene fills the same box, and an embed on somebody else's page never takes over that page's scroll — so the fix is in `shots`: once the place says it has drawn, the window is grown by what the place's scroller still hides, measured again after the place has had the room (a few times at most, up to 16,000 pixels, Chromium's tallest picture), and then photographed. The scene face is pictured at the window as before. `ship`'s tests grow the window by what is hidden, measure again when the place drew more, leave a place that fits alone and stop at the tallest picture; `verify-preview`'s claim `aFullPagePictureOfALongPlaceShowsTheWholePlace` photographs By type at 1280 and reads the picture back: 1,408 pixels tall, its last row's ink at 1,311.
+
+Compatibility: a behavior change in `graview shots` only — a pages-face picture of a place taller than the window is taller than the window, where it was cut at the window's height. The API, the embed, the routed face, the wire, the stored formats and the derived tools are unchanged.

@@ -6,7 +6,10 @@
  * each card the view binds itself with `graview.on("click")`. Each card
  * has an "Acknowledge" press that is a `<span role="button" data-act>`, not
  * a button, and below the cards a triage fieldset per threat takes a note
- * typed in and saved by another such span (0.1.45).
+ * typed in and saved by another such span (0.1.45). Below them, every
+ * threat as an `<a data-record>` with an icon, and as a table's row bound to
+ * its record, and a `<div role="button" aria-pressed>` the view hears with
+ * `graview.on("click")` that keeps only the critical ones (0.1.47).
  *
  * Sam is an analyst, and may acknowledge a threat.
  */
@@ -73,9 +76,12 @@ graview.style(\`
   .card p { margin: 0; }
   .press { justify-self: start; padding: 4px 10px; border: 1px solid var(--graview-edge); border-radius: 6px; }
   .triage { display: grid; gap: 8px; padding: 12px; }
+  .every { display: grid; gap: 8px; padding: 12px; }
+  .every ul { margin: 0; padding-left: 1.2em; }
 \`);
 const open = new Set();
 const said = {};
+let onlyCritical = false;
 const draw = (props) => {
   const threats = (props.nodes ?? []).filter((node) => node.kind === "threat");
   graview.render(graview.html\`<div class="cards">\${threats.map((threat) => graview.html\`
@@ -91,11 +97,22 @@ const draw = (props) => {
       <fieldset data-key="note-\${threat.id}" data-record="\${threat.id}"><legend>\${threat.label}</legend>
         <input name="note" placeholder="A note" data-note="\${threat.id}">
         <span class="press" role="button" data-act="set-note" data-save-note="\${threat.id}">Save the note</span>
-      </fieldset>\`)}</section>\`);
+      </fieldset>\`)}</section>
+    <section class="every"><h2>Every threat</h2>
+      <div class="press" role="button" aria-pressed="\${onlyCritical ? "true" : "false"}" data-only-critical>Only critical</div>
+      <ul>\${threats.filter((threat) => !onlyCritical || threat.severity === "critical").map((threat) => graview.html\`
+        <li data-key="every-\${threat.id}"><a data-record="\${threat.id}" data-link="\${threat.id}"><svg data-icon viewBox="0 0 10 10" width="10" height="10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg> \${threat.label}</a></li>\`)}</ul>
+      <table><tbody>\${threats.map((threat) => graview.html\`
+        <tr data-key="row-\${threat.id}" data-record="\${threat.id}" data-row="\${threat.id}"><td>\${threat.label}</td><td>\${threat.severity}</td></tr>\`)}</tbody></table>
+    </section>\`);
 };
 graview.onProps(draw);
 graview.on("acted", "[data-act]", (event) => {
   said[event.element.getAttribute("data-ack") ?? event.element.getAttribute("data-save-note")] = event.pressed.ok ? "Done" : event.pressed.message;
+  draw(graview.props);
+});
+graview.on("click", "[data-only-critical]", () => {
+  onlyCritical = !onlyCritical;
   draw(graview.props);
 });
 graview.on("click", "[data-more]", (event) => {

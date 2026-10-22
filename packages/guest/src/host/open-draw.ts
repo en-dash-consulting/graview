@@ -18,12 +18,24 @@ export { handedLinks, judgeLink, linkRefusedWords } from "./external-links.js";
  * The host's own rules for the region: what a view's stylesheet cannot reach, because it cannot write `:host`.
  * A link or a press the host made — a card as much as an `<a>`, a `<span role="button">` as much as a button — looks pressable, which is what iOS makes a tap a click on,
  * is not held for a double tap's zoom, and flashes faintly under the finger (pressable.ts).
+ *
+ * KEYBOARD AND PLAIN CONTROLS BY DEFAULT (0.1.47). Whatever takes the keyboard shows a ring when it has it — a whole
+ * outline at least 2px wide, set off from it, in the app's accent (which the brand is held to against its grounds) — and
+ * it is `!important`, so a view's `outline: none` does not take it away: a view restyles it with `--graview-focus-color`,
+ * `--graview-focus-width` (never under 2px) and `--graview-focus-offset`. A `<button>` and a link the host made are
+ * reset to the words around them with no specificity at all (`:where`), so a view's own class always wins and a button
+ * is the semantic choice with nothing to undo. `.graview-sr` is said to assistive technology and not drawn. A link out
+ * says it opens a new tab; a link the host made, now with an address of the app's, does not.
  */
 export const REGION_CSS = `
 :host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }
-[data-graview-view-root] { color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
+[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
+:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }
+:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }
 [data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }
-[data-graview-view-root] a[href]::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
+[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }
+[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }
+[data-graview-view-root] a[href]:not([data-graview-link])::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
 `;
 
 /** The keys a view hears: enough to move and choose, never what the viewer types into the app elsewhere. */
@@ -131,13 +143,40 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
       ...(event.type === "keydown" ? { key: (event as KeyboardEvent).key } : {}),
       ...(said ?? {}),
     });
+    /*
+     * ENTER AND SPACE PRESS WHAT THE HOST MADE A PRESS (0.1.47): on a
+     * control that does not press of itself — a `<div role="button">`, a
+     * tab, a toggle, an element bound to an act — the key is told to the
+     * view, and then a click, as a button's is; the page does not scroll
+     * under Space.
+     */
+    const key = event.type === "keydown" ? (event as KeyboardEvent).key : undefined;
+    if ((key === "Enter" || key === " ") && element.hasAttribute("data-graview-press") && event.composedPath()[0] === element) {
+      event.preventDefault();
+      options.send({ type: "dom-event", target: renderer.idOf(element)!, event: "click" });
+    }
   };
   for (const type of EVENTS) shadow.addEventListener(type, hear);
   /* `toggle` does not bubble: heard on the way down. */
   shadow.addEventListener("toggle", hear, true);
 
   return {
-    apply: (records, spent) => renderer.apply(records, spent),
+    /*
+     * THE KEYBOARD STAYS WHERE IT WAS (0.1.47): what had it before a batch
+     * has it after, though the view moved it among its siblings (a keyed
+     * element, `data-key`, drawn again in another place) — moving an element
+     * in a page takes its focus away, so it is given back.
+     */
+    apply(records, spent) {
+      const had = shadow.activeElement;
+      const id = had ? renderer.idOf(had) : undefined;
+      const done = renderer.apply(records, spent);
+      if (id !== undefined && shadow.activeElement !== had) {
+        const now = renderer.elementOf(id) as HTMLElement | undefined;
+        if (now?.isConnected && typeof now.focus === "function") now.focus({ preventScroll: true });
+      }
+      return done;
+    },
     style(given) {
       const judged = sanitizeStylesheets(given);
       cssRefused.length = 0;

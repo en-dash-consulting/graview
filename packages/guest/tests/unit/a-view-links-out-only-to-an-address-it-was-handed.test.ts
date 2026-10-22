@@ -136,7 +136,7 @@ describe("a view's link out", () => {
   });
 
   it("says it opens elsewhere: an arrow after it, and in its name that it opens in a new tab", () => {
-    expect(REGION_CSS).toMatch(/a\[href\]::after \{[^}]*content: " ↗" \/ " \(opens in a new tab\)"/);
+    expect(REGION_CSS).toMatch(/a\[href\]:not\(\[data-graview-link\]\)::after \{[^}]*content: " ↗" \/ " \(opens in a new tab\)"/);
   });
 
   it("is refused for an address the view made, even on a handed address's own site, and says why and what a view links to", async () => {

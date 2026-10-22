@@ -1,4 +1,4 @@
-import { partsArriving, placeDrawn, placeWatched } from "@graview/react/provider";
+import { partsArriving, partsWaiting, partsWatchMoved, placeDrawn, placeWatched, type PartsWatch } from "@graview/react/provider";
 import { useLayoutEffect, useRef } from "react";
 import type { EmbedWhere } from "./where.js";
 
@@ -8,7 +8,9 @@ import type { EmbedWhere } from "./where.js";
  * A host picturing a place — Graview Cloud's describe_place, headless —
  * waited on a guess: the opening frame gone, the network quiet, then 600
  * ms. The embed knows better. Once the place it is on has drawn — the face
- * here, every part drawn on it arrived (or said it did not), the fonts and
+ * here, every part drawn on it arrived and drawn in its place (or said it
+ * did not arrive) — not only its module here, since React reveals a part
+ * that suspended a moment later, in a commit of its own — the fonts and
  * images loaded, every worker view drawn (or failed, its plain face drawn
  * in its place), every frame guest drawn (or silent past its time) — and nothing in it has moved for a moment, its root says
  * `data-graview-drawn`, its value the place's path, and the host is told
@@ -36,10 +38,12 @@ function images(root: HTMLElement): HTMLImageElement[] {
 }
 
 /** Whether what the place draws is all here: the face, its parts, its fonts, its images and its views. */
-function here(root: HTMLElement): boolean {
+function here(root: HTMLElement, parts?: PartsWatch): boolean {
   const fonts = (root.ownerDocument as Document & { fonts?: { status?: string } }).fonts;
   if (fonts?.status === "loading") return false;
   if (partsArriving() > 0) return false;
+  // A part here whose module arrived, still to be drawn in the commit React holds back a moment after the place first drew.
+  if (partsWaiting(parts) > 0) return false;
   // The face on its way, or a part of it saying it is busy: a frame guest among them, until it has drawn or its time is up.
   if (root.querySelector('[aria-busy="true"]')) return false;
   // An image off screen and lazy is not waited for: it never loads until it is scrolled to.
@@ -64,7 +68,7 @@ function measure(root: HTMLElement): string {
  * nothing has moved for a moment, then calls `settled`. The answer stops
  * watching; a place left before it settled is never said drawn.
  */
-export function watchDrawn(root: HTMLElement, path: string, settled: () => void): () => void {
+export function watchDrawn(root: HTMLElement, path: string, settled: () => void, parts?: PartsWatch): () => void {
   root.removeAttribute(DRAWN_ATTRIBUTE);
   const window = root.ownerDocument.defaultView;
   if (!window) return () => undefined;
@@ -102,7 +106,7 @@ export function watchDrawn(root: HTMLElement, path: string, settled: () => void)
       moved = now();
     }
     const at = now();
-    if ((here(root) && at - moved >= QUIET_MS) || at - started >= MOST_MS) {
+    if ((here(root, parts) && at - moved >= QUIET_MS) || at - started >= MOST_MS) {
       afterPaint(() => {
         if (stopped) return;
         stop();
@@ -125,13 +129,15 @@ export function watchDrawn(root: HTMLElement, path: string, settled: () => void)
  * off in the commit that moved and goes back on once the new place
  * settles. The whole embed and the pages alone say it alike.
  */
-export function useDrawnSignal(rootRef: { readonly current: HTMLElement | null }, key: string, place: EmbedWhere, onDrawn: ((place: EmbedWhere) => void) | undefined): void {
+export function useDrawnSignal(rootRef: { readonly current: HTMLElement | null }, key: string, place: EmbedWhere, onDrawn: ((place: EmbedWhere) => void) | undefined, parts?: PartsWatch): void {
   // What is fetched early waits for the first draw (FR-194): said as the embed first renders, before any part's effect runs.
   placeWatched();
   const latest = useRef({ place, onDrawn });
   latest.current = { place, onDrawn };
   useLayoutEffect(() => {
-    const watch = (root: HTMLElement) => watchDrawn(root, latest.current.place.path, () => latest.current.onDrawn?.(latest.current.place));
+    // The parts the place left behind are waited for no longer; the ones this place suspended are (`PartsWatch`).
+    if (parts) partsWatchMoved(parts);
+    const watch = (root: HTMLElement) => watchDrawn(root, latest.current.place.path, () => latest.current.onDrawn?.(latest.current.place), parts);
     if (rootRef.current) return watch(rootRef.current);
     // First drawn below the root, its ref is set after this effect runs: watched once the commit is done (there is nothing to take off yet).
     let stop: (() => void) | undefined;
@@ -143,5 +149,5 @@ export function useDrawnSignal(rootRef: { readonly current: HTMLElement | null }
       gone = true;
       stop?.();
     };
-  }, [key, rootRef]);
+  }, [key, rootRef, parts]);
 }

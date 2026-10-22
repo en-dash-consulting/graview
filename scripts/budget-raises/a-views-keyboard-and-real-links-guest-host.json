@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 210,
+  "gzipped": 40,
+  "note": "Raised when a worker view's links came to be real links (0.1.47): the links chunk a guest's session loads gives an <a data-record> the address the face goes to, puts back what it took when the link stops being one, gives a row's first cell the keyboard, and leaves a press with Cmd, Ctrl or Shift to the browser. Measured at 24_339 / 11_381 against 24_132 / 11_345 minified and gzipped."
+}
