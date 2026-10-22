@@ -54,12 +54,15 @@ import { registerWorkerView } from "@graview/guest/host/views";
 import { sam, threatApp, threatSeed, WATCH_JS, WATCH_MANIFEST } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/threat-app.ts"))};
 window.__failures = [];
 window.__problems = [];
+const asked = new URLSearchParams(location.search);
 window.__handle = mount(document.getElementById("app"), {
   app: threatApp,
   seed: threatSeed,
   principal: sam,
   face: "pages",
-  path: "/",
+  /* The host keeps its own addresses (memory routing): a page of the app is its one page, ?at=<the app's path>. */
+  path: asked.get("at") ?? "/",
+  ...(asked.has("bare") ? {} : { hrefOf: (path) => "/?at=" + encodeURIComponent(path) }),
   scheme: new URLSearchParams(location.search).get("scheme") === "dark" ? "dark" : "light",
   label: "Threat Watch",
   heading: false,
@@ -267,17 +270,92 @@ window.__node = (id) => window.__handle.store.graph.getNode(id);
       const a = window.__view().querySelector('[data-link="' + id + '"]');
       return { href: a.getAttribute("href"), role: a.getAttribute("role"), tabindex: a.getAttribute("tabindex"), target: a.getAttribute("target"), icon: a.querySelector("svg")?.getAttribute("aria-hidden") ?? null, color: getComputedStyle(a).color, ink: getComputedStyle(a.closest("li")).color, underline: getComputedStyle(a).textDecorationLine };
     }, PHISHING);
-    claim("an <a data-record> carries the address the face goes to as its href, opens in this tab, needs no role or tab stop patched on, and is drawn in the words' own color, not underlined", typeof anchor.href === "string" && anchor.href.startsWith("/threats/") && anchor.href.includes("phishing") && anchor.role === null && anchor.tabindex === null && anchor.target === null && anchor.color === anchor.ink && anchor.underline === "none", anchor);
+    /* The app's path the host's address names (`?at=`): the host keeps its own addresses, and says them through `hrefOf`. */
+    const atOf = (href) => (typeof href === "string" && href.startsWith("/?at=") ? decodeURIComponent(href.slice("/?at=".length)) : null);
+    claim("an <a data-record> carries the host's own address for the page the face goes to as its href (the embed's hrefOf), opens in this tab, needs no role or tab stop patched on, and is drawn in the words' own color, not underlined", opened(atOf(anchor.href)) && atOf(anchor.href).startsWith("/threats/") && anchor.role === null && anchor.tabindex === null && anchor.target === null && anchor.color === anchor.ink && anchor.underline === "none", anchor);
     claim("an icon the view drew with no role, label or title is hidden from assistive technology", anchor.icon === "true", anchor);
     const popup = desk.waitForEvent("page", { timeout: 5_000 }).catch(() => null);
     await tab.locator(inView(`[data-link="${PHISHING}"]`)).click({ modifiers: ["ControlOrMeta"] });
     const newTab = await popup;
     const stayed = await tab.evaluate(() => window.__path());
-    claim("a Cmd- or Ctrl-click on it is the browser's: a new tab at its address, and the app stays where it was", stayed === "/" && newTab !== null && new URL(newTab.url()).pathname === anchor.href, { stayed, opened: newTab?.url() ?? null, href: anchor.href });
+    /* The new tab is the host's page at that address, and the app opens there on the threat's page. */
+    let landedThere = null;
+    if (newTab) {
+      await newTab.waitForFunction(() => window.__ready === true, null, { timeout: 30_000 }).catch(() => null);
+      landedThere = await newTab.evaluate(() => window.__path?.() ?? null).catch(() => null);
+    }
+    const there = newTab ? new URL(newTab.url()) : null;
+    claim("a Cmd- or Ctrl-click on it is the browser's: a new tab at the host's address, where the app opens on the threat's page, and the app stays where it was", stayed === "/" && there !== null && `${there.pathname}${there.search}` === anchor.href && opened(landedThere), { stayed, opened: newTab?.url() ?? null, href: anchor.href, landedThere });
     await newTab?.close();
     await tab.locator(inView(`[data-link="${PHISHING}"]`)).click();
     const followed = await settled(tab);
-    claim("a plain click on it opens the threat's page in the app, at the address it carries", followed === anchor.href, { followed, href: anchor.href });
+    claim("a plain click on it opens the threat's page in the app, at the path its address names", followed === atOf(anchor.href), { followed, href: anchor.href });
+
+    /*
+     * A HOST THAT SAYS NO ADDRESS: memory routing with no hrefOf. The face's
+     * own path is no page of the host's, so the link carries none — a link
+     * by its role and the keyboard, as on the scene — and Enter on it still
+     * opens the threat's page in the app.
+     */
+    await open(tab, "?bare=1");
+    const bare = await tab.evaluate((id) => {
+      const a = window.__view().querySelector('[data-link="' + id + '"]');
+      return { href: a.getAttribute("href"), role: a.getAttribute("role"), tabindex: a.getAttribute("tabindex") };
+    }, PHISHING);
+    await tab.locator(inView(`[data-link="${PHISHING}"]`)).focus();
+    await tab.keyboard.press("Enter");
+    const bareFollowed = await settled(tab);
+    claim("under memory routing with no address from the host, an <a data-record> carries no href, is a link by its role and a tab stop, and Enter opens the threat's page in the app", bare.href === null && bare.role === "link" && bare.tabindex === "0" && opened(bareFollowed), { ...bare, followed: bareFollowed });
+
+    /*
+     * THE RING AT THE REGION'S EDGE: a link the view drew flush with the
+     * region's left edge, given the keyboard, shows its whole ring — every
+     * side of it painted, not cut by the region's clip.
+     */
+    await open(tab);
+    await tab.locator(inView("[data-flush]")).focus();
+    await tab.keyboard.press("Shift+Tab");
+    await tab.keyboard.press(engine === "webkit" ? "Alt+Tab" : "Tab");
+    const edge = await tab.evaluate(() => {
+      const a = window.__view().querySelector("[data-flush]");
+      const region = document.querySelector("[data-worker-view]").getBoundingClientRect();
+      const box = a.getBoundingClientRect();
+      const style = getComputedStyle(a);
+      const width = parseFloat(style.outlineWidth);
+      const offset = parseFloat(style.outlineOffset);
+      return { focused: a.matches(":focus-visible"), flushLeft: Math.round(box.left - region.left), width, offset, color: style.outlineColor, ring: { left: box.left - offset - width, top: box.top - offset - width, right: box.right + offset + width, bottom: box.bottom + offset + width }, region: { left: region.left, top: region.top } };
+    });
+    /* Each side of the ring, sampled at its middle across its width: the ring's color must be painted there. */
+    const shot = await tab.screenshot({ clip: { x: Math.max(0, edge.ring.left - 2), y: Math.max(0, edge.ring.top - 2), width: edge.ring.right - edge.ring.left + 4, height: edge.ring.bottom - edge.ring.top + 4 } });
+    const sides = await tab.evaluate(
+      async ({ b64, edge, from }) => {
+        const image = new Image();
+        image.src = `data:image/png;base64,${b64}`;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const paint = canvas.getContext("2d", { willReadFrequently: true });
+        paint.drawImage(image, 0, 0);
+        const scale = image.width / (edge.ring.right - edge.ring.left + 4);
+        const probe = document.createElement("canvas").getContext("2d");
+        probe.fillStyle = edge.color;
+        probe.fillRect(0, 0, 1, 1);
+        const want = [...probe.getImageData(0, 0, 1, 1).data];
+        const near = (at) => Math.abs(at[0] - want[0]) + Math.abs(at[1] - want[1]) + Math.abs(at[2] - want[2]) < 60;
+        const px = (x, y) => [...paint.getImageData(Math.floor((x - from.x) * scale), Math.floor((y - from.y) * scale), 1, 1).data];
+        const half = edge.width / 2;
+        const middle = { x: (edge.ring.left + edge.ring.right) / 2, y: (edge.ring.top + edge.ring.bottom) / 2 };
+        return {
+          left: near(px(edge.ring.left + half, middle.y)),
+          top: near(px(middle.x, edge.ring.top + half)),
+          right: near(px(edge.ring.right - half, middle.y)),
+          bottom: near(px(middle.x, edge.ring.bottom - half)),
+        };
+      },
+      { b64: shot.toString("base64"), edge, from: { x: Math.max(0, edge.ring.left - 2), y: Math.max(0, edge.ring.top - 2) } },
+    );
+    claim("a focused link flush with the region's left edge shows its whole ring", edge.focused && edge.flushLeft === 0 && edge.width >= 2 && sides.left && sides.top && sides.right && sides.bottom, { ...edge, sides });
 
     /* A table's row bound to a record: its first cell takes the keyboard, and Enter there opens the row. */
     await open(tab);

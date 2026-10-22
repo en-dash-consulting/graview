@@ -20,7 +20,7 @@ export const ViewContentHeight = createContext<((height: number | undefined) => 
  */
 export interface PageDoor {
   open(path: string): void;
-  href?(path: string): string;
+  href?(path: string): string | undefined;
 }
 
 export const PageDoorContext = createContext<PageDoor | null>(null);

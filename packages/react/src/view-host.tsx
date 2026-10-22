@@ -319,7 +319,9 @@ export function SceneViewHost({
        * taller than it was centered on it and spilled both ways: under the
        * app bar, where nothing scrolls to it, and over its neighbors. Marked
        * here, the stylesheet holds what it draws inside the box, scrolling
-       * from its top when it is taller (`scene-css.ts`).
+       * from its top when it is taller (`scene-css.ts`) — all but a worker
+       * view's card, which holds itself to the box with Open to the
+       * record's page (`ScenePreview`).
        */
       data-graview-record-focus={Math.round(node.plane) === 0 && !node.aggregate && !natural && !screen ? "" : undefined}
       /*

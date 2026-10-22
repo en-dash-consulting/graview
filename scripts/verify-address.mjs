@@ -59,7 +59,12 @@
  *   nothing in it scrolls — and Open lands on its place on Pages, where it
  *   flows whole, while a view that says `flows: false` keeps its place's
  *   frame and its preview keeps to its `scene.maxHeight` (Roadmap
- *   f-view-content-height);
+ *   f-view-content-height); a view of one task eighty notes long is the
+ *   same card — no longer the record in focus scrolling inside its box
+ *   (FR-141) — and its Open lands on the task's page, while in the
+ *   whole-page Shell, which has no Pages, Expand grows the card in place
+ *   from its top to what it drew and Collapse takes it back (Roadmap
+ *   f-scene-record-view-card);
  *   and views that say `bleed: true` — the home's, a record's — span the
  *   phone's width less its safe areas, where the page's 20px gutter stood
  *   either side of them, and are the column's width at a desk; a record
@@ -103,7 +108,12 @@ const VIEWS_PAGES = { order: ["view:to-do", "task"], first: "view:to-do", hide: 
 const THE_LOG = { name: "the-log", title: "The log", attach: "task", cardinality: "many" };
 const THE_LOG_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<ol class="log">\${Array.from({ length: 80 }, (_, at) => graview.html\`<li>Entry \${at + 1} of the log</li>\`)}</ol>\`));`;
 const THE_MAP = { name: "the-map", title: "The map", attach: "task", cardinality: "many", flows: false, scene: { maxHeight: 320 } };
-const THE_MAP_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="map" style="height:1200px">A map of \${props.nodes.length} tasks</div>\`));`;
+/** A view of one task far taller than a screen (Roadmap f-scene-record-view-card): on the Scene, a card whose Open lands on the task's page. */
+const NOTES = { name: "notes", attach: "task", cardinality: "one" };
+const NOTES_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<ol class="notes">\${Array.from({ length: 80 }, (_, at) => graview.html\`<li>Note \${at + 1} on \${props.node ? props.node.label : ""}</li>\`)}</ol>\`));`;
+/** The whole-page Shell, with no Pages beside it: the Scene has no page door, so a card is expanded in place. */
+const SHELL_BASE = "/shell";
+const THE_MAP_SOURCE =`graview.onProps((props) => graview.render(graview.html\`<div class="map" style="height:1200px">A map of \${props.nodes.length} tasks</div>\`));`;
 /** Where the tasks are served with views that bleed to a phone's edges, and page slots beside a record's view. */
 const FITTED_BASE = "/apps/a5";
 /** A page slot on each kind: the task's under a view that sits above the page, the person's under one that replaces it. */
@@ -217,6 +227,29 @@ async function buildHost() {
             return window.__handle.drawn();
           };
           window.__handle.drawn().then(() => { window.__ready = true; });
+        } else if (location.pathname.startsWith("${SHELL_BASE}")) {
+          /*
+           * THE WHOLE-PAGE SHELL, WITH NO PAGES (Roadmap f-scene-record-view-card):
+           * the Scene alone, the task in focus, its view of one record kept by
+           * its manifest — and no page door, so its card has no Open.
+           */
+          /* React and its DOM are CommonJS: a dynamic import hands them as the module's default. */
+          const [{ registerDefaultViews, Shell }, { createViews, GraviewProvider }, { EMPTY_VIEW }, react, client] = await Promise.all([
+            import("@graview/primitives"),
+            import("@graview/react"),
+            import("@graview/layout"),
+            import("react"),
+            import("react-dom/client"),
+          ]);
+          const createElement = react.createElement ?? react.default.createElement;
+          const createRoot = client.createRoot ?? client.default.createRoot;
+          const app = compiled.app;
+          const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: ${JSON.stringify(SEED)} });
+          const views = registerWorkerView(registerDefaultViews(app.schema, createViews(app.schema)), { manifest: ${JSON.stringify(NOTES)}, worker: { source: ${JSON.stringify(NOTES_SOURCE)} } });
+          createRoot(document.getElementById("app")).render(
+            createElement(GraviewProvider, { store, views, initialView: { ...EMPTY_VIEW, focusId: "t1" } }, createElement(Shell, { scheme: "light", onScheme: () => {}, syncUrl: false, remembers: false, renderer: "dom" })),
+          );
+          window.__ready = true;
         } else {
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
@@ -228,7 +261,7 @@ async function buildHost() {
           ...(kept
             ? {
                 views: (schema, registry) =>
-                  [[${JSON.stringify(TO_DO)}, ${JSON.stringify(TO_DO_SOURCE)}], [${JSON.stringify(THE_LOG)}, ${JSON.stringify(THE_LOG_SOURCE)}], [${JSON.stringify(THE_MAP)}, ${JSON.stringify(THE_MAP_SOURCE)}]].reduce(
+                  [[${JSON.stringify(TO_DO)}, ${JSON.stringify(TO_DO_SOURCE)}], [${JSON.stringify(THE_LOG)}, ${JSON.stringify(THE_LOG_SOURCE)}], [${JSON.stringify(THE_MAP)}, ${JSON.stringify(THE_MAP_SOURCE)}], [${JSON.stringify(NOTES)}, ${JSON.stringify(NOTES_SOURCE)}]].reduce(
                     (views, [manifest, source]) => registerWorkerView(views, { manifest, worker: { source } }),
                     registry,
                   ),
@@ -277,7 +310,7 @@ async function buildHost() {
       return;
     }
     // Every address under the base is the one page, as a host that owns the page answers it.
-    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
+    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE, SHELL_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
       response.writeHead(200, { "content-type": "text/html" });
       response.end(APP_PAGE);
       return;
@@ -678,6 +711,77 @@ try {
         one.tallView = { log, landed: { ...landed, entries, frame: logFrame }, map, mapFrame: await placeFrame('[data-worker-view="the-map"]') };
       } catch (error) {
         one.tallError = String(error?.message ?? error);
+      }
+      /*
+       * A TALL VIEW OF ONE RECORD ON THE SCENE IS THE SAME CARD (Roadmap
+       * f-scene-record-view-card): the task's notes, eighty of them, with the
+       * task's own fields under them — no taller than the box the Scene gave
+       * it, inside the window, faded with Open, nothing in it scrolling — and
+       * Open lands on the task's page. In the whole-page Shell, which has no
+       * Pages, the card has no Open: Expand grows it in place to what it
+       * drew, still scrolling nowhere, and Collapse takes it back.
+       */
+      try {
+        const card = (name) =>
+          tab.evaluate((name) => {
+            const card = document.querySelector(`[data-graview-preview="${name}"]`);
+            const region = card?.querySelector("[data-worker-view]");
+            if (!card || !region) return null;
+            const box = card.getBoundingClientRect();
+            const host = card.closest("[data-graview-view]")?.getBoundingClientRect();
+            const bar = document.querySelector("header")?.getBoundingClientRect();
+            const body = card.querySelector("[data-graview-preview-body]");
+            const drawn = card.querySelector("[data-graview-preview-drawn]");
+            const open = card.querySelector("[data-graview-preview-open]");
+            const expand = card.querySelector("[data-graview-preview-expand]");
+            const scrolls = (el) => /^(auto|scroll)$/.test(getComputedStyle(el).overflowY);
+            const scrollers = [];
+            for (let el = region; el && el !== card.parentElement; el = el.parentElement) if (scrolls(el)) scrollers.push(el.tagName.toLowerCase());
+            for (const el of card.querySelectorAll("*")) if (scrolls(el)) scrollers.push(el.tagName.toLowerCase());
+            /* The layout's heights, not the drawn box: the Scene's plane may scale the card. */
+            return {
+              title: card.getAttribute("aria-label"),
+              height: Math.round(box.height),
+              top: Math.round(box.top),
+              bottom: Math.round(box.bottom),
+              hostHeight: host ? Math.round(host.height) : null,
+              barBottom: bar ? Math.round(bar.bottom) : 0,
+              window: innerHeight,
+              measured: Number(region.getAttribute("data-graview-content-height") ?? NaN),
+              layoutHeight: card.offsetHeight,
+              drawnHeight: drawn?.offsetHeight ?? null,
+              shown: body?.clientHeight ?? null,
+              more: body?.hasAttribute("data-graview-more") ?? false,
+              fade: card.querySelector("[data-graview-preview-fade]") !== null,
+              expanded: card.hasAttribute("data-graview-expanded"),
+              open: open ? { href: open.getAttribute("href"), name: open.getAttribute("aria-label"), visible: open.getBoundingClientRect().height > 0 } : null,
+              expand: expand ? { said: expand.textContent, pressed: expand.getAttribute("aria-expanded"), name: expand.getAttribute("aria-label") } : null,
+              scrollers,
+            };
+          }, name);
+        const drawnOnScene = (name) => tab.waitForFunction((name) => Number(document.querySelector(`[data-graview-preview="${name}"] [data-worker-view]`)?.getAttribute("data-graview-content-height") ?? 0) > 0, name, { timeout: 20_000 });
+        await go(`${VIEWS_BASE}/places/overview#focus=t1&sel=t1`);
+        await drawnOnScene("t1");
+        await tab.waitForTimeout(400);
+        const notes = await card("t1");
+        await tab.click('[data-graview-preview="t1"] [data-graview-preview-open]');
+        const landed = await settled();
+        await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="notes"]')?.shadowRoot?.querySelector(".notes li")), null, { timeout: 20_000 }).catch(() => null);
+        const entries = await tab.evaluate(() => document.querySelector('[data-worker-view="notes"]')?.shadowRoot?.querySelectorAll(".notes li").length ?? 0);
+        /* The Shell, with no Pages: Expand, then Collapse. */
+        await go(`${SHELL_BASE}/`);
+        await drawnOnScene("t1");
+        await tab.waitForTimeout(400);
+        const before = await card("t1");
+        await tab.click('[data-graview-preview="t1"] [data-graview-preview-expand]');
+        await tab.waitForTimeout(400);
+        const grown = await card("t1");
+        await tab.click('[data-graview-preview="t1"] [data-graview-preview-expand]');
+        await tab.waitForTimeout(400);
+        const back = await card("t1");
+        one.recordCard = { notes, landed: { ...landed, entries }, shell: { before, grown, back } };
+      } catch (error) {
+        one.recordError = String(error?.message ?? error);
       }
       /*
        * A VIEW DRAWN EDGE TO EDGE ON A PHONE (bleed), and a record page's
@@ -1154,6 +1258,61 @@ try {
   report.checks.aViewThatSaysFlowsFalseKeepsItsFrameAndItsScenePreviewKeepsToItsMaxHeight = {
     seen: tallSeen,
     ok: tallHold(({ map, mapFrame }) => map.shown <= 320 && map.more && map.scrollers.length === 0 && mapFrame?.flows === false && mapFrame.scrolls && mapFrame.height !== null),
+  };
+  /*
+   * Roadmap f-scene-record-view-card: a worker view of one record, far taller
+   * than a screen, is the same card on the Scene — no longer the record in
+   * focus scrolling inside its box (FR-141) — and Open lands on the record's
+   * page; with no page door (the whole-page Shell), Expand grows it in place.
+   */
+  const recordSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.recordError ? { error: one.recordError } : one.recordCard]));
+  const recordHold = (test) => pagesAt.length === engines.length * SIZES.length && pagesAt.every(([, one]) => !one.recordError && one.recordCard?.notes && one.recordCard.shell.before && test(one.recordCard));
+  report.checks.aTallRecordViewOnTheSceneIsACardWhoseOpenLandsOnTheRecordsPage = {
+    seen: recordSeen,
+    ok: recordHold(
+      ({ notes, landed }) =>
+        // The embed names what it holds under its own name ("The tasks · …"), so no two landmarks share one.
+        notes.title?.endsWith("Write the brief") &&
+        notes.measured > notes.window &&
+        notes.height <= notes.hostHeight &&
+        notes.top >= notes.barBottom &&
+        notes.bottom <= notes.window &&
+        notes.shown < notes.drawnHeight &&
+        notes.more &&
+        notes.fade &&
+        notes.scrollers.length === 0 &&
+        notes.expand === null &&
+        notes.open?.visible === true &&
+        notes.open.href === `${VIEWS_BASE}/tasks/t1` &&
+        notes.open.name === "Open Write the brief" &&
+        landed.path === `${VIEWS_BASE}/tasks/t1` &&
+        landed.face === "pages" &&
+        landed.heading === "Write the brief" &&
+        landed.entries === 80,
+    ),
+  };
+  report.checks.withNoPageDoorExpandGrowsTheRecordsCardInPlace = {
+    seen: Object.fromEntries(Object.entries(recordSeen).map(([name, seen]) => [name, seen?.shell ?? seen])),
+    ok: recordHold(
+      ({ shell: { before, grown, back } }) =>
+        before.open === null &&
+        before.expand?.said === "Expand" &&
+        before.expand.pressed === "false" &&
+        before.more &&
+        grown.expanded &&
+        grown.expand?.said === "Collapse" &&
+        grown.expand.pressed === "true" &&
+        grown.layoutHeight > before.layoutHeight &&
+        grown.top === before.top &&
+        grown.shown >= grown.drawnHeight - 1 &&
+        grown.drawnHeight >= grown.measured &&
+        !grown.more &&
+        !grown.fade &&
+        grown.scrollers.length === 0 &&
+        !back.expanded &&
+        back.more &&
+        back.layoutHeight === before.layoutHeight,
+    ),
   };
   report.checks.aHiddenKindIsNotInTheDropDownAndStillOpensAtItsAddress = {
     seen: { list: keptSeen("keptView"), atItsAddress: keptSeen("hiddenKind") },

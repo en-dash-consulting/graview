@@ -580,9 +580,14 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   }, [steering, steer, setPageAt, toFace, address, props.basePath]);
   const arrangement = (views as ReactViewRegistry<S>).arrangement?.();
   const onPages = shown === "pages";
-  const hrefOf = address ? addressAt : undefined;
-  /* Where the scene's preview of a view sends a reader for the whole of it (Roadmap f-view-content-height): its place, on the pages. */
-  const pageDoor = useMemo<PageDoor>(() => ({ open: toPage, ...(address ? { href: (path: string) => addressOf(path, props.basePath === undefined ? {} : { basePath: props.basePath }) } : {}) }), [toPage, address, props.basePath]);
+  /* The address a link to a page carries: the host's, where it says one; the app's own under address routing; none under memory routing, where a path of the face is no page of the host's. */
+  const hostHref = props.hrefOf;
+  const hrefOf = hostHref ?? (address ? addressAt : undefined);
+  /* Where the scene's preview of a view sends a reader for the whole of it (Roadmap f-view-content-height): its place, or the record's page, on the pages. */
+  const pageDoor = useMemo<PageDoor>(
+    () => ({ open: toPage, ...(hostHref ? { href: hostHref } : address ? { href: (path: string) => addressOf(path, props.basePath === undefined ? {} : { basePath: props.basePath }) } : {}) }),
+    [toPage, address, props.basePath, hostHref],
+  );
 
   /*
    * THE EMBED IS ITSELF A LANDMARK.
@@ -643,7 +648,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
               }}
               at={onPages ? pageAt : null}
               without={props.pages?.without()}
-              home={{ ...(hrefOf ? { href: hrefOf("/") } : {}), go: () => toPage("/"), current: onPages && pageAt.split("?")[0] === "/" }}
+              home={{ ...(hrefOf?.("/") !== undefined ? { href: hrefOf("/") } : {}), go: () => toPage("/"), current: onPages && pageAt.split("?")[0] === "/" }}
               reach={{ ...(hrefOf ? { href: hrefOf } : {}), go: (place) => toPage(place.path) }}
               standing={standing}
               hostActions={props.hostActions}

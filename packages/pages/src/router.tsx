@@ -4,7 +4,7 @@ import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
 import { narrowedPath } from "@graview/core/navigate";
 import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { createContext, Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
 import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageQuickAsk } from "./quick-ask.js";
@@ -126,7 +126,21 @@ export interface PagesAppProps<S extends AnySchema> {
    * shown it again here. Off unless given.
    */
   readonly firstLook?: FirstLook;
+  /**
+   * THE ADDRESS A VIEW'S LINK CARRIES, where this face's own is not the
+   * page's: given a path of this face (basename-relative, with its search
+   * and section), the address the host's page answers for it — or
+   * `undefined` for none. `false`: no address at all, so a worker view's
+   * `<a data-record>` is a link by its role and the keyboard, as on the
+   * scene. By default the face's own, its base and the path — right when
+   * the face owns the address bar, and a page that may not exist when it
+   * is drawn in somebody else's (an embed's memory routing).
+   */
+  readonly hrefOf?: ((path: string) => string | undefined) | false;
 }
+
+/** Where a view's link goes on the host's page (`PagesAppProps.hrefOf`); the face's own address when not said. */
+const HrefOfContext = createContext<((path: string) => string | undefined) | false | undefined>(undefined);
 
 /** What a bar drawn outside the router holds of it: where the face is, and the way to move it. */
 export interface PagesSteering {
@@ -387,6 +401,8 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
   const navigate = useNavigate();
   /* The address carries the base, as a listed record's link does (RecordLinks, FR-189). */
   const base = useHref("/").replace(/\/$/, "");
+  /* The host's own address for a path, where it says one; none at all where it said `false` (`PagesAppProps.hrefOf`). */
+  const hostHref = useContext(HrefOfContext);
   const goTo = useMemo<GoTo>(() => {
     /** The face's path for a destination, basename-relative; none for one it does not have. */
     const pathOf = (to: GoToTarget, also?: GoToAlso): string | undefined => {
@@ -409,13 +425,14 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
       list: (kind, also) => go(pathOf({ list: kind }, also)),
       // A view drawn stands in the main column, at its own address, as the seat's does.
       draft: () => navigate("/~draft"),
-      // What a view's <a data-record> carries as its href: this face's address for it (0.1.47).
+      // What a view's <a data-record> carries as its href: this face's address for it (0.1.47), or the host's, or none where the host has none.
       href: (to, also) => {
-        const path = pathOf(to, also);
-        return path === undefined ? undefined : `${base}${path}`;
+        const path = hostHref === false ? undefined : pathOf(to, also);
+        if (path === undefined) return undefined;
+        return hostHref ? hostHref(path) : `${base}${path}`;
       },
     };
-  }, [context, navigate, base]);
+  }, [context, navigate, base, hostHref]);
   return <GoToContext.Provider value={goTo}>{children}</GoToContext.Provider>;
 }
 
@@ -588,6 +605,7 @@ export function PagesApp<S extends AnySchema>({
   path,
   steering,
   firstLook,
+  hrefOf,
 }: PagesAppProps<S>) {
   /*
    * THE SEAT THE READER TOOK, where the app offers seats and no provider
@@ -688,7 +706,8 @@ export function PagesApp<S extends AnySchema>({
     routed
   );
   const timed = <PlaybackContext.Provider value={playback as unknown as Playback}>{inner}</PlaybackContext.Provider>;
-  const filed = context.files ? <HostFilesContext.Provider value={context.files}>{timed}</HostFilesContext.Provider> : timed;
+  const hosted = context.files ? <HostFilesContext.Provider value={context.files}>{timed}</HostFilesContext.Provider> : timed;
+  const filed = hrefOf === undefined ? hosted : <HrefOfContext.Provider value={hrefOf}>{hosted}</HrefOfContext.Provider>;
   if (initialPath !== undefined) {
     /*
      * THE TEST ROUTER CARRIES THE BASENAME TOO, OR THE TESTS ARE A LIE.
