@@ -49,7 +49,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.45
 
-Published October 22, 2026 · the current version
+Published October 22, 2026
 
 A form for a visitor, cards that open on a phone's tap, and views that link out, bleed and stack their stylesheets.
 

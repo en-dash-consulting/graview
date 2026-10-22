@@ -1,5 +1,17 @@
 # @graview/guest
 
+## 0.1.46
+
+### Patch Changes
+
+- 15f234f: A titled worker view's place flows with the page, and a brand may keep the line under the app's name off the home without blanking the description. Every view opened at `/places/<slug>` was drawn in a frame `min(72vh, 760px)` tall with a border that scrolled inside itself, under the page's own scroll — on a phone, a box that traps the thumb — while the home's view and a place of blocks flowed. `registerWorkerView` now marks the view it registers `flows`, as a place of blocks is, and its place is drawn in the page's column as long as the view draws; a calendar, a board, the columns and the other pictures keep their frame. `graview-worker-view` says a view's place flows with the page and needs no height to fill one. And with a home view the routed face drew the document's `description` above it, so a view with its own hero said everything twice, and the only way to stop it was to delete the description, which took it out of the app's listings too. A document's `brand.subtitle: false` now keeps the line off the home — over a home view, under a home of blocks and on the derived home alike — and the description stays the app's: the brand's `subtitle`, the name's hover on the bar, its listings. `set-brand` writes it (`subtitle: false`; `true` or `null` draws the line again) and says so in words, the diff of a change says it the same way, the compiled brand carries `subtitleDrawn: false`, and `describePlace` leaves the line out of the home's masthead. Left out, the line is drawn as it always was. `graview-brand` documents the key. `guest`'s tests find a titled view's place marked to flow and drawn with no height and nothing scrolling inside it, and `pages`' find a calendar, a board and the columns keeping their frame; `verify-address` opens a kept view's place and the board at 1440 and 390 in Chromium, WebKit and Firefox, and finds no box between the view and the page that scrolls while the board's frame does (aTitledViewsPlaceFlowsWithThePageWhileABoardKeepsItsFrame). `core`'s tests find the key validated as false and refused as anything else, written by `set-brand` and taken back by `true` and `null` to the very document, and the masthead without the line; `pages`' find the home drawing no line with it and the line without it, the description still the name's hover. A hosted page carries 0.0 KB more up front (3 bytes, 1 gzipped) and the guest host registering a worker view 6 (1), under raises of those budgets by that (`scripts/budget-raises/a-views-place-flows-*.json`).
+  
+  Compatibility: additive in the declaration — `brand.subtitle`, optional and only `false`; a document without it draws as it did, and a build that predates it refuses a document that carries it. Additive in the API: `Brand.subtitleDrawn` and the `set-brand` edit's `subtitle`. A titled worker view's place no longer scrolls inside itself; the wire, the stored formats and the derived tools are unchanged.
+- Updated dependencies [15f234f]
+- Updated dependencies [99d25eb]
+  - @graview/core@0.1.46
+  - @graview/react@0.1.46
+
 ## 0.1.45
 
 ### Patch Changes

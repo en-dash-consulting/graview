@@ -1,5 +1,20 @@
 # @graview/embed
 
+## 0.1.46
+
+### Patch Changes
+
+- Updated dependencies [15f234f]
+- Updated dependencies [99d25eb]
+  - @graview/core@0.1.46
+  - @graview/guest@0.1.46
+  - @graview/pages@0.1.46
+  - @graview/primitives@0.1.46
+  - @graview/layout@0.1.46
+  - @graview/react@0.1.46
+  - @graview/studio@0.1.46
+  - @graview/tools@0.1.46
+
 ## 0.1.45
 
 ### Patch Changes
