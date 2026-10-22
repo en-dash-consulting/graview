@@ -19,6 +19,8 @@
  *   the app has not got, naming the ones it has;
  *   and pictures an app declared in code, a draft view's place named by its
  *   title;
+ *   and pictures a declared lens's place with the lens drawn in it, not its
+ *   page's head over nothing;
  *   and a visitor opens a form at /forms/rsvp (Roadmap f-public-forms),
  *   fills it and submits at 390 and 1440: the guest lands on the store as
  *   "a visitor via the RSVP form", a visitor minted per page, and nothing
@@ -45,6 +47,8 @@ const DOCUMENT = "packages/core/tests/document/fixtures/org.gdd.json";
 const SEED = "packages/core/tests/document/fixtures/org.seed.json";
 const FORM_DOCUMENT = "packages/core/tests/document/fixtures/rsvp.gdd.json";
 const FORM_SEED = "packages/core/tests/document/fixtures/rsvp.seed.json";
+const LENS_DOCUMENT = "packages/core/tests/document/fixtures/threat-watch.gdd.json";
+const LENS_SEED = "packages/core/tests/document/fixtures/threat-watch.seed.json";
 const seed = JSON.parse(readFileSync(resolve(repoRoot, SEED), "utf8"));
 const person = seed.nodes.find((node) => node.kind === "person");
 const report = { at: new Date().toISOString(), engine: ENGINE, document: DOCUMENT, seed: SEED, checks: {} };
@@ -167,6 +171,58 @@ try {
     const files = ["stations-at-a-glance", "stations"].map((name) => join(out, `${name}-light-1280.png`));
     const pngs = files.map((file) => existsSync(file) && statSync(file).size > 10_000 && readFileSync(file).subarray(1, 4).toString() === "PNG");
     report.checks.shotsPicturesAnAppInCodeAndItsDraftByTitle = { status: taken.status, said: (taken.stdout.trim().split("\n").at(-1) ?? "") + taken.stderr.trim(), pngs, ok: taken.status === 0 && pngs.every(Boolean) };
+  }
+
+  /*
+   * ---- graview shots of a declared lens's place: the picture shows the lens, not its page's head over nothing.
+   * The page said data-graview-drawn while a blocks lens was still to be drawn (its module here, its reveal held
+   * back by React a moment), and "What to do" was photographed as a title and a line. Read from the PNG itself:
+   * how many rows of pixels under the head differ from the page's ground.
+   */
+  {
+    const out = join(shotsDir, "lens");
+    const taken = spawnSync(
+      process.execPath,
+      [CLI, "shots", LENS_DOCUMENT, "--seed", LENS_SEED, "--places", "What to do,Active now", "--out", out, "--port", String(portFor("preview-shots"))],
+      { cwd: repoRoot, encoding: "utf8", timeout: 180_000 },
+    );
+    const pictures = {};
+    const reader = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    for (const name of ["what-to-do", "active-now"]) {
+      const file = join(out, `${name}-light-1280.png`);
+      if (!existsSync(file)) {
+        pictures[name] = { written: false, ok: false };
+        continue;
+      }
+      const inked = await reader.evaluate(async (src) => {
+        const image = new Image();
+        image.src = src;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0);
+        const { data } = context.getImageData(0, 0, image.width, image.height);
+        const at = (x, y) => (y * image.width + x) * 4;
+        const ground = at(image.width - 4, image.height - 4);
+        let rows = 0;
+        // Under the page's title, its line and "All … as a list": where the lens draws.
+        for (let y = 220; y < image.height; y += 1) {
+          for (let x = 0; x < image.width; x += 2) {
+            const i = at(x, y);
+            if (Math.abs(data[i] - data[ground]) + Math.abs(data[i + 1] - data[ground + 1]) + Math.abs(data[i + 2] - data[ground + 2]) > 60) {
+              rows += 1;
+              break;
+            }
+          }
+        }
+        return rows;
+      }, `data:image/png;base64,${readFileSync(file).toString("base64")}`);
+      pictures[name] = { written: true, inkedRowsUnderTheHead: inked, ok: inked >= 100 };
+    }
+    await reader.close();
+    report.checks.aLensPlacesPictureShowsTheLensContent = { status: taken.status, said: (taken.stdout.trim().split("\n").at(-1) ?? "") + taken.stderr.trim(), pictures, ok: taken.status === 0 && Object.values(pictures).every((one) => one.ok) };
   }
 
   /* ---- a form for a visitor (Roadmap f-public-forms): /forms/rsvp drawn alone, answered, and nothing of the app shown or sent */

@@ -127,7 +127,8 @@ describe("a hosted page", () => {
     // 963 KB since a compacted store serves no unseen id (FR-199): the scene face measured 985_521 B, 1_025 more — what a checkpoint keeps of the records behind it, and the seat view judging from it.
     // 966 KB once both of 0.1.44's raises above were merged (measured together on the batch).
     // 969 KB since the built-in views came to look designed (Roadmap f-auto-view-type-polish): the blocks' stylesheet's type scale, a group's count, a line of facts as chips, the theme's spacing scale: the scene face measured 992_224 B, 4_449 more than before it (987_775).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(969 * 1024);
+    // 970 KB since a place came to be said drawn once its lens has drawn, not once the lens's module arrived: the watch the faces hand their parts, and each part saying when it suspends and draws: the scene face measured 992_882 B, 878 more than before it (992_004).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(970 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
