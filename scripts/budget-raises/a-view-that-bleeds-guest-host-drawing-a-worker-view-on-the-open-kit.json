@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 122,
+  "gzipped": 22,
+  "note": "Raised when a worker view came to be drawn edge to edge on a phone (`bleed: true`): `checkManifest`, which the open kit's host runs before it draws, judges the key. Measured at 181_944 / 69_260 against 181_822 / 69_238 minified and gzipped."
+}

@@ -1,5 +1,5 @@
 import type { AnySchema, KindOfSchema, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, isDefaultView, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useContext, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
@@ -244,7 +244,9 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
     if (!views.home) throw new Error(`The worker view "${manifest.name}" is the home's body: draw it with workerHome, on the home.`);
     // A draft that fails says why in its place (FR-187): the app's own home standing there would picture the proposal as fine.
     const declared = definition.draft ? undefined : (views.homeView?.() as ViewComponent<AnySchema> | undefined);
-    views.home(workerView(definition, declared ? { fallback: declared } : {}) as unknown as ViewComponent<S>);
+    const home = workerView(definition, declared ? { fallback: declared } : {});
+    // Edge to edge on a phone, where its manifest says so: the pages face takes the gutter back for it.
+    views.home((manifest.bleed === true ? markBleeds(home) : home) as unknown as ViewComponent<S>);
     return views;
   }
   const cell = { cardinality: manifest.cardinality, fidelity: "full" } as const;
@@ -258,7 +260,9 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
   /* A draft (FR-187): no fallback, so a failure is said in its place, and no name, so nothing tidies it and the place menu offers it nothing to keep. */
   const draft = definition.draft === true;
   const view = workerView(definition, { ...(before && !draft ? { fallback: before } : {}), ...(one && manifest.replaces !== "page" && before ? { beside: before } : {}) });
-  views.register(manifest.attach as KindOfSchema<S>, cell, (one && manifest.replaces === "page" ? markReplacesPage(view) : view) as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
+  if (one && manifest.replaces === "page") markReplacesPage(view);
+  if (manifest.bleed === true) markBleeds(view);
+  views.register(manifest.attach as KindOfSchema<S>, cell, view as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
   return views;
 }
 

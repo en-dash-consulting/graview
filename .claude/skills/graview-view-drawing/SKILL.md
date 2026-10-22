@@ -52,6 +52,15 @@ take `var()`; put paints in the stylesheet
 `name` and its `logo`. A brand change or the app's toggle pushes `theme`
 again.
 
+## Its box, and the gutter
+
+On Pages a view is drawn in the page's column, which keeps a 20px gutter
+either side on a phone. Nothing the view draws passes its box: a negative
+margin is clipped at its edge, not widened. Say `bleed: true` in the
+manifest and on a phone (680px or less) the box takes the gutter back,
+keeping the safe areas: a hero is the phone's width. At a desk it is the
+column's width either way.
+
 ## The images a view may show
 
 An `img`'s `src` is drawn only when it is one of these; any other address

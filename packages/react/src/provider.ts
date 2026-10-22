@@ -38,7 +38,7 @@ export type { ReaderMemory } from "./settings.js";
 export { createViews, layerViews } from "./view-registry.js";
 // The host's views as the place menu tidies them (Roadmap f-place-menu-views).
 export { KeptViewsProvider, useTidiedViews } from "./tidied-views.js";
-export { DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage } from "./view-marks.js";
+export { BLEEDS, bleeds, DEFAULT_VIEW, isDefaultView, markBleeds, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage } from "./view-marks.js";
 export { DefaultDrawnElsewhere } from "./default-elsewhere.js";
 export type { Cardinality, Fidelity, ReactViewRegistry, ViewCell, ViewComponent, ViewProps } from "./view-registry.js";
 export { ErrorReportContext } from "./error-report.js";

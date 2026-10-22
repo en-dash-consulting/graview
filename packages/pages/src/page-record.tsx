@@ -2,7 +2,7 @@ import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySc
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
-import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
@@ -29,7 +29,7 @@ import {
   rule,
   whoDid,
 } from "./page-typography.js";
-import { PageMain, PageTitle } from "./page-shell.js";
+import { Bleed, PageMain, PageTitle } from "./page-shell.js";
 import { HeadTrail } from "./place-here.js";
 import { capitalize } from "./page-typography.js";
 
@@ -194,7 +194,10 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
       {PageView && node ? (
         <section data-testid="record-view" style={{ display: "grid", minWidth: 0 }}>
           <DefaultViewElsewhere>
-            <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
+            {/* Edge to edge on a phone, where the view says `bleed` (Bleed). */}
+            <Bleed when={bleeds(ownPage)}>
+              <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
+            </Bleed>
           </DefaultViewElsewhere>
         </section>
       ) : null}
