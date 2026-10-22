@@ -1,0 +1,7 @@
+---
+"@graview/primitives": patch
+---
+
+Enter on a kind in Find hands the keyboard to the kind's place on the first frame the place stands, and to its arranging line when the line comes, so the next key a person types is never typed into the Find box. On a slow machine the line comes with the place's picture, a second or more after Enter; the keyboard was let go on nothing for thirty frames, and the Shell's rule that the keyboard always lands somewhere gave it back to what Enter was pressed on — the Find box — until the line arrived. A person who typed the place's acts key in that while typed it after "songs" in the box. The nightly's journeys found it on the discography, twice on 2026-10-22: being told an act is not yours, on the scene on a laptop from the keyboard, took 24 presses rather than 4, as the walk found no acts key, went Up and across the districts. `primitives`' tests hold that, under the Shell's root, the keyboard is on the place while its line is still coming and on the line once it is drawn; the journeys harness waits for the keyboard to be in the kind (on the place, or on its line once drawn) rather than for 800 milliseconds.
+
+Compatibility: a behavior change in the scene's Find only: after Enter on a kind or one of its pictures the keyboard is on the place at once rather than after thirty frames, and never back in the Find box while the place's line is coming. The API, the declaration, the wire, the stored formats and the derived tools are unchanged.

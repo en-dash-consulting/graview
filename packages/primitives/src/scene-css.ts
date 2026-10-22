@@ -1289,13 +1289,16 @@ ${/* A DISTRICT TAKES A PRESS ON ITS OWN GROUND, not on the box around it.
   pointer-events: auto;
 }
 ${/* THE RECORD IN FOCUS KEEPS TO ITS BOX (FR-141). Whatever draws it — the
-   framework's record, a declared page at its head, a worker view — is held
-   to the box the layout gave it: no taller than the box, scrolling inside
-   when it is taller, from its top. A view centered on a box it outgrew
-   spilled under the bar and over the cards it is tied to. A frame that
-   scrolls its own body (a Panel) keeps doing so; the kind tag astride the
-   frame's edge is not held. */ ""}
-[data-graview-record-focus] > :not(.graview-kind-tag) {
+   framework's record, a declared page at its head, a view the host draws —
+   is held to the box the layout gave it: no taller than the box, scrolling
+   inside when it is taller, from its top. A view centered on a box it
+   outgrew spilled under the bar and over the cards it is tied to. A frame
+   that scrolls its own body (a Panel) keeps doing so; the kind tag astride
+   the frame's edge is not held. A worker view's card (Roadmap
+   f-scene-record-view-card) is held to the box by its own rules — clipped
+   and faded, with Open to the record's page, or expanded in place where
+   there are no pages — and is never a box that scrolls. */ ""}
+[data-graview-record-focus] > :not(.graview-kind-tag):not([data-graview-preview]) {
   min-height: 0;
   max-height: 100%;
   overflow-y: auto;

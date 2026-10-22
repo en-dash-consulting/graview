@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T02:00:06.292Z",
+  "at": "2026-10-22T15:23:23.390Z",
   "transport": "pictures",
   "engine": "chromium",
   "claims": {
@@ -61,11 +61,7 @@
       "ok": true,
       "detail": [
         {
-          "path": "/graview/files/porch-3f9a.png",
-          "signed": true
-        },
-        {
-          "path": "/graview/files/step-77c1.png",
+          "path": "/graview/files/harbor-6d1f.jpg",
           "signed": true
         }
       ]
@@ -74,11 +70,11 @@
       "ok": true,
       "detail": [
         {
-          "url": "http://127.0.0.1:5892/graview/files/porch-3f9a.png",
+          "url": "http://127.0.0.1:5692/graview/files/porch-3f9a.png",
           "type": "fetch"
         },
         {
-          "url": "http://127.0.0.1:5892/graview/files/step-77c1.png",
+          "url": "http://127.0.0.1:5692/graview/files/step-77c1.png",
           "type": "fetch"
         }
       ]
@@ -87,11 +83,11 @@
       "ok": true,
       "detail": [
         {
-          "url": "http://127.0.0.1:5892/graview/files/porch-3f9a.png",
+          "url": "http://127.0.0.1:5692/graview/files/porch-3f9a.png",
           "type": "fetch"
         },
         {
-          "url": "http://127.0.0.1:5892/graview/files/step-77c1.png",
+          "url": "http://127.0.0.1:5692/graview/files/step-77c1.png",
           "type": "fetch"
         }
       ]
@@ -110,6 +106,209 @@
     "the page throws nothing": {
       "ok": true,
       "detail": []
+    },
+    "under a base, the view draws the porch's two pictures from blob: URLs the host made": {
+      "ok": true,
+      "detail": [
+        {
+          "name": "porch.png",
+          "blob": true,
+          "natural": [
+            400,
+            250
+          ]
+        },
+        {
+          "name": "step.png",
+          "blob": true,
+          "natural": [
+            40,
+            20
+          ]
+        }
+      ]
+    },
+    "under a base, the host fetched each picture where it said a record's files are, under /a/jobs, with the reader's session": {
+      "ok": true,
+      "detail": [
+        {
+          "path": "/graview/files/harbor-6d1f.jpg",
+          "signed": true
+        }
+      ]
+    },
+    "under a base, nothing was asked of /graview/files/ at the host's root": {
+      "ok": true,
+      "detail": [
+        {
+          "url": "http://127.0.0.1:5692/a/jobs/graview/files/porch-3f9a.png",
+          "type": "fetch"
+        },
+        {
+          "url": "http://127.0.0.1:5692/a/jobs/graview/files/step-77c1.png",
+          "type": "fetch"
+        }
+      ]
+    },
+    "under a base, no view failed, and nothing was left out": {
+      "ok": true,
+      "detail": {
+        "failures": [],
+        "problems": []
+      }
+    },
+    "under a base, a host that hands filesAt under it and no file on the view has the view's pictures fetched under /a/jobs": {
+      "ok": true,
+      "detail": {
+        "asked": [
+          {
+            "path": "/graview/files/harbor-6d1f.jpg",
+            "signed": true
+          }
+        ],
+        "requests": [
+          {
+            "url": "http://127.0.0.1:5692/a/jobs/graview/files/porch-3f9a.png",
+            "type": "fetch"
+          },
+          {
+            "url": "http://127.0.0.1:5692/a/jobs/graview/files/step-77c1.png",
+            "type": "fetch"
+          }
+        ]
+      }
+    },
+    "under a base, the record's own page draws each of its pictures, and links its quote, at the host's address under /a/jobs, from filesAt alone": {
+      "ok": true,
+      "detail": {
+        "record": {
+          "pictures": [
+            {
+              "src": "/a/jobs/graview/files/porch-3f9a.png",
+              "natural": 1600
+            },
+            {
+              "src": "/a/jobs/graview/files/step-77c1.png",
+              "natural": 40
+            },
+            {
+              "src": "/a/jobs/graview/files/plan-02bd.svg",
+              "natural": 10
+            }
+          ],
+          "papers": [
+            "/a/jobs/graview/files/quote-9e4f.pdf",
+            "/a/jobs/graview/files/quote-9e4f.pdf"
+          ]
+        },
+        "requests": [
+          "http://127.0.0.1:5692/a/jobs/graview/files/porch-3f9a.png",
+          "http://127.0.0.1:5692/a/jobs/graview/files/step-77c1.png",
+          "http://127.0.0.1:5692/a/jobs/graview/files/plan-02bd.svg"
+        ]
+      }
+    },
+    "under a base, saying it once, no view failed, and nothing was left out": {
+      "ok": true,
+      "detail": {
+        "failures": [],
+        "problems": []
+      }
+    },
+    "a view places the porch's clip and the host plays it there: its poster first, native controls, only its metadata fetched, said by what it shows and how long": {
+      "ok": true,
+      "detail": {
+        "src": "/graview/files/clip-5d0a.webm",
+        "poster": "/graview/files/clip-5d0a.png",
+        "controls": true,
+        "preload": "metadata",
+        "label": "The porch, panned, a 1-second video",
+        "duration": 1,
+        "wide": 320,
+        "said": "porch.webm 1",
+        "videos": 0,
+        "named": 0
+      }
+    },
+    "the view is handed the clip's facts, never its path, and its own drawing holds no <video>": {
+      "ok": true,
+      "detail": {
+        "said": "porch.webm 1",
+        "named": 0,
+        "videos": 0
+      }
+    },
+    "the host fetched the clip with the reader's session": {
+      "ok": true,
+      "detail": [
+        {
+          "path": "/graview/files/harbor-6d1f.jpg",
+          "signed": true
+        }
+      ]
+    },
+    "a press on the view's data-lightbox opens the host's full-screen viewer over the app, the keyboard on its Close": {
+      "ok": true,
+      "detail": {
+        "open": true,
+        "modal": true,
+        "inBody": true,
+        "src": "/graview/files/step-77c1.png",
+        "alt": "The cracked step",
+        "focus": "Close",
+        "opener": "dialog"
+      }
+    },
+    "Escape closes the viewer and gives the keyboard back to the view's button": {
+      "ok": true,
+      "detail": {
+        "back": true
+      }
+    },
+    "the reel view did not fail, and nothing was left out": {
+      "ok": true,
+      "detail": {
+        "failures": [],
+        "problems": []
+      }
+    },
+    "the full-size photograph is a real JPEG with JFIF and an EXIF APP1, heavier as a data: image than the 512,000 characters a view's own may be": {
+      "ok": true,
+      "detail": {
+        "app1": true,
+        "bytes": 873054,
+        "base64": 1164095
+      }
+    },
+    "on a page that refuses blob: images, a pictures: true view draws the full-size EXIF JPEG on a record, at its own 1200×900, the data: image the host made": {
+      "ok": true,
+      "detail": {
+        "natural": [
+          1200,
+          900
+        ],
+        "scheme": "data",
+        "length": 1164095,
+        "alt": "The harbor at dusk",
+        "failures": [],
+        "problems": []
+      }
+    },
+    "the host fetched the photograph once, with the reader's session": {
+      "ok": true,
+      "detail": [
+        {
+          "path": "/graview/files/harbor-6d1f.jpg",
+          "signed": true
+        }
+      ]
+    },
+    "the full-size photograph's view did not fail, nothing was refused and nothing was left out": {
+      "ok": true,
+      "detail": {
+        "failures": [],
+        "problems": []
+      }
     }
   },
   "pageErrors": [],

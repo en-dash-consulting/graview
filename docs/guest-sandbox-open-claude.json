@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T01:58:17.962Z",
+  "at": "2026-10-22T15:21:09.024Z",
   "transport": "open",
   "engine": "chromium",
   "policy": "Claude (claudemcpcontent.com /mcp_apps header, observed 2026-10-04)",
@@ -20,7 +20,9 @@
         "stop": "rgb(0, 23, 105)",
         "barFill": "url(\"#barFill\")",
         "animation": "spin",
-        "svgNamespace": "http://www.w3.org/2000/svg"
+        "svgNamespace": "http://www.w3.org/2000/svg",
+        "sheets": 1,
+        "spacing": "2px"
       }
     },
     "in light, the cards take the app's panel and edge, and the ring and the bars the app's accent": {
@@ -39,14 +41,37 @@
         "stop": "rgb(0, 23, 105)",
         "barFill": "url(\"#barFill\")",
         "animation": "spin",
-        "svgNamespace": "http://www.w3.org/2000/svg"
+        "svgNamespace": "http://www.w3.org/2000/svg",
+        "sheets": 1,
+        "spacing": "2px"
+      }
+    },
+    "a view that calls graview.style twice draws both sheets, the second after the first: the cards from the shared one, the ring from its own, and its own rule winning where both say one": {
+      "ok": true,
+      "detail": {
+        "cards": 2,
+        "bars": 4,
+        "grid": "grid",
+        "columns": 17,
+        "cardBackground": "rgb(255, 255, 255)",
+        "cardBorder": "rgba(24, 33, 58, 0.12)",
+        "panel": "rgb(255, 255, 255)",
+        "edge": "rgba(24, 33, 58, 0.12)",
+        "accent": "rgb(0, 23, 105)",
+        "ring": "rgb(0, 23, 105)",
+        "stop": "rgb(0, 23, 105)",
+        "barFill": "url(\"#barFill\")",
+        "animation": "spin",
+        "svgNamespace": "http://www.w3.org/2000/svg",
+        "sheets": 1,
+        "spacing": "2px"
       }
     },
     "the progress ring turns: its keyframes are drawn and running": {
       "ok": true,
       "detail": {
-        "before": "matrix(0.0870636, 0.996203, -0.996203, 0.0870636, 0, 0)",
-        "after": "matrix(-0.939574, 0.342346, -0.342346, -0.939574, 0, 0)"
+        "before": "matrix(3.66519e-05, 1, -1, 3.66519e-05, 0, 0)",
+        "after": "matrix(-0.965849, 0.259107, -0.259107, -0.965849, 0, 0)"
       }
     },
     "after the app's toggle to dark, the same view takes the dark panel, edge and accent": {
@@ -66,7 +91,9 @@
           "stop": "rgb(0, 23, 105)",
           "barFill": "url(\"#barFill\")",
           "animation": "spin",
-          "svgNamespace": "http://www.w3.org/2000/svg"
+          "svgNamespace": "http://www.w3.org/2000/svg",
+          "sheets": 1,
+          "spacing": "2px"
         },
         "dark": {
           "cards": 2,
@@ -82,7 +109,9 @@
           "stop": "rgb(154, 171, 255)",
           "barFill": "url(\"#barFill\")",
           "animation": "spin",
-          "svgNamespace": "http://www.w3.org/2000/svg"
+          "svgNamespace": "http://www.w3.org/2000/svg",
+          "sheets": 1,
+          "spacing": "2px"
         }
       }
     },
@@ -270,14 +299,14 @@
         "hits": []
       }
     },
-    "<a href=\"https:…\"> is drawn as text, with no href, and pressing it goes nowhere": {
+    "<a href=\"https:…\"> to an address the view made is drawn as text, with no href, and pressing it goes nowhere": {
       "ok": true,
       "detail": {
         "link": {
           "href": null,
           "text": "a link out"
         },
-        "url": "http://127.0.0.1:5892/"
+        "url": "http://127.0.0.1:5692/"
       }
     },
     "srcset is not drawn": {
@@ -387,12 +416,12 @@
           "position": "static",
           "rect": {
             "x": 0,
-            "y": 818.875,
+            "y": 623.875,
             "width": 2621.234375,
             "height": 23.1875,
-            "top": 818.875,
+            "top": 623.875,
             "right": 2621.234375,
-            "bottom": 842.0625,
+            "bottom": 647.0625,
             "left": 0
           }
         },
@@ -401,12 +430,12 @@
         },
         "region": {
           "x": 0,
-          "y": 195.375,
+          "y": 0.375,
           "width": 2621.234375,
           "height": 669.875,
-          "top": 195.375,
+          "top": 0.375,
           "right": 2621.234375,
-          "bottom": 865.25,
+          "bottom": 670.25,
           "left": 0
         },
         "atBar": "bar",
@@ -437,6 +466,377 @@
       "detail": {
         "tag": "div",
         "color": "rgb(1, 2, 3)"
+      }
+    },
+    "a view's <span role=\"checkbox\" aria-checked> is drawn as the view drew it, not stopped and not replaced, with its state styled by its own [aria-checked] rule": {
+      "ok": true,
+      "detail": {
+        "failed": null,
+        "fallback": false,
+        "ticked": [
+          "true",
+          "false"
+        ],
+        "background": "rgb(5, 122, 85)",
+        "attributes": [
+          [
+            "div",
+            [
+              [
+                "aria-label",
+                "Steps"
+              ],
+              [
+                "class",
+                "gx"
+              ],
+              [
+                "role",
+                "group"
+              ]
+            ]
+          ],
+          [
+            "div",
+            [
+              [
+                "class",
+                "it"
+              ],
+              [
+                "data-key",
+                "step:1"
+              ]
+            ]
+          ],
+          [
+            "span",
+            [
+              [
+                "aria-checked",
+                "true"
+              ],
+              [
+                "aria-label",
+                "Tick step:1"
+              ],
+              [
+                "class",
+                "box"
+              ],
+              [
+                "data-ck",
+                "step:1"
+              ],
+              [
+                "role",
+                "checkbox"
+              ],
+              [
+                "tabindex",
+                "0"
+              ]
+            ]
+          ],
+          [
+            "div",
+            [
+              [
+                "class",
+                "it"
+              ],
+              [
+                "data-key",
+                "step:2"
+              ]
+            ]
+          ],
+          [
+            "span",
+            [
+              [
+                "aria-checked",
+                "false"
+              ],
+              [
+                "aria-label",
+                "Tick step:2"
+              ],
+              [
+                "class",
+                "box"
+              ],
+              [
+                "data-ck",
+                "step:2"
+              ],
+              [
+                "role",
+                "checkbox"
+              ],
+              [
+                "tabindex",
+                "0"
+              ]
+            ]
+          ],
+          [
+            "span",
+            [
+              [
+                "aria-checked",
+                "true"
+              ],
+              [
+                "aria-label",
+                "Only live threats"
+              ],
+              [
+                "class",
+                "sw"
+              ],
+              [
+                "role",
+                "switch"
+              ],
+              [
+                "tabindex",
+                "0"
+              ]
+            ]
+          ],
+          [
+            "span",
+            [
+              [
+                "aria-pressed",
+                "true"
+              ],
+              [
+                "role",
+                "button"
+              ],
+              [
+                "tabindex",
+                "0"
+              ]
+            ]
+          ],
+          [
+            "span",
+            [
+              [
+                "aria-controls",
+                "more-steps"
+              ],
+              [
+                "aria-expanded",
+                "false"
+              ],
+              [
+                "role",
+                "button"
+              ],
+              [
+                "tabindex",
+                "0"
+              ]
+            ]
+          ],
+          [
+            "div",
+            [
+              [
+                "hidden",
+                ""
+              ],
+              [
+                "id",
+                "more-steps"
+              ]
+            ]
+          ],
+          [
+            "div",
+            [
+              [
+                "aria-label",
+                "Audience"
+              ],
+              [
+                "role",
+                "tablist"
+              ]
+            ]
+          ],
+          [
+            "span",
+            [
+              [
+                "aria-controls",
+                "panel-dev"
+              ],
+              [
+                "aria-selected",
+                "true"
+              ],
+              [
+                "id",
+                "tab-dev"
+              ],
+              [
+                "role",
+                "tab"
+              ],
+              [
+                "tabindex",
+                "0"
+              ]
+            ]
+          ],
+          [
+            "span",
+            [
+              [
+                "aria-selected",
+                "false"
+              ],
+              [
+                "id",
+                "tab-ops"
+              ],
+              [
+                "role",
+                "tab"
+              ],
+              [
+                "tabindex",
+                "-1"
+              ]
+            ]
+          ],
+          [
+            "div",
+            [
+              [
+                "aria-labelledby",
+                "tab-dev"
+              ],
+              [
+                "id",
+                "panel-dev"
+              ],
+              [
+                "role",
+                "tabpanel"
+              ]
+            ]
+          ],
+          [
+            "div",
+            [
+              [
+                "aria-label",
+                "Urgency"
+              ],
+              [
+                "role",
+                "radiogroup"
+              ]
+            ]
+          ],
+          [
+            "span",
+            [
+              [
+                "aria-checked",
+                "true"
+              ],
+              [
+                "role",
+                "radio"
+              ],
+              [
+                "tabindex",
+                "0"
+              ]
+            ]
+          ],
+          [
+            "span",
+            [
+              [
+                "aria-checked",
+                "false"
+              ],
+              [
+                "role",
+                "radio"
+              ],
+              [
+                "tabindex",
+                "-1"
+              ]
+            ]
+          ],
+          [
+            "span",
+            [
+              [
+                "aria-label",
+                "Done"
+              ],
+              [
+                "aria-valuemax",
+                "100"
+              ],
+              [
+                "aria-valuemin",
+                "0"
+              ],
+              [
+                "aria-valuenow",
+                "40"
+              ],
+              [
+                "aria-valuetext",
+                "40 percent"
+              ],
+              [
+                "role",
+                "slider"
+              ],
+              [
+                "tabindex",
+                "0"
+              ]
+            ]
+          ],
+          [
+            "p",
+            [
+              [
+                "id",
+                "controls-done"
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    "a press on the view's checkbox ticks it: the view draws aria-checked again and the page keeps it": {
+      "ok": true,
+      "detail": [
+        "true",
+        "true"
+      ]
+    },
+    "the same view run headless says it runs with no problem, and draws element for element and attribute for attribute what the page drew": {
+      "ok": true,
+      "detail": {
+        "problems": [],
+        "headless": 18,
+        "page": 18
       }
     },
     "what was not drawn was written down as refused": {
@@ -481,6 +881,85 @@
         "stuck": []
       }
     },
+    "a view's link to an address it was handed — the car's own https: page and its dealer's mailto: — is drawn, to open in a new tab, with no opener and no referrer, and an arrow after it": {
+      "ok": true,
+      "detail": {
+        "site": {
+          "href": "https://cars.example/golf",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrer": "no-referrer",
+          "after": "\" ↗\" / \" (opens in a new tab)\""
+        },
+        "mail": {
+          "href": "mailto:sales@cars.example",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrer": "no-referrer",
+          "after": "\" ↗\" / \" (opens in a new tab)\""
+        },
+        "leak": {
+          "href": null,
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrer": "no-referrer",
+          "after": "none"
+        },
+        "script": {
+          "href": null,
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrer": "no-referrer",
+          "after": "none"
+        }
+      }
+    },
+    "a view's link to an address it made — the car's page with what the view read added, and javascript: — is drawn with no href, and written down as refused": {
+      "ok": true,
+      "detail": {
+        "linked": {
+          "site": {
+            "href": "https://cars.example/golf",
+            "target": "_blank",
+            "rel": "noopener noreferrer",
+            "referrer": "no-referrer",
+            "after": "\" ↗\" / \" (opens in a new tab)\""
+          },
+          "mail": {
+            "href": "mailto:sales@cars.example",
+            "target": "_blank",
+            "rel": "noopener noreferrer",
+            "referrer": "no-referrer",
+            "after": "\" ↗\" / \" (opens in a new tab)\""
+          },
+          "leak": {
+            "href": null,
+            "target": "_blank",
+            "rel": "noopener noreferrer",
+            "referrer": "no-referrer",
+            "after": "none"
+          },
+          "script": {
+            "href": null,
+            "target": "_blank",
+            "rel": "noopener noreferrer",
+            "referrer": "no-referrer",
+            "after": "none"
+          }
+        },
+        "refused": [
+          "https://cars.example/golf?read=Golf",
+          "javascript:alert(1)"
+        ]
+      }
+    },
+    "the same view run headless refuses the same two links and says each — no address it was handed, a scheme no link takes — and nothing else": {
+      "ok": true,
+      "detail": [
+        "Not drawn: The link \"https://cars.example/golf?read=Golf\" was not drawn: it is no address this view was handed. A view links out only to an address a record it was shown holds (a url field), as the record holds it; a record or a place of this app is <a data-record> or <a data-place>.",
+        "Not drawn: The link \"javascript:alert(1)\" was not drawn: a view links only to an https:, mailto: or tel: address."
+      ]
+    },
     "no view failed": {
       "ok": true,
       "detail": []
@@ -496,13 +975,15 @@
     "connections": 0
   },
   "requests": [
-    "http://127.0.0.1:5892/",
-    "http://localhost:5893/proxy/claude.html",
-    "blob:null/dd594128-a90e-4e74-b628-47e117d06ed1",
-    "blob:null/f8719b49-4d10-4ef4-9001-ac53f12a71a2",
-    "blob:null/a0f90427-ab67-466b-8d49-282693408412",
-    "blob:null/7852ae7e-6cbd-4a1e-9609-4e70e5efb303",
-    "blob:null/f2ac5f45-c037-47fb-9096-c81374c34fba"
+    "http://127.0.0.1:5692/",
+    "http://localhost:5693/proxy/claude.html",
+    "blob:null/8df5befe-2747-42cf-806f-77e61be2b2e2",
+    "blob:null/cd65ab32-07e9-4a6b-87bf-2beff9ea8b56",
+    "blob:null/4d208d07-2a91-47f5-8105-0fdd5e24f194",
+    "blob:null/fd6ded89-dd5a-4db4-ac9f-9e951f95f98e",
+    "blob:null/a73b8a35-ea4a-4d17-b4d7-eef6acef91d9",
+    "blob:null/52bf499b-e579-4b6f-ac6f-c17978b6b460",
+    "blob:null/7fc17e2d-8f8d-49ba-9476-8d042abaaadc"
   ],
   "passed": true
 }

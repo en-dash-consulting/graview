@@ -63,6 +63,8 @@ export interface HeadlessTranscript {
   readonly messages: number;
   /** Where it listens for a wheel, a drag or a pinch, as it last said it (0.1.42). */
   readonly gestures?: readonly { readonly event: string; readonly selector: string }[];
+  /** The ids of what it drew that a `graview.on("click", selector)` of its matches, once it had drawn and before any press. */
+  readonly clicks?: readonly string[];
   /**
    * The press the run was asked to make (0.1.45): its selector, the id of
    * the element it matched (none when it matched nothing), and how many

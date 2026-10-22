@@ -134,6 +134,8 @@ export interface ViewRuntime {
   hear(message: HostMessage): void;
   /** The id of the first element drawn that a selector matches, as `graview.on` matches it: what a headless run presses (0.1.45). */
   find(selector: string): string | undefined;
+  /** The ids of the elements drawn that a selector the view hears `type` on matches: what an audit holds to the keyboard (Roadmap f-view-a11y-audit). */
+  listened(type: string): string[];
 }
 
 const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -442,5 +444,21 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     }
   };
 
-  return { view, hear, find };
+  const listened = (type: string): string[] => {
+    const ids = new Set<string>();
+    for (const one of delegated) {
+      if (one.type !== type) continue;
+      try {
+        for (const element of Array.from(root.querySelectorAll(one.selector))) {
+          const id = remoteId(element);
+          if (id) ids.add(id);
+        }
+      } catch {
+        /* A selector the polyfill cannot read hears nothing. */
+      }
+    }
+    return [...ids];
+  };
+
+  return { view, hear, find, listened };
 }

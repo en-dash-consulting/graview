@@ -161,10 +161,13 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
       if (line) return line.focus({ preventScroll: true });
       /*
        * The line comes with the place's picture, which may be fetched the
-       * first time: meanwhile the keys wait on the place itself, and go on
-       * to its line when it comes.
+       * first time: meanwhile the keys wait on the place itself, from the
+       * first frame it stands, and go on to its line when it comes. Left on
+       * nothing while they waited, the root gave them back to the box Enter
+       * was pressed in, and on a slow machine the next key a person typed —
+       * the place's acts key — went into the words.
        */
-      if (place && place.tabIndex >= 0 && at !== place && frames > 30) place.focus({ preventScroll: true });
+      if (place && place.tabIndex >= 0 && at !== place) place.focus({ preventScroll: true });
       if (++frames < 240) requestAnimationFrame(look);
     };
     requestAnimationFrame(look);

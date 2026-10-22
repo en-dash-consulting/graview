@@ -1,0 +1,236 @@
+{
+  "at": "2026-10-22T15:24:30.301Z",
+  "transport": "taps",
+  "engine": "webkit",
+  "claims": {
+    "a card the view bound to a record with data-record is a link the host made: a link to assistive technology, reached by the keyboard, drawn with a pointer and no double-tap zoom": {
+      "ok": true,
+      "detail": {
+        "link": true,
+        "role": "link",
+        "tabindex": "0",
+        "cursor": "pointer",
+        "touchAction": "manipulation"
+      }
+    },
+    "on a desk, a click on a threat card's heading opens the threat's page": {
+      "ok": true,
+      "detail": "/threats/threat%3Aphishing"
+    },
+    "on a desk, Enter on a threat card opens the threat's page": {
+      "ok": true,
+      "detail": "/threats/threat%3Aphishing"
+    },
+    "a <span role=\"button\" data-act> is a press the host made: a button to assistive technology, reached by the keyboard, drawn with a pointer and no double-tap zoom": {
+      "ok": true,
+      "detail": {
+        "role": "button",
+        "tabindex": "0",
+        "marked": true,
+        "cursor": "pointer",
+        "touchAction": "manipulation"
+      }
+    },
+    "on a desk, Space on a card's <span role=\"button\" data-act=\"acknowledge\"> acknowledges the threat, the view hears that it did, and the card does not open": {
+      "ok": true,
+      "detail": {
+        "status": "acknowledged",
+        "said": "Done",
+        "path": "/",
+        "scrolled": 0
+      }
+    },
+    "on a desk, Enter on a fieldset's <span role=\"button\" data-act=\"set-note\"> saves the note typed beside it": {
+      "ok": true,
+      "detail": {
+        "note": "Patch window is Saturday"
+      }
+    },
+    "the home view did not fail, and the host said nothing was wrong with it": {
+      "ok": true,
+      "detail": {
+        "failures": [],
+        "problems": []
+      }
+    },
+    "on a desk, Tab (Option-Tab in Safari, which passes over any link with an address without it) reaches every link and press the view drew: each card, link and row bound to a record (a row by its first cell), each data-act, each control it hears itself, each button and field": {
+      "ok": true,
+      "detail": {
+        "stops": 15,
+        "missed": []
+      }
+    },
+    "on a desk, Space on a <div role=\"button\" aria-pressed> the view hears with graview.on(\"click\") presses it, as on a button, and the page does not scroll": {
+      "ok": true,
+      "detail": {
+        "pressed": "true",
+        "tabindex": "0",
+        "links": 1,
+        "keys": [
+          {
+            "key": "Tab",
+            "prevented": false
+          },
+          {
+            "key": " ",
+            "prevented": true
+          }
+        ],
+        "focused": true,
+        "path": "/",
+        "before": 0,
+        "after": 0
+      }
+    },
+    "the keyboard stays on the control the view drew again, as it drew the list again under it": {
+      "ok": true,
+      "detail": {
+        "pressed": "true",
+        "tabindex": "0",
+        "links": 1,
+        "keys": [
+          {
+            "key": "Tab",
+            "prevented": false
+          },
+          {
+            "key": " ",
+            "prevented": true
+          }
+        ],
+        "focused": true,
+        "path": "/"
+      }
+    },
+    "whatever has the keyboard shows a whole ring at least 2px wide, set off from it, at 3:1 or more against the ground behind it, light and dark": {
+      "ok": true,
+      "detail": {
+        "light": {
+          "visible": true,
+          "style": "solid",
+          "width": 2,
+          "offset": 2,
+          "ring": [
+            0,
+            23,
+            105,
+            255
+          ],
+          "ground": [
+            247,
+            247,
+            242,
+            255
+          ],
+          "contrast": 14.73
+        },
+        "dark": {
+          "visible": true,
+          "style": "solid",
+          "width": 2,
+          "offset": 2,
+          "ring": [
+            154,
+            171,
+            255,
+            255
+          ],
+          "ground": [
+            10,
+            15,
+            31,
+            255
+          ],
+          "contrast": 8.76
+        }
+      }
+    },
+    "an <a data-record> carries the address the face goes to as its href, opens in this tab, needs no role or tab stop patched on, and is drawn in the words' own color, not underlined": {
+      "ok": true,
+      "detail": {
+        "href": "/threats/threat%3Aphishing",
+        "role": null,
+        "tabindex": null,
+        "target": null,
+        "icon": "true",
+        "color": "rgb(24, 33, 58)",
+        "ink": "rgb(24, 33, 58)",
+        "underline": "none"
+      }
+    },
+    "an icon the view drew with no role, label or title is hidden from assistive technology": {
+      "ok": true,
+      "detail": {
+        "href": "/threats/threat%3Aphishing",
+        "role": null,
+        "tabindex": null,
+        "target": null,
+        "icon": "true",
+        "color": "rgb(24, 33, 58)",
+        "ink": "rgb(24, 33, 58)",
+        "underline": "none"
+      }
+    },
+    "a Cmd- or Ctrl-click on it is the browser's: a new tab at its address, and the app stays where it was": {
+      "ok": true,
+      "detail": {
+        "stayed": "/",
+        "opened": "http://127.0.0.1:5692/threats/threat%3Aphishing",
+        "href": "/threats/threat%3Aphishing"
+      }
+    },
+    "a plain click on it opens the threat's page in the app, at the address it carries": {
+      "ok": true,
+      "detail": {
+        "followed": "/threats/threat%3Aphishing",
+        "href": "/threats/threat%3Aphishing"
+      }
+    },
+    "a table's row bound to a record keeps its role, its first cell takes the keyboard, and Enter there opens the threat's page": {
+      "ok": true,
+      "detail": {
+        "role": null,
+        "tabindex": null,
+        "cell": "0",
+        "path": "/threats/threat%3Aphishing"
+      }
+    },
+    "on a phone, a tap on a threat card's heading opens the threat's page": {
+      "ok": true,
+      "detail": {
+        "coarse": true,
+        "path": "/threats/threat%3Aphishing"
+      }
+    },
+    "on a phone, a tap on a badge inside the card opens the threat's page too: the press is the card's, from whatever inside it the finger lands on": {
+      "ok": true,
+      "detail": "/threats/threat%3Aphishing"
+    },
+    "on a phone, a tap on the view's own toggle inside the card toggles it and opens nothing": {
+      "ok": true,
+      "detail": {
+        "summary": "Forty mailboxes got the fake invoice this morning.",
+        "path": "/"
+      }
+    },
+    "on a phone, a tap on a card's <span role=\"button\" data-act=\"acknowledge\"> acknowledges the threat and opens nothing": {
+      "ok": true,
+      "detail": {
+        "status": "acknowledged",
+        "path": "/"
+      }
+    },
+    "on a phone, a tap on a fieldset's <span role=\"button\" data-act=\"set-note\"> saves the note typed beside it": {
+      "ok": true,
+      "detail": {
+        "note": "Forwarded to the mail team"
+      }
+    },
+    "the host page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

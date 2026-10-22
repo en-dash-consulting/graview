@@ -57,6 +57,10 @@
       "types": "./dist/worker/view.d.ts",
       "default": "./dist/worker/view.js"
     },
+    "./audit": {
+      "types": "./dist/audit/index.d.ts",
+      "default": "./dist/audit/index.js"
+    },
     "./build": {
       "types": "./dist/build.d.ts",
       "default": "./dist/build.js"

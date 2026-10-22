@@ -646,9 +646,19 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         * header — scrolling inside itself when the picture is bigger, never
         * the document. A one-row grid is what stretches the lens to it.
         */}
+      {/*
+        * A FRAME THAT SCROLLS IS A BOX THE KEYBOARD REACHES (Roadmap
+        * f-view-a11y-audit): the picture scrolls inside it, so it takes Tab
+        * and is named for the place — what a person on a keyboard scrolls
+        * with the arrows and a screen reader says as they enter. A group,
+        * not a region: a view drawn in it is the region of that name
+        * already, and two landmarks of one name say nothing apart. A place
+        * that flows with the page scrolls with the page.
+        */}
       <div
         data-testid="place-lens"
         data-flows={flows ? "" : undefined}
+        {...(flows ? {} : { role: "group", "aria-label": place.title, tabIndex: 0 })}
         style={
           flows
             ? { display: "grid", gridTemplateColumns: "minmax(0, 1fr)", maxWidth: "100%" }

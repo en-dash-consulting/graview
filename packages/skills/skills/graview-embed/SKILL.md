@@ -71,6 +71,12 @@ the project's `pnpm typecheck` covers the embed from day one.
    as a heading: `heading: 1` when the page is the app (and `height:
    "viewport"`, re-measured as a phone turns), the default `2` inside an
    article, `false` when your heading already says it.
+10. **Say your address for a page, or none.** Inside your page the app
+    keeps its pages in memory, so `/tasks/t1` is no address of yours, and
+    a view's link, a bar's place and the Scene's Open carry no `href` — a
+    link by its role and the keyboard. Give `hrefOf: (path) =>
+    "/notes?open=" + encodeURIComponent(path)` and they carry yours, so
+    Cmd-click opens your page there; open it on that `path`.
 
 A host whose page IS the app — a service that serves it, a chat's widget,
 the address bar, its own menu, knowing when a place has drawn, a view

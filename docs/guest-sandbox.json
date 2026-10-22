@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T01:57:35.286Z",
+  "at": "2026-10-22T15:20:25.597Z",
   "transport": "frame",
   "engine": "chromium",
   "claims": {
@@ -19,7 +19,9 @@
           {
             "id": "car:golf",
             "kind": "car",
-            "label": "Golf"
+            "label": "Golf",
+            "site": "https://cars.example/golf",
+            "dealer": "mailto:sales@cars.example"
           },
           {
             "id": "shopper:bethan",
@@ -253,7 +255,7 @@
     "the guest cannot navigate the top window": {
       "ok": true,
       "detail": {
-        "url": "http://127.0.0.1:5892/",
+        "url": "http://127.0.0.1:5692/",
         "tried": {
           "ok": false,
           "error": "SecurityError"

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T01:58:21.312Z",
+  "at": "2026-10-22T15:21:12.604Z",
   "transport": "place",
   "engine": "chromium",
   "claims": {
@@ -212,14 +212,45 @@
     "graview.navigate to no record and no place stays, and tells the host's problems why, naming the places": {
       "ok": true,
       "detail": [
-        "\"projections\" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: \"the-packages\", \"what-we-heard\"."
+        "\"projections\" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: \"the-packages\" (The packages), \"what-we-heard\" (What we heard). Its lists: \"parties\", \"offers\", \"packages\"."
       ]
     },
     "and says the same in the view's console": {
       "ok": true,
       "detail": [
-        "\"projections\" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: \"the-packages\", \"what-we-heard\"."
+        "\"projections\" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: \"the-packages\" (The packages), \"what-we-heard\" (What we heard). Its lists: \"parties\", \"offers\", \"packages\"."
       ]
+    },
+    "an https: image on an origin the host lists for the view's images is drawn, asked for with no referrer": {
+      "ok": true,
+      "detail": {
+        "src": "https://images.example/abbey-road.jpg",
+        "referrer": "no-referrer"
+      }
+    },
+    "an https: image on any other origin is not drawn, and the host's problems say which address and why": {
+      "ok": true,
+      "detail": {
+        "src": null,
+        "said": [
+          "The image \"https://collector.example/abbey-road.jpg\" was not drawn. Its origin is not one the host lists for images (https://images.example). A view here shows a data: image, a picture on a record (pictures in its manifest) or an https: image from https://images.example."
+        ]
+      }
+    },
+    "a view's stylesheet keeps position: sticky on its own heading": {
+      "ok": true,
+      "detail": "sticky"
+    },
+    "a view's stylesheet keeps all: unset, which takes the browser's chrome off a button of its own": {
+      "ok": true,
+      "detail": {
+        "background": "rgba(0, 0, 0, 0)",
+        "border": "none",
+        "padding": "0px"
+      }
+    },
+    "a view's link to a place by its title, data-place=\"The packages\", goes to that place": {
+      "ok": true
     },
     "graview.navigate(\"the-packages\"), a bare string that is no record but a place's slug, goes to that place": {
       "ok": true

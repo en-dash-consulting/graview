@@ -137,6 +137,14 @@ export function DraftFrame({ page = false, go, onPick, onDiscard }: DraftFramePr
       <div
         data-testid="draft-lens"
         data-graview-draft={draft.lens.name}
+        /*
+          * It scrolls the draft inside it: a box the keyboard reaches and
+          * scrolls, named for the view (Roadmap f-view-a11y-audit). A group,
+          * not a region: the view inside is the region of that name already.
+          */
+        role="group"
+        aria-label={draft.title}
+        tabIndex={0}
         style={page ? { height: "min(72vh, 760px)", display: "grid", gridTemplateRows: "minmax(0, 1fr)", overflow: "auto", scrollbarGutter: "stable", border: "1px solid var(--graview-edge)", borderRadius: 12, background: "var(--graview-panel)" } : { minHeight: 0, overflow: "auto", scrollbarGutter: "stable", display: "grid", gridTemplateRows: "minmax(0, 1fr)" }}
         onClick={(event) => {
           const id = (event.target as HTMLElement | null)?.closest("[data-graview-pick]")?.getAttribute("data-graview-pick");

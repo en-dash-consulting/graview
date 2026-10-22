@@ -31,6 +31,7 @@ import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
 import { judgeDestination, listsOf } from "../host/links.js";
 import { guestPlacesOf, placeNamed } from "../host/links-words.js";
 import type { GuestViewInput } from "../host/session.js";
+import type { ViewAudit } from "../audit/rules.js";
 import { checkViewSource } from "../host/view-source.js";
 import type { WorkerViewLimits } from "../host/view.js";
 import type { GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
@@ -148,6 +149,13 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
    * in it, or what the host fills from the record.
    */
   readonly press?: string | { readonly selector: string; readonly typed?: Readonly<Record<string, string | number | boolean>> };
+  /**
+   * AUDIT IT (Roadmap f-view-a11y-audit): once it has drawn, hold what it
+   * drew to the accessibility rules a drawing alone can be held to
+   * (`@graview/guest/audit`), as the host would draw it on a page, with what
+   * it hears a click on — and say which rules need a browser and did not run.
+   */
+  readonly audit?: boolean;
 }
 
 /** Why a view will not do, and a sentence saying it. */
@@ -170,6 +178,8 @@ export interface HeadlessDescribed {
   readonly transcript: HeadlessTranscript;
   /** What the press `options.press` asked for would do, judged as the live host would: the description is of what it drew before it. */
   readonly pressed?: HeadlessPress;
+  /** What `options.audit` found in what it drew, before any press. */
+  readonly audit?: ViewAudit;
 }
 
 export type HeadlessResult = HeadlessDescribed | HeadlessFailure;
@@ -196,7 +206,7 @@ const REASONS: readonly HeadlessFailureReason[] = ["manifest", "source", "refuse
 /** A transcript as an isolate said it, held to its shape: anything else is no transcript. */
 function transcriptOf(value: unknown): HeadlessTranscript | undefined {
   if (!isRecord(value)) return undefined;
-  const { renders, sheets, asked, went, ms, logs, messages, gestures, pressed } = value;
+  const { renders, sheets, asked, went, ms, logs, messages, gestures, pressed, clicks } = value;
   if (!Array.isArray(renders) || !renders.every(Array.isArray) || !Array.isArray(asked) || !Array.isArray(went) || !Array.isArray(logs)) return undefined;
   if (typeof ms !== "number" || typeof messages !== "number" || (sheets !== undefined && !(Array.isArray(sheets) && sheets.every((one) => typeof one === "string")))) return undefined;
   return {
@@ -213,6 +223,7 @@ function transcriptOf(value: unknown): HeadlessTranscript | undefined {
     ms,
     logs: logs.map(String).slice(0, 50),
     messages,
+    ...(Array.isArray(clicks) ? { clicks: clicks.filter((one): one is string => typeof one === "string").slice(0, 2_000) } : {}),
     ...(Array.isArray(gestures) ? { gestures: gestures.filter(isRecord).slice(0, 32).map((one) => ({ event: String(one["event"]), selector: String(one["selector"]) })) } : {}),
     ...(isRecord(pressed) && typeof pressed["selector"] === "string" && [pressed["asked"], pressed["went"], pressed["renders"]].every((n) => typeof n === "number")
       ? { pressed: { selector: pressed["selector"], ...(typeof pressed["target"] === "string" ? { target: pressed["target"] } : {}), asked: pressed["asked"] as number, went: pressed["went"] as number, renders: pressed["renders"] as number } }
@@ -368,5 +379,11 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     problems,
   };
   const { placeText } = await import("@graview/core/describe");
-  return { ok: true, description: { ...description, text: placeText(description) }, props, transcript, ...(pressed ? { pressed } : {}) };
+  let audit: ViewAudit | undefined;
+  if (options.audit === true) {
+    const { auditView } = await import("../audit/index.js");
+    const clicked = (transcript.clicks ?? []).flatMap((id) => judged.drawn.elementOf(id) ?? []);
+    audit = auditView(judged.drawn.root, { host: "pending", clicked });
+  }
+  return { ok: true, description: { ...description, text: placeText(description) }, props, transcript, ...(pressed ? { pressed } : {}), ...(audit ? { audit } : {}) };
 }

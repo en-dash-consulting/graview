@@ -27,7 +27,9 @@ the host follows. On the routed pages the host gives each the address it
 goes to as its `href` (`/a/<app>/offers/offer%3A7`), so it shows on hover,
 copies, and opens in a new tab on Cmd- or Ctrl-click or a middle click; a
 plain click, a tap and Enter stay in the app. On the scene, which has no
-addresses, it is given the keyboard and a link's role instead. A
+addresses, it is given the keyboard and a link's role instead — and so in
+an embed whose host keeps its own addresses (memory routing), unless the
+host says its address for a page with the embed's `hrefOf`. A
 `<button data-record>` goes there too. `<a href>` goes out only to an address a record was
 handed — its own url, `mailto:`, `tel:` (below). A destination
 is a record's id, else a place by its slug or its title
@@ -117,6 +119,13 @@ as a link target can be hidden (set-lens-hidden, `graview-pages`).
    that names nothing the seat was shown and no place, and every filter
    that goes nowhere. `--press ".card h3"` presses there and says where the
    host would go, or that the press is a button's of its own.
+   `--audit` holds what it drew to the keyboard and screen-reader rules,
+   as the host draws it: a `<div>` heard only by `graview.on("click")`, a
+   control or link with no name, a toggle with no state, a button inside a
+   card that opens, an `<img>` with no alt. Each comes with its WCAG
+   criterion and a one-line fix, and the check fails on what the view must
+   fix. Contrast and the ring need a browser: there, `auditView(shadowRoot)`
+   from `@graview/guest/audit` measures them too.
 3. Open it on a phone, 390 pixels wide with touch: tap a card's heading and
    a badge inside it, and see the record's page; tap a toggle inside it,
    and see it toggle and stay. On a desk, Tab through the view: every link

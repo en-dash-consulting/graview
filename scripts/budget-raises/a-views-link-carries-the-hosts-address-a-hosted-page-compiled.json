@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 44,
+  "gzipped": 60,
+  "changeset": "a-views-link-carries-the-hosts-address.md",
+  "note": "Raised when an embed came to take the host's own address for a page of the app (`hrefOf`), as on the page handed a compiled app: the embed handing it to the routed face, the bar and the Scene's Open, and no address under memory routing where the host gives none. 44 / 60 more than before it (546_292 / 189_717): measured at 546_336 / 189_777."
+}
