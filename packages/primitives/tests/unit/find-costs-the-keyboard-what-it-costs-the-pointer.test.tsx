@@ -2,8 +2,8 @@
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
 import { EMPTY_VIEW, type ViewState } from "@graview/layout";
-import { GraviewProvider, createViews } from "@graview/react";
-import { act } from "react";
+import { GraviewProvider, createViews, useTheKeyboardLandsSomewhere } from "@graview/react";
+import { act, useRef, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -28,6 +28,13 @@ const accept = defineMutation("accept", {
   input: z.object({ id: nodeRef(["talk"]) }),
   apply: (ctx, args) => ctx.patchNode(args.id, { accepted: true }),
 });
+
+/** The Shell's root, which gives the keyboard back to what it stood on when an act leaves it nowhere. */
+function Root({ children }: { children: ReactNode }) {
+  const root = useRef<HTMLDivElement | null>(null);
+  useTheKeyboardLandsSomewhere(root);
+  return <div ref={root}>{children}</div>;
+}
 
 async function strip(count: number, q: string) {
   const store = new Store({
@@ -56,7 +63,9 @@ async function strip(count: number, q: string) {
             void draw();
           }}
         >
-          <FindBox />
+          <Root>
+            <FindBox />
+          </Root>
         </GraviewProvider>,
       );
     });
@@ -133,6 +142,35 @@ describe("Find from the keyboard, at the pointer's cost", () => {
     Object.defineProperty(sort, "checkVisibility", { value: () => false });
     document.body.append(place);
     await key("Enter");
+    await act(async () => {
+      await new Promise((done) => setTimeout(done, 120));
+    });
+    expect(document.activeElement?.getAttribute("data-testid")).toBe("arrange-add");
+    place.remove();
+    await done();
+  });
+
+  /*
+   * A PLACE WHOSE LINE IS STILL COMING TAKES THE KEYS AT ONCE. On a slow
+   * machine the arranging line comes with the place's picture, a second or
+   * more after Enter; the keys were let go on nothing for thirty frames, and
+   * the root's rule gave them back to what Enter was pressed on — the Find
+   * box — so the next key a person typed went into the words. On the
+   * nightly's runner the discography's refused act cost the keyboard 24
+   * presses for 4: its acts key was typed after "songs".
+   */
+  it("hands the keys to the place while its line is still coming, never back to the box", async () => {
+    const { key, done } = await strip(40, "talks");
+    const place = document.createElement("div");
+    place.setAttribute("data-graview-view", "aggregate:talk");
+    place.tabIndex = 0;
+    document.body.append(place);
+    await key("Enter");
+    await act(async () => {
+      await new Promise((done) => setTimeout(done, 400));
+    });
+    expect(document.activeElement).toBe(place);
+    place.innerHTML = '<div role="group" aria-label="Arrange"><button type="button" data-testid="arrange-add">Filter</button></div>';
     await act(async () => {
       await new Promise((done) => setTimeout(done, 120));
     });
