@@ -40,7 +40,7 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
-import { brandFindings, emojiIconSentence } from "./brand-check.js";
+import { brandFindings, emojiIconSentence, subtitleSentence } from "./brand-check.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
 import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
@@ -216,6 +216,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         shape: z.union([z.object({ radius: z.union([z.number().min(0).max(32), z.null()]).optional(), density: z.union([z.number().min(0.75).max(1.5), z.null()]).optional() }).strict(), z.null()]).optional(),
         accents: z.union([z.record(z.string(), z.union([z.number().min(0).max(360), z.null()])), z.null()]).optional(),
         scheme: z.union([z.enum(["light", "dark", "auto"]), z.null()]).optional(),
+        // Whether the home draws the description as the line under the name (Roadmap f-home-subtitle-separate): false keeps it off, true or null draws it again.
+        subtitle: z.union([z.boolean(), z.null()]).optional(),
       })
       .strict(),
     "set-name": z.object({ op: z.literal("set-name"), name: z.string().min(1).max(80) }).strict(),
@@ -706,6 +708,11 @@ class Editor {
       if (e.scheme === null || e.scheme === "auto") delete brand["scheme"];
       else brand["scheme"] = e.scheme;
       this.said.push(e.scheme === "light" || e.scheme === "dark" ? `The app opens ${e.scheme} when the reader has not chosen.` : "The app follows the reader's system for light and dark.");
+    }
+    if (e.subtitle !== undefined) {
+      if (e.subtitle === false) brand["subtitle"] = false;
+      else delete brand["subtitle"];
+      this.said.push(subtitleSentence(e.subtitle !== false));
     }
     if (Object.keys(brand).length === 0) delete this.doc.brand;
     else this.doc.brand = brand;

@@ -28,6 +28,10 @@ export const LOGO_FALLBACK_UNUSED = "the dark logo is drawn in the dark scheme, 
 export function emojiSentence(emoji: unknown, problem: string): string {
   return `${typeof emoji === "string" && emoji.trim() !== "" ? JSON.stringify(emoji) : "that"} cannot be the app's icon, because ${problem}`;
 }
+/** Whether the home draws the line under the app's name, said the same by an edit and by the preview of a change. */
+export function subtitleSentence(drawn: boolean): string {
+  return drawn ? "The home draws the description as the line under the app's name." : "The home draws no line under the app's name; the description stays the app's, in its listings.";
+}
 /** What setting an emoji icon does, said the same by an edit and by the preview of a change. */
 export function emojiIconSentence(emoji: string, hasLogo: boolean): string {
   return hasLogo ? `The app's page icon becomes ${emoji}.` : `The app's page icon and mark become ${emoji}.`;

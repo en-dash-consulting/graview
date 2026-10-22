@@ -106,6 +106,12 @@ export interface Brand {
   /** A line under the name (FR-125): a document's `description`. */
   readonly subtitle?: string;
   /**
+   * `false` where the home draws no line under the name (a document's
+   * `brand.subtitle: false`): the `subtitle` is still the app's — the
+   * name's hover, its listings — and is only not drawn on the home.
+   */
+  readonly subtitleDrawn?: false;
+  /**
    * THE SCHEME THE APP PREFERS (FR-124), when the reader has not chosen:
    * "auto" (the default) follows the system's. A host's own `data-theme`
    * stamp, or a scheme the host asks for, is a choice and wins.

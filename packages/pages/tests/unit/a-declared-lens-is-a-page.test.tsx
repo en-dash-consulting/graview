@@ -80,6 +80,18 @@ describe("a document's declared lenses, on the routed face", () => {
     }
   });
 
+  it("keeps a picture's frame for a calendar, a board and the columns, and lets a place of blocks flow with the page", async () => {
+    const framed: Record<string, { flows: boolean; height: string; overflow: string }> = {};
+    for (const place of declaredViews(app).places()) {
+      const { host, done } = await rendered(`/places/${place.as}`);
+      const lens = host.querySelector<HTMLElement>('[data-testid="place-lens"]')!;
+      framed[place.title] = { flows: lens.hasAttribute("data-flows"), height: lens.style.height, overflow: lens.style.overflow };
+      await done();
+    }
+    for (const title of ["The month", "The floor", "By day"]) expect(framed[title], title).toEqual({ flows: false, height: "min(72vh, 760px)", overflow: "auto" });
+    expect(framed["Who keeps the hall"]).toEqual({ flows: true, height: "", overflow: "" });
+  });
+
   it("opens on the place pages.first names, and the app's name on the bar still goes home", async () => {
     const { host, done } = await rendered("/");
     expect(host.querySelector("[data-graview-page-title]")?.textContent).toContain("The floor");

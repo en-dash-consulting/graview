@@ -319,6 +319,13 @@ function build() {
     ),
     accents: z.optional(z.record(z.string(), z.number().check(z.minimum(0), z.maximum(360)))),
     scheme: z.optional(z.enum(["light", "dark", "auto"])),
+    /*
+     * THE LINE UNDER THE NAME, KEPT OFF THE HOME (Roadmap
+     * f-home-subtitle-separate): `false` and the home draws no line from the
+     * `description` — a home view with its own hero says it already — while
+     * the description stays the app's, in listings and on the name's hover.
+     */
+    subtitle: z.optional(z.literal(false)),
   });
 
   const loose = z.record(z.string(), z.unknown());

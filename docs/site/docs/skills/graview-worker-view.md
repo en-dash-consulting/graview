@@ -21,7 +21,7 @@ Every view comes with a manifest the host enforces:
 ```
 
 - `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
-- `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
+- `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`). Its place flows with the page, as long as the view draws: no frame of its own scrolls inside the page, so a view sets no height to fill one.
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.

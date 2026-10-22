@@ -92,7 +92,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   const HomeView = context.views?.homeView?.() as ComponentType<ViewProps<S>> | undefined;
   const anything = (store.schema.kinds as readonly string[]).some((kind) => store.graph.nodesOfKind(kind as never).length > 0);
   if (HomeView && anything) {
-    const line = brand?.subtitle ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null;
+    const line = brand?.subtitle && brand.subtitleDrawn !== false ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null;
     // A home written as blocks says the app's line under its own headline (`HomeLine`); any other home view, over it.
     const placesItsLine = (HomeView as unknown as Record<symbol, unknown>)[Symbol.for("graview.home-blocks")] === true;
     return (
@@ -121,7 +121,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
     <PageMain context={context} style={wide}>
       <header style={{ display: "grid", gap: 12 }}>
         {/* The app is named once, on the bar (FR-131); the line under its name is said here, where it is about the app. */}
-        {brand?.subtitle ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null}
+        {brand?.subtitle && brand.subtitleDrawn !== false ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null}
         {/* THE NUMBERS ARE THE HEADLINE: what is here, said once, as big as the page says anything. */}
         <PageTitle context={context} data-testid="standing">{summary}</PageTitle>
         <p style={{ ...lede, display: "grid", gap: 4 }} data-testid="standing-card">
