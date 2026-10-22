@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 288,
+  "gzipped": 70,
+  "note": "Raised when a worker view came to be drawn edge to edge on a phone (`bleed: true`, Threat Watch on Graview Cloud): `checkManifest` judges the key, and `registerWorkerView` marks a home's view and a record's view that say it (`markBleeds`). Measured at 29_595 / 13_601 against 29_307 / 13_531 minified and gzipped."
+}

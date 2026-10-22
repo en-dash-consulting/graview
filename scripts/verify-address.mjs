@@ -53,7 +53,15 @@
  *   `pages.first` name as `view:to-do` is where the bare address opens,
  *   stands first among the Pages drop-down's lists, while a kind
  *   `pages.hide` names is out of the drop-down and still opens at its
- *   address (Roadmap q-custom-views-in-nav).
+ *   address (Roadmap q-custom-views-in-nav);
+ *   and views that say `bleed: true` — the home's, a record's — span the
+ *   phone's width less its safe areas, where the page's 20px gutter stood
+ *   either side of them, and are the column's width at a desk; a record
+ *   page with a page slot and a view that does not replace the page draws
+ *   the view, then the slot's blocks, then the facts, while one whose view
+ *   replaces the page draws the view alone (Roadmap
+ *   feature:views-on-phones-…-full-bleed,
+ *   feature:page-slot-blocks-on-a-kind-with-a-record-view-…).
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
@@ -85,6 +93,16 @@ const VIEWS_BASE = "/apps/a4";
 const TO_DO = { name: "to-do", title: "To do", attach: "task", cardinality: "many" };
 const TO_DO_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<ul class="to-do">\${props.nodes.map((task) => graview.html\`<li>\${task.label}</li>\`)}</ul>\`));`;
 const VIEWS_PAGES = { order: ["view:to-do", "task"], first: "view:to-do", hide: ["person"] };
+/** Where the tasks are served with views that bleed to a phone's edges, and page slots beside a record's view. */
+const FITTED_BASE = "/apps/a5";
+/** A page slot on each kind: the task's under a view that sits above the page, the person's under one that replaces it. */
+const FITTED_VIEWS = { task: { page: [{ headline: "Read the sources" }, { text: "Each source, in turn." }] }, person: { page: [{ headline: "Who they are" }] } };
+const HERO = { name: "hero", attach: "home", cardinality: "many", bleed: true };
+const HERO_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="hero">The things to do</div>\`));`;
+const BRIEF = { name: "brief", attach: "task", cardinality: "one", bleed: true };
+const BRIEF_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="brief">\${props.node ? props.node.label : ""}</p>\`));`;
+const CARD = { name: "card", attach: "person", cardinality: "one", replaces: "page" };
+const CARD_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="card">\${props.node ? props.node.label : ""}</p>\`));`;
 const SEED = {
   nodes: [
     { id: "t1", kind: "task", label: "Write the brief", status: "todo" },
@@ -129,7 +147,8 @@ async function buildHost() {
         };
         const cards = location.pathname.startsWith("${CARDS_BASE}");
         const kept = location.pathname.startsWith("${VIEWS_BASE}");
-        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : tasks) };
+        const fitted = location.pathname.startsWith("${FITTED_BASE}");
+        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : fitted ? { ...tasks, pages: { first: "home" }, views: ${JSON.stringify(FITTED_VIEWS)} } : tasks) };
         const article = location.pathname.startsWith("/article");
         window.__navigated = [];
         /*
@@ -193,9 +212,19 @@ async function buildHost() {
           seed: ${JSON.stringify(SEED)},
           principal: { kind: "human", id: "p1", roles: ["owner"] },
           // As Cloud's shell: the Graview on a desk, the pages on a phone; the kept view's app on the pages at both.
-          face: article || kept ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
+          face: article || kept || fitted ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
           // A view the host keeps, registered by its manifest's name as Cloud registers a chat's view.
           ...(kept ? { views: (schema, registry) => registerWorkerView(registry, { manifest: ${JSON.stringify(TO_DO)}, worker: { source: ${JSON.stringify(TO_DO_SOURCE)} } }) } : {}),
+          // Kept views that bleed to a phone's edges, and a record view beside its kind's page slot or in place of it.
+          ...(fitted
+            ? {
+                views: (schema, registry) =>
+                  [[${JSON.stringify(HERO)}, ${JSON.stringify(HERO_SOURCE)}], [${JSON.stringify(BRIEF)}, ${JSON.stringify(BRIEF_SOURCE)}], [${JSON.stringify(CARD)}, ${JSON.stringify(CARD_SOURCE)}]].reduce(
+                    (views, [manifest, source]) => registerWorkerView(views, { manifest, worker: { source } }),
+                    registry,
+                  ),
+              }
+            : {}),
           bar: true,
           label: "The tasks",
           heading: article ? 2 : 1,
@@ -203,7 +232,7 @@ async function buildHost() {
           fonts: false,
           studio: false,
           onNavigate: (path, how) => window.__navigated.push([path, how]),
-          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : "${BASE}/" }),
+          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : fitted ? "${FITTED_BASE}/" : "${BASE}/" }),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
         }`,
@@ -229,7 +258,7 @@ async function buildHost() {
       return;
     }
     // Every address under the base is the one page, as a host that owns the page answers it.
-    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
+    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
       response.writeHead(200, { "content-type": "text/html" });
       response.end(APP_PAGE);
       return;
@@ -551,6 +580,64 @@ try {
         one.hiddenKind = { opened: hiddenList, places: await places() };
       } catch (error) {
         one.keptError = String(error?.message ?? error);
+      }
+      /*
+       * A VIEW DRAWN EDGE TO EDGE ON A PHONE (bleed), and a record page's
+       * slot beside its view: the region each view draws in, against the
+       * viewport less its safe areas and the column the page lays out in;
+       * and where the slot's blocks stand between the view and the facts.
+       */
+      try {
+        const drawnIn = (name) => tab.waitForFunction((view) => Boolean(document.querySelector(`[data-worker-view="${view}"]`)?.shadowRoot?.querySelector("div, p")), name, { timeout: 20_000 });
+        const measure = (name) =>
+          tab.evaluate((view) => {
+            const region = document.querySelector(`[data-worker-view="${view}"]`);
+            const main = region?.closest("[data-graview-page-main]");
+            const box = region?.getBoundingClientRect();
+            const style = main ? getComputedStyle(main) : null;
+            const column = main && style ? main.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) : null;
+            /* The safe areas, as the page's own env() reads them. */
+            const probe = document.createElement("div");
+            probe.style.cssText = "position:fixed;left:env(safe-area-inset-left,0px);right:env(safe-area-inset-right,0px);top:0;height:0";
+            document.body.append(probe);
+            const safe = probe.getBoundingClientRect();
+            probe.remove();
+            return {
+              left: box ? Math.round(box.left) : null,
+              width: box ? Math.round(box.width) : null,
+              column: column === null ? null : Math.round(column),
+              safeLeft: Math.round(safe.left),
+              safeWidth: Math.round(safe.width),
+              viewport: window.innerWidth,
+              sideScroll: document.documentElement.scrollWidth > window.innerWidth + 1,
+            };
+          }, name);
+        await go(`${FITTED_BASE}/`);
+        await drawnIn("hero");
+        const home = await measure("hero");
+        await go(`${FITTED_BASE}/tasks/t1`);
+        await drawnIn("brief");
+        await tab.waitForSelector('[data-graview-face=pages] [data-testid="record-fields"]', { timeout: 20_000 });
+        const record = await measure("brief");
+        const order = await tab.evaluate(() => {
+          const top = (element) => (element ? Math.round(element.getBoundingClientRect().top) : null);
+          const bottom = (element) => (element ? Math.round(element.getBoundingClientRect().bottom) : null);
+          const view = document.querySelector('[data-worker-view="brief"]');
+          const slot = document.querySelector('[data-graview-face=pages] [data-graview-spec="page"][data-graview-kind="task"]');
+          const facts = document.querySelector('[data-graview-face=pages] [data-testid="record-fields"]');
+          return { view: [top(view), bottom(view)], slot: [top(slot), bottom(slot)], facts: [top(facts), bottom(facts)], slotSays: slot?.textContent?.trim() ?? null };
+        });
+        await go(`${FITTED_BASE}/people/p1`);
+        await drawnIn("card");
+        const replaced = await tab.evaluate(() => ({
+          drawn: document.querySelector('[data-worker-view="card"]')?.shadowRoot?.querySelector(".card")?.textContent ?? null,
+          slot: document.querySelector('[data-graview-face=pages] [data-graview-spec="page"]') !== null,
+          saysSlot: (document.querySelector("[data-graview-face=pages]")?.textContent ?? "").includes("Who they are"),
+          facts: document.querySelector('[data-graview-face=pages] [data-testid="record-fields"]') !== null,
+        }));
+        one.fitted = { home, record, order, replaced };
+      } catch (error) {
+        one.fittedError = String(error?.message ?? error);
       }
       await context.close();
 
@@ -928,6 +1015,23 @@ try {
   report.checks.aHiddenKindIsNotInTheDropDownAndStillOpensAtItsAddress = {
     seen: { list: keptSeen("keptView"), atItsAddress: keptSeen("hiddenKind") },
     ok: keptHold(({ keptView, hiddenKind }) => !keptView.places.all.includes("/people") && hiddenKind.opened.path === `${VIEWS_BASE}/people` && /^people$/i.test(hiddenKind.opened.heading ?? "") && hiddenKind.places.current === "People"),
+  };
+  /* Roadmap feature:views-on-phones-…-full-bleed: a view that says bleed spans a phone's width less its safe areas, and is the column's width at a desk. */
+  const fittedSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.fittedError ? { error: one.fittedError } : one.fitted]));
+  const fittedHold = (test) => pagesAt.length === engines.length * SIZES.length && pagesAt.every(([name, one]) => !one.fittedError && test(one.fitted, name));
+  const spans = (box, name) => (/×844$/.test(name) ? box.left === box.safeLeft && box.width === box.safeWidth : box.width === box.column) && !box.sideScroll;
+  report.checks.aViewThatBleedsSpansAPhoneLessItsSafeAreasAndTheColumnAtADesk = {
+    seen: fittedSeen,
+    ok: fittedHold((fitted, name) => spans(fitted.home, name) && spans(fitted.record, name)),
+  };
+  /* Roadmap feature:page-slot-blocks-on-a-kind-with-a-record-view-…: the view, then the slot's blocks, then the facts; a view that replaces the page draws alone. */
+  report.checks.aRecordPagesSlotIsDrawnUnderItsViewAndAboveTheFacts = {
+    seen: fittedSeen,
+    ok: fittedHold(({ order }) => /Read the sources/.test(order.slotSays ?? "") && /Each source/.test(order.slotSays ?? "") && order.slot[0] >= order.view[1] && order.facts[0] >= order.slot[1]),
+  };
+  report.checks.aViewThatReplacesThePageDrawsAloneAndItsSlotIsNot = {
+    seen: fittedSeen,
+    ok: fittedHold(({ replaced }) => replaced.drawn === "Ada" && !replaced.slot && !replaced.saysSlot && !replaced.facts),
   };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);

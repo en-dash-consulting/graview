@@ -8,7 +8,7 @@
  * page loads first. Only an agent's seat reaches this, and it loads when
  * the seat does.
  */
-export { describePlace, placeText } from "./document/describe-place.js";
+export { describePlace, placeText, shadowedPageSlots } from "./document/describe-place.js";
 /*
  * A status board's columns and the moves a seat's acts make between them
  * (FR-97): what the board shows one seat, here for the same reason — only
@@ -18,7 +18,7 @@ export { describePlace, placeText } from "./document/describe-place.js";
 export { columnActs, columnChoices, columnMoves, columnOf, columnReach, columnSteps, statusColumns } from "./columns.js";
 export type { ColumnChoice, ColumnMove, ColumnReach, StatusColumn } from "./columns.js";
 export type { DescribePlaceOptions } from "./document/describe-place.js";
-export type { DescribedFact, DescribedItem, DescribedMasthead, DescribedPart, DescribedProblem, DescribePlaceResult, PlaceDescription } from "./document/described.js";
+export type { DescribedFact, DescribedHostView, DescribedItem, DescribedMasthead, DescribedPart, DescribedProblem, DescribePlaceResult, PlaceDescription } from "./document/described.js";
 /*
  * A record's declared blocks — or the home's — resolved over what a seat
  * may see exactly as the faces and the describer resolve them: one call for

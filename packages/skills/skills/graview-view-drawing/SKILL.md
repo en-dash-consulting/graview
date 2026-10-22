@@ -26,7 +26,7 @@ twice, so say what changes per push in a class or a `style` attribute.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`,
 `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image` and `foreignObject`; any
-`srcset` or `on*` attribute; `href` but a link out (below); `src` on anything but `img`, and on
+`srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on
 `img` any address but the ones below. In CSS: `url()` except `url(#id)` on
 `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`;
 `image-set()`, `attr()` and other unlisted functions; `position: fixed`;
@@ -61,15 +61,14 @@ take `var()`; put paints in the stylesheet
 `name` and its `logo`. A brand change or the app's toggle pushes `theme`
 again.
 
-## Links out
+## Its box, and the gutter
 
-`<a href="${node.url}">` is drawn where the address is one a record the
-view was shown holds, as it holds it — an `https:` page, a `mailto:`, a
-`tel:` — or an `https:` address on an origin the host lists (`links: {
-origins }` on the view's definition and a headless run). The host opens it
-in a new tab, no opener, no referrer, marked ↗. An address you build,
-`javascript:`, `data:` or `http:` is refused: a link a view made could
-carry what it reads out.
+On Pages a view is drawn in the page's column, which keeps a 20px gutter
+either side on a phone. Nothing the view draws passes its box: a negative
+margin is clipped at its edge, not widened. Say `bleed: true` in the
+manifest and on a phone (680px or less) the box takes the gutter back,
+keeping the safe areas: a hero is the phone's width. At a desk it is the
+column's width either way.
 
 ## The images a view may show
 

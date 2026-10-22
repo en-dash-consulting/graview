@@ -37,6 +37,13 @@ fields, edges, label, roles — is `graview-node-kind`.
    or a listed record. The scaffold's `views()` draws them
    (`registerViewSpecs`); so does the embed, by itself.
 
+   A kind that also has a worker view of one record draws, on its record
+   page, the view, then the `page` blocks, then the facts they did not say.
+   A view whose manifest says `replaces: "page"` is the whole page: the
+   `page` blocks are never drawn, and `describePlace`, told the host's
+   views, says so as a problem (`shadowedPageSlots`, `@graview/core/describe`). Draw what they said in
+   the view, or leave `replaces` out.
+
 2. **Say more with three blocks** (FR-81, FR-82):
    `{ headline: "{count(out('includes'))} offers" }`;
    `{ figure: "net", as: "money", label: "{name}, net" }` (`number`,

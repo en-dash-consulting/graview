@@ -11,7 +11,7 @@ import { recordPath } from "../views/types.js";
 import { isoToday } from "../days.js";
 import { columnMoves, columnOf, statusColumns } from "../columns.js";
 import { coverageParts } from "./describe-coverage.js";
-import type { DescribedFact, DescribedItem, DescribedMasthead, DescribedPart, DescribedProblem, DescribePlaceResult, PlaceDescription } from "./described.js";
+import type { DescribedFact, DescribedHostView, DescribedItem, DescribedMasthead, DescribedPart, DescribedProblem, DescribePlaceResult, PlaceDescription } from "./described.js";
 import { sortForGrid } from "../grid-sort.js";
 import type { ResolvedBlock } from "./blocks.js";
 import { resolveFor, type ResolveForOptions } from "./resolve-for.js";
@@ -50,7 +50,33 @@ export interface DescribePlaceOptions<S extends AnySchema> {
   readonly width?: number;
   /** The day it is, for dates said relatively; today when unsaid. */
   readonly today?: string;
+  /**
+   * The views the host keeps, by their manifests (`DescribedHostView`). A
+   * record's page whose kind has a view of one says where it is drawn — at
+   * the head, then the kind's page slot, then the facts — or, where the
+   * view replaces the page, the view alone, and that the slot is not drawn.
+   */
+  readonly views?: readonly DescribedHostView[];
 }
+
+/**
+ * A PAGE SLOT A VIEW SHADOWS: a kind whose page blocks (`views.<kind>.page`)
+ * are never drawn, because the host keeps a view of one of its records that
+ * replaces the page (`replaces: "page"`). A view that does not replace the
+ * page draws the slot under it, so it shadows nothing. For a host's problems
+ * beside `graview check`'s, which does not see the host's views.
+ */
+export function shadowedPageSlots(app: Pick<GraviewApp<AnySchema>, "viewSpecs" | "schema">, views: readonly DescribedHostView[]): readonly DescribedProblem[] {
+  const specs = (app.viewSpecs ?? {}) as Readonly<Record<string, { page?: readonly unknown[] }>>;
+  return views
+    .filter((view) => view.cardinality === "one" && view.replaces === "page" && (specs[view.attach]?.page?.length ?? 0) > 0)
+    .map((view) => {
+      const noun = kindWord(app.schema, view.attach, 1);
+      return { at: `views.${view.attach}.page`, says: `The view "${view.name}" replaces ${withArticle(noun)}'s page, so its page slot is never drawn: leave out replaces to draw the slot under the view, or draw what the slot says in the view.` };
+    });
+}
+
+const withArticle = (noun: string) => `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
 
 /** Cards are at least 15rem, with 10px between, in a column of the face's width less its gutters. */
 const CARD = 240;
@@ -180,12 +206,20 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     const title = labelOf(definition, record);
     described = { slug: record.id, title, kind: record.kind, address: recordPath(schema, record.kind, record.id) };
     const page = views[record.kind]?.page;
-    if (page) parts.push(...say(resolved(record, { slot: "page" }), 1, `views.${record.kind}.page`));
-    const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, record) : record;
-    // In the order and the groups its page declares (FR-148), each value as stored: a draft's paragraphs kept (FR-146).
-    for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title], locale: app.brand?.locale, timeZone: app.brand?.timeZone }))) {
-      if (section.title) parts.push({ t: "heading", level: 2, text: section.title });
-      for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value, ...(field.long ? { long: true as const } : {}), ...(field.markdown ? { markdown: true as const } : {}) });
+    /* A view the host keeps of one of its records: at the head, the slot under it; or, replacing the page, alone (Roadmap feature:page-slot-blocks-…). */
+    const view = options.views?.find((one) => one.attach === record.kind && one.cardinality === "one");
+    if (view) parts.push({ t: "view", name: view.name, ...(view.title ? { title: view.title } : {}), ...(view.replaces === "page" ? { replaces: true as const } : {}), ...(view.parts ? { parts: view.parts } : {}) });
+    if (view?.replaces === "page") {
+      drawnBy = `view:${view.name}`;
+      problems.push(...shadowedPageSlots(app as never, [view]));
+    } else {
+      if (page) parts.push(...say(resolved(record, { slot: "page" }), 1, `views.${record.kind}.page`));
+      const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, record) : record;
+      // In the order and the groups its page declares (FR-148), each value as stored: a draft's paragraphs kept (FR-146).
+      for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title], locale: app.brand?.locale, timeZone: app.brand?.timeZone }))) {
+        if (section.title) parts.push({ t: "heading", level: 2, text: section.title });
+        for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value, ...(field.long ? { long: true as const } : {}), ...(field.markdown ? { markdown: true as const } : {}) });
+      }
     }
   } else {
     const at = found!;
@@ -336,6 +370,10 @@ export function placeText(description: Omit<PlaceDescription, "text">): string {
           }
           if (part.as === "card" && part.columns > 1) lines.push(`${indent}(cards, ${part.columns} across)`);
           if (part.more) lines.push(`${indent}and ${part.more} more`);
+          break;
+        case "view":
+          lines.push(`${indent}[the view "${part.title ?? part.name}"${part.replaces ? ", in place of the page" : ""}]`);
+          if (part.parts) walk(part.parts, `${indent}  `);
           break;
       }
     }

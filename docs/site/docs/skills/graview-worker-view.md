@@ -25,8 +25,8 @@ Every view comes with a manifest the host enforces:
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
-- A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
-- `gestures: true` lets it hear a wheel, a drag and a pinch (below).
+- A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`).
+- `gestures: true` lets it hear a wheel, a drag and a pinch (below). `bleed: true` draws it edge to edge on a phone (`graview-view-drawing`).
 - `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path, and lets the view place a record's video (`<graview-video>`) and open the host's full-screen viewer: `graview-view-drawing` says how a view shows them.
 
 A manifest that names a kind, an edge or an act the app does not declare is refused before the view starts.
@@ -59,7 +59,7 @@ HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light an
 
 ### Links
 
-`<a data-record="offer:7">`, `<a data-place="the-packages">` and a whole card or row with `data-record` are links the host follows on a click, a phone's tap and Enter, to what the viewer may see. An `<a href>` goes out only to an address a record was handed (`graview-view-drawing`). A card, what a tap inside it reaches, and going narrowed or to a section are `graview-view-links`.
+`<a data-record="offer:7">`, `<a data-place="the-packages">` and a whole card or row with `data-record` are links the host follows on a click, a phone's tap and Enter, to what the viewer may see. An `<a href>` goes out only to an address a record was handed. A card, a link out, what a tap inside it reaches, and going narrowed or to a section are `graview-view-links`.
 
 ### Writes
 

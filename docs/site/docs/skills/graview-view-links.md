@@ -12,7 +12,11 @@ A worker view (`graview-worker-view`: its manifest, its global, its limits) has 
 
 ### A link
 
-`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows. `<a href>` goes out only to an address a record was handed — its own url, `mailto:`, `tel:` (`graview-view-drawing`). A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places. From code, `graview.navigate("offer:7")` goes by the same rules.
+`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows. `<a href>` goes out only to an address a record was handed — its own url, `mailto:`, `tel:` (below). A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places. From code, `graview.navigate("offer:7")` goes by the same rules.
+
+### Links out
+
+`<a href="${node.url}">` is drawn where the address is one a record the view was shown holds, as it holds it — an `https:` page, a `mailto:`, a `tel:` — or an `https:` address on an origin the host lists (`links: { origins }` on the view's definition and a headless run). The host opens it in a new tab, no opener, no referrer, marked ↗. An address you build, `javascript:`, `data:` or `http:` is refused: a link a view made could carry what it reads out.
 
 ### A card that opens
 
