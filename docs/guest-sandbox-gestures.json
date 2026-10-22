@@ -1,0 +1,186 @@
+{
+  "at": "2026-10-22T15:23:54.572Z",
+  "transport": "gestures",
+  "engine": "chromium",
+  "claims": {
+    "a wheel over the map zooms it in around the pointer, and the page stays where it was": {
+      "ok": true,
+      "detail": {
+        "before": {
+          "box": [
+            0,
+            0,
+            800,
+            500
+          ],
+          "heard": "none",
+          "scrolled": 0,
+          "zoom": 1
+        },
+        "wheeled": {
+          "box": [
+            180.48,
+            106.3,
+            439.05,
+            274.41
+          ],
+          "heard": "wheel",
+          "scrolled": 0,
+          "zoom": 1
+        }
+      }
+    },
+    "a wheel with Control held, a trackpad's pinch, is heard as a pinch and zooms the map, and the page is neither zoomed nor scrolled": {
+      "ok": true,
+      "detail": {
+        "wheeled": {
+          "box": [
+            180.48,
+            106.3,
+            439.05,
+            274.41
+          ],
+          "heard": "wheel",
+          "scrolled": 0,
+          "zoom": 1
+        },
+        "pinched": {
+          "box": [
+            300,
+            180.59,
+            200,
+            125
+          ],
+          "heard": "pinch",
+          "scrolled": 0,
+          "zoom": 1
+        }
+      }
+    },
+    "a drag across the map pans it with the pointer, by as many of the map's units as the pointer moved pixels": {
+      "ok": true,
+      "detail": {
+        "pinched": {
+          "box": [
+            300,
+            180.59,
+            200,
+            125
+          ],
+          "heard": "pinch",
+          "scrolled": 0,
+          "zoom": 1
+        },
+        "dragged": {
+          "box": [
+            264.45,
+            161.63,
+            200,
+            125
+          ],
+          "heard": "drag",
+          "scrolled": 0,
+          "zoom": 1
+        },
+        "perPixel": 0.2962085308056872
+      }
+    },
+    "ten wheels in one frame are taken from the page and heard once, their deltas summed: the map zooms out as far as one wheel of all ten": {
+      "ok": true,
+      "detail": {
+        "burst": {
+          "prevented": 10,
+          "width": 200
+        },
+        "after": [
+          182.24,
+          110.29,
+          364.42,
+          227.76
+        ],
+        "expected": 364.42376007810174
+      }
+    },
+    "a wheel off the map, where the view does not listen, scrolls the page and leaves the map as it was": {
+      "ok": true,
+      "detail": {
+        "still": {
+          "box": [
+            182.24,
+            110.29,
+            364.42,
+            227.76
+          ],
+          "heard": "wheel",
+          "scrolled": 0,
+          "zoom": 1
+        },
+        "scrolled": {
+          "box": [
+            182.24,
+            110.29,
+            364.42,
+            227.76
+          ],
+          "heard": "wheel",
+          "scrolled": 247,
+          "zoom": 1
+        }
+      }
+    },
+    "the map did not fail, and nothing about it was said to be wrong": {
+      "ok": true,
+      "detail": {
+        "failures": [],
+        "problems": []
+      }
+    },
+    "the same view without gestures: true hears no wheel, the page scrolls under it, and the host says why": {
+      "ok": true,
+      "detail": {
+        "plainBefore": {
+          "box": [
+            0,
+            0,
+            800,
+            500
+          ],
+          "heard": "none",
+          "scrolled": 0,
+          "zoom": 1
+        },
+        "plainAfter": {
+          "box": [
+            0,
+            0,
+            800,
+            500
+          ],
+          "heard": "none",
+          "scrolled": 0,
+          "zoom": 1
+        },
+        "plainScrolled": {
+          "box": [
+            0,
+            0,
+            800,
+            500
+          ],
+          "heard": "none",
+          "scrolled": 247,
+          "zoom": 1
+        },
+        "said": [
+          "The view \"Architecture map\" listens for a wheel, a drag or a pinch, and its manifest does not say \"gestures\": true: the host forwards none."
+        ]
+      }
+    },
+    "the host page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

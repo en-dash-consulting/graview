@@ -1522,7 +1522,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <h1 id="h-what">@graview/guest</h1>
       <p class="lede" style="margin-top: 18px;"><code>@graview/guest</code> is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add @graview/guest</code><button type="button" class="copy" data-copy="pnpm add @graview/guest">Copy</button></div></div>
-      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/guest</code>, <code>@graview/guest/react</code>, <code>@graview/guest/host</code>, <code>@graview/guest/host/frame</code>, <code>@graview/guest/host/worker</code>, <code>@graview/guest/host/views</code>, <code>@graview/guest/headless</code>, <code>@graview/guest/headless/node</code>, <code>@graview/guest/worker</code>, <code>@graview/guest/worker/view</code>, <code>@graview/guest/build</code>, <code>@graview/guest/cli</code>, <code>@graview/guest/client</code>, <code>@graview/guest/client.js</code></p>
+      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/guest</code>, <code>@graview/guest/react</code>, <code>@graview/guest/host</code>, <code>@graview/guest/host/frame</code>, <code>@graview/guest/host/worker</code>, <code>@graview/guest/host/views</code>, <code>@graview/guest/headless</code>, <code>@graview/guest/headless/node</code>, <code>@graview/guest/worker</code>, <code>@graview/guest/worker/view</code>, <code>@graview/guest/audit</code>, <code>@graview/guest/build</code>, <code>@graview/guest/cli</code>, <code>@graview/guest/client</code>, <code>@graview/guest/client.js</code></p>
     </section>
     <section id="readme" aria-labelledby="h-readme">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
@@ -1719,6 +1719,15 @@ import { answer } from "./before.js"; import "./view.js";   // view.js is payloa
 const run = globalThis.graviewHeadless;
 export default { async fetch(request) { return answer(await run(await request.text())); } };</code></pre></div>
 <p><code>graview view check view.js --app app.js --manifest manifest.json --seed seed.json --roles partner</code> does the same from a terminal, with <code>nodeIsolate</code>.</p>
+<h4>Audit what a view drew</h4>
+<p><code>auditView(root)</code> from <code>@graview/guest/audit</code> holds a drawn view to what a person on a keyboard or with a screen reader meets, and says each problem as a repair: its rule, its WCAG 2.2 criterion, how bad, where (a selector from the nearest <code>data-key</code>), a one-line fix, and <code>automatic</code> when the framework is the one to fix it rather than the view.</p>
+<div class="code" data-scroller><pre><code class="language-ts">import { auditView } from "@graview/guest/audit";
+
+const audit = auditView(region.shadowRoot, { clicked: ["[data-more]"] });
+for (const one of audit.problems) say(`${one.rule} (WCAG ${one.wcag}) at ${one.at}: ${one.fix}`);
+say(audit.skipped);                                  // what did not run here, and why</code></pre></div>
+<p>It is judged as the host draws it: a link, a press and a control the view drew itself take the keyboard on a page, so none is a problem, and a <code>&lt;div&gt;</code> the view only hears a click on (<code>clicked</code>) is. The rules a drawing alone shows run anywhere: <code>keyboard</code>, <code>role</code>, <code>name</code>, <code>toggle-state</code>, <code>nested-interactive</code>, <code>img-alt</code>, <code>svg-name</code> and <code>scroll-region</code>. The ring the keyboard shows (<code>focus-visible</code>) and text <code>contrast</code> run only where the root is in a browser that lays it out, and say how many elements they measured; elsewhere they are in <code>skipped</code>, never passed. A keyboard trap needs keys pressed, which a harness's Tab walk does (<code>pnpm verify a11y</code>). <code>AUDIT_RULES</code> lists each rule, its criterion and what it needs.</p>
+<p>A headless run audits what it drew when asked (<code>runWorkerViewHeadless({ …, audit: true })</code> answers with <code>audit</code>), with the elements its view listens on for a click, and <code>graview view check … --audit</code> says it and fails on what the view must fix.</p>
     </section>
     <section id="api" aria-labelledby="h-api">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (7)</h2></div>

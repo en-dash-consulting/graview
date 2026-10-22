@@ -6,7 +6,7 @@
 pnpm add @graview/guest
 ```
 
-Entry points: `@graview/guest`, `@graview/guest/react`, `@graview/guest/host`, `@graview/guest/host/frame`, `@graview/guest/host/worker`, `@graview/guest/host/views`, `@graview/guest/headless`, `@graview/guest/headless/node`, `@graview/guest/worker`, `@graview/guest/worker/view`, `@graview/guest/build`, `@graview/guest/cli`, `@graview/guest/client`, `@graview/guest/client.js`
+Entry points: `@graview/guest`, `@graview/guest/react`, `@graview/guest/host`, `@graview/guest/host/frame`, `@graview/guest/host/worker`, `@graview/guest/host/views`, `@graview/guest/headless`, `@graview/guest/headless/node`, `@graview/guest/worker`, `@graview/guest/worker/view`, `@graview/guest/audit`, `@graview/guest/build`, `@graview/guest/cli`, `@graview/guest/client`, `@graview/guest/client.js`
 
 ## What it is
 
@@ -346,6 +346,22 @@ export default { async fetch(request) { return answer(await run(await request.te
 ```
 
 `graview view check view.js --app app.js --manifest manifest.json --seed seed.json --roles partner` does the same from a terminal, with `nodeIsolate`.
+
+#### Audit what a view drew
+
+`auditView(root)` from `@graview/guest/audit` holds a drawn view to what a person on a keyboard or with a screen reader meets, and says each problem as a repair: its rule, its WCAG 2.2 criterion, how bad, where (a selector from the nearest `data-key`), a one-line fix, and `automatic` when the framework is the one to fix it rather than the view.
+
+```ts
+import { auditView } from "@graview/guest/audit";
+
+const audit = auditView(region.shadowRoot, { clicked: ["[data-more]"] });
+for (const one of audit.problems) say(`${one.rule} (WCAG ${one.wcag}) at ${one.at}: ${one.fix}`);
+say(audit.skipped);                                  // what did not run here, and why
+```
+
+It is judged as the host draws it: a link, a press and a control the view drew itself take the keyboard on a page, so none is a problem, and a `<div>` the view only hears a click on (`clicked`) is. The rules a drawing alone shows run anywhere: `keyboard`, `role`, `name`, `toggle-state`, `nested-interactive`, `img-alt`, `svg-name` and `scroll-region`. The ring the keyboard shows (`focus-visible`) and text `contrast` run only where the root is in a browser that lays it out, and say how many elements they measured; elsewhere they are in `skipped`, never passed. A keyboard trap needs keys pressed, which a harness's Tab walk does (`pnpm verify a11y`). `AUDIT_RULES` lists each rule, its criterion and what it needs.
+
+A headless run audits what it drew when asked (`runWorkerViewHeadless({ …, audit: true })` answers with `audit`), with the elements its view listens on for a click, and `graview view check … --audit` says it and fails on what the view must fix.
 
 ## What it exports (7)
 

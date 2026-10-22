@@ -34,6 +34,17 @@
  *   the example apps (todo, seedbed, rota, discography, the desk), whole:
  *   every node on their pages is this repository's.
  *
+ *   worker views as a host draws them (Roadmap f-view-a11y-audit): Threat
+ *   Watch's home (scripts/fixtures/threat-app.ts) and the guest sandbox's
+ *   offers views, one in a frame of its own. `auditView`
+ *   (`@graview/guest/audit`) runs over each drawing in the browser — the
+ *   ring and the words measured, light and dark — and over the framework's
+ *   markup around it, which must pass; Tab is walked into each view and out
+ *   again; a framed place is a box named for it that Tab reaches; and what
+ *   axe finds inside a view, the audit finds too. What a view drew is its
+ *   author's, so axe's nodes inside it are set beside the audit's, not
+ *   counted against the framework.
+ *
  * A screen holds when axe finds nothing. The verdict names each rule that
  * fired, how many nodes, and where.
  *
@@ -74,7 +85,9 @@ const WORKSHOP_SEED = resolve(repoRoot, "scripts/fixtures/desk-bar/workshop.seed
 /** Cloud's shell, as far as the framework can see it: a page with a main, a language and a title, and the app in `#graview-app`. */
 const HOST_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>An app on a host's page</title>
 <style>html,body{margin:0;height:100%}#graview-app{position:relative;height:100vh}</style></head>
-<body><main><div id="graview-app"></div></main><script type="module" src="/entry.js"></script></body></html>`;
+<body><main><div id="graview-app"></div></main><script>window.PACKAGES = __PACKAGES__; window.NOTES = __NOTES__;</script><script type="module" src="/entry.js"></script></body></html>`;
+/** A plain view's source as a chat writes it, put on the host's page as the guest sandbox does. */
+const inline = (file) => JSON.stringify(readFileSync(resolve(repoRoot, file), "utf8")).replace(/<\/script/gi, "<\\/script");
 
 async function buildHost() {
   const require = createRequire(import.meta.url);
@@ -88,8 +101,42 @@ async function buildHost() {
         import vendors from ${JSON.stringify(VENDORS)};
         import workshop from ${JSON.stringify(WORKSHOP)};
         import workshopSeed from ${JSON.stringify(WORKSHOP_SEED)};
+        import { registerWorkerView } from "@graview/guest/host/views";
+        import { auditView } from "@graview/guest/audit";
+        import { sam, threatApp, threatSeed, WATCH_JS, WATCH_MANIFEST } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/threat-app.ts"))};
+        import { lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/offers-app.ts"))};
         const asked = new URLSearchParams(location.search);
-        const isWorkshop = asked.get("doc") === "workshop";
+        /* An audit of what is drawn under a selector — a view's shadow root, or the framework's own markup — as plain data. */
+        window.__audit = (selector, options = {}) => {
+          const at = document.querySelector(selector);
+          return at ? JSON.parse(JSON.stringify(auditView(at.shadowRoot ?? at, options))) : null;
+        };
+        const doc = asked.get("doc");
+        if (doc === "threat" || doc === "offers") {
+          /*
+           * A WORKER VIEW AS A HOST DRAWS IT (Roadmap f-view-a11y-audit): Threat
+           * Watch's home, and the offers fixture's two views — "What we heard" in
+           * a frame of its own (flows: false), "The packages" flowing with the page.
+           */
+          const threat = doc === "threat";
+          const notes = { manifest: { name: "notes", title: "What we heard", attach: "signal", cardinality: "many", flows: false }, worker: { source: window.NOTES } };
+          const packages = { manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many", reads: { kinds: ["offer"], edges: ["includes"] } }, worker: { source: window.PACKAGES } };
+          window.__handle = mount(document.getElementById("graview-app"), {
+            app: threat ? threatApp : offersApp,
+            seed: threat ? threatSeed : offersSeed,
+            principal: threat ? sam : lin,
+            face: asked.get("face") ?? "pages",
+            ...(asked.get("path") ? { path: asked.get("path") } : {}),
+            label: threat ? "Threat Watch" : "Offers",
+            heading: 1,
+            height: "100%",
+            fonts: false,
+            studio: false,
+            views: (schema, registry) => (threat ? registerWorkerView(registry, { manifest: WATCH_MANIFEST, worker: { source: WATCH_JS } }) : registerWorkerView(registerWorkerView(registry, notes), packages)),
+          });
+          window.__handle.drawn().then(() => { window.__ready = true; });
+        } else {
+        const isWorkshop = doc === "workshop";
         const compiled = compileDocumentWithoutCheck(isWorkshop ? workshop : vendors.document, { today: () => "2026-10-02" });
         if (!compiled.ok) throw new Error("the document did not compile");
         const seed = isWorkshop ? workshopSeed : vendors.seed;
@@ -109,7 +156,8 @@ async function buildHost() {
           studio: false,
           bar: true,
         });
-        window.__handle.drawn().then(() => { window.__ready = true; });`,
+        window.__handle.drawn().then(() => { window.__ready = true; });
+        }`,
       resolveDir: resolve(repoRoot, "packages/embed"),
       loader: "js",
     },
@@ -123,7 +171,7 @@ async function buildHost() {
     plugins: [graviewSources(repoRoot)],
     logLevel: "silent",
   });
-  writeFileSync(join(out, "index.html"), HOST_PAGE);
+  writeFileSync(join(out, "index.html"), HOST_PAGE.replace("__PACKAGES__", () => inline("scripts/fixtures/views/packages.js")).replace("__NOTES__", () => inline("scripts/fixtures/views/notes.js")));
   const host = createServer((request, response) => {
     const path = decodeURIComponent((request.url ?? "/").split("?")[0]).replace(/^\/+/, "") || "index.html";
     const file = join(out, path);
@@ -149,6 +197,41 @@ const example = (app, paths) =>
 const firstLook = ["scene", "pages"].map((face) => ({ name: `vendors · first look · ${face}`, group: "first-look", url: () => `${at("a11y-host")}/?doc=vendors&face=${face}&firstLook=1`, hosted: true, firstLook: true }));
 /** A status board, moved three ways with axe run at each (Roadmap f-board-move-without-buttons). */
 const board = { name: "vendors · a board moved", group: "board", url: () => `${at("a11y-host")}/?doc=vendors&face=pages&path=${encodeURIComponent("/places/vendors-by-status")}`, hosted: true, board: true };
+/**
+ * WORKER VIEWS AS A HOST DRAWS THEM, each audited in the browser by
+ * `auditView` (Roadmap f-view-a11y-audit) with the selectors it hears a
+ * click on, the framework's markup around it audited as the framework's,
+ * and Tab walked through it. What a view drew is its author's: axe's word
+ * on it is set beside the audit's, not counted against the framework.
+ */
+const viewAt = (doc, path) => () => `${at("a11y-host")}/?doc=${doc}&face=pages&path=${encodeURIComponent(path)}`;
+const VIEWS = [
+  { name: "threat watch · home", group: "views", url: viewAt("threat", "/"), hosted: true, view: { host: '[data-worker-view="watch"]', clicked: ["[data-only-critical]", "[data-more]"] } },
+  { name: "offers · what we heard, framed", group: "views", url: viewAt("offers", "/places/what-we-heard"), hosted: true, view: { host: '[data-worker-view="notes"]', clicked: ["button[data-go]"], framed: "What we heard" } },
+  { name: "offers · the packages", group: "views", url: viewAt("offers", "/places/the-packages"), hosted: true, view: { host: '[data-worker-view="packages"]', clicked: [] } },
+];
+/** What Threat Watch's drawing is owed, as its headless run says it (a-drawn-views-accessibility-is-audited.test.ts): each card a link around a button, each "More" a disclosure with no state. */
+const THREAT_OWES = ['nested-interactive @ [data-key="threat:phishing"]', 'nested-interactive @ [data-key="threat:vpn"]', 'toggle-state @ [data-key="threat:phishing"] > button.more', 'toggle-state @ [data-key="threat:vpn"] > button.more'];
+/** Axe's rules, by the audit's rule that judges the same thing. */
+const AXE_AS_AUDIT = {
+  "nested-interactive": "nested-interactive",
+  "button-name": "name",
+  "link-name": "name",
+  label: "name",
+  "select-name": "name",
+  "input-button-name": "name",
+  "aria-command-name": "name",
+  "aria-toggle-field-name": "name",
+  "aria-input-field-name": "name",
+  "image-alt": "img-alt",
+  "svg-img-alt": "svg-name",
+  "role-img-alt": "svg-name",
+  "scrollable-region-focusable": "scroll-region",
+  "color-contrast": "contrast",
+  "aria-required-attr": "toggle-state",
+  "aria-valid-attr-value": "toggle-state",
+};
+
 const SCREENS = [
   ...hosted("vendors"),
   ...firstLook,
@@ -159,6 +242,7 @@ const SCREENS = [
   ...example("rota", ["/", "/pages"]),
   ...example("discography", ["/", "/pages"]),
   ...example("launcher", ["/"]),
+  ...VIEWS,
 ].filter((screen) => !ONLY || ONLY.includes(screen.group));
 
 /** Ready: the hosted embed says it drew; an example says it is ready (`__<app>Ready`). Then the scene settles. */
@@ -232,6 +316,8 @@ async function scan(page) {
             html: n.html.slice(0, 200),
             summary: (n.failureSummary ?? "").split("\n").slice(0, 3).join(" ").slice(0, 300),
             inRoot: Boolean(el && host && el !== host && host.contains(el)),
+            /* Inside a shadow root: a worker view's drawing, its author's. */
+            inView: n.target.some(Array.isArray),
           };
         }),
       }));
@@ -290,6 +376,62 @@ async function boardMoves(page) {
   return { scans, steps };
 }
 
+/**
+ * TAB THROUGH THE PAGE (WCAG 2.1.2): from the top, one Tab at a time, until
+ * the keyboard has gone into the view and out of it again — never held in
+ * it — or 300 presses. Says whether a framed place's region took it too.
+ */
+async function tabWalk(page, host) {
+  await page.evaluate(() => document.activeElement?.blur?.());
+  let entered = false;
+  let left = false;
+  let stops = 0;
+  let frame = false;
+  for (let press = 0; press < 300 && !left; press++) {
+    await page.keyboard.press("Tab");
+    const now = await page.evaluate((selector) => {
+      const active = document.activeElement;
+      return { inView: active !== null && active === document.querySelector(selector), frame: active?.getAttribute?.("data-testid") === "place-lens" };
+    }, host);
+    if (now.frame) frame = true;
+    if (now.inView) {
+      entered = true;
+      stops++;
+    } else if (entered) left = true;
+  }
+  return { entered, left, stops, frame };
+}
+
+/** A worker view audited where it is drawn: its drawing, the framework's markup around it, its frame, and Tab through it. */
+async function auditTheView(page, view) {
+  await page.waitForFunction((host) => Boolean(document.querySelector(host)?.shadowRoot?.querySelector("[data-graview-view-root] *")), view.host, { timeout: 30_000 });
+  await page.waitForTimeout(300);
+  const drawing = await page.evaluate(([host, clicked]) => window.__audit(host, { clicked }), [view.host, view.clicked]);
+  const chrome = await page.evaluate(() => window.__audit("#graview-app", { chrome: true }));
+  const frame = view.framed
+    ? await page.evaluate(() => {
+        const box = document.querySelector('[data-testid="place-lens"]');
+        return box && { role: box.getAttribute("role"), label: box.getAttribute("aria-label"), tabIndex: box.tabIndex };
+      })
+    : null;
+  const walk = await tabWalk(page, view.host);
+  /* The measured rules' control: faint words and a button whose ring is taken away, laid on the same page, are each found. */
+  const control = await page.evaluate(() => {
+    const box = document.createElement("div");
+    box.id = "a11y-control";
+    box.innerHTML = '<style>#a11y-control .bare:focus-visible{outline:none}</style><p style="color:#c4c4c4;background:#fff;margin:0">Faint words</p><button type="button" class="bare" style="background:#fff;color:#000">No ring</button>';
+    document.body.append(box);
+    const said = window.__audit("#a11y-control");
+    box.remove();
+    return said.problems.map((problem) => problem.rule);
+  });
+  return { drawing, chrome, frame, walk, control };
+}
+
+/** What each view screen's audit said, and what axe said inside the view. */
+const viewAudits = [];
+const viewAxe = [];
+
 const servers = [];
 /** What each board screen reached, step by step. */
 const boards = [];
@@ -345,8 +487,13 @@ try {
         }
         const violations = screen.firstLook || screen.board ? scans : await scan(page);
         let count = 0;
+        if (screen.view) {
+          for (const v of violations) for (const node of v.nodes) if (node.inView) viewAxe.push({ screen: label, rule: v.rule, target: node.target, html: node.html });
+          viewAudits.push({ screen: label, framed: screen.view.framed ?? null, threat: screen.name.startsWith("threat"), ...(await auditTheView(page, screen.view)) });
+        }
         for (const v of violations) {
           for (const node of v.nodes) {
+            if (screen.view && node.inView) continue;
             // On a host's page, only what the framework drew is the framework's (Cloud's attribution, exactly).
             if (screen.hosted && !node.inRoot && !DOCUMENT_RULES.has(v.rule)) continue;
             findings.push({ screen: label, rule: v.rule, impact: v.impact, help: v.help, target: node.target, html: node.html, summary: node.summary });
@@ -465,6 +612,44 @@ const checks = {
     nodes: findings.filter((finding) => finding.screen.includes("a board moved")).length,
     ok: SCREENS.every((screen) => !screen.board) || (boards.length > 0 && boards.every((one) => one.card && one.carried && one.dropped && one.menu && one.dragged) && findings.every((finding) => !finding.screen.includes("a board moved"))),
   },
+  /* A worker view audited where the host draws it (Roadmap f-view-a11y-audit). */
+  aViewIsAuditedInTheBrowserWithItsRingAndItsWords: {
+    audited: viewAudits.length,
+    ran: [...new Set(viewAudits.flatMap((one) => one.drawing?.ran ?? []))],
+    measured: viewAudits.map((one) => ({ screen: one.screen, ...(one.drawing?.measured ?? {}) })),
+    ok: !SCREENS.some((screen) => screen.view) || (viewAudits.length === SCREENS.filter((screen) => screen.view).length * SWEEP.length && viewAudits.every((one) => one.drawing && ["focus-visible", "contrast"].every((rule) => one.drawing.ran.includes(rule) && one.drawing.measured[rule] > 0))),
+  },
+  theHostsRingAndTheViewsWordsMeasureInLightAndDark: {
+    problems: viewAudits.flatMap((one) => (one.drawing?.problems ?? []).filter((problem) => problem.rule === "focus-visible" || problem.rule === "contrast").map((problem) => `${one.screen}: ${problem.rule} @ ${problem.at} — ${problem.says}`)),
+    unmeasured: viewAudits.map((one) => ({ screen: one.screen, ...(one.drawing?.unmeasured ?? {}) })),
+    ok: viewAudits.every((one) => one.drawing && one.drawing.problems.every((problem) => problem.rule !== "focus-visible" && problem.rule !== "contrast")),
+  },
+  theMeasuredRulesFindFaintWordsAndARingTakenAway: {
+    found: [...new Set(viewAudits.map((one) => (one.control ?? []).join(", ")))],
+    ok: viewAudits.every((one) => ["contrast", "focus-visible"].every((rule) => one.control?.includes(rule))),
+  },
+  threatWatchIsAuditedOnThePageAsItIsHeadless: {
+    owes: THREAT_OWES,
+    said: [...new Set(viewAudits.filter((one) => one.threat).map((one) => (one.drawing?.problems ?? []).filter((problem) => !["focus-visible", "contrast"].includes(problem.rule)).map((problem) => `${problem.rule} @ ${problem.at}`).join(" | ")))],
+    ok: !SCREENS.some((screen) => screen.name.startsWith("threat")) || (viewAudits.some((one) => one.threat) && viewAudits.filter((one) => one.threat).every((one) => JSON.stringify((one.drawing?.problems ?? []).filter((problem) => !["focus-visible", "contrast"].includes(problem.rule)).map((problem) => `${problem.rule} @ ${problem.at}`).sort()) === JSON.stringify([...THREAT_OWES].sort()))),
+  },
+  theFrameworksMarkupAroundAViewPassesTheAudit: {
+    problems: viewAudits.flatMap((one) => (one.chrome?.problems ?? []).map((problem) => `${one.screen}: ${problem.rule} @ ${problem.at} — ${problem.says}`)).slice(0, 40),
+    ok: viewAudits.every((one) => one.chrome && one.chrome.problems.length === 0),
+  },
+  aFramedPlaceIsABoxNamedForItThatTheKeyboardReaches: {
+    frames: viewAudits.filter((one) => one.framed).map((one) => ({ screen: one.screen, ...one.frame, reached: one.walk.frame })),
+    ok: viewAudits.filter((one) => one.framed).every((one) => one.frame?.role === "group" && one.frame.label?.endsWith(one.framed) && one.frame.tabIndex === 0 && one.walk.frame),
+  },
+  tabGoesIntoAViewAndOutAgain: {
+    walks: viewAudits.map((one) => ({ screen: one.screen, ...one.walk })),
+    ok: viewAudits.every((one) => !one.walk.entered || one.walk.left) && viewAudits.filter((one) => one.threat).every((one) => one.walk.entered),
+  },
+  theAuditFindsWhatAxeFindsInAView: {
+    missed: viewAxe.filter((found) => AXE_AS_AUDIT[found.rule] && !viewAudits.find((one) => one.screen === found.screen)?.drawing?.problems.some((problem) => problem.rule === AXE_AS_AUDIT[found.rule])).map((found) => `${found.screen}: ${found.rule} ${found.html.slice(0, 80)}`),
+    axeAlone: [...new Set(viewAxe.filter((found) => !AXE_AS_AUDIT[found.rule]).map((found) => found.rule))],
+    ok: viewAxe.every((found) => !AXE_AS_AUDIT[found.rule] || viewAudits.find((one) => one.screen === found.screen)?.drawing?.problems.some((problem) => problem.rule === AXE_AS_AUDIT[found.rule])),
+  },
   everyScreenWasScanned: { scanned: scanned.length, expected: SCREENS.length * SWEEP.length, ok: scanned.length === SCREENS.length * SWEEP.length },
   noPageThrew: { errors, ok: errors.length === 0 },
 };
@@ -476,6 +661,8 @@ const report = {
   byRule,
   scanned,
   firstLook: { hints, largeText },
+  views: viewAudits.map((one) => ({ screen: one.screen, problems: one.drawing?.problems ?? null, skipped: one.drawing?.skipped ?? null, unmeasured: one.drawing?.unmeasured ?? null })),
+  viewAxe,
   passed: Object.values(checks).every((check) => check.ok),
 };
 writeFileSync(resolve(repoRoot, "docs/a11y.json"), `${JSON.stringify(report, null, 2)}\n`);

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T00:43:13.041Z",
+  "at": "2026-10-22T15:24:47.906Z",
   "tags": [
     "wcag2a",
     "wcag2aa",
@@ -26,7 +26,7 @@
       "ok": true
     },
     "aFirstLookPassesAxeWithEachHintOpen": {
-      "hints": 24,
+      "hints": 16,
       "nodes": 0,
       "ok": true
     },
@@ -36,16 +36,14 @@
           "screen": "vendors · first look · scene",
           "anchors": [
             "faces",
-            "problems",
-            "ask"
+            "problems"
           ]
         },
         {
           "screen": "vendors · first look · pages",
           "anchors": [
             "faces",
-            "problems",
-            "ask"
+            "problems"
           ]
         }
       ],
@@ -60,7 +58,7 @@
       "ok": true
     },
     "aHintFitsAPhoneAtTheLargestText": {
-      "hints": 6,
+      "hints": 4,
       "over": [],
       "ok": true
     },
@@ -83,9 +81,319 @@
       ],
       "ok": true
     },
+    "aBoardMovedByTheKeyboardItsMenuAndAPointerPassesAxe": {
+      "boards": [
+        {
+          "screen": "vendors · a board moved · desk · light",
+          "card": true,
+          "carried": true,
+          "dropped": true,
+          "menu": true,
+          "dragged": true
+        },
+        {
+          "screen": "vendors · a board moved · desk · dark",
+          "card": true,
+          "carried": true,
+          "dropped": true,
+          "menu": true,
+          "dragged": true
+        },
+        {
+          "screen": "vendors · a board moved · phone · light",
+          "card": true,
+          "carried": true,
+          "dropped": true,
+          "menu": true,
+          "dragged": true
+        },
+        {
+          "screen": "vendors · a board moved · phone · dark",
+          "card": true,
+          "carried": true,
+          "dropped": true,
+          "menu": true,
+          "dragged": true
+        }
+      ],
+      "nodes": 0,
+      "ok": true
+    },
+    "aViewIsAuditedInTheBrowserWithItsRingAndItsWords": {
+      "audited": 12,
+      "ran": [
+        "keyboard",
+        "role",
+        "name",
+        "toggle-state",
+        "nested-interactive",
+        "img-alt",
+        "svg-name",
+        "scroll-region",
+        "focus-visible",
+        "contrast"
+      ],
+      "measured": [
+        {
+          "screen": "threat watch · home · desk · light",
+          "contrast": 23,
+          "focus-visible": 15
+        },
+        {
+          "screen": "threat watch · home · desk · dark",
+          "contrast": 23,
+          "focus-visible": 15
+        },
+        {
+          "screen": "threat watch · home · phone · light",
+          "contrast": 23,
+          "focus-visible": 15
+        },
+        {
+          "screen": "threat watch · home · phone · dark",
+          "contrast": 23,
+          "focus-visible": 15
+        },
+        {
+          "screen": "offers · what we heard, framed · desk · light",
+          "contrast": 10,
+          "focus-visible": 5
+        },
+        {
+          "screen": "offers · what we heard, framed · desk · dark",
+          "contrast": 10,
+          "focus-visible": 5
+        },
+        {
+          "screen": "offers · what we heard, framed · phone · light",
+          "contrast": 10,
+          "focus-visible": 5
+        },
+        {
+          "screen": "offers · what we heard, framed · phone · dark",
+          "contrast": 10,
+          "focus-visible": 5
+        },
+        {
+          "screen": "offers · the packages · desk · light",
+          "contrast": 22,
+          "focus-visible": 6
+        },
+        {
+          "screen": "offers · the packages · desk · dark",
+          "contrast": 22,
+          "focus-visible": 6
+        },
+        {
+          "screen": "offers · the packages · phone · light",
+          "contrast": 22,
+          "focus-visible": 6
+        },
+        {
+          "screen": "offers · the packages · phone · dark",
+          "contrast": 22,
+          "focus-visible": 6
+        }
+      ],
+      "ok": true
+    },
+    "theHostsRingAndTheViewsWordsMeasureInLightAndDark": {
+      "problems": [],
+      "unmeasured": [
+        {
+          "screen": "threat watch · home · desk · light"
+        },
+        {
+          "screen": "threat watch · home · desk · dark"
+        },
+        {
+          "screen": "threat watch · home · phone · light"
+        },
+        {
+          "screen": "threat watch · home · phone · dark"
+        },
+        {
+          "screen": "offers · what we heard, framed · desk · light"
+        },
+        {
+          "screen": "offers · what we heard, framed · desk · dark"
+        },
+        {
+          "screen": "offers · what we heard, framed · phone · light"
+        },
+        {
+          "screen": "offers · what we heard, framed · phone · dark"
+        },
+        {
+          "screen": "offers · the packages · desk · light"
+        },
+        {
+          "screen": "offers · the packages · desk · dark"
+        },
+        {
+          "screen": "offers · the packages · phone · light"
+        },
+        {
+          "screen": "offers · the packages · phone · dark"
+        }
+      ],
+      "ok": true
+    },
+    "theMeasuredRulesFindFaintWordsAndARingTakenAway": {
+      "found": [
+        "contrast, focus-visible"
+      ],
+      "ok": true
+    },
+    "threatWatchIsAuditedOnThePageAsItIsHeadless": {
+      "owes": [
+        "nested-interactive @ [data-key=\"threat:phishing\"]",
+        "nested-interactive @ [data-key=\"threat:vpn\"]",
+        "toggle-state @ [data-key=\"threat:phishing\"] > button.more",
+        "toggle-state @ [data-key=\"threat:vpn\"] > button.more"
+      ],
+      "said": [
+        "toggle-state @ [data-key=\"threat:phishing\"] > button.more | toggle-state @ [data-key=\"threat:vpn\"] > button.more | nested-interactive @ [data-key=\"threat:phishing\"] | nested-interactive @ [data-key=\"threat:vpn\"]"
+      ],
+      "ok": true
+    },
+    "theFrameworksMarkupAroundAViewPassesTheAudit": {
+      "problems": [],
+      "ok": true
+    },
+    "aFramedPlaceIsABoxNamedForItThatTheKeyboardReaches": {
+      "frames": [
+        {
+          "screen": "offers · what we heard, framed · desk · light",
+          "role": "group",
+          "label": "What we heard",
+          "tabIndex": 0,
+          "reached": true
+        },
+        {
+          "screen": "offers · what we heard, framed · desk · dark",
+          "role": "group",
+          "label": "What we heard",
+          "tabIndex": 0,
+          "reached": true
+        },
+        {
+          "screen": "offers · what we heard, framed · phone · light",
+          "role": "group",
+          "label": "What we heard",
+          "tabIndex": 0,
+          "reached": true
+        },
+        {
+          "screen": "offers · what we heard, framed · phone · dark",
+          "role": "group",
+          "label": "What we heard",
+          "tabIndex": 0,
+          "reached": true
+        }
+      ],
+      "ok": true
+    },
+    "tabGoesIntoAViewAndOutAgain": {
+      "walks": [
+        {
+          "screen": "threat watch · home · desk · light",
+          "entered": true,
+          "left": true,
+          "stops": 15,
+          "frame": false
+        },
+        {
+          "screen": "threat watch · home · desk · dark",
+          "entered": true,
+          "left": true,
+          "stops": 15,
+          "frame": false
+        },
+        {
+          "screen": "threat watch · home · phone · light",
+          "entered": true,
+          "left": true,
+          "stops": 15,
+          "frame": false
+        },
+        {
+          "screen": "threat watch · home · phone · dark",
+          "entered": true,
+          "left": true,
+          "stops": 15,
+          "frame": false
+        },
+        {
+          "screen": "offers · what we heard, framed · desk · light",
+          "entered": true,
+          "left": true,
+          "stops": 5,
+          "frame": true
+        },
+        {
+          "screen": "offers · what we heard, framed · desk · dark",
+          "entered": true,
+          "left": true,
+          "stops": 5,
+          "frame": true
+        },
+        {
+          "screen": "offers · what we heard, framed · phone · light",
+          "entered": true,
+          "left": true,
+          "stops": 5,
+          "frame": true
+        },
+        {
+          "screen": "offers · what we heard, framed · phone · dark",
+          "entered": true,
+          "left": true,
+          "stops": 5,
+          "frame": true
+        },
+        {
+          "screen": "offers · the packages · desk · light",
+          "entered": true,
+          "left": true,
+          "stops": 6,
+          "frame": false
+        },
+        {
+          "screen": "offers · the packages · desk · dark",
+          "entered": true,
+          "left": true,
+          "stops": 6,
+          "frame": false
+        },
+        {
+          "screen": "offers · the packages · phone · light",
+          "entered": true,
+          "left": true,
+          "stops": 6,
+          "frame": false
+        },
+        {
+          "screen": "offers · the packages · phone · dark",
+          "entered": true,
+          "left": true,
+          "stops": 6,
+          "frame": false
+        }
+      ],
+      "ok": true
+    },
+    "theAuditFindsWhatAxeFindsInAView": {
+      "missed": [],
+      "axeAlone": [
+        "heading-order",
+        "target-size"
+      ],
+      "ok": true
+    },
     "everyScreenWasScanned": {
-      "scanned": 76,
-      "expected": 76,
+      "scanned": 92,
+      "expected": 92,
       "ok": true
     },
     "noPageThrew": {
@@ -157,6 +465,22 @@
     },
     {
       "screen": "vendors · first look · pages · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · a board moved · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · a board moved · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · a board moved · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · a board moved · phone · dark",
       "nodes": 0
     },
     {
@@ -398,6 +722,54 @@
     {
       "screen": "launcher · / · phone · dark",
       "nodes": 0
+    },
+    {
+      "screen": "threat watch · home · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "threat watch · home · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "threat watch · home · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "threat watch · home · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "offers · what we heard, framed · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "offers · what we heard, framed · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "offers · what we heard, framed · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "offers · what we heard, framed · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "offers · the packages · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "offers · the packages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "offers · the packages · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "offers · the packages · phone · dark",
+      "nodes": 0
     }
   ],
   "firstLook": {
@@ -419,14 +791,6 @@
         "title": "Whether all is in order"
       },
       {
-        "screen": "vendors · first look · scene · desk · light",
-        "anchor": "ask",
-        "covers": false,
-        "fits": true,
-        "keyboardOn": true,
-        "title": "Ask Vendor shortlist"
-      },
-      {
         "screen": "vendors · first look · scene · desk · dark",
         "anchor": "faces",
         "covers": false,
@@ -441,14 +805,6 @@
         "fits": true,
         "keyboardOn": true,
         "title": "Whether all is in order"
-      },
-      {
-        "screen": "vendors · first look · scene · desk · dark",
-        "anchor": "ask",
-        "covers": false,
-        "fits": true,
-        "keyboardOn": true,
-        "title": "Ask Vendor shortlist"
       },
       {
         "screen": "vendors · first look · scene · phone · light",
@@ -467,14 +823,6 @@
         "title": "Whether all is in order"
       },
       {
-        "screen": "vendors · first look · scene · phone · light",
-        "anchor": "ask",
-        "covers": false,
-        "fits": true,
-        "keyboardOn": true,
-        "title": "Ask Vendor shortlist"
-      },
-      {
         "screen": "vendors · first look · scene · phone · dark",
         "anchor": "faces",
         "covers": false,
@@ -489,14 +837,6 @@
         "fits": true,
         "keyboardOn": true,
         "title": "Whether all is in order"
-      },
-      {
-        "screen": "vendors · first look · scene · phone · dark",
-        "anchor": "ask",
-        "covers": false,
-        "fits": true,
-        "keyboardOn": true,
-        "title": "Ask Vendor shortlist"
       },
       {
         "screen": "vendors · first look · pages · desk · light",
@@ -515,14 +855,6 @@
         "title": "Whether all is in order"
       },
       {
-        "screen": "vendors · first look · pages · desk · light",
-        "anchor": "ask",
-        "covers": false,
-        "fits": true,
-        "keyboardOn": true,
-        "title": "Ask Vendor shortlist"
-      },
-      {
         "screen": "vendors · first look · pages · desk · dark",
         "anchor": "faces",
         "covers": false,
@@ -537,14 +869,6 @@
         "fits": true,
         "keyboardOn": true,
         "title": "Whether all is in order"
-      },
-      {
-        "screen": "vendors · first look · pages · desk · dark",
-        "anchor": "ask",
-        "covers": false,
-        "fits": true,
-        "keyboardOn": true,
-        "title": "Ask Vendor shortlist"
       },
       {
         "screen": "vendors · first look · pages · phone · light",
@@ -563,14 +887,6 @@
         "title": "Whether all is in order"
       },
       {
-        "screen": "vendors · first look · pages · phone · light",
-        "anchor": "ask",
-        "covers": false,
-        "fits": true,
-        "keyboardOn": true,
-        "title": "Ask Vendor shortlist"
-      },
-      {
         "screen": "vendors · first look · pages · phone · dark",
         "anchor": "faces",
         "covers": false,
@@ -585,14 +901,6 @@
         "fits": true,
         "keyboardOn": true,
         "title": "Whether all is in order"
-      },
-      {
-        "screen": "vendors · first look · pages · phone · dark",
-        "anchor": "ask",
-        "covers": false,
-        "fits": true,
-        "keyboardOn": true,
-        "title": "Ask Vendor shortlist"
       }
     ],
     "largeText": [
@@ -613,14 +921,6 @@
         "title": "Whether all is in order"
       },
       {
-        "screen": "vendors · first look · scene · phone · largest text",
-        "anchor": "ask",
-        "covers": false,
-        "fits": true,
-        "keyboardOn": true,
-        "title": "Ask Vendor shortlist"
-      },
-      {
         "screen": "vendors · first look · pages · phone · largest text",
         "anchor": "faces",
         "covers": false,
@@ -635,16 +935,380 @@
         "fits": true,
         "keyboardOn": true,
         "title": "Whether all is in order"
-      },
-      {
-        "screen": "vendors · first look · pages · phone · largest text",
-        "anchor": "ask",
-        "covers": false,
-        "fits": true,
-        "keyboardOn": true,
-        "title": "Ask Vendor shortlist"
       }
     ]
   },
+  "views": [
+    {
+      "screen": "threat watch · home · desk · light",
+      "problems": [
+        {
+          "rule": "toggle-state",
+          "wcag": "4.1.2",
+          "impact": "moderate",
+          "at": "[data-key=\"threat:phishing\"] > button.more",
+          "key": "threat:phishing",
+          "says": "A button the view hears that reads \"More\" — it opens and closes something — and says no state.",
+          "fix": "Give it aria-expanded=\"true\" or \"false\" (or aria-pressed for a toggle), and draw it again as it changes.",
+          "automatic": false
+        },
+        {
+          "rule": "toggle-state",
+          "wcag": "4.1.2",
+          "impact": "moderate",
+          "at": "[data-key=\"threat:vpn\"] > button.more",
+          "key": "threat:vpn",
+          "says": "A button the view hears that reads \"More\" — it opens and closes something — and says no state.",
+          "fix": "Give it aria-expanded=\"true\" or \"false\" (or aria-pressed for a toggle), and draw it again as it changes.",
+          "automatic": false
+        },
+        {
+          "rule": "nested-interactive",
+          "wcag": "4.1.2",
+          "impact": "serious",
+          "at": "[data-key=\"threat:phishing\"]",
+          "key": "threat:phishing",
+          "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
+          "automatic": false
+        },
+        {
+          "rule": "nested-interactive",
+          "wcag": "4.1.2",
+          "impact": "serious",
+          "at": "[data-key=\"threat:vpn\"]",
+          "key": "threat:vpn",
+          "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
+          "automatic": false
+        }
+      ],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "threat watch · home · desk · dark",
+      "problems": [
+        {
+          "rule": "toggle-state",
+          "wcag": "4.1.2",
+          "impact": "moderate",
+          "at": "[data-key=\"threat:phishing\"] > button.more",
+          "key": "threat:phishing",
+          "says": "A button the view hears that reads \"More\" — it opens and closes something — and says no state.",
+          "fix": "Give it aria-expanded=\"true\" or \"false\" (or aria-pressed for a toggle), and draw it again as it changes.",
+          "automatic": false
+        },
+        {
+          "rule": "toggle-state",
+          "wcag": "4.1.2",
+          "impact": "moderate",
+          "at": "[data-key=\"threat:vpn\"] > button.more",
+          "key": "threat:vpn",
+          "says": "A button the view hears that reads \"More\" — it opens and closes something — and says no state.",
+          "fix": "Give it aria-expanded=\"true\" or \"false\" (or aria-pressed for a toggle), and draw it again as it changes.",
+          "automatic": false
+        },
+        {
+          "rule": "nested-interactive",
+          "wcag": "4.1.2",
+          "impact": "serious",
+          "at": "[data-key=\"threat:phishing\"]",
+          "key": "threat:phishing",
+          "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
+          "automatic": false
+        },
+        {
+          "rule": "nested-interactive",
+          "wcag": "4.1.2",
+          "impact": "serious",
+          "at": "[data-key=\"threat:vpn\"]",
+          "key": "threat:vpn",
+          "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
+          "automatic": false
+        }
+      ],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "threat watch · home · phone · light",
+      "problems": [
+        {
+          "rule": "toggle-state",
+          "wcag": "4.1.2",
+          "impact": "moderate",
+          "at": "[data-key=\"threat:phishing\"] > button.more",
+          "key": "threat:phishing",
+          "says": "A button the view hears that reads \"More\" — it opens and closes something — and says no state.",
+          "fix": "Give it aria-expanded=\"true\" or \"false\" (or aria-pressed for a toggle), and draw it again as it changes.",
+          "automatic": false
+        },
+        {
+          "rule": "toggle-state",
+          "wcag": "4.1.2",
+          "impact": "moderate",
+          "at": "[data-key=\"threat:vpn\"] > button.more",
+          "key": "threat:vpn",
+          "says": "A button the view hears that reads \"More\" — it opens and closes something — and says no state.",
+          "fix": "Give it aria-expanded=\"true\" or \"false\" (or aria-pressed for a toggle), and draw it again as it changes.",
+          "automatic": false
+        },
+        {
+          "rule": "nested-interactive",
+          "wcag": "4.1.2",
+          "impact": "serious",
+          "at": "[data-key=\"threat:phishing\"]",
+          "key": "threat:phishing",
+          "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
+          "automatic": false
+        },
+        {
+          "rule": "nested-interactive",
+          "wcag": "4.1.2",
+          "impact": "serious",
+          "at": "[data-key=\"threat:vpn\"]",
+          "key": "threat:vpn",
+          "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
+          "automatic": false
+        }
+      ],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "threat watch · home · phone · dark",
+      "problems": [
+        {
+          "rule": "toggle-state",
+          "wcag": "4.1.2",
+          "impact": "moderate",
+          "at": "[data-key=\"threat:phishing\"] > button.more",
+          "key": "threat:phishing",
+          "says": "A button the view hears that reads \"More\" — it opens and closes something — and says no state.",
+          "fix": "Give it aria-expanded=\"true\" or \"false\" (or aria-pressed for a toggle), and draw it again as it changes.",
+          "automatic": false
+        },
+        {
+          "rule": "toggle-state",
+          "wcag": "4.1.2",
+          "impact": "moderate",
+          "at": "[data-key=\"threat:vpn\"] > button.more",
+          "key": "threat:vpn",
+          "says": "A button the view hears that reads \"More\" — it opens and closes something — and says no state.",
+          "fix": "Give it aria-expanded=\"true\" or \"false\" (or aria-pressed for a toggle), and draw it again as it changes.",
+          "automatic": false
+        },
+        {
+          "rule": "nested-interactive",
+          "wcag": "4.1.2",
+          "impact": "serious",
+          "at": "[data-key=\"threat:phishing\"]",
+          "key": "threat:phishing",
+          "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
+          "automatic": false
+        },
+        {
+          "rule": "nested-interactive",
+          "wcag": "4.1.2",
+          "impact": "serious",
+          "at": "[data-key=\"threat:vpn\"]",
+          "key": "threat:vpn",
+          "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
+          "automatic": false
+        }
+      ],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "offers · what we heard, framed · desk · light",
+      "problems": [],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "offers · what we heard, framed · desk · dark",
+      "problems": [],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "offers · what we heard, framed · phone · light",
+      "problems": [],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "offers · what we heard, framed · phone · dark",
+      "problems": [],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "offers · the packages · desk · light",
+      "problems": [],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "offers · the packages · desk · dark",
+      "problems": [],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "offers · the packages · phone · light",
+      "problems": [],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    },
+    {
+      "screen": "offers · the packages · phone · dark",
+      "problems": [],
+      "skipped": [
+        {
+          "rule": "keyboard-trap",
+          "why": "It needs keys pressed in a browser: a harness's Tab walk presses them (pnpm verify a11y)."
+        }
+      ],
+      "unmeasured": {}
+    }
+  ],
+  "viewAxe": [
+    {
+      "screen": "threat watch · home · desk · light",
+      "rule": "heading-order",
+      "target": ".graview-worker-view,div[data-key=\"threat:phishing\"] > h3",
+      "html": "<h3>Invoice phishing</h3>"
+    },
+    {
+      "screen": "threat watch · home · desk · light",
+      "rule": "target-size",
+      "target": ".graview-worker-view,button[data-more=\"threat:phishing\"]",
+      "html": "<button class=\"more\" data-more=\"threat:phishing\" type=\"button\">More</button>"
+    },
+    {
+      "screen": "threat watch · home · desk · light",
+      "rule": "target-size",
+      "target": ".graview-worker-view,button[data-more=\"threat:vpn\"]",
+      "html": "<button class=\"more\" data-more=\"threat:vpn\" type=\"button\">More</button>"
+    },
+    {
+      "screen": "threat watch · home · desk · dark",
+      "rule": "heading-order",
+      "target": ".graview-worker-view,div[data-key=\"threat:phishing\"] > h3",
+      "html": "<h3>Invoice phishing</h3>"
+    },
+    {
+      "screen": "threat watch · home · desk · dark",
+      "rule": "target-size",
+      "target": ".graview-worker-view,button[data-more=\"threat:phishing\"]",
+      "html": "<button class=\"more\" data-more=\"threat:phishing\" type=\"button\">More</button>"
+    },
+    {
+      "screen": "threat watch · home · desk · dark",
+      "rule": "target-size",
+      "target": ".graview-worker-view,button[data-more=\"threat:vpn\"]",
+      "html": "<button class=\"more\" data-more=\"threat:vpn\" type=\"button\">More</button>"
+    },
+    {
+      "screen": "threat watch · home · phone · light",
+      "rule": "heading-order",
+      "target": ".graview-worker-view,div[data-key=\"threat:phishing\"] > h3",
+      "html": "<h3>Invoice phishing</h3>"
+    },
+    {
+      "screen": "threat watch · home · phone · light",
+      "rule": "target-size",
+      "target": ".graview-worker-view,button[data-more=\"threat:phishing\"]",
+      "html": "<button class=\"more\" data-more=\"threat:phishing\" type=\"button\">More</button>"
+    },
+    {
+      "screen": "threat watch · home · phone · light",
+      "rule": "target-size",
+      "target": ".graview-worker-view,button[data-more=\"threat:vpn\"]",
+      "html": "<button class=\"more\" data-more=\"threat:vpn\" type=\"button\">More</button>"
+    },
+    {
+      "screen": "threat watch · home · phone · dark",
+      "rule": "heading-order",
+      "target": ".graview-worker-view,div[data-key=\"threat:phishing\"] > h3",
+      "html": "<h3>Invoice phishing</h3>"
+    },
+    {
+      "screen": "threat watch · home · phone · dark",
+      "rule": "target-size",
+      "target": ".graview-worker-view,button[data-more=\"threat:phishing\"]",
+      "html": "<button class=\"more\" data-more=\"threat:phishing\" type=\"button\">More</button>"
+    },
+    {
+      "screen": "threat watch · home · phone · dark",
+      "rule": "target-size",
+      "target": ".graview-worker-view,button[data-more=\"threat:vpn\"]",
+      "html": "<button class=\"more\" data-more=\"threat:vpn\" type=\"button\">More</button>"
+    }
+  ],
   "passed": true
 }

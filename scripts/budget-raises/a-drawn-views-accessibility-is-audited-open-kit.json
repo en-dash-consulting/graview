@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 170,
+  "gzipped": 55,
+  "note": "Raised when a drawn view's accessibility came to be audited (Roadmap f-view-a11y-audit): the view's runtime, which the host inlines into its worker, says which of the elements it drew a click selector of its matches, for a headless run's audit to hold to the keyboard. Measured at 193_961 / 73_700 against 193_799 / 73_649 minified and gzipped."
+}

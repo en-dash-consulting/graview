@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T01:58:52.398Z",
+  "at": "2026-10-22T15:21:52.643Z",
   "transport": "record",
   "engine": "webkit",
   "claims": {
@@ -140,6 +140,57 @@
     },
     "her press on the act changes nothing": {
       "ok": true
+    },
+    "the call sheet's notes field is filled by the host with the call's own notes": {
+      "ok": true,
+      "detail": {
+        "filled": "Asked for the attendance list a week ahead.",
+        "notes": "Asked for the attendance list a week ahead."
+      }
+    },
+    "as the person types, nothing is saved yet and the view says \"Saving…\"": {
+      "ok": true,
+      "detail": {
+        "notes": "Asked for the attendance list a week ahead.",
+        "state": "Saving…"
+      }
+    },
+    "once the person pauses, the notes are saved with no button, once, as Nick, through the view": {
+      "ok": true,
+      "detail": {
+        "notes": "Asked for the attendance list a week ahead. Will bring six from his board.",
+        "state": "Saved",
+        "ops": [
+          {
+            "via": "view:call",
+            "author": "person:nick"
+          }
+        ]
+      }
+    },
+    "the view hears the save as acted and says \"Saved\"": {
+      "ok": true,
+      "detail": "Saved"
+    },
+    "leaving the field saves at once what was still waiting, before the pause would have": {
+      "ok": true,
+      "detail": {
+        "notes": "Asked for the attendance list a week ahead. Will bring six from his board. Call back Thursday.",
+        "ops": 2
+      }
+    },
+    "and the pause after it saves nothing again": {
+      "ok": true,
+      "detail": 2
+    },
+    "a seat that may not save the notes gets the field unfilled, her typing saves nothing, and the view says why": {
+      "ok": true,
+      "detail": {
+        "filled": "",
+        "notes": "Asked for the attendance list a week ahead.",
+        "state": "Not saved: Not permitted: “Save the call's notes” on a call — a staff can.",
+        "ops": 0
+      }
     },
     "no view failed": {
       "ok": true,

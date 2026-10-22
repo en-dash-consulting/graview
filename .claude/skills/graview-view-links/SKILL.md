@@ -117,6 +117,13 @@ as a link target can be hidden (set-lens-hidden, `graview-pages`).
    that names nothing the seat was shown and no place, and every filter
    that goes nowhere. `--press ".card h3"` presses there and says where the
    host would go, or that the press is a button's of its own.
+   `--audit` holds what it drew to the keyboard and screen-reader rules,
+   as the host draws it: a `<div>` heard only by `graview.on("click")`, a
+   control or link with no name, a toggle with no state, a button inside a
+   card that opens, an `<img>` with no alt. Each comes with its WCAG
+   criterion and a one-line fix, and the check fails on what the view must
+   fix. Contrast and the ring need a browser: there, `auditView(shadowRoot)`
+   from `@graview/guest/audit` measures them too.
 3. Open it on a phone, 390 pixels wide with touch: tap a card's heading and
    a badge inside it, and see the record's page; tap a toggle inside it,
    and see it toggle and stay. On a desk, Tab through the view: every link

@@ -1,0 +1,165 @@
+{
+  "at": "2026-10-22T15:23:49.440Z",
+  "transport": "drop",
+  "engine": "firefox",
+  "claims": {
+    "Saturday's card, which the view marked data-drop, is a drop target the host offers and says to assistive technology": {
+      "ok": true,
+      "detail": {
+        "target": true,
+        "said": "Drop to add moments to Saturday."
+      }
+    },
+    "dragging files over Saturday's card, the host takes the drag, draws the card with its own outline and says what dropping there does": {
+      "ok": true,
+      "detail": {
+        "prevented": true,
+        "drawn": true,
+        "outline": "dashed",
+        "status": "Drop to add moments to Saturday."
+      }
+    },
+    "three photographs and a phone's video dropped on Saturday are four moments on Saturday, each its file on its field, stored through the host's files": {
+      "ok": true,
+      "detail": {
+        "photos": [
+          "IMG_4031.jpg",
+          "IMG_4032.jpg",
+          "IMG_4033.png"
+        ],
+        "clips": [
+          {
+            "name": "IMG_4034.MOV",
+            "type": "video/mp4",
+            "duration": 9
+          }
+        ],
+        "batches": [
+          "batch:3b3g6m6p5z21:1"
+        ],
+        "vias": [
+          "view:journey"
+        ],
+        "authors": [
+          "person:nana"
+        ],
+        "uploaded": [
+          "IMG_4031.jpg",
+          "IMG_4032.jpg",
+          "IMG_4033.png",
+          "IMG_4034.MOV"
+        ],
+        "status": "Added 4 moments to Saturday.",
+        "drawn": "4 moments"
+      }
+    },
+    "the four were made in one change, as Nana, through the view, and the host said so": {
+      "ok": true,
+      "detail": {
+        "photos": [
+          "IMG_4031.jpg",
+          "IMG_4032.jpg",
+          "IMG_4033.png"
+        ],
+        "clips": [
+          {
+            "name": "IMG_4034.MOV",
+            "type": "video/mp4",
+            "duration": 9
+          }
+        ],
+        "batches": [
+          "batch:3b3g6m6p5z21:1"
+        ],
+        "vias": [
+          "view:journey"
+        ],
+        "authors": [
+          "person:nana"
+        ],
+        "uploaded": [
+          "IMG_4031.jpg",
+          "IMG_4032.jpg",
+          "IMG_4033.png",
+          "IMG_4034.MOV"
+        ],
+        "status": "Added 4 moments to Saturday.",
+        "drawn": "4 moments"
+      }
+    },
+    "one undo takes all four back": {
+      "ok": true,
+      "detail": {
+        "left": 0,
+        "moments": 0
+      }
+    },
+    "the journey view did not fail, and nothing about its drop targets was said to be wrong": {
+      "ok": true,
+      "detail": {
+        "failures": [],
+        "problems": []
+      }
+    },
+    "a view that hears the drop is told the files as the host stored them, and makes them four moments with one act of several, as one change": {
+      "ok": true,
+      "detail": {
+        "captions": [
+          "Dropped IMG_4031.jpg",
+          "Dropped IMG_4032.jpg",
+          "Dropped IMG_4033.png",
+          "Dropped IMG_4034.MOV"
+        ],
+        "acts": [
+          "add-moment-to-day"
+        ],
+        "batches": [
+          "batch:022b63192n02:1"
+        ],
+        "vias": [
+          "view:journey-handled"
+        ],
+        "clip": {
+          "href": "/graview/files/4-img-4034-mov.mp4",
+          "name": "IMG_4034.MOV",
+          "type": "video/mp4",
+          "bytes": 9000,
+          "poster": "/graview/files/4-poster.jpg",
+          "duration": 9
+        }
+      }
+    },
+    "three photographs the host's upload says were taken on Saturday, copied and dropped on Monday, are three moments at Saturday's times, in one change": {
+      "ok": true,
+      "detail": {
+        "stored": {
+          "IMG_6101.jpg": "2026-10-17T09:12:00.000Z",
+          "IMG_6102.jpg": "2026-10-17T12:40:00.000Z",
+          "IMG_6103.jpg": "2026-10-17T17:55:00.000Z"
+        },
+        "at": {
+          "IMG_6101.jpg": "2026-10-17T09:12:00.000Z",
+          "IMG_6102.jpg": "2026-10-17T12:40:00.000Z",
+          "IMG_6103.jpg": "2026-10-17T17:55:00.000Z"
+        },
+        "batches": 1
+      }
+    },
+    "a friend, who may make no moment, is offered no drop target, and a drop there stores nothing and makes nothing": {
+      "ok": true,
+      "detail": {
+        "target": false,
+        "prevented": false,
+        "moments": 0,
+        "uploaded": 0,
+        "problems": []
+      }
+    },
+    "the host page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

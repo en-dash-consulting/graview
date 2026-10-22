@@ -128,6 +128,8 @@ async function run(text: string): Promise<string> {
   if (transcript.ms >= input.limits.pushMs) fail("slow", `It took longer than ${input.limits.pushMs.toLocaleString("en-US")} ms to draw what it was shown.`);
   /* What it drew goes in microtasks: let them run, and anything it chained on them, a bounded number of turns. */
   for (let turn = 0; turn < 64 && !failure; turn += 1) await new Promise<void>((resolve) => microtask(resolve));
+  /* What it hears a click on, as drawn before any press: what an audit holds to the keyboard (Roadmap f-view-a11y-audit). */
+  if (!failure) transcript.clicks = runtime.listened("click").slice(0, 2_000);
   /*
    * A PRESS, WHEN ASKED (0.1.45): the first element the selector matches,
    * as `graview.on` matches one, is clicked — the view hears it as it

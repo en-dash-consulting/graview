@@ -1,0 +1,6 @@
+{
+  "budget": "a worker view's runtime",
+  "minified": 170,
+  "gzipped": 55,
+  "note": "Raised when a drawn view's accessibility came to be audited (Roadmap f-view-a11y-audit): the runtime says which of the elements a view drew its click selectors match, for a headless run's audit to hold to the keyboard. Measured at 61_664 / 21_332 against 61_502 / 21_284: 162 / 48 more."
+}
