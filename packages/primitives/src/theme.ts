@@ -311,6 +311,14 @@ ${layerVariables()}
   --graview-text-body: 1rem;
   --graview-text-heading: 1.2rem;
   --graview-text-title: 1.728rem;
+  ${/* A page's spacing, one scale on a 4px step: what stands between a header and its first block, a block and the next, a group and the next, and inside a row. */ ""}
+  --graview-space-1: 4px;
+  --graview-space-2: 8px;
+  --graview-space-3: 12px;
+  --graview-space-4: 16px;
+  --graview-space-5: 24px;
+  --graview-space-6: 32px;
+  --graview-space-7: 48px;
   ${/* Shape, as tokens, so a component never has to know whose product it is. */ ""}
   --graview-radius: ${shape.radius}px;
   --graview-radius-sm: ${shape.radiusSmall}px;
@@ -319,6 +327,8 @@ ${layerVariables()}
   --graview-gap: ${shape.gap}px;
   color-scheme: ${scheme};
 }
+${/* On a phone a page's title is one step of the scale smaller: at 1.728rem a two-word title took the width of a 390 screen. */ ""}
+@media (max-width: 480px) { ${root} { --graview-text-title: 1.44rem; } }
 
 ${surface} {
   margin: 0;

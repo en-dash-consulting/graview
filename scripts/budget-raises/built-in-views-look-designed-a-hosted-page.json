@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 355,
+  "gzipped": 133,
+  "changeset": "built-in-views-look-designed.md",
+  "note": "Raised when the built-in views came to look designed (Roadmap f-auto-view-type-polish). Up front: the theme's spacing scale (--graview-space-1 to -7) and a page title one step smaller on a phone, and a blocks lens's door handing the headline it opens with to its page. 355 / 133 more than before it (592_824 / 206_070): measured at 593_179 / 206_203 (0.3 KB)."
+}

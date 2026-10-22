@@ -11,6 +11,8 @@ import { type PageContext, useStoreTick } from "./page-context.js";
 import {
   DISPLAY,
   KindMark,
+  Onward,
+  onward,
   eyebrow,
   h2,
   lede,
@@ -26,7 +28,8 @@ import {
 } from "./page-typography.js";
 import { PageMain, PageTitle } from "./page-shell.js";
 import { HeadTrail } from "./place-here.js";
-import { SpecLinks } from "@graview/primitives/pages";
+import { PlacePageHead, SpecLinks } from "@graview/primitives/pages";
+import { blockContextFor, compileBlocks, resolveBlocks } from "@graview/core/blocks";
 
 
 /** The app's pictures this seat may see: registered places whose kind is live here. */
@@ -522,6 +525,24 @@ export function DefaultPlacesPage<S extends AnySchema>({ context }: { context: P
  * begin the kind beneath it. The other places are the bar's (FR-138). A pick inside it travels to the record — on a page, choosing a
  * thing means going to it.
  */
+const SAID_ABOVE = { lede: true } as const;
+const UNDER_THE_HEAD = { lede: false } as const;
+/* The line under a place's title: the reading size, muted, the measure of a sentence. */
+const ledeStyle: React.CSSProperties = { ...lede, textWrap: "pretty" };
+
+/**
+ * THE HEADLINE A BLOCKS LENS OPENS WITH, as the line under its page's title
+ * (`lede` on its door): worked out as the lens works it out — the same
+ * blocks, the same store, about no one record — so the page says what the
+ * lens would have. Nothing for any other picture, or a headline that could
+ * not be worked out.
+ */
+function ledeOf<S extends AnySchema>(context: PageContext<S>, opening: unknown): string | undefined {
+  if (opening === undefined) return undefined;
+  const [said] = resolveBlocks(compileBlocks([opening]), blockContextFor(context.store as never, null, null, context.brand ? { money: context.brand } : {}));
+  return said?.t === "headline" && !said.problem && said.text.trim() !== "" ? said.text : undefined;
+}
+
 export function DefaultPlacePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { store, principal } = context;
   useStoreTick(store);
@@ -541,8 +562,8 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
       <PageMain context={context}>
         <PageTitle context={context}>No picture is called that.</PageTitle>
         <p style={lede}>
-          <Link to="/places" style={link}>
-            The pictures there are <span aria-hidden="true">→</span>
+          <Link to="/places" style={onward}>
+            <Onward>The pictures there are</Onward>
           </Link>
         </p>
       </PageMain>
@@ -565,6 +586,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
    * kind's list and the bar still offer them.
    */
   const creates = drawnBy?.creates !== false;
+  const headline = ledeOf(context, (drawnBy as { lede?: unknown } | undefined)?.lede);
   const facts = kindFacts(store, place.kind, {
     ...(principal ? { principal } : {}),
     ...(context.invariantContext ? { context: context.invariantContext } : {}),
@@ -573,13 +595,13 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
     .map((affordance) => ({ affordance, mutation: store.allMutations().find((m) => m.name === affordance.mutation) }))
     .filter((entry): entry is { affordance: typeof entry.affordance; mutation: NonNullable<typeof entry.mutation> } => entry.mutation !== undefined);
   return (
-    <PageMain context={context} style={wide}>
+    <PageMain context={context} style={{ ...wide, gap: "var(--graview-space-6, 32px)" }}>
       {/*
         * No eyebrow over the title: "A PICTURE OF TASKS" said what the title
         * and the line under it say, and linked where "All tasks as a list"
         * links two lines down.
         */}
-      <header style={{ display: "grid", gap: 12 }}>
+      <header style={{ display: "grid", gap: "var(--graview-space-2, 8px)" }}>
         {/* The section the picture is in, when the app named one (Roadmap gv-pages-where-am-i). */}
         <HeadTrail context={context} />
         <PageTitle context={context}>{place.title}</PageTitle>
@@ -587,10 +609,11 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           * WHAT THE PICTURE IS, NOT WHAT ONE OF ITS MEMBERS IS: how much is
           * in it, and — over two kinds — what it is across. The kind's own
           * description is in the singular, about a member, and leads the
-          * kind's list page where it reads correctly.
+          * kind's list page where it reads correctly. A lens that opens with a
+          * headline says it here instead (`ledeOf`): one heading, one line.
           */}
-        <p style={lede} data-testid="place-lede">
-          {overOf(store, kindsOfPlace(context, place), place.across)}.
+        <p style={ledeStyle} data-testid="place-lede" {...(headline !== undefined ? { "data-graview-lede": "headline" } : {})}>
+          {headline ?? `${overOf(store, kindsOfPlace(context, place), place.across)}.`}
         </p>
         {/* A picture drawn from blocks lists what its blocks say (their own `where`), so it is not said to be narrowed. */}
         {narrowedTo && !flows ? (
@@ -611,8 +634,8 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         {/* What belongs to the picture alone: its kind as a list. The other places are the bar's (FR-138). */}
         <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
           {kindsOfPlace(context, place).map((kind, index) => (
-            <Link key={kind} to={`/${pluralSlug(store.schema, kind)}`} style={{ ...link, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
-              All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list <span aria-hidden="true">→</span>
+            <Link key={kind} to={`/${pluralSlug(store.schema, kind)}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
+              <Onward>All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list</Onward>
             </Link>
           ))}
         </p>
@@ -669,7 +692,9 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           navigate(recordPath(store.schema, node.kind, id));
         }}
       >
-        <LensOnPage context={context} place={place} filter={narrowedTo} {...(chosen?.at === placeKey(place) ? { chosen: chosen.ids } : {})} />
+        <PlacePageHead.Provider value={headline !== undefined ? SAID_ABOVE : UNDER_THE_HEAD}>
+          <LensOnPage context={context} place={place} filter={narrowedTo} {...(chosen?.at === placeKey(place) ? { chosen: chosen.ids } : {})} />
+        </PlacePageHead.Provider>
       </div>
       {/* The acts, at a reading width: a form as wide as a gallery is a form nobody can scan. */}
       {creators.length > 0 ? (

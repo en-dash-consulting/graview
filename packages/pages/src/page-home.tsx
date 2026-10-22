@@ -12,6 +12,8 @@ import {
   h2,
   lede,
   link,
+  Onward,
+  onward,
   homeKinds,
   liveKinds,
   plain,
@@ -149,8 +151,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
           <h2 style={h2}>What is here</h2>
           {relations.length > 0 ? (
-            <Link to="/map" style={{ ...link, ...quiet, marginLeft: "auto" }} data-testid="map-link">
-              Connections · {relations.length === 1 ? "1 relation" : `${relations.length} relations`} <span aria-hidden="true">→</span>
+            <Link to="/map" style={{ ...onward, ...quiet, marginLeft: "auto" }} data-testid="map-link">
+              <Onward>Connections · {relations.length === 1 ? "1 relation" : `${relations.length} relations`}</Onward>
             </Link>
           ) : null}
         </div>

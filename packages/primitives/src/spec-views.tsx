@@ -2,7 +2,7 @@ import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@g
 import { blockContextFor, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
 import type { ViewSlot, ViewSpecsByKind } from "@graview/core/document";
 import { isDefaultView, useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { createContext, Suspense, useContext, useRef, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
+import { createContext, Fragment, Suspense, useContext, useRef, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
 import { useEndsAboveItsList } from "./stretched-link.js";
 import { DefaultView, useDefaultElsewhere } from "./default-view.js";
 import { RecordHeadContext } from "./record-head.js";
@@ -137,6 +137,26 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
           <div className="graview-spec-text" {...(block.tone ? { "data-graview-tone": block.tone } : {})}>
             <TextBody text={block.text} markdown={block.markdown} />
           </div>
+        );
+      }
+      // A card's or a row's line of facts with a choice in it: the choices as chips, the rest quiet after them, in the order written.
+      if (block.runs) {
+        return (
+          <p className="graview-spec-text graview-spec-meta" {...(block.tone ? { "data-graview-tone": block.tone } : {})}>
+            {block.runs.map((run, at) => (
+              <Fragment key={at}>
+                {/* A space between two facts, for whoever hears or copies the line; the gap is what is seen. Two runs of words keep their dot, in the words, never a mark of its own. */}
+                {at > 0 ? " " : null}
+                {run.field !== undefined ? (
+                  <span className="graview-spec-chip" data-graview-field={run.field}>
+                    {run.text}
+                  </span>
+                ) : (
+                  <span className="graview-spec-meta-words">{at > 0 && block.runs![at - 1]!.field === undefined ? `· ${run.text}` : run.text}</span>
+                )}
+              </Fragment>
+            ))}
+          </p>
         );
       }
       return (
@@ -333,6 +353,17 @@ export const HeadingsUnder = createContext(0);
  */
 export const HomeLine = createContext<ReactNode>(null);
 
+/**
+ * A PAGE NEVER STACKS TWO HEADINGS. A place's page heads its picture with
+ * the place's title and a line under it; a blocks lens that opened with a
+ * headline drew a second, larger heading under that one, often saying the
+ * count again. The page says the lens's first headline as the line under
+ * its title (the place's lede) and tells the lens so (`lede`), and the
+ * lens leaves that headline out. Given at all, the lens stands in the
+ * page's own column, on the edge the title stands on: no inset of its own.
+ */
+export const PlacePageHead = createContext<{ readonly lede: boolean } | null>(null);
+
 function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode; readonly as: "card" | "row"; readonly depth: number; readonly said?: AlreadySaid | null }) {
   const { store, views } = useGraview();
   const label = labelOf(store.schema.tryDefinition(node.kind), node);
@@ -494,7 +525,12 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
     <div className="graview-spec-listing">
       {groups.map((group) => (
         <section key={group.value ?? ""} className="graview-spec-list-group" data-graview-group={group.value ?? ""}>
-          {group.heading ? <Heading className="graview-spec-list-heading">{group.heading}</Heading> : null}
+          {/* A group's heading is its name and how many it holds — every one listed, not only the page drawn. */}
+          {group.heading ? (
+            <Heading className="graview-spec-list-heading">
+              {group.heading} <span className="graview-spec-list-count">{(list.everyGroup?.find((every) => every.value === group.value) ?? group).members.length}</span>
+            </Heading>
+          ) : null}
           {listOf(group.members, group.value !== null ? { values: [group.value, ...(group.heading ? [group.heading] : [])] } : null)}
         </section>
       ))}
@@ -511,12 +547,15 @@ export function SpecPlace({ blocks, heading = 2, firstHeading, slot, view = slot
   const ctx: SpecContext = blockContextFor(store, null, null, { heading, firstHeading, money: brand });
   // The app's line goes under the home's headline when it has one (`HomeLine`), else first.
   const line = useContext(HomeLine);
-  const headed = blocks.some((block) => block.t === "headline");
+  // The page above says the first headline as its lede (`PlacePageHead`): drawn once, there.
+  const ledeAbove = useContext(PlacePageHead)?.lede === true;
+  const drawn = ledeAbove && slot === "place" && blocks[0]?.t === "headline" ? blocks.slice(1) : blocks;
+  const headed = drawn.some((block) => block.t === "headline");
   return (
     <div className={`graview-spec graview-spec-${slot}`} data-graview-spec={slot}>
       {line !== null && !headed ? line : null}
       <HomeLine.Provider value={headed ? line : null}>
-        <SpecBlocks blocks={blocks} ctx={ctx} view={view} />
+        <SpecBlocks blocks={drawn} ctx={ctx} view={view} />
       </HomeLine.Provider>
     </div>
   );

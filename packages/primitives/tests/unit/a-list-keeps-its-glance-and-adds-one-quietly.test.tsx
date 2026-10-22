@@ -39,7 +39,8 @@ describe("a list of declared rows", () => {
   it("follows each row with the glance's facts it does not say itself", () => {
     const html = draw([{ id: "v1", kind: "deliverable", name: "The pilot's budget", due: "2026-10-20", status: "sent" }]);
     expect(html).toContain('data-testid="record-row"');
-    const facts = /data-testid="record-glance"[^>]*>([^<]*)</.exec(html)?.[1] ?? "";
+    // The facts' words, a choice drawn as a chip among them.
+    const facts = (/data-testid="record-glance"[^>]*>(.*?)<\/span><a /.exec(html)?.[1] ?? "").replace(/<[^>]+>/g, "");
     expect(facts).toMatch(/Sent/i);
     expect(facts).toMatch(/Oct/);
     // Never the name again: the row said it.

@@ -81,8 +81,9 @@ describe("FR-81: a front page made only of data", () => {
 
   it("groups by a choice in its declared order, under the headings the block gives", () => {
     const html = home(owner);
-    expect(html.indexOf(">The way in<")).toBeGreaterThan(0);
-    expect(html.indexOf(">The way in<")).toBeLessThan(html.indexOf(">For afterwards<"));
+    // Each heading is its label and, beside it, how many it holds.
+    expect(html.indexOf(">The way in <")).toBeGreaterThan(0);
+    expect(html.indexOf(">The way in <")).toBeLessThan(html.indexOf(">For afterwards <"));
     expect(listed(html)).toEqual(expect.arrayContaining(["offer-workshop", "offer-analysis", "offer-suite", "offer-advice"]));
   });
 

@@ -60,7 +60,9 @@ describe("a list past a page", () => {
   it("shows the rest under the headings of the records they are linked to", async () => {
     const host = await drawn([{ list: "all('song')", sort: "name", as: "row", group: "writtenBy" }]);
     await act(async () => host.querySelector<HTMLButtonElement>("[data-graview-show-more]")!.click());
-    expect([...host.querySelectorAll(".graview-spec-list-heading")].map((heading) => heading.textContent)).toEqual(["Harrison", "Lennon", "McCartney", "Starkey"]);
+    // Each heading says how many its group holds: every one listed, not only the first page.
+    expect([...host.querySelectorAll(".graview-spec-list-heading")].map((heading) => heading.firstChild?.textContent?.trim())).toEqual(["Harrison", "Lennon", "McCartney", "Starkey"]);
+    expect([...host.querySelectorAll(".graview-spec-list-count")].reduce((sum, count) => sum + Number(count.textContent), 0)).toBe(158);
     expect(listed(host)).toBe(158);
   });
 });

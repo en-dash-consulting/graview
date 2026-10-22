@@ -3,6 +3,7 @@ import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { KeepLensHost, MenuSectionSource, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
+import { Onward } from "./onward.js";
 
 
 /**
@@ -217,7 +218,7 @@ export function SceneLink<S extends AnySchema>({
   // The arrow is drawn, not said: "In the scene, link", never "In the scene north east arrow".
   const words = children ?? (
     <>
-      In {scene === "Scene" ? "the scene" : scene.replace(/^The /, "the ")} <span aria-hidden="true">↗</span>
+      <Onward mark="↗">In {scene === "Scene" ? "the scene" : scene.replace(/^The /, "the ")}</Onward>
     </>
   );
   const named = label ? { "aria-label": label } : {};

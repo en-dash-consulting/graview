@@ -24,6 +24,8 @@ import {
   lede,
   link,
   listed,
+  Onward,
+  onward,
   pluralOf,
   quiet,
   rule,
@@ -157,7 +159,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             Made by {whoDid(madeOn, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}), ...(context.people ? { people: context.people } : {}) })}, {lineageWords(madeOn.lineage)}
           </p>
         ) : null}
-        <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...link, ...quiet }} data-testid="spatial-link" />
+        <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...onward, ...quiet }} data-testid="spatial-link" />
         {/* NOTIFY ME (Roadmap f-notify-subscriptions): told when somebody else changes it, or does something to it. */}
         {inPlace && node ? (
           <NotifyButton
@@ -325,7 +327,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             <Link
               key={farKind}
               to={`/${pluralSlug(store.schema, farKind)}?${encodeURIComponent(group.edgeKind)}=${encodeURIComponent(id)}`}
-              style={{ ...link, ...quiet }}
+              style={{ ...onward, ...quiet }}
               data-testid="related-all"
             >
               {/*
@@ -334,8 +336,10 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                 * eras spans Blue Hour" were the edge kind read as a verb from
                 * whichever end it happened to fit.
                 */}
-              Sort and filter {group.description ?? `these ${pluralOf(store, farKind).toLowerCase()}`}
-              {group.targets.some((target) => target.kind !== farKind) ? ` (${pluralOf(store, farKind).toLowerCase()})` : ""} <span aria-hidden="true">→</span>
+              <Onward>
+                Sort and filter {group.description ?? `these ${pluralOf(store, farKind).toLowerCase()}`}
+                {group.targets.some((target) => target.kind !== farKind) ? ` (${pluralOf(store, farKind).toLowerCase()})` : ""}
+              </Onward>
             </Link>
           ))}
         </section>

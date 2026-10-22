@@ -77,7 +77,7 @@ function said(parts: readonly DescribedPart[]): string {
         case "list":
           if (part.groups.length === 0 && part.empty) out.push(part.empty);
           for (const group of part.groups) {
-            if (group.heading) out.push(group.heading);
+            if (group.heading) out.push(group.heading, ...(group.count !== undefined ? [String(group.count)] : []));
             for (const item of group.items) {
               out.push(item.title);
               walk(item.parts);
@@ -155,8 +155,8 @@ describe("FR-89: each LifeLogics place says, at a phone's width, the words its f
       "$21,000 — The package we recommend, after the discount",
       "- The small start",
     ]);
-    expect(text).toContain("The way in:");
-    expect(text).toContain("For afterwards:");
+    expect(text).toMatch(/^The way in \(\d+\):$/m);
+    expect(text).toMatch(/^For afterwards \(\d+\):$/m);
   });
 
   it("a card list is one column on a phone and several on a desk", () => {
