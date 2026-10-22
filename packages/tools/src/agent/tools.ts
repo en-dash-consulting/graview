@@ -30,6 +30,7 @@ import {
   type Store,
   type SubscriptionStore,
   type Violation,
+  type HostView,
 } from "@graview/core";
 import { answerSeenBy } from "@graview/core/seat";
 import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/tidying";
@@ -280,6 +281,8 @@ export interface DraftTools {
   readonly complete?: (prompt: string) => Promise<string>;
   /** Write the `add-lens` edit into the app's declaration (a document host's write); absent, `keep_lens` is not listed. */
   readonly keep?: (edit: KeptLensEdit) => Promise<{ readonly ok: true; readonly said?: string } | { readonly ok: false; readonly error: string }>;
+  /** The views the host keeps: a titled one's place is a title a draft does not take. */
+  readonly views?: readonly HostView[];
 }
 
 const read =(title: string): ToolAnnotations => ({ title, readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });

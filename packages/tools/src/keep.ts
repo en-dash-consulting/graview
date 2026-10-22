@@ -1,3 +1,4 @@
+import { lowerFirst } from "@graview/core/words";
 import { pluralOf, type AnySchema, type AppPlace, type GraviewApp, type LensDeclaration, type ShippedLensName } from "@graview/core";
 import { placesOf } from "@graview/core/seat";
 import { checkApp, compileDocument } from "@graview/core/check";
@@ -18,7 +19,7 @@ import { lensEditOf, takeBackEditOf, type AddLensEdit, type RemoveLensEdit } fro
  * (`onKeepLens`).
  */
 
-const pluralWords = (schema: AnySchema, kind: string): string => pluralOf(schema, kind).toLowerCase();
+const pluralWords = (schema: AnySchema, kind: string): string => lowerFirst(pluralOf(schema, kind));
 
 /** What a lens is kept in: the document an app was compiled from, or the app as it was declared in code. */
 export type LensHolder<S extends AnySchema = AnySchema> = { readonly document: GraviewDocument } | { readonly app: GraviewApp<S> };
@@ -85,7 +86,12 @@ async function changeLenses<S extends AnySchema>(holder: LensHolder<S>, edit: Ad
   const lenses = app.lenses ?? [];
   let next: readonly LensDeclaration[];
   if (adding) {
-    if (lenses.some((lens) => lens.title === edit.title)) return refused([{ path: "lenses", message: `there is already a lens called “${edit.title}”` }]);
+    const held = lenses.find((lens) => lens.title === edit.title);
+    if (held) {
+      const over = held.on ? ` over ${pluralWords(app.schema as AnySchema, held.on)}` : "";
+      const hidden = held.hidden ? ", kept off the bar and the page list, which still holds its title and its address" : "";
+      return refused([{ path: "lenses", message: `there is already a lens called “${edit.title}” — the ${held.name ?? "blocks"} lens${over}${hidden}; give this one a title of its own` }]);
+    }
     next = [...lenses, { name: edit.lens, title: edit.title, on: edit.on, ...(edit.bindings ? { bindings: edit.bindings } : {}), ...(edit.options ? { options: edit.options } : {}) } as LensDeclaration];
   } else {
     const index = lenses.findIndex((lens) => lens.title === edit.title && (edit.on === undefined || lens.on === undefined || lens.on === edit.on));

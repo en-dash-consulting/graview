@@ -8,6 +8,7 @@ import {
   type AnySchema,
   type DrawnLens,
   type GraviewApp,
+  type HostView,
   type LensDeclaration,
   type Principal,
   type ShippedLensName,
@@ -158,6 +159,8 @@ export interface DraftOptions<S extends AnySchema = AnySchema> {
   readonly complete?: Completion;
   /** The draft on screen: kept when this ask cannot be drawn. */
   readonly lastGood?: SeatDraft;
+  /** The views the host keeps: a titled one's place is a title a draft does not take. */
+  readonly views?: readonly HostView[];
 }
 
 // ── sight ───────────────────────────────────────────────────────────────────
@@ -644,9 +647,10 @@ function lensOf(recipe: DraftRecipe, title: string): DraftLens {
 }
 
 /** A title no place of the app already has: the draft's own, or numbered after it. */
-function freeTitle<S extends AnySchema>(title: string, app: GraviewApp<S>): string {
+function freeTitle<S extends AnySchema>(title: string, options: DraftOptions<S>): string {
+  const { app } = options;
   const slug = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "");
-  const taken = new Set(["home", "overview", ...placesOf(app).map((place) => place.slug), ...(app.lenses ?? []).flatMap((lens) => (lens.title ? [slug(lens.title)] : []))]);
+  const taken = new Set(["home", "overview", ...placesOf(app, options.views ? { views: options.views } : {}).map((place) => place.slug), ...(app.lenses ?? []).flatMap((lens) => (lens.title ? [slug(lens.title)] : []))]);
   if (!taken.has(slug(title))) return title;
   for (let n = 2; ; n++) if (!taken.has(slug(`${title} ${n}`))) return `${title} ${n}`;
 }
@@ -913,7 +917,7 @@ export function draftAnswer(draft: SeatDraft): Readonly<Record<string, unknown>>
 
 function fromRecipe<S extends AnySchema>(recipe: DraftRecipe, reading: Reading, options: DraftOptions<S>, asks: readonly string[], keepTitle?: string): DraftResult {
   const named = titled(recipe, reading);
-  const title = recipe.title ?? keepTitle ?? freeTitle(named.title, options.app);
+  const title = recipe.title ?? keepTitle ?? freeTitle(named.title, options);
   const lens = lensOf(recipe, title);
   const judged = judgeLens(options.app, lens, options.sight);
   if (!judged.ok) return { failed: judged.failed, ...(options.lastGood ? { lastGood: options.lastGood } : {}) };
@@ -933,7 +937,7 @@ export function recipeDraft<S extends AnySchema>(recipe: DraftRecipe, options: D
   const info = reading.info(recipe.kind);
   if (!info) return { failed: "Couldn't draw that: Nothing by that name here." };
   const plain = recipe.lens === "blocks" && !recipe.group && !recipe.sort && !recipe.where?.length && recipe.title === undefined;
-  return fromRecipe(plain ? { ...recipe, title: freeTitle(`Every ${info.noun}`, options.app) } : recipe, reading, options, []);
+  return fromRecipe(plain ? { ...recipe, title: freeTitle(`Every ${info.noun}`, options) } : recipe, reading, options, []);
 }
 
 // ── drafting ────────────────────────────────────────────────────────────────
@@ -1036,7 +1040,7 @@ export async function refineDraft<S extends AnySchema>(draft: SeatDraft, ask: st
     if (retitled) {
       const said = ask.replace(/^.*?\b(?:call|name|title)\b\s*(?:it|this)?\s*/i, "").replace(/^["“']|["”']$/g, "").trim();
       if (said.length === 0) return { failed: "Couldn't change that: say what to call it.", ...keep };
-      const lens = { ...draft.lens, title: freeTitle(said, options.app) };
+      const lens = { ...draft.lens, title: freeTitle(said, options) };
       const judged = judgeLens(options.app, lens, options.sight);
       if (!judged.ok) return { failed: judged.failed, ...keep };
       return { ...draft, title: lens.title, lens, drawn: judged.drawn, edit: lensEditOf(lens), asks, ...(recipe ? { recipe: { ...recipe, title: lens.title } } : {}) };
@@ -1162,7 +1166,7 @@ async function modelDraft<S extends AnySchema>(ask: string, options: DraftOption
   const written = lensFromSpec(said);
   if (!isShippedLens(written.name)) return { failed: `Couldn't draw that: "${written.name}" is not a picture the seat can draw.`, ...keep };
   const title = written.title ? written.title.slice(0, 80) : (current?.title ?? capitalize(ask.trim()).slice(0, 80));
-  const lens: DraftLens = { ...written, title: current && current.title === title ? title : freeTitle(title, options.app) };
+  const lens: DraftLens = { ...written, title: current && current.title === title ? title : freeTitle(title, options) };
   const judged = judgeLens(options.app, lens, options.sight);
   if (!judged.ok) return { failed: judged.failed, ...keep };
   const drafted = draftFromLens(options.app, lens, judged.drawn, options.sight, "model");
@@ -1218,7 +1222,7 @@ export async function runDraftTool<S extends AnySchema>(
     if (!verdict.ok) return { ok: false, error: verdict.failed, reason: "invalid" };
     return { ok: true, data: draftAnswer(draftFromLens(app, lens, verdict.drawn, sight, "model")) };
   }
-  const options = { app, sight, ...(drafts?.complete ? { complete: drafts.complete } : {}) };
+  const options = { app, sight, ...(drafts?.complete ? { complete: drafts.complete } : {}), ...(drafts?.views ? { views: drafts.views } : {}) };
   const ask = String(args["ask"] ?? "");
   let result: DraftResult;
   if (args["current"] !== undefined) {
