@@ -1,5 +1,12 @@
 # @graview/layout
 
+## 0.1.47
+
+### Patch Changes
+
+- Updated dependencies [6d84721]
+  - @graview/core@0.1.47
+
 ## 0.1.46
 
 ### Patch Changes

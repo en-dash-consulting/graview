@@ -50,7 +50,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.46
 
-Published October 22, 2026 · the current version
+Published October 22, 2026
 
 Built-in views share one type scale and one heading per page, a view's own place flows with the page, and the home may keep the line under the name off.
 
