@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.46",
+      "date": "2026-10-22",
+      "headline": "Built-in views share one type scale and one heading per page, a view's own place flows with the page, and the home may keep the line under the name off.",
+      "summary": "- **Built-in views look designed.** Place headers, blocks lenses, grouped lists, kind lists and record pages share one type scale, one left edge and one heading. A lens's headline becomes the line under the page's title instead of a second heading; a group's heading is its label and its count; a record's name in a row or card is set in the text face; choices in a line of facts are drawn as small chips; spacing follows a 4px scale, given as `--graview-space-1` … `--graview-space-7`.\n- **A view's place flows with the page.** A titled worker view at `/places/<slug>` is no longer drawn in a fixed-height frame that scrolls inside itself, which trapped the thumb on a phone. A calendar, a board and the other pictures keep their frame.\n- **The home may keep its line off.** `brand.subtitle: false` keeps the description from being drawn under the app's name on the home, so a home view with its own hero no longer says everything twice. The description stays the app's, in its listings and on the name's hover.",
+      "compatibility": "Additive in the declaration: `brand.subtitle`, optional and only `false`; a build that predates it refuses a document that carries it. Additive in the API: `Brand.subtitleDrawn`, the `set-brand` edit's `subtitle`, `PlacePageHead` on `@graview/primitives/pages`, `runs` on a resolved text block whose facts name a choice field, `count` on a grouped list's group in `describe_place`, and the `--graview-space-*` tokens. A titled worker view's place no longer scrolls inside itself. Ops, stored formats, the wire and the derived tools are unchanged.",
+      "published": true
+    },
+    {
       "version": "0.1.45",
       "date": "2026-10-22",
       "headline": "A form for a visitor, cards that open on a phone's tap, and views that link out, bleed and stack their stylesheets.",
