@@ -132,7 +132,7 @@ describe("an edit refuses a field another act writes, naming that act", () => {
   });
 
   it("an argument no act writes is still said as one it does not take", () => {
-    expect(() => store().apply({ name: "edit-threat", args: { id: "t1", colour: "red" } })).toThrow(/does not take "colour"/);
+    expect(() => store().apply({ name: "edit-threat", args: { id: "t1", hue: "red" } })).toThrow(/does not take "hue"/);
   });
 });
 
