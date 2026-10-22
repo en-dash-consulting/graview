@@ -1,26 +1,26 @@
 # The hosted page's weight
 
-What Graview Cloud's app shell loads from the framework before the app draws — `openRemote` plus the embed over a compiled document, built as Cloud builds it (esbuild, split, minified) — is **545.1 KB** up front (188.9 KB gzipped), against a budget of 545.2 KB (189.0 gzipped): **0.1 KB of headroom**, and 54.9 KB under the 600 KB Graview Cloud's brief set. 34.0 KB of it is zod (at most 150.0). The budget is its base raised by `a-grant-to-make-a-kind-takes-out-only-what-you-made-a-hosted-page.json`, `the-0-1-30-wave-a-hosted-page.json`, `the-tenth-walk-a-hosted-page.json`.
+What Graview Cloud's app shell loads from the framework before the app draws — `openRemote` plus the embed over a compiled document, built as Cloud builds it (esbuild, split, minified) — is **580.2 KB** up front (201.7 KB gzipped), against a budget of 580.2 KB (202.2 gzipped): **0.0 KB of headroom**, and 19.8 KB under the 600 KB Graview Cloud's brief set. 34.7 KB of it is zod (at most 150.0). The budget is its base raised by `a-board-moves-without-buttons-a-hosted-page.json`, `a-change-from-elsewhere-is-heard-a-hosted-page.json`, `a-change-is-said-in-words-a-hosted-page.json`, `a-compacted-store-serves-no-unseen-id-hosted-page.json`, `a-draft-view-is-swapped-in-place-a-hosted-page.json`, `a-drop-reads-upload-at-a-hosted-page.json`, `a-form-for-a-visitor-a-hosted-page.json`, `a-frame-guest-holds-back-the-drawn-signal-a-hosted-page.json`, `a-grant-to-make-a-kind-takes-out-only-what-you-made-a-hosted-page.json`, `a-kept-view-is-a-place-in-the-nav-hosted-page.json`, `a-logo-for-each-scheme-a-hosted-page.json`, `a-long-headline-a-hosted-page.json`, `a-page-opened-on-a-draft-view-a-hosted-page.json`, `a-page-opens-on-a-short-tail-a-hosted-page.json`, `a-part-is-waited-for-until-it-has-drawn-a-hosted-page.json`, `a-place-is-tidied-from-its-menu-a-hosted-page.json`, `a-record-holds-a-video-a-hosted-page.json`, `a-rules-today-is-the-apps-day-hosted-page.json`, `a-view-that-bleeds-a-hosted-page.json`, `a-views-place-flows-a-hosted-page.json`, `a-visitor-is-told-how-to-get-in-hosted-page.json`, `an-edge-sign-steps-past-a-districts-name-a-hosted-page.json`, `blocks-lay-out-as-written-a-hosted-page.json`, `built-in-views-look-designed-a-hosted-page.json`, `dates-and-the-quick-ask-together-a-hosted-page.json`, `datetimes-in-the-apps-time-zone-hosted-page.json`, `every-relation-comes-with-its-connect-and-disconnect-hosted-page.json`, `first-draw-chunks-hosted-page.json`, `inline-ai-finish-hosted-page.json`, `lenses-and-views-a-hosted-page.json`, `navigate-filters-and-hidden-lenses-a-hosted-page.json`, `nothing-stands-over-a-control-a-hosted-page.json`, `ops-carry-their-value-once-hosted-page.json`, `playback-reads-the-archive-a-hosted-page.json`, `templates-cards-and-bar-a-hosted-page.json`, `the-0-1-30-wave-a-hosted-page.json`, `the-0-1-30-wave-second-half-a-hosted-page.json`, `the-0-1-37-batch-and-the-walk-merged-a-hosted-page.json`, `the-0-1-37-batch-merged-a-hosted-page.json`, `the-0-1-37-harness-reds-hosted-page.json`, `the-0-1-42-batch-merged-hosted-page.json`, `the-bar-holds-still-a-hosted-page.json`, `the-document-builds-its-shapes-on-first-use-hosted-page.json`, `the-first-load-waits-on-less-a-hosted-page.json`, `the-inline-ai-a-hosted-page.json`, `the-keyboard-reaches-a-long-list-a-hosted-page.json`, `the-lazy-past-declaration-a-hosted-page.json`, `the-notify-me-a-hosted-page.json`, `the-page-says-when-a-place-has-drawn-a-hosted-page.json`, `the-quick-ask-a-hosted-page.json`, `the-scene-opens-on-the-overview-a-hosted-page.json`, `the-scene-strip-tells-the-watch-a-hosted-page.json`, `the-scene-under-a-hosts-bar-a-hosted-page.json`, `the-tenth-walk-a-hosted-page.json`, `the-twelfth-walk-hosted-page.json`, `views-take-a-drop-hosted-page.json`.
 
 | Package | Up front (KB, minified) |
 | --- | ---: |
-| @graview/core | 196.3 |
-| react-dom | 176.2 |
-| @graview/primitives | 43.2 |
-| zod | 34.0 |
-| @graview/react | 31.3 |
-| @graview/embed | 20.0 |
-| @graview/ship | 17.2 |
+| @graview/core | 216.9 |
+| react-dom | 176.3 |
+| @graview/primitives | 47.3 |
+| zod | 34.7 |
+| @graview/react | 34.5 |
+| @graview/embed | 25.0 |
+| @graview/ship | 17.4 |
 | react | 7.9 |
 | @graview/layout | 4.2 |
 | scheduler | 3.6 |
-| @graview/guest | 2.0 |
+| @graview/guest | 2.1 |
 | (the page) | 0.6 |
-| @graview/tools | 0.1 |
-| **Total** | **545.1** |
+| @graview/tools | 0.3 |
+| **Total** | **580.2** |
 
-Before a face draws, with what it fetches as it is first drawn: the scene 883.3 KB (338.2 KB fetched), the pages 854.9 KB (309.7 KB fetched).
+Before a face draws, with what it fetches as it is first drawn: the scene 969.6 KB (389.4 KB fetched), the pages 953.8 KB (373.6 KB fetched).
 
-Handed the compiled app its server made (`appFromOrCompile` from `@graview/core/compiled`, FR-123), the same page loads **501.5 KB** up front (173.5 KB gzipped) against a budget of 501.6 KB — 43.6 KB less, with no compiler in it.
+Handed the compiled app its server made (`appFromOrCompile` from `@graview/core/compiled`, FR-123), the same page loads **533.0 KB** up front (185.1 KB gzipped) against a budget of 533.0 KB — 47.2 KB less, with no compiler in it.
 
-Before its doors were tied to what it draws first and what draws a notice came to be fetched with the first (the headroom after 0.1.29, again), the page that compiles its document loaded 536.8 KB up front (187.9 KB gzipped) and the page handed a compiled app 495.6 KB (173.5 KB gzipped): -8.3 KB (-1.0 KB gzipped) and -5.9 KB (0.0 KB gzipped) less now.
+Before its doors were tied to what it draws first and what draws a notice came to be fetched with the first (the headroom after 0.1.29, again), the page that compiles its document loaded 536.8 KB up front (187.9 KB gzipped) and the page handed a compiled app 495.6 KB (173.5 KB gzipped): -43.4 KB (-13.8 KB gzipped) and -37.4 KB (-11.7 KB gzipped) less now.

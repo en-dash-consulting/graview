@@ -1,5 +1,5 @@
 import type { AnySchema, Brand, Person, Principal, Store } from "@graview/core";
-import { ErrorReportContext, GraviewProvider, type Scheme } from "@graview/react/provider";
+import { createPartsWatch, ErrorReportContext, GraviewProvider, PartsWatchContext, type Scheme } from "@graview/react/provider";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDrawnSignal } from "./drawn.js";
 import { draftWaits, fetchDraftHost, Settling, useDraft, type EmbedDraftView } from "./draft.js";
@@ -79,7 +79,9 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
   // Where the routed face is, said by its router, for the bar's tabs; and the bar's presses, taken by it (FR-131).
   const { at, steering, steer } = useSteering(address && typeof window !== "undefined" ? `${pathWithin(window.location.pathname, props.basePath) ?? "/"}${window.location.search}` : (props.path ?? "/"));
   // Said on the root once the page has drawn and settled, and off in the commit that moves or swaps the draft (FR-188).
-  useDrawnSignal(rootRef, `${at} ${draft.n}`, { face: "pages", path: at, stop: "#" }, props.onDrawn);
+  // The parts each page waits for until they have drawn, not only until their modules arrived.
+  const [parts] = useState(createPartsWatch);
+  useDrawnSignal(rootRef, `${at} ${draft.n}`, { face: "pages", path: at, stop: "#" }, props.onDrawn, parts);
   const [barFind, setBarFind] = useState<BarFind | null>(null);
   // The board the app speaks on, the host's or the frame's own: the one drawn is the one the face says things on.
   const [ownBoard] = useState(createNoticeBoard);
@@ -99,6 +101,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
         <FrameNotices rootRef={rootRef} board={notices} />
         <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} />
         <FaceBoundary module="@graview/react" report={report} content>
+          <PartsWatchContext.Provider value={parts}>
           <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
             {bar ? (
               <FaceBoundary module="@graview/embed" report={report}>
@@ -124,6 +127,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
               </NoticeBoardContext.Provider>
             </BarFindContext.Provider>
           </GraviewProvider>
+          </PartsWatchContext.Provider>
         </FaceBoundary>
       </ErrorReportContext.Provider>
     </section>

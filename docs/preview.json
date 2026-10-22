@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T00:57:26.722Z",
+  "at": "2026-10-22T14:39:05.522Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/org.gdd.json",
   "seed": "packages/core/tests/document/fixtures/org.seed.json",
@@ -17,12 +17,12 @@
     "theSceneDrawsTheGraphAtTheOverviewsAddress": {
       "first": {
         "sceneOn": true,
-        "districts": 313,
+        "districts": 319,
         "path": "/places/overview"
       },
       "again": {
         "sceneOn": true,
-        "districts": 313,
+        "districts": 319,
         "path": "/places/overview"
       },
       "ok": true
@@ -35,7 +35,7 @@
     },
     "shotsWritesAPngForEachNamedPlace": {
       "status": 0,
-      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-0cAVgc",
+      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-Vt1Onm",
       "pngs": [
         true,
         true,
@@ -48,14 +48,109 @@
       "said": "graview shots: En Dash Org has no place called \"nowhere\". Its places: home, overview, people, components, constraints, revenue-streams, open-questions, strengths, or a path such as /places/overview.",
       "ok": true
     },
+    "shotsPicturesAnAppInCodeAndItsDraftByTitle": {
+      "status": 0,
+      "said": "graview shots: 2 pictures of Survey in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-Vt1Onm/in-code",
+      "pngs": [
+        true,
+        true
+      ],
+      "ok": true
+    },
+    "aLensPlacesPictureShowsTheLensContent": {
+      "status": 0,
+      "said": "graview shots: 2 pictures of Threat Watch in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-Vt1Onm/lens",
+      "pictures": {
+        "what-to-do": {
+          "written": true,
+          "inkedRowsUnderTheHead": 309,
+          "ok": true
+        },
+        "active-now": {
+          "written": true,
+          "inkedRowsUnderTheHead": 292,
+          "ok": true
+        }
+      },
+      "ok": true
+    },
+    "aVisitorAnswersAFormAndSeesNoOtherRecord": {
+      "widths": {
+        "390": {
+          "failed": null,
+          "title": "RSVP",
+          "fields": [
+            "name",
+            "email",
+            "coming",
+            "note"
+          ],
+          "bar": 0,
+          "links": 0,
+          "sideways": false,
+          "received": true,
+          "status": "Received — thank you.Thank you — the hosts will write to you a week before.",
+          "focused": "status",
+          "landed": {
+            "kind": "guest",
+            "coming": "maybe"
+          },
+          "shown": [],
+          "leaked": [],
+          "ok": true
+        },
+        "1440": {
+          "failed": null,
+          "title": "RSVP",
+          "fields": [
+            "name",
+            "email",
+            "coming",
+            "note"
+          ],
+          "bar": 0,
+          "links": 0,
+          "sideways": false,
+          "received": true,
+          "status": "Received — thank you.Thank you — the hosts will write to you a week before.",
+          "focused": "status",
+          "landed": {
+            "kind": "guest",
+            "coming": "maybe"
+          },
+          "shown": [],
+          "leaked": [],
+          "ok": true
+        }
+      },
+      "authors": [
+        {
+          "kind": "human",
+          "id": "form:16787f71-bea6-4144-ba8a-a0bd34fec094",
+          "roles": [
+            "visitor"
+          ],
+          "name": "a visitor via the RSVP form"
+        },
+        {
+          "kind": "human",
+          "id": "form:6dc974fa-5489-4657-a0e9-701e342776b3",
+          "roles": [
+            "visitor"
+          ],
+          "name": "a visitor via the RSVP form"
+        }
+      ],
+      "ok": true
+    },
     "noPageThrew": {
       "errors": [],
       "ok": true
     }
   },
   "said": [
-    "graview preview: En Dash Org on http://127.0.0.1:5810",
-    "  Pages: http://127.0.0.1:5810/   the scene: http://127.0.0.1:5810/places/overview",
+    "graview preview: En Dash Org on http://127.0.0.1:5910",
+    "  Pages: http://127.0.0.1:5910/   the scene: http://127.0.0.1:5910/places/overview",
     "  data: in memory, gone when the preview stops",
     "  sits as You",
     "  53 nodes. Ctrl-C stops it."

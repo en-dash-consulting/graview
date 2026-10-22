@@ -4,7 +4,7 @@ import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } f
 import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { afterFirstDraw, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, useNavigation, type ErrorReport, type PageDoor, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { afterFirstDraw, createPartsWatch, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, PartsWatchContext, useNavigation, type ErrorReport, type PageDoor, type PartsWatch, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
@@ -387,6 +387,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
   const draft = useDraft(props.draftView);
   const views = useViews<S>(props, frameworkViewDoors, draft.over) as never;
+  // The parts each place this embed draws waits for until they have drawn (FR-188).
+  const [parts] = useState(createPartsWatch);
   /*
    * THE FACE IT OPENS ON (FR-136). When the host names none: the home, when
    * the app has a home view and the declaration names no other first place
@@ -613,11 +615,12 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
       {/* A first look at the app's own controls, once, over whichever face is drawn. */}
       <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} />
       <FaceBoundary module="@graview/react" report={report} content>
+      <PartsWatchContext.Provider value={parts}>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
         <NoticeBoardContext.Provider value={notices}>
         <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} opens={opens} />
         {whereabouts ? <Watch into={whereabouts} /> : null}
-        <DrawnSignal rootRef={rootRef} face={face} shown={shown} path={pageAt} stop={stop} draft={draft.n} onDrawn={props.onDrawn} />
+        <DrawnSignal rootRef={rootRef} face={face} shown={shown} path={pageAt} stop={stop} draft={draft.n} onDrawn={props.onDrawn} parts={parts} />
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
         {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} opens={opens} landed={landed} /> : null}
         {/*
@@ -680,6 +683,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
         </BarFindContext.Provider>
         </NoticeBoardContext.Provider>
       </GraviewProvider>
+      </PartsWatchContext.Provider>
       </FaceBoundary>
       </ErrorReportContext.Provider>
     </section>
@@ -710,13 +714,13 @@ function Watch({ into }: { readonly into: Whereabouts }) {
  * handed (`setDraftView`), so the attribute comes off in the commit that
  * moved and goes back on once the new place settles.
  */
-function DrawnSignal({ rootRef, face, shown, path, stop, draft, onDrawn }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly face: EmbedFace; readonly shown: EmbedFace; readonly path: string; readonly stop: string | undefined; readonly draft: number; readonly onDrawn: EmbedOptions["onDrawn"] }) {
+function DrawnSignal({ rootRef, face, shown, path, stop, draft, onDrawn, parts }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly face: EmbedFace; readonly shown: EmbedFace; readonly path: string; readonly stop: string | undefined; readonly draft: number; readonly onDrawn: EmbedOptions["onDrawn"]; readonly parts: PartsWatch }) {
   const { view } = useNavigation();
   const onScene = shown === "scene" || shown === "graview";
   const sceneStop = toUrl(view);
   // Where the reader is, as `where()` says it: the overview's path on the scene, with its stop.
   const place: EmbedWhere = { face, path: onScene ? OVERVIEW_PATH : shown === "picture" ? (stop ?? "#") : path, stop: sceneStop };
-  useDrawnSignal(rootRef, `${shown} ${onScene ? sceneStop : place.path} ${draft}`, place, onDrawn);
+  useDrawnSignal(rootRef, `${shown} ${onScene ? sceneStop : place.path} ${draft}`, place, onDrawn, parts);
   return null;
 }
 

@@ -1,9 +1,9 @@
 import type { AnySchema } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import { isTakeBackKey, lastChangeOf, takeBackLast, takeBackWords, type LastChange } from "@graview/primitives/pages";
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useLocation } from "react-router-dom";
-import { partArriving } from "@graview/react/provider";
+import { lazyPart } from "@graview/react/provider";
 import { createPortal } from "react-dom";
 import { useBarFind } from "@graview/primitives/pages";
 import { PagesActivity } from "./pages-activity.js";
@@ -41,7 +41,7 @@ export type { FaceControl } from "./face-placed.js";
 export { lastChangeOf, takeBackWords, type LastChange };
 
 /** The way back, behind its door (take-back.tsx). */
-const TakeBack = lazy(partArriving(retryingImport(() => import("./take-back.js").then((module) => ({ default: module.TakeBack })))));
+const TakeBack = lazyPart(retryingImport(() => import("./take-back.js").then((module) => ({ default: module.TakeBack }))));
 
 /**
  * THE WAY BACK, on the routed face: one control that says what it takes

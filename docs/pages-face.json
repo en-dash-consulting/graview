@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T01:05:58.848Z",
+  "at": "2026-10-22T14:39:05.404Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -93,7 +93,6 @@
           "path": "/pages/tasks",
           "width": 1440,
           "under": 48,
-          "seatFromTheFoot": 16,
           "relatedRepeats": [],
           "first": 242,
           "fromTop": 194,
@@ -104,10 +103,8 @@
           "scrolls": false,
           "end": {
             "end": 761,
-            "feet": [
-              846
-            ],
-            "last": "button act-open-add-task",
+            "feet": [],
+            "last": "li record-row",
             "ok": true
           }
         },
@@ -116,7 +113,6 @@
           "path": "/pages/reasons",
           "width": 1440,
           "under": 48,
-          "seatFromTheFoot": 16,
           "relatedRepeats": [],
           "first": 203,
           "fromTop": 155,
@@ -127,9 +123,7 @@
           "scrolls": false,
           "end": {
             "end": 267,
-            "feet": [
-              846
-            ],
+            "feet": [],
             "last": "li record-row",
             "ok": true
           }
@@ -139,21 +133,18 @@
           "path": "/pages/tasks",
           "width": 390,
           "under": 93,
-          "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 367,
-          "fromTop": 274,
+          "first": 361,
+          "fromTop": 268,
           "lines": 1,
           "selects": 0,
           "count": "10 of 12 tasks",
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 715,
-            "feet": [
-              790
-            ],
-            "last": "button act-open-add-task",
+            "end": 721,
+            "feet": [],
+            "last": "li record-row",
             "ok": true
           }
         },
@@ -162,20 +153,17 @@
           "path": "/pages/reasons",
           "width": 390,
           "under": 93,
-          "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 248,
-          "fromTop": 155,
+          "first": 243,
+          "fromTop": 150,
           "lines": 1,
           "selects": 0,
           "count": "1 reason",
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 341,
-            "feet": [
-              790
-            ],
+            "end": 335,
+            "feet": [],
             "last": "li record-row",
             "ok": true
           }
@@ -406,6 +394,7 @@
     "onAPhoneALongPressChoosesAndOneActDoesThree": {
       "atRest": 0,
       "pressed": {
+        "how": "touch",
         "said": "1 task chosen",
         "path": "/pages/tasks"
       },
@@ -504,20 +493,25 @@
       "bigEnoughToHit": []
     },
     "theAssistantIsOnThePage": {
-      "said": "\"Pay the deposit\" was due Aug 28, 2026.",
-      "offers": [
-        "What's wrong with Pay the deposit?",
-        "Tasks due this week",
-        "Show tasks as a board by day"
+      "askBox": false,
+      "about": "About Pay the deposit",
+      "beside": "page",
+      "rows": [
+        "act",
+        "act",
+        "act",
+        "act",
+        "show",
+        "show",
+        "show",
+        "place",
+        "place",
+        "place"
       ],
       "ok": true
     },
     "aGroundedQuestionIsAnswered": {
-      "answered": "Went to Pay the deposit. Pay the deposit — a task (not finished, due Aug 28, 2026, day Tue). The list it is on: Today. Why this is here: The landlord holds the ",
-      "ok": true
-    },
-    "aProposalAppliesFromThePage": {
-      "said": "y this is here: The landlord holds the date for 48 hours once the deposit…. Trouble: \"Pay the deposit\" was due Aug 28, 2026.Finish \"Pay the deposit\"Do itNot now",
+      "answered": "About Pay the deposit: an answer to “what is left to do here?”, as drafted.",
       "ok": true
     },
     "phoneAsk": {
@@ -559,15 +553,205 @@
       "note": "Who looks after it: June×",
       "ok": true
     },
+    "aRecordPageSaysWhereItIs": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "width": 390,
+          "trails": 1,
+          "links": [
+            {
+              "words": "Gardeners",
+              "href": "/pages/gardeners"
+            }
+          ],
+          "current": "June",
+          "heading": "June",
+          "currentOutOfSight": true,
+          "oneLine": true,
+          "noSideScroll": true,
+          "went": {
+            "path": "/pages/gardeners",
+            "heading": "Gardeners"
+          },
+          "inSection": {
+            "steps": [
+              "The garden",
+              "Plantings"
+            ],
+            "links": [
+              "/pages/plantings"
+            ],
+            "current": "Beans",
+            "oneLine": true
+          }
+        },
+        {
+          "engine": "chromium",
+          "width": 1440,
+          "trails": 1,
+          "links": [
+            {
+              "words": "Gardeners",
+              "href": "/pages/gardeners"
+            }
+          ],
+          "current": "June",
+          "heading": "June",
+          "currentOutOfSight": true,
+          "oneLine": true,
+          "noSideScroll": true,
+          "went": {
+            "path": "/pages/gardeners",
+            "heading": "Gardeners"
+          },
+          "inSection": {
+            "steps": [
+              "The garden",
+              "Plantings"
+            ],
+            "links": [
+              "/pages/plantings"
+            ],
+            "current": "Beans",
+            "oneLine": true
+          }
+        },
+        {
+          "engine": "webkit",
+          "width": 390,
+          "trails": 1,
+          "links": [
+            {
+              "words": "Gardeners",
+              "href": "/pages/gardeners"
+            }
+          ],
+          "current": "June",
+          "heading": "June",
+          "currentOutOfSight": true,
+          "oneLine": true,
+          "noSideScroll": true,
+          "went": {
+            "path": "/pages/gardeners",
+            "heading": "Gardeners"
+          },
+          "inSection": {
+            "steps": [
+              "The garden",
+              "Plantings"
+            ],
+            "links": [
+              "/pages/plantings"
+            ],
+            "current": "Beans",
+            "oneLine": true
+          }
+        },
+        {
+          "engine": "webkit",
+          "width": 1440,
+          "trails": 1,
+          "links": [
+            {
+              "words": "Gardeners",
+              "href": "/pages/gardeners"
+            }
+          ],
+          "current": "June",
+          "heading": "June",
+          "currentOutOfSight": true,
+          "oneLine": true,
+          "noSideScroll": true,
+          "went": {
+            "path": "/pages/gardeners",
+            "heading": "Gardeners"
+          },
+          "inSection": {
+            "steps": [
+              "The garden",
+              "Plantings"
+            ],
+            "links": [
+              "/pages/plantings"
+            ],
+            "current": "Beans",
+            "oneLine": true
+          }
+        },
+        {
+          "engine": "firefox",
+          "width": 390,
+          "trails": 1,
+          "links": [
+            {
+              "words": "Gardeners",
+              "href": "/pages/gardeners"
+            }
+          ],
+          "current": "June",
+          "heading": "June",
+          "currentOutOfSight": true,
+          "oneLine": true,
+          "noSideScroll": true,
+          "went": {
+            "path": "/pages/gardeners",
+            "heading": "Gardeners"
+          },
+          "inSection": {
+            "steps": [
+              "The garden",
+              "Plantings"
+            ],
+            "links": [
+              "/pages/plantings"
+            ],
+            "current": "Beans",
+            "oneLine": true
+          }
+        },
+        {
+          "engine": "firefox",
+          "width": 1440,
+          "trails": 1,
+          "links": [
+            {
+              "words": "Gardeners",
+              "href": "/pages/gardeners"
+            }
+          ],
+          "current": "June",
+          "heading": "June",
+          "currentOutOfSight": true,
+          "oneLine": true,
+          "noSideScroll": true,
+          "went": {
+            "path": "/pages/gardeners",
+            "heading": "Gardeners"
+          },
+          "inSection": {
+            "steps": [
+              "The garden",
+              "Plantings"
+            ],
+            "links": [
+              "/pages/plantings"
+            ],
+            "current": "Beans",
+            "oneLine": true
+          }
+        }
+      ],
+      "ok": true
+    },
     "theDerivedListArrangesOnOneQuietLine": {
       "heads": [
         {
           "width": 1440,
           "under": 48,
-          "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 230,
-          "fromTop": 182,
+          "first": 258,
+          "fromTop": 210,
           "lines": 1,
           "selects": 0,
           "count": "1 planting",
@@ -577,10 +761,9 @@
         {
           "width": 390,
           "under": 93,
-          "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 329,
-          "fromTop": 236,
+          "first": 352,
+          "fromTop": 259,
           "lines": 1,
           "selects": 0,
           "count": "1 planting",
@@ -678,7 +861,7 @@
           "selects": 0,
           "eyebrow": false,
           "indexCut": false,
-          "jumped": 64
+          "jumped": 65
         }
       ],
       "ok": true
@@ -743,8 +926,8 @@
           "root": 16,
           "longerThanTwoLines": 0,
           "heights": [
-            61,
-            79
+            62,
+            80
           ]
         },
         {
@@ -762,7 +945,7 @@
           "root": 32,
           "longerThanTwoLines": 0,
           "heights": [
-            196
+            199
           ]
         }
       ],
@@ -772,22 +955,20 @@
       "seen": {
         "glances": 60,
         "xs": [
-          831
+          817
         ]
       },
       "ok": true
     },
-    "theLastRowScrollsClearOfTheAskBox": {
+    "theLastRowScrollsClearOfTheFoot": {
       "seen": [
         {
           "path": "/pages/sessions?group=day&sort=label",
           "width": 1440,
           "root": 16,
           "end": 745,
-          "feet": [
-            846
-          ],
-          "last": "button act-open-add-session",
+          "feet": [],
+          "last": "li 2026 · Day 3 · Morning · Track D — Secur",
           "ok": true
         },
         {
@@ -795,10 +976,8 @@
           "width": 1440,
           "root": 16,
           "end": 745,
-          "feet": [
-            846
-          ],
-          "last": "button act-open-submit-talk",
+          "feet": [],
+          "last": "a past-link",
           "ok": true
         },
         {
@@ -806,10 +985,8 @@
           "width": 390,
           "root": 16,
           "end": 689,
-          "feet": [
-            790
-          ],
-          "last": "button act-open-add-session",
+          "feet": [],
+          "last": "li 2026 · Day 3 · Morning · Track D — Secur",
           "ok": true
         },
         {
@@ -817,10 +994,8 @@
           "width": 390,
           "root": 16,
           "end": 689,
-          "feet": [
-            790
-          ],
-          "last": "button act-open-submit-talk",
+          "feet": [],
+          "last": "a past-link",
           "ok": true
         },
         {
@@ -828,10 +1003,8 @@
           "width": 390,
           "root": 32,
           "end": 633,
-          "feet": [
-            790
-          ],
-          "last": "button act-open-add-session",
+          "feet": [],
+          "last": "li 2026 · Day 3 · Morning · Track D — Secur",
           "ok": true
         },
         {
@@ -839,10 +1012,8 @@
           "width": 390,
           "root": 32,
           "end": 633,
-          "feet": [
-            790
-          ],
-          "last": "button act-open-submit-talk",
+          "feet": [],
+          "last": "a past-link",
           "ok": true
         }
       ],
@@ -887,7 +1058,7 @@
           "width": 390,
           "root": 16,
           "sizes": {
-            "title": 27.648,
+            "title": 23.04,
             "description": 16,
             "name": 16,
             "glance": null,
@@ -903,7 +1074,7 @@
           "width": 390,
           "root": 16,
           "sizes": {
-            "title": 27.648,
+            "title": 23.04,
             "description": 16,
             "name": 16,
             "glance": 13.328,
@@ -919,7 +1090,7 @@
           "width": 390,
           "root": 32,
           "sizes": {
-            "title": 55.296,
+            "title": 46.08,
             "description": 32,
             "name": 32,
             "glance": null,
@@ -935,7 +1106,7 @@
           "width": 390,
           "root": 32,
           "sizes": {
-            "title": 55.296,
+            "title": 46.08,
             "description": 32,
             "name": 32,
             "glance": 26.656,
@@ -949,18 +1120,25 @@
       ],
       "ok": true
     },
-    "aShortPageKeepsTheAskFieldAtTheWindowsFoot": {
+    "aLargeStoreReloadsWithItsEdit": {
+      "engine": "chromium",
+      "storedNodes": 4001,
+      "keptTheEdit": true,
+      "logged": 1,
+      "foundAfterTheReload": true,
+      "failed": [],
+      "ok": true
+    },
+    "aShortPagesPaperFillsTheWindow": {
       "seen": [
         {
           "width": 1440,
-          "seatFromTheFoot": 16,
           "paperEndsAt": 900,
           "window": 900,
           "scrolls": false
         },
         {
           "width": 390,
-          "seatFromTheFoot": 16,
           "paperEndsAt": 844,
           "window": 844,
           "scrolls": false
