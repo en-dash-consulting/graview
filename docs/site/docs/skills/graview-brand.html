@@ -1557,7 +1557,7 @@ main.page > section.tour-intro { padding-top: 64px; }
 <li><strong>Say its money and its days</strong> on the brand too: <code>currency</code>, <code>locale</code> and <code>timeZone</code>, and a field kept as money, are <code>graview-locale</code>.</li>
 </ol>
 <h3>A document's brand</h3>
-<p>A document (<code>graview-document@1</code>) holds the same brand as data, every key optional, and an edit for each — <code>set-brand</code> (<code>null</code> clears a key), <code>set-name</code>, <code>set-description</code> (drawn as the line under the name):</p>
+<p>A document (<code>graview-document@1</code>) holds the same brand as data, every key optional, and an edit for each — <code>set-brand</code> (<code>null</code> clears a key), <code>set-name</code>, <code>set-description</code> (drawn as the line under the name; a home view with its own hero keeps it off with <code>set-brand</code> <code>subtitle: false</code>, and the description stays in listings and on the name's hover):</p>
 <div class="code" data-scroller><pre><code class="language-json">"brand": {
   "name": "En Dash", "accent": "#0f6e5c",
   "logo": { "src": "/graview/assets/&lt;sha256&gt;.svg", "alt": "En Dash Consulting" },

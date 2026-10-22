@@ -1534,7 +1534,7 @@ main.page > section.tour-intro { padding-top: 64px; }
   acts: ["set-summary", { act: "set-standing", as: "recommend", constants: { standing: "recommended" } }] }</code></pre></div>
 <ul>
 <li><code>name</code> is lower-case letters, digits and hyphens. Acts are recorded <code>via: "view:&lt;name&gt;"</code>.</li>
-<li><code>title</code> makes it a named place on both faces, with the slug <code>placeSlug(title)</code> (<code>"the-packages"</code>).</li>
+<li><code>title</code> makes it a named place on both faces, with the slug <code>placeSlug(title)</code> (<code>"the-packages"</code>). Its place flows with the page, as long as the view draws: no frame of its own scrolls inside the page, so a view sets no height to fill one.</li>
 <li><code>attach</code> is a kind, or <code>"home"</code> for the front page's body (cardinality <code>many</code>).</li>
 <li><code>reads</code> lists the other kinds and the edges it is shown. Nothing else is handed to it.</li>
 <li><code>acts</code> lists the acts it may ask for, by name. An entry with <code>as</code> and <code>constants</code> is another name for the same act with arguments the view cannot change.</li>

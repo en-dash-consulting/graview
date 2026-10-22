@@ -273,6 +273,14 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
   const says = (before as { says?: unknown } | undefined)?.says;
   if (one && manifest.replaces !== "page" && typeof says === "function") (view as { says?: unknown }).says = says;
   if (manifest.bleed === true) markBleeds(view);
+  /*
+   * A VIEW'S PLACE FLOWS WITH THE PAGE (Roadmap f-view-places-flow), as a
+   * place drawn from blocks does: it is drawn in the page's column as long
+   * as it is, never a frame most of the window tall that scrolls inside
+   * itself under the page's own scroll — on a phone, a box that traps the
+   * thumb. The frame stays for the lenses that need one: a board, a calendar.
+   */
+  (view as { flows?: boolean }).flows = true;
   views.register(manifest.attach as KindOfSchema<S>, cell, view as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
   return views;
 }

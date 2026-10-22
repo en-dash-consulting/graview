@@ -1,7 +1,7 @@
 import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
-import { emojiIconSentence } from "./brand-check.js";
+import { emojiIconSentence, subtitleSentence } from "./brand-check.js";
 import { emojiOf } from "../theme/marks.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
 import { narrows, rangeWords } from "./range.js";
@@ -235,6 +235,7 @@ function brandSentences(was: Brand, now: Brand, appName: string): string[] {
     const hue = now.accents?.[kind];
     if (!same(was.accents?.[kind], hue)) out.push(hue === undefined ? `${capitalize(kind)} goes back to its own hue.` : `${capitalize(kind)} is drawn at hue ${hue}°.`);
   }
+  if ((was.subtitle === false) !== (now.subtitle === false)) out.push(subtitleSentence(now.subtitle !== false));
   if (!same(was.scheme ?? "auto", now.scheme ?? "auto")) out.push(now.scheme === "light" || now.scheme === "dark" ? `The app opens ${now.scheme} when the reader has not chosen.` : "The app follows the reader's system for light and dark.");
   return out;
 }

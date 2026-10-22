@@ -93,7 +93,9 @@ somebody with a bright office files a bug — so the framework measures it.
 
 A document (`graview-document@1`) holds the same brand as data, every key
 optional, and an edit for each — `set-brand` (`null` clears a key),
-`set-name`, `set-description` (drawn as the line under the name):
+`set-name`, `set-description` (drawn as the line under the name; a home
+view with its own hero keeps it off with `set-brand` `subtitle: false`,
+and the description stays in listings and on the name's hover):
 
 ```json
 "brand": {

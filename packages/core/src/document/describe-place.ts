@@ -232,7 +232,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
       const logo = light && markHref(light) ? light : undefined;
       masthead = {
         name,
-        ...(brand?.subtitle ? { subtitle: brand.subtitle } : {}),
+        ...(brand?.subtitle && brand.subtitleDrawn !== false ? { subtitle: brand.subtitle } : {}),
         ...(logo ? { logo: { alt: brand?.logoAlt ?? name, ...(isInlineSvg(logo) ? { drawn: "inline SVG" as const } : { drawn: "image" as const, src: logo }) } } : {}),
       };
       if (app.home) {
