@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.45`](https://graview.dev/docs/releases.html#v0-1-45)
 - [`0.1.44`](https://graview.dev/docs/releases.html#v0-1-44)
 - [`0.1.43`](https://graview.dev/docs/releases.html#v0-1-43)
 - [`0.1.42`](https://graview.dev/docs/releases.html#v0-1-42)
@@ -45,6 +46,23 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.45
+
+Published October 22, 2026 · the current version
+
+A form for a visitor, cards that open on a phone's tap, and views that link out, bleed and stack their stylesheets.
+
+- **A form for a visitor.** An app can declare a form — one act drawn alone for somebody with no account — whose answer lands as a record and shows nothing else of the app. `@graview/embed/form` mounts it anywhere.
+- **A card opens on a tap.** Any element a view binds to a record or a place opens it on a click, a phone's tap and Enter, from wherever inside it the press lands. Any element bound to an act presses as a button does, and a headless run can press it and say what it would send.
+- **Views link out, safely.** A view may link to an address a record it was shown holds, drawn to open in a new tab with no referrer; an address the view built is refused, so a link cannot carry what the view read.
+- **Every stylesheet is drawn.** A view that calls `graview.style` twice draws both, in order.
+- **A view can go edge to edge on a phone** with `bleed: true`, and a record page draws its slot under a view that does not replace the page.
+- **The keyboard goes where an act asks**, and the undo key the offer names is the one the journeys press.
+
+**Before you upgrade:** The `style` message between a view's runtime and its host carries `sheets` where it carried `css`, and `HeadlessTranscript.css` is `sheets`; the two ship together in `@graview/guest`. An element other than an `<a>` bound to a record, and one other than a button bound to an act, now opens or presses and is given `tabindex` and a role; a text field or select with `data-act` and no `data-save` no longer presses. `forms` is a new key in the declaration and the document. `bleed` is new in the manifest; `links` on a worker view's options; `describePlace` takes `views`. Under a view that sits above the page, a fact the page's blocks say is not listed again.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.45) · [The full changelog for 0.1.45](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0145)
 
 ## 0.1.44
 
