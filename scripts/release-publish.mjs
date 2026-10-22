@@ -29,7 +29,10 @@ import { hostedPageNotes } from "./lib/hosted-page-notes.mjs";
 const root = resolve(import.meta.dirname, "..");
 const out = mkdtempSync(join(tmpdir(), "graview-publish-"));
 const dryRun = process.argv.includes("--dry-run");
-const run = (cmd, args, cwd = root) => execFileSync(cmd, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+const run = (cmd, args, cwd = root, timeout = undefined) =>
+  execFileSync(cmd, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout });
+/* A PUT the registry holds open is given up on, so one package cannot spend the job's time; whether it landed anyway is asked again below. */
+const PUBLISH_TIMEOUT_MS = 6 * 60_000;
 const onNpm = (name, version) => {
   try {
     return run("npm", ["view", `${name}@${version}`, "version", "--prefer-online"]).trim() === version;
@@ -59,9 +62,13 @@ for (const one of packages) {
   try {
     const packed = run("pnpm", ["pack", "--pack-destination", out], join(root, "packages", one.dir)).trim().split("\n").at(-1).trim();
     const tarball = packed.startsWith("/") ? packed : join(out, packed);
-    run("npm", ["publish", tarball, "--access", "public", ...(dryRun ? ["--dry-run"] : ["--provenance"])]);
+    run("npm", ["publish", tarball, "--access", "public", ...(dryRun ? ["--dry-run"] : ["--provenance"])], root, PUBLISH_TIMEOUT_MS);
     console.log(`published ${spec}`);
   } catch (error) {
+    if (!dryRun && onNpm(one.name, version)) {
+      console.log(`published ${spec} (npm answered with an error, but it has the version)`);
+      continue;
+    }
     failed += 1;
     console.log(`FAILED    ${spec}\n${String(error.stderr ?? error.message).trim()}`);
   }
