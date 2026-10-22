@@ -10,7 +10,7 @@ import { createPressReader, markPresses } from "../../src/host/press.js";
  * A VIEW'S LINKS ARE REAL LINKS, AND ITS BUTTONS PLAIN ONES (0.1.47).
  * Threat Watch's links were followed on a press but were no links to the
  * browser: no address on hover, nothing in a new tab on Cmd-click, nothing
- * to copy — and a view that drew a real `<button>` had the browser's grey
+ * to copy — and a view that drew a real `<button>` had the browser's gray
  * box to undo, so it drew a `<div>` instead. Now an `<a data-record>` or
  * `<a data-place>` carries the address the face goes to as its `href`,
  * which the view never writes; a plain click, a tap and Enter are followed

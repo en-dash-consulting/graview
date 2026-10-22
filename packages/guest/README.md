@@ -512,7 +512,7 @@ the Graview face a record is focused and chosen and a place is drawn; on
 the pages face each goes to its own address — through `useGoTo` in
 `@graview/react`, which the routed face provides — and an `<a data-record>`
 or `<a data-place>` carries that address as its `href` (`GoTo.href`, or
-`hrefOf` on `mountWorkerView`): a plain click, a tap and Enter are followed
+the address option on `mountWorkerView`): a plain click, a tap and Enter are followed
 in the app, and a click with Cmd, Ctrl or Shift, or a middle click, opens
 it as the browser opens any link. Where there is no address (the scene),
 the host gives the link the keyboard and a link's role instead. The kit's `gv-link`
