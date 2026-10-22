@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 6,
+  "gzipped": 1,
+  "note": "Raised when a titled worker view's place came to flow with the page (Roadmap f-view-places-flow): `registerWorkerView` marks the view it registers `flows`, as a place of blocks is. Measured at 29_750 / 13_649 against 29_744 / 13_648 minified and gzipped."
+}

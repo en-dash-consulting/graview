@@ -330,6 +330,23 @@ try {
         return state();
       };
       /*
+       * THE BOX A PLACE IS DRAWN IN: whether it flows with the page or is a
+       * frame of its own, and every box from what the place drew up to the
+       * place's own that scrolls inside itself — a nested scroller, under
+       * the page's own, is what traps a thumb on a phone.
+       */
+      const placeFrame = (inner) =>
+        tab.evaluate((inside) => {
+          const lens = document.querySelector('[data-testid="place-lens"]');
+          if (!lens) return null;
+          const scrolls = (el) => /^(auto|scroll)$/.test(getComputedStyle(el).overflowY);
+          const scrollers = [];
+          for (let el = (inside && lens.querySelector(inside)) || lens; el; el = el === lens ? null : el.parentElement) {
+            if (scrolls(el)) scrollers.push(el.getAttribute("data-testid") ?? el.tagName.toLowerCase());
+          }
+          return { flows: lens.hasAttribute("data-flows"), scrolls: scrolls(lens), height: lens.style.height || null, scrollers };
+        }, inner ?? null);
+      /*
        * A reload as the reader does it. Playwright's own reload in Firefox
        * adds an entry to the session history that no page wrote, so Back
        * after it lands on the same address: the page's own reload does not.
@@ -532,6 +549,7 @@ try {
           return tab.evaluate(() => window.__opened);
         };
         await go(`${BASE}/places/the-board`);
+        one.boardFrame = await placeFrame('[data-testid="columns-lens"]');
         const boardCard = { href: await tab.getAttribute(card("t1"), "href") };
         boardCard.menu = await menuOf(card("t1"));
         boardCard.opened = await newTab();
@@ -573,7 +591,7 @@ try {
         const drawn = await tab.evaluate(() => [...(document.querySelector('[data-worker-view="to-do"]')?.shadowRoot?.querySelectorAll(".to-do li") ?? [])].map((li) => li.textContent));
         if (await tab.locator('[data-testid="app-places-open"]').isVisible().catch(() => false)) await tab.click('[data-testid="app-places-open"]');
         await tab.waitForTimeout(300);
-        one.keptView = { opened, drawn, places: await places() };
+        one.keptView = { opened, drawn, frame: await placeFrame('[data-worker-view="to-do"]'), places: await places() };
         await tab.keyboard.press("Escape");
         await go(`${VIEWS_BASE}/people`);
         const hiddenList = await settled();
@@ -1011,6 +1029,15 @@ try {
   report.checks.aRegisteredViewOrderedFirstOpensFirstAndStandsInTheDropDown = {
     seen: keptSeen("keptView"),
     ok: keptHold(({ keptView }) => keptView.opened.path === `${VIEWS_BASE}/places/to-do` && keptView.opened.pushes === 0 && keptView.drawn.includes("Write the brief") && keptView.places.all.filter((path) => path !== "/")[0] === "/places/to-do" && keptView.places.current === "To do"),
+  };
+  /*
+   * Roadmap f-view-places-flow: a titled view's place flows with the page —
+   * no box between the view and the page scrolls inside itself — while a
+   * board keeps its frame, most of the window tall, that scrolls the board.
+   */
+  report.checks.aTitledViewsPlaceFlowsWithThePageWhileABoardKeepsItsFrame = {
+    seen: Object.fromEntries(pagesAt.map(([name, one]) => [name, one.keptError || one.cardsError ? { error: one.keptError ?? one.cardsError } : { view: one.keptView.frame, board: one.boardFrame }])),
+    ok: keptHold(({ keptView, boardFrame, cardsError }) => !cardsError && keptView.frame?.flows === true && !keptView.frame.scrolls && keptView.frame.height === null && keptView.frame.scrollers.length === 0 && boardFrame?.flows === false && boardFrame.scrolls && boardFrame.height !== null),
   };
   report.checks.aHiddenKindIsNotInTheDropDownAndStillOpensAtItsAddress = {
     seen: { list: keptSeen("keptView"), atItsAddress: keptSeen("hiddenKind") },
