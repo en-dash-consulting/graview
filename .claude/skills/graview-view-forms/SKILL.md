@@ -50,6 +50,16 @@ or pick from that does not save (a click into it is not a press). Inside a
 card that opens (`graview-view-links`) a press is its own: it never opens
 the card.
 
+Draw a `<button data-act>` first: the host resets every button to the
+words around it at no specificity, so your own class styles it with
+nothing to undo. On an element bound to an act, `data-record` is always
+the act's record, never a link: `<button data-act="acknowledge"
+data-record="threat:7">` acknowledges that threat and goes nowhere. A
+control you hear yourself with `graview.on("click")` — `role="button"`,
+`"checkbox"`, `"switch"` or `"tab"`, `aria-pressed`, `aria-expanded` — is
+given the keyboard where it has none, and Enter or Space on it is heard
+as the key and then a `click`, with the page not scrolled.
+
 ## A record's own text, to edit
 
 To offer a record's own text to edit, let the host fill it: `data-prefill`

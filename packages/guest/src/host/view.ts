@@ -13,7 +13,7 @@ import { createDrawBudget } from "./draw-budget.js";
 import { checkViewSource } from "./view-source.js";
 import { viewScript } from "./view-script.js";
 import { createLinks, listsOf, type Arrival, type Destination } from "./links.js";
-import { arriveAt } from "./arrive-at.js";
+import { addressAt, arriveAt } from "./arrive-at.js";
 import type { GoTo } from "@graview/react/provider";
 import type { GuestPictureHand } from "./pictures.js";
 import type { GuestMedia } from "./media.js";
@@ -134,7 +134,16 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * the app (FR-93).
    */
   readonly onNavigate?: (to: Arrival) => void;
-  /** The face's own way of going (`useGoTo`), read when the view goes: where `onNavigate` is not given, the arrival is gone to by it. */
+  /**
+   * The address a destination arrives at, as this host writes it — a path
+   * on the page's own origin, `/a/<app>/threats/threat:x` — which an
+   * `<a data-record>` or `<a data-place>` the view drew carries as its
+   * `href`, so it opens in a new tab and is copied as a link is (0.1.47).
+   * Where neither this nor `goTo`'s `href` gives one, the link has no
+   * address and is given the keyboard and a link's role instead.
+   */
+  readonly hrefOf?: (to: Arrival) => string | undefined;
+  /** The face's own way of going (`useGoTo`), read when the view goes: where `onNavigate` is not given, the arrival is gone to by it, and its `href` is a link's address. */
   readonly goTo?: () => GoTo | undefined;
   /** The app's named places: what the view is told of, and may link to by slug. None by default. */
   readonly places?: () => readonly GuestPlace[];
@@ -490,6 +499,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     lists,
     schema: options.store.schema,
     ...(options.onNavigate ? { onNavigate: options.onNavigate } : options.goTo ? { onNavigate: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
+    /* A link's address: the host's own, or the face's where the face is how the view goes (0.1.47). */
+    ...(options.hrefOf ? { hrefOf: options.hrefOf } : !options.onNavigate && options.goTo ? { hrefOf: (to: Arrival) => addressAt(options.goTo!(), to) } : {}),
     /* Said in the view's console, and to the host. */
     onLost: (said) => {
       port?.postMessage({ type: "notice", text: said });
@@ -619,7 +630,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     element.setAttribute("aria-haspopup", "dialog");
     wantMedia();
   };
-  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf }]) => {
+  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing, handedLinks, judgeLink, linkRefusedWords }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf, quietPictures }]) => {
     if (failed) return;
     const reader = createPressReader();
     /* The view hears what became of an act a press or a save asked for as `acted` on the element bound to it (FR-191). */
@@ -648,6 +659,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       /* A card bound to a record is a link once it is drawn whole: whether it holds a field is known only then (pressable.ts). */
       links.refresh(shadow);
       markPresses(shadow);
+      quietPictures(shadow);
       fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
       media?.refresh(shadow);
       drops?.refresh();

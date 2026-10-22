@@ -2073,8 +2073,10 @@ graview.on("click", ".card", (event) => { /* … */ });
 A delegated listener is handed `event.element`, the element its selector matched at or above what was pressed (`event.target`), so it reads that element's `data-*`:
 
 ```js
-graview.on("click", "button[data-go]", (event) => graview.navigate(event.element.getAttribute("data-go")));
+graview.on("click", "button[data-more]", (event) => toggle(event.element.getAttribute("data-more")));
 ```
+
+To go somewhere, draw `<a data-record>` or `<a data-place>` rather than hearing a click and navigating; to do something, a `<button>`. The region resets a button and a link the host made to the words around them at no specificity, so a view's own class always wins. A control the view hears itself — `role="button"`, `"checkbox"`, `"switch"` or `"tab"`, `aria-pressed`, `aria-expanded` — is given the keyboard where it has none, and Enter or Space on it is told to the view as the key and then a `click`. Whatever has the keyboard shows the host's ring, which a view restyles with `--graview-focus-color`, `--graview-focus-width` and `--graview-focus-offset` and cannot take away with `outline: none`; `class="graview-sr"` is words for assistive technology alone; an `<svg>` with no role, `aria-label` or `<title>` is hidden from it; and an element with a `data-key` keeps the keyboard when the view draws it again elsewhere.
 
 Each `graview.style(css)` adds a sheet after the ones before it — the app's shared design system first, then the view's own — and every one is drawn, in that order, on the page and in a headless run alike. Each is judged on its own, so one left open swallows nothing after it, and all of them share one budget (64 000 characters); a sheet given again is the one already there, so a view that styles on every push adds nothing.
 
@@ -2146,7 +2148,7 @@ With `data-save="input"` the viewer's typing (a trusted `input`) saves it once t
 
 #### Links stay in the app
 
-A worker view links to a record or a named place of this app, or out to an address it was handed, and nowhere else. `<a data-record="offer:coaching">` and `<a data-place="the-packages">` are made links by the host — focusable, a link to assistive technology — and followed by it on a press or Enter, to a record the viewer may see or a place the app has. `graview.navigate("offer:coaching")` and `graview.navigate({ place: "the-packages" })` are held to the same. A bare string is a record the viewer may see first, then a place by that slug, so `graview.navigate("the-packages")` goes to the place. A destination that is neither goes nowhere and says why — in the view's console, and to the host's problems (the onProblem option on `mountWorkerView` and on a registered view's definition) — naming the places there are. The props list the app's places (`places`, each with its slug and title). On the Graview face a record is focused and chosen and a place is drawn; on the pages face each goes to its own address — through `useGoTo` in `@graview/react`, which the routed face provides. The kit's `gv-link` keeps `links.origins`: it is the kit's one deliberate way out, to the origins a host lists, and an open-kit view has none.
+A worker view links to a record or a named place of this app, or out to an address it was handed, and nowhere else. `<a data-record="offer:coaching">` and `<a data-place="the-packages">` are made links by the host — focusable, a link to assistive technology — and followed by it on a press or Enter, to a record the viewer may see or a place the app has. `graview.navigate("offer:coaching")` and `graview.navigate({ place: "the-packages" })` are held to the same. A bare string is a record the viewer may see first, then a place by that slug, so `graview.navigate("the-packages")` goes to the place. A destination that is neither goes nowhere and says why — in the view's console, and to the host's problems (the onProblem option on `mountWorkerView` and on a registered view's definition) — naming the places there are. The props list the app's places (`places`, each with its slug and title). On the Graview face a record is focused and chosen and a place is drawn; on the pages face each goes to its own address — through `useGoTo` in `@graview/react`, which the routed face provides — and an `<a data-record>` or `<a data-place>` carries that address as its `href` (`GoTo.href`, or `hrefOf` on `mountWorkerView`): a plain click, a tap and Enter are followed in the app, and a click with Cmd, Ctrl or Shift, or a middle click, opens it as the browser opens any link. Where there is no address (the scene), the host gives the link the keyboard and a link's role instead. The kit's `gv-link` keeps `links.origins`: it is the kit's one deliberate way out, to the origins a host lists, and an open-kit view has none.
 
 #### A record's video, and the full-screen viewer
 
@@ -5097,6 +5099,8 @@ A field the view filled (`value="…"`) is the view's until the person empties i
 
 Any element with `data-act` is a press, not only a `<button>`: a `<span role="button">`, a `<div>`, a card's badge, an SVG `<g>`. A click on it or on anything inside it presses it, and a phone's tap is a click. One that does not press of itself is given the keyboard (`tabindex="0"`), is a button to assistive technology unless it says another role, is drawn with a pointer and `touch-action: manipulation`, and Enter or Space on it presses it, as on a button. Three things are never pressed, and the check says so: an `<option>` (bind its `select`, with `data-save="change"`), a `<label>` (a press on it presses its field too), and a field to type into or pick from that does not save (a click into it is not a press). Inside a card that opens (`graview-view-links`) a press is its own: it never opens the card.
 
+Draw a `<button data-act>` first: the host resets every button to the words around it at no specificity, so your own class styles it with nothing to undo. On an element bound to an act, `data-record` is always the act's record, never a link: `<button data-act="acknowledge" data-record="threat:7">` acknowledges that threat and goes nowhere. A control you hear yourself with `graview.on("click")` — `role="button"`, `"checkbox"`, `"switch"` or `"tab"`, `aria-pressed`, `aria-expanded` — is given the keyboard where it has none, and Enter or Space on it is heard as the key and then a `click`, with the page not scrolled.
+
 ### A record's own text, to edit
 
 To offer a record's own text to edit, let the host fill it: `data-prefill` names the field, and `name` is the same.
@@ -5163,11 +5167,13 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Links in a worker view
 
-A worker view (`graview-worker-view`: its manifest, its global, its limits) has no address of the page's to link to: an `href` it built is never drawn. What it may link to is a record, a named place or a kind's list of this app, and the host makes that a link and follows it, on both faces, only to what the viewer may see.
+A worker view (`graview-worker-view`: its manifest, its global, its limits) writes no address of the page's: an `href` it built is never drawn. What it may link to is a record, a named place or a kind's list of this app, and the host makes that a link and follows it, on both faces, only to what the viewer may see.
+
+**Go somewhere with a link, do something with a button.** `<a data-record>` or `<a data-place>` to go; `<button>`, or `<button data-act>` (`graview-view-forms`), to do. Style both as you like: the host resets a button and a link it made to the words around them at no specificity, so your own class always wins. A `<div>` or `<span>` with a `graview.on("click")` handler is reached by no keyboard and is nothing to a screen reader: do not draw one. A list of records is a list of `<a data-record>`, never `graview.on("click", "[data-id]", … navigate)`.
 
 ### A link
 
-`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows. `<a href>` goes out only to an address a record was handed — its own url, `mailto:`, `tel:` (below). A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places. From code, `graview.navigate("offer:7")` goes by the same rules.
+`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows. On the routed pages the host gives each the address it goes to as its `href` (`/a/<app>/offers/offer%3A7`), so it shows on hover, copies, and opens in a new tab on Cmd- or Ctrl-click or a middle click; a plain click, a tap and Enter stay in the app. On the scene, which has no addresses, it is given the keyboard and a link's role instead. A `<button data-record>` goes there too. `<a href>` goes out only to an address a record was handed — its own url, `mailto:`, `tel:` (below). A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places. From code, `graview.navigate("offer:7")` goes by the same rules.
 
 ### Links out
 
@@ -5186,7 +5192,7 @@ Any element with `data-record` or `data-place` is a link, not only an `<a>`:
 </div>
 ```
 
-The host gives it the keyboard (`tabindex="0"`), makes it a link to assistive technology (`role="link"`; a list's item or a table's row keeps its own role), draws it with a pointer, `touch-action: manipulation` and a faint tap highlight, and follows it on a click, on Enter, and on a phone's tap. A press anywhere inside it opens it — its heading, a badge, a line — unless it lands on something with a press of its own: a button, a field, a `data-act`, a lightbox, a drop target, a control's `role`, another link. So "More" above toggles and opens nothing.
+The host gives it the keyboard (`tabindex="0"`), makes it a link to assistive technology (`role="link"`; a list's item keeps its own role, and a table's row keeps its role and gives the keyboard to its first cell, where Enter opens the row), draws it with a pointer, `touch-action: manipulation` and a faint tap highlight, and follows it on a click, on Enter, and on a phone's tap. A press anywhere inside it opens it — its heading, a badge, a line — unless it lands on something with a press of its own: a button, a field, a `data-act`, a lightbox, a drop target, a control's `role`, another link. So "More" above toggles and opens nothing.
 
 It is no link when it is a press scope: a `fieldset` or `role="group"` (the record a form's acts are done to), an element with `data-act`, `data-lightbox`, `data-drop` or `data-field`, a field, or an element that holds a field to type into or pick from (a checkbox inside leaves its row a link). Link such a card's title instead: `<h3><a data-record="…">`.
 
@@ -5204,7 +5210,7 @@ A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in 
 
 1. `graview check` the app the view links into: a link is only as sound as the records and places it names.
 2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says every `data-record` or `data-place` that names nothing the seat was shown and no place, and every filter that goes nowhere. `--press ".card h3"` presses there and says where the host would go, or that the press is a button's of its own.
-3. Open it on a phone, 390 pixels wide with touch: tap a card's heading and a badge inside it, and see the record's page; tap a toggle inside it, and see it toggle and stay. On a desk, Tab to a card and press Enter.
+3. Open it on a phone, 390 pixels wide with touch: tap a card's heading and a badge inside it, and see the record's page; tap a toggle inside it, and see it toggle and stay. On a desk, Tab through the view: every link and button is reached, with a ring; Enter on a card opens it, and Cmd-click on an `<a data-record>` opens it in a new tab.
 4. Follow each link narrowed and to a section, and see it land where it says.
 
 ### What the check cannot see
@@ -5409,9 +5415,9 @@ graview.navigate({ place: "features", where: { stage: "building" }, section: "Sh
 
 `props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made), and `locale` and `timeZone`: say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, hour: "numeric", minute: "2-digit" })`, the clock the rest of the app says it on, never a zone of your own. `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
 
-```js
-graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
-```
+### Links and buttons, by default
+
+To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<button>` (`data-act` to run an act). Style either freely: the host resets both to the words around them, and your class wins. A `<div>` or `<span>` with only `graview.on("click")` is reached by no keyboard and named nothing; given `role="button"` (or checkbox, switch, tab, `aria-pressed`, `aria-expanded`) the host gives it the keyboard, and Enter or Space is heard as a click. Whatever has the keyboard shows the host's ring: restyle it with `--graview-focus-color`, never `outline: none`. `class="graview-sr"` is words for a screen reader alone; an `<svg>` with no role, `aria-label` or `<title>` is hidden from one.
 
 ### Gestures
 

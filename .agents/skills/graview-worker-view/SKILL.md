@@ -68,9 +68,18 @@ carries `value`, `checked`, `key`, `pressed` for a bound press, and
 `element`, what the selector matched: read its `data-*`. Elements lack
 `closest`, `matches` and `dataset`.
 
-```js
-graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
-```
+## Links and buttons, by default
+
+To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a
+`<button>` (`data-act` to run an act). Style either freely: the host
+resets both to the words around them, and your class wins. A `<div>` or
+`<span>` with only `graview.on("click")` is reached by no keyboard and
+named nothing; given `role="button"` (or checkbox, switch, tab,
+`aria-pressed`, `aria-expanded`) the host gives it the keyboard, and Enter
+or Space is heard as a click. Whatever has the keyboard shows the host's
+ring: restyle it with `--graview-focus-color`, never `outline: none`.
+`class="graview-sr"` is words for a screen reader alone; an `<svg>` with no
+role, `aria-label` or `<title>` is hidden from one.
 
 ## Gestures
 

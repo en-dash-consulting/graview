@@ -4,7 +4,7 @@ export { MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.j
 export type { MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 export { BesideTheMap } from "./beside-the-map.js";
 export { HostFilesContext, useHostFiles } from "./files.js";
-export type { GoTo, GoToAlso } from "./go.js";
+export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
 export { Figure, Occupants, PersonFigure } from "./occupants.js";
 export { HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
 export type { PresenceInputs, PresenceState } from "./presence.js";

@@ -24,6 +24,16 @@
  * after a note typed beside it, apply their acts; on a phone a tap on
  * "Acknowledge" inside a card acknowledges the threat and opens nothing,
  * and a tap on "Save the note" saves the note typed beside it.
+ *
+ * And the keyboard by default (0.1.47): Tab from the top of the page
+ * reaches every link and press the view drew; Space on a
+ * `<div role="button" aria-pressed>` the view hears itself presses it
+ * without scrolling the page, and the keyboard stays on it as the view
+ * draws again; whatever has the keyboard shows a ring at 3:1 or more,
+ * light and dark; an `<a data-record>` carries its address as its `href`,
+ * a Cmd- or Ctrl-click opens it in a new tab and a plain click in the app;
+ * an icon that says nothing is hidden from assistive technology; and a
+ * table's row opens on Enter on its first cell.
  */
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -50,7 +60,7 @@ window.__handle = mount(document.getElementById("app"), {
   principal: sam,
   face: "pages",
   path: "/",
-  scheme: "light",
+  scheme: new URLSearchParams(location.search).get("scheme") === "dark" ? "dark" : "light",
   label: "Threat Watch",
   heading: false,
   height: "100%",
@@ -93,8 +103,8 @@ window.__node = (id) => window.__handle.store.graph.getNode(id);
     }
   }).listen(HOST_PORT, "127.0.0.1");
 
-  const open = async (on) => {
-    await on.goto(`${HOST}/`, { waitUntil: "load" });
+  const open = async (on, query = "") => {
+    await on.goto(`${HOST}/${query}`, { waitUntil: "load" });
     await on.waitForFunction(() => window.__ready === true, null, { timeout: 30_000 });
     await on.waitForFunction((id) => window.__card?.(id)?.querySelector("h3") != null, PHISHING, { timeout: 15_000 });
     await on.waitForTimeout(300);
@@ -148,6 +158,137 @@ window.__node = (id) => window.__handle.store.graph.getNode(id);
     const noted = await tab.evaluate((id) => ({ note: window.__node(id)?.note ?? null }), VPN);
     claim('on a desk, Enter on a fieldset\'s <span role="button" data-act="set-note"> saves the note typed beside it', noted.note === "Patch window is Saturday", noted);
     claim("the home view did not fail, and the host said nothing was wrong with it", (await tab.evaluate(() => [...window.__failures, ...window.__problems])).length === 0, await tab.evaluate(() => ({ failures: window.__failures, problems: window.__problems })));
+
+    /* THE KEYBOARD, BY DEFAULT (0.1.47): Tab from the top of the page through the view, and every link and press the view drew is reached. */
+    await open(tab);
+    const stops = await tab.evaluate(() => {
+      const view = window.__view();
+      const marks = [...view.querySelectorAll("[data-graview-link], [data-graview-press], a[href], button, input")]
+        .map((one) => (one.localName === "tr" ? one.querySelector("td, th") : one))
+        .filter(Boolean)
+        .filter((one, at, all) => all.indexOf(one) === at);
+      marks.forEach((one, at) => one.setAttribute("data-tab-stop", String(at)));
+      document.activeElement?.blur?.();
+      return marks.map((one) => `<${one.localName}${one.getAttribute("data-record") ? ` data-record="${one.getAttribute("data-record")}"` : ""}${one.getAttribute("data-act") ? ` data-act="${one.getAttribute("data-act")}"` : ""}>`);
+    });
+    const reached = new Set();
+    let inside = false;
+    /* Safari's Tab passes over links with an address unless the person asks for them, as on every page: Option-Tab is how its keyboard reaches them. */
+    const next = engine === "webkit" ? "Alt+Tab" : "Tab";
+    for (let press = 0; press < 240; press += 1) {
+      await tab.keyboard.press(next);
+      const at = await tab.evaluate(() => {
+        let on = document.activeElement;
+        while (on?.shadowRoot?.activeElement) on = on.shadowRoot.activeElement;
+        return on?.getAttribute?.("data-tab-stop") ?? null;
+      });
+      if (at !== null) {
+        inside = true;
+        reached.add(Number(at));
+      } else if (inside) break;
+    }
+    const missed = stops.filter((_, at) => !reached.has(at));
+    claim("on a desk, Tab (Option-Tab in Safari, which passes over any link with an address without it) reaches every link and press the view drew: each card, link and row bound to a record (a row by its first cell), each data-act, each control it hears itself, each button and field", stops.length >= 12 && missed.length === 0, { stops: stops.length, missed });
+
+    /* A <div role="button"> the view hears itself: Space presses it, and the page does not scroll under it. */
+    await open(tab);
+    await tab.evaluate(() => {
+      window.__keys = [];
+      window.addEventListener("keydown", (event) => window.__keys.push({ key: event.key, prevented: event.defaultPrevented }));
+    });
+    const scrolled = () =>
+      tab.evaluate(() => {
+        let sum = window.scrollY;
+        const walk = (root) => {
+          for (const one of root.querySelectorAll("*")) {
+            sum += one.scrollTop;
+            if (one.shadowRoot) walk(one.shadowRoot);
+          }
+        };
+        walk(document);
+        return sum;
+      });
+    await tab.locator(inView(`[data-save-note="${VPN}"]`)).focus();
+    await tab.keyboard.press("Tab");
+    const before = await scrolled();
+    await tab.keyboard.press("Space");
+    await tab.waitForFunction(() => window.__view().querySelector("[data-only-critical]")?.getAttribute("aria-pressed") === "true", null, { timeout: 5_000 }).catch(() => {});
+    const toggled = await tab.evaluate(() => {
+      const view = window.__view();
+      const div = view.querySelector("[data-only-critical]");
+      return { pressed: div.getAttribute("aria-pressed"), tabindex: div.getAttribute("tabindex"), links: view.querySelectorAll(".every li").length, keys: window.__keys, focused: view.activeElement === div, path: window.__path() };
+    });
+    const after = await scrolled();
+    claim('on a desk, Space on a <div role="button" aria-pressed> the view hears with graview.on("click") presses it, as on a button, and the page does not scroll', toggled.pressed === "true" && toggled.tabindex === "0" && toggled.links === 1 && toggled.keys.at(-1)?.key === " " && toggled.keys.at(-1)?.prevented === true && before === after && toggled.path === "/", { ...toggled, before, after });
+    claim("the keyboard stays on the control the view drew again, as it drew the list again under it", toggled.focused, toggled);
+
+    /* A whole ring, at least 2px, set off, in the app's accent at 3:1 or more against the ground behind it — light and dark. */
+    const ringOf = (on) =>
+      on.evaluate(() => {
+        const view = window.__view();
+        const div = view.querySelector("[data-only-critical]");
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 1;
+        const paint = canvas.getContext("2d", { willReadFrequently: true });
+        const rgba = (color) => {
+          paint.clearRect(0, 0, 1, 1);
+          paint.fillStyle = "#000";
+          paint.fillStyle = color;
+          paint.fillRect(0, 0, 1, 1);
+          return [...paint.getImageData(0, 0, 1, 1).data];
+        };
+        let ground = null;
+        for (let at = div.parentElement ?? div.getRootNode().host; at && !ground; at = at.parentElement ?? at.getRootNode()?.host ?? null) {
+          const said = rgba(getComputedStyle(at).backgroundColor);
+          if (said[3] === 255) ground = said;
+        }
+        ground ??= rgba(getComputedStyle(document.documentElement).colorScheme.includes("dark") ? "#000" : "#fff");
+        const style = getComputedStyle(div);
+        const ring = rgba(style.outlineColor);
+        const luminance = ([r, g, b]) => [r, g, b].map((v) => v / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+        const [hi, lo] = [luminance(ring), luminance(ground)].sort((a, b) => b - a);
+        return { visible: div.matches(":focus-visible"), style: style.outlineStyle, width: parseFloat(style.outlineWidth), offset: parseFloat(style.outlineOffset), ring, ground, contrast: Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100 };
+      });
+    const ringed = (ring) => ring.visible && ring.style === "solid" && ring.width >= 2 && ring.offset >= 1 && ring.contrast >= 3;
+    const light = await ringOf(tab);
+    const dark = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
+    const night = await dark.newPage();
+    night.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+    await open(night, "?scheme=dark");
+    await night.locator(inView(`[data-save-note="${VPN}"]`)).focus();
+    await night.keyboard.press("Tab");
+    const darkRing = await ringOf(night);
+    await dark.close();
+    claim("whatever has the keyboard shows a whole ring at least 2px wide, set off from it, at 3:1 or more against the ground behind it, light and dark", ringed(light) && ringed(darkRing), { light, dark: darkRing });
+
+    /* A real link: an address on hover and in a new tab, and the app's own on a plain click. */
+    await open(tab);
+    const anchor = await tab.evaluate((id) => {
+      const a = window.__view().querySelector('[data-link="' + id + '"]');
+      return { href: a.getAttribute("href"), role: a.getAttribute("role"), tabindex: a.getAttribute("tabindex"), target: a.getAttribute("target"), icon: a.querySelector("svg")?.getAttribute("aria-hidden") ?? null, color: getComputedStyle(a).color, ink: getComputedStyle(a.closest("li")).color, underline: getComputedStyle(a).textDecorationLine };
+    }, PHISHING);
+    claim("an <a data-record> carries the address the face goes to as its href, opens in this tab, needs no role or tab stop patched on, and is drawn in the words' own color, not underlined", typeof anchor.href === "string" && anchor.href.startsWith("/threats/") && anchor.href.includes("phishing") && anchor.role === null && anchor.tabindex === null && anchor.target === null && anchor.color === anchor.ink && anchor.underline === "none", anchor);
+    claim("an icon the view drew with no role, label or title is hidden from assistive technology", anchor.icon === "true", anchor);
+    const popup = desk.waitForEvent("page", { timeout: 5_000 }).catch(() => null);
+    await tab.locator(inView(`[data-link="${PHISHING}"]`)).click({ modifiers: ["ControlOrMeta"] });
+    const newTab = await popup;
+    const stayed = await tab.evaluate(() => window.__path());
+    claim("a Cmd- or Ctrl-click on it is the browser's: a new tab at its address, and the app stays where it was", stayed === "/" && newTab !== null && new URL(newTab.url()).pathname === anchor.href, { stayed, opened: newTab?.url() ?? null, href: anchor.href });
+    await newTab?.close();
+    await tab.locator(inView(`[data-link="${PHISHING}"]`)).click();
+    const followed = await settled(tab);
+    claim("a plain click on it opens the threat's page in the app, at the address it carries", followed === anchor.href, { followed, href: anchor.href });
+
+    /* A table's row bound to a record: its first cell takes the keyboard, and Enter there opens the row. */
+    await open(tab);
+    const row = await tab.evaluate((id) => {
+      const tr = window.__view().querySelector('[data-row="' + id + '"]');
+      return { role: tr.getAttribute("role"), tabindex: tr.getAttribute("tabindex"), cell: tr.querySelector("td").getAttribute("tabindex") };
+    }, PHISHING);
+    await tab.locator(inView(`[data-row="${PHISHING}"] td >> nth=0`)).focus();
+    await tab.keyboard.press("Enter");
+    const rowed = await settled(tab);
+    claim("a table's row bound to a record keeps its role, its first cell takes the keyboard, and Enter there opens the threat's page", row.role === null && row.tabindex === null && row.cell === "0" && opened(rowed), { ...row, path: rowed });
     await desk.close();
 
     /* ON A PHONE: a coarse pointer and touch, where a tap is the press. Firefox has no mobile emulation. */

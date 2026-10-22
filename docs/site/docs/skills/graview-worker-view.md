@@ -47,9 +47,9 @@ graview.navigate({ place: "features", where: { stage: "building" }, section: "Sh
 
 `props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made), and `locale` and `timeZone`: say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, hour: "numeric", minute: "2-digit" })`, the clock the rest of the app says it on, never a zone of your own. `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
 
-```js
-graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
-```
+### Links and buttons, by default
+
+To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<button>` (`data-act` to run an act). Style either freely: the host resets both to the words around them, and your class wins. A `<div>` or `<span>` with only `graview.on("click")` is reached by no keyboard and named nothing; given `role="button"` (or checkbox, switch, tab, `aria-pressed`, `aria-expanded`) the host gives it the keyboard, and Enter or Space is heard as a click. Whatever has the keyboard shows the host's ring: restyle it with `--graview-focus-color`, never `outline: none`. `class="graview-sr"` is words for a screen reader alone; an `<svg>` with no role, `aria-label` or `<title>` is hidden from one.
 
 ### Gestures
 

@@ -27,6 +27,8 @@ A field the view filled (`value="…"`) is the view's until the person empties i
 
 Any element with `data-act` is a press, not only a `<button>`: a `<span role="button">`, a `<div>`, a card's badge, an SVG `<g>`. A click on it or on anything inside it presses it, and a phone's tap is a click. One that does not press of itself is given the keyboard (`tabindex="0"`), is a button to assistive technology unless it says another role, is drawn with a pointer and `touch-action: manipulation`, and Enter or Space on it presses it, as on a button. Three things are never pressed, and the check says so: an `<option>` (bind its `select`, with `data-save="change"`), a `<label>` (a press on it presses its field too), and a field to type into or pick from that does not save (a click into it is not a press). Inside a card that opens (`graview-view-links`) a press is its own: it never opens the card.
 
+Draw a `<button data-act>` first: the host resets every button to the words around it at no specificity, so your own class styles it with nothing to undo. On an element bound to an act, `data-record` is always the act's record, never a link: `<button data-act="acknowledge" data-record="threat:7">` acknowledges that threat and goes nowhere. A control you hear yourself with `graview.on("click")` — `role="button"`, `"checkbox"`, `"switch"` or `"tab"`, `aria-pressed`, `aria-expanded` — is given the keyboard where it has none, and Enter or Space on it is heard as the key and then a `click`, with the page not scrolled.
+
 ### A record's own text, to edit
 
 To offer a record's own text to edit, let the host fill it: `data-prefill` names the field, and `name` is the same.

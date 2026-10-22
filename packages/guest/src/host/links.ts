@@ -26,6 +26,18 @@ export { nowhere, placesSaid, quoted, whereOfWords } from "./links-words.js";
  * the element is a press scope (a fieldset, an element bound to an act, a
  * form). pressable.ts says which, and how a tap reaches it.
  *
+ * A REAL LINK, WITH AN ADDRESS (0.1.47): on a face whose places are
+ * addresses (the routed pages), an `<a data-record>` or `<a data-place>`
+ * carries the address the host would go to as its `href`, which the view
+ * never writes. A plain click, a tap and Enter are still followed in the
+ * app; a press with Ctrl, Cmd, Shift or Alt, or a middle click, is the
+ * browser's — a new tab, a new window. Where there is no address (the
+ * scene), the link is given the keyboard and a link's role instead. A
+ * `<button data-record>` is followed the same way; a button bound to an
+ * act (`data-act`) is that act's press, and its `data-record` the act's
+ * record. A table's row keeps its role: its first cell takes the keyboard,
+ * and Enter there follows the row.
+ *
  * A view's code asks the same with `graview.navigate`, and is held to the
  * same.
  *
@@ -75,6 +87,12 @@ export interface LinksOptions {
   readonly schema?: AnySchema;
   /** Go: the face's own way to a record, a place or a list. */
   readonly onNavigate?: (to: Arrival) => void;
+  /**
+   * The address going there arrives at, as the face writes it (`GoTo.href`):
+   * what an `<a data-record>` or `<a data-place>` carries as its `href`.
+   * None where the face's places are no addresses (the scene).
+   */
+  readonly hrefOf?: (to: Arrival) => string | undefined;
   /** It went nowhere: the sentence saying why. */
   readonly onLost?: (said: string) => void;
 }
@@ -140,30 +158,121 @@ export function judgeDestination(to: Destination, input: JudgeDestinationInput):
 const listsSaid = (slugs: readonly string[]) =>
   slugs.length === 0 ? "" : ` Its lists: ${slugs.slice(0, 8).map((slug) => `"${slug}"`).join(", ")}${slugs.length > 8 ? ` and ${slugs.length - 8} more` : ""}.`;
 
+const HTML = "http://www.w3.org/1999/xhtml";
+/** A modified press — a new tab, a new window, a download — or a button not the main one: the browser's to take, where the link has an address. */
+const modified = (event: Event) => {
+  const mouse = event as MouseEvent;
+  return mouse.metaKey || mouse.ctrlKey || mouse.shiftKey || mouse.altKey || (event.type === "click" && typeof mouse.button === "number" && mouse.button !== 0);
+};
+
 export function createLinks(options: LinksOptions): Links {
-  /* What the host gave the keyboard, so it is taken back if the element stops being a link. */
+  /* What the host gave the keyboard or a role, so it is taken back if the element stops being a link or is given an address. */
   const tabbed = new WeakSet<Element>();
+  const roled = new WeakSet<Element>();
+  /* The address the host gave an `<a>`, and the target the open kit had given it, so both are put back as they were. */
+  const addressed = new WeakMap<Element, { readonly href: string; readonly target: string | null }>();
+  /* A row keeps its own role, so its first cell takes the keyboard for it. */
+  const rowCells = new WeakMap<Element, Element>();
+  const judge = (to: Destination) => judgeDestination(to, { sees: options.sees, places: options.places(), lists: options.lists?.() ?? [], ...(options.schema ? { schema: options.schema } : {}) });
   const go = (to: Destination) => {
-    const judged = judgeDestination(to, { sees: options.sees, places: options.places(), lists: options.lists?.() ?? [], ...(options.schema ? { schema: options.schema } : {}) });
+    const judged = judge(to);
     if (judged.ok) options.onNavigate?.(judged.arrival);
     else options.onLost?.(judged.says);
     return judged.ok;
   };
+  /** Where an element the view drew says to go, in the words `go` takes; nothing where it names nowhere. */
+  const destinationOf = (element: Element): Destination | undefined => {
+    const record = element.getAttribute("data-record");
+    const place = element.getAttribute("data-place");
+    const filter = element.getAttribute("data-filter");
+    const section = element.getAttribute("data-section");
+    const also = { ...(filter ? { where: whereOfWords(filter) } : {}), ...(section ? { section } : {}) };
+    if (record) return { record, ...also };
+    if (place) return { place, ...also };
+    return undefined;
+  };
+  /** The address a link goes to, as the face writes it: none where the face has no addresses, or the link goes nowhere. */
+  const addressOf = (element: Element): string | undefined => {
+    if (!options.hrefOf) return undefined;
+    const to = destinationOf(element);
+    const judged = to ? judge(to) : undefined;
+    return judged?.ok ? options.hrefOf(judged.arrival) : undefined;
+  };
+  const tab = (element: Element) => {
+    if (element.hasAttribute("tabindex")) return false;
+    element.setAttribute("tabindex", "0");
+    tabbed.add(element);
+    return true;
+  };
+  const untab = (element: Element) => {
+    if (tabbed.delete(element)) element.removeAttribute("tabindex");
+  };
+  const unrole = (element: Element) => {
+    if (roled.delete(element) && element.getAttribute("role") === "link") element.removeAttribute("role");
+  };
+  const unaddress = (element: Element) => {
+    const had = addressed.get(element);
+    if (!had) return;
+    addressed.delete(element);
+    if (element.getAttribute("href") === had.href) element.removeAttribute("href");
+    if (had.target !== null && !element.hasAttribute("target")) element.setAttribute("target", had.target);
+  };
+  const unrow = (row: Element) => {
+    const cell = rowCells.get(row);
+    if (!cell) return;
+    rowCells.delete(row);
+    untab(cell);
+  };
   const links: Links = {
     link(element) {
       const goes = opensOnPress(element, [...element.querySelectorAll("input, select, textarea")].some(isEntry));
-      if (goes && !element.hasAttribute("data-graview-link")) {
-        element.setAttribute("data-graview-link", "");
-        if (!element.hasAttribute("role") && (element.localName === "a" || takesRole(element))) element.setAttribute("role", "link");
-        if (!element.hasAttribute("tabindex") && element.localName !== "button") {
-          element.setAttribute("tabindex", "0");
-          tabbed.add(element);
-        }
-      } else if (!goes && element.hasAttribute("data-graview-link")) {
+      if (!goes) {
+        if (!element.hasAttribute("data-graview-link")) return;
         element.removeAttribute("data-graview-link");
-        if (element.getAttribute("role") === "link") element.removeAttribute("role");
-        if (tabbed.delete(element)) element.removeAttribute("tabindex");
+        unrole(element);
+        untab(element);
+        unaddress(element);
+        unrow(element);
+        return;
       }
+      if (!element.hasAttribute("data-graview-link")) element.setAttribute("data-graview-link", "");
+      /*
+       * A REAL LINK (0.1.47): an `<a>` bound to a record or a place carries
+       * the address the face goes to, so it is a link to the browser as to a
+       * person — opened in a new tab, copied, its address shown on hover. A
+       * view never writes it: an `href` the view gave is a link out
+       * (external-links.ts), left as the open kit drew it.
+       */
+      const anchor = element.localName === "a" && element.namespaceURI === HTML;
+      const given = element.getAttribute("href");
+      const own = addressed.get(element);
+      const viewsOwn = given !== null && own?.href !== given;
+      const address = anchor && !viewsOwn ? addressOf(element) : undefined;
+      if (address !== undefined) {
+        if (given !== address) element.setAttribute("href", address);
+        addressed.set(element, { href: address, target: own ? own.target : element.getAttribute("target") });
+        /* In this tab, as the app's own links go: the open kit opens a link out in a tab of its own. */
+        element.removeAttribute("target");
+        /* A link with an address is a link, and takes the keyboard, of itself: what the host gave it in their place is taken back. */
+        unrole(element);
+        untab(element);
+        return;
+      }
+      if (viewsOwn) addressed.delete(element);
+      else unaddress(element);
+      if (!element.hasAttribute("role") && (anchor || takesRole(element))) {
+        element.setAttribute("role", "link");
+        roled.add(element);
+      }
+      /* A table's row keeps its role, so its first cell takes the keyboard, and Enter there follows the row. */
+      if (element.localName === "tr" && element.namespaceURI === HTML) {
+        untab(element);
+        const cell = [...element.children].find((child) => child.localName === "td" || child.localName === "th");
+        if (rowCells.get(element) !== cell) unrow(element);
+        if (cell && !rowCells.has(element) && tab(cell)) rowCells.set(element, cell);
+        return;
+      }
+      if (element.localName !== "button") tab(element);
     },
     refresh(root) {
       for (const element of root.querySelectorAll("[data-record], [data-place], [data-graview-link]")) links.link(element);
@@ -173,19 +282,16 @@ export function createLinks(options: LinksOptions): Links {
       const link = linkPressed(at, root, (on) => on.hasAttribute("data-graview-link"));
       if (!link) return false;
       /* Followed here, and nowhere else: the face around the view does not also take the press for a press on the card. */
-      event.preventDefault();
       event.stopPropagation();
+      /* A modified press on a link with an address — a new tab, a new window — is the browser's, as on any link. */
+      if (addressed.has(link) && modified(event)) return true;
+      event.preventDefault();
       links.follow(link);
       return true;
     },
     follow(anchor) {
-      const record = anchor.getAttribute("data-record");
-      const place = anchor.getAttribute("data-place");
-      const filter = anchor.getAttribute("data-filter");
-      const section = anchor.getAttribute("data-section");
-      const also = { ...(filter ? { where: whereOfWords(filter) } : {}), ...(section ? { section } : {}) };
-      if (record) go({ record, ...also });
-      else if (place) go({ place, ...also });
+      const to = destinationOf(anchor);
+      if (to) go(to);
     },
     go,
   };
