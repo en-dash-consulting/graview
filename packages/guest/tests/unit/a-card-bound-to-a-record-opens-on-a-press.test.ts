@@ -90,7 +90,7 @@ describe("a card bound to a record", () => {
     expect(at("row").getAttribute("role")).toBeNull();
     expect(at("row").getAttribute("tabindex")).toBe("0");
     // A pointer, no double-tap zoom, a faint flash under the finger: what makes iOS take a tap on it for a click.
-    expect(REGION_CSS).toMatch(/\[data-graview-link\] \{ cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: [^;]+; \}/);
+    expect(REGION_CSS).toMatch(/\[data-graview-link\][^{]*\{ cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: [^;]+; \}/);
   });
 
   it("opens on a press anywhere inside it — its heading, a badge, a line nested deeper — and the face around it never hears the press", () => {

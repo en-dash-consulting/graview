@@ -87,7 +87,8 @@ as a link target can be hidden (set-lens-hidden, `graview-pages`).
 2. `graview view check view.js --app <app> --manifest manifest.json --seed
    <seed.json> --roles <role>` says every `data-record` or `data-place`
    that names nothing the seat was shown and no place, and every filter
-   that goes nowhere.
+   that goes nowhere. `--press ".card h3"` presses there and says where the
+   host would go, or that the press is a button's of its own.
 3. Open it on a phone, 390 pixels wide with touch: tap a card's heading and
    a badge inside it, and see the record's page; tap a toggle inside it,
    and see it toggle and stay. On a desk, Tab to a card and press Enter.

@@ -131,6 +131,8 @@ export interface ViewRuntime {
   readonly view: GraviewView;
   /** A message from the host: a push of props, or what the viewer did on what the view drew. */
   hear(message: HostMessage): void;
+  /** The id of the first element drawn that a selector matches, as `graview.on` matches it: what a headless run presses (0.1.45). */
+  find(selector: string): string | undefined;
 }
 
 const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -429,5 +431,14 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     },
   });
 
-  return { view, hear };
+  const find = (selector: string): string | undefined => {
+    try {
+      const found = root.querySelectorAll(selector)[0];
+      return found ? remoteId(found) : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
+  return { view, hear, find };
 }

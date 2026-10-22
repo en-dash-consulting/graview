@@ -16,6 +16,14 @@
  * alone) a tap on the card's heading opens it, a tap on a badge inside it
  * opens it, and a tap on the view's own toggle inside the card toggles it
  * and opens nothing.
+ *
+ * And a press that is no button: each card's "Acknowledge" and each triage
+ * fieldset's "Save the note" are `<span role="button" data-act>`. The host
+ * makes each a press, reached by the keyboard and drawn as something to
+ * press; on a desk Space on "Acknowledge" and Enter on "Save the note",
+ * after a note typed beside it, apply their acts; on a phone a tap on
+ * "Acknowledge" inside a card acknowledges the threat and opens nothing,
+ * and a tap on "Save the note" saves the note typed beside it.
  */
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -24,6 +32,7 @@ import { join, resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
 
 const PHISHING = "threat:phishing";
+const VPN = "threat:vpn";
 
 export async function tapsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, engine }) {
   const out = mkdtempSync(join(tmpdir(), "graview-guest-taps-"));
@@ -51,8 +60,9 @@ window.__handle = mount(document.getElementById("app"), {
 });
 window.__handle.drawn().then(() => { window.__ready = true; });
 window.__view = () => document.querySelector("[data-worker-view]")?.shadowRoot ?? null;
-window.__card = (id) => window.__view()?.querySelector('[data-record="' + id + '"]') ?? null;
+window.__card = (id) => window.__view()?.querySelector('.card[data-record="' + id + '"]') ?? null;
 window.__path = () => window.__handle.where().path;
+window.__node = (id) => window.__handle.store.graph.getNode(id);
 `,
       resolveDir: resolve(repoRoot, "packages/embed"),
       loader: "js",
@@ -110,14 +120,33 @@ window.__path = () => window.__handle.where().path;
       return { link: card.hasAttribute("data-graview-link"), role: card.getAttribute("role"), tabindex: card.getAttribute("tabindex"), cursor: style.cursor, touchAction: style.touchAction };
     }, PHISHING);
     claim("a card the view bound to a record with data-record is a link the host made: a link to assistive technology, reached by the keyboard, drawn with a pointer and no double-tap zoom", drawn.link && drawn.role === "link" && drawn.tabindex === "0" && drawn.cursor === "pointer" && drawn.touchAction === "manipulation", drawn);
-    await tab.locator(inView(`[data-record="${PHISHING}"] h3`)).click();
+    await tab.locator(inView(`.card[data-record="${PHISHING}"] h3`)).click();
     const clicked = await settled(tab);
     claim("on a desk, a click on a threat card's heading opens the threat's page", opened(clicked), clicked);
     await open(tab);
-    await tab.locator(inView(`[data-record="${PHISHING}"]`)).focus();
+    await tab.locator(inView(`.card[data-record="${PHISHING}"]`)).focus();
     await tab.keyboard.press("Enter");
     const entered = await settled(tab);
     claim("on a desk, Enter on a threat card opens the threat's page", opened(entered), entered);
+    /* A PRESS THAT IS NO BUTTON. */
+    await open(tab);
+    const press = await tab.evaluate((id) => {
+      const span = window.__view().querySelector('[data-ack="' + id + '"]');
+      const style = getComputedStyle(span);
+      return { role: span.getAttribute("role"), tabindex: span.getAttribute("tabindex"), marked: span.hasAttribute("data-graview-press"), cursor: style.cursor, touchAction: style.touchAction };
+    }, PHISHING);
+    claim('a <span role="button" data-act> is a press the host made: a button to assistive technology, reached by the keyboard, drawn with a pointer and no double-tap zoom', press.role === "button" && press.tabindex === "0" && press.marked && press.cursor === "pointer" && press.touchAction === "manipulation", press);
+    await tab.locator(inView(`[data-ack="${PHISHING}"]`)).focus();
+    await tab.keyboard.press("Space");
+    await tab.waitForFunction((id) => window.__node(id)?.status === "acknowledged" && window.__view().querySelector('[data-said="' + id + '"]')?.textContent === "Done", PHISHING, { timeout: 5_000 }).catch(() => {});
+    const spaced = await tab.evaluate((id) => ({ status: window.__node(id)?.status, said: window.__view().querySelector('[data-said="' + id + '"]')?.textContent, path: window.__path(), scrolled: window.scrollY }), PHISHING);
+    claim('on a desk, Space on a card\'s <span role="button" data-act="acknowledge"> acknowledges the threat, the view hears that it did, and the card does not open', spaced.status === "acknowledged" && spaced.said === "Done" && spaced.path === "/", spaced);
+    await tab.locator(inView(`[data-note="${VPN}"]`)).fill("Patch window is Saturday");
+    await tab.locator(inView(`[data-save-note="${VPN}"]`)).focus();
+    await tab.keyboard.press("Enter");
+    await tab.waitForFunction((id) => window.__node(id)?.note === "Patch window is Saturday", VPN, { timeout: 5_000 }).catch(() => {});
+    const noted = await tab.evaluate((id) => ({ note: window.__node(id)?.note ?? null }), VPN);
+    claim('on a desk, Enter on a fieldset\'s <span role="button" data-act="set-note"> saves the note typed beside it', noted.note === "Patch window is Saturday", noted);
     claim("the home view did not fail, and the host said nothing was wrong with it", (await tab.evaluate(() => [...window.__failures, ...window.__problems])).length === 0, await tab.evaluate(() => ({ failures: window.__failures, problems: window.__problems })));
     await desk.close();
 
@@ -128,11 +157,11 @@ window.__path = () => window.__handle.where().path;
       hand.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
       await open(hand);
       const coarse = await hand.evaluate(() => matchMedia("(pointer: coarse)").matches);
-      await hand.locator(inView(`[data-record="${PHISHING}"] h3`)).tap();
+      await hand.locator(inView(`.card[data-record="${PHISHING}"] h3`)).tap();
       const tapped = await settled(hand);
       claim("on a phone, a tap on a threat card's heading opens the threat's page", coarse && opened(tapped), { coarse, path: tapped });
       await open(hand);
-      await hand.locator(inView(`[data-record="${PHISHING}"] [data-badge]`)).tap();
+      await hand.locator(inView(`.card[data-record="${PHISHING}"] [data-badge]`)).tap();
       const badge = await settled(hand);
       claim("on a phone, a tap on a badge inside the card opens the threat's page too: the press is the card's, from whatever inside it the finger lands on", opened(badge), badge);
       await open(hand);
@@ -140,6 +169,17 @@ window.__path = () => window.__handle.where().path;
       await hand.waitForFunction((id) => window.__card(id)?.querySelector("[data-summary]") != null, PHISHING, { timeout: 5_000 }).catch(() => {});
       const toggled = await hand.evaluate((id) => ({ summary: window.__card(id)?.querySelector("[data-summary]")?.textContent ?? null, path: window.__path() }), PHISHING);
       claim("on a phone, a tap on the view's own toggle inside the card toggles it and opens nothing", toggled.summary === "Forty mailboxes got the fake invoice this morning." && toggled.path === "/", toggled);
+      await open(hand);
+      await hand.locator(inView(`[data-ack="${PHISHING}"]`)).tap();
+      await hand.waitForFunction((id) => window.__node(id)?.status === "acknowledged", PHISHING, { timeout: 5_000 }).catch(() => {});
+      const acked = await hand.evaluate((id) => ({ status: window.__node(id)?.status, path: window.__path() }), PHISHING);
+      claim('on a phone, a tap on a card\'s <span role="button" data-act="acknowledge"> acknowledges the threat and opens nothing', acked.status === "acknowledged" && acked.path === "/", acked);
+      await hand.locator(inView(`[data-note="${PHISHING}"]`)).tap();
+      await hand.locator(inView(`[data-note="${PHISHING}"]`)).fill("Forwarded to the mail team");
+      await hand.locator(inView(`[data-save-note="${PHISHING}"]`)).tap();
+      await hand.waitForFunction((id) => window.__node(id)?.note === "Forwarded to the mail team", PHISHING, { timeout: 5_000 }).catch(() => {});
+      const tappedNote = await hand.evaluate((id) => ({ note: window.__node(id)?.note ?? null }), PHISHING);
+      claim('on a phone, a tap on a fieldset\'s <span role="button" data-act="set-note"> saves the note typed beside it', tappedNote.note === "Forwarded to the mail team", tappedNote);
       await phone.close();
     }
     claim("the host page throws nothing", report.pageErrors.length === 0, report.pageErrors);

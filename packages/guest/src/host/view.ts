@@ -608,7 +608,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     element.setAttribute("aria-haspopup", "dialog");
     wantMedia();
   };
-  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, createSaver, fillPrefills, judgePress, prefillOf }]) => {
+  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, createSaver, fillPrefills, judgePress, markPresses, prefillOf }]) => {
     if (failed) return;
     const reader = createPressReader();
     /* The view hears what became of an act a press or a save asked for as `acted` on the element bound to it (FR-191). */
@@ -636,6 +636,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     refill = () => {
       /* A card bound to a record is a link once it is drawn whole: whether it holds a field is known only then (pressable.ts). */
       links.refresh(shadow);
+      markPresses(shadow);
       fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
       media?.refresh(shadow);
       drops?.refresh();
@@ -691,6 +692,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         const press = reader.press(event, at, root);
         if (!press || !session) return;
         event.stopPropagation();
+        /* Space on a press is the press, never the page scrolling under it. */
+        if (event.type === "keydown") event.preventDefault();
         const outcome = session.pressed(judgePress(options.store, manifest, shown, press));
         tally();
         const pressed = { as: press.as, ...outcome };

@@ -1,6 +1,7 @@
 import type { DescribedItem, DescribedPart, DescribedProblem } from "@graview/core/describe";
 import type { GuestNode, GuestProps } from "../protocol.js";
 import { placeNamed, placesSaid, type NamedPlace } from "../host/links-words.js";
+import { notPressable } from "../host/pressable.js";
 import { TreeElement, type TreeNode, TreeText } from "./tree.js";
 
 /*
@@ -141,6 +142,9 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
   for (const element of elementsUnder(root)) {
     const act = element.getAttribute("data-act");
     if (act !== null) acts.add(act);
+    /* An element the host can never press, whatever it is bound to (pressable.ts): an option, a label, a field to type into that does not save. A field that meant to save (data-debounce) is said by saveProblems. */
+    const unpressed = act !== null && element.getAttribute("data-debounce") === null ? notPressable(element) : undefined;
+    if (unpressed) problems.push({ at: `drawing <${element.localName} data-act="${act}">`, says: unpressed });
     const record = element.getAttribute("data-record");
     if (record !== null) {
       records.add(record);

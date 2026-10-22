@@ -44,7 +44,7 @@ A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in 
 ### Then find out whether it worked
 
 1. `graview check` the app the view links into: a link is only as sound as the records and places it names.
-2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says every `data-record` or `data-place` that names nothing the seat was shown and no place, and every filter that goes nowhere.
+2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says every `data-record` or `data-place` that names nothing the seat was shown and no place, and every filter that goes nowhere. `--press ".card h3"` presses there and says where the host would go, or that the press is a button's of its own.
 3. Open it on a phone, 390 pixels wide with touch: tap a card's heading and a badge inside it, and see the record's page; tap a toggle inside it, and see it toggle and stay. On a desk, Tab to a card and press Enter.
 4. Follow each link narrowed and to a section, and see it land where it says.
 

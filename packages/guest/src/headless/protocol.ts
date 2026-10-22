@@ -37,6 +37,8 @@ export interface HeadlessInput {
   /** The kinds' lists the seat sees, by their plural's slug and by the kind's name: where a view may go by name besides a place. */
   readonly lists?: readonly string[];
   readonly limits: { readonly maxNodes: number; readonly messages: number; readonly pushMs: number };
+  /** Press what this selector matches, once it has drawn: the view hears the click as it would on a page (0.1.45). */
+  readonly press?: { readonly selector: string };
 }
 
 /** What the view said, in order: every message the host would have heard. */
@@ -57,6 +59,13 @@ export interface HeadlessTranscript {
   readonly messages: number;
   /** Where it listens for a wheel, a drag or a pinch, as it last said it (0.1.42). */
   readonly gestures?: readonly { readonly event: string; readonly selector: string }[];
+  /**
+   * The press the run was asked to make (0.1.45): its selector, the id of
+   * the element it matched (none when it matched nothing), and how many
+   * acts asked, places gone to and batches drawn there were before it, so
+   * what came after is what the press did.
+   */
+  readonly pressed?: { readonly selector: string; readonly target?: string; readonly asked: number; readonly went: number; readonly renders: number };
 }
 
 /**

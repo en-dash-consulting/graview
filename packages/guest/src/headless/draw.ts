@@ -20,6 +20,8 @@ export interface DrawnTranscript {
   readonly over: boolean;
   /** The stylesheet as a page would draw it. */
   readonly css: string;
+  /** The element drawn for a view's id: what a press the run made landed on (0.1.45). */
+  elementOf(id: string): TreeElement | undefined;
 }
 
 export function drawTranscript(renders: readonly unknown[], css: string | undefined, options: { readonly maxNodes: number; readonly origin?: string; readonly imageOrigins?: readonly string[]; readonly asset?: (path: string) => string | undefined }): DrawnTranscript {
@@ -41,5 +43,5 @@ export function drawTranscript(renders: readonly unknown[], css: string | undefi
     kept = judged.css;
     for (const one of judged.refused) refused.push({ reason: "css", name: "stylesheet", css: one });
   }
-  return { root, refused, size: renderer.size, over, css: kept };
+  return { root, refused, size: renderer.size, over, css: kept, elementOf: (id) => renderer.elementOf(id) as unknown as TreeElement | undefined };
 }

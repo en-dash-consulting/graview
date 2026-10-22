@@ -128,6 +128,22 @@ async function run(text: string): Promise<string> {
   if (transcript.ms >= input.limits.pushMs) fail("slow", `It took longer than ${input.limits.pushMs.toLocaleString("en-US")} ms to draw what it was shown.`);
   /* What it drew goes in microtasks: let them run, and anything it chained on them, a bounded number of turns. */
   for (let turn = 0; turn < 64 && !failure; turn += 1) await new Promise<void>((resolve) => microtask(resolve));
+  /*
+   * A PRESS, WHEN ASKED (0.1.45): the first element the selector matches,
+   * as `graview.on` matches one, is clicked — the view hears it as it
+   * would on a page, without `pressed`, which only the host can say — and
+   * what it asked for, where it went and what it drew after are the
+   * press's. Whether the host would follow a link or apply an act there is
+   * the host's to judge, from the transcript.
+   */
+  if (input.press && typeof input.press.selector === "string" && !failure) {
+    const target = runtime.find(input.press.selector);
+    transcript.pressed = { selector: input.press.selector.slice(0, 200), ...(target !== undefined ? { target } : {}), asked: transcript.asked.length, went: transcript.went.length, renders: transcript.renders.length };
+    if (target !== undefined) {
+      runtime.hear({ type: "dom-event", target, event: "click" });
+      for (let turn = 0; turn < 64 && !failure; turn += 1) await new Promise<void>((resolve) => microtask(resolve));
+    }
+  }
   if (failure) return stringify({ ok: false, ...failure, transcript } satisfies HeadlessOutcome);
 
   const judged = judgeTranscript(transcript, input);

@@ -1,5 +1,6 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { ManifestAct, WorkerViewManifest } from "./manifest.js";
+import { clicksItself, isPress, takesRole } from "./pressable.js";
 import { declaredValues, entryFor, refuse, type Judged, type Prefilled, type Press, type PressedField } from "./writes.js";
 
 /*
@@ -51,7 +52,12 @@ export interface PressReader {
   heard(event: Event, element: Element): void;
   /** The view set what a field shows: what the viewer typed there is gone. */
   filled(field: Element): void;
-  /** A trusted click on (or in) an element bound to an act: the press, with its record and the fields in its scope. */
+  /**
+   * A trusted click on (or in) an element bound to an act — a tap is a
+   * click — or Enter or Space on one that does not press of itself (a
+   * `<span role="button">`): the press, with its record and the fields in
+   * its scope. Nothing for what can never be pressed (pressable.ts).
+   */
   press(event: Event, element: Element, root: Element): Press | undefined;
   /** What a press on `bound` (an element with `data-act`) would carry now: its record and the fields in its scope (FR-191: a field saved as it is typed). */
   collect(bound: Element, root: Element): Press | undefined;
@@ -86,10 +92,13 @@ export function createPressReader(trusted: (event: Event) => boolean = (event) =
       else written.delete(field);
     },
     press(event, element, root) {
-      if (event.type !== "click" || !trusted(event)) return undefined;
+      if (!trusted(event)) return undefined;
       const bound = element.closest("[data-act]");
-      /* A field saved as it is typed (FR-191) is bound to its act, but a click into it to type is not a press. */
-      if (!bound || (isField(bound) && bound.hasAttribute("data-save"))) return undefined;
+      /* A field saved as it is typed (FR-191) is bound to its act, but a click into it to type is not a press; nor is one on an option or a label. */
+      if (!bound || !isPress(bound)) return undefined;
+      const key = event.type === "keydown" ? (event as KeyboardEvent).key : undefined;
+      /* A key presses only what has the keyboard, and only what would not click of itself: a button's Enter is its click already. */
+      if (event.type !== "click" && !((key === "Enter" || key === " ") && element === bound && !clicksItself(bound))) return undefined;
       return reader.collect(bound, root);
     },
     collect(bound, root) {
@@ -127,6 +136,37 @@ export function createPressReader(trusted: (event: Event) => boolean = (event) =
     },
   };
   return reader;
+}
+
+/* What the host gave the keyboard or a role, so it is taken back when the element stops being a press. */
+const marked = new WeakMap<Element, { readonly tab: boolean; readonly role: boolean }>();
+
+/**
+ * EVERY PRESS THE VIEW DREW, MADE ONE (0.1.45): each element under `root`
+ * bound to an act that does not press of itself — a `<span role="button">`,
+ * a `<div>`, an SVG `<g>` — is given the keyboard, is a button to assistive
+ * technology unless it says a role of its own, and is drawn as something to
+ * press (`data-graview-press`, open-draw.ts). Run after each batch the view
+ * draws.
+ */
+export function markPresses(root: ParentNode): void {
+  for (const element of root.querySelectorAll("[data-act], [data-graview-press]")) {
+    const press = isPress(element) && !clicksItself(element) && !isField(element);
+    const had = marked.get(element);
+    if (press && !had) {
+      const tab = !element.hasAttribute("tabindex");
+      const role = takesRole(element);
+      if (tab) element.setAttribute("tabindex", "0");
+      if (role) element.setAttribute("role", "button");
+      element.setAttribute("data-graview-press", "");
+      marked.set(element, { tab, role });
+    } else if (!press && had) {
+      if (had.tab) element.removeAttribute("tabindex");
+      if (had.role && element.getAttribute("role") === "button") element.removeAttribute("role");
+      element.removeAttribute("data-graview-press");
+      marked.delete(element);
+    }
+  }
 }
 
 /*
