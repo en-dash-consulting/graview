@@ -71,6 +71,7 @@ interface Engine {
       waitForFunction(fn: string, arg?: unknown, options?: { timeout?: number }): Promise<unknown>;
       waitForTimeout(ms: number): Promise<void>;
       evaluate<T>(fn: string): Promise<T>;
+      setViewportSize(size: { width: number; height: number }): Promise<void>;
       screenshot(options: { path: string; fullPage?: boolean }): Promise<unknown>;
       close(): Promise<void>;
     }>;
@@ -118,6 +119,48 @@ export interface ShootOptions {
   readonly onShot?: (file: string) => void;
 }
 
+/**
+ * HOW MUCH OF THE PLACE IS PAST THE WINDOW'S FOOT, in the box the page
+ * scrolls in. The page the preview serves is the app's embed, a box the
+ * window's height with the bar on top, and the place scrolls inside it
+ * (`[data-embed-content]`), not the document: Playwright's `fullPage` sees
+ * only the document, so a long place stopped at the window. Any other page
+ * shots is pointed at: the tallest box that scrolls, when it is most of the
+ * window, and nothing when the document itself scrolls.
+ */
+export const OVERFLOW_PAST_THE_WINDOW = `(() => {
+  const scrolls = (el) => /(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight + 1;
+  const content = document.querySelector("[data-embed-content]");
+  const box = content && scrolls(content)
+    ? content
+    : [...document.querySelectorAll("body *")].filter((el) => scrolls(el) && el.clientHeight >= innerHeight / 2).sort((a, b) => b.clientHeight - a.clientHeight)[0];
+  return box ? Math.ceil(box.scrollHeight - box.clientHeight) : 0;
+})()`;
+
+/** Chromium's tallest picture is 16,384 pixels; a place past that is pictured to there. */
+export const TALLEST_SHOT = 16_000;
+
+/**
+ * THE WHOLE PLACE, NOT THE WINDOW'S WORTH: the window grown by what the
+ * place's scroller still hides, until nothing is hidden. The embed measures
+ * the window again on a resize (its `100dvh`), so its box grows with it; a
+ * place that draws more when it has more room is measured again after it
+ * has, a few times at most.
+ */
+export async function wholePlace(page: { evaluate<T>(fn: string): Promise<T>; setViewportSize(size: { width: number; height: number }): Promise<void> }, width: number, height: number): Promise<number> {
+  let tall = height;
+  for (let round = 0; round < 4; round++) {
+    const hidden = await page.evaluate<number>(OVERFLOW_PAST_THE_WINDOW);
+    const next = Math.min(TALLEST_SHOT, tall + Math.max(0, hidden));
+    if (hidden <= 1 || next === tall) break;
+    tall = next;
+    await page.setViewportSize({ width, height: tall });
+    // Two frames: the resize heard, the box grown, the place laid out again.
+    await page.evaluate<void>("new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())))");
+  }
+  return tall;
+}
+
 /** Every shot at every scheme and width, into `out` as `<name>-<scheme>-<width>.png`. Resolves to the files written. */
 export async function shoot(options: ShootOptions): Promise<string[]> {
   mkdirSync(options.out, { recursive: true });
@@ -127,13 +170,15 @@ export async function shoot(options: ShootOptions): Promise<string[]> {
     for (const scheme of options.schemes) {
       for (const width of options.widths) {
         for (const shot of options.shots) {
-          const page = await browser.newPage({ viewport: { width, height: width < 600 ? 844 : 900 }, colorScheme: scheme, deviceScaleFactor: 1 });
+          const height = width < 600 ? 844 : 900;
+          const page = await browser.newPage({ viewport: { width, height }, colorScheme: scheme, deviceScaleFactor: 1 });
           try {
             await page.goto(`${options.url}${shot.address}`, { waitUntil: "load" });
             // The place drawn and settled, as the page says it (FR-188): its parts, fonts, images and views here, the scene's camera still.
             await page.waitForFunction("document.querySelector('[data-graview-drawn]') !== null || typeof window.__graviewFailed === 'string'", undefined, { timeout: 60_000 });
             const failed = await page.evaluate<string | undefined>("window.__graviewFailed");
             if (failed) throw new Error(failed);
+            if (!shot.scene) await wholePlace(page, width, height);
             const file = resolve(options.out, `${shot.name}-${scheme}-${width}.png`);
             await page.screenshot({ path: file, fullPage: !shot.scene });
             written.push(file);

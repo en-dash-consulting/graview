@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T00:57:26.722Z",
+  "at": "2026-10-22T14:46:02.885Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/org.gdd.json",
   "seed": "packages/core/tests/document/fixtures/org.seed.json",
@@ -17,12 +17,12 @@
     "theSceneDrawsTheGraphAtTheOverviewsAddress": {
       "first": {
         "sceneOn": true,
-        "districts": 313,
+        "districts": 319,
         "path": "/places/overview"
       },
       "again": {
         "sceneOn": true,
-        "districts": 313,
+        "districts": 319,
         "path": "/places/overview"
       },
       "ok": true
@@ -35,7 +35,7 @@
     },
     "shotsWritesAPngForEachNamedPlace": {
       "status": 0,
-      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-0cAVgc",
+      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-5o9IP6",
       "pngs": [
         true,
         true,
@@ -46,6 +46,94 @@
     "shotsRefusesAPlaceTheAppHasNot": {
       "status": 2,
       "said": "graview shots: En Dash Org has no place called \"nowhere\". Its places: home, overview, people, components, constraints, revenue-streams, open-questions, strengths, or a path such as /places/overview.",
+      "ok": true
+    },
+    "aFullPagePictureOfALongPlaceShowsTheWholePlace": {
+      "status": 0,
+      "said": "graview shots: 1 picture of Threat Watch in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-5o9IP6/long",
+      "picture": {
+        "width": 1280,
+        "height": 1408,
+        "lowestInk": 1311
+      },
+      "ok": true
+    },
+    "shotsPicturesAnAppInCodeAndItsDraftByTitle": {
+      "status": 0,
+      "said": "graview shots: 2 pictures of Survey in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-5o9IP6/in-code",
+      "pngs": [
+        true,
+        true
+      ],
+      "ok": true
+    },
+    "aVisitorAnswersAFormAndSeesNoOtherRecord": {
+      "widths": {
+        "390": {
+          "failed": null,
+          "title": "RSVP",
+          "fields": [
+            "name",
+            "email",
+            "coming",
+            "note"
+          ],
+          "bar": 0,
+          "links": 0,
+          "sideways": false,
+          "received": true,
+          "status": "Received — thank you.Thank you — the hosts will write to you a week before.",
+          "focused": "status",
+          "landed": {
+            "kind": "guest",
+            "coming": "maybe"
+          },
+          "shown": [],
+          "leaked": [],
+          "ok": true
+        },
+        "1440": {
+          "failed": null,
+          "title": "RSVP",
+          "fields": [
+            "name",
+            "email",
+            "coming",
+            "note"
+          ],
+          "bar": 0,
+          "links": 0,
+          "sideways": false,
+          "received": true,
+          "status": "Received — thank you.Thank you — the hosts will write to you a week before.",
+          "focused": "status",
+          "landed": {
+            "kind": "guest",
+            "coming": "maybe"
+          },
+          "shown": [],
+          "leaked": [],
+          "ok": true
+        }
+      },
+      "authors": [
+        {
+          "kind": "human",
+          "id": "form:04ca2087-2b9b-4574-916d-828f26dd0fd9",
+          "roles": [
+            "visitor"
+          ],
+          "name": "a visitor via the RSVP form"
+        },
+        {
+          "kind": "human",
+          "id": "form:49992abb-6de7-4144-aa15-9cad68530db4",
+          "roles": [
+            "visitor"
+          ],
+          "name": "a visitor via the RSVP form"
+        }
+      ],
       "ok": true
     },
     "noPageThrew": {
