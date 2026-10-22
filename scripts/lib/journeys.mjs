@@ -1550,9 +1550,14 @@ export const JOBS = {
        * where the key is the field's own undo.
        */
       if (person.input === "keyboard") {
-        const said = await page.evaluate(() =>
-          [...document.querySelectorAll("[aria-keyshortcuts]")].some((el) => el.getClientRects().length > 0 && /(^|\s)(Meta|Control)\+Z(\s|$)/.test(el.getAttribute("aria-keyshortcuts") ?? "")),
-        );
+        // The offer comes in after the change lands; on a slow runner it is not drawn yet when the walk begins.
+        const said = await page
+          .waitForFunction(
+            () => [...document.querySelectorAll("[aria-keyshortcuts]")].some((el) => el.getClientRects().length > 0 && /(^|\s)(Meta|Control)\+Z(\s|$)/.test(el.getAttribute("aria-keyshortcuts") ?? "")),
+            undefined,
+            { timeout: 3000 },
+          )
+          .then(() => true, () => false);
         if (said) {
           const before = person.presses;
           await person.key(process.platform === "darwin" ? "Meta+Z" : "Control+Z");
