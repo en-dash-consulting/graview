@@ -103,7 +103,9 @@ jobs:
     runs-on: ubuntu-latest
     # The required reviewer on this environment is the release's one approval.
     environment: npm
-    timeout-minutes: 30
+    # The tests take about 12 minutes before anything is published, and one
+    # slow registry PUT took 8 on 2026-10-22; 30 cut that release in half.
+    timeout-minutes: 75
     permissions:
       contents: write
       id-token: write
