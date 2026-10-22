@@ -114,6 +114,19 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly basePath?: string;
   /**
+   * THE HOST'S ADDRESS FOR A PAGE OF THE APP: given a path of the routed
+   * face (`/tasks/t1`, `/places/the-board?filter=…#section`), the address the
+   * host's page answers for it — `https://chat.example/c/42?open=/tasks/t1`
+   * — or `undefined` where it has none. A worker view's `<a data-record>`
+   * and `<a data-place>`, the bar's places and the Scene's Open carry it as
+   * their `href`, so Cmd-click opens it in a new tab and it copies as a link.
+   * Under memory routing the face's paths are no addresses of the host's
+   * page, so without this those links carry no `href` — a view's link is a
+   * link by its role and the keyboard, as on the scene. Under address
+   * routing it is `basePath` and the path unless given.
+   */
+  readonly hrefOf?: (path: string) => string | undefined;
+  /**
    * TOLD WHERE THE ROUTED FACE WENT (FR-106): its path within the app's own
    * routes, with its search, each time it changes after arrival, and how
    * (`"push"`, `"replace"` or `"pop"`). Under memory routing it is how a host

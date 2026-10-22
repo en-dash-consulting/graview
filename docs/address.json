@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T13:47:57.027Z",
+  "at": "2026-10-22T15:30:34.503Z",
   "engines": [
     "chromium",
     "webkit",
@@ -12,7 +12,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -27,7 +27,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -44,7 +44,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5788/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -59,7 +59,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5788/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -78,7 +78,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -93,7 +93,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -110,7 +110,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5788/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -125,7 +125,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5788/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -144,7 +144,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 1,
@@ -159,7 +159,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 1,
@@ -176,7 +176,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5788/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 2,
@@ -191,7 +191,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5788/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 2,
@@ -215,7 +215,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5788/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -231,7 +231,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5788/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -249,7 +249,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5788/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -265,7 +265,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5788/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -285,7 +285,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5788/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -301,7 +301,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5788/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -319,7 +319,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5788/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -335,7 +335,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5788/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -355,7 +355,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5788/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 3,
@@ -371,7 +371,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5788/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 3,
@@ -389,7 +389,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5788/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 4,
@@ -405,7 +405,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5788/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 4,
@@ -430,7 +430,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -445,7 +445,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -462,7 +462,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/open-questions",
+              "href": "http://localhost:5788/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 7,
@@ -477,7 +477,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2",
+              "href": "http://localhost:5788/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 7,
@@ -496,7 +496,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -511,7 +511,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -528,7 +528,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/open-questions",
+              "href": "http://localhost:5788/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 7,
@@ -543,7 +543,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2",
+              "href": "http://localhost:5788/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 7,
@@ -562,7 +562,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 5,
@@ -577,7 +577,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5788/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 5,
@@ -594,7 +594,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/open-questions",
+              "href": "http://localhost:5788/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 6,
@@ -609,7 +609,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2",
+              "href": "http://localhost:5788/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 6,
@@ -787,7 +787,7 @@
       "seen": {
         "chromium": {
           "place": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5788/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 2,
@@ -802,7 +802,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5788/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 4,
@@ -818,7 +818,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5788/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 6,
@@ -835,7 +835,7 @@
         },
         "webkit": {
           "place": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5788/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 2,
@@ -850,7 +850,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5788/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 4,
@@ -866,7 +866,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5788/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 6,
@@ -883,7 +883,7 @@
         },
         "firefox": {
           "place": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5788/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 1,
@@ -898,7 +898,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5788/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 3,
@@ -914,7 +914,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5788/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 5,
@@ -3653,25 +3653,25 @@
       "seen": {
         "chromium 1440×900 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3680,25 +3680,25 @@
         },
         "chromium 390×844 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3707,25 +3707,25 @@
         },
         "webkit 1440×900 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3734,25 +3734,25 @@
         },
         "webkit 390×844 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3761,25 +3761,25 @@
         },
         "firefox 1440×900 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": null
@@ -3788,25 +3788,25 @@
         },
         "firefox 390×844 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5788/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": null
@@ -5307,6 +5307,1102 @@
             "scrollers": [
               "place-lens"
             ]
+          }
+        }
+      },
+      "ok": true
+    },
+    "aTallRecordViewOnTheSceneIsACardWhoseOpenLandsOnTheRecordsPage": {
+      "seen": {
+        "chromium 1440×900": {
+          "notes": {
+            "title": "The tasks · Write the brief",
+            "height": 628,
+            "top": 80,
+            "bottom": 708,
+            "hostHeight": 628,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1652,
+            "layoutHeight": 628,
+            "drawnHeight": 1781,
+            "shown": 569,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": {
+              "href": "/apps/a4/tasks/t1",
+              "name": "Open Write the brief",
+              "visible": true
+            },
+            "expand": null,
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 31,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80
+          },
+          "shell": {
+            "before": {
+              "title": "Write the brief",
+              "height": 607,
+              "top": 79,
+              "bottom": 685,
+              "hostHeight": 629,
+              "barBottom": 47,
+              "window": 900,
+              "measured": 1887,
+              "layoutHeight": 607,
+              "drawnHeight": 2015,
+              "shown": 545,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            },
+            "grown": {
+              "title": "Write the brief",
+              "height": 2076,
+              "top": 79,
+              "bottom": 2154,
+              "hostHeight": 629,
+              "barBottom": 47,
+              "window": 900,
+              "measured": 1887,
+              "layoutHeight": 2076,
+              "drawnHeight": 2015,
+              "shown": 2015,
+              "more": false,
+              "fade": false,
+              "expanded": true,
+              "open": null,
+              "expand": {
+                "said": "Collapse",
+                "pressed": "true",
+                "name": "Collapse Write the brief"
+              },
+              "scrollers": []
+            },
+            "back": {
+              "title": "Write the brief",
+              "height": 607,
+              "top": 79,
+              "bottom": 685,
+              "hostHeight": 629,
+              "barBottom": 47,
+              "window": 900,
+              "measured": 1887,
+              "layoutHeight": 607,
+              "drawnHeight": 2015,
+              "shown": 545,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            }
+          }
+        },
+        "chromium 390×844": {
+          "notes": {
+            "title": "The tasks · Write the brief",
+            "height": 544,
+            "top": 120,
+            "bottom": 664,
+            "hostHeight": 544,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1652,
+            "layoutHeight": 544,
+            "drawnHeight": 1847,
+            "shown": 485,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": {
+              "href": "/apps/a4/tasks/t1",
+              "name": "Open Write the brief",
+              "visible": true
+            },
+            "expand": null,
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 29,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80
+          },
+          "shell": {
+            "before": {
+              "title": "Write the brief",
+              "height": 523,
+              "top": 119,
+              "bottom": 641,
+              "hostHeight": 545,
+              "barBottom": 47,
+              "window": 844,
+              "measured": 1887,
+              "layoutHeight": 523,
+              "drawnHeight": 2056,
+              "shown": 461,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            },
+            "grown": {
+              "title": "Write the brief",
+              "height": 2117,
+              "top": 119,
+              "bottom": 2236,
+              "hostHeight": 545,
+              "barBottom": 47,
+              "window": 844,
+              "measured": 1887,
+              "layoutHeight": 2117,
+              "drawnHeight": 2056,
+              "shown": 2056,
+              "more": false,
+              "fade": false,
+              "expanded": true,
+              "open": null,
+              "expand": {
+                "said": "Collapse",
+                "pressed": "true",
+                "name": "Collapse Write the brief"
+              },
+              "scrollers": []
+            },
+            "back": {
+              "title": "Write the brief",
+              "height": 523,
+              "top": 119,
+              "bottom": 641,
+              "hostHeight": 545,
+              "barBottom": 47,
+              "window": 844,
+              "measured": 1887,
+              "layoutHeight": 523,
+              "drawnHeight": 2056,
+              "shown": 461,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            }
+          }
+        },
+        "webkit 1440×900": {
+          "notes": {
+            "title": "The tasks · Write the brief",
+            "height": 628,
+            "top": 80,
+            "bottom": 708,
+            "hostHeight": 628,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1652,
+            "layoutHeight": 628,
+            "drawnHeight": 1781,
+            "shown": 569,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": {
+              "href": "/apps/a4/tasks/t1",
+              "name": "Open Write the brief",
+              "visible": true
+            },
+            "expand": null,
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 31,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80
+          },
+          "shell": {
+            "before": {
+              "title": "Write the brief",
+              "height": 607,
+              "top": 79,
+              "bottom": 686,
+              "hostHeight": 629,
+              "barBottom": 47,
+              "window": 900,
+              "measured": 1887,
+              "layoutHeight": 607,
+              "drawnHeight": 2014,
+              "shown": 546,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            },
+            "grown": {
+              "title": "Write the brief",
+              "height": 2075,
+              "top": 79,
+              "bottom": 2154,
+              "hostHeight": 629,
+              "barBottom": 47,
+              "window": 900,
+              "measured": 1887,
+              "layoutHeight": 2075,
+              "drawnHeight": 2014,
+              "shown": 2014,
+              "more": false,
+              "fade": false,
+              "expanded": true,
+              "open": null,
+              "expand": {
+                "said": "Collapse",
+                "pressed": "true",
+                "name": "Collapse Write the brief"
+              },
+              "scrollers": []
+            },
+            "back": {
+              "title": "Write the brief",
+              "height": 607,
+              "top": 79,
+              "bottom": 686,
+              "hostHeight": 629,
+              "barBottom": 47,
+              "window": 900,
+              "measured": 1887,
+              "layoutHeight": 607,
+              "drawnHeight": 2014,
+              "shown": 546,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            }
+          }
+        },
+        "webkit 390×844": {
+          "notes": {
+            "title": "The tasks · Write the brief",
+            "height": 544,
+            "top": 120,
+            "bottom": 664,
+            "hostHeight": 544,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1652,
+            "layoutHeight": 544,
+            "drawnHeight": 1845,
+            "shown": 485,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": {
+              "href": "/apps/a4/tasks/t1",
+              "name": "Open Write the brief",
+              "visible": true
+            },
+            "expand": null,
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 29,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80
+          },
+          "shell": {
+            "before": {
+              "title": "Write the brief",
+              "height": 523,
+              "top": 119,
+              "bottom": 642,
+              "hostHeight": 545,
+              "barBottom": 47,
+              "window": 844,
+              "measured": 1887,
+              "layoutHeight": 523,
+              "drawnHeight": 2055,
+              "shown": 462,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            },
+            "grown": {
+              "title": "Write the brief",
+              "height": 2116,
+              "top": 119,
+              "bottom": 2235,
+              "hostHeight": 545,
+              "barBottom": 47,
+              "window": 844,
+              "measured": 1887,
+              "layoutHeight": 2116,
+              "drawnHeight": 2055,
+              "shown": 2055,
+              "more": false,
+              "fade": false,
+              "expanded": true,
+              "open": null,
+              "expand": {
+                "said": "Collapse",
+                "pressed": "true",
+                "name": "Collapse Write the brief"
+              },
+              "scrollers": []
+            },
+            "back": {
+              "title": "Write the brief",
+              "height": 523,
+              "top": 119,
+              "bottom": 642,
+              "hostHeight": 545,
+              "barBottom": 47,
+              "window": 844,
+              "measured": 1887,
+              "layoutHeight": 523,
+              "drawnHeight": 2055,
+              "shown": 462,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            }
+          }
+        },
+        "firefox 1440×900": {
+          "notes": {
+            "title": "The tasks · Write the brief",
+            "height": 628,
+            "top": 80,
+            "bottom": 708,
+            "hostHeight": 628,
+            "barBottom": 48,
+            "window": 900,
+            "measured": 1652,
+            "layoutHeight": 628,
+            "drawnHeight": 1782,
+            "shown": 569,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": {
+              "href": "/apps/a4/tasks/t1",
+              "name": "Open Write the brief",
+              "visible": true
+            },
+            "expand": null,
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 29,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80
+          },
+          "shell": {
+            "before": {
+              "title": "Write the brief",
+              "height": 607,
+              "top": 79,
+              "bottom": 685,
+              "hostHeight": 629,
+              "barBottom": 47,
+              "window": 900,
+              "measured": 1888,
+              "layoutHeight": 607,
+              "drawnHeight": 2016,
+              "shown": 545,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            },
+            "grown": {
+              "title": "Write the brief",
+              "height": 2077,
+              "top": 79,
+              "bottom": 2155,
+              "hostHeight": 629,
+              "barBottom": 47,
+              "window": 900,
+              "measured": 1888,
+              "layoutHeight": 2077,
+              "drawnHeight": 2016,
+              "shown": 2016,
+              "more": false,
+              "fade": false,
+              "expanded": true,
+              "open": null,
+              "expand": {
+                "said": "Collapse",
+                "pressed": "true",
+                "name": "Collapse Write the brief"
+              },
+              "scrollers": []
+            },
+            "back": {
+              "title": "Write the brief",
+              "height": 607,
+              "top": 79,
+              "bottom": 685,
+              "hostHeight": 629,
+              "barBottom": 47,
+              "window": 900,
+              "measured": 1888,
+              "layoutHeight": 607,
+              "drawnHeight": 2016,
+              "shown": 545,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            }
+          }
+        },
+        "firefox 390×844": {
+          "notes": {
+            "title": "The tasks · Write the brief",
+            "height": 544,
+            "top": 120,
+            "bottom": 664,
+            "hostHeight": 544,
+            "barBottom": 48,
+            "window": 844,
+            "measured": 1652,
+            "layoutHeight": 544,
+            "drawnHeight": 1847,
+            "shown": 485,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": {
+              "href": "/apps/a4/tasks/t1",
+              "name": "Open Write the brief",
+              "visible": true
+            },
+            "expand": null,
+            "scrollers": []
+          },
+          "landed": {
+            "path": "/apps/a4/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 27,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false,
+            "entries": 80
+          },
+          "shell": {
+            "before": {
+              "title": "Write the brief",
+              "height": 523,
+              "top": 119,
+              "bottom": 641,
+              "hostHeight": 545,
+              "barBottom": 47,
+              "window": 844,
+              "measured": 1888,
+              "layoutHeight": 523,
+              "drawnHeight": 2057,
+              "shown": 461,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            },
+            "grown": {
+              "title": "Write the brief",
+              "height": 2119,
+              "top": 119,
+              "bottom": 2237,
+              "hostHeight": 545,
+              "barBottom": 47,
+              "window": 844,
+              "measured": 1888,
+              "layoutHeight": 2119,
+              "drawnHeight": 2057,
+              "shown": 2057,
+              "more": false,
+              "fade": false,
+              "expanded": true,
+              "open": null,
+              "expand": {
+                "said": "Collapse",
+                "pressed": "true",
+                "name": "Collapse Write the brief"
+              },
+              "scrollers": []
+            },
+            "back": {
+              "title": "Write the brief",
+              "height": 523,
+              "top": 119,
+              "bottom": 641,
+              "hostHeight": 545,
+              "barBottom": 47,
+              "window": 844,
+              "measured": 1888,
+              "layoutHeight": 523,
+              "drawnHeight": 2057,
+              "shown": 461,
+              "more": true,
+              "fade": true,
+              "expanded": false,
+              "open": null,
+              "expand": {
+                "said": "Expand",
+                "pressed": "false",
+                "name": "Expand Write the brief"
+              },
+              "scrollers": []
+            }
+          }
+        }
+      },
+      "ok": true
+    },
+    "withNoPageDoorExpandGrowsTheRecordsCardInPlace": {
+      "seen": {
+        "chromium 1440×900": {
+          "before": {
+            "title": "Write the brief",
+            "height": 607,
+            "top": 79,
+            "bottom": 685,
+            "hostHeight": 629,
+            "barBottom": 47,
+            "window": 900,
+            "measured": 1887,
+            "layoutHeight": 607,
+            "drawnHeight": 2015,
+            "shown": 545,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          },
+          "grown": {
+            "title": "Write the brief",
+            "height": 2076,
+            "top": 79,
+            "bottom": 2154,
+            "hostHeight": 629,
+            "barBottom": 47,
+            "window": 900,
+            "measured": 1887,
+            "layoutHeight": 2076,
+            "drawnHeight": 2015,
+            "shown": 2015,
+            "more": false,
+            "fade": false,
+            "expanded": true,
+            "open": null,
+            "expand": {
+              "said": "Collapse",
+              "pressed": "true",
+              "name": "Collapse Write the brief"
+            },
+            "scrollers": []
+          },
+          "back": {
+            "title": "Write the brief",
+            "height": 607,
+            "top": 79,
+            "bottom": 685,
+            "hostHeight": 629,
+            "barBottom": 47,
+            "window": 900,
+            "measured": 1887,
+            "layoutHeight": 607,
+            "drawnHeight": 2015,
+            "shown": 545,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          }
+        },
+        "chromium 390×844": {
+          "before": {
+            "title": "Write the brief",
+            "height": 523,
+            "top": 119,
+            "bottom": 641,
+            "hostHeight": 545,
+            "barBottom": 47,
+            "window": 844,
+            "measured": 1887,
+            "layoutHeight": 523,
+            "drawnHeight": 2056,
+            "shown": 461,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          },
+          "grown": {
+            "title": "Write the brief",
+            "height": 2117,
+            "top": 119,
+            "bottom": 2236,
+            "hostHeight": 545,
+            "barBottom": 47,
+            "window": 844,
+            "measured": 1887,
+            "layoutHeight": 2117,
+            "drawnHeight": 2056,
+            "shown": 2056,
+            "more": false,
+            "fade": false,
+            "expanded": true,
+            "open": null,
+            "expand": {
+              "said": "Collapse",
+              "pressed": "true",
+              "name": "Collapse Write the brief"
+            },
+            "scrollers": []
+          },
+          "back": {
+            "title": "Write the brief",
+            "height": 523,
+            "top": 119,
+            "bottom": 641,
+            "hostHeight": 545,
+            "barBottom": 47,
+            "window": 844,
+            "measured": 1887,
+            "layoutHeight": 523,
+            "drawnHeight": 2056,
+            "shown": 461,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          }
+        },
+        "webkit 1440×900": {
+          "before": {
+            "title": "Write the brief",
+            "height": 607,
+            "top": 79,
+            "bottom": 686,
+            "hostHeight": 629,
+            "barBottom": 47,
+            "window": 900,
+            "measured": 1887,
+            "layoutHeight": 607,
+            "drawnHeight": 2014,
+            "shown": 546,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          },
+          "grown": {
+            "title": "Write the brief",
+            "height": 2075,
+            "top": 79,
+            "bottom": 2154,
+            "hostHeight": 629,
+            "barBottom": 47,
+            "window": 900,
+            "measured": 1887,
+            "layoutHeight": 2075,
+            "drawnHeight": 2014,
+            "shown": 2014,
+            "more": false,
+            "fade": false,
+            "expanded": true,
+            "open": null,
+            "expand": {
+              "said": "Collapse",
+              "pressed": "true",
+              "name": "Collapse Write the brief"
+            },
+            "scrollers": []
+          },
+          "back": {
+            "title": "Write the brief",
+            "height": 607,
+            "top": 79,
+            "bottom": 686,
+            "hostHeight": 629,
+            "barBottom": 47,
+            "window": 900,
+            "measured": 1887,
+            "layoutHeight": 607,
+            "drawnHeight": 2014,
+            "shown": 546,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          }
+        },
+        "webkit 390×844": {
+          "before": {
+            "title": "Write the brief",
+            "height": 523,
+            "top": 119,
+            "bottom": 642,
+            "hostHeight": 545,
+            "barBottom": 47,
+            "window": 844,
+            "measured": 1887,
+            "layoutHeight": 523,
+            "drawnHeight": 2055,
+            "shown": 462,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          },
+          "grown": {
+            "title": "Write the brief",
+            "height": 2116,
+            "top": 119,
+            "bottom": 2235,
+            "hostHeight": 545,
+            "barBottom": 47,
+            "window": 844,
+            "measured": 1887,
+            "layoutHeight": 2116,
+            "drawnHeight": 2055,
+            "shown": 2055,
+            "more": false,
+            "fade": false,
+            "expanded": true,
+            "open": null,
+            "expand": {
+              "said": "Collapse",
+              "pressed": "true",
+              "name": "Collapse Write the brief"
+            },
+            "scrollers": []
+          },
+          "back": {
+            "title": "Write the brief",
+            "height": 523,
+            "top": 119,
+            "bottom": 642,
+            "hostHeight": 545,
+            "barBottom": 47,
+            "window": 844,
+            "measured": 1887,
+            "layoutHeight": 523,
+            "drawnHeight": 2055,
+            "shown": 462,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          }
+        },
+        "firefox 1440×900": {
+          "before": {
+            "title": "Write the brief",
+            "height": 607,
+            "top": 79,
+            "bottom": 685,
+            "hostHeight": 629,
+            "barBottom": 47,
+            "window": 900,
+            "measured": 1888,
+            "layoutHeight": 607,
+            "drawnHeight": 2016,
+            "shown": 545,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          },
+          "grown": {
+            "title": "Write the brief",
+            "height": 2077,
+            "top": 79,
+            "bottom": 2155,
+            "hostHeight": 629,
+            "barBottom": 47,
+            "window": 900,
+            "measured": 1888,
+            "layoutHeight": 2077,
+            "drawnHeight": 2016,
+            "shown": 2016,
+            "more": false,
+            "fade": false,
+            "expanded": true,
+            "open": null,
+            "expand": {
+              "said": "Collapse",
+              "pressed": "true",
+              "name": "Collapse Write the brief"
+            },
+            "scrollers": []
+          },
+          "back": {
+            "title": "Write the brief",
+            "height": 607,
+            "top": 79,
+            "bottom": 685,
+            "hostHeight": 629,
+            "barBottom": 47,
+            "window": 900,
+            "measured": 1888,
+            "layoutHeight": 607,
+            "drawnHeight": 2016,
+            "shown": 545,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          }
+        },
+        "firefox 390×844": {
+          "before": {
+            "title": "Write the brief",
+            "height": 523,
+            "top": 119,
+            "bottom": 641,
+            "hostHeight": 545,
+            "barBottom": 47,
+            "window": 844,
+            "measured": 1888,
+            "layoutHeight": 523,
+            "drawnHeight": 2057,
+            "shown": 461,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
+          },
+          "grown": {
+            "title": "Write the brief",
+            "height": 2119,
+            "top": 119,
+            "bottom": 2237,
+            "hostHeight": 545,
+            "barBottom": 47,
+            "window": 844,
+            "measured": 1888,
+            "layoutHeight": 2119,
+            "drawnHeight": 2057,
+            "shown": 2057,
+            "more": false,
+            "fade": false,
+            "expanded": true,
+            "open": null,
+            "expand": {
+              "said": "Collapse",
+              "pressed": "true",
+              "name": "Collapse Write the brief"
+            },
+            "scrollers": []
+          },
+          "back": {
+            "title": "Write the brief",
+            "height": 523,
+            "top": 119,
+            "bottom": 641,
+            "hostHeight": 545,
+            "barBottom": 47,
+            "window": 844,
+            "measured": 1888,
+            "layoutHeight": 523,
+            "drawnHeight": 2057,
+            "shown": 461,
+            "more": true,
+            "fade": true,
+            "expanded": false,
+            "open": null,
+            "expand": {
+              "said": "Expand",
+              "pressed": "false",
+              "name": "Expand Write the brief"
+            },
+            "scrollers": []
           }
         }
       },

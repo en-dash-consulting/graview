@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 650,
+  "gzipped": 240,
+  "note": "Raised when a focus ring at a worker view's region edge came to be drawn whole (0.1.47): the region letting the ring's reach past its edge while it holds the keyboard, and, where the engine has no overflow-clip-margin, a control found at the edge as it takes the keyboard drawing its ring inside its own edge. Measured at 194_446 / 73_884 against 193_799 / 73_649 minified and gzipped."
+}

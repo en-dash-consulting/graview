@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { Store, type AnySchema } from "@graview/core";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { sam, threatApp, threatSeed } from "../../../../scripts/fixtures/threat-app.js";
 import { createLinks, type Arrival } from "../../src/host/links.js";
 import { createOpenDrawing, REGION_CSS } from "../../src/host/open-draw.js";
@@ -162,6 +162,38 @@ describe("the region's own rules", () => {
   it("reset a link the host made the same way, and say only a link out opens a new tab", () => {
     expect(REGION_CSS).toContain(":where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }");
     expect(REGION_CSS).toMatch(/a\[href\]:not\(\[data-graview-link\]\)::after/);
+  });
+
+  it("let a ring at the region's edge paint whole while the keyboard is in it, and nothing else past it", () => {
+    /*
+     * The region clips what the view draws, and cut the ring of a link flush
+     * with its edge in half. It lets the ring's reach (2px and its 2px offset)
+     * past its edge only while something in it has the keyboard; where the
+     * engine has no overflow-clip-margin (WebKit), a control the host finds
+     * at the edge as it takes the keyboard draws its ring inside its own
+     * edge, after the ring's own rule so it wins. In three engines:
+     * `guest-sandbox --transport=taps` ("a focused link flush with the
+     * region's left edge shows its whole ring").
+     */
+    expect(REGION_CSS).toMatch(/:host \{[^}]*contain: layout paint style;[^}]*overflow: clip;/);
+    expect(REGION_CSS).toContain(":host(:focus-within) { overflow-clip-margin: 4px; }");
+    const ring = REGION_CSS.indexOf("[data-graview-view-root] :focus-visible { outline:");
+    const inside = REGION_CSS.indexOf("[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }");
+    expect(ring).toBeGreaterThan(0);
+    expect(inside).toBeGreaterThan(ring);
+  });
+
+  it("mark a control at the region's edge, as it takes the keyboard, to draw its ring inside, where the engine has no overflow-clip-margin", () => {
+    // jsdom lays nothing out, so every control is at the edge; it is asked as WebKit answers.
+    const supports = vi.spyOn(CSS, "supports").mockReturnValue(false);
+    const webkit = region();
+    webkit.at("link").dispatchEvent(new FocusEvent("focusin", { bubbles: true, composed: true }));
+    expect(webkit.at("link").hasAttribute("data-graview-ring-inside")).toBe(true);
+    supports.mockRestore();
+    // Where the region lets the ring past its edge, nothing is marked.
+    const chromium = region();
+    chromium.at("link").dispatchEvent(new FocusEvent("focusin", { bubbles: true, composed: true }));
+    expect(chromium.at("link").hasAttribute("data-graview-ring-inside")).toBe(false);
   });
 });
 

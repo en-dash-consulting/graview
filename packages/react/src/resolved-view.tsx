@@ -1,4 +1,4 @@
-import { pluralLabel, counted, placeSlug, type AnySchema, type Fidelity, type NodeOfSchema } from "@graview/core";
+import { pluralLabel, counted, labelOf, placeSlug, recordPath, type AnySchema, type Fidelity, type NodeOfSchema } from "@graview/core";
 import { aggregateId, isAggregateId, kindCardId, kindOfCard, withFocus } from "@graview/layout/view";
 import { PLANE_STYLES } from "@graview/render";
 import { memo, useMemo, useRef, type ReactNode } from "react";
@@ -305,10 +305,18 @@ export function ResolvedView<S extends AnySchema>({
   if (!Component) return <MissingView node={node} props={props} />;
   /*
    * A VIEW AS TALL AS WHAT IT DRAWS IS PREVIEWED HERE (Roadmap
-   * f-view-content-height): a worker view of the members, drawn as a card
-   * held to its box with Open to its place, never as the whole of itself.
+   * f-view-content-height, f-scene-record-view-card): a worker view, drawn
+   * as a card held to its box, never as the whole of itself — of the
+   * members, with Open to its place; of one record, with Open to the
+   * record's page.
    */
-  const preview = cell.cardinality === "many" ? previewOf(Component) : undefined;
+  const preview = previewOf(Component);
+  const record = !node.aggregate && props.node ? props.node : undefined;
+  const previewed = preview
+    ? record
+      ? { title: labelOf(store.schema.tryDefinition(record.kind), record as never), name: record.id, path: recordPath(store.schema, record.kind, record.id) }
+      : { title: props.label ?? node.kind, name: registration?.title ? placeSlug(registration.title) : "", path: registration?.title ? `/places/${placeSlug(registration.title)}` : undefined }
+    : undefined;
   /*
    * DRAWN AGAIN ONLY WHEN WHAT IT DRAWS CHANGED.
    *
@@ -366,8 +374,8 @@ export function ResolvedView<S extends AnySchema>({
           signature={signature}
           graph={graph}
           draw={() =>
-            preview ? (
-              <ScenePreview title={props.label ?? node.kind} as={registration?.title ? placeSlug(registration.title) : undefined} maxHeight={preview.maxHeight}>
+            preview && previewed ? (
+              <ScenePreview {...previewed} maxHeight={preview.maxHeight}>
                 <Component {...props} />
               </ScenePreview>
             ) : (

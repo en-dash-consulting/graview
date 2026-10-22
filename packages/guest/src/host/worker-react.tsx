@@ -286,12 +286,13 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
    */
   (view as { flows?: boolean }).flows = manifest.flows !== false;
   /*
-   * ON THE SCENE, A PREVIEW (Roadmap f-view-content-height): a view of the
-   * members is as tall as it draws, so the Scene draws it as a card held to
-   * its box — at most its measured content height, at most `scene.maxHeight`
-   * — faded where there is more, with Open to its place.
+   * ON THE SCENE, A PREVIEW (Roadmap f-view-content-height,
+   * f-scene-record-view-card): a view is as tall as it draws, so the Scene
+   * draws it as a card held to its box — at most its measured content
+   * height, at most `scene.maxHeight` — faded where there is more, with Open
+   * to its place, or, for a view of one record, to the record's page.
    */
-  if (manifest.cardinality === "many") markPreviews(view, manifest.scene?.maxHeight !== undefined ? { maxHeight: manifest.scene.maxHeight } : {});
+  markPreviews(view, manifest.scene?.maxHeight !== undefined ? { maxHeight: manifest.scene.maxHeight } : {});
   views.register(manifest.attach as KindOfSchema<S>, cell, view as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
   return views;
 }

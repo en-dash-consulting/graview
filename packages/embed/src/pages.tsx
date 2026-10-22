@@ -111,8 +111,8 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
                   named={barLeaves(bar).name !== false}
                   at={at}
                   without={props.pages?.without()}
-                  home={{ ...(address ? { href: addressOf("/", base) } : {}), go: () => steer("/"), current: at.split("?")[0] === "/" }}
-                  reach={{ ...(address ? { href: (path: string) => addressOf(path, base) } : {}), go: (place) => steer(place.path) }}
+                  home={{ ...(props.hrefOf?.("/") !== undefined ? { href: props.hrefOf("/") } : address ? { href: addressOf("/", base) } : {}), go: () => steer("/"), current: at.split("?")[0] === "/" }}
+                  reach={{ ...(props.hrefOf ? { href: props.hrefOf } : address ? { href: (path: string) => addressOf(path, base) } : {}), go: (place) => steer(place.path) }}
                   standing={standing}
                   hostActions={props.hostActions}
                   onFind={setBarFind}

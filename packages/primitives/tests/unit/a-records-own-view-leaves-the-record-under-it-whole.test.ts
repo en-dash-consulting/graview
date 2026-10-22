@@ -21,12 +21,19 @@ describe("the record in focus", () => {
   it("scrolls its body once, and draws a panel inside that body whole", () => {
     for (const scheme of ["light", "dark"] as const) {
       const css = sceneCss(scheme);
-      expect(rule(css, "[data-graview-record-focus] > :not(.graview-kind-tag)")).toMatch(/overflow-y: auto/);
+      expect(rule(css, "[data-graview-record-focus] > :not(.graview-kind-tag):not([data-graview-preview])")).toMatch(/overflow-y: auto/);
       const inner = rule(css, '[data-graview-record-focus] > :not(.graview-kind-tag) [data-graview-primitive="panel"]');
       expect(inner).toMatch(/max-height: none !important/);
       expect(inner).toMatch(/height: auto !important/);
       expect(inner).toMatch(/overflow: visible !important/);
       expect(rule(css, '[data-graview-record-focus] > :not(.graview-kind-tag) [data-graview-primitive="panel"] > .graview-scroll')).toMatch(/overflow: visible/);
     }
+  });
+
+  it("drawn by a worker view, is that view's card, which the record's scroll does not hold (Roadmap f-scene-record-view-card)", () => {
+    /* The card clips and fades, with Open or Expand; it is never the box that scrolls. A panel inside it is still drawn whole. */
+    const css = sceneCss("light");
+    expect(css).not.toContain("[data-graview-record-focus] > :not(.graview-kind-tag) {");
+    expect(rule(css, '[data-graview-record-focus] > :not(.graview-kind-tag) [data-graview-primitive="panel"]')).toMatch(/max-height: none !important/);
   });
 });

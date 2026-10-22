@@ -87,6 +87,13 @@ export function PagesContent<S extends AnySchema>({
             ? basePathOf(props.basePath) === "" ? {} : { basename: basePathOf(props.basePath) }
             : { initialPath: props.path ?? "/" })}
           {...(props.path !== undefined ? { path: props.path } : {})}
+          /*
+           * WHERE A VIEW'S LINK GOES ON THE HOST'S PAGE: the host's address
+           * for it where it says one. Under memory routing the face's own
+           * path is no page of the host's, so with none said a link carries
+           * no address; under address routing it is the face's own.
+           */
+          {...(props.hrefOf ? { hrefOf: props.hrefOf } : props.routing === "address" ? {} : { hrefOf: false as const })}
           {...(props.onNavigate ? { onNavigate: props.onNavigate } : {})}
         />
       </div>

@@ -58,11 +58,17 @@ describe("a manifest's two hints", () => {
 });
 
 describe("a worker view, registered", () => {
-  it("is previewed on the Scene where it draws a kind's members, held to its scene.maxHeight where it says one", () => {
+  it("is previewed on the Scene, a kind's members held to its scene.maxHeight where it says one, and one record's view too", () => {
     expect(previewOf(viewOf(PACKAGES))).toEqual({});
     expect(previewOf(viewOf({ ...PACKAGES, scene: { maxHeight: 320 } }))).toEqual({ maxHeight: 320 });
-    // A view of one record is the record in focus, held to its box as every record is (FR-141).
-    expect(previewOf(viewOf({ name: "one-package", attach: "package", cardinality: "one" }))).toBeUndefined();
+    /*
+     * A view of one record is the same card (Roadmap f-scene-record-view-card),
+     * Open going to the record's page: no longer the record in focus held to
+     * its box and scrolling inside it (FR-141), which a view the host draws
+     * in React still is.
+     */
+    expect(previewOf(viewOf({ name: "one-package", attach: "package", cardinality: "one" }))).toEqual({});
+    expect(previewOf(viewOf({ name: "one-package", attach: "package", cardinality: "one", replaces: "page" }))).toEqual({});
   });
 
   it("flows on Pages, and keeps its place's frame where its manifest says flows: false", async () => {
