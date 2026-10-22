@@ -1044,7 +1044,28 @@ async function goByFind(person, kind, plural) {
   if ((await lit()) !== wanted) throw new DeadEnd(`the keys do not reach "${plural}" in the Find strip`);
   await person.key("Enter");
   person.note(`Find "${plural.toLowerCase()}"`, before);
-  await person.settle(800);
+  /*
+   * THERE WHEN THE KEYBOARD IS IN THE KIND, as a person sees it go in, not
+   * after a set while. Eight hundred milliseconds was a guess at a fast
+   * machine: on the nightly's runner the keys had not yet landed when the
+   * walk looked for the place's acts key, found none, and went Up and across
+   * the districts — 24 presses for 4. On the place, or on its arranging
+   * line once the line is drawn; where they never land, the walk goes on
+   * and finds that out.
+   */
+  await page
+    .waitForFunction(
+      (kind) => {
+        const place = document.querySelector(`[data-graview-view="aggregate:${CSS.escape(kind)}"]`);
+        const at = document.activeElement;
+        if (!place || !at || !place.contains(at)) return false;
+        const line = [...place.querySelectorAll('[role="group"][aria-label="Arrange"] :is(button, input)')].some((one) => one.checkVisibility?.() ?? true);
+        return at !== place || !line;
+      },
+      kind,
+      { timeout: PATIENCE },
+    )
+    .catch(() => undefined);
 }
 
 /** Find a record by part of its name and open it. Returns once it is open. `more` is a word of the name that narrows a long answer. */
