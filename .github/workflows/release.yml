@@ -66,8 +66,18 @@ jobs:
           set -euo pipefail
           if ls .changeset/*.md 2>/dev/null | grep -qv README.md; then PENDING=true; else PENDING=false; fi
           VERSION=$(node -p "require('./packages/graview/package.json').version")
-          if npm view "graview@${VERSION}" version >/dev/null 2>&1; then UNPUBLISHED=false; else UNPUBLISHED=true; fi
-          echo "Changesets pending: ${PENDING}; graview@${VERSION} unpublished: ${UNPUBLISHED}"
+          # Every package, not only the CLI: a publish npm cut off part way
+          # (0.1.45, 2026-10-22) leaves graview on npm and the rest missing.
+          UNPUBLISHED=false
+          for manifest in packages/*/package.json; do
+            NAME=$(node -p "const m = require('./${manifest}'); m.private ? '' : m.name")
+            [ -z "${NAME}" ] && continue
+            if ! npm view "${NAME}@${VERSION}" version --prefer-online >/dev/null 2>&1; then
+              echo "${NAME}@${VERSION} is not on npm"
+              UNPUBLISHED=true
+            fi
+          done
+          echo "Changesets pending: ${PENDING}; a package at ${VERSION} unpublished: ${UNPUBLISHED}"
           echo "pending=${PENDING}" >> "$GITHUB_OUTPUT"
           echo "unpublished=${UNPUBLISHED}" >> "$GITHUB_OUTPUT"
 
