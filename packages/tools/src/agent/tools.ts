@@ -1,6 +1,8 @@
 import {
+  actSpelledAs,
   actTitle,
   deriveMutations,
+  nearestAct,
   derivedVia,
   nodeRefArgs,
   permits,
@@ -836,7 +838,21 @@ export function createToolRuntime<S extends AnySchema>(
   const actNamed = (name: string): string | undefined => {
     if (READ_NAMES.includes(name)) return undefined;
     for (const [act, tool] of names) if (tool === name) return act;
-    return names.has(name) ? name : undefined;
+    if (names.has(name)) return name;
+    // An act asked for in another spelling is that act: `connect-threat-partOf` is `connect-threat-part-of`.
+    return actSpelledAs(name, names.keys());
+  };
+  /** " Did you mean "connect-threat-part-of"?" for a name that nearly says an act, or nothing. */
+  const didYouMean = (name: string): string => {
+    const near = nearestAct(name, names.keys());
+    return near ? ` Did you mean "${near}"?` : "";
+  };
+  /** The listed name first; an act's declared name reaches it too, unless a listed tool holds that name, and then that act in another spelling. */
+  const toolNamed = (name: string) => {
+    const listed = definitions.find((tool) => tool.name === name) ?? definitions.find((tool) => tool.act === name);
+    if (listed) return listed;
+    const act = actNamed(name);
+    return act === undefined ? undefined : definitions.find((tool) => tool.act === act);
   };
 
   /*
@@ -879,7 +895,7 @@ export function createToolRuntime<S extends AnySchema>(
     try {
       await judgingWithLines();
       // The listed name first; an act's declared name reaches it too, unless a listed tool holds that name.
-      const definition = definitions.find((tool) => tool.name === name) ?? definitions.find((tool) => tool.act === name);
+      const definition = toolNamed(name);
       if (!definition) {
         /*
          * A tool this seat may not use EXISTS, and saying "unknown" would be
@@ -895,7 +911,7 @@ export function createToolRuntime<S extends AnySchema>(
         }
         return {
           ok: false,
-          error: `Unknown tool "${name}". Available: ${definitions.map((t) => t.name).join(", ")}`,
+          error: `Unknown tool "${name}".${didYouMean(name)} Available: ${definitions.map((t) => t.name).join(", ")}`,
         };
       }
       if (definition.mutating && options.readOnly) {
@@ -1062,7 +1078,7 @@ export function createToolRuntime<S extends AnySchema>(
           if (!mutation || !permitted.has(act)) {
             const verdict = mutation ? store.permits({ name: act, args: {} }, principal) : undefined;
             if (verdict && !verdict.ok) return { ok: false, error: verdict.refusal.message, reason: "forbidden" };
-            return { ok: false, error: `There is no act "${asked}" this seat may run. Nothing was changed.`, reason: "invalid" };
+            return { ok: false, error: `There is no act "${asked}" this seat may run.${didYouMean(asked)} Nothing was changed.`, reason: "invalid" };
           }
           const subject = mutation.subject;
           if (!subject) return { ok: false, error: `"${actTitle(mutation)}" does not act on a record, so it cannot be run on several. Nothing was changed.`, reason: "invalid" };
@@ -1187,7 +1203,7 @@ export function createToolRuntime<S extends AnySchema>(
 
     async call(name, args) {
       const mutating =
-        (definitions.find((tool) => tool.name === name) ?? definitions.find((tool) => tool.act === name))?.mutating ?? false;
+        toolNamed(name)?.mutating ?? false;
       const started = { name, args, mutating, at: new Date().toISOString() };
       announce({ ...started, phase: "running" });
       const settle = <T extends ToolResult<S>>(result: T): T => {

@@ -83,6 +83,25 @@ export function formatValue(value: Value, format: Formatter | undefined, today: 
 /** What a part says once its formatter has said it: `| capital` upper-cases its first letter. */
 export const capitalized = (part: TemplatePart, said: string): string => (part.capital ? capitalize(said) : said);
 
+/** The formatters whose words are the framework's own, said in lower case: a count in words, a plural, "3 days ago". */
+const OWN_WORDS: ReadonlySet<Formatter> = new Set(["words", "plural", "relative"]);
+
+/**
+ * A HEADLINE THAT OPENS WITH WORDS THE FRAMEWORK WROTE STARTS WITH A
+ * CAPITAL. "{count(all('indicator')) | words} indicators" said "seventy-two
+ * indicators" at the top of a page, unless its author knew to add
+ * `| capital`. The rule is narrow on purpose: only a headline, only when it
+ * opens on an interpolation formatted `words`, `plural` or `relative` —
+ * words no person typed — and only when that first word is all lower case.
+ * Text the author wrote first stays as written, and so does a record's own
+ * name ("iPhone", "eBay"), which is the person's spelling, not a sentence's.
+ */
+export function headlineSaid(parts: readonly TemplatePart[], said: string): string {
+  const first = parts[0];
+  if (!first || first.text !== undefined || !first.format || !OWN_WORDS.has(first.format)) return said;
+  return /^[a-z][a-z'’-]*(?=\s|$|[,.;:!?])/.test(said) ? capitalize(said) : said;
+}
+
 /** How a template says a record: the words its kind's label makes. */
 export type Namer = (node: AnyGraphNode) => string;
 

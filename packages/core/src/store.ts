@@ -18,6 +18,7 @@ import type {
   Violation,
 } from "./invariants/types.js";
 import { compileMutation } from "./mutations/define-mutation.js";
+import { actSpelledAs, nearestAct } from "./mutations/act-spelling.js";
 import { InvalidArguments } from "./mutations/invalid-arguments.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
@@ -483,12 +484,16 @@ export interface AdoptResult<S extends AnySchema> {
  * call gave, so a surface that tells a person can say only that (FR-46).
  */
 export class UnknownMutationError extends GraphError {
+  /** The act the name most nearly says, when one does: what a refusal asks "did you mean …?" of. */
+  readonly nearest: string | undefined;
   constructor(
     readonly mutation: string,
     registered: readonly string[],
   ) {
-    super(`Unknown mutation "${mutation}"`, `Registered: ${registered.join(", ") || "(none)"}`);
+    const nearest = nearestAct(mutation, registered);
+    super(`Unknown mutation "${mutation}"${nearest ? ` — did you mean "${nearest}"?` : ""}`, `Registered: ${registered.join(", ") || "(none)"}`);
     this.name = "UnknownMutationError";
+    this.nearest = nearest;
   }
 }
 
@@ -750,7 +755,7 @@ export class Store<S extends AnySchema> {
   }
 
   mutation(name: string): AnyMutationDefinition<S> {
-    const found = this.mutations.get(name);
+    const found = this.mutations.get(this.spelled(name));
     if (!found) {
       throw new UnknownMutationError(name, [...this.mutations.keys()]);
     }
@@ -763,6 +768,21 @@ export class Store<S extends AnySchema> {
       );
     }
     return found;
+  }
+
+  /**
+   * The act a name says, however it spells it: `connect-threat-partOf` is
+   * `connect-threat-part-of` (`act-spelling.ts`). A name no act says stays
+   * as it was given, to be refused by that name.
+   */
+  private spelled(name: string): string {
+    return this.mutations.has(name) ? name : (actSpelledAs(name, this.mutations.keys()) ?? name);
+  }
+
+  /** A call with its act's name as the store spells it, so the log and every check read the one name. */
+  private spelledCall(call: MutationCall): MutationCall {
+    const name = this.spelled(call.name);
+    return name === call.name ? call : { ...call, name };
   }
 
   /** Off by module, or a derived act of a kind the workspace has off. */
@@ -823,6 +843,7 @@ export class Store<S extends AnySchema> {
     call: MutationCall,
     principal: Principal = HUMAN,
   ): ReturnType<typeof permits> {
+    call = this.spelledCall(call);
     /*
      * The same answer `apply` would give. A declared agent's `may` narrows
      * it before the policy does; asked without it, the chat offered a
@@ -966,6 +987,7 @@ export class Store<S extends AnySchema> {
    * hidden record and an absent one, and says back nothing the seat sent.
    */
   missingFor(call: MutationCall, principal: Principal = HUMAN): MissingRecordError | undefined {
+    call = this.spelledCall(call);
     const mutation = this.mutations.get(call.name);
     const named = new Set(this.namedIn(call));
     if (!mutation || named.size === 0) return undefined;
@@ -1260,6 +1282,7 @@ export class Store<S extends AnySchema> {
   }
 
   preview(call: MutationCall, context?: InvariantContext, options: { readonly author?: Principal } = {}): Preview<S> {
+    call = this.spelledCall(call);
     const definition = this.mutation(call.name);
     const compiled = compileMutation(this.graph, definition, call.args, this.sighted(options.author));
     return this.previewPrimitives(compiled.primitives, {
@@ -1362,7 +1385,9 @@ export class Store<S extends AnySchema> {
    * through the store's own path, whatever a host has wrapped `applyAll` in
    * (`openRemote` sends each one down the wire).
    */
-  private applying(calls: readonly MutationCall[], options: ApplyOptions, context?: InvariantContext): ApplyResult<S> {
+  private applying(asked: readonly MutationCall[], options: ApplyOptions, context?: InvariantContext): ApplyResult<S> {
+    // Each act by the name the store gives it, however the call spelled it.
+    const calls = asked.map((call) => this.spelledCall(call));
     this.stillNow();
     const batch = options.batch ?? this.mintBatch("batch");
     const author = options.author ?? this.by;

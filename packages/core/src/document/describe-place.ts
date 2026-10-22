@@ -1,3 +1,4 @@
+import { lowerFirst } from "../capital.js";
 import type { GraviewApp } from "../app.js";
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import type { Principal } from "../permissions/types.js";
@@ -342,7 +343,7 @@ function kindWord(schema: AnySchema, kind: string, count: number): string {
   const definition = schema.tryDefinition(kind) as { noun?: string; plural?: string } | undefined;
   if (count === 1) return definition?.noun ?? kind;
   const plural = pluralOf(schema, kind);
-  return plural.charAt(0).toLowerCase() + plural.slice(1);
+  return lowerFirst(plural);
 }
 
 /** A description as plain text: a heading as `#`s, a list's records as bullets under their group's heading, indented by depth. */

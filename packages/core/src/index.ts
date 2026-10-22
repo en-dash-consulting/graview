@@ -162,7 +162,7 @@ export type {
 } from "./search.js";
 
 // Mutations — the only writes.
-export { argumentsTaken, compileMutation, defineMutation, seatMark, takesAnId } from "./mutations/define-mutation.js";
+export { argumentsTaken, compileMutation, defineMutation, numbersSpelled, seatMark, takesAnId } from "./mutations/define-mutation.js";
 export type { CompiledMutation } from "./mutations/define-mutation.js";
 export {
   deriveArchiveMutations,
@@ -339,6 +339,7 @@ export type {
 
 // Store — graph + log + mutations + invariants, one object.
 export { MODULES_AUTHOR, PastError, PREVIEW_BATCH, problemsMoved, ReceiveError, shapedRules, Store, UnknownMutationError, violationKey } from "./store.js";
+export { actSpelledAs, nearestAct, spellingOf } from "./mutations/act-spelling.js";
 export type {
   Adopt,
   AdoptResult,

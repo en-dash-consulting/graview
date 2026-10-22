@@ -23,6 +23,7 @@
 export { describeNode, isLongText, pageSections, readableFields, tellApart } from "./schema/reading.js";
 export { argShape, describeArg } from "./mutations/arg-shape.js";
 export { argumentWords, failureWords } from "./mutations/words.js";
+export { capitalize, lowerFirst } from "./capital.js";
 export { viaSaid } from "./via.js";
 export { edgeWords, valueWords } from "./schema/value-words.js";
 // A date that repeats, in words: "Every Tuesday, next Oct 27".

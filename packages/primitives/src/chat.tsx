@@ -83,7 +83,8 @@ const DRAW = /\b(?:board|kanban|timeline|calendar|gantt|who covers|covers what|c
 /** An ask that changes the view on screen: group by, sort by, only, call it, as a … */
 const REFINE = /\b(?:group(?:ed)? by|split by|sort(?:ed)? by|order(?:ed)? by|only|call it|name it|as an? (?:board|kanban|calendar|timeline|list|table|cards|rows|grid|plan|layout)|show all|all of them|clear the filter|no filter)\b/i;
 
-const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
+// Never an acronym's: "CVEs by severity" stays, never "cVEs by severity".
+const lowerFirst = (text: string) => (/^.\p{Lu}/u.test(text) ? text : text.charAt(0).toLowerCase() + text.slice(1));
 
 /** What a move is called in the sentence that says it: a link that goes there again. */
 const nameOfMove = (move: SeatMove): string => (move.to === "record" ? move.label : move.to === "problems" ? "problems" : move.title);
