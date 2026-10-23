@@ -1481,7 +1481,7 @@ main.landing > section.agent-hero {
 }
 .ah-head .lede { font-size: clamp(18px, 1.6vw, 21px); max-width: 54ch; }
 
-.doors { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--s2); margin-top: calc(var(--s5) * -0.5); }
+.doors { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s2); margin-top: calc(var(--s5) * -0.5); }
 .door {
   display: grid; gap: var(--s2); align-content: start; min-width: 0;
   padding: var(--s3) 28px 28px; border: 1px solid var(--rule); border-radius: 12px; background: var(--sunk);
@@ -1612,10 +1612,9 @@ main.landing footer { margin-top: var(--s6); font-size: var(--t-cap); }
 
   <!--
     THE FIRST SCREEN SAYS WHAT IT IS, THEN OFFERS TWO DOORS. The headline
-    is the claim in one breath. Under it, the two ways to build one: on
-    Graview Cloud, by asking the AI you already use (the door most people
-    want, so it is first and the only filled button on the screen), or in a
-    repository, by handing an agent the prompt. The prompt's tabs are that
+    is the claim in one breath. Under it, the two ways to build one: in a
+    repository, by handing an agent the prompt, or on Graview Cloud, by
+    asking the AI you already use. The prompt's tabs are that
     same sentence with a different app in it, and each runs on the stage
     under the doors, live, not a picture of it.
   -->
@@ -1631,15 +1630,6 @@ main.landing footer { margin-top: var(--s6); font-size: var(--t-cap); }
     </div>
 
     <div class="doors">
-      <div class="door door-cloud">
-        <p class="door-label">No code &middot; Graview Cloud</p>
-        <p class="door-line">Describe it in ChatGPT or Claude. A minute later it&rsquo;s an app at its own address, live for everyone you invite.</p>
-        <div class="door-act">
-          <a class="btn" href="https://graview.cloud/#invite">Request an invite <span aria-hidden="true">&rarr;</span></a>
-          <span class="door-note">Free during the private alpha</span>
-        </div>
-      </div>
-
       <div class="door door-agent ah-ask">
         <p class="door-label"><span class="dot" aria-hidden="true"></span>In your repo &middot; hand this to your agent</p>
         <div class="prompt">
@@ -1657,6 +1647,15 @@ main.landing footer { margin-top: var(--s6); font-size: var(--t-cap); }
           <span>Claude Code, Codex, Cursor: anything that runs a shell.</span>
           <span class="diy-line">Or yourself: <code>npm create graview@latest</code> <button type="button" class="copy" data-copy="npm create graview@latest">Copy</button></span>
         </p>
+      </div>
+
+      <div class="door door-cloud">
+        <p class="door-label">No code &middot; Graview Cloud</p>
+        <p class="door-line">Describe it in ChatGPT or Claude. A minute later it&rsquo;s an app at its own address, live for everyone you invite.</p>
+        <div class="door-act">
+          <a class="btn" href="https://graview.cloud/#invite">Request an invite <span aria-hidden="true">&rarr;</span></a>
+          <span class="door-note">Free during the private alpha</span>
+        </div>
       </div>
     </div>
 

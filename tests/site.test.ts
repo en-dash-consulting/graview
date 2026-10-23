@@ -102,17 +102,17 @@ describe("what the pages promise each other", () => {
     expect(read("tour.html")).toContain('id="surfaces"');
   });
 
-  it("opens the landing page on the claim, then two doors with Graview Cloud first, then the interface asked for, before the recipes", () => {
+  it("opens the landing page on the claim, then two doors, the agent's prompt and Graview Cloud, then the interface asked for, before the recipes", () => {
     const landing = read("index.html");
     const main = landing.slice(landing.indexOf("<main"));
     const h1 = main.indexOf("<h1");
     const cloud = main.indexOf('href="https://graview.cloud/#invite"');
     const prompt = main.indexOf('id="prompt-text"');
     expect(h1).toBeGreaterThan(-1);
-    // The headline says what it is; the hosted door comes before the agent's prompt, and its tabs after it.
-    expect(cloud).toBeGreaterThan(h1);
-    expect(prompt).toBeGreaterThan(cloud);
+    // The headline says what it is; the agent's prompt and its tabs, then the hosted door beside it.
+    expect(prompt).toBeGreaterThan(h1);
     expect(main.indexOf('class="recipe-tabs"')).toBeGreaterThan(prompt);
+    expect(cloud).toBeGreaterThan(prompt);
     // The bar's one filled link is the hosted door too.
     expect(landing.slice(0, landing.indexOf("<main"))).toContain('class="go" href="https://graview.cloud/#invite"');
     // No stat strip in the hero: the one number left on the page is the footer's.
