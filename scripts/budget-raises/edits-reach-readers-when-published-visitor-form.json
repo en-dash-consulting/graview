@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 1620,
+  "gzipped": 777,
+  "note": "Raised when edits came to reach readers when they are published (Roadmap f-publishing-lifecycle): a visitor is a reader, so the form fetches how readers are served for an app that publishes, and its store carries the hooks for `publish`; the reader's view itself is fetched on demand. Measured at 381_620 / 146_381 against 379_509 / 145_604 before (2_111 / 777 more)."
+}

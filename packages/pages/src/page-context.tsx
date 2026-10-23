@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
-import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore } from "@graview/core";
+import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
-import type { KeepLensHost, MenuSectionSource, ReactViewRegistry } from "@graview/react/provider";
+import type { AwaySummary, KeepLensHost, MenuSectionSource, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Onward } from "./onward.js";
 
@@ -135,6 +135,21 @@ export interface PageContext<S extends AnySchema> {
    * the provider's around the face, else the page's own memory.
    */
   readonly subscriptions?: SubscriptionStore;
+  /**
+   * WHERE THE READER'S "NOT NOW" IS KEPT, for the provider under the pages when `views` is given: what this person
+   * put out of sight in the Suggested tray (`Dismissal`), as `{ list,
+   * dismiss, onChange? }` over the host's storage, beside what else it
+   * keeps of them. Unsaid, the tray keeps it in this browser (localStorage
+   * where the page may use it, else the page's memory).
+   */
+  readonly dismissals?: DismissalStore | undefined;
+  /**
+   * WHAT THE APP'S OWN ACTOR DID WHILE THE READER WAS AWAY (`whileAway`
+   * from `@graview/tools/tidy` returns one): the Suggested tray says "3
+   * suggestions waiting · tidied 12 things while you were away", and
+   * nothing while there is nothing to say.
+   */
+  readonly whileAway?: AwaySummary | undefined;
   /**
    * WHAT A SIGNED-OUT READER COULD GAIN (FR-183): `{ label, run, roles? }`,
    * handed only while the reader is a visitor. Where every act withheld

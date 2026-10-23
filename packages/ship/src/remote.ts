@@ -25,6 +25,7 @@ import {
   type WireRefusal,
 } from "@graview/core";
 import type { StorageLike } from "./browser-adapter.js";
+import { cursorAt } from "./cursor.js";
 import { LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
@@ -639,7 +640,7 @@ async function opening<S extends AnySchema>(
     schema: app.schema,
     mutations: app.mutations ?? [],
     invariants: app.invariants ?? [],
-    ...(app.policy ? { policy: app.policy } : {}),
+    ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}),
     ...(app.modules ? { modules: app.modules } : {}),
     ...(enabledModules ? { enabledModules } : {}),
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),
@@ -862,9 +863,15 @@ async function opening<S extends AnySchema>(
   };
 
   const since = async (seq: number): Promise<Operation[]> => {
-    const response = await reach(`${options.url}/graview/since?seq=${seq}&opFormat=${FORMATS.op}`, { headers });
-    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string };
-    return moved(answer) ? [] : (answer.ops ?? []);
+    const response = await reach(`${options.url}/graview/since?seq=${cursorAt(seq)}&opFormat=${FORMATS.op}`, { headers });
+    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string; reset?: boolean };
+    if (moved(answer)) return [];
+    // The ops cannot catch this client up (behind the horizon, or past where its seat is now served): it takes the state.
+    if (answer.reset === true) {
+      resync();
+      return [];
+    }
+    return answer.ops ?? [];
   };
 
   /** Asks for what is new, and waits for a resync the answer started, so the store is the server's when it returns. */
@@ -879,7 +886,7 @@ async function opening<S extends AnySchema>(
       const response = await reach(`${options.url}/graview/here`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ presence: mine, seq: seen }),
+        body: JSON.stringify({ presence: mine, seq: cursorAt(seen) }),
       });
       const answer = (await response.json()) as { who: Presence[]; ops?: Operation[]; participant?: string; version?: number; build?: string };
       if (moved(answer)) return [];
@@ -1133,7 +1140,9 @@ async function opening<S extends AnySchema>(
         if (typeof message.participant === "string") self = message.participant;
         // Held, or not, as of this welcome: a hold released while this socket was away ends here (FR-66).
         hearHeld(message.held);
-        land(message.ops ?? []);
+        // The whole state in place of the ops: this client is behind the horizon, or holds what its seat is no longer served. It takes the state.
+        if (message.state) resync();
+        else land(message.ops ?? []);
         // Whatever was sent and never answered goes again: the server answers a batch it already has with its ops.
         busy.clear();
         if (busyTimer) clearTimeout(busyTimer);
@@ -1353,7 +1362,7 @@ async function opening<S extends AnySchema>(
       if (socket !== made) return;
       // From the last op this client has: the welcome brings exactly the ones after it.
       // Which codec, which protocol and which build this page speaks (FR-44).
-      made.send(JSON.stringify({ t: "hello", seq: seen, protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, opFormat: FORMATS.op, ...(options.build ? { build: options.build.slice(0, 64) } : {}), ...(options.hostProtocol !== undefined ? { hostProtocol: options.hostProtocol } : {}) } satisfies LiveClientMessage));
+      made.send(JSON.stringify({ t: "hello", seq: cursorAt(seen), protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, opFormat: FORMATS.op, ...(options.build ? { build: options.build.slice(0, 64) } : {}), ...(options.hostProtocol !== undefined ? { hostProtocol: options.hostProtocol } : {}) } satisfies LiveClientMessage));
     };
     made.onmessage = (event) => {
       if (socket !== made) return;
@@ -1504,7 +1513,7 @@ async function opening<S extends AnySchema>(
    * single presses traveled: two windows on one roster disagreed about
    * exactly the changes an agent had made.
    */
-  store.applyAll = ((calls, applyOptions) => {
+  store.applyAll = ((asItWas, applyOptions) => {
     /*
      * What this browser's earlier presses, still pending, wrote: a field
      * one of them changed is this browser's own to change again, not a
@@ -1520,15 +1529,29 @@ async function opening<S extends AnySchema>(
      * this fixes is the one that does not, which would otherwise meet a
      * refusal about a person who is not sitting there.
      */
-    const result = appliedAll(calls, {
+    const result = appliedAll(asItWas, {
       ...(options.principal ? { author: options.principal } : {}),
       ...applyOptions,
+    });
+    /*
+     * THE SAME RECORD ON THE SERVER, WHEN IT CAN BE (Roadmap f-1-0-client-ids).
+     * A call that made a record here under an id this page minted — nobody
+     * asked for one — says that id as a hint (`mintedHint`): the server
+     * makes the record under it when it is free, so the rebase keeps it,
+     * and mints as ever when somebody took it meanwhile (`-2`), a later
+     * call of the same change following it there. Two people adding
+     * "Groceries" at once both land. An `id` the caller asked for is a
+     * demand, sent as it was, and refused when taken.
+     */
+    const calls = asItWas.map((call, at) => {
+      const hint = result.minted?.[at];
+      return hint === undefined || call.args?.["id"] !== undefined ? call : { ...call, mintedHint: hint };
     });
     pending.push(result.batch);
     provisional.add(result.batch);
     asked.set(result.batch, { calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}), ...(applyOptions?.via ? { via: applyOptions.via } : {}), ...lined(applyOptions) });
     // The revision of each field this changes, as this browser saw it — unless the person chose theirs over it.
-    const base = overriding ? [] : revisions.baseFor(result.ops, earlier);
+    const base = overriding ? [] : revisions.baseFor(result.ops, earlier, (node, field) => store.collaborative(node, field));
     answers.set(
       result.batch,
       track(

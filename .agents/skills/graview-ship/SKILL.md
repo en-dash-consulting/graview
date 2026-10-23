@@ -148,6 +148,20 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    `compileDocumentFiles(path, { seed })` from `@graview/core/testing`
    reads the document where it lives — no fixture copy to drift.
 
+8. **Edits reach readers when published, if you say so.**
+   `publishing: { mode: "on-publish", working: ["editor"] }` on the
+   declaration (absent, `"live"`: as they are made). The working roles, and
+   an agent acting for one, edit the head live; every other seat — a
+   visitor, an embed, a static page, a linked read — is served the last
+   publish. A publisher (`publishers`, else `working`) runs the built-in
+   `publish` act; undoing it takes readers back. Writes always land on the
+   head: a visitor's answer reaches readers with the next publish.
+   `?as=published` shows a collaborator what readers see, and
+   `unpublished(store)` from `@graview/core/history` says what is waiting.
+   A server loads `@graview/core/publishing` (ship does). Hand
+   `app.publishing` to any store you make yourself — `openStore` and
+   the embed do — and prove it by opening the app as a visitor.
+
 ## Then find out whether it worked
 
 Write, close, reopen, and read: the graph must survive the round trip and

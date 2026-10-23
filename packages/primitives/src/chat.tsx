@@ -15,9 +15,11 @@ import {
   type Responder,
   type SeatMove,
   type ToolCall,
+  withNotNow,
 } from "@graview/tools";
 import type { SeatTurn } from "@graview/react/provider";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { dismissalsOf } from "./dismissals.js";
 import { useLensKeeping } from "./lens-keeping.js";
 import { useSceneGo } from "./seat-move.js";
 import { useSubject } from "./subject.js";
@@ -115,7 +117,7 @@ export function ChatPanel<S extends AnySchema>({
   place,
   onDraft,
 }: ChatPanelProps<S>) {
-  const { store, views, view, principal, setView, seatWho, noteSeat, session, ai, seatTalk, brand, app, subscriptions, signIn } = useGraview<S>();
+  const { store, views, view, principal, setView, seatWho, noteSeat, session, ai, seatTalk, brand, app, subscriptions, signIn, dismissals } = useGraview<S>();
   const sceneGo = useSceneGo();
   const go = onMove ?? sceneGo;
   const { takeBack } = useLensKeeping(go);
@@ -132,7 +134,8 @@ export function ChatPanel<S extends AnySchema>({
   const viaNow = useRef<string | undefined>(undefined);
   const runtime = useMemo(
     () =>
-      createToolRuntime(store, {
+      // "Not now" for the person at the keyboard (`dismiss_suggestion`), kept where the Suggested tray keeps it.
+      withNotNow(createToolRuntime(store, {
         author: {
           ...author,
           ...(principal.roles ? { roles: principal.roles } : {}),
@@ -147,8 +150,8 @@ export function ChatPanel<S extends AnySchema>({
         near: ai.near,
         // Notify me (Roadmap f-notify-subscriptions): the reader's own subscriptions, kept where the menu's sheet keeps them — none for a visitor, nobody to tell (FR-183).
         ...(signIn ? {} : { subscriptions, subscriber: principal }),
-      }),
-    [store, principal, author, views, app, ai.near, subscriptions, signIn],
+      }), dismissalsOf(dismissals, app?.name ?? "app", principal)),
+    [store, principal, author, views, app, ai.near, subscriptions, signIn, dismissals],
   );
   /* THE GRAPH FIRST, THE HOST'S MODEL AFTER IT: a host that passes `respond` answers in its place. */
   const answer = useMemo<Responder<S>>(() => respond ?? seatResponder<S>(ai), [respond, ai]);

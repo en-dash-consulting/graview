@@ -1,7 +1,7 @@
 import { createMemoryAdapter, createSchema, defineApp, defineMutation, defineNode, nodeRef, Store, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createStoreHandler, LIVE_PATH, openStore, WIRE, type LiveServerMessage } from "../../src/runtime.js";
+import { createStoreHandler, cursorAt, LIVE_PATH, openStore, WIRE, type LiveServerMessage } from "../../src/runtime.js";
 
 /**
  * THE WIRE OVER A STORE THE HOST ALREADY HOLDS (FR-42).
@@ -100,7 +100,7 @@ describe("the wire over a store the host holds", () => {
     // An op the host lands on its own store goes down the socket.
     store.apply({ name: "finish", args: { id: "t2" } }, { author: keeper });
     await until(() => heard.some((message) => message.t === "ops"));
-    expect((heard.at(-1) as Extract<LiveServerMessage, { t: "ops" }>).seq).toBe(1);
+    expect((heard.at(-1) as Extract<LiveServerMessage, { t: "ops" }>).seq).toBe(cursorAt(1));
     connection.close();
     await handler.close();
   });

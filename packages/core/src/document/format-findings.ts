@@ -1,5 +1,6 @@
 import { error, warning, type Finding } from "./findings.js";
 import { formatFits, formatMisplaced } from "./format-rules.js";
+import { withArticle } from "../schema/define-node.js";
 import type { GraviewDocument } from "./schema.js";
 
 /*
@@ -21,6 +22,10 @@ export function formatFindings(document: GraviewDocument): readonly Finding[] {
   const found: Finding[] = [];
   for (const [kind, spec] of Object.entries(document.kinds)) {
     for (const [name, field] of Object.entries(spec.fields)) {
+      // Typed together (Roadmap f-collab-text) is a text's or a string's to say: no other value is typed into a character at a time.
+      if (field.collaborative !== undefined && field.type !== "text" && field.type !== "string") {
+        found.push(error("field-collaborative", `kinds.${kind}.fields.${name}.collaborative`, `${kind}'s ${name} is ${withArticle(field.type)} field, and only a text or string field is typed together`, 'leave "collaborative" out, or make the field {"type": "text"}'));
+      }
       const path = `kinds.${kind}.fields.${name}.format`;
       if (!field.format) continue;
       if (!formatFits(field.format, field.type)) {

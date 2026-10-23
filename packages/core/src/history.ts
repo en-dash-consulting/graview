@@ -15,7 +15,7 @@ import { capitalize } from "./capital.js";
 import { humanizeField, nounOf } from "./schema/define-node.js";
 import { nameOfAuthor } from "./who.js";
 import type { Epoch } from "./ops/log.js";
-import type { Author, Batch, Operation } from "./ops/types.js";
+import { authorKindOf, type Author, type Batch, type Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { PastDeclaration, Store } from "./store.js";
@@ -117,10 +117,11 @@ export interface PlaybackTick {
   readonly withheld: boolean;
 }
 
-/** Who made a change, for the reader `me`. A system or a rule is the app itself; an agent acting for a person is still an agent. */
+/** Who made a change, for the reader `me`. A system or a rule is the app itself, as is a kind this build does not know; an agent acting for a person is still an agent; a visitor is a person. */
 export function makerOf(author: Author, me?: Principal): Maker {
-  if (author.kind === "agent") return "agent";
-  if (author.kind !== "human") return "app";
+  const kind = authorKindOf(author);
+  if (kind === "agent") return "agent";
+  if (kind !== "human" && kind !== "visitor") return "app";
   if (author.onBehalfOf !== undefined) return "person";
   return author.id === undefined || me?.id === undefined || author.id === me.id ? "you" : "person";
 }
@@ -178,6 +179,37 @@ export function ticksOf<S extends AnySchema>(store: Store<S>, options: { readonl
     });
   }
   return ticks.sort((a, b) => a.seq - b.seq || Number(a.batch !== undefined) - Number(b.batch !== undefined));
+}
+
+/** What an app that publishes has not published yet (`unpublished`). */
+export interface Unpublished {
+  /** How far readers are served: the last publish, or undefined when nothing was ever published. */
+  readonly publishedSeq: number | undefined;
+  /** The head: what collaborators are served. */
+  readonly head: number;
+  /** One tick per gesture made after the publish and standing now, oldest first — none of them a publish. */
+  readonly ticks: readonly PlaybackTick[];
+  /** The badge's words: "3 changes are not published yet.", "Everything is published.", "Nothing is published yet." */
+  readonly sentence: string;
+}
+
+/**
+ * WHAT IS NOT PUBLISHED YET (Roadmap f-publishing-lifecycle): the gestures
+ * between what readers are served (`publishedSeq`) and the head, in words
+ * — what a "not published" badge counts and a diff lists. The change
+ * itself is `pastOf(store, publishedSeq)` against the head. Read through a
+ * seat's view, a change it may not see is a tick that says only that.
+ */
+export function unpublished<S extends AnySchema>(store: Store<S>, options: { readonly me?: Principal } = {}): Unpublished {
+  const publishedSeq = store.publishedSeq;
+  const from = publishedSeq ?? store.log.horizon;
+  // A gesture taken back since, a publish, and an undo of a gesture made since are not changes readers will meet.
+  const seqOf = new Map(store.log.all().map((op) => [op.id, op.seq]));
+  const since = (op: Operation) => op.undoes !== undefined && (seqOf.get(op.undoes) ?? -1) >= from;
+  const standing = new Set(store.batches().filter((batch) => !batch.undone && !batch.ops.some((op) => op.publishedThrough !== undefined || since(op))).map((batch) => batch.id));
+  const ticks = ticksOf(store, options).filter((tick) => tick.from >= from && tick.batch !== undefined && standing.has(tick.batch));
+  const sentence = publishedSeq === undefined ? "Nothing is published yet." : ticks.length === 0 ? "Everything is published." : `${ticks.length === 1 ? "1 change is" : `${ticks.length} changes are`} not published yet.`;
+  return { publishedSeq, head: store.log.length, ticks, sentence };
 }
 
 type Declared = Pick<AnySchema, "kinds" | "tryDefinition">;

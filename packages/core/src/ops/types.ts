@@ -2,18 +2,46 @@ import type { Primitive } from "../graph/primitives.js";
 import type { MutationCall } from "../mutations/types.js";
 import type { Lineage } from "./lineage.js";
 
+/**
+ * WHO CAN AUTHOR AN OP, AS THIS BUILD KNOWS THEM. The set is open: a kind
+ * may be added within a major, and a reader that meets one it does not know
+ * reads it as `system` for display and policy (`authorKindOf`) — never
+ * refuses the op, which is history and folds the same whoever wrote it.
+ */
+export const AUTHOR_KINDS = ["human", "visitor", "agent", "rule", "system"] as const;
+export type AuthorKind = (typeof AUTHOR_KINDS)[number];
+const KNOWN_AUTHOR_KINDS: ReadonlySet<unknown> = new Set(AUTHOR_KINDS);
+
+/**
+ * An author's kind as this build reads it: its own when this build knows it,
+ * `system` when a newer build wrote one this build does not — the app
+ * itself, the least a reader can grant or name it.
+ */
+export function authorKindOf(author: { readonly kind: string } | undefined): AuthorKind {
+  return KNOWN_AUTHOR_KINDS.has(author?.kind) ? (author!.kind as AuthorKind) : "system";
+}
+
 export interface Author {
   /**
-   * Who moved: a person, an agent acting on their behalf, a rule repairing
-   * something, or an external system of record whose change arrived here.
+   * Who moved: a person, a visitor answering a form, an agent acting on
+   * their behalf, a rule repairing something, or an external system of
+   * record whose change arrived here.
    *
    * `system` earns its place for the same reason the others do: an inbound
    * calendar change is an ordinary op, appears in the activity list beside a
    * person's edits, and is undone like anything else. A sync layer that wrote
    * the graph outside the log would be the one kind of change nobody could
    * see or take back.
+   *
+   * `visitor` is a person who never joined the app — one answer to a form
+   * a host opened (`formVisitor`), under the id the host minted for it. Held
+   * to the form's role as a person is to theirs.
+   *
+   * Read through `authorKindOf`: a kind this build does not know reads as
+   * `system` (`AUTHOR_KINDS`). The app's own actor is a `system` or `agent`
+   * author with `automated: true`, not a kind of its own.
    */
-  readonly kind: "human" | "agent" | "rule" | "system";
+  readonly kind: AuthorKind;
   readonly id?: string;
   readonly session?: string;
   /**
@@ -62,6 +90,11 @@ export interface Operation {
   /**
    * Human-readable statement of what was meant, not what changed: the act's
    * own `describe()` sentence ("Add “Book the van”"), or "Undo: …".
+   *
+   * DISPLAY ONLY. Nothing in the framework matches on its words — what an
+   * op did is its `mutation`, its primitives, its `batch` and its `undoes` —
+   * so an act's sentence may be reworded, translated or withheld from a
+   * seat without changing what any program decides.
    */
   readonly intent: string;
   /**
@@ -155,6 +188,16 @@ export interface Operation {
    * anew. Absent, it waits until a person answers it.
    */
   readonly expiresAt?: string;
+  /**
+   * HOW FAR READERS ARE SERVED, set by a publish (Roadmap
+   * f-publishing-lifecycle): in an `on-publish` app, the seats not
+   * `working` are served the ops before this seq and none after. Set only
+   * on the op of the built-in `publish` act, which touches no record; the
+   * last such op that stands says it (`Store.publishedSeq`), so an undo
+   * of a publish takes readers back to the one before. An op without it
+   * reads as before, and folds the same.
+   */
+  readonly publishedThrough?: number;
 }
 
 export interface Batch {

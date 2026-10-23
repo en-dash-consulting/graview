@@ -1,7 +1,7 @@
-import type { AnySchema, Principal, Store } from "@graview/core";
+import { servesReaders, type AnySchema, type Principal, type Publishing, type Store } from "@graview/core";
 import type { HistoryHost } from "@graview/core/history";
 import { retryingImport } from "@graview/core/retry";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from "react";
 
 /**
  * THE APP AS IT WAS, SHOWN (Roadmap f-playback): which moment a face is
@@ -36,7 +36,7 @@ export interface Playback<S extends AnySchema = AnySchema> {
    * closes the timeline and comes back to now.
    */
   show(seq: number | null): void;
-  /** The store as it is now, whole: read through the seat's sight (`seenBy`). */
+  /** The store as it is now, whole: read through the seat's sight (`seenBy`), as the seat is served it. */
   readonly live: Store<S>;
   /** What the host keeps outside the log: declaration changes, a script view's code at a moment, the ops a compaction archived. */
   readonly host: HistoryHost | undefined;
@@ -59,7 +59,7 @@ export function usePlayback<S extends AnySchema = AnySchema>(): Playback<S> | nu
 }
 
 /**
- * THE STORE AS IT IS NOW, as this seat sees it, whatever moment the face
+ * THE STORE AS IT IS NOW, as this seat is served it, whatever moment the face
  * draws — what Activity lists and a timeline counts its ticks from — drawn
  * again as it changes. The provider's own store where there is no playback.
  */
@@ -82,6 +82,21 @@ export function useLiveStore<S extends AnySchema>(shown: Store<S>, principal: Pr
 type History = typeof import("@graview/core/past");
 /** `@graview/core/past`, fetched when somebody first asks to see the past: the fold is none of a page's weight until then. */
 const history = /* @__PURE__ */ retryingImport(() => import("@graview/core/past"));
+/**
+ * WHETHER A READER OF THIS STORE CAN BE SERVED YET (Roadmap
+ * f-publishing-lifecycle): true at once for a live app; for an app that
+ * publishes, once `@graview/core/publishing` is here — fetched with
+ * `@graview/core/past`, which brings it, the first time it is asked. A
+ * face draws nothing until then, so a reader is never drawn the head.
+ */
+export function useReadersServed(store: { readonly publishing?: Publishing | undefined }): boolean {
+  const [, arrived] = useReducer((count: number) => count + 1, 0);
+  const waiting = store.publishing?.mode === "on-publish" && !servesReaders();
+  useEffect(() => {
+    if (waiting) void history().then(arrived, () => {});
+  }, [waiting]);
+  return !waiting;
+}
 /** The module once it is here, so a face drawn after it arrived shows the past at once. */
 let arrived: History | undefined;
 /** How long a moment holds the picture it had while the host is asked for its declaration, before it is drawn under today's until the answer comes. */

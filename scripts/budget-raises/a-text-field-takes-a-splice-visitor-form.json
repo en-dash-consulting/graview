@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 1850,
+  "gzipped": 450,
+  "note": "Raised when a text field came to take a splice (collaborative text, phase 1): the `splice-text` primitive folded by the graph (`applySplice`), undone, served to a seat, and read back wherever a patch is read. The store and the graph draw the form, so this is up front. Measured at 382_225 / 146_526 against a budget of 380_450 / 146_150: 1_775 / 376 more."
+}

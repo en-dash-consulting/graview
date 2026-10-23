@@ -2,6 +2,7 @@ import {
   assertReadable,
   formatStamp,
   Graph,
+  LogHeadMovedError,
   isEmptyDiff,
   tickEachDay,
   OperationLog,
@@ -140,7 +141,9 @@ export interface OpenedStore<S extends AnySchema> {
    * of them. The next open loads the checkpoint and the tail, undo stops at
    * the horizon and says so, and `exportBundle(app, store, { full: true })`
    * still carries everything. Settles after every write accepted before
-   * it. Refused by an adapter that keeps no archive.
+   * it. Refused by an adapter that keeps no archive. `pins` are the seqs
+   * the host serves somebody at (a published seq): the horizon stops at
+   * the lowest, so the reader's past still folds from the log.
    */
   compact(options?: CompactOptions): Promise<Compaction>;
 }
@@ -189,10 +192,13 @@ export async function openStore<S extends AnySchema>(
    * stamp — and re-running a migration over already-migrated data is the
    * exact corruption migrations exist to prevent. The migration ops are in
    * the log before anything else is written, so the log knows the truth.
+   * Read from the batch a migration names (`migration:<from>-><to>`), never
+   * from its sentence: an op's intent is for a person, and no program
+   * matches on it.
    */
   const migratedTo = persisted
     .filter((op) => op.author.kind === "system" && op.author.id === "ship:migration")
-    .map((op) => Number(op.intent.match(/migration \d+→(\d+):/)?.[1] ?? 0))
+    .map((op) => Number(/^migration:\d+->(\d+)$/.exec(op.batch)?.[1] ?? 0))
     .reduce((highest, version) => Math.max(highest, version), 0);
   const storedVersion =
     stored === null
@@ -205,8 +211,9 @@ export async function openStore<S extends AnySchema>(
   if (storedVersion < target) {
     const run = migrateSnapshot(app, snapshot, storedVersion);
     snapshot = run.snapshot;
+    const head = seq;
     migrated = run.ops.map((op) => ({ ...op, seq: seq++ }));
-    await adapter.appendOps?.(scope, migrated);
+    await adapter.appendOps?.(scope, migrated, { head });
   }
 
   /*
@@ -298,7 +305,7 @@ export async function openStore<S extends AnySchema>(
     mutations: app.mutations ?? [],
     invariants: app.invariants ?? [],
     ...(app.modules ? { modules: app.modules } : {}),
-    ...(app.policy ? { policy: app.policy } : {}),
+    ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}),
     /* The allowlist travels with the declaration, so a deployment enforces
        what the app said an agent was for without being asked to. */
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),
@@ -379,7 +386,14 @@ export async function openStore<S extends AnySchema>(
     }
     writing = writing
       .then(async () => {
-        await adapter.appendOps?.(scope, stamped);
+        /*
+         * ONE WRITER (compare-and-set): the head this store last knew goes
+         * with the ops, and an adapter that finds its log moved — another
+         * process, another tab — refuses them with `LogHeadMovedError`,
+         * reported, rather than interleave two histories. Nothing after it
+         * is written: this store is no longer the scope's writer.
+         */
+        if (stamped.length > 0) await adapter.appendOps?.(scope, stamped, { head: stamped[0]!.seq });
         await adapter.save(scope, store.snapshot());
       })
       .catch(report);
@@ -471,7 +485,16 @@ async function replayJournal<S extends AnySchema>(
       return undefined;
     }
   }
-  if (unlogged.length > 0) await adapter.appendOps?.(scope, unlogged);
+  if (unlogged.length > 0) {
+    const sorted = [...unlogged].sort((a, b) => a.seq - b.seq);
+    /*
+     * Kept by a writer that lost (another tab appended first): its ops are
+     * not this log's next ones, so nothing of the journal is put back, and
+     * the store opens on what the log and the snapshot hold.
+     */
+    const lost = await adapter.appendOps?.(scope, sorted, { head: sorted[0]!.seq }).catch((error: unknown) => (error instanceof LogHeadMovedError ? (report(error), true) : Promise.reject(error)));
+    if (lost) return undefined;
+  }
   const log = [...logged, ...unlogged].sort((a, b) => a.seq - b.seq);
   return { log, ...(snapshot ? { snapshot } : {}), folded: snapshot !== undefined };
 }

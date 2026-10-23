@@ -33,7 +33,9 @@ import {
 } from "@graview/core";
 // What a seat is served keeps the fields its sight keeps (Roadmap f-field-sight): the protocol judges them.
 import "@graview/core/field-sight";
+import "@graview/core/publishing";
 import { argumentWords } from "@graview/core/words";
+import { cursorAt, seqAt, type Cursor } from "./cursor.js";
 import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LimitAsked, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
 /**
@@ -364,7 +366,7 @@ export interface LiveProtocol<S extends AnySchema> {
   post(body: string, asked: WireAsked): Promise<WireAnswer & { readonly landed?: readonly Operation[] }>;
   /** `GET /graview/state`: the store as the asking seat sees it — snapshot, log, migrations, modules, horizon. */
   state(asked: WireAsked): WireAnswer;
-  /** `GET /graview/since?seq=N`: the ops after `seq`, as the asking seat sees them. */
+  /** `GET /graview/since?seq=`: the ops after `seq` (the cursor said, read as a seq) the asking seat is served, as it sees them — through the seq it is served, the head today — and the cursor after them. */
   since(seq: number, asked: WireAsked): WireAnswer;
   /**
    * THE DECLARATION CHANGED (FR-43), and this protocol is the one over the
@@ -666,8 +668,23 @@ export interface Wire<S extends AnySchema> {
   sighted(principal: Principal): boolean;
   /** Ops as the seat may see them, withheld in place (FR-16). */
   shown(principal: Principal, ops: readonly Operation[]): Operation[];
-  /** The ops after `seq`, as the seat sees them. */
+  /**
+   * Where the seat is served through (`servedSeq`): the head, or — a reader
+   * of an app that publishes (Roadmap f-publishing-lifecycle) — what was
+   * published. The last seq it is served is one before.
+   */
+  servedSeq(principal: Principal): number;
+  /** The ops after `seq` the seat is served, as it sees them: through its served seq. */
   since(principal: Principal, seq: number): Operation[];
+  /**
+   * Whether a client that has every op through `seq` must take the whole
+   * state instead of the ops after it: when the ops between it and the
+   * horizon were compacted away (FR-23), or when it holds ops past where
+   * the seat is now served (a publish taken back).
+   */
+  behind(principal: Principal, seq: number): boolean;
+  /** `{ servedThrough }` for a seat of an app that publishes, as a cursor (the position after the last op it is served); nothing otherwise. */
+  servedOf(principal: Principal): { servedThrough?: Cursor };
   /** The store as the seat sees it. */
   seenFor(principal: Principal): Store<S>;
   /** The store's log as the seat sees it: every op in place, withheld ones under an opaque batch. */
@@ -784,12 +801,20 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
     }
     return revisions;
   };
+  // Where a seat is served through: the head in a live app, without judging its sight; what was published, for a reader of one that publishes.
+  const servedTo = (principal: Principal): number => (store.publishing?.mode === "on-publish" ? seenBy(store, principal).servedSeq : store.log.length);
   return {
     store,
     lastSeq: () => store.log.length - 1,
     sighted,
     shown,
-    since: (principal, seq) => shown(principal, store.log.opsFrom(Math.max(0, Math.floor(seq) + 1))),
+    servedSeq: servedTo,
+    since: (principal, seq) => {
+      const served = servedTo(principal);
+      return shown(principal, store.log.opsFrom(Math.max(0, Math.floor(seq) + 1)).filter((op) => op.seq < served));
+    },
+    behind: (principal, seq) => Number.isFinite(seq) && (Math.floor(seq) + 1 < store.log.horizon || (Math.floor(seq) >= servedTo(principal) && servedTo(principal) < store.log.length)),
+    servedOf: (principal) => (store.publishing?.mode === "on-publish" ? { servedThrough: cursorAt(servedTo(principal) - 1) } : {}),
     seenFor: (principal) => seenBy(store, principal),
     seenLog(principal) {
       const log = seenBy(store, principal).log.all();
@@ -1030,14 +1055,43 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     }
     // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
     const after = (ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq >= last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from)).filter((op) => op.seq <= last);
-    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: last, ops: opsFor(peer.opFormat, wire.shown(seat, after)) } satisfies LiveServerMessage) : "";
+    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: cursorAt(last), ops: opsFor(peer.opFormat, wire.shown(seat, after)) } satisfies LiveServerMessage) : "";
     if (key !== undefined) sight!.texts.set(key, text);
     if (text.length > 0) sayText(peer, text);
   };
   /** Every op this socket has not been sent, down it now, as its seat sees them — up to the first that is not durable. */
   const catchUp = (peer: LivePeer, ops?: readonly Operation[], known?: Principal, sight?: Sight): void => {
     const held = heldFrom();
-    sendUpTo(peer, held === undefined ? wire.lastSeq() : Math.min(wire.lastSeq(), held - 1), ops, known, sight);
+    const seat = known ?? principalOf(peer, sight);
+    if (!seat) return;
+    // Up to where the seat is served: a reader of an app that publishes waits for the publish, and is taken back with an undone one (Roadmap f-publishing-lifecycle).
+    const last = wire.servedSeq(seat) - 1;
+    if (peer.cursor !== undefined && peer.cursor > last && last < wire.lastSeq()) return reset(peer, seat);
+    sendUpTo(peer, held === undefined ? last : Math.min(last, held - 1), ops, seat, sight);
+  };
+  /**
+   * A SOCKET THAT CANNOT BE CAUGHT UP OP BY OP IS SENT THE WHOLE STATE: one
+   * that resumes behind the compaction horizon, whose ops before it are in
+   * no answer, or a reader that holds ops past where it is now served (a
+   * publish taken back). A `welcome` with `state`, its cursor where the
+   * state ends — never the ops after the horizon as if those before had
+   * been sent.
+   */
+  const reset = (peer: LivePeer, seat: Principal, said: Record<string, unknown> = {}): void => {
+    peer.cursor = wire.servedSeq(seat) - 1;
+    const seen = wire.seenFor(seat);
+    say(peer, {
+      t: "welcome",
+      protocol: WIRE_PROTOCOL,
+      wire: LIVE_WIRE,
+      version: options.version ?? 1,
+      ...said,
+      ...(peer.participant ? { participant: peer.participant } : {}),
+      seq: cursorAt(peer.cursor),
+      ops: [],
+      ...wire.servedOf(seat),
+      state: { version: options.version ?? 1, snapshot: seen.snapshot(), ...openedLog(seat), migrated: [...(options.migrated ?? [])], enabledModules: wire.enabledModules() },
+    } as LiveServerMessage);
   };
 
   /** The host's hold, in its sentence, or nothing: the app takes changes (FR-66). */
@@ -1117,7 +1171,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   const sayLimited = (peer: LivePeer, cid: string, limited: LimitAnswer): LiveReceived => {
     if ("refuse" in limited) {
       delete peer.held;
-      say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
+      say(peer, { t: "refused", cid, reason: limited.reason ?? "limit", sentence: limited.refuse });
     } else if ("unavailable" in limited) {
       // Not for a while, and no wait to name: refused `unavailable`, which the client keeps and sends again, backing off.
       delete peer.held;
@@ -1129,9 +1183,12 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     }
     return { cursor: peer.cursor! };
   };
-  /** The same word over HTTP: 413 `limit`, 503 `unavailable`, or 429 with `Retry-After`. */
+  /** The same word over HTTP: 413 `limit` (401 `unauthenticated`, 403 `quota`), 503 `unavailable`, or 429 with `Retry-After`. */
   const limitedReply = (limited: LimitAnswer, said: Record<string, unknown>): WireAnswer => {
-    if ("refuse" in limited) return reply(413, { error: limited.refuse, refused: true, reason: "limit", ...said });
+    if ("refuse" in limited) {
+      const reason = limited.reason ?? "limit";
+      return reply(reason === "quota" ? 403 : reason === "unauthenticated" ? 401 : 413, { error: limited.refuse, refused: true, reason, ...said });
+    }
     if ("unavailable" in limited) return reply(503, { error: limited.unavailable, refused: true, reason: "unavailable", ...said });
     const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
     return reply(429, { error: limited.sentence ?? `The store is busy: send it again in ${retryAfter} ms.`, busy: true, retryAfter }, { "retry-after": String(Math.ceil(retryAfter / 1000)) });
@@ -1147,7 +1204,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
      * durable: then the cursor stays, and they go down after the flush.
      */
     const landing = await land(seat, via, change, bytes, (own) => {
-      if (own.length === 0 || heldFrom(own[0]!.seq) === undefined) peer.cursor = wire.lastSeq();
+      if (own.length === 0 || heldFrom(own[0]!.seq) === undefined) peer.cursor = Math.min(wire.lastSeq(), wire.servedSeq(seat) - 1);
     });
     // What it would do is over the host's caps: nothing was kept.
     if (landing.limited) return sayLimited(peer, cid, landing.limited);
@@ -1173,11 +1230,12 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   const acked = (peer: LivePeer, seat: Principal, cid: string, batch: string, own: readonly Operation[], saved: readonly Operation[] | undefined): LiveReceived => {
     const first = own[0]?.seq;
     if (first !== undefined) {
-      sendUpTo(peer, first - 1, undefined, seat);
-      peer.cursor = Math.max(peer.cursor!, own.at(-1)!.seq);
+      sendUpTo(peer, Math.min(first - 1, wire.servedSeq(seat) - 1), undefined, seat);
+      // A reader of an app that publishes is acked its own, and its cursor stays where it is served (Roadmap f-publishing-lifecycle).
+      peer.cursor = Math.max(peer.cursor!, Math.min(own.at(-1)!.seq, wire.servedSeq(seat) - 1));
     }
     const ops = wire.shown(seat, own);
-    say(peer, { t: "ack", cid, seq: ops.at(-1)?.seq ?? peer.cursor!, batch, ops });
+    say(peer, { t: "ack", cid, seq: cursorAt(ops.at(-1)?.seq ?? peer.cursor!), batch, ops });
     return { cursor: peer.cursor!, ...(saved && saved.length > 0 ? { landed: saved } : {}) };
   };
 
@@ -1250,8 +1308,10 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           // The op format it reads, said or not: a hello again on the same socket says it again.
           if (typeof message.opFormat === "number" && Number.isInteger(message.opFormat) && message.opFormat > 0) peer.opFormat = message.opFormat;
           else delete peer.opFormat;
-          const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
-          peer.cursor = wire.lastSeq();
+          const asked = seqAt(message.seq);
+          // Behind the horizon, or past where the seat is served: the whole state, never a skip (`behind`).
+          const seq = asked !== undefined && asked >= 0 && wire.behind(seat, asked) ? undefined : asked;
+          peer.cursor = wire.servedSeq(seat) - 1;
           // Its own key, built from the seat, so the client can leave itself out of who is here (FR-47).
           peer.participant ??= participantKey({ kind: seat.kind, ...(seat.id ? { id: seat.id } : {}), session: mintSession() });
           const participant = peer.participant;
@@ -1263,8 +1323,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             say(peer, {
               t: "welcome",
               ...said,
-              seq: peer.cursor,
+              seq: cursorAt(peer.cursor!),
               ops: [],
+              ...wire.servedOf(seat),
               state: {
                 version: options.version ?? 1,
                 snapshot: seen.snapshot(),
@@ -1277,7 +1338,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             // Caught up to what is written: an op still being flushed, or one a flush failed, comes once it holds.
             const held = heldFrom();
             if (held !== undefined) peer.cursor = Math.max(Math.floor(seq), held - 1);
-            say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(seat, seq).filter((op) => op.seq <= peer.cursor!) });
+            say(peer, { t: "welcome", ...said, seq: cursorAt(peer.cursor!), ops: wire.since(seat, seq).filter((op) => op.seq <= peer.cursor!), ...wire.servedOf(seat) });
           }
           const others = heldBySockets(who, [peer, ...peers]).filter((presence) => presence.participant !== peer.participant);
           if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(seat, others) });
@@ -1323,7 +1384,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
               return acked(peer, seat, cid, message.batch as string, claim.answered, flushed.saved);
             }
             catchUp(peer, undefined, seat);
-            say(peer, { t: "ack", cid, seq: claim.answered.at(-1)!.seq, batch: message.batch as string, ops: wire.shown(seat, claim.answered) });
+            say(peer, { t: "ack", cid, seq: cursorAt(claim.answered.at(-1)!.seq), batch: message.batch as string, ops: wire.shown(seat, claim.answered) });
             return { cursor: peer.cursor };
           }
           /*
@@ -1467,12 +1528,19 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         snapshot: seen.snapshot(),
         ...opened,
         log: opsFor(asked.opFormat, opened.log),
+        cursor: cursorAt(opened.log.at(-1)?.seq ?? (opened.horizon ?? 0) - 1),
+        ...wire.servedOf(asked.seat),
         migrated: [...(options.migrated ?? [])],
         enabledModules: wire.enabledModules(),
       });
     },
     since(seq, asked) {
-      return reply(200, { ops: opsFor(asked.opFormat, wire.since(asked.seat, seq)), ...answering(asked) });
+      const ops = wire.since(asked.seat, seq);
+      const cursor = cursorAt(ops.at(-1)?.seq ?? seq);
+      // A client the ops cannot catch up — behind the horizon, or past where it is now served — is told to take the state.
+      // (The ops after the horizon still come, so a client that predates `reset` sees the gap and takes the state as it did.)
+      if (wire.behind(asked.seat, seq)) return reply(200, { ops: opsFor(asked.opFormat, ops), cursor, reset: true, ...wire.horizonOf(), ...wire.servedOf(asked.seat), ...answering(asked) });
+      return reply(200, { ops: opsFor(asked.opFormat, ops), cursor, ...wire.servedOf(asked.seat), ...answering(asked) });
     },
     declared(peers) {
       for (const peer of peers) {

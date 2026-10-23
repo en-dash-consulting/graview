@@ -9,7 +9,9 @@ import {
   type InAppAgent,
   type ToolCall,
   type ToolRuntime,
+  withNotNow,
 } from "@graview/tools";
+import { dismissalsOf } from "../dismissals.js";
 import { useEffect, useMemo, useState } from "react";
 
 
@@ -72,7 +74,7 @@ export function AgentSeat<S extends AnySchema>({
   onCall,
   run,
 }: AgentSeatProps<S>) {
-  const { store, views, principal, registerSeatWho, noteSeat, session, app, ai, subscriptions } = useGraview<S>();
+  const { store, views, principal, registerSeatWho, noteSeat, session, app, ai, subscriptions, dismissals } = useGraview<S>();
   /*
    * ONE ROBOT for the tab's seat and its chat: the seat registers its name
    * and the chat writes as it, so the two surfaces are one body in the city.
@@ -83,7 +85,8 @@ export function AgentSeat<S extends AnySchema>({
   }, [who, registerSeatWho]);
   const runtime = useMemo(
     () =>
-      createToolRuntime(store, {
+      // "Not now" for the person the seat sits with (`dismiss_suggestion`), kept where the Suggested tray keeps it.
+      withNotNow(createToolRuntime(store, {
         // This tab's own session, so the robot and the log agree about which tab it was.
         author: {
           kind: "agent",
@@ -101,8 +104,8 @@ export function AgentSeat<S extends AnySchema>({
         // Notify me (Roadmap f-notify-subscriptions): the reader's own subscriptions, kept where the menu's sheet keeps them.
         subscriptions,
         subscriber: principal,
-      }),
-    [store, principal, who, session, views, app, ai.near, subscriptions],
+      }), dismissalsOf(dismissals, app?.name ?? "app", principal)),
+    [store, principal, who, session, views, app, ai.near, subscriptions, dismissals],
   );
   const agent = useMemo(() => createInAppAdapter(runtime), [runtime]);
   const [busy, setBusy] = useState(false);

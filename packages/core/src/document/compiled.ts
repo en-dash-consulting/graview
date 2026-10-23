@@ -266,6 +266,8 @@ export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): 
   // A phone, a place and a duration say so, for a face to say and link each. A number shown as a duration IS one: whole minutes, said, typed and told to a model as the duration type is.
   const numeric = spec.type === "number" || spec.type === "integer";
   markTyped(schema, numeric && spec.format === "duration" ? "duration" : spec.type);
+  // Typed together or written whole, where the field says (Roadmap f-collab-text): the mark `schema/collaborative.ts` reads.
+  if (spec.collaborative !== undefined && (spec.type === "text" || spec.type === "string")) (z.defOf(schema) as Record<symbol, 0 | 1>)[Symbol.for("@graview/core:collaborative")] = spec.collaborative ? 1 : 0;
   if (spec.description) schema = schema.check(z.describe(spec.description));
   // What a number is said as — money in the app's currency, a percent, a measure — read by every face, every form and every tool.
   if (numeric && (spec.format === "money" || spec.format === "percent" || (!spec.format && spec.unit))) markAmount(schema, { ...money, ...(spec.format ? { format: spec.format } : {}), ...(spec.unit ? { unit: spec.unit } : {}) });
@@ -711,6 +713,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     ...(document.connections ? { connections: document.connections as never } : {}),
     // Its forms for visitors (Roadmap f-public-forms): data a host draws alone.
     ...(document.forms ? { forms: document.forms as never } : {}),
+    // When edits reach readers (Roadmap f-publishing-lifecycle): the store a host makes honors it.
+    ...(document.publishing ? { publishing: document.publishing } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
     ...(plan.viewSpecs ? { viewSpecs: plan.viewSpecs as never } : {}),
     // And its home view, about no one record, is the app's home (FR-81).

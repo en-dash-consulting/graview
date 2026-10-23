@@ -11,6 +11,8 @@
  * store folded into the poll it already makes.
  */
 
+import { AUTHOR_KINDS, type AuthorKind } from "./ops/types.js";
+
 export interface PresenceRobot {
   /** What the robot stands at: a node id, `kind:<kind>`, or null for its dock. */
   readonly at: string | null;
@@ -123,12 +125,12 @@ export function nextExpiry(who: readonly Presence[], now: number = Date.now()): 
 
 /** The parts of a participant key: who, and which tab of theirs. */
 export interface Participant {
-  readonly kind: "human" | "agent" | "rule" | "system";
+  readonly kind: AuthorKind;
   readonly id?: string;
   readonly session?: string;
 }
 
-const PARTICIPANT_KINDS: ReadonlySet<string> = new Set(["human", "agent", "rule", "system"]);
+const PARTICIPANT_KINDS: ReadonlySet<string> = new Set(AUTHOR_KINDS);
 
 /**
  * THE ONE DIALECT. A participant is `kind:id:session`: the op log's own

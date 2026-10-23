@@ -1817,7 +1817,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <p>``<code>json    "policy": {      "grants": [{ "roles": ["host"], "mutations": "*" }, { "roles": ["visitor"], "mutations": ["add-guest"] }],      "sees": [{ "roles": ["host"], "kinds": ["guest", "table"] }]    }    </code>``</p>
 <p>A policy with <code>sees</code> keeps every kind it does not name from every role    it does not name, so the visitor is served nothing — not the guests    already there, not the one they just made. A picker the form asks with    offers only what the visitor is served: show them a kind by a sight    naming their role when they must pick one (an event to answer for).</p>
 <ol>
-<li><strong>Mint a visitor per answer, on the host.</strong> `formVisitor(app, "rsvp", "form:&lt;token&gt;")<code> from </code>@graview/core/forms<code> is </code>{ kind: "human", id, name: "a visitor via the RSVP form", roles: ["visitor"] }`: hand it to the store that judges the act (a served store believes it from the seat's headers), so Activity names the answer for the form and never by its token.</li>
+<li><strong>Mint a visitor per answer, on the host.</strong> `formVisitor(app, "rsvp", "form:&lt;token&gt;")<code> from </code>@graview/core/forms<code> is </code>{ kind: "visitor", id, name: "a visitor via the RSVP form", roles: ["visitor"] }`: hand it to the store that judges the act (a served store believes it from the seat's headers), so Activity names the answer for the form and never by its token.</li>
 </ol>
 <ol>
 <li><strong>Draw it alone.</strong> <code>@graview/embed/form</code>:</li>

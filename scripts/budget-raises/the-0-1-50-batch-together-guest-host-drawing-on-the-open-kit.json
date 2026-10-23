@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 0,
+  "gzipped": 8,
+  "note": "Raised when the 0.1.50 batch came together: its branches each fit the guest host drawing a worker view on the open kit on their own; together it gzips 5 bytes past (measured 195_871 / 74_485 against 195_871 / 74_480 minified and gzipped). Eight bytes leave room for the gzip of the merged whole to move."
+}

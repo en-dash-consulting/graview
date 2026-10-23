@@ -152,6 +152,43 @@ export function adapterCases(make: () => PersistenceAdapter<string>): AdapterCas
       },
     },
     {
+      // One writer, enforced: an append names the head it expects, and one that finds the log moved appends nothing.
+      name: "refuses the second of two writers appending at the same head, and appends nothing of it",
+      async run() {
+        const adapter = make();
+        if (!adapter.appendOps || !adapter.loadLog) return;
+        const op = (seq: number, by: string) => ({
+          id: `${by}-${seq}`,
+          seq,
+          batch: `${by}:${seq}`,
+          author: { kind: "human" as const, id: by },
+          intent: `Retime by ${by}`,
+          mutation: null,
+          primitives: [{ op: "patch-node" as const, id: "d1", before: { at: 480 }, after: { at: 540 } }],
+          reads: ["d1"],
+          writes: ["d1"],
+          at: "1970-01-01T00:00:00.000Z",
+        });
+        await adapter.appendOps("h", [op(0, "ana")], { head: 0 });
+        await adapter.appendOps("h", [op(1, "ana")], { head: 1 });
+        // Bo opened the log when it was one op long and appends after Ana did.
+        let refused: unknown;
+        try {
+          await adapter.appendOps("h", [op(1, "bo")], { head: 1 });
+        } catch (error) {
+          refused = error;
+        }
+        ok(refused instanceof Error && refused.name === "LogHeadMovedError", `the second writer was not refused: ${String(refused)}`);
+        same((refused as { expected: number; found: number }).found, 2, "the head the second writer found");
+        same((await adapter.loadLog("h")).map((one) => one.id), ["ana-0", "ana-1"], "the log after the refusal");
+        // At the head it holds, the writer goes on; without a head, an append is not checked, as before.
+        await adapter.appendOps("h", [op(2, "bo")], { head: 2 });
+        same((await adapter.loadLog("h")).map((one) => one.id), ["ana-0", "ana-1", "bo-2"], "the log after an append at its head");
+        await adapter.appendOps("other", [op(0, "cy")], { head: 0 });
+        same((await adapter.loadLog("other")).map((one) => one.id), ["cy-0"], "another scope begins at 0");
+      },
+    },
+    {
       // FR-23: a normal open loads the checkpoint and the tail; the archive holds the rest.
       name: "moves the ops and epochs behind a checkpoint into its archive when it compacts",
       async run() {
@@ -190,6 +227,16 @@ export function adapterCases(make: () => PersistenceAdapter<string>): AdapterCas
         same((await adapter.loadArchive("h")).ops.map((op) => op.seq), [0, 1, 2, 3], "the archive after two");
         same((await adapter.loadArchive("h")).epochs, [seed, checkpoint], "the archived epochs after two");
         same(await adapter.loadArchive("other"), { ops: [], epochs: [] }, "another scope's archive");
+        // The head of a compacted log is one past its tail: an append there lands, one behind it does not.
+        let behind: unknown;
+        try {
+          await adapter.appendOps("h", [{ ...ops[4]!, id: "late", seq: 4 }], { head: 4 });
+        } catch (error) {
+          behind = error;
+        }
+        ok(behind instanceof Error && behind.name === "LogHeadMovedError", "an append behind a compacted log's head was not refused");
+        await adapter.appendOps("h", [{ ...ops[4]!, id: "next", seq: 5 }], { head: 5 });
+        same((await adapter.loadLog("h")).map((op) => op.seq), [4, 5], "the tail after an append at its head");
       },
     },
   ];
@@ -250,6 +297,36 @@ export function sqlCases(fresh: () => SqlHandle): AdapterCase[] {
         await adapter.save("h", snapshot);
         await adapter.save("h", { nodes: snapshot.nodes.filter((n) => n.id !== "p2"), edges: snapshot.edges });
         same((await adapter.load("h"))?.nodes.map((n) => n.id).sort(), ["d1", "p1"], "the nodes");
+      },
+    },
+    {
+      name: "keeps a link's own id and data in the edge table's data column",
+      async run() {
+        const adapter = createSqlAdapter({ ...fresh(), createTables: true });
+        const linked: GraphSnapshot = { nodes: snapshot.nodes, edges: [{ kind: "assigned-to", from: "p1", to: "d1", id: "shift-1", data: { hours: 4 } }, { kind: "assigned-to", from: "p2", to: "d1" }] };
+        await adapter.save("h", linked);
+        same((await adapter.load("h"))?.edges, linked.edges, "the edges");
+      },
+    },
+    {
+      name: "an edge table made before the data column reads links as before, refuses one with an id, and gains the column when asked to make its tables",
+      async run() {
+        const handle = fresh();
+        householdTables(handle.sql);
+        const plain = createSqlAdapter(handle);
+        await plain.save("h", snapshot);
+        same((await plain.load("h"))?.edges, snapshot.edges, "a plain link");
+        const linked: GraphSnapshot = { nodes: snapshot.nodes, edges: [{ kind: "assigned-to", from: "p1", to: "d1", id: "shift-1" }] };
+        let refused = false;
+        try {
+          await plain.save("h", linked);
+        } catch (error) {
+          refused = /no "data" column/.test(String(error));
+        }
+        ok(refused, "a link with an id is refused where it cannot be kept");
+        const made = createSqlAdapter({ ...handle, createTables: true });
+        await made.save("h", linked);
+        same((await made.load("h"))?.edges, linked.edges, "the link, with its id");
       },
     },
   ];

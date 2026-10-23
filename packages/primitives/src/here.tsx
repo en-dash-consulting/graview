@@ -1,4 +1,4 @@
-import { isWithheld, labelOf, nameOfAuthor, pluralLabel, type AnySchema, type Operation, type Person, type Presence, type Principal, type Store } from "@graview/core";
+import { authorKindOf, isWithheld, labelOf, nameOfAuthor, pluralLabel, type AnySchema, type Operation, type Person, type Presence, type Principal, type Store } from "@graview/core";
 import { fromUrl, kindsOfAggregate } from "@graview/layout/view";
 import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react/provider";
 import { useEffect, useState } from "react";
@@ -112,7 +112,7 @@ export function changeSaid(
   input: { readonly store: Store<AnySchema>; readonly principal: Principal; readonly seats?: readonly { readonly label: string; readonly principal: Principal }[]; readonly people?: readonly Person[] },
 ): string | null {
   const mine = (author: Operation["author"]) => author.id !== undefined && (author.id === input.principal.id || author.onBehalfOf?.id === input.principal.id);
-  const theirs = ops.filter((op) => !isWithheld(op) && op.author.kind !== "system" && !mine(op.author));
+  const theirs = ops.filter((op) => !isWithheld(op) && authorKindOf(op.author) !== "system" && !mine(op.author));
   const first = theirs[0];
   if (!first) return null;
   const by = nameOfAuthor(first.author, {

@@ -9,6 +9,8 @@ import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
 import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
+import { diffSnapshots } from "./graph/diff.js";
+import { PUBLISHING, readsPublished, type Publishing } from "./publish.js";
 
 const NOTHING: ReadonlySet<string> = new Set();
 
@@ -334,7 +336,7 @@ const touchedIds = (ops: readonly Operation[]): Set<string> => {
   for (const op of ops) {
     for (const primitive of op.primitives) {
       if (primitive.op === "add-node" || primitive.op === "remove-node") ids.add(primitive.node.id);
-      else if (primitive.op === "patch-node") ids.add(primitive.id);
+      else if (primitive.op === "patch-node" || primitive.op === "splice-text") ids.add(primitive.id);
       else {
         ids.add(primitive.edge.from);
         ids.add(primitive.edge.to);
@@ -413,19 +415,36 @@ export function readingOf(ops: readonly Operation[], epochs: LogReading["epochs"
 
 const VIEWS = new WeakMap<object, Map<string, unknown>>();
 
-/** A seat, keyed by the seat the policy judges: an agent for Nick is not the same agent alone. */
+/**
+ * A seat, keyed by the seat the policy judges: an agent for Nick is not the
+ * same agent alone. It is everything serving reads of the principal — its
+ * kind, the id and roles sight is judged by (`actingAs`), and whether it
+ * acts for somebody — and nothing it does not (a session, a name), so two
+ * tabs of one seat share what they are served.
+ */
 function seatKey(principal: Principal): string {
   const judged = isSystem(principal) ? principal : actingAs(principal);
-  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? "for" : ""}`;
+  // An agent's own id too: two agents for one person are two seats, and each view answers as its own (`seenFor`, `wouldChange`, `preview`).
+  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? `for:${principal.id ?? ""}` : ""}`;
 }
 
-const bound = (target: object, prop: PropertyKey): unknown => {
+/**
+ * WHERE A SEAT'S VIEW IS SERVED THROUGH (`servedSeq`): the head, for a seat
+ * of a live app and a collaborator of one that publishes — the view reads
+ * its store as it grows — or what was published, for a reader of one
+ * (`servedBehind`), which moves when a publish does. The store a seat's
+ * view is of, the module reading what is off and the policy are each the
+ * store's own, so the view's key is the seat and this.
+ */
+export const viewKey = (principal: Principal, served: "head" | "published"): string => `${seatKey(principal)}@${served}`;
+
+export const bound = (target: object, prop: PropertyKey): unknown => {
   const value = Reflect.get(target, prop, target);
   return typeof value === "function" ? (value as (...args: unknown[]) => unknown).bind(target) : value;
 };
 
 /**
- * THE STORE AS ONE PRINCIPAL MAY SEE IT.
+ * THE APP AS THIS SEAT IS SERVED IT.
  *
  * Every surface reads `store.graph` — the scene, the pages, Find, the
  * chat, an agent's tools — and none of them asked who was looking: a
@@ -433,11 +452,17 @@ const bound = (target: object, prop: PropertyKey): unknown => {
  * question, because a policy could only say who may ACT. With the policy's
  * `sees` declared, this is the store a surface is handed: its graph, its
  * log, its history and its problems hold only what the principal may see,
- * and every act still goes to the store itself, judged there as always.
- * With no `sees`, it is the store, unchanged.
+ * and every act still goes to the store itself, judged there — at the
+ * head — as always. With no `sees`, it is the store, unchanged.
+ *
+ * What a seat is served is not promised to be the head: it is served
+ * through `servedSeq`, which is the head today and which a policy may set
+ * behind it (docs/stability.md, "Served state and the head"). Nor is it
+ * promised to be one object per principal: the view is kept to save
+ * judging again, keyed by what serving depends on (`viewKey`).
  */
 /** The key a seat's view answers with the store it is of and the seat (`seatOf`, `@graview/core/seat-of`'s reading of it). */
-const SEAT = Symbol.for("@graview/core:seat");
+export const SEAT = Symbol.for("@graview/core:seat");
 
 /**
  * WHAT A SEAT'S VIEW IS A VIEW OF: a store as `seenBy` reads it — beyond
@@ -454,14 +479,40 @@ export interface Viewed extends Judged {
   wouldChange(call: never, author: Principal): unknown;
   preview(call: never, context: never, options: { readonly author: Principal }): unknown;
   checkpoint(options?: never): Epoch | undefined;
+  readonly publishing?: Publishing | undefined;
+  readonly publishedSeq?: number | undefined;
+  subscribe(listener: never): () => void;
 }
 
-export function seenBy<T extends Viewed>(store: T, principal: Principal): T {
-  // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
-  if (!hidesFrom(store, principal)) return store;
-  const key = seatKey(principal);
+/** How a seat asks to be served: as it is (the default), or — a collaborator previewing — as readers are, `"published"`. */
+export interface SeenOptions {
+  readonly as?: "head" | "published";
+}
+
+export function seenBy<T extends Viewed>(store: T, principal: Principal, options: SeenOptions = {}): T {
+  // A reader of an app that publishes is served what was published (Roadmap f-publishing-lifecycle), once `@graview/core/publishing` says how; until then, refused — never the head.
+  if (readsPublished(store.publishing, principal, options.as)) {
+    if (PUBLISHING.served) return PUBLISHING.served(store as never, principal) as T;
+    throw new Error("Load @graview/core/publishing to serve a reader of an app that publishes.");
+  }
+  return seatView(store, principal);
+}
+
+/** Whether readers of an app that publishes can be served here: true once `@graview/core/publishing` is loaded. */
+export const servesReaders = (): boolean => PUBLISHING.served !== undefined;
+
+export function viewsOf(store: object): Map<string, unknown> {
   let views = VIEWS.get(store);
   if (!views) VIEWS.set(store, (views = new Map()));
+  return views;
+}
+
+/** The app as a seat is served it at the head: what its sight reaches, as the store grows. */
+export function seatView<T extends Viewed>(store: T, principal: Principal): T {
+  // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
+  if (!hidesFrom(store, principal)) return store;
+  const key = viewKey(principal, "head");
+  const views = viewsOf(store);
   const held = views.get(key);
   if (held) return held as T;
 
@@ -641,9 +692,12 @@ export function seenBy<T extends Viewed>(store: T, principal: Principal): T {
         case "preview":
           return (call: never, context?: never, options?: object) => target.preview(call, context as never, { author: principal, ...options });
         case "seenBy":
-          return (other: Principal) => seenBy(target, other);
+          return (other: Principal, options?: SeenOptions) => seenBy(target, other, options);
         case "seenFor":
           return principal;
+        // Where what this seat is served ends: the store's own (`servedSeq`) — its head, or a past's seq; never set through the view.
+        case "servedSeq":
+          return (target as unknown as { servedSeq: number }).servedSeq;
         // A checkpoint taken through the seat's view is the one it is served.
         case "checkpoint":
           return (options?: never) => servedIf(target.checkpoint(options));
@@ -656,3 +710,5 @@ export function seenBy<T extends Viewed>(store: T, principal: Principal): T {
   return view;
 }
 
+// What the reader's view borrows of this module (`@graview/core/publishing`), lent rather than imported.
+PUBLISHING.kit = { seatView: seatView as never, viewsOf, viewKey, diff: diffSnapshots as never, reads: readsPublished };

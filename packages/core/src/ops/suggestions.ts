@@ -46,6 +46,21 @@ export interface Dismissal {
   readonly until?: string;
 }
 
+/**
+ * WHERE A PERSON'S "NOT NOW" IS KEPT: the host's, beside what else it keeps
+ * of them (their subscriptions, their pins), for the one person reading.
+ * `list` is read as the tray draws, so a host whose storage is far away
+ * keeps a copy near and says `onChange` when it moves.
+ */
+export interface DismissalStore {
+  /** What this person said "not now" to. */
+  list(): readonly Dismissal[];
+  /** Keep one, in place of any earlier one for the same suggestion. */
+  dismiss(dismissal: Dismissal): void | Promise<void>;
+  /** Told when what is kept changes; returns how to stop being told. */
+  onChange?(listener: () => void): () => void;
+}
+
 /** What reading the suggestions waiting is told besides the log. */
 export interface WaitingOptions {
   /** Now, as an ISO time: what an expiry and a dismissal's `until` are read against. Unsaid, the clock's. */

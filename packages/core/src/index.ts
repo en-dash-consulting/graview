@@ -86,9 +86,13 @@ export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./grap
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
 export { invert, isUnset, normalize, UNSET, writesOf } from "./graph/primitives.js";
-export type { Primitive } from "./graph/primitives.js";
+export type { Primitive, SpliceTextPrimitive } from "./graph/primitives.js";
+export { applySplice, compose as composeSplices, transform as transformSplices, transformCaret } from "./text/splice.js";
+export type { TextSplice } from "./text/splice.js";
+export { diffSplice } from "./text/diff.js";
 export { TrackedReader } from "./graph/tracked.js";
 export { edgeId } from "./graph/types.js";
+export { EDGE_FIELDS } from "./graph/edge-fields.js";
 export type {
   AnyGraphNode,
   GraphEdge,
@@ -108,7 +112,8 @@ export type { Capabilities } from "./capabilities.js";
 export { REFUSAL_REASONS, refusalOf } from "./refusal.js";
 export { ActRefusal } from "./refused.js";
 export type { RefusalReason, WireRefusal } from "./refusal.js";
-export { assertReadable, FORMATS, formatStamp, NewerFormatError, upgradeOp, upgradeSnapshot } from "./formats.js";
+export { assertReadable, FORMATS, formatStamp, NewerFormatError, PRIMITIVE_OPS, upgradeOp, upgradeSnapshot, VALUE_TYPES } from "./formats.js";
+export { unknownPrimitive } from "./format-error.js";
 export type { FormatName, FormatStamp } from "./formats.js";
 export type {
   EvaluateOptions,
@@ -209,14 +214,19 @@ export { FieldRevisions, fieldsWritten, NEVER_WRITTEN, writtenBy } from "./ops/r
 export type { FieldConflict, FieldRevision } from "./ops/revisions.js";
 export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck, UndoRefused } from "./ops/undo.js";
-export type { Author, Batch, Operation, Via } from "./ops/types.js";
+export type { Author, AuthorKind, Batch, Operation, Via } from "./ops/types.js";
+export { AUTHOR_KINDS, authorKindOf } from "./ops/types.js";
 export { LINEAGE_BASIS_LIMIT, LINEAGE_EVIDENCE_LIMIT, LINEAGE_LIMIT, LINEAGE_MODEL_LIMIT, lineageOf, type Lineage } from "./ops/lineage.js";
 // What a link was based on, and whether a person has kept it, are `@graview/core/provenance`'s, fetched with what draws them (FR-172).
 export type { HasLog, LinkProvenance, LinkRef } from "./ops/provenance.js";
 export { KEEP_LINK } from "./mutations/keep-link.js";
+// Typing into a field typed together (Roadmap f-collab-text): the act every store answers to, and whether a field is one.
+export { TYPE_TEXT } from "./text/typing-hook.js";
+export type { TypeTextArgs } from "./mutations/type-text.js";
+export { isCollaborativeField, markCollaborative } from "./schema/collaborative.js";
 // Whether a record is left alone and an author is the app's own actor, which a page draws with; the rest is `@graview/core/tidying`'s.
 export { isAutomated, isLeftAlone } from "./ops/tidying.js";
-export type { Suggestion } from "./ops/suggestions.js";
+export type { Dismissal, DismissalStore, Suggestion } from "./ops/suggestions.js";
 export type { ActivityRow } from "./ops/digest.js";
 export {
   actingAs,
@@ -316,7 +326,8 @@ export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/typ
 export { FIELD_SIGHT, recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export { writersOf, type Writers } from "./ops/writers.js";
 export type { FieldsKept, RecordedLog, Records } from "./permissions/sight.js";
-export { hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
+export { hidesFrom, logSeenBy, seatLens, seenBy, seesId, servesReaders, type SeenOptions } from "./seen.js";
+export { onPublish, PUBLISH, type Publishing } from "./publish.js";
 // Notify me (Roadmap f-notify-subscriptions): what a subscription is, and the store a page keeps them in; the matcher and their words are `@graview/core/subscriptions`.
 export { keptSubscription, memorySubscriptions, subscriberOf, subscriptionId } from "./subscription-shape.js";
 export type { MatchedRecord, OnSubscriptionMatch, Subscription, SubscriptionDraft, SubscriptionMatch, SubscriptionStore, SubscriptionWhen } from "./subscription-shape.js";
@@ -424,7 +435,8 @@ export { createMemoryAdapter } from "./persistence/memory.js";
 export { createSqlAdapter, createSqliteAdapter, sqlFromDatabase, SQLITE_TABLE_SHAPE } from "./persistence/sqlite.js";
 export type { SqlAdapterOptions, SqlExec } from "./persistence/sql.js";
 export type { SqliteAdapterOptions, SqliteDatabase, SqliteStatement } from "./persistence/sqlite.js";
-export type { PersistenceAdapter } from "./persistence/types.js";
+export type { AppendOptions, PersistenceAdapter } from "./persistence/types.js";
+export { assertHead, headOf, LogHeadMovedError } from "./persistence/types.js";
 
 // Extending a schema without rewriting what was written against the base.
 export { extendInvariants, extendMutations } from "./extend.js";

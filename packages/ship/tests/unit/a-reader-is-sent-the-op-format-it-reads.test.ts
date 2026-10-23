@@ -127,7 +127,7 @@ describe("a reader is sent the op format it reads", () => {
     expect(bare((newer.heard.find((one) => one.t === "ack") as Extract<LiveServerMessage, { t: "ack" }>).ops)).toBe(true);
   });
 
-  it("openRemote says it reads format 2, keeps a copy that matches the server's, and undoes through it", async () => {
+  it("openRemote says the op format it reads, keeps a copy that matches the server's, and undoes through it", async () => {
     const server = aStore();
     const handler = await createStoreHandler({ app, store: server, seatOf: () => kim });
     const asked: string[] = [];
@@ -157,7 +157,7 @@ describe("a reader is sent the op format it reads", () => {
     const remote = await openRemote({ app, url: "https://store.example", principal: kim, fetch: fetcher, live: true, pollMs: 0, openTimeoutMs: 30, socket });
     await new Promise((tick) => setTimeout(tick, 10));
     expect(said.find((message) => message.t === "hello")).toMatchObject({ opFormat: FORMATS.op });
-    expect(asked.some((url) => url.includes("/graview/state?opFormat=2"))).toBe(true);
+    expect(asked.some((url) => url.includes(`/graview/state?opFormat=${FORMATS.op}`))).toBe(true);
     expect(bare(remote.store.log.all())).toBe(true);
     expect(remote.store.snapshot()).toEqual(server.snapshot());
     remote.close();
@@ -184,7 +184,7 @@ describe("a reader is sent the op format it reads", () => {
     expect(lines).toHaveLength(4);
     expect(carry(lines.slice(0, 2))).toBe(true);
     expect(bare(lines.slice(2))).toBe(true);
-    expect(JSON.parse(readFileSync(join(root, "cards", "meta.json"), "utf8"))).toMatchObject({ formats: { op: 2 } });
+    expect(JSON.parse(readFileSync(join(root, "cards", "meta.json"), "utf8"))).toMatchObject({ formats: { op: FORMATS.op } });
     opened.close?.();
     // Opened again, the mixed log reads as one history.
     const again = await openStore({ app, adapter: createFileAdapter(root) });
@@ -193,10 +193,10 @@ describe("a reader is sent the op format it reads", () => {
     again.close?.();
   });
 
-  it("an export is op format 2 with no inverse; one from before imports and undoes the same", () => {
+  it("an export is op format 2 or later, with no inverse; one from before imports and undoes the same", () => {
     const store = aStore();
     const bundle = exportBundle(app, store);
-    expect(bundle.formats).toMatchObject({ op: 2 });
+    expect(bundle.formats).toMatchObject({ op: FORMATS.op });
     expect(bare(bundle.log)).toBe(true);
     const older = { ...bundle, framework: "0.1.42", formats: { snapshot: 1, op: 1 }, log: bundle.log.map(withInverse) };
     for (const one of [bundle, older]) {

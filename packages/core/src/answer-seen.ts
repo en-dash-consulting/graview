@@ -82,8 +82,8 @@ export function answerSeenBy<
     const listed = new Set(diff.changedNodes.map((change: NodeChange) => change.after.id));
     const patched = new Map<string, string[]>();
     for (const primitive of (answer.ops?.flatMap((op) => op.primitives) ?? (answer.primitives as readonly Primitive[] | undefined) ?? [])) {
-      if (primitive.op !== "patch-node" || listed.has(primitive.id)) continue;
-      patched.set(primitive.id, [...(patched.get(primitive.id) ?? []), ...Object.keys(primitive.after)]);
+      if ((primitive.op !== "patch-node" && primitive.op !== "splice-text") || listed.has(primitive.id)) continue;
+      patched.set(primitive.id, [...(patched.get(primitive.id) ?? []), ...(primitive.op === "splice-text" ? [primitive.field] : Object.keys(primitive.after))]);
     }
     const kept = () =>
       [...patched].flatMap(([id, fields]) => {

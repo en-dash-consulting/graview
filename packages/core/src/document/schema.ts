@@ -101,6 +101,13 @@ function build() {
        * `Repeat` — `"startsAtRepeat": { "every": "week", "on": ["tue"] }`.
        */
       repeats: z.optional(z.boolean()),
+      /**
+       * Whether two people may type into it at once, each keeping their
+       * words (Roadmap f-collab-text): a `text` field is by default, a
+       * `string` is not. Only a text or string field says it (the checker's
+       * `field-collaborative`).
+       */
+      collaborative: z.optional(z.boolean()),
     })
     .check(
       z.superRefine((f, ctx) => {
@@ -471,6 +478,17 @@ function build() {
     connections: z.optional(z.record(name("connection"), loose)),
     /** Forms for visitors, by name: each one act, its fields, and what the visitor is told once it is received. */
     forms: z.optional(z.record(name("form"), FormSpec)),
+    /**
+     * When edits reach readers (Roadmap f-publishing-lifecycle): `"live"` (absent, the same) as they are made;
+     * `"on-publish"` when a publisher publishes, the `working` roles editing the head meanwhile.
+     */
+    publishing: z.optional(
+      z.strictObject({
+        mode: z.enum(["live", "on-publish"]),
+        working: some(name("role"), undefined, 40),
+        publishers: z.optional(some(name("role"), 1, 40)),
+      }),
+    ),
   });
   return { FieldSpec, EdgeSpec, ComputedSpec, KindSpec, ValueSpec, EffectSpec, ActSpec, RepairSpec, RuleSpec, GrantSpec, SightSpec, PolicySpec, BrandSpec, PagesSpec, DocumentSpec };
 }

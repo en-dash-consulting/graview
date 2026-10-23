@@ -13,9 +13,11 @@ export const keptOf = (lens: SeatLens, id: string): ((field: string) => boolean)
   return kind === undefined ? undefined : lens.kept?.({ id, kind });
 };
 
-/** Primitives as the seat receives them: what a patch wrote of a field kept from it is no part of them. */
+/** Primitives as the seat receives them: what a patch or a splice wrote of a field kept from it is no part of them. */
 export function withoutKeptFields(primitives: readonly Primitive[], lens: SeatLens): Primitive[] {
   return primitives.flatMap((primitive): Primitive[] => {
+    // A splice of a kept field is no part of them at all.
+    if (primitive.op === "splice-text") return keptOf(lens, primitive.id)?.(primitive.field) ? [] : [primitive];
     if (primitive.op !== "patch-node") return [primitive];
     const kept = keptOf(lens, primitive.id);
     if (!kept || !Object.keys(primitive.after).some(kept)) return [primitive];

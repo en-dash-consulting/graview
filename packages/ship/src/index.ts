@@ -1,5 +1,8 @@
 // A host that serves seats judges a sight that hides a field (Roadmap f-field-sight): loaded here, so every store this server opens can.
 import "@graview/core/field-sight";
+import "@graview/core/publishing";
+// And merges text typed together (Roadmap f-collab-text): a keystroke carried over the log, a whole write as a splice, an undo per person.
+import "@graview/core/typing";
 export { createFileAdapter } from "./file-adapter.js";
 export type { FileAdapter } from "./file-adapter.js";
 export {
@@ -34,7 +37,8 @@ export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
 export type { LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, RemoteOptions, RemoteRefusal, RemoteState, RemoteStatus, RemoteStore } from "./remote.js";
 export { conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, liveSubprotocol, REFUSAL_REASONS } from "./live.js";
-export type { Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket, RefusalReason, WireRefusal } from "./live.js";
+export { cursorAt, seqAt, type Cursor } from "./cursor.js";
+export type { HostRefusalReason, Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket, RefusalReason, WireRefusal } from "./live.js";
 export { createStoreHandler, presenceSeenBy } from "./handler.js";
 // Notify me (Roadmap f-notify-subscriptions): the wire's route, its client, and the file `graview serve` keeps them in.
 export { answerSubscriptions } from "./subscriptions.js";

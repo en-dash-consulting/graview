@@ -55,7 +55,7 @@ describe("a form mounted alone", () => {
     await act(async () => host!.querySelector("form")!.requestSubmit());
 
     expect(handle!.store.snapshot().nodes.filter((node) => node.kind === "guest").map((node) => node.name)).toEqual(["Grace Hopper", "Ada Lovelace"]);
-    expect(handle!.store.log.all().at(-1)!.author).toEqual({ kind: "human", id: "form:tok-1", name: "a visitor via the RSVP form", roles: ["visitor"] });
+    expect(handle!.store.log.all().at(-1)!.author).toEqual({ kind: "visitor", id: "form:tok-1", name: "a visitor via the RSVP form", roles: ["visitor"] });
     expect(host.querySelector('[role="status"]')?.textContent).toContain("Received — thank you.");
     expect(host.textContent).not.toMatch(/Grace|Rose/);
     expect(submitted).toEqual(["rsvp"]);

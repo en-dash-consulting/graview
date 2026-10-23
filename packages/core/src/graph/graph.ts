@@ -1,8 +1,11 @@
 import { humanizeField, labelOf } from "../schema/define-node.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import { SchemaError } from "../schema/schema.js";
+import { assertKnownValues, unknownPrimitive } from "../format-error.js";
+import { applySplice } from "../text/splice.js";
 import { isArchived, MARKS, type ArchivedOption } from "./archived.js";
 import { diffSnapshots, diffTouched, type GraphDiff } from "./diff.js";
+import { edgeFieldsProblem } from "./edge-fields.js";
 import { isUnset, type Primitive } from "./primitives.js";
 import { edgeId, type GraphEdge, type GraphReader, type GraphSnapshot } from "./types.js";
 
@@ -122,6 +125,7 @@ const EDGE = "e\u0000";
 export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> {
   private readonly nodes = new Map<string, NodeOfSchema<S>>();
   private readonly edges = new Map<string, GraphEdge>();
+  private readonly linkIds = new Map<string, string>();
   private readonly outIndex = new Map<string, Set<string>>();
   private readonly inIndex = new Map<string, Set<string>>();
   /*
@@ -244,6 +248,11 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     return this.edgesFrom(this.inIndex.get(id), kind);
   }
 
+  /** The link that carries this id of its own (reserved, `EDGE_FIELDS`), if one does. */
+  linkById(id: string): GraphEdge | undefined {
+    return this.edges.get(this.linkIds.get(id)!);
+  }
+
   /** Everything it holds, archived records and their links with the rest: what is stored. */
   snapshot(): GraphSnapshot<NodeOfSchema<S>> {
     return { nodes: [...this.nodes.values()], edges: [...this.edges.values()] };
@@ -307,7 +316,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
 
   /** Puts the graph back to a snapshot it held, as stored and silently: nothing a listener saw ever changed. */
   private restore(snapshot: GraphSnapshot<NodeOfSchema<S>>): void {
-    for (const held of [this.nodes, this.edges, this.outIndex, this.inIndex, this.ranks, this.lapsed, this.counts, this.archived]) held.clear();
+    for (const held of [this.nodes, this.edges, this.linkIds, this.outIndex, this.inIndex, this.ranks, this.lapsed, this.counts, this.archived]) held.clear();
     this.reordered = false;
     for (const node of snapshot.nodes) this.insertNode(node, true);
     for (const edge of snapshot.edges) this.insertEdge(edge, true);
@@ -368,6 +377,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   private applyOne(primitive: Primitive, restoring: boolean, inPlace: boolean): void {
     switch (primitive.op) {
       case "add-node":
+        assertKnownValues(primitive.node);
         this.insertNode(primitive.node as NodeOfSchema<S>, restoring, inPlace);
         return;
       case "remove-node": {
@@ -392,6 +402,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         if (!current) {
           throw new MissingRecordError(primitive.id, `Cannot patch missing node "${primitive.id}"`);
         }
+        assertKnownValues(primitive.after);
         const next = { ...current } as Record<string, unknown>;
         for (const [key, value] of Object.entries(primitive.after)) {
           // `undefined` in memory, `UNSET` once written down: both mean the
@@ -406,16 +417,40 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         if (patched.kind !== current.kind) this.tally(current.kind, -1), this.tally(patched.kind, 1);
         return;
       }
+      case "splice-text": {
+        const current = this.nodes.get(primitive.id);
+        if (!current) {
+          throw new MissingRecordError(primitive.id, `Cannot splice the text of missing node "${primitive.id}"`);
+        }
+        const text = (current as Record<string, unknown>)[primitive.field];
+        let spliced: string | undefined;
+        try {
+          if (typeof text === "string" && primitive.field !== "id" && primitive.field !== "kind") spliced = applySplice(text, primitive);
+        } catch {
+          // Said below: a splice whose text is not there.
+        }
+        if (spliced === undefined) {
+          throw new GraphError(`Cannot splice ${primitive.id}.${primitive.field}: it does not hold ${JSON.stringify(primitive.removed)} at ${primitive.at}`, "A corrupt op: the text it was made against is not the text the log folds to.");
+        }
+        const next = { ...current, [primitive.field]: spliced } as Record<string, unknown>;
+        this.nodes.set(primitive.id, (restoring ? next : this.checkPatch(current, next, [primitive.field])) as NodeOfSchema<S>);
+        return;
+      }
       case "add-edge":
         this.insertEdge(primitive.edge, restoring, inPlace);
         return;
       case "remove-edge": {
-        if (!this.edges.has(edgeId(primitive.edge))) {
-          throw new MissingRecordError(edgeId(primitive.edge), `Cannot remove missing edge ${edgeId(primitive.edge)}`);
+        // Named by its own id when it carries one (reserved, `EDGE_FIELDS`), else by where it stands.
+        const named = primitive.edge.id === undefined ? primitive.edge : this.linkById(primitive.edge.id);
+        if (!named || !this.edges.has(edgeId(named))) {
+          throw new MissingRecordError(primitive.edge.id ?? edgeId(primitive.edge), `Cannot remove missing edge ${primitive.edge.id ?? edgeId(primitive.edge)}`);
         }
-        this.deleteEdge(primitive.edge);
+        this.deleteEdge(named);
         return;
       }
+      default:
+        // A primitive a newer build wrote: refused, never skipped, so this graph cannot quietly diverge from the log.
+        unknownPrimitive(primitive);
     }
   }
 
@@ -521,8 +556,20 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       );
     }
     const id = edgeId(edge);
+    /*
+     * A LINK'S OWN ID AND DATA (reserved, EDGE_FIELDS), judged on a write.
+     * One link of a kind per pair, still: the same link again is nothing
+     * new, as it always was; one that says it is another — an id of its
+     * own — is refused, and so is an id another link already holds.
+     */
+    if (!held && (edge.id !== undefined || edge.data !== undefined)) {
+      const there = this.edges.get(id);
+      const problem = edgeFieldsProblem(edge) ?? (there && edge.id !== undefined && there.id !== edge.id ? `A second "${edge.kind}" link between two records is not allowed yet` : (this.linkIds.get(edge.id!) ?? id) !== id ? `Link id "${edge.id}" is already taken` : undefined);
+      if (problem) throw new GraphError(problem);
+    }
     if (this.edges.has(id)) return;
     this.edges.set(id, edge);
+    if (edge.id !== undefined) this.linkIds.set(edge.id, id);
     this.place(EDGE + id, inPlace);
     this.index(this.outIndex, edge.from, id);
     this.index(this.inIndex, edge.to, id);
@@ -530,6 +577,8 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
 
   private deleteEdge(edge: GraphEdge): void {
     const id = edgeId(edge);
+    const held = this.edges.get(id)?.id;
+    if (held !== undefined) this.linkIds.delete(held);
     this.edges.delete(id);
     this.lapse(EDGE + id);
     this.outIndex.get(edge.from)?.delete(id);

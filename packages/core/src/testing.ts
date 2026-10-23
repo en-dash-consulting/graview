@@ -329,6 +329,7 @@ export function compileDocumentFiles(document: string | URL, options: { readonly
         invariants: (app.invariants ?? []) as never,
         ...(seed ? { snapshot: structuredClone(seed) as never } : {}),
         ...(app.policy ? { policy: app.policy as never } : {}),
+        ...(app.publishing ? { publishing: app.publishing } : {}),
       }),
   };
 }

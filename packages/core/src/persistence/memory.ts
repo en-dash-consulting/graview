@@ -1,7 +1,10 @@
 import type { GraphSnapshot } from "../graph/types.js";
 import type { Epoch, LogArchive } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
-import type { PersistenceAdapter } from "./types.js";
+import { assertHead, headOf, type PersistenceAdapter } from "./types.js";
+
+/** The seq a compacted log begins at: its checkpoint's (FR-23), or 0. */
+const horizonOf = (epochs: readonly Epoch[] | undefined): number => [...(epochs ?? [])].reverse().find((epoch) => epoch.horizon)?.seq ?? 0;
 
 /** In-memory adapter. Deep-copies on the way in and out, so a stored graph
  * cannot be mutated behind the store's back. */
@@ -34,8 +37,9 @@ export function createMemoryAdapter(
     async loadLog(scope) {
       return clone(logs.get(scope) ?? []);
     },
-    async appendOps(scope, ops) {
+    async appendOps(scope, ops, options) {
       const existing = logs.get(scope) ?? [];
+      assertHead(scope, ops, options, () => headOf(existing, horizonOf(epochs.get(scope))));
       logs.set(scope, [...existing, ...clone([...ops])]);
     },
     async loadEpochs(scope) {

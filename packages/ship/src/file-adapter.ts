@@ -1,6 +1,6 @@
-import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync, appendFileSync, existsSync } from "node:fs";
+import { closeSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, writeFileSync, appendFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { bareOp, type Epoch, type LogArchive, type Operation, type PersistenceAdapter } from "@graview/core";
+import { assertHead, bareOp, type Epoch, type LogArchive, type Operation, type PersistenceAdapter } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 import type { StoredMeta } from "./meta.js";
 
@@ -27,6 +27,32 @@ export interface FileAdapter extends PersistenceAdapter<string> {
    * name was answering a different one.
    */
   readonly root: string;
+}
+
+/** The last non-empty line of a file, read from its end a piece at a time: an op log can be long. */
+function lastLine(path: string): string | undefined {
+  if (!existsSync(path)) return undefined;
+  const fd = openSync(path, "r");
+  try {
+    const size = fstatSync(fd).size;
+    const PIECE = 64 * 1024;
+    let end = size;
+    let tail = Buffer.alloc(0);
+    while (end > 0) {
+      const start = Math.max(0, end - PIECE);
+      const piece = Buffer.alloc(end - start);
+      readSync(fd, piece, 0, piece.length, start);
+      tail = Buffer.concat([piece, tail]);
+      end = start;
+      const text = tail.toString("utf8").replace(/\s+$/, "");
+      const at = text.lastIndexOf("\n");
+      if (at >= 0) return text.slice(at + 1);
+      if (end === 0) return text.length > 0 ? text : undefined;
+    }
+    return undefined;
+  } finally {
+    closeSync(fd);
+  }
 }
 
 export function createFileAdapter(root: string): FileAdapter {
@@ -86,9 +112,20 @@ export function createFileAdapter(root: string): FileAdapter {
       const ops = lines(place(scope, "log.jsonl"));
       return horizon > 0 ? ops.filter((op) => op.seq >= horizon) : ops;
     },
-    async appendOps(scope, ops) {
+    async appendOps(scope, ops, options) {
       if (ops.length === 0) return;
       const path = place(scope, "log.jsonl");
+      /*
+       * ONE WRITER (compare-and-set): the head is read from the file's last
+       * line, not remembered, so a second process that appended since is
+       * seen. The read and the append are not one atomic step across
+       * processes; a host running several keeps a scope in a database.
+       */
+      assertHead(scope, ops, options, () => {
+        const newest = lastLine(path);
+        if (newest !== undefined) return (JSON.parse(newest) as Operation).seq + 1;
+        return horizonOf(scope);
+      });
       mkdirSync(dirname(path), { recursive: true });
       appendFileSync(path, ops.map((op) => JSON.stringify(op)).join("\n") + "\n");
     },

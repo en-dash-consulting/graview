@@ -1,4 +1,4 @@
-import { isUnset, type Primitive } from "@graview/core";
+import { applySplice, isUnset, unknownPrimitive, type Primitive } from "@graview/core";
 
 /**
  * A stored graph mid-migration is BETWEEN schemas, so nothing here
@@ -8,7 +8,8 @@ import { isUnset, type Primitive } from "@graview/core";
  */
 export interface GraphSnapshot {
   readonly nodes: readonly ({ readonly id: string; readonly kind: string } & Record<string, unknown>)[];
-  readonly edges: readonly { readonly kind: string; readonly from: string; readonly to: string }[];
+  /** A link's own `id` and `data` are reserved (Roadmap f-1-0-edge-fields) and carried as they are. */
+  readonly edges: readonly { readonly kind: string; readonly from: string; readonly to: string; readonly id?: string; readonly data?: Readonly<Record<string, unknown>> }[];
 }
 
 export function applyToSnapshot(
@@ -41,19 +42,27 @@ export function applyToSnapshot(
           return patched as GraphSnapshot["nodes"][number];
         });
         break;
+      case "splice-text":
+        // Structural like the rest: the text must hold what the splice removes, or the log is corrupt and the step says so.
+        nodes = nodes.map((node) => {
+          if (node.id !== primitive.id) return node;
+          const text = node[primitive.field];
+          if (typeof text !== "string") throw new Error(`Cannot splice ${primitive.id}.${primitive.field}: it holds no text.`);
+          return { ...node, [primitive.field]: applySplice(text, primitive) };
+        });
+        break;
       case "add-edge":
         edges.push(primitive.edge);
         break;
-      case "remove-edge":
-        edges = edges.filter(
-          (edge) =>
-            !(
-              edge.kind === primitive.edge.kind &&
-              edge.from === primitive.edge.from &&
-              edge.to === primitive.edge.to
-            ),
-        );
+      case "remove-edge": {
+        // By its own id when the primitive names one, as a graph removes it; else by where it stands.
+        const { id, kind, from, to } = primitive.edge;
+        edges = edges.filter((edge) => !(id !== undefined ? edge.id === id : edge.kind === kind && edge.from === from && edge.to === to));
         break;
+      }
+      default:
+        // A primitive a newer build wrote: a migration refuses it rather than carry a graph that skipped it.
+        unknownPrimitive(primitive);
     }
   }
   return { nodes, edges };

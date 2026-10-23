@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T14:39:05.522Z",
+  "at": "2026-10-23T04:54:54.813Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/org.gdd.json",
   "seed": "packages/core/tests/document/fixtures/org.seed.json",
@@ -35,7 +35,7 @@
     },
     "shotsWritesAPngForEachNamedPlace": {
       "status": 0,
-      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-Vt1Onm",
+      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-hKHGG0",
       "pngs": [
         true,
         true,
@@ -48,9 +48,19 @@
       "said": "graview shots: En Dash Org has no place called \"nowhere\". Its places: home, overview, people, components, constraints, revenue-streams, open-questions, strengths, or a path such as /places/overview.",
       "ok": true
     },
+    "aFullPagePictureOfALongPlaceShowsTheWholePlace": {
+      "status": 0,
+      "said": "graview shots: 1 picture of Threat Watch in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-hKHGG0/long",
+      "picture": {
+        "width": 1280,
+        "height": 1408,
+        "lowestInk": 1311
+      },
+      "ok": true
+    },
     "shotsPicturesAnAppInCodeAndItsDraftByTitle": {
       "status": 0,
-      "said": "graview shots: 2 pictures of Survey in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-Vt1Onm/in-code",
+      "said": "graview shots: 2 pictures of Survey in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-hKHGG0/in-code",
       "pngs": [
         true,
         true
@@ -59,11 +69,11 @@
     },
     "aLensPlacesPictureShowsTheLensContent": {
       "status": 0,
-      "said": "graview shots: 2 pictures of Threat Watch in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-Vt1Onm/lens",
+      "said": "graview shots: 2 pictures of Threat Watch in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-hKHGG0/lens",
       "pictures": {
         "what-to-do": {
           "written": true,
-          "inkedRowsUnderTheHead": 309,
+          "inkedRowsUnderTheHead": 323,
           "ok": true
         },
         "active-now": {
@@ -126,7 +136,7 @@
       "authors": [
         {
           "kind": "human",
-          "id": "form:16787f71-bea6-4144-ba8a-a0bd34fec094",
+          "id": "form:cdf9cdd5-a6e0-4ea5-9885-51c1729b942a",
           "roles": [
             "visitor"
           ],
@@ -134,7 +144,7 @@
         },
         {
           "kind": "human",
-          "id": "form:6dc974fa-5489-4657-a0e9-701e342776b3",
+          "id": "form:0de0a1bd-53f5-402e-ad0c-5e25e527ecc8",
           "roles": [
             "visitor"
           ],
@@ -143,14 +153,34 @@
       ],
       "ok": true
     },
+    "aReaderIsServedWhatWasPublished": {
+      "received": true,
+      "answered": true,
+      "hostTables": [
+        "Rose table",
+        "Unpublished table"
+      ],
+      "readerTablesBefore": [
+        "Rose table"
+      ],
+      "readerTablesAfter": [
+        "Rose table",
+        "Unpublished table"
+      ],
+      "servedThrough": {
+        "before": 0,
+        "after": 3
+      },
+      "ok": true
+    },
     "noPageThrew": {
       "errors": [],
       "ok": true
     }
   },
   "said": [
-    "graview preview: En Dash Org on http://127.0.0.1:5910",
-    "  Pages: http://127.0.0.1:5910/   the scene: http://127.0.0.1:5910/places/overview",
+    "graview preview: En Dash Org on http://127.0.0.1:5810",
+    "  Pages: http://127.0.0.1:5810/   the scene: http://127.0.0.1:5810/places/overview",
     "  data: in memory, gone when the preview stops",
     "  sits as You",
     "  53 nodes. Ctrl-C stops it."

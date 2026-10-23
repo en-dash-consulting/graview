@@ -24,6 +24,7 @@ import { amountMark, amountSentence } from "../schema/amount-words.js";
 import { sayAmount } from "../document/amount.js";
 import { linkedRelations } from "../schema/linked.js";
 import { linkedRelationWords } from "../linked.js";
+import { collaborativeFieldOf } from "../schema/collaborative.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -255,6 +256,16 @@ export function describeApp<S extends AnySchema>(
    * name and every field a person reads on a record; an agent that knows
    * which is an agent that searches rather than reading the whole graph.
    */
+  /*
+   * TEXT TYPED TOGETHER (Roadmap f-collab-text): which fields two people
+   * type into at once, each keeping their words, and an agent's rewrite
+   * merged into the typing rather than written over it.
+   */
+  const together = kinds.flatMap((kind) => Object.keys((app.schema.tryDefinition(kind)?.fields as { shape?: Record<string, unknown> } | undefined)?.shape ?? {}).filter((field) => collaborativeFieldOf(app.schema, kind, field)).map((field) => `${kind}'s ${field}`));
+  if (together.length > 0) {
+    lines.push("", "## Typed together", `${capitalize(list(together))} ${together.length === 1 ? "is" : "are"} typed together: two people type at once and both keep their words, and a whole value written over one (an edit, an agent) is merged into what was typed since. Other fields are written whole.`);
+  }
+
   lines.push("", "## What can be found");
   lines.push("The Find box (/ or ⌘K), /search?q= and the search_graph tool match the start of words in:");
   for (const kind of kinds) {
@@ -366,6 +377,16 @@ export function describeApp<S extends AnySchema>(
     } else {
       lines.push(`Pass --as <role> to see what one seat is offered; a principal holding no granted role is refused everything, silently.`);
     }
+  }
+
+  // WHEN EDITS REACH READERS (Roadmap f-publishing-lifecycle): said only of an app that publishes; a live app is as every app was.
+  if (app.publishing?.mode === "on-publish") {
+    const publishers = app.publishing.publishers ?? app.publishing.working;
+    lines.push(
+      "",
+      "## Publishing",
+      `Edits reach readers when they are published. ${capitalize(list([...app.publishing.working]) || "nobody")} edit live and see every change as it is made; everyone else — visitors, embeds, static pages, other apps' linked reads — is served the app as it stood at the last publish. ${capitalize(list([...publishers]) || "nobody")} may publish ("publish") and take a publish back (undo it). What a reader sends lands at once, and reaches readers with the next publish.`,
+    );
   }
 
   /* HOW A MODEL IS REACHED, and whether anything actually serves the door. */

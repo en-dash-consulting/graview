@@ -13,7 +13,7 @@ export type { Placed } from "./placement.js";
 export type { OccupantsProps } from "./occupants.js";
 export { foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO } from "./robot.js";
 export type { RobotEvent, RobotMode, RobotState, SeatNote } from "./robot.js";
-export type { ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
+export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
 export { createPointerStore } from "./pointer.js";
 export type { PointerStore, ScenePoint } from "./pointer.js";
 export { applySettings, honorSetting, loadSetting, rememberSetting } from "./settings.js";
@@ -97,5 +97,5 @@ export type { LazyModule, LazyPartOptions, PartsWatch } from "./lazy-part.js";
 export { prepareAffordances, useAffordances, useApplyAffordance } from "./affordances.js";
 export type { AffordancesAsked } from "./affordances.js";
 // The app as it was (Roadmap f-playback): the moment a face draws instead of now, held by its outermost provider.
-export { PlaybackContext, useLiveStore, useOwnPlayback, usePlayback } from "./past.js";
+export { PlaybackContext, useLiveStore, useOwnPlayback, usePlayback, useReadersServed } from "./past.js";
 export type { PastShown, Playback } from "./past.js";

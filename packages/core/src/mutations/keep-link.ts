@@ -44,8 +44,10 @@ export function keepLinkMutation<S extends AnySchema>(schema: S): AnyMutationDef
         const id = edgeId({ kind, from, to });
         throw new MissingRecordError(id, `Cannot remove missing edge ${id}`);
       }
-      ctx.removeEdge({ kind, from, to });
-      ctx.addEdge({ kind, from, to });
+      // The link as it is held, its own id and data (reserved) and all, put back as it was.
+      const held = ctx.graph.edgesOfKind(kind, { archived: "all" }).find((edge) => edge.from === from && edge.to === to) ?? { kind, from, to };
+      ctx.removeEdge(held);
+      ctx.addEdge(held);
     },
   } as AnyMutationDefinition<S>;
 }

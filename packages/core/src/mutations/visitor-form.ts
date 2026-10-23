@@ -104,7 +104,7 @@ export function visitorForm<S extends AnySchema>(app: GraviewApp<S>, name: strin
 export function formVisitor(app: Pick<GraviewApp, "forms">, name: string, id: string): Principal {
   const form = app.forms?.[name];
   if (!form) throw new Error(`There is no form called "${name}"${app.forms ? `: the forms are ${Object.keys(app.forms).join(", ")}` : ": the app declares none"}.`);
-  return { kind: "human", id, name: `a visitor via the ${titleOf(name, form)} form`, roles: [form.role ?? VISITOR_ROLE] };
+  return { kind: "visitor", id, name: `a visitor via the ${titleOf(name, form)} form`, roles: [form.role ?? VISITOR_ROLE] };
 }
 
 /** What a visitor is told once their answer is received: the declaration's own words after a plain "Received". */

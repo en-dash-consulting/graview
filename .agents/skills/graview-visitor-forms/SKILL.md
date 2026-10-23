@@ -51,7 +51,7 @@ told afterwards.
    naming their role when they must pick one (an event to answer for).
 
 3. **Mint a visitor per answer, on the host.** `formVisitor(app, "rsvp",
-   "form:<token>")` from `@graview/core/forms` is `{ kind: "human", id,
+   "form:<token>")` from `@graview/core/forms` is `{ kind: "visitor", id,
    name: "a visitor via the RSVP form", roles: ["visitor"] }`: hand it to
    the store that judges the act (a served store believes it from the
    seat's headers), so Activity names the answer for the form and never

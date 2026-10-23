@@ -40,7 +40,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
-  "@graview/core/history": { from: history, names: ["declarationSentence", "makerOf", "makerWords", "restoreBatches", "ticksOf"] },
+  "@graview/core/history": { from: history, names: ["declarationSentence", "makerOf", "makerWords", "restoreBatches", "ticksOf", "unpublished"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.
   "@graview/core/past": { from: past, names: ["askArchived", "askDeclaration", "declarationAt", "pastAt", "pastOf", "seqAt"] },
   "@graview/core/provenance": { from: provenance, names: ["isProvisional", "lineageWords", "linkKey", "linkProvenance", "linkProvenances", "provenanceWords", "provisionalLinks"] },

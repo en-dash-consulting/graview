@@ -1,3 +1,4 @@
+import type { Cursor } from "./cursor.js";
 import type { GraphSnapshot } from "./snapshot.js";
 import { WIRE_PROTOCOL, type FieldConflict, type FieldRevision, type Lineage, type MutationCall, type Operation, type Presence, type Principal, type RefusalReason } from "@graview/core";
 export { REFUSAL_REASONS } from "@graview/core";
@@ -21,9 +22,12 @@ export type { RefusalReason, WireRefusal } from "@graview/core";
  * ignores them, and raising the number would make every server with a
  * `minProtocol` send every open tab a `reload` for nothing.
  *
- * Seqs mean what they mean on `GET /graview/since?seq=N`: the position of
- * an op in the store's log, and a client's seq is the last one it has. -1
- * is "none yet".
+ * A message's `seq` means what `GET /graview/since?seq=` means: where a
+ * reader stands in the log, said as an opaque `Cursor` (`./cursor.ts`) —
+ * a string only the server that gave it reads. The store keeps numbers;
+ * the wire never promises one. A seat is served through the seq it is
+ * served, which is the head today and which a policy may hold behind it:
+ * no message promises a seat's position is the store's last.
  *
  * What a seat may not see holds here exactly as on the HTTP routes (FR-02,
  * FR-16): every op a socket is sent is the op as that seat may see it,
@@ -58,13 +62,14 @@ export function liveSubprotocol(request: Request): string | undefined {
 /** What a client says. A field the server does not know is ignored, never refused. */
 export type LiveClientMessage =
   /**
-   * The first word on a socket. `seq` is the last op the client has: the
-   * welcome carries exactly the ops after it. Without one, the welcome
+   * The first word on a socket. `seq` is where the client stands (a
+   * `Cursor`; a page before 0.1.49 says the last op's number, read for one
+   * minor more): the welcome carries exactly the ops after it. Without one, the welcome
    * carries the whole state, as `GET /graview/state` would.
    */
   | {
       readonly t: "hello";
-      readonly seq?: number;
+      readonly seq?: Cursor | number;
       /** The protocol this client speaks; absent is 1. A server whose `minProtocol` is past it answers `reload` (FR-44). */
       readonly protocol?: number;
       /** The codec, `LIVE_WIRE`; absent is ship's (FR-44). */
@@ -123,8 +128,11 @@ export type LiveClientMessage =
 export type LiveServerMessage =
   /**
    * The answer to `hello`: the protocol the server speaks, the last seq in
-   * its log, and the ops after the client's seq. `state` only when the
-   * hello named no seq.
+   * its log, and the ops after the client's seq. `state` when the hello
+   * named no seq — and in place of the ops when they cannot catch it up:
+   * its seq is behind the compaction horizon, or past where its seat is
+   * now served (a publish taken back). Such a welcome may also come
+   * unasked, mid-connection; the client takes the state.
    */
   | {
       readonly t: "welcome";
@@ -139,13 +147,15 @@ export type LiveServerMessage =
       readonly participant?: string;
       /** The host holds the app and takes no changes for now, in its own words (FR-66): absent when it takes them. */
       readonly held?: string;
-      readonly seq: number;
+      readonly seq: Cursor;
       readonly ops: readonly Operation[];
+      /** Where the seat is served through, in an app that publishes (Roadmap f-publishing-lifecycle): a cursor, as opaque as `seq`, the position after the last op it is served. Absent in a live app. */
+      readonly servedThrough?: Cursor;
       /** `horizon`: the seq `log` begins at, when the store was compacted (FR-23); absent, 0. */
       readonly state?: { readonly version: number; readonly snapshot: GraphSnapshot; readonly log: readonly Operation[]; readonly migrated: readonly string[]; readonly enabledModules?: readonly string[]; readonly horizon?: number };
     }
   /** A call or undo landed: the ops it made, in the batch they landed in. Every op before them has already been sent. */
-  | { readonly t: "ack"; readonly cid: string; readonly seq: number; readonly batch: string; readonly ops: readonly Operation[] }
+  | { readonly t: "ack"; readonly cid: string; readonly seq: Cursor; readonly batch: string; readonly ops: readonly Operation[] }
   /**
    * Refused, in the policy's own sentence, and why as a code a program can
    * branch on (FR-46): `forbidden`, `missing`, `invalid`, `limit` or
@@ -167,7 +177,7 @@ export type LiveServerMessage =
   /** A stale write: each field that moved since the call's base, theirs and yours. Nothing landed. */
   | { readonly t: "conflict"; readonly cid: string; readonly sentence: string; readonly conflicts: readonly FieldConflict[] }
   /** Ops that landed, everybody's, in seq order and none skipped; `seq` is the last of them. */
-  | { readonly t: "ops"; readonly seq: number; readonly ops: readonly Operation[] }
+  | { readonly t: "ops"; readonly seq: Cursor; readonly ops: readonly Operation[] }
   /** Who else is here now. */
   | { readonly t: "presence"; readonly who: readonly Presence[] }
   /**
@@ -243,7 +253,17 @@ export interface LimitAsked {
  * Asked only of a change that has not landed: a call sent again after it
  * did is answered with its ops, whatever the host would say now.
  */
-export type LimitAnswer = { readonly retryAfter: number; readonly sentence?: string } | { readonly refuse: string } | { readonly unavailable: string };
+export type LimitAnswer =
+  | { readonly retryAfter: number; readonly sentence?: string }
+  | { readonly refuse: string; readonly reason?: HostRefusalReason }
+  | { readonly unavailable: string };
+
+/**
+ * THE FINAL REFUSALS A HOST SAYS ITSELF, as `{ refuse, reason }`: `limit`
+ * (the default; 413 over HTTP), `unauthenticated` (401) or `quota` (403).
+ * Each is final, and the client takes the change back.
+ */
+export type HostRefusalReason = "limit" | "unauthenticated" | "quota";
 
 /** A host's word on whether a change may be judged now: busy, refused at its limit, or nothing. */
 export type Limit = (asked: LimitAsked) => LimitAnswer | undefined | Promise<LimitAnswer | undefined>;

@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 1850,
+  "gzipped": 600,
+  "note": "Raised when a text field came to take a splice (collaborative text, phase 1): the `splice-text` primitive folded by the graph (`applySplice`), undone, served to a seat, and read back wherever a patch is read. The store and the graph are on every page, so this is up front. Measured at 647_664 / 238_203 against a budget of 645_877 / 237_668: 1_787 / 535 more."
+}

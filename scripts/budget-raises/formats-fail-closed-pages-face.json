@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 830,
+  "gzipped": 430,
+  "note": "Raised when the formats came to fail closed for 1.0: a primitive or a typed value (`$type`) a build does not know is refused where ops are folded (`format-error.ts`, the graph's and the log's checks), an author's kind is read through `authorKindOf` with `visitor` among them, and the refusal codes gain `unauthenticated` and `quota`. The store and the graph are on every page, so this is up front. Measured at 645_873 / 237_665 against a budget of 645_047 / 237_238: 826 / 427 more."
+}

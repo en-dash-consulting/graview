@@ -2,6 +2,7 @@ import { bareOp } from "./ops/inverse.js";
 import type { Operation } from "./ops/types.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import { FRAMEWORK_VERSION } from "./version.js";
+import { assertKnownPrimitives, FORMATS, NewerFormatError, type FormatName } from "./format-error.js";
 
 /**
  * STORED FORMATS CARRY THEIR VERSION (FR-31).
@@ -23,9 +24,22 @@ import { FRAMEWORK_VERSION } from "./version.js";
  * as it did (its step drops an inverse that is its primitives' own), and a
  * build before 0.1.43 meeting a store stamped `op: 2` refuses it with
  * `NewerFormatError` rather than undo an op it would find no inverse on.
+ *
+ * OP FORMAT 3 adds the `splice-text` primitive (collaborative text,
+ * phase 1). A format-2 op reads as it was written; a build before it
+ * meeting a store stamped `op: 3`, or a splice, refuses it.
+ *
+ * FAIL CLOSED (1.0). A new primitive raises `FORMATS.op` and travels only
+ * to a reader that said it reads it (`opFormat`); a reader that meets a
+ * primitive it does not know — a log a newer build wrote, an op handed
+ * over by hand — refuses it with `NewerFormatError` wherever ops are
+ * folded, never skips it. A field value `{ $type, … }` is a typed value,
+ * reserved as `$archived` is: one whose type this build does not know is
+ * refused where it would be applied, and passed through as written
+ * everywhere else (`format-error.ts`).
  */
-export const FORMATS = { snapshot: 1, op: 2 } as const;
-export type FormatName = keyof typeof FORMATS;
+export { FORMATS, NewerFormatError, PRIMITIVE_OPS, VALUE_TYPES } from "./format-error.js";
+export type { FormatName } from "./format-error.js";
 
 /** What a stored thing says about who wrote it and in what shape. */
 export interface FormatStamp {
@@ -37,22 +51,6 @@ export interface FormatStamp {
 /** The stamp this build writes. */
 export function formatStamp(): FormatStamp {
   return { framework: FRAMEWORK_VERSION, formats: { ...FORMATS } };
-}
-
-/** Something written in a format newer than this build reads. Fold the log, or upgrade the framework. */
-export class NewerFormatError extends Error {
-  constructor(
-    readonly what: FormatName,
-    readonly found: number,
-    readonly supported: number,
-    readonly writtenBy?: string,
-  ) {
-    super(
-      `This ${what} is in a newer format (${found}${writtenBy ? `, written by @graview ${writtenBy}` : ""}) than @graview ${FRAMEWORK_VERSION} reads (${supported}). ` +
-        (what === "snapshot" ? "Refold it from the log, or upgrade the framework." : "Upgrade the framework to read it."),
-    );
-    this.name = "NewerFormatError";
-  }
 }
 
 /** Throws `NewerFormatError` when a stamp says a format this build cannot read; absent formats are format 1. */
@@ -72,6 +70,8 @@ const SNAPSHOT_STEPS: Readonly<Record<number, Step<GraphSnapshot>>> = {};
 const OP_STEPS: Readonly<Record<number, Step<Operation>>> = {
   // Format 1 wrote the inverse beside the primitives; format 2 derives it.
   1: bareOp,
+  // Format 3 added a primitive, `splice-text`; a format-2 op is a format-3 op as written.
+  2: (op) => op,
 };
 
 function upgrade<T>(what: FormatName, value: T, from: number, steps: Readonly<Record<number, Step<T>>>): T {
@@ -93,5 +93,6 @@ export function upgradeSnapshot(snapshot: GraphSnapshot, from: number): GraphSna
 
 /** An op written in format `from`, brought up to the format this build writes. */
 export function upgradeOp(op: Operation, from: number): Operation {
+  assertKnownPrimitives(op);
   return upgrade("op", op, from, OP_STEPS);
 }

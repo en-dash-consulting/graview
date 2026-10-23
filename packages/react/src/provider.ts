@@ -26,7 +26,7 @@ export { BesideTheMap } from "./beside-the-map.js";
 // The host's files (FR-163), where a file field's editor finds them.
 export { HostFilesContext, useHostFiles } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
-export type { ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
+export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
 export { HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
 export type { PresenceInputs, PresenceState } from "./presence.js";
 export { foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO } from "./robot.js";
@@ -64,5 +64,5 @@ export type { AiDesk, AiDeskState, HeldGhost } from "./ai-desk.js";
 export type { KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
 export type { LazyModule, LazyPartOptions, PartsWatch } from "./lazy-part.js";
 // The app as it was (Roadmap f-playback): the moment a face draws instead of now, held by its outermost provider.
-export { PlaybackContext, useLiveStore, useOwnPlayback, usePlayback } from "./past.js";
+export { PlaybackContext, useLiveStore, useOwnPlayback, usePlayback, useReadersServed } from "./past.js";
 export type { PastShown, Playback } from "./past.js";

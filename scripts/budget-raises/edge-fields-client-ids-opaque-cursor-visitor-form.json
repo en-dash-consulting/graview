@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 1800,
+  "gzipped": 620,
+  "note": "Raised when three 1.0 foundations landed: a link's own id and data are kept and folded (`EDGE_FIELDS`, the graph's id index and its checks on a write), and every creating act honors a caller's id (`ApplyResult.minted`). The store and the graph draw the form, so this is up front. Measured at 382_227 / 146_748 against a budget of 380_450 / 146_150: 1_777 / 598 more, and 1_789 / 771 more than the form measured before them (380_438 / 145_977)."
+}

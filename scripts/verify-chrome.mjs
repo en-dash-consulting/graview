@@ -66,7 +66,7 @@ async function buildHost() {
     stdin: {
       contents: `
         import { mount } from "@graview/embed";
-        import { declined, suggest } from "@graview/core/tidying";
+        import { declined, suggest, suggestions } from "@graview/core/tidying";
         import { todoApp } from ${JSON.stringify(todo)};
         import seed from ${JSON.stringify(seed)};
         const asked = new URLSearchParams(location.search);
@@ -80,6 +80,8 @@ async function buildHost() {
           height: "100%",
           fonts: false,
           studio: false,
+          // What the app's own actor did while the reader was away, as a host that ran whileAway() hands it, when the page asks.
+          ...(asked.get("away") ? { whileAway: { tidied: 2, waiting: 1 } } : {}),
           // Whether the quick ask is drawn, when the page asks.
           ...(asked.get("quickAsk") ? { quickAsk: asked.get("quickAsk") !== "false" } : {}),
           /*
@@ -96,7 +98,7 @@ async function buildHost() {
         };
         window.__handle = mount(document.getElementById("app"), options);
         // What reads the suggestions back, for the claims that ask the store what a person declined.
-        window.__tidying = { declined };
+        window.__tidying = { declined, suggestions };
         /*
          * The app's own actor tidied, when the page asks: two links it is sure of, made with their lineage, and one it is not, suggested.
          * Its run is one row of Activity, and the suggestion waits in the Suggested tray beside it.
@@ -664,6 +666,63 @@ try {
       tidying[face] = { tray, digest, declined, ok };
     }
     report.checks.whatTidyingDidAndSuggestsIsSaidOnTheTodoExample = { ...tidying, ok: Object.values(tidying).every((one) => one.ok) };
+  }
+  /*
+   * ---- "Not now" is one person's, and the tray says what tidying did while they were away, on both faces: the host hands what
+   * whileAway() worked out; the tray says it in a line; Not now, pressed from the keyboard, hides the suggestion from this reader
+   * alone — kept in this browser, nothing in the log, still waiting for everyone else — and the keyboard never lands on <body>.
+   */
+  {
+    const notNow = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&tidy=1&away=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      const said = await page.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        const label = button.getAttribute("aria-label");
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-not-now"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const away = document.querySelector('[data-testid="while-away"]')?.textContent ?? null;
+        const later = document.querySelector('[data-testid="suggestion-not-now"]');
+        const hint = later ? (document.getElementById(later.getAttribute("aria-describedby") ?? "")?.textContent ?? null) : null;
+        later?.focus();
+        return { label, away, hint, focused: document.activeElement?.getAttribute("data-testid") ?? null, ops: window.__handle.store.log.length };
+      });
+      // Pressed as a keyboard presses it.
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(300);
+      const after = await page.evaluate(() => {
+        const store = window.__handle.store;
+        const key = Object.keys(localStorage).find((one) => one.startsWith("graview:not-now:"));
+        return {
+          ops: store.log.length,
+          stillWaitsForEveryone: window.__tidying.suggestions(store).length,
+          kept: key ? JSON.parse(localStorage.getItem(key) ?? "[]").length : 0,
+          rows: document.querySelectorAll('[data-testid="suggestion"]').length,
+          button: document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]')?.textContent?.trim() ?? null,
+          keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
+        };
+      });
+      await page.close();
+      const ok =
+        said !== null &&
+        said.label === "Suggested: One suggestion waiting · tidied 2 things while you were away" &&
+        said.away === "One suggestion waiting · tidied 2 things while you were away." &&
+        /until tomorrow/.test(said.hint ?? "") &&
+        said.focused === "suggestion-not-now" &&
+        after.ops === said.ops &&
+        after.stillWaitsForEveryone === 1 &&
+        after.kept === 1 &&
+        after.rows === 0 &&
+        /Tidied 2/.test(after.button ?? "") &&
+        after.keyboard !== "BODY";
+      notNow[face] = { said, after, ok };
+    }
+    report.checks.notNowIsOnePersonsAndTheTraySaysWhatWasDoneWhileTheyWereAway = { ...notNow, ok: Object.values(notNow).every((one) => one.ok) };
   }
   /* ---- FR-75: a host speaks in the app's own notices */
   {

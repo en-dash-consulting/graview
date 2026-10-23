@@ -62,9 +62,10 @@ export function authorship<S extends AnySchema>(store: Store<S>, caller: Princip
       const by = foreign(op.author) ? op.author : undefined;
       for (const primitive of op.primitives) {
         if (primitive.op === "remove-node") fields.delete(primitive.node.id);
-        const id = primitive.op === "add-node" ? primitive.node.id : primitive.op === "patch-node" ? primitive.id : undefined;
+        const id = primitive.op === "add-node" ? primitive.node.id : primitive.op === "patch-node" || primitive.op === "splice-text" ? primitive.id : undefined;
         if (id === undefined) continue;
-        const keys = primitive.op === "add-node" ? Object.keys(primitive.node) : Object.keys((primitive as { after: object }).after);
+        // A splice makes the whole text the splicer's to answer for, as a whole write would.
+        const keys = primitive.op === "add-node" ? Object.keys(primitive.node) : primitive.op === "splice-text" ? [primitive.field] : Object.keys((primitive as { after: object }).after);
         let held = fields.get(id);
         if (primitive.op === "add-node" || !held) fields.set(id, (held = new Map()));
         for (const key of keys) {
