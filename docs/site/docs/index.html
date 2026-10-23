@@ -1467,6 +1467,284 @@ main.page > section.tour-intro { padding-top: 64px; }
   .topbar .jump a { padding: 6px 8px; }
   .topbar .jump a[href^="https://github.com"] { display: none; }
 }
+
+/* ── The landing page, fifth cut: fewer sizes, more room ──────────────
+   The fourth cut had the right pieces and too many of them at once: a
+   dozen font sizes between 11 and 34 pixels, a paragraph beside every
+   heading, a frame and a grid of cards in every section, and the hosted
+   product seven sections down. This cut keeps one scale and one rhythm
+   for the whole page, says each thing once, and offers Graview Cloud as
+   the first of two doors and again as a band of its own.
+
+   The scale: 13 (captions, labels), 15 (small text), 17 (reading),
+   18–21 (ledes), 44 (a section's claim), 68 (the page's). The rhythm:
+   8, 16, 24, 40, 64, 120.
+   ─────────────────────────────────────────────────────────────────── */
+
+.landing {
+  --s1: 8px; --s2: 16px; --s3: 24px; --s4: 48px; --s5: 72px; --s6: 152px;
+  --t-cap: 13px; --t-sm: 15px; --t-body: 17px;
+  --t-lede: clamp(18px, 1.45vw, 20px);
+  --t-h2: clamp(30px, 3.3vw, 44px);
+}
+
+main.landing > section { padding-top: var(--s6); scroll-margin-top: 64px; }
+.landing .sec-head { display: grid; gap: var(--s2); max-width: 760px; margin-bottom: var(--s4); }
+.landing .eyebrow { margin: 0; font-size: 12px; letter-spacing: 0.12em; color: var(--ink-3); }
+/* Only the page's own headings: an embedded app's title is an h1 or h2 too. */
+.landing .sec-head h2, .cloud-pitch h2 { font-size: var(--t-h2); line-height: 1.08; letter-spacing: -0.03em; font-weight: var(--w-display); max-width: 20ch; }
+.landing .lede { font-size: var(--t-lede); line-height: 1.55; color: var(--ink-2); max-width: 58ch; }
+.landing .lede .inl { font-weight: var(--w-label); text-decoration: none; }
+.landing .lede .inl:hover { text-decoration: underline; }
+.landing .stage-caption { font-size: var(--t-cap); line-height: 1.5; }
+.landing .stage-caption .live { font-size: 11px; }
+
+/* The one filled button, and the quiet one beside it. */
+.landing .btn {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px;
+  font-family: var(--sans); font-size: 16px; font-weight: var(--w-label); letter-spacing: -0.005em;
+  color: #060A16; background: var(--mint); border-radius: 8px; text-decoration: none;
+}
+.landing .btn:hover { color: #060A16; background: #5CF0D2; }
+.landing .btn-quiet {
+  display: inline-flex; align-items: center; min-height: 48px; padding: 0 6px;
+  font-size: 16px; font-weight: var(--w-label); color: var(--ink); text-decoration: none;
+}
+.landing .btn-quiet:hover { text-decoration: underline; color: var(--ink); }
+.landing .door-act { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); }
+.landing .door-note { margin: 0; font-size: 14px; color: var(--ink-3); }
+
+/* The hero: the claim, two doors, the stage. */
+main.landing > section.agent-hero {
+  padding-top: clamp(56px, 9vh, 104px); padding-bottom: clamp(64px, 9vh, 104px);
+  gap: var(--s5);
+}
+.ah-head { display: grid; gap: var(--s3); }
+.ah-head h1 {
+  font-size: clamp(40px, 5vw, 68px); line-height: 1.03; letter-spacing: -0.035em;
+  font-weight: var(--w-display); max-width: 19ch;
+}
+.ah-head .lede { font-size: clamp(18px, 1.6vw, 21px); max-width: 54ch; }
+
+.doors { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s2); margin-top: calc(var(--s5) * -0.5); }
+.door {
+  display: grid; gap: var(--s2); align-content: start; min-width: 0;
+  padding: var(--s3) 28px 28px; border: 1px solid var(--rule); border-radius: 12px; background: var(--sunk);
+}
+.door-cloud { border-color: color-mix(in srgb, var(--mint) 45%, var(--rule)); background: color-mix(in srgb, var(--mint) 6%, var(--sunk)); }
+.door-cloud .door-act { margin-top: var(--s1); }
+.door-label {
+  margin: 0; display: flex; align-items: center; gap: 10px;
+  font-family: var(--sans); font-size: 12px; font-weight: var(--w-label); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.door-cloud .door-label { color: var(--mint); }
+.door-label .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); flex: 0 0 auto; }
+.door-line { margin: 0; font-size: 20px; line-height: 1.45; color: var(--ink); max-width: 30ch; }
+
+/* The prompt, inside its door: no second box, type a reader reads rather than a poster. */
+.door .prompt { border: 0; background: none; padding: 0; }
+.door .prompt-text { font-size: clamp(16px, 1.45vw, 19px); line-height: 1.55; letter-spacing: -0.01em; }
+.door .prompt-foot { margin-top: var(--s2); padding-top: var(--s2); gap: var(--s1) var(--s2); }
+.door .recipe-tabs [role="tab"] { font-size: 13px; min-height: 32px; padding: 0 12px; }
+.door .copy-prompt { min-height: 36px; }
+.door .ah-diy { margin: 0; font-size: var(--t-cap); gap: var(--s1) var(--s3); }
+.door .diy-line code { font-size: var(--t-cap); }
+
+.landing .agent-hero .hero-live { height: min(560px, 64vh); min-height: 420px; border-radius: 10px; }
+.landing .run { font-size: var(--t-cap); }
+.landing .stage-panel { gap: 12px; }
+
+/* The asks. */
+.landing .season-live { border-radius: 10px; }
+
+/* What it builds: the rota beside one line per domain. */
+.builds-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s4) var(--s5); align-items: start; }
+.builds .visual { display: grid; gap: 12px; min-width: 0; }
+.builds .chapter-live { height: 520px; border-radius: 10px; box-shadow: 0 0 0 1px var(--rule); }
+.uses { margin: 0; padding: 0; list-style: none; display: grid; }
+.uses li { display: grid; gap: 4px; padding: 20px 0; border-top: 1px solid var(--rule-2); min-width: 0; }
+.uses li:first-child { border-top: 0; padding-top: 0; }
+.uses b { font-size: var(--t-body); font-weight: var(--w-label); color: var(--ink); }
+.uses li > span:last-child { font-size: var(--t-sm); line-height: 1.5; color: var(--ink-2); }
+
+/* What you get: six claims, three across, no boxes. */
+.gives-list { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4) var(--s5); }
+.gives-list li { display: grid; gap: var(--s1); align-content: start; min-width: 0; }
+.gives-list a { display: inline-flex; align-items: center; min-height: 28px; font-size: 18px; font-weight: var(--w-label); letter-spacing: -0.01em; line-height: 1.3; color: var(--ink); text-decoration: none; justify-self: start; }
+.gives-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.gives-list p { font-size: var(--t-sm); line-height: 1.6; color: var(--ink-2); }
+
+/* Graview Cloud: the page's one band in the brand's navy, edge to edge. */
+main.landing > section.cloud-band {
+  margin-top: var(--s6); padding: 96px 0;
+  background: var(--navy); box-shadow: 0 0 0 100vmax var(--navy); clip-path: inset(0 -100vmax);
+  --ink-2: #D3DAEA; --ink-3: #AAB4CF; --rule: rgba(255, 255, 255, 0.16); --pine: var(--mint);
+}
+.cloud-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s4) var(--s5); align-items: center; }
+.cloud-pitch { display: grid; gap: var(--s3); }
+.cloud-pitch .eyebrow { color: var(--ink-3); }
+.cloud-pitch h2 { max-width: 16ch; }
+.cloud-pitch .door-act { margin-top: var(--s1); }
+.cloud-points { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; }
+.cloud-points li { padding: 18px 0; border-top: 1px solid var(--rule); font-size: var(--t-sm); line-height: 1.6; color: var(--ink-2); }
+.cloud-points li:first-child { border-top: 0; padding-top: 0; }
+.cloud-points b { display: block; color: var(--ink); font-size: var(--t-body); font-weight: var(--w-label); margin-bottom: 2px; }
+
+
+/* Questions. */
+.landing .faq-list { gap: var(--s4) var(--s5); margin-top: 0; }
+.landing .qa h3 { font-size: 18px; margin-bottom: var(--s1); }
+.landing .qa p { font-size: var(--t-sm); line-height: 1.65; }
+main.landing footer { margin-top: var(--s6); font-size: var(--t-cap); }
+
+/* The bar's one filled link is the hosted door. */
+.topbar.night .jump a.go { color: #060A16; background: var(--mint); }
+.topbar.night .jump a.go:hover { color: #060A16; background: #5CF0D2; }
+
+@media (max-width: 1000px) {
+  .doors, .builds-grid, .cloud-grid { grid-template-columns: minmax(0, 1fr); }
+  .gives-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .builds .chapter-live { height: 460px; }
+}
+@media (max-width: 640px) {
+  .landing { --s4: 28px; --s5: 40px; --s6: 80px; }
+  .gives-list { grid-template-columns: minmax(0, 1fr); }
+  .door { padding: 20px; }
+  .door-line { font-size: 18px; }
+  .landing .btn { width: 100%; justify-content: center; }
+  main.landing > section.cloud-band { padding: 64px 0; }
+  .landing .agent-hero .hero-live { height: 420px; min-height: 0; }
+  .doors { margin-top: 0; }
+}
+@media (max-width: 480px) { .topbar .jump a.go .try { display: none; } }
+@media (forced-colors: active) {
+  .landing .btn, .door { border: 1px solid CanvasText; }
+}
+
+/*
+ * ONE THING TO LOOK AT ON THE FIRST SCREEN. With the selected tab, both
+ * copy buttons, the invite and the bar's link all filled in turquoise,
+ * the eye had five places to land and chose none. The prompt is the
+ * thing; its Copy is the one filled button in sight, and the task in it
+ * the one turquoise word. The other door, the tabs and the second copy
+ * are drawn in the page's own ink, a step quieter.
+ */
+.door-agent { background: var(--panel); border-color: color-mix(in srgb, var(--ink) 22%, var(--rule)); }
+.door-agent .door-label .dot { display: none; }
+.door .prompt-text { font-size: clamp(17px, 1.6vw, 21px); }
+.door .copy-prompt { min-height: 44px; padding: 0 20px; font-size: 15px; }
+.door .recipe-tabs [role="tab"][aria-selected="true"] { color: var(--ink); background: color-mix(in srgb, var(--ink) 12%, transparent); border-color: var(--ink-3); }
+.door .diy-line .copy { color: var(--ink-2); background: none; border-color: var(--rule); }
+.door .diy-line .copy:hover { color: var(--ink); border-color: var(--ink-3); background: none; }
+
+.door-cloud { background: none; border-color: var(--rule-2); }
+.door-cloud .door-label { color: var(--ink-3); }
+.door-cloud .door-line { font-size: 18px; color: var(--ink-2); }
+.landing .btn-line { color: var(--ink); background: none; border: 1px solid var(--ink-3); min-height: 44px; font-size: 15px; }
+.landing .btn-line:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+
+.topbar.night .jump a.go { color: var(--ink); background: none; box-shadow: inset 0 0 0 1px var(--ink-3); }
+.topbar.night .jump a.go:hover { color: var(--ink); background: var(--panel); }
+
+/*
+ * AND ON EVERY SCREEN AFTER IT. Each section has one thing to look at —
+ * the asked-for app, the rota, the six claims, the invite, a recipe's
+ * task, a question — and everything around it is in the page's ink, with
+ * room rather than a rule or a box to say where one thing ends.
+ */
+
+
+/* Questions: the heading beside one column a reader can follow down. */
+.landing .faq { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--s4) var(--s5); align-items: start; }
+.landing .faq .sec-head { position: sticky; top: 96px; margin: 0; }
+.landing .faq-list { grid-template-columns: minmax(0, 1fr); gap: var(--s4); }
+.landing .qa p { max-width: 64ch; }
+main.landing footer { border-top-color: var(--rule-2); }
+@media (max-width: 900px) {
+  .landing .faq { grid-template-columns: minmax(0, 1fr); }
+  .landing .faq .sec-head { position: static; }
+}
+
+/*
+ * THE ASKS BESIDE THE APP. A bar with a shortcut in it read as a box to
+ * type in, and stacked a third bar over the app's own: the asks are a
+ * short list to pick from instead, said as what somebody asked for, with
+ * the season they redraw beside them.
+ */
+.landing .ask-demo { margin-top: 0; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); gap: var(--s3) var(--s4); align-items: start; }
+.landing .ask-chips { display: grid; gap: var(--s1); }
+.landing .ask-chips button {
+  display: grid; gap: 4px; text-align: left; width: 100%; min-height: 0;
+  padding: 14px 16px; border: 0; border-left: 2px solid var(--rule); border-radius: 0;
+  background: none; color: var(--ink-3); font-size: var(--t-sm); line-height: 1.45;
+}
+.landing .ask-chips button:hover { color: var(--ink-2); border-left-color: var(--ink-3); }
+.landing .ask-chips button[aria-pressed="true"] { color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent); border-left-color: var(--mint); }
+.landing .ask-n { font-size: 11px; font-weight: var(--w-label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.landing .ask-stage { display: grid; gap: 12px; min-width: 0; }
+@media (max-width: 900px) {
+  .landing .ask-demo { grid-template-columns: minmax(0, 1fr); }
+  .landing .ask-chips button { width: 100%; }
+}
+
+/*
+ * BUILT ON GRAVIEW: two products, each a picture and a sentence, the whole
+ * card the link; then the recipes a repository starts from, one line each.
+ */
+.built-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4) var(--s4); }
+.built-card { display: grid; gap: 20px; align-content: start; color: inherit; text-decoration: none; min-width: 0; }
+.built-shot img { border-radius: 10px; box-shadow: 0 0 0 1px var(--rule); transition: box-shadow 160ms ease; }
+.built-card:hover .built-shot img { box-shadow: 0 0 0 1px var(--ink-3); }
+.built-words { display: grid; gap: var(--s1); }
+.built-words b { font-size: 22px; font-weight: var(--w-label); letter-spacing: -0.015em; color: var(--ink); }
+.built-words > span:not(.built-at) { font-size: var(--t-sm); line-height: 1.6; color: var(--ink-2); max-width: 56ch; }
+.built-at { font-size: 14px; font-weight: var(--w-label); color: var(--pine); }
+.built-card:hover .built-at { text-decoration: underline; text-underline-offset: 4px; }
+
+.landing .recipes { margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--rule-2); display: grid; gap: var(--s1); }
+.landing .recipes h3 { font-size: 18px; }
+.landing .recipes-lede { font-size: var(--t-sm); color: var(--ink-3); }
+.landing .recipe-list { margin: var(--s3) 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s3); }
+.landing .recipe-list a { display: grid; gap: 4px; text-decoration: none; color: var(--ink); }
+.landing .recipe-list b { font-size: var(--t-sm); font-weight: var(--w-label); }
+.landing .recipe-list a:hover b { text-decoration: underline; text-underline-offset: 4px; }
+.landing .recipe-list span { font-size: var(--t-cap); color: var(--ink-3); }
+.landing .recipes-note { margin-top: var(--s3); font-size: var(--t-cap); color: var(--ink-3); border: 0; padding: 0; }
+@media (max-width: 1000px) { .landing .recipe-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .built-list { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .landing .recipe-list { grid-template-columns: minmax(0, 1fr); } }
+
+/*
+ * THE BOARD ON THE FIRST SCREEN. The run ends on the departures board, and
+ * at a desk's height it began below the fold: a three-line headline and two
+ * tall doors took the whole screen. Two lines, one row of controls under
+ * the prompt, and the stage close under the doors.
+ */
+main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: var(--s4); }
+.ah-head { gap: var(--s2); }
+.ah-head h1 { font-size: clamp(38px, 4.1vw, 60px); max-width: 24ch; }
+.ah-head .lede { font-size: clamp(17px, 1.4vw, 19px); }
+.doors { margin-top: 0; }
+.door { padding: 20px 24px 22px; gap: 14px; }
+.door .prompt-foot { flex-wrap: nowrap; }
+.door .recipe-tabs { flex-wrap: nowrap; }
+.door .copy-prompt { margin-left: auto; flex: 0 0 auto; }
+.door .ah-diy { display: grid; gap: 6px; }
+.door .ah-diy .diy-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.door .ah-diy code { font-size: var(--t-cap); color: var(--ink); }
+.door .ah-diy .copy { margin-left: 4px; min-height: 26px; padding: 0 10px; font-size: 12px; color: var(--ink-2); background: none; border-color: var(--rule); }
+.door .ah-diy .copy:hover { color: var(--ink); border-color: var(--ink-3); background: none; }
+.door-cloud .door-act { margin-top: 0; }
+@media (max-width: 1180px) {
+  .door .prompt-foot, .door .recipe-tabs { flex-wrap: wrap; }
+}
+/* At a phone's narrowest a door is the column's width, not its content's: the command breaks rather than pushing the page sideways. */
+.door { grid-template-columns: minmax(0, 1fr); }
+.door .ah-diy code { overflow-wrap: anywhere; min-width: 0; }
+@media (forced-colors: active) {
+  .landing .ask-chips button[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-left-color: HighlightText; }
+}
 /* site-css:end */
 </style>
 
