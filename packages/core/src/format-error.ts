@@ -6,14 +6,14 @@ import { FRAMEWORK_VERSION } from "./version.js";
  * the primitives and every fold can refuse what they do not know without
  * reaching the upgrade steps (`formats.ts`), which import the ops.
  */
-export const FORMATS = { snapshot: 1, op: 2 } as const;
+export const FORMATS = { snapshot: 1, op: 3 } as const;
 export type FormatName = keyof typeof FORMATS;
 
 /**
  * Something written in a format newer than this build reads. Fold the log, or upgrade the framework.
  *
  * `unknown` names what this build met and does not know, when it was
- * not a stamp: a primitive (`primitive "splice-text"`) or a typed value
+ * not a stamp: a primitive (`primitive "<name>"`) or a typed value
  * (`value type "rich-text"`) a newer build wrote. Its `found` is then the
  * format after the one this build reads, the least the writer was on.
  */
@@ -41,7 +41,7 @@ export class NewerFormatError extends Error {
  * refuses the op (`unknownPrimitive`) rather than skip it, since a graph
  * that skipped a primitive is a graph that diverged without saying so.
  */
-export const PRIMITIVE_OPS = ["add-node", "remove-node", "patch-node", "add-edge", "remove-edge"] as const;
+export const PRIMITIVE_OPS = ["add-node", "remove-node", "patch-node", "add-edge", "remove-edge", "splice-text"] as const;
 const KNOWN_PRIMITIVES: ReadonlySet<unknown> = new Set(PRIMITIVE_OPS);
 
 /** A primitive this build does not know, refused: the default of every switch that folds one. */

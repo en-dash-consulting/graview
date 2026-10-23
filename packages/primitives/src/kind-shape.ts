@@ -332,7 +332,7 @@ export function changedSince(
     if (op.at <= since) continue;
     for (const primitive of op.primitives) {
       if (primitive.op === "add-node" && primitive.node?.kind === kind) added.add(primitive.node.id);
-      else if (primitive.op === "patch-node" && primitive.id !== undefined && kindOf(primitive.id) === kind) changed.add(primitive.id);
+      else if ((primitive.op === "patch-node" || primitive.op === "splice-text") && primitive.id !== undefined && kindOf(primitive.id) === kind) changed.add(primitive.id);
     }
   }
   for (const id of added) changed.delete(id);

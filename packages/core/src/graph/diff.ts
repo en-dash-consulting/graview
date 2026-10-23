@@ -110,7 +110,7 @@ export function diffTouched<N extends GraphNodeBase>(
   primitives: readonly Primitive[],
 ): GraphDiff<N> {
   const ids = new Set(
-    primitives.flatMap((primitive) => (primitive.op === "patch-node" ? [primitive.id] : "node" in primitive ? [primitive.node.id] : [primitive.edge.from, primitive.edge.to])),
+    primitives.flatMap((primitive) => (primitive.op === "patch-node" || primitive.op === "splice-text" ? [primitive.id] : "node" in primitive ? [primitive.node.id] : [primitive.edge.from, primitive.edge.to])),
   );
   if (ids.size === 0) return EMPTY_DIFF as GraphDiff<N>;
   const within = (snapshot: { nodes: readonly N[]; edges: readonly GraphEdge[] }) => ({

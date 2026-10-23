@@ -75,6 +75,8 @@ function indexFrom(base: number, behind?: Readonly<Record<string, Readonly<Recor
 function writtenBy(primitive: Primitive): readonly [string, readonly string[]] | undefined {
   if (primitive.op === "add-node") return [primitive.node.id, Object.keys(primitive.node).filter((field) => field !== "id" && field !== "kind")];
   if (primitive.op === "patch-node") return [primitive.id, Object.keys(primitive.after).filter((field) => !isUnset(primitive.after[field]))];
+  // A splice writes its field: the text as it now stands is the splicer's words, as a whole write's would be.
+  if (primitive.op === "splice-text") return [primitive.id, [primitive.field]];
   return undefined;
 }
 

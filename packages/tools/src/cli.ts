@@ -255,6 +255,7 @@ function report(ops: readonly Operation[], extra: Record<string, unknown> = {}):
       case "add-node": return `+ ${primitive.node.kind} ${primitive.node.id}`;
       case "remove-node": return `- ${primitive.node.kind} ${primitive.node.id}`;
       case "patch-node": return `~ ${primitive.id}: ${Object.keys(primitive.after).join(", ")}`;
+      case "splice-text": return `~ ${primitive.id}: ${primitive.field}`;
       case "add-edge": return `+ ${primitive.edge.from} ${primitive.edge.kind} ${primitive.edge.to}`;
       case "remove-edge": return `- ${primitive.edge.from} ${primitive.edge.kind} ${primitive.edge.to}`;
     }

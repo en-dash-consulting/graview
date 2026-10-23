@@ -156,9 +156,9 @@ function fieldLens(base: SeatLens, store: Judged, principal: Principal): SeatLen
 function touchesKept(op: Operation, lens: SeatLens): boolean {
   return op.primitives.some((primitive) => {
     if (primitive.op === "add-node" || primitive.op === "remove-node") return lens.kept!(primitive.node) !== undefined;
-    if (primitive.op !== "patch-node") return false;
+    if (primitive.op !== "patch-node" && primitive.op !== "splice-text") return false;
     const kept = keptOf(lens, primitive.id);
-    return kept !== undefined && Object.keys(primitive.after).some(kept);
+    return kept !== undefined && (primitive.op === "splice-text" ? kept(primitive.field) : Object.keys(primitive.after).some(kept));
   });
 }
 
@@ -255,11 +255,12 @@ function compiling<O extends Compiling>(store: Store<AnySchema>, author: Princip
     check(primitives, definition) {
       for (let at = primitives.length - 1; kept && at >= 0; at--) {
         const primitive = primitives[at]!;
-        if (primitive.op !== "add-node" && primitive.op !== "patch-node") continue;
+        if (primitive.op !== "add-node" && primitive.op !== "patch-node" && primitive.op !== "splice-text") continue;
         const node = primitive.op === "add-node" ? primitive.node : store.graph.getNode(primitive.id);
         const keeps = node && kept(node as Node);
         if (!keeps) continue;
-        const fields = (primitive.op === "add-node" ? primitive.node : primitive.after) as Record<string, unknown>;
+        // A splice is always a write: it has no value to leave unset.
+        const fields = (primitive.op === "add-node" ? primitive.node : primitive.op === "splice-text" ? { [primitive.field]: primitive.inserted } : primitive.after) as Record<string, unknown>;
         const stray = Object.keys(fields).filter((field) => field !== "id" && field !== "kind" && keeps(field));
         if (stray.some((field) => !isUnset(fields[field]))) {
           throw new InvalidArguments(definition.name, [{ path: [], message: doesNotTake(stray, (argumentsTaken(definition) ?? []).filter((key) => !keeps(key))) }]);

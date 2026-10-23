@@ -334,7 +334,7 @@ const touchedIds = (ops: readonly Operation[]): Set<string> => {
   for (const op of ops) {
     for (const primitive of op.primitives) {
       if (primitive.op === "add-node" || primitive.op === "remove-node") ids.add(primitive.node.id);
-      else if (primitive.op === "patch-node") ids.add(primitive.id);
+      else if (primitive.op === "patch-node" || primitive.op === "splice-text") ids.add(primitive.id);
       else {
         ids.add(primitive.edge.from);
         ids.add(primitive.edge.to);

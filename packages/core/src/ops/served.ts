@@ -1,4 +1,4 @@
-import { isUnset, UNSET, type Primitive } from "../graph/primitives.js";
+import { isUnset, splicedRecord, UNSET, type Primitive } from "../graph/primitives.js";
 import { edgeId, type AnyGraphNode, type GraphEdge } from "../graph/types.js";
 import { actingAs } from "../permissions/policy.js";
 import type { Principal } from "../permissions/types.js";
@@ -102,10 +102,10 @@ class Moment {
 
   /** The fields a primitive just wrote, and who wrote them. */
   note(primitive: Primitive, by: (id: string, field: string) => string | undefined): void {
-    const id = primitive.op === "add-node" ? primitive.node.id : primitive.op === "patch-node" ? primitive.id : "";
+    const id = primitive.op === "add-node" ? primitive.node.id : primitive.op === "patch-node" || primitive.op === "splice-text" ? primitive.id : "";
     // A record never judged never asks who wrote it.
     if (id === "" || this.unversioned?.has(id)) return;
-    const fields = primitive.op === "add-node" ? Object.keys(primitive.node) : Object.keys((primitive as { after: object }).after);
+    const fields = primitive.op === "add-node" ? Object.keys(primitive.node) : primitive.op === "splice-text" ? [primitive.field] : Object.keys((primitive as { after: object }).after);
     for (const field of fields) if (field !== "id" && field !== "kind") this.wrote.set(`${id}\u0000${field}`, by(id, field));
   }
 
@@ -158,6 +158,11 @@ class Moment {
         this.setNode(primitive.id, patched(node, primitive.before));
         return;
       }
+      case "splice-text": {
+        const node = this.unversioned?.has(primitive.id) ? undefined : this.node(primitive.id);
+        if (node) this.setNode(primitive.id, splicedRecord(node, primitive, true));
+        return;
+      }
       case "add-edge":
         this.setEdge(primitive.edge, false);
         return;
@@ -182,6 +187,11 @@ class Moment {
         const node = this.node(primitive.id);
         if (!node) return;
         this.setNode(primitive.id, patched(node, primitive.after));
+        return;
+      }
+      case "splice-text": {
+        const node = this.unversioned?.has(primitive.id) ? undefined : this.node(primitive.id);
+        if (node) this.setNode(primitive.id, splicedRecord(node, primitive));
         return;
       }
       case "add-edge":
@@ -210,7 +220,7 @@ interface Served {
 }
 
 const idOf = (primitive: Primitive): string | undefined =>
-  primitive.op === "add-node" || primitive.op === "remove-node" ? primitive.node.id : primitive.op === "patch-node" ? primitive.id : undefined;
+  primitive.op === "add-node" || primitive.op === "remove-node" ? primitive.node.id : primitive.op === "patch-node" || primitive.op === "splice-text" ? primitive.id : undefined;
 
 /** Judges one primitive at a moment, and moves the moment past it. */
 function serveOne(primitive: Primitive, moment: Moment, judge: ServedJudge, by: (id: string, field: string) => string | undefined): Served {
@@ -264,6 +274,13 @@ function serveOne(primitive: Primitive, moment: Moment, judge: ServedJudge, by: 
     const kept = (served: AnyGraphNode, held: AnyGraphNode | undefined) => (field: string) => field in served === (held !== undefined && field in held);
     if (Object.keys(primitive.after).every((field) => kept(before!, was)(field) && kept(after!, now)(field))) return { primitives: [primitive], faithful: true };
     const side = (node: AnyGraphNode) => Object.fromEntries(Object.keys(primitive.after).map((field) => [field, field in node ? node[field] : UNSET]));
+    return { primitives: [{ op: "patch-node", id, before: side(before!), after: side(after!) }], faithful: false };
+  }
+  if (primitive.op === "splice-text") {
+    // The splice as written, when its field is served as it is on both sides; else the field as the seat is served it, whole.
+    const field = primitive.field;
+    if (before![field] === was![field] && after![field] === now![field]) return { primitives: [primitive], faithful: true };
+    const side = (node: AnyGraphNode) => ({ [field]: field in node ? node[field] : UNSET });
     return { primitives: [{ op: "patch-node", id, before: side(before!), after: side(after!) }], faithful: false };
   }
   // An add of a record already there, or a remove that leaves it: a log that does not fold here; say the record as it is.
@@ -345,6 +362,10 @@ function judgedAlong(log: readonly Operation[], first: number, present: Present,
       else if (primitive.op === "patch-node") {
         version(primitive.id, primitive.before);
         version(primitive.id, primitive.after);
+      } else if (primitive.op === "splice-text") {
+        // Part of a text says nothing of what the whole names: a record spliced is followed version by version.
+        version(primitive.id, {});
+        if (!unseen.has(primitive.id)) followed.add(primitive.id), plain.delete(primitive.id);
       }
     }
   }

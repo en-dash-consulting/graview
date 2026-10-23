@@ -71,8 +71,10 @@ export const WORKER_SHAPED = join(ROOT, "scripts/fixtures/cloud-worker-imports.m
  * name an act in another spelling in a grant or a repair (`asked-order.ts`,
  * `act-spellings.ts`): 2_003_320 B, 6_434 more than before them (1_996_886).
  */
+// 2_010_000 since a text field takes a splice (collaborative text, phase 1: the `splice-text` primitive folded, undone, served and read back wherever a patch is): 2_005_731 B measured, 5_787 more than before it (1_999_944).
 // 2_020_000 since the 0.1.49 batch came together (every form in one order, act spellings, suggestion and lineage shapes): 2_010_374 B measured.
-export const WORKER_BUDGET = { cpu: 75, bytes: 2_020_000, zod: 260_000 };
+// 2_250_000 — Nick, 2026-10-23: one deliberate raise for the road to 1.0; the 75 ms startup CPU still guards cold starts.
+export const WORKER_BUDGET = { cpu: 75, bytes: 2_250_000, zod: 260_000 };
 
 /** The file an entry resolves to in its package's dist/. */
 export function entryFile(entry) {

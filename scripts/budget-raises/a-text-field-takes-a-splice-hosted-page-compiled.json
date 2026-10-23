@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1900,
+  "gzipped": 700,
+  "changeset": "a-text-field-takes-a-splice.md",
+  "note": "Raised when a text field came to take a splice (collaborative text, phase 1): the `splice-text` primitive folded by the graph (`applySplice`), undone, served to a seat, and read back wherever a patch is read. The store and the graph are on every page, so this is up front. Measured at 552_083 B minified against a budget of 550_267: 1_816 more."
+}

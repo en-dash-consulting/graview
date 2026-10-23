@@ -86,7 +86,10 @@ export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./grap
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
 export { invert, isUnset, normalize, UNSET, writesOf } from "./graph/primitives.js";
-export type { Primitive } from "./graph/primitives.js";
+export type { Primitive, SpliceTextPrimitive } from "./graph/primitives.js";
+export { applySplice, compose as composeSplices, transform as transformSplices, transformCaret } from "./text/splice.js";
+export type { TextSplice } from "./text/splice.js";
+export { diffSplice } from "./text/diff.js";
 export { TrackedReader } from "./graph/tracked.js";
 export { edgeId } from "./graph/types.js";
 export type {

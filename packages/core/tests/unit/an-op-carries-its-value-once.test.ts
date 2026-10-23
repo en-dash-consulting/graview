@@ -99,8 +99,8 @@ const withWhatDepends = (store: Store<typeof schema>, batch: string): string[] =
 };
 
 describe("an op carries its value once", () => {
-  it("is op format 2", () => {
-    expect(FORMATS.op).toBe(2);
+  it("is op format 2 or a later one", () => {
+    expect(FORMATS.op).toBeGreaterThanOrEqual(2);
   });
 
   it("an op a store writes carries no inverse, whichever way it was made", () => {

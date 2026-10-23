@@ -1,4 +1,4 @@
-import { isUnset, unknownPrimitive, type Primitive } from "@graview/core";
+import { applySplice, isUnset, unknownPrimitive, type Primitive } from "@graview/core";
 
 /**
  * A stored graph mid-migration is BETWEEN schemas, so nothing here
@@ -39,6 +39,15 @@ export function applyToSnapshot(
             if (isUnset(value)) delete patched[key];
           }
           return patched as GraphSnapshot["nodes"][number];
+        });
+        break;
+      case "splice-text":
+        // Structural like the rest: the text must hold what the splice removes, or the log is corrupt and the step says so.
+        nodes = nodes.map((node) => {
+          if (node.id !== primitive.id) return node;
+          const text = node[primitive.field];
+          if (typeof text !== "string") throw new Error(`Cannot splice ${primitive.id}.${primitive.field}: it holds no text.`);
+          return { ...node, [primitive.field]: applySplice(text, primitive) };
         });
         break;
       case "add-edge":
