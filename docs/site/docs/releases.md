@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.49`](https://graview.dev/docs/releases.html#v0-1-49)
 - [`0.1.48`](https://graview.dev/docs/releases.html#v0-1-48)
 - [`0.1.47`](https://graview.dev/docs/releases.html#v0-1-47)
 - [`0.1.46`](https://graview.dev/docs/releases.html#v0-1-46)
@@ -50,9 +51,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.48
+## 0.1.49
 
 Published October 23, 2026 · the current version
+
+An app tidies itself overnight, judged by a model where one is lent; suggestions and lineage take their 1.0 shapes; every form asks in one order.
+
+- **Dreaming.** `@graview/tools/tidy` gives an app its own actor: `dream()` finds candidates in code and, where the host lends a System One model such as Jev, asks it whether two records are the same thing, which record a field means, whether a record is finished, and which choice fits an empty field. What it is sure of may apply where the host allows; the rest waits as suggestions; without a model, rules do the judging. `whileAway()` says what happened since a person last looked; `suggest_changes` lets a remote actor suggest; `graview dream` runs it from the command line.
+- **Suggestions and lineage, as 1.0 keeps them.** A suggestion may expire; "not now" is one person's and leaves it waiting for everyone else; a decline answers by meaning, so the same change asked another way stays declined. Lineage names the run, the judge and the evidence, and keeps keys a later build adds.
+- **The model door takes an object.** `Completion` takes `{ prompt, system, images, signal }` and answers `{ text, usage }`; the Fast slot's types live in their own module; the seat's offers are `Offer`.
+- **Every form asks in one order**, whatever declared it: the label's fields, then what is required, then the rest. A declaration may name an act in another spelling.
+- **Smaller things.** Enter in Find leaves the box in the same press; a wider focus ring stays whole at a view's edge; `graview view check --audit --browser` runs every accessibility rule in Chromium; the host learns what a view hears a click on.
+
+**Before you upgrade:** `Completion` changes shape (an object in, `{ text, usage }` out) and `Suggestion`/`suggestionsFor` in `@graview/tools/suggest` are renamed `Offer`/`offersFor`. Additive: `@graview/tools/tidy`, the `suggest_changes` tool for automated seats, a suggestion's `expiresAt`, lineage's `run`, `actor` and `evidence` (and unknown keys kept), declines matched by meaning, `Dismissal`. A document's act arguments and every generated form ask in a new order. Ops, stored formats and the wire are otherwise unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.49) · [The full changelog for 0.1.49](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0149)
+
+## 0.1.48
+
+Published October 23, 2026
 
 Forms ask the name first, acts answer to the way they're spelled, refusals name the act that would, and a place says its forms.
 

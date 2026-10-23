@@ -1,5 +1,32 @@
 # graview
 
+## 0.1.49
+
+### Patch Changes
+
+- 4ca00a7: The app's own actor can now find what to suggest, and a host can run it on a schedule. `@graview/tools/tidy` holds three judges that read the store as the actor sees it — `duplicates` (two records of a kind with one name, or one email or code, merged into the one with more links), `links` (a record whose text names another record, linked through a relation the app already declares and only where its cardinality allows; a name two records share links neither), and `archive` (a record its kind says is finished — its lifecycle, its main choice field read as the map reads it, or a done flag — unchanged for 30 days) — each giving its calls with a basis a person reads and a confidence. `dream(store, { now, limit })` runs them once as "Graview, tidying" and suggests each, surest first: never what a person declined, never twice what already waits, never about a record left alone, changed in the last day, or of a kind or relation the app says is never tidied. It applies nothing on its own unless the host passes `applyAtLeast`, since a declaration says only where the actor may never act; a model in the Fast slot's shape may weigh each candidate, and the run stands on the judges' own word when it does not answer. It returns what it did by judge. `whileAway(store, { seq })` is the tray's line: "2 suggestions waiting · tidied 12 things while you were away". A host that judges elsewhere suggests through the new `suggest_changes` tool, listed only for a seat that says `automated: true` and refused to any other in a sentence, and `graview dream <entry> --data ./data` runs it against a folder or a SQLite file. The tidying skill says how.
+  
+  Compatibility: additive — a new entry, `@graview/tools/tidy`, a new `graview dream` command, and a new tool, `suggest_changes`, listed only for an automated seat; every other seat's tool names and input schemas are unchanged. Ops, stored formats and the wire are unchanged: a suggestion is the op `suggest` already writes.
+- 1f80e4a: The app's own actor now leaves the judging to a System One model when the host lends one, and keeps code to finding, routing and making. `dream(store, { ai })` (or `{ model }`) puts forward far more than an exact match: two records of a kind that share a telling word, a key value or a near hit from the host's `near` ranker; a record whose text mentions another's name or one of its words; an empty choice field; an empty one-link relation. Each candidate is one request to the model, its records as named JSON as the actor may see them and every question about them together — a Score for whether two are the same thing with a Noul for the name and each key field, a Choice among the likeliest far records with "none of these" for each declared relation, a Noul for "finished or no longer relevant" with how long it has been unchanged and how its kind says it is finished, and, for the new `categorize` judge, a Choice over a field's options with "none fits". Code maps each answer to a confidence (a Score's expected level, a Choice's probability and its margin, a Noul's probability) and routes it by how much the change would undo (`BANDS`: merge 0.9 to act and 0.5 to ask, archive 0.85 and 0.55, a link or a filled choice 0.8 and 0.45; a split choice never acts): made unasked only where the host's `applyAtLeast` allows, suggested with a basis a person reads ("Jev: 0.93 that “Acme Corp” and “ACME Corporation” are the same vendor") and the model named in the lineage, or dropped. It asks six at a time within a run's budget of 60 requests and 200,000 input tokens, keeps each answer by a hash of what was asked (`memoryDreamCache`, or the host's own `DreamCache`) so an unchanged record is not asked again, and reports what it spent. Without a model, or where it failed or the budget ran out, the deterministic judges stand as the floor. `graview dream` takes `--model jev-latest` (with TYPESAFE_API_KEY), `--max-requests` and `--cache <file>`.
+  
+  Compatibility: additive — `@graview/tools/tidy` gains `categorize`, `missingLinks`, `BANDS`, `routeOf`, `memoryDreamCache`, `systemOneOf` and their types, a judge may say its `severity`, a run's report its `usage` and `budget`, and an outcome may be `dropped`; `graview dream` gains three flags. Ops, stored formats, the wire and every seat's tools are unchanged: a judgment is the suggestion or the lineage-carrying change `suggest` and `applyAll` already keep.
+- Updated dependencies [1c1bfcd]
+- Updated dependencies [81a6028]
+- Updated dependencies [8993971]
+- Updated dependencies [ec8c429]
+- Updated dependencies [ee70d83]
+- Updated dependencies [9dab8bb]
+- Updated dependencies [4ca00a7]
+- Updated dependencies [1f80e4a]
+- Updated dependencies [908367d]
+- Updated dependencies [5f1603f]
+- Updated dependencies [1c1bfcd]
+  - @graview/tools@0.1.49
+  - @graview/core@0.1.49
+  - @graview/ship@0.1.49
+  - @graview/skills@0.1.49
+  - @graview/guest@0.1.49
+
 ## 0.1.48
 
 ### Patch Changes
