@@ -1,3 +1,5 @@
+// A store served takes typing together whichever entry served it — `graview serve` and `graview preview` reach it through the CLI, not the main entry (Roadmap f-collab-text).
+import "@graview/core/typing";
 import {
   AUTHOR_KINDS,
   foldPresence,

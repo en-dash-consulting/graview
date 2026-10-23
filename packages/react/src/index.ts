@@ -6,6 +6,8 @@ export { BesideTheMap } from "./beside-the-map.js";
 export { HostFilesContext, useHostFiles } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
 export { Figure, Occupants, PersonFigure } from "./occupants.js";
+export { TypingContext } from "./typing.js";
+export type { FieldTyping, LiveTyping } from "./typing.js";
 export { HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
 export type { PresenceInputs, PresenceState } from "./presence.js";
 export { anchorOf, AUDIENCE_ROW, placeOthers } from "./placement.js";

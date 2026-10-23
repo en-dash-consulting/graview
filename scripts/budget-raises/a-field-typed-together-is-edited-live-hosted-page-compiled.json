@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 450,
+  "gzipped": 200,
+  "changeset": "a-field-typed-together-is-edited-live.md",
+  "note": "Raised when a field typed together came to be edited live (collaborative text, phase 4), as the hosted page's raise of the same name says. Measured at 561_210 / 195_733 against 560_807 / 195_573: 403 more minified, 160 gzipped."
+}

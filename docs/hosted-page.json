@@ -1,14 +1,14 @@
 {
-  "at": "2026-10-23T05:28:34.617Z",
+  "at": "2026-10-23T06:00:18.700Z",
   "page": "openRemote + mount(…, { studio: false }) over the vendors document, built as Graview Cloud's packages/client/bundles.mjs builds its shell",
   "checks": {
     "atMostTheBudgetMinifiedUpFront": {
-      "kb": 598,
-      "budgetKb": 598,
+      "kb": 597,
+      "budgetKb": 597,
       "ok": true
     },
     "atMostTheBudgetGzippedUpFront": {
-      "kb": 209,
+      "kb": 208,
       "budgetKb": 209,
       "ok": true
     },
@@ -21,13 +21,13 @@
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetUpFront": {
-      "kb": 549,
-      "budgetKb": 549,
+      "kb": 548,
+      "budgetKb": 548,
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetGzippedUpFront": {
-      "kb": 192,
-      "budgetKb": 192,
+      "kb": 191,
+      "budgetKb": 191,
       "ok": true
     },
     "handedACompiledAppCarriesNoCompilerUpFront": {
@@ -36,13 +36,13 @@
     }
   },
   "upFront": {
-    "kb": 598,
-    "gzippedKb": 209,
-    "bytes": 612473,
-    "gzippedBytes": 213739,
+    "kb": 597,
+    "gzippedKb": 208,
+    "bytes": 611122,
+    "gzippedBytes": 213321,
     "chunks": 13,
     "packagesKb": {
-      "@graview/core": 232,
+      "@graview/core": 231,
       "react-dom": 176,
       "@graview/primitives": 47,
       "@graview/react": 35,
@@ -59,8 +59,8 @@
     "ownNeedKb": 583
   },
   "budget": {
-    "minified": 612496,
-    "gzipped": 213962,
+    "minified": 611246,
+    "gzipped": 213612,
     "raises": [
       "a-board-moves-without-buttons-a-hosted-page.json",
       "a-change-from-elsewhere-is-heard-a-hosted-page.json",
@@ -69,6 +69,7 @@
       "a-declared-row-names-its-record-a-hosted-page.json",
       "a-draft-view-is-swapped-in-place-a-hosted-page.json",
       "a-drop-reads-upload-at-a-hosted-page.json",
+      "a-field-typed-together-is-edited-live-hosted-page.json",
       "a-form-for-a-visitor-a-hosted-page.json",
       "a-frame-guest-holds-back-the-drawn-signal-a-hosted-page.json",
       "a-grant-to-make-a-kind-takes-out-only-what-you-made-a-hosted-page.json",
@@ -135,12 +136,12 @@
     ]
   },
   "whenAsked": {
-    "kb": 1383,
-    "chunks": 144,
+    "kb": 1394,
+    "chunks": 145,
     "packagesKb": {
-      "@graview/primitives": 485,
+      "@graview/primitives": 492,
       "@graview/guest": 199,
-      "@graview/core": 160,
+      "@graview/core": 163,
       "@graview/react": 125,
       "@graview/tools": 124,
       "@graview/pages": 121,
@@ -623,6 +624,21 @@
         }
       },
       {
+        "module": "ship/src/remote-typing.ts",
+        "kb": 9,
+        "packagesKb": {
+          "@graview/core": 7,
+          "@graview/ship": 2
+        }
+      },
+      {
+        "module": "primitives/src/live-prose-editor.tsx",
+        "kb": 9,
+        "packagesKb": {
+          "@graview/primitives": 9
+        }
+      },
+      {
         "module": "core/src/past.ts",
         "kb": 9,
         "packagesKb": {
@@ -635,14 +651,6 @@
         "packagesKb": {
           "@graview/primitives": 7,
           "@graview/core": 1
-        }
-      },
-      {
-        "module": "ship/src/remote-typing.ts",
-        "kb": 7,
-        "packagesKb": {
-          "@graview/core": 5,
-          "@graview/ship": 2
         }
       },
       {
@@ -755,13 +763,13 @@
     ]
   },
   "handedACompiledApp": {
-    "kb": 549,
-    "gzippedKb": 192,
-    "bytes": 562561,
-    "gzippedBytes": 196140,
+    "kb": 548,
+    "gzippedKb": 191,
+    "bytes": 561210,
+    "gzippedBytes": 195732,
     "budget": {
-      "minified": 562588,
-      "gzipped": 196359,
+      "minified": 561338,
+      "gzipped": 196009,
       "raises": [
         "a-board-moves-without-buttons-a-hosted-page-handed-a-compiled-app.json",
         "a-change-from-elsewhere-is-heard-a-hosted-page-handed-a-compiled-app.json",
@@ -770,6 +778,7 @@
         "a-declared-row-names-its-record-a-hosted-page-compiled.json",
         "a-draft-view-is-swapped-in-place-a-hosted-page-compiled.json",
         "a-drop-reads-upload-at-a-hosted-page-handed-a-compiled-app.json",
+        "a-field-typed-together-is-edited-live-hosted-page-compiled.json",
         "a-form-for-a-visitor-a-hosted-page-compiled.json",
         "a-frame-guest-holds-back-the-drawn-signal-a-hosted-page-compiled.json",
         "a-grant-to-make-a-kind-takes-out-only-what-you-made-a-hosted-page-handed-a-compiled-app.json",
@@ -832,7 +841,7 @@
     },
     "savedKb": 49,
     "packagesKb": {
-      "@graview/core": 184,
+      "@graview/core": 183,
       "react-dom": 176,
       "@graview/primitives": 47,
       "@graview/react": 35,
@@ -849,11 +858,11 @@
   },
   "beforeEachFaceDraws": {
     "scene": {
-      "kb": 995,
-      "fetchedKb": 396
+      "kb": 993,
+      "fetchedKb": 397
     },
     "pages": {
-      "kb": 974,
+      "kb": 973,
       "fetchedKb": 376
     }
   },

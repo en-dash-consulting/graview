@@ -29,6 +29,7 @@ import {
   type Operation,
   type PlannedChange,
   type Presence,
+  type PresenceCaret,
   type Principal,
   type Store,
   type WireRefusal,
@@ -586,13 +587,23 @@ const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"
  * given, the claimed key is not read at all.
  */
 export function presenceFrom(told: Presence, seat: Principal, now: Date = new Date(), participant?: string): Presence {
-  const { participant: claimed, kind: _kind, name: claimedName, onBehalfOf: _for, onBehalfOfName: _forName, until: _until, held: _held, at: _at, ...said } = told;
+  const { participant: claimed, kind: _kind, name: claimedName, onBehalfOf: _for, onBehalfOfName: _forName, until: _until, held: _held, at: _at, caret: claimedCaret, ...said } = told;
+  const caret = caretOf(claimedCaret);
   // The session is what follows the seat's own `kind:id:` — an id may hold a colon (`shopper:bethan`).
   const own = `${seat.kind}:${seat.id ?? ""}:`;
   const session = claimed.startsWith(own) ? claimed.slice(own.length) : (claimed.split(":").at(-1) ?? "");
   const key = participant ?? (seat.id ? participantKey({ kind: seat.kind, id: seat.id, session }) : claimed);
   const name = seat.name ?? claimedName;
-  return { ...said, participant: key, kind: seat.kind, ...(name ? { name } : {}), ...forWhom(seat), at: now.toISOString() };
+  return { ...said, participant: key, kind: seat.kind, ...(name ? { name } : {}), ...forWhom(seat), ...(caret ? { caret } : {}), at: now.toISOString() };
+}
+
+/** A caret as a client said it (Roadmap f-collab-text), kept only when it is one: a record, a field, and three counts. */
+function caretOf(said: unknown): PresenceCaret | undefined {
+  if (typeof said !== "object" || said === null) return undefined;
+  const { node, field, anchor, head, rev } = said as Record<string, unknown>;
+  const count = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+  if (typeof node !== "string" || typeof field !== "string" || node.length > 512 || field.length > 512 || !count(anchor) || !count(head) || !count(rev)) return undefined;
+  return { node, field, anchor, head, rev };
 }
 
 /**
@@ -658,7 +669,7 @@ const mintSession = (): string => globalThis.crypto.randomUUID().slice(0, 8);
  * where they stand or what they hover when that names a record the seat
  * may not see. A participant whose id is no record is shown as they are.
  */
-export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => boolean): Presence[] {
+export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => boolean, seesField?: (node: string, field: string) => boolean): Presence[] {
   const names = (value: string): boolean => value.split(/[/?#=&,;]/).every((part) => part === "" || sees(decodeURIComponent(part)));
   return who
     .filter((presence) => {
@@ -668,7 +679,7 @@ export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => b
     })
     .map((presence) => {
       // An agent is shown; for whom it acts is not, to a seat that may not see that person (FR-47).
-      const { onBehalfOf, onBehalfOfName, ...rest } = presence;
+      const { onBehalfOf, onBehalfOfName, caret, ...rest } = presence;
       const forWhom = onBehalfOf !== undefined && sees(onBehalfOf) ? { onBehalfOf, ...(onBehalfOfName !== undefined ? { onBehalfOfName } : {}) } : {};
       return {
         ...rest,
@@ -676,6 +687,8 @@ export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => b
         stop: names(presence.stop) ? presence.stop : "",
         ...(typeof presence.over === "string" && !sees(presence.over) ? { over: null } : {}),
         ...(presence.robot?.at && !sees(presence.robot.at) ? { robot: { ...presence.robot, at: null } } : {}),
+        // A caret in a field the seat may not see is not said at all: where somebody types says what is there (Roadmap f-collab-text).
+        ...(caret && sees(caret.node) && (seesField?.(caret.node, caret.field) ?? true) ? { caret } : {}),
       };
     });
 }
@@ -938,7 +951,9 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       // A visitor whose announced time has passed is never told of, though a host may still hold it.
       const now = Date.now();
       const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
-      return sighted(principal) ? presenceSeenBy(standing, seesId(store, principal)) : standing;
+      if (!sighted(principal)) return standing;
+      const lens = seatLens(store, principal);
+      return presenceSeenBy(standing, seesId(store, principal), (node, field) => !keptField(lens, node, field));
     },
     claim(batch, seat) {
       if (batch === undefined || batch === null || batch === "") return {};

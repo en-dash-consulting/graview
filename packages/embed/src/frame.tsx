@@ -2,7 +2,7 @@ import type { HistoryHost } from "@graview/core/history";
 import { faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
-import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type KeepLensHost, type MenuSectionSource, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
+import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type MenuSectionSource, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -81,6 +81,8 @@ export interface EmbedHostContext {
 export interface EmbedRemote<S extends AnySchema = AnySchema> {
   readonly store: Store<S>;
   readonly presence?: PresenceChannel;
+  /** Typing into a field typed together, a keystroke at a time (Roadmap f-collab-text): a remote store's own, called without its remote. */
+  readonly typing?: (node: string, field: string) => Promise<FieldTyping>;
 }
 
 /** What every face takes: the app, its store, who is here, and the frame it sits in. */
@@ -658,6 +660,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     /* The seats, so every surface under the provider names a seat as it was offered (W-114). */
     seats: props.seats,
     presence,
+    typing: props.remote?.typing,
     people: props.people,
     memory: props.memory,
     presenceTtlMs: props.presenceTtlMs,

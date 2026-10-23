@@ -1,0 +1,58 @@
+{
+  "at": "2026-10-23T06:00:40.571Z",
+  "engine": "chromium",
+  "document": "scripts/fixtures/long-text/roadmap.gdd.json",
+  "claims": {
+    "theBodyOpensLiveWithNoSave": {
+      "ok": true,
+      "detail": {
+        "live": true,
+        "buttons": [
+          "Done",
+          "Preview"
+        ]
+      }
+    },
+    "twoPagesTypingIntoOneLongFieldConverge": {
+      "ok": true,
+      "detail": {
+        "length": 10751,
+        "sameOnBoth": true,
+        "sameAsTheStore": true,
+        "adasWords": true,
+        "bosWords": true
+      }
+    },
+    "aCaretStaysOnItsWordWhileTheOtherTypesAboveIt": {
+      "ok": true,
+      "detail": {
+        "before": "one two three ",
+        "collapsed": true
+      }
+    },
+    "eachSeesTheOthersCaretWhereTheyStand": {
+      "ok": true,
+      "detail": {
+        "bosOnAda": {
+          "title": "Bo is typing here",
+          "before": "sv`\n- one two three ",
+          "color": "rgb(195, 200, 65)",
+          "width": 2,
+          "inside": true
+        },
+        "adasOnBo": {
+          "title": "Ada is typing here",
+          "before": "71 alpha beta gamma ",
+          "color": "rgb(65, 200, 162)",
+          "width": 2,
+          "inside": true
+        }
+      }
+    },
+    "noPageThrew": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "passed": true
+}

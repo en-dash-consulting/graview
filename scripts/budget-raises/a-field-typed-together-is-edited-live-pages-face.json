@@ -1,0 +1,7 @@
+{
+  "budget": "the pages face alone",
+  "minified": 450,
+  "gzipped": 200,
+  "changeset": "a-field-typed-together-is-edited-live.md",
+  "note": "Raised when a field typed together came to be edited live (collaborative text, phase 4): the provider's `typing` and the context an editor finds it by, the presence's caret, and the record's prose handing its editor the record. Measured at 656_600 / 241_664 against 656_151 / 241_498 before it: 449 more minified, 166 gzipped."
+}

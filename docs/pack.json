@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-23T05:38:41.295Z",
+  "at": "2026-10-23T06:03:37.264Z",
   "packages": {
     "@graview/core": {
       "files": 1244,
-      "tarballBytes": 1471558,
+      "tarballBytes": 1471969,
       "ok": true
     },
     "create-graview": {
@@ -13,17 +13,17 @@
     },
     "@graview/embed": {
       "files": 63,
-      "tarballBytes": 93527,
+      "tarballBytes": 93700,
       "ok": true
     },
     "graview": {
-      "files": 179,
-      "tarballBytes": 718194,
+      "files": 180,
+      "tarballBytes": 721491,
       "ok": true
     },
     "@graview/guest": {
       "files": 300,
-      "tarballBytes": 430014,
+      "tarballBytes": 430013,
       "ok": true
     },
     "@graview/layout": {
@@ -33,17 +33,17 @@
     },
     "@graview/pages": {
       "files": 131,
-      "tarballBytes": 191393,
+      "tarballBytes": 191392,
       "ok": true
     },
     "@graview/primitives": {
-      "files": 618,
-      "tarballBytes": 818853,
+      "files": 626,
+      "tarballBytes": 830115,
       "ok": true
     },
     "@graview/react": {
-      "files": 307,
-      "tarballBytes": 362348,
+      "files": 311,
+      "tarballBytes": 363955,
       "ok": true
     },
     "@graview/render": {
@@ -53,7 +53,7 @@
     },
     "@graview/ship": {
       "files": 191,
-      "tarballBytes": 294319,
+      "tarballBytes": 294909,
       "ok": true
     },
     "@graview/skills": {
@@ -63,12 +63,12 @@
     },
     "@graview/studio": {
       "files": 75,
-      "tarballBytes": 144627,
+      "tarballBytes": 144629,
       "ok": true
     },
     "@graview/tools": {
       "files": 235,
-      "tarballBytes": 366449,
+      "tarballBytes": 366448,
       "ok": true
     }
   },
@@ -79,12 +79,12 @@
     {
       "name": "the pages face alone",
       "load": "first",
-      "minified": 656151,
-      "gzipped": 241498,
+      "minified": 656600,
+      "gzipped": 241664,
       "chunks": 39,
       "budget": {
-        "minified": 656184,
-        "gzipped": 241543
+        "minified": 656634,
+        "gzipped": 241743
       },
       "carries": [],
       "defers": [],
@@ -103,12 +103,12 @@
     {
       "name": "a visitor's form alone",
       "load": "first",
-      "minified": 390234,
-      "gzipped": 149741,
+      "minified": 390472,
+      "gzipped": 149848,
       "chunks": 36,
       "budget": {
-        "minified": 390270,
-        "gzipped": 149782
+        "minified": 390570,
+        "gzipped": 149932
       },
       "carries": [],
       "defers": [],
@@ -125,8 +125,8 @@
     {
       "name": "embed without the studio",
       "load": "first",
-      "minified": 386687,
-      "gzipped": 135987,
+      "minified": 387017,
+      "gzipped": 136099,
       "chunks": 9,
       "budget": {
         "minified": 725090,
@@ -152,9 +152,9 @@
     {
       "name": "every face",
       "load": "all",
-      "minified": 2236098,
-      "gzipped": 817382,
-      "chunks": 163,
+      "minified": 2244340,
+      "gzipped": 821036,
+      "chunks": 164,
       "budget": {
         "minified": 2500880,
         "gzipped": 846976
@@ -179,8 +179,8 @@
     {
       "name": "embed with the studio handed in",
       "load": "first",
-      "minified": 1590446,
-      "gzipped": 563497,
+      "minified": 1590805,
+      "gzipped": 563620,
       "chunks": 78,
       "budget": {
         "minified": 1881752,
@@ -235,7 +235,7 @@
       "name": "the guest host, before a worker is drawn",
       "load": "first",
       "minified": 24914,
-      "gzipped": 11643,
+      "gzipped": 11642,
       "chunks": 8,
       "budget": {
         "minified": 24945,
@@ -254,7 +254,7 @@
       "name": "the guest host, registering a worker view",
       "load": "first",
       "minified": 31729,
-      "gzipped": 14267,
+      "gzipped": 14268,
       "chunks": 10,
       "budget": {
         "minified": 31743,

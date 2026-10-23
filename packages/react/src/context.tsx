@@ -49,6 +49,7 @@ import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./r
 import type { ViewComponent, ViewMode } from "./view-registry.js";
 import type { HistoryHost } from "@graview/core/history";
 import { PlaybackContext, useOwnPlayback, useReadersServed, type Playback } from "./past.js";
+import { TypingContext, type FieldTyping } from "./typing.js";
 
 export type { ViewMode } from "./view-registry.js";
 
@@ -491,6 +492,13 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * unless it opts in.
    */
   readonly presence?: PresenceChannel | undefined;
+  /**
+   * TYPING TOGETHER (Roadmap f-collab-text): a served store's
+   * `remote.typing(node, field)`. Given, a field typed together is edited
+   * live — each keystroke sent as it is typed, others' carets drawn in it;
+   * unsaid, under a provider that was handed one, that one's.
+   */
+  readonly typing?: ((node: string, field: string) => Promise<FieldTyping>) | undefined;
   readonly brand?: Brand | undefined;
   /**
    * THE READER'S LOCALE (FR-178): what days, times and numbers are said in
@@ -694,6 +702,7 @@ export function GraviewProvider<S extends AnySchema>({
   app: mountedApp,
   settings: appSettings = mountedApp?.settings ?? NO_SETTINGS,
   presence,
+  typing,
   brand,
   locale: readerLocale,
   timeZone: readerTimeZone,
@@ -1103,7 +1112,7 @@ export function GraviewProvider<S extends AnySchema>({
     [setView],
   );
 
-  const { who: others, following, follow, sayWhere, sharing } = usePresenceState<S>({
+  const { who: others, following, follow, sayWhere, sayCaret, sharing } = usePresenceState<S>({
     channel: presence,
     store,
     view: current,
@@ -1241,10 +1250,12 @@ export function GraviewProvider<S extends AnySchema>({
 
   );
 
+  const live = useMemo(() => (typing ? { typing, sayCaret, who: others } : null), [typing, sayCaret, others]);
+  const filed = files ? <HostFilesContext.Provider value={files}>{children}</HostFilesContext.Provider> : children;
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
       <PlaybackContext.Provider value={playback as unknown as Playback}>
-        <FoundProvider>{waiting ? null : files ? <HostFilesContext.Provider value={files}>{children}</HostFilesContext.Provider> : children}</FoundProvider>
+        <FoundProvider>{waiting ? null : live ? <TypingContext.Provider value={live}>{filed}</TypingContext.Provider> : filed}</FoundProvider>
       </PlaybackContext.Provider>
     </GraviewContext.Provider>
   );

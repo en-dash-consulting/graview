@@ -27,6 +27,9 @@ export { BesideTheMap } from "./beside-the-map.js";
 export { HostFilesContext, useHostFiles } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
 export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
+// Typing together (Roadmap f-collab-text): the host's `typing`, where an editor of a field typed together finds it.
+export { TypingContext } from "./typing.js";
+export type { FieldTyping, LiveTyping } from "./typing.js";
 export { HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
 export type { PresenceInputs, PresenceState } from "./presence.js";
 export { foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO } from "./robot.js";

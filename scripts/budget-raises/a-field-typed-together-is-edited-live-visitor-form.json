@@ -1,0 +1,7 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 300,
+  "gzipped": 150,
+  "changeset": "a-field-typed-together-is-edited-live.md",
+  "note": "Raised when a field typed together came to be edited live (collaborative text, phase 4): the provider a form is drawn under takes `typing` and the context an editor finds it by, and its presence holds a caret. Measured at 390_472 / 149_848 against 390_234 / 149_741 before it: 238 more minified, 107 gzipped."
+}
