@@ -440,6 +440,14 @@ export interface GraviewProviderProps<S extends AnySchema> {
   /** Defaults to an unroled human, which a store with no policy permits everything. */
   readonly principal?: Principal | undefined;
   /**
+   * AS READERS SEE IT (Roadmap f-publishing-lifecycle): in an app that
+   * publishes, `"published"` shows a collaborator the app as readers are
+   * served it — the last publish — to preview it before publishing; acts
+   * still land on the head. Absent, `?as=published` in the page's address
+   * says it; otherwise the seat is served as it is.
+   */
+  readonly as?: "head" | "published";
+  /**
    * The seats a reader may take. The first is where they start unless
    * `principal` says otherwise; the bar draws a control when there are two
    * or more, and nothing at all when there are none.
@@ -627,6 +635,15 @@ export function useTheWatchKnowsWhatIsUnseen<S extends AnySchema>(store: Store<S
   }, [store, principal, from]);
 }
 
+/** `?as=published` in the page's address: a collaborator previewing what readers are served. */
+const previewAsked = (): "published" | undefined => {
+  try {
+    return typeof location !== "undefined" && new URLSearchParams(location.search).get("as") === "published" ? "published" : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 /** What a host that turned AI off is handed on: nothing but that it is off. */
 const AI_OFF: HostAi = { off: true };
 
@@ -637,6 +654,7 @@ export function GraviewProvider<S extends AnySchema>({
   scheme = "dark",
   initialSelection,
   principal,
+  as: servedAs,
   seats = NO_SEATS,
   onSeat,
   people = NO_PEOPLE,
@@ -685,7 +703,8 @@ export function GraviewProvider<S extends AnySchema>({
    * storefront is not shown the customers. Acts still go to the store
    * itself. With no `sees` it is the store, unchanged.
    */
-  const store = useMemo(() => shown.seenBy(seatNow), [shown, seatNow]);
+  const as = servedAs ?? previewAsked();
+  const store = useMemo(() => shown.seenBy(seatNow, as ? { as } : undefined), [shown, seatNow, as]);
   useTheWatchKnowsWhatIsUnseen(given, seatNow);
   /* This tab, for the life of the tab: see `tabSession`. */
   const [session] = useState(() => tabSession(memory));

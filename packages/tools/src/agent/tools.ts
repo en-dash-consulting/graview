@@ -7,6 +7,10 @@ import {
   nodeRefArgs,
   permits,
   permittedMutations,
+  onPublish,
+  PUBLISH,
+  publishMutation,
+  publishRefusal,
   refusalOf,
   resolveModules,
   archivedFrom,
@@ -774,19 +778,22 @@ export interface ToolDefinitionsOptions {
  * moved.
  */
 export function toolDefinitions<S extends AnySchema>(
-  app: Pick<GraviewApp<S>, "schema" | "mutations" | "policy" | "modules">,
+  app: Pick<GraviewApp<S>, "schema" | "mutations" | "policy" | "modules" | "publishing">,
   principal: Principal = { kind: "agent" },
   options: ToolDefinitionsOptions = {},
 ): { readonly definitions: readonly ToolDefinition[]; readonly hash: string } {
   const declared = (app.mutations ?? []) as unknown as readonly AnyMutationDefinition[];
-  const every = [...declared, ...deriveMutations(app.schema as AnySchema, declared as never)] as AnyMutationDefinition[];
+  // And "Publish", as the store adds it to an app that publishes (Roadmap f-publishing-lifecycle).
+  const publishes = onPublish(app.publishing) && !declared.some((act) => act.name === PUBLISH);
+  const every = [...declared, ...deriveMutations(app.schema as AnySchema, declared as never), ...(publishes ? [publishMutation() as unknown as AnyMutationDefinition] : [])] as AnyMutationDefinition[];
   const modules = resolveModules(app.modules, options.enabledModules);
   const acts = every.filter(
     (act) => !modules.disabledMutations.has(act.name) && !(act.derived !== undefined && modules.disabledKinds.has(act.derived.kind)),
   );
   // As the store narrows: declared acts by the policy, derived ones through the acts they ride.
   const permitted = new Set([
-    ...permittedMutations(app.policy, principal, acts.filter((act) => !act.derived)).map((act) => act.name),
+    ...permittedMutations(app.policy, principal, acts.filter((act) => !act.derived && !(publishes && act.name === PUBLISH))).map((act) => act.name),
+    ...(publishes && !publishRefusal(app.publishing, principal) ? [PUBLISH] : []),
     ...acts
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),

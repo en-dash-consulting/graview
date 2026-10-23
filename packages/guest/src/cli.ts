@@ -64,7 +64,7 @@ export async function view(argv: readonly string[]): Promise<number> {
   const store = new Store<AnySchema>({
     schema: app.schema as AnySchema,
     mutations: (app.mutations ?? []) as never,
-    ...(app.policy ? { policy: app.policy } : {}),
+    ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}),
     // Either snapshot format, as `serve --seed` reads it.
     ...(seedAt ? { snapshot: readSnapshot(readFileSync(resolve(process.cwd(), seedAt), "utf8")).snapshot as never } : {}),
   });

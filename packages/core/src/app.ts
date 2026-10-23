@@ -3,6 +3,7 @@ import type { ArrangementWords } from "./arrangement.js";
 import type { InvariantDefinition } from "./invariants/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import type { Policy } from "./permissions/types.js";
+import type { Publishing } from "./publishing.js";
 import type { Brand } from "./theme/types.js";
 import type { ModuleMap } from "./modules.js";
 import type { GraphSnapshot } from "./graph/types.js";
@@ -192,6 +193,16 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * cannot press.
    */
   readonly policy?: Policy;
+  /**
+   * WHEN EDITS REACH READERS (Roadmap f-publishing-lifecycle). Absent, or
+   * `mode: "live"`, every edit reaches everyone as it is made. With
+   * `mode: "on-publish"`, the seats whose roles are `working` edit the head
+   * in real time, and everyone else is served the app as it stood at the
+   * last publish — the built-in `publish` act, run by `publishers` (absent,
+   * `working`). Handed to the store (`StoreOptions.publishing`), which is
+   * where it is honored; `graview check` judges the roles it names.
+   */
+  readonly publishing?: Publishing;
   /**
    * The name, the palette and the typography this installation wears.
    *

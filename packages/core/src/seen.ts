@@ -9,6 +9,9 @@ import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
 import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
+import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
+import { pastOf } from "./past.js";
+import { servedThroughFor, type Publishing } from "./publishing.js";
 
 const NOTHING: ReadonlySet<string> = new Set();
 
@@ -422,19 +425,19 @@ const VIEWS = new WeakMap<object, Map<string, unknown>>();
  */
 function seatKey(principal: Principal): string {
   const judged = isSystem(principal) ? principal : actingAs(principal);
-  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? "for" : ""}`;
+  // An agent's own id too: two agents for one person are two seats, and each view answers as its own (`seenFor`, `wouldChange`, `preview`).
+  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? `for:${principal.id ?? ""}` : ""}`;
 }
 
 /**
- * WHERE A SEAT'S VIEW IS SERVED THROUGH (`servedSeq`): the head, today, for
- * every seat — the view reads its store as it grows. A policy that serves a
- * seat behind the head (docs/stability.md, "Served state and the head")
- * changes only how this is chosen; the store a seat's view is of, the
- * module reading what is off and the policy are each the store's own, so
- * the view's key is the seat and this.
+ * WHERE A SEAT'S VIEW IS SERVED THROUGH (`servedSeq`): the head, for a seat
+ * of a live app and a collaborator of one that publishes — the view reads
+ * its store as it grows — or what was published, for a reader of one
+ * (`servedBehind`), which moves when a publish does. The store a seat's
+ * view is of, the module reading what is off and the policy are each the
+ * store's own, so the view's key is the seat and this.
  */
-const HEAD = "head";
-const viewKey = (principal: Principal): string => `${seatKey(principal)}@${HEAD}`;
+const viewKey = (principal: Principal, served: "head" | "published"): string => `${seatKey(principal)}@${served}`;
 
 const bound = (target: object, prop: PropertyKey): unknown => {
   const value = Reflect.get(target, prop, target);
@@ -477,14 +480,96 @@ export interface Viewed extends Judged {
   wouldChange(call: never, author: Principal): unknown;
   preview(call: never, context: never, options: { readonly author: Principal }): unknown;
   checkpoint(options?: never): Epoch | undefined;
+  readonly publishing?: Publishing | undefined;
+  readonly publishedSeq?: number | undefined;
+  subscribe(listener: never): () => void;
 }
 
-export function seenBy<T extends Viewed>(store: T, principal: Principal): T {
-  // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
-  if (!hidesFrom(store, principal)) return store;
-  const key = viewKey(principal);
+/** How a seat asks to be served: as it is (the default), or — a collaborator previewing — as readers are, `"published"`. */
+export interface SeenOptions {
+  readonly as?: "head" | "published";
+}
+
+export function seenBy<T extends Viewed>(store: T, principal: Principal, options: SeenOptions = {}): T {
+  // A reader of an app that publishes is served what was published (Roadmap f-publishing-lifecycle).
+  if (store.publishing?.mode === "on-publish" && servedThroughFor(store.publishing, store.publishedSeq, store.log.horizon, principal, options.as) !== undefined) return servedBehind(store, principal);
+  return seatView(store, principal);
+}
+
+/** The reads a reader's view answers from what was published; every other, and every write, is the head's. */
+const PUBLISHED_READS = new Set<PropertyKey>(["graph", "log", "snapshot", "batches", "violations", "findings", "canUndo", "servedSeq", "checkpoint"]);
+
+/**
+ * THE APP AS A READER IS SERVED IT, in an app that publishes (Roadmap
+ * f-publishing-lifecycle): its graph, log, problems and history are those
+ * of the app as it stood at the last publish (`pastOf`), as the seat may
+ * see it; and every act, preview and permission still goes to the store
+ * and is judged at the head, where what the reader writes lands — read by
+ * readers when it is next published. It follows the published seq as a
+ * publish (or the undo of one) moves it, and tells its subscribers only
+ * when it does, with the change between the two.
+ */
+function servedBehind<T extends Viewed>(store: T, principal: Principal): T {
+  const views = viewsOf(store);
+  const key = viewKey(principal, "published");
+  const held = views.get(key);
+  if (held) return held as T;
+  const head = seatView(store, principal);
+  let kept: { readonly seq: number; readonly id: string | undefined; readonly view: T } | undefined;
+  const now = (): T => {
+    const seq = servedThroughFor(store.publishing, store.publishedSeq, store.log.horizon, principal, "published") ?? store.log.length;
+    if (seq >= store.log.length) return head;
+    const id = store.log.all()[seq - 1 - store.log.horizon]?.id;
+    if (kept?.seq !== seq || kept.id !== id) kept = { seq, id, view: seatView(pastOf(store as never, seq) as unknown as T, principal) };
+    return kept.view;
+  };
+  const seqOf = (served: T): number => (served as unknown as { readonly servedSeq: number }).servedSeq;
+  const subscribe = (listener: (diff: GraphDiff<never>, ops: readonly Operation[]) => void) => {
+    let from = seqOf(now());
+    let shot = now().graph.snapshot();
+    return store.subscribe((() => {
+      const served = now();
+      const to = seqOf(served);
+      if (to === from) return;
+      const after = served.graph.snapshot();
+      const ops = to > from ? served.log.all().filter((op) => op.seq >= from) : [];
+      const diff = diffSnapshots(shot as never, after as never) as GraphDiff<never>;
+      [from, shot] = [to, after];
+      listener(diff, ops);
+    }) as never);
+  };
+  const view = new Proxy(head, {
+    get(target, prop) {
+      switch (prop) {
+        case SEAT:
+          return { store, principal };
+        case "subscribe":
+          return subscribe;
+        case "seenBy":
+          return (other: Principal, options?: SeenOptions) => seenBy(store, other, options);
+        case "seenFor":
+          return principal;
+        default:
+          return PUBLISHED_READS.has(prop) ? bound(now(), prop) : bound(target, prop);
+      }
+    },
+  });
+  views.set(key, view);
+  return view as T;
+}
+
+function viewsOf(store: object): Map<string, unknown> {
   let views = VIEWS.get(store);
   if (!views) VIEWS.set(store, (views = new Map()));
+  return views;
+}
+
+/** The app as a seat is served it at the head: what its sight reaches, as the store grows. */
+function seatView<T extends Viewed>(store: T, principal: Principal): T {
+  // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
+  if (!hidesFrom(store, principal)) return store;
+  const key = viewKey(principal, "head");
+  const views = viewsOf(store);
   const held = views.get(key);
   if (held) return held as T;
 
@@ -664,12 +749,12 @@ export function seenBy<T extends Viewed>(store: T, principal: Principal): T {
         case "preview":
           return (call: never, context?: never, options?: object) => target.preview(call, context as never, { author: principal, ...options });
         case "seenBy":
-          return (other: Principal) => seenBy(target, other);
+          return (other: Principal, options?: SeenOptions) => seenBy(target, other, options);
         case "seenFor":
           return principal;
-        // Where what this seat is served ends: the head, as the store's own (`servedSeq`); never set through the view.
+        // Where what this seat is served ends: the store's own (`servedSeq`) — its head, or a past's seq; never set through the view.
         case "servedSeq":
-          return target.log.length;
+          return (target as unknown as { servedSeq: number }).servedSeq;
         // A checkpoint taken through the seat's view is the one it is served.
         case "checkpoint":
           return (options?: never) => servedIf(target.checkpoint(options));

@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 9254,
+  "gzipped": 3341,
+  "note": "Raised when edits came to reach readers when they are published (Roadmap f-publishing-lifecycle): a visitor is a reader, and in an app that publishes is served the last publish, so the form's store reaches `pastOf` from the seat view. Measured at 389_254 / 149_341 against 379_509 / 145_604 before (9_745 / 3_737 more)."
+}

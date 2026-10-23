@@ -125,8 +125,11 @@ export type LiveClientMessage =
 export type LiveServerMessage =
   /**
    * The answer to `hello`: the protocol the server speaks, the last seq in
-   * its log, and the ops after the client's seq. `state` only when the
-   * hello named no seq.
+   * its log, and the ops after the client's seq. `state` when the hello
+   * named no seq — and in place of the ops when they cannot catch it up:
+   * its seq is behind the compaction horizon, or past where its seat is
+   * now served (a publish taken back). Such a welcome may also come
+   * unasked, mid-connection; the client takes the state.
    */
   | {
       readonly t: "welcome";
@@ -143,6 +146,8 @@ export type LiveServerMessage =
       readonly held?: string;
       readonly seq: number;
       readonly ops: readonly Operation[];
+      /** Where the seat is served through, in an app that publishes (Roadmap f-publishing-lifecycle): `seq` + 1. Absent in a live app. */
+      readonly servedThrough?: number;
       /** `horizon`: the seq `log` begins at, when the store was compacted (FR-23); absent, 0. */
       readonly state?: { readonly version: number; readonly snapshot: GraphSnapshot; readonly log: readonly Operation[]; readonly migrated: readonly string[]; readonly enabledModules?: readonly string[]; readonly horizon?: number };
     }

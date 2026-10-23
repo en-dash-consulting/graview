@@ -147,6 +147,16 @@ export interface Operation {
    * whole from a seat that may not see a record it names.
    */
   readonly suggests?: readonly MutationCall[];
+  /**
+   * HOW FAR READERS ARE SERVED, set by a publish (Roadmap
+   * f-publishing-lifecycle): in an `on-publish` app, the seats not
+   * `working` are served the ops before this seq and none after. Set only
+   * on the op of the built-in `publish` act, which touches no record; the
+   * last such op that stands says it (`Store.publishedSeq`), so an undo
+   * of a publish takes readers back to the one before. An op without it
+   * reads as before, and folds the same.
+   */
+  readonly publishedThrough?: number;
 }
 
 export interface Batch {

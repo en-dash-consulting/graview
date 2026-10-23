@@ -368,6 +368,16 @@ export function describeApp<S extends AnySchema>(
     }
   }
 
+  // WHEN EDITS REACH READERS (Roadmap f-publishing-lifecycle): said only of an app that publishes; a live app is as every app was.
+  if (app.publishing?.mode === "on-publish") {
+    const publishers = app.publishing.publishers ?? app.publishing.working;
+    lines.push(
+      "",
+      "## Publishing",
+      `Edits reach readers when they are published. ${capitalize(list([...app.publishing.working]) || "nobody")} edit live and see every change as it is made; everyone else — visitors, embeds, static pages, other apps' linked reads — is served the app as it stood at the last publish. ${capitalize(list([...publishers]) || "nobody")} may publish ("publish") and take a publish back (undo it). What a reader sends lands at once, and reaches readers with the next publish.`,
+    );
+  }
+
   /* HOW A MODEL IS REACHED, and whether anything actually serves the door. */
   const providers = app.intelligence ?? [];
   if (providers.length > 0) {

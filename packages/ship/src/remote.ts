@@ -639,7 +639,7 @@ async function opening<S extends AnySchema>(
     schema: app.schema,
     mutations: app.mutations ?? [],
     invariants: app.invariants ?? [],
-    ...(app.policy ? { policy: app.policy } : {}),
+    ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}),
     ...(app.modules ? { modules: app.modules } : {}),
     ...(enabledModules ? { enabledModules } : {}),
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),
@@ -863,8 +863,14 @@ async function opening<S extends AnySchema>(
 
   const since = async (seq: number): Promise<Operation[]> => {
     const response = await reach(`${options.url}/graview/since?seq=${seq}&opFormat=${FORMATS.op}`, { headers });
-    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string };
-    return moved(answer) ? [] : (answer.ops ?? []);
+    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string; reset?: boolean };
+    if (moved(answer)) return [];
+    // The ops cannot catch this client up (behind the horizon, or past where its seat is now served): it takes the state.
+    if (answer.reset === true) {
+      resync();
+      return [];
+    }
+    return answer.ops ?? [];
   };
 
   /** Asks for what is new, and waits for a resync the answer started, so the store is the server's when it returns. */
@@ -1133,7 +1139,9 @@ async function opening<S extends AnySchema>(
         if (typeof message.participant === "string") self = message.participant;
         // Held, or not, as of this welcome: a hold released while this socket was away ends here (FR-66).
         hearHeld(message.held);
-        land(message.ops ?? []);
+        // The whole state in place of the ops: this client is behind the horizon, or holds what its seat is no longer served. It takes the state.
+        if (message.state) resync();
+        else land(message.ops ?? []);
         // Whatever was sent and never answered goes again: the server answers a batch it already has with its ops.
         busy.clear();
         if (busyTimer) clearTimeout(busyTimer);
