@@ -1,11 +1,11 @@
 {
-  "at": "2026-10-15T00:54:54.525Z",
+  "at": "2026-10-23T03:46:03.568Z",
   "engine": "chromium",
   "checks": {
     "everyPopoverStandsOverEverythingWithTheSeatOpen": {
       "faces": {
         "the embed's Graview 1440×900": {
-          "seat": "open",
+          "askBox": false,
           "popovers": {
             "profile": {
               "drawn": true,
@@ -231,7 +231,7 @@
                 "inside": true
               },
               "lastRow": {
-                "at": "button[suggestion-decline]",
+                "at": "button[suggestion-not-now]",
                 "inside": true
               },
               "inTheViewport": true,
@@ -443,11 +443,11 @@
               "drawn": true,
               "topLayer": true,
               "center": {
-                "at": "button",
+                "at": "section[context-menu]",
                 "inside": true
               },
               "lastRow": {
-                "at": "button[pin-toggle]",
+                "at": "button",
                 "inside": true
               },
               "inTheViewport": true,
@@ -455,7 +455,7 @@
                 613,
                 273,
                 300,
-                84
+                152
               ],
               "ok": true,
               "opened": {
@@ -515,7 +515,7 @@
           }
         },
         "the embed's pages 1440×900": {
-          "seat": "open",
+          "askBox": false,
           "popovers": {
             "profile": {
               "drawn": true,
@@ -809,7 +809,7 @@
                 "inside": true
               },
               "lastRow": {
-                "at": "button[suggestion-decline]",
+                "at": "button[suggestion-not-now]",
                 "inside": true
               },
               "inTheViewport": true,
@@ -961,7 +961,7 @@
           }
         },
         "the Shell 1440×900": {
-          "seat": "open",
+          "askBox": false,
           "popovers": {
             "profile": {
               "drawn": true,
@@ -1189,7 +1189,7 @@
               "drawn": true,
               "topLayer": true,
               "center": {
-                "at": "div[find-hit]",
+                "at": "span",
                 "inside": true
               },
               "lastRow": {
@@ -1201,7 +1201,7 @@
                 845,
                 45,
                 416,
-                439
+                392
               ],
               "ok": true,
               "opened": {
@@ -1267,15 +1267,15 @@
                 "inside": true
               },
               "lastRow": {
-                "at": null,
+                "at": "button",
                 "inside": true
               },
               "inTheViewport": true,
               "box": [
-                487,
-                797,
+                171,
+                650,
                 300,
-                88
+                135
               ],
               "ok": true,
               "opened": {
@@ -1283,7 +1283,7 @@
                 "onTrigger": false,
                 "onCard": false,
                 "onBody": false,
-                "at": "section[context-menu]"
+                "at": "button"
               },
               "hangs": null,
               "escaped": {
@@ -1335,7 +1335,7 @@
           }
         },
         "the embed's Graview 390×844": {
-          "seat": "closed",
+          "askBox": false,
           "popovers": {
             "profile": {
               "drawn": true,
@@ -1617,7 +1617,7 @@
                 "inside": true
               },
               "lastRow": {
-                "at": "button[suggestion-decline]",
+                "at": "button[suggestion-not-now]",
                 "inside": true
               },
               "inTheViewport": true,
@@ -1761,11 +1761,11 @@
               "drawn": true,
               "topLayer": true,
               "center": {
-                "at": "button",
+                "at": "section[context-menu]",
                 "inside": true
               },
               "lastRow": {
-                "at": "button[pin-toggle]",
+                "at": "button",
                 "inside": true
               },
               "inTheViewport": true,
@@ -1773,7 +1773,7 @@
                 82,
                 369,
                 300,
-                84
+                152
               ],
               "ok": true,
               "opened": {
@@ -1833,7 +1833,7 @@
           }
         },
         "the embed's pages 390×844": {
-          "seat": "closed",
+          "askBox": false,
           "popovers": {
             "profile": {
               "drawn": true,
@@ -2127,7 +2127,7 @@
                 "inside": true
               },
               "lastRow": {
-                "at": "button[suggestion-decline]",
+                "at": "button[suggestion-not-now]",
                 "inside": true
               },
               "inTheViewport": true,
@@ -2279,7 +2279,7 @@
           }
         },
         "the Shell 390×844": {
-          "seat": "closed",
+          "askBox": false,
           "popovers": {
             "profile": {
               "drawn": true,
@@ -2637,11 +2637,11 @@
               "drawn": true,
               "topLayer": true,
               "center": {
-                "at": "p[no-affordances]",
+                "at": "section[context-menu]",
                 "inside": true
               },
               "lastRow": {
-                "at": null,
+                "at": "button",
                 "inside": true
               },
               "inTheViewport": true,
@@ -2649,7 +2649,7 @@
                 82,
                 149,
                 300,
-                58
+                104
               ],
               "ok": true,
               "opened": {
@@ -2657,7 +2657,7 @@
                 "onTrigger": false,
                 "onCard": false,
                 "onBody": false,
-                "at": "section[context-menu]"
+                "at": "button"
               },
               "hangs": null,
               "escaped": {
@@ -2783,7 +2783,7 @@
         "tray": {
           "count": "1",
           "rows": [
-            "Graview, tidying suggests \"Redirect the post\" waits for \"Give notice on the flat\"based on “The post is redirected from the day notice is given” · 45% sureRedirect the postGive notice on the flatAcceptDecline"
+            "Graview, tidying suggests \"Redirect the post\" waits for \"Give notice on the flat\"based on “The post is redirected from the day notice is given” · 45% sureRedirect the postGive notice on the flatAcceptDeclineNot nowHides it from you until tomorrow; it still waits for everyone else."
           ],
           "edges": 18
         },
@@ -2808,7 +2808,7 @@
         "tray": {
           "count": "1",
           "rows": [
-            "Graview, tidying suggests \"Redirect the post\" waits for \"Give notice on the flat\"based on “The post is redirected from the day notice is given” · 45% sureRedirect the postGive notice on the flatAcceptDecline"
+            "Graview, tidying suggests \"Redirect the post\" waits for \"Give notice on the flat\"based on “The post is redirected from the day notice is given” · 45% sureRedirect the postGive notice on the flatAcceptDeclineNot nowHides it from you until tomorrow; it still waits for everyone else."
           ],
           "edges": 18
         },
@@ -2825,6 +2825,45 @@
           "trayGone": true,
           "unchanged": true,
           "declinedBy": "user-nora",
+          "keyboard": "activity-button"
+        },
+        "ok": true
+      },
+      "ok": true
+    },
+    "notNowIsOnePersonsAndTheTraySaysWhatWasDoneWhileTheyWereAway": {
+      "graview": {
+        "said": {
+          "label": "Suggested: One suggestion waiting · tidied 2 things while you were away",
+          "away": "One suggestion waiting · tidied 2 things while you were away.",
+          "hint": "Hides it from you until tomorrow; it still waits for everyone else.",
+          "focused": "suggestion-not-now",
+          "ops": 3
+        },
+        "after": {
+          "ops": 3,
+          "stillWaitsForEveryone": 1,
+          "kept": 1,
+          "rows": 0,
+          "button": "Tidied 2",
+          "keyboard": "activity-button"
+        },
+        "ok": true
+      },
+      "pages": {
+        "said": {
+          "label": "Suggested: One suggestion waiting · tidied 2 things while you were away",
+          "away": "One suggestion waiting · tidied 2 things while you were away.",
+          "hint": "Hides it from you until tomorrow; it still waits for everyone else.",
+          "focused": "suggestion-not-now",
+          "ops": 3
+        },
+        "after": {
+          "ops": 3,
+          "stillWaitsForEveryone": 1,
+          "kept": 1,
+          "rows": 0,
+          "button": "Tidied 2",
           "keyboard": "activity-button"
         },
         "ok": true
@@ -3223,94 +3262,26 @@
           "09:00",
           "09:15"
         ],
-        "text": "TASKS\n\nPay the deposit\n\nIn the scene ↗\n\n\"Pay the deposit\" was due Aug 28, 2026\nGive it a new date …\nFinish it\nThe facts\nChange one where you can.\nFINISHED\nNo\nDUE\nAug 28, 2026\nDAY\nTue\nBLOCKED\n09:00\nUNTIL\n09:15\nThe list it is on\nToday\nWhy this is here\nThe landlord holds the date for 48 hours once the deposit…\nWhat can be done\nGive it a new date …\nFinish it\nNote why this is here …\nMove it to another list …\nRename …\nThis has to happen first …\nChange the task …\nBlock time for it …\nShow 5 more"
+        "text": "TASKS\n\nPay the deposit\n\nIn the scene\n↗\n\nNotify me when this changes\n\n\"Pay the deposit\" was due Aug 28, 2026\nGive it a new date …\nFinish it\nThe facts\nChange one where you can.\nFINISHED\nNo\nDUE\nAug 28, 2026\nDAY\nTue\nBLOCKED\n09:00\nUNTIL\n09:15\nThe list it is on\nToday\nWhy this is here\nThe landlord holds the date for 48 hours once the deposit…\nWhat can be done\nGive it a new date …\nFinish it\nNote why this is here …\nMove it to another list …\nRename …\nThis has to happen first …\nChange the task …\nBlock time for it …\nShow 5 more"
       },
       "ok": true
     },
-    "theSeatFloatsSnapsAndCanBeLeftOut": {
+    "thePictureKeepsItsWidthWithNoAskBox": {
       "the embed's Graview": {
-        "closed": {
+        "drawn": {
           "frameWidth": 1440,
           "sceneWidth": 1440,
-          "state": "closed",
-          "side": "left",
-          "fromLeft": 16,
-          "fromRight": 1088,
-          "keyboard": null,
-          "firstCard": 314
-        },
-        "opened": {
-          "frameWidth": 1440,
-          "sceneWidth": 1440,
-          "state": "open",
-          "side": "left",
-          "fromLeft": 7,
-          "fromRight": 1079,
-          "keyboard": "seat-field",
-          "firstCard": 314
-        },
-        "snapped": {
-          "frameWidth": 1440,
-          "sceneWidth": 1440,
-          "state": "open",
-          "side": "right",
-          "fromLeft": 1079,
-          "fromRight": 7,
-          "keyboard": "seat-side",
-          "firstCard": 314
-        },
-        "afterAReload": {
-          "frameWidth": 1440,
-          "sceneWidth": 1440,
-          "state": "open",
-          "side": "right",
-          "fromLeft": 1079,
-          "fromRight": 7,
-          "keyboard": null,
-          "firstCard": 314
+          "askBox": false,
+          "quickAsk": false
         },
         "ok": true
       },
       "the Shell": {
-        "closed": {
+        "drawn": {
           "frameWidth": 1440,
           "sceneWidth": 1440,
-          "state": "closed",
-          "side": "left",
-          "fromLeft": 16,
-          "fromRight": 1088,
-          "keyboard": null,
-          "firstCard": 36
-        },
-        "opened": {
-          "frameWidth": 1440,
-          "sceneWidth": 1440,
-          "state": "open",
-          "side": "left",
-          "fromLeft": 7,
-          "fromRight": 1079,
-          "keyboard": "seat-field",
-          "firstCard": 36
-        },
-        "snapped": {
-          "frameWidth": 1440,
-          "sceneWidth": 1440,
-          "state": "open",
-          "side": "right",
-          "fromLeft": 1079,
-          "fromRight": 7,
-          "keyboard": "seat-side",
-          "firstCard": 36
-        },
-        "afterAReload": {
-          "frameWidth": 1440,
-          "sceneWidth": 1440,
-          "state": "open",
-          "side": "right",
-          "fromLeft": 1079,
-          "fromRight": 7,
-          "keyboard": null,
-          "firstCard": 36
+          "askBox": false,
+          "quickAsk": false
         },
         "ok": true
       },
@@ -3318,25 +3289,17 @@
         "narrow": {
           "frameWidth": 820,
           "sceneWidth": 820,
-          "state": "closed",
-          "side": "left",
-          "fromLeft": 16,
-          "fromRight": 468,
-          "keyboard": null,
-          "firstCard": 16
+          "askBox": false,
+          "quickAsk": false
         },
         "ok": true
       },
-      "startedAs-hidden": {
+      "startedWithoutTheQuickAsk": {
         "started": {
           "frameWidth": 1440,
           "sceneWidth": 1440,
-          "state": null,
-          "side": null,
-          "fromLeft": null,
-          "fromRight": null,
-          "keyboard": null,
-          "firstCard": 309
+          "askBox": false,
+          "quickAsk": false
         },
         "ok": true
       },

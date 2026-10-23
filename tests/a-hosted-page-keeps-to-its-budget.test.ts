@@ -136,6 +136,7 @@ describe("a hosted page", () => {
     // 983 KB since a lineage came to keep its judge, run, evidence and a later build's keys, a decline to refuse the same change by what it means, and a suggestion to expire: the scene face measured 1_002_336 B, 1_408 more than before them (1_000_928).
     // 984 KB since the 0.1.49 batch came together: what each raise above measured alone, with the dream's run id on its lineage — the scene face measured 1_006_737 B.
     // 979 KB since the formats came to fail closed for 1.0: a primitive or a typed value a build does not know refused where ops are folded, an author's kind read through `authorKindOf`, two refusal codes more: the scene face measured 1_002_138 B, 666 over 978.
+    // 980 KB since the Suggested tray came to say Not now and what was done while a person was away, and Activity to fold a night's run into one row: the provider hands the tray the host's `dismissals` and `whileAway`, and the bar fetches the tray for them: the scene face measured 1_002_816 B, 480 more than before them (1_002_336).
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(984 * 1024);
   });
 

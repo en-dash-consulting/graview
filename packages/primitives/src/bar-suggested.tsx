@@ -9,15 +9,17 @@ import { useMemo } from "react";
  * (an op that `suggests`); while nothing does it draws nothing and fetches
  * nothing, so a hosted page carries the tray, and the reading of which
  * suggestions still wait (`suggestions`, `@graview/core/tidying`), only
- * once there may be one to show. The tray draws nothing while none waits.
+ * once there may be one to show — or once the host said what the app's own
+ * actor did while the person was away (`whileAway`). The tray draws
+ * nothing while none waits and there is nothing to say.
  * One door for both faces: the scene's bar and the routed face's.
  */
 const tray = lazyModule(retryingImport(() => import("./suggested.js")));
 const Tray = tray.part<Record<string, never>>((module) => <module.SuggestedTray />, { quiet: true });
 
 export function BarSuggested() {
-  const { store } = useGraview<AnySchema>();
+  const { store, whileAway } = useGraview<AnySchema>();
   const nodes = useGraph();
   const suggested = useMemo(() => store.log.all().some((op) => op.suggests !== undefined && !op.withheld), [store, nodes]);
-  return suggested ? <Tray /> : null;
+  return suggested || whileAway?.tidied ? <Tray /> : null;
 }

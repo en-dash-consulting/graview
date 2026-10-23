@@ -39,13 +39,15 @@ opens in and how its cards read are `graview-lists`.
    refused the same change again — matched by what it means
    (`meaningKey`): the same link by any act that makes the relation, a
    record made again under a new id, a merged pair either way round. Its
-   run of changes is one Activity row, "Tidied 6 things today". Give a
+   run of changes is one Activity row, "Tidied 6 things overnight". Give a
    night's work one `lineage.run`, name the judge in `lineage.actor` and
    the records it rests on in `lineage.evidence`; give a suggestion an
    `expiresAt`, after which it leaves the tray and the next run judges it
    again. "Not now" is not a decline: it is the person's own state
    (`Dismissal`, handed to `suggestions(store, who, { dismissed })`), hides
-   it from them alone and binds the actor to nothing.
+   it from them alone and binds the actor to nothing. The tray's Not now
+   keeps it in the host's `dismissals`, else the browser; a seat says it
+   with `withNotNow(runtime, dismissals)`.
 
 3. **Hold it to what people said.** A person says "Leave this one alone" on
    a record (`leave-alone-<kind>`, cleared by `allow-tidying-<kind>`;

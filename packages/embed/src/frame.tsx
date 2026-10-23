@@ -1,8 +1,8 @@
 import type { HistoryHost } from "@graview/core/history";
-import { faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore } from "@graview/core";
+import { faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
-import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type MenuSectionSource, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
+import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type KeepLensHost, type MenuSectionSource, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -345,6 +345,21 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly subscriptions?: SubscriptionStore;
   /**
+   * WHERE THE READER'S "NOT NOW" IS KEPT, on either face: what this person
+   * put out of sight in the Suggested tray (`Dismissal`), as `{ list,
+   * dismiss, onChange? }` over the host's storage, beside what else it
+   * keeps of them. Unsaid, the tray keeps it in this browser (localStorage
+   * where the page may use it, else the page's memory).
+   */
+  readonly dismissals?: DismissalStore | undefined;
+  /**
+   * WHAT THE APP'S OWN ACTOR DID WHILE THE READER WAS AWAY (`whileAway`
+   * from `@graview/tools/tidy` returns one): the Suggested tray says "3
+   * suggestions waiting · tidied 12 things while you were away", and
+   * nothing while there is nothing to say.
+   */
+  readonly whileAway?: AwaySummary | undefined;
+  /**
    * THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (Roadmap
    * f-place-menu-views), on either face: `{ current, onChange, hide, show,
    * remove, restore, lens? }` (`KeptViews`). Right-clicking a place in the
@@ -653,6 +668,8 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     history: props.history,
     linkedRecords: props.linkedRecords,
     subscriptions: props.subscriptions,
+    dismissals: props.dismissals,
+    whileAway: props.whileAway,
     keptViews: props.keptViews,
     signIn: props.signIn,
     menuSections: props.menuSections,
