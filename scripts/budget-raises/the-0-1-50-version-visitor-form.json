@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 0,
+  "gzipped": 16,
+  "note": "Raised in the 0.1.50 Version packages pull request: the same 390_164 B minified the batch measured compressed to 149_735 B gzipped once the versions moved, 10 more than the batch's 149_725 and 3 past the 149_732 its raise held; 16 keeps a few bytes of compression either side."
+}
