@@ -1,5 +1,27 @@
 # @graview/pages
 
+## 0.1.49
+
+### Patch Changes
+
+- 9dab8bb: Every form asks in one order, whatever declared its act. 0.1.48 made a document's creating act ask for what names the record first; "Change the threat" still asked in the kind's field order, and an app written in TypeScript asked in its `z.object`'s key order, so a code app's "Add a threat" asked Aliases and CVSS before the name it must be given. Now one rule orders them all (`askedArguments`, `askedFieldsOf` and `inAskedOrder` on `@graview/core`, `askedFormFields` on `@graview/core/forms`): the fields the kind's label reads, in the order it reads them; then every other field the record cannot be made without (required, no default — in the schema or in a compiled document's `defaults`); then the rest; each run in the order the kind's page names them, then as declared. A TypeScript kind's label is a function, so it is asked which fields it says — handed a record whose every field marks its own name — and one that cannot be read that way falls back to a field called `name`, `title` or `label`. Only the arguments that are a field of the kind the act makes (else the one kind it changes) move, and only among their own places: a record to link to, the subject and an argument an act names for itself stay where the act put them. A derived `edit-<kind>` is built in this order, its `writes` and its sentence too: an edit is the form that made the record again, filled with what the record holds, so each field is where the person found it the first time — and what the record cannot be without still matters most when changing it, so "required first" holds for an edit as well, though every field of an edit may be left as it is. A TypeScript act's own input is left as declared; what asks reorders it: the pages face's form, a visitor's form that names no `fields`, the seat's described form (`describe_place`), the strip's open questions, the questions a decision is asked, the seat model's list of acts, the studio's offer form, `graview docs` and an agent's tool, whose `properties` are listed in the order a person is asked (`mutationToolSchema` takes the order as a second argument). `core`'s tests find a document's derived edit and a TypeScript app's creating form, edit, visitor form, described form and tool asking the name first, a label's fields read off a label function, a page's order kept, and an act's own input unchanged; `tools`' find the strip and an agent's tool asking a TypeScript act's name first. A hosted page carries 1.6 KB more up front, and so does one handed a compiled app — the store derives the edit in this order and the strip asks in it, so both are on every page — under raises of those budgets (`scripts/budget-raises/every-form-asks-in-one-order-*.json`), with the pages face alone (1.7 KB) and a visitor's form alone (1.5 KB).
+  
+  Compatibility: additive in the API — `askedArguments`, `askedFieldsOf` and `inAskedOrder` on `@graview/core`, `askedFormFields` on `@graview/core/forms`, and `mutationToolSchema`'s optional second argument. A behavior change in what is asked: a derived edit's input, `writes` and description list fields in the asked order, and a TypeScript app's forms, strip questions and agent tool schemas list arguments in it. Arguments are named, so every call is taken as before. A tool surface's hash is taken over sorted keys, so a property's place does not move it, but a derived edit's description now lists its fields in the asked order, so a surface with a derived edit whose fields were declared in another order hashes differently once. The declaration, the wire and the stored formats are unchanged. What Graview Cloud does: nothing — its forms ask the name first once it takes this version.
+- Updated dependencies [1c1bfcd]
+- Updated dependencies [81a6028]
+- Updated dependencies [8993971]
+- Updated dependencies [ec8c429]
+- Updated dependencies [69b9046]
+- Updated dependencies [9dab8bb]
+- Updated dependencies [4ca00a7]
+- Updated dependencies [1f80e4a]
+- Updated dependencies [1c1bfcd]
+  - @graview/tools@0.1.49
+  - @graview/core@0.1.49
+  - @graview/primitives@0.1.49
+  - @graview/react@0.1.49
+  - @graview/layout@0.1.49
+
 ## 0.1.48
 
 ### Patch Changes
