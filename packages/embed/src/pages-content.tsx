@@ -71,6 +71,9 @@ export function PagesContent<S extends AnySchema>({
             ...(props.people ? { people: props.people } : {}),
             /* Where "Notify me" is kept: the host's store, on this face as on the scene. */
             ...(props.subscriptions ? { subscriptions: props.subscriptions } : {}),
+            /* Where "Not now" is kept, and what was done while the reader was away: the host's, on this face as on the scene. */
+            dismissals: props.dismissals,
+            whileAway: props.whileAway,
             /* What a visitor could gain (FR-183): the host's way in, on this face as on the scene. */
             ...(props.signIn ? { signIn: props.signIn } : {}),
             /* The quick ask as the app set it, on this face as on the scene. */

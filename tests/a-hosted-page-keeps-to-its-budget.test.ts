@@ -133,7 +133,8 @@ describe("a hosted page", () => {
     // 977 KB since an act came to be found by another spelling of its name, a derived edit to name the act that writes a field it refuses and a number given as its digits to be read, and a headline opening on a count in words to start with a capital: the scene face measured 999_696 B, 2_430 more than before them (997_266).
     // 978 KB since a declared row came to name its record where its blocks do not, and a key's abbreviation to be said as its letters: 1_237 B more on the scene face.
     // 979 KB since a lineage came to keep its judge, run, evidence and a later build's keys, a decline to refuse the same change by what it means, and a suggestion to expire: the scene face measured 1_002_336 B, 1_408 more than before them (1_000_928).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(979 * 1024);
+    // 980 KB since the Suggested tray came to say Not now and what was done while a person was away, and Activity to fold a night's run into one row: the provider hands the tray the host's `dismissals` and `whileAway`, and the bar fetches the tray for them: the scene face measured 1_002_816 B, 480 more than before them (1_002_336).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(980 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

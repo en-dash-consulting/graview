@@ -18,7 +18,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type Place, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
+import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type DismissalStore, type Place, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
@@ -133,6 +133,17 @@ export interface DrawnBox {
 /** What a mounted scene lends the context: its own answer to "where is". */
 export interface SceneHandle {
   whereIs(id: string): DrawnBox | null;
+}
+
+/**
+ * WHAT THE APP'S OWN ACTOR DID WHILE A READER WAS AWAY, as a host hands it:
+ * how many things it did on its own (`tidied`) and, when the host counted
+ * them, how many suggestions wait (`waiting`). `whileAway` from
+ * `@graview/tools/tidy` returns one; any object with these keys does.
+ */
+export interface AwaySummary {
+  readonly tidied: number;
+  readonly waiting?: number;
 }
 
 export interface GraviewContextValue<S extends AnySchema> {
@@ -253,6 +264,10 @@ export interface GraviewContextValue<S extends AnySchema> {
    * keep the reader's subscriptions here.
    */
   readonly subscriptions: SubscriptionStore;
+  /** WHERE THE READER'S "NOT NOW" IS KEPT: the host's `dismissals`; unsaid, the Suggested tray keeps its own in the page. */
+  readonly dismissals?: DismissalStore | undefined;
+  /** WHAT THE APP'S OWN ACTOR DID WHILE THE READER WAS AWAY: the host's `whileAway`. */
+  readonly whileAway?: AwaySummary | undefined;
   /**
    * WHAT A SIGNED-OUT READER COULD GAIN (FR-183): the host's `signIn`, else
    * the provider's around it. Given, the reader is a visitor: the menu and
@@ -572,6 +587,22 @@ export interface GraviewProviderProps<S extends AnySchema> {
    */
   readonly subscriptions?: SubscriptionStore | undefined;
   /**
+   * WHERE THE READER'S "NOT NOW" IS KEPT: what this person put out of sight
+   * in the Suggested tray (`Dismissal`, `@graview/core/tidying`) — their own
+   * state, never the app's — as `{ list, dismiss, onChange? }` over the
+   * host's storage, beside what else it keeps of them. Unsaid, the tray
+   * keeps them in this browser (localStorage, where the page may use it,
+   * else the page's memory).
+   */
+  readonly dismissals?: DismissalStore | undefined;
+  /**
+   * WHAT THE APP'S OWN ACTOR DID WHILE THE READER WAS AWAY, as the host
+   * worked it out (`whileAway` from `@graview/tools/tidy` is one): the
+   * Suggested tray says "3 suggestions waiting · tidied 12 things while you
+   * were away" from it, and nothing while there is nothing to say.
+   */
+  readonly whileAway?: AwaySummary | undefined;
+  /**
    * WHAT A SIGNED-OUT READER COULD GAIN (FR-183): `{ label, run, roles? }`,
    * handed only while the reader is a visitor. Where every act withheld
    * from them is one a member could take (one of `roles`, the roles signing
@@ -652,6 +683,8 @@ export function GraviewProvider<S extends AnySchema>({
   menuSections,
   keptViews: hostKeptViews,
   subscriptions: hostSubscriptions,
+  dismissals,
+  whileAway,
   signIn: hostSignIn,
   view,
   onViewChange,
@@ -1089,6 +1122,8 @@ export function GraviewProvider<S extends AnySchema>({
       menuSections: hostSections,
       ...(keptViews ? { keptViews } : {}),
       subscriptions,
+      dismissals,
+      whileAway,
       signIn,
       linkedReads,
       movedByHand,
@@ -1145,6 +1180,8 @@ export function GraviewProvider<S extends AnySchema>({
       hostSections,
       keptViews,
       subscriptions,
+      dismissals,
+      whileAway,
       signIn,
       linkedReads,
       movedByHand,
