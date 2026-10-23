@@ -20,7 +20,10 @@ export interface TypeTextArgs {
   readonly at: number;
   readonly remove: number;
   readonly insert: string;
-  /** The field's revision when its sender last read it (`FieldRevisions.of`); absent, the text as it is now. */
+  /**
+   * Where its sender last read the field: its revision then (`FieldRevisions.of`), or any later seq the sender
+   * had read the log through — `openRemote` sends the last it has; absent, the text as it is now.
+   */
   readonly rev?: number;
 }
 

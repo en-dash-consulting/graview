@@ -1,7 +1,7 @@
 import type { Primitive } from "../graph/primitives.js";
 import type { FieldRevision } from "../ops/revisions.js";
 import type { Operation } from "../ops/types.js";
-import type { AnyMutationDefinition } from "../mutations/types.js";
+import type { AnyMutationDefinition, MutationCall } from "../mutations/types.js";
 
 /*
  * WHAT TYPING TOGETHER NEEDS THAT A PAGE OPENING AN APP DOES NOT (Roadmap
@@ -39,4 +39,10 @@ export const TYPING: {
   undone?: (log: readonly Operation[], ops: readonly Operation[]) => { readonly op: Operation; readonly primitives: readonly Primitive[] }[];
   /** Of a later op, against what an undo takes back: true when it only typed on text the undo only typed, else the records whose typed text it wrote whole. */
   aside?: (targets: readonly Primitive[], later: Operation) => true | readonly string[];
+  /**
+   * A client's own typing, still pending, carried over what the server
+   * says (`Store.rebase`): each pending batch that only types, as the calls
+   * that make its keystrokes on the text the landed ops leave.
+   */
+  carried?: (rolledBack: readonly Operation[], landed: readonly Operation[], pending: readonly string[]) => ReadonlyMap<string, readonly MutationCall[]>;
 } = {};

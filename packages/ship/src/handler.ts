@@ -7,6 +7,7 @@ import {
   PRESENCE_TTL_MS,
   VISITOR_PRESENCE_TTL_MS,
   type AnySchema,
+  type CompactOptions,
   type GraviewApp,
   type Operation,
   type PersistenceAdapter,
@@ -45,7 +46,7 @@ import {
   type Wire,
   type WireAnswer,
 } from "./live-protocol.js";
-import { openStore, type OpenedStore } from "./open-store.js";
+import { openStore, type Compaction, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import { answerSubscriptions } from "./subscriptions.js";
 import { SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
@@ -385,6 +386,14 @@ export interface StoreHandler<S extends AnySchema> {
   hold(sentence: string): void;
   /** Take changes again (FR-66): every open socket is told `{ t: "held", sentence: null }`, and what clients kept is sent. */
   release(): void;
+  /**
+   * THE SEQS A COMPACTION KEEPS BEHIND NOW (Roadmap f-collab-text): the
+   * protocol's `floor` over the sockets open here, as `CompactOptions.pins`
+   * takes them — so somebody typing keeps typing against text the log
+   * still holds. Empty when no socket has said hello. The adapter form's
+   * `compact` passes them itself.
+   */
+  pins(): readonly number[];
   /** Writes what is pending and lets the adapter go — or, over a store the host holds, writes what is pending and leaves the store open. */
   close(): Promise<void>;
 }
@@ -443,7 +452,7 @@ const CANNOT_TELL = "This store cannot tell who is asking: the host gives serveS
  * Or answer the wire for a store the host opened itself (FR-42): the
  * adapter form is that, over the store `openStore` hands back.
  */
-export async function createStoreHandler<S extends AnySchema>(options: AdapterStoreHandlerOptions<S>): Promise<StoreHandler<S> & { readonly opened: OpenedStore<S> }>;
+export async function createStoreHandler<S extends AnySchema>(options: AdapterStoreHandlerOptions<S>): Promise<StoreHandler<S> & { readonly opened: OpenedStore<S>; compact(options?: CompactOptions): Promise<Compaction> }>;
 export async function createStoreHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>): Promise<StoreHandler<S>>;
 export async function createStoreHandler<S extends AnySchema>(options: StoreHandlerOptions<S>): Promise<StoreHandler<S>>;
 export async function createStoreHandler<S extends AnySchema>(options: StoreHandlerOptions<S>): Promise<StoreHandler<S>> {
@@ -488,7 +497,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     // that does; `where` is for a caller with a better name for it.
     where: options.where ?? (adapter as { root?: string }).root ?? scope,
   }, adapter.name);
-  return {
+  const adapted: StoreHandler<S> & { readonly opened: OpenedStore<S>; compact(options?: CompactOptions): Promise<Compaction> } = {
     ...handler,
     get store() {
       return handler.store;
@@ -499,6 +508,8 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     get opened() {
       return opened as unknown as OpenedStore<S>;
     },
+    // A compaction with sockets open stops behind what each was sent (`pins`).
+    compact: (compacting: CompactOptions = {}) => opened.compact({ ...compacting, pins: [...(compacting.pins ?? []), ...handler.pins()] }),
     /*
      * OPENED AGAIN, ON THE NEW DECLARATION. What is pending is written
      * first, then the adapter is read again by `openStore`, which runs the
@@ -519,6 +530,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       opened.close();
     },
   };
+  return adapted;
 }
 
 /** What the handler serves now: replaced, all together, when the declaration changes (FR-43). */
@@ -1030,6 +1042,10 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       if (holding === undefined) return;
       holding = undefined;
       serving.protocol.heldChanged(sockets);
+    },
+    pins() {
+      const floor = serving.protocol.floor(sockets);
+      return floor === undefined ? [] : [floor];
     },
     handle: async (request) => {
       try {

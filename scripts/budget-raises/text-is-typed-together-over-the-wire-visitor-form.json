@@ -1,0 +1,7 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 100,
+  "gzipped": 50,
+  "changeset": "text-is-typed-together-over-the-wire.md",
+  "note": "Raised when text came to be typed together over the wire (collaborative text, phase 3): the store's rebase asks `@graview/core/typing`'s hook for pending typing carried over what landed, and applies a batch again by the calls it answers. The store draws the form. Measured at 390_234 / 149_741 against a budget of 390_170 / 149_732: 64 / 9 more."
+}

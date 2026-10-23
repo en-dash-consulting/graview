@@ -142,7 +142,8 @@ describe("a hosted page", () => {
     // 980 KB since edits came to reach readers when they are published (Roadmap f-publishing-lifecycle): the declaration's publishing, the store's hooks for publish and the provider fetching the reader's view on demand: the scene face measured 1_002_949 B, 1_830 more than before it (1_001_119).
     // 983 KB since text came to be typed together (collaborative text, phase 2): the store's hooks for `@graview/core/typing`, which carries the act and the merge on demand: the scene face measured 1_005_441 B, 1_337 more than before it (1_004_104).
     // 992 KB since the 0.1.50 batch came together: formats that fail closed, the tray's Not now, a text field's splice, a link's id, a caller's id and an opaque cursor, the publishing lifecycle and typing that merges, on top of the 0.1.49 batch — the scene face measured 1_015_718 B.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(992 * 1024);
+    // 995 KB since text came to be typed together over the wire (collaborative text, phase 3): `remote.typing` and its door tied to `@graview/core`, a whole write's merge base, a conflicting run's take-back and the store's hook for carrying pending typing over a rebase: the scene face measured 1_018_464 B, 2_675 more than before it (1_015_789).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(995 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 2700,
+  "gzipped": 1000,
+  "changeset": "text-is-typed-together-over-the-wire.md",
+  "note": "Raised when text came to be typed together over the wire (collaborative text, phase 3), as the hosted page's raise of the same name says: `remote.typing` and the door it opens, a whole write's merge base and the store's hook for carrying pending typing over a rebase are up front; the rest loads once a field is typed into."
+}

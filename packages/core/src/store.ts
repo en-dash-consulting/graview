@@ -2145,12 +2145,13 @@ export class Store<S extends AnySchema> {
         landed.push(here);
       }
 
-      // 3. What is still pending, again, on top.
+      // 3. What is still pending, again, on top: its typing carried over what landed (`@graview/core/typing`).
+      const typed = TYPING.carried?.(tail, landed, change.pending);
       for (const batch of change.pending) {
         const ops = tail.filter((op) => op.batch === batch);
         if (ops.length === 0) continue;
         try {
-          replayed.push(...this.replay(batch, ops));
+          replayed.push(...this.replay(batch, ops, typed?.get(batch)));
         } catch (error) {
           refused.push({ batch, error });
         }
@@ -2243,8 +2244,8 @@ export class Store<S extends AnySchema> {
     return { diff, adopted, pending: replayed, refused };
   }
 
-  /** One pending batch, applied again as it was made: its calls, its undo, or its primitives. */
-  private replay(batch: string, ops: readonly Operation[]): readonly Operation[] {
+  /** One pending batch, applied again as it was made: its calls (or the ones its typing is carried to), its undo, or its primitives. */
+  private replay(batch: string, ops: readonly Operation[], calls?: readonly MutationCall[]): readonly Operation[] {
     const head = ops[0]!;
     const options: ApplyOptions = {
       author: head.author,
@@ -2259,6 +2260,7 @@ export class Store<S extends AnySchema> {
       if (missing) throw new GraphError(`What "${missing.intent}" took back is no longer in the log`);
       return this.undoing([...new Set(targets.map((op) => op!.batch))], options).ops;
     }
+    if (calls) return this.applying(calls, options).ops;
     if (ops.every((op) => op.mutation !== null)) {
       return this.applying(ops.map((op) => op.mutation!), options).ops;
     }

@@ -1,0 +1,7 @@
+{
+  "budget": "the pages face alone",
+  "minified": 100,
+  "gzipped": 50,
+  "changeset": "text-is-typed-together-over-the-wire.md",
+  "note": "Raised when text came to be typed together over the wire (collaborative text, phase 3): the store's rebase asks `@graview/core/typing`'s hook for pending typing carried over what landed, and applies a batch again by the calls it answers. Measured at 656_151 / 241_508 against a budget of 656_084 / 241_493: 67 / 15 more."
+}

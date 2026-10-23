@@ -1,10 +1,10 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { gzipSync } from "node:zlib";
 import type { Duplex } from "node:stream";
-import type { AnySchema, Operation } from "@graview/core";
+import type { AnySchema, CompactOptions, Operation } from "@graview/core";
 import { sameOrigin } from "@graview/core/sync";
 import { createStoreHandler, SEAT_HEADERS, seatFromHeaders, WIRE, type AdapterStoreHandlerOptions, type StoreHandler } from "./handler.js";
-import type { OpenedStore } from "./open-store.js";
+import type { Compaction, OpenedStore } from "./open-store.js";
 import { LIVE_PATH, LIVE_SUBPROTOCOL } from "./live.js";
 import { acceptSocket, type ServerSocket } from "./websocket.js";
 
@@ -44,6 +44,8 @@ export interface ServeOptions<S extends AnySchema> extends AdapterStoreHandlerOp
 
 export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, "close" | "opened"> {
   readonly opened: OpenedStore<S>;
+  /** Compacts the log behind an undo horizon (`opened.compact`), kept behind what every open socket was sent (`pins`). */
+  compact(options?: CompactOptions): Promise<Compaction>;
   readonly server: Server;
   readonly port: number;
   readonly url: string;
@@ -140,6 +142,8 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     onCall: handler.onCall,
     hold: handler.hold,
     release: handler.release,
+    pins: handler.pins,
+    compact: handler.compact,
     server,
     port,
     url: `http://localhost:${port}`,
