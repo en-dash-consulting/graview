@@ -17,7 +17,7 @@ Graview is an agent-native TypeScript framework, made by En Dash, for apps that 
 
 ### What can I build with Graview?
 
-Apps for anything that is really things and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household’s calendar and a shared garden are built on it, and so are apps over a repository’s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take.
+Apps for anything that is a thing, and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household’s calendar and a shared garden are built on it, and so are apps over a repository’s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take.
 
 ### How is Graview different from other app frameworks?
 

@@ -17,7 +17,7 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graview — One declaration. A UI for people, tools for agents, rules for both.</title>
-<meta name="description" content="Graview builds apps for anything that is really things and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository&rsquo;s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent&rsquo;s tools are derived from it, so they can&rsquo;t drift apart.">
+<meta name="description" content="Graview builds apps for anything that is a thing, and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository&rsquo;s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent&rsquo;s tools are derived from it, so they can&rsquo;t drift apart.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
@@ -63,7 +63,7 @@ img { max-width: 100%; }
    "@id": "https://graview.dev/#website",
    "url": "https://graview.dev/",
    "name": "Graview",
-   "description": "Graview builds apps for anything that is really things and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository’s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent’s tools are derived from it, so they can’t drift apart.",
+   "description": "Graview builds apps for anything that is a thing, and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository’s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent’s tools are derived from it, so they can’t drift apart.",
    "inLanguage": "en",
    "publisher": {
     "@id": "https://graview.dev/#endash"
@@ -86,7 +86,7 @@ img { max-width: 100%; }
    "@type": "SoftwareApplication",
    "@id": "https://graview.dev/#software",
    "name": "Graview",
-   "description": "Graview builds apps for anything that is really things and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository’s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent’s tools are derived from it, so they can’t drift apart.",
+   "description": "Graview builds apps for anything that is a thing, and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository’s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent’s tools are derived from it, so they can’t drift apart.",
    "url": "https://graview.dev/",
    "applicationCategory": "DeveloperApplication",
    "operatingSystem": "Any platform with Node.js 22 or later",
@@ -116,7 +116,7 @@ img { max-width: 100%; }
    "@type": "SoftwareSourceCode",
    "@id": "https://graview.dev/#source",
    "name": "Graview",
-   "description": "Graview builds apps for anything that is really things and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository’s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent’s tools are derived from it, so they can’t drift apart.",
+   "description": "Graview builds apps for anything that is a thing, and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository’s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent’s tools are derived from it, so they can’t drift apart.",
    "codeRepository": "https://github.com/en-dash-consulting/graview",
    "programmingLanguage": {
     "@type": "ComputerLanguage",
@@ -153,7 +153,7 @@ img { max-width: 100%; }
      "name": "What can I build with Graview?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Apps for anything that is really things and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household’s calendar and a shared garden are built on it, and so are apps over a repository’s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take."
+      "text": "Apps for anything that is a thing, and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household’s calendar and a shared garden are built on it, and so are apps over a repository’s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take."
      }
     },
     {
@@ -1658,8 +1658,6 @@ main.landing > section.agent-hero {
 .landing .stage-panel { gap: 12px; }
 
 /* The asks. */
-.landing .ask-demo { margin-top: 0; gap: var(--s2); }
-.landing .ask-bar-big { font-size: 16px; padding: 14px 16px; }
 .landing .season-live { border-radius: 10px; }
 
 /* What it builds: the rota beside one line per domain. */
@@ -1764,10 +1762,6 @@ main.landing footer { margin-top: var(--s6); font-size: var(--t-cap); }
  * task, a question — and everything around it is in the page's ink, with
  * room rather than a rule or a box to say where one thing ends.
  */
-.landing .ask-bar-big { box-shadow: none; border-color: color-mix(in srgb, var(--ink) 22%, var(--rule)); }
-.landing .ask-chips button { background: none; color: var(--ink-3); }
-.landing .ask-chips button:hover { color: var(--ink); }
-.landing .ask-chips button[aria-pressed="true"] { color: var(--ink); background: color-mix(in srgb, var(--ink) 10%, transparent); border-color: var(--ink-3); }
 
 .landing .recipe-row { padding: var(--s4) 0; border-top-color: var(--rule-2); align-items: start; }
 .landing .recipe-row dt { color: var(--ink-3); }
@@ -1785,6 +1779,28 @@ main.landing footer { border-top-color: var(--rule-2); }
 @media (max-width: 900px) {
   .landing .faq { grid-template-columns: minmax(0, 1fr); }
   .landing .faq .sec-head { position: static; }
+}
+
+/*
+ * THE ASKS BESIDE THE APP. A bar with a shortcut in it read as a box to
+ * type in, and stacked a third bar over the app's own: the asks are a
+ * short list to pick from instead, said as what somebody asked for, with
+ * the season they redraw beside them.
+ */
+.landing .ask-demo { margin-top: 0; display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); gap: var(--s3) var(--s4); align-items: start; }
+.landing .ask-chips { display: grid; gap: var(--s1); }
+.landing .ask-chips button {
+  display: grid; gap: 4px; text-align: left; width: 100%; min-height: 0;
+  padding: 14px 16px; border: 0; border-left: 2px solid var(--rule); border-radius: 0;
+  background: none; color: var(--ink-3); font-size: var(--t-sm); line-height: 1.45;
+}
+.landing .ask-chips button:hover { color: var(--ink-2); border-left-color: var(--ink-3); }
+.landing .ask-chips button[aria-pressed="true"] { color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent); border-left-color: var(--mint); }
+.landing .ask-n { font-size: 11px; font-weight: var(--w-label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.landing .ask-stage { display: grid; gap: 12px; min-width: 0; }
+@media (max-width: 900px) {
+  .landing .ask-demo { grid-template-columns: minmax(0, 1fr); }
+  .landing .ask-chips button { width: 100%; }
 }
 /* site-css:end */
 </style>
@@ -1918,22 +1934,21 @@ main.landing footer { border-top-color: var(--rule-2); }
       <p class="eyebrow">The interface</p>
       <h2 id="h-asks">You never build the UI. You ask for the one you want.</h2>
       <p class="lede">
-        A list for every kind, a page for every record and a form for every
-        act come from the declaration. Want it different? Say so. What comes
-        back runs over the same records, so every rule still holds in it.
+        Every kind gets a list, every record a page, every act a form. Want
+        something else? Ask for it, and every rule still holds in what comes
+        back. Press one:
       </p>
     </div>
     <div class="ask-demo">
-      <div class="ask-line">
-        <p class="ask-bar ask-bar-big"><kbd>&#8984;K</kbd><span class="ask-typed" id="season-typed">What Graview generated from the declaration</span></p>
-        <div class="ask-chips" role="group" aria-label="Ask the season for another interface">
-          <button type="button" data-ask="" aria-pressed="true" data-says="What Graview generated from the declaration" data-caption="What Graview generated from the declaration alone: the games, the families and a page for each. The Brookside Bears game has nobody on snacks, so the rule puts it on the home as a problem card, with its repair.">What Graview generated</button>
-          <button type="button" data-ask="remaining-games" aria-pressed="false" data-says="Give me a list view of remaining games and who&rsquo;s bringing snacks" data-caption="Asked for a list: the four games still to play and who brings snacks to each. The Bears game is the row with Sign up; press it and the problem is gone from every view.">&ldquo;Give me a list view of remaining games and who&rsquo;s bringing snacks&rdquo;</button>
-          <button type="button" data-ask="courier" aria-pressed="false" data-says="Make this app look more like a physical newspaper" data-caption="Asked for a newspaper: the same games as a weekly paper, the next one as the lead story. A game nobody brings snacks to is a WANTED ad in the classifieds.">&ldquo;Make this app look more like a physical newspaper&rdquo;</button>
-        </div>
+      <div class="ask-chips" role="group" aria-label="Ask the season for another interface">
+        <button type="button" data-ask="" aria-pressed="true" data-caption="What Graview generated from the declaration alone: the games, the families and a page for each. The Brookside Bears game has nobody on snacks, so the rule puts it on the home as a problem card, with its repair."><span class="ask-n">As generated</span>Nothing asked for: the declaration alone</button>
+        <button type="button" data-ask="remaining-games" aria-pressed="false" data-caption="Asked for a list: the four games still to play and who brings snacks to each. The Bears game is the row with Sign up; press it and the problem is gone from every view."><span class="ask-n">Asked for</span>&ldquo;Give me a list view of remaining games and who&rsquo;s bringing snacks&rdquo;</button>
+        <button type="button" data-ask="courier" aria-pressed="false" data-caption="Asked for a newspaper: the same games as a weekly paper, the next one as the lead story. A game nobody brings snacks to is a WANTED ad in the classifieds."><span class="ask-n">Asked for</span>&ldquo;Make this app look more like a physical newspaper&rdquo;</button>
       </div>
-      <div class="chapter-live season-live" data-graview-app="season" data-label="A kids' soccer season" role="region" aria-label="A kids' soccer season built on Graview, running on this page"><p class="chapter-loading">The season, loading…</p></div>
-      <p class="stage-caption"><span class="live">Live</span><span id="season-caption">What Graview generated from the declaration alone: the games, the families and a page for each. The Brookside Bears game has nobody on snacks, so the rule puts it on the home as a problem card, with its repair.</span></p>
+      <div class="ask-stage">
+        <div class="chapter-live season-live" data-graview-app="season" data-label="A kids' soccer season" role="region" aria-label="A kids' soccer season built on Graview, running on this page"><p class="chapter-loading">The season, loading…</p></div>
+        <p class="stage-caption"><span class="live">Live</span><span id="season-caption">What Graview generated from the declaration alone: the games, the families and a page for each. The Brookside Bears game has nobody on snacks, so the rule puts it on the home as a problem card, with its repair.</span></p>
+      </div>
     </div>
   </section>
 
@@ -1946,7 +1961,7 @@ main.landing footer { border-top-color: var(--rule-2); }
   <section id="builds" class="builds" aria-labelledby="h-builds">
     <div class="sec-head">
       <p class="eyebrow">What it builds</p>
-      <h2 id="h-builds">Anything that is really things, and the rules between them.</h2>
+      <h2 id="h-builds">Anything that is a <em>thing</em>, and the rules between them.</h2>
       <p class="lede">Scheduling, coverage, planning, operations: the work where the hard part is how things relate, and a form per table was never the interface anybody wanted.</p>
     </div>
     <div class="builds-grid">
@@ -2326,21 +2341,18 @@ main.landing footer { border-top-color: var(--rule-2); }
 </script>
 <script>
 /*
- * THE ASKS, PRESSED. Each press types its sentence into the bar and hands
- * the season the view that sentence came back with (or, for the first,
+ * THE ASKS, PRESSED. Each press hands the season the view its sentence
+ * came back with (or, for the first,
  * the interface the declaration alone generates), over the same store:
  * a family signed up in the list is on snack duty in the newspaper.
  */
 (function () {
   var host = document.querySelector('[data-graview-app="season"]');
-  var typed = document.getElementById("season-typed");
   var caption = document.getElementById("season-caption");
   var chips = [].slice.call(document.querySelectorAll(".ask-chips [data-ask]"));
-  if (!host || !typed || !caption || chips.length === 0) return;
-  var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!host || !caption || chips.length === 0) return;
   var mounted = false;
   var waiting = null;
-  var turn = 0;
   function answer(name) {
     var api = window.graviewChapters || {};
     if (typeof api.answer !== "function") return;
@@ -2349,26 +2361,8 @@ main.landing footer { border-top-color: var(--rule-2); }
   function ask(chip) {
     chips.forEach(function (other) { other.setAttribute("aria-pressed", other === chip ? "true" : "false"); });
     caption.textContent = chip.getAttribute("data-caption");
-    var words = chip.getAttribute("data-says");
-    var name = chip.getAttribute("data-ask");
-    if (!mounted) { waiting = chip; typed.textContent = words; return; }
-    var mine = ++turn;
-    if (still || !name) {
-      typed.removeAttribute("data-typing");
-      typed.textContent = words;
-      answer(name);
-      return;
-    }
-    typed.setAttribute("data-typing", "");
-    var i = 0;
-    (function key() {
-      if (mine !== turn) return;
-      i += 2;
-      typed.textContent = words.slice(0, i);
-      if (i < words.length) { setTimeout(key, 22); return; }
-      typed.removeAttribute("data-typing");
-      setTimeout(function () { if (mine === turn) answer(name); }, 250);
-    })();
+    if (!mounted) { waiting = chip; return; }
+    answer(chip.getAttribute("data-ask"));
   }
   chips.forEach(function (chip) { chip.addEventListener("click", function () { ask(chip); }); });
   host.addEventListener("graview:mounted", function () {
@@ -2393,7 +2387,7 @@ main.landing footer { border-top-color: var(--rule-2); }
       </div>
       <div class="qa">
         <h3>What can I build with Graview?</h3>
-        <p>Apps for anything that is really things and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household&rsquo;s calendar and a shared garden are built on it, and so are apps over a repository&rsquo;s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take.</p>
+        <p>Apps for anything that is a thing, and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household&rsquo;s calendar and a shared garden are built on it, and so are apps over a repository&rsquo;s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take.</p>
       </div>
       <div class="qa">
         <h3>How is Graview different from other app frameworks?</h3>
