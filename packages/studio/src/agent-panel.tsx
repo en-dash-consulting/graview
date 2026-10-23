@@ -1,5 +1,5 @@
 import { humanizeField, labelOf, type AnySchema, type Store } from "@graview/core";
-import { formFields, type FormField } from "@graview/core/forms";
+import { askedFormFields, type FormField } from "@graview/core/forms";
 import { figureSvg } from "@graview/core/figures";
 import type { Finding } from "@graview/core/check";
 import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react";
@@ -318,7 +318,7 @@ function Offered<S extends AnySchema>({
 }) {
   const faint = { fontSize: "0.8125rem", color: "var(--graview-ink-muted)" } as const;
   const declared = store.allMutations().find((one) => one.name === offer.proposal.mutation);
-  const fields = declared ? formFields(declared.input) : [];
+  const fields = declared ? askedFormFields(store.schema, declared) : [];
   const breaks = offer.verdict.ok && offer.verdict.breaks;
   const refused = !offer.verdict.ok;
   /*

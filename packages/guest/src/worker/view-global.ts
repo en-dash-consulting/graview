@@ -388,6 +388,27 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     });
   };
 
+  /*
+   * WHERE IT HEARS A CLICK (0.1.48): every selector, said to the host as a
+   * whole once a microtask after it moves, so an audit of the page knows what
+   * the view hears a click on without being told (`auditView`, which reads
+   * it off the region).
+   */
+  let clicksSaid = "[]";
+  let clicksDue = false;
+  const sayClicks = () => {
+    if (clicksDue) return;
+    clicksDue = true;
+    io.microtask(() => {
+      clicksDue = false;
+      const selectors = [...new Set([...delegated].filter((one) => one.type === "click" && typeof one.selector === "string").map((one) => one.selector))].sort().slice(0, 200);
+      const said = JSON.stringify(selectors);
+      if (said === clicksSaid) return;
+      clicksSaid = said;
+      io.send({ type: "clicks", selectors });
+    });
+  };
+
   const view: GraviewView = Object.freeze({
     get props() {
       return current;
@@ -413,9 +434,11 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
         io.send({ type: "hears", events: [type] });
       }
       if (gestures.has(type)) sayGestures();
+      if (type === "click") sayClicks();
       return () => {
         delegated.delete(one);
         if (gestures.has(type)) sayGestures();
+        if (type === "click") sayClicks();
       };
     },
     act: (name: string, args: ActArgs = {}) => io.act(name, args),

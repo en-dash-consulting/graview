@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { isProvisional, lineageWords, linkProvenance, provisionalLinks } from "../../src/provenance.js";
-import { bindSchema, createSchema, defineNode, GraphError, KEEP_LINK, nodeRef, OperationLog, PermissionDeniedError, Store, type AnySchema, type Author, type Policy } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, GraphError, KEEP_LINK, nodeRef, OperationLog, PermissionDeniedError, redact, Store, type AnySchema, type Author, type Policy } from "../../src/index.js";
 
 /**
  * A CHANGE SAYS WHAT IT WAS BASED ON, AND A LINK MADE UNSURE IS PROVISIONAL
@@ -86,9 +86,33 @@ describe("an op's lineage", () => {
     expect(() => store.apply(call, { lineage: { basis: "x".repeat(501) } })).toThrow(GraphError);
     expect(() => store.applyPrimitives([{ op: "add-edge", edge }], { lineage: { basis: "x", confidence: -0.1 } })).toThrow(GraphError);
     expect(store.log.length).toBe(0);
-    // Nothing else rides along.
-    const kept = store.apply(call, { lineage: { basis: " Same street ", confidence: 0, extra: "no" } as never });
-    expect(kept.ops[0]!.lineage).toEqual({ basis: "Same street", confidence: 0 });
+    // A key a later build says rides along as it was said; one that is not plain JSON, or reaches a prototype, is refused.
+    expect(() => store.apply(call, { lineage: { basis: "x", later: () => 1 } as never })).toThrow(GraphError);
+    expect(() => store.apply(call, { lineage: JSON.parse('{"basis":"x","__proto__":{"polluted":true}}') })).toThrow(GraphError);
+    expect(() => store.apply(call, { lineage: { basis: "x", later: "y".repeat(4000) } as never })).toThrow(/at most 4000/);
+    expect(store.log.length).toBe(0);
+    const kept = store.apply(call, { lineage: { basis: " Same street ", confidence: 0, extra: "kept" } as never });
+    expect(kept.ops[0]!.lineage).toEqual({ basis: "Same street", confidence: 0, extra: "kept" });
+  });
+
+  it("says which judge made it, in which run, and the records its basis rests on", () => {
+    const store = storeOf();
+    const call = { name: "link-lease", args: { id: "lease:harbor", to: "property:harbor" } };
+    const said = { basis: "Both name 12 Harbor Street", confidence: 0.6, actor: "links by address", run: "run:2026-10-22", evidence: ["lease:harbor", "property:harbor"] };
+    expect(store.apply(call, { author: tidying, lineage: said }).ops[0]!.lineage).toEqual(said);
+    expect(() => store.apply(call, { lineage: { basis: "x", evidence: "lease:harbor" } as never })).toThrow(GraphError);
+    expect(() => store.apply(call, { lineage: { basis: "x", evidence: Array.from({ length: 51 }, (_, at) => `r${at}`) } })).toThrow(GraphError);
+    expect(() => store.apply(call, { lineage: { basis: "x", run: "" } })).toThrow(GraphError);
+    expect(() => store.apply(call, { lineage: { basis: "x", actor: "a".repeat(121) } })).toThrow(GraphError);
+  });
+
+  it("withholds the op from a seat that may not see a record its evidence names", () => {
+    const store = storeOf();
+    store.apply({ name: "link-lease", args: { id: "lease:harbor", to: "property:harbor" } }, { author: tidying, lineage: { basis: "Named in the email", evidence: ["email:secret"] } });
+    const op = store.log.all()[0]!;
+    const [served] = redact([op], (id) => id !== "email:secret");
+    expect(served!.withheld).toBe(true);
+    expect(JSON.stringify(served)).not.toContain("email:secret");
   });
 
   it("is carried by a host's own ops, and by ops received from elsewhere", () => {

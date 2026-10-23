@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1650,
+  "gzipped": 640,
+  "changeset": "every-form-asks-in-one-order-whatever-declared-it.md",
+  "note": "Raised when every form came to ask in one order (Roadmap f-forms-same-order-everywhere): `askedArguments` and `askedFieldsOf` (`mutations/asked-order.ts`) order a derived edit's input as the store derives it, and the strip's open questions as they are derived, so it is on every page; a figure's and a meter's label starting with a capital (`headlineSaid` in `blocks.ts`) landed with it. Measured with the act spellings beside it at 600_512 / 209_107 against 597_942 / 208_145 minified and gzipped; this is the share a page handed a compiled app measures too (1_624 / 630)."
+}

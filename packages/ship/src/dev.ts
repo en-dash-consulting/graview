@@ -506,7 +506,17 @@ const CURRENT = /^claude-(?:fable-5-1|opus-5-5|opus-5|sonnet-5-5)$/;
 interface MessagesReply {
   readonly content?: readonly { readonly type: string; readonly text?: string }[];
   readonly stop_reason?: string;
+  readonly usage?: { readonly input_tokens?: number; readonly output_tokens?: number };
   readonly error?: { readonly message?: string };
+}
+
+/** A completion's pictures as the Messages API takes them: base64 image blocks, the words after them. Anything not a picture is left out. */
+function promptContent(prompt: string, images: unknown): string | readonly unknown[] {
+  const pictures = Array.isArray(images)
+    ? images.filter((image): image is { mediaType: string; data: string } => typeof image?.mediaType === "string" && /^image\//.test(image.mediaType) && typeof image.data === "string" && image.data.length > 0)
+    : [];
+  if (pictures.length === 0) return prompt;
+  return [...pictures.map((image) => ({ type: "image", source: { type: "base64", media_type: image.mediaType, data: image.data } })), { type: "text", text: prompt }];
 }
 
 export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
@@ -537,11 +547,11 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
       return;
     }
     try {
-      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown; system?: unknown; messages?: unknown; tools?: unknown; tool_choice?: unknown };
+      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown; system?: unknown; images?: unknown; messages?: unknown; tools?: unknown; tool_choice?: unknown };
       /* A turn's step: the conversation so far, the seat's read tools, and its framing. */
       const step = Array.isArray(ask.messages) && ask.messages.length > 0;
       if (!step && (typeof ask.prompt !== "string" || ask.prompt.trim().length === 0)) {
-        sendJson(res, 400, { error: "A request is { prompt }, or a turn's { system, messages, tools }." });
+        sendJson(res, 400, { error: "A request is { prompt, system?, images? }, or a turn's { system, messages, tools }." });
         return;
       }
       const current = CURRENT.test(model);
@@ -563,7 +573,10 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
                 messages: ask.messages,
                 ...(Array.isArray(ask.tools) && ask.tools.length > 0 ? { tools: ask.tools, ...(ask.tool_choice ? { tool_choice: ask.tool_choice } : {}) } : {}),
               }
-            : { messages: [{ role: "user", content: ask.prompt }] }),
+            : {
+                ...(typeof ask.system === "string" && ask.system.length > 0 ? { system: ask.system } : {}),
+                messages: [{ role: "user", content: promptContent(ask.prompt as string, ask.images) }],
+              }),
           // A seat's answer is a few sentences: a low effort is quick and enough.
           ...(current ? { output_config: { effort: "low" }, fallbacks: "default" } : {}),
         }),
@@ -593,7 +606,8 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
         .filter((block) => block.type === "text" && typeof block.text === "string")
         .map((block) => block.text)
         .join("");
-      sendJson(res, 200, { text });
+      const used = reply.usage;
+      sendJson(res, 200, { text, ...(typeof used?.input_tokens === "number" && typeof used.output_tokens === "number" ? { usage: { inputTokens: used.input_tokens, outputTokens: used.output_tokens } } : {}) });
     } catch (error) {
       const said = error instanceof Error ? error.message : String(error);
       sendJson(res, 500, { error: said.split(key).join("…") });

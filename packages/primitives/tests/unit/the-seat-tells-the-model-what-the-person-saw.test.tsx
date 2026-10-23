@@ -83,9 +83,9 @@ describe("what the seat offered, in the conversation the model is handed", () =>
     const prompts: string[] = [];
     const ai: HostAi = {
       name: "stub",
-      complete: async (prompt) => {
+      complete: async ({ prompt }) => {
         prompts.push(prompt);
-        return JSON.stringify({ say: "Here is a plot for it.", proposals: prompts.length === 1 ? [{ mutation: "add-plot", args: { soil: "clay", label: "Back bed" } }] : [] });
+        return { text: JSON.stringify({ say: "Here is a plot for it.", proposals: prompts.length === 1 ? [{ mutation: "add-plot", args: { soil: "clay", label: "Back bed" } }] : [] }) };
       },
     };
     const { host, unmount } = await mounted(store(), ai);
@@ -100,9 +100,9 @@ describe("what the seat offered, in the conversation the model is handed", () =>
     const prompts: string[] = [];
     const ai: HostAi = {
       name: "stub",
-      complete: async (prompt) => {
+      complete: async ({ prompt }) => {
         prompts.push(prompt);
-        return JSON.stringify({ say: "Here is a plot for it.", proposals: prompts.length === 1 ? [{ mutation: "add-plot", args: { label: "Back bed" } }] : [] });
+        return { text: JSON.stringify({ say: "Here is a plot for it.", proposals: prompts.length === 1 ? [{ mutation: "add-plot", args: { label: "Back bed" } }] : [] }) };
       },
     };
     const kept = store();
@@ -119,7 +119,7 @@ describe("what the seat offered, in the conversation the model is handed", () =>
 
 describe("a model's answer, marked", () => {
   it("is marked once in each of its turns, quietly in the line it said, not on a line of its own", async () => {
-    const ai: HostAi = { name: "stub", complete: async () => JSON.stringify({ say: "Clay holds water.", proposals: [] }) };
+    const ai: HostAi = { name: "stub", complete: async () => ({ text: JSON.stringify({ say: "Clay holds water.", proposals: [] }) }) };
     const { host, unmount } = await mounted(store(), ai);
     const one = await ask(host, "what does clay do?");
     const two = await ask(host, "and sand?");

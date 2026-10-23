@@ -29,13 +29,15 @@ export { handedLinks, judgeLink, linkRefusedWords } from "./external-links.js";
  *
  * THE RING IS WHOLE AT THE REGION'S EDGE. The region clips what the view draws to its box, and a control flush with
  * that edge lost the half of its ring outside it. While something in it holds the keyboard the region lets the ring's
- * reach — its 2px and its 2px offset — paint past its edge (`overflow-clip-margin`), and nothing else: the region is
- * still the box it clips to, contained and isolated. Where the engine cannot (WebKit), a control that takes the
+ * reach — its width and its offset, 2px and 2px unless the app or the view says wider — paint past its edge
+ * (`overflow-clip-margin`), and nothing else: the region is still the box it clips to, contained and isolated. The
+ * reach is the ring's as the control that took the keyboard draws it, measured as it takes it and handed to the rule
+ * as a plain length (`--graview-ring-reach`: Chromium takes no calc() in `overflow-clip-margin`), never past 16px. Where the engine cannot (WebKit), a control that takes the
  * keyboard within that reach of the edge has its ring drawn inside its own edge (`data-graview-ring-inside`).
  */
 export const REGION_CSS = `
 :host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }
-:host(:focus-within) { overflow-clip-margin: 4px; }
+:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }
 [data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }
 :where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }
 :where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }
@@ -46,8 +48,18 @@ export const REGION_CSS = `
 [data-graview-view-root] a[href]:not([data-graview-link])::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
 `;
 
-/** How far the ring reaches past a control's edge by default — its 2px and its 2px offset — and so how far the region lets it paint past its own. */
+/** How far the ring reaches past a control's edge by default — its 2px and its 2px offset — and the most the region lets any ring paint past its own. */
 const RING_REACH = 4;
+const RING_REACH_MOST = 16;
+
+/** How far a control's ring reaches past its edge, as it draws it now: its outline's width and its offset outward, held to 4–16px. */
+export function ringReach(control: Element): number {
+  const style = control.ownerDocument.defaultView?.getComputedStyle(control);
+  if (!style) return RING_REACH;
+  const width = Number.parseFloat(style.outlineWidth) || 0;
+  const offset = Math.max(0, Number.parseFloat(style.outlineOffset) || 0);
+  return Math.min(RING_REACH_MOST, Math.max(RING_REACH, Math.ceil(width + offset)));
+}
 
 /** The keys a view hears: enough to move and choose, never what the viewer types into the app elsewhere. */
 const KEYS = new Set(["Enter", " ", "Escape", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"]);
@@ -176,18 +188,28 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
    * ring's reach of the region's edge draws its ring inside its own edge,
    * measured in the layout's pixels (a Scene's plane scales the region).
    */
-  if (typeof CSS === "undefined" || typeof CSS.supports !== "function" || !CSS.supports("overflow-clip-margin", "4px")) {
-    shadow.addEventListener("focusin", (event) => {
-      const at = event.composedPath()[0] as Element | undefined;
-      const host = shadow.host as HTMLElement;
-      if (!at || at.nodeType !== 1 || !into.contains(at)) return;
-      const region = host.getBoundingClientRect();
-      const box = at.getBoundingClientRect();
-      const reach = RING_REACH * (host.offsetWidth > 0 ? region.width / host.offsetWidth : 1);
-      const flush = box.left - region.left < reach || region.right - box.right < reach || box.top - region.top < reach || region.bottom - box.bottom < reach;
-      at.toggleAttribute("data-graview-ring-inside", flush);
-    });
-  }
+  const clipsPast = typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("overflow-clip-margin", "4px");
+  /*
+   * A RING WIDER THAN THE DEFAULT: a view that sets `--graview-focus-width` or
+   * `--graview-focus-offset` inside its own drawing, where the region's rule
+   * cannot read it, has its ring measured as a control takes the keyboard,
+   * and the region lets that much past its edge (`--graview-ring-reach`).
+   */
+  shadow.addEventListener("focusin", (event) => {
+    const at = event.composedPath()[0] as Element | undefined;
+    const host = shadow.host as HTMLElement;
+    if (!at || at.nodeType !== 1 || !into.contains(at)) return;
+    const reach = ringReach(at);
+    if (clipsPast) {
+      host.style.setProperty("--graview-ring-reach", `${reach}px`);
+      return;
+    }
+    const region = host.getBoundingClientRect();
+    const box = at.getBoundingClientRect();
+    const scaled = reach * (host.offsetWidth > 0 ? region.width / host.offsetWidth : 1);
+    const flush = box.left - region.left < scaled || region.right - box.right < scaled || box.top - region.top < scaled || region.bottom - box.bottom < scaled;
+    at.toggleAttribute("data-graview-ring-inside", flush);
+  });
 
   return {
     /*

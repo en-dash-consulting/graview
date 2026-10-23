@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T15:20:25.597Z",
+  "at": "2026-10-23T03:07:53.232Z",
   "transport": "frame",
   "engine": "chromium",
   "claims": {
@@ -255,7 +255,7 @@
     "the guest cannot navigate the top window": {
       "ok": true,
       "detail": {
-        "url": "http://127.0.0.1:5692/",
+        "url": "http://127.0.0.1:5792/",
         "tried": {
           "ok": false,
           "error": "SecurityError"

@@ -2,6 +2,7 @@ import { bindSchema, createSchema, defineNode, Store } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import * as tools from "../../src/index.js";
+import type { CompletionRequest } from "../../src/intelligence.js";
 import * as frame from "../../src/frame.js";
 import {
   ANSWERED_WITH_AI,
@@ -51,7 +52,7 @@ const store = () =>
     snapshot: { nodes: [{ id: "a", kind: "thing", label: "Widget" }, { id: "b", kind: "thing", label: "" }] as never, edges: [] },
   });
 
-const ask = (say: string, proposals: unknown[] = []) => async (_prompt?: string) => JSON.stringify({ say, proposals });
+const ask = (say: string, proposals: unknown[] = []) => async (_request?: CompletionRequest) => ({ text: JSON.stringify({ say, proposals }) });
 
 describe("nothing for a reader to choose", () => {
   it("exports no ladder, no remembered rung and no rung's words", () => {
@@ -83,9 +84,9 @@ describe("with no model, an open question says so in one plain sentence", () => 
 describe("with the host's model, the open question is the model's — and says so quietly", () => {
   it("answers through the model, carrying the via its proposals are logged with", async () => {
     let asked = 0;
-    const complete = async (prompt: string) => {
+    const complete = async (request: CompletionRequest) => {
       asked += 1;
-      return ask("Paint it blue.")(prompt);
+      return ask("Paint it blue.")(request);
     };
     const respond = seatResponder<typeof schema>({ complete, name: "stub" });
     const open = await respond(store(), "should we repaint the hallway?");
@@ -121,15 +122,15 @@ describe("a decision, wherever it is answered", () => {
   });
 
   it("is decided by a model behind the parse-and-refuse layer: held to the options, refused otherwise", async () => {
-    const decide = completionDecide(async () =>
-      'Sure: {"rule:named:b":{"noul":0.2},"rule:named:a":{"noul":0.9},"repair:named:b":{"choice":"rename","confidence":0.8},"field:thing.color":{"choice":"blue","confidence":0.7}}',
-    );
+    const decide = completionDecide(async () => ({
+      text: 'Sure: {"rule:named:b":{"noul":0.2},"rule:named:a":{"noul":0.9},"repair:named:b":{"choice":"rename","confidence":0.8},"field:thing.color":{"choice":"blue","confidence":0.7}}',
+    }));
     const decided = await decide({}, questions);
     expect(decided.answers["field:thing.color"]).toMatchObject({ type: "choice", choice: "blue", confidence: 0.7, probabilities: { blue: 0.7, red: expect.closeTo(0.3, 5) } });
     expect(decided.answers["rule:named:b"]).toEqual({ type: "noul", noul: 0.2 });
-    const refusing = completionDecide(async () => '{"field:thing.color":{"choice":"green"}}');
+    const refusing = completionDecide(async () => ({ text: '{"field:thing.color":{"choice":"green"}}' }));
     await expect(refusing({}, { "field:thing.color": questions["field:thing.color"]! })).rejects.toThrow(/did not answer "field:thing.color"/);
-    const scoring = completionDecide(async () => '{"s":{"level":2,"confidence":0.6}}');
+    const scoring = completionDecide(async () => ({ text: '{"s":{"level":2,"confidence":0.6}}' }));
     const scored = await scoring({}, { s: { type: "score", instructions: "?", criteria: ["a", "b", "c"] } });
     expect(scored.answers["s"]).toMatchObject({ type: "score", legend: { "0": "a", "1": "b", "2": "c" } });
     expect((scored.answers["s"] as { score: number }).score).toBeCloseTo(0.2 * 0 + 0.2 * 1 + 0.6 * 2, 5);

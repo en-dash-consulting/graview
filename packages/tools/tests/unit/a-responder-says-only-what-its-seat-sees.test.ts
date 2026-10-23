@@ -90,21 +90,21 @@ describe("a responder called directly with the whole store", () => {
 
   it("writes a completion's prompt the same way, through seatResponder", async () => {
     let prompt = "";
-    await seatResponder<AnySchema>({ complete: async (asked) => ((prompt = asked), '{"say": "Noted.", "proposals": []}') })(office(), "how should we plan the next quarter?", { principal: planner });
+    await seatResponder<AnySchema>({ complete: async ({ prompt: asked }) => ((prompt = asked), { text: '{"say": "Noted.", "proposals": []}' }) })(office(), "how should we plan the next quarter?", { principal: planner });
     expect(prompt).toContain("Bloom & Co");
     expect(prompt).not.toContain(HIDDEN);
     expect(prompt).not.toContain("payroll:hopper");
   });
 
   it("answers from the graph as the planner too: the selected vendor's links name no hidden record", async () => {
-    const reply = await seatResponder<AnySchema>({ complete: async () => '{"say": "Noted.", "proposals": []}' })(office(), "tell me about Bloom & Co", { principal: planner });
+    const reply = await seatResponder<AnySchema>({ complete: async () => ({ text: '{"say": "Noted.", "proposals": []}' }) })(office(), "tell me about Bloom & Co", { principal: planner });
     expect(reply.say).toContain("Bloom & Co");
     expect(reply.say).not.toContain(HIDDEN);
   });
 
   it("still names it to the seat that may see it", async () => {
     let prompt = "";
-    await llmResponder<AnySchema>({ complete: async (asked) => ((prompt = asked), '{"say": "Noted.", "proposals": []}') })(office(), "what needs doing?", { principal: { kind: "human", id: "boss", roles: ["owner"] } });
+    await llmResponder<AnySchema>({ complete: async ({ prompt: asked }) => ((prompt = asked), { text: '{"say": "Noted.", "proposals": []}' }) })(office(), "what needs doing?", { principal: { kind: "human", id: "boss", roles: ["owner"] } });
     expect(prompt).toContain(HIDDEN);
   });
 
@@ -120,7 +120,7 @@ describe("a responder called directly with the whole store", () => {
   it("asked with no seat of a store that keeps nothing from anybody, says nothing extra", async () => {
     const open = new Store({ schema, mutations: [raise], snapshot: { nodes: [{ id: "payroll:hopper", kind: "payroll", label: HIDDEN, salary: 500 }] as never, edges: [] } }) as unknown as Store<AnySchema>;
     let prompt = "";
-    const reply = await llmResponder<AnySchema>({ complete: async (asked) => ((prompt = asked), '{"say": "Noted.", "proposals": []}') })(open, "who works here?");
+    const reply = await llmResponder<AnySchema>({ complete: async ({ prompt: asked }) => ((prompt = asked), { text: '{"say": "Noted.", "proposals": []}' }) })(open, "who works here?");
     expect(prompt).toContain(HIDDEN);
     expect(reply.say).toBe("Noted.");
   });

@@ -85,7 +85,7 @@ describe("the code a change leaves saying something untrue", () => {
 
   it("takes the seat's draft as the object it was asked for, whatever it was wrapped in", async () => {
     const drafted = await rewriteCode(
-      async () => 'Here you go:\n```ts\n{\n  title: "Name a caretaker",\n  describe: (args) => `${args.label} {braces}`,\n}\n```\nHope that helps.',
+      async () => ({ text: 'Here you go:\n```ts\n{\n  title: "Name a caretaker",\n  describe: (args) => `${args.label} {braces}`,\n}\n```\nHope that helps.' }),
       { sort: "act", name: "tend", why: "it moved", text: "{}", changes: [] },
     );
     expect(drafted).toBe('{\n  title: "Name a caretaker",\n  describe: (args) => `${args.label} {braces}`,\n}');

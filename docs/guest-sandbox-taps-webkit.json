@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T15:24:30.301Z",
+  "at": "2026-10-23T03:09:13.434Z",
   "transport": "taps",
   "engine": "webkit",
   "claims": {
@@ -56,7 +56,7 @@
     "on a desk, Tab (Option-Tab in Safari, which passes over any link with an address without it) reaches every link and press the view drew: each card, link and row bound to a record (a row by its first cell), each data-act, each control it hears itself, each button and field": {
       "ok": true,
       "detail": {
-        "stops": 15,
+        "stops": 17,
         "missed": []
       }
     },
@@ -145,10 +145,10 @@
         }
       }
     },
-    "an <a data-record> carries the address the face goes to as its href, opens in this tab, needs no role or tab stop patched on, and is drawn in the words' own color, not underlined": {
+    "an <a data-record> carries the host's own address for the page the face goes to as its href (the embed's hrefOf), opens in this tab, needs no role or tab stop patched on, and is drawn in the words' own color, not underlined": {
       "ok": true,
       "detail": {
-        "href": "/threats/threat%3Aphishing",
+        "href": "/?at=%2Fthreats%2Fthreat%253Aphishing",
         "role": null,
         "tabindex": null,
         "target": null,
@@ -161,7 +161,7 @@
     "an icon the view drew with no role, label or title is hidden from assistive technology": {
       "ok": true,
       "detail": {
-        "href": "/threats/threat%3Aphishing",
+        "href": "/?at=%2Fthreats%2Fthreat%253Aphishing",
         "role": null,
         "tabindex": null,
         "target": null,
@@ -171,19 +171,82 @@
         "underline": "none"
       }
     },
-    "a Cmd- or Ctrl-click on it is the browser's: a new tab at its address, and the app stays where it was": {
+    "a Cmd- or Ctrl-click on it is the browser's: a new tab at the host's address, where the app opens on the threat's page, and the app stays where it was": {
       "ok": true,
       "detail": {
         "stayed": "/",
-        "opened": "http://127.0.0.1:5692/threats/threat%3Aphishing",
-        "href": "/threats/threat%3Aphishing"
+        "opened": "http://127.0.0.1:5792/?at=%2Fthreats%2Fthreat%253Aphishing",
+        "href": "/?at=%2Fthreats%2Fthreat%253Aphishing",
+        "landedThere": "/threats/threat%3Aphishing"
       }
     },
-    "a plain click on it opens the threat's page in the app, at the address it carries": {
+    "a plain click on it opens the threat's page in the app, at the path its address names": {
       "ok": true,
       "detail": {
         "followed": "/threats/threat%3Aphishing",
-        "href": "/threats/threat%3Aphishing"
+        "href": "/?at=%2Fthreats%2Fthreat%253Aphishing"
+      }
+    },
+    "under memory routing with no address from the host, an <a data-record> carries no href, is a link by its role and a tab stop, and Enter opens the threat's page in the app": {
+      "ok": true,
+      "detail": {
+        "href": null,
+        "role": "link",
+        "tabindex": "0",
+        "followed": "/threats/threat%3Aphishing"
+      }
+    },
+    "a focused link flush with the region's left edge shows its whole ring, and so does one the view rings wider": {
+      "ok": true,
+      "detail": {
+        "edge": {
+          "focused": true,
+          "flushLeft": 0,
+          "width": 2,
+          "offset": -2,
+          "color": "rgb(0, 23, 105)",
+          "ring": {
+            "left": 60,
+            "top": 121,
+            "right": 191.98025512695312,
+            "bottom": 140
+          },
+          "region": {
+            "left": 60,
+            "top": 119
+          },
+          "sides": {
+            "left": true,
+            "top": true,
+            "right": true,
+            "bottom": true
+          },
+          "whole": true
+        },
+        "wide": {
+          "focused": true,
+          "flushLeft": 0,
+          "width": 5,
+          "offset": -5,
+          "color": "rgb(0, 23, 105)",
+          "ring": {
+            "left": 60,
+            "top": 144,
+            "right": 249.57843017578125,
+            "bottom": 163
+          },
+          "region": {
+            "left": 60,
+            "top": 119
+          },
+          "sides": {
+            "left": true,
+            "top": true,
+            "right": true,
+            "bottom": true
+          },
+          "whole": true
+        }
       }
     },
     "a table's row bound to a record keeps its role, its first cell takes the keyboard, and Enter there opens the threat's page": {

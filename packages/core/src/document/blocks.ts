@@ -511,7 +511,8 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       const value = judge(block.value, ctx);
       const max = judge(block.max, ctx);
       const said = block.label ? say(block.label, ctx) : { text: "Progress" };
-      const label = said.text;
+      // A meter's label opening on a count in words starts with a capital, as a headline does.
+      const label = block.label ? headlineSaid(block.label, said.text) : said.text;
       const problem = !value.ok ? value.problem : !max.ok ? max.problem : said.problem;
       if (!(value.ok && max.ok && typeof value.value === "number" && typeof max.value === "number" && Number.isFinite(value.value) && Number.isFinite(max.value) && max.value > 0)) {
         return withProblem({ t: "progress", label, text: NOTHING }, problem);
@@ -540,7 +541,8 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       const judged = judge(block.value, ctx);
       const text = !judged.ok || judged.value === null || typeof judged.value === "object" ? NOTHING : sayNumber(judged.value, block.as, block.currency, ctx.today, ctx.money);
       const said = block.label ? say(block.label, ctx) : undefined;
-      return withProblem({ t: "number", text, ...(said ? { label: said.text } : {}), ...(block.emphasis ? { emphasis: block.emphasis } : {}) }, judged.ok ? said?.problem : judged.problem);
+      // And so does a figure's: "Seventy-two indicators", not "seventy-two indicators".
+      return withProblem({ t: "number", text, ...(said && block.label ? { label: headlineSaid(block.label, said.text) } : {}), ...(block.emphasis ? { emphasis: block.emphasis } : {}) }, judged.ok ? said?.problem : judged.problem);
     }
     case "list":
       return resolveList(block, ctx);

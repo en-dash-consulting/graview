@@ -36,8 +36,16 @@ opens in and how its cards read are `graview-lists`.
    and they wait in the Suggested tray beside Activity until a person
    accepts (`acceptSuggestion`, made as them) or declines them
    (`declineSuggestion`); `declined(store, calls)` says so, and the actor is
-   refused the same change again. Its run of changes is one Activity row,
-   "Tidied 6 things today".
+   refused the same change again — matched by what it means
+   (`meaningKey`): the same link by any act that makes the relation, a
+   record made again under a new id, a merged pair either way round. Its
+   run of changes is one Activity row, "Tidied 6 things today". Give a
+   night's work one `lineage.run`, name the judge in `lineage.actor` and
+   the records it rests on in `lineage.evidence`; give a suggestion an
+   `expiresAt`, after which it leaves the tray and the next run judges it
+   again. "Not now" is not a decline: it is the person's own state
+   (`Dismissal`, handed to `suggestions(store, who, { dismissed })`), hides
+   it from them alone and binds the actor to nothing.
 
 3. **Hold it to what people said.** A person says "Leave this one alone" on
    a record (`leave-alone-<kind>`, cleared by `allow-tidying-<kind>`;
@@ -47,6 +55,22 @@ opens in and how its cards read are `graview-lists`.
    `{"op": "set-tidying", "kind": "vendor", "tidying": "no-links"}` (with
    `"relation"` for one relation, `"allowed"` to undo it). The store refuses
    the actor each in a sentence; a person is never refused by them.
+
+4. **Let it dream.** `dream(store, { now, limit, ai })` from
+   `@graview/tools/tidy` runs the actor once. Code puts forward
+   near-duplicates, the records a relation might mean, finished records
+   and empty choices; the host's System One model (`ai.fast`, Jev) does
+   the judging, one request per candidate; code routes each answer by how
+   much the change would undo (`BANDS`) — made, suggested with its basis
+   ("Jev: 0.93 that …"), or dropped. Without a model, or when it fails or
+   the budget runs out, the floor is the judges' own rules: a shared name
+   or email, a link the record's text names, a finished record unchanged
+   for 30 days. It skips what was declined, what waits, what is left alone
+   or changed in the last day, and applies nothing unless the host passes
+   `applyAtLeast`. A host's schedule runs it (`graview dream <entry> --data
+   ./data --model jev-latest --cache ./cache.json`), or reaches the store
+   as the actor through `suggest_changes`, the tool only an `automated`
+   seat is offered. `whileAway(store, { seq })` is the tray's line.
 
 ## Then find out whether it worked
 
@@ -66,6 +90,8 @@ The rest is behavior, so try it:
 - Have a test actor (`automated: true`) suggest a link and decline it from
   the tray: `suggest(store, …)` of the same calls then refuses, and a
   record left alone refuses the actor's change by name.
+- Run `graview dream` twice: the second run suggests nothing new, and its
+  JSON says each finding is already waiting.
 
 ## What the check cannot see
 

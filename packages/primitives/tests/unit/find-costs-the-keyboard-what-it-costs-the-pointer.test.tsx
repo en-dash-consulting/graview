@@ -178,4 +178,48 @@ describe("Find from the keyboard, at the pointer's cost", () => {
     place.remove();
     await done();
   });
+  /*
+   * NOT ONE FRAME IN THE BOX. The keys went to the place on the first frame
+   * it stood, but between Enter and that frame they were on nothing, and the
+   * root gave them back to the box: a key pressed in that frame was typed
+   * into the words. Enter now moves the keyboard in the same press — onto a
+   * holder that says where it is going — and on to the place when it stands.
+   */
+  it("moves the keys off the box in the press of Enter, before the place stands, and on to the place once it does", async () => {
+    const { host, key, done } = await strip(40, "talks");
+    const box = host.querySelector<HTMLInputElement>('[data-testid="find-box"]')!;
+    await key("Enter");
+    const holder = host.querySelector<HTMLElement>('[data-testid="find-landing"]')!;
+    // In the press itself: no frame has passed, and the keyboard is not in the words.
+    expect(document.activeElement).toBe(holder);
+    expect(holder.getAttribute("aria-label")).toBe("Opening Talks…");
+    // The root's rule, asked again a tenth of a second on, finds it somewhere and leaves it there.
+    await act(async () => {
+      await new Promise((done) => setTimeout(done, 250));
+    });
+    expect(document.activeElement).not.toBe(box);
+    expect(document.activeElement).toBe(holder);
+    const place = document.createElement("div");
+    place.setAttribute("data-graview-view", "aggregate:talk");
+    place.tabIndex = 0;
+    document.body.append(place);
+    await act(async () => {
+      await new Promise((done) => setTimeout(done, 120));
+    });
+    expect(document.activeElement).toBe(place);
+    place.remove();
+    await done();
+  });
+
+  it("puts the keys on a place that already stands in the press of Enter", async () => {
+    const { key, done } = await strip(40, "talks");
+    const place = document.createElement("div");
+    place.setAttribute("data-graview-view", "aggregate:talk");
+    place.tabIndex = 0;
+    document.body.append(place);
+    await key("Enter");
+    expect(document.activeElement).toBe(place);
+    place.remove();
+    await done();
+  });
 });

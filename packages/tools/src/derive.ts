@@ -9,7 +9,7 @@
  * tool surface and zod's JSON Schema into that face's first load — some
  * 30 KB the pages face alone never drew with before a reader asked.
  */
-import { nodeRefArgs, tellTheWatchOfAPressRefusedByItsInput, type AnySchema, type NodeOfSchema, type Principal, type Store } from "@graview/core";
+import { askedArguments, inAskedOrder, nodeRefArgs, tellTheWatchOfAPressRefusedByItsInput, type AnySchema, type NodeOfSchema, type Principal, type Store } from "@graview/core";
 import { insightProvider } from "./providers/insight.js";
 import { usageBoost, usageWeights } from "./usage.js";
 import { invariantProvider } from "./providers/invariant.js";
@@ -126,6 +126,12 @@ export function deriveAffordances<S extends AnySchema>(
     affordances.push(...(result.affordances ?? []));
     observations.push(...(result.observations ?? []));
   }
+  // What an act leaves open is asked in the order every form asks (`askedArguments`): what names the record first.
+  const acts = new Map(store.allMutations().map((mutation) => [mutation.name, mutation]));
+  affordances.forEach((affordance, at) => {
+    const act = affordance.open.length > 1 ? acts.get(affordance.mutation) : undefined;
+    if (act) affordances[at] = { ...affordance, open: inAskedOrder(affordance.open, askedArguments(store.schema, act)) };
+  });
 
   /*
    * THE BANDS ARE INVIOLATE; everything else shuffles inside them.

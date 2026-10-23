@@ -18,6 +18,7 @@ import { excerpt } from "../excerpt.js";
 import type { AnyMutationDefinition } from "./types.js";
 import { deriveRepeatMutations } from "./derive-repeats.js";
 import { deriveRelationMutations } from "./derive-relations.js";
+import { askedFieldsOf, inAskedOrder } from "./asked-order.js";
 
 /**
  * A FIELD YOU COULD SET AT CREATION, YOU CAN CHANGE.
@@ -173,7 +174,8 @@ export function deriveEditMutations<S extends AnySchema>(
     const kind = definition.kind;
     const name = editMutationName(kind);
     if (taken.has(name)) continue;
-    const fields = unwrittenFields(schema, mutations, kind);
+    // Asked in the order the form that made one asks (`askedFieldsOf`): an edit is that form again, filled.
+    const fields = inAskedOrder(unwrittenFields(schema, mutations, kind), askedFieldsOf(definition), (field) => field);
     if (fields.length === 0) continue;
     // The fields it leaves to another act, and which: what a refusal of one names (`writtenBy`).
     const writers = fieldWriters(schema, mutations).get(kind);

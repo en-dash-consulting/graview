@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
 import { instantiateTemplate } from "@graview/core/check";
@@ -9,6 +9,7 @@ import { createMcpAdapter } from "./agent/adapters.js";
 import { createToolRuntime } from "./agent/tools.js";
 import { serveMcpStdio } from "./mcp-stdio.js";
 import { applyPlan, planFrom, type PlannedCall } from "./plan.js";
+import type { DreamAnswers, DreamCache, DreamModel } from "./tidy.js";
 
 /**
  * THE AGENT HOST. An external agent — an editor's assistant, a worker on a
@@ -469,4 +470,90 @@ async function finish<S extends AnySchema>(host: Host<S>, since: number, extra: 
   const theirs = landed.filter((op) => !op.id.startsWith("local-"));
   process.stdout.write(report(theirs.length > 0 ? theirs : landed, extra));
   return 0;
+}
+
+export const DREAM_USAGE = `  graview dream <entry> [--data <dir> | --sqlite <file>] [--limit <n>]
+                        [--older-than <days>] [--quiet-hours <h>] [--apply-at <0..1>] [--as <id>]
+                        [--model jev-latest] [--max-requests <n>] [--cache <file>]
+      Runs the app's own actor once ("Graview, tidying", or --as). With
+      --model and TYPESAFE_API_KEY set, Jev judges what code puts forward —
+      near-duplicates, the record a relation means, finished records, an
+      empty choice — within --max-requests (60), its answers kept in
+      --cache so an unchanged record is not asked again; without one, the
+      judges' own rules find exact duplicates, links a record's text names
+      and finished records. Each is suggested for a person to accept or
+      decline — or, with --apply-at, applied with its lineage when it is at
+      least that sure and the change is one that sure may make. Prints what
+      it did as JSON. For a host's schedule; a served store runs it on the
+      server.
+`;
+
+/** Answers kept in a JSON file between runs of `graview dream --cache`. */
+function fileDreamCache(path: string): { readonly cache: DreamCache; save(): void } {
+  let kept: Record<string, DreamAnswers> = {};
+  try {
+    kept = JSON.parse(readFileSync(path, "utf8")) as typeof kept;
+  } catch {
+    kept = {};
+  }
+  return {
+    cache: { get: (key) => kept[key], set: (key, answers) => void (kept[key] = answers) },
+    save: () => writeFileSync(path, `${JSON.stringify(kept)}\n`),
+  };
+}
+
+/** `graview dream`: the actor, once, against a folder or a SQLite file. */
+export async function dream(argv: readonly string[]): Promise<number> {
+  const app = await entryOf(argv, "dream");
+  if (typeof app === "number") return app;
+  if (flag(argv, "--remote-url") !== undefined) {
+    say("graview dream: run it where the store is kept — on the server, or through its MCP's suggest_changes; a remote copy's suggestions would not reach it.\n");
+    return 2;
+  }
+  const number = (name: string) => {
+    const given = flag(argv, name);
+    return given === undefined ? undefined : Number(given);
+  };
+  const { dream: run, TIDYING_ACTOR } = await import("./tidy.js");
+  const modelName = flag(argv, "--model");
+  let model: DreamModel | undefined;
+  if (modelName !== undefined) {
+    const { jevDecide, jevKeyFromEnvironment, JEV_INPUT_USD_PER_MILLION } = await import("./providers/jev.js");
+    const apiKey = jevKeyFromEnvironment();
+    if (!apiKey) {
+      say("graview dream: --model asks Jev, which needs TYPESAFE_API_KEY in the environment.\n");
+      return 2;
+    }
+    model = { model: modelName, decide: jevDecide({ apiKey, model: modelName }), price: { inputPerMillion: JEV_INPUT_USD_PER_MILLION } };
+  }
+  const cachePath = flag(argv, "--cache");
+  const kept = cachePath ? fileDreamCache(resolve(cachePath)) : undefined;
+  const as = flag(argv, "--as");
+  const principal = { ...TIDYING_ACTOR, ...(as ? { id: as } : {}) };
+  const host = await openHost(app, argv, principal, "cli");
+  try {
+    const limit = number("--limit");
+    const olderThanDays = number("--older-than");
+    const quietHours = number("--quiet-hours");
+    const applyAtLeast = number("--apply-at");
+    const requests = number("--max-requests");
+    const ran = await run(host.store, {
+      principal,
+      via: "cli",
+      ...(model ? { model } : {}),
+      ...(kept ? { cache: kept.cache } : {}),
+      ...(requests !== undefined ? { budget: { requests } } : {}),
+      ...(limit !== undefined ? { limit } : {}),
+      ...(olderThanDays !== undefined ? { olderThanDays } : {}),
+      ...(quietHours !== undefined ? { quietHours } : {}),
+      ...(applyAtLeast !== undefined ? { applyAtLeast } : {}),
+    });
+    await host.settled();
+    kept?.save();
+    say(`graview dream: ${app.name} on ${host.where} — ${ran.said}${ran.budget ? ` ${ran.budget}` : ""}${ran.model?.error ? ` The model failed (${ran.model.error}); the judges' own rules stood in.` : ""}\n`);
+    process.stdout.write(`${JSON.stringify(ran, null, 2)}\n`);
+    return 0;
+  } finally {
+    await host.close();
+  }
 }

@@ -1,5 +1,5 @@
 import { labelOf, pluralOf, type AnySchema, type GraviewApp, type Principal, type Store } from "@graview/core";
-import { formFields, type FormField } from "@graview/core/forms";
+import { askedFormFields, type FormField } from "@graview/core/forms";
 import type { HostAi, HostTurn, TurnMessage } from "./ai.js";
 import { canonical, createToolRuntime } from "./agent/tools.js";
 import type { ChatContext, ChatReply } from "./conversation.js";
@@ -78,7 +78,7 @@ export async function answerWithModel<S extends AnySchema>(
     .allMutations()
     .map(
       (mutation) =>
-        `- ${mutation.name}(${formFields(mutation.input).map(argument).join(", ")}): ${mutation.description ?? mutation.title ?? ""}`,
+        `- ${mutation.name}(${askedFormFields(store.schema, mutation).map(argument).join(", ")}): ${mutation.description ?? mutation.title ?? ""}`,
     )
     .join("\n");
   /*
@@ -178,7 +178,7 @@ export async function answerWithModel<S extends AnySchema>(
   ]
     .filter(Boolean)
     .join("\n\n");
-  const answer = options.turn ? await options.turn(turnOf(whole, seat, prompt, text, context)) : await options.complete!(prompt);
+  const answer = options.turn ? await options.turn(turnOf(whole, seat, prompt, text, context)) : (await options.complete!({ prompt })).text;
   const read = firstJsonObject(answer);
   /*
    * A bare array IS the list of proposals — the shape a model reaches for

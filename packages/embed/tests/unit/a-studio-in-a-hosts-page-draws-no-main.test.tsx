@@ -6,7 +6,7 @@ import { Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { compileDocumentWithoutCheck, type GraviewDocument } from "@graview/core/document";
 import axe from "axe-core";
 import { act } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
 
 /**
@@ -61,9 +61,13 @@ async function hostPage(studio: EmbedOptions["studio"]): Promise<HTMLElement> {
       } as EmbedOptions<AnySchema>),
     );
   });
-  // The studio's chunk arrives, then the studio draws.
-  for (let tries = 0; tries < 50 && !element.querySelector('[data-testid="studio"]'); tries += 1) {
-    await act(async () => new Promise((resolve) => setTimeout(resolve, 40)));
+  // The studio's chunk arrives, then the studio draws: waited for until it does
+  // (a cold transform of the studio can take seconds), never a count of turns.
+  for (let tries = 0; tries < 250 && !element.querySelector('[data-testid="studio"]'); tries += 1) {
+    await act(async () => {
+      await vi.dynamicImportSettled();
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    });
   }
   return element;
 }
@@ -74,7 +78,7 @@ const violations = async () => {
 };
 
 describe("a studio mounted into a host's page", () => {
-  it("draws no main of its own, and axe finds no landmark violation on the host's page", async () => {
+  it("draws no main of its own, and axe finds no landmark violation on the host's page", { timeout: 20_000 }, async () => {
     const element = await hostPage({ onApply: () => {} });
     const studio = element.querySelector('[data-testid="studio"]');
     expect(studio, "the studio opened").not.toBeNull();
@@ -85,7 +89,7 @@ describe("a studio mounted into a host's page", () => {
     expect(await violations()).toEqual([]);
   });
 
-  it("keeps its main when the host says so, which axe then holds against a host that has one", async () => {
+  it("keeps its main when the host says so, which axe then holds against a host that has one", { timeout: 20_000 }, async () => {
     const element = await hostPage({ onApply: () => {}, landmark: "main" });
     expect(element.querySelector('[data-testid="studio"] main')).not.toBeNull();
     // The very failure Cloud reported: what the default above is free of.

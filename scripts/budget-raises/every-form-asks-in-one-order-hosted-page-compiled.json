@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1650,
+  "gzipped": 640,
+  "changeset": "every-form-asks-in-one-order-whatever-declared-it.md",
+  "note": "Raised when every form came to ask in one order (Roadmap f-forms-same-order-everywhere): the store derives a record's edit in the order its creating form asks, and the strip orders an act's open questions so (`mutations/asked-order.ts`); a figure's and a meter's label starting with a capital landed with it. Measured at 550_731 / 191_625 against 549_107 / 190_995 minified and gzipped: 1_624 / 630 more."
+}

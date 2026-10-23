@@ -210,7 +210,7 @@ export type { FieldConflict, FieldRevision } from "./ops/revisions.js";
 export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck, UndoRefused } from "./ops/undo.js";
 export type { Author, Batch, Operation, Via } from "./ops/types.js";
-export { LINEAGE_BASIS_LIMIT, LINEAGE_MODEL_LIMIT, lineageOf, type Lineage } from "./ops/lineage.js";
+export { LINEAGE_BASIS_LIMIT, LINEAGE_EVIDENCE_LIMIT, LINEAGE_LIMIT, LINEAGE_MODEL_LIMIT, lineageOf, type Lineage } from "./ops/lineage.js";
 // What a link was based on, and whether a person has kept it, are `@graview/core/provenance`'s, fetched with what draws them (FR-172).
 export type { HasLog, LinkProvenance, LinkRef } from "./ops/provenance.js";
 export { KEEP_LINK } from "./mutations/keep-link.js";
@@ -340,6 +340,8 @@ export type {
 // Store — graph + log + mutations + invariants, one object.
 export { MODULES_AUTHOR, PastError, PREVIEW_BATCH, problemsMoved, ReceiveError, shapedRules, Store, UnknownMutationError, violationKey } from "./store.js";
 export { actSpelledAs, nearestAct, spellingOf } from "./mutations/act-spelling.js";
+// One order every form asks in, whatever declared the act: what names the record, what it must be given, the rest (Roadmap f-forms-same-order-everywhere).
+export { askedArguments, askedFieldsOf, inAskedOrder } from "./mutations/asked-order.js";
 export type {
   Adopt,
   AdoptResult,

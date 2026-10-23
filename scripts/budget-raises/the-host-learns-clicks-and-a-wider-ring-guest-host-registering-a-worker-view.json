@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 117,
+  "gzipped": 23,
+  "note": "Raised when the host came to learn what a worker view hears a click on (the view's runtime says its click selectors as { type: \"clicks\" }, and the host keeps them on the region for auditView) and the region came to let a wider focus ring past its edge (the ring measured as a control takes the keyboard, --graview-ring-reach). Measured at 31_643 / 14_227 against 31_526 / 14_204 minified and gzipped."
+}

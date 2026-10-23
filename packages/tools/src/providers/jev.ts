@@ -1,4 +1,4 @@
-import type { Question } from "../questions.js";
+import type { Answer, Decide, Usage } from "../fast.js";
 
 /**
  * THE PROVIDER ITSELF: one call, many questions, honest about failure.
@@ -27,39 +27,6 @@ export const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 export const JEV_MODEL = "jev-latest";
 /** Input is metered at this rate; output is not metered at all. */
 export const JEV_INPUT_USD_PER_MILLION = 0.042;
-
-export type ChoiceAnswer = {
-  readonly type: "choice";
-  readonly choice: string;
-  readonly confidence: number;
-  readonly probabilities: Readonly<Record<string, number>>;
-};
-export type NoulAnswer = { readonly type: "noul"; readonly noul: number };
-export type ScoreAnswer = {
-  readonly type: "score";
-  readonly score: number;
-  readonly confidence: number;
-  readonly probabilities: Readonly<Record<string, number>>;
-  readonly legend: Readonly<Record<string, string>>;
-};
-export type Answer = ChoiceAnswer | NoulAnswer | ScoreAnswer;
-
-export interface Usage {
-  readonly inputTokens: number;
-  readonly outputTokens: number;
-  /** Requests made, retries excluded. */
-  readonly calls: number;
-  readonly questions: number;
-}
-
-export interface Decided {
-  readonly answers: Readonly<Record<string, Answer>>;
-  /** This call's own usage. */
-  readonly usage: { readonly inputTokens: number; readonly outputTokens: number };
-}
-
-/** The whole provider surface: one state, a map of questions, typed answers back. */
-export type Decide = (state: unknown, questions: Readonly<Record<string, Question>>) => Promise<Decided>;
 
 /** Whose failure it was, so a surface can say so. */
 export type JevFailure = "seat" | "ours" | "busy" | "network" | "shape";

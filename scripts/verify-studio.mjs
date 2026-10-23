@@ -707,16 +707,16 @@ try {
       ],
     });
     await page.addInitScript((baseUrl) => {
-      // The host's model, as an OpenAI-shaped endpoint: prompt in, text out.
+      // The host's model, as an OpenAI-shaped endpoint: a request in, its text out.
       window.__todoAi = {
         name: "harness",
-        complete: async (prompt) => {
+        complete: async ({ prompt }) => {
           const response = await fetch(`${baseUrl}/chat/completions`, {
             method: "POST",
             headers: { "content-type": "application/json", authorization: "Bearer harness" },
             body: JSON.stringify({ model: "stub", messages: [{ role: "user", content: prompt }] }),
           });
-          return (await response.json()).choices[0].message.content;
+          return { text: (await response.json()).choices[0].message.content };
         },
       };
     }, `${at("studio-model")}/v1`);

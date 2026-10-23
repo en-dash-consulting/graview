@@ -8,7 +8,7 @@ import { declaredViews, fetchDeclaredLenses } from "@graview/primitives";
 import { createViews, type MenuSectionSource } from "@graview/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { PagesApp, type PageContext } from "../../src/index.js";
 
@@ -76,7 +76,7 @@ async function rendered(path: string, also: { principal?: Principal; menuSection
   document.body.appendChild(host);
   const root = createRoot(host);
   await act(async () => root.render(<PagesApp context={context} initialPath={path} />));
-  await settle();
+  await drawn(host);
   cleanup = async () => {
     await act(async () => root.unmount());
     host.remove();
@@ -84,22 +84,45 @@ async function rendered(path: string, also: { principal?: Principal; menuSection
   return { host, store };
 }
 
-/** Lets the lazy pane arrive and draw. */
-async function settle(ms = 30) {
-  for (let turn = 0; turn < 20; turn += 1) {
-    await act(async () => new Promise((done) => setTimeout(done, ms)));
-    if (document.querySelector(MENU) || turn > 2) {
-      // One more turn once it is there, for its sections.
-      if (document.querySelector(MENU)) await act(async () => new Promise((done) => setTimeout(done, ms)));
-      return;
-    }
+/**
+ * Waits for what a test is about to read, polling until it holds (bounded),
+ * never a count of turns: the menu and its sections are lazily loaded, and a
+ * loaded machine takes longer than three short turns to fetch them.
+ */
+async function until(holds: () => boolean, what: string, within = 5000) {
+  for (const end = Date.now() + within; ; ) {
+    await act(async () => {
+      await vi.dynamicImportSettled();
+      await new Promise((done) => setTimeout(done, 10));
+    });
+    if (holds()) return;
+    if (Date.now() > end) throw new Error(`waited ${within} ms for ${what}`);
   }
 }
+
+/** True once `read` has said the same thing twice running: what was arriving has arrived. */
+function steady(read: () => string | undefined): () => boolean {
+  let last: string | undefined;
+  return () => {
+    const now = read();
+    const same = now !== undefined && now === last;
+    last = now;
+    return same;
+  };
+}
+
+/** The page drawn and still: its lazy parts have stopped arriving. */
+const drawn = (host: HTMLElement) => until(steady(() => (host.querySelector("main") ? host.innerHTML : undefined)), "the page to draw");
+/** The menu open with its rows, and its sections arrived. */
+const opened = () => until(steady(() => (menu()?.querySelector("[data-menu-item], [data-affordance], [data-testid]") ? menu()!.innerHTML : undefined)), "the menu to open");
+/** The menu gone. */
+const closed = () => until(() => menu() === null, "the menu to close");
 
 async function rightClick(element: Element, init: MouseEventInit = {}) {
   const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, clientX: 40, clientY: 60, ...init });
   await act(async () => void element.dispatchEvent(event));
-  await settle();
+  // A press the browser keeps opens no menu; there is nothing to wait for.
+  if (event.defaultPrevented) await opened();
   return event;
 }
 
@@ -139,7 +162,7 @@ describe("the context menu on the routed face", () => {
     // First in the menu: before the acts.
     expect(change.compareDocumentPosition(menu()!.querySelector("[data-affordance]")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await act(async () => change.click());
-    await settle();
+    await closed();
     expect(menu()).toBeNull();
     expect(host.querySelector('[data-testid="record-fields"] input[data-graview-field="due"]')).not.toBeNull();
   });
@@ -168,12 +191,12 @@ describe("the context menu on the routed face", () => {
     for (const init of [{ key: "F10", shiftKey: true }, { key: "ContextMenu" }]) {
       const press = new KeyboardEvent("keydown", { bubbles: true, cancelable: true, ...init });
       await act(async () => void link.dispatchEvent(press));
-      await settle();
+      await opened();
       expect(press.defaultPrevented).toBe(true);
       expect(menu()!.textContent).toContain("Pay the deposit");
       expect(menu()!.contains(document.activeElement)).toBe(true);
       await act(async () => void document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
-      await settle();
+      await closed();
     }
   });
 
@@ -183,7 +206,7 @@ describe("the context menu on the routed face", () => {
     const link = host.querySelector<HTMLAnchorElement>('main a[href="/tasks"]')!;
     await act(async () => void link.dispatchEvent(Object.assign(new MouseEvent("pointerdown", { bubbles: true, clientX: 30, clientY: 30 }), { pointerType: "touch", isPrimary: true })));
     await act(async () => new Promise((done) => setTimeout(done, 650)));
-    await settle();
+    await opened();
     expect(menu()!.textContent).toContain("Tasks");
     expect(acts()).toEqual(["Add a task"]);
     // The finger lifts: its click follows no link.
@@ -199,7 +222,7 @@ describe("the context menu on the routed face", () => {
     await rightClick(link);
     expect(menu()!.contains(document.activeElement)).toBe(true);
     await act(async () => void document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
-    await settle();
+    await closed();
     expect(menu()).toBeNull();
     expect(document.activeElement).toBe(link);
   });
@@ -212,7 +235,7 @@ describe("the context menu on the routed face", () => {
     expect((await rightClick(find.closest("form")!.parentElement!)).defaultPrevented).toBe(true);
     expect(menu()).not.toBeNull();
     await act(async () => void document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
-    await settle();
+    await closed();
     const inField = await rightClick(find);
     expect(inField.defaultPrevented).toBe(false);
     expect(menu()).toBeNull();
@@ -261,7 +284,7 @@ async function aPlace(as: string) {
   document.body.appendChild(host);
   const root = createRoot(host);
   await act(async () => root.render(<PagesApp context={{ store, views: declaredViews(app), principal: { kind: "human", id: "m1", roles: ["keeper"] } }} initialPath={`/places/${as}`} />));
-  await settle();
+  await drawn(host);
   cleanup = async () => {
     await act(async () => root.unmount());
     host.remove();

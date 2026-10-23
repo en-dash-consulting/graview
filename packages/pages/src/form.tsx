@@ -8,7 +8,7 @@ import {
 } from "@graview/core";
 import { amountBox, amountInBox, argumentWords, endAfterStartMoved, failureWords, readAmount, startAndEndOf, tellApart } from "@graview/core/words";
 import type { AmountMark } from "@graview/core";
-import { changedArgs, editStart, formFields, formArgs, keptArguments, type FormField } from "@graview/core/forms";
+import { askedFormFields, changedArgs, editStart, formArgs, keptArguments, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
 import { Files, LinkedPicker, RepeatPicker, WhenInput } from "@graview/primitives/pages";
@@ -627,8 +627,8 @@ export function DerivedForm<S extends AnySchema>({
   const seat = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
   const subject = mutation.subject && prefilled[mutation.subject.arg];
   const kept = seat ? keptArguments(store, seat, mutation, typeof subject === "string" ? subject : undefined) : undefined;
-  // Asked in the order `only` names them, where it names them: a visitor's form asks in the declaration's order.
-  const all = formFields(mutation.input);
+  // Asked in the order `only` names them, where it names them: a visitor's form asks in the declaration's order. Else in the order every form asks (`askedFormFields`).
+  const all = askedFormFields(store.schema, mutation);
   const fields = (only === undefined ? all : only.flatMap((name) => all.find((spec) => spec.name === name) ?? [])).filter((spec) => !kept?.has(spec.name));
   const words: Words = (name) => argumentWords(store.schema, mutation, name);
   /*

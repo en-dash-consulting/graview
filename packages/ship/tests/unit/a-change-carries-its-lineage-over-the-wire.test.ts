@@ -48,6 +48,21 @@ describe("a change's lineage on the wire", () => {
     expect(JSON.stringify(heard)).toContain("Named in the email");
   });
 
+  it("keeps a key a later build says, and the judge, run and evidence, across the wire and out to every client", async () => {
+    const store = hostsStore();
+    const live = liveProtocol({ store });
+    const heard: LiveServerMessage[] = [];
+    const peer = await opened(live, heard);
+    const later = { basis: "Named in the email", actor: "links by email", run: "run:2026-10-22", evidence: ["t0"], weighedBy: { judge: "address", votes: [1, 0.5] } };
+    await live.receive(peer, JSON.stringify({ t: "call", cid: "c1", batch: "batch:tab:1", lineage: later, calls: [{ name: "add", args: { id: "t1", label: "T1" } }] }));
+    await live.post(JSON.stringify({ batch: "batch:tab:2", lineage: { basis: "Same day", nextYear: true }, calls: [{ name: "add", args: { id: "t2", label: "T2" } }] }), { seat: tidying, via: "api" });
+    const [first, second] = store.log.all();
+    expect(first!.lineage).toEqual(later);
+    expect(second!.lineage).toEqual({ basis: "Same day", nextYear: true });
+    const sent = heard.flatMap((message) => ("ops" in message ? (message.ops as unknown as { lineage?: unknown }[]) : []));
+    expect(sent.map((op) => op.lineage)).toContainEqual(later);
+  });
+
   it("is refused when it is not a lineage, and nothing is kept", async () => {
     const store = hostsStore();
     const live = liveProtocol({ store });

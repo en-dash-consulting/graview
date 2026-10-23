@@ -4,7 +4,7 @@ import type { Policy, Principal } from "../permissions/types.js";
 import { humanizeField } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import { VISITOR_ROLE, type VisitorFormDeclaration } from "../visitor-form-shape.js";
-import { formFields, type FormField } from "./form.js";
+import { askedFormFields, type FormField } from "./form.js";
 import { argumentsNeverShown } from "./kept-arguments.js";
 import type { AnyMutationDefinition } from "./types.js";
 
@@ -78,8 +78,8 @@ export function visitorForm<S extends AnySchema>(app: GraviewApp<S>, name: strin
   const role = form.role ?? VISITOR_ROLE;
   const visitor = judgedVisitor(role);
   const never = argumentsNeverShown(app.schema, app.policy, visitor, act);
-  const all = formFields(act.input);
-  // Named, in the order named; unsaid, every argument a visitor could answer.
+  const all = askedFormFields(app.schema, act);
+  // Named, in the order named; unsaid, every argument a visitor could answer, in the order every form asks.
   const fields = form.fields ? form.fields.flatMap((field) => all.find((one) => one.name === field) ?? []) : all.filter((field) => fillable(app.policy, visitor, field, never));
   return {
     name,

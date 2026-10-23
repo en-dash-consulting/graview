@@ -77,20 +77,20 @@ describe("reading a model's answer", () => {
 
 describe("a person never sees the plumbing", () => {
   it("says so when the model answers in a shape it cannot read", async () => {
-    const reply = await llmResponder({ complete: async () => '{"say": "Yes"' })(store(), "anything");
+    const reply = await llmResponder({ complete: async () => ({ text: '{"say": "Yes"' }) })(store(), "anything");
     expect(reply.say).not.toContain("{");
     expect(reply.say).toContain("could not read");
     expect(reply.proposals).toEqual([]);
   });
 
   it("passes prose through as prose", async () => {
-    const reply = await llmResponder({ complete: async () => "I would add a field." })(store(), "anything");
+    const reply = await llmResponder({ complete: async () => ({ text: "I would add a field." }) })(store(), "anything");
     expect(reply.say).toBe("I would add a field.");
   });
 
   it("reads the object even when the model overshoots its braces", async () => {
     const reply = await llmResponder({
-      complete: async () => '{"say": "Done", "proposals": [{"mutation": "serve", "args": {"shift": "s-mon", "meal": "m-soup"}}]}}',
+      complete: async () => ({ text: '{"say": "Done", "proposals": [{"mutation": "serve", "args": {"shift": "s-mon", "meal": "m-soup"}}]}}' }),
     })(store(), "serve the soup");
     expect(reply.say).toBe("Done");
     expect(reply.proposals).toHaveLength(1);
@@ -100,14 +100,14 @@ describe("a person never sees the plumbing", () => {
 describe("nothing the gate takes out disappears in silence", () => {
   it("takes a bare array of proposals as the answer", async () => {
     const reply = await llmResponder({
-      complete: async () => '[{"mutation":"serve","args":{"shift":"s-mon","meal":"m-soup"}}]',
+      complete: async () => ({ text: '[{"mutation":"serve","args":{"shift":"s-mon","meal":"m-soup"}}]' }),
     })(store(), "serve the soup on monday");
     expect(reply.proposals).toHaveLength(1);
   });
 
   it("says when a model named an act this app has no such thing for", async () => {
     const reply = await llmResponder({
-      complete: async () => '{"say":"Sure.","proposals":[{"mutation":"add_field","args":{}}]}',
+      complete: async () => ({ text: '{"say":"Sure.","proposals":[{"mutation":"add_field","args":{}}]}' }),
     })(store(), "add a field");
     expect(reply.proposals).toEqual([]);
     expect(reply.say).toContain("add_field");
@@ -117,7 +117,7 @@ describe("nothing the gate takes out disappears in silence", () => {
   it("says when a seat may not run what was suggested", async () => {
     const reply = await llmResponder({
       may: ["nothing-at-all"],
-      complete: async () => '{"say":"Sure.","proposals":[{"mutation":"serve","args":{}}]}',
+      complete: async () => ({ text: '{"say":"Sure.","proposals":[{"mutation":"serve","args":{}}]}' }),
     })(store(), "serve it");
     expect(reply.proposals).toEqual([]);
     expect(reply.say).toContain("not something this seat may run");
@@ -125,7 +125,7 @@ describe("nothing the gate takes out disappears in silence", () => {
 
   it("keeps quiet when there was nothing to drop", async () => {
     const reply = await llmResponder({
-      complete: async () => '{"say":"Done.","proposals":[{"mutation":"serve","args":{"shift":"s-mon","meal":"m-soup"}}]}',
+      complete: async () => ({ text: '{"say":"Done.","proposals":[{"mutation":"serve","args":{"shift":"s-mon","meal":"m-soup"}}]}' }),
     })(store(), "serve it");
     expect(reply.say).toBe("Done.");
   });

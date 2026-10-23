@@ -4303,10 +4303,10 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 13,
-              "ms": 829,
+              "presses": 4,
+              "ms": 1348,
               "steps": [
-                "the Songs district (12)",
+                "Find \"songs\" (3)",
                 "its acts (1)"
               ],
               "violations": []
@@ -6542,11 +6542,6 @@
       "app": "discography",
       "job": "undo",
       "says": "discography: Taking the last change back on the scene on a laptop from the keyboard takes 13 presses; on the pages on a laptop with the pointer, 1."
-    },
-    {
-      "app": "discography",
-      "job": "refused",
-      "says": "discography: Being told an act is not yours before pressing it on the scene on a laptop from the keyboard takes 13 presses; on the pages on a laptop with the pointer, 1."
     },
     {
       "app": "discography",

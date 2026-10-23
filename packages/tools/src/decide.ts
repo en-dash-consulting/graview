@@ -1,7 +1,7 @@
 import type { AnySchema, Store } from "@graview/core";
 import type { Completion } from "./intelligence.js";
 import { firstJsonObject } from "./intelligence.js";
-import type { Answer, Decide, Decided } from "./providers/jev.js";
+import type { Answer, Decide, Decided } from "./fast.js";
 import type { Question } from "./questions.js";
 
 /**
@@ -83,7 +83,7 @@ export function completionDecide(complete: Completion): Decide {
       `State:\n${JSON.stringify(state)}`,
       `Questions:\n${JSON.stringify(questions)}`,
     ].join("\n\n");
-    const text = await complete(prompt);
+    const { text, usage } = await complete({ prompt });
     const read = firstJsonObject(text);
     if (!read || typeof read !== "object" || Array.isArray(read)) {
       throw new Error("The model answered in a shape that is not a map of answers.");
@@ -139,6 +139,6 @@ export function completionDecide(complete: Completion): Decide {
     if (refused.length > 0) {
       throw new Error(`The model did not answer ${refused.map((key) => `"${key}"`).join(", ")} in the shape asked, so nothing was taken for them.`);
     }
-    return { answers, usage: { inputTokens: 0, outputTokens: 0 } };
+    return { answers, usage: { inputTokens: usage?.inputTokens ?? 0, outputTokens: usage?.outputTokens ?? 0 } };
   };
 }

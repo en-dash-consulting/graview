@@ -7,6 +7,7 @@ import type { GraviewDocument } from "@graview/core/document";
 import { todoApp } from "../../../../apps/todo/src/domain/app.js";
 import { createSeedbedStore, seedbedApp } from "../../../../apps/seedbed/src/domain/app.js";
 import { createToolRuntime, toolDefinitions } from "../../src/index.js";
+import type { CompletionRequest } from "../../src/intelligence.js";
 import {
   draftSight,
   draftView,
@@ -127,7 +128,7 @@ describe("a draft binds only what the seat may see", () => {
   });
 
   it("refuses a model's lens over a hidden kind as one over a kind that does not exist", async () => {
-    const complete = async () => JSON.stringify({ title: "Gardeners", lens: "blocks", on: "gardener", options: { blocks: [{ list: "all('gardener')" }] } });
+    const complete = async () => ({ text: JSON.stringify({ title: "Gardeners", lens: "blocks", on: "gardener", options: { blocks: [{ list: "all('gardener')" }] } }) });
     const result = await draftView("the gardeners as cards", { app: hidden, sight, complete });
     expect(isDraftFailure(result) ? result.failed : "").toBe("Couldn't draw that: Nothing by that name here.");
   });
@@ -136,9 +137,9 @@ describe("a draft binds only what the seat may see", () => {
 describe("a model writes the same JSON, and it is judged before it is drawn", () => {
   it("draws what a template does not read when the model's lens holds", async () => {
     const prompts: string[] = [];
-    const complete = async (prompt: string) => {
+    const complete = async ({ prompt }: CompletionRequest) => {
       prompts.push(prompt);
-      return 'Here it is: {"title": "Open decisions", "lens": "blocks", "on": "decision", "options": {"blocks": [{"headline": "What is still open"}, {"list": "all(\'decision\') where status == \'open\'", "as": "card"}]}}';
+      return { text: 'Here it is: {"title": "Open decisions", "lens": "blocks", "on": "decision", "options": {"blocks": [{"headline": "What is still open"}, {"list": "all(\'decision\') where status == \'open\'", "as": "card"}]}}' };
     };
     const result = drafted(await draftView("what still needs deciding", { app: workshopApp, complete }));
     expect(result.by).toBe("model");
@@ -149,7 +150,7 @@ describe("a model writes the same JSON, and it is judged before it is drawn", ()
 
   it("asks no model when a template reads the ask", async () => {
     let asked = 0;
-    const result = drafted(await draftView("a board of decisions by status", { app: workshopApp, complete: async () => (asked++, "{}") }));
+    const result = drafted(await draftView("a board of decisions by status", { app: workshopApp, complete: async () => (asked++, { text: "{}" }) }));
     expect(asked).toBe(0);
     expect(result.by).toBe("template");
   });
@@ -164,13 +165,13 @@ describe("a model writes the same JSON, and it is judged before it is drawn", ()
       '{"failed": "the workshop records no owners"}',
     ];
     for (const answer of answers) {
-      const result = await draftView("something new", { app: workshopApp, complete: async () => answer, lastGood: good });
+      const result = await draftView("something new", { app: workshopApp, complete: async () => ({ text: answer }), lastGood: good });
       expect(isDraftFailure(result)).toBe(true);
       if (!isDraftFailure(result)) continue;
       expect(result.failed).toMatch(/^Couldn't draw that: [^\n]+\.$/);
       expect(result.lastGood).toBe(good);
     }
-    const said = await draftView("something new", { app: workshopApp, complete: async () => answers[4]!, lastGood: good });
+    const said = await draftView("something new", { app: workshopApp, complete: async () => ({ text: answers[4]! }), lastGood: good });
     expect(isDraftFailure(said) ? said.failed : "").toBe("Couldn't draw that: the workshop records no owners.");
   });
 
@@ -216,9 +217,9 @@ describe("refining a draft by asking again", () => {
   it("hands a refinement no template reads to the model, with the draft on screen", async () => {
     const board = drafted(await draftView("a board of decisions by status", { app: workshopApp }));
     let prompt = "";
-    const complete = async (asked: string) => {
+    const complete = async ({ prompt: asked }: CompletionRequest) => {
       prompt = asked;
-      return '{"title": "Decisions by status", "lens": "blocks", "on": "decision", "options": {"blocks": [{"list": "all(\'decision\')", "group": "status", "as": "card"}]}}';
+      return { text: '{"title": "Decisions by status", "lens": "blocks", "on": "decision", "options": {"blocks": [{"list": "all(\'decision\')", "group": "status", "as": "card"}]}}' };
     };
     const result = drafted(await refineDraft(board, "make it look friendlier", { app: workshopApp, complete }));
     expect(prompt).toContain('"name":"columns"');
