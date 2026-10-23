@@ -2,6 +2,7 @@ import { isArchived, isCurrent, isLeftAlone, labelOf, nameKey, nodeRefArgs, noun
 import { districtState } from "@graview/core/city";
 import { fold } from "@graview/core/search";
 import { tidyingOf } from "@graview/core/tidying";
+import type { Severity } from "./policy.js";
 
 /*
  * THE JUDGES: what the app's own actor would change, found from the graph
@@ -41,16 +42,22 @@ export interface JudgeContext {
   readonly olderThanDays: number;
 }
 
-/** A judge: a name, and what it finds. */
+/**
+ * A judge: a name, how much what it proposes would undo, and what it finds
+ * from the graph alone — the floor a dream stands on when no model answers.
+ * A model, when lent, judges the same things more broadly (`./judging.ts`).
+ */
 export interface Judge {
   readonly name: string;
+  /** How much its changes would undo, which sets how sure it must be (`BANDS`). "archive" when unsaid. */
+  readonly severity?: Severity;
   judge(context: JudgeContext): readonly Candidate[];
 }
 
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Whether the actor may propose anything about this record: not left alone, not changed lately, its kind tidied. */
-function mayTouch(context: JudgeContext, node: Node): boolean {
+export function mayTouch(context: JudgeContext, node: Node): boolean {
   if (isLeftAlone(context.store, node.id) || isArchived(node as never)) return false;
   if (tidyingOf(context.store.schema, node.kind) === "never") return false;
   const last = context.touched.get(node.id);
@@ -58,17 +65,17 @@ function mayTouch(context: JudgeContext, node: Node): boolean {
 }
 
 /** A kind's acts as the store holds them, by name. */
-const actNamed = (store: Store<AnySchema>, name: string) => store.allMutations().find((act) => act.name === name);
+export const actNamed = (store: Store<AnySchema>, name: string) => store.allMutations().find((act) => act.name === name);
 
-const named = (schema: AnySchema, node: Node): string => labelOf(schema.tryDefinition(node.kind), node);
-const noun = (schema: AnySchema, kind: string): string => nounOf(schema.tryDefinition(kind), kind);
-const fieldsOf = (schema: AnySchema, kind: string): string[] => Object.keys((schema.tryDefinition(kind)?.fields.shape ?? {}) as Record<string, unknown>);
+export const named = (schema: AnySchema, node: Node): string => labelOf(schema.tryDefinition(node.kind), node);
+export const noun = (schema: AnySchema, kind: string): string => nounOf(schema.tryDefinition(kind), kind);
+export const fieldsOf = (schema: AnySchema, kind: string): string[] => Object.keys((schema.tryDefinition(kind)?.fields.shape ?? {}) as Record<string, unknown>);
 
 /** Fields whose value names one thing and only that thing: two records that share one are the same. */
-const KEY_FIELD = /^(e-?mail|email-?address|code|sku|reference|ref|external-?id|key)$/i;
+export const KEY_FIELD = /^(e-?mail|email-?address|code|sku|reference|ref|external-?id|key)$/i;
 
 /** The one of several that stays: the one with the most links and history, else the first made. */
-function keeperOf(store: Store<AnySchema>, nodes: readonly Node[], touched: ReadonlyMap<string, number>): Node {
+export function keeperOf(store: Store<AnySchema>, nodes: readonly Node[], touched: ReadonlyMap<string, number>): Node {
   const weight = (node: Node) => store.graph.out(node.id).length + store.graph.in(node.id).length;
   return [...nodes].sort((a, b) => weight(b) - weight(a) || (touched.get(a.id) ?? 0) - (touched.get(b.id) ?? 0))[0]!;
 }
@@ -83,6 +90,7 @@ function keeperOf(store: Store<AnySchema>, nodes: readonly Node[], touched: Read
  */
 export const duplicates: Judge = {
   name: "duplicates",
+  severity: "merge",
   judge(context) {
     const { store } = context;
     const schema = store.schema;
@@ -125,7 +133,7 @@ export const duplicates: Judge = {
 };
 
 /** The act that links a kind's records along a relation, and the argument the far record goes in: the derived connect, else a declared act that `connects` it. */
-function connectOf(store: Store<AnySchema>, kind: string, relation: string, targets: readonly string[]): { readonly name: string; readonly to: string } | undefined {
+export function connectOf(store: Store<AnySchema>, kind: string, relation: string, targets: readonly string[]): { readonly name: string; readonly to: string } | undefined {
   for (const act of store.allMutations()) {
     if (!(act.connects ?? []).includes(relation) || act.subject?.arg === undefined || !act.subject.kinds?.includes(kind)) continue;
     const refs = nodeRefArgs(act.input).filter((ref) => ref.name !== act.subject!.arg);
@@ -150,6 +158,7 @@ const holdsWords = (inside: string, words: string): boolean => ` ${inside} `.inc
  */
 export const links: Judge = {
   name: "links",
+  severity: "link",
   judge(context) {
     const { store } = context;
     const schema = store.schema;
@@ -219,7 +228,7 @@ export const links: Judge = {
  * value like done, shipped, closed), else a yes/no field called done,
  * completed or closed. Undefined when the kind says no such thing.
  */
-function finishedOf(schema: AnySchema, kind: string, today: string): ((node: Node) => string | undefined) | undefined {
+export function finishedOf(schema: AnySchema, kind: string, today: string): ((node: Node) => string | undefined) | undefined {
   const definition = schema.tryDefinition(kind);
   if (!definition) return undefined;
   const lifecycle = definition.lifecycle;
@@ -236,7 +245,7 @@ function finishedOf(schema: AnySchema, kind: string, today: string): ((node: Nod
 }
 
 /** When a record last moved: the log's last change to it, else the date its declaration reads it by (a lifecycle date, an end or due role). */
-function lastMoved(schema: AnySchema, node: Node, touched: ReadonlyMap<string, number>): number | undefined {
+export function lastMoved(schema: AnySchema, node: Node, touched: ReadonlyMap<string, number>): number | undefined {
   const logged = touched.get(node.id);
   if (logged !== undefined) return logged;
   const definition = schema.tryDefinition(node.kind);
@@ -258,6 +267,7 @@ function lastMoved(schema: AnySchema, node: Node, touched: ReadonlyMap<string, n
  */
 export const archive: Judge = {
   name: "archive",
+  severity: "archive",
   judge(context) {
     const { store } = context;
     const schema = store.schema;
@@ -289,5 +299,19 @@ export const archive: Judge = {
   },
 };
 
+/**
+ * AN EMPTY CHOICE, FILLED IN (`edit-<kind>`). Which of a field's options a
+ * record is takes reading it, so the graph alone proposes nothing: only a
+ * model, when lent, judges it (`./judging.ts`).
+ */
+export const categorize: Judge = { name: "categorize", severity: "categorize", judge: () => [] };
+
+/**
+ * AN EMPTY ONE-LINK RELATION, FILLED IN. Without a model the floor is the
+ * `links` judge's — a far record the record's own text names; a model, when
+ * lent, chooses among the likeliest records of the far kind, or none.
+ */
+export const missingLinks: Judge = { name: "missing-links", severity: "link", judge: () => [] };
+
 /** The judges a run uses unless told otherwise. */
-export const JUDGES: readonly Judge[] = [duplicates, links, archive];
+export const JUDGES: readonly Judge[] = [duplicates, links, archive, categorize, missingLinks];

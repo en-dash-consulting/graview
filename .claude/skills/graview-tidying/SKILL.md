@@ -48,17 +48,21 @@ opens in and how its cards read are `graview-lists`.
    `"relation"` for one relation, `"allowed"` to undo it). The store refuses
    the actor each in a sentence; a person is never refused by them.
 
-4. **Let it dream.** `dream(store, { now, limit })` from
-   `@graview/tools/tidy` runs the actor once: its judges find duplicates
-   to merge (a shared name or email), links a record's own text names
-   through a relation the app declares, and finished records unchanged for
-   30 days to archive, and each is suggested with its basis. It skips what
-   was declined, what waits, what is left alone or changed in the last day,
-   and applies nothing unless the host passes `applyAtLeast`. A host's
-   schedule runs it (`graview dream <entry> --data ./data`), or reaches the
-   store as the actor through `suggest_changes`, the tool only an
-   `automated` seat is offered. `whileAway(store, { seq })` is the tray's
-   line: "2 suggestions waiting · tidied 12 things while you were away".
+4. **Let it dream.** `dream(store, { now, limit, ai })` from
+   `@graview/tools/tidy` runs the actor once. Code puts forward
+   near-duplicates, the records a relation might mean, finished records
+   and empty choices; the host's System One model (`ai.fast`, Jev) does
+   the judging, one request per candidate; code routes each answer by how
+   much the change would undo (`BANDS`) — made, suggested with its basis
+   ("Jev: 0.93 that …"), or dropped. Without a model, or when it fails or
+   the budget runs out, the floor is the judges' own rules: a shared name
+   or email, a link the record's text names, a finished record unchanged
+   for 30 days. It skips what was declined, what waits, what is left alone
+   or changed in the last day, and applies nothing unless the host passes
+   `applyAtLeast`. A host's schedule runs it (`graview dream <entry> --data
+   ./data --model jev-latest --cache ./cache.json`), or reaches the store
+   as the actor through `suggest_changes`, the tool only an `automated`
+   seat is offered. `whileAway(store, { seq })` is the tray's line.
 
 ## Then find out whether it worked
 

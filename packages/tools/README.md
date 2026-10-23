@@ -108,18 +108,29 @@ of this turn, which is above." }`, and counts toward the turn's twelve.
 ## The app's own actor, run on a schedule: `graview dream`
 
 `@graview/tools/tidy` holds what the app's own actor suggests and a way to
-run it. Its judges read the store as the actor sees it and find duplicates
-to merge (a shared name or email), links a record's own text names through
-a relation the app declares, and finished records long unchanged to set
-aside. `dream` runs them once and suggests each change with its basis and
-how sure, skipping what a person declined, what already waits, a record
-left alone and one changed in the last day; it applies nothing on its own
-unless the host names a confidence it may apply at. A model in the Fast
-slot's shape may weigh each candidate. `whileAway` says what it did since a
-person last looked.
+run it. `dream` reads the store as the actor sees it. Code puts forward
+what is worth judging, far wider than an exact match: two records of a kind
+that share a telling word or a value, a record whose text mentions
+another's name, an empty choice, an empty one-link relation. A System One
+model the host lends (Jev, as the Fast slot) judges each in one request —
+a Score for "the same thing?", a Choice among the likeliest records or
+options with "none of these", a Noul for "finished?" — and code routes each
+answer by how much the change would undo (`BANDS`: a merge is held to more
+than an archive, which is held to more than a link): made unasked only
+where the host names a confidence it may apply at, suggested with its
+basis ("Jev: 0.93 that “Acme Corp” and “ACME Corporation” are the same
+vendor"), or let go. A few requests at once, within a request and token
+budget, each answer kept by a hash of what was asked (`memoryDreamCache`,
+or the host's own), so an unchanged record is not asked again. Without a
+model, or when it fails, deterministic judges are the floor: a shared name
+or email, a link a record's text names, a finished record long unchanged.
+Either way it skips what a person declined, what already waits, a record
+left alone and one changed in the last day. `whileAway` says what it did
+since a person last looked.
 
 ```sh
 graview dream ./dist/domain/app.js --data ./data --limit 20
+TYPESAFE_API_KEY=… graview dream ./dist/domain/app.js --data ./data --model jev-latest --cache ./dream-cache.json
 ```
 
 A host that judges elsewhere reaches the store as the actor through the

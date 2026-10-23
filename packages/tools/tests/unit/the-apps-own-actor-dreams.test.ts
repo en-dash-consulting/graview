@@ -190,19 +190,6 @@ describe("a dream", () => {
     expect(made.lineage).toEqual({ basis: "Its supplier is “Harbor Catering”, the name of a vendor", confidence: 0.85 });
   });
 
-  it("is weighed by a model when lent one, which names itself in the lineage, and stands on the judges' own word when it fails", async () => {
-    const store = storeOf();
-    const decide = async (_state: unknown, questions: Readonly<Record<string, unknown>>) => ({
-      answers: Object.fromEntries(Object.keys(questions).map((key) => [key, { type: "noul" as const, noul: 0.25 }])),
-      usage: { inputTokens: 1, outputTokens: 0 },
-    });
-    const report = await dream(store, { now: NOW, judges: [archive], model: { model: "jev-latest", decide } });
-    expect(report.model).toEqual({ name: "jev-latest", answered: true });
-    expect(suggestions(store)[0]!.lineage).toMatchObject({ model: "jev-latest", confidence: 0.53 });
-    const failing = await dream(storeOf(), { now: NOW, judges: [archive], model: { model: "jev-latest", decide: () => Promise.reject(new Error("busy")) } });
-    expect(failing.model).toEqual({ name: "jev-latest", answered: false, error: "busy" });
-    expect(failing.outcomes[0]).toMatchObject({ outcome: "suggested", confidence: 0.8 });
-  });
 
   it("is refused to a person", async () => {
     await expect(dream(storeOf(), { principal: nick })).rejects.toThrow(/Only the app's own actor/);
