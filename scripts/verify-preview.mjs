@@ -26,7 +26,9 @@
  *   and a visitor opens a form at /forms/rsvp (Roadmap f-public-forms),
  *   fills it and submits at 390 and 1440: the guest lands on the store as
  *   "a visitor via the RSVP form", a visitor minted per page, and nothing
- *   of the records already there is drawn or sent to the page.
+ *   of the records already there is drawn or sent to the page;
+ *   and the same RSVP declared on-publish: a visitor's answer lands, and a
+ *   table the hosts add reaches a reader only once they publish.
  *
  *   node scripts/verify-preview.mjs [--engine=chromium|webkit|firefox]
  *
@@ -60,7 +62,7 @@ if (!existsSync(resolve(repoRoot, "packages/graview/dist/preview/index.html"))) 
   process.exit(1);
 }
 
-await vacant(portFor("preview"), portFor("preview-shots"), portFor("preview-form"));
+await vacant(portFor("preview"), portFor("preview-shots"), portFor("preview-form"), portFor("preview-publishing"));
 const server = spawn(process.execPath, [CLI, "preview", DOCUMENT, "--seed", SEED, "--port", String(portFor("preview"))], { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"] });
 let said = "";
 server.stdout.on("data", (chunk) => (said += chunk));
@@ -377,6 +379,77 @@ try {
       report.checks.aVisitorAnswersAFormAndSeesNoOtherRecord = { error: String(error?.stack ?? error), ok: false };
     } finally {
       formServer.kill();
+    }
+  }
+
+  /*
+   * ---- an app that publishes (Roadmap f-publishing-lifecycle): the RSVP declared `on-publish`, the hosts working on it and
+   * everyone reading its tables. A visitor's form answer lands on the store; a table the hosts add is not served to a reader
+   * until they publish, and then is, with `servedThrough` saying how far.
+   */
+  {
+    const dir = mkdtempSync(join(tmpdir(), "graview-publishing-"));
+    const declared = JSON.parse(readFileSync(resolve(repoRoot, FORM_DOCUMENT), "utf8"));
+    declared.publishing = { mode: "on-publish", working: ["host"] };
+    declared.policy.sees = [...declared.policy.sees, { roles: "*", kinds: ["table"] }];
+    const file = join(dir, "rsvp-published.gdd.json");
+    writeFileSync(file, JSON.stringify(declared));
+    const publishingServer = spawn(process.execPath, [CLI, "preview", file, "--seed", FORM_SEED, "--port", String(portFor("preview-publishing"))], { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"] });
+    let publishingSaid = "";
+    publishingServer.stdout.on("data", (chunk) => (publishingSaid += chunk));
+    publishingServer.stderr.on("data", (chunk) => (publishingSaid += chunk));
+    const publishingBase = at("preview-publishing");
+    try {
+      const began = Date.now();
+      for (;;) {
+        try {
+          if ((await fetch(`${publishingBase}/graview/health`)).ok) break;
+        } catch {
+          // not listening yet
+        }
+        if (Date.now() - began > 30_000 || publishingServer.exitCode !== null) throw new Error(`graview preview of the RSVP that publishes did not start:\n${publishingSaid}`);
+        await new Promise((ready) => setTimeout(ready, 200));
+      }
+      const { principal: host } = await (await fetch(`${publishingBase}/graview/document`)).json();
+      const reader = { kind: "human", id: "reader", name: "A reader", roles: [] };
+      const stateOf = async (seat) => (await fetch(`${publishingBase}/graview/state`, { headers: seatHeaders(seat) })).json();
+      const post = async (body) => (await fetch(`${publishingBase}/graview/ops`, { method: "POST", headers: { ...seatHeaders(host), "content-type": "application/json" }, body: JSON.stringify(body) })).json();
+      const tables = (state) => (state.snapshot?.nodes ?? []).filter((node) => node.kind === "table").map((node) => node.name);
+      // A visitor answers the form on the page, and it lands on the store.
+      const page = await browser.newPage({ viewport: { width: 390, height: 900 }, colorScheme: "light" });
+      page.on("pageerror", (error) => errors.push(`/forms/rsvp that publishes: ${error.message}`));
+      await page.goto(`${publishingBase}/forms/rsvp`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__graviewReady === true || typeof window.__graviewFailed === "string", null, { timeout: 60_000 });
+      await page.fill('input[name="name"]', "Mary Somerville");
+      await page.selectOption('select[name="coming"]', "yes");
+      await page.click('button[type="submit"]');
+      const received = await page
+        .waitForFunction(() => document.querySelector('[role="status"]')?.textContent?.includes("Received"), null, { timeout: 15_000 })
+        .then(() => true)
+        .catch(() => false);
+      await page.close();
+      const answered = (await stateOf(host)).snapshot?.nodes?.some((node) => node.name === "Mary Somerville") === true;
+      // The hosts add a table: their own state holds it, a reader's does not.
+      await post({ calls: [{ name: "add-table", args: { name: "Unpublished table" } }] });
+      const before = { host: tables(await stateOf(host)), reader: await stateOf(reader) };
+      await post({ calls: [{ name: "publish", args: {} }] });
+      const after = await stateOf(reader);
+      const unpublishedHidden = before.host.includes("Unpublished table") && !tables(before.reader).includes("Unpublished table");
+      const publishedShown = tables(after).includes("Unpublished table");
+      report.checks.aReaderIsServedWhatWasPublished = {
+        received,
+        answered,
+        hostTables: before.host,
+        readerTablesBefore: tables(before.reader),
+        readerTablesAfter: tables(after),
+        servedThrough: { before: before.reader.servedThrough ?? null, after: after.servedThrough ?? null },
+        ok: received && answered && unpublishedHidden && publishedShown && typeof after.servedThrough === "number" && after.servedThrough > (before.reader.servedThrough ?? -1),
+      };
+    } catch (error) {
+      report.checks.aReaderIsServedWhatWasPublished = { error: String(error?.stack ?? error), ok: false };
+    } finally {
+      publishingServer.kill();
+      rmSync(dir, { recursive: true, force: true });
     }
   }
 
