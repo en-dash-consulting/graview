@@ -70,6 +70,11 @@ export const WORKER_SHAPED = join(ROOT, "scripts/fixtures/cloud-worker-imports.m
  * 2.01 MB since every form came to ask in one order and a document came to
  * name an act in another spelling in a grant or a repair (`asked-order.ts`,
  * `act-spellings.ts`): 2_003_320 B, 6_434 more than before them (1_996_886).
+ *
+ * 2.004 MB measured alone when three 1.0 foundations — a link's own id and
+ * data, a caller's id honored by every creating act, an opaque cursor on
+ * the wire — took the worker from 1_999_926 to 2_003_930 (4_004 more, in
+ * the graph, the store and the live protocol a worker serves).
  */
 // 2_010_000 since a text field takes a splice (collaborative text, phase 1: the `splice-text` primitive folded, undone, served and read back wherever a patch is): 2_005_731 B measured, 5_787 more than before it (1_999_944).
 // 2_020_000 since the 0.1.49 batch came together (every form in one order, act spellings, suggestion and lineage shapes): 2_010_374 B measured.

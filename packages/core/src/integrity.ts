@@ -39,7 +39,8 @@ const byKey = (a: { key: string }, b: { key: string }) => (a.key < b.key ? -1 : 
 function canonicalSnapshot(snapshot: GraphSnapshot): string {
   const nodes = snapshot.nodes.map((node) => ({ key: node.id, value: node })).sort(byKey);
   const edges = snapshot.edges
-    .map((edge) => ({ key: edgeId(edge), value: { kind: edge.kind, from: edge.from, to: edge.to } }))
+    // A link's own id and data (reserved) count when it carries them; a graph without them hashes as it always did.
+    .map((edge) => ({ key: edgeId(edge), value: { kind: edge.kind, from: edge.from, to: edge.to, id: edge.id, data: edge.data } }))
     .sort(byKey);
   return canonicalJson({ nodes: nodes.map((n) => n.value), edges: edges.map((e) => e.value) });
 }

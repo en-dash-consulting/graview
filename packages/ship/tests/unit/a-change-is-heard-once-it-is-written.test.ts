@@ -1,7 +1,7 @@
 import { createSchema, defineApp, defineMutation, defineNode, Store, type Operation, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createStoreHandler, liveProtocol, type LivePeer, type LiveServerMessage } from "../../src/runtime.js";
+import { createStoreHandler, cursorAt, liveProtocol, type LivePeer, type LiveServerMessage } from "../../src/runtime.js";
 
 /**
  * A CHANGE OTHERS HEAR IS A CHANGE THAT IS WRITTEN.
@@ -85,7 +85,7 @@ describe("a change is heard once it is written", () => {
     const heard: LiveServerMessage[] = [];
     const late: LivePeer = { ...live.open(bo, "web"), send: (text) => heard.push(JSON.parse(text) as LiveServerMessage) };
     await live.receive(late, JSON.stringify({ t: "hello", seq: -1 }));
-    expect(heard[0]).toMatchObject({ t: "welcome", seq: -1, ops: [] });
+    expect(heard[0]).toMatchObject({ t: "welcome", seq: cursorAt(-1), ops: [] });
     gate.release();
     live.publish((await receiving).landed!, [late]);
     expect(opsOf(heard).map((op) => op.batch)).toEqual(["batch:adatab:1"]);

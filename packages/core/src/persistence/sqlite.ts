@@ -51,6 +51,7 @@ export interface SqliteAdapterOptions {
  *   kind: text("kind").notNull(),
  *   fromId: text("from_id").notNull(),
  *   toId: text("to_id").notNull(),
+ *   data: text("data"), // optional: a link's own id and data, when it carries them (reserved for 1.0)
  * }, (t) => [primaryKey({ columns: [t.householdId, t.position] })]);
  * ```
  */

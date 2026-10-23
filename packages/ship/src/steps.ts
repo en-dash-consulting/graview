@@ -209,7 +209,8 @@ export function primitivesFor(step: MigrationStep, stored: GraphSnapshot): Primi
           ),
         );
         out.push({ op: "remove-edge", edge });
-        for (const heir of tied) out.push({ op: "add-edge", edge: { kind: edge.kind, from: heir, to: edge.to } });
+        // Each heir's link is a new one: it carries the old link's data (reserved), never its id, which only one link holds.
+        for (const heir of tied) out.push({ op: "add-edge", edge: { kind: edge.kind, from: heir, to: edge.to, ...(edge.data !== undefined ? { data: edge.data } : {}) } });
       }
       return out;
     }

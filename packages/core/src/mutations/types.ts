@@ -205,4 +205,12 @@ export type AnyMutationDefinition<S extends AnySchema = AnySchema> =
 export interface MutationCall<Name extends string = string> {
   readonly name: Name;
   readonly args: Record<string, unknown>;
+  /**
+   * The id a client minted on its own for the record this call makes, when
+   * it applied the call first (Roadmap f-1-0-client-ids): a hint, never a
+   * demand. The store makes the record under it when it is free, and mints
+   * as ever when it is not — and a later call of the same change naming it
+   * then names the record the store made. An `id` argument is the demand.
+   */
+  readonly mintedHint?: string;
 }

@@ -34,6 +34,7 @@ export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
 export type { LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, RemoteOptions, RemoteRefusal, RemoteState, RemoteStatus, RemoteStore } from "./remote.js";
 export { conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, liveSubprotocol, REFUSAL_REASONS } from "./live.js";
+export { cursorAt, seqAt, type Cursor } from "./cursor.js";
 export type { HostRefusalReason, Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket, RefusalReason, WireRefusal } from "./live.js";
 export { createStoreHandler, presenceSeenBy } from "./handler.js";
 // Notify me (Roadmap f-notify-subscriptions): the wire's route, its client, and the file `graview serve` keeps them in.

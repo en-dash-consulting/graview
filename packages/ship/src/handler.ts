@@ -52,6 +52,7 @@ import { SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
 import { VIEWS_PATH } from "./remote-views.js";
 import { answerViews, keepsTheApp } from "./views.js";
 import type { GraphSnapshot } from "./snapshot.js";
+import { cursorAt, seqAt } from "./cursor.js";
 
 /**
  * THE STORE, BEHIND ANY RUNTIME'S FETCH — and the op log is the wire (FR-09).
@@ -74,7 +75,7 @@ import type { GraphSnapshot } from "./snapshot.js";
  *
  *   GET  /graview/state        the graph, the log, the stored version and the modules on
  *   POST /graview/ops          calls in, the ops they produced out — or `undo`, batches to take back
- *   GET  /graview/since?seq=N  the ops after N the asking seat is served — everyone else's
+ *   GET  /graview/since?seq=C  the ops after cursor C the asking seat is served — everyone else's
  *   GET  /graview/health       ship's own report, plus where the data is
  *
  * And three for WHO IS HERE, which is not the op log and never touches it:
@@ -106,7 +107,7 @@ import type { GraphSnapshot } from "./snapshot.js";
 export const WIRE = [
   { method: "GET", path: "/graview/state", says: "the graph, the log, the stored version and the modules on" },
   { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` the asking seat already landed is answered with the ops it made, and one that is somebody else's or not `batch:<tag>:<n>` is refused `invalid`; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy, 503 with the reason `unavailable` when it takes no changes for a while" },
-  { method: "GET", path: "/graview/since", says: "the ops after ?seq=N that the asking seat is served — everyone else's, through the seq it is served (the head, unless a policy serves it behind)" },
+  { method: "GET", path: "/graview/since", says: "the ops after ?seq=<cursor> that the asking seat is served — everyone else's, through the seq it is served (the head, unless a policy serves it behind), and the cursor after them" },
   { method: "GET", path: "/graview/health", says: "ship's own report, plus where the data is" },
   { method: "GET", path: "/graview/export", says: "the whole store as one bundle, the way out" },
   { method: "POST", path: "/graview/here", says: "say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under" },
@@ -675,14 +676,16 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     if (url.pathname === "/graview/state") return answered(serving.protocol.state(await asked("api")));
 
     if (url.pathname === "/graview/since") {
-      const seq = Number(url.searchParams.get("seq") ?? "-1");
+      // A cursor this server gave (or, for one minor more, an old page's number): opaque on the wire, a seq here.
+      const seq = seqAt(url.searchParams.get("seq") ?? -1);
+      if (seq === undefined) return send(400, { error: "seq is a cursor this server gave: a welcome's, an ack's or an ops message's seq.", reason: "invalid" });
       return answered(serving.protocol.since(seq, await asked("api")));
     }
 
     if (url.pathname === "/graview/who") return send(200, { who: wire.whoFor(await seat(), alive()) });
 
     if (url.pathname === "/graview/here" && request.method === "POST") {
-      const body = (await read(request)) as { presence?: Presence; seq?: number };
+      const body = (await read(request)) as { presence?: Presence; seq?: unknown };
       if (!body.presence || typeof body.presence.participant !== "string" || typeof body.presence.stop !== "string") {
         return send(400, { error: "A presence is a participant and a stop.", reason: "invalid" });
       }
@@ -690,13 +693,15 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       const mine = presenceFrom(body.presence, asking);
       arrive(mine);
       tellWhoIsHere();
+      const from = seqAt(body.seq);
+      const since = from === undefined ? undefined : wire.since(asking, from);
       // Folded into the poll: the heartbeat carries back everybody else AND
       // the ops since, so being here costs no round trip of its own.
       // `participant` is the key the server holds this poller under, so it can leave itself out (FR-47).
       return send(200, {
         participant: mine.participant,
         who: wire.whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
-        ...(typeof body.seq === "number" ? { ops: wire.since(asking, body.seq) } : {}),
+        ...(since ? { ops: since, cursor: cursorAt(since.at(-1)?.seq ?? from!) } : {}),
         ...answering(asking),
         // A poller that only says where it is learns the hold, and its end, here too (FR-66).
         ...(holding ? { held: holding } : {}),

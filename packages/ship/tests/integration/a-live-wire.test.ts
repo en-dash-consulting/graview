@@ -1,7 +1,7 @@
 import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, nodeRef, type Operation, type Principal } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createStoreHandler, LIVE_PATH, openRemote, seatHeaders, serveStore, type LiveServerMessage, type RemoteConflict, type RemoteOptions, type RemoteStore, type ServedStore } from "../../src/index.js";
+import { createStoreHandler, cursorAt, LIVE_PATH, openRemote, seatHeaders, serveStore, type LiveServerMessage, type RemoteConflict, type RemoteOptions, type RemoteStore, type ServedStore } from "../../src/index.js";
 
 /**
  * A LIVE WIRE (FR-05): ops pushed as they land, pending edits rebased, and a
@@ -259,7 +259,7 @@ describe("a live wire", () => {
     await until(() => heard.some((message) => message.t === "welcome"));
     const welcome = heard.find((message) => message.t === "welcome") as Extract<LiveServerMessage, { t: "welcome" }>;
     expect(welcome.protocol).toBe(1);
-    expect(welcome.seq).toBe(3);
+    expect(welcome.seq).toBe(cursorAt(3));
     expect(welcome.ops.map((op) => op.seq)).toEqual([2, 3]);
     expect(welcome.ops.map((op) => op.id)).toEqual(served.store.log.all().slice(2).map((op) => op.id));
 

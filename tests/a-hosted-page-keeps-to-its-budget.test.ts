@@ -138,6 +138,7 @@ describe("a hosted page", () => {
     // 979 KB since the formats came to fail closed for 1.0: a primitive or a typed value a build does not know refused where ops are folded, an author's kind read through `authorKindOf`, two refusal codes more: the scene face measured 1_002_138 B, 666 over 978.
     // 980 KB since the Suggested tray came to say Not now and what was done while a person was away, and Activity to fold a night's run into one row: the provider hands the tray the host's `dismissals` and `whileAway`, and the bar fetches the tray for them: the scene face measured 1_002_816 B, 480 more than before them (1_002_336).
     // 981 KB since a text field came to take a splice (collaborative text, phase 1): the `splice-text` primitive folded, undone, served and read back wherever a patch is: the scene face measured 1_004_074 B, 1_578 over 979.
+    // 981 KB since a link came to keep its own id and data, every creating act to honor a caller's id, and the wire to say a position as an opaque cursor: the scene face measured 1_004_096 B, 1_958 more than before them (1_002_138).
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(984 * 1024);
   });
 
