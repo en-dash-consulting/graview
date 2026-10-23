@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 0,
+  "gzipped": 4,
+  "note": "Raised when the 0.1.49 batch came together: the host learning a view's clicks and a wider ring (#370) and the suggestion and lineage shapes (#371) each fit on their own; together they gzip one byte past (measured 24_845 / 11_613 against 24_845 / 11_612 minified and gzipped). Four bytes leave room for the gzip of the merged whole to move."
+}

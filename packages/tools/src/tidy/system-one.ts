@@ -1,6 +1,6 @@
 import type { SearchRanker } from "@graview/core";
 import type { AiPrice, HostAi } from "../ai.js";
-import type { Answer, Decide } from "../providers/jev.js";
+import type { Answer, Decide } from "../fast.js";
 
 /*
  * THE ONE DOOR THE DREAM ASKS A MODEL THROUGH. A System One model (Jev, or

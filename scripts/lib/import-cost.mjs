@@ -71,7 +71,8 @@ export const WORKER_SHAPED = join(ROOT, "scripts/fixtures/cloud-worker-imports.m
  * name an act in another spelling in a grant or a repair (`asked-order.ts`,
  * `act-spellings.ts`): 2_003_320 B, 6_434 more than before them (1_996_886).
  */
-export const WORKER_BUDGET = { cpu: 75, bytes: 2_010_000, zod: 260_000 };
+// 2_020_000 since the 0.1.49 batch came together (every form in one order, act spellings, suggestion and lineage shapes): 2_010_374 B measured.
+export const WORKER_BUDGET = { cpu: 75, bytes: 2_020_000, zod: 260_000 };
 
 /** The file an entry resolves to in its package's dist/. */
 export function entryFile(entry) {

@@ -134,7 +134,8 @@ describe("a hosted page", () => {
     // 978 KB since a declared row came to name its record where its blocks do not, and a key's abbreviation to be said as its letters: 1_237 B more on the scene face.
     // 981 KB since every form came to ask in one order (Roadmap f-forms-same-order-everywhere) and a document came to name an act in another spelling in a grant or a repair (Roadmap f-act-spellings-in-declarations): the store derives a record's edit and the strip its questions in the order a creating form asks, and the compile writes a grant's or a repair's act as its own name: the scene face measured 1_003_731 B, 2_803 more than before them (1_000_928).
     // 983 KB since a lineage came to keep its judge, run, evidence and a later build's keys, a decline to refuse the same change by what it means, and a suggestion to expire: the scene face measured 1_002_336 B, 1_408 more than before them (1_000_928).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(983 * 1024);
+    // 984 KB since the 0.1.49 batch came together: what each raise above measured alone, with the dream's run id on its lineage — the scene face measured 1_006_737 B.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(984 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

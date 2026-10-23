@@ -90,9 +90,8 @@ export interface DreamOutcome {
 /** What a run did, by judge, and in a sentence. */
 export interface DreamReport {
   /**
-   * The run, by its moment. HOOK(run id): the suggestion shape does not yet
-   * carry a run, so this is not on the ops; when it does, `suggest` is
-   * handed it here.
+   * The run, by its moment: on every change and suggestion it made, as
+   * `lineage.run`, so Activity reads a night's work as one.
    */
   readonly run: string;
   readonly outcomes: readonly DreamOutcome[];
@@ -212,13 +211,14 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
   const ranked = [...fresh].sort((a, b) => b.candidate.confidence - a.candidate.confidence || a.at - b.at).slice(0, limit);
   // A record merged away in this run is not merged, or merged into, again.
   const mergedAway = new Set<string>();
+  const run = new Date(now).toISOString();
   for (const { candidate, route } of ranked) {
     const merge = candidate.judge === "duplicates" ? (candidate.calls[0]?.args as { id?: string; into?: string } | undefined) : undefined;
     if (merge && (mergedAway.has(String(merge.id)) || mergedAway.has(String(merge.into)))) {
       said(candidate, "dropped", { error: "One of the two was already proposed to merge into another in this run." });
       continue;
     }
-    const lineage = { basis: candidate.basis, confidence: candidate.confidence, ...(candidate.model ? { model: candidate.model } : {}) };
+    const lineage = { basis: candidate.basis, confidence: candidate.confidence, run, actor: candidate.judge, ...(candidate.model ? { model: candidate.model } : {}) };
     try {
       if (route === "act" && options.applyAtLeast !== undefined && candidate.confidence >= options.applyAtLeast) {
         const result = whole.applyAll(candidate.calls, { author: principal, lineage, ...(options.via ? { via: options.via } : {}) });
@@ -244,7 +244,7 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
   const suggested = outcomes.filter((one) => one.outcome === "suggested").length;
   const applied = outcomes.filter((one) => one.outcome === "applied").length;
   return {
-    run: new Date(now).toISOString(),
+    run,
     outcomes,
     byJudge,
     ...(modelSaid ? { model: modelSaid } : {}),
