@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.48`](https://graview.dev/docs/releases.html#v0-1-48)
 - [`0.1.47`](https://graview.dev/docs/releases.html#v0-1-47)
 - [`0.1.46`](https://graview.dev/docs/releases.html#v0-1-46)
 - [`0.1.45`](https://graview.dev/docs/releases.html#v0-1-45)
@@ -49,9 +50,27 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.48
+
+Published October 23, 2026 · the current version
+
+Forms ask the name first, acts answer to the way they're spelled, refusals name the act that would, and a place says its forms.
+
+- **A creating form asks the name first.** Then the required fields, then the rest, in the page's order, whatever order the document keeps its fields in. A key's abbreviation is said as its letters: `cvss` is "CVSS", `sourceUrl` "Source URL".
+- **An act answers to its other spellings.** `connect-threat-partOf` runs `connect-threat-part-of`; a name no act has is answered with the nearest one. A relation from a kind to itself is titled from its description: "Set the family it belongs to".
+- **Refusals name the act that would.** An edit refused a field another act writes says which act: "whatToDo is set by set-verdict". A number given as its digits ("8.6") is read as the number.
+- **Capitals where they belong.** A headline that opens on a count in words starts with a capital; an acronym ("CVEs") is never lowered.
+- **A declared row names its record** when its blocks don't, so the picture and its words agree.
+- **describe_place says a place's forms**: each creating act's fields in order, required, with their choices; and a visitor form at `forms/<name>`.
+- **A hidden lens is hidden where a record is seen**, and a title another lens holds is refused by naming that lens. A draft view takes no title a titled view already has.
+
+**Before you upgrade:** Additive in the API: `actSpelledAs`, `nearestAct`, `numbersSpelled`, `capitalize` and `lowerFirst` on `@graview/core/words`, `blocksName` on `/blocks`, `DescribedForm` on `/describe`, `views` on `DraftOptions` and `DraftTools`. A document's creating acts take their arguments in a new order (name, then required, then the rest), so a generated form and an agent tool's schema list them so; a field's label for a known abbreviation changes ("Id" is "ID"); a number argument given as an exact numeric string is accepted where it was refused. Ops, stored formats and the wire are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.48) · [The full changelog for 0.1.48](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0148)
+
 ## 0.1.47
 
-Published October 22, 2026 · the current version
+Published October 22, 2026
 
 Custom views work by keyboard with real links and buttons, are as tall as they draw, and can be audited for accessibility; a place is said drawn once its lens has drawn.
 
