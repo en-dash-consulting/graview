@@ -147,6 +147,14 @@ export interface Operation {
    * whole from a seat that may not see a record it names.
    */
   readonly suggests?: readonly MutationCall[];
+  /**
+   * WHEN A SUGGESTION STOPS WAITING (an ISO time), when its maker said: on
+   * a suggestion's op only. From then on it leaves the Suggested tray and
+   * cannot be accepted or declined; nothing is undone, since it changed
+   * nothing. An actor that still thinks so judges it again and suggests it
+   * anew. Absent, it waits until a person answers it.
+   */
+  readonly expiresAt?: string;
 }
 
 export interface Batch {

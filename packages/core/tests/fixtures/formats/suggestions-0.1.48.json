@@ -1,0 +1,279 @@
+{
+  "written": "by @graview 0.1.48: the app's own actor's confident links, two suggestions, one declined and one accepted, and a confident link a person took back",
+  "snapshot": {
+    "nodes": [
+      {
+        "id": "vendor:bloom",
+        "kind": "vendor",
+        "label": "Bloom Florals"
+      },
+      {
+        "id": "vendor:harbor",
+        "kind": "vendor",
+        "label": "Harbor Catering"
+      },
+      {
+        "id": "vendor:quill",
+        "kind": "vendor",
+        "label": "Quill Stationers"
+      },
+      {
+        "id": "vendor:moss",
+        "kind": "vendor",
+        "label": "Moss & Fern"
+      },
+      {
+        "id": "event:gala",
+        "kind": "event",
+        "label": "Spring gala"
+      }
+    ],
+    "edges": []
+  },
+  "ops": [
+    {
+      "id": "op1",
+      "seq": 0,
+      "batch": "batch:1",
+      "author": {
+        "kind": "system",
+        "id": "tidying",
+        "name": "Graview, tidying",
+        "automated": true
+      },
+      "intent": "supply(id=\"vendor:bloom\", event=\"event:gala\")",
+      "mutation": {
+        "name": "supply",
+        "args": {
+          "id": "vendor:bloom",
+          "event": "event:gala"
+        }
+      },
+      "primitives": [
+        {
+          "op": "add-edge",
+          "edge": {
+            "kind": "supplies",
+            "from": "vendor:bloom",
+            "to": "event:gala"
+          }
+        }
+      ],
+      "reads": [],
+      "writes": [
+        "vendor:bloom",
+        "event:gala"
+      ],
+      "at": "2026-10-14T09:00:00.000Z",
+      "lineage": {
+        "basis": "The gala's invoice names Bloom",
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "op2",
+      "seq": 1,
+      "batch": "batch:2",
+      "author": {
+        "kind": "system",
+        "id": "tidying",
+        "name": "Graview, tidying",
+        "automated": true
+      },
+      "intent": "supply(id=\"vendor:harbor\", event=\"event:gala\")",
+      "mutation": {
+        "name": "supply",
+        "args": {
+          "id": "vendor:harbor",
+          "event": "event:gala"
+        }
+      },
+      "primitives": [
+        {
+          "op": "add-edge",
+          "edge": {
+            "kind": "supplies",
+            "from": "vendor:harbor",
+            "to": "event:gala"
+          }
+        }
+      ],
+      "reads": [],
+      "writes": [
+        "vendor:harbor",
+        "event:gala"
+      ],
+      "at": "2026-10-14T09:00:00.000Z",
+      "lineage": {
+        "basis": "Harbor's quote is for the gala",
+        "confidence": 0.92
+      }
+    },
+    {
+      "id": "op3",
+      "seq": 2,
+      "batch": "batch:3",
+      "author": {
+        "kind": "system",
+        "id": "tidying",
+        "name": "Graview, tidying",
+        "automated": true
+      },
+      "intent": "supply(id=\"vendor:quill\", event=\"event:gala\")",
+      "mutation": null,
+      "primitives": [],
+      "reads": [],
+      "writes": [],
+      "at": "2026-10-14T09:00:00.000Z",
+      "lineage": {
+        "basis": "Quill printed something in April",
+        "confidence": 0.4
+      },
+      "suggests": [
+        {
+          "name": "supply",
+          "args": {
+            "id": "vendor:quill",
+            "event": "event:gala"
+          }
+        }
+      ]
+    },
+    {
+      "id": "op4",
+      "seq": 3,
+      "batch": "batch:4",
+      "author": {
+        "kind": "system",
+        "id": "tidying",
+        "name": "Graview, tidying",
+        "automated": true
+      },
+      "intent": "supply(id=\"vendor:moss\", event=\"event:gala\")",
+      "mutation": null,
+      "primitives": [],
+      "reads": [],
+      "writes": [],
+      "at": "2026-10-14T09:00:00.000Z",
+      "lineage": {
+        "basis": "Moss sent a quote",
+        "confidence": 0.5
+      },
+      "suggests": [
+        {
+          "name": "supply",
+          "args": {
+            "id": "vendor:moss",
+            "event": "event:gala"
+          }
+        }
+      ]
+    },
+    {
+      "id": "op5",
+      "seq": 4,
+      "batch": "undo:5",
+      "author": {
+        "kind": "human",
+        "id": "nick",
+        "name": "Nick"
+      },
+      "intent": "Undo: supply(id=\"vendor:quill\", event=\"event:gala\")",
+      "mutation": null,
+      "primitives": [],
+      "reads": [],
+      "writes": [],
+      "at": "2026-10-14T09:00:00.000Z",
+      "undoes": "op3",
+      "undoneLineage": {
+        "basis": "Quill printed something in April",
+        "confidence": 0.4
+      }
+    },
+    {
+      "id": "op6",
+      "seq": 5,
+      "batch": "batch:6",
+      "author": {
+        "kind": "human",
+        "id": "nick",
+        "name": "Nick"
+      },
+      "intent": "supply(id=\"vendor:moss\", event=\"event:gala\")",
+      "mutation": {
+        "name": "supply",
+        "args": {
+          "id": "vendor:moss",
+          "event": "event:gala"
+        }
+      },
+      "primitives": [
+        {
+          "op": "add-edge",
+          "edge": {
+            "kind": "supplies",
+            "from": "vendor:moss",
+            "to": "event:gala"
+          }
+        }
+      ],
+      "reads": [],
+      "writes": [
+        "vendor:moss",
+        "event:gala"
+      ],
+      "at": "2026-10-14T09:00:00.000Z",
+      "lineage": {
+        "basis": "Moss sent a quote",
+        "confidence": 0.5,
+        "suggestion": "op4"
+      }
+    },
+    {
+      "id": "op7",
+      "seq": 6,
+      "batch": "undo:7",
+      "author": {
+        "kind": "human",
+        "id": "nick",
+        "name": "Nick"
+      },
+      "intent": "Undo: supply(id=\"vendor:harbor\", event=\"event:gala\")",
+      "mutation": null,
+      "primitives": [
+        {
+          "op": "remove-edge",
+          "edge": {
+            "kind": "supplies",
+            "from": "vendor:harbor",
+            "to": "event:gala"
+          }
+        }
+      ],
+      "reads": [],
+      "writes": [
+        "vendor:harbor",
+        "event:gala"
+      ],
+      "at": "2026-10-14T09:00:00.000Z",
+      "undoes": "op2",
+      "undoneLineage": {
+        "basis": "Harbor's quote is for the gala",
+        "confidence": 0.92
+      }
+    }
+  ],
+  "folds": "sha256:96424a71a78b89c622a56b93a8c2e3a9e6e83af64e0bd18221ab6c86c9548cab",
+  "edges": [
+    {
+      "kind": "supplies",
+      "from": "vendor:bloom",
+      "to": "event:gala"
+    },
+    {
+      "kind": "supplies",
+      "from": "vendor:moss",
+      "to": "event:gala"
+    }
+  ]
+}

@@ -27,7 +27,7 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
-import { declinedIn, isAutomated, tidyingRefusal } from "./ops/tidying.js";
+import { declinedIn, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
@@ -1895,9 +1895,14 @@ export class Store<S extends AnySchema> {
     return nameOfAuthor(author, { graph: this.graph as never, schema: this.schema });
   }
 
+  // What this app's acts mean, for a decline matched by meaning rather than spelling (`meaningKey`).
+  private actMeanings(): ActMeanings {
+    return { act: (name) => this.mutations.get(this.spelled(name)) as never, has: (id) => this.graph.has(id) };
+  }
+
   /** A change a person declined is not made or suggested again: refused, in a sentence. */
   private refuseDeclined(calls: readonly MutationCall[], author: Author | Principal): void {
-    const declined = declinedIn(this.log.all(), calls);
+    const declined = declinedIn(this.log.all(), calls, this.actMeanings());
     if (declined) this.refuse({ mutation: calls[0]!.name, message: `${this.authorName(author)} may not make this again: a person declined it on ${declined.at.slice(0, 10)}.`, wouldNeed: [] }, author.id);
   }
 

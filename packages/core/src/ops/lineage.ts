@@ -16,6 +16,10 @@ import { GraphError } from "../graph/graph.js";
  * when a model did. The framework records, draws and explains; it never
  * decides what to link.
  *
+ * A key this build does not know is a later build's, and is kept as it was
+ * said (`lineageOf`), so what a newer client says reaches every reader
+ * through an older store. It folds nothing.
+ *
  * What draws a link or a history line reads `provenance.ts`; only the check
  * every change is held to lives here, so a page carries the rest when it
  * draws.
@@ -37,33 +41,77 @@ export interface Lineage {
    * the offer and the model that made it, and taken back from that entry.
    */
   readonly interaction?: string;
+  /**
+   * WHICH AUTOMATED ACTOR, OR WHICH OF ITS JUDGES, MADE THE CALL: "links by
+   * shared address", "duplicates". The author says who moved — "Graview,
+   * tidying" for everything the app's own actor does — and this says which
+   * of its judgments this one was, so a reader can weigh one judge apart
+   * from the others. 1–120 characters.
+   */
+  readonly actor?: string;
+  /**
+   * THE RUN IT WAS MADE IN: one id for everything an actor applied and
+   * suggested in one pass (a night's tidying), so the pass reads, and is
+   * weighed, as one unit. 1–120 characters.
+   */
+  readonly run?: string;
+  /**
+   * THE RECORDS THE BASIS RESTS ON, by id: the email, the invoice, the two
+   * records that share an address. At most 50, each 1–120 characters. An id
+   * here is one the op names, so a seat that may not see one of them is
+   * served the op withheld, as for any id an op names.
+   */
+  readonly evidence?: readonly string[];
 }
 
 /** The longest basis an op keeps: a reason, not a transcript. */
 export const LINEAGE_BASIS_LIMIT = 500;
-/** The longest model name an op keeps. */
+/** The longest model name an op keeps; and the longest actor, run, suggestion, interaction or evidence id. */
 export const LINEAGE_MODEL_LIMIT = 120;
+/** The most records a lineage names as its evidence. */
+export const LINEAGE_EVIDENCE_LIMIT = 50;
+/** The longest a whole lineage is, written out as JSON: what bounds the keys a later build adds. */
+export const LINEAGE_LIMIT = 4000;
+
+/** The keys that name something in 1–120 characters. */
+const NAMES = ["model", "suggestion", "interaction", "actor", "run"];
+
+/** A string of 1–120 characters. */
+const isName = (value: unknown): value is string => typeof value === "string" && value.length > 0 && value.length <= LINEAGE_MODEL_LIMIT;
+
+/** A value as JSON keeps it — a copy, so nothing the caller holds changes the op — or undefined when JSON keeps nothing of it. */
+const asJson = (value: unknown): unknown => {
+  const text = JSON.stringify(value);
+  return text === undefined ? undefined : JSON.parse(text);
+};
 
 /**
- * A lineage as an op keeps it — the basis trimmed, keys it does not know
- * dropped — or a GraphError: a basis of 1–500 characters, a confidence
- * from 0 to 1, a model name of 1–120. Asked before anything is kept;
- * nothing said is no lineage.
+ * A lineage as an op keeps it — the basis and model trimmed, a key this
+ * build does not know kept as JSON keeps it (a later build's) — or a
+ * GraphError: a basis of 1–500 characters, a confidence from 0 to 1, a
+ * model, suggestion, interaction, actor and run of 1–120 characters,
+ * evidence of at most 50 such ids, no key that would reach a prototype, and
+ * the whole at most 4000 characters written out. Asked before anything is
+ * kept; nothing said is no lineage.
  */
 export function lineageOf(value: unknown): Lineage | undefined {
   if (value === undefined) return undefined;
-  const { basis, confidence, model, suggestion, interaction } = (value ?? {}) as Record<string, unknown>;
-  const said = typeof basis === "string" ? basis.trim() : "";
-  const named = typeof model === "string" ? model.trim() : "";
-  if (
-    !said ||
-    said.length > LINEAGE_BASIS_LIMIT ||
-    (confidence !== undefined && !(typeof confidence === "number" && confidence >= 0 && confidence <= 1)) ||
-    (model !== undefined && !(named && named.length <= LINEAGE_MODEL_LIMIT)) ||
-    (suggestion !== undefined && !(typeof suggestion === "string" && suggestion.length > 0 && suggestion.length <= LINEAGE_MODEL_LIMIT)) ||
-    (interaction !== undefined && !(typeof interaction === "string" && interaction.length > 0 && interaction.length <= LINEAGE_MODEL_LIMIT))
-  ) {
-    throw new GraphError("A lineage is { basis: 1–500 characters, confidence?: 0–1, model?: 1–120 characters, suggestion?: an op id, interaction?: an AI interaction's id }");
+  const given = (value && typeof value === "object" && !Array.isArray(value) ? value : {}) as Record<string, unknown>;
+  const basis = typeof given["basis"] === "string" ? given["basis"].trim() : "";
+  const kept: Record<string, unknown> = { basis };
+  let fits = basis !== "" && basis.length <= LINEAGE_BASIS_LIMIT;
+  for (const key of Object.keys(given)) {
+    let said = given[key];
+    // One said as undefined was not said.
+    if (key === "basis" || said === undefined) continue;
+    if (key === "model" && typeof said === "string") said = said.trim();
+    if (key === "confidence") fits &&= typeof said === "number" && said >= 0 && said <= 1;
+    else if (NAMES.includes(key)) fits &&= isName(said);
+    else if (key === "evidence") fits &&= Array.isArray(said) && said.length <= LINEAGE_EVIDENCE_LIMIT && said.every(isName);
+    else fits &&= key !== "__proto__" && key !== "constructor" && key !== "prototype" && (said = asJson(said)) !== undefined;
+    if (fits) kept[key] = said;
   }
-  return { basis: said, ...(confidence !== undefined ? { confidence } : {}), ...(named ? { model: named } : {}), ...(typeof suggestion === "string" ? { suggestion } : {}), ...(typeof interaction === "string" ? { interaction } : {}) } as Lineage;
+  if (!fits) throw new GraphError("A lineage is { basis: 1 to 500 characters, confidence?: 0 to 1, model?, suggestion?, interaction?, actor?, run?: 1 to 120 characters, evidence?: up to 50 ids }");
+  if (JSON.stringify(kept).length > LINEAGE_LIMIT) throw new GraphError(`A lineage is at most ${LINEAGE_LIMIT} characters written out.`);
+  return kept as unknown as Lineage;
 }
