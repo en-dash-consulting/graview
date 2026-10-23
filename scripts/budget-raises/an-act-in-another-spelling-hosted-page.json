@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 950,
+  "gzipped": 340,
+  "changeset": "a-declaration-may-name-an-act-in-another-spelling.md",
+  "note": "Raised when a document came to name an act in another spelling in a grant or a rule's repair (Roadmap f-act-spellings-in-declarations): the compile writes it as the act's own name before the shape is judged (`document/act-spellings.ts`), and says 'did you mean' for one that names nothing. The compiler is on a page that compiles its document, not one handed a compiled app: the hosted page's 2_570 / 962 more less the compiled page's 1_624 / 630 is this, 946 / 332."
+}

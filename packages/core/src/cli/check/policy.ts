@@ -2,6 +2,7 @@ import { permits, rolesOf } from "../../permissions/policy.js";
 import { THEMSELVES } from "./people.js";
 import { derivedVia } from "../../mutations/derive-edits.js";
 import { nodeRefKinds } from "../../mutations/node-ref.js";
+import { nearestAct } from "../../mutations/act-spelling.js";
 import type { AnySchema } from "../../schema/schema.js";
 
 /**
@@ -102,12 +103,19 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
       if (grant.mutations === "*") continue;
       for (const name of grant.mutations) {
         if (mutations.has(name)) continue;
+        /*
+         * A grant written in code is matched by the act's own name, as it
+         * is written: `connect-threat-partOf` grants nothing, so it is
+         * refused naming the act it spells — a document's is rewritten as
+         * that act when it compiles (`act-spellings.ts`).
+         */
+        const near = nearestAct(name, mutations.keys());
         add({
           severity: "error",
           code: "grant-unknown-mutation",
           where: "policy.grants",
           message: `Grants "${name}", which no mutation declares.`,
-          fix: `Register a mutation called "${name}", or drop it from the grant.`,
+          fix: near ? `Did you mean "${near}"? Name it as it is spelled.` : `Register a mutation called "${name}", or drop it from the grant.`,
         });
       }
       if (grant.kinds === undefined || grant.kinds === "*") continue;
