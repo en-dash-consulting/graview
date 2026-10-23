@@ -399,7 +399,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
    * `ARRANGE_FROM` records the line is the count alone — unless the address
    * already arranged it, when the line says how and offers the way back.
    */
-  const pictures = placesOf(context).filter((place) => place.kind === kind);
+  // Its pictures, but none kept off the lists (`set-lens-hidden`): hidden is hidden here too.
+  const pictures = placesOf(context).filter((place) => place.kind === kind && !place.hidden);
   // What the declaration says this list filters by (`pages.lists.<kind>.filters`), when it says.
   const named = declared?.filters;
   // `is:any` is the horizon widened by "+N past", not an arrangement to undo.

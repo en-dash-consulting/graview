@@ -100,6 +100,14 @@ jobs:
       - run: pnpm typecheck
 
       # quick-ask and a few others walk all three engines, so every shard has them.
+      # The browsers are cached by the pinned Playwright version: a fresh
+      # download of all three took 42 of a job's 45 minutes on 2026-10-22.
+      # Their system libraries are installed every time (install-deps).
+      - name: The engines, cached
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: The engines
         run: npx playwright install --with-deps chromium webkit firefox
 
@@ -144,6 +152,14 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      # The browsers are cached by the pinned Playwright version: a fresh
+      # download of all three took 42 of a job's 45 minutes on 2026-10-22.
+      # Their system libraries are installed every time (install-deps).
+      - name: The engines, cached
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: npx playwright install --with-deps chromium webkit firefox
       # A cell that fails is looked at again alone; one that held the second
       # time is written to docs/flakes.json and raised as a warning.

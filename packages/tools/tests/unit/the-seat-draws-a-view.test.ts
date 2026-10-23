@@ -93,6 +93,19 @@ describe("a template draws from the declaration, with no model", () => {
     const again = { ...todo, lenses: [...(todo.lenses ?? []), { name: "calendar", title: "Tasks by month", bindings: { task: { start: "due" } } }] } as GraviewApp;
     expect(drafted(templateDraft("a calendar of tasks", { app: again })).title).toBe("Tasks by month 2");
   });
+
+  it("gives a draft no title a titled view the host keeps already has, its place being that view's", () => {
+    const views = [{ name: "month", title: "Tasks by month", attach: "task", cardinality: "many" as const }];
+    expect(drafted(templateDraft("a calendar of tasks", { app: todo, views })).title).toBe("Tasks by month 2");
+    expect(drafted(templateDraft("a calendar of tasks", { app: todo })).title).toBe("Tasks by month");
+  });
+
+  it("names the lens that holds a title when keeping one would take it", async () => {
+    const holding = { ...todo, lenses: [...(todo.lenses ?? []), { name: "calendar", title: "Tasks by month", on: "task", hidden: true, bindings: { task: { start: "due" } } }] } as GraviewApp;
+    const refused = await keepLens({ app: holding }, { op: "add-lens", title: "Tasks by month", lens: "columns", on: "task", bindings: { task: { column: "done" } } });
+    expect(refused.ok).toBe(false);
+    expect(JSON.stringify(refused)).toContain("there is already a lens called “Tasks by month” — the calendar lens over tasks, kept off the bar and the page list");
+  });
 });
 
 describe("a draft binds only what the seat may see", () => {

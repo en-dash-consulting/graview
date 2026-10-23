@@ -1043,7 +1043,7 @@ class Editor {
     const lens: Doc = { name, title: e.title, ...(e.on !== undefined ? { on: e.on } : {}), ...(e.bindings !== undefined ? { bindings: e.bindings } : {}), ...(e.options !== undefined ? { options: e.options } : {}), ...(was?.["hidden"] === true ? { hidden: true } : {}), ...(e.create === false ? { create: false } : {}) };
     // A title is an address: one lens a title on a kind.
     const clash = lenses.findIndex((other, index) => index !== at && isObject(other) && typeof other["title"] === "string" && placeSlug(other["title"]) === placeSlug(e.title) && (e.on === undefined || other["on"] === undefined || other["on"] === e.on));
-    if (clash >= 0) return this.fail(i, "title", `there is already a lens called "${String(lenses[clash]["title"])}"`, 'give it its own title, or say "replace" with the title of the lens it takes the place of');
+    if (clash >= 0) return this.titleTaken(i, lenses[clash]!);
     // An option the lens does not take would apply and do nothing: refused in the checker's own words (FR-190).
     const stray = isObject(e.options) ? Object.keys(e.options).find((key) => !(SHIPPED_LENSES[name].options as readonly string[]).includes(key)) : undefined;
     if (stray !== undefined) {
@@ -1073,7 +1073,32 @@ class Editor {
       this.doc.pages.first = e.title;
       follows = "; the app still opens on it";
     }
-    this.said.push(retitled ? `The lens "${String(was["title"])}" is now "${e.title}"${where}${follows}.` : `The lens "${e.title}" changes${where}.`);
+    // Drawn in the place of one kept off the lists, it is kept off them too: said, so a lens meant to be seen is shown.
+    const stays = lens.hidden === true ? `; it stays off the bar and the page list, as "${String(was["title"])}" was, until set-lens-hidden with "hidden": false shows it` : "";
+    this.said.push(retitled ? `The lens "${String(was["title"])}" is now "${e.title}"${where}${follows}${stays}.` : `The lens "${e.title}" changes${where}${stays}.`);
+  }
+
+  /**
+   * A TITLE ANOTHER LENS HOLDS. A title is an address, so add-lens refuses
+   * it — and says which lens holds it (what draws it, over what, and
+   * whether it is kept off the lists, where a reader of the page never
+   * sees it), and the one way to take it: "replace" with that title. An
+   * app made with lenses it never asked for, hidden afterwards, met a bare
+   * "there is already a lens called…" for a title it could not find.
+   * Hiding a lens does not free its title: it is still a place at its
+   * address.
+   */
+  private titleTaken(i: number, held: Doc) {
+    const title = String(held["title"]);
+    const over = typeof held["on"] === "string" ? held["on"] : kindsBound(held)[0];
+    const what = `the ${typeof held["name"] === "string" ? held["name"] : "blocks"} lens${over ? ` over ${pluralWords(this.doc, over)}` : ""}`;
+    const hidden = held["hidden"] === true;
+    this.fail(
+      i,
+      "title",
+      `there is already a lens called "${title}" — ${what}${hidden ? ", kept off the bar and the page list (set-lens-hidden), which still holds its title and its address" : ""}`,
+      `to draw this one in its place, say "replace": "${title}"${hidden ? ' (it stays off the lists, as that one is, until set-lens-hidden with "hidden": false shows it)' : ""}; or give this one a title of its own`,
+    );
   }
 
   /**

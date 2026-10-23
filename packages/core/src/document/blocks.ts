@@ -5,7 +5,7 @@ import { valueWords } from "../schema/value-words.js";
 import { evaluateExpr, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";
-import { capitalized, EMPTY_GRAPH, formatMoney, formatValue, namerOf, type Money, type TemplatePart } from "./template.js";
+import { capitalized, EMPTY_GRAPH, formatMoney, formatValue, headlineSaid, namerOf, type Money, type TemplatePart } from "./template.js";
 import { parseTemplate } from "./template-parse.js";
 import { fieldSpecOf } from "./field-spec.js";
 import { linkedRefsOf, type LinkedRecordRef, type LinkedRelation } from "../schema/linked.js";
@@ -533,7 +533,8 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
     case "headline": {
       const said = say(block.parts, ctx);
       const level = Math.min(6, Math.max(1, (first ? ctx.firstHeading : undefined) ?? ctx.heading ?? 3));
-      return withProblem({ t: "headline", level, text: said.text }, said.problem);
+      // Opening on a count in words, it starts as a sentence does: "Seventy-two indicators", not "seventy-two indicators".
+      return withProblem({ t: "headline", level, text: block.parts ? headlineSaid(block.parts, said.text) : said.text }, said.problem);
     }
     case "number": {
       const judged = judge(block.value, ctx);
@@ -550,6 +551,34 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
 export function resolveBlocks(blocks: readonly SpecBlock[], ctx: BlockContext): readonly ResolvedBlock[] {
   const first = blocks.findIndex((block) => block.t === "headline");
   return blocks.map((block, i) => ({ ...resolveOne(block, ctx, i === first), key: block.key }) as ResolvedBlock);
+}
+
+/**
+ * WHETHER A RECORD'S ROW NAMES IT. A row is a link to its record, and a link
+ * needs a name: a row declared as `{severity} · {status}` alone drew a list
+ * of facts with no record named in it, while `describe_place` said each
+ * record's title. Its blocks name it when they show a title or a headline,
+ * or words that hold its whole name (`{name} for {fills.name}`); a row that
+ * does not is drawn with the record's name first, and said so.
+ */
+export function blocksName(resolved: readonly ResolvedBlock[], label: string): boolean {
+  const name = label.trim().toLowerCase();
+  return resolved.some((block) => {
+    switch (block.t) {
+      case "title":
+      case "headline":
+        return block.text.trim() !== "";
+      case "text":
+      case "badge":
+        return name !== "" && block.text.toLowerCase().includes(name);
+      case "group":
+        return blocksName(block.blocks, label);
+      case "when":
+        return block.shown && blocksName(block.blocks, label);
+      default:
+        return false;
+    }
+  });
 }
 
 /** What a record's blocks said, once worked out: what a view drawn around them must not say again (FR-141). */

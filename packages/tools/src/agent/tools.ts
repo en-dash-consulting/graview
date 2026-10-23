@@ -1,6 +1,8 @@
 import {
+  actSpelledAs,
   actTitle,
   deriveMutations,
+  nearestAct,
   derivedVia,
   nodeRefArgs,
   permits,
@@ -28,6 +30,7 @@ import {
   type Store,
   type SubscriptionStore,
   type Violation,
+  type HostView,
 } from "@graview/core";
 import { answerSeenBy } from "@graview/core/seat";
 import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/tidying";
@@ -278,6 +281,8 @@ export interface DraftTools {
   readonly complete?: (prompt: string) => Promise<string>;
   /** Write the `add-lens` edit into the app's declaration (a document host's write); absent, `keep_lens` is not listed. */
   readonly keep?: (edit: KeptLensEdit) => Promise<{ readonly ok: true; readonly said?: string } | { readonly ok: false; readonly error: string }>;
+  /** The views the host keeps: a titled one's place is a title a draft does not take. */
+  readonly views?: readonly HostView[];
 }
 
 const read =(title: string): ToolAnnotations => ({ title, readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
@@ -385,11 +390,11 @@ const READ_TOOLS: readonly ToolDefinition[] = [
     name: "describe_place",
     title: "Say what a place shows",
     description:
-      "Say what one place of the app shows you, as a person in your seat would see it: its headings, its figures as drawn, its lists with each record's title and what its card or row says, the headings a list is grouped under, what an empty list says, and any block that could not be worked out. Pass a place's slug (\"home\", a lens's address like \"the-offers\", a kind's like \"offers\") or a record's id, and width 390 for a phone. Use it after a change to check what somebody now sees, instead of guessing.",
+      "Say what one place of the app shows you, as a person in your seat would see it: its headings, its figures as drawn, its lists with each record's title and what its card or row says, the headings a list is grouped under, what an empty list says, the forms it offers (each field in the order asked, its label, whether it must be answered, what it takes and its choices), and any block that could not be worked out. Pass a place's slug (\"home\", a lens's address like \"the-offers\", a kind's like \"offers\"), a record's id, or a visitor form's \"forms/<name>\", and width 390 for a phone. Use it after a change to check what somebody now sees, instead of guessing.",
     inputSchema: {
       type: "object",
       properties: {
-        place: { type: "string", description: "\"home\", a place's slug, or a record's id." },
+        place: { type: "string", description: "\"home\", a place's slug, a record's id, or \"forms/<name>\" for a visitor form." },
         width: { type: "number", description: "The screen's width in CSS pixels; 390 is a phone, 1440 when unsaid." },
       },
       required: ["place"],
@@ -836,7 +841,21 @@ export function createToolRuntime<S extends AnySchema>(
   const actNamed = (name: string): string | undefined => {
     if (READ_NAMES.includes(name)) return undefined;
     for (const [act, tool] of names) if (tool === name) return act;
-    return names.has(name) ? name : undefined;
+    if (names.has(name)) return name;
+    // An act asked for in another spelling is that act: `connect-threat-partOf` is `connect-threat-part-of`.
+    return actSpelledAs(name, names.keys());
+  };
+  /** " Did you mean "connect-threat-part-of"?" for a name that nearly says an act, or nothing. */
+  const didYouMean = (name: string): string => {
+    const near = nearestAct(name, names.keys());
+    return near ? ` Did you mean "${near}"?` : "";
+  };
+  /** The listed name first; an act's declared name reaches it too, unless a listed tool holds that name, and then that act in another spelling. */
+  const toolNamed = (name: string) => {
+    const listed = definitions.find((tool) => tool.name === name) ?? definitions.find((tool) => tool.act === name);
+    if (listed) return listed;
+    const act = actNamed(name);
+    return act === undefined ? undefined : definitions.find((tool) => tool.act === act);
   };
 
   /*
@@ -879,7 +898,7 @@ export function createToolRuntime<S extends AnySchema>(
     try {
       await judgingWithLines();
       // The listed name first; an act's declared name reaches it too, unless a listed tool holds that name.
-      const definition = definitions.find((tool) => tool.name === name) ?? definitions.find((tool) => tool.act === name);
+      const definition = toolNamed(name);
       if (!definition) {
         /*
          * A tool this seat may not use EXISTS, and saying "unknown" would be
@@ -895,7 +914,7 @@ export function createToolRuntime<S extends AnySchema>(
         }
         return {
           ok: false,
-          error: `Unknown tool "${name}". Available: ${definitions.map((t) => t.name).join(", ")}`,
+          error: `Unknown tool "${name}".${didYouMean(name)} Available: ${definitions.map((t) => t.name).join(", ")}`,
         };
       }
       if (definition.mutating && options.readOnly) {
@@ -1062,7 +1081,7 @@ export function createToolRuntime<S extends AnySchema>(
           if (!mutation || !permitted.has(act)) {
             const verdict = mutation ? store.permits({ name: act, args: {} }, principal) : undefined;
             if (verdict && !verdict.ok) return { ok: false, error: verdict.refusal.message, reason: "forbidden" };
-            return { ok: false, error: `There is no act "${asked}" this seat may run. Nothing was changed.`, reason: "invalid" };
+            return { ok: false, error: `There is no act "${asked}" this seat may run.${didYouMean(asked)} Nothing was changed.`, reason: "invalid" };
           }
           const subject = mutation.subject;
           if (!subject) return { ok: false, error: `"${actTitle(mutation)}" does not act on a record, so it cannot be run on several. Nothing was changed.`, reason: "invalid" };
@@ -1187,7 +1206,7 @@ export function createToolRuntime<S extends AnySchema>(
 
     async call(name, args) {
       const mutating =
-        (definitions.find((tool) => tool.name === name) ?? definitions.find((tool) => tool.act === name))?.mutating ?? false;
+        toolNamed(name)?.mutating ?? false;
       const started = { name, args, mutating, at: new Date().toISOString() };
       announce({ ...started, phase: "running" });
       const settle = <T extends ToolResult<S>>(result: T): T => {

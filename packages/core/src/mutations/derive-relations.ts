@@ -5,7 +5,7 @@ import type { AnySchema } from "../schema/schema.js";
 import type { EdgeDeclaration } from "../schema/types.js";
 import { ActRefusal } from "../refused.js";
 import { refTo } from "./node-ref.js";
-import { RELATION_ACTS, relationActName, relationActTitles } from "./derived-names.js";
+import { ownKindWords, RELATION_ACTS, relationActName, relationActTitles } from "./derived-names.js";
 import type { AnyMutationDefinition } from "./types.js";
 
 /**
@@ -63,7 +63,15 @@ export function deriveRelationMutations<S extends AnySchema>(
       const one = edge.cardinality === "one";
       // Another relation of this kind to the same kinds: each is told apart by its own words.
       const shared = edges.some(([other, spec]) => other !== relation && reaches(spec) === to);
-      const words = { to, from: nounOf(definition, kind), one, also: shared ? humanizeField(relation).toLowerCase() : undefined };
+      const spoken = (name: string) => humanizeField(name).toLowerCase();
+      // One of its own kind, said by the relation's own words: "Set the family it belongs to", not "Set the threat".
+      const own = ownKindWords(kind, relation, edge, spoken);
+      const words = {
+        to: own && "to" in own ? own.to : to,
+        from: nounOf(definition, kind),
+        one,
+        also: own && "also" in own ? own.also : shared && !own ? spoken(relation) : undefined,
+      };
       const noun = words.from;
       for (const act of RELATION_ACTS) {
         const name = relationActName(act, kind, relation);
