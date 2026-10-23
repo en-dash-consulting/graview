@@ -108,7 +108,8 @@ export type { Capabilities } from "./capabilities.js";
 export { REFUSAL_REASONS, refusalOf } from "./refusal.js";
 export { ActRefusal } from "./refused.js";
 export type { RefusalReason, WireRefusal } from "./refusal.js";
-export { assertReadable, FORMATS, formatStamp, NewerFormatError, upgradeOp, upgradeSnapshot } from "./formats.js";
+export { assertReadable, FORMATS, formatStamp, NewerFormatError, PRIMITIVE_OPS, upgradeOp, upgradeSnapshot, VALUE_TYPES } from "./formats.js";
+export { unknownPrimitive } from "./format-error.js";
 export type { FormatName, FormatStamp } from "./formats.js";
 export type {
   EvaluateOptions,
@@ -209,7 +210,8 @@ export { FieldRevisions, fieldsWritten, NEVER_WRITTEN, writtenBy } from "./ops/r
 export type { FieldConflict, FieldRevision } from "./ops/revisions.js";
 export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck, UndoRefused } from "./ops/undo.js";
-export type { Author, Batch, Operation, Via } from "./ops/types.js";
+export type { Author, AuthorKind, Batch, Operation, Via } from "./ops/types.js";
+export { AUTHOR_KINDS, authorKindOf } from "./ops/types.js";
 export { LINEAGE_BASIS_LIMIT, LINEAGE_MODEL_LIMIT, lineageOf, type Lineage } from "./ops/lineage.js";
 // What a link was based on, and whether a person has kept it, are `@graview/core/provenance`'s, fetched with what draws them (FR-172).
 export type { HasLog, LinkProvenance, LinkRef } from "./ops/provenance.js";
@@ -422,7 +424,8 @@ export { createMemoryAdapter } from "./persistence/memory.js";
 export { createSqlAdapter, createSqliteAdapter, sqlFromDatabase, SQLITE_TABLE_SHAPE } from "./persistence/sqlite.js";
 export type { SqlAdapterOptions, SqlExec } from "./persistence/sql.js";
 export type { SqliteAdapterOptions, SqliteDatabase, SqliteStatement } from "./persistence/sqlite.js";
-export type { PersistenceAdapter } from "./persistence/types.js";
+export type { AppendOptions, PersistenceAdapter } from "./persistence/types.js";
+export { assertHead, headOf, LogHeadMovedError } from "./persistence/types.js";
 
 // Extending a schema without rewriting what was written against the base.
 export { extendInvariants, extendMutations } from "./extend.js";

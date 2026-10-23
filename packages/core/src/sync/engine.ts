@@ -5,8 +5,10 @@ import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import type { AnyMutationDefinition, MutationCall } from "../mutations/types.js";
 import type { Principal } from "../permissions/types.js";
 import { seesId } from "../seen.js";
+import { NewerFormatError } from "../format-error.js";
 import {
   EMPTY_SYNC_STATE,
+  SYNC_STATE_FORMAT,
   systemAuthor,
   type ConflictPolicy,
   type DeletedConflict,
@@ -195,6 +197,9 @@ export class SyncEngine<S extends AnySchema> {
 
   constructor(options: SyncOptions<S>, state: SyncState = EMPTY_SYNC_STATE) {
     this.options = options;
+    // A state a newer build wrote is not run on: its links may say what this build would misread (stability.md §2).
+    const format = state.format ?? 1;
+    if (!(format <= SYNC_STATE_FORMAT)) throw new NewerFormatError("sync state", format, SYNC_STATE_FORMAT);
     /*
      * LINKED AT THE VERSION THE GRAPH WAS MADE FROM. A graph projected from
      * the remote already holds what the remote holds; without a link, the
@@ -203,8 +208,9 @@ export class SyncEngine<S extends AnySchema> {
     this.state = { ...state, links: { ...this.seededLinks(), ...state.links } };
   }
 
+  // What to keep between runs, stamped with the format this build writes.
   get snapshot(): SyncState {
-    return this.state;
+    return { ...this.state, format: SYNC_STATE_FORMAT };
   }
 
   private get policy(): ConflictPolicy {
@@ -689,7 +695,7 @@ export class SyncEngine<S extends AnySchema> {
       refused,
       gone,
       offline,
-      state: this.state,
+      state: this.snapshot,
     };
   }
 

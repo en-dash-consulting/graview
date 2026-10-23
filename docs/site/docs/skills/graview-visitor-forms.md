@@ -24,7 +24,7 @@ An RSVP link is a page with nothing on it but the question. The visitor has no a
 
 A policy with `sees` keeps every kind it does not name from every role it does not name, so the visitor is served nothing — not the guests already there, not the one they just made. A picker the form asks with offers only what the visitor is served: show them a kind by a sight naming their role when they must pick one (an event to answer for).
 
-1. **Mint a visitor per answer, on the host.** `formVisitor(app, "rsvp", "form:<token>")` from `@graview/core/forms` is `{ kind: "human", id, name: "a visitor via the RSVP form", roles: ["visitor"] }`: hand it to the store that judges the act (a served store believes it from the seat's headers), so Activity names the answer for the form and never by its token.
+1. **Mint a visitor per answer, on the host.** `formVisitor(app, "rsvp", "form:<token>")` from `@graview/core/forms` is `{ kind: "visitor", id, name: "a visitor via the RSVP form", roles: ["visitor"] }`: hand it to the store that judges the act (a served store believes it from the seat's headers), so Activity names the answer for the form and never by its token.
 
 1. **Draw it alone.** `@graview/embed/form`:
 

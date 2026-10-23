@@ -1,3 +1,4 @@
+import { assertKnownPrimitives } from "../format-error.js";
 import { bareOp } from "./inverse.js";
 import { Graph } from "../graph/graph.js";
 import type { GraphSnapshot } from "../graph/types.js";
@@ -134,6 +135,8 @@ export class OperationLog {
     if (op.seq !== this.length) {
       throw new Error(this.length === 0 && op.seq > 0 ? beginsPastZero(op) : `Op "${op.id}" has seq ${op.seq} but the log is ${this.length} long`);
     }
+    // A primitive a newer build wrote is refused here, not skipped where it is folded (`NewerFormatError`).
+    assertKnownPrimitives(op);
     // Format 2 whatever wrote it: an inverse that is its primitives' own is not kept (`bareOp`).
     this.ops.push(bareOp(op));
   }

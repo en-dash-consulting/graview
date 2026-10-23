@@ -1,4 +1,4 @@
-import type { Operation, PersistenceAdapter, Principal } from "@graview/core";
+import { assertHead, headOf, type AppendOptions, type Operation, type PersistenceAdapter, type Principal } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 import type { StoredMeta } from "./meta.js";
 import { indexedEntries, type IDBFactoryLike, type IndexedEntries } from "./indexed-entries.js";
@@ -151,7 +151,7 @@ interface Backend {
   loadThrough(scope: string): Promise<number>;
   delete(scope: string): Promise<void>;
   loadLog(scope: string): Promise<Operation[]>;
-  appendOps(scope: string, ops: readonly Operation[]): Promise<void>;
+  appendOps(scope: string, ops: readonly Operation[], options?: AppendOptions): Promise<void>;
   loadMeta(scope: string): Promise<StoredMeta | null>;
   saveMeta(scope: string, meta: StoredMeta): Promise<void>;
 }
@@ -197,7 +197,7 @@ function adapterOver(keysFor: Keys, choose: () => Promise<Chosen>, journalIn: St
     save: (scope, snapshot) => queued(({ backend }) => backend.save(scope, snapshot, undefined)),
     delete: (scope) => queued(({ backend }) => backend.delete(scope)),
     loadLog: (scope) => queued(({ backend }) => backend.loadLog(scope)),
-    appendOps: (scope, ops) => queued(({ backend }) => (ops.length === 0 ? Promise.resolve() : backend.appendOps(scope, ops))),
+    appendOps: (scope, ops, options) => queued(({ backend }) => (ops.length === 0 ? Promise.resolve() : backend.appendOps(scope, ops, options))),
     loadMeta: (scope) => queued(({ backend }) => backend.loadMeta(scope)),
     saveMeta: (scope, meta) => queued(({ backend }) => backend.saveMeta(scope, meta)),
   };
@@ -296,11 +296,11 @@ function journaled(
         stateOf(scope).logged = newest(log);
         return log;
       }),
-    appendOps: (scope, ops) => {
+    appendOps: (scope, ops, options) => {
       heard(scope, ops);
       return queued(async ({ backend }) => {
         if (ops.length === 0) return;
-        await backend.appendOps(scope, ops);
+        await backend.appendOps(scope, ops, options);
         const state = stateOf(scope);
         state.logged = Math.max(state.logged, newest(ops));
         prune(scope);
@@ -351,9 +351,12 @@ function localBackend(storage: StorageLike, keysFor: Keys): Backend {
     async loadLog(scope) {
       return read<Operation[]>(keysFor(scope).log) ?? [];
     },
-    async appendOps(scope, ops) {
+    async appendOps(scope, ops, options) {
       const key = keysFor(scope).log;
-      write(key, [...(read<Operation[]>(key) ?? []), ...ops]);
+      const log = read<Operation[]>(key) ?? [];
+      // One writer: another tab that appended since is seen, read now from storage (compare-and-set).
+      assertHead(scope, ops, options, () => headOf(log));
+      write(key, [...log, ...ops]);
     },
     async loadMeta(scope) {
       return read<StoredMeta>(keysFor(scope).meta);
@@ -508,8 +511,21 @@ function indexedBackend(
       }
       return log;
     },
-    async appendOps(scope, ops) {
+    async appendOps(scope, ops, options) {
       await settle(scope);
+      if (options?.head !== undefined && ops.length > 0) {
+        /*
+         * ONE WRITER (compare-and-set): the count and the newest piece read
+         * now, not remembered, so another tab that appended since is seen.
+         * The read and the write are two transactions; two tabs writing in
+         * the same instant between them are not caught.
+         */
+        const [raw] = await entries.read([keysFor(scope).log]);
+        const stored = Number(raw ?? 0) || 0;
+        pieces.set(scope, stored);
+        const [last] = stored === 0 ? [null] : await entries.read([piece(scope, stored - 1)]);
+        assertHead(scope, ops, options, () => headOf(last == null ? [] : (JSON.parse(last) as Operation[])));
+      }
       const n = await count(scope);
       // The piece and the count in one transaction: a log never counts a piece it does not have.
       await entries.write(

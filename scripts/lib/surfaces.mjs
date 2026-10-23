@@ -11,7 +11,7 @@
 export const SURFACES = [
   {
     name: "ops and primitives",
-    paths: [/^packages\/core\/src\/ops\//, /^packages\/core\/src\/graph\/primitives\.ts$/, /^packages\/core\/src\/graph\/types\.ts$/],
+    paths: [/^packages\/core\/src\/ops\//, /^packages\/core\/src\/graph\/primitives\.ts$/, /^packages\/core\/src\/graph\/types\.ts$/, /^packages\/core\/src\/format-error\.ts$/],
   },
   {
     name: "stored formats",
@@ -19,12 +19,19 @@ export const SURFACES = [
       /^packages\/core\/src\/formats\.ts$/,
       /^packages\/core\/src\/snapshot\.ts$/,
       /^packages\/core\/src\/persistence\//,
-      /^packages\/ship\/src\/(open-store|export|meta|snapshot|file-adapter|browser-adapter|migrations)\.ts$/,
+      // A sync state a host keeps between runs (`SyncState.format`), and the subscriptions and views a host's files keep.
+      /^packages\/core\/src\/sync\//,
+      /^packages\/core\/src\/(subscription-shape|views\/kept)\.ts$/,
+      /^packages\/ship\/src\/(open-store|export|meta|snapshot|file-adapter|browser-adapter|indexed-entries|migrations|file-subscriptions|file-views)\.ts$/,
     ],
   },
   {
     name: "the wire",
-    paths: [/^packages\/ship\/src\/(serve|handler|runtime|remote|seat-headers|live|live-protocol)\.ts$/, /^packages\/core\/src\/(presence|capabilities|refusal)\.ts$/, /^packages\/guest\/src\/protocol\.ts$/],
+    paths: [
+      /^packages\/ship\/src\/(serve|handler|runtime|remote|seat-headers|live|live-protocol|presence|subscriptions|remote-subscriptions|views|remote-views)\.ts$/,
+      /^packages\/core\/src\/(presence|capabilities|refusal|refused)\.ts$/,
+      /^packages\/guest\/src\/protocol\.ts$/,
+    ],
   },
   {
     name: "the declaration and check finding codes",

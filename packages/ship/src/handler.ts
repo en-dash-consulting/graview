@@ -1,4 +1,5 @@
 import {
+  AUTHOR_KINDS,
   foldPresence,
   memorySubscriptions,
   memoryViews,
@@ -168,7 +169,8 @@ interface HandlerOptions<S extends AnySchema> {
    * `{ retryAfter }` is BUSY: the socket says `busy`, HTTP answers 429 with
    * `Retry-After`, and the client sends the change again after the wait.
    * `{ refuse }` is a hard cap: refused with reason `limit` (413 over
-   * HTTP), and the client takes the change back. `{ unavailable }` is a
+   * HTTP), or the `reason` it names — `unauthenticated` (401), `quota`
+   * (403) — and the client takes the change back. `{ unavailable }` is a
    * spell with no known end: refused `unavailable` (503 over HTTP), and
    * the client keeps the change and sends it again, backing off.
    */
@@ -386,7 +388,8 @@ export interface StoreHandler<S extends AnySchema> {
   close(): Promise<void>;
 }
 
-const KINDS = new Set(["human", "agent", "rule", "system"]);
+// A kind the host's headers name that this build does not know is a person's seat, never the system's: a seat is minted by the host, and fails closed.
+const KINDS: ReadonlySet<string> = new Set(AUTHOR_KINDS);
 const list = (value: string | null) => (value ? value.split(",").filter(Boolean) : undefined);
 const decoded = (value: string | null) => (value ? decodeURIComponent(value) : undefined);
 

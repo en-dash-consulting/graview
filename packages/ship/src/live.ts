@@ -243,7 +243,17 @@ export interface LimitAsked {
  * Asked only of a change that has not landed: a call sent again after it
  * did is answered with its ops, whatever the host would say now.
  */
-export type LimitAnswer = { readonly retryAfter: number; readonly sentence?: string } | { readonly refuse: string } | { readonly unavailable: string };
+export type LimitAnswer =
+  | { readonly retryAfter: number; readonly sentence?: string }
+  | { readonly refuse: string; readonly reason?: HostRefusalReason }
+  | { readonly unavailable: string };
+
+/**
+ * THE FINAL REFUSALS A HOST SAYS ITSELF, as `{ refuse, reason }`: `limit`
+ * (the default; 413 over HTTP), `unauthenticated` (401) or `quota` (403).
+ * Each is final, and the client takes the change back.
+ */
+export type HostRefusalReason = "limit" | "unauthenticated" | "quota";
 
 /** A host's word on whether a change may be judged now: busy, refused at its limit, or nothing. */
 export type Limit = (asked: LimitAsked) => LimitAnswer | undefined | Promise<LimitAnswer | undefined>;

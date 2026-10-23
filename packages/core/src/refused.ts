@@ -3,9 +3,12 @@
  *
  * A refusal reached a client as a sentence and nothing else, so an MCP tool
  * and an interface told "you may not" from "it is gone" by matching words.
- * The set is closed and on the stability surface (docs/stability.md): a
- * code never changes meaning, and before 1.0 one may be added, the
- * changelog saying so (`unavailable`, FR-66; `refused`, FR-119).
+ * The set is OPEN and on the stability surface (docs/stability.md): a code
+ * never changes meaning, a code may be added within a major, the changelog
+ * saying so (`unavailable`, FR-66; `refused`, FR-119; `unauthenticated`
+ * and `quota`, 1.0's foundation), and a client meeting a code it does not
+ * know treats it as a final refusal — the change is taken back, its
+ * sentence shown — never as `unavailable`.
  *
  *   forbidden  the seat may not: the policy, a sight, an agent's `may`, a module turned off
  *   missing    what the call names is not there: a record, or a batch to take back
@@ -13,16 +16,20 @@
  *   limit      the host's hard cap: the call can never succeed as asked, however long the caller waits
  *   unavailable  the host takes no changes for a while — a room read-only while it is checked, storage that failed to write — and does not know for how long
  *   refused    the act's own rule said no to a well-formed call: a document act's `allowedWhen`, a TypeScript mutation's `ActRefusal` (FR-119)
+ *   unauthenticated  the host does not know who is asking: no session, or one that ran out; signing in again may let the same change through
+ *   quota      the account the app belongs to has used what its plan allows: the change may succeed once the allowance grows, never by waiting
  *
- * `limit` and `unavailable` are the host's to say; nothing in the store
- * says them. Neither is `busy`: busy is "not now, after `retryAfter`", and
+ * A body too large to take is `limit` (413), and a caller sending too much
+ * too fast is told `busy` with a wait (429), which is not a refusal.
+ * `limit`, `unavailable`, `unauthenticated` and `quota` are the host's to
+ * say; nothing in the store says them. Neither is `busy`: busy is "not now, after `retryAfter`", and
  * the client keeps the change and sends it again (FR-45). `unavailable` is
  * the one refusal that is not final: nothing was judged, and the client
  * keeps the change pending and sends it again, backing off as it does to
  * reconnect, until the host takes it. A refusal of any other reason is
  * final, and the change is taken back.
  */
-export const REFUSAL_REASONS = ["forbidden", "missing", "invalid", "limit", "unavailable", "refused"] as const;
+export const REFUSAL_REASONS = ["forbidden", "missing", "invalid", "limit", "unavailable", "refused", "unauthenticated", "quota"] as const;
 
 export type RefusalReason = (typeof REFUSAL_REASONS)[number];
 

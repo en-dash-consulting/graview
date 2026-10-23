@@ -1,7 +1,7 @@
 import type { GraphEdge, GraphSnapshot, AnyGraphNode } from "../graph/types.js";
 import type { Epoch } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
-import type { PersistenceAdapter } from "./types.js";
+import { assertHead, type PersistenceAdapter } from "./types.js";
 
 /**
  * PERSISTENCE OVER PLAIN SQL — one synchronous `exec` (FR-09).
@@ -161,10 +161,16 @@ export function createSqlAdapter(options: SqlAdapterOptions): PersistenceAdapter
         (row) => JSON.parse(row.data) as Operation,
       );
     },
-    async appendOps(key, ops) {
+    async appendOps(key, ops, options) {
       if (ops.length === 0) return;
       ensureOpTable();
       transaction(() => {
+        // Read and written in one transaction: a second writer at the same head finds it moved (compare-and-set).
+        assertHead(key, ops, options, () => {
+          const [newest] = rows<{ seq: number | null }>(`SELECT MAX(seq) AS seq FROM ${opTable} WHERE ${scope} = ?`, key);
+          if (newest?.seq !== null && newest?.seq !== undefined) return Number(newest.seq) + 1;
+          return [...epochsOf(key, 0)].reverse().find((epoch) => epoch.horizon)?.seq ?? 0;
+        });
         for (const op of ops) run(`INSERT OR REPLACE INTO ${opTable} (${scope}, seq, data) VALUES (?, ?, ?)`, key, op.seq, JSON.stringify(op));
       });
     },
