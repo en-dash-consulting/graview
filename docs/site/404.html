@@ -1539,13 +1539,6 @@ main.landing > section.cloud-band {
 .cloud-points li:first-child { border-top: 0; padding-top: 0; }
 .cloud-points b { display: block; color: var(--ink); font-size: var(--t-body); font-weight: var(--w-label); margin-bottom: 2px; }
 
-/* The recipes, quieter: one rhythm with the rest. */
-.landing .recipe-list { margin-top: 0; }
-.landing .recipe-row { padding: var(--s3) 0; gap: var(--s2) var(--s5); }
-.landing .recipe-row h3 { font-size: 20px; letter-spacing: -0.015em; }
-.landing .recipe-row .recipe-blurb { font-size: var(--t-sm); line-height: 1.6; }
-.landing .recipe-row .recipe-prompt { font-size: var(--t-cap); }
-.landing .recipe-row dl { font-size: 14px; }
 
 /* Questions. */
 .landing .faq-list { gap: var(--s4) var(--s5); margin-top: 0; }
@@ -1609,12 +1602,6 @@ main.landing footer { margin-top: var(--s6); font-size: var(--t-cap); }
  * room rather than a rule or a box to say where one thing ends.
  */
 
-.landing .recipe-row { padding: var(--s4) 0; border-top-color: var(--rule-2); align-items: start; }
-.landing .recipe-row dt { color: var(--ink-3); }
-.landing .recipe-row dd { color: var(--ink-2); }
-.landing .recipe-row .recipe-links a { color: var(--ink-2); font-weight: 500; }
-.landing .recipe-row .recipe-links a:first-child { color: var(--pine); font-weight: var(--w-label); }
-.landing .recipes-note { border-top: 0; color: var(--ink-3); }
 
 /* Questions: the heading beside one column a reader can follow down. */
 .landing .faq { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--s4) var(--s5); align-items: start; }
@@ -1648,6 +1635,33 @@ main.landing footer { border-top-color: var(--rule-2); }
   .landing .ask-demo { grid-template-columns: minmax(0, 1fr); }
   .landing .ask-chips button { width: 100%; }
 }
+
+/*
+ * BUILT ON GRAVIEW: two products, each a picture and a sentence, the whole
+ * card the link; then the recipes a repository starts from, one line each.
+ */
+.built-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4) var(--s4); }
+.built-card { display: grid; gap: 20px; align-content: start; color: inherit; text-decoration: none; min-width: 0; }
+.built-shot img { border-radius: 10px; box-shadow: 0 0 0 1px var(--rule); transition: box-shadow 160ms ease; }
+.built-card:hover .built-shot img { box-shadow: 0 0 0 1px var(--ink-3); }
+.built-words { display: grid; gap: var(--s1); }
+.built-words b { font-size: 22px; font-weight: var(--w-label); letter-spacing: -0.015em; color: var(--ink); }
+.built-words > span:not(.built-at) { font-size: var(--t-sm); line-height: 1.6; color: var(--ink-2); max-width: 56ch; }
+.built-at { font-size: 14px; font-weight: var(--w-label); color: var(--pine); }
+.built-card:hover .built-at { text-decoration: underline; text-underline-offset: 4px; }
+
+.landing .recipes { margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--rule-2); display: grid; gap: var(--s1); }
+.landing .recipes h3 { font-size: 18px; }
+.landing .recipes-lede { font-size: var(--t-sm); color: var(--ink-3); }
+.landing .recipe-list { margin: var(--s3) 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s3); }
+.landing .recipe-list a { display: grid; gap: 4px; text-decoration: none; color: var(--ink); }
+.landing .recipe-list b { font-size: var(--t-sm); font-weight: var(--w-label); }
+.landing .recipe-list a:hover b { text-decoration: underline; text-underline-offset: 4px; }
+.landing .recipe-list span { font-size: var(--t-cap); color: var(--ink-3); }
+.landing .recipes-note { margin-top: var(--s3); font-size: var(--t-cap); color: var(--ink-3); border: 0; padding: 0; }
+@media (max-width: 1000px) { .landing .recipe-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .built-list { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .landing .recipe-list { grid-template-columns: minmax(0, 1fr); } }
 /* site-css:end */
 </style>
 <a class="skip" href="#main">Skip to content</a>

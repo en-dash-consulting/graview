@@ -1693,13 +1693,6 @@ main.landing > section.cloud-band {
 .cloud-points li:first-child { border-top: 0; padding-top: 0; }
 .cloud-points b { display: block; color: var(--ink); font-size: var(--t-body); font-weight: var(--w-label); margin-bottom: 2px; }
 
-/* The recipes, quieter: one rhythm with the rest. */
-.landing .recipe-list { margin-top: 0; }
-.landing .recipe-row { padding: var(--s3) 0; gap: var(--s2) var(--s5); }
-.landing .recipe-row h3 { font-size: 20px; letter-spacing: -0.015em; }
-.landing .recipe-row .recipe-blurb { font-size: var(--t-sm); line-height: 1.6; }
-.landing .recipe-row .recipe-prompt { font-size: var(--t-cap); }
-.landing .recipe-row dl { font-size: 14px; }
 
 /* Questions. */
 .landing .faq-list { gap: var(--s4) var(--s5); margin-top: 0; }
@@ -1763,12 +1756,6 @@ main.landing footer { margin-top: var(--s6); font-size: var(--t-cap); }
  * room rather than a rule or a box to say where one thing ends.
  */
 
-.landing .recipe-row { padding: var(--s4) 0; border-top-color: var(--rule-2); align-items: start; }
-.landing .recipe-row dt { color: var(--ink-3); }
-.landing .recipe-row dd { color: var(--ink-2); }
-.landing .recipe-row .recipe-links a { color: var(--ink-2); font-weight: 500; }
-.landing .recipe-row .recipe-links a:first-child { color: var(--pine); font-weight: var(--w-label); }
-.landing .recipes-note { border-top: 0; color: var(--ink-3); }
 
 /* Questions: the heading beside one column a reader can follow down. */
 .landing .faq { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: var(--s4) var(--s5); align-items: start; }
@@ -1802,6 +1789,33 @@ main.landing footer { border-top-color: var(--rule-2); }
   .landing .ask-demo { grid-template-columns: minmax(0, 1fr); }
   .landing .ask-chips button { width: 100%; }
 }
+
+/*
+ * BUILT ON GRAVIEW: two products, each a picture and a sentence, the whole
+ * card the link; then the recipes a repository starts from, one line each.
+ */
+.built-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4) var(--s4); }
+.built-card { display: grid; gap: 20px; align-content: start; color: inherit; text-decoration: none; min-width: 0; }
+.built-shot img { border-radius: 10px; box-shadow: 0 0 0 1px var(--rule); transition: box-shadow 160ms ease; }
+.built-card:hover .built-shot img { box-shadow: 0 0 0 1px var(--ink-3); }
+.built-words { display: grid; gap: var(--s1); }
+.built-words b { font-size: 22px; font-weight: var(--w-label); letter-spacing: -0.015em; color: var(--ink); }
+.built-words > span:not(.built-at) { font-size: var(--t-sm); line-height: 1.6; color: var(--ink-2); max-width: 56ch; }
+.built-at { font-size: 14px; font-weight: var(--w-label); color: var(--pine); }
+.built-card:hover .built-at { text-decoration: underline; text-underline-offset: 4px; }
+
+.landing .recipes { margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--rule-2); display: grid; gap: var(--s1); }
+.landing .recipes h3 { font-size: 18px; }
+.landing .recipes-lede { font-size: var(--t-sm); color: var(--ink-3); }
+.landing .recipe-list { margin: var(--s3) 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s3); }
+.landing .recipe-list a { display: grid; gap: 4px; text-decoration: none; color: var(--ink); }
+.landing .recipe-list b { font-size: var(--t-sm); font-weight: var(--w-label); }
+.landing .recipe-list a:hover b { text-decoration: underline; text-underline-offset: 4px; }
+.landing .recipe-list span { font-size: var(--t-cap); color: var(--ink-3); }
+.landing .recipes-note { margin-top: var(--s3); font-size: var(--t-cap); color: var(--ink-3); border: 0; padding: 0; }
+@media (max-width: 1000px) { .landing .recipe-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .built-list { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .landing .recipe-list { grid-template-columns: minmax(0, 1fr); } }
 /* site-css:end */
 </style>
 
@@ -1814,7 +1828,7 @@ main.landing footer { border-top-color: var(--rule-2); }
     </div>
     <nav class="jump" aria-label="Sections">
       <a class="wide" href="#builds">What it builds</a>
-      <a class="wide" href="#recipes">Recipes</a>
+      <a class="wide" href="#built">Built on it</a>
       <a class="wide" href="tour.html">The tour</a>
       <a href="docs/index.html">Docs</a>
       <a href="https://github.com/en-dash-consulting/graview">GitHub</a>
@@ -2034,91 +2048,42 @@ main.landing footer { border-top-color: var(--rule-2); }
   </section>
 
   <!--
-    THE RECIPES: the same prompt, a different task each, and what the
-    agent declared. Written between the markers by scripts/site-docs.mjs
-    from docs/site/recipes/, so a recipe's kinds, rules and counts here are
-    its committed declaration's and cannot drift from it.
+    BUILT ON GRAVIEW. Graview is the framework, so what is built on it is a
+    product of its own, in its own design, at its own address: two of them,
+    each a picture and a sentence, and then the recipes a repository starts
+    from, one line each. The recipes' lines are written between the markers
+    by scripts/site-docs.mjs from docs/site/recipes/, so what each declared
+    is counted from its committed declaration and cannot drift from it.
   -->
-  <section id="recipes" class="recipes" aria-labelledby="h-recipes">
+  <section id="built" class="built" aria-labelledby="h-built">
     <div class="sec-head">
-      <p class="eyebrow">Recipes, for a repository</p>
-      <h2 id="h-recipes">The same prompt. A different task.</h2>
-      <p class="lede">
-        Each is what an agent made from the prompt alone, in a repository it
-        had never seen: the declaration it wrote is committed, checked by
-        <code>graview check</code> on every push, and running on its page.
-        <a class="inl" href="docs/getting-started.html">Getting started&nbsp;&rarr;</a>
-      </p>
+      <p class="eyebrow">Built on Graview</p>
+      <h2 id="h-built">Products of their own, in their own design.</h2>
+      <p class="lede">Graview is the framework, so what you build on it is yours: its own domain, its own look, its own address.</p>
     </div>
+    <div class="built-list">
+      <a class="built-card" href="https://beebot.drza.dev/">
+        <span class="shot built-shot"><img class="light" src="img/built/beebot-light.jpg" width="1280" height="800" alt="BeeBOT's front page: a beekeeping operation's living record" loading="lazy" decoding="async"><img class="dark" src="img/built/beebot-dark.jpg" width="1280" height="800" alt="BeeBOT's front page: a beekeeping operation's living record" loading="lazy" decoding="async"></span>
+        <span class="built-words"><b>BeeBOT</b><span>A beekeeping operation from the Chesapeake Bay to the Indian River Lagoon: its yards, colonies, honey, money, drones and weather as one living record that notices things before you do.</span><span class="built-at">beebot.drza.dev&nbsp;&rarr;</span></span>
+      </a>
+      <a class="built-card" href="https://pele.wiki/footballer/">
+        <span class="shot built-shot"><img class="light" src="img/built/pele-light.jpg" width="1280" height="800" alt="The Pelé wiki's front page" loading="lazy" decoding="async"><img class="dark" src="img/built/pele-dark.jpg" width="1280" height="800" alt="The Pelé wiki's front page" loading="lazy" decoding="async"></span>
+        <span class="built-words"><b>Pel&eacute;, the wiki</b><span>The footballer&rsquo;s life as 201 records and 563 relations: chapters, four World Cups, clubs, matches, goals, people and honors, every record with its source, and a map of it all to fly over.</span><span class="built-at">pele.wiki/footballer&nbsp;&rarr;</span></span>
+      </a>
+    </div>
+    <div class="recipes" id="recipes">
+      <h3>Or start from your repository</h3>
+      <p class="recipes-lede">The same prompt, a different task. Each is live on its own page. <a class="inl" href="docs/getting-started.html">Getting started&nbsp;&rarr;</a></p>
     <!-- site-recipes:start — written by scripts/site-docs.mjs. -->
-    <ol class="recipe-list">
-      <li class="recipe-row">
-        <div>
-          <h3>Your docs, as an app</h3>
-          <p class="recipe-prompt">Read https://graview.dev/start.md, then turn this repo's <b>docs</b> into a Graview app.</p>
-        </div>
-        <div>
-          <p class="recipe-blurb">The repository's docs, the modules they cover and who owns each, with every module that has no doc or no owner flagged and the repair offered.</p>
-          <dl>
-            <dt>Kinds</dt><dd>modules, docs, decision records, people</dd>
-            <dt>Rules</dt><dd>Every module has a doc; Every module has an owner; Every module has a README; Every guide, runbook and API doc covers a module; A superseded decision names its successor</dd>
-            <dt>Seed</dt><dd>54 records and 78 relations, read out of Larkspur</dd>
-            <dt>Check</dt><dd>clean, on every push</dd>
-          </dl>
-          <p class="recipe-links"><a href="docs/recipes/docs.html">Open it, live &rarr;</a><a href="recipes/docs/app.json">app.json</a><a href="recipes/docs/seed.json">seed.json</a></p>
-        </div>
-      </li>
-      <li class="recipe-row">
-        <div>
-          <h3>Your decisions, as an app</h3>
-          <p class="recipe-prompt">Read https://graview.dev/start.md, then turn this repo's <b>decisions</b> into a Graview app.</p>
-        </div>
-        <div>
-          <p class="recipe-blurb">The architecture decision records: what each decided, what it superseded and which modules it affects, with the loose ends flagged.</p>
-          <dl>
-            <dt>Kinds</dt><dd>decisions, modules</dd>
-            <dt>Rules</dt><dd>A superseded decision names what superseded it; A decision something supersedes says so; What supersedes a decision is accepted; A decision is superseded only by a later one; A proposal is decided within 90 days; An accepted decision affects something</dd>
-            <dt>Seed</dt><dd>30 records and 28 relations, read out of Larkspur</dd>
-            <dt>Check</dt><dd>clean, on every push</dd>
-          </dl>
-          <p class="recipe-links"><a href="docs/recipes/decisions.html">Open it, live &rarr;</a><a href="recipes/decisions/app.json">app.json</a><a href="recipes/decisions/seed.json">seed.json</a></p>
-        </div>
-      </li>
-      <li class="recipe-row">
-        <div>
-          <h3>Your dependencies, as an upgrade plan</h3>
-          <p class="recipe-prompt">Read https://graview.dev/start.md, then turn this repo's <b>dependencies</b> into a Graview app.</p>
-        </div>
-        <div>
-          <p class="recipe-blurb">Every third-party package, the version pinned against the latest on npm, the modules that use it and the upgrade it needs, with the risky ones flagged.</p>
-          <dl>
-            <dt>Kinds</dt><dd>modules, people, packages, dependencies, decisions</dd>
-            <dt>Rules</dt><dd>One version per package; A major upgrade has someone on it; What an accepted decision drops is planned to go</dd>
-            <dt>Seed</dt><dd>122 records and 142 relations, read out of Larkspur</dd>
-            <dt>Check</dt><dd>clean, on every push</dd>
-          </dl>
-          <p class="recipe-links"><a href="docs/recipes/dependencies.html">Open it, live &rarr;</a><a href="recipes/dependencies/app.json">app.json</a><a href="recipes/dependencies/seed.json">seed.json</a></p>
-        </div>
-      </li>
-      <li class="recipe-row">
-        <div>
-          <h3>Your architecture, with a face of its own</h3>
-          <p class="recipe-prompt">Read https://graview.dev/start.md, then turn this repo's <b>architecture</b> into a Graview app.</p>
-        </div>
-        <div>
-          <p class="recipe-blurb">The zones the modules group into, what each module imports, who owns each zone, and the modules no zone holds yet, with a product face of its own over the running preview.</p>
-          <dl>
-            <dt>Kinds</dt><dd>zones, modules, people</dd>
-            <dt>Rules</dt><dd>Every module is in a zone; Every zone has an owner</dd>
-            <dt>Seed</dt><dd>30 records and 46 relations, read out of Larkspur</dd>
-            <dt>Check</dt><dd>clean, on every push</dd>
-          </dl>
-          <p class="recipe-links"><a href="docs/recipes/architecture.html">Open it, live &rarr;</a><a href="recipes/architecture/app.json">app.json</a><a href="recipes/architecture/seed.json">seed.json</a></p>
-        </div>
-      </li>
-    </ol>
-    <p class="sm dim recipes-note">How these were made: an agent ran each prompt once, with nothing but the prompt and <a class="inl" href="start.md">start.md</a>, at the root of Larkspur, a made-up repository written for the purpose (<code>scripts/fixtures/recipes/larkspur.mjs</code>); the architecture recipe, and the face of its own beside it, were written by hand over Larkspur, as its page says. CI does not run an agent. On every push it checks the declaration that run produced, loads its seed, and opens each recipe&rsquo;s page in a browser to see the app mount.</p>
+    <ul class="recipe-list">
+      <li><a href="docs/recipes/docs.html"><b>Your docs, as an app</b><span>4 kinds &middot; 5 rules &middot; 54 records</span></a></li>
+      <li><a href="docs/recipes/decisions.html"><b>Your decisions, as an app</b><span>2 kinds &middot; 6 rules &middot; 30 records</span></a></li>
+      <li><a href="docs/recipes/dependencies.html"><b>Your dependencies, as an upgrade plan</b><span>5 kinds &middot; 3 rules &middot; 122 records</span></a></li>
+      <li><a href="docs/recipes/architecture.html"><b>Your architecture, with a face of its own</b><span>3 kinds &middot; 2 rules &middot; 30 records</span></a></li>
+    </ul>
+    <p class="recipes-note">Each made by an agent from the prompt alone, over a made-up repository, and checked on every push. <a class="inl" href="docs/recipes.html">How they were made&nbsp;&rarr;</a></p>
     <!-- site-recipes:end -->
+    </div>
   </section>
 
 <script>

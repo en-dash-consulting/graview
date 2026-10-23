@@ -102,7 +102,7 @@ describe("what the pages promise each other", () => {
     expect(read("tour.html")).toContain('id="surfaces"');
   });
 
-  it("opens the landing page on the claim, then two doors, the agent's prompt and Graview Cloud, then the interface asked for, before the recipes", () => {
+  it("opens the landing page on the claim, then two doors, the agent's prompt and Graview Cloud, then the interface asked for, before what is built on it", () => {
     const landing = read("index.html");
     const main = landing.slice(landing.indexOf("<main"));
     const h1 = main.indexOf("<h1");
@@ -119,7 +119,7 @@ describe("what the pages promise each other", () => {
     const hero = /<section id="what"[\s\S]*?<\/section>/.exec(main)?.[0] ?? "";
     expect(hero).not.toMatch(/data-number=/);
     // The sections the page is cut to, in order: Cloud's band once the reader has seen what an app is.
-    const order = ["what", "asks", "builds", "gives", "cloud", "recipes", "faq"].map((id) => main.indexOf(`<section id="${id}"`));
+    const order = ["what", "asks", "builds", "gives", "cloud", "built", "faq"].map((id) => main.indexOf(`<section id="${id}"`));
     expect(order.every((at) => at > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(main.match(/<section id="/g)).toHaveLength(7);
