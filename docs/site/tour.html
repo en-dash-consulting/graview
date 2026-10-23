@@ -1740,6 +1740,9 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 @media (max-width: 1180px) {
   .door .prompt-foot, .door .recipe-tabs { flex-wrap: wrap; }
 }
+/* At a phone's narrowest a door is the column's width, not its content's: the command breaks rather than pushing the page sideways. */
+.door { grid-template-columns: minmax(0, 1fr); }
+.door .ah-diy code { overflow-wrap: anywhere; min-width: 0; }
 /* site-css:end */
 </style>
 
