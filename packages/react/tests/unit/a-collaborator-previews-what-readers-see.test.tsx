@@ -57,22 +57,26 @@ afterEach(() => {
   history.replaceState(null, "", "/");
 });
 
-const drawn = (element: React.ReactElement) => {
+/** Drawn once the provider has fetched how readers are served: nothing is drawn before, so no reader is ever drawn the head. */
+const drawn = async (element: React.ReactElement) => {
   act(() => root.render(element));
-  return host.querySelector("[data-testid=labels]")!.textContent;
+  for (let tries = 0; tries < 50 && !host.querySelector("[data-testid=labels]"); tries++) await act(async () => new Promise((ready) => setTimeout(ready, 10)));
+  return host.querySelector("[data-testid=labels]")?.textContent;
 };
 
 describe("a collaborator in an app that publishes", () => {
-  it("is shown the head as it is edited", () => {
-    expect(drawn(<GraviewProvider store={store()} views={createViews(schema)} principal={editor}><Labels /></GraviewProvider>)).toBe("Draft,Published");
+  it("draws nothing until it knows how readers are served, then the head as it is edited", async () => {
+    act(() => root.render(<GraviewProvider store={store()} views={createViews(schema)} principal={editor}><Labels /></GraviewProvider>));
+    expect(host.querySelector("[data-testid=labels]")).toBeNull();
+    expect(await drawn(<GraviewProvider store={store()} views={createViews(schema)} principal={editor}><Labels /></GraviewProvider>)).toBe("Draft,Published");
   });
 
-  it("is shown what readers see when the provider is asked as published", () => {
-    expect(drawn(<GraviewProvider store={store()} views={createViews(schema)} principal={editor} as="published"><Labels /></GraviewProvider>)).toBe("Published");
+  it("is shown what readers see when the provider is asked as published", async () => {
+    expect(await drawn(<GraviewProvider store={store()} views={createViews(schema)} principal={editor} as="published"><Labels /></GraviewProvider>)).toBe("Published");
   });
 
-  it("is shown what readers see with ?as=published in the address", () => {
+  it("is shown what readers see with ?as=published in the address", async () => {
     history.replaceState(null, "", "/?as=published");
-    expect(drawn(<GraviewProvider store={store()} views={createViews(schema)} principal={editor}><Labels /></GraviewProvider>)).toBe("Published");
+    expect(await drawn(<GraviewProvider store={store()} views={createViews(schema)} principal={editor}><Labels /></GraviewProvider>)).toBe("Published");
   });
 });

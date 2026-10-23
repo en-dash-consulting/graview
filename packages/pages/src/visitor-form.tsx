@@ -2,6 +2,7 @@ import type { AnySchema, GraviewApp, Principal, Store } from "@graview/core";
 import { formReceived, visitorForm } from "@graview/core/forms";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { DerivedForm } from "./form.js";
+import { useReadersServed } from "@graview/react/provider";
 
 /**
  * `@graview/pages/visitor-form` — ONE ACT'S FORM, ALONE, FOR A VISITOR (Roadmap
@@ -36,8 +37,9 @@ const page: CSSProperties = { maxWidth: 560, margin: "0 auto", padding: "40px 20
 
 export function VisitorFormPage<S extends AnySchema>({ app, store, form: name, principal, heading = 1, onSubmitted }: VisitorFormPageProps<S>) {
   const form = useMemo(() => visitorForm(app, name, store.allMutations() as never), [app, name, store]);
-  // The store as the visitor is served it: a picker offers only what their sight shows.
-  const seen = useMemo(() => store.seenBy(principal), [store, principal]);
+  // The store as the visitor is served it: a picker offers only what their sight shows — and, in an app that publishes, once how readers are served is here.
+  const ready = useReadersServed(store);
+  const seen = useMemo(() => (ready ? store.seenBy(principal) : store), [ready, store, principal]);
   const [received, setReceived] = useState(false);
   const told = useRef<HTMLDivElement>(null);
   // The keyboard lands on what was said, not on the page's body, once the form it was in is gone.
@@ -45,6 +47,7 @@ export function VisitorFormPage<S extends AnySchema>({ app, store, form: name, p
     if (received) told.current?.focus();
   }, [received]);
   const Title = `h${heading}` as "h1";
+  if (!ready) return null;
   if (!form) {
     return (
       <main data-graview-visitor-form={name} style={page}>

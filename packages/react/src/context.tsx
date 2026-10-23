@@ -48,7 +48,7 @@ import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
 import type { ViewComponent, ViewMode } from "./view-registry.js";
 import type { HistoryHost } from "@graview/core/history";
-import { PlaybackContext, useOwnPlayback, type Playback } from "./past.js";
+import { PlaybackContext, useOwnPlayback, useReadersServed, type Playback } from "./past.js";
 
 export type { ViewMode } from "./view-registry.js";
 
@@ -704,7 +704,14 @@ export function GraviewProvider<S extends AnySchema>({
    * itself. With no `sees` it is the store, unchanged.
    */
   const as = servedAs ?? previewAsked();
-  const store = useMemo(() => shown.seenBy(seatNow, as ? { as } : undefined), [shown, seatNow, as]);
+  /*
+   * AN APP THAT PUBLISHES serves its readers the last publish, which
+   * `@graview/core/publishing` folds: fetched here before anything is drawn
+   * for such an app, so a live app's page carries none of it, and a reader
+   * is never drawn the head while it arrives (Roadmap f-publishing-lifecycle).
+   */
+  const waiting = !useReadersServed(given);
+  const store = useMemo(() => (waiting ? given : shown.seenBy(seatNow, as ? { as } : undefined)), [waiting, given, shown, seatNow, as]);
   useTheWatchKnowsWhatIsUnseen(given, seatNow);
   /* This tab, for the life of the tab: see `tabSession`. */
   const [session] = useState(() => tabSession(memory));
@@ -1200,7 +1207,7 @@ export function GraviewProvider<S extends AnySchema>({
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
       <PlaybackContext.Provider value={playback as unknown as Playback}>
-        <FoundProvider>{files ? <HostFilesContext.Provider value={files}>{children}</HostFilesContext.Provider> : children}</FoundProvider>
+        <FoundProvider>{waiting ? null : files ? <HostFilesContext.Provider value={files}>{children}</HostFilesContext.Provider> : children}</FoundProvider>
       </PlaybackContext.Provider>
     </GraviewContext.Provider>
   );

@@ -1,5 +1,5 @@
 import { rolesOf } from "../../permissions/policy.js";
-import { PUBLISH } from "../../publishing.js";
+import { PUBLISH } from "../../publish.js";
 import type { AnySchema } from "../../schema/schema.js";
 import type { CheckContext } from "./context.js";
 

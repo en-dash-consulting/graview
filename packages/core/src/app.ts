@@ -3,7 +3,7 @@ import type { ArrangementWords } from "./arrangement.js";
 import type { InvariantDefinition } from "./invariants/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import type { Policy } from "./permissions/types.js";
-import type { Publishing } from "./publishing.js";
+import type { Publishing } from "./publish.js";
 import type { Brand } from "./theme/types.js";
 import type { ModuleMap } from "./modules.js";
 import type { GraphSnapshot } from "./graph/types.js";

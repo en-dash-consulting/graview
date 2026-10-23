@@ -43,7 +43,7 @@ import { capitalize } from "./capital.js";
 import { dayOf, type Tick } from "./clock.js";
 import { pluralOf } from "./schema/define-node.js";
 import { linkedReaderOf } from "./schema/linked.js";
-import { onPublish, PUBLISH, publishedSeqOf, publishMutation, publishRefusal, type Publishing } from "./publishing.js";
+import { onPublish, PUBLISH, PUBLISHING, type Publishing } from "./publish.js";
 
 export interface StoreOptions<S extends AnySchema> {
   readonly schema: S;
@@ -530,10 +530,6 @@ export class Store<S extends AnySchema> {
   readonly policy: Policy | undefined;
   /** When edits reach readers (`StoreOptions.publishing`). */
   readonly publishing: Publishing | undefined;
-  /** The store's own "Publish", in an `on-publish` app that declared no act by that name. */
-  private publisher: AnyMutationDefinition<S> | undefined;
-  /** The published seq, and the log it was read from: its length and its last op. */
-  private published: { readonly length: number; readonly last: string | undefined; readonly seq: number | undefined } | undefined;
   /**
    * The intelligence the app declared, so a surface can read the DOORS.
    *
@@ -633,11 +629,6 @@ export class Store<S extends AnySchema> {
       this.keeper = keepLinkMutation(options.schema);
       this.mutations.set(KEEP_LINK, this.keeper);
     }
-    // "Publish" (Roadmap f-publishing-lifecycle): answered by every store of an app whose readers are served what was published.
-    if (!options.past && onPublish(options.publishing) && !this.mutations.has(PUBLISH)) {
-      this.publisher = publishMutation<S>();
-      this.mutations.set(PUBLISH, this.publisher!);
-    }
 
     const horizon = given("horizon", options.horizon);
     const validate = { validate: this.validate };
@@ -724,10 +715,16 @@ export class Store<S extends AnySchema> {
    * are, and kept between reads while the log is the one it was read from.
    */
   get publishedSeq(): number | undefined {
-    const all = this.log.all();
-    const last = all.at(-1)?.id;
-    if (this.published?.length !== all.length || this.published.last !== last) this.published = { length: all.length, last, seq: publishedSeqOf(all) };
-    return this.published.seq;
+    return PUBLISHING.seq?.(this);
+  }
+
+  /**
+   * "PUBLISH" (Roadmap f-publishing-lifecycle): answered by every store of
+   * an app whose readers are served what was published, and that declared
+   * no act by the name, once `@graview/core/publishing` is loaded.
+   */
+  private get publisher(): AnyMutationDefinition<S> | undefined {
+    return PUBLISHING.act?.(this, this.mutations) as AnyMutationDefinition<S> | undefined;
   }
 
   get modules(): ModuleProjection {
@@ -801,7 +798,7 @@ export class Store<S extends AnySchema> {
   }
 
   mutation(name: string): AnyMutationDefinition<S> {
-    const found = this.mutations.get(this.spelled(name));
+    const found = this.mutations.get(this.spelled(name)) ?? (name === PUBLISH ? this.publisher : undefined);
     if (!found) {
       throw new UnknownMutationError(name, [...this.mutations.keys()]);
     }
@@ -838,7 +835,7 @@ export class Store<S extends AnySchema> {
   }
 
   allMutations(): AnyMutationDefinition<S>[] {
-    return [...this.mutations.values()].filter((mutation) => mutation !== this.keeper && !this.mutationDisabled(mutation));
+    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && !this.mutationDisabled(mutation));
   }
 
   /** The declared acts a derived act resolves its permission through; keeping a link, those that make or break its relation. */
@@ -900,12 +897,9 @@ export class Store<S extends AnySchema> {
     if (this.past) return { ok: false, refusal: { mutation: call.name, wouldNeed: [], message: "Nothing changes while you look back." } } as ReturnType<typeof permits>;
     const narrowed = this.refusesAgent(call, principal) ?? this.namesTurnedOff(call, principal);
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
-    const mutation = this.mutations.get(call.name);
+    const mutation = this.mutations.get(call.name) ?? (call.name === PUBLISH ? this.publisher : undefined);
     // Publishing is the declaration's `publishers`, not a grant's.
-    if (mutation !== undefined && mutation === this.publisher) {
-      const refusal = publishRefusal(this.publishing, principal);
-      return (refusal ? { ok: false, refusal } : { ok: true }) as ReturnType<typeof permits>;
-    }
+    if (mutation && mutation === this.publisher) return PUBLISHING.verdict!(this, principal) as ReturnType<typeof permits>;
     const id = mutation?.subject && call.args[mutation.subject.arg];
     /*
      * An own-end grant holds the records the call names at the far end of
@@ -1160,7 +1154,7 @@ export class Store<S extends AnySchema> {
       all.filter((mutation) => !mutation.derived && mutation !== this.publisher),
     );
     // Publishing is offered to the declaration's publishers (Roadmap f-publishing-lifecycle).
-    const publishing = this.publisher && !publishRefusal(this.publishing, principal) ? [this.publisher] : [];
+    const publishing = this.publisher && PUBLISHING.verdict!(this, principal).ok ? [this.publisher] : [];
     // A derived act is offered when the kind's own acts it rides are.
     const derived = all.filter(
       (mutation) =>
@@ -1510,8 +1504,9 @@ export class Store<S extends AnySchema> {
         if (naming[at]) (permitted(call), declared(call));
         const definition = this.mutation(call.name);
         if (definition === this.publisher) {
-          ops.push(this.publishOp(call, batch, author, options));
-          intents.push(ops.at(-1)!.intent);
+          const op = PUBLISHING.op!(this, { id: this.nextId(), at: this.now() }, call, batch, author as Principal, options);
+          ops.push(op);
+          intents.push(op.intent);
           continue;
         }
         const missing = this.missingFor(call, author as Principal);
@@ -1951,39 +1946,6 @@ export class Store<S extends AnySchema> {
       ...this.moved(before, after),
       violationsAfter: after,
     };
-  }
-
-  /**
-   * THE MARKER A PUBLISH IS (Roadmap f-publishing-lifecycle): one op that
-   * touches no record and says how far readers are served — through
-   * itself, or through `through` when the call names an earlier seq.
-   */
-  private publishOp(call: MutationCall, batch: string, author: Author | Principal, options: ApplyOptions): Operation {
-    const seq = this.log.length;
-    const asked = call.args["through"];
-    if (asked !== undefined && (!Number.isInteger(asked) || (asked as number) < this.log.horizon || (asked as number) > seq)) {
-      throw new GraphError(`Cannot publish through seq ${String(asked)}: this store holds seqs ${this.log.horizon} to ${seq}.`);
-    }
-    const through = (asked as number | undefined) ?? seq + 1;
-    const was = this.publishedSeq ?? this.log.horizon;
-    const changes = this.log.batches().filter((one) => !one.undone && one.ops.some((op) => op.seq >= was && op.seq < through && op.publishedThrough === undefined)).length;
-    const op: Operation = {
-      id: this.nextId(),
-      seq,
-      batch,
-      author,
-      intent: through < was ? "Take back what was published" : `Publish ${changes === 1 ? "1 change" : `${changes} changes`}`,
-      ...given("batchIntent", options.intent),
-      mutation: call,
-      primitives: [],
-      reads: [],
-      writes: [],
-      at: this.now(),
-      ...given("via", options.via),
-      publishedThrough: through,
-    };
-    this.log.append(op);
-    return op;
   }
 
   /** An author named as Activity names one, for a sentence that refuses them. */

@@ -2,6 +2,8 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
+// The command line serves seats of an app that publishes as a server does (Roadmap f-publishing-lifecycle).
+import "../publishing.js";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { GraviewApp } from "../app.js";
 import type { AnySchema } from "../schema/schema.js";

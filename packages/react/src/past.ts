@@ -1,7 +1,7 @@
-import type { AnySchema, Principal, Store } from "@graview/core";
+import { servesReaders, type AnySchema, type Principal, type Publishing, type Store } from "@graview/core";
 import type { HistoryHost } from "@graview/core/history";
 import { retryingImport } from "@graview/core/retry";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from "react";
 
 /**
  * THE APP AS IT WAS, SHOWN (Roadmap f-playback): which moment a face is
@@ -82,6 +82,21 @@ export function useLiveStore<S extends AnySchema>(shown: Store<S>, principal: Pr
 type History = typeof import("@graview/core/past");
 /** `@graview/core/past`, fetched when somebody first asks to see the past: the fold is none of a page's weight until then. */
 const history = /* @__PURE__ */ retryingImport(() => import("@graview/core/past"));
+/**
+ * WHETHER A READER OF THIS STORE CAN BE SERVED YET (Roadmap
+ * f-publishing-lifecycle): true at once for a live app; for an app that
+ * publishes, once `@graview/core/publishing` is here — fetched with
+ * `@graview/core/past`, which brings it, the first time it is asked. A
+ * face draws nothing until then, so a reader is never drawn the head.
+ */
+export function useReadersServed(store: { readonly publishing?: Publishing | undefined }): boolean {
+  const [, arrived] = useReducer((count: number) => count + 1, 0);
+  const waiting = store.publishing?.mode === "on-publish" && !servesReaders();
+  useEffect(() => {
+    if (waiting) void history().then(arrived, () => {});
+  }, [waiting]);
+  return !waiting;
+}
 /** The module once it is here, so a face drawn after it arrived shows the past at once. */
 let arrived: History | undefined;
 /** How long a moment holds the picture it had while the host is asked for its declaration, before it is drawn under today's until the answer comes. */

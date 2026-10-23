@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page",
-  "minified": 9746,
-  "gzipped": 3784,
+  "minified": 2015,
+  "gzipped": 716,
   "changeset": "edits-reach-readers-when-published.md",
-  "note": "Raised when edits came to reach readers when they are published (Roadmap f-publishing-lifecycle): a seat's view now serves a reader of an app that publishes the app as it stood at the last publish, so `pastOf` (`@graview/core/past`) is reached from the seat view up front, with the declaration's `publishing`, the published seq and the reader's view that follows it. Measured at 607_694 / 212_013 against 598_133 / 208_229 before (9_561 / 3_784 more); the base was already 185 B over its budget, which this raise also covers."
+  "note": "Raised when edits came to reach readers when they are published (Roadmap f-publishing-lifecycle): a live app's page carries only the declaration's `publishing`, who is a reader, the store's hooks for `publish` and the provider fetching how readers are served with `@graview/core/past` for an app that publishes — the reader's view itself is `@graview/core/publishing`, fetched on demand and importing nothing of the first chunk — and the two fixes beside it (a socket behind the horizon takes the state; a seat view per agent). Measured at 599_963 / 208_945 against 598_133 / 208_229 before (1_830 / 716 more); the base was already 185 B over its budget, which this raise also covers."
 }

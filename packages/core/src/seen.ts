@@ -9,9 +9,8 @@ import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
 import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
-import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
-import { pastOf } from "./past.js";
-import { servedThroughFor, type Publishing } from "./publishing.js";
+import { diffSnapshots } from "./graph/diff.js";
+import { PUBLISHING, readsPublished, type Publishing } from "./publish.js";
 
 const NOTHING: ReadonlySet<string> = new Set();
 
@@ -437,9 +436,9 @@ function seatKey(principal: Principal): string {
  * view is of, the module reading what is off and the policy are each the
  * store's own, so the view's key is the seat and this.
  */
-const viewKey = (principal: Principal, served: "head" | "published"): string => `${seatKey(principal)}@${served}`;
+export const viewKey = (principal: Principal, served: "head" | "published"): string => `${seatKey(principal)}@${served}`;
 
-const bound = (target: object, prop: PropertyKey): unknown => {
+export const bound = (target: object, prop: PropertyKey): unknown => {
   const value = Reflect.get(target, prop, target);
   return typeof value === "function" ? (value as (...args: unknown[]) => unknown).bind(target) : value;
 };
@@ -463,7 +462,7 @@ const bound = (target: object, prop: PropertyKey): unknown => {
  * judging again, keyed by what serving depends on (`viewKey`).
  */
 /** The key a seat's view answers with the store it is of and the seat (`seatOf`, `@graview/core/seat-of`'s reading of it). */
-const SEAT = Symbol.for("@graview/core:seat");
+export const SEAT = Symbol.for("@graview/core:seat");
 
 /**
  * WHAT A SEAT'S VIEW IS A VIEW OF: a store as `seenBy` reads it — beyond
@@ -491,81 +490,25 @@ export interface SeenOptions {
 }
 
 export function seenBy<T extends Viewed>(store: T, principal: Principal, options: SeenOptions = {}): T {
-  // A reader of an app that publishes is served what was published (Roadmap f-publishing-lifecycle).
-  if (store.publishing?.mode === "on-publish" && servedThroughFor(store.publishing, store.publishedSeq, store.log.horizon, principal, options.as) !== undefined) return servedBehind(store, principal);
+  // A reader of an app that publishes is served what was published (Roadmap f-publishing-lifecycle), once `@graview/core/publishing` says how; until then, refused — never the head.
+  if (readsPublished(store.publishing, principal, options.as)) {
+    if (PUBLISHING.served) return PUBLISHING.served(store as never, principal) as T;
+    throw new Error("Load @graview/core/publishing to serve a reader of an app that publishes.");
+  }
   return seatView(store, principal);
 }
 
-/** The reads a reader's view answers from what was published; every other, and every write, is the head's. */
-const PUBLISHED_READS = new Set<PropertyKey>(["graph", "log", "snapshot", "batches", "violations", "findings", "canUndo", "servedSeq", "checkpoint"]);
+/** Whether readers of an app that publishes can be served here: true once `@graview/core/publishing` is loaded. */
+export const servesReaders = (): boolean => PUBLISHING.served !== undefined;
 
-/**
- * THE APP AS A READER IS SERVED IT, in an app that publishes (Roadmap
- * f-publishing-lifecycle): its graph, log, problems and history are those
- * of the app as it stood at the last publish (`pastOf`), as the seat may
- * see it; and every act, preview and permission still goes to the store
- * and is judged at the head, where what the reader writes lands — read by
- * readers when it is next published. It follows the published seq as a
- * publish (or the undo of one) moves it, and tells its subscribers only
- * when it does, with the change between the two.
- */
-function servedBehind<T extends Viewed>(store: T, principal: Principal): T {
-  const views = viewsOf(store);
-  const key = viewKey(principal, "published");
-  const held = views.get(key);
-  if (held) return held as T;
-  const head = seatView(store, principal);
-  let kept: { readonly seq: number; readonly id: string | undefined; readonly view: T } | undefined;
-  const now = (): T => {
-    const seq = servedThroughFor(store.publishing, store.publishedSeq, store.log.horizon, principal, "published") ?? store.log.length;
-    if (seq >= store.log.length) return head;
-    const id = store.log.all()[seq - 1 - store.log.horizon]?.id;
-    if (kept?.seq !== seq || kept.id !== id) kept = { seq, id, view: seatView(pastOf(store as never, seq) as unknown as T, principal) };
-    return kept.view;
-  };
-  const seqOf = (served: T): number => (served as unknown as { readonly servedSeq: number }).servedSeq;
-  const subscribe = (listener: (diff: GraphDiff<never>, ops: readonly Operation[]) => void) => {
-    let from = seqOf(now());
-    let shot = now().graph.snapshot();
-    return store.subscribe((() => {
-      const served = now();
-      const to = seqOf(served);
-      if (to === from) return;
-      const after = served.graph.snapshot();
-      const ops = to > from ? served.log.all().filter((op) => op.seq >= from) : [];
-      const diff = diffSnapshots(shot as never, after as never) as GraphDiff<never>;
-      [from, shot] = [to, after];
-      listener(diff, ops);
-    }) as never);
-  };
-  const view = new Proxy(head, {
-    get(target, prop) {
-      switch (prop) {
-        case SEAT:
-          return { store, principal };
-        case "subscribe":
-          return subscribe;
-        case "seenBy":
-          return (other: Principal, options?: SeenOptions) => seenBy(store, other, options);
-        case "seenFor":
-          return principal;
-        default:
-          return PUBLISHED_READS.has(prop) ? bound(now(), prop) : bound(target, prop);
-      }
-    },
-  });
-  views.set(key, view);
-  return view as T;
-}
-
-function viewsOf(store: object): Map<string, unknown> {
+export function viewsOf(store: object): Map<string, unknown> {
   let views = VIEWS.get(store);
   if (!views) VIEWS.set(store, (views = new Map()));
   return views;
 }
 
 /** The app as a seat is served it at the head: what its sight reaches, as the store grows. */
-function seatView<T extends Viewed>(store: T, principal: Principal): T {
+export function seatView<T extends Viewed>(store: T, principal: Principal): T {
   // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
   if (!hidesFrom(store, principal)) return store;
   const key = viewKey(principal, "head");
@@ -767,3 +710,5 @@ function seatView<T extends Viewed>(store: T, principal: Principal): T {
   return view;
 }
 
+// What the reader's view borrows of this module (`@graview/core/publishing`), lent rather than imported.
+PUBLISHING.kit = { seatView: seatView as never, viewsOf, viewKey, diff: diffSnapshots as never, reads: readsPublished };

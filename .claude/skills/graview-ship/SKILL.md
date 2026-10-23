@@ -158,7 +158,8 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    head: a visitor's answer reaches readers with the next publish.
    `?as=published` shows a collaborator what readers see, and
    `unpublished(store)` from `@graview/core/history` says what is waiting.
-   Hand `app.publishing` to any store you make yourself — `openStore` and
+   A server loads `@graview/core/publishing` (ship does). Hand
+   `app.publishing` to any store you make yourself — `openStore` and
    the embed do — and prove it by opening the app as a visitor.
 
 ## Then find out whether it worked

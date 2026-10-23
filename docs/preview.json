@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-23T04:12:10.627Z",
+  "at": "2026-10-23T04:54:54.813Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/org.gdd.json",
   "seed": "packages/core/tests/document/fixtures/org.seed.json",
@@ -35,7 +35,7 @@
     },
     "shotsWritesAPngForEachNamedPlace": {
       "status": 0,
-      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-HT8jlH",
+      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-hKHGG0",
       "pngs": [
         true,
         true,
@@ -50,7 +50,7 @@
     },
     "aFullPagePictureOfALongPlaceShowsTheWholePlace": {
       "status": 0,
-      "said": "graview shots: 1 picture of Threat Watch in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-HT8jlH/long",
+      "said": "graview shots: 1 picture of Threat Watch in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-hKHGG0/long",
       "picture": {
         "width": 1280,
         "height": 1408,
@@ -60,7 +60,7 @@
     },
     "shotsPicturesAnAppInCodeAndItsDraftByTitle": {
       "status": 0,
-      "said": "graview shots: 2 pictures of Survey in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-HT8jlH/in-code",
+      "said": "graview shots: 2 pictures of Survey in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-hKHGG0/in-code",
       "pngs": [
         true,
         true
@@ -69,7 +69,7 @@
     },
     "aLensPlacesPictureShowsTheLensContent": {
       "status": 0,
-      "said": "graview shots: 2 pictures of Threat Watch in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-HT8jlH/lens",
+      "said": "graview shots: 2 pictures of Threat Watch in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-hKHGG0/lens",
       "pictures": {
         "what-to-do": {
           "written": true,
@@ -136,7 +136,7 @@
       "authors": [
         {
           "kind": "human",
-          "id": "form:40747af3-4d46-4dc2-b466-cad3160346de",
+          "id": "form:cdf9cdd5-a6e0-4ea5-9885-51c1729b942a",
           "roles": [
             "visitor"
           ],
@@ -144,7 +144,7 @@
         },
         {
           "kind": "human",
-          "id": "form:df68ce72-d2f5-421a-aa39-75c2027949c5",
+          "id": "form:0de0a1bd-53f5-402e-ad0c-5e25e527ecc8",
           "roles": [
             "visitor"
           ],

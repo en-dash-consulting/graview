@@ -9,8 +9,6 @@ import {
   permittedMutations,
   onPublish,
   PUBLISH,
-  publishMutation,
-  publishRefusal,
   refusalOf,
   resolveModules,
   archivedFrom,
@@ -36,6 +34,8 @@ import {
   type Violation,
   type HostView,
 } from "@graview/core";
+// A reader of an app that publishes is served the last publish (Roadmap f-publishing-lifecycle).
+import { publishMutation, publishRefusal } from "@graview/core/publishing";
 import { answerSeenBy } from "@graview/core/seat";
 import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/tidying";
 import { search, type SearchRanker } from "@graview/core/search";

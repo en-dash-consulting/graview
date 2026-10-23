@@ -105,7 +105,7 @@ import type { GraphSnapshot } from "./snapshot.js";
 export const WIRE = [
   { method: "GET", path: "/graview/state", says: "the graph, the log, the stored version and the modules on" },
   { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` the asking seat already landed is answered with the ops it made, and one that is somebody else's or not `batch:<tag>:<n>` is refused `invalid`; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy, 503 with the reason `unavailable` when it takes no changes for a while" },
-  { method: "GET", path: "/graview/since", says: "the ops after ?seq=N that the asking seat is served — everyone else's, through the seq it is served (the head, or for a reader of an app that publishes what was published, said as `servedThrough`); `reset: true` when they cannot catch it up and it takes the state" },
+  { method: "GET", path: "/graview/since", says: "the ops after ?seq=N that the asking seat is served — everyone else's, through the seq it is served (the head, or for a reader of an app that publishes what was published, said as servedThrough); `reset: true` when they cannot catch it up and it takes the state" },
   { method: "GET", path: "/graview/health", says: "ship's own report, plus where the data is" },
   { method: "GET", path: "/graview/export", says: "the whole store as one bundle, the way out" },
   { method: "POST", path: "/graview/here", says: "say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under" },

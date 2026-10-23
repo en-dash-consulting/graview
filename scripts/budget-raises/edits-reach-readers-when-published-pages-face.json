@@ -1,6 +1,6 @@
 {
   "budget": "the pages face alone",
-  "minified": 9703,
-  "gzipped": 3763,
-  "note": "Raised when edits came to reach readers when they are published (Roadmap f-publishing-lifecycle): a seat's view serves a reader of an app that publishes the last publish, reaching `pastOf` from the seat view. Measured at 654_750 / 241_001 against 644_836 / 237_201 before (9_914 / 3_800 more)."
+  "minified": 1967,
+  "gzipped": 777,
+  "note": "Raised when edits came to reach readers when they are published (Roadmap f-publishing-lifecycle): the declaration's `publishing`, the store's hooks for `publish` and the provider fetching how readers are served for an app that publishes; the reader's view itself is fetched on demand. Measured at 647_014 / 237_978 against 644_836 / 237_201 before (2_178 / 777 more)."
 }

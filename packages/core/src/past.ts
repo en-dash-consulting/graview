@@ -24,6 +24,8 @@ import type { Principal } from "./permissions/types.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { seatOf } from "./seat-of.js";
 import type { PastDeclaration, Store, StoreOptions } from "./store.js";
+// And how a reader of an app that publishes is served, which folds the past: a page fetches the two together, when it first looks back or draws an app that publishes (Roadmap f-publishing-lifecycle).
+import "./publishing.js";
 
 /** The declaration a moment was made under: the last mark at or before `seq` that carries one. Absent, the store's own. */
 export function declarationAt(marks: readonly DeclarationMark[] | undefined, seq: number): PastDeclaration | undefined {

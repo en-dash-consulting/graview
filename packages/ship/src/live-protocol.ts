@@ -33,6 +33,7 @@ import {
 } from "@graview/core";
 // What a seat is served keeps the fields its sight keeps (Roadmap f-field-sight): the protocol judges them.
 import "@graview/core/field-sight";
+import "@graview/core/publishing";
 import { argumentWords } from "@graview/core/words";
 import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LimitAsked, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 

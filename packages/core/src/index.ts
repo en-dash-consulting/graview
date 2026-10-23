@@ -316,8 +316,8 @@ export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/typ
 export { FIELD_SIGHT, recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export { writersOf, type Writers } from "./ops/writers.js";
 export type { FieldsKept, RecordedLog, Records } from "./permissions/sight.js";
-export { hidesFrom, logSeenBy, seatLens, seenBy, seesId, type SeenOptions } from "./seen.js";
-export { onPublish, PUBLISH, publishMutation, publishRefusal, type Publishing } from "./publishing.js";
+export { hidesFrom, logSeenBy, seatLens, seenBy, seesId, servesReaders, type SeenOptions } from "./seen.js";
+export { onPublish, PUBLISH, type Publishing } from "./publish.js";
 // Notify me (Roadmap f-notify-subscriptions): what a subscription is, and the store a page keeps them in; the matcher and their words are `@graview/core/subscriptions`.
 export { keptSubscription, memorySubscriptions, subscriberOf, subscriptionId } from "./subscription-shape.js";
 export type { MatchedRecord, OnSubscriptionMatch, Subscription, SubscriptionDraft, SubscriptionMatch, SubscriptionStore, SubscriptionWhen } from "./subscription-shape.js";

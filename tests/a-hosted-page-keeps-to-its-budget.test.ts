@@ -132,8 +132,8 @@ describe("a hosted page", () => {
     // 974 KB since a worker view of one record came to be the same card on the Scene (Roadmap f-scene-record-view-card): the card named for the record with Open to its page, Expand and Collapse where there are no pages, its measure of all it holds, and the ring's room at its foot: the scene face measured 997_272 B, 1_376 more than before it (995_896).
     // 977 KB since an act came to be found by another spelling of its name, a derived edit to name the act that writes a field it refuses and a number given as its digits to be read, and a headline opening on a count in words to start with a capital: the scene face measured 999_696 B, 2_430 more than before them (997_266).
     // 978 KB since a declared row came to name its record where its blocks do not, and a key's abbreviation to be said as its letters: 1_237 B more on the scene face.
-    // 988 KB since edits came to reach readers when they are published (Roadmap f-publishing-lifecycle): a reader's view folds the last publish, reaching `pastOf` from the seat view: the scene face measured 1_010_587 B, 9_468 more than before it (1_001_119).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(988 * 1024);
+    // 980 KB since edits came to reach readers when they are published (Roadmap f-publishing-lifecycle): the declaration's publishing, the store's hooks for publish and the provider fetching the reader's view on demand: the scene face measured 1_002_949 B, 1_830 more than before it (1_001_119).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(980 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

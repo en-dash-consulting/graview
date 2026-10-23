@@ -6,6 +6,7 @@ import { toDocument } from "../../src/document/index.js";
 import { bindSchema, createSchema, defineNode, nodeRef, PermissionDeniedError, PUBLISH, Store, type Principal, type Publishing } from "../../src/index.js";
 import { pastOf } from "../../src/past.js";
 import { unpublished } from "../../src/history.js";
+import "../../src/publishing.js";
 
 /**
  * A LITE PUBLISHING LIFECYCLE (Roadmap f-publishing-lifecycle). Nick, Oct
