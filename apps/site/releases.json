@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.51",
+      "date": "2026-10-23",
+      "headline": "Several people type into one long text field at once and keep every word: over the wire, in the editor, in words, whatever the network does.",
+      "summary": "- **Over the wire.** `remote.typing(node, field)` sends a field's typing a run at a time as `type-text`, and the server carries each run over everyone else's, so two pages typing into one field both keep their words, over the socket or the poll. A reader that never said it reads op format 3 is sent the whole text instead of a splice. `@graview/core/typing` loads the first time somebody types.\n- **In the editor.** Prose the declaration types together opens with no draft and no Save: each keystroke is the field's at once, somebody else's typing lands as it arrives with the selection carried over it, and Ctrl or ⌘ Z takes back only this person's own last run. Presence carries a caret.\n- **In words.** A run of typing is said as what it wrote, where and how much (\"Ada wrote in Kitchen's notes (+42 −3)\"): one tick in the timeline, one row in Activity with one undo, one notification when the typist stops, and `historyInWords` for an agent's history.\n- **Whatever the network does.** A seeded fuzz of three pages typing, with frames held, duplicated and lost and runs taken back at random, found five ways an undo of typing went wrong; all are fixed.",
+      "compatibility": "`transformSplices`, `composeSplices`, `diffSplice` and `isCollaborativeField` move from `@graview/core` to `@graview/core/typing`. A `type-text` behind the horizon is answered `conflict` where it was refused `invalid`; a whole write over a field typed together may now be refused as stale by a server before 0.1.50. `LiveProtocol` gains `floor(peers)`, so a host's own implementation has one more method to write. A notification's field typed into carries `typed` (`{ inserted, removed, spans }`) instead of `before` and `after`. Additive: presence `caret`, the provider's `typing`, `EmbedRemote.typing`, `historyInWords` and the typing words, `holdTypingRuns` and `typingQuietMs`, `StoreHandler.pins()` and `compact`. Ops, stored formats and `WIRE_PROTOCOL` are unchanged.",
+      "published": true
+    },
+    {
       "version": "0.1.50",
       "date": "2026-10-23",
       "headline": "The 1.0 foundations: formats that fail closed, links with ids of their own, opaque cursors, a publishing lifecycle, and the first two phases of text typed together.",

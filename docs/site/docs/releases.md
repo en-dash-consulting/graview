@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.51`](https://graview.dev/docs/releases.html#v0-1-51)
 - [`0.1.50`](https://graview.dev/docs/releases.html#v0-1-50)
 - [`0.1.49`](https://graview.dev/docs/releases.html#v0-1-49)
 - [`0.1.48`](https://graview.dev/docs/releases.html#v0-1-48)
@@ -51,6 +52,21 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.51
+
+Published October 23, 2026 · the current version
+
+Several people type into one long text field at once and keep every word: over the wire, in the editor, in words, whatever the network does.
+
+- **Over the wire.** `remote.typing(node, field)` sends a field's typing a run at a time as `type-text`, and the server carries each run over everyone else's, so two pages typing into one field both keep their words, over the socket or the poll. A reader that never said it reads op format 3 is sent the whole text instead of a splice. `@graview/core/typing` loads the first time somebody types.
+- **In the editor.** Prose the declaration types together opens with no draft and no Save: each keystroke is the field's at once, somebody else's typing lands as it arrives with the selection carried over it, and Ctrl or ⌘ Z takes back only this person's own last run. Presence carries a caret.
+- **In words.** A run of typing is said as what it wrote, where and how much ("Ada wrote in Kitchen's notes (+42 −3)"): one tick in the timeline, one row in Activity with one undo, one notification when the typist stops, and `historyInWords` for an agent's history.
+- **Whatever the network does.** A seeded fuzz of three pages typing, with frames held, duplicated and lost and runs taken back at random, found five ways an undo of typing went wrong; all are fixed.
+
+**Before you upgrade:** `transformSplices`, `composeSplices`, `diffSplice` and `isCollaborativeField` move from `@graview/core` to `@graview/core/typing`. A `type-text` behind the horizon is answered `conflict` where it was refused `invalid`; a whole write over a field typed together may now be refused as stale by a server before 0.1.50. `LiveProtocol` gains `floor(peers)`, so a host's own implementation has one more method to write. A notification's field typed into carries `typed` (`{ inserted, removed, spans }`) instead of `before` and `after`. Additive: presence `caret`, the provider's `typing`, `EmbedRemote.typing`, `historyInWords` and the typing words, `holdTypingRuns` and `typingQuietMs`, `StoreHandler.pins()` and `compact`. Ops, stored formats and `WIRE_PROTOCOL` are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.51) · [The full changelog for 0.1.51](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0151)
 
 ## 0.1.50
 
