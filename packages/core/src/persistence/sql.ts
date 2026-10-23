@@ -60,6 +60,26 @@ export function createSqlAdapter(options: SqlAdapterOptions): PersistenceAdapter
     for (const _ of sql.exec(statement, ...params)) void _;
   };
 
+  /*
+   * A LINK'S OWN ID AND DATA (reserved, Roadmap f-1-0-edge-fields) live in
+   * the edge table's optional `data` column, as JSON — `{ id?, data? }` —
+   * and only when a link carries either. An app's table without the column
+   * reads and writes links as it always did; a link that carries them is
+   * refused there rather than kept without them.
+   */
+  let edgeData: boolean | undefined;
+  const hasEdgeData = (): boolean => {
+    if (edgeData !== undefined) return edgeData;
+    try {
+      rows(`SELECT data FROM ${edgeTable} LIMIT 0`);
+      return (edgeData = true);
+    } catch {
+      return (edgeData = false);
+    }
+  };
+  const extraOf = (edge: GraphEdge): string | null =>
+    edge.id === undefined && edge.data === undefined ? null : JSON.stringify({ id: edge.id, data: edge.data });
+
   const createOpTable = `CREATE TABLE IF NOT EXISTS ${opTable} (
     ${scope} TEXT NOT NULL, seq INTEGER NOT NULL, data TEXT NOT NULL,
     PRIMARY KEY (${scope}, seq))`;
@@ -83,8 +103,10 @@ export function createSqlAdapter(options: SqlAdapterOptions): PersistenceAdapter
       PRIMARY KEY (${scope}, id))`);
     run(`CREATE TABLE IF NOT EXISTS ${edgeTable} (
       ${scope} TEXT NOT NULL, position INTEGER NOT NULL,
-      kind TEXT NOT NULL, from_id TEXT NOT NULL, to_id TEXT NOT NULL,
+      kind TEXT NOT NULL, from_id TEXT NOT NULL, to_id TEXT NOT NULL, data TEXT,
       PRIMARY KEY (${scope}, position))`);
+    // A table made before a link could carry an id and data (1.0) gains the column; one that has it says so, and is left as it is.
+    if (!hasEdgeData()) run(`ALTER TABLE ${edgeTable} ADD COLUMN data TEXT`), (edgeData = true);
     run(createOpTable);
     run(createEpochTable);
     run(createArchiveTable);
@@ -123,8 +145,9 @@ export function createSqlAdapter(options: SqlAdapterOptions): PersistenceAdapter
     async load(key) {
       const nodeRows = rows<{ id: string; kind: string; data: string }>(`SELECT id, kind, data FROM ${nodeTable} WHERE ${scope} = ?`, key);
       if (nodeRows.length === 0) return null;
-      const edgeRows = rows<{ kind: string; from_id: string; to_id: string }>(
-        `SELECT kind, from_id, to_id FROM ${edgeTable} WHERE ${scope} = ? ORDER BY position ASC`,
+      const edgeRows = rows<{ kind: string; from_id: string; to_id: string; data?: string | null }>(
+        // Every column, so a table with `data` hands it back and one without reads as it always did — no statement to ask which.
+        `SELECT * FROM ${edgeTable} WHERE ${scope} = ? ORDER BY position ASC`,
         key,
       );
       const nodes: AnyGraphNode[] = nodeRows.map((row) => {
@@ -133,7 +156,7 @@ export function createSqlAdapter(options: SqlAdapterOptions): PersistenceAdapter
         // columns win so a row is never internally inconsistent.
         return { ...parsed, id: row.id, kind: row.kind };
       });
-      const edges: GraphEdge[] = edgeRows.map((row) => ({ kind: row.kind, from: row.from_id, to: row.to_id }));
+      const edges: GraphEdge[] = edgeRows.map((row) => ({ kind: row.kind, from: row.from_id, to: row.to_id, ...(row.data ? (JSON.parse(row.data) as Pick<GraphEdge, "id" | "data">) : {}) }));
       return { nodes, edges };
     },
     async save(key, snapshot: GraphSnapshot) {
@@ -143,7 +166,13 @@ export function createSqlAdapter(options: SqlAdapterOptions): PersistenceAdapter
           run(`INSERT INTO ${nodeTable} (${scope}, id, kind, data) VALUES (?, ?, ?, ?)`, key, node.id, node.kind, JSON.stringify(node));
         }
         snapshot.edges.forEach((edge, position) => {
-          run(`INSERT INTO ${edgeTable} (${scope}, position, kind, from_id, to_id) VALUES (?, ?, ?, ?, ?)`, key, position, edge.kind, edge.from, edge.to);
+          const extra = extraOf(edge);
+          if (extra === null) {
+            run(`INSERT INTO ${edgeTable} (${scope}, position, kind, from_id, to_id) VALUES (?, ?, ?, ?, ?)`, key, position, edge.kind, edge.from, edge.to);
+            return;
+          }
+          if (!hasEdgeData()) throw new Error(`${edgeTable} has no "data" column to keep a link's id and data in`);
+          run(`INSERT INTO ${edgeTable} (${scope}, position, kind, from_id, to_id, data) VALUES (?, ?, ?, ?, ?, ?)`, key, position, edge.kind, edge.from, edge.to, extra);
         });
       });
     },

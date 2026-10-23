@@ -34,6 +34,7 @@ import {
 // What a seat is served keeps the fields its sight keeps (Roadmap f-field-sight): the protocol judges them.
 import "@graview/core/field-sight";
 import { argumentWords } from "@graview/core/words";
+import { cursorAt, seqAt } from "./cursor.js";
 import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LimitAsked, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
 /**
@@ -364,7 +365,7 @@ export interface LiveProtocol<S extends AnySchema> {
   post(body: string, asked: WireAsked): Promise<WireAnswer & { readonly landed?: readonly Operation[] }>;
   /** `GET /graview/state`: the store as the asking seat sees it — snapshot, log, migrations, modules, horizon. */
   state(asked: WireAsked): WireAnswer;
-  /** `GET /graview/since?seq=N`: the ops after `seq`, as the asking seat sees them. */
+  /** `GET /graview/since?seq=`: the ops after `seq` (the cursor said, read as a seq), as the asking seat sees them, and the cursor after them. */
   since(seq: number, asked: WireAsked): WireAnswer;
   /**
    * THE DECLARATION CHANGED (FR-43), and this protocol is the one over the
@@ -1030,7 +1031,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     }
     // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
     const after = (ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq >= last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from)).filter((op) => op.seq <= last);
-    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: last, ops: opsFor(peer.opFormat, wire.shown(seat, after)) } satisfies LiveServerMessage) : "";
+    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: cursorAt(last), ops: opsFor(peer.opFormat, wire.shown(seat, after)) } satisfies LiveServerMessage) : "";
     if (key !== undefined) sight!.texts.set(key, text);
     if (text.length > 0) sayText(peer, text);
   };
@@ -1180,7 +1181,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       peer.cursor = Math.max(peer.cursor!, own.at(-1)!.seq);
     }
     const ops = wire.shown(seat, own);
-    say(peer, { t: "ack", cid, seq: ops.at(-1)?.seq ?? peer.cursor!, batch, ops });
+    say(peer, { t: "ack", cid, seq: cursorAt(ops.at(-1)?.seq ?? peer.cursor!), batch, ops });
     return { cursor: peer.cursor!, ...(saved && saved.length > 0 ? { landed: saved } : {}) };
   };
 
@@ -1253,7 +1254,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           // The op format it reads, said or not: a hello again on the same socket says it again.
           if (typeof message.opFormat === "number" && Number.isInteger(message.opFormat) && message.opFormat > 0) peer.opFormat = message.opFormat;
           else delete peer.opFormat;
-          const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
+          const seq = seqAt(message.seq);
           peer.cursor = wire.lastSeq();
           // Its own key, built from the seat, so the client can leave itself out of who is here (FR-47).
           peer.participant ??= participantKey({ kind: seat.kind, ...(seat.id ? { id: seat.id } : {}), session: mintSession() });
@@ -1266,7 +1267,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             say(peer, {
               t: "welcome",
               ...said,
-              seq: peer.cursor,
+              seq: cursorAt(peer.cursor!),
               ops: [],
               state: {
                 version: options.version ?? 1,
@@ -1280,7 +1281,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             // Caught up to what is written: an op still being flushed, or one a flush failed, comes once it holds.
             const held = heldFrom();
             if (held !== undefined) peer.cursor = Math.max(Math.floor(seq), held - 1);
-            say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(seat, seq).filter((op) => op.seq <= peer.cursor!) });
+            say(peer, { t: "welcome", ...said, seq: cursorAt(peer.cursor!), ops: wire.since(seat, seq).filter((op) => op.seq <= peer.cursor!) });
           }
           const others = heldBySockets(who, [peer, ...peers]).filter((presence) => presence.participant !== peer.participant);
           if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(seat, others) });
@@ -1326,7 +1327,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
               return acked(peer, seat, cid, message.batch as string, claim.answered, flushed.saved);
             }
             catchUp(peer, undefined, seat);
-            say(peer, { t: "ack", cid, seq: claim.answered.at(-1)!.seq, batch: message.batch as string, ops: wire.shown(seat, claim.answered) });
+            say(peer, { t: "ack", cid, seq: cursorAt(claim.answered.at(-1)!.seq), batch: message.batch as string, ops: wire.shown(seat, claim.answered) });
             return { cursor: peer.cursor };
           }
           /*
@@ -1470,12 +1471,14 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         snapshot: seen.snapshot(),
         ...opened,
         log: opsFor(asked.opFormat, opened.log),
+        cursor: cursorAt(opened.log.at(-1)?.seq ?? (opened.horizon ?? 0) - 1),
         migrated: [...(options.migrated ?? [])],
         enabledModules: wire.enabledModules(),
       });
     },
     since(seq, asked) {
-      return reply(200, { ops: opsFor(asked.opFormat, wire.since(asked.seat, seq)), ...answering(asked) });
+      const ops = wire.since(asked.seat, seq);
+      return reply(200, { ops: opsFor(asked.opFormat, ops), cursor: cursorAt(ops.at(-1)?.seq ?? seq), ...answering(asked) });
     },
     declared(peers) {
       for (const peer of peers) {

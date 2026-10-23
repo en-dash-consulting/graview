@@ -35,6 +35,8 @@ export interface CompiledMutation {
   readonly intent: string;
   /** The record a merge kept, when the act merged one into it (FR-173): the op says so. */
   readonly mergedInto?: string;
+  /** The first id `freshId` gave — the one a requested `id` goes to — when the act minted any. */
+  readonly firstMinted?: string;
 }
 
 /** Whether an act takes the framework's `id` argument: it creates, and has no `id` of its own. */
@@ -108,12 +110,21 @@ export function numbersSpelled(input: unknown, given: unknown): unknown {
   return read ?? given;
 }
 
+/** The longest id a caller may ask an act to make a record with. */
+export const REQUESTED_ID_LENGTH = 200;
+
+/**
+ * AN ID A CALLER MAY ASK FOR (Roadmap f-1-0-client-ids): 1–200 characters,
+ * none of them a space or a control character. Readable slugs —
+ * `task:buy-milk`, `room:green.0k3j2xa` — and a client's own UUIDs pass;
+ * an id that would not survive a URL, a log line or a search does not.
+ */
 function requestedId(rawArgs: unknown): string | undefined {
   if (typeof rawArgs !== "object" || rawArgs === null) return undefined;
   const id = (rawArgs as Record<string, unknown>)["id"];
   if (id === undefined) return undefined;
-  if (typeof id !== "string" || id.trim().length === 0) {
-    throw new GraphError("An id must be a non-empty string", `Got ${JSON.stringify(id)}.`);
+  if (!(typeof id === "string" && id.length <= REQUESTED_ID_LENGTH && /^[^\s\p{Cc}]+$/u.test(id))) {
+    throw new GraphError(`An id is 1–${REQUESTED_ID_LENGTH} characters with no space`, `Got ${JSON.stringify(id)}.`);
   }
   return id;
 }
@@ -325,7 +336,8 @@ export function compileMutation<S extends AnySchema>(
       // THE KEPT ONE TAKES THE LINKS, but never a link to itself or one it has; then the duplicate is archived.
       const has = new Set([...graph.outEdges(into), ...graph.inEdges(into)].map(edgeId));
       for (const edge of unlink(gone)) {
-        const next = { kind: edge.kind, from: edge.from === gone ? into : edge.from, to: edge.to === gone ? into : edge.to };
+        // Moved whole: a link's own id and data (reserved) go with it.
+        const next = { ...edge, from: edge.from === gone ? into : edge.from, to: edge.to === gone ? into : edge.to };
         if (next.from !== next.to && !has.has(edgeId(next))) has.add(edgeId(next)), primitives.push({ op: "add-edge", edge: next });
       }
       context.archiveNode(gone);
@@ -335,7 +347,8 @@ export function compileMutation<S extends AnySchema>(
       primitives.push({ op: "add-edge", edge });
     },
     removeEdge(edge) {
-      primitives.push({ op: "remove-edge", edge });
+      // A link named by its own id is removed as it is held, so the removal's inverse puts back all of it.
+      primitives.push({ op: "remove-edge", edge: (edge.id !== undefined && graph.linkById(edge.id)) || edge });
     },
     setSingleSource(kind, to, from) {
       /*
@@ -355,9 +368,16 @@ export function compileMutation<S extends AnySchema>(
     },
     freshId(label, prefix) {
       if (requested !== undefined && !minted.has(requested)) {
-        // Asked the same whether a record the seat may not see holds it or nothing does (FR-55).
-        if (options.seesInFull && !options.seesInFull()) {
-          throw new GraphError(`"${definition.name}" makes its own id here`, "Leave id out: the answer says the id it made.");
+        /*
+         * Asked the same whether a record the seat may not see holds it or
+         * nothing does (FR-55). A seat that does not see everything may ask
+         * only for an id of its own — one that ends `.<seatMark(me)>`, as
+         * the ids minted for it do — which nobody else's label mints, so a
+         * refusal tells it nothing it did not already know.
+         */
+        const mark = options.me === undefined ? undefined : `.${seatMark(options.me)}`;
+        if (options.seesInFull && !options.seesInFull() && !(mark && new RegExp(`\\${mark}(-[0-9a-z]+)?$`).test(requested))) {
+          throw new GraphError(`"${definition.name}" makes its own id here`, `Leave id out${mark ? `, or end it "${mark}"` : ""}: the answer says the id it made.`);
         }
         if (held(requested)) {
           throw new GraphError(
@@ -388,6 +408,10 @@ export function compileMutation<S extends AnySchema>(
   };
 
   definition.apply(context, args);
+  // An id asked for and not taken is said, never dropped: the caller would name a record that is not there.
+  if (requested !== undefined && !minted.has(requested)) {
+    throw new GraphError(`"${definition.name}" did not make a record with id "${requested}": it names what it makes itself`);
+  }
   const quoted = options.check?.(primitives, definition);
 
   const writes = new Set(primitives.flatMap(writesOf));
@@ -407,5 +431,6 @@ export function compileMutation<S extends AnySchema>(
     writes: [...writes],
     intent,
     ...(mergedInto !== undefined ? { mergedInto } : {}),
+    ...(minted.size > 0 ? { firstMinted: minted.values().next().value! } : {}),
   };
 }

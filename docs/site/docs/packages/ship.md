@@ -39,7 +39,7 @@ Every route `serveStore` answers is `WIRE`, exported from the package and pinned
 | --- | --- | --- |
 | GET | `/graview/state` | the graph, the log, the stored version and the modules on |
 | POST | `/graview/ops` | calls in, the ops they produced out — or `undo`, batches to take back; a `batch` the asking seat already landed is answered with the ops it made, and one that is somebody else's or not `batch:<tag>:<n>` is refused `invalid`; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy |
-| GET | `/graview/since?seq=N` | the ops appended after N — everyone else's |
+| GET | `/graview/since?seq=<cursor>` | the ops appended after the cursor — everyone else's — and the cursor after them |
 | GET | `/graview/health` | ship's own report, plus where the data is |
 | GET | `/graview/export` | the whole store as one bundle, the way out |
 | POST | `/graview/here` | say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under |
@@ -82,7 +82,7 @@ createStoreHandler({
 | server | `declaration` | `version`: the declaration changed, and the socket is served again after a new hello |
 | server | `reload` | `reason` and `protocol`, the lowest served: the hello's protocol is no longer served |
 
-Seqs mean what `/graview/since?seq=N` means, and `hello` and `welcome` carry `WIRE_PROTOCOL`. A host on any runtime attaches a socket with `createStoreHandler(...).connect(request, { send, close })`, which reads the seat from the upgrade and answers with the connection to hand each message to; `serveStore` does this for Node's upgrade. What a seat may not see holds on the socket as on the routes, and so does its id (FR-55): no record id the seat may not see is in anything it is sent — a welcome, ops, an ack, a conflict, a route's answer. A seen record's field that names a hidden one is cleared, or, when the record cannot do without that field, the record is withheld from the seat whole; a withheld op keeps no hidden id in any primitive. `seatLens(store, principal)` is that judgment, the one every surface reads.
+Positions are cursors — opaque strings only the server that gave them reads (`Cursor`) — as `/graview/since?seq=` takes them, and `hello` and `welcome` carry `WIRE_PROTOCOL`. A host on any runtime attaches a socket with `createStoreHandler(...).connect(request, { send, close })`, which reads the seat from the upgrade and answers with the connection to hand each message to; `serveStore` does this for Node's upgrade. What a seat may not see holds on the socket as on the routes, and so does its id (FR-55): no record id the seat may not see is in anything it is sent — a welcome, ops, an ack, a conflict, a route's answer. A seen record's field that names a hidden one is cleared, or, when the record cannot do without that field, the record is withheld from the seat whole; a withheld op keeps no hidden id in any primitive. `seatLens(store, principal)` is that judgment, the one every surface reads.
 
 A host that hibernates — a Durable Object wakes on a message with no closure left — holds each socket's state itself. `liveProtocol({ store })` (from `@graview/ship/runtime`) is the same protocol as functions over the store and one plain-JSON `LiveSocketState` per socket, `{ seat, via, cursor?, participant?, build?, hostBuild?, held? }`, the thing `serializeAttachment` keeps:
 
@@ -127,7 +127,7 @@ if (landed) live.publish(landed, otherPeers); // each as its own seat sees them,
 const { status, body, headers, landed } = await live.post(await request.text(), { seat, via: "api" });
 if (landed) live.publish(landed, peers);
 return Response.json(body, { status, headers });
-// GET /graview/state and /graview/since?seq=N, as the seat sees them:
+// GET /graview/state and /graview/since?seq=<cursor>, as the seat sees them:
 live.state({ seat, via: "api" });
 live.since(seq, { seat, via: "api" });
 ```
@@ -227,11 +227,11 @@ A third party stands up their own host — a file store or SQLite, `graview serv
 
 Anything **one** deployment needs lives here. Anything only the **operator of many** deployments needs — tenancy, provisioning, deploy-to-URL, billing, fleet upgrades, the builder UX — lives in the `graview-cloud` repo, which consumes this package the way any customer would. If Cloud ever needs a private hook into the framework, that hook is a missing public seam to fix here first.
 
-## What it exports (94)
+## What it exports (97)
 
 Read off the package's own barrel, so this is what is there today.
 
-`announcePresence`, `answerSubscriptions`, `answerViews`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `BROWSER_DATABASE`, `browserStartsFresh`, `bundleAppForPage`, `conflictSentence`, `connectionsFileOf`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `fileConnectionState`, `filesAt`, `fileSubscriptions`, `fileViews`, `findBundler`, `forgetFreshParam`, `freshHref`, `GOOGLE_TOKEN_URL`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `keepsTheApp`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `NO_BUNDLER`, `openRemote`, `openStore`, `opFormatOf`, `opsFor`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `PREVIEW_APP_PATH`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `readEnvFile`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `remoteSubscriptions`, `remoteViews`, `runConnections`, `sayHeld`, `sayRefusals`, `sayReport`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedRefusals`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `VIEWS_PATH`, `visitorPresence`, `WIRE`, `wireRefusalOf`
+`announcePresence`, `answerSubscriptions`, `answerViews`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `BROWSER_DATABASE`, `browserStartsFresh`, `bundleAppForPage`, `conflictSentence`, `connectionsFileOf`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `Cursor`, `cursorAt`, `exportBundle`, `fileConnectionState`, `filesAt`, `fileSubscriptions`, `fileViews`, `findBundler`, `forgetFreshParam`, `freshHref`, `GOOGLE_TOKEN_URL`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `keepsTheApp`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `NO_BUNDLER`, `openRemote`, `openStore`, `opFormatOf`, `opsFor`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `PREVIEW_APP_PATH`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `readEnvFile`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `remoteSubscriptions`, `remoteViews`, `runConnections`, `sayHeld`, `sayRefusals`, `sayReport`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedRefusals`, `seedSteps`, `seqAt`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `VIEWS_PATH`, `visitorPresence`, `WIRE`, `wireRefusalOf`
 
 ---
 

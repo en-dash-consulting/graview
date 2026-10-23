@@ -11,7 +11,7 @@
 export const SURFACES = [
   {
     name: "ops and primitives",
-    paths: [/^packages\/core\/src\/ops\//, /^packages\/core\/src\/graph\/primitives\.ts$/, /^packages\/core\/src\/graph\/types\.ts$/, /^packages\/core\/src\/format-error\.ts$/],
+    paths: [/^packages\/core\/src\/ops\//, /^packages\/core\/src\/graph\/primitives\.ts$/, /^packages\/core\/src\/graph\/(types|edge-fields)\.ts$/, /^packages\/core\/src\/format-error\.ts$/],
   },
   {
     name: "stored formats",
@@ -28,7 +28,7 @@ export const SURFACES = [
   {
     name: "the wire",
     paths: [
-      /^packages\/ship\/src\/(serve|handler|runtime|remote|seat-headers|live|live-protocol|presence|subscriptions|remote-subscriptions|views|remote-views)\.ts$/,
+      /^packages\/ship\/src\/(serve|handler|runtime|remote|seat-headers|cursor|live|live-protocol|presence|subscriptions|remote-subscriptions|views|remote-views)\.ts$/,
       /^packages\/core\/src\/(presence|capabilities|refusal|refused)\.ts$/,
       /^packages\/guest\/src\/protocol\.ts$/,
     ],

@@ -133,7 +133,8 @@ describe("a hosted page", () => {
     // 977 KB since an act came to be found by another spelling of its name, a derived edit to name the act that writes a field it refuses and a number given as its digits to be read, and a headline opening on a count in words to start with a capital: the scene face measured 999_696 B, 2_430 more than before them (997_266).
     // 978 KB since a declared row came to name its record where its blocks do not, and a key's abbreviation to be said as its letters: 1_237 B more on the scene face.
     // 979 KB since the formats came to fail closed for 1.0: a primitive or a typed value a build does not know refused where ops are folded, an author's kind read through `authorKindOf`, two refusal codes more: the scene face measured 1_002_138 B, 666 over 978.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(979 * 1024);
+    // 981 KB since a link came to keep its own id and data, every creating act to honor a caller's id, and the wire to say a position as an opaque cursor: the scene face measured 1_003_781 B, 1_643 more than before them (1_002_138).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(981 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

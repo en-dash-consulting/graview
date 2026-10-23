@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1650,
+  "gzipped": 750,
+  "changeset": "a-link-keeps-its-own-id-a-caller-names-what-it-makes-and-a-cursor-is-opaque.md",
+  "note": "Raised when three 1.0 foundations landed: a link's own id and data are kept and folded (`EDGE_FIELDS`, the graph's id index and its checks on a write), every creating act honors a caller's id and `openRemote` sends the id a record was made with, and the wire says a position as an opaque cursor (`cursorAt`, `seqAt`). The graph, the store and the remote are on every page, so this is up front. Measured at 600_737 B minified and 209_401 gzipped against 599_094 and 208_655 before: 1_643 and 746 more."
+}

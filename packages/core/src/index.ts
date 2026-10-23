@@ -89,6 +89,7 @@ export { invert, isUnset, normalize, UNSET, writesOf } from "./graph/primitives.
 export type { Primitive } from "./graph/primitives.js";
 export { TrackedReader } from "./graph/tracked.js";
 export { edgeId } from "./graph/types.js";
+export { EDGE_FIELDS } from "./graph/edge-fields.js";
 export type {
   AnyGraphNode,
   GraphEdge,

@@ -7,6 +7,7 @@ import {
   REMOTE_PRESENCE_TTL_MS,
   samePresence,
   Store,
+  takesAnId,
   tickEachDay,
   FORMATS,
   WIRE_PROTOCOL,
@@ -25,6 +26,7 @@ import {
   type WireRefusal,
 } from "@graview/core";
 import type { StorageLike } from "./browser-adapter.js";
+import { cursorAt } from "./cursor.js";
 import { LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
@@ -862,7 +864,7 @@ async function opening<S extends AnySchema>(
   };
 
   const since = async (seq: number): Promise<Operation[]> => {
-    const response = await reach(`${options.url}/graview/since?seq=${seq}&opFormat=${FORMATS.op}`, { headers });
+    const response = await reach(`${options.url}/graview/since?seq=${cursorAt(seq)}&opFormat=${FORMATS.op}`, { headers });
     const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string };
     return moved(answer) ? [] : (answer.ops ?? []);
   };
@@ -879,7 +881,7 @@ async function opening<S extends AnySchema>(
       const response = await reach(`${options.url}/graview/here`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ presence: mine, seq: seen }),
+        body: JSON.stringify({ presence: mine, seq: cursorAt(seen) }),
       });
       const answer = (await response.json()) as { who: Presence[]; ops?: Operation[]; participant?: string; version?: number; build?: string };
       if (moved(answer)) return [];
@@ -1353,7 +1355,7 @@ async function opening<S extends AnySchema>(
       if (socket !== made) return;
       // From the last op this client has: the welcome brings exactly the ones after it.
       // Which codec, which protocol and which build this page speaks (FR-44).
-      made.send(JSON.stringify({ t: "hello", seq: seen, protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, opFormat: FORMATS.op, ...(options.build ? { build: options.build.slice(0, 64) } : {}), ...(options.hostProtocol !== undefined ? { hostProtocol: options.hostProtocol } : {}) } satisfies LiveClientMessage));
+      made.send(JSON.stringify({ t: "hello", seq: cursorAt(seen), protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, opFormat: FORMATS.op, ...(options.build ? { build: options.build.slice(0, 64) } : {}), ...(options.hostProtocol !== undefined ? { hostProtocol: options.hostProtocol } : {}) } satisfies LiveClientMessage));
     };
     made.onmessage = (event) => {
       if (socket !== made) return;
@@ -1504,7 +1506,7 @@ async function opening<S extends AnySchema>(
    * single presses traveled: two windows on one roster disagreed about
    * exactly the changes an agent had made.
    */
-  store.applyAll = ((calls, applyOptions) => {
+  store.applyAll = ((asItWas, applyOptions) => {
     /*
      * What this browser's earlier presses, still pending, wrote: a field
      * one of them changed is this browser's own to change again, not a
@@ -1520,9 +1522,21 @@ async function opening<S extends AnySchema>(
      * this fixes is the one that does not, which would otherwise meet a
      * refusal about a person who is not sitting there.
      */
-    const result = appliedAll(calls, {
+    const result = appliedAll(asItWas, {
       ...(options.principal ? { author: options.principal } : {}),
       ...applyOptions,
+    });
+    /*
+     * THE SAME RECORD ON THE SERVER (Roadmap f-1-0-client-ids). A call that
+     * made a record here goes with the id it was made with, so the server
+     * makes it under that id and the rebase keeps it: a press after it that
+     * names the record — still pending, or offline — names the one the
+     * server holds. An id somebody took meanwhile is refused there, said,
+     * and the change taken back; never renamed under the person.
+     */
+    const calls = asItWas.map((call, at) => {
+      const id = result.minted?.[at];
+      return id === undefined || call.args?.["id"] !== undefined || !takesAnId(store.mutation(call.name)) ? call : { ...call, args: { ...call.args, id } };
     });
     pending.push(result.batch);
     provisional.add(result.batch);

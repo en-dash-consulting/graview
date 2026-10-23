@@ -266,6 +266,12 @@ export interface Preview<S extends AnySchema> {
 export interface ApplyResult<S extends AnySchema> extends Preview<S> {
   readonly ops: readonly Operation[];
   readonly batch: string;
+  /**
+   * The id each call's act minted first, by the call's index — the one an
+   * `id` argument names (Roadmap f-1-0-client-ids) — where it minted one:
+   * what a client sends with the call, so the server makes the same record.
+   */
+  readonly minted?: readonly (string | undefined)[];
 }
 
 /**
@@ -1446,6 +1452,7 @@ export class Store<S extends AnySchema> {
 
     /* The first record each call made, for a later call that names it (FR-193). */
     const madeIds: (string | undefined)[] = [];
+    const minted: (string | undefined)[] = [];
     try {
       for (const [at, asked] of calls.entries()) {
         const call = naming[at] ? resolveMade(asked, madeIds, at) : asked;
@@ -1477,7 +1484,8 @@ export class Store<S extends AnySchema> {
          * simply leaves no trace, because it left no trace.
          */
         if (compiled.primitives.length === 0) continue;
-        madeIds[at] = compiled.primitives.find((primitive): primitive is Extract<Primitive, { op: "add-node" }> => primitive.op === "add-node")?.node.id;
+        minted[at] = compiled.firstMinted;
+        madeIds[at] =compiled.primitives.find((primitive): primitive is Extract<Primitive, { op: "add-node" }> => primitive.op === "add-node")?.node.id;
         const op: Operation = {
           id: this.nextId(),
           seq: this.log.length,
@@ -1531,6 +1539,7 @@ export class Store<S extends AnySchema> {
     return {
       batch,
       ops,
+      ...(minted.length > 0 ? { minted } : {}),
       diff,
       primitives: allPrimitives,
       reads: [...reads],

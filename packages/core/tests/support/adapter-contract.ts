@@ -299,5 +299,35 @@ export function sqlCases(fresh: () => SqlHandle): AdapterCase[] {
         same((await adapter.load("h"))?.nodes.map((n) => n.id).sort(), ["d1", "p1"], "the nodes");
       },
     },
+    {
+      name: "keeps a link's own id and data in the edge table's data column",
+      async run() {
+        const adapter = createSqlAdapter({ ...fresh(), createTables: true });
+        const linked: GraphSnapshot = { nodes: snapshot.nodes, edges: [{ kind: "assigned-to", from: "p1", to: "d1", id: "shift-1", data: { hours: 4 } }, { kind: "assigned-to", from: "p2", to: "d1" }] };
+        await adapter.save("h", linked);
+        same((await adapter.load("h"))?.edges, linked.edges, "the edges");
+      },
+    },
+    {
+      name: "an edge table made before the data column reads links as before, refuses one with an id, and gains the column when asked to make its tables",
+      async run() {
+        const handle = fresh();
+        householdTables(handle.sql);
+        const plain = createSqlAdapter(handle);
+        await plain.save("h", snapshot);
+        same((await plain.load("h"))?.edges, snapshot.edges, "a plain link");
+        const linked: GraphSnapshot = { nodes: snapshot.nodes, edges: [{ kind: "assigned-to", from: "p1", to: "d1", id: "shift-1" }] };
+        let refused = false;
+        try {
+          await plain.save("h", linked);
+        } catch (error) {
+          refused = /no "data" column/.test(String(error));
+        }
+        ok(refused, "a link with an id is refused where it cannot be kept");
+        const made = createSqlAdapter({ ...handle, createTables: true });
+        await made.save("h", linked);
+        same((await made.load("h"))?.edges, linked.edges, "the link, with its id");
+      },
+    },
   ];
 }

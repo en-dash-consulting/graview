@@ -8,7 +8,8 @@ import { isUnset, unknownPrimitive, type Primitive } from "@graview/core";
  */
 export interface GraphSnapshot {
   readonly nodes: readonly ({ readonly id: string; readonly kind: string } & Record<string, unknown>)[];
-  readonly edges: readonly { readonly kind: string; readonly from: string; readonly to: string }[];
+  /** A link's own `id` and `data` are reserved (Roadmap f-1-0-edge-fields) and carried as they are. */
+  readonly edges: readonly { readonly kind: string; readonly from: string; readonly to: string; readonly id?: string; readonly data?: Readonly<Record<string, unknown>> }[];
 }
 
 export function applyToSnapshot(
@@ -44,16 +45,12 @@ export function applyToSnapshot(
       case "add-edge":
         edges.push(primitive.edge);
         break;
-      case "remove-edge":
-        edges = edges.filter(
-          (edge) =>
-            !(
-              edge.kind === primitive.edge.kind &&
-              edge.from === primitive.edge.from &&
-              edge.to === primitive.edge.to
-            ),
-        );
+      case "remove-edge": {
+        // By its own id when the primitive names one, as a graph removes it; else by where it stands.
+        const { id, kind, from, to } = primitive.edge;
+        edges = edges.filter((edge) => !(id !== undefined ? edge.id === id : edge.kind === kind && edge.from === from && edge.to === to));
         break;
+      }
       default:
         // A primitive a newer build wrote: a migration refuses it rather than carry a graph that skipped it.
         unknownPrimitive(primitive);
