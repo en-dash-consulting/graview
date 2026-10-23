@@ -12,7 +12,7 @@ import {
   descriptionOf,
 } from "@graview/core";
 import { readableFields } from "@graview/core/words";
-import { formFields, type FormField } from "@graview/core/forms";
+import { askedFormFields, formFields, type FormField } from "@graview/core/forms";
 
 /**
  * THE QUESTIONS ARE DERIVED, NOT AUTHORED.
@@ -249,7 +249,7 @@ export function questionsForMutation<S extends AnySchema>(
   const shape = (mutation.input as { shape?: Record<string, unknown> }).shape ?? {};
   const of = mutation.title ?? name;
   const out: DerivedQuestion[] = [];
-  for (const field of formFields(mutation.input)) {
+  for (const field of askedFormFields(store.schema, mutation)) {
     if (field.name in given) continue;
     const question = questionFor(store, field, describedAs(shape[field.name]), `the act "${of}"`);
     if (!question) continue;

@@ -32,6 +32,22 @@ describe("a headline that opens on a count in words", () => {
     expect(blocks.find((block) => block.key === "headline")).toMatchObject({ t: "headline", text: "Two findings, worst first" });
   });
 
+  it("says a figure's label and a meter's the same way: 'Two findings', not 'two findings'", () => {
+    const home = [
+      { figure: "count(all('finding'))", label: "{count(all('finding')) | words} {count(all('finding')) | plural: 'finding'}", key: "figure" },
+      { progress: { value: "count(all('finding'))", max: "4" }, label: "{count(all('finding')) | words} of four", key: "meter" },
+      { figure: "count(all('finding'))", label: "only {count(all('finding')) | words}", key: "authored" },
+    ];
+    const compiled = compileDocument({ ...review, views: { ...review.views, home } }, { today: () => "2026-10-15" });
+    if (!compiled.ok) throw new Error("the review did not compile");
+    const store = new Store<AnySchema>({ schema: compiled.app.schema as AnySchema, mutations: compiled.app.mutations ?? [], policy: compiled.app.policy!, snapshot: seed });
+    const owner: Principal = { kind: "human", id: "u:owner", roles: ["owner"] };
+    const blocks = resolveFor(store, owner, null, { app: compiled.app });
+    expect(blocks.find((block) => block.key === "figure")).toMatchObject({ t: "number", label: "Two findings" });
+    expect(blocks.find((block) => block.key === "meter")).toMatchObject({ t: "progress", label: "Two of four" });
+    expect(blocks.find((block) => block.key === "authored")).toMatchObject({ t: "number", label: "only two" });
+  });
+
   it("capitalizes words the framework wrote at the start: seventy-two, threats, 3 days ago is left as digits", () => {
     expect(said("{count(all('indicator')) | words} indicators", "seventy-two indicators")).toBe("Seventy-two indicators");
     expect(said("{count(all('threat')) | plural: 'threat'} open", "threats open")).toBe("Threats open");

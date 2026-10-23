@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T18:49:44.207Z",
+  "at": "2026-10-23T03:06:18.955Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/every-lens.gdd.json",
   "checks": {
@@ -2345,6 +2345,18 @@
     "aMoneyFieldIsSaidAsMoneyInTheScenesRecord": {
       "dollars": true,
       "bare": false,
+      "ok": true
+    },
+    "aCreatingFormAsksTheNameFirstThoughItsFieldsAreKeptSorted": {
+      "asked": [
+        "Name",
+        "Amount",
+        "Effort",
+        "Fee",
+        "Margin",
+        "Stage",
+        "Weight"
+      ],
       "ok": true
     },
     "aMoneyFormShowsItsCurrencyAndTakesAnAmountAsWritten": {

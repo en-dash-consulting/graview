@@ -1,5 +1,6 @@
 import { error, type Finding } from "./findings.js";
 import type { KindSpec } from "./schema.js";
+import { askedRule } from "../mutations/asked-order.js";
 
 /*
  * A KIND'S PAGE (FR-148): how a record's page orders and groups its facts,
@@ -66,10 +67,11 @@ export function pageNames(page: KindSpec["page"], field: string): boolean {
  * them (`set-page-fields`: its fields, then its groups'), then as declared.
  */
 export function askedOrder(spec: Pick<KindSpec, "fields" | "page">, named: readonly string[] = []): readonly string[] {
-  const declared = Object.keys(spec.fields);
-  const paged = [...(spec.page?.fields ?? []), ...(spec.page?.groups ?? []).flatMap((group) => group.fields)].filter((field) => Object.hasOwn(spec.fields, field));
-  const ordered = [...new Set([...paged, ...declared])];
-  const must = (field: string) => Boolean(spec.fields[field]!.required) && spec.fields[field]!.default === undefined;
-  const naming = named.filter((field) => Object.hasOwn(spec.fields, field));
-  return [...new Set([...naming, ...ordered.filter(must), ...ordered])];
+  // The rule every form asks by (`askedRule`), read off the document's words before the kind is compiled.
+  return askedRule({
+    declared: Object.keys(spec.fields),
+    paged: [...(spec.page?.fields ?? []), ...(spec.page?.groups ?? []).flatMap((group) => group.fields)],
+    must: (field) => Boolean(spec.fields[field]!.required) && spec.fields[field]!.default === undefined,
+    naming: named,
+  });
 }

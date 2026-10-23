@@ -1,30 +1,6 @@
 {
-  "at": "2026-10-22T18:53:53.980Z",
+  "at": "2026-10-23T03:10:28.894Z",
   "results": [
-    {
-      "name": "hosted",
-      "code": 0,
-      "took": 1,
-      "verdict": "held"
-    },
-    {
-      "name": "seat",
-      "code": 0,
-      "took": 22,
-      "verdict": "held"
-    },
-    {
-      "name": "quick-ask",
-      "code": 0,
-      "took": 67,
-      "verdict": "held"
-    },
-    {
-      "name": "pages",
-      "code": 0,
-      "took": 165,
-      "verdict": "held"
-    },
     {
       "name": "declared",
       "code": 0,

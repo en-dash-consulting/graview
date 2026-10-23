@@ -1,5 +1,6 @@
 import { describeArg, type ArgShape } from "../../mutations/arg-shape.js";
 import { nodeRefArgs } from "../../mutations/node-ref.js";
+import { nearestAct } from "../../mutations/act-spelling.js";
 import { roleProblem } from "../../document/facts-and-roles.js";
 import { documentOf } from "../../document/to-document.js";
 import { withArticle } from "../../schema/define-node.js";
@@ -304,12 +305,14 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
         });
       }
       if (!mutations.has(repair)) {
+        // Offered by its own name only: one it spells another way, or nearly, is named.
+        const near = nearestAct(repair, mutations.keys());
         add({
           severity: "error",
           code: "repair-unknown-mutation",
           where: `defineInvariant("${invariant.name}").repairs[${index}]`,
           message: `Names repair mutation "${repair}", which is not registered on this app.`,
-          fix: `Register a mutation called "${repair}", or drop it from repairs. Registered: ${
+          fix: near ? `Did you mean "${near}"? Name it as it is spelled.` : `Register a mutation called "${repair}", or drop it from repairs. Registered: ${
             [...mutations.keys()].join(", ") || "(none)"
           }.`,
         });

@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 1560,
+  "gzipped": 600,
+  "note": "Raised when every form came to ask in one order (Roadmap f-forms-same-order-everywhere): a visitor's form that names no fields asks in `askedFormFields`'s order — what names the record, what it cannot be made without, then the rest — whether a document or TypeScript declared its act (`mutations/asked-order.ts`). 379_318 / 145_511 before, 380_850 / 146_095 with it: 1_532 / 584 more."
+}

@@ -1,5 +1,6 @@
 import {
   actSpelledAs,
+  askedArguments,
   actTitle,
   deriveMutations,
   nearestAct,
@@ -712,8 +713,9 @@ function without(schema: JsonSchema, kept: ReadonlySet<string>): JsonSchema {
  * it does — without an argument that writes a field the seat's sight never
  * shows it, so the tool does not name one (Roadmap f-field-sight).
  */
-function actTool(mutation: AnyMutationDefinition, name: string, kept: ReadonlySet<string>): ToolDefinition {
-  const tool = mutationToolSchema(mutation);
+function actTool(mutation: AnyMutationDefinition, name: string, kept: ReadonlySet<string>, schema: AnySchema): ToolDefinition {
+  // Its properties in the order every form asks (`askedArguments`): a model fills them as a person would.
+  const tool = mutationToolSchema(mutation, askedArguments(schema, mutation as never));
   const title = actTitle(mutation);
   const description = tool.nodeRefs.length > 0 ? `${tool.description}${/[.!?]$/.test(tool.description) ? "" : "."} ${BY_NAME}` : tool.description;
   return {
@@ -764,12 +766,14 @@ function surfaceOf(
   subscribes = false,
   /** Whether the seat is the app's own actor (`automated`): `suggest_changes` is listed. */
   automated = false,
+  /** The app's kinds: what orders an act's properties as its form asks them. */
+  schema?: AnySchema,
 ): { readonly definitions: readonly ToolDefinition[]; readonly names: ReadonlyMap<string, string> } {
   const names = toolNames(acts.map((act) => act.name));
   const drawing = [...draftTools(drafts, readOnly), ...(links ? [FIND_LINKED] : []), ...(subscribes ? SUBSCRIPTION_TOOLS : [])];
   const definitions = readOnly
     ? [...READ_TOOLS.filter((tool) => !tool.mutating), ...drawing]
-    : [...READ_TOOLS, ACT_ON_SEVERAL, ...(automated ? [SUGGEST_CHANGES] : []), ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act)))];
+    : [...READ_TOOLS, ACT_ON_SEVERAL, ...(automated ? [SUGGEST_CHANGES] : []), ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act), schema as AnySchema))];
   return { definitions, names };
 }
 
@@ -812,7 +816,7 @@ export function toolDefinitions<S extends AnySchema>(
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),
   ]);
-  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true, isAutomated(principal));
+  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true, isAutomated(principal), app.schema as AnySchema);
   return { definitions, hash: surfaceHash(definitions) };
 }
 
@@ -849,6 +853,7 @@ export function createToolRuntime<S extends AnySchema>(
     linksAnotherApp(store.schema as AnySchema),
     options.subscriptions !== undefined,
     isAutomated(principal),
+    store.schema as AnySchema,
   );
   const hash = surfaceHash(definitions);
   /*

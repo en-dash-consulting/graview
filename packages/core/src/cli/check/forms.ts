@@ -1,5 +1,5 @@
 import { argumentsNeverShown } from "../../mutations/kept-arguments.js";
-import { formFields } from "../../mutations/form.js";
+import { askedFormFields } from "../../mutations/form.js";
 import { pickersIn, visitorSeesKind } from "../../mutations/visitor-form.js";
 import { grantsTo, permittedMutations } from "../../permissions/policy.js";
 import type { Principal } from "../../permissions/types.js";
@@ -52,7 +52,7 @@ export function checkForms<S extends AnySchema>(ctx: CheckContext<S>): void {
       add({ severity: "error", code: "form-act-not-granted", where: `${where}.act`, message: `A visitor holds the role "${role}", and no grant lets it run "${form.act}": the form would refuse every answer.`, fix: `Add a grant: { roles: ["${role}"], mutations: ["${form.act}"] }.` });
     }
 
-    const all = formFields(act.input);
+    const all = askedFormFields(app.schema, act);
     const never = argumentsNeverShown(app.schema, policy, visitor, act);
     const asked = form.fields ?? all.map((field) => field.name);
     for (const field of form.fields ?? []) {
