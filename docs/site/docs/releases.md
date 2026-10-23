@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.50`](https://graview.dev/docs/releases.html#v0-1-50)
 - [`0.1.49`](https://graview.dev/docs/releases.html#v0-1-49)
 - [`0.1.48`](https://graview.dev/docs/releases.html#v0-1-48)
 - [`0.1.47`](https://graview.dev/docs/releases.html#v0-1-47)
@@ -51,9 +52,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.49
+## 0.1.50
 
 Published October 23, 2026 · the current version
+
+The 1.0 foundations: formats that fail closed, links with ids of their own, opaque cursors, a publishing lifecycle, and the first two phases of text typed together.
+
+- **Formats fail closed.** A primitive, a typed value or a store format a build does not know is refused with `NewerFormatError` rather than skipped; an author kind it does not know reads as the system's; a refusal code a client does not know is final. Two writers on one log fail loudly with `LogHeadMovedError` instead of writing a second op 1.
+- **Links, ids and cursors.** A link may carry an `id` and `data` of its own; an act honors a caller's id when it is free and refuses one that is taken; a page's own ids travel as a hint, so two people adding the same name both land. Positions on the wire are opaque cursors.
+- **Publishing.** Under `publishing: { mode: "on-publish" }`, collaborators edit live and everyone else reads the app as of the last `publish`; `?as=published` shows what readers see, and `unpublished(store)` says what is waiting.
+- **Text typed together.** A text field takes a `splice-text`, transformed so concurrent typing converges; the `type-text` act in `@graview/core/typing` merges keystrokes, an agent's whole rewrite and undo out of order.
+- **Not now.** The Suggested tray hides a suggestion from one person until tomorrow, and a night's tidying is one row in Activity.
+
+**Before you upgrade:** Stored formats: op format 3 — a store this build writes is refused by an earlier one with `NewerFormatError`, so roll back by refolding from the log. The wire: positions are cursor strings on `welcome`, `ack`, `ops`, `/graview/state`, `/graview/since` and `/graview/here`; a server reads a page's old number for one minor. A caller's `id` with a space, over 200 characters, or naming a record the act did not make is refused. A visitor form's ops say author kind `visitor`. `appendOps` takes `{ head }`, and an adapter that ignores it works as before. Additive: edge `id`/`data`, `mintedHint`, `publishing`, `publish`, `servedThrough`, `Store.servedSeq`, `CompactOptions.pins`, `unauthenticated` and `quota`, `collaborative` on a document field, `Dismissal`, `withNotNow`.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.50) · [The full changelog for 0.1.50](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0150)
+
+## 0.1.49
+
+Published October 23, 2026
 
 An app tidies itself overnight, judged by a model where one is lent; suggestions and lineage take their 1.0 shapes; every form asks in one order.
 
