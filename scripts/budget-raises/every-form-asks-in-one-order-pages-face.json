@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 1750,
+  "gzipped": 650,
+  "note": "Raised when every form came to ask in one order (Roadmap f-forms-same-order-everywhere): the pages face's form asks in `askedFormFields`'s order, the store derives a record's edit in it (`mutations/asked-order.ts`), and a figure's and a meter's label opening on a count in words starts with a capital. 644_645 / 237_112 before, 646_367 / 237_740 with it: 1_722 / 628 more."
+}

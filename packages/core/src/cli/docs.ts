@@ -3,6 +3,7 @@ import { searchableFields } from "../search.js";
 import type { GraviewApp } from "../app.js";
 import { deriveMutations } from "../mutations/derive-edits.js";
 import { mutationToolSchema } from "../schema/json-schema.js";
+import { askedArguments } from "../mutations/asked-order.js";
 import type { AnySchema } from "../schema/schema.js";
 import { agentRules } from "../scaffold/agents.js";
 
@@ -87,7 +88,7 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
     "",
   );
   for (const mutation of allMutationsOf(app)) {
-    const tool = mutationToolSchema(mutation);
+    const tool = mutationToolSchema(mutation, askedArguments(app.schema, mutation));
     lines.push(`### ${mutation.name}`);
     lines.push(tool.description);
     if (mutation.subject) {

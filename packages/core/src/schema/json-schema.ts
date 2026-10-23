@@ -145,9 +145,19 @@ export function mutationToolSchema(mutation: {
   description?: string;
   input: unknown;
   creates?: readonly string[];
-}): MutationToolSchema {
+}, order?: readonly string[]): MutationToolSchema {
   const refs = nodeRefArgs(mutation.input);
   const base = toJsonSchema(mutation.input);
+  /*
+   * In the order its form asks (`askedArguments`, handed in by whoever has
+   * the app's kinds): what names the record first, as a person is asked.
+   * Its `required` list keeps its order, which says nothing, so a surface's
+   * hash — taken over sorted keys — is the same.
+   */
+  if (order && base["properties"]) {
+    const rank = (name: string) => (order.includes(name) ? order.indexOf(name) : order.length);
+    base["properties"] = Object.fromEntries(Object.entries(base["properties"] as Record<string, JsonSchema>).sort(([a], [b]) => rank(a) - rank(b)));
+  }
   const properties = (base["properties"] ?? {}) as Record<string, JsonSchema>;
   /*
    * THE ID A CALLER MAY BRING. An act that creates takes it beside its own

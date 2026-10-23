@@ -9,6 +9,7 @@ import { parseDuration } from "../schema/field-words.js";
 import { describeArg, unwrap } from "./arg-shape.js";
 import type { AmountMark } from "../schema/amount-mark.js";
 import { nodeRefKinds } from "./node-ref.js";
+import { askedArguments, inAskedOrder } from "./asked-order.js";
 
 /**
  * A FORM, derived from a mutation's own input declaration.
@@ -247,4 +248,13 @@ export function formArgs(fields: readonly FormField[], values: Readonly<Record<s
     }
   }
   return sent;
+}
+
+/**
+ * AN ACT'S FORM IN THE ORDER EVERY FORM ASKS (`askedArguments`): what names
+ * the record, what it cannot be made without, then the rest — the same for
+ * an act a document declared, one written in TypeScript and a derived edit.
+ */
+export function askedFormFields(schema: Parameters<typeof askedArguments>[0], mutation: Parameters<typeof askedArguments>[1]): readonly FormField[] {
+  return inAskedOrder(formFields(mutation.input), askedArguments(schema, mutation));
 }

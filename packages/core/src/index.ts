@@ -340,6 +340,8 @@ export type {
 // Store — graph + log + mutations + invariants, one object.
 export { MODULES_AUTHOR, PastError, PREVIEW_BATCH, problemsMoved, ReceiveError, shapedRules, Store, UnknownMutationError, violationKey } from "./store.js";
 export { actSpelledAs, nearestAct, spellingOf } from "./mutations/act-spelling.js";
+// One order every form asks in, whatever declared the act: what names the record, what it must be given, the rest (Roadmap f-forms-same-order-everywhere).
+export { askedArguments, askedFieldsOf, inAskedOrder } from "./mutations/asked-order.js";
 export type {
   Adopt,
   AdoptResult,

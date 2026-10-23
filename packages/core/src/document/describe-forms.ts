@@ -1,4 +1,4 @@
-import { formFields, type FormField } from "../mutations/form.js";
+import { askedFormFields, type FormField } from "../mutations/form.js";
 import { keptArguments } from "../mutations/kept-arguments.js";
 import { argumentWords } from "../mutations/words.js";
 import type { AnyMutationDefinition } from "../mutations/types.js";
@@ -61,7 +61,7 @@ function described(schema: AnySchema, field: FormField, words: (name: string) =>
 export function describeActForm<S extends AnySchema>(store: Store<S>, principal: Principal, act: AnyMutationDefinition<S>): DescribedForm {
   const kept = keptArguments(store, principal, act);
   const schema = store.schema as AnySchema;
-  const fields = formFields(act.input).filter((field) => field.name !== act.subject?.arg && !kept.has(field.name));
+  const fields = askedFormFields(schema, act).filter((field) => field.name !== act.subject?.arg && !kept.has(field.name));
   const title = actTitle(act);
   return { act: act.name, title, submit: title, fields: fields.map((field) => described(schema, field, (name) => argumentWords(schema, act as never, name))) };
 }
