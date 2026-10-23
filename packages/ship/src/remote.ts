@@ -9,6 +9,7 @@ import {
   Store,
   tickEachDay,
   FORMATS,
+  TYPE_TEXT,
   WIRE_PROTOCOL,
   writtenBy,
   type AnySchema,
@@ -27,6 +28,7 @@ import {
 import type { StorageLike } from "./browser-adapter.js";
 import { cursorAt } from "./cursor.js";
 import { LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, type LiveClientMessage, type LiveServerMessage } from "./live.js";
+import type { RemoteTyping, TypingInsides } from "./remote-typing.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
@@ -373,6 +375,17 @@ export interface RemoteStore<S extends AnySchema> {
    * was noticed is told at once. The client keeps working.
    */
   onBuild(listener: (build: string) => void): () => void;
+  /**
+   * TYPING INTO A FIELD TYPED TOGETHER (Roadmap f-collab-text, phase 3):
+   * what an editor calls a keystroke at a time. Each is shown at once; a
+   * run of them goes to the server as one `type-text`, at most one run per
+   * field on its way, the rest held and carried over what others type
+   * until it is their turn — so two people typing into one text converge
+   * character for character. Loads `@graview/core/typing` the first time,
+   * so a page carries none of it until somebody types. One per field: asked
+   * again, the same one.
+   */
+  typing(node: string, field: string): Promise<RemoteTyping>;
   close(): void;
 }
 
@@ -901,6 +914,8 @@ async function opening<S extends AnySchema>(
   const batches = new Map<string, string>();
   /** Each provisional batch's post, so an undo of it waits until the server has named it. */
   const answers = new Map<string, Promise<unknown>>();
+  /** Provisional batches let go of without ever being sent — a run of typing that came to change nothing — so an undo of one is let go of too. */
+  const letGo = new Set<string>();
   /** What each provisional batch asked for, so a conflict's `useMine` can ask again. */
   const asked = new Map<string, { calls: readonly MutationCall[]; intent?: string; via?: Via; lineage?: Lineage }>();
   /** Every post not yet answered, so `settled` can wait for the verdicts. */
@@ -1453,6 +1468,8 @@ async function opening<S extends AnySchema>(
   const conflictListeners = wiring.conflicts;
   /** Set while `useMine` sends a change again: it goes without the revisions it was refused for. */
   let overriding = false;
+  /** `./remote-typing.js`, once a field has been typed into: what a whole write over typed text, and a run that conflicts, are read with. */
+  let typingLoaded: typeof import("./remote-typing.js") | undefined;
   /*
    * A refusal takes the optimism back: the provisional batch is dropped
    * by a rebase, which rolls it back and applies whatever is still pending
@@ -1465,6 +1482,8 @@ async function opening<S extends AnySchema>(
     if (error instanceof Superseded || retiring) return;
     const refusal = error instanceof RemoteRefusedError ? error.refusal : refusalOf(error);
     const reason = refusal.sentence;
+    // A run of typing that conflicts: what this page showed is "yours" (Roadmap f-collab-text).
+    const typed = error instanceof StaleWrite ? typingLoaded?.yoursOf(store as unknown as Store<AnySchema>, asked.get(batch)?.calls ?? []) : undefined;
     settle(batch);
     try {
       land([], [batch]);
@@ -1481,11 +1500,13 @@ async function opening<S extends AnySchema>(
      * what stands on screen when the person chooses is theirs.
      */
     if (error instanceof StaleWrite && !socketReady()) await pull().catch(() => []);
+    // Taking the server's whole state: the person chooses once theirs is what stands here.
+    if (error instanceof StaleWrite && resyncing) await resyncing;
     if (error instanceof StaleWrite && conflictListeners.size > 0) {
       let chosen = false;
       const conflict: RemoteConflict = {
         sentence: reason,
-        conflicts: error.conflicts,
+        conflicts: typed ? error.conflicts.map((one) => (one.node === typed.node && one.field === typed.field ? { ...one, yours: typed.yours } : one)) : error.conflicts,
         keepTheirs() {
           chosen = true;
         },
@@ -1494,7 +1515,7 @@ async function opening<S extends AnySchema>(
           chosen = true;
           overriding = true;
           try {
-            store.applyAll(made.calls, { ...(made.intent ? { intent: made.intent } : {}), ...(made.via ? { via: made.via } : {}), ...lined(made) });
+            store.applyAll(typed ? [typed.over(seen)] : made.calls, { ...(made.intent ? { intent: made.intent } : {}), ...(made.via ? { via: made.via } : {}), ...lined(made) });
           } finally {
             overriding = false;
           }
@@ -1513,6 +1534,20 @@ async function opening<S extends AnySchema>(
    * single presses traveled: two windows on one roster disagreed about
    * exactly the changes an agent had made.
    */
+  /*
+   * A WHOLE WRITE OVER TEXT TYPED TOGETHER (Roadmap f-collab-text), which a
+   * store with `@graview/core/typing` loaded wrote as a splice: the server
+   * is told where this page last read the log, so it merges what this page
+   * changed three ways with what was typed since — never stale, as a server
+   * compares no revision of such a field. A field this page's own pending
+   * changes wrote is merged against the text now.
+   */
+  const mergedOver = (ops: readonly Operation[], skip: ReadonlySet<string>): FieldRevision[] =>
+    ops.flatMap((op) =>
+      op.mutation?.name === TYPE_TEXT
+        ? []
+        : op.primitives.flatMap((one) => (one.op === "splice-text" && !skip.has(one.id) && !skip.has(`${one.id}\u0000${one.field}`) ? [{ node: one.id, field: one.field, rev: seen }] : [])),
+    );
   store.applyAll = ((asItWas, applyOptions) => {
     /*
      * What this browser's earlier presses, still pending, wrote: a field
@@ -1551,7 +1586,7 @@ async function opening<S extends AnySchema>(
     provisional.add(result.batch);
     asked.set(result.batch, { calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}), ...(applyOptions?.via ? { via: applyOptions.via } : {}), ...lined(applyOptions) });
     // The revision of each field this changes, as this browser saw it — unless the person chose theirs over it.
-    const base = overriding ? [] : revisions.baseFor(result.ops, earlier, (node, field) => store.collaborative(node, field));
+    const base = overriding ? [] : [...revisions.baseFor(result.ops, earlier, (node, field) => store.collaborative(node, field)), ...mergedOver(result.ops, earlier)];
     answers.set(
       result.batch,
       track(
@@ -1597,18 +1632,31 @@ async function opening<S extends AnySchema>(
       result.batch,
       track(
         before
-          .then(() =>
-            transmit(
+          .then(() => {
+            /*
+             * A run of typing that came to change nothing was let go of
+             * here and never sent (Roadmap f-collab-text): an undo of it
+             * alone undoes nothing, so it is let go of too, never sent to
+             * be refused as naming a batch the server never had.
+             */
+            const named = ids.filter((id) => !letGo.has(id));
+            if (named.length === 0) {
+              settle(result.batch);
+              asked.delete(result.batch);
+              land([], [result.batch]);
+              return;
+            }
+            return transmit(
               {
-                undo: ids.map((id) => batches.get(id) ?? id),
+                undo: named.map((id) => batches.get(id) ?? id),
                 ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}),
                 batch: result.batch,
                 ...(undoOptions?.via ? { via: undoOptions.via } : {}),
                 ...lined(undoOptions),
               },
               result.batch,
-            ),
-          )
+            );
+          })
           .catch((error: unknown) => takeBack(result.batch, error)),
       ),
     );
@@ -1697,8 +1745,43 @@ async function opening<S extends AnySchema>(
     }
   }
 
+  /*
+   * TYPING TOGETHER, ON DEMAND (Roadmap f-collab-text, phase 3): the runs a
+   * field's typing holds and sends are `./remote-typing.ts`'s, loaded with
+   * `@graview/core/typing` the first time a field is typed into.
+   */
+  const typings = new Map<string, Promise<RemoteTyping>>();
+  // What the door is handed of this store's insides; it makes its wire of them (`wireOf`).
+  const typingInsides = (): TypingInsides => ({
+    store: store as unknown as Store<AnySchema>,
+    author: options.principal,
+    appliedAll: appliedAll as never,
+    pending,
+    provisional,
+    asked,
+    answers,
+    letGo,
+    sent: (batch, calls) => track(transmit({ calls, batch }, batch).catch((error: unknown) => takeBack(batch, error))),
+    settle,
+    land,
+    seen: () => seen,
+    gone: () => closed || retiring,
+  });
+
   const remote: RemoteStore<S> = {
     store,
+    typing(node, field) {
+      const key = `${node}\u0000${field}`;
+      let one = typings.get(key);
+      if (!one) {
+        one = import("./remote-typing.js").then((loaded) => {
+          typingLoaded = loaded;
+          return loaded.typingOf(node, field, loaded.wireOf(typingInsides()));
+        });
+        typings.set(key, one);
+      }
+      return one;
+    },
     version: state.version,
     migrated: state.migrated ?? [],
     send,

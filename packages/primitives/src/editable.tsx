@@ -588,11 +588,13 @@ function EditableProse<S extends AnySchema>({ nodeId, field, label, value, label
         {editing && editable ? (
           <Suspense fallback={drawn}>
             <ProseEditor
+              nodeId={nodeId}
               field={field}
               label={label}
               value={value}
               {...(markdown ? { markdown: true } : {})}
               onCancel={() => close(true)}
+              onDone={(left) => close(!left)}
               onSave={(draft, left) => {
                 close(!left);
                 if (draft !== value) commit(editable, draft);

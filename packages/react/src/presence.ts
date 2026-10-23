@@ -1,4 +1,4 @@
-import { foldPresence, hueFor, nameOfAuthor, REMOTE_PRESENCE_TTL_MS, type AnySchema, type Person, type Presence, type PresenceChannel, type Principal, type SettingDeclaration, type Store } from "@graview/core";
+import { foldPresence, hueFor, nameOfAuthor, REMOTE_PRESENCE_TTL_MS, type AnySchema, type Person, type Presence, type PresenceCaret, type PresenceChannel, type Principal, type SettingDeclaration, type Store } from "@graview/core";
 import { fromUrl, sameView, toUrl, type ViewState } from "@graview/layout/view";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { pickedFrom } from "./picked.js";
@@ -107,6 +107,8 @@ export interface PresenceState {
   follow(participant: string | null): void;
   /** Where this tab says it is when a face other than the scene draws it (`sayWhere` on the provider). */
   sayWhere(stop: string | null): void;
+  /** Where this tab's caret stands in a field typed together, or null once it has left it (Roadmap f-collab-text). */
+  sayCaret(caret: PresenceCaret | null): void;
 }
 
 /**
@@ -153,12 +155,19 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
     };
   }, [channel, shareWhere, shareOver, participant, name, principal.id, principal.kind, principal.onBehalfOf?.id, principal.onBehalfOf?.name, view, said, over, robot?.at, robot?.mode]);
 
+  /* THE CARET (Roadmap f-collab-text): in a ref, so a caret moved with each keystroke re-renders nothing; said with the rest. */
+  const caret = useRef<PresenceCaret | null>(null);
+  const say = (presence: Presence | null) => presence && channel?.here({ ...presence, caret: caret.current ?? undefined, at: new Date().toISOString() });
+  const sayCaret = useCallback((next: PresenceCaret | null) => {
+    caret.current = next;
+    say(mine);
+  }, [channel, mine]);
+
   /* Say it: on change, and on the heartbeat while it stands. */
   useEffect(() => {
-    if (!channel) return;
     if (!mine) return;
-    channel.here(mine);
-    const beat = setInterval(() => channel.here({ ...mine, at: new Date().toISOString() }), HEARTBEAT_MS);
+    say(mine);
+    const beat = setInterval(() => say(mine), HEARTBEAT_MS);
     return () => clearInterval(beat);
   }, [channel, mine]);
 
@@ -254,7 +263,8 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
       following,
       follow,
       sayWhere,
+      sayCaret,
     }),
-    [who, mine, participant, name, following, follow],
+    [who, mine, participant, name, following, follow, sayCaret],
   );
 }

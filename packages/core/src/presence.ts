@@ -19,6 +19,23 @@ export interface PresenceRobot {
   readonly mode: string;
 }
 
+/**
+ * A CARET IN A FIELD TYPED TOGETHER (Roadmap f-collab-text, phase 4): the
+ * selection somebody holds in one field of one record, in UTF-16 code
+ * units of the text as their page showed it once their log held `rev` ops.
+ * Another page carries it over the typing its own log took since, by
+ * anybody else, so it stands on the same word there. `anchor` is where the
+ * selection began, `head` where the caret is; they are equal for a caret.
+ */
+export interface PresenceCaret {
+  readonly node: string;
+  readonly field: string;
+  readonly anchor: number;
+  readonly head: number;
+  /** How many ops the log they read it against held: `store.log.length`. */
+  readonly rev: number;
+}
+
 export interface Presence {
   /** `kind:id:session` — the op log's own reading of an author, so a figure and its edits agree. */
   readonly participant: string;
@@ -37,6 +54,8 @@ export interface Presence {
   readonly over?: string | null;
   /** Their seat's robot, if it has a body somewhere. */
   readonly robot?: PresenceRobot;
+  /** Where their caret stands in a field typed together (Roadmap f-collab-text), while they are typing in it. */
+  readonly caret?: PresenceCaret;
   /** When they last said so, ISO. */
   readonly at: string;
   /**
@@ -200,6 +219,7 @@ export function samePresence(a: Presence | undefined, b: Presence | undefined): 
     a.stop === b.stop &&
     (a.over ?? null) === (b.over ?? null) &&
     (a.robot?.at ?? null) === (b.robot?.at ?? null) &&
-    (a.robot?.mode ?? null) === (b.robot?.mode ?? null)
+    (a.robot?.mode ?? null) === (b.robot?.mode ?? null) &&
+    JSON.stringify(a.caret) === JSON.stringify(b.caret)
   );
 }

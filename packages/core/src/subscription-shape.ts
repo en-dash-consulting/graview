@@ -62,8 +62,20 @@ export interface MatchedRecord {
   readonly label: string;
   /** What happened to it in the batch. */
   readonly change: "created" | "changed" | "removed";
-  /** Each field the batch wrote that the subscriber may see: before and after, `undefined` for a field set or cleared. */
-  readonly fields?: readonly { readonly field: string; readonly words: string; readonly before?: unknown; readonly after?: unknown }[];
+  /**
+   * Each field the batch wrote that the subscriber may see: before and
+   * after, `undefined` for a field set or cleared. A field typed into
+   * (Roadmap f-collab-text) says what was put in and taken out instead —
+   * `typed`, with no `before` or `after`: a keystroke in a long text is not
+   * the whole text twice.
+   */
+  readonly fields?: readonly {
+    readonly field: string;
+    readonly words: string;
+    readonly before?: unknown;
+    readonly after?: unknown;
+    readonly typed?: { readonly inserted: number; readonly removed: number; readonly spans: readonly { readonly at: number; readonly removed: string; readonly inserted: string }[] };
+  }[];
 }
 
 /**
@@ -75,6 +87,11 @@ export interface SubscriptionMatch {
   readonly app: string;
   /** The batch that matched, by the id the log keeps; its ops are `ops`. */
   readonly batch: string;
+  /**
+   * A run of typing told once it ended (Roadmap f-collab-text): every batch
+   * of it, oldest first; `batch` is the last. Absent for any other match.
+   */
+  readonly batches?: readonly string[];
   readonly ops: readonly string[];
   /** The last op's seq, so a host can open the app as it stood just then. */
   readonly seq: number;

@@ -1,0 +1,120 @@
+{
+  "at": "2026-10-23T06:32:53.836Z",
+  "engine": "chromium",
+  "document": "scripts/fixtures/long-text/roadmap-with-an-outsider.gdd.json",
+  "claims": {
+    "theBodyOpensLiveWithNoSave": {
+      "ok": true,
+      "detail": {
+        "live": true,
+        "buttons": [
+          "Done",
+          "Preview"
+        ]
+      }
+    },
+    "twoPagesTypingIntoOneLongFieldConverge": {
+      "ok": true,
+      "detail": {
+        "length": 10751,
+        "sameOnBoth": true,
+        "sameAsTheStore": true,
+        "adasWords": true,
+        "bosWords": true
+      }
+    },
+    "aCaretStaysOnItsWordWhileTheOtherTypesAboveIt": {
+      "ok": true,
+      "detail": {
+        "before": "one two three ",
+        "collapsed": true
+      }
+    },
+    "eachSeesTheOthersCaretWhereTheyStand": {
+      "ok": true,
+      "detail": {
+        "bosOnAda": {
+          "title": "Bo is typing here",
+          "before": "sv`\n- one two three ",
+          "color": "rgb(195, 200, 65)",
+          "width": 2,
+          "inside": true
+        },
+        "adasOnBo": {
+          "title": "Ada is typing here",
+          "before": "71 alpha beta gamma ",
+          "color": "rgb(65, 200, 162)",
+          "width": 2,
+          "inside": true
+        }
+      }
+    },
+    "aThrottledPageTypingBesideAQuickOneConverges": {
+      "ok": true,
+      "detail": {
+        "slowed": "Emulation.setCPUThrottlingRate 4",
+        "ok": true,
+        "length": 10776,
+        "quick lark ": true,
+        "slow tortoise ": true
+      }
+    },
+    "aPageThatDropsOfflineMidRunComesBackAndItsRunLandsCarriedOver": {
+      "ok": true,
+      "detail": {
+        "closedByOffline": false,
+        "shownWhileAway": true,
+        "keptWhileAway": false,
+        "ok": true,
+        "length": 10823,
+        "unsent words typed while away ": true,
+        "typed while here ": true
+      }
+    },
+    "eachPersonsUndoTakesBackOnlyTheirOwnRun": {
+      "ok": true,
+      "detail": {
+        "typed": true,
+        "ok": true,
+        "length": 10829,
+        "typed while here zeta": false,
+        "omega ": true
+      }
+    },
+    "aWordComposedWithAnInputMethodLandsWhole": {
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "length": 10836,
+        "日本": true,
+        "keptMidWord": [],
+        "wholeSplice": true,
+        "partial": []
+      }
+    },
+    "aSeatThatMayNotSeeTheFieldIsServedNoSpliceAndNoCaret": {
+      "ok": true,
+      "detail": {
+        "messages": 66,
+        "welcomed": true,
+        "splices": false,
+        "carets": false,
+        "words": []
+      }
+    },
+    "anOlderReaderOfOpFormat2ConvergesOnWholeValues": {
+      "ok": true,
+      "detail": {
+        "splices": 0,
+        "wholeWrites": 24,
+        "foldsToTheStoresText": true,
+        "length": 10836
+      }
+    },
+    "noPageThrew": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "passed": true
+}

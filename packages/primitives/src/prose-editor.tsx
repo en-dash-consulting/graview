@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { TypingContext } from "@graview/react/provider";
+import { lazy, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { TextBody } from "./text-body.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -14,14 +15,9 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  * Markdown (FR-180) is written as Markdown, and "Preview" shows it as the
  * record will draw it — "Write" goes back to the words, where they were.
  */
-export default function ProseEditor({
-  field,
-  label,
-  value,
-  markdown,
-  onSave,
-  onCancel,
-}: {
+interface ProseEditorProps {
+  /** The record, where the field may be typed together (Roadmap f-collab-text). */
+  readonly nodeId?: string;
   readonly field: string;
   readonly label: string;
   readonly value: string;
@@ -30,7 +26,38 @@ export default function ProseEditor({
   /** `left`: the person moved the keyboard elsewhere, and it stays there. */
   readonly onSave: (draft: string, left: boolean) => void;
   readonly onCancel: () => void;
-}) {
+  /** The live editor closed: `left`, the keyboard went elsewhere. Without it, `onCancel`. */
+  readonly onDone?: (left: boolean) => void;
+}
+
+/*
+ * TYPED TOGETHER, LIVE (Roadmap f-collab-text, phase 4): under a host that
+ * can carry typing (a served store), the live editor is fetched as prose is
+ * opened, with `@graview/core/typing`, which says whether the declaration
+ * types the field together; it is edited live when it does. Anywhere else,
+ * and for a field written whole, the draft and its Save, as before.
+ */
+export default function ProseEditor(props: ProseEditorProps) {
+  const live = useContext(TypingContext);
+  const draft = <DraftProseEditor {...props} />;
+  if (!live || props.nodeId === undefined) return draft;
+  // Whether the field is typed together is read with `@graview/core/typing`, which comes with the live editor.
+  return (
+    <LiveProseEditor
+      nodeId={props.nodeId}
+      field={props.field}
+      label={props.label}
+      {...(props.markdown ? { markdown: true } : {})}
+      live={live}
+      onDone={(left) => (props.onDone ? props.onDone(left) : props.onCancel())}
+      writtenWhole={draft}
+    />
+  );
+}
+
+const LiveProseEditor = lazy(() => import("./live-prose-editor.js"));
+
+function DraftProseEditor({ field, label, value, markdown, onSave, onCancel }: ProseEditorProps) {
   const [draft, setDraft] = useState(value);
   const [preview, setPreview] = useState(false);
   const area = useRef<HTMLTextAreaElement | null>(null);

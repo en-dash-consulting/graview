@@ -1,0 +1,77 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Graview Roadmap, with an outsider",
+  "description": "The Roadmap's briefs, with a seat that sees each brief but not its body: what verify-typed-together serves a seat that may not see the field typed together.",
+  "roles": [
+    "owner",
+    "outsider"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner"
+        ],
+        "mutations": "*"
+      }
+    ],
+    "sees": [
+      {
+        "roles": [
+          "owner"
+        ],
+        "kinds": [
+          "brief"
+        ]
+      },
+      {
+        "roles": [
+          "outsider"
+        ],
+        "kinds": [
+          "brief"
+        ],
+        "hide": [
+          "body"
+        ]
+      }
+    ]
+  },
+  "kinds": {
+    "brief": {
+      "noun": "brief",
+      "plural": "briefs",
+      "description": "A brief between the framework and Cloud, written in Markdown.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "sent",
+            "answered"
+          ],
+          "default": "sent",
+          "required": true
+        },
+        "body": {
+          "type": "text",
+          "format": "markdown"
+        },
+        "notes": {
+          "type": "text"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-brief": {
+      "title": "Add a brief",
+      "creates": "brief",
+      "description": "Write a brief down."
+    }
+  }
+}

@@ -1,18 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import {
-  applySplice,
-  composeSplices,
-  createSchema,
-  defineNode,
-  diffSplice,
-  Graph,
-  invert,
-  transformCaret,
-  transformSplices,
-  type SpliceTextPrimitive,
-  type TextSplice,
-} from "../../src/index.js";
+import { applySplice, createSchema, defineNode, Graph, invert, transformCaret, type SpliceTextPrimitive, type TextSplice } from "../../src/index.js";
+import { composeSplices, diffSplice, transformSplices } from "../../src/typing.js";
 
 /**
  * THE TRANSFORM, BY PROPERTY (collaborative text, phase 1). Seeded random

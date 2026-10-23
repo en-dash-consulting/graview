@@ -40,7 +40,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
-  "@graview/core/history": { from: history, names: ["declarationSentence", "makerOf", "makerWords", "restoreBatches", "ticksOf", "unpublished"] },
+  "@graview/core/history": { from: history, names: ["declarationSentence", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.
   "@graview/core/past": { from: past, names: ["askArchived", "askDeclaration", "declarationAt", "pastAt", "pastOf", "seqAt"] },
   "@graview/core/provenance": { from: provenance, names: ["isProvisional", "lineageWords", "linkKey", "linkProvenance", "linkProvenances", "provenanceWords", "provisionalLinks"] },
@@ -65,12 +65,12 @@ const OFF_THE_PAGE = {
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "archivedSeenBy", "beginning", "placesFrom", "placesOf", "viewPlaceOf"] },
   // Roadmap f-ai-candidate-catalog: what the inline AI may pick from, the state a model reads and what an interaction leaves behind, fetched when somebody first opens it.
   // Roadmap f-notify-subscriptions: what a person asked to be told of, matched against a commit under their sight — the host's and a sheet's, fetched when somebody first subscribes.
-  "@graview/core/subscriptions": { from: subscriptions, names: ["matchSubscriptions", "subscriptionProblem", "subscriptionWords", "watchSubscriptions"] },
+  "@graview/core/subscriptions": { from: subscriptions, names: ["holdTypingRuns", "matchSubscriptions", "subscriptionProblem", "subscriptionWords", "TYPING_QUIET_MS", "watchSubscriptions"] },
   "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "existingViewsOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,
-    names: ["acceptSuggestion", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "meaningKey", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "tidyingOf", "tidyingRefusal"],
+    names: ["acceptSuggestion", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "meaningKey", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "tidyingOf", "tidyingRefusal", "typedRowWords"],
   },
 } as const;
 

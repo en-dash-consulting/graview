@@ -14,10 +14,14 @@ import {
   seenBy,
   seesId,
   refusalOf,
+  applySplice,
+  TYPE_TEXT,
+  UNSET,
   VISITOR_PRESENCE_TTL_MS,
   WIRE_PROTOCOL,
   withInverse,
   type AnySchema,
+  type Primitive,
   type Author,
   type FieldConflict,
   type FieldRevision,
@@ -25,6 +29,7 @@ import {
   type Operation,
   type PlannedChange,
   type Presence,
+  type PresenceCaret,
   type Principal,
   type Store,
   type WireRefusal,
@@ -385,6 +390,15 @@ export interface LiveProtocol<S extends AnySchema> {
    * sends what it kept on release.
    */
   heldChanged(peers: Iterable<LivePeer>): void;
+  /**
+   * HOW FAR A COMPACTION MAY GO WITH THESE SOCKETS OPEN (Roadmap
+   * f-collab-text): one past the lowest seq any of them has been sent, or
+   * nothing when none has said hello. Passed as one of `CompactOptions.pins`,
+   * it keeps the horizon behind the text every open page types against, so
+   * a keystroke is carried over what others typed rather than refused as
+   * typed against history nobody holds.
+   */
+  floor(peers: Iterable<LiveSocketState>): number | undefined;
 }
 
 /**
@@ -412,8 +426,74 @@ export interface WireAsked {
  * inverse off the op, so it is sent the inverse written out — the bytes
  * format 1 cost, and nothing it would misread.
  */
-export function opsFor(opFormat: number | undefined, ops: readonly Operation[]): readonly Operation[] {
-  return opFormat !== undefined && opFormat >= 2 ? ops : ops.map(withInverse);
+export function opsFor(opFormat: number | undefined, ops: readonly Operation[], store?: Store<AnySchema>): readonly Operation[] {
+  const read = store && (opFormat ?? 1) < 3 ? wholeSplices(store, ops) : ops;
+  return opFormat !== undefined && opFormat >= 2 ? read : read.map(withInverse);
+}
+
+/**
+ * A SPLICE AS A READER BEFORE OP FORMAT 3 READS IT (Roadmap f-collab-text,
+ * phase 3): a `patch-node` of the field's whole text before and after it,
+ * as every op before typing together wrote one. A reader that did not say
+ * it reads format 3 has never met a `splice-text` and would refuse it; it
+ * is sent the same change whole and its copy folds to the same text. The
+ * text each splice stood on is read by walking back from the field's value
+ * now over the log's ops since — at a broadcast that is the op just
+ * landed, in a catch-up as far as the oldest op asked about. An op that is
+ * not in the store's log at its seq is sent as it is.
+ */
+function wholeSplices(store: Store<AnySchema>, ops: readonly Operation[]): readonly Operation[] {
+  const spliced = ops.filter((op) => op.primitives.some((one) => one.op === "splice-text"));
+  if (spliced.length === 0) return ops;
+  const key = (id: string, field: string) => `${id}\u0000${field}`;
+  const texts = new Map<string, unknown>();
+  for (const op of spliced) for (const one of op.primitives) if (one.op === "splice-text") texts.set(key(one.id, one.field), (store.graph.getNode(one.id) as Record<string, unknown> | undefined)?.[one.field]);
+  const wanted = new Set(spliced.map((op) => op.seq));
+  const first = Math.max(store.log.horizon, Math.min(...wanted));
+  const log = store.log.all();
+  /** Each wanted op's splices, by field, in order: the text before and after each. */
+  const whole = new Map<number, Map<string, { before: unknown; after: unknown }[]>>();
+  for (let seq = store.log.length - 1; seq >= first; seq--) {
+    const op = log[seq - store.log.horizon]!;
+    for (let at = op.primitives.length - 1; at >= 0; at--) {
+      const one = op.primitives[at]!;
+      if (one.op === "splice-text") {
+        const field = key(one.id, one.field);
+        if (!texts.has(field)) continue;
+        const after = texts.get(field);
+        let before: unknown;
+        try {
+          before = typeof after === "string" ? applySplice(after, { at: one.at, removed: one.inserted, inserted: one.removed }) : undefined;
+        } catch {
+          before = undefined;
+        }
+        texts.set(field, before);
+        if (!wanted.has(seq)) continue;
+        let byField = whole.get(seq);
+        if (!byField) whole.set(seq, (byField = new Map()));
+        byField.set(field, [{ before, after }, ...(byField.get(field) ?? [])]);
+      } else if (one.op === "patch-node") {
+        for (const field of Object.keys(one.after)) if (texts.has(key(one.id, field))) texts.set(key(one.id, field), one.before[field]);
+      } else if (one.op === "add-node" || one.op === "remove-node") {
+        for (const [field] of texts) if (field.startsWith(`${one.node.id}\u0000`)) texts.set(field, one.op === "add-node" ? undefined : (one.node as Record<string, unknown>)[field.slice(one.node.id.length + 1)]);
+      }
+    }
+  }
+  return ops.map((op) => {
+    const byField = whole.get(op.seq);
+    if (!byField || log[op.seq - store.log.horizon]?.id !== op.id) return op;
+    const taken = new Map<string, number>();
+    const primitives = op.primitives.map((one): Primitive => {
+      if (one.op !== "splice-text") return one;
+      const field = key(one.id, one.field);
+      const at = taken.get(field) ?? 0;
+      taken.set(field, at + 1);
+      const said = byField.get(field)?.[at];
+      if (!said || typeof said.after !== "string") return one;
+      return { op: "patch-node", id: one.id, before: { [one.field]: typeof said.before === "string" ? said.before : UNSET }, after: { [one.field]: said.after } };
+    });
+    return { ...op, primitives };
+  });
 }
 
 /** The op format a request says it reads: `?opFormat=<n>` on its URL; nothing when it says none. */
@@ -422,14 +502,14 @@ export function opFormatOf(url: URL | string): number | undefined {
   return Number.isInteger(said) && said > 0 ? said : undefined;
 }
 
-/** A live message as a socket of this op format reads it: its ops, and a welcome's log, bare or with their inverses. */
-function readableBy(opFormat: number | undefined, message: LiveServerMessage): LiveServerMessage {
-  if (opFormat !== undefined && opFormat >= 2) return message;
+/** A live message as a socket of this op format reads it: its ops, and a welcome's log, bare or with their inverses, and its splices whole before format 3. */
+function readableBy(opFormat: number | undefined, message: LiveServerMessage, store?: Store<AnySchema>): LiveServerMessage {
+  if (opFormat !== undefined && opFormat >= 3) return message;
   if (message.t === "welcome") {
-    const state = message.state ? { state: { ...message.state, log: opsFor(opFormat, message.state.log) } } : {};
-    return { ...message, ops: opsFor(opFormat, message.ops), ...state } as LiveServerMessage;
+    const state = message.state ? { state: { ...message.state, log: opsFor(opFormat, message.state.log, store) } } : {};
+    return { ...message, ops: opsFor(opFormat, message.ops, store), ...state } as LiveServerMessage;
   }
-  if (message.t === "ops" || message.t === "ack") return { ...message, ops: opsFor(opFormat, message.ops) } as LiveServerMessage;
+  if (message.t === "ops" || message.t === "ack") return { ...message, ops: opsFor(opFormat, message.ops, store) } as LiveServerMessage;
   return message;
 }
 
@@ -507,13 +587,23 @@ const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"
  * given, the claimed key is not read at all.
  */
 export function presenceFrom(told: Presence, seat: Principal, now: Date = new Date(), participant?: string): Presence {
-  const { participant: claimed, kind: _kind, name: claimedName, onBehalfOf: _for, onBehalfOfName: _forName, until: _until, held: _held, at: _at, ...said } = told;
+  const { participant: claimed, kind: _kind, name: claimedName, onBehalfOf: _for, onBehalfOfName: _forName, until: _until, held: _held, at: _at, caret: claimedCaret, ...said } = told;
+  const caret = caretOf(claimedCaret);
   // The session is what follows the seat's own `kind:id:` — an id may hold a colon (`shopper:bethan`).
   const own = `${seat.kind}:${seat.id ?? ""}:`;
   const session = claimed.startsWith(own) ? claimed.slice(own.length) : (claimed.split(":").at(-1) ?? "");
   const key = participant ?? (seat.id ? participantKey({ kind: seat.kind, id: seat.id, session }) : claimed);
   const name = seat.name ?? claimedName;
-  return { ...said, participant: key, kind: seat.kind, ...(name ? { name } : {}), ...forWhom(seat), at: now.toISOString() };
+  return { ...said, participant: key, kind: seat.kind, ...(name ? { name } : {}), ...forWhom(seat), ...(caret ? { caret } : {}), at: now.toISOString() };
+}
+
+/** A caret as a client said it (Roadmap f-collab-text), kept only when it is one: a record, a field, and three counts. */
+function caretOf(said: unknown): PresenceCaret | undefined {
+  if (typeof said !== "object" || said === null) return undefined;
+  const { node, field, anchor, head, rev } = said as Record<string, unknown>;
+  const count = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+  if (typeof node !== "string" || typeof field !== "string" || node.length > 512 || field.length > 512 || !count(anchor) || !count(head) || !count(rev)) return undefined;
+  return { node, field, anchor, head, rev };
 }
 
 /**
@@ -579,7 +669,7 @@ const mintSession = (): string => globalThis.crypto.randomUUID().slice(0, 8);
  * where they stand or what they hover when that names a record the seat
  * may not see. A participant whose id is no record is shown as they are.
  */
-export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => boolean): Presence[] {
+export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => boolean, seesField?: (node: string, field: string) => boolean): Presence[] {
   const names = (value: string): boolean => value.split(/[/?#=&,;]/).every((part) => part === "" || sees(decodeURIComponent(part)));
   return who
     .filter((presence) => {
@@ -589,7 +679,7 @@ export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => b
     })
     .map((presence) => {
       // An agent is shown; for whom it acts is not, to a seat that may not see that person (FR-47).
-      const { onBehalfOf, onBehalfOfName, ...rest } = presence;
+      const { onBehalfOf, onBehalfOfName, caret, ...rest } = presence;
       const forWhom = onBehalfOf !== undefined && sees(onBehalfOf) ? { onBehalfOf, ...(onBehalfOfName !== undefined ? { onBehalfOfName } : {}) } : {};
       return {
         ...rest,
@@ -597,6 +687,8 @@ export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => b
         stop: names(presence.stop) ? presence.stop : "",
         ...(typeof presence.over === "string" && !sees(presence.over) ? { over: null } : {}),
         ...(presence.robot?.at && !sees(presence.robot.at) ? { robot: { ...presence.robot, at: null } } : {}),
+        // A caret in a field the seat may not see is not said at all: where somebody types says what is there (Roadmap f-collab-text).
+        ...(caret && sees(caret.node) && (seesField?.(caret.node, caret.field) ?? true) ? { caret } : {}),
       };
     });
 }
@@ -801,6 +893,38 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
     }
     return revisions;
   };
+  /*
+   * A KEYSTROKE TYPED AGAINST TEXT BEHIND THE HORIZON (Roadmap f-collab-text,
+   * phase 3): the log no longer holds what was typed between the text its
+   * sender read and now, so it cannot be carried over it. A conflict, not a
+   * refusal: the person keeps theirs, or puts the text they had over it
+   * whole. A compaction keeps the horizon behind every open socket
+   * (`floor`), so only a client that was away meets this.
+   */
+  const typedBehind = (author: Principal, calls: readonly MutationCall[]): FieldConflict[] => {
+    const floor = store.log.horizon - 1;
+    const out: FieldConflict[] = [];
+    for (const call of calls) {
+      if (call?.name !== TYPE_TEXT || !call.args) continue;
+      const { node, field, rev } = call.args as { node?: unknown; field?: unknown; rev?: unknown };
+      if (typeof node !== "string" || typeof field !== "string" || typeof rev !== "number" || rev >= floor) continue;
+      const lens = sighted(author) ? seatLens(store, author) : undefined;
+      if (lens && (!lens.shows(node) || keptField(lens, node, field))) continue;
+      const at = current().of(node, field);
+      const wrote = at >= store.log.horizon ? store.log.opsFrom(at)[0] : undefined;
+      const seen = wrote && lens ? redact([wrote], lens)[0] : wrote;
+      out.push({
+        node,
+        field,
+        theirs: ((lens ? seenBy(store, author) : store).graph.getNode(node) as Record<string, unknown> | undefined)?.[field],
+        yours: undefined,
+        by: seen?.author.name ?? seen?.author.id ?? "Someone",
+        rev: at,
+        saw: rev,
+      });
+    }
+    return out;
+  };
   // Where a seat is served through: the head in a live app, without judging its sight; what was published, for a reader of one that publishes.
   const servedTo = (principal: Principal): number => (store.publishing?.mode === "on-publish" ? seenBy(store, principal).servedSeq : store.log.length);
   return {
@@ -827,7 +951,9 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       // A visitor whose announced time has passed is never told of, though a host may still hold it.
       const now = Date.now();
       const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
-      return sighted(principal) ? presenceSeenBy(standing, seesId(store, principal)) : standing;
+      if (!sighted(principal)) return standing;
+      const lens = seatLens(store, principal);
+      return presenceSeenBy(standing, seesId(store, principal), (node, field) => !keptField(lens, node, field));
     },
     claim(batch, seat) {
       if (batch === undefined || batch === null || batch === "") return {};
@@ -863,11 +989,22 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
     horizonOf: () => (store.log.horizon > 0 ? { horizon: store.log.horizon } : {}),
     enabledModules: () => [...store.modules.enabled].sort(),
     conflictsOf(author, calls, base, via) {
+      const behind = typedBehind(author, calls);
+      if (behind.length > 0) return behind;
       if (!Array.isArray(base) || base.length === 0) return [];
       const lens = sighted(author) ? seatLens(store, author) : undefined;
-      // A record the seat is not served is not there to have moved: the call itself is refused for naming it.
+      /*
+       * A record the seat is not served is not there to have moved: the call itself is refused for naming it.
+       * A field typed together is never stale: a whole write over it is merged with what was typed since (`ApplyOptions.base`).
+       */
       const claimed = (base as FieldRevision[]).filter(
-        (entry) => entry && typeof entry.node === "string" && typeof entry.field === "string" && typeof entry.rev === "number" && (!lens || (lens.shows(entry.node) && !keptField(lens, entry.node, entry.field))),
+        (entry) =>
+          entry &&
+          typeof entry.node === "string" &&
+          typeof entry.field === "string" &&
+          typeof entry.rev === "number" &&
+          !store.collaborative(entry.node, entry.field) &&
+          (!lens || (lens.shows(entry.node) && !keptField(lens, entry.node, entry.field))),
       );
       const revs = current();
       const stale = revs.stale(claimed);
@@ -910,7 +1047,7 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
   };
 }
 
-const say = (peer: LivePeer, message: LiveServerMessage): void => sayText(peer, JSON.stringify(readableBy(peer.opFormat, message)));
+const sayTo = (peer: LivePeer, message: LiveServerMessage, store?: Store<AnySchema>): void => sayText(peer, JSON.stringify(readableBy(peer.opFormat, message, store)));
 const sayText = (peer: LivePeer, text: string): void => {
   try {
     peer.send(text);
@@ -951,7 +1088,7 @@ const SEAT_LOST_CODE = 4000;
 /** The host lost this socket's seat: told to open again, closed when it can be, and served nothing more. */
 const lost = (peer: LivePeer): void => {
   delete peer.cursor;
-  say(peer, { t: "error", reopen: true, sentence: SEAT_LOST });
+  sayTo(peer, { t: "error", reopen: true, sentence: SEAT_LOST });
   try {
     peer.close?.(SEAT_LOST_CODE, "Seat no longer known: open it again.");
   } catch {
@@ -966,6 +1103,9 @@ const lost = (peer: LivePeer): void => {
 export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S>): LiveProtocol<S> {
   const { store } = options;
   const wire = wireOf(store, options.withheldKey);
+  /** The store, as what a reader before op format 3 is sent is read from: each splice whole (`opsFor`). */
+  const served = store as unknown as Store<AnySchema>;
+  const say = (peer: LivePeer, message: LiveServerMessage): void => sayTo(peer, message, served);
   /**
    * The log an open carries for this seat (`openTail`): the latest ops and
    * the seq they begin at, or the whole log and the store's own horizon.
@@ -1055,7 +1195,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     }
     // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
     const after = (ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq >= last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from)).filter((op) => op.seq <= last);
-    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: cursorAt(last), ops: opsFor(peer.opFormat, wire.shown(seat, after)) } satisfies LiveServerMessage) : "";
+    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: cursorAt(last), ops: opsFor(peer.opFormat, wire.shown(seat, after), served) } satisfies LiveServerMessage) : "";
     if (key !== undefined) sight!.texts.set(key, text);
     if (text.length > 0) sayText(peer, text);
   };
@@ -1129,7 +1269,19 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             if (answer) throw new NotAdmitted(answer);
           }
         : undefined;
-      const applying = { author: seat, via, ...(change.intent ? { intent: change.intent } : {}), batch, ...(admitting ? { admit: admitting } : {}), ...(change.lineage !== undefined ? { lineage: change.lineage as Lineage } : {}) };
+      // What the caller read, so a whole write over a field typed together merges with what was typed since (Roadmap f-collab-text).
+      const base = Array.isArray(change.base)
+        ? (change.base as FieldRevision[]).filter((entry) => entry && typeof entry.node === "string" && typeof entry.field === "string" && typeof entry.rev === "number")
+        : [];
+      const applying = {
+        author: seat,
+        via,
+        ...(change.intent ? { intent: change.intent } : {}),
+        batch,
+        ...(admitting ? { admit: admitting } : {}),
+        ...(change.lineage !== undefined ? { lineage: change.lineage as Lineage } : {}),
+        ...(base.length > 0 ? { base } : {}),
+      };
       result = change.t === "undo" ? store.undo(change.batches, applying) : store.applyAll(change.calls, applying);
     } catch (error) {
       taking = undefined;
@@ -1310,7 +1462,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           else delete peer.opFormat;
           const asked = seqAt(message.seq);
           // Behind the horizon, or past where the seat is served: the whole state, never a skip (`behind`).
-          const seq = asked !== undefined && asked >= 0 && wire.behind(seat, asked) ? undefined : asked;
+          // A page that read nothing (-1) is behind a horizon past 0 as any other is: what it never read is not in the log to send.
+          const seq = asked !== undefined && wire.behind(seat, asked) ? undefined : asked;
           peer.cursor = wire.servedSeq(seat) - 1;
           // Its own key, built from the seat, so the client can leave itself out of who is here (FR-47).
           peer.participant ??= participantKey({ kind: seat.kind, ...(seat.id ? { id: seat.id } : {}), session: mintSession() });
@@ -1490,9 +1643,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         if (unsavedIn(claim.answered)) {
           const flushed = await durable([]);
           if (!("saved" in flushed)) return reply(503, { error: UNSAVED, refused: true, reason: "unavailable", ...said });
-          return { ...reply(200, { ops: opsFor(reads, wire.shown(asked.seat, claim.answered)), batch: change.batch, ...said }), landed: flushed.saved };
+          return { ...reply(200, { ops: opsFor(reads, wire.shown(asked.seat, claim.answered), served), batch: change.batch, ...said }), landed: flushed.saved };
         }
-        return reply(200, { ops: opsFor(reads, wire.shown(asked.seat, claim.answered)), batch: change.batch, ...said });
+        return reply(200, { ops: opsFor(reads, wire.shown(asked.seat, claim.answered), served), batch: change.batch, ...said });
       }
       /*
        * THE HOST'S LIMITS, BEFORE ANYTHING IS JUDGED. Busy is 429 and the
@@ -1518,7 +1671,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       // Not durable: refused `unavailable`, which the client keeps and sends again.
       if (!landing.saved) return reply(503, { error: UNSAVED, refused: true, reason: "unavailable", ...said });
       // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
-      return { ...reply(200, { ops: opsFor(reads, wire.shown(asked.seat, landing.result.ops)), batch: landing.result.batch, ...said }), landed: landing.saved };
+      return { ...reply(200, { ops: opsFor(reads, wire.shown(asked.seat, landing.result.ops), served), batch: landing.result.batch, ...said }), landed: landing.saved };
     },
     state(asked) {
       const seen = wire.seenFor(asked.seat);
@@ -1527,7 +1680,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         ...answering(asked),
         snapshot: seen.snapshot(),
         ...opened,
-        log: opsFor(asked.opFormat, opened.log),
+        log: opsFor(asked.opFormat, opened.log, served),
         cursor: cursorAt(opened.log.at(-1)?.seq ?? (opened.horizon ?? 0) - 1),
         ...wire.servedOf(asked.seat),
         migrated: [...(options.migrated ?? [])],
@@ -1539,8 +1692,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       const cursor = cursorAt(ops.at(-1)?.seq ?? seq);
       // A client the ops cannot catch up — behind the horizon, or past where it is now served — is told to take the state.
       // (The ops after the horizon still come, so a client that predates `reset` sees the gap and takes the state as it did.)
-      if (wire.behind(asked.seat, seq)) return reply(200, { ops: opsFor(asked.opFormat, ops), cursor, reset: true, ...wire.horizonOf(), ...wire.servedOf(asked.seat), ...answering(asked) });
-      return reply(200, { ops: opsFor(asked.opFormat, ops), cursor, ...wire.servedOf(asked.seat), ...answering(asked) });
+      if (wire.behind(asked.seat, seq)) return reply(200, { ops: opsFor(asked.opFormat, ops, served), cursor, reset: true, ...wire.horizonOf(), ...wire.servedOf(asked.seat), ...answering(asked) });
+      return reply(200, { ops: opsFor(asked.opFormat, ops, served), cursor, ...wire.servedOf(asked.seat), ...answering(asked) });
     },
     declared(peers) {
       for (const peer of peers) {
@@ -1553,6 +1706,11 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       // The same words for every seat: a hold names nothing in the store.
       const text = JSON.stringify({ t: "held", sentence: heldNow() ?? null } satisfies LiveServerMessage);
       for (const peer of peers) if (peer.cursor !== undefined) sayText(peer, text);
+    },
+    floor(peers) {
+      let lowest: number | undefined;
+      for (const peer of peers) if (peer.cursor !== undefined && (lowest === undefined || peer.cursor < lowest)) lowest = peer.cursor;
+      return lowest === undefined ? undefined : lowest + 1;
     },
   };
 }

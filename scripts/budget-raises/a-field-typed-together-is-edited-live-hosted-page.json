@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 450,
+  "gzipped": 200,
+  "changeset": "a-field-typed-together-is-edited-live.md",
+  "note": "Raised when a field typed together came to be edited live (collaborative text, phase 4): up front are only the provider's `typing` and the context an editor finds it by, the presence's caret held in a ref and said with the rest, `samePresence` comparing it, and the frame handing a remote's `typing` on. The editor, its diff and carry, and the caret's drawing load as such a field is opened. Measured at 611_122 / 213_318 against 610_719 / 213_154 before it: 403 more minified, 164 gzipped."
+}

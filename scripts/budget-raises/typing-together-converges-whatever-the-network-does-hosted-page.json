@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 300,
+  "gzipped": 150,
+  "changeset": "typing-together-converges-whatever-the-network-does.md",
+  "note": "Raised when the fuzz of the live protocol found five ways an undo of typing went wrong (collaborative text, phase 6): up front are the rebase reading an undo's target by the batch of the ops it rolled back, and the remote's set of runs let go of, which an undo naming only those is dropped by. Measured at 611_385 / 213_438 against 611_122 / 213_302 before it: 263 more minified, 136 gzipped."
+}

@@ -87,9 +87,8 @@ export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
 export { invert, isUnset, normalize, UNSET, writesOf } from "./graph/primitives.js";
 export type { Primitive, SpliceTextPrimitive } from "./graph/primitives.js";
-export { applySplice, compose as composeSplices, transform as transformSplices, transformCaret } from "./text/splice.js";
+export { applySplice, transformCaret } from "./text/splice.js";
 export type { TextSplice } from "./text/splice.js";
-export { diffSplice } from "./text/diff.js";
 export { TrackedReader } from "./graph/tracked.js";
 export { edgeId } from "./graph/types.js";
 export { EDGE_FIELDS } from "./graph/edge-fields.js";
@@ -223,7 +222,7 @@ export { KEEP_LINK } from "./mutations/keep-link.js";
 // Typing into a field typed together (Roadmap f-collab-text): the act every store answers to, and whether a field is one.
 export { TYPE_TEXT } from "./text/typing-hook.js";
 export type { TypeTextArgs } from "./mutations/type-text.js";
-export { isCollaborativeField, markCollaborative } from "./schema/collaborative.js";
+export { markCollaborative } from "./schema/collaborative.js";
 // Whether a record is left alone and an author is the app's own actor, which a page draws with; the rest is `@graview/core/tidying`'s.
 export { isAutomated, isLeftAlone } from "./ops/tidying.js";
 export type { Dismissal, DismissalStore, Suggestion } from "./ops/suggestions.js";
@@ -488,4 +487,4 @@ export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export type { VisitorFormDeclaration } from "./visitor-form-shape.js";
 export { foldPresence, nextExpiry, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
-export type { Participant, Presence, PresenceChannel, PresenceRobot } from "./presence.js";
+export type { Participant, Presence, PresenceCaret, PresenceChannel, PresenceRobot } from "./presence.js";

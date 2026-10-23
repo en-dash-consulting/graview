@@ -6,7 +6,7 @@ import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
 import { createContext, Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
-import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
+import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageQuickAsk } from "./quick-ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazyPart(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
@@ -137,6 +137,16 @@ export interface PagesAppProps<S extends AnySchema> {
    * is drawn in somebody else's (an embed's memory routing).
    */
   readonly hrefOf?: ((path: string) => string | undefined) | false;
+  /**
+   * TYPING TOGETHER, WITH NO EMBED AROUND THE PAGES (Roadmap f-collab-text):
+   * a served store's `remote.typing(node, field)` — `openRemote`'s own —
+   * handed to the provider under the routes (`context.views` puts one
+   * there), so a field the declaration types together is edited live, each
+   * keystroke sent as it is typed and others' carets drawn when
+   * `context.presence` says who is here. Before `context.typing`; unsaid,
+   * a provider's above the pages, else every field is written whole.
+   */
+  readonly typing?: (node: string, field: string) => Promise<FieldTyping>;
 }
 
 /** Where a view's link goes on the host's page (`PagesAppProps.hrefOf`); the face's own address when not said. */
@@ -606,6 +616,7 @@ export function PagesApp<S extends AnySchema>({
   steering,
   firstLook,
   hrefOf,
+  typing: typingProp,
 }: PagesAppProps<S>) {
   /*
    * THE SEAT THE READER TOOK, where the app offers seats and no provider
@@ -631,6 +642,7 @@ export function PagesApp<S extends AnySchema>({
    * says nothing of its own, or one tab would say two places by turns.
    */
   const outer = useGraviewIfAny();
+  const typing = typingProp ?? given.typing;
   // Days, times and numbers in the reader's locale, else the app's (FR-178), and instants on the person's clock, else the app's — whether or not a provider is drawn under the pages.
   sayIn({
     reader: given.locale ?? outer?.locale,
@@ -684,6 +696,7 @@ export function PagesApp<S extends AnySchema>({
 
       {...(context.settings ? { settings: context.settings } : {})}
       {...(context.presence && !outer ? { presence: context.presence } : {})}
+      {...(typing ? { typing } : {})}
       {...(context.people ? { people: context.people } : {})}
       {...(context.seats ? { seats: context.seats } : {}) /* So the person's button names the seat, not its principal id. */}
       onSeat={(seat) => (outer ? outer.takeSeat(seat) : setTaken({ from: handed.principal, seat }))}

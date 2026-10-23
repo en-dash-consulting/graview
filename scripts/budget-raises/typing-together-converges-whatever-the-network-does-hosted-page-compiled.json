@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 300,
+  "gzipped": 150,
+  "changeset": "typing-together-converges-whatever-the-network-does.md",
+  "note": "Raised when the fuzz of the live protocol found five ways an undo of typing went wrong (collaborative text, phase 6), as the hosted page's raise of the same name says. Measured at 561_473 / 195_855 against 561_210 / 195_730: 263 more minified, 125 gzipped."
+}

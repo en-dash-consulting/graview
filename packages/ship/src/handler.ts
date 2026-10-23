@@ -1,3 +1,5 @@
+// A store served takes typing together whichever entry served it — `graview serve` and `graview preview` reach it through the CLI, not the main entry (Roadmap f-collab-text).
+import "@graview/core/typing";
 import {
   AUTHOR_KINDS,
   foldPresence,
@@ -7,6 +9,7 @@ import {
   PRESENCE_TTL_MS,
   VISITOR_PRESENCE_TTL_MS,
   type AnySchema,
+  type CompactOptions,
   type GraviewApp,
   type Operation,
   type PersistenceAdapter,
@@ -24,7 +27,7 @@ import {
   type KeptViewsMay,
 } from "@graview/core";
 import { judgeWithLines } from "@graview/core/lines";
-import { matchSubscriptions } from "@graview/core/subscriptions";
+import { holdTypingRuns, matchSubscriptions } from "@graview/core/subscriptions";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
 import { LIVE_PATH, type Limit, type LimitAnswer, type LimitAsked, type LiveConnection, type LiveSocket } from "./live.js";
@@ -45,7 +48,7 @@ import {
   type Wire,
   type WireAnswer,
 } from "./live-protocol.js";
-import { openStore, type OpenedStore } from "./open-store.js";
+import { openStore, type Compaction, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import { answerSubscriptions } from "./subscriptions.js";
 import { SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
@@ -258,9 +261,12 @@ interface HandlerOptions<S extends AnySchema> {
    * THE HOST'S HOOK: told once per committed batch per subscription it
    * matches, judged as the subscriber may see — what Graview Cloud turns
    * into an email or a push. Never told of a change to a record the
-   * subscriber cannot see, nor, unless they asked, of their own.
+   * subscriber cannot see, nor, unless they asked, of their own. A run of
+   * typing is told once, when the typist stops (`holdTypingRuns`).
    */
   readonly onSubscriptionMatch?: OnSubscriptionMatch;
+  /** How long a run of typing is held before the hook is told of it; `TYPING_QUIET_MS` (5 s) unsaid, 0 tells every run at once. */
+  readonly typingQuietMs?: number;
 }
 
 /**
@@ -385,6 +391,14 @@ export interface StoreHandler<S extends AnySchema> {
   hold(sentence: string): void;
   /** Take changes again (FR-66): every open socket is told `{ t: "held", sentence: null }`, and what clients kept is sent. */
   release(): void;
+  /**
+   * THE SEQS A COMPACTION KEEPS BEHIND NOW (Roadmap f-collab-text): the
+   * protocol's `floor` over the sockets open here, as `CompactOptions.pins`
+   * takes them — so somebody typing keeps typing against text the log
+   * still holds. Empty when no socket has said hello. The adapter form's
+   * `compact` passes them itself.
+   */
+  pins(): readonly number[];
   /** Writes what is pending and lets the adapter go — or, over a store the host holds, writes what is pending and leaves the store open. */
   close(): Promise<void>;
 }
@@ -443,7 +457,7 @@ const CANNOT_TELL = "This store cannot tell who is asking: the host gives serveS
  * Or answer the wire for a store the host opened itself (FR-42): the
  * adapter form is that, over the store `openStore` hands back.
  */
-export async function createStoreHandler<S extends AnySchema>(options: AdapterStoreHandlerOptions<S>): Promise<StoreHandler<S> & { readonly opened: OpenedStore<S> }>;
+export async function createStoreHandler<S extends AnySchema>(options: AdapterStoreHandlerOptions<S>): Promise<StoreHandler<S> & { readonly opened: OpenedStore<S>; compact(options?: CompactOptions): Promise<Compaction> }>;
 export async function createStoreHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>): Promise<StoreHandler<S>>;
 export async function createStoreHandler<S extends AnySchema>(options: StoreHandlerOptions<S>): Promise<StoreHandler<S>>;
 export async function createStoreHandler<S extends AnySchema>(options: StoreHandlerOptions<S>): Promise<StoreHandler<S>> {
@@ -488,7 +502,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     // that does; `where` is for a caller with a better name for it.
     where: options.where ?? (adapter as { root?: string }).root ?? scope,
   }, adapter.name);
-  return {
+  const adapted: StoreHandler<S> & { readonly opened: OpenedStore<S>; compact(options?: CompactOptions): Promise<Compaction> } = {
     ...handler,
     get store() {
       return handler.store;
@@ -499,6 +513,8 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     get opened() {
       return opened as unknown as OpenedStore<S>;
     },
+    // A compaction with sockets open stops behind what each was sent (`pins`).
+    compact: (compacting: CompactOptions = {}) => opened.compact({ ...compacting, pins: [...(compacting.pins ?? []), ...handler.pins()] }),
     /*
      * OPENED AGAIN, ON THE NEW DECLARATION. What is pending is written
      * first, then the adapter is read again by `openStore`, which runs the
@@ -519,6 +535,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       opened.close();
     },
   };
+  return adapted;
 }
 
 /** What the handler serves now: replaced, all together, when the declaration changes (FR-43). */
@@ -804,10 +821,17 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
    * judged at once; one that answers a promise, when it answers — each
    * record as it stood just after the batch.
    */
+  const report = (error: unknown) => console.error(`A subscription to ${serving.app.name} could not be told:`, error);
+  // A run of typing is held until its typist stops, and told then as one (Roadmap f-collab-text).
+  const told = holdTypingRuns(
+    (match) => {
+      const hook = options.onSubscriptionMatch;
+      if (hook) void Promise.resolve().then(() => hook(match)).catch(report);
+    },
+    options.typingQuietMs !== undefined ? { quietMs: options.typingQuietMs } : {},
+  );
   function notify(store: Store<AnySchema>, ops: readonly Operation[]): void {
-    const hook = options.onSubscriptionMatch!;
     const app = serving.app.name;
-    const report = (error: unknown) => console.error(`A subscription to ${app} could not be told:`, error);
     const tell = (all: readonly Subscription[]) => {
       let matches: SubscriptionMatch[];
       try {
@@ -816,7 +840,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         report(error);
         return;
       }
-      for (const match of matches) void Promise.resolve().then(() => hook(match)).catch(report);
+      for (const match of matches) told.tell(match);
     };
     try {
       const listed = subscriptions.list();
@@ -1031,6 +1055,10 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       holding = undefined;
       serving.protocol.heldChanged(sockets);
     },
+    pins() {
+      const floor = serving.protocol.floor(sockets);
+      return floor === undefined ? [] : [floor];
+    },
     handle: async (request) => {
       try {
         return await route(request);
@@ -1050,6 +1078,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       }
       sockets.clear();
       unsubscribe();
+      told.flush();
       await flush();
     },
   };

@@ -925,7 +925,7 @@ interface Swap {
 
 /** The options with a new declaration in them: where the reader was stands for the path and the stop the host first gave. */
 function swapped<S extends AnySchema>({ path: _path, stop: _stop, ...options }: EmbedOptions<S>, swap: Swap): EmbedOptions<S> {
-  return { ...options, app: swap.app as never, at: swap.at, ...(swap.remote.presence ? { presence: swap.remote.presence } : {}) };
+  return { ...options, app: swap.app as never, at: swap.at, remote: swap.remote as never, ...(swap.remote.presence ? { presence: swap.remote.presence } : {}) };
 }
 
 /**
