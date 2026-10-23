@@ -27,15 +27,20 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
+import { TYPE_TEXT, typeTextMutation, typeTextVia } from "./mutations/type-text.js";
+import { collaborativeFieldOf } from "./schema/collaborative.js";
+import { textAt, wholeAsSplice, type TextThen } from "./text/since.js";
+import { NEVER_WRITTEN, type FieldRevision } from "./ops/revisions.js";
+import { argumentsTaken } from "./mutations/define-mutation.js";
 import { declinedIn, isAutomated, tidyingRefusal } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
 import { nounOf } from "./schema/define-node.js";
-import { behind, fieldsJudged, partialSight, recordsOf } from "./permissions/sight.js";
+import { behind, FIELD_SIGHT, fieldsJudged, partialSight, recordsOf } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
-import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
+import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { validateGraph, type GraphFinding } from "./validate-graph.js";
 import { tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal, tellTheWatchOfAnInputRefusal } from "./watched.js";
@@ -232,6 +237,15 @@ export interface ApplyOptions {
    * subscribers are as if the change was never asked. Returning keeps it.
    */
   readonly admit?: (planned: PlannedChange) => void;
+  /**
+   * WHAT THE CALLER LAST READ (Roadmap f-collab-text): each field it writes,
+   * at the revision it read it at, as a call over the wire says it. A whole
+   * value written over a field typed together is merged three ways — what
+   * the caller changed in the text it read, carried over what others typed
+   * since — rather than written over theirs; a field it names no revision
+   * of is diffed against its text now.
+   */
+  readonly base?: readonly FieldRevision[];
 }
 
 /**
@@ -517,6 +531,8 @@ export class Store<S extends AnySchema> {
   private readonly mutations = new Map<string, AnyMutationDefinition<S>>();
   /** The store's own "Keep this link" (FR-172), when the app declared none by that name. */
   private keeper: AnyMutationDefinition<S> | undefined;
+  /** "Type text", when the store answers to its own (Roadmap f-collab-text). */
+  private typer: AnyMutationDefinition<S> | undefined;
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
   readonly policy: Policy | undefined;
@@ -617,6 +633,11 @@ export class Store<S extends AnySchema> {
     if (!options.past && !this.mutations.has(KEEP_LINK)) {
       this.keeper = keepLinkMutation(options.schema);
       this.mutations.set(KEEP_LINK, this.keeper);
+    }
+    // "Type text" (Roadmap f-collab-text): likewise answered by every store and offered by no list.
+    if (!options.past && !this.mutations.has(TYPE_TEXT)) {
+      this.typer = typeTextMutation(options.schema, (node, field, rev) => this.textThen(node, field, rev));
+      this.mutations.set(TYPE_TEXT, this.typer);
     }
 
     const horizon = given("horizon", options.horizon);
@@ -792,11 +813,11 @@ export class Store<S extends AnySchema> {
   }
 
   allMutations(): AnyMutationDefinition<S>[] {
-    return [...this.mutations.values()].filter((mutation) => mutation !== this.keeper && !this.mutationDisabled(mutation));
+    return [...this.mutations.values()].filter((mutation) => mutation !== this.keeper && mutation !== this.typer && !this.mutationDisabled(mutation));
   }
 
   /** The declared acts a derived act resolves its permission through; keeping a link, those that make or break its relation. */
-  private viaOf(mutation: AnyMutationDefinition<S> | undefined, call?: MutationCall): readonly string[] | undefined {
+  private viaOf(mutation: AnyMutationDefinition<S> | undefined, call?: MutationCall, principal?: Principal): readonly string[] | undefined {
     if (mutation !== undefined && mutation === this.keeper) {
       const declared = keepLinkVia(this.mutations.values(), call?.args["kind"]);
       if (declared.length > 0) return declared;
@@ -804,6 +825,8 @@ export class Store<S extends AnySchema> {
       const all = [...this.mutations.values()];
       return [...new Set(all.filter((one) => one.derived?.relation === call?.args["kind"]).flatMap((one) => derivedVia(this.schema, all, one) ?? []))];
     }
+    // Typing into a field: whoever may run an act that writes that field of that record.
+    if (mutation !== undefined && mutation === this.typer) return typeTextVia(this.schema, [...this.mutations.values()], this.subjectKindOf(call!, principal), call?.args["field"]);
     if (!mutation?.derived) return undefined;
     return derivedVia(this.schema, [...this.mutations.values()], mutation);
   }
@@ -868,7 +891,7 @@ export class Store<S extends AnySchema> {
       principal,
       call.name,
       this.subjectKindOf(call, principal),
-      this.viaOf(mutation, call),
+      this.viaOf(mutation, call, principal),
       typeof id === "string" ? id : undefined,
       this.words,
       () => {
@@ -882,7 +905,7 @@ export class Store<S extends AnySchema> {
         return far;
       },
       // Who made the record a derived act is about: riding only everybody's grant, it reaches what this principal made (W-201).
-      mutation?.derived && (() => recordsOf(this.log).creatorOf(id as string)),
+      mutation !== undefined && (mutation.derived !== undefined || mutation === this.typer) ? () => recordsOf(this.log).creatorOf(id as string) : undefined,
       // Taking a record out, or folding it away, rides the making of the kind only over what this principal made (W-201).
       mutation?.derived !== undefined && UNMAKING.has(mutation.derived.act),
     );
@@ -971,6 +994,87 @@ export class Store<S extends AnySchema> {
     // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
     const hidden = seesId(this, author);
     return { ...me, seen: seenBy(this, author).graph as never, keepUnchanged: (value: unknown) => namesUnseen(value, hidden), seesInFull: seesEveryRecord(this as never, author) };
+  }
+
+  /**
+   * WHETHER ONE FIELD OF A RECORD IS TYPED TOGETHER (Roadmap f-collab-text),
+   * read off the declaration of the record's kind, never off its value:
+   * `isCollaborativeField`. False for a record that is not here.
+   */
+  collaborative(node: string, field: string): boolean {
+    return collaborativeFieldOf(this.schema, this.graph.getNode(node)?.kind as string | undefined, field);
+  }
+
+  /** A field's text at revision `rev` (now, when absent) and the splices since, read back off the log (`textAt`). */
+  private textThen(node: string, field: string, rev: number | undefined): TextThen | undefined {
+    const current = (this.graph.getNode(node) as Record<string, unknown> | undefined)?.[field];
+    if (rev === undefined) return typeof current === "string" ? { then: current, since: [] } : undefined;
+    return textAt(this.log.all(), this.log.horizon, node, field, Math.max(rev, NEVER_WRITTEN), current);
+  }
+
+  /**
+   * A FIELD KEPT FROM THE CALLER IS NOT TYPED INTO (Roadmap f-field-sight):
+   * refused as an argument "Type text" does not take, before the text is
+   * read, so the refusal is the same whatever the field holds and wherever
+   * the keystroke was.
+   */
+  private refuseKeptTyping(call: MutationCall, author: Principal): void {
+    const node = this.graph.getNode(String(call.args["node"]));
+    const field = call.args["field"];
+    if (!node || typeof field !== "string" || !FIELD_SIGHT.keptFrom?.(this as never, author)?.(node as never)?.(field)) return;
+    const takes = (argumentsTaken(this.typer!) ?? []).map((key) => `"${key}"`).join(", ");
+    throw new InvalidArguments(TYPE_TEXT, [{ path: [], message: `does not take "${field}"; it takes ${takes}` }]);
+  }
+
+  /**
+   * A WHOLE VALUE WRITTEN OVER TEXT TYPED TOGETHER IS A SPLICE (Roadmap
+   * f-collab-text): a patch an act, an edit, an agent or an import writes
+   * to such a field, where the record holds text, is rewritten here into
+   * the one splice that makes the change — against the text the caller
+   * read at the revision `base` names for it (a three-way merge, so an
+   * agent's whole write merges with somebody typing), else against the
+   * text now. A field that holds no text yet, or is cleared, is written
+   * whole, as before. Read in order, so a record the same op made or a
+   * field it already changed is read as it will be.
+   */
+  private asSplices(primitives: readonly Primitive[], base?: readonly FieldRevision[]): Primitive[] {
+    if (!primitives.some((one) => one.op === "patch-node")) return [...primitives];
+    const made = new Map<string, Record<string, unknown>>();
+    const touched = new Set<string>();
+    const out: Primitive[] = [];
+    for (const primitive of primitives) {
+      if (primitive.op === "add-node") made.set(primitive.node.id, { ...primitive.node });
+      if (primitive.op !== "patch-node" || made.has(primitive.id)) {
+        if (primitive.op === "patch-node") Object.assign(made.get(primitive.id)!, primitive.after);
+        if (primitive.op === "splice-text") touched.add(`${primitive.id}\u0000${primitive.field}`);
+        out.push(primitive);
+        continue;
+      }
+      const record = this.graph.getNode(primitive.id) as ({ kind: string } & Record<string, unknown>) | undefined;
+      const before: Record<string, unknown> = {};
+      const after: Record<string, unknown> = {};
+      const splices: Primitive[] = [];
+      for (const [field, value] of Object.entries(primitive.after)) {
+        const current = record?.[field];
+        const at = `${primitive.id}\u0000${field}`;
+        if (typeof value === "string" && typeof current === "string" && current !== "" && !touched.has(at) && collaborativeFieldOf(this.schema, record?.kind, field)) {
+          const claimed = base?.find((entry) => entry.node === primitive.id && entry.field === field);
+          const splice = wholeAsSplice(current, value, claimed ? textAt(this.log.all(), this.log.horizon, primitive.id, field, claimed.rev, current) : undefined);
+          if (splice) {
+            splices.push({ op: "splice-text", id: primitive.id, field, ...splice });
+            touched.add(at);
+            continue;
+          }
+          // Merged, it changes nothing: written as the caller wrote it, a patch of what the field already holds.
+        }
+        before[field] = primitive.before[field];
+        after[field] = value;
+        touched.add(at);
+      }
+      if (Object.keys(after).length > 0) out.push(splices.length > 0 ? { op: "patch-node", id: primitive.id, before, after } : primitive);
+      out.push(...splices);
+    }
+    return out;
   }
 
   /**
@@ -1285,7 +1389,7 @@ export class Store<S extends AnySchema> {
     call = this.spelledCall(call);
     const definition = this.mutation(call.name);
     const compiled = compileMutation(this.graph, definition, call.args, this.sighted(options.author));
-    return this.previewPrimitives(compiled.primitives, {
+    return this.previewPrimitives(this.asSplices(compiled.primitives), {
       reads: compiled.reads,
       writes: compiled.writes,
       intent: compiled.intent,
@@ -1340,6 +1444,11 @@ export class Store<S extends AnySchema> {
       mintBatch: () => PREVIEW_BATCH,
       rehearsing: true,
     });
+    // "Type text" reads the text back off the rehearsal's own log, as the apply would off this one's.
+    if (this.typer) {
+      const typer = typeTextMutation(this.schema, (node, field, rev) => twin.textThen(node, field, rev));
+      Object.assign(twin as unknown as Record<string, unknown>, { typer, mutations: new Map(this.mutations).set(TYPE_TEXT, typer) });
+    }
     return twin;
   }
 
@@ -1453,6 +1562,7 @@ export class Store<S extends AnySchema> {
         const definition = this.mutation(call.name);
         const missing = this.missingFor(call, author as Principal);
         if (missing) throw missing;
+        if (definition === this.typer) this.refuseKeptTyping(call, author as Principal);
         let compiled: ReturnType<typeof compileMutation>;
         try {
           compiled = compileMutation(this.graph, definition, call.args, this.sighted(author as Principal));
@@ -1498,7 +1608,7 @@ export class Store<S extends AnySchema> {
            * instruction is lost the moment the op is written to JSON and the
            * inverse quietly does nothing. See `normalize` in primitives.ts.
            */
-          primitives: compiled.primitives.map(normalize),
+          primitives: this.asSplices(compiled.primitives, options.base).map(normalize),
           reads: compiled.reads,
           writes: compiled.writes,
           // Which records its sentence read, so a reader who may not see one is not handed the sentence (FR-55).
@@ -1689,7 +1799,7 @@ export class Store<S extends AnySchema> {
     const rollback = this.graph.snapshot();
     const intent = options.intent ?? "Apply a change";
     const lineage = lineageOf(options.lineage);
-    const recorded = primitives.map(normalize);
+    const recorded = this.asSplices(primitives, options.base).map(normalize);
     const ops: Operation[] = [];
     if (recorded.length > 0) {
       const op: Operation = {
@@ -1757,7 +1867,7 @@ export class Store<S extends AnySchema> {
   ): UndoPreview<S> {
     const check = this.canUndo(batchIds);
     if (!check.ok) return { ok: false, check };
-    const primitives = undoPrimitives(check.ops);
+    const primitives = undoPrimitives(check.ops, this.log.all());
     const writes = new Set<string>();
     for (const op of check.ops) for (const id of op.writes) writes.add(id);
     return {
@@ -1848,7 +1958,7 @@ export class Store<S extends AnySchema> {
     const ops: Operation[] = [];
     const kept = this.log.length;
 
-    for (const target of [...check.ops].sort((a, b) => b.seq - a.seq)) {
+    for (const { op: target, primitives } of undoneInverses(this.log.all(), check.ops)) {
       const op: Operation = {
         id: this.nextId(),
         seq: this.log.length,
@@ -1857,7 +1967,7 @@ export class Store<S extends AnySchema> {
         intent: `Undo: ${target.intent}`,
         ...given("batchIntent", options.intent),
         mutation: null,
-        primitives: inverseOf(target),
+        primitives,
         reads: target.reads,
         writes: target.writes,
         at: this.now(),

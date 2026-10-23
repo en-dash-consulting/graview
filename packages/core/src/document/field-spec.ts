@@ -1,6 +1,7 @@
 import { fileKindOf } from "../schema/files.js";
 import { isAppLinkField } from "../schema/app-link.js";
 import { isMarkdownField } from "../schema/markdown.js";
+import { isCollaborativeField } from "../schema/collaborative.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
 import { descriptionOf } from "../schema/zod.js";
 import { isMoment } from "../days.js";
@@ -43,7 +44,9 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
   // Another app's address (FR-171): `appLinkField()`.
   if (isAppLinkField(schema)) return { spec: { type: "app-link", ...base } };
   // Prose written in Markdown (FR-180): `markdownField()`.
-  if (isMarkdownField(schema)) return { spec: { type: "text", format: "markdown", ...base } };
+  // Typed together, where that is not what the document's type says by default (Roadmap f-collab-text): a text is, a string is not.
+  const together = (type: "text" | "string") => (isCollaborativeField(schema) !== (type === "text") ? { collaborative: type !== "text" } : {});
+  if (isMarkdownField(schema)) return { spec: { type: "text", format: "markdown", ...base, ...together("text") } };
   // A phone, a place or a duration: `phoneField()`, `placeField()`, `durationField()`.
   const typed = typedFieldOf(schema);
   if (typed) return { spec: { type: typed, ...base } };
@@ -55,7 +58,7 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
       if (format === "date") return { spec: { type: "date", ...base } };
       if (format === "datetime" || checks.some((check) => check?.["fn"] === isMoment)) return { spec: { type: "datetime", ...base } };
       if (checks.some((check) => check?.["format"] === "regex" && DATE.test(String((check?.["pattern"] as RegExp | undefined)?.source ?? "")))) return { spec: { type: "date", ...base } };
-      return { spec: { type: "string", ...base } };
+      return { spec: { type: "string", ...base, ...together("string") } };
     }
     case "number": {
       // Its range, where the declaration bounds it inclusively (FR-114): `.min(1).max(5)`, `.multipleOf(0.5)`.

@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 7500,
+  "gzipped": 2700,
+  "note": "Raised when text came to be typed together (collaborative text, phase 2): the `type-text` act every store answers to, a whole write over a field typed together merged as a splice (`text/since.ts`, `transformSplices` and `diffSplice` now up front), the mark that says which fields are (`schema/collaborative.ts`), and an undo that carries a person's typing over what others typed since (`undoneInverses`). The store is on every page, so this is up front. Measured at 655_108 / 240_850 against a budget of 647_727 / 238_268: 7_381 / 2_582 more."
+}

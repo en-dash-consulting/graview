@@ -69,7 +69,8 @@ export const WORKER_SHAPED = join(ROOT, "scripts/fixtures/cloud-worker-imports.m
  * part of zod and its forty-odd locales (805 KB, against 219 KB now).
  */
 // 2_010_000 since a text field takes a splice (collaborative text, phase 1: the `splice-text` primitive folded, undone, served and read back wherever a patch is): 2_005_731 B measured, 5_787 more than before it (1_999_944).
-export const WORKER_BUDGET = { cpu: 75, bytes: 2_010_000, zod: 260_000 };
+// 2_026_000 since text is typed together (collaborative text, phase 2: the `type-text` act and a whole write merged as a splice, so the store's `transformSplices`, `diffSplice` and `text/since.ts` are in the worker): 2_022_944 B measured, 17_213 more than before it (2_005_731).
+export const WORKER_BUDGET = { cpu: 75, bytes: 2_026_000, zod: 260_000 };
 
 /** The file an entry resolves to in its package's dist/. */
 export function entryFile(entry) {
