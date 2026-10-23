@@ -103,7 +103,7 @@ const CHAIN = [
   ["drawn", "verify-drawn.mjs"],
   // A record's long text keeps its paragraphs and lists, spans the record under its label, is edited in a text area, and its facts follow the declared or the page's order, in three engines (FR-146–FR-148).
   ["long-text", "verify-long-text.mjs"],
-  // Two seats type into one long brief at once with real keystrokes: the body opens live with no Save, both pages and the store converge, each draws the other's caret where they stand, and a caret stays on its word (Roadmap f-collab-text).
+  // Two seats type into one long brief at once with real keystrokes: the body opens live with no Save, both pages and the store converge, each draws the other's caret where they stand, and a caret stays on its word; a slowed page and one that drops offline mid-run converge, each person's ⌘Z takes back only their run, a composed word lands whole, a seat that may not see the body is served none of it, and a reader of op format 2 folds whole values to the same text (Roadmap f-collab-text).
   ["typed-together", "verify-typed-together.mjs"],
   // A roadmap grown large: status chips with counts, a Filter that opens short and finds a record by typing, whole badges, cards read at a glance, at a desk and a phone, in three engines.
   ["growing", "verify-growing.mjs"],

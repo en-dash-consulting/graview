@@ -17,6 +17,22 @@
  *   above it;
  *   and no page threw.
  *
+ * Then, on the same brief:
+ *
+ *   a page whose CPU is slowed four times types beside one that is not, and
+ *   both converge with the store (Chromium's CPU throttling; WebKit and
+ *   Firefox, which have none, have their main thread kept busy three
+ *   quarters of the time instead);
+ *   a page that drops offline mid-run keeps typing, comes back, and its run
+ *   lands carried over what the other typed meanwhile;
+ *   each person's Ctrl or Cmd Z takes back only their own run;
+ *   a word composed with an input method (Chromium's Input.imeSetComposition)
+ *   lands whole, and nothing it showed while composing is ever kept;
+ *   a seat that may not see the body (the document's `outsider`, whose
+ *   sight hides it) is served no splice, no typed word and no caret;
+ *   and a reader that says it reads op format 2 is sent the body whole each
+ *   time it changes, and folds to the store's text.
+ *
  *   node scripts/verify-typed-together.mjs [--engine=chromium|webkit|firefox]
  *
  * Writes docs/typed-together.json. Needs `pnpm build`.
@@ -28,12 +44,12 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
-import { seatHeaders } from "../packages/ship/dist/index.js";
+import { LIVE_PATH, LIVE_SUBPROTOCOL, seatHeaders } from "../packages/ship/dist/index.js";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 const CLI = resolve(repoRoot, "packages/graview/dist/cli.js");
-const DOCUMENT = "scripts/fixtures/long-text/roadmap.gdd.json";
+const DOCUMENT = "scripts/fixtures/long-text/roadmap-with-an-outsider.gdd.json";
 const SEED = "scripts/fixtures/long-text/roadmap.seed.json";
 const BRIEF = "brief-0129";
 const report = { at: new Date().toISOString(), engine: ENGINE, document: DOCUMENT, claims: {} };
@@ -88,6 +104,27 @@ try {
       seat = handed.principal;
       await route.fulfill({ response: answered, json: { ...handed, principal: { ...handed.principal, id, name } } });
     });
+    /*
+     * Every socket the page opens, kept where the harness can reach it —
+     * whether going offline closed it is a finding — and a page that can be
+     * cut off in every engine: `context.setOffline` keeps an open socket in
+     * all three and, in WebKit, lets a loopback one open again. While
+     * `__offline`, a socket asks for a path nobody answers and a fetch
+     * fails, as the network's absence does.
+     */
+    await context.addInitScript(() => {
+      const Native = window.WebSocket;
+      const nativeFetch = window.fetch.bind(window);
+      window.__sockets = [];
+      window.__offline = false;
+      window.WebSocket = class extends Native {
+        constructor(url, ...rest) {
+          super(window.__offline ? `${location.origin.replace(/^http/, "ws")}/nowhere-while-offline` : url, ...rest);
+          window.__sockets.push(this);
+        }
+      };
+      window.fetch = (...args) => (window.__offline ? Promise.reject(new TypeError("Failed to fetch")) : nativeFetch(...args));
+    });
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(`${name}: ${error.message}`));
     await page.goto(`${base}/briefs/${BRIEF}`, { waitUntil: "load" });
@@ -98,6 +135,25 @@ try {
   };
   const ada = await sitDown("ada", "Ada");
   const bo = await sitDown("bo", "Bo");
+
+  /*
+   * Three readers on the socket from here, as other programs: a seat the
+   * document hides the body from, a reader of op format 2, and one of op
+   * format 3 that keeps every op, to read what was ever kept.
+   */
+  const listen = (principal, opFormat) => {
+    const url = new URL(`${base.replace(/^http/, "ws")}${LIVE_PATH}`);
+    // A socket carries no headers: a server that believes seat headers reads them from the query.
+    for (const [name, value] of Object.entries(seatHeaders(principal))) url.searchParams.set(name, value);
+    const socket = new WebSocket(url, [LIVE_SUBPROTOCOL]);
+    const heard = [];
+    socket.onopen = () => socket.send(JSON.stringify({ t: "hello", protocol: 1, opFormat }));
+    socket.onmessage = (event) => heard.push(String(event.data));
+    return { heard, close: () => socket.close() };
+  };
+  const outsider = listen({ kind: "human", id: "cy", name: "Cy", roles: ["outsider"] }, 3);
+  const older = listen({ kind: "human", id: "old", name: "Old", roles: ["owner"] }, 2);
+  const keeper = listen({ kind: "human", id: "keeper", name: "Keeper", roles: ["owner"] }, 3);
   const area = '[data-graview-live="body"] textarea';
 
   const opened = await ada.evaluate(() => {
@@ -179,6 +235,140 @@ try {
   };
   const [bosOnAda, adasOnBo] = await Promise.all([caretOf(ada, "bo", BO_TYPES), caretOf(bo, "ada", ADA_TYPES)]);
   claim("eachSeesTheOthersCaretWhereTheyStand", bosOnAda?.title === "Bo is typing here" && bosOnAda.before?.endsWith(BO_TYPES) && adasOnBo?.title === "Ada is typing here" && adasOnBo.before?.endsWith(ADA_TYPES) && bosOnAda?.inside && adasOnBo?.inside, { bosOnAda, adasOnBo });
+
+  /** Until both pages and the store hold one text that `holds`; the three as they last read. */
+  const converge = async (holds, tries = 80) => {
+    let read = [];
+    for (let at = 0; at < tries; at++) {
+      read = await Promise.all([valueOf(ada), valueOf(bo), stored()]);
+      if (read[0] === read[1] && read[1] === read[2] && holds(read[0])) return { ok: true, text: read[0] };
+      await new Promise((settle) => setTimeout(settle, 250));
+    }
+    return { ok: false, text: read[0], sameOnBoth: read[0] === read[1], sameAsTheStore: read[1] === read[2] };
+  };
+  /** Which of these a text holds, and its length, for a verdict's detail. */
+  const holding = ({ text, ...rest }, ...said) => ({ ...rest, length: text?.length, ...Object.fromEntries(said.map((one) => [one, text?.includes(one) ?? false])) });
+
+  /* A page four times slower: CDP's CPU throttling where the engine has it, a busy main thread where it does not. */
+  const QUICK = "quick lark ";
+  const SLOW = "slow tortoise ";
+  let slowed;
+  if (ENGINE === "chromium" || ENGINE === "canary") {
+    const cdp = await bo.context().newCDPSession(bo);
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    slowed = { how: "Emulation.setCPUThrottlingRate 4", undo: () => cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 }) };
+  } else {
+    await bo.evaluate(() => {
+      // Three quarters of every 40 ms spent spinning: what a page four times slower has left for its own work.
+      window.__hog = setInterval(() => {
+        const until = performance.now() + 30;
+        while (performance.now() < until);
+      }, 40);
+    });
+    slowed = { how: "main thread kept busy 30 ms in every 40", undo: () => bo.evaluate(() => clearInterval(window.__hog)) };
+  }
+  await Promise.all([ada.keyboard.type(QUICK, { delay: 40 }), bo.keyboard.type(SLOW, { delay: 40 })]);
+  const throttled = await converge((text) => text.includes(QUICK) && text.includes(SLOW));
+  await slowed.undo();
+  claim("aThrottledPageTypingBesideAQuickOneConverges", throttled.ok, { slowed: slowed.how, ...holding(throttled, QUICK, SLOW) });
+
+  /* Bo drops offline mid-run, types on, comes back: his run lands carried over what Ada typed meanwhile. */
+  const AWAY = "unsent words typed while away ";
+  const HERE = "typed while here ";
+  await bo.keyboard.type(AWAY.slice(0, 3), { delay: 40 });
+  await bo.context().setOffline(true);
+  await new Promise((settle) => setTimeout(settle, 1500));
+  // Whether going offline closed the live socket by itself, or the page still holds it open.
+  const closedByOffline = await bo.evaluate(() => window.__sockets.filter((one) => one.url.includes("/graview/live")).every((one) => one.readyState >= 2));
+  // It does not in any engine: the page is cut off itself, its socket closed and every new one and every fetch failing until it is back.
+  await bo.evaluate(() => {
+    window.__offline = true;
+    window.__sockets.forEach((one) => one.close());
+  });
+  await Promise.all([bo.keyboard.type(AWAY.slice(3), { delay: 40 }), ada.keyboard.type(HERE, { delay: 40 })]);
+  await new Promise((settle) => setTimeout(settle, 1000));
+  const [shownAway, keptAway] = await Promise.all([valueOf(bo), stored()]);
+  await bo.context().setOffline(false);
+  await bo.evaluate(() => (window.__offline = false));
+  const back = await converge((text) => text.includes(AWAY) && text.includes(HERE), 120);
+  claim("aPageThatDropsOfflineMidRunComesBackAndItsRunLandsCarriedOver", back.ok && shownAway.includes(AWAY) && !keptAway.includes(AWAY), {
+    closedByOffline,
+    shownWhileAway: shownAway.includes(AWAY),
+    keptWhileAway: keptAway.includes(AWAY),
+    ...holding(back, AWAY, HERE),
+  });
+
+  /* Ada and Bo each type; Ada's Ctrl or Cmd Z takes back her run and only hers. */
+  const MINE = "zeta";
+  const THEIRS = "omega ";
+  await Promise.all([ada.keyboard.type(MINE, { delay: 40 }), bo.keyboard.type(THEIRS, { delay: 40 })]);
+  const both = await converge((text) => text.includes(HERE + MINE) && text.includes(THEIRS));
+  await ada.keyboard.press("ControlOrMeta+z");
+  const takenBack = await converge((text) => !text.includes(HERE + MINE) && text.includes(THEIRS) && text.includes(HERE));
+  claim("eachPersonsUndoTakesBackOnlyTheirOwnRun", both.ok && takenBack.ok, { typed: both.ok, ...holding(takenBack, HERE + MINE, THEIRS) });
+
+  /* A word composed with an input method: nothing is sent while it is composed, and it lands whole. */
+  const COMPOSED = "日本";
+  const SHOWN = ["に", "にほ", "にほん"];
+  if (ENGINE === "chromium" || ENGINE === "canary") {
+    const cdp = await ada.context().newCDPSession(ada);
+    await ada.focus(area);
+    for (const text of SHOWN) {
+      await cdp.send("Input.imeSetComposition", { text, selectionStart: text.length, selectionEnd: text.length });
+      await new Promise((settle) => setTimeout(settle, 500));
+    }
+    const midWord = await stored();
+    await cdp.send("Input.insertText", { text: COMPOSED });
+    await bo.keyboard.type("kana ", { delay: 40 });
+    const composed = await converge((text) => text.includes(COMPOSED) && text.includes("kana "));
+    // Every splice the store kept for the body, as the reader that keeps them all was sent it.
+    const inserted = keeper.heard.flatMap((said) => {
+      const message = JSON.parse(said);
+      return (message.ops ?? []).flatMap((op) => op.primitives.flatMap((one) => (one.op === "splice-text" && one.id === BRIEF ? [one.inserted] : [])));
+    });
+    const partial = inserted.filter((one) => /[぀-ゟ]/u.test(one) || one.includes("日") !== one.includes("本"));
+    claim("aWordComposedWithAnInputMethodLandsWhole", composed.ok && !SHOWN.some((one) => midWord.includes(one)) && inserted.some((one) => one.includes(COMPOSED)) && partial.length === 0, {
+      ...holding(composed, COMPOSED),
+      keptMidWord: SHOWN.filter((one) => midWord.includes(one)),
+      wholeSplice: inserted.some((one) => one.includes(COMPOSED)),
+      partial,
+    });
+  } else {
+    claim("aWordComposedWithAnInputMethodLandsWhole", true, { skipped: true, why: `${ENGINE} has no Input.imeSetComposition to compose with: Chromium's verdict holds this claim` });
+  }
+
+  /* What the seat the body is hidden from was sent, start to end: no splice, no typed word, no caret. */
+  const final = await stored();
+  const typedWords = [ADA_TYPES, BO_TYPES, QUICK, SLOW, AWAY, HERE, THEIRS];
+  const toldOutsider = outsider.heard.join("\n");
+  const welcomed = outsider.heard.some((said) => said.includes('"welcome"'));
+  claim("aSeatThatMayNotSeeTheFieldIsServedNoSpliceAndNoCaret", welcomed && !toldOutsider.includes("splice-text") && !toldOutsider.includes('"caret"') && typedWords.every((one) => !toldOutsider.includes(one)), {
+    messages: outsider.heard.length,
+    welcomed,
+    splices: toldOutsider.includes("splice-text"),
+    carets: toldOutsider.includes('"caret"'),
+    words: typedWords.filter((one) => toldOutsider.includes(one)),
+  });
+
+  /* The reader of op format 2: sent the body whole each time, it folds to the store's text. */
+  let folded;
+  let splicesToOlder = 0;
+  let wholes = 0;
+  for (const said of older.heard) {
+    const message = JSON.parse(said);
+    if (message.t === "welcome" && message.state) folded = message.state.snapshot.nodes.find((node) => node.id === BRIEF)?.body;
+    for (const op of message.ops ?? []) {
+      for (const one of op.primitives) {
+        if (one.op === "splice-text") splicesToOlder++;
+        if (one.op === "patch-node" && one.id === BRIEF && "body" in one.after) {
+          wholes++;
+          folded = one.after.body;
+        }
+      }
+    }
+  }
+  claim("anOlderReaderOfOpFormat2ConvergesOnWholeValues", splicesToOlder === 0 && wholes > 0 && folded === final, { splices: splicesToOlder, wholeWrites: wholes, foldsToTheStoresText: folded === final, length: folded?.length });
+  for (const one of [outsider, older, keeper]) one.close();
 
   claim("noPageThrew", errors.length === 0, errors);
 } catch (error) {
