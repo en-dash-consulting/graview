@@ -1117,7 +1117,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   const sayLimited = (peer: LivePeer, cid: string, limited: LimitAnswer): LiveReceived => {
     if ("refuse" in limited) {
       delete peer.held;
-      say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
+      say(peer, { t: "refused", cid, reason: limited.reason ?? "limit", sentence: limited.refuse });
     } else if ("unavailable" in limited) {
       // Not for a while, and no wait to name: refused `unavailable`, which the client keeps and sends again, backing off.
       delete peer.held;
@@ -1129,9 +1129,12 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     }
     return { cursor: peer.cursor! };
   };
-  /** The same word over HTTP: 413 `limit`, 503 `unavailable`, or 429 with `Retry-After`. */
+  /** The same word over HTTP: 413 `limit` (401 `unauthenticated`, 403 `quota`), 503 `unavailable`, or 429 with `Retry-After`. */
   const limitedReply = (limited: LimitAnswer, said: Record<string, unknown>): WireAnswer => {
-    if ("refuse" in limited) return reply(413, { error: limited.refuse, refused: true, reason: "limit", ...said });
+    if ("refuse" in limited) {
+      const reason = limited.reason ?? "limit";
+      return reply(reason === "quota" ? 403 : reason === "unauthenticated" ? 401 : 413, { error: limited.refuse, refused: true, reason, ...said });
+    }
     if ("unavailable" in limited) return reply(503, { error: limited.unavailable, refused: true, reason: "unavailable", ...said });
     const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
     return reply(429, { error: limited.sentence ?? `The store is busy: send it again in ${retryAfter} ms.`, busy: true, retryAfter }, { "retry-after": String(Math.ceil(retryAfter / 1000)) });

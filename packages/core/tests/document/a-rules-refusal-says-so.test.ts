@@ -43,7 +43,7 @@ const refused = (run: () => unknown): unknown => {
 
 describe("a rule's refusal says so", () => {
   it("is a sixth code, refused, beside the five the wire already says", () => {
-    expect([...REFUSAL_REASONS]).toEqual(["forbidden", "missing", "invalid", "limit", "unavailable", "refused"]);
+    expect([...REFUSAL_REASONS]).toEqual(["forbidden", "missing", "invalid", "limit", "unavailable", "refused", "unauthenticated", "quota"]);
   });
 
   it("resolve-question on a resolved question refuses with reason refused, in the act's own words", () => {

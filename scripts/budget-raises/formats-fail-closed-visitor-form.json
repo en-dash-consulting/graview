@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 450,
+  "gzipped": 150,
+  "note": "Raised when the formats came to fail closed for 1.0: a primitive or a typed value (`$type`) a build does not know is refused where ops are folded (`format-error.ts`, the graph's and the log's checks), and a visitor's own ops say `visitor` (`authorKindOf`). The store and the graph draw the form, so this is up front. Measured at 380_438 / 145_977 against a budget of 380_000 / 146_000: 438 more minified."
+}

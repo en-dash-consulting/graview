@@ -74,7 +74,7 @@ describe("a form for a visitor, declared", () => {
 
 describe("the visitor a host mints for one submission", () => {
   it("holds the form's role and nothing else, under the host's id, named for the form", () => {
-    expect(formVisitor(compiled(), "rsvp", "form:tok-1")).toEqual({ kind: "human", id: "form:tok-1", name: "a visitor via the RSVP form", roles: ["visitor"] });
+    expect(formVisitor(compiled(), "rsvp", "form:tok-1")).toEqual({ kind: "visitor", id: "form:tok-1", name: "a visitor via the RSVP form", roles: ["visitor"] });
     expect(() => formVisitor(compiled(), "nowhere", "form:x")).toThrow(/no form called "nowhere": the forms are rsvp/);
   });
 

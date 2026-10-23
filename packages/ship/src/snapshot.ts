@@ -1,4 +1,4 @@
-import { isUnset, type Primitive } from "@graview/core";
+import { isUnset, unknownPrimitive, type Primitive } from "@graview/core";
 
 /**
  * A stored graph mid-migration is BETWEEN schemas, so nothing here
@@ -54,6 +54,9 @@ export function applyToSnapshot(
             ),
         );
         break;
+      default:
+        // A primitive a newer build wrote: a migration refuses it rather than carry a graph that skipped it.
+        unknownPrimitive(primitive);
     }
   }
   return { nodes, edges };

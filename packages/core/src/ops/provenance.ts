@@ -1,5 +1,6 @@
 import type { GraphEdge } from "../graph/types.js";
 import type { Lineage } from "./lineage.js";
+import { authorKindOf } from "./types.js";
 import type { Author, Operation } from "./types.js";
 
 /*
@@ -63,7 +64,8 @@ export function linkProvenances(ops: readonly Operation[], undone: ReadonlySet<s
   const links = new Map<string, LinkProvenance>();
   for (const op of ops) {
     if (op.undoes !== undefined || undone.has(op.id) || op.withheld) continue;
-    const person = op.author.kind === "human";
+    const kind = authorKindOf(op.author);
+    const person = kind === "human" || kind === "visitor";
     const gone = new Map<string, LinkProvenance>();
     for (const primitive of op.primitives) {
       if (primitive.op !== "add-edge" && primitive.op !== "remove-edge") continue;

@@ -15,7 +15,7 @@ import { capitalize } from "./capital.js";
 import { humanizeField, nounOf } from "./schema/define-node.js";
 import { nameOfAuthor } from "./who.js";
 import type { Epoch } from "./ops/log.js";
-import type { Author, Batch, Operation } from "./ops/types.js";
+import { authorKindOf, type Author, type Batch, type Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { PastDeclaration, Store } from "./store.js";
@@ -117,10 +117,11 @@ export interface PlaybackTick {
   readonly withheld: boolean;
 }
 
-/** Who made a change, for the reader `me`. A system or a rule is the app itself; an agent acting for a person is still an agent. */
+/** Who made a change, for the reader `me`. A system or a rule is the app itself, as is a kind this build does not know; an agent acting for a person is still an agent; a visitor is a person. */
 export function makerOf(author: Author, me?: Principal): Maker {
-  if (author.kind === "agent") return "agent";
-  if (author.kind !== "human") return "app";
+  const kind = authorKindOf(author);
+  if (kind === "agent") return "agent";
+  if (kind !== "human" && kind !== "visitor") return "app";
   if (author.onBehalfOf !== undefined) return "person";
   return author.id === undefined || me?.id === undefined || author.id === me.id ? "you" : "person";
 }

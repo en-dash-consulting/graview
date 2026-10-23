@@ -1,6 +1,7 @@
 import { humanizeField, labelOf } from "../schema/define-node.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import { SchemaError } from "../schema/schema.js";
+import { assertKnownValues, unknownPrimitive } from "../format-error.js";
 import { isArchived, MARKS, type ArchivedOption } from "./archived.js";
 import { diffSnapshots, diffTouched, type GraphDiff } from "./diff.js";
 import { isUnset, type Primitive } from "./primitives.js";
@@ -368,6 +369,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   private applyOne(primitive: Primitive, restoring: boolean, inPlace: boolean): void {
     switch (primitive.op) {
       case "add-node":
+        assertKnownValues(primitive.node);
         this.insertNode(primitive.node as NodeOfSchema<S>, restoring, inPlace);
         return;
       case "remove-node": {
@@ -392,6 +394,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         if (!current) {
           throw new MissingRecordError(primitive.id, `Cannot patch missing node "${primitive.id}"`);
         }
+        assertKnownValues(primitive.after);
         const next = { ...current } as Record<string, unknown>;
         for (const [key, value] of Object.entries(primitive.after)) {
           // `undefined` in memory, `UNSET` once written down: both mean the
@@ -416,6 +419,9 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         this.deleteEdge(primitive.edge);
         return;
       }
+      default:
+        // A primitive a newer build wrote: refused, never skipped, so this graph cannot quietly diverge from the log.
+        unknownPrimitive(primitive);
     }
   }
 

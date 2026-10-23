@@ -129,8 +129,19 @@ export interface RemoteSystem {
   push(writes: readonly RemoteWrite[]): Promise<readonly RemoteAck[]>;
 }
 
+/**
+ * THE FORMAT A SYNC STATE IS WRITTEN IN. A host keeps a `SyncState` between
+ * runs — a file, a row — so it is a stored format like a snapshot: stamped
+ * with the format this build writes, and refused by a build that reads an
+ * older one (`NewerFormatError`) rather than run on links it would misread.
+ * A state without a stamp, written before it existed, is format 1.
+ */
+export const SYNC_STATE_FORMAT = 1;
+
 /** What the engine remembers between runs. */
 export interface SyncState {
+  /** The format it was written in (`SYNC_STATE_FORMAT`); absent on a state written before stamps, which is format 1. */
+  readonly format?: number;
   readonly cursor?: string;
   /** Local id → what the remote knows about it. */
   readonly links: Readonly<Record<string, RemoteLink>>;

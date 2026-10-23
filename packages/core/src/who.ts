@@ -1,4 +1,4 @@
-import type { Author } from "./ops/types.js";
+import { authorKindOf, type Author } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import { labelOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -46,7 +46,9 @@ export function nameOfAuthor(
     const { onBehalfOf, ...itself } = author;
     return `${nameOfAuthor(itself, where)}, for ${nameOfAuthor(onBehalfOf, where)}`;
   }
-  if (author.id === undefined) return author.name ?? (author.kind === "agent" ? "an agent" : author.kind);
+  // A kind a newer build wrote reads as the app itself (`authorKindOf`).
+  const kind = authorKindOf(author);
+  if (author.id === undefined) return author.name ?? (kind === "agent" ? "an agent" : kind === "visitor" ? "a visitor" : kind);
   const node = where.graph.getNode(author.id);
   if (node) return labelOf(where.schema.tryDefinition(node.kind), node);
   const seat = where.seats?.find((one) => one.principal.id === author.id);
@@ -65,6 +67,6 @@ export function nameOfAuthor(
   // A visitor a host minted for one answer to a form (Roadmap f-public-forms), where it gave no name: never the token.
   if (author.id.startsWith("form:")) return "a visitor via a form";
   // A plain name ("kai") is how a host without seats names somebody; a namespaced id is not a name.
-  if (/[:_/]/.test(author.id)) return { human: "somebody", agent: "an agent", rule: "a rule", system: "the system" }[author.kind];
+  if (/[:_/]/.test(author.id)) return { human: "somebody", visitor: "a visitor", agent: "an agent", rule: "a rule", system: "the system" }[kind];
   return author.id;
 }
