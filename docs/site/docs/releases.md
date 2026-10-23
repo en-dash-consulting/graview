@@ -54,7 +54,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.50
 
-Published October 23, 2026 · the current version
+Published October 23, 2026
 
 The 1.0 foundations: formats that fail closed, links with ids of their own, opaque cursors, a publishing lifecycle, and the first two phases of text typed together.
 

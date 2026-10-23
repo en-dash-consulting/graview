@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.50)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version ()
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -845,7 +845,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.50
 
-Published October 23, 2026 · the current version
+Published October 23, 2026
 
 The 1.0 foundations: formats that fail closed, links with ids of their own, opaque cursors, a publishing lifecycle, and the first two phases of text typed together.
 
