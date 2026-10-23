@@ -77,6 +77,24 @@ describe("a caller names the records it makes", () => {
     expect(store.graph.allNodes().map((node) => node.id)).toEqual(["task-0b91"]);
   });
 
+  it("takes a client's own id as a hint: made under it when free, minted as ever when taken, and a later call of the change follows it", () => {
+    const store = open();
+    store.apply({ name: "add-list", args: { label: "Groceries" }, mintedHint: "list-local-1" });
+    expect(store.graph.getNode("list-local-1")).toBeDefined();
+    store.apply({ name: "add-task", args: { label: "Buy milk" } });
+    const result = store.applyAll([
+      { name: "add-task", args: { label: "Buy milk" }, mintedHint: "task:buy-milk" },
+      { name: "file", args: { listId: "list-local-1", taskId: "task:buy-milk" } },
+    ]);
+    expect(result.minted?.[0]).toBe("task:buy-milk-2");
+    expect(store.graph.out("list-local-1", "holds").map((node) => node.id)).toEqual(["task:buy-milk-2"]);
+    // The log keeps the calls as the store read them: no hint, and the later call naming the record made.
+    expect(result.ops.map((op) => op.mutation)).toEqual([
+      { name: "add-task", args: { label: "Buy milk" } },
+      { name: "file", args: { listId: "list-local-1", taskId: "task:buy-milk-2" } },
+    ]);
+  });
+
   it("refuses an id that is not one: empty, too long, or with a space in it", () => {
     const store = open();
     for (const id of ["", "two words", "x".repeat(201), "tab\there"]) {

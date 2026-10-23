@@ -110,22 +110,19 @@ export function numbersSpelled(input: unknown, given: unknown): unknown {
   return read ?? given;
 }
 
-/** The longest id a caller may ask an act to make a record with. */
-export const REQUESTED_ID_LENGTH = 200;
-
 /**
  * AN ID A CALLER MAY ASK FOR (Roadmap f-1-0-client-ids): 1–200 characters,
  * none of them a space or a control character. Readable slugs —
  * `task:buy-milk`, `room:green.0k3j2xa` — and a client's own UUIDs pass;
  * an id that would not survive a URL, a log line or a search does not.
  */
+const validId = (id: unknown): id is string => typeof id === "string" && id.length <= 200 && /^[^\s\p{Cc}]+$/u.test(id);
+
 function requestedId(rawArgs: unknown): string | undefined {
   if (typeof rawArgs !== "object" || rawArgs === null) return undefined;
   const id = (rawArgs as Record<string, unknown>)["id"];
   if (id === undefined) return undefined;
-  if (!(typeof id === "string" && id.length <= REQUESTED_ID_LENGTH && /^[^\s\p{Cc}]+$/u.test(id))) {
-    throw new GraphError(`An id is 1–${REQUESTED_ID_LENGTH} characters with no space`, `Got ${JSON.stringify(id)}.`);
-  }
+  if (!validId(id)) throw new GraphError("An id is 1–200 characters with no space", `Got ${JSON.stringify(id)}.`);
   return id;
 }
 
@@ -238,6 +235,8 @@ export function compileMutation<S extends AnySchema>(
      * with the fields of records it reads (`<id>#<field>`), so a seat that
      * may not see one is served the op withheld. `@graview/core/field-sight` sets it.
      */
+    /** The id a client minted for the first record, as a hint (`MutationCall.mintedHint`): taken when free and its to ask for, else minted as ever. */
+    readonly hint?: string | undefined;
     readonly check?: (primitives: readonly Primitive[], definition: { readonly name: string; readonly creates?: readonly string[] | undefined; readonly input: unknown }) => readonly string[];
   } = {},
 ): CompiledMutation {
@@ -282,6 +281,14 @@ export function compileMutation<S extends AnySchema>(
   const reader = new TrackedReader<NodeOfSchema<S>>(options.seen ?? graph);
   const primitives: Primitive[] = [];
   const minted = new Set<string>();
+  /*
+   * Asked the same whether a record the seat may not see holds it or
+   * nothing does (FR-55): a seat that does not see everything may ask only
+   * for an id of its own — one that ends `.<seatMark(me)>`, as the ids
+   * minted for it do — which nobody else's label mints.
+   */
+  const mark = options.me === undefined ? undefined : `.${seatMark(options.me)}`;
+  const mayAsk = (id: string) => !options.seesInFull || options.seesInFull() || (mark !== undefined && new RegExp(`\\${mark}(-[0-9a-z]+)?$`).test(id));
   // An id any record holds, seen or not: a minted id never lands on one.
   const held = (id: string) => reader.has(id) || graph.has(id) || minted.has(id);
   let mergedInto: string | undefined;
@@ -368,16 +375,8 @@ export function compileMutation<S extends AnySchema>(
     },
     freshId(label, prefix) {
       if (requested !== undefined && !minted.has(requested)) {
-        /*
-         * Asked the same whether a record the seat may not see holds it or
-         * nothing does (FR-55). A seat that does not see everything may ask
-         * only for an id of its own — one that ends `.<seatMark(me)>`, as
-         * the ids minted for it do — which nobody else's label mints, so a
-         * refusal tells it nothing it did not already know.
-         */
-        const mark = options.me === undefined ? undefined : `.${seatMark(options.me)}`;
-        if (options.seesInFull && !options.seesInFull() && !(mark && new RegExp(`\\${mark}(-[0-9a-z]+)?$`).test(requested))) {
-          throw new GraphError(`"${definition.name}" makes its own id here`, `Leave id out${mark ? `, or end it "${mark}"` : ""}: the answer says the id it made.`);
+        if (!mayAsk(requested)) {
+          throw new GraphError(`"${definition.name}" makes its own id here`, `Leave id out${mark ? `, or end it "${mark}"` : ""}.`);
         }
         if (held(requested)) {
           throw new GraphError(
@@ -388,6 +387,9 @@ export function compileMutation<S extends AnySchema>(
         minted.add(requested);
         return requested;
       }
+      // A client's own guess at the first id (`hint`): taken when free, else minted as ever — never refused.
+      const hint = options.hint;
+      if (requested === undefined && !minted.size && validId(hint) && mayAsk(hint) && !held(hint)) return minted.add(hint), hint;
       const base = prefix ? `${prefix}:${slug(label)}` : slug(label);
       /*
        * AN ID THAT SAYS NOTHING OF WHAT THE SEAT MAY NOT SEE (FR-55). Stepping

@@ -7,7 +7,6 @@ import {
   REMOTE_PRESENCE_TTL_MS,
   samePresence,
   Store,
-  takesAnId,
   tickEachDay,
   FORMATS,
   WIRE_PROTOCOL,
@@ -1527,16 +1526,18 @@ async function opening<S extends AnySchema>(
       ...applyOptions,
     });
     /*
-     * THE SAME RECORD ON THE SERVER (Roadmap f-1-0-client-ids). A call that
-     * made a record here goes with the id it was made with, so the server
-     * makes it under that id and the rebase keeps it: a press after it that
-     * names the record — still pending, or offline — names the one the
-     * server holds. An id somebody took meanwhile is refused there, said,
-     * and the change taken back; never renamed under the person.
+     * THE SAME RECORD ON THE SERVER, WHEN IT CAN BE (Roadmap f-1-0-client-ids).
+     * A call that made a record here under an id this page minted — nobody
+     * asked for one — says that id as a hint (`mintedHint`): the server
+     * makes the record under it when it is free, so the rebase keeps it,
+     * and mints as ever when somebody took it meanwhile (`-2`), a later
+     * call of the same change following it there. Two people adding
+     * "Groceries" at once both land. An `id` the caller asked for is a
+     * demand, sent as it was, and refused when taken.
      */
     const calls = asItWas.map((call, at) => {
-      const id = result.minted?.[at];
-      return id === undefined || call.args?.["id"] !== undefined || !takesAnId(store.mutation(call.name)) ? call : { ...call, args: { ...call.args, id } };
+      const hint = result.minted?.[at];
+      return hint === undefined || call.args?.["id"] !== undefined ? call : { ...call, mintedHint: hint };
     });
     pending.push(result.batch);
     provisional.add(result.batch);

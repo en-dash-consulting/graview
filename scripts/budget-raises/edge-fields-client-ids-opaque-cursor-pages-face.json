@@ -1,6 +1,6 @@
 {
   "budget": "the pages face alone",
-  "minified": 1450,
-  "gzipped": 570,
-  "note": "Raised when three 1.0 foundations landed: a link's own id and data are kept and folded (`EDGE_FIELDS`, the graph's id index and its checks on a write), every creating act honors a caller's id and `openRemote` sends the id a record was made with, and the wire says a position as an opaque cursor (`cursorAt`, `seqAt`). The graph, the store and the remote draw the face, so this is up front. Measured at 647_320 / 238_234 against a budget of 645_877 / 237_668: 1_443 / 566 more."
+  "minified": 1800,
+  "gzipped": 730,
+  "note": "Raised when three 1.0 foundations landed: a link's own id and data are kept and folded (`EDGE_FIELDS`, the graph's id index and its checks on a write), every creating act honors a caller's id and `openRemote` sends the id a record was made with, and the wire says a position as an opaque cursor (`cursorAt`, `seqAt`). The graph, the store and the remote draw the face, so this is up front. Measured at 647_667 / 238_386 against a budget of 645_877 / 237_668: 1_790 / 718 more."
 }

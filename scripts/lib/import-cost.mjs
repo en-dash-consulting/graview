@@ -70,7 +70,7 @@ export const WORKER_SHAPED = join(ROOT, "scripts/fixtures/cloud-worker-imports.m
  *
  * Bytes were 2_000_000 until three 1.0 foundations — a link's own id and
  * data, a caller's id honored by every creating act, an opaque cursor on
- * the wire — took the worker from 1_999_926 to 2_003_215 (3_289 more, in
+ * the wire — took the worker from 1_999_926 to 2_003_930 (4_004 more, in
  * the graph, the store and the live protocol a worker serves).
  */
 export const WORKER_BUDGET = { cpu: 75, bytes: 2_004_000, zod: 260_000 };

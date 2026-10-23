@@ -1453,8 +1453,18 @@ export class Store<S extends AnySchema> {
     /* The first record each call made, for a later call that names it (FR-193). */
     const madeIds: (string | undefined)[] = [];
     const minted: (string | undefined)[] = [];
+    /*
+     * A CLIENT'S OWN ID, A HINT (Roadmap f-1-0-client-ids). A call it applied
+     * first says the id it minted there (`mintedHint`); the record is made
+     * under it when it is free, and minted as ever when somebody holds it —
+     * and a later call of this change naming the hint names the record made.
+     */
+    const renamed = new Map<string, string>();
+    const rename = (value: unknown): unknown => (typeof value === "string" ? (renamed.get(value) ?? value) : Array.isArray(value) ? value.map(rename) : value);
     try {
-      for (const [at, asked] of calls.entries()) {
+      for (const [at, sent] of calls.entries()) {
+        const { mintedHint: hint, ...plain } = sent;
+        const asked = renamed.size ? { ...plain, args: Object.fromEntries(Object.entries(plain.args).map(([key, value]) => [key, rename(value)])) } : plain;
         const call = naming[at] ? resolveMade(asked, madeIds, at) : asked;
         if (naming[at]) (permitted(call), declared(call));
         const definition = this.mutation(call.name);
@@ -1462,12 +1472,13 @@ export class Store<S extends AnySchema> {
         if (missing) throw missing;
         let compiled: ReturnType<typeof compileMutation>;
         try {
-          compiled = compileMutation(this.graph, definition, call.args, this.sighted(author as Principal));
+          compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(author as Principal), hint });
         } catch (error) {
           // A press the act's own input refused: the watch tells a form filled wrongly from an act offered whole.
           if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal(error, author.id);
           throw error;
         }
+        if (hint !== undefined && compiled.firstMinted !== undefined && compiled.firstMinted !== hint) renamed.set(hint, compiled.firstMinted);
         if (automated) {
           const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(author), { declaration: !this.suggesting });
           if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, author.id);
