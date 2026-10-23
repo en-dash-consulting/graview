@@ -200,7 +200,9 @@ async function buildHost() {
         const org = asked.get("doc") === "strengths";
         const changed = asked.get("doc") === "changes";
         const dollars = asked.get("doc") === "money";
-        const compiled = compileDocumentWithoutCheck(fab ? discography : laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? money : reviewed ? review : hall, { today: () => "2026-09-01" });
+        /* A document as a store that sorts its keys keeps it: the deal's fields alphabetical, its name among them. */
+        const kept = asked.get("sorted") === "1" ? { ...money, kinds: { ...money.kinds, deal: { ...money.kinds.deal, fields: Object.fromEntries(Object.entries(money.kinds.deal.fields).sort(([a], [b]) => a.localeCompare(b))) } } } : money;
+        const compiled = compileDocumentWithoutCheck(fab ? discography : laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? kept : reviewed ? review : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
@@ -777,6 +779,14 @@ try {
       });
     }
     await form.close();
+    // A form that makes a deal asks its name first, then what must be answered — though the document keeps its fields sorted.
+    const sorted = await open(`doc=money&sorted=1&face=pages&path=${encodeURIComponent("/deals")}`, { width: 1280, height: 900 });
+    if (!(await sorted.locator('[data-testid="form-add-deal"]').isVisible().catch(() => false))) await sorted.click('[data-testid="act-open-add-deal"]').catch(() => {});
+    await sorted.waitForSelector('[data-testid="form-add-deal"] [name]', { timeout: 10_000 }).catch(() => {});
+    const asked = await sorted.evaluate(() => [...document.querySelectorAll('[data-testid="form-add-deal"] [data-graview-part="field"]')].map((field) => field.querySelector('[data-graview-part="label"]')?.textContent?.replace(/\s*\*\s*$/, "").trim() ?? null));
+    await sorted.close();
+    report.checks.aCreatingFormAsksTheNameFirstThoughItsFieldsAreKeptSorted = { asked, ok: asked[0] === "Name" && asked[1] === "Amount" };
+
     report.checks.aMoneyFormShowsItsCurrencyAndTakesAnAmountAsWritten = { box, made, ok: box.type === "text" && box.mode === "decimal" && box.symbol === "$" && box.placeholder === "1,250.00" && made === "said" };
   }
 

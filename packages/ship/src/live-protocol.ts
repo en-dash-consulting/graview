@@ -1,3 +1,4 @@
+import { lowerFirst } from "@graview/core/words";
 import {
   FieldRevisions,
   InvalidArguments,
@@ -482,7 +483,7 @@ export function wireRefusalOf(store: Store<AnySchema>, error: unknown): WireRefu
   if (error instanceof InvalidArguments) {
     const mutation = store.allMutations().find((one) => one.name === error.mutation);
     const said = error.issues.map((issue) => {
-      const message = issue.message.replace(/^./, (first) => first.toLowerCase());
+      const message = lowerFirst(issue.message);
       return issue.path.length > 0 ? `${argumentWords(store.schema, mutation, String(issue.path[0])).label} — ${message}` : message;
     });
     return { ...refusal, sentence: `“${mutation?.title ?? error.mutation}” was not made: ${said.join("; ")}.` };

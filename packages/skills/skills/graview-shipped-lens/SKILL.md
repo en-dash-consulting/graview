@@ -103,13 +103,16 @@ not draw and what it ignores:
   date or its `range` not one it opens at, it stands on what is not a
   kind, or its title has nothing to make an address of.
 - `lens-not-shipped` — a title on a lens the framework does not draw;
-  `lens-title-taken` — two pictures on one kind under one title;
+  `lens-title-taken` — two pictures on one kind under one title. `add-lens`
+  names the lens that holds the title, hidden or not (hiding frees no
+  title); `"replace": "<that title>"` draws yours in its place, kept off
+  the lists if that one was, until set-lens-hidden shows it;
   `lens-options-not-an-object`, `lens-sort`, `lens-horizon`, `lens-create`
   and `lens-hidden-untitled` say the rest.
 - The bindings themselves: `lens-role-unbound`, `lens-binding-missing-field`
   and `lens-binding-undeclared-kind`.
 
-`graview describe` lists the places that draw. Report the output, then open
+`graview describe` lists the places that draw, saying which are hidden. Report the output, then open
 each place on both faces and look.
 
 ## What the check cannot see

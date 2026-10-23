@@ -1,3 +1,4 @@
+import { lowerFirst } from "../capital.js";
 /*
  * A RULE, READ BACK AS ITS SHAPE (the parts are `../invariants/line.ts`).
  *
@@ -71,7 +72,7 @@ const isComparison = (e: Expr): e is Extract<Expr, { t: "binary" }> => e.t === "
 
 /** "Target margin" inside a line is "target margin"; "AI uses" stays as it is. */
 function inLine(text: string): string {
-  return text.length > 1 && text[1] === text[1]!.toUpperCase() && /[A-Z]/.test(text[1]!) ? text : text.charAt(0).toLowerCase() + text.slice(1);
+  return lowerFirst(text);
 }
 
 interface Definition {

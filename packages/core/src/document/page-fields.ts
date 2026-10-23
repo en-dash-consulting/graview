@@ -55,3 +55,21 @@ export function withoutOnPage(page: KindSpec["page"], field: string): KindSpec["
 export function pageNames(page: KindSpec["page"], field: string): boolean {
   return Boolean(page && ((page.fields ?? []).includes(field) || (page.groups ?? []).some((group) => group.fields.includes(field))));
 }
+
+/**
+ * THE ORDER A FORM THAT MAKES ONE OF A KIND ASKS IN. "Add a threat" asked
+ * Affected versions, Aliases, Concern, Cvss, Disclosed… — the fields as a
+ * stored document had sorted them — with the name it must be given buried
+ * among them. A form asks first for what names the record (`named`, the
+ * fields its label is said from), then for every other field it must be
+ * answered, then for the rest; each run in the order the kind's page names
+ * them (`set-page-fields`: its fields, then its groups'), then as declared.
+ */
+export function askedOrder(spec: Pick<KindSpec, "fields" | "page">, named: readonly string[] = []): readonly string[] {
+  const declared = Object.keys(spec.fields);
+  const paged = [...(spec.page?.fields ?? []), ...(spec.page?.groups ?? []).flatMap((group) => group.fields)].filter((field) => Object.hasOwn(spec.fields, field));
+  const ordered = [...new Set([...paged, ...declared])];
+  const must = (field: string) => Boolean(spec.fields[field]!.required) && spec.fields[field]!.default === undefined;
+  const naming = named.filter((field) => Object.hasOwn(spec.fields, field));
+  return [...new Set([...naming, ...ordered.filter(must), ...ordered])];
+}

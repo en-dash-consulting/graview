@@ -91,6 +91,44 @@ export interface DescribedFact {
   readonly refused?: string;
 }
 
+/**
+ * ONE FIELD OF A FORM, as the form asks it: its label, whether it must be
+ * answered (drawn with a star), what it takes — "text", "long text",
+ * "date", "date and time", "number", "amount", "choice", "yes or no",
+ * "record", "picture", "list of …", "group" and the rest — and, for a
+ * choice, its choices in the words the form offers them.
+ */
+export interface DescribedFormField {
+  /** The argument it answers. */
+  readonly name: string;
+  readonly label: string;
+  readonly required: boolean;
+  readonly input: string;
+  readonly choices?: readonly string[];
+  /** The kinds a record picker picks from. */
+  readonly kinds?: readonly string[];
+  readonly min?: number;
+  readonly max?: number;
+  /** A group's own fields. */
+  readonly fields?: readonly DescribedFormField[];
+}
+
+/**
+ * A FORM A PLACE OFFERS: an act that makes a record where its kind's
+ * records are listed ("Add a threat"), or a visitor's form (`forms.<name>`,
+ * at `/forms/<name>`) — its fields in the order it asks them.
+ */
+export interface DescribedForm {
+  /** The act it runs. */
+  readonly act: string;
+  readonly title: string;
+  /** The words on its button. */
+  readonly submit: string;
+  /** The visitor form's name, where it is one. */
+  readonly visitor?: string;
+  readonly fields: readonly DescribedFormField[];
+}
+
 export interface PlaceDescription {
   /** On the home: what its masthead says (FR-125). */
   readonly masthead?: DescribedMasthead;
@@ -106,8 +144,10 @@ export interface PlaceDescription {
   readonly width: number;
   readonly variant: "phone" | "wide";
   /** What draws it: the app's blocks, the framework's derived page, a shipped lens, a record's page, or a worker view run headless (FR-95). */
-  readonly drawnBy: "blocks" | "derived" | "record" | `lens:${string}` | `view:${string}`;
+  readonly drawnBy: "blocks" | "derived" | "record" | "form" | `lens:${string}` | `view:${string}`;
   readonly parts: readonly DescribedPart[];
+  /** The forms it offers this seat, each with its fields in the order asked: a kind's list its creating acts', a visitor form's place its own. */
+  readonly forms?: readonly DescribedForm[];
   readonly problems: readonly DescribedProblem[];
   /** The same, as plain text a chat can quote. */
   readonly text: string;

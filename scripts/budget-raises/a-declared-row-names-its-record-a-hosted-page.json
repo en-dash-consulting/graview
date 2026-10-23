@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 896,
+  "gzipped": 448,
+  "changeset": "a-declared-row-names-its-record.md",
+  "note": "Raised when a declared row came to name its record where its blocks do not (`blocksName`, the row drawing the record's name first) and a key with no label came to say an abbreviation as its letters (`humanizeField`'s list: CVSS, URL, ID), both up front. 896 / 448 more than before them (594_636 / 206_680): measured at 595_532 / 207_128 (0.9 KB)."
+}

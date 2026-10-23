@@ -144,6 +144,13 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const whole = PageView !== undefined && replacesPage(ownPage);
   // A file field that holds nothing yet is where one is put (FR-163): drawn where the face changes values in place and an act may write it.
   const unfilled = inPlace && fileFieldsOf(definition).length > 0;
+  /*
+   * WHERE IT IS SEEN: the pictures of its kind, or across it — never one
+   * kept off the lists (`set-lens-hidden`). A lens hidden is reached by its
+   * address and a link, and listed nowhere; a record's page had listed the
+   * hidden ones first, ahead of the pictures the app meant to show.
+   */
+  const seenIn = placesOf(context).filter((place) => !place.hidden && (place.kind === facts.kind || place.across === facts.kind));
 
   return (
     <PageMain context={context}>
@@ -169,13 +176,11 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             style={{ ...button, ...quiet, justifySelf: "start" }}
           />
         ) : null}
-        {placesOf(context).some((place) => place.kind === facts.kind || place.across === facts.kind) ? (
+        {seenIn.length > 0 ? (
           /* WHERE IT IS SEEN: the pictures this kind of thing appears in, each as a page and as a stop in the scene. */
           <p style={{ ...quiet, margin: 0 }} data-testid="seen-in">
             Seen in:{" "}
-            {placesOf(context)
-              .filter((place) => place.kind === facts.kind || place.across === facts.kind)
-              .map((place, index) => (
+            {seenIn.map((place, index) => (
                 <span key={placeKey(place)}>
                   {index > 0 ? <span aria-hidden="true"> · </span> : null}
                   <Link to={pathOfPlace(context, place)} style={link}>

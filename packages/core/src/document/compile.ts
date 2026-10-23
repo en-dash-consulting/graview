@@ -14,6 +14,7 @@ import {
   type EffectSpec,
   type FieldSpec,
   type GraviewDocument,
+  type KindSpec,
   type ValueSpec,
 } from "./schema.js";
 import { linkedEdges, localEdges, reachesAnotherApp } from "../schema/linked.js";
@@ -24,7 +25,7 @@ import { homeOf, validateViews, viewsOf } from "./views.js";
 import { farEnd } from "./far-end.js";
 import { parsedComputed, workedOutAlone } from "./computed.js";
 import { durationsOf } from "./durations.js";
-import { pageFieldFindings } from "./page-fields.js";
+import { askedOrder, pageFieldFindings } from "./page-fields.js";
 import {
   build,
   COMPILED_FORMAT,
@@ -383,6 +384,12 @@ function validate(document: GraviewDocument): Finding[] {
   return findings;
 }
 
+/** The fields a kind's records are named by: those its label reads, in the order it reads them, else the field it is named by unsaid. */
+function namingFields(spec: KindSpec): readonly string[] {
+  if (!spec.label) return [defaultLabelField(spec) ?? []].flat();
+  return [...spec.label.matchAll(/\{\s*([A-Za-z_][A-Za-z0-9_]*)/g)].map((match) => match[1]!);
+}
+
 /** The arguments an act asks for: declared ones, then whatever its effects reference. */
 function argsOf(act: ActSpec, effects: readonly ActEffect[], document: GraviewDocument, edges: Map<string, EdgeInfo>): Map<string, ArgPlan> {
   const args = new Map<string, ArgPlan>();
@@ -415,7 +422,10 @@ function argsOf(act: ActSpec, effects: readonly ActEffect[], document: GraviewDo
   for (const effect of effects) {
     if ("create" in effect) {
       const kind = document.kinds[effect.create];
-      for (const [field, value] of Object.entries(effect.set ?? {})) {
+      // Asked in the order a form that makes one asks (`askedOrder`): what names it, what must be answered, then the rest.
+      const order = kind ? askedOrder(kind, namingFields(kind)) : [];
+      const rank = (field: string) => (order.includes(field) ? order.indexOf(field) : order.length);
+      for (const [field, value] of Object.entries(effect.set ?? {}).sort(([a], [b]) => rank(a) - rank(b))) {
         const arg = refName(value);
         const spec = kind?.fields[field];
         if (arg && spec) {

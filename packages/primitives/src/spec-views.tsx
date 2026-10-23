@@ -1,5 +1,5 @@
 import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
-import { blockContextFor, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
+import { blockContextFor, blocksName, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
 import type { ViewSlot, ViewSpecsByKind } from "@graview/core/document";
 import { isDefaultView, useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { createContext, Fragment, Suspense, useContext, useRef, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
@@ -651,12 +651,34 @@ export function pageSays(view: unknown, node: AnyGraphNode, graph: GraphReader):
   return typeof view === "function" ? (view as SaysWhat).says?.(node, graph) : undefined;
 }
 
-/** A row: one line, named for assistive technology by the record's own label. */
+/**
+ * A row: one line, named for assistive technology by the record's own label —
+ * and led by it, drawn, where its blocks name it nowhere (`blocksName`): a row
+ * of `{severity} · {status}` alone was a link to a record nobody could tell.
+ */
 function SpecRow({ blocks, node, selected }: { readonly blocks: readonly SpecBlock[]; readonly node: AnyGraphNode; readonly selected: boolean }) {
   const { store } = useGraview();
+  const label = labelOf(store.schema.tryDefinition(node.kind), node);
+  const ctx = useSpecContext(node, "row");
+  const resolved = resolveBlocks(blocks, ctx);
+  const linked = useContext(NamedByItsLink);
   return (
-    <div title={labelOf(store.schema.tryDefinition(node.kind), node)} style={{ minWidth: 0, maxWidth: "100%" }}>
-      <SpecView slot="row" blocks={blocks} node={node} selected={selected} />
+    <div title={label} style={{ minWidth: 0, maxWidth: "100%" }}>
+      <div
+        className="graview-spec graview-spec-row"
+        data-graview-spec="row"
+        data-graview-kind={node.kind}
+        // A row that lists records or says a figure is more than one line, and is drawn as a block rather than a pill.
+        {...(blocks.some(isTallBlock) ? { "data-graview-tall": "" } : {})}
+        {...(selected ? { "data-selected": "" } : {})}
+      >
+        {blocksName(resolved, label) ? null : (
+          <strong className="graview-spec-title" data-graview-row-name="" {...(linked !== null && sameWords(linked, label) ? { "aria-hidden": true } : {})}>
+            {label}
+          </strong>
+        )}
+        <Viewed blocks={resolved} ctx={ctx} view={`${node.kind}.row`} />
+      </div>
     </div>
   );
 }

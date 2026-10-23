@@ -1,6 +1,6 @@
-import { derivedActOf, relationActTitles } from "../mutations/derived-names.js";
+import { derivedActOf, ownKindWords, relationActTitles } from "../mutations/derived-names.js";
 import { documentRelationActOf } from "./relation-acts.js";
-import { capitalize, listed } from "../capital.js";
+import { capitalize, listed, lowerFirst } from "../capital.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
 import type { GraviewDocument } from "./schema.js";
 
@@ -25,7 +25,7 @@ const withA = (noun: string) => `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`
 export const nounWords = (kinds: Kinds, kind: string): string => kinds[kind]?.noun ?? spoken(kind);
 export function pluralWords(kinds: Kinds, kind: string): string {
   const plural = kinds[kind]?.plural;
-  return plural ? plural.charAt(0).toLowerCase() + plural.slice(1) : `${spoken(kind)}s`;
+  return plural ? lowerFirst(plural) : `${spoken(kind)}s`;
 }
 
 /** The one kind whose records are the people who sign in, when exactly one says so. */
@@ -52,7 +52,15 @@ export function actWords(document: GraviewDocument, act: string): string {
     const edge = document.kinds[relation.kind]!.edges![relation.relation]!;
     const to = reaches(edge.to);
     const shared = edges.some(([other, spec]) => other !== relation.relation && reaches(spec.to) === to);
-    return quoted(relationActTitles(relation.act, { to, from: nounWords(document.kinds, relation.kind), one: edge.cardinality === "one", also: shared ? spoken(relation.relation).trim() : undefined }).title);
+    const own = ownKindWords(relation.kind, relation.relation, edge, (name) => spoken(name).trim());
+    return quoted(
+      relationActTitles(relation.act, {
+        to: own && "to" in own ? own.to : to,
+        from: nounWords(document.kinds, relation.kind),
+        one: edge.cardinality === "one",
+        also: own && "also" in own ? own.also : shared && !own ? spoken(relation.relation).trim() : undefined,
+      }).title,
+    );
   }
   return quoted(act);
 }

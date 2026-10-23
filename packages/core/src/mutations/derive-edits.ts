@@ -1,3 +1,4 @@
+import { lowerFirst } from "../capital.js";
 import * as z from "../schema/zod.js";
 import { filesOf } from "../schema/files.js";
 import { amountOf } from "../schema/amount-mark.js";
@@ -174,6 +175,9 @@ export function deriveEditMutations<S extends AnySchema>(
     if (taken.has(name)) continue;
     const fields = unwrittenFields(schema, mutations, kind);
     if (fields.length === 0) continue;
+    // The fields it leaves to another act, and which: what a refusal of one names (`writtenBy`).
+    const writers = fieldWriters(schema, mutations).get(kind);
+    const writtenBy = Object.fromEntries(settableFields(definition).flatMap((field) => (writers?.get(field)?.length ? [[field, writers.get(field)!]] : [])));
     const shape = definition.fields.shape as unknown as Record<string, z.ZodMiniType>;
     const noun = nounOf(definition, kind);
     const said = fields.map((field) => fieldWords(definition, field).toLowerCase());
@@ -185,6 +189,7 @@ export function deriveEditMutations<S extends AnySchema>(
       description: `Change what was set when this ${noun} was made: ${said.join(", ")}.`,
       subject: { kinds: [kind], arg: "id" },
       writes: fields,
+      ...(Object.keys(writtenBy).length > 0 ? { writtenBy } : {}),
       // Strict (FR-110): an argument it does not take is refused, naming those it does — never dropped, leaving nothing to change.
       input: z.strictObject({
         id: refTo([kind]),
@@ -232,7 +237,7 @@ function editSaid(definition: AnyNodeDefinition, shape: Record<string, unknown>,
       const date = repeatedBy(field);
       const repeat = date !== undefined && date in shape;
       const word = fieldWords(definition, repeat ? date : field);
-      const named = word === word.toUpperCase() ? word : word.charAt(0).toLowerCase() + word.slice(1);
+      const named = word === word.toUpperCase() ? word : lowerFirst(word);
       return `the ${named}${at === 0 ? ` of ${label}` : ""} to ${repeat ? (value ? `repeat ${everySaid(value as never)}` : "stop repeating") : valueSaid(definition, shape[field], field, value)}`;
     });
   return said.length === 0 ? `Changed nothing on ${label}` : `Changed ${said.length > 1 ? `${said.slice(0, -1).join(", ")} and ${said.at(-1)}` : said[0]}`;

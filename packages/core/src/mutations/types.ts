@@ -139,6 +139,13 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    */
   readonly writesOther?: Readonly<Record<string, readonly string[]>>;
   /**
+   * Fields of its subject this act does not take because another act
+   * writes them, by field: the acts that do. A derived edit carries it, so
+   * an edit given `whatToDo` is refused with "whatToDo is set by
+   * set-verdict" rather than only the arguments it takes.
+   */
+  readonly writtenBy?: Readonly<Record<string, readonly string[]>>;
+  /**
    * Fields of the SUBJECT this mutation sets to a fixed value, whatever it
    * is told: `mark-fixed` sets `status` to `"fixed"`. A named step, read as
    * one — a status board offers it as the move to that value's column

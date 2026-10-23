@@ -1532,7 +1532,7 @@ main.page > section.tour-intro { padding-top: 64px; }
 <li><strong>Declare the form.</strong> In code (<code>defineApp({ …, forms })</code>) or a document's <code>forms</code>:</li>
 </ol>
 <p>``<code>json    "forms": {      "rsvp": {        "act": "add-guest",        "title": "RSVP",        "intro": "Tell us whether you can come on June 14.",        "fields": ["name", "email", "coming", "note"],        "say": "The hosts will write to you a week before."      }    }    </code>``</p>
-<p><code>act</code> makes a record or acts on none — a visitor is shown no record to    pick. <code>fields</code> is the order asked; unsaid, every argument a visitor    could fill. <code>say</code> is what the visitor reads under "Received — thank    you." <code>submit</code> is the button (the act's title, unsaid). <code>role</code> is the    role the visitor holds: <code>visitor</code>, unsaid.</p>
+<p><code>act</code> makes a record or acts on none — a visitor is shown no record to    pick. <code>fields</code> is the order asked; unsaid, every argument a visitor    could fill, its name first and then what must be answered. <code>say</code> is what the visitor reads under "Received — thank    you." <code>submit</code> is the button (the act's title, unsaid). <code>role</code> is the    role the visitor holds: <code>visitor</code>, unsaid.</p>
 <ol>
 <li><strong>Grant the role the act, and name it in no sight.</strong></li>
 </ol>
@@ -1558,6 +1558,7 @@ main.page > section.tour-intro { padding-top: 64px; }
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">npx graview check ./app.gdd.json</code></pre></div>
 <p>A form is held to what a visitor can do: <code>form-unknown-act</code>, <code>form-act-on-a-record</code>, <code>form-without-sight</code> (no policy, or one that says nothing of who sees what: the visitor would be served every record), <code>form-act-not-granted</code>, <code>form-field-unknown</code>, <code>form-omits-required</code>, <code>form-field-unfillable</code> (a required picker over records the visitor is not served, or a field their sight keeps from them); and as warnings, <code>form-visitor-sees</code> (a sight serves the visitor a kind — to everybody, or by name where no picker asks for it) and <code>form-visitor-may-more</code> (the role may run acts no form opens). Report what it said.</p>
+<p><strong>Read what it asks.</strong> <code>describe_place</code> with <code>forms/&lt;name&gt;</code> (or <code>graview describe &lt;entry&gt; --place forms/&lt;name&gt;</code>) says each field in the order asked: its label, a star where it must be answered, what it takes and its choices — as the visitor is asked it.</p>
 <p><strong>And try it.</strong> Open <code>/forms/&lt;name&gt;</code> under <code>graview preview</code>, answer, and read the store as the host: the record is there, its author "a visitor via the … form". Then read <code>store.seenBy(visitor).snapshot()</code> — it should be empty — and the answers the page was sent should name no record.</p>
 <h3>What the check cannot see</h3>
 <ul>

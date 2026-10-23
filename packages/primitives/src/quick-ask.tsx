@@ -56,7 +56,8 @@ const fits = (label: string, words: readonly string[]): boolean => {
   const said = folded(label);
   return words.every((word) => said.includes(word));
 };
-const sentenceCase = (text: string): string => (text ? `${text[0]!.toLowerCase()}${text.slice(1)}` : text);
+// Never an acronym's: "CVEs open" stays, never "cVEs open".
+const sentenceCase = (text: string): string => (text && !/^.\p{Lu}/u.test(text) ? `${text[0]!.toLowerCase()}${text.slice(1)}` : text);
 
 /** How many of each kind of row the bar lists. */
 const MOST = { act: 4, show: 3, place: 3, record: 4 } as const;

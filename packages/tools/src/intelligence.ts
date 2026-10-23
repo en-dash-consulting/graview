@@ -2,6 +2,7 @@ import {
   pluralOf,
   labelOf,
   nodeRefArgs,
+  numbersSpelled,
   type AnySchema,
   type MutationCall,
   type Store,
@@ -418,7 +419,7 @@ export function describeProposal<S extends AnySchema>(
   if (mutation?.describe) {
     const resolved = resolveProposal(store, proposal);
     const parsed = (mutation.input as { safeParse?: (value: unknown) => { success: boolean; data?: unknown } })
-      .safeParse?.(resolved.args);
+      .safeParse?.(numbersSpelled(mutation.input, resolved.args));
     if (parsed?.success) {
       try {
         return mutation.describe(parsed.data, store.graph);

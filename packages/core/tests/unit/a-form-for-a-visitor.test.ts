@@ -61,7 +61,8 @@ describe("a form for a visitor, declared", () => {
     const document = copy();
     document.acts!["seat-guest"] = { title: "Seat yourself", description: "Answer and pick a table.", creates: "guest", effects: [{ connect: "table", from: "$new", to: "$table" }], args: { table: { type: "string" } } } as never;
     delete (document.forms!.rsvp as { fields?: unknown }).fields;
-    expect(visitorForm(compiled(document), "rsvp")!.fields.map((field) => field.name)).toEqual(["name", "email", "coming", "note"]);
+    // In the order a form that makes a guest asks: the name, what must be answered, then the rest.
+    expect(visitorForm(compiled(document), "rsvp")!.fields.map((field) => field.name)).toEqual(["name", "coming", "email", "note"]);
   });
 
   it("is refused by the document's shape when it says a key a form does not have", () => {
