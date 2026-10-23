@@ -1669,6 +1669,31 @@ main.landing footer { border-top-color: var(--rule-2); }
 @media (max-width: 1000px) { .landing .recipe-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .built-list { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 480px) { .landing .recipe-list { grid-template-columns: minmax(0, 1fr); } }
+
+/*
+ * THE BOARD ON THE FIRST SCREEN. The run ends on the departures board, and
+ * at a desk's height it began below the fold: a three-line headline and two
+ * tall doors took the whole screen. Two lines, one row of controls under
+ * the prompt, and the stage close under the doors.
+ */
+main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: var(--s4); }
+.ah-head { gap: var(--s2); }
+.ah-head h1 { font-size: clamp(38px, 4.1vw, 60px); max-width: 24ch; }
+.ah-head .lede { font-size: clamp(17px, 1.4vw, 19px); }
+.doors { margin-top: 0; }
+.door { padding: 20px 24px 22px; gap: 14px; }
+.door .prompt-foot { flex-wrap: nowrap; }
+.door .recipe-tabs { flex-wrap: nowrap; }
+.door .copy-prompt { margin-left: auto; flex: 0 0 auto; }
+.door .ah-diy { display: grid; gap: 6px; }
+.door .ah-diy .diy-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.door .ah-diy code { font-size: var(--t-cap); color: var(--ink); }
+.door .ah-diy .copy { margin-left: 4px; min-height: 26px; padding: 0 10px; font-size: 12px; color: var(--ink-2); background: none; border-color: var(--rule); }
+.door .ah-diy .copy:hover { color: var(--ink); border-color: var(--ink-3); background: none; }
+.door-cloud .door-act { margin-top: 0; }
+@media (max-width: 1180px) {
+  .door .prompt-foot, .door .recipe-tabs { flex-wrap: wrap; }
+}
 /* site-css:end */
 </style>
 
@@ -1724,7 +1749,7 @@ main.landing footer { border-top-color: var(--rule-2); }
           </div>
         </div>
         <p class="ah-diy">
-          <span>Claude Cowork, Claude Code, Codex, Cursor: any agent that can run a command.</span>
+          <span>For Claude Cowork, Claude Code, Codex or Cursor.</span>
           <span class="diy-line">Or yourself: <code>npm create graview@latest</code> <button type="button" class="copy" data-copy="npm create graview@latest">Copy</button></span>
         </p>
       </div>
@@ -1760,7 +1785,7 @@ main.landing footer { border-top-color: var(--rule-2); }
           <li data-step="preview"><code>graview preview</code><span>The app, from altitude.</span></li>
           <li data-step="generated" class="said"><b>The interface is generated.</b><span>A list per kind, a page per module, a form per act. The agent wrote none of it.</span></li>
           <li data-step="ask" class="asked">
-            <span class="ask-bar"><kbd>&#8984;K</kbd><span class="ask-typed" id="hero-ask-typed">Make the modules page look like an airport departures board.</span></span>
+            <span class="ask-bar"><span class="ask-typed" id="hero-ask-typed">Make the modules page look like an airport departures board.</span></span>
             <span>Answered with a view: the modules, as a departures board.</span>
           </li>
         </ol>
@@ -2092,20 +2117,21 @@ main.landing footer { border-top-color: var(--rule-2); }
     run.setAttribute("data-running", "");
     typed.textContent = "";
     at("declare");
-    later(900, function () { at("check"); });
-    later(1900, function () { at("problem"); });
-    later(3300, function () { at("repair"); repair(); });
-    later(4700, function () { at("preview"); });
-    later(6900, function () { at("generated"); generated(); });
-    later(9700, function () {
+    /* The board is what the run is for: it lands in about five seconds, every step said on the way. */
+    later(450, function () { at("check"); });
+    later(950, function () { at("problem"); });
+    later(1650, function () { at("repair"); repair(); });
+    later(2300, function () { at("preview"); });
+    later(3000, function () { at("generated"); generated(); });
+    later(4200, function () {
       at("ask");
       typed.setAttribute("data-typing", "");
       var i = 0;
       (function key() {
-        i += 1;
+        i += 3;
         typed.textContent = ASK.slice(0, i);
-        if (i < ASK.length) later(34, key);
-        else later(700, answered);
+        if (i < ASK.length) later(24, key);
+        else later(250, answered);
       })();
     });
   }
@@ -2127,13 +2153,13 @@ main.landing footer { border-top-color: var(--rule-2); }
   host.addEventListener("graview:mounted", function (event) {
     handle = event.detail && event.detail.handle;
     if (!handle) return;
-    handle.drawn().then(function () { if (seen) later(1600, play); });
+    handle.drawn().then(function () { if (seen) later(500, play); });
   });
   new IntersectionObserver(function (entries, observer) {
     if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
     seen = true;
     observer.disconnect();
-    if (handle) later(1600, play);
+    if (handle) later(500, play);
   }, { threshold: 0.2 }).observe(host);
   /* The reader's own hands on the app: the run lets go. */
   host.addEventListener("pointerdown", stop);
@@ -2146,7 +2172,7 @@ main.landing footer { border-top-color: var(--rule-2); }
       host.replaceChildren();
       handle = api().mountRecipe(host, "docs", undefined, undefined, LABEL, "dark");
     });
-    handle.drawn().then(function () { later(900, play); });
+    handle.drawn().then(function () { later(300, play); });
   });
 })();
 </script>
@@ -2228,6 +2254,7 @@ main.landing footer { border-top-color: var(--rule-2); }
     <span><strong data-number="tests">5902</strong> named tests, green on every push</span>
     <span><a href="tour.html" style="text-decoration: none;">The tour</a> · <a href="progression.html" style="text-decoration: none;">The garden, grown</a> · <a href="docs/index.html" style="text-decoration: none;">Docs</a> · <a href="docs/releases.html" style="text-decoration: none;">Releases</a></span>
     <span>This site is a Graview app: <a href="docs/site.html" style="text-decoration: none;">open it</a> · <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json" style="text-decoration: none;">its declaration</a></span>
+    <span>Planned and built with <a href="https://n-dx.dev" style="text-decoration: none;">n-dx</a></span>
     <span style="flex: 1 1 auto;"></span>
     <span><a href="https://github.com/en-dash-consulting/graview" style="text-decoration: none;">GitHub</a> · <a href="https://www.npmjs.com/package/graview" style="text-decoration: none;">npm</a> · <a href="https://graview.cloud" style="text-decoration: none;">Graview Cloud</a> · <a href="https://endash.us" style="text-decoration: none;">En&nbsp;Dash</a>, Richmond, VA, and across the US</span>
   </footer>
