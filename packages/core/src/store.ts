@@ -522,6 +522,9 @@ export class UnknownMutationError extends GraphError {
   }
 }
 
+/** The batch each op was in, by op id: what an undo replayed after them reads its targets' batches from. */
+const batchesOf = (ops: readonly Operation[]): ReadonlyMap<string, string> => new Map(ops.map((op) => [op.id, op.batch]));
+
 /**
  * A tag nobody else's store is using, for this store's batch ids. Drawn
  * from the platform's random source where there is one, which every page
@@ -2147,11 +2150,12 @@ export class Store<S extends AnySchema> {
 
       // 3. What is still pending, again, on top: its typing carried over what landed (`@graview/core/typing`).
       const typed = TYPING.carried?.(tail, landed, change.pending);
+      const wasIn = batchesOf(tail);
       for (const batch of change.pending) {
         const ops = tail.filter((op) => op.batch === batch);
         if (ops.length === 0) continue;
         try {
-          replayed.push(...this.replay(batch, ops, typed?.get(batch)));
+          replayed.push(...this.replay(batch, ops, typed?.get(batch), wasIn));
         } catch (error) {
           refused.push({ batch, error });
         }
@@ -2223,7 +2227,7 @@ export class Store<S extends AnySchema> {
         const ops = tails.get(batch) ?? [];
         if (ops.length === 0) continue;
         try {
-          replayed.push(...this.replay(batch, ops));
+          replayed.push(...this.replay(batch, ops, undefined, batchesOf(held)));
         } catch (error) {
           refused.push({ batch, error });
         }
@@ -2245,7 +2249,7 @@ export class Store<S extends AnySchema> {
   }
 
   /** One pending batch, applied again as it was made: its calls (or the ones its typing is carried to), its undo, or its primitives. */
-  private replay(batch: string, ops: readonly Operation[], calls?: readonly MutationCall[]): readonly Operation[] {
+  private replay(batch: string, ops: readonly Operation[], calls?: readonly MutationCall[], wasIn: ReadonlyMap<string, string> = new Map()): readonly Operation[] {
     const head = ops[0]!;
     const options: ApplyOptions = {
       author: head.author,
@@ -2255,10 +2259,16 @@ export class Store<S extends AnySchema> {
       ...given("lineage", head.lineage),
     };
     if (head.undoes !== undefined) {
-      const targets = ops.map((op) => this.log.get(op.undoes ?? ""));
-      const missing = ops.find((_op, index) => targets[index] === undefined);
+      /*
+       * An undo of a batch that was pending too was applied again just
+       * before it, under the same batch and new op ids: it is that batch
+       * the undo takes back (Roadmap f-collab-text: ⌘Z on a run of typing
+       * still on its way, carried over what landed meanwhile).
+       */
+      const targets = ops.map((op) => this.log.get(op.undoes ?? "")?.batch ?? wasIn.get(op.undoes ?? ""));
+      const missing = ops.find((_op, index) => targets[index] === undefined || !this.log.all().some((one) => one.batch === targets[index]));
       if (missing) throw new GraphError(`What "${missing.intent}" took back is no longer in the log`);
-      return this.undoing([...new Set(targets.map((op) => op!.batch))], options).ops;
+      return this.undoing([...new Set(targets as string[])], options).ops;
     }
     if (calls) return this.applying(calls, options).ops;
     if (ops.every((op) => op.mutation !== null)) {

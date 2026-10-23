@@ -50,6 +50,22 @@ describe("pending typing is carried over what lands under it", () => {
     expect(body(server)).toBe(body(page));
   });
 
+  // Found by the live protocol's fuzz: the undo was lost as its run was applied again under new op ids, and ⌘Z took the same run back twice.
+  it("keeps a pending undo of a pending run when what lands under them carries the run", () => {
+    const server = seeded();
+    let minted = 0;
+    // Op ids of its own, as a page's are: the server's are never mistaken for the page's.
+    const page = new Store({ schema, snapshot: { nodes: [{ id: "n1", kind: "note", body: "Hello world" }], edges: [] } as never, ids: () => `page-op${++minted}` });
+    const run = type(page, 11, "!", 0, "batch:page:1");
+    const undo = page.undo(run.batch, { batch: "undo:page:2" });
+    expect(body(page)).toBe("Hello world");
+    const theirs = type(server, 0, "Oh, ").ops;
+    const rebased = page.rebase({ confirmed: theirs, pending: [run.batch, undo.batch] });
+    expect(rebased.refused).toEqual([]);
+    expect(body(page)).toBe("Oh, Hello world");
+    expect(page.batches().find((one) => one.id === run.batch)?.undone).toBe(true);
+  });
+
   it("takes a refused run out from under the typing after it", () => {
     const page = seeded();
     const refused = type(page, 0, "Dear ", 0, "batch:page:1");

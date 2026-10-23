@@ -42,6 +42,14 @@ export interface TypingWire {
   seen(): number;
   /** Whether the remote store has been closed or let go of. */
   gone(): boolean;
+  /**
+   * The answers to wait for before a run is sent: the batches of this
+   * client's pending ahead of it that changed the same field — an undo of
+   * an earlier run, a whole write. A run claims the revision the server's
+   * ops reach here, so it is sent only once what it was typed over is
+   * among them.
+   */
+  ahead(batch: string, node: string, field: string): readonly { readonly batch: string; readonly answer: Promise<unknown> }[];
 }
 
 /**
@@ -58,6 +66,8 @@ export interface TypingInsides {
   readonly provisional: Set<string>;
   readonly asked: Map<string, { calls: readonly MutationCall[] }>;
   readonly answers: Map<string, Promise<unknown>>;
+  /** Batches let go of without ever being sent, so an undo of one is let go of too. */
+  readonly letGo: Set<string>;
   /** Sends a batch, taken back if refused; resolves once answered either way. */
   sent(batch: string, calls: readonly MutationCall[]): Promise<unknown>;
   settle(batch: string): void;
@@ -69,27 +79,55 @@ export interface TypingInsides {
 /** The wire a field's typing runs on, made of a remote store's insides. */
 export function wireOf(inside: TypingInsides): TypingWire {
   const { store, author, pending, provisional, asked } = inside;
+  /*
+   * A run is answered from the moment it is held, not only once it is sent:
+   * an undo of a run still held behind the one on its way waits for its
+   * answer (`answers`), so it never reaches the server before the run does.
+   */
+  const answered = new Map<string, (value: unknown) => void>();
+  const answer = (batch: string, value?: unknown) => {
+    answered.get(batch)?.(value);
+    answered.delete(batch);
+  };
   return {
     store,
     apply: (calls, batch) => inside.appliedAll(calls, { ...(author ? { author } : {}), ...(batch !== undefined ? { batch } : {}) }),
     hold(batch) {
       pending.push(batch);
       provisional.add(batch);
+      inside.answers.set(batch, new Promise((resolve) => answered.set(batch, resolve)));
     },
     ask: (batch, calls) => void asked.set(batch, { calls }),
     send(batch, calls) {
       asked.set(batch, { calls });
-      const answered = inside.sent(batch, calls);
-      inside.answers.set(batch, answered);
-      return answered;
+      const sent = inside.sent(batch, calls);
+      const done = () => answer(batch, sent);
+      sent.then((said) => {
+        // Carried over what others deleted meanwhile, the run made nothing on the server: an undo of it has nothing to take back there either.
+        if (Array.isArray((said as { ops?: unknown } | undefined)?.ops) && (said as { ops: unknown[] }).ops.length === 0) inside.letGo.add(batch);
+        done();
+      }, done);
+      return sent;
     },
     drop(batch) {
+      inside.letGo.add(batch);
       inside.settle(batch);
       asked.delete(batch);
       inside.land([], [batch]);
+      answer(batch);
     },
     seen: inside.seen,
     gone: inside.gone,
+    ahead(batch, node, field) {
+      const at = pending.indexOf(batch);
+      const ops = store.log.all();
+      const touches = (one: string) =>
+        ops.some((op) => op.batch === one && op.primitives.some((p) => (p.op === "splice-text" && p.id === node && p.field === field) || (p.op === "patch-node" && p.id === node && field in p.after)));
+      return pending.slice(0, Math.max(0, at)).flatMap((one) => {
+        const answer = inside.answers.get(one);
+        return answer && touches(one) ? [{ batch: one, answer }] : [];
+      });
+    },
   };
 }
 
@@ -149,6 +187,10 @@ export function typingOf(node: string, field: string, wire: TypingWire): RemoteT
   /** The run on its way to the server. */
   let flying: string | undefined;
   let idle: ReturnType<typeof setTimeout> | undefined;
+  /** Waiting for the answer to a change of this client's to the field, made ahead of the next run (an undo, a whole write). */
+  let holding = false;
+  /** Those changes, once answered. */
+  const heard = new Set<string>();
 
   const callOf = (splice: TextSplice): MutationCall => ({
     name: TYPE_TEXT,
@@ -163,9 +205,20 @@ export function typingOf(node: string, field: string, wire: TypingWire): RemoteT
   };
   /** The next run, once nothing of this field's is on its way: one at a time, so the server only carries it over other people's typing. */
   const pump = (): void => {
-    if (flying !== undefined || wire.gone()) return;
+    if (flying !== undefined || holding || wire.gone()) return;
     const batch = queue.shift();
     if (batch === undefined) return;
+    const waits = wire.ahead(batch, node, field).filter((one) => !heard.has(one.batch));
+    if (waits.length > 0) {
+      queue.unshift(batch);
+      holding = true;
+      void Promise.allSettled(waits.map((one) => one.answer)).then(() => {
+        for (const one of waits) heard.add(one.batch);
+        holding = false;
+        pump();
+      });
+      return;
+    }
     const splice = runSplice(wire.store, batch, node, field);
     if (!splice) {
       wire.drop(batch);

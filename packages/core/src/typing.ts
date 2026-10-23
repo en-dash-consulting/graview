@@ -114,6 +114,8 @@ function undone(log: readonly Operation[], ops: readonly Operation[]): { readonl
  */
 function aside(targets: readonly Primitive[], later: Operation): true | readonly string[] {
   const wholes = (node: string, field: string) => targets.some((one) => writesWhole(one, node, field));
+  // An undo of typing carried to nothing — its words deleted already — put nothing back, and is in nobody's way.
+  if (later.undoes !== undefined && later.primitives.length === 0 && targets.some((one) => one.op === "splice-text")) return true;
   if (later.primitives.length > 0 && later.primitives.every((one) => one.op === "splice-text" && !wholes(one.id, one.field))) return true;
   return targets.flatMap((one) => (one.op === "splice-text" && later.primitives.some((other) => writesWhole(other, one.id, one.field)) ? [one.id] : []));
 }

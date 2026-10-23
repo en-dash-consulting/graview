@@ -914,6 +914,8 @@ async function opening<S extends AnySchema>(
   const batches = new Map<string, string>();
   /** Each provisional batch's post, so an undo of it waits until the server has named it. */
   const answers = new Map<string, Promise<unknown>>();
+  /** Provisional batches let go of without ever being sent — a run of typing that came to change nothing — so an undo of one is let go of too. */
+  const letGo = new Set<string>();
   /** What each provisional batch asked for, so a conflict's `useMine` can ask again. */
   const asked = new Map<string, { calls: readonly MutationCall[]; intent?: string; via?: Via; lineage?: Lineage }>();
   /** Every post not yet answered, so `settled` can wait for the verdicts. */
@@ -1630,18 +1632,31 @@ async function opening<S extends AnySchema>(
       result.batch,
       track(
         before
-          .then(() =>
-            transmit(
+          .then(() => {
+            /*
+             * A run of typing that came to change nothing was let go of
+             * here and never sent (Roadmap f-collab-text): an undo of it
+             * alone undoes nothing, so it is let go of too, never sent to
+             * be refused as naming a batch the server never had.
+             */
+            const named = ids.filter((id) => !letGo.has(id));
+            if (named.length === 0) {
+              settle(result.batch);
+              asked.delete(result.batch);
+              land([], [result.batch]);
+              return;
+            }
+            return transmit(
               {
-                undo: ids.map((id) => batches.get(id) ?? id),
+                undo: named.map((id) => batches.get(id) ?? id),
                 ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}),
                 batch: result.batch,
                 ...(undoOptions?.via ? { via: undoOptions.via } : {}),
                 ...lined(undoOptions),
               },
               result.batch,
-            ),
-          )
+            );
+          })
           .catch((error: unknown) => takeBack(result.batch, error)),
       ),
     );
@@ -1745,6 +1760,7 @@ async function opening<S extends AnySchema>(
     provisional,
     asked,
     answers,
+    letGo,
     sent: (batch, calls) => track(transmit({ calls, batch }, batch).catch((error: unknown) => takeBack(batch, error))),
     settle,
     land,

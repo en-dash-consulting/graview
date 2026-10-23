@@ -191,6 +191,19 @@ describe("text is typed together", () => {
     expect(s.canUndo(first).ok).toBe(false);
   });
 
+  // Found by the live protocol's fuzz: an undo carried to nothing still read the record, and blocked every undo of typing before it.
+  it("an undo of typing that put nothing back, its words deleted already, stands in nobody's way", () => {
+    const s = store();
+    const bens = type(s, ben, { at: 4, insert: "j" }).batch;
+    const anas = type(s, ana, { at: 0, insert: "So " }).batch;
+    type(s, ana, { at: 7, remove: 1 }); // Ana deletes Ben's j
+    s.undo(bens, { author: ben });
+    expect(s.log.all().at(-1)!.primitives).toEqual([]);
+    expect(s.canUndo(anas).ok).toBe(true);
+    s.undo(anas, { author: ana });
+    expect(text(s)).toBe("The quick fox");
+  });
+
   it("a later whole write or a removal still blocks an undo of typing", () => {
     const cleared = store();
     const typed = type(cleared, ana, { at: 13, insert: "!" }).batch;
