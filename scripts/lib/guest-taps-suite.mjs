@@ -310,52 +310,60 @@ window.__node = (id) => window.__handle.store.graph.getNode(id);
     /*
      * THE RING AT THE REGION'S EDGE: a link the view drew flush with the
      * region's left edge, given the keyboard, shows its whole ring — every
-     * side of it painted, not cut by the region's clip.
+     * side of it painted, not cut by the region's clip. And one the view
+     * rings wider (--graview-focus-width 5px, --graview-focus-offset 4px, set
+     * in its own stylesheet where the region's rule cannot read them): the
+     * region lets as much past its edge as that ring reaches.
      */
-    await open(tab);
-    await tab.locator(inView("[data-flush]")).focus();
-    await tab.keyboard.press("Shift+Tab");
-    await tab.keyboard.press(engine === "webkit" ? "Alt+Tab" : "Tab");
-    const edge = await tab.evaluate(() => {
-      const a = window.__view().querySelector("[data-flush]");
-      const region = document.querySelector("[data-worker-view]").getBoundingClientRect();
-      const box = a.getBoundingClientRect();
-      const style = getComputedStyle(a);
-      const width = parseFloat(style.outlineWidth);
-      const offset = parseFloat(style.outlineOffset);
-      return { focused: a.matches(":focus-visible"), flushLeft: Math.round(box.left - region.left), width, offset, color: style.outlineColor, ring: { left: box.left - offset - width, top: box.top - offset - width, right: box.right + offset + width, bottom: box.bottom + offset + width }, region: { left: region.left, top: region.top } };
-    });
-    /* Each side of the ring, sampled at its middle across its width: the ring's color must be painted there. */
-    const shot = await tab.screenshot({ clip: { x: Math.max(0, edge.ring.left - 2), y: Math.max(0, edge.ring.top - 2), width: edge.ring.right - edge.ring.left + 4, height: edge.ring.bottom - edge.ring.top + 4 } });
-    const sides = await tab.evaluate(
-      async ({ b64, edge, from }) => {
-        const image = new Image();
-        image.src = `data:image/png;base64,${b64}`;
-        await image.decode();
-        const canvas = document.createElement("canvas");
-        canvas.width = image.width;
-        canvas.height = image.height;
-        const paint = canvas.getContext("2d", { willReadFrequently: true });
-        paint.drawImage(image, 0, 0);
-        const scale = image.width / (edge.ring.right - edge.ring.left + 4);
-        const probe = document.createElement("canvas").getContext("2d");
-        probe.fillStyle = edge.color;
-        probe.fillRect(0, 0, 1, 1);
-        const want = [...probe.getImageData(0, 0, 1, 1).data];
-        const near = (at) => Math.abs(at[0] - want[0]) + Math.abs(at[1] - want[1]) + Math.abs(at[2] - want[2]) < 60;
-        const px = (x, y) => [...paint.getImageData(Math.floor((x - from.x) * scale), Math.floor((y - from.y) * scale), 1, 1).data];
-        const half = edge.width / 2;
-        const middle = { x: (edge.ring.left + edge.ring.right) / 2, y: (edge.ring.top + edge.ring.bottom) / 2 };
-        return {
-          left: near(px(edge.ring.left + half, middle.y)),
-          top: near(px(middle.x, edge.ring.top + half)),
-          right: near(px(edge.ring.right - half, middle.y)),
-          bottom: near(px(middle.x, edge.ring.bottom - half)),
-        };
-      },
-      { b64: shot.toString("base64"), edge, from: { x: Math.max(0, edge.ring.left - 2), y: Math.max(0, edge.ring.top - 2) } },
-    );
-    claim("a focused link flush with the region's left edge shows its whole ring", edge.focused && edge.flushLeft === 0 && edge.width >= 2 && sides.left && sides.top && sides.right && sides.bottom, { ...edge, sides });
+    const ringAtTheEdge = async (selector) => {
+      await open(tab);
+      await tab.locator(inView(selector)).focus();
+      await tab.keyboard.press(engine === "webkit" ? "Alt+Shift+Tab" : "Shift+Tab");
+      await tab.keyboard.press(engine === "webkit" ? "Alt+Tab" : "Tab");
+      const edge = await tab.evaluate((selector) => {
+        const a = window.__view().querySelector(selector);
+        const region = document.querySelector("[data-worker-view]").getBoundingClientRect();
+        const box = a.getBoundingClientRect();
+        const style = getComputedStyle(a);
+        const width = parseFloat(style.outlineWidth);
+        const offset = parseFloat(style.outlineOffset);
+        return { focused: a.matches(":focus-visible"), flushLeft: Math.round(box.left - region.left), width, offset, color: style.outlineColor, ring: { left: box.left - offset - width, top: box.top - offset - width, right: box.right + offset + width, bottom: box.bottom + offset + width }, region: { left: region.left, top: region.top } };
+      }, selector);
+      /* Each side of the ring, sampled at its middle across its width: the ring's color must be painted there. */
+      const shot = await tab.screenshot({ clip: { x: Math.max(0, edge.ring.left - 2), y: Math.max(0, edge.ring.top - 2), width: edge.ring.right - edge.ring.left + 4, height: edge.ring.bottom - edge.ring.top + 4 } });
+      const sides = await tab.evaluate(
+        async ({ b64, edge, from }) => {
+          const image = new Image();
+          image.src = `data:image/png;base64,${b64}`;
+          await image.decode();
+          const canvas = document.createElement("canvas");
+          canvas.width = image.width;
+          canvas.height = image.height;
+          const paint = canvas.getContext("2d", { willReadFrequently: true });
+          paint.drawImage(image, 0, 0);
+          const scale = image.width / (edge.ring.right - edge.ring.left + 4);
+          const probe = document.createElement("canvas").getContext("2d");
+          probe.fillStyle = edge.color;
+          probe.fillRect(0, 0, 1, 1);
+          const want = [...probe.getImageData(0, 0, 1, 1).data];
+          const near = (at) => Math.abs(at[0] - want[0]) + Math.abs(at[1] - want[1]) + Math.abs(at[2] - want[2]) < 60;
+          const px = (x, y) => [...paint.getImageData(Math.floor((x - from.x) * scale), Math.floor((y - from.y) * scale), 1, 1).data];
+          const half = edge.width / 2;
+          const middle = { x: (edge.ring.left + edge.ring.right) / 2, y: (edge.ring.top + edge.ring.bottom) / 2 };
+          return {
+            left: near(px(edge.ring.left + half, middle.y)),
+            top: near(px(middle.x, edge.ring.top + half)),
+            right: near(px(edge.ring.right - half, middle.y)),
+            bottom: near(px(middle.x, edge.ring.bottom - half)),
+          };
+        },
+        { b64: shot.toString("base64"), edge, from: { x: Math.max(0, edge.ring.left - 2), y: Math.max(0, edge.ring.top - 2) } },
+      );
+      return { ...edge, sides, whole: edge.focused && edge.flushLeft === 0 && edge.width >= 2 && sides.left && sides.top && sides.right && sides.bottom };
+    };
+    const edge = await ringAtTheEdge("[data-flush]");
+    const wide = await ringAtTheEdge("[data-flush-wide]");
+    claim("a focused link flush with the region's left edge shows its whole ring, and so does one the view rings wider", edge.whole && wide.whole && wide.width >= 5, { edge, wide });
 
     /* A table's row bound to a record: its first cell takes the keyboard, and Enter there opens the row. */
     await open(tab);
