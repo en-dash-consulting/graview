@@ -96,7 +96,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 
 ## Graview Cloud
 
-- [Graview Cloud](https://graview.cloud): Graview Cloud is the hosted product built on Graview, from En Dash, for people who don’t write TypeScript, in private alpha and invite-only at [graview.cloud](https://graview.cloud/). You keep working in the AI you already use: say what you are organizing in Claude or ChatGPT, or start from a template, and it becomes a shared, live app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine.
+- [Graview Cloud](https://graview.cloud): Graview Cloud is the hosted product built on Graview, from En Dash, for people who would rather not run an app themselves, in private alpha and invite-only at [graview.cloud](https://graview.cloud/). You keep working in the AI you already use: say what you are organizing in Claude or ChatGPT, or start from a template, and it becomes a shared, live app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine.
 
 ## Optional
 
