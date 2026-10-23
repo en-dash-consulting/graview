@@ -830,9 +830,16 @@ the keyboard shows (`focus-visible`) and text `contrast` run only where
 the root is in a browser that lays it out, and say how many elements they
 measured; elsewhere they are in `skipped`, never passed. A keyboard trap
 needs keys pressed, which a harness's Tab walk does (`pnpm verify a11y`).
-`AUDIT_RULES` lists each rule, its criterion and what it needs.
+`AUDIT_RULES` lists each rule, its criterion and what it needs. On a page
+a worker view is drawn in, `clicked` need not be handed: the view's runtime
+tells its host where it hears a click, and the audit reads it off the
+region.
 
 A headless run audits what it drew when asked (`runWorkerViewHeadless({
 …, audit: true })` answers with `audit`), with the elements its view
 listens on for a click, and `graview view check … --audit` says it and
-fails on what the view must fix.
+fails on what the view must fix. With `--browser` the command lays what
+the view drew out in Chromium and runs every rule there: the ring, text
+contrast, and Tab from before the view through it and out. It uses the
+project's own Playwright, an optional peer of this package, and says what
+to install when there is none.

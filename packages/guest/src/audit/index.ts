@@ -23,6 +23,7 @@
  * would — by the host's own reading of what a press is (host/pressable.ts) —
  * before it is judged. It is a tool, not drawing: no page loads it up front.
  */
+import { clickedOf } from "../host/clicked.js";
 import { clicksItself, focusable, isEntry, isKeyControl, isPress, opensOnPress, takesRole, type PressedElement } from "../host/pressable.js";
 import { measureView } from "./measure.js";
 import { AUDIT_RULES, type AuditImpact, type AuditProblem, type AuditRuleId, type ViewAudit } from "./rules.js";
@@ -47,7 +48,9 @@ export interface AuditViewOptions {
   /**
    * What the view hears a click on (`graview.on("click", selector)`): the
    * elements themselves, or — on a page — the selectors, matched within the
-   * root. A headless run hands the elements its view listened on.
+   * root. A headless run hands the elements its view listened on. Not
+   * handed, it is what the live host kept on the region the view is drawn
+   * in, as the view's runtime said it (0.1.48).
    */
   readonly clicked?: Iterable<AuditedElement> | readonly string[];
   /**
@@ -288,7 +291,7 @@ export function auditView(root: AuditedNode, options: AuditViewOptions = {}): Vi
   const all = elementsOf(root);
   const byId = new Map(all.flatMap((one) => (one.getAttribute("id") ? [[one.getAttribute("id")!, one] as const] : [])));
   const labels = all.filter((one) => isHtml(one, "label"));
-  const given = options.clicked ? Array.from(options.clicked as Iterable<AuditedElement | string>) : [];
+  const given = options.clicked ? Array.from(options.clicked as Iterable<AuditedElement | string>) : [...(clickedOf(root) ?? [])];
   const clicked = new Set<AuditedElement>([...given.filter((one): one is AuditedElement => typeof one === "object"), ...matching(root, given.filter((one): one is string => typeof one === "string"))]);
   const chrome = options.chrome === true;
   const problems: AuditProblem[] = [];

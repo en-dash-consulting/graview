@@ -86,13 +86,17 @@
   },
   "peerDependencies": {
     "react": ">=18",
-    "esbuild": ">=0.20"
+    "esbuild": ">=0.20",
+    "playwright": ">=1.40"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
     },
     "esbuild": {
+      "optional": true
+    },
+    "playwright": {
       "optional": true
     }
   },

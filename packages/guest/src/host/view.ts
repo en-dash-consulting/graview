@@ -1,4 +1,5 @@
 import { imageRefusedWords } from "./open-judge.js";
+import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
 import type { AnySchema, FileValue, HostFiles, Principal, Store } from "@graview/core";
 import { storedFilesOf } from "./marks.js";
@@ -835,6 +836,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         },
         /* Where it listens for a gesture (0.1.42): heard only where its manifest says gestures. */
         onGestures: bindGestures,
+        /* Where it hears a click (0.1.48), kept on the region for an audit of the page to read. */
+        onClicks: (selectors) => keepClicked(region, selectors),
         onRender: (records) => {
           drew = true;
           draw(["render", records]);

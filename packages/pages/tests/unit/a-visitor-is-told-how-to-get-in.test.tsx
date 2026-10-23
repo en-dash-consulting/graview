@@ -52,7 +52,7 @@ async function rendered(path: string, principal: Principal, signIn?: SignIn) {
   document.body.appendChild(host);
   const root = createRoot(host);
   await act(async () => root.render(<PagesApp context={context} initialPath={path} />));
-  await settle();
+  await drawn(host);
   cleanup = async () => {
     await act(async () => root.unmount());
     host.remove();
@@ -60,19 +60,41 @@ async function rendered(path: string, principal: Principal, signIn?: SignIn) {
   return host;
 }
 
-async function settle(ms = 30) {
-  for (let turn = 0; turn < 20; turn += 1) {
-    await act(async () => new Promise((done) => setTimeout(done, ms)));
-    if (document.querySelector(MENU) || turn > 2) {
-      if (document.querySelector(MENU)) await act(async () => new Promise((done) => setTimeout(done, ms)));
-      return;
-    }
+/**
+ * Waits for what a test is about to read, polling until it holds (bounded),
+ * never a count of turns: the menu and its sections are lazily loaded, and a
+ * loaded machine takes longer than three short turns to fetch them.
+ */
+async function until(holds: () => boolean, what: string, within = 5000) {
+  for (const end = Date.now() + within; ; ) {
+    await act(async () => {
+      await vi.dynamicImportSettled();
+      await new Promise((done) => setTimeout(done, 10));
+    });
+    if (holds()) return;
+    if (Date.now() > end) throw new Error(`waited ${within} ms for ${what}`);
   }
 }
 
+/** True once `read` has said the same thing twice running: what was arriving has arrived. */
+function steady(read: () => string | undefined): () => boolean {
+  let last: string | undefined;
+  return () => {
+    const now = read();
+    const same = now !== undefined && now === last;
+    last = now;
+    return same;
+  };
+}
+
+/** The page drawn and still: its lazy parts have stopped arriving. */
+const drawn = (host: HTMLElement) => until(steady(() => (host.querySelector("main") ? host.innerHTML : undefined)), "the page to draw");
+/** The menu open with its rows, and its sections arrived. */
+const opened = () => until(steady(() => (menu()?.querySelector("[data-menu-item], [data-affordance], [data-testid]") ? menu()!.innerHTML : undefined)), "the menu to open");
+
 async function rightClick(element: Element) {
   await act(async () => void element.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, clientX: 40, clientY: 60 })));
-  await settle();
+  await opened();
 }
 
 const menu = () => document.querySelector<HTMLElement>(MENU);

@@ -471,6 +471,9 @@ importers:
       esbuild:
         specifier: '>=0.20'
         version: 0.25.0
+      playwright:
+        specifier: '>=1.40'
+        version: 1.49.1
       react:
         specifier: '>=18'
         version: 19.2.8

@@ -79,13 +79,14 @@ graview.style(\`
   .every { display: grid; gap: 8px; padding: 12px; }
   .every ul { margin: 0; padding-left: 1.2em; }
   .lead { margin: 0; }
+  .wide { --graview-focus-width: 5px; --graview-focus-offset: 4px; }
 \`);
 const open = new Set();
 const said = {};
 let onlyCritical = false;
 const draw = (props) => {
   const threats = (props.nodes ?? []).filter((node) => node.kind === "threat");
-  graview.render(graview.html\`\${threats.length ? graview.html\`<p class="lead"><a data-record="\${threats[0].id}" data-flush>The latest threat</a></p>\` : ""}<div class="cards">\${threats.map((threat) => graview.html\`
+  graview.render(graview.html\`\${threats.length ? graview.html\`<p class="lead"><a data-record="\${threats[0].id}" data-flush>The latest threat</a></p><p class="lead"><a class="wide" data-record="\${threats[0].id}" data-flush-wide>The latest, ringed wider</a></p>\` : ""}<div class="cards">\${threats.map((threat) => graview.html\`
     <div class="card" data-key="\${threat.id}" data-record="\${threat.id}">
       <h3>\${threat.label}</h3>
       <div class="badges"><span class="badge" data-badge>\${threat.severity}</span><span class="badge">\${threat.status}</span></div>

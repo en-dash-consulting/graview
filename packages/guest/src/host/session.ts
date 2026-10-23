@@ -134,6 +134,8 @@ export interface GuestHostOptions<S extends AnySchema> {
   readonly onHears?: (events: readonly string[]) => void;
   /** A worker view said where it listens for a wheel, a drag or a pinch (0.1.42): the first 32, as it said them, for the host's gestures to read (gestures.ts). Without it, a `gestures` is dropped unread. */
   readonly onGestures?: (bound: readonly unknown[]) => void;
+  /** Where a worker view hears a click, every selector, each time it moves (0.1.48). */
+  readonly onClicks?: (selectors: readonly string[]) => void;
   readonly limits?: GuestLimits;
   /**
    * The frame's limiter, when the frame outlives this session: a guest
@@ -415,6 +417,10 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       }
       if (data.type === "hears" && Array.isArray(data.events) && options.onHears) {
         options.onHears(data.events.filter((one): one is string => typeof one === "string").slice(0, 20));
+        return;
+      }
+      if (data.type === "clicks" && Array.isArray(data.selectors)) {
+        options.onClicks?.(data.selectors.filter((one): one is string => typeof one === "string" && one.length <= 500).slice(0, 200));
         return;
       }
       if (data.type === "gestures" && Array.isArray(data.bound) && options.onGestures) {

@@ -4,7 +4,7 @@ import { Store, type AnySchema, type Principal } from "@graview/core";
 import { loadApp } from "@graview/core/cli";
 import { readSnapshot } from "@graview/core/snapshot";
 import type { WorkerViewManifest } from "./host/manifest.js";
-import { runWorkerViewHeadless } from "./headless/index.js";
+import { HEADLESS_THEME, runWorkerViewHeadless } from "./headless/index.js";
 import { nodeIsolate } from "./headless/node.js";
 import { plainNode } from "./host/session.js";
 import type { ViewAudit } from "./audit/rules.js";
@@ -25,7 +25,8 @@ import type { ViewAudit } from "./audit/rules.js";
 
 export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest <manifest.json>
                      [--seed <file>] [--record <id>] [--as <id>] [--roles a,b]
-                     [--width <px>] [--press <selector> [--type name=value]…] [--json]
+                     [--width <px>] [--press <selector> [--type name=value]…]
+                     [--audit [--browser]] [--json]
       run a worker view once, headless, with no network, seated as one
       member (the system, unless --as or --roles say who), and say what it
       drew, or why it will not do; a view of one record is run over the
@@ -37,7 +38,9 @@ export const VIEW_USAGE = `  graview view check <view.js> --app <app> --manifest
       can be held to (@graview/guest/audit: keyboard, role, name, toggle
       state, nested controls, images, SVG, scroll boxes), says the rules
       that need a browser and did not run, and fails on a problem the view
-      must fix
+      must fix; --browser lays what it drew out in Chromium, through the
+      project's own Playwright, and runs every rule there — the ring the
+      keyboard shows, text contrast, and Tab through the view and out
 `;
 
 function flag(argv: readonly string[], name: string): string | undefined {
@@ -72,7 +75,9 @@ export async function view(argv: readonly string[]): Promise<number> {
   const as = flag(argv, "--as");
   const principal: Principal = as || roles.length > 0 ? { kind: "human", id: as ?? "graview-view-check", ...(roles.length > 0 ? { roles } : {}) } : { kind: "system", id: "graview-view-check" };
   const width = flag(argv, "--width");
-  const auditing = argv.includes("--audit");
+  /* Every rule, in a browser (0.1.48): the rules that need a page laid out, and Tab pressed. */
+  const inBrowser = argv.includes("--browser");
+  const auditing = argv.includes("--audit") || inBrowser;
   /* A press to check (0.1.45): what the selector matches, with the words the person typed by field name. */
   const pressAt = flag(argv, "--press");
   const typed = Object.fromEntries(argv.flatMap((one, at) => (one === "--type" && argv[at + 1]?.includes("=") ? [[argv[at + 1]!.slice(0, argv[at + 1]!.indexOf("=")), argv[at + 1]!.slice(argv[at + 1]!.indexOf("=") + 1)]] : [])));
@@ -108,24 +113,44 @@ export async function view(argv: readonly string[]): Promise<number> {
     ...(width ? { width: Number(width) } : {}),
     ...(pressAt ? { press: { selector: pressAt, typed } } : {}),
     ...(auditing ? { audit: true } : {}),
+    ...(inBrowser ? { drawing: true } : {}),
   });
+  let audit = result.ok ? result.audit : undefined;
+  if (inBrowser && result.ok && result.drawing) {
+    const { auditInBrowser, BrowserMissing, loadPlaywright } = await import("./audit/browser.js");
+    /* Its stylesheets as the host keeps them: judged here, not in the headless run a worker may import. */
+    const { sanitizeStylesheets } = await import("./host/css.js");
+    const { markupOf } = await import("./headless/serialize.js");
+    const mark = "data-graview-audit-clicked";
+    try {
+      const { AUDIT_PAGE_SCRIPT } = await import("./audit/page.generated.js");
+      audit = await auditInBrowser(
+        { markup: markupOf(result.drawing.root, new Set(result.drawing.clicked), mark), clicked: `[${mark}]`, css: sanitizeStylesheets(result.transcript.sheets ?? []).css, title: manifest.title ?? manifest.name },
+        { playwright: await loadPlaywright(), script: AUDIT_PAGE_SCRIPT, theme: HEADLESS_THEME, ...(width ? { width: Number(width) } : {}) },
+      );
+    } catch (error) {
+      if (!(error instanceof BrowserMissing)) throw error;
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
   /* The view's to fix: a problem the framework fixes on a page is said, and fails nothing. */
-  const owed = result.ok && result.audit ? result.audit.problems.filter((one) => !one.automatic) : [];
+  const owed = audit ? audit.problems.filter((one) => !one.automatic) : [];
   if (argv.includes("--json")) {
-    process.stdout.write(`${JSON.stringify(result.ok ? { ...result.description, ...(result.pressed ? { pressed: result.pressed } : {}), ...(result.audit ? { audit: result.audit } : {}) } : { reason: result.reason, detail: result.detail }, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify(result.ok ? { ...result.description, ...(result.pressed ? { pressed: result.pressed } : {}), ...(audit ? { audit } : {}) } : { reason: result.reason, detail: result.detail }, null, 2)}\n`);
     return result.ok && owed.length === 0 ? 0 : 1;
   }
   if (!result.ok) {
     process.stdout.write(`${file} will not do (${result.reason}): ${result.detail}\n`);
     return 1;
   }
-  process.stdout.write(`${over}${result.description.text}\n${result.pressed ? `\n${result.pressed.says}\n` : ""}${result.audit ? `\n${auditText(result.audit)}` : ""}`);
+  process.stdout.write(`${over}${result.description.text}\n${result.pressed ? `\n${result.pressed.says}\n` : ""}${audit ? `\n${auditText(audit)}` : ""}`);
   return owed.length === 0 ? 0 : 1;
 }
 
 /** An audit in words: the rules it ran and did not, then each problem with its fix. */
 export function auditText(audit: ViewAudit): string {
-  const lines = [`Accessibility: ${audit.problems.length === 0 ? "no problems" : `${audit.problems.length} problem${audit.problems.length === 1 ? "" : "s"}`} under ${audit.ran.join(", ")}.`];
+  const lines = [`Accessibility: ${audit.problems.length === 0 ? "no problems" : `${audit.problems.length} problem${audit.problems.length === 1 ? "" : "s"}`} under ${audit.ran.join(", ")}${audit.skipped.length === 0 ? " — every rule" : ""}.`];
   for (const skipped of audit.skipped) lines.push(`  Not run: ${skipped.rule} — ${skipped.why}`);
   for (const one of audit.problems) {
     lines.push(`  ${one.impact} · ${one.rule} (WCAG ${one.wcag}) at ${one.at}: ${one.says}`, `    Fix: ${one.fix}${one.automatic ? " (the framework's to fix)" : ""}`);
