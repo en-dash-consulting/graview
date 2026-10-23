@@ -102,23 +102,28 @@ describe("what the pages promise each other", () => {
     expect(read("tour.html")).toContain('id="surfaces"');
   });
 
-  it("opens the landing page on the prompt, then says the interface is asked for, then what it builds and what you get before the recipes", () => {
+  it("opens the landing page on the claim, then two doors, the agent's prompt and Graview Cloud, then the interface asked for, before what is built on it", () => {
     const landing = read("index.html");
     const main = landing.slice(landing.indexOf("<main"));
+    const h1 = main.indexOf("<h1");
+    const cloud = main.indexOf('href="https://graview.cloud/#invite"');
     const prompt = main.indexOf('id="prompt-text"');
-    expect(prompt).toBeGreaterThan(-1);
-    // The prompt comes first, then the recipe tabs, then the headline as the why.
+    expect(h1).toBeGreaterThan(-1);
+    // The headline says what it is; the agent's prompt and its tabs, then the hosted door beside it.
+    expect(prompt).toBeGreaterThan(h1);
     expect(main.indexOf('class="recipe-tabs"')).toBeGreaterThan(prompt);
-    expect(main.indexOf("<h1")).toBeGreaterThan(prompt);
+    expect(cloud).toBeGreaterThan(prompt);
+    // The bar's one filled link is the hosted door too.
+    expect(landing.slice(0, landing.indexOf("<main"))).toContain('class="go" href="https://graview.cloud/#invite"');
     // No stat strip in the hero: the one number left on the page is the footer's.
     const hero = /<section id="what"[\s\S]*?<\/section>/.exec(main)?.[0] ?? "";
     expect(hero).not.toMatch(/data-number=/);
-    // The sections the page is cut to, in order.
-    const order = ["what", "asks", "builds", "gives", "recipes", "how", "cloud", "faq"].map((id) => main.indexOf(`<section id="${id}"`));
+    // The sections the page is cut to, in order: Cloud's band once the reader has seen what an app is.
+    const order = ["what", "asks", "builds", "gives", "cloud", "built", "faq"].map((id) => main.indexOf(`<section id="${id}"`));
     expect(order.every((at) => at > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(main.match(/<section id="/g)).toHaveLength(8);
-    // Each feature card goes to its own section of the tour.
+    expect(main.match(/<section id="/g)).toHaveLength(7);
+    // Each feature goes to its own section of the tour.
     for (const anchor of ["surfaces", "rules", "lenses", "agent", "acts", "studio"]) {
       expect(main).toContain(`href="tour.html#${anchor}"`);
       expect(read("tour.html")).toContain(`id="${anchor}"`);
