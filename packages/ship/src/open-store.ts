@@ -140,7 +140,9 @@ export interface OpenedStore<S extends AnySchema> {
    * of them. The next open loads the checkpoint and the tail, undo stops at
    * the horizon and says so, and `exportBundle(app, store, { full: true })`
    * still carries everything. Settles after every write accepted before
-   * it. Refused by an adapter that keeps no archive.
+   * it. Refused by an adapter that keeps no archive. `pins` are the seqs
+   * the host serves somebody at (a published seq): the horizon stops at
+   * the lowest, so the reader's past still folds from the log.
    */
   compact(options?: CompactOptions): Promise<Compaction>;
 }

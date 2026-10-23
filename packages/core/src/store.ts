@@ -684,6 +684,19 @@ export class Store<S extends AnySchema> {
    * between reads and re-read only past what it has read — a log only ever
    * grows at its end, and a rebase that cut it is read again from the start.
    */
+  /**
+   * WHERE WHAT THIS STORE SERVES ENDS: the ops before this seq are in what
+   * it reads, none after. A store's own is its head (`log.length`), a past
+   * (`pastOf(store, seq)`) is `seq`, and a seat's view (`seenBy`) is the
+   * seq that seat is served through — the head today. A seat's served state
+   * may end before the head, chosen by policy (docs/stability.md, "Served
+   * state and the head"), as narrowing; a write is always judged at the
+   * head, whatever this says. Read-only: nothing sets it.
+   */
+  get servedSeq(): number {
+    return this.log.length;
+  }
+
   get modules(): ModuleProjection {
     const all = this.log.all();
     const last = all.at(-1)?.id;
@@ -1016,9 +1029,11 @@ export class Store<S extends AnySchema> {
   }
 
   /**
-   * The store as one principal may see it: its graph, log, history and
-   * problems hold only what the policy's `sees` lets them see, and every
-   * act still comes here. With no `sees`, this store itself (see `seen.ts`).
+   * The app as this seat is served it: its graph, log, history and problems
+   * hold only what the policy's `sees` lets the seat see, through the seq it
+   * is served (`servedSeq`, the head today), and every act still comes here,
+   * judged at the head. With no `sees`, this store itself (see `seen.ts`).
+   * Nothing promises it is the head, nor that one principal has one view.
    */
   seenBy(principal: Principal): Store<S> {
     return seenBy(this, principal);
@@ -2199,6 +2214,9 @@ export class Store<S extends AnySchema> {
       const byDays = kept ? kept.seq : this.log.length;
       seq = Math.min(byOps, byDays);
     }
+    // Never past a seq somebody is served at: a reader's past (`pastOf`) folds from the log, so the lowest pin is the furthest it goes.
+    const pinned = (options.pins ?? []).filter((pin) => Number.isInteger(pin));
+    if (pinned.length > 0) seq = Math.min(seq, ...pinned);
     seq = Math.min(Math.max(seq, this.log.horizon), this.log.length);
     // Never inside a gesture: back to where the batch it would split began.
     while (seq > this.log.horizon && seq < this.log.length && ops[seq - this.log.horizon]!.batch === ops[seq - 1 - this.log.horizon]!.batch) seq--;
@@ -2243,5 +2261,14 @@ export interface CompactOptions {
   readonly keepOps?: number;
   /** The time the days count back from, as an ISO string. Defaults to the store's clock. */
   readonly now?: string;
+  /**
+   * SEQS SOMEBODY IS SERVED AT, which the horizon never passes: a host
+   * passes the seq it serves readers through (a published seq, say), and
+   * the checkpoint stops at the lowest of them — `seq` and the days and
+   * ops above are each held to it — so `pastOf(store, pin)` still folds
+   * from the log. A pin at or behind the horizon leaves nothing to
+   * compact; one past the head holds nothing back.
+   */
+  readonly pins?: readonly number[];
 }
 

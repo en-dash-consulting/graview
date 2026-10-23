@@ -364,7 +364,7 @@ export interface LiveProtocol<S extends AnySchema> {
   post(body: string, asked: WireAsked): Promise<WireAnswer & { readonly landed?: readonly Operation[] }>;
   /** `GET /graview/state`: the store as the asking seat sees it — snapshot, log, migrations, modules, horizon. */
   state(asked: WireAsked): WireAnswer;
-  /** `GET /graview/since?seq=N`: the ops after `seq`, as the asking seat sees them. */
+  /** `GET /graview/since?seq=N`: the ops after `seq` the asking seat is served, as it sees them — through the seq it is served, the head today. */
   since(seq: number, asked: WireAsked): WireAnswer;
   /**
    * THE DECLARATION CHANGED (FR-43), and this protocol is the one over the
@@ -666,7 +666,7 @@ export interface Wire<S extends AnySchema> {
   sighted(principal: Principal): boolean;
   /** Ops as the seat may see them, withheld in place (FR-16). */
   shown(principal: Principal, ops: readonly Operation[]): Operation[];
-  /** The ops after `seq`, as the seat sees them. */
+  /** The ops after `seq` the seat is served, as it sees them: through the head today. */
   since(principal: Principal, seq: number): Operation[];
   /** The store as the seat sees it. */
   seenFor(principal: Principal): Store<S>;

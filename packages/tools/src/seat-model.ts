@@ -31,7 +31,7 @@ export const READ_AS_ANY_AGENT = "(No seat was named, so this was read as any ag
 /**
  * One answer from the host's model: its turn when it gave one, else its completion.
  *
- * WRITTEN OVER WHAT THE SEAT SEES. Every name, link, rule and selection
+ * WRITTEN OVER WHAT THE SEAT IS SERVED. Every name, link, rule and selection
  * the prompt carries is read from `store.seenBy(principal)`, whatever store
  * it was handed: a host that calls `llmResponder` or `seatResponder` with
  * the whole store and a principal gets the prompt the chat gets, which

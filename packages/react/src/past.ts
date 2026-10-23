@@ -36,7 +36,7 @@ export interface Playback<S extends AnySchema = AnySchema> {
    * closes the timeline and comes back to now.
    */
   show(seq: number | null): void;
-  /** The store as it is now, whole: read through the seat's sight (`seenBy`). */
+  /** The store as it is now, whole: read through the seat's sight (`seenBy`), as the seat is served it. */
   readonly live: Store<S>;
   /** What the host keeps outside the log: declaration changes, a script view's code at a moment, the ops a compaction archived. */
   readonly host: HistoryHost | undefined;
@@ -59,7 +59,7 @@ export function usePlayback<S extends AnySchema = AnySchema>(): Playback<S> | nu
 }
 
 /**
- * THE STORE AS IT IS NOW, as this seat sees it, whatever moment the face
+ * THE STORE AS IT IS NOW, as this seat is served it, whatever moment the face
  * draws — what Activity lists and a timeline counts its ticks from — drawn
  * again as it changes. The provider's own store where there is no playback.
  */
