@@ -47,7 +47,7 @@ describe("a remote model is one fetch", () => {
         };
       },
     });
-    expect(await complete("prompt words")).toBe("hi");
+    expect(await complete({ prompt: "prompt words" })).toEqual({ text: "hi" });
     expect(seen.url).toBe("https://example.test/v1/chat/completions");
     expect(seen.auth).toBe("Bearer k");
     expect(seen.body).toEqual({ model: "m", messages: [{ role: "user", content: "prompt words" }] });
@@ -67,7 +67,7 @@ describe("a remote model is one fetch", () => {
         };
       },
     });
-    expect(await complete("x")).toBe("grok says");
+    expect(await complete({ prompt: "x" })).toEqual({ text: "grok says" });
     expect(url).toBe("https://api.x.ai/v1/chat/completions");
   });
 
@@ -76,7 +76,7 @@ describe("a remote model is one fetch", () => {
       apiKey: "bad",
       fetch: async () => ({ ok: false, status: 401, json: async () => ({}), text: async () => "no" }),
     });
-    await expect(complete("x")).rejects.toThrow(/401/);
+    await expect(complete({ prompt: "x" })).rejects.toThrow(/401/);
   });
 });
 
@@ -94,12 +94,12 @@ describe("the on-device model warms off the critical path", () => {
       }),
     });
     expect(local.ready()).toBe(false);
-    await expect(local.complete("x")).rejects.toThrow(/not warm/);
+    await expect(local.complete({ prompt: "x" })).rejects.toThrow(/not warm/);
     local.warm();
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(local.ready()).toBe(true);
     expect(states).toEqual(["warming", "ready"]);
-    expect(await local.complete("x")).toBe("local words");
+    expect(await local.complete({ prompt: "x" })).toEqual({ text: "local words" });
   });
 });
 

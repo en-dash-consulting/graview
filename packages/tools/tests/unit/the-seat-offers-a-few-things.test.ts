@@ -1,7 +1,7 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store, type Violation } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { offeredActs, sayAct, SEAT_OFFERS, suggestionsFor, whereLine } from "../../src/suggest.js";
+import { offeredActs, sayAct, SEAT_OFFERS, offersFor, whereLine } from "../../src/suggest.js";
 import type { Affordance } from "../../src/types.js";
 
 /**
@@ -78,15 +78,15 @@ describe("the line about where the reader is", () => {
 
 describe("what the seat offers to ask", () => {
   it("is at most three, asks what is wrong only when something is, and is about the thing", () => {
-    const troubled = suggestionsFor({ store, subject: deposit, violations: [late] });
+    const troubled = offersFor({ store, subject: deposit, violations: [late] });
     expect(troubled.length).toBeLessThanOrEqual(SEAT_OFFERS);
     expect(troubled.map((one) => one.ask)).toEqual(["What's wrong with Pay the deposit?", "Tell me about Pay the deposit"]);
-    const calm = suggestionsFor({ store, subject: { id: "t2", name: "Book the van" }, violations: [] });
+    const calm = offersFor({ store, subject: { id: "t2", name: "Book the van" }, violations: [] });
     expect(calm.map((one) => one.why)).toEqual(["about"]);
   });
 
   it("asks what needs attention when the trouble is elsewhere, and what is here at a place", () => {
-    const here = suggestionsFor({ store, subject: { id: null, name: "the whole thing" }, violations: [late] });
+    const here = offersFor({ store, subject: { id: null, name: "the whole thing" }, violations: [late] });
     expect(here.map((one) => one.ask)).toEqual(["What needs attention?", "What is here?"]);
   });
 });

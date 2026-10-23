@@ -2,7 +2,7 @@ import type { SearchRanker } from "@graview/core";
 import type { AiCatalog, AiContextState, AiInteraction, AiTarget, AiUsage } from "@graview/core/catalog";
 import type { ToolDefinition } from "./agent/tool-definition.js";
 import type { Completion } from "./intelligence.js";
-import type { Decide } from "./providers/jev.js";
+import type { Decide } from "./fast.js";
 
 /**
  * THE AI A SEAT MAY USE, AS THE HOST DECIDED IT — once, in code.

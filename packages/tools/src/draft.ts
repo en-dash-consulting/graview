@@ -1155,7 +1155,7 @@ async function modelDraft<S extends AnySchema>(ask: string, options: DraftOption
   const reading = readApp(seenSchema(options.app.schema as AnySchema, options.sight));
   let answer: string;
   try {
-    answer = await options.complete!(promptFor(ask, reading, current));
+    answer = (await options.complete!({ prompt: promptFor(ask, reading, current) })).text;
   } catch {
     return { failed: "Couldn't draw that: the model did not answer.", ...keep };
   }

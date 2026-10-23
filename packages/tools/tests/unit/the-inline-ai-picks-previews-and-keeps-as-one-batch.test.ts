@@ -60,7 +60,7 @@ describe("the slots", () => {
     const fast = stubFast();
     expect(fastOf({ fast })).toBe(fast);
     expect(fastOf({ decide: fast.decide, name: "jev" })?.model).toBe("jev");
-    expect(thinkingOf({ complete: async () => "{}" })?.model).toBe("model");
+    expect(thinkingOf({ complete: async () => ({ text: "{}" }) })?.model).toBe("model");
     expect(fastOf({ off: true, fast })).toBeUndefined();
     expect(inlineAiOn({ off: true, fast })).toBe(false);
     expect(inlineAiOn({ fast })).toBe(true);

@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { movesFromNames, NOTHING_BY_THAT_NAME, placesFromViews, resolveAsk, type AskAnswer, type AskContext, type SeatMove } from "../../src/go.js";
 import { graphResponder, llmResponder, openAiCompatibleCompletion, seatResponder } from "../../src/index.js";
+import type { CompletionRequest } from "../../src/intelligence.js";
 import { createTodoStore, todoApp } from "../../../../apps/todo/src/domain/app.js";
 import { seedbedApp, createSeedbedStore } from "../../../../apps/seedbed/src/domain/app.js";
 
@@ -374,10 +375,10 @@ describe("the conversation answers with moves", () => {
 
   it("a model's answer may move the app too, only where the resolver itself would", async () => {
     const store = createTodoStore({ snapshot: example }) as unknown as Store<AnySchema>;
-    const complete = async (prompt: string) => {
+    const complete = async ({ prompt }: CompletionRequest) => {
       expect(prompt).toContain("Places in the app: Home, Scene, The month, The week");
       expect(prompt).not.toContain("Who may do what");
-      return JSON.stringify({ say: "The week shows when you planned it.", proposals: [], go: ["The week", "Nora", "Nowhere at all"] });
+      return { text: JSON.stringify({ say: "The week shows when you planned it.", proposals: [], go: ["The week", "Nora", "Nowhere at all"] }) };
     };
     const reply = await llmResponder({ complete })(store, "where do I plan?", { principal: member, places });
     expect(reply.say).toBe("The week shows when you planned it.");

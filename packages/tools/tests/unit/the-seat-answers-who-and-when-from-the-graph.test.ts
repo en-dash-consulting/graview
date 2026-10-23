@@ -83,7 +83,7 @@ describe("who, on a named day, on the rota", () => {
   });
 
   it("the graph answers it, grounded, and no model is asked", async () => {
-    const complete = vi.fn(async () => '{"say": "Probably Bo.", "proposals": []}');
+    const complete = vi.fn(async () => ({ text: '{"say": "Probably Bo.", "proposals": []}' }));
     const store = rota() as unknown as Store<AnySchema>;
     for (const respond of [graphResponder<AnySchema>(), seatResponder<AnySchema>({ complete })]) {
       const reply = await respond(store, "who's working thursday", { places: placesOf(rotaApp) });

@@ -76,7 +76,7 @@ describe("the intelligence seam, at zero", () => {
     const model = llmIntelligence({
       name: "fake",
       may: ["add-gardener"],
-      complete: async () => '[{"mutation":"add-gardener","args":{"label":"Wren"},"why":"a garden needs hands"}]',
+      complete: async () => ({ text: '[{"mutation":"add-gardener","args":{"label":"Wren"},"why":"a garden needs hands"}]' }),
     });
     const proposals = await model.propose(createSeedbedUiStore());
     expect(proposals).toEqual([

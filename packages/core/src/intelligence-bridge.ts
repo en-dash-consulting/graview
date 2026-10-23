@@ -82,10 +82,12 @@ export type AiBridgeStatus =
   | { readonly configured: true; readonly model: string; readonly name: string }
   | { readonly configured: false; readonly howTo: string };
 
-/** POST — a prompt in, as `Completion` takes it. */
+/** POST — a completion's request, as `Completion` takes it (`@graview/tools`): the words, the framing, the pictures as base64. */
 export interface AiBridgeAsk {
   readonly prompt: string;
+  readonly system?: string;
+  readonly images?: readonly { readonly mediaType: string; readonly data: string }[];
 }
 
-/** What comes back: the model's text, or why there is none. Never the key. */
-export type AiBridgeAnswer = { readonly text: string } | { readonly error: string };
+/** What comes back: the model's text and what the call used, or why there is none. Never the key. */
+export type AiBridgeAnswer = { readonly text: string; readonly usage?: { readonly inputTokens: number; readonly outputTokens: number } } | { readonly error: string };

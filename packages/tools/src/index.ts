@@ -68,7 +68,7 @@ export {
   templateIntelligence,
   validateProposals,
 } from "./intelligence.js";
-export type { Completion, Intelligence, ProposedCall } from "./intelligence.js";
+export type { Completion, CompletionImage, CompletionReply, CompletionRequest, Intelligence, ProposedCall } from "./intelligence.js";
 export { graphResponder, llmResponder } from "./conversation.js";
 export type { ChatContext, ChatReply, Responder } from "./conversation.js";
 // Where an ask takes the app (`resolveAsk` is `@graview/tools/go`'s, fetched with the seat that asks).
@@ -107,7 +107,8 @@ export type { ChoiceQuestion, DerivedQuestion, NoulQuestion, OfferedQuestion, Qu
 
 // The decision provider: one call, many questions, honest about failure.
 export { JEV_ENDPOINT, JEV_INPUT_USD_PER_MILLION, JEV_MODEL, JevError, jevCostUsd, jevDecide, jevKeyFromEnvironment } from "./providers/jev.js";
-export type { Answer, ChoiceAnswer, Decide, Decided, JevFailure, JevOptions, NoulAnswer, ScoreAnswer, Usage } from "./providers/jev.js";
+export type { Answer, ChoiceAnswer, Decide, Decided, NoulAnswer, ScoreAnswer, Usage } from "./fast.js";
+export type { JevFailure, JevOptions } from "./providers/jev.js";
 
 // A run: a sequence of typed asks over the graph, declared not scripted.
 export { describeRun, landRun, offerOf, readRun, replyFromRun, runFrom, valueOf } from "./run.js";

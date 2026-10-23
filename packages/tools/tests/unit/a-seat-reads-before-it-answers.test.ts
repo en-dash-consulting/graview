@@ -2,6 +2,7 @@ import { bindSchema, createSchema, defineNode, nodeRef, Store, type AnySchema, t
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { aiThroughDevServer, llmResponder, seatResponder, turnThroughMessages, type HostTurn, type MessagesStepRequest } from "../../src/index.js";
+import type { CompletionRequest } from "../../src/intelligence.js";
 import { TURN_CALLS } from "../../src/seat-model.js";
 
 /**
@@ -150,7 +151,7 @@ describe("a seat whose host hands it a turn", () => {
   });
 
   it("is preferred to a completion when a host gives both, and a host with only a completion is asked as before", async () => {
-    const complete = vi.fn(async (_prompt: string) => '{"say": "From the prompt.", "proposals": []}');
+    const complete = vi.fn(async (_request: CompletionRequest) => ({ text: '{"say": "From the prompt.", "proposals": []}' }));
     const turn = vi.fn(async () => '{"say": "From the turn.", "proposals": []}');
     const both = await seatResponder<AnySchema>({ complete, turn })(wedding(), "how much do we still owe, and to whom?", { principal: planner });
     expect(both.say).toBe("From the turn.");
@@ -158,7 +159,7 @@ describe("a seat whose host hands it a turn", () => {
 
     const only = await seatResponder<AnySchema>({ complete })(wedding(), "how much do we still owe, and to whom?", { principal: planner, history: [{ role: "person", text: "hi" }] });
     expect(only.say).toBe("From the prompt.");
-    const prompt = complete.mock.calls[0]![0];
+    const prompt = complete.mock.calls[0]![0].prompt;
     expect(prompt).toContain("Conversation so far:\nPerson: hi");
     expect(prompt).toContain("Person: how much do we still owe, and to whom?");
     expect(prompt).not.toContain("Read it with the tools");

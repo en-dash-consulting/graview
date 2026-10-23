@@ -3,7 +3,8 @@ import { NO_AI_SAID, type HostAi } from "./ai.js";
 import { graphResponder, llmResponder, type ChatReply, type Responder } from "./conversation.js";
 import { completionDecide } from "./decide.js";
 import type { Completion } from "./intelligence.js";
-import { jevDecide, type Decide } from "./providers/jev.js";
+import type { Decide } from "./fast.js";
+import { jevDecide } from "./providers/jev.js";
 
 /*
  * What the host gave a seat (`HostAi`) is `./ai.ts`, which reaches no
@@ -42,7 +43,13 @@ export function openAiCompatibleCompletion(options: {
   readonly fetch?: FetchLike;
 }): Completion {
   const call = options.fetch ?? (globalThis.fetch as FetchLike);
-  return async (prompt) => {
+  return async ({ prompt, system, images, signal }) => {
+    // A hung provider must not hang the conversation: the floor answers. The caller's signal gives up sooner.
+    const timeout = typeof AbortSignal !== "undefined" && "timeout" in AbortSignal ? AbortSignal.timeout(45_000) : undefined;
+    const giveUp = signal && timeout && "any" in AbortSignal ? AbortSignal.any([signal, timeout]) : (signal ?? timeout);
+    const content = images?.length
+      ? [{ type: "text", text: prompt }, ...images.map((image) => ({ type: "image_url", image_url: { url: `data:${image.mediaType};base64,${image.data}` } }))]
+      : prompt;
     const response = await call(`${options.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
       headers: {
@@ -51,22 +58,21 @@ export function openAiCompatibleCompletion(options: {
       },
       body: JSON.stringify({
         model: options.model,
-        messages: [{ role: "user", content: prompt }],
+        messages: [...(system ? [{ role: "system", content: system }] : []), { role: "user", content }],
       }),
-      // A hung provider must not hang the conversation: the floor answers.
-      ...(typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
-        ? { signal: AbortSignal.timeout(45_000) }
-        : {}),
+      ...(giveUp ? { signal: giveUp } : {}),
     });
     if (!response.ok) {
       throw new Error(`${options.model} answered ${response.status}: ${(await response.text()).slice(0, 160)}`);
     }
     const parsed = (await response.json()) as {
       choices?: { message?: { content?: string } }[];
+      usage?: { prompt_tokens?: unknown; completion_tokens?: unknown };
     };
-    const content = parsed.choices?.[0]?.message?.content;
-    if (typeof content !== "string") throw new Error(`${options.model} answered with no content`);
-    return content;
+    const text = parsed.choices?.[0]?.message?.content;
+    if (typeof text !== "string") throw new Error(`${options.model} answered with no content`);
+    const { prompt_tokens: inputTokens, completion_tokens: outputTokens } = parsed.usage ?? {};
+    return { text, ...(typeof inputTokens === "number" && typeof outputTokens === "number" ? { usage: { inputTokens, outputTokens } } : {}) };
   };
 }
 
@@ -160,7 +166,7 @@ export function localCompletion(
           completions: {
             create: async ({ messages }) => ({
               choices: [
-                { message: { content: await session.prompt(messages[messages.length - 1]?.content ?? "") } },
+                { message: { content: await session.prompt(messages.map((message) => message.content).join("\n\n")) } },
               ],
             }),
           },
@@ -214,15 +220,16 @@ export function localCompletion(
     return bringing;
   };
 
-  const complete: Completion = async (prompt) => {
+  // Words only: a model in the browser is handed no pictures.
+  const complete: Completion = async ({ prompt, system }) => {
     engine = held.engine ?? engine;
     if (!engine) throw new Error("The local model is not warm yet");
     const answer = await engine.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
+      messages: [...(system ? [{ role: "system", content: system }] : []), { role: "user", content: prompt }],
     });
-    const content = answer.choices?.[0]?.message?.content;
-    if (typeof content !== "string") throw new Error("The local model answered with no content");
-    return content;
+    const text = answer.choices?.[0]?.message?.content;
+    if (typeof text !== "string") throw new Error("The local model answered with no content");
+    return { text };
   };
 
   return { complete, ready: () => (held.engine ?? engine) !== null, warm, failed: () => held.failed };
@@ -252,15 +259,15 @@ interface TalkingModel {
 function talkingModel(ai: HostAi, hooks: { readonly onStatus?: (status: LocalStatus) => void }): TalkingModel | undefined {
   const turn = ai.turn;
   const complete: Completion | undefined =
-    ai.complete ?? (turn ? (prompt) => turn({ system: "", messages: [{ role: "user", content: prompt }], tools: [], call: async () => ({ error: "No tools here." }) }) : undefined);
+    ai.complete ?? (turn ? async ({ prompt, system }) => ({ text: await turn({ system: system ?? "", messages: [{ role: "user", content: prompt }], tools: [], call: async () => ({ error: "No tools here." }) }) }) : undefined);
   if (complete) return { complete, ready: () => true, warm: () => Promise.resolve(), failed: () => null };
   if (!ai.onDevice) return undefined;
   const model = typeof ai.onDevice === "object" ? ai.onDevice.model : undefined;
   const local = localCompletion({ ...(model ? { model } : {}), ...(hooks.onStatus ? { onStatus: hooks.onStatus } : {}) });
   return {
-    complete: async (prompt) => {
+    complete: async (request) => {
       if (!local.ready()) void local.warm();
-      return local.complete(prompt);
+      return local.complete(request);
     },
     ready: local.ready,
     warm: local.warm,

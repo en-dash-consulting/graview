@@ -74,6 +74,23 @@ describe("the model door", () => {
     expect(sent.body).not.toContain(KEY);
   });
 
+  it("forwards a completion's framing and pictures to the Messages request, and answers what the call used", async () => {
+    const upstream = vi.fn(async (_url: string, _init: { method: string; headers: Record<string, string>; body: string }) => ({
+      status: 200,
+      text: async () => JSON.stringify({ content: [{ type: "text", text: "A receipt for 12 dollars." }], stop_reason: "end_turn", usage: { input_tokens: 812, output_tokens: 9 } }),
+    }));
+    const handler = aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY }, fetch: upstream });
+    const { sent, res } = respond();
+    const images = [{ mediaType: "image/png", data: "iVBORw0KGgo=" }, { mediaType: "text/html", data: "PGI+" }];
+    await handler(request("POST", JSON.stringify({ prompt: "what is this?", system: "Read receipts.", images })), res);
+    expect(JSON.parse(upstream.mock.calls[0]![1].body)).toMatchObject({
+      system: "Read receipts.",
+      messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: "image/png", data: "iVBORw0KGgo=" } }, { type: "text", text: "what is this?" }] }],
+    });
+    expect(JSON.parse(upstream.mock.calls[0]![1].body).messages[0].content).toHaveLength(2);
+    expect(JSON.parse(sent.body!)).toEqual({ text: "A receipt for 12 dollars.", usage: { inputTokens: 812, outputTokens: 9 } });
+  });
+
   it("forwards one step of a seat's turn — its framing, messages and read tools — and answers with the content and why it stopped, so the page runs the reads (FR-160)", async () => {
     const blocks = [{ type: "tool_use", id: "t1", name: "get_node", input: { id: "Bloom & Co" } }];
     const upstream = vi.fn(async (_url: string, _init: { method: string; headers: Record<string, string>; body: string }) => ({ status: 200, text: async () => JSON.stringify({ content: blocks, stop_reason: "tool_use" }) }));

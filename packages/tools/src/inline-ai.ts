@@ -51,7 +51,8 @@ import {
 } from "@graview/core/catalog";
 import type { AiPrice, AnswerProvider, AnswerReply, FastProvider, HostAi, ThinkingProvider } from "./ai.js";
 import { firstJsonObject } from "./intelligence.js";
-import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide, type Answer, type ChoiceAnswer, type JevOptions } from "./providers/jev.js";
+import type { Answer, ChoiceAnswer } from "./fast.js";
+import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide, type JevOptions } from "./providers/jev.js";
 import type { ChoiceQuestion, Question } from "./questions.js";
 
 // ── the slots ───────────────────────────────────────────────────────────────
@@ -72,7 +73,7 @@ export function thinkingOf(ai: HostAi): ThinkingProvider | undefined {
   const model = ai.name ?? "model";
   if (ai.complete) {
     const complete = ai.complete;
-    return { model, think: async ({ system, prompt }) => ({ text: await complete(`${system}\n\n${prompt}`) }) };
+    return { model, think: ({ system, prompt }) => complete({ prompt, system }) };
   }
   if (ai.turn) {
     const turn = ai.turn;

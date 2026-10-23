@@ -63,7 +63,7 @@ export async function drawFigure(
 The kind is called "${kind}".${description ? `\nIt is described as: ${description}` : ""}`;
   let answer = "";
   try {
-    answer = await complete(asked);
+    answer = (await complete({ prompt: asked })).text;
   } catch (error) {
     return {
       kind,

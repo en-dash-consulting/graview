@@ -178,7 +178,7 @@ export async function answerWithModel<S extends AnySchema>(
   ]
     .filter(Boolean)
     .join("\n\n");
-  const answer = options.turn ? await options.turn(turnOf(whole, seat, prompt, text, context)) : await options.complete!(prompt);
+  const answer = options.turn ? await options.turn(turnOf(whole, seat, prompt, text, context)) : (await options.complete!({ prompt })).text;
   const read = firstJsonObject(answer);
   /*
    * A bare array IS the list of proposals — the shape a model reaches for

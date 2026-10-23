@@ -356,7 +356,7 @@ describe("a figure is a change like any other", () => {
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M4 18 12 6l8 12z"/></svg>';
     const studio = createStudio(rota);
-    const reply = await studioResponder({ complete: async () => `Here you go:\n${drawn}` })(studio.store as never, "draw a figure for shift");
+    const reply = await studioResponder({ complete: async () => ({ text: `Here you go:\n${drawn}` }) })(studio.store as never, "draw a figure for shift");
     expect(reply.proposals[0]?.args["figure"]).toBe(drawn);
     const kept = studio.propose({ name: "set-figure", args: { ...reply.proposals[0]!.args } }, agent);
     expect(kept.ok).toBe(true);
