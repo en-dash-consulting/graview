@@ -52,6 +52,7 @@
  *
  * `--quick` scans the desk in light and the phone in dark only.
  */
+import { spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -407,6 +408,8 @@ async function auditTheView(page, view) {
   await page.waitForFunction((host) => Boolean(document.querySelector(host)?.shadowRoot?.querySelector("[data-graview-view-root] *")), view.host, { timeout: 30_000 });
   await page.waitForTimeout(300);
   const drawing = await page.evaluate(([host, clicked]) => window.__audit(host, { clicked }), [view.host, view.clicked]);
+  /* And not handed what it hears a click on: the host kept it on the region, as the view's runtime said it (0.1.48). */
+  const learned = await page.evaluate((host) => window.__audit(host), view.host);
   const chrome = await page.evaluate(() => window.__audit("#graview-app", { chrome: true }));
   const frame = view.framed
     ? await page.evaluate(() => {
@@ -425,8 +428,47 @@ async function auditTheView(page, view) {
     box.remove();
     return said.problems.map((problem) => problem.rule);
   });
-  return { drawing, chrome, frame, walk, control };
+  return { drawing, learned, chrome, frame, walk, control };
 }
+
+/*
+ * `graview view check --audit --browser` (0.1.48): the command a view's
+ * author runs lays what the view drew out in Chromium and runs every rule
+ * there — the ring, contrast and Tab through and out — not only the rules a
+ * drawing alone answers.
+ */
+function viewCheckInABrowser() {
+  const fixtures = resolve(repoRoot, "packages/core/tests/document/fixtures");
+  const run = spawnSync(
+    process.execPath,
+    [
+      resolve(repoRoot, "packages/graview/dist/cli.js"),
+      "view",
+      "check",
+      resolve(repoRoot, "scripts/fixtures/view-check-browser.js"),
+      "--app",
+      join(fixtures, "lifelogics.gdd.json"),
+      "--manifest",
+      resolve(repoRoot, "packages/guest/tests/fixtures/lifelogics/packages.manifest.json"),
+      "--seed",
+      join(fixtures, "lifelogics.seed.json"),
+      "--audit",
+      "--browser",
+      "--json",
+    ],
+    { cwd: repoRoot, encoding: "utf8", timeout: 120_000 },
+  );
+  try {
+    return { status: run.status, audit: JSON.parse(run.stdout).audit ?? null, stderr: run.stderr.slice(0, 500) };
+  } catch {
+    return { status: run.status, audit: null, stderr: `${run.stderr}`.slice(0, 500), stdout: `${run.stdout}`.slice(0, 500) };
+  }
+}
+const viewCheck = viewCheckInABrowser();
+const EVERY_RULE = ["keyboard", "role", "name", "toggle-state", "nested-interactive", "img-alt", "svg-name", "scroll-region", "focus-visible", "contrast", "keyboard-trap"];
+
+/** An audit's structural problems, as `rule @ at`, sorted: what two audits of one drawing must agree on. */
+const said = (audit) => (audit?.problems ?? []).filter((problem) => !["focus-visible", "contrast"].includes(problem.rule)).map((problem) => `${problem.rule} @ ${problem.at}`).sort();
 
 /** What each view screen's audit said, and what axe said inside the view. */
 const viewAudits = [];
@@ -632,6 +674,29 @@ const checks = {
     owes: THREAT_OWES,
     said: [...new Set(viewAudits.filter((one) => one.threat).map((one) => (one.drawing?.problems ?? []).filter((problem) => !["focus-visible", "contrast"].includes(problem.rule)).map((problem) => `${problem.rule} @ ${problem.at}`).join(" | ")))],
     ok: !SCREENS.some((screen) => screen.name.startsWith("threat")) || (viewAudits.some((one) => one.threat) && viewAudits.filter((one) => one.threat).every((one) => JSON.stringify((one.drawing?.problems ?? []).filter((problem) => !["focus-visible", "contrast"].includes(problem.rule)).map((problem) => `${problem.rule} @ ${problem.at}`).sort()) === JSON.stringify([...THREAT_OWES].sort()))),
+  },
+  aPageAuditLearnsFromTheHostWhatTheViewHearsAClickOn: {
+    differ: viewAudits
+      .filter((one) => JSON.stringify(said(one.learned)) !== JSON.stringify(said(one.drawing)))
+      .map((one) => ({ screen: one.screen, handed: said(one.drawing), learned: said(one.learned) })),
+    ok: viewAudits.length > 0 && viewAudits.every((one) => one.learned && JSON.stringify(said(one.learned)) === JSON.stringify(said(one.drawing))),
+  },
+  graviewViewCheckBrowserRunsEveryRule: {
+    status: viewCheck.status,
+    ran: viewCheck.audit?.ran ?? null,
+    skipped: viewCheck.audit?.skipped ?? null,
+    measured: viewCheck.audit?.measured ?? null,
+    found: (viewCheck.audit?.problems ?? []).map((problem) => `${problem.rule} @ ${problem.at}`),
+    ...(viewCheck.audit ? {} : { stderr: viewCheck.stderr }),
+    ok:
+      viewCheck.status === 1 &&
+      Boolean(viewCheck.audit) &&
+      EVERY_RULE.every((rule) => viewCheck.audit.ran.includes(rule)) &&
+      viewCheck.audit.skipped.length === 0 &&
+      viewCheck.audit.measured["focus-visible"] >= 2 &&
+      viewCheck.audit.measured["keyboard-trap"] >= 2 &&
+      ["contrast @ p.faint", "keyboard @ div.more"].every((one) => viewCheck.audit.problems.some((problem) => `${problem.rule} @ ${problem.at}` === one)) &&
+      viewCheck.audit.problems.every((problem) => problem.rule !== "keyboard-trap" && problem.rule !== "focus-visible"),
   },
   theFrameworksMarkupAroundAViewPassesTheAudit: {
     problems: viewAudits.flatMap((one) => (one.chrome?.problems ?? []).map((problem) => `${one.screen}: ${problem.rule} @ ${problem.at} — ${problem.says}`)).slice(0, 40),

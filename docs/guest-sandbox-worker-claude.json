@@ -1,10 +1,10 @@
 {
-  "at": "2026-10-22T15:20:33.908Z",
+  "at": "2026-10-23T03:07:55.592Z",
   "transport": "worker",
   "engine": "chromium",
   "policy": {
     "name": "claude",
-    "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; font-src 'self' data:; media-src 'self' blob: data:; worker-src 'self' blob:; frame-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'self' http://127.0.0.1:5692; form-action 'self'; webrtc 'block'",
+    "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; font-src 'self' data:; media-src 'self' blob: data:; worker-src 'self' blob:; frame-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'self' http://127.0.0.1:5792; form-action 'self'; webrtc 'block'",
     "sandbox": "allow-scripts allow-forms",
     "widgetOrigin": "null"
   },
@@ -460,25 +460,25 @@
     "a guest that spins after ready is stopped as silent within limits.silentMs (1500 ms) and one interval of it": {
       "ok": true,
       "detail": {
-        "spun": 1497.2000000029802,
+        "spun": 1497.7999999970198,
         "failedAt": {
-          "builder": 500.6000000014901,
-          "spinner": 1572.3000000044703
+          "builder": 433.5,
+          "spinner": 1575.2000000029802
         },
         "drewAt": {
-          "spinner": 75.10000000149012
+          "spinner": 77.40000000596046
         },
         "pulse": {
-          "last": 5051.70000000298,
-          "longest": 170.79999999701977,
-          "ticks": 37
+          "last": 5103.800000011921,
+          "longest": 175,
+          "ticks": 38
         },
         "spinnerStopped": true,
         "busyRunning": true,
         "building": {
-          "last": 5055.10000000149,
-          "longest": 167.39999999850988,
-          "ticks": 5
+          "last": 5107.100000008941,
+          "longest": 58.70000000298023,
+          "ticks": 4
         },
         "builderStopped": true
       }
@@ -486,9 +486,9 @@
     "the widget's page kept its own timer while a guest spun, never more than 250 ms between 50 ms ticks": {
       "ok": true,
       "detail": {
-        "last": 5051.70000000298,
-        "longest": 170.79999999701977,
-        "ticks": 37
+        "last": 5103.800000011921,
+        "longest": 175,
+        "ticks": 38
       }
     },
     "a guest that is busy but yields, for three times silentMs, is kept": {
@@ -517,9 +517,9 @@
           ]
         ],
         "building": {
-          "last": 5055.10000000149,
-          "longest": 167.39999999850988,
-          "ticks": 5
+          "last": 5107.100000008941,
+          "longest": 58.70000000298023,
+          "ticks": 4
         },
         "stopped": true
       }

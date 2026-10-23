@@ -32,6 +32,7 @@ import { judgeDestination, listsOf } from "../host/links.js";
 import { guestPlacesOf, placeNamed } from "../host/links-words.js";
 import type { GuestViewInput } from "../host/session.js";
 import type { ViewAudit } from "../audit/rules.js";
+import type { TreeElement } from "./tree.js";
 import { checkViewSource } from "../host/view-source.js";
 import type { WorkerViewLimits } from "../host/view.js";
 import type { GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
@@ -156,6 +157,19 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
    * it hears a click on — and say which rules need a browser and did not run.
    */
   readonly audit?: boolean;
+  /**
+   * With `audit`, hand back the tree it drew — with the host's marks the
+   * audit gave it — and the elements it hears a click on, for the rules that
+   * need a page (`graview view check --audit --browser`, which writes it out
+   * as markup with `markupOf`).
+   */
+  readonly drawing?: boolean;
+}
+
+/** What a headless run drew: its tree, with the host's marks, and the elements in it the view hears a click on. */
+export interface HeadlessDrawing {
+  readonly root: TreeElement;
+  readonly clicked: readonly TreeElement[];
 }
 
 /** Why a view will not do, and a sentence saying it. */
@@ -180,6 +194,8 @@ export interface HeadlessDescribed {
   readonly pressed?: HeadlessPress;
   /** What `options.audit` found in what it drew, before any press. */
   readonly audit?: ViewAudit;
+  /** What it drew, as markup, when `options.drawing` asked with `options.audit`. */
+  readonly drawing?: HeadlessDrawing;
 }
 
 export type HeadlessResult = HeadlessDescribed | HeadlessFailure;
@@ -380,10 +396,13 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   };
   const { placeText } = await import("@graview/core/describe");
   let audit: ViewAudit | undefined;
+  let drawing: HeadlessDrawing | undefined;
   if (options.audit === true) {
     const { auditView } = await import("../audit/index.js");
     const clicked = (transcript.clicks ?? []).flatMap((id) => judged.drawn.elementOf(id) ?? []);
     audit = auditView(judged.drawn.root, { host: "pending", clicked });
+    /* After the audit, which gave the tree the host's marks: what a page would hold. */
+    if (options.drawing === true) drawing = { root: judged.drawn.root as unknown as TreeElement, clicked: clicked as unknown as TreeElement[] };
   }
-  return { ok: true, description: { ...description, text: placeText(description) }, props, transcript, ...(pressed ? { pressed } : {}), ...(audit ? { audit } : {}) };
+  return { ok: true, description: { ...description, text: placeText(description) }, props, transcript, ...(pressed ? { pressed } : {}), ...(audit ? { audit } : {}), ...(drawing ? { drawing } : {}) };
 }

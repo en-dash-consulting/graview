@@ -91,8 +91,6 @@ function steady(read: () => string | undefined): () => boolean {
 const drawn = (host: HTMLElement) => until(steady(() => (host.querySelector("main") ? host.innerHTML : undefined)), "the page to draw");
 /** The menu open with its rows, and its sections arrived. */
 const opened = () => until(steady(() => (menu()?.querySelector("[data-menu-item], [data-affordance], [data-testid]") ? menu()!.innerHTML : undefined)), "the menu to open");
-/** The menu gone. */
-const closed = () => until(() => menu() === null, "the menu to close");
 
 async function rightClick(element: Element) {
   await act(async () => void element.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, clientX: 40, clientY: 60 })));
