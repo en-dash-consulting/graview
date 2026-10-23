@@ -2,7 +2,8 @@ import { labelOf, type AnySchema, type Principal, type Store, type Violation } f
 import type { ToolCall } from "./agent/tools.js";
 import type { ChatReply } from "./conversation.js";
 import { applyPlan, planFrom, type PlanOptions, type PlannedCall } from "./plan.js";
-import { jevCostUsd, type Answer, type Decide } from "./providers/jev.js";
+import type { Answer, Decide } from "./fast.js";
+import { jevCostUsd } from "./providers/jev.js";
 import { questionsForInvariant, type DerivedQuestion, type OfferedQuestion } from "./questions.js";
 import { offerOf } from "./run.js";
 

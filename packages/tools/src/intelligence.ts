@@ -143,8 +143,37 @@ export interface Intelligence<S extends AnySchema = AnySchema> {
   propose(store: Store<S>): Promise<readonly ProposedCall[]>;
 }
 
-/** The whole vendor surface: one prompt in, one string out. */
-export type Completion = (prompt: string) => Promise<string>;
+/** A picture a completion is asked about: its media type and its bytes as base64, with no `data:` prefix. */
+export interface CompletionImage {
+  readonly mediaType: string;
+  readonly data: string;
+}
+
+/**
+ * WHAT A COMPLETION IS ASKED: the words, and — when the caller has them —
+ * its framing (`system`), the pictures the words are about, and a signal
+ * that gives up on the answer. A model that cannot take one of them says
+ * so in its own way; none is required.
+ */
+export interface CompletionRequest {
+  readonly prompt: string;
+  readonly system?: string;
+  readonly images?: readonly CompletionImage[];
+  readonly signal?: AbortSignal;
+}
+
+/** What a completion answers: its text, and the call's usage when the model said. */
+export interface CompletionReply {
+  readonly text: string;
+  readonly usage?: { readonly inputTokens: number; readonly outputTokens: number; readonly costUsd?: number };
+}
+
+/**
+ * THE WHOLE VENDOR SURFACE: one request in, one reply out. An object both
+ * ways, so a framing, pictures, a way to give up and what the call cost
+ * travel without the contract changing again.
+ */
+export type Completion = (request: CompletionRequest) => Promise<CompletionReply>;
 
 /**
  * WHAT THE GATE TOOK OUT, AND WHY — so a seat can say so.
@@ -234,7 +263,7 @@ export function llmIntelligence<S extends AnySchema>(options: {
         trouble ? `Currently broken:\n${trouble}` : "Nothing is currently broken.",
         'Answer ONLY a JSON array of {"mutation": string, "args": object, "why": string}.',
       ].join("\n\n");
-      const answer = await options.complete(prompt);
+      const { text: answer } = await options.complete({ prompt });
       const match = answer.match(/\[[\s\S]*\]/);
       if (!match) return [];
       let parsed: unknown;

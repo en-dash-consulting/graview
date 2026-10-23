@@ -119,9 +119,9 @@ describe("with the host's model", () => {
     const asked: string[] = [];
     const ai: HostAi = {
       name: "stub",
-      complete: async (prompt) => {
+      complete: async ({ prompt }) => {
         asked.push(prompt);
-        return JSON.stringify({ say: "A back bed would help.", proposals: [{ mutation: "add-plot", args: { label: "Back bed" } }] });
+        return { text: JSON.stringify({ say: "A back bed would help.", proposals: [{ mutation: "add-plot", args: { label: "Back bed" } }] }) };
       },
     };
     const kept = store();

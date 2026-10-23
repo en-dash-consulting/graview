@@ -24,7 +24,7 @@ describe("the on-device model without WebGPU", () => {
     const failed = statuses.find((status) => status.state === "failed")!;
     expect(failed.detail).toContain("WebGPU");
     expect(local.ready()).toBe(false);
-    await expect(local.complete("hi")).rejects.toThrow(/not warm/);
+    await expect(local.complete({ prompt: "hi" })).rejects.toThrow(/not warm/);
   });
 });
 

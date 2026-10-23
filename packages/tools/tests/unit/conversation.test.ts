@@ -434,12 +434,12 @@ describe("a model holds the conversation through the same gate", () => {
   it("threads history and selection into the prompt and validates the reply", async () => {
     const model = llmResponder<typeof schema>({
       may: ["shorten"],
-      complete: async (prompt) => {
+      complete: async ({ prompt }) => {
         expect(prompt).toContain("Person: and now?");
         expect(prompt).toContain("Person: earlier words");
         expect(prompt).toContain('what "this" means');
         expect(prompt).toContain("School run");
-        return '{"say":"Cutting it.","proposals":[{"mutation":"shorten","args":{"dutyId":"school"},"why":"over an hour"},{"mutation":"reassign","args":{},"why":"not allowed"}]}';
+        return { text: '{"say":"Cutting it.","proposals":[{"mutation":"shorten","args":{"dutyId":"school"},"why":"over an hour"},{"mutation":"reassign","args":{},"why":"not allowed"}]}' };
       },
     });
     const reply = await model(store(), "and now?", {
@@ -463,9 +463,9 @@ describe("a model holds the conversation through the same gate", () => {
   it("shows the model what each act takes and how things are connected", async () => {
     let seen = "";
     const model = llmResponder<typeof schema>({
-      complete: async (prompt) => {
+      complete: async ({ prompt }) => {
         seen = prompt;
-        return '{"say":"Ok.","proposals":[]}';
+        return { text: '{"say":"Ok.","proposals":[]}' };
       },
     });
     await model(store(), "give the school run to Bo");
@@ -475,13 +475,13 @@ describe("a model holds the conversation through the same gate", () => {
   });
 
   it("degrades an unparseable answer to words, never to guesses", async () => {
-    const model = llmResponder<typeof schema>({ complete: async () => "I would rather chat." });
+    const model = llmResponder<typeof schema>({ complete: async () => ({ text: "I would rather chat." }) });
     const reply = await model(store(), "hm");
     expect(reply).toEqual({ say: "I would rather chat.", proposals: [] });
   });
 
   it("never hands the person the plumbing when the answer is a shape it cannot read", async () => {
-    const model = llmResponder<typeof schema>({ complete: async () => '{"say": "half an answer' });
+    const model = llmResponder<typeof schema>({ complete: async () => ({ text: '{"say": "half an answer' }) });
     const reply = await model(store(), "hm");
     expect(reply.say).not.toContain("{");
     expect(reply.proposals).toEqual([]);

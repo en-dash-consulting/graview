@@ -1,3 +1,4 @@
+import type { Completion } from "../intelligence.js";
 import {
   actSpelledAs,
   actTitle,
@@ -278,7 +279,7 @@ export interface KeptLensEdit {
 
 /** What a host gives a seat that may draw views: its model, for an ask no template reads, and how a kept lens is written. */
 export interface DraftTools {
-  readonly complete?: (prompt: string) => Promise<string>;
+  readonly complete?: Completion;
   /** Write the `add-lens` edit into the app's declaration (a document host's write); absent, `keep_lens` is not listed. */
   readonly keep?: (edit: KeptLensEdit) => Promise<{ readonly ok: true; readonly said?: string } | { readonly ok: false; readonly error: string }>;
   /** The views the host keeps: a titled one's place is a title a draft does not take. */

@@ -19,7 +19,7 @@ import { capitalize } from "./capital.js";
  * (`store.seenBy(principal)`), so nothing here names what they may not.
  */
 
-/** At most this many of each: suggestions, and acts offered unprompted. */
+/** At most this many of each: offers, and acts offered unprompted. */
 export const SEAT_OFFERS = 3;
 
 /** What the seat is about: a record, a kind, a place, or the whole thing. */
@@ -30,7 +30,7 @@ export interface SeatSubject {
   readonly name: string;
 }
 
-export interface SuggestInput<S extends AnySchema> {
+export interface OfferInput<S extends AnySchema> {
   readonly store: Pick<Store<S>, "schema" | "graph">;
   readonly subject: SeatSubject;
   /** The rules broken right now, as the reader may see them. */
@@ -44,20 +44,20 @@ export interface SuggestInput<S extends AnySchema> {
 }
 
 /**
- * Why a suggestion is offered: a problem; what this is or what is here; a
+ * Why an offer is made: a problem; what this is or what is here; a
  * picture to go to ("go"); what falls due this week ("due"); a way of
  * drawing what is here ("draw").
  */
-export type SuggestionWhy = "problem" | "about" | "here" | "go" | "due" | "draw";
+export type OfferWhy = "problem" | "about" | "here" | "go" | "due" | "draw";
 
-export interface Suggestion {
+export interface Offer {
   /** What pressing it asks, in the reader's words. */
   readonly ask: string;
-  readonly why: SuggestionWhy;
+  readonly why: OfferWhy;
 }
 
 /** The record the subject names, when it names one. */
-function recordOf<S extends AnySchema>(store: SuggestInput<S>["store"], subject: SeatSubject) {
+function recordOf<S extends AnySchema>(store: OfferInput<S>["store"], subject: SeatSubject) {
   return subject.id ? store.graph.getNode(subject.id) : undefined;
 }
 
@@ -86,7 +86,7 @@ const sentenceOf = (text: string): string => {
  * looking at first, else what it is — a record and its kind, a place and
  * how much is on it, or the whole thing by its largest kinds.
  */
-export function whereLine<S extends AnySchema>({ store, subject, violations, place }: SuggestInput<S>): string {
+export function whereLine<S extends AnySchema>({ store, subject, violations, place }: OfferInput<S>): string {
   const record = recordOf(store, subject);
   const problem = problemOn(violations, record?.id ?? null);
   if (problem) return sentenceOf(problem.message);
@@ -125,10 +125,10 @@ export function whereLine<S extends AnySchema>({ store, subject, violations, pla
  * ask as `resolveAsk` narrows a kind, the drawing as `templateDraft` reads
  * a board.
  */
-export function suggestionsFor<S extends AnySchema>(input: SuggestInput<S>): readonly Suggestion[] {
+export function offersFor<S extends AnySchema>(input: OfferInput<S>): readonly Offer[] {
   const { store, subject, violations } = input;
   const record = recordOf(store, subject);
-  const out: Suggestion[] = [];
+  const out: Offer[] = [];
   if (record && problemOn(violations, record.id)) out.push({ ask: `What's wrong with ${subject.name}?`, why: "problem" });
   else if (violations.length > 0) out.push({ ask: "What needs attention?", why: "problem" });
   const kind = record ? (record.kind as string) : (input.place?.kind ?? kindOfCard(subject.id));
@@ -150,7 +150,7 @@ export function suggestionsFor<S extends AnySchema>(input: SuggestInput<S>): rea
 type Fields = Readonly<Record<string, { readonly _def?: { readonly typeName?: string; readonly type?: string }; readonly def?: { readonly type?: string }; readonly options?: readonly unknown[] }>>;
 
 /** A kind's declared fields, by name: what a zod object's shape holds. */
-function fieldsOf<S extends AnySchema>(store: SuggestInput<S>["store"], kind: string): Fields {
+function fieldsOf<S extends AnySchema>(store: OfferInput<S>["store"], kind: string): Fields {
   return ((store.schema.tryDefinition(kind) as { fields?: { shape?: Fields } } | undefined)?.fields?.shape ?? {}) as Fields;
 }
 
@@ -169,7 +169,7 @@ const DAY = /^\d{4}-\d{2}-\d{2}/;
 const DATE_NAMES = ["due", "deadline", "date", "when"];
 
 /** "Tasks due this week", when something of this kind (or, nothing chosen, of any kind) falls due in the next seven days. */
-function dueThisWeek<S extends AnySchema>(input: SuggestInput<S>, kind: string | undefined): Suggestion | undefined {
+function dueThisWeek<S extends AnySchema>(input: OfferInput<S>, kind: string | undefined): Offer | undefined {
   const { store } = input;
   const today = input.today;
   if (!today || !DAY.test(today)) return undefined;
@@ -194,7 +194,7 @@ function dueThisWeek<S extends AnySchema>(input: SuggestInput<S>, kind: string |
 }
 
 /** "Go to The week": a picture of the app's that the reader is not standing in. */
-function anotherPlace<S extends AnySchema>(input: SuggestInput<S>, kind: string | undefined): Suggestion | undefined {
+function anotherPlace<S extends AnySchema>(input: OfferInput<S>, kind: string | undefined): Offer | undefined {
   const here = input.place?.title;
   // A picture of something else than what the reader is looking at.
   const picture = (input.places ?? []).find((place) => place.kind !== null && place.picture === true && place.title !== here && place.kind !== kind);
@@ -202,7 +202,7 @@ function anotherPlace<S extends AnySchema>(input: SuggestInput<S>, kind: string 
 }
 
 /** "Show tasks as a board by day": a kind here with a choice to put its records in columns by. */
-function aDrawing<S extends AnySchema>(input: SuggestInput<S>, kind: string | undefined): Suggestion | undefined {
+function aDrawing<S extends AnySchema>(input: OfferInput<S>, kind: string | undefined): Offer | undefined {
   const { store } = input;
   // This kind first; then the kind with the most records that has a choice to draw by.
   const most = [...(store.schema.kinds as readonly string[])].sort((a, b) => store.graph.nodesOfKind(b as never).length - store.graph.nodesOfKind(a as never).length);

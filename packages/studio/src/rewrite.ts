@@ -38,7 +38,7 @@ Answer with ONLY the object, from its opening { to its closing } — no defineMu
   ]
     .filter(Boolean)
     .join("\n\n");
-  return theObject(await complete(prompt));
+  return theObject((await complete({ prompt })).text);
 }
 
 /**

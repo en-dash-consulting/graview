@@ -1,7 +1,7 @@
 import { isCurrent, labelOf, type AnySchema, type Principal, type Store, type Violation } from "@graview/core";
 import type { ToolCall } from "./agent/tools.js";
 import { applyPlan, planFrom, type AppliedPlan, type Plan, type PlanOptions, type PlannedCall } from "./plan.js";
-import type { Answer, Decide, Decided } from "./providers/jev.js";
+import type { Answer, Decide, Decided } from "./fast.js";
 import { jevCostUsd } from "./providers/jev.js";
 import type { ChatReply } from "./conversation.js";
 import {

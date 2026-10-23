@@ -34,15 +34,15 @@ describe("what comes back", () => {
   });
 
   it("keeps a drawing that holds the style", async () => {
-    const drawn = await drawFigure("temple", "a building people gather in", async () => GOOD);
+    const drawn = await drawFigure("temple", "a building people gather in", async () => ({ text: GOOD }));
     expect(drawn).toMatchObject({ kind: "temple", figure: GOOD, from: "model" });
     expect(figureFaults(drawn.figure)).toEqual([]);
   });
 
   it("refuses one that does not, and says what was wrong with it", async () => {
-    const drawn = await drawFigure("temple", undefined, async () =>
-      '<svg viewBox="0 0 24 24"><path stroke="#c0ffee" d="M0 0"/></svg>',
-    );
+    const drawn = await drawFigure("temple", undefined, async () => ({
+      text: '<svg viewBox="0 0 24 24"><path stroke="#c0ffee" d="M0 0"/></svg>',
+    }));
     expect(drawn.from).toBe("shipped");
     expect(drawn.refused?.join(" ")).toContain("#c0ffee");
     // And what it fell back to is itself drawable, or the refusal would

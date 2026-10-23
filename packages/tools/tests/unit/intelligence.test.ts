@@ -81,15 +81,15 @@ describe("a model is one completion function", () => {
     const model = llmIntelligence<typeof schema>({
       name: "fake",
       may: ["add-gardener"],
-      complete: async (prompt) => {
+      complete: async ({ prompt }) => {
         // The prompt states the declaration — that is the model's context.
         expect(prompt).toContain("add-plot");
         expect(prompt).toContain("Gardeners");
-        return `Sure! [
+        return { text: `Sure! [
           {"mutation": "add-gardener", "args": {"label": "Ravi"}, "why": "someone must dig"},
           {"mutation": "add-plot", "args": {"label": "x", "beds": 2}, "why": "not allowed"},
           {"mutation": "drop-tables", "args": {}, "why": "nice try"}
-        ]`;
+        ]` };
       },
     });
     const proposals = await model.propose(empty());
@@ -100,7 +100,7 @@ describe("a model is one completion function", () => {
   });
 
   it("answers nothing on an unparseable reply rather than guessing", async () => {
-    const model = llmIntelligence<typeof schema>({ name: "fake", complete: async () => "I refuse." });
+    const model = llmIntelligence<typeof schema>({ name: "fake", complete: async () => ({ text: "I refuse." }) });
     expect(await model.propose(empty())).toEqual([]);
   });
 });

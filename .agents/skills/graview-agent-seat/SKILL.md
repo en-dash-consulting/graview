@@ -166,7 +166,8 @@ path to the store:
   Keyless it answers from the graph (`graphResponder`); `ai.turn` hands
   the model the seat's read tools as the person (FR-160), at most twelve
   calls, `turnThroughMessages(post)` the loop over Messages requests;
-  `complete` answers from the prompt alone. Call `seatResponder` or
+  `complete` answers from the prompt alone (`{ prompt, system?, images?,
+  signal? }` in, `{ text, usage? }` out). Call `seatResponder` or
   `llmResponder` with `principal` in the context: the prompt is what that
   seat sees. Proposals are logged `via: "ai:<name>"`. "Why do I still have
   mosquitoes?" is a walk through THIS graph, not a paragraph about gardens.

@@ -182,16 +182,16 @@ try {
    */
   await page.addInitScript(
     ({ stored, model }) => {
-      // The host's model, handed to the example as a host hands it `ai`: prompt in, text out.
+      // The host's model, handed to the example as a host hands it `ai`: a request in, its text out.
       window.__seedbedAi = {
         name: "rehearsal",
-        complete: async (prompt) => {
+        complete: async ({ prompt }) => {
           const response = await fetch(`${model}/chat/completions`, {
             method: "POST",
             headers: { "content-type": "application/json", authorization: "Bearer rehearsal" },
             body: JSON.stringify({ model: "stub", messages: [{ role: "user", content: prompt }] }),
           });
-          return (await response.json()).choices[0].message.content;
+          return { text: (await response.json()).choices[0].message.content };
         },
       };
       if (sessionStorage.getItem("rehearsal:seeded")) return;
