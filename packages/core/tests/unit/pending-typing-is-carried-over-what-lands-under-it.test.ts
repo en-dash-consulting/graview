@@ -36,6 +36,20 @@ describe("pending typing is carried over what lands under it", () => {
     expect(body(server)).toBe(body(page));
   });
 
+  it("reads a first text into an empty field as the insert it is, on the server and under pending typing", () => {
+    const empty = () => new Store({ schema, snapshot: { nodes: [{ id: "n1", kind: "note" }], edges: [] } as never });
+    const server = empty();
+    const page = empty();
+    const mine = type(page, 0, "Yo", 0, "batch:page:1");
+    const theirs = type(server, 0, "Hi").ops;
+    expect(theirs[0]!.primitives[0]!.op).toBe("patch-node");
+    page.rebase({ confirmed: theirs, pending: [mine.batch] });
+    expect(body(page)).toBe("HiYo");
+    // The server carries the page's keystroke, made against the empty text, over the first text rather than refusing it.
+    server.applyAll([{ name: TYPE_TEXT, args: { node: "n1", field: "body", at: 0, remove: 0, insert: "Yo", rev: -1 } }]);
+    expect(body(server)).toBe(body(page));
+  });
+
   it("takes a refused run out from under the typing after it", () => {
     const page = seeded();
     const refused = type(page, 0, "Dear ", 0, "batch:page:1");

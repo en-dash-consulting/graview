@@ -1,7 +1,8 @@
-import type { Primitive } from "../graph/primitives.js";
+import { isUnset, type Primitive } from "../graph/primitives.js";
 import type { Operation } from "../ops/types.js";
 import { diffSplice } from "./diff.js";
-import { applySplice, transform, type TextSplice } from "./splice.js";
+import { applySplice, type TextSplice } from "./splice.js";
+import { transform } from "./transform.js";
 
 /*
  * A TEXT FIELD AS SOMEBODY LAST READ IT (Roadmap f-collab-text, phase 2).
@@ -35,6 +36,21 @@ export function writesWhole(primitive: Primitive, node: string, field: string): 
   }
 }
 
+/**
+ * A FIELD'S FIRST TEXT, AS THE INSERT IT IS. The first keystroke into a field
+ * holding no text is written whole, a patch from nothing to what was typed
+ * (so its inverse is exact); read as a splice it is that text inserted at 0,
+ * so a keystroke somebody else made against the empty text at the same time
+ * carries over it — the two insertions kept, the earlier in the log first —
+ * rather than being refused as made against text written whole since.
+ */
+export function firstText(primitive: Primitive, node: string, field: string): TextSplice | undefined {
+  if (primitive.op !== "patch-node" || primitive.id !== node || !Object.prototype.hasOwnProperty.call(primitive.after, field)) return undefined;
+  const before = primitive.before[field];
+  const after = primitive.after[field];
+  return typeof after === "string" && (before === undefined || before === "" || isUnset(before)) ? { at: 0, removed: "", inserted: after } : undefined;
+}
+
 /** The splices on one field among these primitives, in order. */
 export const splicesOn = (primitives: readonly Primitive[], node: string, field: string): TextSplice[] =>
   primitives.flatMap((one) => (one.op === "splice-text" && one.id === node && one.field === field ? [one] : []));
@@ -51,6 +67,11 @@ export function textAt(ops: readonly Operation[], horizon: number, node: string,
   for (const op of ops) {
     if (op.seq <= rev) continue;
     for (const primitive of op.primitives) {
+      const first = firstText(primitive, node, field);
+      if (first) {
+        since.push(first);
+        continue;
+      }
       if (writesWhole(primitive, node, field)) return undefined;
       if (primitive.op === "splice-text" && primitive.id === node && primitive.field === field) since.push(primitive);
     }

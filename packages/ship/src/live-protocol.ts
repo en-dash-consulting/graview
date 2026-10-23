@@ -1447,7 +1447,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           else delete peer.opFormat;
           const asked = seqAt(message.seq);
           // Behind the horizon, or past where the seat is served: the whole state, never a skip (`behind`).
-          const seq = asked !== undefined && asked >= 0 && wire.behind(seat, asked) ? undefined : asked;
+          // A page that read nothing (-1) is behind a horizon past 0 as any other is: what it never read is not in the log to send.
+          const seq = asked !== undefined && wire.behind(seat, asked) ? undefined : asked;
           peer.cursor = wire.servedSeq(seat) - 1;
           // Its own key, built from the seat, so the client can leave itself out of who is here (FR-47).
           peer.participant ??= participantKey({ kind: seat.kind, ...(seat.id ? { id: seat.id } : {}), session: mintSession() });

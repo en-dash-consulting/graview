@@ -24,7 +24,7 @@ import { amountMark, amountSentence } from "../schema/amount-words.js";
 import { sayAmount } from "../document/amount.js";
 import { linkedRelations } from "../schema/linked.js";
 import { linkedRelationWords } from "../linked.js";
-import { collaborativeFieldOf } from "../schema/collaborative.js";
+import { collaborativeFieldOf } from "../schema/collaborative-of.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.

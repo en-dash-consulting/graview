@@ -28,7 +28,7 @@ import {
 import type { StorageLike } from "./browser-adapter.js";
 import { cursorAt } from "./cursor.js";
 import { LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, type LiveClientMessage, type LiveServerMessage } from "./live.js";
-import type { RemoteTyping, TypingWire } from "./remote-typing.js";
+import type { RemoteTyping, TypingInsides } from "./remote-typing.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
@@ -1736,25 +1736,18 @@ async function opening<S extends AnySchema>(
    * `@graview/core/typing` the first time a field is typed into.
    */
   const typings = new Map<string, Promise<RemoteTyping>>();
-  const typingWire = (): TypingWire => ({
+  // What the door is handed of this store's insides; it makes its wire of them (`wireOf`).
+  const typingInsides = (): TypingInsides => ({
     store: store as unknown as Store<AnySchema>,
-    apply: (calls, batch) => appliedAll(calls, { ...(options.principal ? { author: options.principal } : {}), ...(batch !== undefined ? { batch } : {}) }),
-    hold(batch) {
-      pending.push(batch);
-      provisional.add(batch);
-    },
-    ask: (batch, calls) => void asked.set(batch, { calls }),
-    send(batch, calls) {
-      asked.set(batch, { calls });
-      const answered = track(transmit({ calls, batch }, batch).catch((error: unknown) => takeBack(batch, error)));
-      answers.set(batch, answered);
-      return answered;
-    },
-    drop(batch) {
-      settle(batch);
-      asked.delete(batch);
-      land([], [batch]);
-    },
+    author: options.principal,
+    appliedAll: appliedAll as never,
+    pending,
+    provisional,
+    asked,
+    answers,
+    sent: (batch, calls) => track(transmit({ calls, batch }, batch).catch((error: unknown) => takeBack(batch, error))),
+    settle,
+    land,
     seen: () => seen,
     gone: () => closed || retiring,
   });
@@ -1767,7 +1760,7 @@ async function opening<S extends AnySchema>(
       if (!one) {
         one = import("./remote-typing.js").then((loaded) => {
           typingLoaded = loaded;
-          return loaded.typingOf(node, field, typingWire());
+          return loaded.typingOf(node, field, loaded.wireOf(typingInsides()));
         });
         typings.set(key, one);
       }

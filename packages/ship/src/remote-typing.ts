@@ -1,6 +1,6 @@
 // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts) — `@graview/core`, which it reads text with.
-import { applySplice, composeSplices, diffSplice, isUnset, TYPE_TEXT, type AnySchema, type MutationCall, type Operation, type Store, type TextSplice } from "@graview/core";
-import "@graview/core/typing";
+import { applySplice, isUnset, TYPE_TEXT, type AnySchema, type MutationCall, type Operation, type Principal, type Store, type TextSplice } from "@graview/core";
+import { composeSplices, diffSplice } from "@graview/core/typing";
 
 /**
  * TYPING INTO A FIELD TYPED TOGETHER, OVER THE WIRE (Roadmap f-collab-text,
@@ -42,6 +42,55 @@ export interface TypingWire {
   seen(): number;
   /** Whether the remote store has been closed or let go of. */
   gone(): boolean;
+}
+
+/**
+ * WHAT `openRemote` HANDS THE DOOR OF ITS INSIDES: its store and its own
+ * apply, the batches it holds pending and what each asked, and how it
+ * sends, settles and lands one. The wire is made of them here, so a page
+ * that never types carries none of it.
+ */
+export interface TypingInsides {
+  readonly store: Store<AnySchema>;
+  readonly author: Principal | undefined;
+  readonly appliedAll: (calls: readonly MutationCall[], options: { author?: Principal; batch?: string }) => { readonly batch: string; readonly ops: readonly Operation[] };
+  readonly pending: string[];
+  readonly provisional: Set<string>;
+  readonly asked: Map<string, { calls: readonly MutationCall[] }>;
+  readonly answers: Map<string, Promise<unknown>>;
+  /** Sends a batch, taken back if refused; resolves once answered either way. */
+  sent(batch: string, calls: readonly MutationCall[]): Promise<unknown>;
+  settle(batch: string): void;
+  land(ops: readonly Operation[], drop: readonly string[]): unknown;
+  seen(): number;
+  gone(): boolean;
+}
+
+/** The wire a field's typing runs on, made of a remote store's insides. */
+export function wireOf(inside: TypingInsides): TypingWire {
+  const { store, author, pending, provisional, asked } = inside;
+  return {
+    store,
+    apply: (calls, batch) => inside.appliedAll(calls, { ...(author ? { author } : {}), ...(batch !== undefined ? { batch } : {}) }),
+    hold(batch) {
+      pending.push(batch);
+      provisional.add(batch);
+    },
+    ask: (batch, calls) => void asked.set(batch, { calls }),
+    send(batch, calls) {
+      asked.set(batch, { calls });
+      const answered = inside.sent(batch, calls);
+      inside.answers.set(batch, answered);
+      return answered;
+    },
+    drop(batch) {
+      inside.settle(batch);
+      asked.delete(batch);
+      inside.land([], [batch]);
+    },
+    seen: inside.seen,
+    gone: inside.gone,
+  };
 }
 
 /** Typing into one field of one record, as `remote.typing(node, field)` hands it to an editor. */

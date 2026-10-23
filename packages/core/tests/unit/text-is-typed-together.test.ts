@@ -4,7 +4,6 @@ import {
   createSchema,
   defineNode,
   FieldRevisions,
-  isCollaborativeField,
   markCollaborative,
   markdownField,
   refusalOf,
@@ -16,7 +15,7 @@ import {
   type Principal,
 } from "../../src/index.js";
 import "../../src/field-sight.js";
-import "../../src/typing.js";
+import { isCollaborativeField } from "../../src/typing.js";
 import { compileDocument } from "../../src/check.js";
 import { describeApp } from "../../src/cli/describe.js";
 

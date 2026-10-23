@@ -18,10 +18,11 @@ import { inverseOf } from "./ops/inverse.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { typeTextMutation, typeTextVia } from "./mutations/type-text.js";
 import type { Operation } from "./ops/types.js";
-import { collaborativeFieldOf } from "./schema/collaborative.js";
+import { collaborativeFieldOf } from "./schema/collaborative-of.js";
 import type { MutationCall } from "./mutations/types.js";
-import { carried, splicesOn, textAt, wholeAsSplice, writesWhole } from "./text/since.js";
-import { transform, type TextSplice } from "./text/splice.js";
+import { carried, firstText, splicesOn, textAt, wholeAsSplice, writesWhole } from "./text/since.js";
+import type { TextSplice } from "./text/splice.js";
+import { transform } from "./text/transform.js";
 import { TYPE_TEXT, TYPING, type TypingStore } from "./text/typing-hook.js";
 
 /**
@@ -145,7 +146,10 @@ function carriedTyping(rolledBack: readonly Operation[], landed: readonly Operat
   const untyped = new Set<string>();
   for (const op of rolledBack) {
     const only = op.primitives[0];
-    if (op.mutation?.name === TYPE_TEXT && op.primitives.length === 1 && only?.op === "splice-text") typed.push({ batch: op.batch, node: only.id, field: only.field, splice: only });
+    const args = op.mutation?.args as { node?: string; field?: string } | undefined;
+    // A keystroke is a splice, or — the first into an empty field — its text written whole, which is its insert at 0.
+    const splice = op.mutation?.name !== TYPE_TEXT || op.primitives.length !== 1 || !only ? undefined : only.op === "splice-text" ? only : firstText(only, String(args?.node), String(args?.field));
+    if (splice) typed.push({ batch: op.batch, node: String(args?.node), field: String(args?.field), splice });
     else untyped.add(op.batch);
   }
   if (typed.length === 0) return out;
@@ -160,14 +164,16 @@ function carriedTyping(rolledBack: readonly Operation[], landed: readonly Operat
       continue;
     }
     for (const primitive of op.primitives) {
-      if (primitive.op !== "splice-text") {
-        for (const one of mine) if (writesWhole(primitive, one.node, one.field)) whole.add(key(one));
-        continue;
-      }
-      let over: TextSplice = primitive;
-      for (const one of mine) {
-        if (one.node !== primitive.id || one.field !== primitive.field) continue;
-        [over, one.splice] = transform(over, one.splice);
+      if (primitive.op === "add-edge" || primitive.op === "remove-edge") continue;
+      const id = primitive.op === "add-node" || primitive.op === "remove-node" ? primitive.node.id : primitive.id;
+      for (const field of new Set(mine.filter((one) => one.node === id).map((one) => one.field))) {
+        // A splice of somebody else's — or their first text into a field empty here too — carried over this client's keystrokes on the field, and they over it.
+        let over: TextSplice | undefined = primitive.op === "splice-text" ? (primitive.field === field ? primitive : undefined) : firstText(primitive, id, field);
+        for (const one of mine) {
+          if (one.node !== id || one.field !== field) continue;
+          if (over) [over, one.splice] = transform(over, one.splice);
+          else if (writesWhole(primitive, one.node, one.field)) whole.add(key(one));
+        }
       }
     }
   }
@@ -195,3 +201,12 @@ TYPING.asSplices = asSplices;
 TYPING.undone = undone;
 TYPING.aside = aside;
 TYPING.carried = carriedTyping;
+
+/*
+ * The transform and the reading of which fields are typed together, for a
+ * server and an editor: here, not on `@graview/core`, so a page that never
+ * types carries none of it.
+ */
+export { compose as composeSplices, transform as transformSplices } from "./text/transform.js";
+export { diffSplice } from "./text/diff.js";
+export { collaborativeFieldOf, isCollaborativeField } from "./schema/collaborative-of.js";

@@ -1,7 +1,7 @@
 import * as z from "../schema/zod.js";
 import { MissingRecordError } from "../graph/graph.js";
 import { ActRefusal } from "../refused.js";
-import { collaborativeFieldOf } from "../schema/collaborative.js";
+import { collaborativeFieldOf } from "../schema/collaborative-of.js";
 import { labelOf, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import { NEVER_WRITTEN } from "../ops/revisions.js";

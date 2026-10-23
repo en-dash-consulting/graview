@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page",
-  "minified": 2700,
-  "gzipped": 1000,
+  "minified": 1000,
+  "gzipped": 450,
   "changeset": "text-is-typed-together-over-the-wire.md",
-  "note": "Raised when text came to be typed together over the wire (collaborative text, phase 3): `remote.typing(node, field)` and the door it opens on demand (`./remote-typing.js`, tied to `@graview/core` and loading `@graview/core/typing`), a whole write's merge base, a conflicting run's take-back, and the store's hook for carrying pending typing over a rebase are up front; the runs a field holds and sends, and the act, load once a field is typed into. Measured at 612_473 / 213_739 against 609_798 / 212_744 for the batch before it: 2_675 more minified, 995 gzipped, in thirteen chunks as before."
+  "note": "Raised when text came to be typed together over the wire (collaborative text, phase 3): up front are only `remote.typing(node, field)`, which imports the typing door (`./remote-typing.js`, tied to `@graview/core`), the insides it hands the door, a whole write's merge base, and the store's hook for carrying pending typing over a rebase. The run buffer, a conflicting run's handling, the carry and the transform load with the door; the transform, `diffSplice` and which fields are typed together moved off `@graview/core` to `@graview/core/typing` so a door reaching them pulls none of it up front. Measured at 610_719 / 213_154 against 609_727 / 212_724 for the batch before it: 992 more minified, 430 gzipped, in thirteen chunks as before."
 }

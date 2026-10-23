@@ -185,6 +185,52 @@ describe("text typed together over the wire", () => {
     await handler.close();
   });
 
+  it("two pages typing the first words into one empty field at once both land, and converge", async () => {
+    const { store, handler, page } = await served({ nodes: [{ id: "n1", kind: "note", title: "Blank" }], edges: [] } as never);
+    const a = await page(ana);
+    const b = await page(ben);
+    const refused: string[] = [];
+    for (const one of [a, b]) one.remote.onRefusal((sentence) => refused.push(sentence));
+    const typingA = await a.remote.typing("n1", "body");
+    const typingB = await b.remote.typing("n1", "body");
+    for (const one of [a.line(), b.line()]) (one.up = true), (one.down = true);
+    typeOut(typingA, 0, "Hi");
+    typeOut(typingB, 0, "Yo");
+    typingA.flush();
+    typingB.flush();
+    expect([bodyOf(a.remote.store), bodyOf(b.remote.store)]).toEqual(["Hi", "Yo"]);
+    a.line().release();
+    b.line().release();
+    await until(() => typingA.waiting() === 0 && typingB.waiting() === 0, "both runs answered");
+    await a.remote.settled();
+    await b.remote.settled();
+    await until(() => bodyOf(a.remote.store) === bodyOf(store) && bodyOf(b.remote.store) === bodyOf(store), "both pages at the server's text");
+    // The first written whole, the second carried over it as an insert after it: the earlier in the log first.
+    expect(bodyOf(store)).toBe("HiYo");
+    expect(store.log.all().map((op) => op.primitives[0]!.op)).toEqual(["patch-node", "splice-text"]);
+    expect(refused).toEqual([]);
+    a.remote.close();
+    b.remote.close();
+    await handler.close();
+  });
+
+  it("a page that read nothing comes back after the horizon moved past 0 and takes the state", async () => {
+    const handler = await createStoreHandler({ app, adapter: createMemoryAdapter(), seed: HELLO as never, trustSeatHeaders: true });
+    const { page, net } = harness(handler);
+    const away = await page(ana);
+    expect(away.remote.seq()).toBe(-1);
+    net.offline = true;
+    away.line().drop();
+    const others = handler.store;
+    for (let at = 0; at < 3; at++) others.apply({ name: TYPE_TEXT, args: { node: "n1", field: "body", at: 0, remove: 0, insert: "*" } }, { author: ben });
+    expect((await handler.compact({ seq: others.log.length, keepOps: 0 })).horizon).toBe(3);
+    net.offline = false;
+    await until(() => away.remote.counters().resyncs > 0 && bodyOf(away.remote.store) === bodyOf(others), "the page reset onto the server's state");
+    expect(bodyOf(away.remote.store)).toBe("***Hello world");
+    away.remote.close();
+    await handler.close();
+  });
+
   it("a slow client's held batch lands transformed", async () => {
     const { store, handler, page } = await served();
     const slow = await page(ana);
