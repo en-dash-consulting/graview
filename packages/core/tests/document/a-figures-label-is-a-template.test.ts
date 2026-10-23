@@ -42,7 +42,8 @@ describe("a figure's label says the record it is about", () => {
     const node = store.graph.getNode("pkg-whole")!;
     const [figure, meter] = resolveBlocks(compileBlocks([NAMED, METER]), { node, graph: store.graph as never, schema, kinds: shapesOfSchema(schema), fields: fieldSpecsOf(schema, "package"), today: "2026-10-05" });
     expect(figure).toEqual({ key: "number.1", t: "number", text: "$69,300", label: "The whole thing, net" });
-    expect(meter).toMatchObject({ t: "progress", label: "four of The whole thing's offers", text: "4 of 4" });
+    // Opening on a count in words, it starts as a headline does.
+    expect(meter).toMatchObject({ t: "progress", label: "Four of The whole thing's offers", text: "4 of 4" });
   });
 
   it("a label with no braces is said as written, as before", () => {
