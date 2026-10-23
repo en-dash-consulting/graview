@@ -139,7 +139,8 @@ describe("a hosted page", () => {
     // 980 KB since the Suggested tray came to say Not now and what was done while a person was away, and Activity to fold a night's run into one row: the provider hands the tray the host's `dismissals` and `whileAway`, and the bar fetches the tray for them: the scene face measured 1_002_816 B, 480 more than before them (1_002_336).
     // 981 KB since a text field came to take a splice (collaborative text, phase 1): the `splice-text` primitive folded, undone, served and read back wherever a patch is: the scene face measured 1_004_074 B, 1_578 over 979.
     // 981 KB since a link came to keep its own id and data, every creating act to honor a caller's id, and the wire to say a position as an opaque cursor: the scene face measured 1_004_096 B, 1_958 more than before them (1_002_138).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(984 * 1024);
+    // 989 KB since the 0.1.50 batch came together: formats that fail closed, the tray's Not now, a text field's splice, and a link's id, a caller's id and an opaque cursor, on top of the 0.1.49 batch — the scene face measured 1_012_518 B.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(989 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 115,
+  "gzipped": 185,
+  "note": "Raised when the 0.1.50 batch came together: formats that fail closed (#374), a text field's splice (#378) and a link's id, a caller's id and an opaque cursor (#379) each raised a visitor's form alone for what it measured on its own; together they measured 386_894 / 148_530 against the 386_785 / 148_350 those raises sum to: 109 / 180 more, held for a few bytes either side."
+}

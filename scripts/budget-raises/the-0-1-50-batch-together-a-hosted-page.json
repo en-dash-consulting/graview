@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 112,
+  "gzipped": 4,
+  "changeset": "a-link-keeps-its-own-id-a-caller-names-what-it-makes-and-a-cursor-is-opaque.md",
+  "note": "Raised when the 0.1.50 batch came together: formats that fail closed (#374), the tray's Not now (#377), a text field's splice (#378) and a link's id, a caller's id and an opaque cursor (#379) each fit a hosted page on their own under their raises; together they measured 606_737 / 211_646 against the 606_631 minified their raises sum to: 106 more, its gzipped size within the budget. A few bytes either side leave room for the merged whole to move."
+}

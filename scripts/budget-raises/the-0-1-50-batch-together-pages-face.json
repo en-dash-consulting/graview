@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 350,
+  "gzipped": 170,
+  "note": "Raised when the 0.1.50 batch came together: formats that fail closed (#374), a text field's splice (#378) and a link's id, a caller's id and an opaque cursor (#379) each raised the pages face alone for what it measured on its own; together they measured 652_745 / 240_328 against the 652_402 / 240_166 those raises sum to: 343 / 162 more, held for a few bytes either side."
+}
