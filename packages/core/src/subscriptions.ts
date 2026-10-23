@@ -35,7 +35,10 @@ import { shapesOfSchema } from "./document/rules.js";
 import type { Primitive } from "./graph/primitives.js";
 import { isUnset, splicedRecord } from "./graph/primitives.js";
 import type { AnyGraphNode, GraphReader } from "./graph/types.js";
-import type { Operation } from "./ops/types.js";
+import type { Author, Operation } from "./ops/types.js";
+import { joinRuns, typedRun, typingSentence, typingWords, type TypedRun } from "./text/typing-words.js";
+import { joinSpans } from "./text/typing-spans.js";
+import type { TextSplice } from "./text/splice.js";
 import { isWithheld, redact, WITHHELD_AUTHOR } from "./ops/withheld.js";
 import { actingAs } from "./permissions/policy.js";
 import type { Principal } from "./permissions/types.js";
@@ -293,8 +296,10 @@ export function matchSubscriptions<S extends AnySchema>(store: Store<S>, ops: re
       const whole = open.length === served.length;
       const shownBy = whole ? by : WITHHELD_AUTHOR;
       const byName = whole ? nameOfAuthor(by, { graph: seen.graph as never, schema: any.schema, ...(options.seats ? { seats: options.seats } : {}) }) : (WITHHELD_AUTHOR.name ?? "Someone");
-      const intent = (whole ? first.batchIntent : undefined) ?? (open.length > 0 ? open.map((op) => op.intent).join("; ") : recordsSaid(records));
-      matches.push({
+      // A run of typing is said as one: "Wrote in Kitchen's notes (+5 −1)", read over what the subscriber is served.
+      const typed = whole ? typedRun(served) : undefined;
+      const intent = typed ? typingWords(typed, any.schema, seen.graph) : ((whole ? first.batchIntent : undefined) ?? (open.length > 0 ? open.map((op) => op.intent).join("; ") : recordsSaid(records)));
+      const match: SubscriptionMatch = {
         subscription,
         app: subscription.app,
         batch: first.batch,
@@ -305,12 +310,115 @@ export function matchSubscriptions<S extends AnySchema>(store: Store<S>, ops: re
         intent,
         acts: [...new Set(open.flatMap((op) => (op.mutation ? [op.mutation.name] : [])))],
         records,
-        said: `${byName}: ${intent}`,
+        said: typed ? typingSentence(byName, typed, any.schema, seen.graph) : `${byName}: ${intent}`,
         at: last.at,
-      });
+      };
+      if (typed) typing.set(match, { run: typed, author: by, schema: any.schema, graph: seen.graph });
+      matches.push(match);
     }
   }
   return matches;
+}
+
+/** The run of typing a match is, kept beside it: what holding it until the run ends reads. */
+const typing = new WeakMap<SubscriptionMatch, { readonly run: TypedRun; readonly author: Author; readonly schema: AnySchema; readonly graph: { getNode(id: string): unknown } }>();
+
+/**
+ * HOW LONG A RUN OF TYPING IS HELD before it is told (Roadmap f-collab-text,
+ * phase 5): a person writing a paragraph sends a run every word, and a
+ * subscriber hears of it once, when they stop — this long after their last
+ * keystroke into the field, or as soon as anything else matches the same
+ * subscription.
+ */
+export const TYPING_QUIET_MS = 5_000;
+
+/** What `holdTypingRuns` answers: tell it each match, and flush it when the watching stops. */
+export interface HeldTyping {
+  /** A match to tell: at once, unless it is a run of typing, which is held until the typist stops. */
+  tell(match: SubscriptionMatch): void;
+  /** Tells every run held, now. */
+  flush(): void;
+}
+
+/**
+ * TYPING TOLD AT THE END OF A RUN, NOT EVERY WORD (Roadmap f-collab-text,
+ * phase 5). Between `matchSubscriptions` and a host's hook: a match that is
+ * a run of typing is held, and the next run by the same person into the
+ * same field for the same subscription joins it — one match, every batch
+ * (`batches`), the counts added and the spans one after the other, said
+ * again ("Ada wrote in Kitchen's notes (+42 −3)") — until `quietMs` pass
+ * with no more, or another match for that subscription comes, which is
+ * told after it so the order holds. Any other match is told at once.
+ * `watchSubscriptions` and `@graview/ship`'s handler both hold through it.
+ */
+export function holdTypingRuns(hook: (match: SubscriptionMatch) => void, options: { readonly quietMs?: number } = {}): HeldTyping {
+  const quiet = options.quietMs ?? TYPING_QUIET_MS;
+  const held = new Map<string, { match: SubscriptionMatch; timer: ReturnType<typeof setTimeout> | undefined }>();
+  const keyOf = (match: SubscriptionMatch, run: TypedRun, author: Author) => JSON.stringify([match.subscription.id, author.kind, author.id ?? "", author.name ?? "", run.node, run.field]);
+  const release = (key: string) => {
+    const one = held.get(key);
+    if (!one) return;
+    held.delete(key);
+    if (one.timer) clearTimeout(one.timer);
+    hook(one.match);
+  };
+  const releaseFor = (subscription: string, except?: string) => {
+    for (const [key, one] of [...held]) if (one.match.subscription.id === subscription && key !== except) release(key);
+  };
+  return {
+    tell(match) {
+      const typed = typing.get(match);
+      if (!typed || quiet <= 0) {
+        releaseFor(match.subscription.id);
+        hook(match);
+        return;
+      }
+      const key = keyOf(match, typed.run, typed.author);
+      releaseFor(match.subscription.id, key);
+      const was = held.get(key);
+      const joined = was ? joinMatches(was.match, match) : match;
+      if (was?.timer) clearTimeout(was.timer);
+      const timer = setTimeout(() => release(key), quiet);
+      (timer as { unref?: () => void }).unref?.();
+      held.set(key, { match: joined, timer });
+    },
+    flush() {
+      for (const key of [...held.keys()]) release(key);
+    },
+  };
+}
+
+/** Two matches of one person's typing into one field, as one: the later's moment, both runs' counts and spans. */
+function joinMatches(a: SubscriptionMatch, b: SubscriptionMatch): SubscriptionMatch {
+  const one = typing.get(a)!;
+  const two = typing.get(b)!;
+  const run = joinRuns(one.run, two.run);
+  const records = b.records.map((record) => {
+    const before = a.records.find((other) => other.id === record.id);
+    if (!before?.fields || !record.fields) return record;
+    return {
+      ...record,
+      fields: [
+        ...before.fields.filter((field) => !record.fields!.some((other) => other.field === field.field)),
+        ...record.fields.map((field) => {
+          const was = before.fields!.find((other) => other.field === field.field);
+          if (!was?.typed || !field.typed) return was && "before" in was ? { ...field, before: was.before } : field;
+          return { ...field, typed: { inserted: was.typed.inserted + field.typed.inserted, removed: was.typed.removed + field.typed.removed, spans: joinSpans(was.typed.spans, field.typed.spans) } };
+        }),
+      ],
+    };
+  });
+  const intent = typingWords(run, two.schema, two.graph);
+  const joined: SubscriptionMatch = {
+    ...b,
+    batches: [...(a.batches ?? [a.batch]), ...(b.batches ?? [b.batch])],
+    ops: [...a.ops, ...b.ops],
+    intent,
+    records,
+    said: typingSentence(b.byName, run, two.schema, two.graph),
+  };
+  typing.set(joined, { ...two, run });
+  return joined;
 }
 
 /** What happened to the records, said without who or why: "Added “Call the plumber”". */
@@ -340,14 +448,16 @@ function matchOne(store: Store<AnySchema>, seen: Store<AnySchema>, subscription:
     const definition = store.schema.tryDefinition(kind);
     const label = node ? labelOf(definition as never, node) : id;
     const change: MatchedRecord["change"] = added && !removed ? "created" : removed && !now ? "removed" : "changed";
-    const fields = new Map<string, { before?: unknown; after?: unknown }>();
+    const fields = new Map<string, { before?: unknown; after?: unknown; typed?: { inserted: number; removed: number; spans: readonly TextSplice[] } }>();
     for (const primitive of primitives) {
       if (primitive.op === "splice-text" && primitive.id === id) {
-        // A splice says part of the text: the field is said whole, as it was before the batch and as it is.
+        // A splice says part of the text, and is said as that part — what was put in and taken out — never the text whole twice (Roadmap f-collab-text, phase 5).
         const held = fields.get(primitive.field);
-        const before = held ? held.before : nodeBefore(now, id, primitives)?.[primitive.field];
-        const after = now?.[primitive.field];
-        fields.set(primitive.field, { ...(before === undefined ? {} : { before }), ...(after === undefined ? {} : { after }) });
+        const span = { at: primitive.at, removed: primitive.removed, inserted: primitive.inserted };
+        const typed = { inserted: [...primitive.inserted].length + (held?.typed?.inserted ?? 0), removed: [...primitive.removed].length + (held?.typed?.removed ?? 0), spans: joinSpans(held?.typed?.spans ?? [], [span]) };
+        if (held && !held.typed) fields.set(primitive.field, { ...held, ...(now?.[primitive.field] === undefined ? {} : { after: now[primitive.field] }) });
+        else fields.set(primitive.field, { typed });
+        continue;
       }
       if (primitive.op !== "patch-node" || primitive.id !== id) continue;
       for (const [field, after] of Object.entries(primitive.after)) {
@@ -361,7 +471,16 @@ function matchOne(store: Store<AnySchema>, seen: Store<AnySchema>, subscription:
       kind,
       label,
       change,
-      ...(fields.size > 0 ? { fields: [...fields].map(([field, values]) => ({ field, words: fieldWords(definition as never, field), ...values })) } : {}),
+      ...(fields.size > 0
+        ? {
+            fields: [...fields].map(([field, { typed, ...values }]) => ({
+              field,
+              words: fieldWords(definition as never, field),
+              ...values,
+              ...(typed ? { typed: { inserted: typed.inserted, removed: typed.removed, spans: typed.spans } } : {}),
+            })),
+          }
+        : {}),
     };
   };
   const touched = [...new Set(primitives.flatMap(aboutOf))];
@@ -414,6 +533,8 @@ export interface WatchSubscriptionsOptions extends MatchOptions {
   readonly onSubscriptionMatch: OnSubscriptionMatch;
   /** Told when the hook throws or the store cannot list; unsaid, the error is reported on the console. */
   readonly onError?: (error: unknown) => void;
+  /** How long a run of typing is held before it is told (`holdTypingRuns`); `TYPING_QUIET_MS` unsaid, 0 tells every run at once. */
+  readonly typingQuietMs?: number;
 }
 
 /**
@@ -421,21 +542,26 @@ export interface WatchSubscriptionsOptions extends MatchOptions {
  * subscriptions on each commit, and hands each match to the hook. A store
  * that lists at once is matched at once; one that answers a promise is
  * matched when it answers, against each record as it stood just after the
- * batch. Answers the way to stop.
+ * batch. A run of typing is told once the typist stops (`holdTypingRuns`).
+ * Answers the way to stop, which tells what it held.
  */
 export function watchSubscriptions<S extends AnySchema>(store: Store<S>, options: WatchSubscriptionsOptions): () => void {
   const report = options.onError ?? ((error: unknown) => console.error("A subscription could not be judged:", error));
-  const tell = (matches: readonly SubscriptionMatch[]) => {
-    for (const match of matches) {
+  const held = holdTypingRuns(
+    (match) => {
       try {
         const told = options.onSubscriptionMatch(match);
         if (told && typeof (told as Promise<void>).then === "function") (told as Promise<void>).catch(report);
       } catch (error) {
         report(error);
       }
-    }
+    },
+    options.typingQuietMs !== undefined ? { quietMs: options.typingQuietMs } : {},
+  );
+  const tell = (matches: readonly SubscriptionMatch[]) => {
+    for (const match of matches) held.tell(match);
   };
-  return store.subscribe((_diff, ops) => {
+  const stop = store.subscribe((_diff, ops) => {
     if (ops.length === 0) return;
     try {
       const listed = options.subscriptions.list();
@@ -445,4 +571,9 @@ export function watchSubscriptions<S extends AnySchema>(store: Store<S>, options
       report(error);
     }
   });
+  // Stopping tells what typing it held: nothing matched is lost.
+  return () => {
+    stop();
+    held.flush();
+  };
 }

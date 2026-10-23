@@ -27,7 +27,7 @@ import {
   type KeptViewsMay,
 } from "@graview/core";
 import { judgeWithLines } from "@graview/core/lines";
-import { matchSubscriptions } from "@graview/core/subscriptions";
+import { holdTypingRuns, matchSubscriptions } from "@graview/core/subscriptions";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
 import { LIVE_PATH, type Limit, type LimitAnswer, type LimitAsked, type LiveConnection, type LiveSocket } from "./live.js";
@@ -261,9 +261,12 @@ interface HandlerOptions<S extends AnySchema> {
    * THE HOST'S HOOK: told once per committed batch per subscription it
    * matches, judged as the subscriber may see — what Graview Cloud turns
    * into an email or a push. Never told of a change to a record the
-   * subscriber cannot see, nor, unless they asked, of their own.
+   * subscriber cannot see, nor, unless they asked, of their own. A run of
+   * typing is told once, when the typist stops (`holdTypingRuns`).
    */
   readonly onSubscriptionMatch?: OnSubscriptionMatch;
+  /** How long a run of typing is held before the hook is told of it; `TYPING_QUIET_MS` (5 s) unsaid, 0 tells every run at once. */
+  readonly typingQuietMs?: number;
 }
 
 /**
@@ -818,10 +821,17 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
    * judged at once; one that answers a promise, when it answers — each
    * record as it stood just after the batch.
    */
+  const report = (error: unknown) => console.error(`A subscription to ${serving.app.name} could not be told:`, error);
+  // A run of typing is held until its typist stops, and told then as one (Roadmap f-collab-text).
+  const told = holdTypingRuns(
+    (match) => {
+      const hook = options.onSubscriptionMatch;
+      if (hook) void Promise.resolve().then(() => hook(match)).catch(report);
+    },
+    options.typingQuietMs !== undefined ? { quietMs: options.typingQuietMs } : {},
+  );
   function notify(store: Store<AnySchema>, ops: readonly Operation[]): void {
-    const hook = options.onSubscriptionMatch!;
     const app = serving.app.name;
-    const report = (error: unknown) => console.error(`A subscription to ${app} could not be told:`, error);
     const tell = (all: readonly Subscription[]) => {
       let matches: SubscriptionMatch[];
       try {
@@ -830,7 +840,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         report(error);
         return;
       }
-      for (const match of matches) void Promise.resolve().then(() => hook(match)).catch(report);
+      for (const match of matches) told.tell(match);
     };
     try {
       const listed = subscriptions.list();
@@ -1068,6 +1078,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       }
       sockets.clear();
       unsubscribe();
+      told.flush();
       await flush();
     },
   };

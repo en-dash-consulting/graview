@@ -15,6 +15,9 @@ import { capitalize } from "./capital.js";
 import { humanizeField, nounOf } from "./schema/define-node.js";
 import { nameOfAuthor } from "./who.js";
 import type { Epoch } from "./ops/log.js";
+import { joinRuns, sameTypist, typedRun, typingSentence, typingWords, type TypedRun } from "./text/typing-words.js";
+import { typedSpans } from "./text/typing-spans.js";
+import type { TextSplice } from "./text/splice.js";
 import { authorKindOf, type Author, type Batch, type Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -115,6 +118,14 @@ export interface PlaybackTick {
   readonly declaration: boolean;
   /** Something this seat may not see happened here (FR-16): said, and nothing more. */
   readonly withheld: boolean;
+  /**
+   * A RUN OF TYPING (Roadmap f-collab-text): consecutive gestures by one
+   * person typing into one field are one tick — every gesture's batch,
+   * oldest first (`batch` is the last), and what they typed, said as
+   * "Wrote in Notes (+42 −3)".
+   */
+  readonly batches?: readonly string[];
+  readonly typed?: TypedRun;
 }
 
 /** Who made a change, for the reader `me`. A system or a rule is the app itself, as is a kind this build does not know; an agent acting for a person is still an agent; a visitor is a person. */
@@ -136,22 +147,32 @@ const opsSeen = (batch: Batch) => batch.ops.filter((op) => op.withheld !== true)
  * that something happened.
  */
 export function ticksOf<S extends AnySchema>(store: Store<S>, options: { readonly me?: Principal; readonly declarations?: readonly DeclarationMark[] } = {}): PlaybackTick[] {
-  const ticks: PlaybackTick[] = store.batches().map((batch) => {
+  const ticks: PlaybackTick[] = [];
+  for (const batch of store.batches()) {
     const first = batch.ops[0]!;
     const last = batch.ops.at(-1)!;
     const withheld = opsSeen(batch).length === 0;
-    return {
+    const typed = withheld ? undefined : typedRun(batch.ops);
+    // A run of typing joins the tick before it when that is the same person typing into the same field (Roadmap f-collab-text).
+    const before = ticks.at(-1);
+    if (typed && before?.typed && before.author && sameTypist(before.author, batch.author) && before.typed.node === typed.node && before.typed.field === typed.field) {
+      const joined = joinRuns(before.typed, typed);
+      ticks[ticks.length - 1] = { ...before, seq: last.seq + 1, at: last.at, batch: batch.id, batches: [...(before.batches ?? []), batch.id], typed: joined, said: typingWords(joined, store.schema, store.graph, false) };
+      continue;
+    }
+    ticks.push({
       seq: last.seq + 1,
       from: first.seq,
       at: last.at,
       batch: batch.id,
       maker: withheld ? "person" : makerOf(batch.author, options.me),
       author: withheld ? undefined : batch.author,
-      said: batch.intent,
+      said: typed ? typingWords(typed, store.schema, store.graph, false) : batch.intent,
       declaration: false,
       withheld,
-    };
-  });
+      ...(typed ? { batches: [batch.id], typed } : {}),
+    });
+  }
   const marks: DeclarationMark[] = [
     ...store.log
       .epochs()
@@ -207,7 +228,7 @@ export function unpublished<S extends AnySchema>(store: Store<S>, options: { rea
   const seqOf = new Map(store.log.all().map((op) => [op.id, op.seq]));
   const since = (op: Operation) => op.undoes !== undefined && (seqOf.get(op.undoes) ?? -1) >= from;
   const standing = new Set(store.batches().filter((batch) => !batch.undone && !batch.ops.some((op) => op.publishedThrough !== undefined || since(op))).map((batch) => batch.id));
-  const ticks = ticksOf(store, options).filter((tick) => tick.from >= from && tick.batch !== undefined && standing.has(tick.batch));
+  const ticks = ticksOf(store, options).filter((tick) => tick.from >= from && tick.batch !== undefined && (tick.batches ?? [tick.batch]).some((batch) => standing.has(batch)));
   const sentence = publishedSeq === undefined ? "Nothing is published yet." : ticks.length === 0 ? "Everything is published." : `${ticks.length === 1 ? "1 change is" : `${ticks.length} changes are`} not published yet.`;
   return { publishedSeq, head: store.log.length, ticks, sentence };
 }
@@ -273,3 +294,51 @@ export function makerWords(tick: PlaybackTick, context: Parameters<typeof nameOf
   if (!tick.author) return "the app";
   return nameOfAuthor(tick.author, context);
 }
+
+/** One change in a history said in words: who, what, and the sentence that says both. */
+export interface ChangeSaid {
+  /** The moment just after it (`pastOf(store, seq)`). */
+  readonly seq: number;
+  readonly at: string | undefined;
+  /** Its gestures' batches, oldest first: several for a run of typing. */
+  readonly batches: readonly string[];
+  /** Who made it, as `makerWords` says them. */
+  readonly by: string;
+  /** What it was: the gesture's intent, or "Wrote in Kitchen's notes (+42 −3)" for typing. */
+  readonly said: string;
+  /** Who and what in one sentence: "Ada wrote in Kitchen's notes (+42 −3)", "Ben: Added “Call the plumber”". */
+  readonly sentence: string;
+  /** For typing: the field, the counts and the spans put in and taken out — never the text whole. */
+  readonly typed?: TypedRun & { readonly spans: readonly TextSplice[] };
+}
+
+/**
+ * A STORE'S HISTORY IN WORDS, newest first — what an agent's history answer
+ * says (Roadmap f-collab-text, phase 5): one entry per gesture, a run of one
+ * person's typing into one field one entry, said as "Ada wrote in Kitchen's
+ * notes (+42 −3)" with the spans it put in and took out rather than the
+ * field's text. Read through a seat's view (`seenBy`), a change it may not
+ * see is "Someone changed something you cannot see". Declaration changes
+ * are left out: `ticksOf` has them.
+ */
+export function historyInWords<S extends AnySchema>(store: Store<S>, options: { readonly me?: Principal; readonly limit?: number; readonly context?: Omit<Parameters<typeof nameOfAuthor>[1], "graph" | "schema"> } = {}): ChangeSaid[] {
+  const where = { graph: store.graph as never, schema: store.schema as AnySchema, ...options.context };
+  const ticks = ticksOf(store, options.me ? { me: options.me } : {}).filter((tick) => tick.batch !== undefined);
+  const opsOf = new Map<string, readonly Operation[]>(store.batches().map((batch) => [batch.id, batch.ops]));
+  return ticks
+    .reverse()
+    .slice(0, options.limit ?? ticks.length)
+    .map((tick) => {
+      // Without a reader, nobody is "you": each author by name.
+      const by = options.me || tick.withheld || !tick.author ? makerWords(tick, where) : nameOfAuthor(tick.author, where);
+      const said = tick.withheld ? "changed something you cannot see" : tick.typed ? typingWords(tick.typed, store.schema, store.graph) : tick.said;
+      const sentence = tick.typed && !tick.withheld ? typingSentence(by, tick.typed, store.schema, store.graph) : tick.withheld ? `${capitalize(by)} ${said}` : `${capitalize(by)}: ${said}`;
+      const batches = tick.batches ?? [tick.batch!];
+      const spans = () => typedSpans(batches.flatMap((batch) => opsOf.get(batch) ?? []), tick.typed!.node, tick.typed!.field);
+      return { seq: tick.seq, at: tick.at, batches, by, said, sentence, ...(tick.typed && !tick.withheld ? { typed: { ...tick.typed, spans: spans() } } : {}) };
+    });
+}
+
+export { typedCounts, typedRun, typingSentence, typingWords } from "./text/typing-words.js";
+export { typedSpans } from "./text/typing-spans.js";
+export type { TypedRun } from "./text/typing-words.js";

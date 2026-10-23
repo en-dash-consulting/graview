@@ -43,6 +43,8 @@ The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, P
 
 Everything a page shows is a derivation the scene uses too: `recordFacts`, `deriveAffordances`, `store.permits`. **A page never decides what an act is or who may take it** — it strikes through what the seat may not, and says why. A record's facts, `computed` ones too, read in declared order or as the kind's `display.page` groups them; prose keeps its paragraphs, full width.
 
+**Typed together.** Over a served store, hand the face `typing` (`openRemote`'s `remote.typing`; an embed passes it) and prose is edited live: each keystroke a splice, no Save, others' carets drawn. Markdown, a document's `text` and a string past 500 characters are; a short string is not, and stays a whole value with a Save: a name or a title is changed whole, two people merging letters into one name is a worse name, and a whole write keeps its stale-write check (`markCollaborative` overrides).
+
 **On a phone this face is the answer.** `Shell` carries `pagesHref`.
 
 ### Rung one: a page in the app's own words

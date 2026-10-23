@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
 import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
-import type { AwaySummary, KeepLensHost, MenuSectionSource, ReactViewRegistry } from "@graview/react/provider";
+import type { AwaySummary, FieldTyping, KeepLensHost, MenuSectionSource, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Onward } from "./onward.js";
 
@@ -106,6 +106,14 @@ export interface PageContext<S extends AnySchema> {
   readonly settings?: readonly SettingDeclaration[];
   /** Who else is here, for the same provider. */
   readonly presence?: PresenceChannel;
+  /**
+   * TYPING TOGETHER (Roadmap f-collab-text): a served store's
+   * `remote.typing(node, field)`, so a field typed together is edited live
+   * on these pages — with or without `views`, and with no embed around
+   * them. Unsaid, a provider's above the pages, else every field is
+   * written whole with a Save.
+   */
+  readonly typing?: (node: string, field: string) => Promise<FieldTyping>;
   /**
    * Where a lens the seat drew is kept (`onKeepLens`): handed the
    * check-clean `add-lens` edit, and `remove-lens` to take it back. A host

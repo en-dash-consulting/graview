@@ -30,8 +30,8 @@ export { declinedIn, declinesIn, meaningKey, suggestionKey, tidyingOf, tidyingRe
 export type { ActMeanings } from "./ops/tidying.js";
 export { isDismissed, suggestionsIn } from "./ops/suggestions.js";
 export type { Dismissal, DismissalStore, Suggestion, WaitingOptions } from "./ops/suggestions.js";
-export { digestWords, foldDigests, isSuggestionBatch } from "./ops/digest.js";
-export type { ActivityRow } from "./ops/digest.js";
+export { digestWords, foldDigests, isSuggestionBatch, typedRowWords } from "./ops/digest.js";
+export type { ActivityRow, TypedRow } from "./ops/digest.js";
 export { LEFT_ALONE } from "./graph/archived.js";
 
 /**

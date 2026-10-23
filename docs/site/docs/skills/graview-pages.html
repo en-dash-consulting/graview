@@ -1829,6 +1829,7 @@ if (location.pathname.startsWith("/pages")) {
 <li><strong>The quick ask</strong> (⌘K, where <code>ai</code> gives a model): a bar and answer card by the page's heading, the ROUTE what "this" means. <code>context.quickAsk: false</code> draws none.</li>
 </ul>
 <p>Everything a page shows is a derivation the scene uses too: <code>recordFacts</code>, <code>deriveAffordances</code>, <code>store.permits</code>. <strong>A page never decides what an act is or who may take it</strong> — it strikes through what the seat may not, and says why. A record's facts, <code>computed</code> ones too, read in declared order or as the kind's <code>display.page</code> groups them; prose keeps its paragraphs, full width.</p>
+<p><strong>Typed together.</strong> Over a served store, hand the face <code>typing</code> (<code>openRemote</code>'s <code>remote.typing</code>; an embed passes it) and prose is edited live: each keystroke a splice, no Save, others' carets drawn. Markdown, a document's <code>text</code> and a string past 500 characters are; a short string is not, and stays a whole value with a Save: a name or a title is changed whole, two people merging letters into one name is a worse name, and a whole write keeps its stale-write check (<code>markCollaborative</code> overrides).</p>
 <p><strong>On a phone this face is the answer.</strong> <code>Shell</code> carries <code>pagesHref</code>.</p>
 <h3>Rung one: a page in the app's own words</h3>
 <p><code>createPageRegistry(schema)</code> replaces pages per kind and surfaces per app:</p>

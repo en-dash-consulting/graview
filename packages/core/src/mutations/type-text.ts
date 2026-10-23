@@ -2,10 +2,11 @@ import * as z from "../schema/zod.js";
 import { MissingRecordError } from "../graph/graph.js";
 import { ActRefusal } from "../refused.js";
 import { collaborativeFieldOf } from "../schema/collaborative-of.js";
-import { labelOf, nounOf } from "../schema/define-node.js";
+import { nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import { NEVER_WRITTEN } from "../ops/revisions.js";
 import { carried, textAt } from "../text/since.js";
+import { typingWords } from "../text/typing-words.js";
 import { TYPE_TEXT, type TypingStore } from "../text/typing-hook.js";
 import { derivedVia, fieldsWrittenBy, subjectKindsOf } from "./derive-edits.js";
 import type { AnyMutationDefinition } from "./types.js";
@@ -66,9 +67,9 @@ export function typeTextMutation<S extends AnySchema>(store: TypingStore): AnyMu
     // It writes no field of its own: which field it types into is an argument, judged per call (`typeTextVia`).
     writes: [],
     describe: (args, graph) => {
-      const { node, field } = args as unknown as TypeTextArgs;
-      const record = graph.getNode(node) as ({ id: string; kind: string } & Record<string, unknown>) | undefined;
-      return `Type in ${record ? `${labelOf(schema.tryDefinition(record.kind), record)}'s` : "the"} ${field}`;
+      // Said as the change is (Roadmap f-collab-text, phase 5): "Wrote in Kitchen's notes (+5 −1)", as history and Activity say a run.
+      const { node, field, insert, remove } = args as unknown as TypeTextArgs;
+      return typingWords({ node, field, inserted: [...String(insert ?? "")].length, removed: Number(remove) || 0 }, schema, graph);
     },
     apply(ctx, raw) {
       const { node, field, at, remove, insert, rev } = raw as unknown as TypeTextArgs;

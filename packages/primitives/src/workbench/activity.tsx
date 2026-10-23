@@ -1,7 +1,7 @@
 import { humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author, type Batch } from "@graview/core";
 import { viaSaid } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
-import { digestWords, foldDigests } from "@graview/core/tidying";
+import { digestWords, foldDigests, typedRowWords } from "@graview/core/tidying";
 import { lazyModule, POPOVER_STYLE, useGoTo, useGraview, useLiveStore, usePlayback, usePopover } from "@graview/react/provider";
 import { prefetchTimeline } from "../past-bar.js";
 import type { ToolCall } from "@graview/tools";
@@ -38,6 +38,12 @@ export interface Change {
    */
   readonly named?: Readonly<Record<string, string>>;
   readonly batch: string;
+  /**
+   * A RUN OF TYPING (Roadmap f-collab-text): one person's consecutive runs
+   * into one field, one row — every batch, oldest first, taken back
+   * together; `batch` is the last.
+   */
+  readonly batches?: readonly string[];
   /** When it was made. */
   readonly at?: string;
   /** The AI interaction it came from (lineage `interaction`), whose entry draws it. */
@@ -107,7 +113,11 @@ export function useRecentChanges(limit = 4): readonly Change[] {
         .reverse()
         .slice(0, limit)
         .map((row): Change => {
-          if ("batch" in row) return changeOf(store, row.batch, carried);
+          if ("batch" in row) {
+            const change = changeOf(store, row.batch, carried);
+            // Typing, said as one: "Wrote in Notes (+42 −3)", the record beside it as every row names one.
+            return row.typed ? { ...change, intent: typedRowWords(row.typed, store.schema, store.graph), batches: row.typed.batches.filter((batch) => !batch.undone).map((batch) => batch.id) } : change;
+          }
           const changes = [...row.digest.batches].reverse().map((batch) => changeOf(store, batch, carried));
           return {
             // Today on the app's clock, as the digest's own day is read: a UTC today called an evening's tidying "on Oct 18" on Oct 18.
@@ -230,7 +240,7 @@ function DigestRow({ change, goes }: { readonly change: Change; readonly goes: (
  * the button says how many other turns would have to come along, which is
  * what the check already returns.
  */
-export function UndoTurn({ batch }: { readonly batch: string }) {
+export function UndoTurn({ batch }: { readonly batch: string | readonly string[] }) {
   /*
    * WHO IS UNDOING. Undo is a change and the store judges it like one —
    * "what you may undo is what you may have done" — so it has to be told
@@ -278,8 +288,9 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
         setRefused(null);
         try {
           /* Taking an agent's turn back walks its body home: the log and the body agree. */
-          const turned = store.log.all().find((op) => op.batch === batch && op.author.kind === "agent");
-          store.undo(blocked ? [batch, ...alsoNeeded] : batch, { author: principal });
+          const asked = typeof batch === "string" ? [batch] : batch;
+          const turned = store.log.all().find((op) => asked.includes(op.batch) && op.author.kind === "agent");
+          store.undo(blocked ? [...asked, ...alsoNeeded] : typeof batch === "string" ? batch : [...batch], { author: principal });
           if (turned) noteSeat({ type: "home", author: turned.author });
         } catch (error) {
           setRefused(error instanceof Error ? error.message : String(error));
@@ -718,7 +729,7 @@ export function ActivityRail({
                       {change.basis ? <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}> · {change.basis}</span> : null}
                     </span>
                     {change.batch ? <ShowAsItWas seq={change.seq} intent={change.intent} /> : null}
-                    {change.batch ? <UndoTurn batch={change.batch} /> : null}
+                    {change.batch ? <UndoTurn batch={change.batches && change.batches.length > 0 ? (change.batches.length === 1 ? change.batches[0]! : change.batches) : change.batch} /> : null}
                   </div>
                   <div
                     data-touched={change.touched.join(" ")}

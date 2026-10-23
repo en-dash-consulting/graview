@@ -1,0 +1,7 @@
+{
+  "budget": "the pages face alone",
+  "minified": 200,
+  "gzipped": 150,
+  "changeset": "typing-is-said-in-words.md",
+  "note": "Raised when typing came to be said in words and hardened (collaborative text, phases 5 and 6): `PagesApp` handing its `typing` to the provider under the routes, and the rebase and the remote's undo fixes the fuzz found (typing-together-converges-whatever-the-network-does.md). Measured at 656_768 / 241_774 against 656_600 / 241_664 before them: 168 more minified, 110 gzipped."
+}
