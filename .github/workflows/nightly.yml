@@ -69,7 +69,8 @@ jobs:
   harnesses:
     name: ${{ matrix.shard }} (${{ matrix.renderer }})
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # 75: installing the engines alone has taken 32–42 minutes on a slow day.
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
@@ -104,12 +105,21 @@ jobs:
       # download of all three took 42 of a job's 45 minutes on 2026-10-22.
       # Their system libraries are installed every time (install-deps).
       - name: The engines, cached
-        uses: actions/cache@v4
+        id: engines-cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: The engines
         run: npx playwright install --with-deps chromium webkit firefox
+      # Saved the moment they are installed: a cache saved after the job is
+      # never saved when the job runs out of time, which is when it matters.
+      - name: The engines, kept
+        if: steps.engines-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       # The GPU path's Chromium: Google Chrome as it ships, which has element
       # capture behind its flag; engine.mjs switches it on with SwiftShader.
@@ -156,11 +166,18 @@ jobs:
       # download of all three took 42 of a job's 45 minutes on 2026-10-22.
       # Their system libraries are installed every time (install-deps).
       - name: The engines, cached
-        uses: actions/cache@v4
+        id: engines-cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: npx playwright install --with-deps chromium webkit firefox
+      - name: The engines, kept
+        if: steps.engines-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       # A cell that fails is looked at again alone; one that held the second
       # time is written to docs/flakes.json and raised as a warning.
       - run: pnpm engines

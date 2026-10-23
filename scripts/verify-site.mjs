@@ -64,8 +64,8 @@ const arrive = async (page, url) => {
 };
 
 const PAGES = [
-  /* The prompt and the recipe it opens on, the season the asks reshape, the rota and the rule, live; the other recipes mount when their tab is chosen. */
-  { file: "index.html", name: "the page", live: 4, skip: "#what" },
+  /* The prompt and the recipe it opens on, the season the asks reshape and the rota, live; the other recipes mount when their tab is chosen. */
+  { file: "index.html", name: "the page", live: 3, skip: "#what" },
   /* The long tour, moved off the front page: eight feature frames and the first step of the stepper. */
   { file: "tour.html", name: "the tour", live: 9, skip: "#tour" },
   /* Sixteen chapters and the kit's own frame. */
@@ -502,7 +502,11 @@ try {
   await arrive(forced, pageAt("index.html"));
   await forced.waitForTimeout(400);
   report.criteria.forcedColorsKeepTheMeaningfulMarks = await forced.evaluate(
-    () => getComputedStyle(document.querySelector(".head .tick")).forcedColorAdjust === "none",
+    () => {
+      // The ask the season is drawn from is marked by its edge alone, so it keeps that mark in system colors.
+      const pressed = document.querySelector('.ask-chips [aria-pressed="true"]');
+      return pressed !== null && getComputedStyle(pressed).forcedColorAdjust === "none";
+    },
   );
   await forced.close();
 } catch (error) {

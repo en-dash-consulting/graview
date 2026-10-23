@@ -872,30 +872,17 @@ function scriptsOf(design) {
 /* ── the hand-designed pages, filled from records ─────────────────────── */
 
 /**
- * THE FRONT PAGE'S RECIPE ROWS, between their markers: each recipe's task,
- * the prompt, what it declared and where its proof is, from its record.
+ * THE FRONT PAGE'S RECIPES, between their markers: one line each under the
+ * products built on Graview — the task, linked to its live page, and what
+ * it declared, counted from its record so the line cannot drift from it.
  */
 function recipeRows(rcps) {
   const rows = rcps.map((r) =>
-    `      <li class="recipe-row">\n` +
-    `        <div>\n` +
-    `          <h3>${escape(r.title)}</h3>\n` +
-    `          <p class="recipe-prompt">${escape(r.prompt).replace(escape(`repo's ${r.task}`), `repo's <b>${escape(r.task)}</b>`)}</p>\n` +
-    `        </div>\n` +
-    `        <div>\n` +
-    `          <p class="recipe-blurb">${escape(r.blurb)}</p>\n` +
-    `          <dl>\n` +
-    `            <dt>Kinds</dt><dd>${r.kinds.map((k) => escape(k.plural)).join(", ")}</dd>\n` +
-    `            <dt>Rules</dt><dd>${r.rules.map((rule) => escape(rule.title)).join("; ")}</dd>\n` +
-    `            <dt>Seed</dt><dd>${r.records} records and ${r.ties} relations, read out of Larkspur</dd>\n` +
-    `            <dt>Check</dt><dd>${escape(r.check.some((line) => line.startsWith("!")) ? "warnings" : "clean, on every push")}</dd>\n` +
-    `          </dl>\n` +
-    `          <p class="recipe-links"><a href="docs/recipes/${r.slug}.html">Open it, live &rarr;</a><a href="recipes/${r.slug}/app.json">app.json</a><a href="recipes/${r.slug}/seed.json">seed.json</a></p>\n` +
-    `        </div>\n` +
-    `      </li>`);
+    `      <li><a href="docs/recipes/${r.slug}.html"><b>${escape(r.title)}</b>` +
+    `<span>${r.kinds.length} kinds &middot; ${r.rules.length} rules &middot; ${r.records} records${r.check.some((line) => line.startsWith("!")) ? " &middot; warnings" : ""}</span></a></li>`);
   return (
-    `${RECIPES_START}\n    <ol class="recipe-list">\n${rows.join("\n")}\n    </ol>\n` +
-    `    <p class="sm dim recipes-note">How these were made: an agent ran each prompt once, with nothing but the prompt and <a class="inl" href="start.md">start.md</a>, at the root of Larkspur, a made-up repository written for the purpose (<code>scripts/fixtures/recipes/larkspur.mjs</code>); the architecture recipe, and the face of its own beside it, were written by hand over Larkspur, as its page says. CI does not run an agent. On every push it checks the declaration that run produced, loads its seed, and opens each recipe&rsquo;s page in a browser to see the app mount.</p>\n    ${RECIPES_END}`
+    `${RECIPES_START}\n    <ul class="recipe-list">\n${rows.join("\n")}\n    </ul>\n` +
+    `    <p class="recipes-note">Each made by an agent from the prompt alone, over a made-up repository, and checked on every push. <a class="inl" href="docs/recipes.html">How they were made&nbsp;&rarr;</a></p>\n    ${RECIPES_END}`
   );
 }
 

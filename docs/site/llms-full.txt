@@ -17,7 +17,7 @@ Graview is an agent-native TypeScript framework, made by En Dash, for apps that 
 
 ### What can I build with Graview?
 
-Apps for anything that is really things and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household’s calendar and a shared garden are built on it, and so are apps over a repository’s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take.
+Apps for anything that is a thing, and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household’s calendar and a shared garden are built on it, and so are apps over a repository’s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take.
 
 ### How is Graview different from other app frameworks?
 
@@ -37,7 +37,7 @@ Through the same acts a person has. Every act in the declaration is a typed tool
 
 ### What is Graview Cloud?
 
-Graview Cloud is the hosted product built on Graview, from En Dash, for people who don’t write TypeScript, in private alpha and invite-only at [graview.cloud](https://graview.cloud/). You keep working in the AI you already use: say what you are organizing in Claude or ChatGPT, or start from a template, and it becomes a shared, live app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine.
+Graview Cloud is the hosted product built on Graview, from En Dash, for people who would rather not run an app themselves, in private alpha and invite-only at [graview.cloud](https://graview.cloud/). You keep working in the AI you already use: say what you are organizing in Claude or ChatGPT, or start from a template, and it becomes a shared, live app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine.
 
 ---
 
