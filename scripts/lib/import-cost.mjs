@@ -84,7 +84,7 @@ export const WORKER_SHAPED = join(ROOT, "scripts/fixtures/cloud-worker-imports.m
 // 2_010_000 since a text field takes a splice (collaborative text, phase 1: the `splice-text` primitive folded, undone, served and read back wherever a patch is): 2_005_731 B measured, 5_787 more than before it (1_999_944).
 // 2_026_000 since text is typed together (collaborative text, phase 2: `@graview/ship/runtime` loads `@graview/core/typing`, the `type-text` act and a whole write merged as a splice, so `transformSplices`, `diffSplice` and `text/since.ts` are in the worker): 2_021_456 B measured, 15_725 more than before it (2_005_731).
 // 2_020_000 since the 0.1.49 batch came together (every form in one order, act spellings, suggestion and lineage shapes): 2_010_374 B measured.
-// 2_250_000 — Nick, 2026-10-23: one deliberate raise for the road to 1.0; the 75 ms startup CPU still guards cold starts. The 0.1.50 batch together measured 2_024_556 B.
+// 2_250_000 — Nick, 2026-10-23: one deliberate raise for the road to 1.0; the 75 ms startup CPU still guards cold starts. The 0.1.50 batch together measured 2_059_703 B.
 export const WORKER_BUDGET = { cpu: 75, bytes: 2_250_000, zod: 260_000 };
 
 /** The file an entry resolves to in its package's dist/. */
