@@ -1,5 +1,29 @@
 # @graview/primitives
 
+## 0.1.48
+
+### Patch Changes
+
+- 29f5e0d: A declared row names its record. Threat Watch's threat row was set to `{severity} · {status} · …` alone, and its list drew lines of facts with no threat named in any of them — a list of links nobody could tell apart — while describe_place said each record's title above them: the words and the picture disagreed. A row is a link to its record and needs a name, for a reader and for a person: one whose blocks show no `title`, no `headline` and no words holding the record's whole name is now drawn with the record's name first, as a title is; one that names the record is drawn as declared (`blocksName`, on `@graview/core/blocks`). describe_place says the name that leads the row, then what its blocks say — a row led by a headline is said with the headline as its title, once, where it was said as the record's title and then as a heading. `graview-view-specs` says a row is always named, and how to choose how. Primitives' tests find a row of facts alone drawn with its record's name first and said with it, and a row led by a title, by a headline or by words that hold the name drawn as declared with the name once. A hosted page carries 0.9 KB more up front for this and the abbreviations of `a-creating-form-asks-its-name-first` (0.4 KB on the page handed a compiled app), the scene face 1.2 KB more before it draws, and the pages face alone 1.6 KB more (0.8 KB gzipped), under raises of those budgets by that (`scripts/budget-raises/a-declared-row-names-its-record-*.json`).
+  
+  Compatibility: the declaration, stored formats, the wire, check findings and derived tools are unchanged. A row spec that names its record nowhere now draws the record's name before its blocks; describe_place's item for a row led by a headline has the headline as its `title` and leaves it out of `parts`. New on `@graview/core/blocks`: `blocksName`. What Graview Cloud does: nothing — its pages and describe_place agree once it takes this version.
+- 7c9b1ae: A headline that opens on a count in words starts with a capital, and an acronym is never lower-cased inside a sentence. Threat Watch, on Graview Cloud, headed its home "{count(all('indicator'))|words} indicators…", which read "seventy-two indicators…" unless its author knew to add `| capital`. A headline that opens on an interpolation formatted `words`, `plural` or `relative` — words the framework wrote, not a person — now starts with a capital when its first word is all lower case: "Seventy-two indicators…". Only a headline: text the author wrote first stays as written ("only three left"), and so does a record's own name ("iPhone", "eBay"), which is a person's spelling, not a sentence's. Separately, a kind whose noun is "CVE" and plural "CVEs" was written "cVEs" in a change's summary ("How cVEs work out…"), in a place's description and in the chat's sentences: each lower-cased a plural's first letter as a word inside a sentence reads. `lowerFirst`, on `@graview/core/words` with `capitalize`, never lower-cases a word whose second letter is upper case, and every place that lower-cased a noun, a plural, a field's label or a refusal's first word reads through it or the same rule. `core`'s tests say the review's headline "Two findings, worst first" without `| capital`, leave text the author wrote first and a record's name as spelled, and say "How CVEs work out" in a change's summary.
+  
+  Compatibility: additive in the API — `capitalize` and `lowerFirst` on `@graview/core/words`. A behavior change in words: a headline opening on `words`, `plural` or `relative` starts with a capital, and a noun or plural written as an acronym keeps its capitals inside a sentence. The declaration, the wire, the stored formats and the derived tools are unchanged.
+- Updated dependencies [29f5e0d]
+- Updated dependencies [29f5e0d]
+- Updated dependencies [04a9246]
+- Updated dependencies [7c9b1ae]
+- Updated dependencies [5b30150]
+- Updated dependencies [7c9b1ae]
+- Updated dependencies [7c9b1ae]
+- Updated dependencies [29f5e0d]
+  - @graview/core@0.1.48
+  - @graview/tools@0.1.48
+  - @graview/layout@0.1.48
+  - @graview/react@0.1.48
+  - @graview/render@0.1.48
+
 ## 0.1.47
 
 ### Patch Changes

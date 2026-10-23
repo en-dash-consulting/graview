@@ -51,7 +51,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.47
 
-Published October 22, 2026 · the current version
+Published October 22, 2026
 
 Custom views work by keyboard with real links and buttons, are as tall as they draw, and can be audited for accessibility; a place is said drawn once its lens has drawn.
 
