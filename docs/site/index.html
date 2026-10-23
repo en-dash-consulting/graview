@@ -1569,6 +1569,171 @@ main.page > section.tour-intro { padding-top: 64px; }
   .topbar .jump a { padding: 6px 8px; }
   .topbar .jump a[href^="https://github.com"] { display: none; }
 }
+
+/* ── The landing page, fifth cut: fewer sizes, more room ──────────────
+   The fourth cut had the right pieces and too many of them at once: a
+   dozen font sizes between 11 and 34 pixels, a paragraph beside every
+   heading, a frame and a grid of cards in every section, and the hosted
+   product seven sections down. This cut keeps one scale and one rhythm
+   for the whole page, says each thing once, and offers Graview Cloud as
+   the first of two doors and again as a band of its own.
+
+   The scale: 13 (captions, labels), 15 (small text), 17 (reading),
+   18–21 (ledes), 44 (a section's claim), 68 (the page's). The rhythm:
+   8, 16, 24, 40, 64, 120.
+   ─────────────────────────────────────────────────────────────────── */
+
+.landing {
+  --s1: 8px; --s2: 16px; --s3: 24px; --s4: 40px; --s5: 64px; --s6: 120px;
+  --t-cap: 13px; --t-sm: 15px; --t-body: 17px;
+  --t-lede: clamp(18px, 1.45vw, 20px);
+  --t-h2: clamp(30px, 3.3vw, 44px);
+}
+
+main.landing > section { padding-top: var(--s6); scroll-margin-top: 64px; }
+.landing .sec-head { display: grid; gap: var(--s2); max-width: 760px; margin-bottom: var(--s4); }
+.landing .eyebrow { margin: 0; font-size: 12px; letter-spacing: 0.12em; color: var(--pine); }
+/* Only the page's own headings: an embedded app's title is an h1 or h2 too. */
+.landing .sec-head h2, .cloud-pitch h2 { font-size: var(--t-h2); line-height: 1.08; letter-spacing: -0.03em; font-weight: var(--w-display); max-width: 20ch; }
+.landing .lede { font-size: var(--t-lede); line-height: 1.55; color: var(--ink-2); max-width: 58ch; }
+.landing .lede .inl { font-weight: var(--w-label); text-decoration: none; }
+.landing .lede .inl:hover { text-decoration: underline; }
+.landing .stage-caption { font-size: var(--t-cap); line-height: 1.5; }
+.landing .stage-caption .live { font-size: 11px; }
+
+/* The one filled button, and the quiet one beside it. */
+.landing .btn {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 22px;
+  font-family: var(--sans); font-size: 16px; font-weight: var(--w-label); letter-spacing: -0.005em;
+  color: #060A16; background: var(--mint); border-radius: 8px; text-decoration: none;
+}
+.landing .btn:hover { color: #060A16; background: #5CF0D2; }
+.landing .btn-quiet {
+  display: inline-flex; align-items: center; min-height: 48px; padding: 0 6px;
+  font-size: 16px; font-weight: var(--w-label); color: var(--ink); text-decoration: none;
+}
+.landing .btn-quiet:hover { text-decoration: underline; color: var(--ink); }
+.landing .door-act { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); }
+.landing .door-note { margin: 0; font-size: 14px; color: var(--ink-3); }
+
+/* The hero: the claim, two doors, the stage. */
+main.landing > section.agent-hero {
+  padding-top: clamp(56px, 9vh, 104px); padding-bottom: clamp(64px, 9vh, 104px);
+  gap: var(--s5);
+}
+.ah-head { display: grid; gap: var(--s3); }
+.ah-head h1 {
+  font-size: clamp(40px, 5vw, 68px); line-height: 1.03; letter-spacing: -0.035em;
+  font-weight: var(--w-display); max-width: 19ch;
+}
+.ah-head .lede { font-size: clamp(18px, 1.6vw, 21px); max-width: 54ch; }
+
+.doors { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--s2); margin-top: calc(var(--s5) * -0.5); }
+.door {
+  display: grid; gap: var(--s2); align-content: start; min-width: 0;
+  padding: var(--s3) 28px 28px; border: 1px solid var(--rule); border-radius: 12px; background: var(--sunk);
+}
+.door-cloud { border-color: color-mix(in srgb, var(--mint) 45%, var(--rule)); background: color-mix(in srgb, var(--mint) 6%, var(--sunk)); }
+.door-cloud .door-act { margin-top: var(--s1); }
+.door-label {
+  margin: 0; display: flex; align-items: center; gap: 10px;
+  font-family: var(--sans); font-size: 12px; font-weight: var(--w-label); letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.door-cloud .door-label { color: var(--mint); }
+.door-label .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); flex: 0 0 auto; }
+.door-line { margin: 0; font-size: 20px; line-height: 1.45; color: var(--ink); max-width: 30ch; }
+
+/* The prompt, inside its door: no second box, type a reader reads rather than a poster. */
+.door .prompt { border: 0; background: none; padding: 0; }
+.door .prompt-text { font-size: clamp(16px, 1.45vw, 19px); line-height: 1.55; letter-spacing: -0.01em; }
+.door .prompt-foot { margin-top: var(--s2); padding-top: var(--s2); gap: var(--s1) var(--s2); }
+.door .recipe-tabs [role="tab"] { font-size: 13px; min-height: 32px; padding: 0 12px; }
+.door .copy-prompt { min-height: 36px; }
+.door .ah-diy { margin: 0; font-size: var(--t-cap); gap: var(--s1) var(--s3); }
+.door .diy-line code { font-size: var(--t-cap); }
+
+.landing .agent-hero .hero-live { height: min(560px, 64vh); min-height: 420px; border-radius: 10px; }
+.landing .run { font-size: var(--t-cap); }
+.landing .stage-panel { gap: 12px; }
+
+/* The asks. */
+.landing .ask-demo { margin-top: 0; gap: var(--s2); }
+.landing .ask-bar-big { font-size: 16px; padding: 14px 16px; }
+.landing .season-live { border-radius: 10px; }
+
+/* What it builds: the rota beside one line per domain. */
+.builds-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s4) var(--s5); align-items: start; }
+.builds .visual { display: grid; gap: 12px; min-width: 0; }
+.builds .chapter-live { height: 520px; border-radius: 10px; box-shadow: 0 0 0 1px var(--rule); }
+.uses { margin: 0; padding: 0; list-style: none; display: grid; }
+.uses li { display: grid; gap: 2px; padding: 14px 0; border-top: 1px solid var(--rule-2); min-width: 0; }
+.uses li:first-child { border-top: 0; padding-top: 0; }
+.uses .kind { font-size: 11px; font-weight: var(--w-label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.uses b { font-size: var(--t-body); font-weight: var(--w-label); color: var(--ink); margin-top: 2px; }
+.uses li > span:last-child { font-size: var(--t-sm); line-height: 1.5; color: var(--ink-2); }
+
+/* What you get: six claims, three across, no boxes. */
+.gives-list { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4) var(--s5); }
+.gives-list li { display: grid; gap: var(--s1); align-content: start; padding-top: 20px; border-top: 1px solid var(--rule); min-width: 0; }
+.gives-list a { font-size: 18px; font-weight: var(--w-label); letter-spacing: -0.01em; line-height: 1.3; color: var(--ink); text-decoration: none; justify-self: start; }
+.gives-list a::after { content: " \2192"; color: var(--pine); }
+.gives-list a:hover { color: var(--pine); }
+.gives-list p { font-size: var(--t-sm); line-height: 1.6; color: var(--ink-2); }
+
+/* Graview Cloud: the page's one band in the brand's navy, edge to edge. */
+main.landing > section.cloud-band {
+  margin-top: var(--s6); padding: 96px 0;
+  background: var(--navy); box-shadow: 0 0 0 100vmax var(--navy); clip-path: inset(0 -100vmax);
+  --ink-2: #D3DAEA; --ink-3: #AAB4CF; --rule: rgba(255, 255, 255, 0.16); --pine: var(--mint);
+}
+.cloud-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s4) var(--s5); align-items: center; }
+.cloud-pitch { display: grid; gap: var(--s3); }
+.cloud-pitch .eyebrow { color: var(--mint); }
+.cloud-pitch h2 { max-width: 16ch; }
+.cloud-pitch .door-act { margin-top: var(--s1); }
+.cloud-points { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; }
+.cloud-points li { padding: 18px 0; border-top: 1px solid var(--rule); font-size: var(--t-sm); line-height: 1.6; color: var(--ink-2); }
+.cloud-points li:first-child { border-top: 0; padding-top: 0; }
+.cloud-points b { display: block; color: var(--ink); font-size: var(--t-body); font-weight: var(--w-label); margin-bottom: 2px; }
+
+/* The recipes, quieter: one rhythm with the rest. */
+.landing .recipe-list { margin-top: 0; }
+.landing .recipe-row { padding: var(--s3) 0; gap: var(--s2) var(--s5); }
+.landing .recipe-row h3 { font-size: 20px; letter-spacing: -0.015em; }
+.landing .recipe-row .recipe-blurb { font-size: var(--t-sm); line-height: 1.6; }
+.landing .recipe-row .recipe-prompt { font-size: var(--t-cap); }
+.landing .recipe-row dl { font-size: 14px; }
+
+/* Questions. */
+.landing .faq-list { gap: var(--s4) var(--s5); margin-top: 0; }
+.landing .qa h3 { font-size: 18px; margin-bottom: var(--s1); }
+.landing .qa p { font-size: var(--t-sm); line-height: 1.65; }
+main.landing footer { margin-top: var(--s6); font-size: var(--t-cap); }
+
+/* The bar's one filled link is the hosted door. */
+.topbar.night .jump a.go { color: #060A16; background: var(--mint); }
+.topbar.night .jump a.go:hover { color: #060A16; background: #5CF0D2; }
+
+@media (max-width: 1000px) {
+  .doors, .builds-grid, .cloud-grid { grid-template-columns: minmax(0, 1fr); }
+  .gives-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .builds .chapter-live { height: 460px; }
+}
+@media (max-width: 640px) {
+  .landing { --s4: 28px; --s5: 40px; --s6: 80px; }
+  .gives-list { grid-template-columns: minmax(0, 1fr); }
+  .door { padding: 20px; }
+  .door-line { font-size: 18px; }
+  .landing .btn { width: 100%; justify-content: center; }
+  main.landing > section.cloud-band { padding: 64px 0; }
+  .landing .agent-hero .hero-live { height: 420px; min-height: 0; }
+  .doors { margin-top: 0; }
+}
+@media (max-width: 480px) { .topbar .jump a.go .try { display: none; } }
+@media (forced-colors: active) {
+  .landing .btn, .door { border: 1px solid CanvasText; }
+}
 /* site-css:end */
 </style>
 
@@ -1580,46 +1745,66 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a class="logo" href="index.html" aria-label="Graview"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 847.64 180" aria-hidden="true" focusable="false"><g transform="translate(12 7)"><g fill="none" stroke="currentColor" stroke-width="8.4" stroke-linejoin="round"><path d="M81 63 L15 49 L84 12 H181 L120 56"/><path d="M60 100 L15 127 L101 150 L179 107 L123 98"/><path d="M101 95 V125" stroke-linecap="round"/></g><circle cx="101" cy="74" r="11.7" fill="var(--point, currentColor)"/></g><g transform="translate(234 0)"><path d="M323.0216778668979 -200.0173422935183Q249.98699327986125 -200.0173422935183 179.9826577064817 -180.52818122696726Q109.9783221331021 -161.03902016041621 64.95230869282463 -123.05636245393453L118.05202688055495 -37.75720789074355Q154.03468458703662 -67.73553002384566 208.01517450682852 -85.72035551701713Q261.9956644266204 -103.7051810101886 318.9393019726859 -103.7051810101886Q409.84825493171473 -103.7051810101886 452.29406026447 -61.75937567743334Q494.7398655972252 -19.813570344678084 494.7398655972252 65.05636245393453V167.80923477129852L504.7398655972252 281.0563624539345L499.7658790375027 395.299154563191V532.0650336006937H605.2427921092565V77.13873834814655Q605.2427921092565 -65.93063082592673 533.1734229351832 -132.9739865597225Q461.1040537611099 -200.0173422935183 323.0216778668979 -200.0173422935183ZM311.87860394537176 23.030349013657055Q233.91762410578798 23.030349013657055 172.42412746585734 55.53034901365706Q110.93063082592673 88.03034901365706 75.42412746585737 146.03468458703662Q39.91762410578799 204.03902016041621 39.91762410578799 281.0563624539345Q39.91762410578799 358.07370474745284 75.42412746585737 416.07804032083243Q110.93063082592673 474.082375894212 172.42412746585734 506.08237589421196Q233.91762410578798 538.082375894212 311.87860394537176 538.082375894212Q378.8959462388901 538.082375894212 434.3525905050943 511.07804032083243Q489.8092347712985 484.07370474745284 523.7572078907435 427.0672013873835Q557.7051810101887 370.0606980273141 557.7051810101887 281.0563624539345Q557.7051810101887 192.05202688055496 523.7572078907435 135.04552352048557Q489.8092347712985 78.03902016041621 434.3525905050943 50.53468458703664Q378.8959462388901 23.030349013657055 311.87860394537176 23.030349013657055ZM324.0867114675916 119.37719488402341Q374.9826577064817 119.37719488402341 413.90461738564926 139.8360069369174Q452.82657706481683 160.2948189898114 474.783221331021 196.72328202904833Q496.7398655972252 233.15174506828527 496.7398655972252 281.0563624539345Q496.7398655972252 328.9653154129634 474.783221331021 365.3916106655105Q452.82657706481683 401.81790591805765 413.90461738564926 421.7767179709516Q374.9826577064817 441.7355300238456 324.0867114675916 441.7355300238456Q274.1907652287015 441.7355300238456 234.7688055495339 421.7767179709516Q195.34684587036637 401.81790591805765 173.38803381747238 365.3916106655105Q151.42922176457836 328.9653154129634 151.42922176457836 281.0563624539345Q151.42922176457836 233.15174506828527 173.38803381747238 196.72328202904833Q195.34684587036637 160.2948189898114 234.7688055495339 139.8360069369174Q274.1907652287015 119.37719488402341 324.0867114675916 119.37719488402341Z" transform="translate(0.0 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M86.83958378495556 0V532.0650336006937H192.3164968567093V387.9739865597225L181.21244309559938 429.9956644266204Q204.22111424235857 483.0433557337958 255.73628874918708 510.5628658140039Q307.2514632560156 538.082375894212 383.2557988293952 538.082375894212V430.6791675699111Q376.22111424235857 431.6835031432907 370.19726858877084 432.18567092998046Q364.17342293518317 432.6878387166703 358.1474094949057 432.6878387166703Q284.247127682636 432.6878387166703 240.7948189898114 389.2615434641231Q197.34251029698677 345.83524821157596 197.34251029698677 260.92195967916757V0Z" transform="translate(101.592 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M414.8525905050943 0V109.94363754606547L409.8048991979189 131.96097983958379V321.9349663993063Q409.8048991979189 378.86126165185345 375.3482549317147 410.81357034467806Q340.8916106655105 442.7658790375027 271.9523086928246 442.7658790375027Q225.99132885324084 442.7658790375027 182.0173422935183 428.27888575764143Q138.0433557337958 413.7918924777802 107.06069802731412 388.81357034467806L61.94363754606547 471.1040537611099Q103.96965098634294 504.09104704097115 162.50650336006936 521.0867114675916Q221.0433557337958 538.082375894212 285.0433557337958 538.082375894212Q397.1690873618036 538.082375894212 458.7384565358769 483.5455235204856Q520.3078257099502 429.0086711467592 520.3078257099502 315.90461738564926V0ZM245.91328853240842 -6.017342293518318Q185.88293951875136 -6.017342293518318 140.88293951875136 13.995664426620419Q95.88293951875136 34.008671146759156 71.38944287882072 70.01951008020811Q46.89594623889009 106.03034901365706 46.89594623889009 152.03468458703662Q46.89594623889009 196.07370474745284 67.92195967916757 231.58020810752222Q88.94797311944505 267.0867114675916 136.9804899197919 288.57587253414266Q185.01300672013875 310.0650336006937 265.0346845870366 310.0650336006937H425.8309126381964V230.93496639930632H270.1690873618036Q202.30782570995012 230.93496639930632 179.33600693691739 208.9804899197919Q156.36418816388468 187.02601344027747 156.36418816388468 156.06069802731412Q156.36418816388468 120.13440277476695 185.30132234988076 99.17125514849339Q214.23845653587688 78.20810752221982 265.1257316280078 78.20810752221982Q315.0086711467592 78.20810752221982 353.9241274658574 100.16691957511381Q392.83958378495555 122.1257316280078 409.8048991979189 165.05636245393453L429.84391935833514 89.09538261435074Q410.86993279861264 44.02601344027748 363.8916106655105 19.00433557337958Q316.9132885324084 -6.017342293518318 245.91328853240842 -6.017342293518318Z" transform="translate(154.53 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M226.90461738564926 0 -3.052026880554955 532.0650336006937H111.45957077823542L313.3078257099501 57.19943637546066H257.0433557337958L463.917624105788 532.0650336006937H571.381530457403L340.42922176457836 0Z" transform="translate(242.046 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M86.83958378495556 0V532.0650336006937H197.34251029698677V0ZM142.09104704097118 626.8439193583351Q110.95664426620422 626.8439193583351 90.38510730544115 646.9002818122697Q69.81357034467808 666.9566442662042 69.81357034467808 696.0433557337958Q69.81357034467808 725.1300672013874 90.38510730544115 745.186429655322Q110.95664426620422 765.2427921092565 142.09104704097118 765.2427921092565Q173.22544981573813 765.2427921092565 193.7969867765012 746.1907652287015Q214.36852373726427 727.1387383481465 214.36852373726427 698.052026880555Q214.36852373726427 667.9566442662042 194.2948189898114 647.4002818122697Q174.22111424235854 626.8439193583351 142.09104704097118 626.8439193583351Z" transform="translate(326.808 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M330.09538261435074 -6.017342293518318Q243.03902016041621 -6.017342293518318 177.5 28.99132885324084Q111.96097983958379 64 75.93930197268588 125.51300672013873Q39.91762410578799 187.02601344027747 39.91762410578799 266.0346845870366Q39.91762410578799 345.05202688055493 74.94146975937568 406.5628658140039Q109.96531541296336 468.07370474745284 171.5043355733796 503.07804032083243Q233.0433557337958 538.082375894212 311.0867114675916 538.082375894212Q389.09971818773033 538.082375894212 449.1365705614568 503.593214827661Q509.17342293518317 469.1040537611099 543.20593973553 407.09971818773033Q577.2384565358768 345.09538261435074 577.2384565358768 262.05202688055493Q577.2384565358768 255.03034901365706 576.736288749187 245.50867114675916Q576.2341209624973 235.98699327986125 575.2341209624973 227.96965098634294H127.35118144374593V307.09971818773033H516.9653154129634L472.7875569044006 281.0867114675916Q473.783221331021 329.0173422935183 452.82440927812706 365.95447647951437Q431.86559722523305 402.8916106655105 395.4371341859961 423.85475829178404Q359.0086711467592 444.81790591805765 311.09538261435074 444.81790591805765Q263.18209408194235 444.81790591805765 226.25363104270542 423.85475829178404Q189.32516800346846 402.8916106655105 168.86635595057447 365.4566442662042Q148.40754389768045 328.0216778668979 148.40754389768045 278.09971818773033V260.03034901365703Q148.40754389768045 210.09538261435074 171.36852373726424 171.65391285497506Q194.32950357684803 133.21244309559938 236.26013440277475 111.7514632560156Q278.1907652287015 90.29048341643181 333.11272490786905 90.29048341643181Q379.07804032083243 90.29048341643181 416.5216778668979 105.26880554953392Q453.9653154129634 120.24712768263603 481.9609798395838 151.19943637546066L542.2124430955994 79.99132885324084Q506.1951008020811 37.98699327986126 452.17559072187294 15.98482549317147Q398.15608064166486 -6.017342293518318 330.09538261435074 -6.017342293518318Z" transform="translate(365.823 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M201.92195967916757 0 4.952308692824626 532.0650336006937H109.42922176457836L281.3078257099501 57.19943637546066H232.07370474745284L410.9523086928246 532.0650336006937H504.38153045740296L679.247127682636 57.19943637546066H630.0260134402774L806.9046173856492 532.0650336006937H905.3381747236072L707.3728593106439 0H601.8742683719922L440.07804032083243 426.67483199653157H472.2254498157381L307.42055061781923 0Z" transform="translate(454.40999999999997 133.2397) scale(.153 -.153)" fill="currentColor"/></g></svg></a>
     </div>
     <nav class="jump" aria-label="Sections">
-      <a href="#builds">What it builds</a>
-      <a class="wide" href="#gives">What you get</a>
+      <a class="wide" href="#builds">What it builds</a>
       <a class="wide" href="#recipes">Recipes</a>
-      <a class="wide" href="#cloud">Cloud</a>
       <a class="wide" href="tour.html">The tour</a>
+      <a href="docs/index.html">Docs</a>
       <a href="https://github.com/en-dash-consulting/graview">GitHub</a>
-      <a class="go" href="docs/index.html">Docs</a>
+      <a class="go" href="https://graview.cloud/#invite"><span class="try">Try&nbsp;</span>Graview Cloud</a>
     </nav>
   </div>
 </header>
 
-<main class="page col" id="main" tabindex="-1" lang="en">
+<main class="page col landing" id="main" tabindex="-1" lang="en">
 
   <!--
-    THE FIRST SCREEN IS ONE THING TO HAND YOUR AGENT. Almost everyone will
-    start a Graview app by asking an assistant to make one, so the page
-    opens with the sentence to paste. Its tabs are that same sentence with
-    a different app in it, as unlike each other as the page can show: a
-    repository's docs, a volunteer rota, a garden in its own design. Each
-    runs beside it, live, not a picture of it. The headline comes after, as
-    the reason.
+    THE FIRST SCREEN SAYS WHAT IT IS, THEN OFFERS TWO DOORS. The headline
+    is the claim in one breath. Under it, the two ways to build one: on
+    Graview Cloud, by asking the AI you already use (the door most people
+    want, so it is first and the only filled button on the screen), or in a
+    repository, by handing an agent the prompt. The prompt's tabs are that
+    same sentence with a different app in it, and each runs on the stage
+    under the doors, live, not a picture of it.
   -->
   <section id="what" class="agent-hero night" aria-labelledby="h-what">
-    <div class="ah-ask">
-      <p class="ah-label"><span class="dot" aria-hidden="true"></span>Hand this to your agent</p>
-      <div class="prompt">
-        <p class="prompt-text" id="prompt-text">Read https://graview.dev/start.md, then <span class="task" id="prompt-task">turn this repo&rsquo;s docs into a Graview app</span>.</p>
-        <div class="prompt-foot">
-          <div class="recipe-tabs" role="tablist" aria-label="The same prompt with another app in it">
-            <button type="button" role="tab" id="rt-docs" aria-selected="true" aria-controls="stage-docs" data-task="turn this repo’s docs into a Graview app">a repo&rsquo;s docs</button>
-            <button type="button" role="tab" id="rt-rota" aria-selected="false" aria-controls="stage-rota" data-task="make a Graview app for our volunteer rota" tabindex="-1">a volunteer rota</button>
-            <button type="button" role="tab" id="rt-garden" aria-selected="false" aria-controls="stage-garden" data-task="make a Graview app for our community garden, in its own design" tabindex="-1">a community garden</button>
-          </div>
-          <button type="button" class="copy copy-prompt" data-copy-from="prompt-text" data-copy="Read https://graview.dev/start.md, then turn this repo's docs into a Graview app.">Copy prompt</button>
+    <div class="ah-head">
+      <h1 id="h-what">One declaration. A whole app, for people and their agents.</h1>
+      <p class="lede">
+        Say what your work is made of, a rota, a season, your
+        repository&rsquo;s docs, and Graview generates the interface, the
+        rules that repair and a tool for every action from it. Want it
+        different? Ask, and it stays in step.
+      </p>
+    </div>
+
+    <div class="doors">
+      <div class="door door-cloud">
+        <p class="door-label">No code &middot; Graview Cloud</p>
+        <p class="door-line">Describe it in ChatGPT or Claude. A minute later it&rsquo;s an app at its own address, live for everyone you invite.</p>
+        <div class="door-act">
+          <a class="btn" href="https://graview.cloud/#invite">Request an invite <span aria-hidden="true">&rarr;</span></a>
+          <span class="door-note">Free during the private alpha</span>
         </div>
       </div>
-      <p class="ah-diy">
-        <span>Claude Code, Codex, Cursor: anything that can run a shell.</span>
-        <span class="diy-line">Driving it yourself? <code>npm create graview@latest</code> <button type="button" class="copy" data-copy="npm create graview@latest">Copy</button></span>
-      </p>
+
+      <div class="door door-agent ah-ask">
+        <p class="door-label"><span class="dot" aria-hidden="true"></span>In your repo &middot; hand this to your agent</p>
+        <div class="prompt">
+          <p class="prompt-text" id="prompt-text">Read https://graview.dev/start.md, then <span class="task" id="prompt-task">turn this repo&rsquo;s docs into a Graview app</span>.</p>
+          <div class="prompt-foot">
+            <div class="recipe-tabs" role="tablist" aria-label="The same prompt with another app in it">
+              <button type="button" role="tab" id="rt-docs" aria-selected="true" aria-controls="stage-docs" data-task="turn this repo’s docs into a Graview app">a repo&rsquo;s docs</button>
+              <button type="button" role="tab" id="rt-rota" aria-selected="false" aria-controls="stage-rota" data-task="make a Graview app for our volunteer rota" tabindex="-1">a volunteer rota</button>
+              <button type="button" role="tab" id="rt-garden" aria-selected="false" aria-controls="stage-garden" data-task="make a Graview app for our community garden, in its own design" tabindex="-1">a community garden</button>
+            </div>
+            <button type="button" class="copy copy-prompt" data-copy-from="prompt-text" data-copy="Read https://graview.dev/start.md, then turn this repo's docs into a Graview app.">Copy prompt</button>
+          </div>
+        </div>
+        <p class="ah-diy">
+          <span>Claude Code, Codex, Cursor: anything that runs a shell.</span>
+          <span class="diy-line">Or yourself: <code>npm create graview@latest</code> <button type="button" class="copy" data-copy="npm create graview@latest">Copy</button></span>
+        </p>
+      </div>
     </div>
 
     <div class="ah-stage">
@@ -1666,18 +1851,6 @@ main.page > section.tour-intro { padding-top: 64px; }
       </div>
     </div>
 
-    <div class="ah-why">
-      <h1 id="h-what">One declaration. A UI for people, tools for agents, rules for both.</h1>
-      <p class="lede">
-        A rota, a bid, a season&rsquo;s plan, a household&rsquo;s week, your
-        repository&rsquo;s docs: anything that is really things and the
-        rules between them. Your agent writes one declaration of what the
-        domain is made of. Graview generates the whole interface from it, a
-        list per kind, a page per record, a form per act, and the rules that
-        repair, the permissions and a typed tool for every act with it, so
-        they can&rsquo;t drift apart. Want a different interface? Ask for it.
-      </p>
-    </div>
   </section>
 
   <!--
@@ -1692,17 +1865,13 @@ main.page > section.tour-intro { padding-top: 64px; }
     snacks to is a problem card, a row with Sign up, a WANTED ad.
   -->
   <section id="asks" class="asks" aria-labelledby="h-asks">
-    <div class="asks-head">
-      <div class="claim">
-        <p class="eyebrow"><span>The interface</span></p>
-        <h2 id="h-asks">You never build the UI. You ask for the one you want.</h2>
-      </div>
+    <div class="sec-head">
+      <p class="eyebrow">The interface</p>
+      <h2 id="h-asks">You never build the UI. You ask for the one you want.</h2>
       <p class="lede">
-        Graview generates the interface from the declaration: a list for
-        every kind, a page for every record, a form for every act. Want it
-        different? Say so. What comes back is a view, a small script the
-        framework runs in a sandbox over the same records, so every rule
-        still holds in it.
+        A list for every kind, a page for every record and a form for every
+        act come from the declaration. Want it different? Say so. What comes
+        back runs over the same records, so every rule still holds in it.
       </p>
     </div>
     <div class="ask-demo">
@@ -1720,138 +1889,83 @@ main.page > section.tour-intro { padding-top: 64px; }
   </section>
 
   <!--
-    WHAT IT BUILDS. The prompt above is a developer's door, and its recipes
-    are a repository's; this is the answer to "what is it for" in the
-    domain's words, before a word about how. The rota is live because it is
-    the plainest proof: a product nobody would call a developer tool, built
-    on the same packages.
+    WHAT IT BUILDS. The answer to "what is it for" in the domain's words,
+    before a word about how: one line each, beside the rota, live, because
+    it is the plainest proof — a product nobody would call a developer
+    tool, built on the same packages.
   -->
-  <section id="builds" class="feature cases" aria-labelledby="h-builds">
-    <div class="feature-grid">
-      <div class="claim">
-        <p class="eyebrow"><span>What it builds</span></p>
-        <h2 id="h-builds">Anything that is really things, and the rules between them.</h2>
-        <p class="lede">
-          Scheduling, coverage, planning, operations: the work where the hard
-          part is how things relate, and where a form per table was never the
-          interface anybody wanted. Who covers which shift. Which requirement
-          nobody answered. Which plot nobody tends.
-        </p>
-        <ul class="plain">
-          <li><b>A person gets a real interface.</b> A calendar, a board, a matrix, lists, records and forms, at phone width, with nothing drawn by hand.</li>
-          <li><b>The rules watch.</b> An uncovered shift is a problem with a one-press fix, not something somebody finds on Saturday.</li>
-          <li><b>An agent works it too.</b> Ask the app to cover a shift and it takes the same action a coordinator would, in the same log.</li>
-        </ul>
-        <p class="more"><a href="tour.html#cases">Four products built on it &rarr;</a></p>
-      </div>
+  <section id="builds" class="builds" aria-labelledby="h-builds">
+    <div class="sec-head">
+      <p class="eyebrow">What it builds</p>
+      <h2 id="h-builds">Anything that is really things, and the rules between them.</h2>
+      <p class="lede">Scheduling, coverage, planning, operations: the work where the hard part is how things relate, and a form per table was never the interface anybody wanted.</p>
+    </div>
+    <div class="builds-grid">
       <div class="visual">
         <div class="chapter-live" data-graview-app="rota" data-face="picture" data-stop="#view=the-week&amp;in.at=2026-09-14" data-label="The rota's week" role="region" aria-label="A volunteer rota built on Graview, live">
           <p class="chapter-loading">The rota, loading…</p>
         </div>
-        <p class="stage-caption"><span class="live">Live</span><span>a volunteer rota built on Graview: the week its coordinator and volunteers fill in, drawn by the calendar lens</span></p>
+        <p class="stage-caption"><span class="live">Live</span><span>A volunteer rota built on Graview: the week its coordinator and volunteers fill in.</span></p>
       </div>
+      <ul class="uses">
+        <li><span class="kind">Scheduling</span><b>A volunteer rota</b><span>Shifts and who covers them, in a calendar a coordinator and an agent both fill in.</span></li>
+        <li><span class="kind">Coverage</span><b>A tender response</b><span>Requirements against answers, with the one nobody answered flagged.</span></li>
+        <li><span class="kind">Planning</span><b>A coaching week</b><span>The team you&rsquo;ll field decides the skills, and the skills decide the training.</span></li>
+        <li><span class="kind">Operations</span><b>A household week</b><span>People, time and a synced calendar whose conflicts arrive with a repair.</span></li>
+        <li><span class="kind">Community</span><b>A shared garden</b><span>Plots, gardeners and a rule that every plot has a caretaker.</span></li>
+        <li><span class="kind">Engineering</span><b>Your repository</b><span>Its docs, decisions and dependencies. The <a class="inl" href="#recipes">recipes</a> below came from the prompt alone.</span></li>
+      </ul>
     </div>
-    <div class="case-grid three">
-      <div class="case">
-        <span class="kind">Scheduling</span>
-        <h3>A volunteer rota</h3>
-        <p>Shifts, locations and the people who cover them. A coordinator, volunteers and viewers under one policy, and a calendar a person and an agent both fill in.</p>
-      </div>
-      <div class="case">
-        <span class="kind">Coverage</span>
-        <h3>A tender response</h3>
-        <p>Requirements against answers, and the two failures that lose a bid: a requirement nobody answered, and work nobody asked for. A matrix shows both at a glance.</p>
-      </div>
-      <div class="case">
-        <span class="kind">Planning</span>
-        <h3>A coaching week</h3>
-        <p>The team you intend to field decides which skills matter, and those decide what training is for: one chain across a board, a matrix and a week.</p>
-      </div>
-      <div class="case">
-        <span class="kind">Operations</span>
-        <h3>A household week</h3>
-        <p>People, time and capacity, with a calendar sync whose conflicts arrive as problems with repairs, ported from an existing app and matched to it result for result.</p>
-      </div>
-      <div class="case">
-        <span class="kind">Community</span>
-        <h3>A shared garden</h3>
-        <p>Plots, gardeners, plantings and rotations, with a rule that every plot has a caretaker. The example the docs teach from, grown one step at a time.</p>
-      </div>
-      <div class="case">
-        <span class="kind">Engineering</span>
-        <h3>Your repository</h3>
-        <p>Its docs and who owns them, its decisions and what they superseded, its dependencies and the upgrade each needs. The <a class="inl" href="#recipes">recipes</a> below were made from the prompt alone.</p>
-      </div>
-    </div>
-    <p class="sm dim ways-note">
-      Don&rsquo;t write code? On <a class="inl" href="https://graview.cloud">Graview Cloud</a>
-      the same kind of app comes from a conversation: a wedding&rsquo;s vendors,
-      a trip, a job search, at its own address, shared with the people involved.
-    </p>
   </section>
 
   <!--
-    WHAT YOU GET. The tour's six features, each in a sentence a person
-    could repeat, with the strongest of them live: a rule that finds a
-    problem and offers its own repair. Each card goes to its section of the
-    tour, where it is live beside the claim.
+    WHAT YOU GET. The tour's six features, a sentence each, and each name
+    goes to its section of the tour, where it is live beside the claim.
   -->
-  <section id="gives" class="feature flip cases" aria-labelledby="h-gives">
-    <div class="feature-grid">
-      <div class="claim">
-        <p class="eyebrow"><span>What you get</span></p>
-        <h2 id="h-gives">One declaration. Everything a person and an agent need.</h2>
-        <p class="lede">
-          Say once what the domain is made of: the kinds of thing, how they
-          relate, what changes them, the rules they keep and who may do what.
-          Everything below is derived from that, and stays in step with it.
-        </p>
-        <p class="more"><a href="tour.html">Every one of them live, on the tour &rarr;</a></p>
-      </div>
-      <div class="visual">
-        <div class="chapter-live" data-graview-chapter="3" data-stop="#overview=1&amp;expand=kind:rule" data-label="The garden's agreement" role="region" aria-label="The garden with one rule and one problem, live">
-          <p class="chapter-loading">The rule, loading…</p>
-        </div>
-        <p class="stage-caption"><span class="live">Live</span><span>one rule, the problem it found, and the repair it names: press the problem</span></p>
-      </div>
+  <section id="gives" class="gives" aria-labelledby="h-gives">
+    <div class="sec-head">
+      <p class="eyebrow">What you get</p>
+      <h2 id="h-gives">Everything else follows from the one declaration.</h2>
+      <p class="lede">Say once what the domain is made of: its kinds, how they relate, what changes them, the rules they keep and who may do what. All of this is derived from it, and stays in step. <a class="inl" href="tour.html">Every one of them live, on the tour&nbsp;&rarr;</a></p>
     </div>
-    <div class="case-grid three">
-      <div class="case">
-        <span class="kind">Rules that repair</span>
-        <h3>A problem with a way out</h3>
-        <p>A broken rule says what is wrong in a sentence and offers the fix as a button, to a person or an agent, instead of refusing a save.</p>
-        <p class="gave"><a class="inl" href="tour.html#rules">See it on the tour &rarr;</a></p>
+    <ul class="gives-list">
+      <li><a href="tour.html#rules">Rules that repair</a><p>A broken rule says what is wrong and offers the fix as a button, to a person or an agent.</p></li>
+      <li><a href="tour.html#surfaces">An ordinary web app, free</a><p>A home, a list per kind, a page per record and a form per action, at phone width.</p></li>
+      <li><a href="tour.html#lenses">Pictures that travel</a><p>A calendar, a board, a matrix, a timeline: written once, they work unchanged in your domain.</p></li>
+      <li><a href="tour.html#agent">The same buttons for agents</a><p>Every action is a typed tool, under the same permissions, in the same log, and can be taken back.</p></li>
+      <li><a href="tour.html#acts">What you can press is what you can see</a><p>Declare who may do what once, and the buttons, pages and tools all narrow from it.</p></li>
+      <li><a href="tour.html#studio">Change the app inside the app</a><p>The declaration opens as a graph you edit with ordinary actions, checked before it lands.</p></li>
+    </ul>
+  </section>
+
+  <!--
+    GRAVIEW CLOUD. The hosted product built on the framework, under the
+    same symbol, for people who don't write code: the page's one band in
+    the brand's navy, at the point a reader has seen what an app is and
+    asks how to get one. It claims for Cloud only what graview.cloud
+    itself says, and its button is that site's own: request an invite.
+  -->
+  <section id="cloud" class="cloud-band night" aria-labelledby="h-cloud">
+    <div class="cloud-grid">
+      <div class="cloud-pitch">
+        <p class="eyebrow">Graview Cloud</p>
+        <h2 id="h-cloud">Don&rsquo;t write code? Build one in a conversation.</h2>
+        <p class="lede">
+          Say what you&rsquo;re organizing in Claude or ChatGPT, or start from a
+          template. About a minute later it&rsquo;s an app at its own address,
+          live for everyone you invite. Change it later by asking.
+        </p>
+        <div class="door-act">
+          <a class="btn" href="https://graview.cloud/#invite">Request an invite <span aria-hidden="true">&rarr;</span></a>
+          <a class="btn-quiet" href="https://graview.cloud">See graview.cloud</a>
+        </div>
+        <p class="door-note">Private alpha, free while it runs. Invites go out in small batches.</p>
       </div>
-      <div class="case">
-        <span class="kind">The routed face</span>
-        <h3>An ordinary web app, free</h3>
-        <p>A home, a list per kind, a page per record, a form per action and a problems page, at phone width. Replace any page with your own design.</p>
-        <p class="gave"><a class="inl" href="tour.html#surfaces">See it on the tour &rarr;</a></p>
-      </div>
-      <div class="case">
-        <span class="kind">Lenses</span>
-        <h3>Pictures that travel</h3>
-        <p>A calendar, a board, a matrix, a timeline, a plan. Written once for one domain, they work unchanged in yours.</p>
-        <p class="gave"><a class="inl" href="tour.html#lenses">See it on the tour &rarr;</a></p>
-      </div>
-      <div class="case">
-        <span class="kind">People and agents</span>
-        <h3>The same buttons, no more</h3>
-        <p>Every action is a typed tool for an agent, under the same permissions. Its changes land in the same log with its name on them, and any one can be taken back.</p>
-        <p class="gave"><a class="inl" href="tour.html#agent">See it on the tour &rarr;</a></p>
-      </div>
-      <div class="case">
-        <span class="kind">Permissions</span>
-        <h3>What you can press is what you can see</h3>
-        <p>Declare who may do what once, and the buttons, the pages and the agent&rsquo;s tools all narrow from it, with a sentence saying who can.</p>
-        <p class="gave"><a class="inl" href="tour.html#acts">See it on the tour &rarr;</a></p>
-      </div>
-      <div class="case">
-        <span class="kind">The studio</span>
-        <h3>Change the app inside the app</h3>
-        <p>The declaration opens as a graph in the same interface. Edit it with ordinary actions, checked before it lands, with the stored data migrated.</p>
-        <p class="gave"><a class="inl" href="tour.html#studio">See it on the tour &rarr;</a></p>
-      </div>
+      <ul class="cloud-points">
+        <li><b>People and AI in the same app.</b> Every change says who made it, your AI included, and any one can be taken back.</li>
+        <li><b>Rules that watch.</b> The app flags the record that breaks a rule and offers the fix.</li>
+        <li><b>Leave with everything.</b> An app and its whole history export as one file that opens in the framework on your own machine.</li>
+      </ul>
     </div>
   </section>
 
@@ -1862,13 +1976,14 @@ main.page > section.tour-intro { padding-top: 64px; }
     its committed declaration's and cannot drift from it.
   -->
   <section id="recipes" class="recipes" aria-labelledby="h-recipes">
-    <div class="claim">
-      <p class="eyebrow"><span>Recipes, for a repository</span></p>
+    <div class="sec-head">
+      <p class="eyebrow">Recipes, for a repository</p>
       <h2 id="h-recipes">The same prompt. A different task.</h2>
       <p class="lede">
-        Each recipe is what an agent produced from the prompt alone, in a
-        repository it had never seen. The declaration it wrote is committed,
-        checked by <code>graview check</code> on every push, and running on its page.
+        Each is what an agent made from the prompt alone, in a repository it
+        had never seen: the declaration it wrote is committed, checked by
+        <code>graview check</code> on every push, and running on its page.
+        <a class="inl" href="docs/getting-started.html">Getting started&nbsp;&rarr;</a>
       </p>
     </div>
     <!-- site-recipes:start — written by scripts/site-docs.mjs. -->
@@ -2214,99 +2329,6 @@ main.page > section.tour-intro { padding-top: 64px; }
 })();
 </script>
 
-  <section id="how" class="how" aria-labelledby="h-how">
-    <div class="claim">
-      <p class="eyebrow"><span>How it works</span></p>
-      <h2 id="h-how">Three moves. One declaration.</h2>
-      <p class="lede">
-        Most app frameworks make you build the interface, the permissions and
-        the API separately and keep them in step by hand. Graview makes them
-        the same thing.
-      </p>
-    </div>
-    <div class="steps-3">
-      <div class="step3">
-        <span class="n" aria-hidden="true">1</span>
-        <h3>Declare</h3>
-        <p>Say what your domain is made of, once, in TypeScript or as a JSON document your agent writes: the kinds of thing, the fields on each, the relations between them, the actions that change them, the rules they must keep, and who may do what.</p>
-        <div class="tags"><span>kinds</span><span>relations</span><span>actions</span><span>rules</span><span>roles</span></div>
-      </div>
-      <div class="step3">
-        <span class="n" aria-hidden="true">2</span>
-        <h3>Derive</h3>
-        <p>The kit reads that declaration and produces the application: a city you fly over and come down into, a routed web app with lists, records and forms, the buttons a person may press, the tools an agent may call, and a checker that says in plain words when the declaration is wrong.</p>
-        <div class="tags"><span>scene</span><span>pages</span><span>forms</span><span>permissions</span><span>agent tools</span><span>checks</span></div>
-      </div>
-      <div class="step3">
-        <span class="n" aria-hidden="true">3</span>
-        <h3>Ship</h3>
-        <p>Serve the store behind HTTP with your data in a folder you can open, or in SQLite. Every change is an operation in a log, so history, undo and migrations come with it. The same packages run <a class="inl" href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it.</p>
-        <div class="tags"><span>serve</span><span>persist</span><span>migrate</span><span>export</span><span>self-host</span></div>
-      </div>
-    </div>
-  </section>
-
-  <!--
-    TWO WAYS IN. The framework is this page; the hosted product is built on
-    it under the same symbol. The section says how the two relate in the
-    kit's own words — build the engine, or make it yours — and claims for
-    Cloud only what graview.cloud itself says it does.
-  -->
-  <section id="cloud" class="ways" aria-labelledby="h-cloud">
-    <div class="claim">
-      <p class="eyebrow"><span>Graview and Graview Cloud</span></p>
-      <h2 id="h-cloud">One brand. Two ways in.</h2>
-      <p class="lede">
-        Graview is the framework and the visual language this page is
-        about, source-available under the Elastic License 2.0. Graview Cloud is the hosted product built on it, under the same
-        symbol, for people who don&rsquo;t write TypeScript: you keep working
-        in the AI you already use, and Graview gives it a shared, live place
-        to work with you and the people you invite.
-      </p>
-    </div>
-    <div class="ways-grid">
-      <div class="way">
-        <p class="way-for">The framework &middot; for developers</p>
-        <h3 class="way-mark"><span class="sr-only">Graview</span><svg class="gv" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 847.64 180" aria-hidden="true" focusable="false"><g transform="translate(12 7)"><g fill="none" stroke="currentColor" stroke-width="8.4" stroke-linejoin="round"><path d="M81 63 L15 49 L84 12 H181 L120 56"/><path d="M60 100 L15 127 L101 150 L179 107 L123 98"/><path d="M101 95 V125" stroke-linecap="round"/></g><circle cx="101" cy="74" r="11.7" fill="var(--point, currentColor)"/></g><g transform="translate(234 0)"><path d="M323.0216778668979 -200.0173422935183Q249.98699327986125 -200.0173422935183 179.9826577064817 -180.52818122696726Q109.9783221331021 -161.03902016041621 64.95230869282463 -123.05636245393453L118.05202688055495 -37.75720789074355Q154.03468458703662 -67.73553002384566 208.01517450682852 -85.72035551701713Q261.9956644266204 -103.7051810101886 318.9393019726859 -103.7051810101886Q409.84825493171473 -103.7051810101886 452.29406026447 -61.75937567743334Q494.7398655972252 -19.813570344678084 494.7398655972252 65.05636245393453V167.80923477129852L504.7398655972252 281.0563624539345L499.7658790375027 395.299154563191V532.0650336006937H605.2427921092565V77.13873834814655Q605.2427921092565 -65.93063082592673 533.1734229351832 -132.9739865597225Q461.1040537611099 -200.0173422935183 323.0216778668979 -200.0173422935183ZM311.87860394537176 23.030349013657055Q233.91762410578798 23.030349013657055 172.42412746585734 55.53034901365706Q110.93063082592673 88.03034901365706 75.42412746585737 146.03468458703662Q39.91762410578799 204.03902016041621 39.91762410578799 281.0563624539345Q39.91762410578799 358.07370474745284 75.42412746585737 416.07804032083243Q110.93063082592673 474.082375894212 172.42412746585734 506.08237589421196Q233.91762410578798 538.082375894212 311.87860394537176 538.082375894212Q378.8959462388901 538.082375894212 434.3525905050943 511.07804032083243Q489.8092347712985 484.07370474745284 523.7572078907435 427.0672013873835Q557.7051810101887 370.0606980273141 557.7051810101887 281.0563624539345Q557.7051810101887 192.05202688055496 523.7572078907435 135.04552352048557Q489.8092347712985 78.03902016041621 434.3525905050943 50.53468458703664Q378.8959462388901 23.030349013657055 311.87860394537176 23.030349013657055ZM324.0867114675916 119.37719488402341Q374.9826577064817 119.37719488402341 413.90461738564926 139.8360069369174Q452.82657706481683 160.2948189898114 474.783221331021 196.72328202904833Q496.7398655972252 233.15174506828527 496.7398655972252 281.0563624539345Q496.7398655972252 328.9653154129634 474.783221331021 365.3916106655105Q452.82657706481683 401.81790591805765 413.90461738564926 421.7767179709516Q374.9826577064817 441.7355300238456 324.0867114675916 441.7355300238456Q274.1907652287015 441.7355300238456 234.7688055495339 421.7767179709516Q195.34684587036637 401.81790591805765 173.38803381747238 365.3916106655105Q151.42922176457836 328.9653154129634 151.42922176457836 281.0563624539345Q151.42922176457836 233.15174506828527 173.38803381747238 196.72328202904833Q195.34684587036637 160.2948189898114 234.7688055495339 139.8360069369174Q274.1907652287015 119.37719488402341 324.0867114675916 119.37719488402341Z" transform="translate(0.0 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M86.83958378495556 0V532.0650336006937H192.3164968567093V387.9739865597225L181.21244309559938 429.9956644266204Q204.22111424235857 483.0433557337958 255.73628874918708 510.5628658140039Q307.2514632560156 538.082375894212 383.2557988293952 538.082375894212V430.6791675699111Q376.22111424235857 431.6835031432907 370.19726858877084 432.18567092998046Q364.17342293518317 432.6878387166703 358.1474094949057 432.6878387166703Q284.247127682636 432.6878387166703 240.7948189898114 389.2615434641231Q197.34251029698677 345.83524821157596 197.34251029698677 260.92195967916757V0Z" transform="translate(101.592 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M414.8525905050943 0V109.94363754606547L409.8048991979189 131.96097983958379V321.9349663993063Q409.8048991979189 378.86126165185345 375.3482549317147 410.81357034467806Q340.8916106655105 442.7658790375027 271.9523086928246 442.7658790375027Q225.99132885324084 442.7658790375027 182.0173422935183 428.27888575764143Q138.0433557337958 413.7918924777802 107.06069802731412 388.81357034467806L61.94363754606547 471.1040537611099Q103.96965098634294 504.09104704097115 162.50650336006936 521.0867114675916Q221.0433557337958 538.082375894212 285.0433557337958 538.082375894212Q397.1690873618036 538.082375894212 458.7384565358769 483.5455235204856Q520.3078257099502 429.0086711467592 520.3078257099502 315.90461738564926V0ZM245.91328853240842 -6.017342293518318Q185.88293951875136 -6.017342293518318 140.88293951875136 13.995664426620419Q95.88293951875136 34.008671146759156 71.38944287882072 70.01951008020811Q46.89594623889009 106.03034901365706 46.89594623889009 152.03468458703662Q46.89594623889009 196.07370474745284 67.92195967916757 231.58020810752222Q88.94797311944505 267.0867114675916 136.9804899197919 288.57587253414266Q185.01300672013875 310.0650336006937 265.0346845870366 310.0650336006937H425.8309126381964V230.93496639930632H270.1690873618036Q202.30782570995012 230.93496639930632 179.33600693691739 208.9804899197919Q156.36418816388468 187.02601344027747 156.36418816388468 156.06069802731412Q156.36418816388468 120.13440277476695 185.30132234988076 99.17125514849339Q214.23845653587688 78.20810752221982 265.1257316280078 78.20810752221982Q315.0086711467592 78.20810752221982 353.9241274658574 100.16691957511381Q392.83958378495555 122.1257316280078 409.8048991979189 165.05636245393453L429.84391935833514 89.09538261435074Q410.86993279861264 44.02601344027748 363.8916106655105 19.00433557337958Q316.9132885324084 -6.017342293518318 245.91328853240842 -6.017342293518318Z" transform="translate(154.53 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M226.90461738564926 0 -3.052026880554955 532.0650336006937H111.45957077823542L313.3078257099501 57.19943637546066H257.0433557337958L463.917624105788 532.0650336006937H571.381530457403L340.42922176457836 0Z" transform="translate(242.046 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M86.83958378495556 0V532.0650336006937H197.34251029698677V0ZM142.09104704097118 626.8439193583351Q110.95664426620422 626.8439193583351 90.38510730544115 646.9002818122697Q69.81357034467808 666.9566442662042 69.81357034467808 696.0433557337958Q69.81357034467808 725.1300672013874 90.38510730544115 745.186429655322Q110.95664426620422 765.2427921092565 142.09104704097118 765.2427921092565Q173.22544981573813 765.2427921092565 193.7969867765012 746.1907652287015Q214.36852373726427 727.1387383481465 214.36852373726427 698.052026880555Q214.36852373726427 667.9566442662042 194.2948189898114 647.4002818122697Q174.22111424235854 626.8439193583351 142.09104704097118 626.8439193583351Z" transform="translate(326.808 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M330.09538261435074 -6.017342293518318Q243.03902016041621 -6.017342293518318 177.5 28.99132885324084Q111.96097983958379 64 75.93930197268588 125.51300672013873Q39.91762410578799 187.02601344027747 39.91762410578799 266.0346845870366Q39.91762410578799 345.05202688055493 74.94146975937568 406.5628658140039Q109.96531541296336 468.07370474745284 171.5043355733796 503.07804032083243Q233.0433557337958 538.082375894212 311.0867114675916 538.082375894212Q389.09971818773033 538.082375894212 449.1365705614568 503.593214827661Q509.17342293518317 469.1040537611099 543.20593973553 407.09971818773033Q577.2384565358768 345.09538261435074 577.2384565358768 262.05202688055493Q577.2384565358768 255.03034901365706 576.736288749187 245.50867114675916Q576.2341209624973 235.98699327986125 575.2341209624973 227.96965098634294H127.35118144374593V307.09971818773033H516.9653154129634L472.7875569044006 281.0867114675916Q473.783221331021 329.0173422935183 452.82440927812706 365.95447647951437Q431.86559722523305 402.8916106655105 395.4371341859961 423.85475829178404Q359.0086711467592 444.81790591805765 311.09538261435074 444.81790591805765Q263.18209408194235 444.81790591805765 226.25363104270542 423.85475829178404Q189.32516800346846 402.8916106655105 168.86635595057447 365.4566442662042Q148.40754389768045 328.0216778668979 148.40754389768045 278.09971818773033V260.03034901365703Q148.40754389768045 210.09538261435074 171.36852373726424 171.65391285497506Q194.32950357684803 133.21244309559938 236.26013440277475 111.7514632560156Q278.1907652287015 90.29048341643181 333.11272490786905 90.29048341643181Q379.07804032083243 90.29048341643181 416.5216778668979 105.26880554953392Q453.9653154129634 120.24712768263603 481.9609798395838 151.19943637546066L542.2124430955994 79.99132885324084Q506.1951008020811 37.98699327986126 452.17559072187294 15.98482549317147Q398.15608064166486 -6.017342293518318 330.09538261435074 -6.017342293518318Z" transform="translate(365.823 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M201.92195967916757 0 4.952308692824626 532.0650336006937H109.42922176457836L281.3078257099501 57.19943637546066H232.07370474745284L410.9523086928246 532.0650336006937H504.38153045740296L679.247127682636 57.19943637546066H630.0260134402774L806.9046173856492 532.0650336006937H905.3381747236072L707.3728593106439 0H601.8742683719922L440.07804032083243 426.67483199653157H472.2254498157381L307.42055061781923 0Z" transform="translate(454.40999999999997 133.2397) scale(.153 -.153)" fill="currentColor"/></g></svg></h3>
-        <p class="way-line">Build the engine.</p>
-        <p>
-          Declare your domain once, in TypeScript, and the scene, the routed
-          pages, the permissions and an agent&rsquo;s tools are derived from it.
-          Your code, your repository, your servers.
-        </p>
-        <ul class="plain">
-          <li><b>One command to start.</b> <code>npm create graview@latest</code> writes a running product, a test and a CI workflow.</li>
-          <li><b>Serve it yourself.</b> A store behind HTTP, with the data in a folder you can open or in SQLite.</li>
-          <li><b>Source-available.</b> Elastic License 2.0: free to build with and to ship products on.</li>
-        </ul>
-        <p class="more"><a href="docs/getting-started.html">Getting started &rarr;</a></p>
-      </div>
-      <div class="way">
-        <p class="way-for">The hosted product &middot; for people and small teams</p>
-        <h3 class="way-mark"><a href="https://graview.cloud" aria-label="Graview Cloud"><svg class="gvc" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1307.505 180" aria-hidden="true" focusable="false"><g transform="translate(12 7)"><g fill="none" stroke="currentColor" stroke-width="8.4" stroke-linejoin="round"><path d="M81 63 L15 49 L84 12 H181 L120 56"/><path d="M60 100 L15 127 L101 150 L179 107 L123 98"/><path d="M101 95 V125" stroke-linecap="round"/></g><circle cx="101" cy="74" r="11.7" fill="var(--point, currentColor)"/></g><g transform="translate(234 0)"><path d="M323.0216778668979 -200.0173422935183Q249.98699327986125 -200.0173422935183 179.9826577064817 -180.52818122696726Q109.9783221331021 -161.03902016041621 64.95230869282463 -123.05636245393453L118.05202688055495 -37.75720789074355Q154.03468458703662 -67.73553002384566 208.01517450682852 -85.72035551701713Q261.9956644266204 -103.7051810101886 318.9393019726859 -103.7051810101886Q409.84825493171473 -103.7051810101886 452.29406026447 -61.75937567743334Q494.7398655972252 -19.813570344678084 494.7398655972252 65.05636245393453V167.80923477129852L504.7398655972252 281.0563624539345L499.7658790375027 395.299154563191V532.0650336006937H605.2427921092565V77.13873834814655Q605.2427921092565 -65.93063082592673 533.1734229351832 -132.9739865597225Q461.1040537611099 -200.0173422935183 323.0216778668979 -200.0173422935183ZM311.87860394537176 23.030349013657055Q233.91762410578798 23.030349013657055 172.42412746585734 55.53034901365706Q110.93063082592673 88.03034901365706 75.42412746585737 146.03468458703662Q39.91762410578799 204.03902016041621 39.91762410578799 281.0563624539345Q39.91762410578799 358.07370474745284 75.42412746585737 416.07804032083243Q110.93063082592673 474.082375894212 172.42412746585734 506.08237589421196Q233.91762410578798 538.082375894212 311.87860394537176 538.082375894212Q378.8959462388901 538.082375894212 434.3525905050943 511.07804032083243Q489.8092347712985 484.07370474745284 523.7572078907435 427.0672013873835Q557.7051810101887 370.0606980273141 557.7051810101887 281.0563624539345Q557.7051810101887 192.05202688055496 523.7572078907435 135.04552352048557Q489.8092347712985 78.03902016041621 434.3525905050943 50.53468458703664Q378.8959462388901 23.030349013657055 311.87860394537176 23.030349013657055ZM324.0867114675916 119.37719488402341Q374.9826577064817 119.37719488402341 413.90461738564926 139.8360069369174Q452.82657706481683 160.2948189898114 474.783221331021 196.72328202904833Q496.7398655972252 233.15174506828527 496.7398655972252 281.0563624539345Q496.7398655972252 328.9653154129634 474.783221331021 365.3916106655105Q452.82657706481683 401.81790591805765 413.90461738564926 421.7767179709516Q374.9826577064817 441.7355300238456 324.0867114675916 441.7355300238456Q274.1907652287015 441.7355300238456 234.7688055495339 421.7767179709516Q195.34684587036637 401.81790591805765 173.38803381747238 365.3916106655105Q151.42922176457836 328.9653154129634 151.42922176457836 281.0563624539345Q151.42922176457836 233.15174506828527 173.38803381747238 196.72328202904833Q195.34684587036637 160.2948189898114 234.7688055495339 139.8360069369174Q274.1907652287015 119.37719488402341 324.0867114675916 119.37719488402341Z" transform="translate(0.0 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M86.83958378495556 0V532.0650336006937H192.3164968567093V387.9739865597225L181.21244309559938 429.9956644266204Q204.22111424235857 483.0433557337958 255.73628874918708 510.5628658140039Q307.2514632560156 538.082375894212 383.2557988293952 538.082375894212V430.6791675699111Q376.22111424235857 431.6835031432907 370.19726858877084 432.18567092998046Q364.17342293518317 432.6878387166703 358.1474094949057 432.6878387166703Q284.247127682636 432.6878387166703 240.7948189898114 389.2615434641231Q197.34251029698677 345.83524821157596 197.34251029698677 260.92195967916757V0Z" transform="translate(101.592 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M414.8525905050943 0V109.94363754606547L409.8048991979189 131.96097983958379V321.9349663993063Q409.8048991979189 378.86126165185345 375.3482549317147 410.81357034467806Q340.8916106655105 442.7658790375027 271.9523086928246 442.7658790375027Q225.99132885324084 442.7658790375027 182.0173422935183 428.27888575764143Q138.0433557337958 413.7918924777802 107.06069802731412 388.81357034467806L61.94363754606547 471.1040537611099Q103.96965098634294 504.09104704097115 162.50650336006936 521.0867114675916Q221.0433557337958 538.082375894212 285.0433557337958 538.082375894212Q397.1690873618036 538.082375894212 458.7384565358769 483.5455235204856Q520.3078257099502 429.0086711467592 520.3078257099502 315.90461738564926V0ZM245.91328853240842 -6.017342293518318Q185.88293951875136 -6.017342293518318 140.88293951875136 13.995664426620419Q95.88293951875136 34.008671146759156 71.38944287882072 70.01951008020811Q46.89594623889009 106.03034901365706 46.89594623889009 152.03468458703662Q46.89594623889009 196.07370474745284 67.92195967916757 231.58020810752222Q88.94797311944505 267.0867114675916 136.9804899197919 288.57587253414266Q185.01300672013875 310.0650336006937 265.0346845870366 310.0650336006937H425.8309126381964V230.93496639930632H270.1690873618036Q202.30782570995012 230.93496639930632 179.33600693691739 208.9804899197919Q156.36418816388468 187.02601344027747 156.36418816388468 156.06069802731412Q156.36418816388468 120.13440277476695 185.30132234988076 99.17125514849339Q214.23845653587688 78.20810752221982 265.1257316280078 78.20810752221982Q315.0086711467592 78.20810752221982 353.9241274658574 100.16691957511381Q392.83958378495555 122.1257316280078 409.8048991979189 165.05636245393453L429.84391935833514 89.09538261435074Q410.86993279861264 44.02601344027748 363.8916106655105 19.00433557337958Q316.9132885324084 -6.017342293518318 245.91328853240842 -6.017342293518318Z" transform="translate(154.53 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M226.90461738564926 0 -3.052026880554955 532.0650336006937H111.45957077823542L313.3078257099501 57.19943637546066H257.0433557337958L463.917624105788 532.0650336006937H571.381530457403L340.42922176457836 0Z" transform="translate(242.046 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M86.83958378495556 0V532.0650336006937H197.34251029698677V0ZM142.09104704097118 626.8439193583351Q110.95664426620422 626.8439193583351 90.38510730544115 646.9002818122697Q69.81357034467808 666.9566442662042 69.81357034467808 696.0433557337958Q69.81357034467808 725.1300672013874 90.38510730544115 745.186429655322Q110.95664426620422 765.2427921092565 142.09104704097118 765.2427921092565Q173.22544981573813 765.2427921092565 193.7969867765012 746.1907652287015Q214.36852373726427 727.1387383481465 214.36852373726427 698.052026880555Q214.36852373726427 667.9566442662042 194.2948189898114 647.4002818122697Q174.22111424235854 626.8439193583351 142.09104704097118 626.8439193583351Z" transform="translate(326.808 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M330.09538261435074 -6.017342293518318Q243.03902016041621 -6.017342293518318 177.5 28.99132885324084Q111.96097983958379 64 75.93930197268588 125.51300672013873Q39.91762410578799 187.02601344027747 39.91762410578799 266.0346845870366Q39.91762410578799 345.05202688055493 74.94146975937568 406.5628658140039Q109.96531541296336 468.07370474745284 171.5043355733796 503.07804032083243Q233.0433557337958 538.082375894212 311.0867114675916 538.082375894212Q389.09971818773033 538.082375894212 449.1365705614568 503.593214827661Q509.17342293518317 469.1040537611099 543.20593973553 407.09971818773033Q577.2384565358768 345.09538261435074 577.2384565358768 262.05202688055493Q577.2384565358768 255.03034901365706 576.736288749187 245.50867114675916Q576.2341209624973 235.98699327986125 575.2341209624973 227.96965098634294H127.35118144374593V307.09971818773033H516.9653154129634L472.7875569044006 281.0867114675916Q473.783221331021 329.0173422935183 452.82440927812706 365.95447647951437Q431.86559722523305 402.8916106655105 395.4371341859961 423.85475829178404Q359.0086711467592 444.81790591805765 311.09538261435074 444.81790591805765Q263.18209408194235 444.81790591805765 226.25363104270542 423.85475829178404Q189.32516800346846 402.8916106655105 168.86635595057447 365.4566442662042Q148.40754389768045 328.0216778668979 148.40754389768045 278.09971818773033V260.03034901365703Q148.40754389768045 210.09538261435074 171.36852373726424 171.65391285497506Q194.32950357684803 133.21244309559938 236.26013440277475 111.7514632560156Q278.1907652287015 90.29048341643181 333.11272490786905 90.29048341643181Q379.07804032083243 90.29048341643181 416.5216778668979 105.26880554953392Q453.9653154129634 120.24712768263603 481.9609798395838 151.19943637546066L542.2124430955994 79.99132885324084Q506.1951008020811 37.98699327986126 452.17559072187294 15.98482549317147Q398.15608064166486 -6.017342293518318 330.09538261435074 -6.017342293518318Z" transform="translate(365.823 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M201.92195967916757 0 4.952308692824626 532.0650336006937H109.42922176457836L281.3078257099501 57.19943637546066H232.07370474745284L410.9523086928246 532.0650336006937H504.38153045740296L679.247127682636 57.19943637546066H630.0260134402774L806.9046173856492 532.0650336006937H905.3381747236072L707.3728593106439 0H601.8742683719922L440.07804032083243 426.67483199653157H472.2254498157381L307.42055061781923 0Z" transform="translate(454.40999999999997 133.2397) scale(.153 -.153)" fill="currentColor"/></g><path d="M317.06621961441743 -4.699916177703269Q238.96647108130762 -4.699916177703269 177.5 29.650041911148364Q116.03352891869237 64 81.05029337803856 124.41659681475272Q46.067057837384745 184.83319362950544 46.067057837384745 262.96647108130765Q46.067057837384745 341.6663872590109 81.05029337803856 401.7996647108131Q116.03352891869237 461.93294216261523 177.5 496.0662196144174Q238.96647108130762 530.1994970662196 317.06621961441743 530.1994970662196Q383.8323554065381 530.1994970662196 437.7154233025985 504.0997485331098Q491.59849119865885 478 523.4652137468566 426.36714165968147L469.80050293378036 390.40150880134115Q442.6336965632858 429.7015926236379 402.7334450963956 448.6349538977368Q362.83319362950544 467.5683151718357 316.49958088851633 467.5683151718357Q259.69907795473597 467.5683151718357 214.6320201173512 442.16806370494555Q169.56496227996647 416.76781223805534 143.59807208717518 370.7673931265717Q117.6311818943839 324.766974015088 117.6311818943839 262.96647108130765Q117.6311818943839 201.16596814752725 143.59807208717518 155.1655490360436Q169.56496227996647 109.16512992455993 214.6320201173512 83.54819782062029Q259.69907795473597 57.931265716680635 316.49958088851633 57.931265716680635Q362.83319362950544 57.931265716680635 402.7334450963956 76.79798826487846Q442.6336965632858 95.66471081307628 469.80050293378036 135.09807208717518L523.4652137468566 99.13243922883487Q491.59849119865885 48.066219614417435 437.7154233025985 21.68315171835708Q383.8323554065381 -4.699916177703269 317.06621961441743 -4.699916177703269Z" transform="translate(873.6400 133.2397) scale(0.1530000 -0.1530000)" fill="currentColor"/><path d="M99.13411567476949 0V742H170.13160100586757V0Z" transform="translate(954.8830 133.2397) scale(0.1530000 -0.1530000)" fill="currentColor"/><path d="M313.49958088851633 -4.699916177703269Q236.64792822999027 -4.699916177703269 176.3407285743413 29.650041911148364Q116.03352891869237 64 81.05029337803856 124.73952221290864Q46.067057837384745 185.47904442581728 46.067057837384745 263.0622996893644Q46.067057837384745 341.6663872590109 81.15634029042786 401.6076205401072Q116.24562274347099 461.5488538212034 176.32272754943875 495.87417544371147Q236.39983235540655 530.1994970662196 313.49958088851633 530.1994970662196Q390.5993294216262 530.1994970662196 451.20809002233705 495.9109108275027Q511.81685062304786 461.6223245887857 546.3744772813479 401.7452411569964Q580.932103939648 341.86815772520714 580.932103939648 263.0555863705443Q580.932103939648 185.26655490360434 546.4488683989941 124.63327745180217Q511.9656328583403 64 451.14539112565234 29.650041911148364Q390.32514939296436 -4.699916177703269 313.49958088851633 -4.699916177703269ZM313.49958088851633 57.931265716680635Q369.8667225481978 57.931265716680635 414.15046102263204 83.54819782062029Q458.43419949706623 109.16512992455993 483.9010896898575 155.6655490360436Q509.3679798826488 202.16596814752725 509.3679798826488 263.03779623561684Q509.3679798826488 324.766974015088 483.9010896898575 370.7673931265717Q458.43419949706623 416.76781223805534 414.15046102263204 442.16806370494555Q369.8667225481978 467.5683151718357 313.7829002514669 467.5683151718357Q257.69907795473597 467.5683151718357 213.6320201173512 442.16806370494555Q169.56496227996647 416.76781223805534 143.59807208717518 370.7673931265717Q117.6311818943839 324.766974015088 117.6311818943839 263.03779623561684Q117.6311818943839 202.16596814752725 143.59807208717518 155.6655490360436Q169.56496227996647 109.16512992455993 213.59202208964052 83.54819782062029Q257.6190818993146 57.931265716680635 313.49958088851633 57.931265716680635Z" transform="translate(992.3680 133.2397) scale(0.1530000 -0.1530000)" fill="currentColor"/><path d="M316.4668901927913 -4.699916177703269Q248.766974015088 -4.699916177703269 198.71709974853312 20.083403185247278Q148.66722548197822 44.86672254819782 121.1839899413244 95.13327745180219Q93.70075440067058 145.39983235540655 93.70075440067058 220.49958088851633V525.4995808885163H164.69823973176864V227.86588432523052Q164.69823973176864 144.33193629505448 206.1986588432523 101.69823973176864Q247.69907795473597 59.064543168482814 323.39983235540655 59.064543168482814Q378.2003352891869 59.064543168482814 418.4006705783738 81.74811399832356Q458.6010058675608 104.4316848281643 480.4844928751048 147.34870075440068Q502.3679798826488 190.26571668063704 502.3679798826488 249.59932942162615V525.4995808885163H573.3654652137468V0H505.20117351215424V143.73344509639566L516.2673931265716 117.50125733445097Q491.43419949706623 60.13411567476949 438.85079631181895 27.71709974853311Q386.2673931265717 -4.699916177703269 316.4668901927913 -4.699916177703269Z" transform="translate(1084.6270 133.2397) scale(0.1530000 -0.1530000)" fill="currentColor"/><path d="M308.39983235540655 -4.699916177703269Q233.4333612740989 -4.699916177703269 173.883487007544 29.083403185247278Q114.33361274098911 62.86672254819782 80.20033528918692 123.21668063704946Q46.067057837384745 183.5666387259011 46.067057837384745 262.96647108130765Q46.067057837384745 342.7996647108131 80.20033528918692 402.7162615255658Q114.33361274098911 462.63285834031853 173.883487007544 496.41617770326906Q233.4333612740989 530.1994970662196 308.39983235540655 530.1994970662196Q376.5666387259011 530.1994970662196 431.43336127409896 498.966051969824Q486.30008382229676 467.7326068734283 518.8000838222968 408.3826487845767Q551.3000838222968 349.0326906957251 551.3000838222968 262.96647108130765Q551.3000838222968 177.90025146689018 519.3667225481978 117.8336127409891Q487.4333612740989 57.76697401508801 432.56663872590104 26.53352891869237Q377.69991617770324 -4.699916177703269 308.39983235540655 -4.699916177703269ZM313.49958088851633 57.931265716680635Q369.30008382229676 57.931265716680635 413.58382229673094 83.54819782062029Q457.86756077116513 109.16512992455993 483.61777032690696 155.6655490360436Q509.3679798826488 202.16596814752725 509.3679798826488 262.96647108130765Q509.3679798826488 324.766974015088 483.61777032690696 370.7673931265717Q457.86756077116513 416.76781223805534 413.58382229673094 442.16806370494555Q369.30008382229676 467.5683151718357 313.49958088851633 467.5683151718357Q257.69907795473597 467.5683151718357 213.6320201173512 442.16806370494555Q169.56496227996647 416.76781223805534 143.59807208717518 370.7673931265717Q117.6311818943839 324.766974015088 117.6311818943839 262.96647108130765Q117.6311818943839 202.16596814752725 143.59807208717518 155.6655490360436Q169.56496227996647 109.16512992455993 213.6320201173512 83.54819782062029Q257.69907795473597 57.931265716680635 313.49958088851633 57.931265716680635ZM511.06789606035204 0V158.26823134953898L518.2347024308466 263.96647108130765L508.2347024308466 369.6647108130763V742H579.2321877619447V0Z" transform="translate(1183.7710 133.2397) scale(0.1530000 -0.1530000)" fill="currentColor"/></svg></a></h3>
-        <p class="way-line">Make it yours.</p>
-        <p>
-          Bring your own AI. Say what you&rsquo;re organizing in Claude or
-          ChatGPT, or start from one of twelve templates, and about a minute
-          later it&rsquo;s an app at its own address, live for everyone you
-          invite. Keep working in the chat; change it later by asking.
-        </p>
-        <ul class="plain">
-          <li><b>People and AI in the same app.</b> Every change says who made it, your AI included, and any one of them can be taken back.</li>
-          <li><b>Rules that watch.</b> The app flags the record that breaks a rule and offers the fix.</li>
-          <li><b>Leave with everything.</b> An app and its whole history export as one file, which opens in the framework on your own machine.</li>
-        </ul>
-        <p class="more"><a href="https://graview.cloud">Graview Cloud: private alpha, invite-only &rarr;</a></p>
-      </div>
-    </div>
-    <p class="sm dim ways-note">
-      Cloud installs the framework from npm the way any product does, and an
-      app made there is a Graview declaration: checked, versioned, and the
-      same thing every interface and every agent tool on this page is derived
-      from.
-    </p>
-  </section>
-
   <!--
     QUESTIONS, ANSWERED PLAINLY. What a person arriving from a search asks
     first, in the words the rest of the page already earns. The page's
@@ -2314,7 +2336,7 @@ main.page > section.tour-intro { padding-top: 64px; }
     by scripts/site-docs.mjs, so the two cannot say different things.
   -->
   <section id="faq" class="faq" aria-labelledby="h-faq">
-    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-faq">Questions, answered plainly</h2></div>
+    <div class="sec-head"><h2 id="h-faq">Questions, answered plainly</h2></div>
     <div class="faq-list">
       <div class="qa">
         <h3>What is Graview?</h3>

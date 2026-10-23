@@ -156,8 +156,8 @@ describe("the hero's run", () => {
   });
 
   it("is said in the subhead too: the interface is generated, and a different one is asked for", () => {
-    expect(built).toContain("Graview generates the whole interface from it");
-    expect(built).toContain("Want a different interface? Ask for it.");
+    expect(built).toMatch(/Graview generates the interface,\s+the\s+rules that repair and a tool for every action from it/);
+    expect(built).toMatch(/Want it\s+different\? Ask, and it stays in step\./);
     expect(built).toContain("The interface is generated.");
     expect(built).toContain("You never build the UI. You ask for the one you want.");
   });
