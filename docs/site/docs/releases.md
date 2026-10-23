@@ -52,7 +52,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.48
 
-Published October 23, 2026 · the current version
+Published October 23, 2026
 
 Forms ask the name first, acts answer to the way they're spelled, refusals name the act that would, and a place says its forms.
 

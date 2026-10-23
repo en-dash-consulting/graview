@@ -1,5 +1,22 @@
 # @graview/ship
 
+## 0.1.49
+
+### Patch Changes
+
+- 1c1bfcd: A host's model is asked with one object and answers with one, so it can be handed a framing, pictures and a way to give up, and say what the call used, without breaking again. `Completion` was `(prompt: string) => Promise<string>`; it is `(request: { prompt, system?, images?, signal? }) => Promise<{ text, usage? }>`, each picture `{ mediaType, data }` in base64 and `usage` `{ inputTokens, outputTokens, costUsd? }`. `openAiCompatibleCompletion` and `xaiCompletion` send the framing as a system message and the pictures as image parts, give up on the caller's signal and read what the call used; `localCompletion` takes the framing; the inline AI hands the framing over apart from the ask rather than joined to it, and `completionDecide` reports the completion's usage. The dev server's door (`aiDevProxy`, `aiThroughDevServer`) takes `{ prompt, system?, images? }` and answers `{ text, usage? }`. The Fast slot's contract — `Decide`, `Decided`, `Answer`, `ChoiceAnswer`, `NoulAnswer`, `ScoreAnswer` and `Usage` — is in a module of its own rather than Jev's, by the same names on `@graview/tools`.
+  
+  Compatibility: breaking in the API a host's seat reaches, before 1.0 — every `HostAi.complete` and every caller of a `Completion` takes and returns the object (`async (prompt) => text` becomes `async ({ prompt }) => ({ text })`). Additive on the dev server's door: `system`, `images` and `usage` are optional fields. Ops, stored formats, the wire, the document format and tool schemas are unchanged.
+- ec8c429: What a suggestion and a lineage keep is settled before 1.0. A suggestion may say when it stops waiting (`expiresAt` on `SuggestOptions` and on its op): from then on it leaves the tray, is neither accepted nor declined, and the same calls suggested again are a new suggestion, so an actor that still thinks so judges it again. "Not now" is not a decline: a `Dismissal` (`{ suggestion, at, until? }`) is the person's own state, which a host keeps where it keeps what a person chose and hands to `suggestions(store, principal, { dismissed })`; it hides the suggestion from that person alone, writes nothing to the log and holds the app's own actor to nothing, while a decline stays an undo in the log that answers it for everyone. A decline now refuses the same change by what it means as well as exactly as asked (`meaningKey`): the same link of a relation whichever act asks it, a record the actor would make again under a newly minted id, a merge of the same pair either way round, and a record archived by another spelling of the act — worked out from the calls, so a decline already in a log matches too. A lineage may say which judge made the call (`actor`), the run it was made in (`run`, one id for a night's work) and the records its basis rests on (`evidence`, at most 50 ids, which withhold the op from a seat that may not see one). A key a build does not know is kept as JSON keeps it, so a later client's lineage reaches every reader: none named `__proto__`, `constructor` or `prototype`, and the whole at most `LINEAGE_LIMIT` (4000) characters. A log written by 0.1.48 folds, waits and refuses as it did, held by a fixture of one. A hosted page carries 0.9 KB more up front for it (the pages face alone 1.1 KB), and the names Graview Cloud's worker imports come to 1_999_652 bytes of their 2 MB.
+  
+  Compatibility: additive for ops and the wire — `Operation.expiresAt` and `Lineage.actor`, `run` and `evidence` are optional, and an op without them reads and folds as before; a build before this one keeps `expiresAt` on an op it receives and reads the suggestion as waiting. Breaking, before 1.0, for a lineage's unknown keys: a store kept none before and keeps them now, and a lineage whose later key JSON cannot write, is named for a prototype, or runs past 4000 characters is refused with a `GraphError`. A decline refuses more than it did (the same change, however it is asked); nothing it refused before is let through. Stored formats, the document format and tool schemas are unchanged.
+- Updated dependencies [1c1bfcd]
+- Updated dependencies [81a6028]
+- Updated dependencies [8993971]
+- Updated dependencies [ec8c429]
+- Updated dependencies [9dab8bb]
+  - @graview/core@0.1.49
+
 ## 0.1.48
 
 ### Patch Changes
