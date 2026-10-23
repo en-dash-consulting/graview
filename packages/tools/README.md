@@ -105,6 +105,26 @@ one turn of a host's model, a call with the same name and input as an
 earlier one is answered `{ already: "Already read: see the answer to call N
 of this turn, which is above." }`, and counts toward the turn's twelve.
 
+## The app's own actor, run on a schedule: `graview dream`
+
+`@graview/tools/tidy` holds what the app's own actor suggests and a way to
+run it. Its judges read the store as the actor sees it and find duplicates
+to merge (a shared name or email), links a record's own text names through
+a relation the app declares, and finished records long unchanged to set
+aside. `dream` runs them once and suggests each change with its basis and
+how sure, skipping what a person declined, what already waits, a record
+left alone and one changed in the last day; it applies nothing on its own
+unless the host names a confidence it may apply at. A model in the Fast
+slot's shape may weigh each candidate. `whileAway` says what it did since a
+person last looked.
+
+```sh
+graview dream ./dist/domain/app.js --data ./data --limit 20
+```
+
+A host that judges elsewhere reaches the store as the actor through the
+`suggest_changes` tool, offered only to a seat that says it is automated.
+
 ## Drawing a view on the fly, and keeping it as a lens
 
 Asked for a way of seeing — "a board of deliverables by status", "a timeline

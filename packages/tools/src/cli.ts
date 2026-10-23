@@ -470,3 +470,51 @@ async function finish<S extends AnySchema>(host: Host<S>, since: number, extra: 
   process.stdout.write(report(theirs.length > 0 ? theirs : landed, extra));
   return 0;
 }
+
+export const DREAM_USAGE = `  graview dream <entry> [--data <dir> | --sqlite <file>] [--limit <n>]
+                        [--older-than <days>] [--quiet-hours <h>] [--apply-at <0..1>] [--as <id>]
+      Runs the app's own actor once ("Graview, tidying", or --as): the
+      judges find duplicates to merge, links a record's text names and
+      finished records old enough to set aside, and each is suggested for a
+      person to accept or decline — or, with --apply-at, applied with its
+      lineage when it is at least that sure. Prints what it did as JSON.
+      For a host's schedule; a served store runs it on the server.
+`;
+
+/** `graview dream`: the actor, once, against a folder or a SQLite file. */
+export async function dream(argv: readonly string[]): Promise<number> {
+  const app = await entryOf(argv, "dream");
+  if (typeof app === "number") return app;
+  if (flag(argv, "--remote-url") !== undefined) {
+    say("graview dream: run it where the store is kept — on the server, or through its MCP's suggest_changes; a remote copy's suggestions would not reach it.\n");
+    return 2;
+  }
+  const number = (name: string) => {
+    const given = flag(argv, name);
+    return given === undefined ? undefined : Number(given);
+  };
+  const { dream: run, TIDYING_ACTOR } = await import("./tidy.js");
+  const as = flag(argv, "--as");
+  const principal = { ...TIDYING_ACTOR, ...(as ? { id: as } : {}) };
+  const host = await openHost(app, argv, principal, "cli");
+  try {
+    const limit = number("--limit");
+    const olderThanDays = number("--older-than");
+    const quietHours = number("--quiet-hours");
+    const applyAtLeast = number("--apply-at");
+    const ran = await run(host.store, {
+      principal,
+      via: "cli",
+      ...(limit !== undefined ? { limit } : {}),
+      ...(olderThanDays !== undefined ? { olderThanDays } : {}),
+      ...(quietHours !== undefined ? { quietHours } : {}),
+      ...(applyAtLeast !== undefined ? { applyAtLeast } : {}),
+    });
+    await host.settled();
+    say(`graview dream: ${app.name} on ${host.where} — ${ran.said}\n`);
+    process.stdout.write(`${JSON.stringify(ran, null, 2)}\n`);
+    return 0;
+  } finally {
+    await host.close();
+  }
+}

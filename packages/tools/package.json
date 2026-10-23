@@ -52,6 +52,10 @@
     "./inline-ai": {
       "types": "./dist/inline-ai.d.ts",
       "default": "./dist/inline-ai.js"
+    },
+    "./tidy": {
+      "types": "./dist/tidy.d.ts",
+      "default": "./dist/tidy.js"
     }
   },
   "scripts": {

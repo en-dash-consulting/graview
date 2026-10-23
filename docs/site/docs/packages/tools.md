@@ -6,7 +6,7 @@
 pnpm add @graview/tools
 ```
 
-Entry points: `@graview/tools`, `@graview/tools/cli`, `@graview/tools/frame`, `@graview/tools/edit`, `@graview/tools/suggest`, `@graview/tools/derive`, `@graview/tools/go`, `@graview/tools/draft`, `@graview/tools/keep`, `@graview/tools/turn`, `@graview/tools/several`, `@graview/tools/inline-ai`
+Entry points: `@graview/tools`, `@graview/tools/cli`, `@graview/tools/frame`, `@graview/tools/edit`, `@graview/tools/suggest`, `@graview/tools/derive`, `@graview/tools/go`, `@graview/tools/draft`, `@graview/tools/keep`, `@graview/tools/turn`, `@graview/tools/several`, `@graview/tools/inline-ai`, `@graview/tools/tidy`
 
 ## What it is
 
@@ -64,6 +64,16 @@ Every tool carries a title and MCP's four hints in its `annotations`, derived fr
 Reads go through `seenBy`, and prose written by somebody other than the caller — or the person an agent acts for — comes back as `{ untrusted: true, authoredBy, text }` in `get_node`, `get_graph` and `search_graph`, so a model reads another collaborator's words as data.
 
 Every read is bounded, for a seat's turn and an MCP client alike, since both call the same runtime: no answer is longer than `READ_CHARS` (8,000) characters of JSON. `get_graph` answers a page of at most `READ_PAGE` (25) records with the edges out of them, `total`, and `more` saying how many are left and the `offset` of the next page; `get_node` answers a record's fields and its links as `{ kind, id, label }`, `READ_LINKS` (20) each way a page; `search_graph` at most `READ_HITS` (20) hits, whatever `limit` asked; `get_violations` `{ violations, total, more? }`, `READ_PROBLEMS` (20) a page. A text longer than `READ_TEXT` (600) characters is cut and says how long it was, and any other read that does not fit answers `{ cut, partial }`. Within one turn of a host's model, a call with the same name and input as an earlier one is answered `{ already: "Already read: see the answer to call N of this turn, which is above." }`, and counts toward the turn's twelve.
+
+### The app's own actor, run on a schedule: `graview dream`
+
+`@graview/tools/tidy` holds what the app's own actor suggests and a way to run it. Its judges read the store as the actor sees it and find duplicates to merge (a shared name or email), links a record's own text names through a relation the app declares, and finished records long unchanged to set aside. `dream` runs them once and suggests each change with its basis and how sure, skipping what a person declined, what already waits, a record left alone and one changed in the last day; it applies nothing on its own unless the host names a confidence it may apply at. A model in the Fast slot's shape may weigh each candidate. `whileAway` says what it did since a person last looked.
+
+```sh
+graview dream ./dist/domain/app.js --data ./data --limit 20
+```
+
+A host that judges elsewhere reaches the store as the actor through the `suggest_changes` tool, offered only to a seat that says it is automated.
 
 ### Drawing a view on the fly, and keeping it as a lens
 

@@ -9,7 +9,7 @@ import { main as core, USAGE as CORE_USAGE } from "@graview/core/cli";
  * or `graview check` from inside a project that has it as a devDependency.
  * It owns no logic. Every subcommand lives in the package whose concern it
  * is — the generator, the checker and `doctor` in core, `serve`,
- * `sync-seed`, `preview` and `shots` in ship, `mcp` and `apply` in tools,
+ * `sync-seed`, `preview` and `shots` in ship, `mcp`, `apply` and `dream` in tools,
  * `skills` in skills, `view` in guest — and this dispatches to it, so a
  * project made with `graview create` and one made by calling core's own
  * CLI are the same project. What it carries is the page `preview` serves,
@@ -38,9 +38,9 @@ export async function main(given: readonly string[]): Promise<number> {
     const { syncSeed } = await import("@graview/ship/cli");
     return syncSeed(rest);
   }
-  if (command === "mcp" || command === "apply") {
-    const { mcp, apply } = await import("@graview/tools/cli");
-    return command === "mcp" ? mcp(rest) : apply(rest);
+  if (command === "mcp" || command === "apply" || command === "dream") {
+    const { mcp, apply, dream } = await import("@graview/tools/cli");
+    return command === "mcp" ? mcp(rest) : command === "apply" ? apply(rest) : dream(rest);
   }
   if (command === "skills") {
     const { skills } = await import("@graview/skills/cli");
@@ -60,8 +60,8 @@ export async function main(given: readonly string[]): Promise<number> {
 /** Core's usage, then the subcommands the other packages contribute. */
 async function usage(): Promise<string> {
   const { SERVE_USAGE } = await import("@graview/ship/cli");
-  const { MCP_USAGE } = await import("@graview/tools/cli");
+  const { MCP_USAGE, DREAM_USAGE } = await import("@graview/tools/cli");
   const { SKILLS_USAGE } = await import("@graview/skills/cli");
   const { VIEW_USAGE } = await import("@graview/guest/cli");
-  return `${CORE_USAGE}\n${SERVE_USAGE}\n${MCP_USAGE}\n${SKILLS_USAGE}\n${VIEW_USAGE}`;
+  return `${CORE_USAGE}\n${SERVE_USAGE}\n${MCP_USAGE}\n${DREAM_USAGE}\n${SKILLS_USAGE}\n${VIEW_USAGE}`;
 }

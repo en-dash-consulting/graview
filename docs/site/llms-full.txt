@@ -2955,7 +2955,7 @@ Source: https://graview.dev/docs/packages/tools.html
 pnpm add @graview/tools
 ```
 
-Entry points: `@graview/tools`, `@graview/tools/cli`, `@graview/tools/frame`, `@graview/tools/edit`, `@graview/tools/suggest`, `@graview/tools/derive`, `@graview/tools/go`, `@graview/tools/draft`, `@graview/tools/keep`, `@graview/tools/turn`, `@graview/tools/several`, `@graview/tools/inline-ai`
+Entry points: `@graview/tools`, `@graview/tools/cli`, `@graview/tools/frame`, `@graview/tools/edit`, `@graview/tools/suggest`, `@graview/tools/derive`, `@graview/tools/go`, `@graview/tools/draft`, `@graview/tools/keep`, `@graview/tools/turn`, `@graview/tools/several`, `@graview/tools/inline-ai`, `@graview/tools/tidy`
 
 ## What it is
 
@@ -3013,6 +3013,16 @@ Every tool carries a title and MCP's four hints in its `annotations`, derived fr
 Reads go through `seenBy`, and prose written by somebody other than the caller — or the person an agent acts for — comes back as `{ untrusted: true, authoredBy, text }` in `get_node`, `get_graph` and `search_graph`, so a model reads another collaborator's words as data.
 
 Every read is bounded, for a seat's turn and an MCP client alike, since both call the same runtime: no answer is longer than `READ_CHARS` (8,000) characters of JSON. `get_graph` answers a page of at most `READ_PAGE` (25) records with the edges out of them, `total`, and `more` saying how many are left and the `offset` of the next page; `get_node` answers a record's fields and its links as `{ kind, id, label }`, `READ_LINKS` (20) each way a page; `search_graph` at most `READ_HITS` (20) hits, whatever `limit` asked; `get_violations` `{ violations, total, more? }`, `READ_PROBLEMS` (20) a page. A text longer than `READ_TEXT` (600) characters is cut and says how long it was, and any other read that does not fit answers `{ cut, partial }`. Within one turn of a host's model, a call with the same name and input as an earlier one is answered `{ already: "Already read: see the answer to call N of this turn, which is above." }`, and counts toward the turn's twelve.
+
+### The app's own actor, run on a schedule: `graview dream`
+
+`@graview/tools/tidy` holds what the app's own actor suggests and a way to run it. Its judges read the store as the actor sees it and find duplicates to merge (a shared name or email), links a record's own text names through a relation the app declares, and finished records long unchanged to set aside. `dream` runs them once and suggests each change with its basis and how sure, skipping what a person declined, what already waits, a record left alone and one changed in the last day; it applies nothing on its own unless the host names a confidence it may apply at. A model in the Fast slot's shape may weigh each candidate. `whileAway` says what it did since a person last looked.
+
+```sh
+graview dream ./dist/domain/app.js --data ./data --limit 20
+```
+
+A host that judges elsewhere reaches the store as the actor through the `suggest_changes` tool, offered only to a seat that says it is automated.
 
 ### Drawing a view on the fly, and keeping it as a lens
 
@@ -5003,6 +5013,8 @@ A list that grows fills with what is finished and what was entered twice, and th
 
 1. **Hold it to what people said.** A person says "Leave this one alone" on a record (`leave-alone-<kind>`, cleared by `allow-tidying-<kind>`; `isLeftAlone(store, id)`), and the declaration says a kind is never tidied or never linked — `tidying: "never" | "no-links"` on `defineNode`, `tidying: "never"` on a relation; in a document the edit `{"op": "set-tidying", "kind": "vendor", "tidying": "no-links"}` (with `"relation"` for one relation, `"allowed"` to undo it). The store refuses the actor each in a sentence; a person is never refused by them.
 
+1. **Let it dream.** `dream(store, { now, limit })` from `@graview/tools/tidy` runs the actor once: its judges find duplicates to merge (a shared name or email), links a record's own text names through a relation the app declares, and finished records unchanged for 30 days to archive, and each is suggested with its basis. It skips what was declined, what waits, what is left alone or changed in the last day, and applies nothing unless the host passes `applyAtLeast`. A host's schedule runs it (`graview dream <entry> --data ./data`), or reaches the store as the actor through `suggest_changes`, the tool only an `automated` seat is offered. `whileAway(store, { seq })` is the tray's line: "2 suggestions waiting · tidied 12 things while you were away".
+
 ### Then find out whether it worked
 
 ```sh
@@ -5015,6 +5027,7 @@ Report **the actual output**. In a document it warns `tidying-redundant` where a
 - Archive one record by its act and ask `graview describe <entry> --place <slug>` again: it is gone from the list and the count, and `?archived=true` finds it. Bring it back; its links are still there.
 - Merge two records and undo the merge: both come back with their links.
 - Have a test actor (`automated: true`) suggest a link and decline it from the tray: `suggest(store, …)` of the same calls then refuses, and a record left alone refuses the actor's change by name.
+- Run `graview dream` twice: the second run suggests nothing new, and its JSON says each finding is already waiting.
 
 ### What the check cannot see
 
@@ -7128,7 +7141,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 432 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 433 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -7144,7 +7157,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | --- | --- | --- |
 | `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 70 |
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
-| `entry` | One subpath a package exports, as a product imports it. | 96 |
+| `entry` | One subpath a package exports, as a product imports it. | 97 |
 | `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 30 |
 | `check` | A thing graview check can say, read out of the checker's source. | 119 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |

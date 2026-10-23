@@ -4,6 +4,7 @@ import {
   deriveMutations,
   nearestAct,
   derivedVia,
+  isAutomated,
   nodeRefArgs,
   permits,
   permittedMutations,
@@ -33,7 +34,7 @@ import {
   type HostView,
 } from "@graview/core";
 import { answerSeenBy } from "@graview/core/seat";
-import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/tidying";
+import { acceptSuggestion, declineSuggestion, suggest, suggestions } from "@graview/core/tidying";
 import { search, type SearchRanker } from "@graview/core/search";
 import { argumentsNeverShown, mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import type { ToolAnnotations, ToolDefinition } from "./tool-definition.js";
@@ -493,6 +494,24 @@ const ACT_ON_SEVERAL: ToolDefinition = {
   annotations: { title: "Do one act to several records", readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
 };
 
+/*
+ * WHAT THE APP'S OWN ACTOR SUGGESTS FROM ELSEWHERE (`suggest`): a host's
+ * schedule or alarm that judged the graph off the page leaves its changes
+ * for a person. Listed only for a seat that says `automated: true`.
+ */
+const SUGGEST_CHANGES: ToolDefinition = {
+  name: "suggest_changes",
+  title: "Suggest changes",
+  description: "Keep calls ({ act, args }) as one suggestion a person accepts or declines, with its basis and confidence (0 to 1). Changes nothing; a declined change is refused.",
+  inputSchema: {
+    type: "object",
+    properties: { calls: { type: "array", items: { type: "object" } }, basis: { type: "string" }, confidence: { type: "number" } },
+    required: ["calls", "basis"],
+  },
+  mutating: true,
+  annotations: { title: "Suggest changes", readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+};
+
 const LENS_SPEC = {
   type: "object",
   description: "A lens, as draft_view returns one.",
@@ -619,7 +638,7 @@ export interface ToolRuntime<S extends AnySchema> {
 /** Said on every act whose arguments name records: a name is resolved as well as an id (FR-33). */
 export const BY_NAME = "An argument that names a record takes its id or its name.";
 
-const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, DRAFT_VIEW.name, KEEP_LENS.name, FIND_LINKED.name, ...SUBSCRIPTION_TOOLS.map((tool) => tool.name)];
+const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, SUGGEST_CHANGES.name, DRAFT_VIEW.name, KEEP_LENS.name, FIND_LINKED.name, ...SUBSCRIPTION_TOOLS.map((tool) => tool.name)];
 const MAX_NAME = 64;
 
 /**
@@ -743,12 +762,14 @@ function surfaceOf(
   links = false,
   /** Whether the host keeps subscriptions: `subscribe`, `unsubscribe` and `list_subscriptions` are listed. */
   subscribes = false,
+  /** Whether the seat is the app's own actor (`automated`): `suggest_changes` is listed. */
+  automated = false,
 ): { readonly definitions: readonly ToolDefinition[]; readonly names: ReadonlyMap<string, string> } {
   const names = toolNames(acts.map((act) => act.name));
   const drawing = [...draftTools(drafts, readOnly), ...(links ? [FIND_LINKED] : []), ...(subscribes ? SUBSCRIPTION_TOOLS : [])];
   const definitions = readOnly
     ? [...READ_TOOLS.filter((tool) => !tool.mutating), ...drawing]
-    : [...READ_TOOLS, ACT_ON_SEVERAL, ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act)))];
+    : [...READ_TOOLS, ACT_ON_SEVERAL, ...(automated ? [SUGGEST_CHANGES] : []), ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act)))];
   return { definitions, names };
 }
 
@@ -791,7 +812,7 @@ export function toolDefinitions<S extends AnySchema>(
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),
   ]);
-  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true);
+  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true, isAutomated(principal));
   return { definitions, hash: surfaceHash(definitions) };
 }
 
@@ -827,6 +848,7 @@ export function createToolRuntime<S extends AnySchema>(
     (act) => argumentsNeverShown(store.schema as AnySchema, store.policy, principal, act as never),
     linksAnotherApp(store.schema as AnySchema),
     options.subscriptions !== undefined,
+    isAutomated(principal),
   );
   const hash = surfaceHash(definitions);
   /*
@@ -899,6 +921,9 @@ export function createToolRuntime<S extends AnySchema>(
       await judgingWithLines();
       // The listed name first; an act's declared name reaches it too, unless a listed tool holds that name.
       const definition = toolNamed(name);
+      if (!definition && name === SUGGEST_CHANGES.name) {
+        return { ok: false, error: "Only the app's own actor (automated: true) suggests changes.", reason: "forbidden" };
+      }
       if (!definition) {
         /*
          * A tool this seat may not use EXISTS, and saying "unknown" would be
@@ -1145,6 +1170,13 @@ export function createToolRuntime<S extends AnySchema>(
             };
           });
           return { ok: true, data: { suggestions: waiting }, reads: [...new Set(waiting.flatMap((one) => one.about))] };
+        }
+
+        case "suggest_changes": {
+          // Each act by its tool name or its declared name, judged as this actor when it is kept (`suggest` rehearses it).
+          const calls = (args["calls"] as { act: string; args: Record<string, unknown> }[]).map((call) => ({ name: actNamed(call.act) ?? call.act, args: call.args }));
+          const op = suggest(store, calls, { author: principal, lineage: { basis: args["basis"], confidence: args["confidence"] } as never, ...viaNow(options.via) });
+          return { ok: true, data: { suggestion: op?.id ?? null } };
         }
 
         case "accept_suggestion":

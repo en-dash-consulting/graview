@@ -48,6 +48,18 @@ opens in and how its cards read are `graview-lists`.
    `"relation"` for one relation, `"allowed"` to undo it). The store refuses
    the actor each in a sentence; a person is never refused by them.
 
+4. **Let it dream.** `dream(store, { now, limit })` from
+   `@graview/tools/tidy` runs the actor once: its judges find duplicates
+   to merge (a shared name or email), links a record's own text names
+   through a relation the app declares, and finished records unchanged for
+   30 days to archive, and each is suggested with its basis. It skips what
+   was declined, what waits, what is left alone or changed in the last day,
+   and applies nothing unless the host passes `applyAtLeast`. A host's
+   schedule runs it (`graview dream <entry> --data ./data`), or reaches the
+   store as the actor through `suggest_changes`, the tool only an
+   `automated` seat is offered. `whileAway(store, { seq })` is the tray's
+   line: "2 suggestions waiting · tidied 12 things while you were away".
+
 ## Then find out whether it worked
 
 ```sh
@@ -66,6 +78,8 @@ The rest is behavior, so try it:
 - Have a test actor (`automated: true`) suggest a link and decline it from
   the tray: `suggest(store, …)` of the same calls then refuses, and a
   record left alone refuses the actor's change by name.
+- Run `graview dream` twice: the second run suggests nothing new, and its
+  JSON says each finding is already waiting.
 
 ## What the check cannot see
 

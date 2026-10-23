@@ -18,6 +18,8 @@ A list that grows fills with what is finished and what was entered twice, and th
 
 1. **Hold it to what people said.** A person says "Leave this one alone" on a record (`leave-alone-<kind>`, cleared by `allow-tidying-<kind>`; `isLeftAlone(store, id)`), and the declaration says a kind is never tidied or never linked — `tidying: "never" | "no-links"` on `defineNode`, `tidying: "never"` on a relation; in a document the edit `{"op": "set-tidying", "kind": "vendor", "tidying": "no-links"}` (with `"relation"` for one relation, `"allowed"` to undo it). The store refuses the actor each in a sentence; a person is never refused by them.
 
+1. **Let it dream.** `dream(store, { now, limit })` from `@graview/tools/tidy` runs the actor once: its judges find duplicates to merge (a shared name or email), links a record's own text names through a relation the app declares, and finished records unchanged for 30 days to archive, and each is suggested with its basis. It skips what was declined, what waits, what is left alone or changed in the last day, and applies nothing unless the host passes `applyAtLeast`. A host's schedule runs it (`graview dream <entry> --data ./data`), or reaches the store as the actor through `suggest_changes`, the tool only an `automated` seat is offered. `whileAway(store, { seq })` is the tray's line: "2 suggestions waiting · tidied 12 things while you were away".
+
 ### Then find out whether it worked
 
 ```sh
@@ -30,6 +32,7 @@ Report **the actual output**. In a document it warns `tidying-redundant` where a
 - Archive one record by its act and ask `graview describe <entry> --place <slug>` again: it is gone from the list and the count, and `?archived=true` finds it. Bring it back; its links are still there.
 - Merge two records and undo the merge: both come back with their links.
 - Have a test actor (`automated: true`) suggest a link and decline it from the tray: `suggest(store, …)` of the same calls then refuses, and a record left alone refuses the actor's change by name.
+- Run `graview dream` twice: the second run suggests nothing new, and its JSON says each finding is already waiting.
 
 ### What the check cannot see
 
