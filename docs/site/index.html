@@ -1673,7 +1673,7 @@ main.landing > section.agent-hero {
 /* What you get: six claims, three across, no boxes. */
 .gives-list { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4) var(--s5); }
 .gives-list li { display: grid; gap: var(--s1); align-content: start; min-width: 0; }
-.gives-list a { font-size: 18px; font-weight: var(--w-label); letter-spacing: -0.01em; line-height: 1.3; color: var(--ink); text-decoration: none; justify-self: start; }
+.gives-list a { display: inline-flex; align-items: center; min-height: 28px; font-size: 18px; font-weight: var(--w-label); letter-spacing: -0.01em; line-height: 1.3; color: var(--ink); text-decoration: none; justify-self: start; }
 .gives-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .gives-list p { font-size: var(--t-sm); line-height: 1.6; color: var(--ink-2); }
 
@@ -1844,6 +1844,9 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 /* At a phone's narrowest a door is the column's width, not its content's: the command breaks rather than pushing the page sideways. */
 .door { grid-template-columns: minmax(0, 1fr); }
 .door .ah-diy code { overflow-wrap: anywhere; min-width: 0; }
+@media (forced-colors: active) {
+  .landing .ask-chips button[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-left-color: HighlightText; }
+}
 /* site-css:end */
 </style>
 
