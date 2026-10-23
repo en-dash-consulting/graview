@@ -67,8 +67,11 @@ export const WORKER_SHAPED = join(ROOT, "scripts/fixtures/cloud-worker-imports.m
  * which do not vary by machine. Of those bytes, zod's are held apart: a
  * framework module that imports `{ z }` from "zod" makes esbuild keep every
  * part of zod and its forty-odd locales (805 KB, against 219 KB now).
+ * 2.01 MB since every form came to ask in one order and a document came to
+ * name an act in another spelling in a grant or a repair (`asked-order.ts`,
+ * `act-spellings.ts`): 2_003_320 B, 6_434 more than before them (1_996_886).
  */
-export const WORKER_BUDGET = { cpu: 75, bytes: 2_000_000, zod: 260_000 };
+export const WORKER_BUDGET = { cpu: 75, bytes: 2_010_000, zod: 260_000 };
 
 /** The file an entry resolves to in its package's dist/. */
 export function entryFile(entry) {
