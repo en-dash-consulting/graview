@@ -711,6 +711,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     ...(document.connections ? { connections: document.connections as never } : {}),
     // Its forms for visitors (Roadmap f-public-forms): data a host draws alone.
     ...(document.forms ? { forms: document.forms as never } : {}),
+    // When edits reach readers (Roadmap f-publishing-lifecycle): the store a host makes honors it.
+    ...(document.publishing ? { publishing: document.publishing } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
     ...(plan.viewSpecs ? { viewSpecs: plan.viewSpecs as never } : {}),
     // And its home view, about no one record, is the app's home (FR-81).

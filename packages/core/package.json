@@ -93,6 +93,10 @@
       "types": "./dist/seat.d.ts",
       "default": "./dist/seat.js"
     },
+    "./publishing": {
+      "types": "./dist/publishing.d.ts",
+      "default": "./dist/publishing.js"
+    },
     "./field-sight": {
       "types": "./dist/field-sight.d.ts",
       "default": "./dist/field-sight.js"
@@ -184,7 +188,9 @@
   ],
   "sideEffects": [
     "./dist/field-sight.js",
-    "./src/field-sight.ts"
+    "./src/field-sight.ts",
+    "./dist/publishing.js",
+    "./src/publishing.ts"
   ],
   "repository": {
     "type": "git",

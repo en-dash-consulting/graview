@@ -82,7 +82,7 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 |---|---|---|
 | GET | `/graview/state` | the graph, the log, the stored version and the modules on |
 | POST | `/graview/ops` | calls in, the ops they produced out — or `undo`, batches to take back; a `batch` the asking seat already landed is answered with the ops it made, and one that is somebody else's or not `batch:<tag>:<n>` is refused `invalid`; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy |
-| GET | `/graview/since?seq=<cursor>` | the ops after the cursor that the asking seat is served — everyone else's, through the seq it is served (the head, unless a policy serves it behind) — and the cursor after them |
+| GET | `/graview/since?seq=<cursor>` | the ops after the cursor that the asking seat is served — everyone else's, through the seq it is served (the head, or for a reader of an app that publishes what was published, said as `servedThrough`) — and the cursor after them; `reset: true` when they cannot catch it up and it takes the state |
 | GET | `/graview/health` | ship's own report, plus where the data is |
 | GET | `/graview/export` | the whole store as one bundle, the way out |
 | POST | `/graview/here` | say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under |
@@ -159,7 +159,7 @@ of the attempt in milliseconds or `{ min, max, factor }` for the jittered defaul
 | client | `call` | `cid`, `calls`, `intent`, `batch`, `base` (the revision of each field it changes), and `via`: a claim of the channel, such as a guest view's `view:<name>`, which a server records only if it accepts it |
 | client | `undo` | `cid`, `batches` to take back, and a `via` claim as on `call` |
 | client | `here` / `bye` | a presence, as `/graview/here` takes it; gone |
-| server | `welcome` | `protocol`, `wire`, `version` (the declaration it serves), `build`, `participant` (this socket's own key, built from its seat), `seq` (the last the seat is served: the server's last, unless a policy serves it behind), and the `ops` after the client's seq |
+| server | `welcome` | `protocol`, `wire`, `version` (the declaration it serves), `build`, `participant` (this socket's own key, built from its seat), `seq` (the last the seat is served: the server's last, or for a reader of an app that publishes the last published, with servedThrough), and the `ops` after the client's seq — or `state` in their place when they cannot catch it up (behind the compaction horizon, or a publish taken back), which may also come unasked |
 | server | `ack` | `cid`, `batch`, `seq` and the `ops` the call made |
 | server | `refused` / `conflict` | `cid` and the sentence; a refusal's `reason` and, when the policy knows who could, `wouldNeed`; a conflict names each field, theirs, yours and who wrote theirs |
 | server | `busy` | `cid` and `retryAfter` in milliseconds: not now, and not refused — the client sends the call again after the wait |

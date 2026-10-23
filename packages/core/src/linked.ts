@@ -22,6 +22,7 @@
  */
 // A host serves seats: a sight that hides a field shows the rest, never nothing (`@graview/core/field-sight`).
 import "./field-sight.js";
+import "./publishing.js";
 import { labelOf } from "./schema/define-node.js";
 import { humanizeField } from "./schema/define-node.js";
 import { readableFields } from "./schema/reading.js";

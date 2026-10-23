@@ -24,6 +24,8 @@ import type { Principal } from "./permissions/types.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { seatOf } from "./seat-of.js";
 import type { PastDeclaration, Store, StoreOptions } from "./store.js";
+// And how a reader of an app that publishes is served, which folds the past: a page fetches the two together, when it first looks back or draws an app that publishes (Roadmap f-publishing-lifecycle).
+import "./publishing.js";
 
 /** The declaration a moment was made under: the last mark at or before `seq` that carries one. Absent, the store's own. */
 export function declarationAt(marks: readonly DeclarationMark[] | undefined, seq: number): PastDeclaration | undefined {
@@ -134,7 +136,12 @@ export function seqAt(store: Pick<Store<AnySchema>, "log">, when: string | Date)
  */
 export function pastOf<S extends AnySchema>(store: Store<S>, when: number | string | Date, options: { readonly declaration?: PastDeclaration | undefined } = {}): Store<S> {
   const seat = seatOf(store);
-  if (seat) return pastOf(seat.store, when, options).seenBy(seat.principal);
+  if (seat) {
+    // Never past where the seat is served through: a reader of an app that publishes looks back over what was published (Roadmap f-publishing-lifecycle).
+    const seq = typeof when === "number" ? when : seqAt(store, when);
+    if (seq > store.servedSeq) throw new RangeError(`No moment at seq ${seq}: this seat is served through seq ${store.servedSeq}`);
+    return pastOf(seat.store, seq, options).seenBy(seat.principal);
+  }
   const log = store.log;
   const first = log.horizon;
   const seq = typeof when === "number" ? when : seqAt(store, when);

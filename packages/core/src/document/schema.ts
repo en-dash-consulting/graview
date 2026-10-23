@@ -471,6 +471,17 @@ function build() {
     connections: z.optional(z.record(name("connection"), loose)),
     /** Forms for visitors, by name: each one act, its fields, and what the visitor is told once it is received. */
     forms: z.optional(z.record(name("form"), FormSpec)),
+    /**
+     * When edits reach readers (Roadmap f-publishing-lifecycle): `"live"` (absent, the same) as they are made;
+     * `"on-publish"` when a publisher publishes, the `working` roles editing the head meanwhile.
+     */
+    publishing: z.optional(
+      z.strictObject({
+        mode: z.enum(["live", "on-publish"]),
+        working: some(name("role"), undefined, 40),
+        publishers: z.optional(some(name("role"), 1, 40)),
+      }),
+    ),
   });
   return { FieldSpec, EdgeSpec, ComputedSpec, KindSpec, ValueSpec, EffectSpec, ActSpec, RepairSpec, RuleSpec, GrantSpec, SightSpec, PolicySpec, BrandSpec, PagesSpec, DocumentSpec };
 }

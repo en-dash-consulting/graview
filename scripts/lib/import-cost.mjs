@@ -75,6 +75,11 @@ export const WORKER_SHAPED = join(ROOT, "scripts/fixtures/cloud-worker-imports.m
  * data, a caller's id honored by every creating act, an opaque cursor on
  * the wire — took the worker from 1_999_926 to 2_003_930 (4_004 more, in
  * the graph, the store and the live protocol a worker serves).
+ *
+ * Edits came to reach readers when they are published (Roadmap
+ * f-publishing-lifecycle): a reader's view folds the last publish
+ * (`pastOf`), the store and the live protocol serve it, and the checker
+ * judges `publishing` — 2_017_361 bytes alone, against 1_997_994 before.
  */
 // 2_010_000 since a text field takes a splice (collaborative text, phase 1: the `splice-text` primitive folded, undone, served and read back wherever a patch is): 2_005_731 B measured, 5_787 more than before it (1_999_944).
 // 2_020_000 since the 0.1.49 batch came together (every form in one order, act spellings, suggestion and lineage shapes): 2_010_374 B measured.

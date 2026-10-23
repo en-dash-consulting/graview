@@ -21,6 +21,7 @@
       "@graview/core/markdown": ["./packages/core/src/markdown.ts"],
       "@graview/core/seat": ["./packages/core/src/seat.ts"],
       "@graview/core/field-sight": ["./packages/core/src/field-sight.ts"],
+      "@graview/core/publishing": ["./packages/core/src/publishing.ts"],
       "@graview/core/provenance": ["./packages/core/src/provenance.ts"],
       "@graview/core/history": ["./packages/core/src/history.ts"],
       "@graview/core/past": ["./packages/core/src/past.ts"],

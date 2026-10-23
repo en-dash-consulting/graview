@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1888,
+  "gzipped": 680,
+  "changeset": "edits-reach-readers-when-published.md",
+  "note": "Raised when edits came to reach readers when they are published (Roadmap f-publishing-lifecycle): the same hooks as the page that compiles, the reader's view fetched on demand for an app that publishes. Measured at 551_015 / 191_767 against 549_298 / 191_087 before (1_717 / 680 more); the base was already 171 B over its budget, which this raise also covers."
+}

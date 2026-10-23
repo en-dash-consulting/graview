@@ -48,7 +48,7 @@ import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
 import type { ViewComponent, ViewMode } from "./view-registry.js";
 import type { HistoryHost } from "@graview/core/history";
-import { PlaybackContext, useOwnPlayback, type Playback } from "./past.js";
+import { PlaybackContext, useOwnPlayback, useReadersServed, type Playback } from "./past.js";
 
 export type { ViewMode } from "./view-registry.js";
 
@@ -455,6 +455,14 @@ export interface GraviewProviderProps<S extends AnySchema> {
   /** Defaults to an unroled human, which a store with no policy permits everything. */
   readonly principal?: Principal | undefined;
   /**
+   * AS READERS SEE IT (Roadmap f-publishing-lifecycle): in an app that
+   * publishes, `"published"` shows a collaborator the app as readers are
+   * served it — the last publish — to preview it before publishing; acts
+   * still land on the head. Absent, `?as=published` in the page's address
+   * says it; otherwise the seat is served as it is.
+   */
+  readonly as?: "head" | "published";
+  /**
    * The seats a reader may take. The first is where they start unless
    * `principal` says otherwise; the bar draws a control when there are two
    * or more, and nothing at all when there are none.
@@ -658,6 +666,15 @@ export function useTheWatchKnowsWhatIsUnseen<S extends AnySchema>(store: Store<S
   }, [store, principal, from]);
 }
 
+/** `?as=published` in the page's address: a collaborator previewing what readers are served. */
+const previewAsked = (): "published" | undefined => {
+  try {
+    return typeof location !== "undefined" && new URLSearchParams(location.search).get("as") === "published" ? "published" : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 /** What a host that turned AI off is handed on: nothing but that it is off. */
 const AI_OFF: HostAi = { off: true };
 
@@ -668,6 +685,7 @@ export function GraviewProvider<S extends AnySchema>({
   scheme = "dark",
   initialSelection,
   principal,
+  as: servedAs,
   seats = NO_SEATS,
   onSeat,
   people = NO_PEOPLE,
@@ -718,7 +736,15 @@ export function GraviewProvider<S extends AnySchema>({
    * storefront is not shown the customers. Acts still go to the store
    * itself. With no `sees` it is the store, unchanged.
    */
-  const store = useMemo(() => shown.seenBy(seatNow), [shown, seatNow]);
+  const as = servedAs ?? previewAsked();
+  /*
+   * AN APP THAT PUBLISHES serves its readers the last publish, which
+   * `@graview/core/publishing` folds: fetched here before anything is drawn
+   * for such an app, so a live app's page carries none of it, and a reader
+   * is never drawn the head while it arrives (Roadmap f-publishing-lifecycle).
+   */
+  const waiting = !useReadersServed(given);
+  const store = useMemo(() => (waiting ? given : shown.seenBy(seatNow, as ? { as } : undefined)), [waiting, given, shown, seatNow, as]);
   useTheWatchKnowsWhatIsUnseen(given, seatNow);
   /* This tab, for the life of the tab: see `tabSession`. */
   const [session] = useState(() => tabSession(memory));
@@ -1218,7 +1244,7 @@ export function GraviewProvider<S extends AnySchema>({
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
       <PlaybackContext.Provider value={playback as unknown as Playback}>
-        <FoundProvider>{files ? <HostFilesContext.Provider value={files}>{children}</HostFilesContext.Provider> : children}</FoundProvider>
+        <FoundProvider>{waiting ? null : files ? <HostFilesContext.Provider value={files}>{children}</HostFilesContext.Provider> : children}</FoundProvider>
       </PlaybackContext.Provider>
     </GraviewContext.Provider>
   );

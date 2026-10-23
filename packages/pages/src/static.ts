@@ -23,6 +23,8 @@
  * Worker that wants a page does not load a UI library to get one; nothing
  * on the hosted page imports it, so its weight is nobody's but the caller's.
  */
+// A reader of an app that publishes is printed the last publish (Roadmap f-publishing-lifecycle).
+import "@graview/core/publishing";
 import {
   humanizeField,
   isCurrent,
