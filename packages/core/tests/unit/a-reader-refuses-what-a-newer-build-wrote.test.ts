@@ -49,19 +49,19 @@ const op = (seq: number, primitives: readonly unknown[], author: Author = { kind
   }) as unknown as Operation;
 
 const added = { op: "add-node", node: { id: "t1", kind: "task", label: "Water the beds" } };
-const spliced = { op: "splice-text", id: "t1", field: "label", at: 0, remove: 0, insert: "Now: " };
+const spliced = { op: "move-text", id: "t1", field: "label", from: 0, to: 4, length: 3 };
 
 describe("a reader refuses what a newer build wrote", () => {
-  it("names the five primitives it folds, at op format 2", () => {
-    expect([...PRIMITIVE_OPS]).toEqual(["add-node", "remove-node", "patch-node", "add-edge", "remove-edge"]);
-    expect(FORMATS.op).toBe(2);
+  it("names the six primitives it folds, at op format 3", () => {
+    expect([...PRIMITIVE_OPS]).toEqual(["add-node", "remove-node", "patch-node", "add-edge", "remove-edge", "splice-text"]);
+    expect(FORMATS.op).toBe(3);
   });
 
   it("an older reader refuses a log with an unknown primitive instead of diverging", () => {
     const log = [op(0, [added]), op(1, [spliced])];
     // Opening the log: refused at the op, nothing half-read.
     expect(() => OperationLog.from(log)).toThrow(NewerFormatError);
-    expect(() => new Store({ schema, snapshot: { nodes: [added.node as never], edges: [] }, log })).toThrow(/primitive "splice-text" that @graview .* does not know/);
+    expect(() => new Store({ schema, snapshot: { nodes: [added.node as never], edges: [] }, log })).toThrow(/primitive "move-text" that @graview .* does not know/);
     // Folding it by hand: the graph is as it was, not the graph without the splice.
     const graph = Graph.from(schema, { nodes: [], edges: [] });
     expect(() => graph.applyPrimitives([added, spliced] as never)).toThrow(NewerFormatError);
@@ -79,7 +79,7 @@ describe("a reader refuses what a newer build wrote", () => {
       expect(error).toBeInstanceOf(NewerFormatError);
       expect((error as NewerFormatError).what).toBe("op");
       expect((error as NewerFormatError).found).toBe(FORMATS.op + 1);
-      expect((error as NewerFormatError).unknown).toBe('primitive "splice-text"');
+      expect((error as NewerFormatError).unknown).toBe('primitive "move-text"');
     }
   });
 

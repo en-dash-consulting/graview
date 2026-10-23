@@ -1,9 +1,15 @@
 import type { AnyGraphNode, GraphEdge } from "./types.js";
+import { applySplice } from "../text/splice.js";
 
 /**
- * The five primitive operations every mutation compiles down to. Keeping the
+ * The six primitive operations every mutation compiles down to. Keeping the
  * primitive set this small is what makes inverses mechanical and the fold
  * over the log total.
+ *
+ * `splice-text` (op format 3) changes part of a text field: at `at` (UTF-16
+ * code units) the field holds `removed`, and `inserted` takes its place. It
+ * keeps the text it removed so its inverse is the same splice turned round,
+ * and a fold refuses one whose text is not there (`text/splice.ts`).
  */
 export type Primitive =
   | { readonly op: "add-node"; readonly node: AnyGraphNode }
@@ -15,7 +21,18 @@ export type Primitive =
       readonly after: Readonly<Record<string, unknown>>;
     }
   | { readonly op: "add-edge"; readonly edge: GraphEdge }
-  | { readonly op: "remove-edge"; readonly edge: GraphEdge };
+  | { readonly op: "remove-edge"; readonly edge: GraphEdge }
+  | SpliceTextPrimitive;
+
+/** Part of one text field of one record changed: `removed` at `at` gives way to `inserted`. */
+export interface SpliceTextPrimitive {
+  readonly op: "splice-text";
+  readonly id: string;
+  readonly field: string;
+  readonly at: number;
+  readonly removed: string;
+  readonly inserted: string;
+}
 
 /**
  * "THIS KEY GOES AWAY", written down.
@@ -68,6 +85,8 @@ export function invert(primitive: Primitive): Primitive {
       return { op: "remove-edge", edge: primitive.edge };
     case "remove-edge":
       return { op: "add-edge", edge: primitive.edge };
+    case "splice-text":
+      return { ...primitive, removed: primitive.inserted, inserted: primitive.removed };
   }
 }
 
@@ -78,9 +97,25 @@ export function writesOf(primitive: Primitive): string[] {
     case "remove-node":
       return [primitive.node.id];
     case "patch-node":
+    case "splice-text":
       return [primitive.id];
     case "add-edge":
     case "remove-edge":
       return [primitive.edge.from, primitive.edge.to];
+  }
+}
+
+/**
+ * A record with a splice made in its field — or, `back`, taken back — for
+ * what reads a record through the log rather than folding it: as it was
+ * when the field does not hold the text the splice expects.
+ */
+export function splicedRecord<N extends object>(node: N, splice: SpliceTextPrimitive, back = false): N {
+  const text = (node as Record<string, unknown>)[splice.field];
+  if (typeof text !== "string") return node;
+  try {
+    return { ...node, [splice.field]: applySplice(text, back ? invert(splice) as SpliceTextPrimitive : splice) };
+  } catch {
+    return node;
   }
 }

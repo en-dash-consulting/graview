@@ -1,4 +1,5 @@
 import type { GraphReader } from "../graph/types.js";
+import { splicedRecord } from "../graph/primitives.js";
 import { PermissionDeniedError } from "../permissions/types.js";
 import type { ApplyOptions, PlannedChange, Store } from "../store.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
@@ -264,17 +265,39 @@ export class SyncEngine<S extends AnySchema> {
     const before = new Map<string, Record<string, unknown>>();
     // And a record deleted here before then is linked as it was, so the delete is sent (or held against the remote's edit).
     const removed = new Map<string, Record<string, unknown>>();
-    for (const op of this.options.store.log.all()) {
-      if (op.author.kind === "system" && op.author.id === this.options.mapping.system) continue;
-      for (const primitive of op.primitives) {
+    /*
+     * Read newest first, so what is left is each field's value before the
+     * earliest write: a splice says only part of a text, so the text before
+     * it is worked back from the text after it (`texts`, every op's, the
+     * remote's own included).
+     */
+    const texts = new Map<string, unknown>();
+    const textOf = (id: string, field: string): unknown => {
+      const key = `${id}\u0000${field}`;
+      return texts.has(key) ? texts.get(key) : (this.options.store.graph.getNode(id) as Record<string, unknown> | undefined)?.[field];
+    };
+    const ops = this.options.store.log.all();
+    for (let at = ops.length - 1; at >= 0; at--) {
+      const op = ops[at]!;
+      const remote = op.author.kind === "system" && op.author.id === this.options.mapping.system;
+      for (let one = op.primitives.length - 1; one >= 0; one--) {
+        const primitive = op.primitives[one]!;
         if (primitive.op === "remove-node") {
           const node = primitive.node as unknown as Record<string, unknown>;
-          if (!removed.has(node["id"] as string)) removed.set(node["id"] as string, node);
+          for (const [field, value] of Object.entries(node)) texts.set(`${primitive.node.id}\u0000${field}`, value);
+          if (!remote) removed.set(node["id"] as string, node);
         }
-        if (primitive.op !== "patch-node") continue;
-        const was = before.get(primitive.id) ?? {};
-        for (const [field, value] of Object.entries(primitive.before ?? {})) if (!Object.hasOwn(was, field)) was[field] = value;
-        before.set(primitive.id, was);
+        const fields: [string, unknown][] =
+          primitive.op === "patch-node"
+            ? Object.entries(primitive.before ?? {})
+            : primitive.op === "splice-text"
+              ? [[primitive.field, splicedRecord({ [primitive.field]: textOf(primitive.id, primitive.field) }, primitive, true)[primitive.field]]]
+              : [];
+        if (fields.length === 0) continue;
+        const id = (primitive as { id: string }).id;
+        for (const [field, value] of fields) texts.set(`${id}\u0000${field}`, value);
+        if (remote) continue;
+        before.set(id, { ...before.get(id), ...Object.fromEntries(fields) });
       }
     }
     const graph = this.options.store.graph;
@@ -851,7 +874,7 @@ export class SyncEngine<S extends AnySchema> {
         const node = (
           primitive.op === "add-node" || primitive.op === "remove-node"
             ? primitive.node
-            : primitive.op === "patch-node"
+            : primitive.op === "patch-node" || primitive.op === "splice-text"
               ? graph.getNode(primitive.id)
               : undefined
         ) as Record<string, unknown> | undefined;

@@ -133,6 +133,7 @@ export function touchesUnseen(op: Operation, sees: (id: string) => boolean): boo
  * so a client never adds a record that fails its own declaration. A patch
  * that wrote such a field says the field was cleared, as the view shows
  * it; one it cannot clear goes. A removal needs only the record's id.
+ * A splice whose text names an unseen record goes.
  */
 function servedPrimitive(primitive: Primitive, lens: SeatLens): Primitive | undefined {
   if (!touchedBy(primitive).every(lens.shows)) return undefined;
@@ -160,6 +161,9 @@ function servedPrimitive(primitive: Primitive, lens: SeatLens): Primitive | unde
     case "add-edge":
     case "remove-edge":
       return namesUnseen(primitive.edge, lens.sees) ? undefined : primitive;
+    case "splice-text":
+      // Part of a text: one whose text is an unseen record's id goes, as a patch it could not clear does.
+      return namesUnseen(primitive.removed, lens.sees) || namesUnseen(primitive.inserted, lens.sees) ? undefined : primitive;
   }
 }
 

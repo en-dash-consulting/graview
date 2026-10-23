@@ -2,6 +2,7 @@ import { humanizeField, labelOf } from "../schema/define-node.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import { SchemaError } from "../schema/schema.js";
 import { assertKnownValues, unknownPrimitive } from "../format-error.js";
+import { applySplice } from "../text/splice.js";
 import { isArchived, MARKS, type ArchivedOption } from "./archived.js";
 import { diffSnapshots, diffTouched, type GraphDiff } from "./diff.js";
 import { isUnset, type Primitive } from "./primitives.js";
@@ -407,6 +408,25 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         this.archived[isArchived(patched) ? "add" : "delete"](primitive.id);
         // A patch that names the kind moves the record between counts.
         if (patched.kind !== current.kind) this.tally(current.kind, -1), this.tally(patched.kind, 1);
+        return;
+      }
+      case "splice-text": {
+        const current = this.nodes.get(primitive.id);
+        if (!current) {
+          throw new MissingRecordError(primitive.id, `Cannot splice the text of missing node "${primitive.id}"`);
+        }
+        const text = (current as Record<string, unknown>)[primitive.field];
+        let spliced: string | undefined;
+        try {
+          if (typeof text === "string" && primitive.field !== "id" && primitive.field !== "kind") spliced = applySplice(text, primitive);
+        } catch {
+          // Said below: a splice whose text is not there.
+        }
+        if (spliced === undefined) {
+          throw new GraphError(`Cannot splice ${primitive.id}.${primitive.field}: it does not hold ${JSON.stringify(primitive.removed)} at ${primitive.at}`, "A corrupt op: the text it was made against is not the text the log folds to.");
+        }
+        const next = { ...current, [primitive.field]: spliced } as Record<string, unknown>;
+        this.nodes.set(primitive.id, (restoring ? next : this.checkPatch(current, next, [primitive.field])) as NodeOfSchema<S>);
         return;
       }
       case "add-edge":

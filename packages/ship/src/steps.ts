@@ -258,7 +258,9 @@ export function primitivesForSteps(steps: readonly MigrationStep[], stored: Grap
           ? `${primitive.op} ${primitive.edge.kind} ${primitive.edge.from} ${primitive.edge.to}`
           : primitive.op === "patch-node"
             ? `${primitive.op} ${primitive.id} ${Object.keys(primitive.after).join(",")}`
-            : `${primitive.op} ${primitive.node.id}`;
+            : primitive.op === "splice-text"
+              ? `${primitive.op} ${primitive.id} ${primitive.field} ${primitive.at} ${JSON.stringify([primitive.removed, primitive.inserted])}`
+              : `${primitive.op} ${primitive.node.id}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;

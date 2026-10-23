@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { bindSchema, createSchema, defineNode, Graph, nodeRef, Store, type AnyGraphNode, type AnySchema, type GraphEdge, type GraphSnapshot, type Operation, type Policy, type Primitive, type Principal, type Sight } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, Graph, nodeRef, Store, type AnyGraphNode, type AnySchema, type GraphEdge, type GraphSnapshot, type Operation, type Policy, type Primitive, type Principal, type Sight, writesOf } from "../../src/index.js";
 
 /*
  * RANDOM WORLDS FOR THE SEAT VIEW (FR-55), ported from Graview Cloud's
@@ -189,7 +189,7 @@ export function world(seed: number, options: { readonly required?: boolean } = {
       primitives: prims,
       inverse: [],
       reads,
-      writes: prims.flatMap((p) => (p.op === "patch-node" ? [p.id] : "node" in p ? [p.node.id] : [p.edge.from, p.edge.to])),
+      writes: prims.flatMap(writesOf),
       at: "2026-10-02T00:00:00.000Z",
     });
   }

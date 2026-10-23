@@ -33,7 +33,7 @@ import { parseExpr, type Expr } from "./document/expr/parse.js";
 import { evaluateExpr, ExprEvalError, type KindShape } from "./document/expr/evaluate.js";
 import { shapesOfSchema } from "./document/rules.js";
 import type { Primitive } from "./graph/primitives.js";
-import { isUnset } from "./graph/primitives.js";
+import { isUnset, splicedRecord } from "./graph/primitives.js";
 import type { AnyGraphNode, GraphReader } from "./graph/types.js";
 import type { Operation } from "./ops/types.js";
 import { isWithheld, redact, WITHHELD_AUTHOR } from "./ops/withheld.js";
@@ -161,6 +161,7 @@ function aboutOf(primitive: Primitive): readonly string[] {
     case "remove-node":
       return [primitive.node.id];
     case "patch-node":
+    case "splice-text":
       return [primitive.id];
     case "add-edge":
     case "remove-edge":
@@ -191,6 +192,7 @@ function nodeAfter(store: Store<AnySchema>, id: string, seq: number): AnyGraphNo
       if (primitive.op === "add-node" && primitive.node.id === id) node = undefined;
       else if (primitive.op === "remove-node" && primitive.node.id === id) node = primitive.node;
       else if (primitive.op === "patch-node" && primitive.id === id && node) node = patched(node, primitive.before);
+      else if (primitive.op === "splice-text" && primitive.id === id && node) node = splicedRecord(node, primitive, true);
     }
   }
   return node;
@@ -214,6 +216,7 @@ function nodeBefore(after: AnyGraphNode | undefined, id: string, primitives: rea
     if (primitive.op === "add-node" && primitive.node.id === id) node = undefined;
     else if (primitive.op === "remove-node" && primitive.node.id === id) node = primitive.node;
     else if (primitive.op === "patch-node" && primitive.id === id && node) node = patched(node, primitive.before);
+    else if (primitive.op === "splice-text" && primitive.id === id && node) node = splicedRecord(node, primitive, true);
   }
   return node;
 }
@@ -339,6 +342,13 @@ function matchOne(store: Store<AnySchema>, seen: Store<AnySchema>, subscription:
     const change: MatchedRecord["change"] = added && !removed ? "created" : removed && !now ? "removed" : "changed";
     const fields = new Map<string, { before?: unknown; after?: unknown }>();
     for (const primitive of primitives) {
+      if (primitive.op === "splice-text" && primitive.id === id) {
+        // A splice says part of the text: the field is said whole, as it was before the batch and as it is.
+        const held = fields.get(primitive.field);
+        const before = held ? held.before : nodeBefore(now, id, primitives)?.[primitive.field];
+        const after = now?.[primitive.field];
+        fields.set(primitive.field, { ...(before === undefined ? {} : { before }), ...(after === undefined ? {} : { after }) });
+      }
       if (primitive.op !== "patch-node" || primitive.id !== id) continue;
       for (const [field, after] of Object.entries(primitive.after)) {
         const held = fields.get(field);

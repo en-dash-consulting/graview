@@ -65,6 +65,8 @@ export function fieldsWritten(primitive: Primitive): readonly (readonly [string,
       .map((field) => [primitive.node.id, field] as const);
   }
   if (primitive.op === "patch-node") return Object.keys(primitive.after).map((field) => [primitive.id, field] as const);
+  // A splice moves its field's revision as any write does: a whole-value write made against the text before it is stale.
+  if (primitive.op === "splice-text") return [[primitive.id, primitive.field]];
   return [];
 }
 

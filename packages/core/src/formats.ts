@@ -25,6 +25,10 @@ import { assertKnownPrimitives, FORMATS, NewerFormatError, type FormatName } fro
  * build before 0.1.43 meeting a store stamped `op: 2` refuses it with
  * `NewerFormatError` rather than undo an op it would find no inverse on.
  *
+ * OP FORMAT 3 adds the `splice-text` primitive (collaborative text,
+ * phase 1). A format-2 op reads as it was written; a build before it
+ * meeting a store stamped `op: 3`, or a splice, refuses it.
+ *
  * FAIL CLOSED (1.0). A new primitive raises `FORMATS.op` and travels only
  * to a reader that said it reads it (`opFormat`); a reader that meets a
  * primitive it does not know — a log a newer build wrote, an op handed
@@ -66,6 +70,8 @@ const SNAPSHOT_STEPS: Readonly<Record<number, Step<GraphSnapshot>>> = {};
 const OP_STEPS: Readonly<Record<number, Step<Operation>>> = {
   // Format 1 wrote the inverse beside the primitives; format 2 derives it.
   1: bareOp,
+  // Format 3 added a primitive, `splice-text`; a format-2 op is a format-3 op as written.
+  2: (op) => op,
 };
 
 function upgrade<T>(what: FormatName, value: T, from: number, steps: Readonly<Record<number, Step<T>>>): T {

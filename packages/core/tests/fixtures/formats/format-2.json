@@ -1,0 +1,37 @@
+{
+  "written": "by @graview 0.1.48, op format 2: no inverse, the five primitives",
+  "formats": { "snapshot": 1, "op": 2 },
+  "ops": [
+    {
+      "id": "op-0",
+      "seq": 0,
+      "batch": "batch:1",
+      "author": { "kind": "human", "id": "ana" },
+      "intent": "Add “Water the beds”",
+      "mutation": { "name": "add-task", "args": { "label": "Water the beds" } },
+      "primitives": [{ "op": "add-node", "node": { "id": "t1", "kind": "task", "label": "Water the beds" } }],
+      "reads": [],
+      "writes": ["t1"],
+      "at": "2026-10-21T09:00:00.000Z"
+    },
+    {
+      "id": "op-1",
+      "seq": 1,
+      "batch": "batch:2",
+      "author": { "kind": "human", "id": "ana" },
+      "intent": "Change “Water the beds”",
+      "mutation": { "name": "edit-task", "args": { "id": "t1", "label": "Water the raised beds", "done": true } },
+      "primitives": [
+        {
+          "op": "patch-node",
+          "id": "t1",
+          "before": { "label": "Water the beds", "done": "\u0000graview:unset" },
+          "after": { "label": "Water the raised beds", "done": true }
+        }
+      ],
+      "reads": ["t1"],
+      "writes": ["t1"],
+      "at": "2026-10-21T09:01:00.000Z"
+    }
+  ]
+}
