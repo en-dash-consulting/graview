@@ -6,7 +6,7 @@ import type { FastProvider, HostAi, ThinkingProvider } from "@graview/tools/fram
 import { stubFast, stubThinking } from "@graview/tools/inline-ai";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { PagesApp, type PageContext } from "../../src/index.js";
 
@@ -73,14 +73,41 @@ async function settle(turns = 6, ms = 30) {
   for (let turn = 0; turn < turns; turn += 1) await act(async () => new Promise((done) => setTimeout(done, ms)));
 }
 
+/**
+ * Waits for what a test is about to read, polling until it holds (bounded),
+ * never a count of turns: the menu and its sections are lazily loaded, and a
+ * loaded machine takes longer than a few short turns to fetch them.
+ */
+async function until(holds: () => boolean, what: string, within = 5000) {
+  for (const end = Date.now() + within; ; ) {
+    await act(async () => {
+      await vi.dynamicImportSettled();
+      await new Promise((done) => setTimeout(done, 10));
+    });
+    if (holds()) return;
+    if (Date.now() > end) throw new Error(`waited ${within} ms for ${what}`);
+  }
+}
+
+/** The menu open with its rows, and still: its sections have arrived. */
+async function opened() {
+  let last: string | undefined;
+  await until(() => {
+    const now = menu()?.querySelector("[data-menu-item], [data-affordance]") ? menu()!.innerHTML : undefined;
+    const same = now !== undefined && now === last;
+    last = now;
+    return same;
+  }, "the menu to open");
+}
+
 async function openOn(host: HTMLElement) {
   const row = host.querySelector('[data-graview-record="book"]')!;
   await act(async () => void row.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, clientX: 40, clientY: 60 })));
-  await settle();
+  await opened();
 }
 const close = async () => {
   await act(async () => void document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
-  await settle(2);
+  await until(() => menu() === null, "the menu to close");
 };
 const menu = () => document.querySelector<HTMLElement>(MENU);
 const item = (id: string) => menu()?.querySelector<HTMLButtonElement>(`[data-menu-item="${id}"]`) ?? null;

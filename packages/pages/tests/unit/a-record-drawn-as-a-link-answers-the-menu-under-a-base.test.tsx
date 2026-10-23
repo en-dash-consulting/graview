@@ -66,9 +66,36 @@ async function at(place: string) {
   return { host, store, card };
 }
 
+/**
+ * Waits for what a test is about to read, polling until it holds (bounded),
+ * never a count of turns: the menu and its sections are lazily loaded, and a
+ * loaded machine takes longer than a few short turns to fetch them.
+ */
+async function until(holds: () => boolean, what: string, within = 5000) {
+  for (const end = Date.now() + within; ; ) {
+    await act(async () => {
+      await vi.dynamicImportSettled();
+      await new Promise((done) => setTimeout(done, 10));
+    });
+    if (holds()) return;
+    if (Date.now() > end) throw new Error(`waited ${within} ms for ${what}`);
+  }
+}
+
+/** The menu open with its rows, and still: its sections have arrived. */
+async function opened() {
+  let last: string | undefined;
+  await until(() => {
+    const now = menu()?.querySelector("[data-menu-item], [data-affordance]") ? menu()!.innerHTML : undefined;
+    const same = now !== undefined && now === last;
+    last = now;
+    return same;
+  }, "the menu to open");
+}
+
 async function rightClick(element: Element) {
   await act(async () => void element.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, clientX: 40, clientY: 60 })));
-  await settle();
+  await opened();
 }
 
 const menu = () => document.querySelector<HTMLElement>('[data-testid="context-menu"]');
@@ -97,7 +124,7 @@ describe("a board's card under a base", () => {
     const { card } = await at("the-board");
     await act(async () => void card("t1").dispatchEvent(Object.assign(new MouseEvent("pointerdown", { bubbles: true, clientX: 30, clientY: 30 }), { pointerType: "touch", isPrimary: true })));
     await act(async () => new Promise((done) => setTimeout(done, 650)));
-    await settle();
+    await opened();
     expect(menu()!.textContent).toContain("Write the brief");
     expect(rows()).toContain("move-to");
   });
