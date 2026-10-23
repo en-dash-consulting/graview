@@ -985,7 +985,7 @@ export function createToolRuntime<S extends AnySchema>(
         };
       }
 
-      // Reads go through what this seat may see, and other people's words come back as data.
+      // Reads go through the app as this seat is served it, and other people's words come back as data; a write goes to the store, judged at the head.
       const seen = store.seenBy(principal);
       switch (definition.name) {
         case "search_graph": {

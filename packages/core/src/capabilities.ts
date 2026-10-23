@@ -37,7 +37,13 @@ export interface Capabilities {
   readonly documentFormats: readonly string[];
   /** The stored formats it writes and reads (FR-31). */
   readonly formats: typeof FORMATS;
-  /** The FR ids of the seams this version ships. */
+  /**
+   * The FR ids of the seams this version ships. Planned and not shipped,
+   * with names reserved (docs/stability.md, "Served state and the head"):
+   * the publishing lifecycle (Roadmap f-publishing-lifecycle) — an op's
+   * `publishedThrough`, a document's `publishing`, the wire's
+   * `servedThrough`. No build writes or reads them until its id is here.
+   */
   readonly shipped: readonly string[];
 }
 

@@ -23,7 +23,9 @@ export type { RefusalReason, WireRefusal } from "@graview/core";
  *
  * Seqs mean what they mean on `GET /graview/since?seq=N`: the position of
  * an op in the store's log, and a client's seq is the last one it has. -1
- * is "none yet".
+ * is "none yet". A seat is served through the seq it is served, which is
+ * the head today and which a policy may hold behind it: no message
+ * promises a seat's seq is the store's last.
  *
  * What a seat may not see holds here exactly as on the HTTP routes (FR-02,
  * FR-16): every op a socket is sent is the op as that seat may see it,

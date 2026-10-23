@@ -136,6 +136,12 @@ export interface SceneHandle {
 }
 
 export interface GraviewContextValue<S extends AnySchema> {
+  /**
+   * The app as this seat is served it (`store.seenBy(seat)`): what its sight
+   * reaches, through the seq it is served (`store.servedSeq`) — the head
+   * today, though a policy may serve a seat behind it. Acts still go to the
+   * store itself and are judged at the head.
+   */
   readonly store: Store<S>;
   /**
    * The scheme, so the RENDERER can match it. Depth is drawn differently in
@@ -674,9 +680,10 @@ export function GraviewProvider<S extends AnySchema>({
   const shown = playback.past && playback.live === given ? playback.past.store : given;
   /*
    * WHAT THEY MAY SEE. Every surface under this provider reads the store it
-   * hands out, and that store holds only what the policy's `sees` lets the
-   * seat see — a stranger at a storefront is not shown the customers. Acts
-   * still go to the store itself. With no `sees` it is the store, unchanged.
+   * hands out — the app as this seat is served it — and that store holds
+   * only what the policy's `sees` lets the seat see: a stranger at a
+   * storefront is not shown the customers. Acts still go to the store
+   * itself. With no `sees` it is the store, unchanged.
    */
   const store = useMemo(() => shown.seenBy(seatNow), [shown, seatNow]);
   useTheWatchKnowsWhatIsUnseen(given, seatNow);
@@ -1330,9 +1337,9 @@ export function useGraviewIfAny<S extends AnySchema>(): GraviewContextValue<S> |
 }
 
 /**
- * Subscribes to the graph. Re-renders on every applied diff, whoever caused
- * it — so an agent's edit updates the interface through exactly the path a
- * human edit does.
+ * Subscribes to the graph, as this seat is served it. Re-renders on every
+ * diff the served store hears, whoever caused it — so an agent's edit
+ * updates the interface through exactly the path a human edit does.
  *
  * The snapshot is CACHED between diffs. `allNodes()` builds a fresh array
  * every call, and `useSyncExternalStore` compares snapshots by identity: a

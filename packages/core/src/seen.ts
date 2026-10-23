@@ -413,11 +413,28 @@ export function readingOf(ops: readonly Operation[], epochs: LogReading["epochs"
 
 const VIEWS = new WeakMap<object, Map<string, unknown>>();
 
-/** A seat, keyed by the seat the policy judges: an agent for Nick is not the same agent alone. */
+/**
+ * A seat, keyed by the seat the policy judges: an agent for Nick is not the
+ * same agent alone. It is everything serving reads of the principal — its
+ * kind, the id and roles sight is judged by (`actingAs`), and whether it
+ * acts for somebody — and nothing it does not (a session, a name), so two
+ * tabs of one seat share what they are served.
+ */
 function seatKey(principal: Principal): string {
   const judged = isSystem(principal) ? principal : actingAs(principal);
   return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? "for" : ""}`;
 }
+
+/**
+ * WHERE A SEAT'S VIEW IS SERVED THROUGH (`servedSeq`): the head, today, for
+ * every seat — the view reads its store as it grows. A policy that serves a
+ * seat behind the head (docs/stability.md, "Served state and the head")
+ * changes only how this is chosen; the store a seat's view is of, the
+ * module reading what is off and the policy are each the store's own, so
+ * the view's key is the seat and this.
+ */
+const HEAD = "head";
+const viewKey = (principal: Principal): string => `${seatKey(principal)}@${HEAD}`;
 
 const bound = (target: object, prop: PropertyKey): unknown => {
   const value = Reflect.get(target, prop, target);
@@ -425,7 +442,7 @@ const bound = (target: object, prop: PropertyKey): unknown => {
 };
 
 /**
- * THE STORE AS ONE PRINCIPAL MAY SEE IT.
+ * THE APP AS THIS SEAT IS SERVED IT.
  *
  * Every surface reads `store.graph` — the scene, the pages, Find, the
  * chat, an agent's tools — and none of them asked who was looking: a
@@ -433,8 +450,14 @@ const bound = (target: object, prop: PropertyKey): unknown => {
  * question, because a policy could only say who may ACT. With the policy's
  * `sees` declared, this is the store a surface is handed: its graph, its
  * log, its history and its problems hold only what the principal may see,
- * and every act still goes to the store itself, judged there as always.
- * With no `sees`, it is the store, unchanged.
+ * and every act still goes to the store itself, judged there — at the
+ * head — as always. With no `sees`, it is the store, unchanged.
+ *
+ * What a seat is served is not promised to be the head: it is served
+ * through `servedSeq`, which is the head today and which a policy may set
+ * behind it (docs/stability.md, "Served state and the head"). Nor is it
+ * promised to be one object per principal: the view is kept to save
+ * judging again, keyed by what serving depends on (`viewKey`).
  */
 /** The key a seat's view answers with the store it is of and the seat (`seatOf`, `@graview/core/seat-of`'s reading of it). */
 const SEAT = Symbol.for("@graview/core:seat");
@@ -459,7 +482,7 @@ export interface Viewed extends Judged {
 export function seenBy<T extends Viewed>(store: T, principal: Principal): T {
   // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
   if (!hidesFrom(store, principal)) return store;
-  const key = seatKey(principal);
+  const key = viewKey(principal);
   let views = VIEWS.get(store);
   if (!views) VIEWS.set(store, (views = new Map()));
   const held = views.get(key);
@@ -644,6 +667,9 @@ export function seenBy<T extends Viewed>(store: T, principal: Principal): T {
           return (other: Principal) => seenBy(target, other);
         case "seenFor":
           return principal;
+        // Where what this seat is served ends: the head, as the store's own (`servedSeq`); never set through the view.
+        case "servedSeq":
+          return target.log.length;
         // A checkpoint taken through the seat's view is the one it is served.
         case "checkpoint":
           return (options?: never) => servedIf(target.checkpoint(options));
