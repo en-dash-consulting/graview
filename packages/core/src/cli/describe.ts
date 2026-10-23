@@ -24,6 +24,7 @@ import { amountMark, amountSentence } from "../schema/amount-words.js";
 import { sayAmount } from "../document/amount.js";
 import { linkedRelations } from "../schema/linked.js";
 import { linkedRelationWords } from "../linked.js";
+import { collaborativeFieldOf } from "../schema/collaborative.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -255,6 +256,16 @@ export function describeApp<S extends AnySchema>(
    * name and every field a person reads on a record; an agent that knows
    * which is an agent that searches rather than reading the whole graph.
    */
+  /*
+   * TEXT TYPED TOGETHER (Roadmap f-collab-text): which fields two people
+   * type into at once, each keeping their words, and an agent's rewrite
+   * merged into the typing rather than written over it.
+   */
+  const together = kinds.flatMap((kind) => Object.keys((app.schema.tryDefinition(kind)?.fields as { shape?: Record<string, unknown> } | undefined)?.shape ?? {}).filter((field) => collaborativeFieldOf(app.schema, kind, field)).map((field) => `${kind}'s ${field}`));
+  if (together.length > 0) {
+    lines.push("", "## Typed together", `${capitalize(list(together))} ${together.length === 1 ? "is" : "are"} typed together: two people type at once and both keep their words, and a whole value written over one (an edit, an agent) is merged into what was typed since. Other fields are written whole.`);
+  }
+
   lines.push("", "## What can be found");
   lines.push("The Find box (/ or ⌘K), /search?q= and the search_graph tool match the start of words in:");
   for (const kind of kinds) {

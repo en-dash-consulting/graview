@@ -220,6 +220,10 @@ export { LINEAGE_BASIS_LIMIT, LINEAGE_EVIDENCE_LIMIT, LINEAGE_LIMIT, LINEAGE_MOD
 // What a link was based on, and whether a person has kept it, are `@graview/core/provenance`'s, fetched with what draws them (FR-172).
 export type { HasLog, LinkProvenance, LinkRef } from "./ops/provenance.js";
 export { KEEP_LINK } from "./mutations/keep-link.js";
+// Typing into a field typed together (Roadmap f-collab-text): the act every store answers to, and whether a field is one.
+export { TYPE_TEXT } from "./text/typing-hook.js";
+export type { TypeTextArgs } from "./mutations/type-text.js";
+export { isCollaborativeField, markCollaborative } from "./schema/collaborative.js";
 // Whether a record is left alone and an author is the app's own actor, which a page draws with; the rest is `@graview/core/tidying`'s.
 export { isAutomated, isLeftAlone } from "./ops/tidying.js";
 export type { Dismissal, DismissalStore, Suggestion } from "./ops/suggestions.js";

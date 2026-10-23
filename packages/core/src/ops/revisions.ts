@@ -108,8 +108,14 @@ export class FieldRevisions {
     return this.revs.get(key(node, field)) ?? this.floor;
   }
 
-  /** The base a call made of these ops would carry: each field they patch on a record they did not add, at its revision here. */
-  baseFor(ops: readonly Operation[], skip: ReadonlySet<string> = new Set()): FieldRevision[] {
+  /**
+   * The base a call made of these ops would carry: each field they patch on
+   * a record they did not add, at its revision here — but a field typed
+   * together (`collaborative`, Roadmap f-collab-text), which is merged and
+   * never stale: a splice claims nothing, and neither does the first
+   * keystroke's patch into an empty field.
+   */
+  baseFor(ops: readonly Operation[], skip: ReadonlySet<string> = new Set(), collaborative?: (node: string, field: string) => boolean): FieldRevision[] {
     const created = new Set<string>();
     const base = new Map<string, FieldRevision>();
     for (const op of ops) {
@@ -118,7 +124,7 @@ export class FieldRevisions {
         if (primitive.op !== "patch-node" || created.has(primitive.id) || skip.has(primitive.id)) continue;
         for (const field of Object.keys(primitive.after)) {
           const at = key(primitive.id, field);
-          if (skip.has(at) || base.has(at)) continue;
+          if (skip.has(at) || base.has(at) || collaborative?.(primitive.id, field)) continue;
           base.set(at, { node: primitive.id, field, rev: this.of(primitive.id, field) });
         }
       }

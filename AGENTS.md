@@ -157,7 +157,7 @@ pinned at 1.49.1 on purpose.
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
   entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`, `./city`, `./provenance`, `./history`, `./past`, `./linked`, `./tidying`, `./catalog`, `./subscriptions`,
-  `./figures`, `./blocks`, `./describe`, `./arrange`, `./navigate`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./publishing`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
+  `./figures`, `./blocks`, `./describe`, `./arrange`, `./navigate`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./publishing`, `./typing`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
   `./lines`, `./testing` and the `./document.schema.json` the build writes; layout's `./view`, `./sizes` and `./view-moves`; guest's `./host/frame`; react's `./provider` and `./drawing`;
   tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep`, `./turn`, `./several`, `./inline-ai` and `./tidy` (the app's own actor's judges and `dream`, on no page); embed's `./pages`, `./form` (a visitor's form alone) and `./first-draw` (what a face's first draw opens, for a host's build); pages' `./static` (a place as static HTML, no React) and `./visitor-form`;
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and

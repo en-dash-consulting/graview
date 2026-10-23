@@ -27,6 +27,8 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
+import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
+import type { FieldRevision } from "./ops/revisions.js";
 import { declinedIn, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
@@ -35,7 +37,7 @@ import { writersBehind } from "./ops/writers.js";
 import { nounOf } from "./schema/define-node.js";
 import { behind, fieldsJudged, partialSight, recordsOf } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
-import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
+import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { validateGraph, type GraphFinding } from "./validate-graph.js";
 import { tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal, tellTheWatchOfAnInputRefusal } from "./watched.js";
@@ -240,6 +242,15 @@ export interface ApplyOptions {
    * subscribers are as if the change was never asked. Returning keeps it.
    */
   readonly admit?: (planned: PlannedChange) => void;
+  /**
+   * WHAT THE CALLER LAST READ (Roadmap f-collab-text): each field it writes,
+   * at the revision it read it at, as a call over the wire says it. A whole
+   * value written over a field typed together is merged three ways — what
+   * the caller changed in the text it read, carried over what others typed
+   * since — rather than written over theirs; a field it names no revision
+   * of is diffed against its text now.
+   */
+  readonly base?: readonly FieldRevision[];
 }
 
 /**
@@ -531,6 +542,8 @@ export class Store<S extends AnySchema> {
   private readonly mutations = new Map<string, AnyMutationDefinition<S>>();
   /** The store's own "Keep this link" (FR-172), when the app declared none by that name. */
   private keeper: AnyMutationDefinition<S> | undefined;
+  /** "Type text", when the store answers to its own (Roadmap f-collab-text). */
+  private typer: AnyMutationDefinition<S> | undefined;
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
   readonly policy: Policy | undefined;
@@ -825,6 +838,8 @@ export class Store<S extends AnySchema> {
    * as it was given, to be refused by that name.
    */
   private spelled(name: string): string {
+    // "Type text" (Roadmap f-collab-text): answered by every store once `@graview/core/typing` is loaded, and offered by no list.
+    if (name === TYPE_TEXT && !this.typer && TYPING.typeText && !this.past && !this.mutations.has(name)) this.mutations.set(name, (this.typer = TYPING.typeText(this)));
     return this.mutations.has(name) ? name : (actSpelledAs(name, this.mutations.keys()) ?? name);
   }
 
@@ -841,11 +856,11 @@ export class Store<S extends AnySchema> {
   }
 
   allMutations(): AnyMutationDefinition<S>[] {
-    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && !this.mutationDisabled(mutation));
+    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && mutation !== this.typer && !this.mutationDisabled(mutation));
   }
 
   /** The declared acts a derived act resolves its permission through; keeping a link, those that make or break its relation. */
-  private viaOf(mutation: AnyMutationDefinition<S> | undefined, call?: MutationCall): readonly string[] | undefined {
+  private viaOf(mutation: AnyMutationDefinition<S> | undefined, call?: MutationCall, principal?: Principal): readonly string[] | undefined {
     if (mutation !== undefined && mutation === this.keeper) {
       const declared = keepLinkVia(this.mutations.values(), call?.args["kind"]);
       if (declared.length > 0) return declared;
@@ -853,6 +868,8 @@ export class Store<S extends AnySchema> {
       const all = [...this.mutations.values()];
       return [...new Set(all.filter((one) => one.derived?.relation === call?.args["kind"]).flatMap((one) => derivedVia(this.schema, all, one) ?? []))];
     }
+    // Typing into a field: whoever may run an act that writes that field of that record.
+    if (mutation !== undefined && mutation === this.typer) return TYPING.via!(this.schema, [...this.mutations.values()] as never, this.subjectKindOf(call!, principal), call?.args["field"]);
     if (!mutation?.derived) return undefined;
     return derivedVia(this.schema, [...this.mutations.values()], mutation);
   }
@@ -919,7 +936,7 @@ export class Store<S extends AnySchema> {
       principal,
       call.name,
       this.subjectKindOf(call, principal),
-      this.viaOf(mutation, call),
+      this.viaOf(mutation, call, principal),
       typeof id === "string" ? id : undefined,
       this.words,
       () => {
@@ -933,7 +950,7 @@ export class Store<S extends AnySchema> {
         return far;
       },
       // Who made the record a derived act is about: riding only everybody's grant, it reaches what this principal made (W-201).
-      mutation?.derived && (() => recordsOf(this.log).creatorOf(id as string)),
+      mutation !== undefined && (mutation.derived !== undefined || mutation === this.typer) ? () => recordsOf(this.log).creatorOf(id as string) : undefined,
       // Taking a record out, or folding it away, rides the making of the kind only over what this principal made (W-201).
       mutation?.derived !== undefined && UNMAKING.has(mutation.derived.act),
     );
@@ -1022,6 +1039,20 @@ export class Store<S extends AnySchema> {
     // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
     const hidden = seesId(this, author);
     return { ...me, seen: seenBy(this, author).graph as never, keepUnchanged: (value: unknown) => namesUnseen(value, hidden), seesInFull: seesEveryRecord(this as never, author) };
+  }
+
+  /**
+   * WHETHER ONE FIELD OF A RECORD IS TYPED TOGETHER (Roadmap f-collab-text),
+   * read off the declaration of the record's kind, never off its value:
+   * `isCollaborativeField`. False for a record that is not here.
+   */
+  collaborative(node: string, field: string): boolean {
+    return TYPING.collaborative?.(this.schema, this.graph.getNode(node)?.kind as string | undefined, field) ?? false;
+  }
+
+  /** A whole value written over text typed together, as a splice, where `@graview/core/typing` is loaded; as written otherwise. */
+  private asSplices(primitives: readonly Primitive[], base?: readonly FieldRevision[]): readonly Primitive[] {
+    return TYPING.asSplices ? TYPING.asSplices(this, primitives, base) : primitives;
   }
 
   /**
@@ -1343,7 +1374,7 @@ export class Store<S extends AnySchema> {
     call = this.spelledCall(call);
     const definition = this.mutation(call.name);
     const compiled = compileMutation(this.graph, definition, call.args, this.sighted(options.author));
-    return this.previewPrimitives(compiled.primitives, {
+    return this.previewPrimitives(this.asSplices(compiled.primitives), {
       reads: compiled.reads,
       writes: compiled.writes,
       intent: compiled.intent,
@@ -1398,6 +1429,9 @@ export class Store<S extends AnySchema> {
       mintBatch: () => PREVIEW_BATCH,
       rehearsing: true,
     });
+    // Its own acts, so "Type text" reads the text back off the rehearsal's log, as the apply would off this one's.
+    const typer = this.typer && TYPING.typeText!(twin);
+    Object.assign(twin as unknown as Record<string, unknown>, { typer, mutations: typer ? new Map(this.mutations).set(TYPE_TEXT, typer) : new Map(this.mutations) });
     return twin;
   }
 
@@ -1575,7 +1609,7 @@ export class Store<S extends AnySchema> {
            * instruction is lost the moment the op is written to JSON and the
            * inverse quietly does nothing. See `normalize` in primitives.ts.
            */
-          primitives: compiled.primitives.map(normalize),
+          primitives: this.asSplices(compiled.primitives, options.base).map(normalize),
           reads: compiled.reads,
           writes: compiled.writes,
           // Which records its sentence read, so a reader who may not see one is not handed the sentence (FR-55).
@@ -1767,7 +1801,7 @@ export class Store<S extends AnySchema> {
     const rollback = this.graph.snapshot();
     const intent = options.intent ?? "Apply a change";
     const lineage = lineageOf(options.lineage);
-    const recorded = primitives.map(normalize);
+    const recorded = this.asSplices(primitives, options.base).map(normalize);
     const ops: Operation[] = [];
     if (recorded.length > 0) {
       const op: Operation = {
@@ -1835,7 +1869,7 @@ export class Store<S extends AnySchema> {
   ): UndoPreview<S> {
     const check = this.canUndo(batchIds);
     if (!check.ok) return { ok: false, check };
-    const primitives = undoPrimitives(check.ops);
+    const primitives = undoPrimitives(check.ops, this.log.all());
     const writes = new Set<string>();
     for (const op of check.ops) for (const id of op.writes) writes.add(id);
     return {
@@ -1926,7 +1960,7 @@ export class Store<S extends AnySchema> {
     const ops: Operation[] = [];
     const kept = this.log.length;
 
-    for (const target of [...check.ops].sort((a, b) => b.seq - a.seq)) {
+    for (const { op: target, primitives } of undoneInverses(this.log.all(), check.ops)) {
       const op: Operation = {
         id: this.nextId(),
         seq: this.log.length,
@@ -1935,7 +1969,7 @@ export class Store<S extends AnySchema> {
         intent: `Undo: ${target.intent}`,
         ...given("batchIntent", options.intent),
         mutation: null,
-        primitives: inverseOf(target),
+        primitives,
         reads: target.reads,
         writes: target.writes,
         at: this.now(),

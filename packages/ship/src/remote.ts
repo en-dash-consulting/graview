@@ -1551,7 +1551,7 @@ async function opening<S extends AnySchema>(
     provisional.add(result.batch);
     asked.set(result.batch, { calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}), ...(applyOptions?.via ? { via: applyOptions.via } : {}), ...lined(applyOptions) });
     // The revision of each field this changes, as this browser saw it — unless the person chose theirs over it.
-    const base = overriding ? [] : revisions.baseFor(result.ops, earlier);
+    const base = overriding ? [] : revisions.baseFor(result.ops, earlier, (node, field) => store.collaborative(node, field));
     answers.set(
       result.batch,
       track(

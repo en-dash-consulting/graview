@@ -18,7 +18,8 @@ import type { FieldSpec } from "./schema.js";
 type ZodLike = { readonly _zod?: { readonly def?: Record<string, unknown> } };
 const defOf = (schema: unknown): Record<string, unknown> | undefined => (schema as ZodLike | undefined)?._zod?.def;
 
-const DATE = /^\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$$/;
+const COLLABORATIVE = Symbol.for("@graview/core:collaborative");
+const DATE =/^\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$$/;
 
 /** One zod field as a document field, or why it cannot be one. */
 export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { readonly why: string } {
@@ -43,7 +44,11 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
   // Another app's address (FR-171): `appLinkField()`.
   if (isAppLinkField(schema)) return { spec: { type: "app-link", ...base } };
   // Prose written in Markdown (FR-180): `markdownField()`.
-  if (isMarkdownField(schema)) return { spec: { type: "text", format: "markdown", ...base } };
+  // Typed together or not, where the declaration marked it so against what the document's type says by default (Roadmap f-collab-text): a text is, a string is not.
+  let mark: unknown;
+  for (let at = defOf(schema), depth = 0; at && mark === undefined && depth < 4; at = defOf(at["innerType"]), depth++) mark = (at as Record<symbol, unknown>)[COLLABORATIVE];
+  const together = (type: "text" | "string") => (mark !== undefined && (mark === 1) !== (type === "text") ? { collaborative: mark === 1 } : {});
+  if (isMarkdownField(schema)) return { spec: { type: "text", format: "markdown", ...base, ...together("text") } };
   // A phone, a place or a duration: `phoneField()`, `placeField()`, `durationField()`.
   const typed = typedFieldOf(schema);
   if (typed) return { spec: { type: typed, ...base } };
@@ -55,7 +60,7 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
       if (format === "date") return { spec: { type: "date", ...base } };
       if (format === "datetime" || checks.some((check) => check?.["fn"] === isMoment)) return { spec: { type: "datetime", ...base } };
       if (checks.some((check) => check?.["format"] === "regex" && DATE.test(String((check?.["pattern"] as RegExp | undefined)?.source ?? "")))) return { spec: { type: "date", ...base } };
-      return { spec: { type: "string", ...base } };
+      return { spec: { type: "string", ...base, ...together("string") } };
     }
     case "number": {
       // Its range, where the declaration bounds it inclusively (FR-114): `.min(1).max(5)`, `.multipleOf(0.5)`.

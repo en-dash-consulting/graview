@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1150,
+  "gzipped": 150,
+  "changeset": "text-is-typed-together.md",
+  "note": "Raised when text came to be typed together (collaborative text, phase 2): only the store's hooks are up front — registering `type-text` once `@graview/core/typing` is loaded, the field writers it rides, a whole write and an undo handed to the hooks — while the act, the merge and the transform load with `@graview/core/typing`. Measured at 553_218 / 192_485 against a budget of 552_167 / 192_546: 1_051 more minified."
+}

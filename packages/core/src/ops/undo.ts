@@ -1,4 +1,6 @@
 import { GraphError } from "../graph/graph.js";
+import type { Primitive } from "../graph/primitives.js";
+import { TYPING } from "../text/typing-hook.js";
 import { inverseOf } from "./inverse.js";
 import type { LogReading } from "./log.js";
 import type { Operation } from "./types.js";
@@ -170,13 +172,17 @@ export function checkUndo(
    * it is never offered as a batch to include; it simply does not block.
    */
   const seqOf = new Map(log.all().map((op) => [op.id, op.seq]));
+  const targetPrimitives = ops.flatMap((op) => op.primitives);
   const blockedBy: UndoBlock[] = [];
   for (const op of log.all()) {
     if (op.seq <= earliest) continue;
     if (targets.has(op.batch)) continue;
     if (undone.has(op.id)) continue;
     if (op.undoes !== undefined && (seqOf.get(op.undoes) ?? -1) > earliest) continue;
-    const overlap = op.reads.filter((id) => writes.has(id));
+    // Typing on text the undo only typed stands aside, where `@graview/core/typing` carries the undo over it; text written whole since blocks (`aside`).
+    const typed = TYPING.aside?.(targetPrimitives, op);
+    if (typed === true) continue;
+    const overlap = [...new Set([...op.reads.filter((id) => writes.has(id)), ...(typed ?? [])])];
     if (overlap.length > 0) blockedBy.push({ op, overlap });
   }
 
@@ -215,8 +221,21 @@ export function checkUndo(
 /**
  * The primitives an undo would apply: each op's inverse, newest first, so
  * dependent writes come apart in the order they went together. (An op's
- * inverse is its own primitives already reversed: `inverseOf`.)
+ * inverse is its own primitives already reversed: `inverseOf`.) Given the
+ * log they are in, each splice is carried over the typing since
+ * (`undoneInverses`), as the store's undo puts it back.
  */
-export function undoPrimitives(ops: readonly Operation[]) {
+export function undoPrimitives(ops: readonly Operation[], log?: readonly Operation[]): Primitive[] {
+  if (log) return undoneInverses(log, ops).flatMap((one) => [...one.primitives]);
   return [...ops].sort((a, b) => b.seq - a.seq).flatMap((op) => inverseOf(op));
+}
+
+/**
+ * WHAT EACH OP OF AN UNDO PUTS BACK, newest first, as the store appends
+ * them: its inverse — with each splice carried over the typing on its field
+ * since, where `@graview/core/typing` is loaded, so an undo of one person's
+ * typing takes back only their words.
+ */
+export function undoneInverses(log: readonly Operation[], ops: readonly Operation[]): { readonly op: Operation; readonly primitives: readonly Primitive[] }[] {
+  return TYPING.undone ? TYPING.undone(log, ops) : [...ops].sort((a, b) => b.seq - a.seq).map((op) => ({ op, primitives: inverseOf(op) }));
 }
