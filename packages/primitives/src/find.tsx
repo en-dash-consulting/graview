@@ -56,6 +56,8 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
   const violations = useViolations<S>();
   const flag = useKit().marks.flag;
   const input = useRef<HTMLInputElement>(null);
+  // Where the keyboard waits between Enter and the place standing (see `hold`).
+  const holder = useRef<HTMLSpanElement>(null);
   const strip = useId();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string | null>(null);
@@ -154,7 +156,7 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
     const look = () => {
       const place = document.querySelector<HTMLElement>(`[data-graview-view="aggregate:${CSS.escape(kind)}"]`);
       const at = document.activeElement;
-      const free = !at || at === document.body || at === document.documentElement || at === input.current || at === place;
+      const free = !at || at === document.body || at === document.documentElement || at === input.current || at === holder.current || at === place;
       if (!free) return;
       // The first the line draws: on a phone it folds Sort into "Arrange", and a folded control takes no keys.
       const line = [...(place?.querySelectorAll<HTMLElement>('[role="group"][aria-label="Arrange"] :is(button, input)') ?? [])].find((one) => one.checkVisibility?.() ?? true);
@@ -169,9 +171,29 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
        */
       if (place && place.tabIndex >= 0 && at !== place) place.focus({ preventScroll: true });
       if (++frames < 240) requestAnimationFrame(look);
+      // The place never stood: the keyboard is let go, and the root gives it back to the box.
+      else if (document.activeElement === holder.current) holder.current?.blur();
     };
     requestAnimationFrame(look);
   }, [view]);
+
+  /*
+   * NOT ONE FRAME IN THE BOX (0.1.48). The keys went to the place on the
+   * first frame it stood, but Enter let them go on nothing until then, and a
+   * key pressed in that frame — a person typing the place's acts key
+   * straight after Enter — still landed in the words. So Enter on a kind or
+   * a picture moves the keyboard at once, in the same press: onto the place
+   * where it already stands, else onto a holder here that says where it is
+   * going, until the place does.
+   */
+  const hold = (kind: string, going: string) => {
+    const place = document.querySelector<HTMLElement>(`[data-graview-view="aggregate:${CSS.escape(kind)}"]`);
+    if (place && place.tabIndex >= 0) return place.focus({ preventScroll: true });
+    const waiting = holder.current;
+    if (!waiting) return input.current?.blur();
+    waiting.setAttribute("aria-label", going);
+    waiting.focus({ preventScroll: true });
+  };
 
   const highlight = (row: Row | AskRow | undefined) => {
     if (!row) return;
@@ -221,11 +243,13 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
          */
         setView((stop) => withJackIn(withOverview(stop, false), kindCardId(hit.kind), { ownPicture: true }));
         landOn.current = hit.kind;
-        break;
+        setOpen(false);
+        return hold(hit.kind, `Opening ${hit.label}…`);
       case "place":
         setView((stop) => withPicture(stop, hit.kind, hit.as));
         landOn.current = hit.kind;
-        break;
+        setOpen(false);
+        return hold(hit.kind, `Opening ${hit.title}…`);
       case "rule": {
         const named = violations.filter((violation) => violation.invariant === hit.name).flatMap((violation) => violation.nodeIds);
         setView((stop) => withSelection(stop, [...new Set(named)]));
@@ -368,6 +392,8 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
       <span role="status" aria-live="polite" style={VISUALLY_HIDDEN} data-testid="find-count">
         {q.trim() ? announce : ""}
       </span>
+      {/* Where the keyboard waits between Enter on a kind and its place standing: never the box. */}
+      <span ref={holder} tabIndex={-1} role="status" style={VISUALLY_HIDDEN} data-testid="find-landing" />
       <div
         {...popover.pane}
         id={strip}
