@@ -97,6 +97,10 @@
       "types": "./dist/field-sight.d.ts",
       "default": "./dist/field-sight.js"
     },
+    "./typing": {
+      "types": "./dist/typing.d.ts",
+      "default": "./dist/typing.js"
+    },
     "./search": {
       "types": "./dist/search.d.ts",
       "default": "./dist/search.js"

@@ -1,6 +1,6 @@
 {
   "budget": "a visitor's form alone",
-  "minified": 7500,
-  "gzipped": 2700,
-  "note": "Raised when text came to be typed together (collaborative text, phase 2): the `type-text` act every store answers to, a whole write over a field typed together merged as a splice (`text/since.ts`, `transformSplices` and `diffSplice` now up front), the mark that says which fields are (`schema/collaborative.ts`), and an undo that carries a person's typing over what others typed since (`undoneInverses`). The store draws the form, so this is up front. Measured at 389_674 / 149_241 against a budget of 382_300 / 146_600: 7_374 / 2_641 more."
+  "minified": 1150,
+  "gzipped": 400,
+  "note": "Raised when text came to be typed together (collaborative text, phase 2): only the store's hooks are up front — registering `type-text` once `@graview/core/typing` is loaded, the field writers it rides, a whole write and an undo handed to the hooks — while the act, the merge and the transform load with `@graview/core/typing`. The store draws the form. Measured at 383_386 / 146_961 against a budget of 382_300 / 146_600: 1_086 / 361 more."
 }

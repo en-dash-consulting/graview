@@ -1,7 +1,6 @@
 import { fileKindOf } from "../schema/files.js";
 import { isAppLinkField } from "../schema/app-link.js";
 import { isMarkdownField } from "../schema/markdown.js";
-import { isCollaborativeField } from "../schema/collaborative.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
 import { descriptionOf } from "../schema/zod.js";
 import { isMoment } from "../days.js";
@@ -19,7 +18,8 @@ import type { FieldSpec } from "./schema.js";
 type ZodLike = { readonly _zod?: { readonly def?: Record<string, unknown> } };
 const defOf = (schema: unknown): Record<string, unknown> | undefined => (schema as ZodLike | undefined)?._zod?.def;
 
-const DATE = /^\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$$/;
+const COLLABORATIVE = Symbol.for("@graview/core:collaborative");
+const DATE =/^\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$$/;
 
 /** One zod field as a document field, or why it cannot be one. */
 export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { readonly why: string } {
@@ -44,8 +44,10 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
   // Another app's address (FR-171): `appLinkField()`.
   if (isAppLinkField(schema)) return { spec: { type: "app-link", ...base } };
   // Prose written in Markdown (FR-180): `markdownField()`.
-  // Typed together, where that is not what the document's type says by default (Roadmap f-collab-text): a text is, a string is not.
-  const together = (type: "text" | "string") => (isCollaborativeField(schema) !== (type === "text") ? { collaborative: type !== "text" } : {});
+  // Typed together or not, where the declaration marked it so against what the document's type says by default (Roadmap f-collab-text): a text is, a string is not.
+  let mark: unknown;
+  for (let at = defOf(schema), depth = 0; at && mark === undefined && depth < 4; at = defOf(at["innerType"]), depth++) mark = (at as Record<symbol, unknown>)[COLLABORATIVE];
+  const together = (type: "text" | "string") => (mark !== undefined && (mark === 1) !== (type === "text") ? { collaborative: mark === 1 } : {});
   if (isMarkdownField(schema)) return { spec: { type: "text", format: "markdown", ...base, ...together("text") } };
   // A phone, a place or a duration: `phoneField()`, `placeField()`, `durationField()`.
   const typed = typedFieldOf(schema);

@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page",
-  "minified": 7000,
-  "gzipped": 2100,
+  "minified": 1150,
+  "gzipped": 150,
   "changeset": "text-is-typed-together.md",
-  "note": "Raised when text came to be typed together (collaborative text, phase 2): the `type-text` act every store answers to, a whole write over a field typed together merged as a splice (`text/since.ts`, `transformSplices` and `diffSplice` now up front), the mark that says which fields are (`schema/collaborative.ts`), and an undo that carries a person's typing over what others typed since (`undoneInverses`). The store is on every page, so this is up front. Measured at 607_880 / 211_723 against a budget of 600_998 / 209_747: 6_882 / 1_976 more."
+  "note": "Raised when text came to be typed together (collaborative text, phase 2): only the store's hooks are up front — registering `type-text` once `@graview/core/typing` is loaded, the field writers it rides, a whole write and an undo handed to the hooks — while the act, the merge and the transform load with `@graview/core/typing`, which a server and a focused editor load. Measured at 602_075 / 209_622 against a budget of 600_998 / 209_747: 1_077 more minified."
 }

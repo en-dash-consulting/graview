@@ -1,6 +1,6 @@
 import { GraphError } from "../graph/graph.js";
 import type { Primitive } from "../graph/primitives.js";
-import { carried, splicesOn, writesWhole } from "../text/since.js";
+import { TYPING } from "../text/typing-hook.js";
 import { inverseOf } from "./inverse.js";
 import type { LogReading } from "./log.js";
 import type { Operation } from "./types.js";
@@ -173,25 +173,16 @@ export function checkUndo(
    */
   const seqOf = new Map(log.all().map((op) => [op.id, op.seq]));
   const targetPrimitives = ops.flatMap((op) => op.primitives);
-  const wholes = (node: string, field: string) => targetPrimitives.some((one) => writesWhole(one, node, field));
-  const spliced = targetPrimitives.flatMap((one) => (one.op === "splice-text" ? [[one.id, one.field] as const] : []));
   const blockedBy: UndoBlock[] = [];
   for (const op of log.all()) {
     if (op.seq <= earliest) continue;
     if (targets.has(op.batch)) continue;
     if (undone.has(op.id)) continue;
     if (op.undoes !== undefined && (seqOf.get(op.undoes) ?? -1) > earliest) continue;
-    /*
-     * TYPING ON TEXT ONLY TYPED, SINCE, STANDS IN NOBODY'S WAY (Roadmap
-     * f-collab-text): a later op that only splices, into fields the undone
-     * ops wrote no other way than by splicing, read the record for its
-     * text, and the undo carries its inverse over that typing
-     * (`undoneInverses`). Text written whole since — or the record taken
-     * out — still blocks an undo of typing into it, whatever that op read.
-     */
-    if (op.primitives.length > 0 && op.primitives.every((one) => one.op === "splice-text" && !wholes(one.id, one.field))) continue;
-    const overwrote = spliced.filter(([node, field]) => op.primitives.some((one) => writesWhole(one, node, field))).map(([node]) => node);
-    const overlap = [...new Set([...op.reads.filter((id) => writes.has(id)), ...overwrote])];
+    // Typing on text the undo only typed stands aside, where `@graview/core/typing` carries the undo over it; text written whole since blocks (`aside`).
+    const typed = TYPING.aside?.(targetPrimitives, op);
+    if (typed === true) continue;
+    const overlap = [...new Set([...op.reads.filter((id) => writes.has(id)), ...(typed ?? [])])];
     if (overlap.length > 0) blockedBy.push({ op, overlap });
   }
 
@@ -241,33 +232,10 @@ export function undoPrimitives(ops: readonly Operation[], log?: readonly Operati
 
 /**
  * WHAT EACH OP OF AN UNDO PUTS BACK, newest first, as the store appends
- * them: its inverse, with each splice in it carried over every splice of
- * the same field that came after it (Roadmap f-collab-text) — the rest of
- * its own op, the log since, and what the undo has put back already. So an
- * undo of one person's typing takes back only their words: text somebody
- * else typed since stays where it went, and text of theirs somebody else
- * already deleted shrinks out of what is taken back.
+ * them: its inverse — with each splice carried over the typing on its field
+ * since, where `@graview/core/typing` is loaded, so an undo of one person's
+ * typing takes back only their words.
  */
 export function undoneInverses(log: readonly Operation[], ops: readonly Operation[]): { readonly op: Operation; readonly primitives: readonly Primitive[] }[] {
-  const putBack: Primitive[] = [];
-  return [...ops]
-    .sort((a, b) => b.seq - a.seq)
-    .map((op) => {
-      const inverse = inverseOf(op);
-      if (!inverse.some((one) => one.op === "splice-text")) {
-        putBack.push(...inverse);
-        return { op, primitives: inverse };
-      }
-      const later = log.filter((one) => one.seq > op.seq).flatMap((one) => one.primitives);
-      const count = op.primitives.length;
-      const out: Primitive[] = [];
-      inverse.forEach((one, at) => {
-        if (one.op !== "splice-text") return void out.push(one);
-        const since = splicesOn([...op.primitives.slice(count - at), ...later, ...putBack, ...out], one.id, one.field);
-        const splice = carried(one, since);
-        if (splice.removed !== "" || splice.inserted !== "") out.push({ op: "splice-text", id: one.id, field: one.field, ...splice });
-      });
-      putBack.push(...out);
-      return { op, primitives: out };
-    });
+  return TYPING.undone ? TYPING.undone(log, ops) : [...ops].sort((a, b) => b.seq - a.seq).map((op) => ({ op, primitives: inverseOf(op) }));
 }

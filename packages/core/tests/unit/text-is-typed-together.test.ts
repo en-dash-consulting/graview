@@ -16,6 +16,7 @@ import {
   type Principal,
 } from "../../src/index.js";
 import "../../src/field-sight.js";
+import "../../src/typing.js";
 import { compileDocument } from "../../src/check.js";
 import { describeApp } from "../../src/cli/describe.js";
 
@@ -157,7 +158,10 @@ describe("text is typed together", () => {
     expect(first).toMatchObject({ op: "patch-node", id: "note:one", after: { body: "H" } });
     expect(second).toEqual({ op: "splice-text", id: "note:one", field: "body", at: 1, removed: "", inserted: "i" });
     expect(text(s)).toBe("Hi");
-    expect(refusalOf(catching(() => type(store({}), ana, { at: 2, insert: "x" })))).toMatchObject({ reason: "invalid" });
+    // Into no text, a keystroke is the whole text wherever it said it was.
+    const anywhere = store({});
+    type(anywhere, ana, { at: 2, insert: "x" });
+    expect(text(anywhere)).toBe("x");
   });
 
   it("undo out of order takes back only that person's run", () => {

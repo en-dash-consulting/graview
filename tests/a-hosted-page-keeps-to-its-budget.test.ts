@@ -134,8 +134,8 @@ describe("a hosted page", () => {
     // 978 KB since a declared row came to name its record where its blocks do not, and a key's abbreviation to be said as its letters: 1_237 B more on the scene face.
     // 979 KB since the formats came to fail closed for 1.0: a primitive or a typed value a build does not know refused where ops are folded, an author's kind read through `authorKindOf`, two refusal codes more: the scene face measured 1_002_138 B, 666 over 978.
     // 981 KB since a text field came to take a splice (collaborative text, phase 1): the `splice-text` primitive folded, undone, served and read back wherever a patch is: the scene face measured 1_004_074 B, 1_578 over 979.
-    // 988 KB since text came to be typed together (collaborative text, phase 2): the `type-text` act, a whole write merged as a splice, the collaborative mark and an undo carried over others' typing: the scene face measured 1_011_131 B, 7_027 more than before it (1_004_104).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(988 * 1024);
+    // 983 KB since text came to be typed together (collaborative text, phase 2): the store's hooks for `@graview/core/typing`, which carries the act and the merge on demand: the scene face measured 1_005_441 B, 1_337 more than before it (1_004_104).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(983 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

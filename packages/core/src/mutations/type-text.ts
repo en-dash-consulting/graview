@@ -4,12 +4,13 @@ import { ActRefusal } from "../refused.js";
 import { collaborativeFieldOf } from "../schema/collaborative.js";
 import { labelOf, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
-import { carried, type TextThen } from "../text/since.js";
+import { NEVER_WRITTEN } from "../ops/revisions.js";
+import { carried, textAt } from "../text/since.js";
+import { TYPE_TEXT, type TypingStore } from "../text/typing-hook.js";
 import { derivedVia, fieldsWrittenBy, subjectKindsOf } from "./derive-edits.js";
 import type { AnyMutationDefinition } from "./types.js";
 
-/** The name of the act that types into a text field typed together (Roadmap f-collab-text). */
-export const TYPE_TEXT = "type-text";
+export { TYPE_TEXT };
 
 /** What a keystroke says: at `at` in the field's text as its sender last read it (revision `rev`), `remove` characters out and `insert` in. */
 export interface TypeTextArgs {
@@ -42,10 +43,14 @@ export interface TypeTextArgs {
  * not declare, an offset or a length the text read then does not have, and
  * a keystroke made against text the field no longer has any history of —
  * written whole since, or behind the log's horizon — which its sender reads
- * again. A field kept from the caller is refused before any of that, as an
- * argument the act does not take, whatever it holds (the store's).
+ * again. A field kept from the caller reads to it as holding no text, so
+ * its keystroke is a whole write wherever it was, which field sight refuses
+ * as an argument the act does not take, alike whatever the field holds.
+ *
+ * `@graview/core/typing`'s: a store registers it once that is loaded.
  */
-export function typeTextMutation<S extends AnySchema>(schema: S, textThen: (node: string, field: string, rev: number | undefined) => TextThen | undefined): AnyMutationDefinition<S> {
+export function typeTextMutation<S extends AnySchema>(store: TypingStore): AnyMutationDefinition<S> {
+  const schema = store.schema as S;
   const refuse = (sentence: string): never => {
     throw new ActRefusal(sentence, "invalid");
   };
@@ -72,13 +77,13 @@ export function typeTextMutation<S extends AnySchema>(schema: S, textThen: (node
       }
       if (remove === 0 && insert === "") return;
       const text = record[field];
-      // THE FIRST KEYSTROKE into a field with no text yet writes the whole of it, from nothing to what was typed.
+      // THE FIRST KEYSTROKE into a field with no text yet writes the whole of it, from nothing to what was typed, wherever it said it was.
       if (typeof text !== "string" || text === "") {
-        if (at !== 0 || remove !== 0) refuse(`${field} holds no text yet: type at 0, taking nothing out`);
         ctx.patchNode(node, { [field]: insert });
         return;
       }
-      const read = textThen(node, field, rev);
+      const current = (store.graph.getNode(node) as Record<string, unknown> | undefined)?.[field];
+      const read = rev === undefined ? { then: text, since: [] } : textAt(store.log.all(), store.log.horizon, node, field, Math.max(rev, NEVER_WRITTEN), current);
       if (!read) refuse(`${field} was written whole since revision ${rev}: read it again and type over what it holds now`);
       const { then, since } = read!;
       if (at + remove > then.length) refuse(`${field} held ${then.length} characters at revision ${rev ?? "now"}, so there is nothing at ${at}${remove > 0 ? `–${at + remove}` : ""} to type over`);

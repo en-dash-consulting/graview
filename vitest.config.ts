@@ -29,6 +29,7 @@ export default defineConfig({
       "@graview/core/markdown": fileURLToPath(new URL("./packages/core/src/markdown.ts", import.meta.url)),
       "@graview/core/seat": fileURLToPath(new URL("./packages/core/src/seat.ts", import.meta.url)),
       "@graview/core/field-sight": fileURLToPath(new URL("./packages/core/src/field-sight.ts", import.meta.url)),
+      "@graview/core/typing": fileURLToPath(new URL("./packages/core/src/typing.ts", import.meta.url)),
       "@graview/core/provenance": fileURLToPath(new URL("./packages/core/src/provenance.ts", import.meta.url)),
       "@graview/core/history": fileURLToPath(new URL("./packages/core/src/history.ts", import.meta.url)),
       "@graview/core/past": fileURLToPath(new URL("./packages/core/src/past.ts", import.meta.url)),

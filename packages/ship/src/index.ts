@@ -1,5 +1,7 @@
 // A host that serves seats judges a sight that hides a field (Roadmap f-field-sight): loaded here, so every store this server opens can.
 import "@graview/core/field-sight";
+// And merges text typed together (Roadmap f-collab-text): a keystroke carried over the log, a whole write as a splice, an undo per person.
+import "@graview/core/typing";
 export { createFileAdapter } from "./file-adapter.js";
 export type { FileAdapter } from "./file-adapter.js";
 export {
