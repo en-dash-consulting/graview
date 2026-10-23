@@ -53,7 +53,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.49
 
-Published October 23, 2026 · the current version
+Published October 23, 2026
 
 An app tidies itself overnight, judged by a model where one is lent; suggestions and lineage take their 1.0 shapes; every form asks in one order.
 
