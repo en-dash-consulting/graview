@@ -1,0 +1,7 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 150,
+  "gzipped": 100,
+  "changeset": "typing-together-converges-whatever-the-network-does.md",
+  "note": "Raised when the fuzz of the live protocol found five ways an undo of typing went wrong (collaborative text, phase 6): the store a form is drawn over reads an undo's target by the batch of the ops its rebase rolled back. Measured at 390_598 / 149_921 against 390_472 / 149_848 before it: 126 more minified, 73 gzipped."
+}
