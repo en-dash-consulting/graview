@@ -56,7 +56,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.52
 
-Published October 24, 2026 · the current version
+Published October 24, 2026
 
 A list exports as a CSV, just as it is shown, and a view hidden from the place menu leaves the bar.
 

@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.52)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version ()
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -847,7 +847,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.52
 
-Published October 24, 2026 · the current version
+Published October 24, 2026
 
 A list exports as a CSV, just as it is shown, and a view hidden from the place menu leaves the bar.
 
