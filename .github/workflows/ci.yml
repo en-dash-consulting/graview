@@ -28,7 +28,7 @@ jobs:
   # The tests, a third of the files each (vitest's own sharding).
   test:
     name: test (${{ matrix.shard }}/3)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -57,7 +57,7 @@ jobs:
 
   packages:
     name: typecheck, build and the tarballs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -111,7 +111,7 @@ jobs:
   # products consume the framework.
   scaffold:
     name: scaffold a project, install it, verify it, open it
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -138,7 +138,7 @@ jobs:
   # fails the build rather than the page.
   progression:
     name: photograph the progression
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -169,7 +169,7 @@ jobs:
   # page's budget in the tests. docs/first-load.md has the numbers.
   first-load:
     name: time the first load and a page switch
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -200,7 +200,7 @@ jobs:
   verify:
     if: always()
     needs: [test, packages, scaffold, progression, first-load]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Every job passed
@@ -219,7 +219,7 @@ jobs:
     # explain later. This asks for it while the change is still in front of
     # the person who made it.
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
