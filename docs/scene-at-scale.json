@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T05:47:06.489Z",
+  "at": "2026-10-24T06:50:42.496Z",
   "engine": "chromium",
   "slowdown": 4,
   "records": 1016,
@@ -10,27 +10,14 @@
       "commits": 0,
       "rendered": 0
     },
-    "the ground grid moves with the picture while it is dragged and does not jump when it is let go": {
-      "ok": true,
-      "latticeMoved": {
-        "x": -240,
-        "y": 80
-      },
-      "buildingMoved": {
-        "x": -240,
-        "y": 80
-      },
-      "latticeJumped": 0,
-      "buildingJumped": 0
-    },
     "a drag's own moves keep the main thread under 700 ms": {
       "ok": true,
-      "measured": 326,
+      "measured": 337,
       "budget": 700
     },
     "letting go of a drag draws the scene once and takes under 250 ms": {
       "ok": true,
-      "measured": 104,
+      "measured": 119,
       "budget": 250,
       "commits": 2,
       "renderedInCards": 0,
@@ -38,15 +25,57 @@
     },
     "the wheel's pan draws no card again and takes under 250 ms": {
       "ok": true,
-      "measured": 119,
+      "measured": 120,
       "budget": 250,
       "commits": 2
     },
     "entering a district of 250 records takes under 2000 ms": {
       "ok": true,
-      "measured": 1368,
+      "measured": 1208,
       "budget": 2000,
-      "elements": 3419
+      "elements": 3420
+    },
+    "every grid under the picture moves with it while it is dragged and does not jump when it is let go": {
+      "ok": true,
+      "the lattice, from altitude": {
+        "ok": true,
+        "gridMoved": {
+          "x": -240,
+          "y": 80
+        },
+        "thingMoved": {
+          "x": -240,
+          "y": 80
+        },
+        "gridJumped": 0,
+        "thingJumped": 0
+      },
+      "the fine measure, from altitude": {
+        "ok": true,
+        "gridMoved": {
+          "x": -240,
+          "y": 80
+        },
+        "thingMoved": {
+          "x": -240,
+          "y": 80
+        },
+        "gridJumped": 0,
+        "thingJumped": 0
+      },
+      "the fine measure, on the ground": {
+        "ok": true,
+        "gridMoved": {
+          "x": -160,
+          "y": 80
+        },
+        "thingMoved": {
+          "x": -160,
+          "y": 80
+        },
+        "gridJumped": 0,
+        "thingJumped": 0.000030517578125
+      }
     },
     "a drag on the ground over a board of 250 sets no React state": {
       "ok": true,
@@ -54,7 +83,7 @@
     },
     "letting go on the ground draws no card on the board again and takes under 220 ms": {
       "ok": true,
-      "measured": 99,
+      "measured": 100,
       "budget": 220,
       "renderedInCards": 0,
       "rendered": 61,
@@ -67,8 +96,8 @@
   },
   "measured": {
     "altitude": {
-      "moves": 326,
-      "release": 104,
+      "moves": 337,
+      "release": 119,
       "whileMoving": {
         "commits": 0,
         "rendered": 0,
@@ -84,9 +113,17 @@
           "x": -40,
           "y": 594.6
         },
+        "measure": {
+          "x": -120,
+          "y": 40
+        },
         "building": {
           "x": 497,
           "y": 781
+        },
+        "card": {
+          "x": -103.99996185302734,
+          "y": 642.5999755859375
         }
       },
       "during": {
@@ -94,9 +131,17 @@
           "x": -280,
           "y": 674.6
         },
+        "measure": {
+          "x": -360,
+          "y": 120
+        },
         "building": {
           "x": 257,
           "y": 861
+        },
+        "card": {
+          "x": -343.9999694824219,
+          "y": 722.5999755859375
         }
       },
       "after": {
@@ -104,14 +149,22 @@
           "x": -280,
           "y": 674.6
         },
+        "measure": {
+          "x": -360,
+          "y": 120
+        },
         "building": {
           "x": 257,
           "y": 861
+        },
+        "card": {
+          "x": -343.9999694824219,
+          "y": 722.5999755859375
         }
       }
     },
     "wheel": {
-      "wheel": 119,
+      "wheel": 120,
       "wheeled": {
         "commits": 2,
         "rendered": 73,
@@ -124,13 +177,13 @@
       "n": 250
     },
     "besideTheMap": {
-      "ms": 6099,
+      "ms": 5514,
       "note": "reported, not held: the relations' ribbons are routed here (ribbons.ts)"
     },
     "goIn": {
-      "ms": 1368,
+      "ms": 1208,
       "cards": 0,
-      "elements": 3419
+      "elements": 3420
     },
     "ground": {
       "groundMoving": {
@@ -138,7 +191,7 @@
         "rendered": 0,
         "inCards": 0
       },
-      "groundRelease": 99,
+      "groundRelease": 100,
       "groundLetGo": {
         "commits": 3,
         "rendered": 61,
@@ -148,7 +201,7 @@
   },
   "pageErrors": [],
   "reference": {
-    "ms": 81,
+    "ms": 83,
     "setOn": 87,
     "factor": 1
   },

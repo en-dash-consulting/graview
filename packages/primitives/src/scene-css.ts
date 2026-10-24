@@ -893,7 +893,8 @@ ${/* A RELATION THE BAND COULD NOT HOLD: a group with its count and first names,
   border: none;
   border-radius: inherit;
   background: none;
-  color: var(--graview-ink-muted);
+  ${/* In ink, not its muted tone: the card stands on the shelf, which recedes, and muted under that was 4.0:1 against its panel — a control's words need 4.5. */ ""}
+  color: var(--graview-ink);
   cursor: pointer;
   font: inherit;
   font-size: 0.875rem;

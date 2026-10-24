@@ -21,7 +21,7 @@ import { useReached } from "../../src/emphasis.js";
  */
 const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes" });
 const schema = createSchema([note]);
-const nodes = Array.from({ length: 30 }, (_, i) => ({ id: `n${i}`, kind: "note", label: `Note ${i}` }));
+const nodes = Array.from({ length: 30 }, (_, i) => ({ id: `n${i}`, kind: "note" as const, label: `Note ${i}` }));
 const store = new Store({ schema, mutations: [], snapshot: { nodes, edges: [] } });
 const views = createViews(schema);
 

@@ -4,7 +4,7 @@ Written by `scripts/verify-screen-reader.mjs` from the accessibility tree Chromi
 
 No system screen reader was turned on to write this. `scripts/voiceover-walk.mjs` listens to the same stops with real VoiceOver in Safari, when somebody chooses to.
 
-Claims: 59 of 59 hold. The verdict is `docs/screen-reader.json`.
+Claims: 66 of 66 hold. The verdict is `docs/screen-reader.json`.
 
 ## Roadmap: The bar
 
@@ -136,6 +136,9 @@ A Roadmap, region landmark
   (no name), alert
   A Roadmap, sectionheader
     Features, heading level 2
+    Add a feature, button, collapsed
+    Skip to the 146 features, button
+    Skip to arranging them, button
     A capability: considered, planned, being built, or shipped.
     Related:
     The part it lives in, link
@@ -179,158 +182,193 @@ A Roadmap, region landmark
       list, 7 items
         Choose Billing across apps, checkbox, not checked
         Billing across apps, link
-        Building · Cloud
+        Building
+        Cloud
         Choose Billing at scale, checkbox, not checked
         Billing at scale, link
-        Planned · Framework
+        Planned
+        Framework
         Choose Billing for strangers, checkbox, not checked
         Billing for strangers, link
-        Shipped · Framework
+        Shipped
+        Framework
         … and 4 more
     C, region landmark
       C, heading level 2
       list, 22 items
         Choose Calendar across apps, checkbox, not checked
         Calendar across apps, link
-        Planned · Framework
+        Planned
+        Framework
         Choose Calendar at scale, checkbox, not checked
         Calendar at scale, link
-        Considering · Cloud
+        Considering
+        Cloud
         Choose Calendar for strangers, checkbox, not checked
         Calendar for strangers, link
-        Shipped · Cloud
+        Shipped
+        Cloud
         … and 19 more
     E, region landmark
       E, heading level 2
       list, 8 items
         Choose Export across apps, checkbox, not checked
         Export across apps, link
-        Considering · Cloud
+        Considering
+        Cloud
         Choose Export at scale, checkbox, not checked
         Export at scale, link
-        Building · Framework
+        Building
+        Framework
         Choose Export for strangers, checkbox, not checked
         Export for strangers, link
-        Shipped · Framework
+        Shipped
+        Framework
         … and 5 more
     F, region landmark
       F, heading level 2
       list, 22 items
         Choose Files across apps, checkbox, not checked
         Files across apps, link
-        Planned · Framework
+        Planned
+        Framework
         Choose Files at scale, checkbox, not checked
         Files at scale, link
-        Considering · Framework
+        Considering
+        Framework
         Choose Files for strangers, checkbox, not checked
         Files for strangers, link
-        Shipped · Framework
+        Shipped
+        Framework
         … and 19 more
     H, region landmark
       H, heading level 2
       list, 7 items
         Choose History across apps, checkbox, not checked
         History across apps, link
-        Building · Framework
+        Building
+        Framework
         Choose History at scale, checkbox, not checked
         History at scale, link
-        Planned · Framework
+        Planned
+        Framework
         Choose History for strangers, checkbox, not checked
         History for strangers, link
-        Shipped · Framework
+        Shipped
+        Framework
         … and 4 more
     I, region landmark
       I, heading level 2
       list, 15 items
         Choose Import across apps, checkbox, not checked
         Import across apps, link
-        Building · Cloud
+        Building
+        Cloud
         Choose Import at scale, checkbox, not checked
         Import at scale, link
-        Planned · Cloud
+        Planned
+        Cloud
         Choose Import for strangers, checkbox, not checked
         Import for strangers, link
-        Shipped · Cloud
+        Shipped
+        Cloud
         … and 12 more
     L, region landmark
       L, heading level 2
       list, 7 items
         Choose Lenses across apps, checkbox, not checked
         Lenses across apps, link
-        Building · Framework
+        Building
+        Framework
         Choose Lenses at scale, checkbox, not checked
         Lenses at scale, link
-        Planned · Framework
+        Planned
+        Framework
         Choose Lenses for strangers, checkbox, not checked
         Lenses for strangers, link
-        Shipped · Cloud
+        Shipped
+        Cloud
         … and 4 more
     O, region landmark
       O, heading level 2
       list, 7 items
         Choose Offline across apps, checkbox, not checked
         Offline across apps, link
-        Planned · Framework
+        Planned
+        Framework
         Choose Offline at scale, checkbox, not checked
         Offline at scale, link
-        Considering · Framework
+        Considering
+        Framework
         Choose Offline for strangers, checkbox, not checked
         Offline for strangers, link
-        Shipped · Framework
+        Shipped
+        Framework
         … and 4 more
     R, region landmark
       R, heading level 2
       list, 14 items
         Choose Roles across apps, checkbox, not checked
         Roles across apps, link
-        Planned · Cloud
+        Planned
+        Cloud
         Choose Roles at scale, checkbox, not checked
         Roles at scale, link
-        Considering · Cloud
+        Considering
+        Cloud
         Choose Roles for strangers, checkbox, not checked
         Roles for strangers, link
-        Shipped · Framework
+        Shipped
+        Framework
         … and 11 more
     S, region landmark
       S, heading level 2
       list, 22 items
         Choose Search across apps, checkbox, not checked
         Search across apps, link
-        Considering · Framework
+        Considering
+        Framework
         Choose Search at scale, checkbox, not checked
         Search at scale, link
-        Building · Framework
+        Building
+        Framework
         Choose Search for strangers, checkbox, not checked
         Search for strangers, link
-        Shipped · Framework
+        Shipped
+        Framework
         … and 19 more
     T, region landmark
       T, heading level 2
       list, 7 items
         Choose Themes across apps, checkbox, not checked
         Themes across apps, link
-        Building · Cloud
+        Building
+        Cloud
         Choose Themes at scale, checkbox, not checked
         Themes at scale, link
-        Planned · Cloud
+        Planned
+        Cloud
         Choose Themes for strangers, checkbox, not checked
         Themes for strangers, link
-        Shipped · Cloud
+        Shipped
+        Cloud
         … and 4 more
     U, region landmark
       U, heading level 2
       list, 8 items
         Choose Undo across apps, checkbox, not checked
         Undo across apps, link
-        Building · Framework
+        Building
+        Framework
         Choose Undo at scale, checkbox, not checked
         Undo at scale, link
-        Planned · Framework
+        Planned
+        Framework
         Choose Undo for strangers, checkbox, not checked
         Undo for strangers, link
-        Shipped · Framework
+        Shipped
+        Framework
         … and 5 more
-  Add a feature, button, collapsed
 ```
 
 ## Roadmap: A record page
@@ -350,10 +388,14 @@ A Roadmap, region landmark
   (no name), status
   (no name), alert
   A Roadmap, sectionheader
-    FEATURES, link
+    A Roadmap · You are here, navigation landmark
+      list, 2 items
+        FEATURES, link
+        BILLING ACROSS APPS
     Billing across apps, heading level 2
     building
     In the scene, link
+    Notify me when this changes, button
     Seen in:
     Roadmap, link
     Roadmap, in the scene, link
@@ -376,8 +418,14 @@ A Roadmap, region landmark
     Brief 10, link
   Sort and filter the briefs about it, link
   What can be done, heading level 2
-  Change the feature, button, collapsed
-  Show 5 more, button, collapsed
+  What can be done, toolbar
+    Link a brief, button, collapsed
+    Link a release, button, collapsed
+    Link a request, button, collapsed
+    Link a feature (depends on), button, collapsed
+    Link a feature (pairs with), button, collapsed
+    Change the feature, button, collapsed
+    Show 6 more, button, collapsed
 ```
 
 ## Roadmap: An act's form
@@ -436,7 +484,7 @@ Change the feature, button, collapsed
 
 ## Roadmap: A columns lens
 
-The Roadmap board: features in columns by stage, reached from the home by the keyboard; a card moved with its Move… menu.
+The Roadmap board: features in columns by stage, reached from the home by the keyboard; a card carried by the keyboard, moved from its menu's Move to ›, and dragged.
 
 **Focus after following the Roadmap link**
 
@@ -453,68 +501,65 @@ A Roadmap, region landmark
   (no name), status
   A Roadmap, sectionheader
     Roadmap, heading level 2
-    146 features
-    .
+    146 features.
     All features as a list, link
   Roadmap, group
-    (no name), status
-    A Roadmap · Features by stage, region landmark
-      Roadmap · Considering, 19, region landmark
-        Considering 19, heading level 3
-        list, 19 items
-          Themes without a build, link
-          Considering
-          Framework
-          Choose Themes without a build, checkbox, not checked
-          Move “Themes without a build” to another column, button, collapsed
-          Charts without a build, link
-          Considering
-          Framework
-          Choose Charts without a build, checkbox, not checked
-          Move “Charts without a build” to another column, button, collapsed
-          … and 17 more
-      Roadmap · Planned, 19, region landmark
-        Planned 19, heading level 3
-        list, 19 items
-          Forms without a build, link
-          Planned
-          Framework
-          Choose Forms without a build, checkbox, not checked
-          Move “Forms without a build” to another column, button, collapsed
-          Comments without a build, link
-          Planned
-          Cloud
-          Choose Comments without a build, checkbox, not checked
-          Move “Comments without a build” to another column, button, collapsed
-          … and 17 more
-      Roadmap · Building, 18, region landmark
-        Building 18, heading level 3
-        list, 18 items
-          Rules without a build, link
-          Building
-          Framework
-          Choose Rules without a build, checkbox, not checked
-          Move “Rules without a build” to another column, button, collapsed
-          Files without a build, link
-          Building
-          Framework
-          Choose Files without a build, checkbox, not checked
-          Move “Files without a build” to another column, button, collapsed
-          … and 16 more
-      Roadmap · Shipped, 90, region landmark
-        Shipped 90, heading level 3
-        list, 90 items
-          Filters that stay usable, link
-          Shipped
-          Framework
-          Choose Filters that stay usable, checkbox, not checked
-          Move “Filters that stay usable” to another column, button, collapsed
-          Undo that stay usable, link
-          Shipped
-          Cloud
-          Choose Undo that stay usable, checkbox, not checked
-          Move “Undo that stay usable” to another column, button, collapsed
-          … and 88 more
+    Arrange, group
+      Sort, button, collapsed
+      Filter, button, collapsed
+      Find
+      Find, search text
+    Roadmap, group
+      (no name), status
+      A Roadmap · Features by stage, region landmark
+        Roadmap · Considering, 19, region landmark
+          Considering 19, heading level 3
+          list, 19 items
+            Themes without a build, link
+            Considering
+            Framework
+            Choose Themes without a build, checkbox, not checked
+            Charts without a build, link
+            Considering
+            Framework
+            Choose Charts without a build, checkbox, not checked
+            … and 17 more
+        Roadmap · Planned, 19, region landmark
+          Planned 19, heading level 3
+          list, 19 items
+            Forms without a build, link
+            Planned
+            Framework
+            Choose Forms without a build, checkbox, not checked
+            Comments without a build, link
+            Planned
+            Cloud
+            Choose Comments without a build, checkbox, not checked
+            … and 17 more
+        Roadmap · Building, 18, region landmark
+          Building 18, heading level 3
+          list, 18 items
+            Rules without a build, link
+            Building
+            Framework
+            Choose Rules without a build, checkbox, not checked
+            Files without a build, link
+            Building
+            Framework
+            Choose Files without a build, checkbox, not checked
+            … and 16 more
+        Roadmap · Shipped, 90, region landmark
+          Shipped 90, heading level 3
+          list, 90 items
+            Filters that stay usable, link
+            Shipped
+            Framework
+            Choose Filters that stay usable, checkbox, not checked
+            Undo that stay usable, link
+            Shipped
+            Cloud
+            Choose Undo that stay usable, checkbox, not checked
+            … and 88 more
   Add a feature, heading level 2
   Put a feature on the roadmap.
   Name
@@ -539,23 +584,51 @@ A Roadmap, region landmark
   Add a feature, button
 ```
 
-**Focus after opening “Themes without a build”'s Move… menu**
+**Heard: picking up “Themes without a build” and carrying it a column on**
 
 ```text
-Planned, menuitem
+(assertive) Themes without a build, picked up. Considering, 1 of 19. Arrow keys move it, Space drops it, Escape puts it back.
+(assertive) Planned, 1 of 20.
 ```
 
-**Focus after choosing a column**
+**Focus after dropping it**
 
 ```text
-Move “Themes without a build” to another column, button, collapsed
+Themes without a build, link
 ```
 
-**Heard: after the move**
+**Heard: after the drop**
 
 ```text
 (polite) Moved “Themes without a build” to Planned.Undo
+(assertive) Themes without a build, dropped in Planned.
 (polite) Take back “Changed the stage of Themes without a build to Planned”
+```
+
+**Focus after opening its menu's Move to ›**
+
+```text
+Considering, button
+```
+
+**Focus after choosing a column from the menu**
+
+```text
+Themes without a build, link
+```
+
+**Heard: after the move from the menu**
+
+```text
+(polite) Moved “Themes without a build” to Considering.Undo
+(polite) Take back “Changed the stage of Themes without a build to Considering”
+```
+
+**Heard: after a drag**
+
+```text
+(polite) Moved “Charts without a build” to Planned.Undo
+(polite) Take back “Changed the stage of Charts without a build to Planned”
 ```
 
 ## Roadmap: A blocks lens
@@ -577,10 +650,8 @@ A Roadmap, region landmark
   (no name), status
   A Roadmap, sectionheader
     Up next, heading level 2
-    146 features
-    .
+    Being built
     All features as a list, link
-  Being built, heading level 3
   list, 4 items
     Rules without a build, link
     Building
@@ -617,42 +688,52 @@ A Roadmap, region landmark
   Add a feature, button
 ```
 
-## Roadmap: The Ask box
+## Roadmap: No Ask box
 
-The seat's box at the foot of the page, asked a question with no model lent.
+No field at the foot of the page, and no quick ask where no model is lent.
 
 **Read in order**
 
 ```text
-A Roadmap · Ask A Roadmap, region landmark
-  Ask A Roadmap, heading level 2
-  Ask A Roadmap, edit text
-```
-
-**Focus after asking**
-
-```text
-Ask A Roadmap, edit text
-```
-
-**Heard: after asking**
-
-```text
-(polite) I can answer about what's in this app. Open questions need AI, which isn't on here.
-```
-
-**The seat after the question**
-
-```text
-A Roadmap · Ask A Roadmap, region landmark
-  Ask A Roadmap, heading level 2
-  Move to the right, button
-  Close Ask A Roadmap, button
-  list, 2 items
-    How many features are being built?
-    I can answer about what's in this app. Open questions need AI, which isn't on here.
-  I can answer about what's in this app. Open questions need AI, which isn't on here.
-  Ask A Roadmap, edit text
+A Roadmap, region landmark
+  (no name), status
+  (no name), alert
+  (no name), status
+  A Roadmap, sectionheader
+    Up next, heading level 2
+    Being built
+    All features as a list, link
+  list, 4 items
+    Rules without a build, link
+    Building
+    Framework
+    Files without a build, link
+    Building
+    Framework
+    … and 2 more
+  14 more · all features, link
+  Add a feature, heading level 2
+  Put a feature on the roadmap.
+  Name
+  Name, edit text, required
+  Stage
+  Stage, —, pop-up button, collapsed
+    (no name), MenuListPopup
+      —, option
+      Considering, option
+      Planned, option
+      Building, option
+      Shipped, option
+  Layer
+  Layer, —, pop-up button, collapsed
+    (no name), MenuListPopup
+      —, option
+      Framework, option
+      Cloud, option
+      Both, option
+  Summary
+  Summary, edit text
+  Add a feature, button
 ```
 
 ## Roadmap: A change from someone else
@@ -695,6 +776,7 @@ The todo example's routed face, standalone: its own banner, main and footer.
 
 ```text
 (no name), banner landmark
+  Skip to the content, button
   Things, heading level 1
     Things, link
   Scene or Pages, group
@@ -738,7 +820,6 @@ The app’s places, navigation landmark
 Find anything, search landmark
 (no name), main landmark
 (no name), contentinfo landmark
-Ask Things, region landmark
 ```
 
 ## Things (todo): A list
@@ -757,6 +838,9 @@ Tasks, heading level 2
 (no name), main landmark
   (no name), sectionheader
     Tasks, heading level 2
+    Add a task, button, collapsed
+    Skip to the 10 tasks, button
+    Skip to arranging them, button
     One thing to do.
     Related:
     The list it is on, link
@@ -818,7 +902,6 @@ Tasks, heading level 2
       Pay the deposit, link
       Breaks a rule, image
       Aug 28
-  Add a task, button, collapsed
 ```
 
 ## Things (todo): A record page
@@ -840,6 +923,7 @@ Pay the deposit, heading level 1
     Pay the deposit, heading level 1
       Pay the deposit, button
     In the scene, link
+    Notify me when this changes, button
   "Pay the deposit" was due Aug 28, 2026
   Give it a new date …, button, collapsed
   Finish it, button
@@ -866,15 +950,16 @@ Pay the deposit, heading level 1
     The landlord holds the date for 48 hours once the deposit…, link
   (no name), sectionheader
     What can be done, heading level 2
-  Give it a new date …, button, collapsed
-  Finish it, button, collapsed
-  Note why this is here …, button, collapsed
-  Move it to another list …, button, collapsed
-  Rename …, button, collapsed
-  This has to happen first …, button, collapsed
-  Change the task …, button, collapsed
-  Block time for it …, button, collapsed
-  Show 5 more, button, collapsed
+  What can be done, toolbar
+    Give it a new date …, button, collapsed
+    Finish it, button, collapsed
+    Note why this is here …, button, collapsed
+    Move it to another list …, button, collapsed
+    Rename …, button, collapsed
+    This has to happen first …, button, collapsed
+    Change the task …, button, collapsed
+    Block time for it …, button, collapsed
+    Show 5 more, button, collapsed
 ```
 
 ## Things (todo): An act's form
@@ -907,19 +992,44 @@ Rename …, button, collapsed
 (polite) Take back “Rename to "Pay the deposit today"”
 ```
 
-## Things (todo): The Ask box
+## Things (todo): The quick ask
 
-The seat at the page's foot, asked what is late.
+⌘K on a task's page, lent a stub model, asked what is left.
 
 **Focus after asking**
 
 ```text
-Ask Things, edit text
+Ask a follow-up about Pay the deposit, pop-up button, collapsed
 ```
 
 **Heard: after asking**
 
 ```text
-(polite) Went to the overdue tasks. One task is overdue: Pay the deposit today.
-(polite) Take back “Rename to "Pay the deposit today"”
+(polite) 1 way to go on
+(polite) About Pay the deposit: an answer to “What is left?”, as drafted.
+```
+
+**The answer card**
+
+```text
+Answer about Pay the deposit, region landmark
+  About
+  Pay the deposit
+  Close, button
+  “
+  What is left?
+  ”
+  About Pay the deposit: an answer to “What is left?”, as drafted.
+  Proposed by AI, region landmark
+    Proposed by AI · What is left?
+    list, 3 items
+      Finish "Pay the deposit", checkbox, checked
+      Finish "Pay the deposit"
+      Archive Pay the deposit, checkbox, checked
+      Archive Pay the deposit
+      "Pay the deposit" waits for "Get the second quote", checkbox, checked
+      "Pay the deposit" waits for "Get the second quote"
+    Accept, button
+    Dismiss, button
+  Ask a follow-up about Pay the deposit, pop-up button, collapsed
 ```

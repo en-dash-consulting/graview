@@ -1,7 +1,7 @@
 {
   "budget": "the pages face alone",
-  "minified": 250,
+  "minified": 400,
   "gzipped": 150,
   "changeset": "the-scene-keeps-up-with-a-hand-on-a-large-app.md",
-  "note": "Raised when the scene came to keep up with a hand on a large app: the presence's `sharing` kept while it says the same, what a selection reaches worked out once per selection however many ask (`useReached`), and a record's connections reading the rules judged once (`useViolations`). Measured at 657_010 / 241_891 against 656_768 / 241_756 before it: 242 more minified, 135 gzipped."
+  "note": "Raised when the scene came to keep up with a hand on a large app: the presence's `sharing` kept while it says the same, what a selection reaches worked out once per selection however many ask (`useReached`), a record's connections reading the rules judged once (`useViolations`), and a layout saying how far the world is moved (`Layout.pan`), which the ground's grids are drawn from. Measured at 657_156 / 241_899 against 656_768 / 241_756 before it: 388 more minified, 143 gzipped."
 }

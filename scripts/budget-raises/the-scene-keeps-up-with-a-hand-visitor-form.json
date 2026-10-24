@@ -1,7 +1,7 @@
 {
   "budget": "a visitor's form alone",
-  "minified": 250,
+  "minified": 400,
   "gzipped": 150,
   "changeset": "the-scene-keeps-up-with-a-hand-on-a-large-app.md",
-  "note": "Raised when the scene came to keep up with a hand on a large app: the presence's `sharing` kept while it says the same, and what a selection reaches worked out once per selection however many ask (`useReached`). Measured at 390_802 / 150_015 against 390_598 / 149_907 before it: 204 more minified, 108 gzipped."
+  "note": "Raised when the scene came to keep up with a hand on a large app: the presence's `sharing` kept while it says the same, what a selection reaches worked out once per selection however many ask (`useReached`), and a layout saying how far the world is moved (`Layout.pan`), which the ground's grids are drawn from. Measured at 390_948 / 150_020 against 390_598 / 149_907 before it: 350 more minified, 113 gzipped."
 }

@@ -1196,6 +1196,21 @@ export function Scene<S extends AnySchema>({
         ...style,
       }}
     >
+      {/*
+        * THE FINE MEASURE, first on the ground as its ::before was: part of
+        * the picture, so it stands where the world is moved to — the frame's
+        * own pan, which tweens with the cards — and a hand moves it with the
+        * cards while it drags (scene-hand.ts). Said on it alone: a custom
+        * property on the ground is inherited by every element in the scene.
+        */}
+      <div
+        className="graview-measure"
+        aria-hidden="true"
+        style={{
+          ["--graview-world-x" as string]: `${(frame.pan?.x ?? 0).toFixed(1)}px`,
+          ["--graview-world-y" as string]: `${(frame.pan?.y ?? 0).toFixed(1)}px`,
+        }}
+      />
       {/* THE RELATIONS, one ribbon each between the districts they join (see ribbons-layer.tsx): on the ground, under the districts and their buildings. */}
       {view.overview && frame.city ? (
         <Suspense fallback={null}>

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T05:48:37.483Z",
+  "at": "2026-10-24T06:51:07.827Z",
   "results": [
     {
       "name": "navigation",
@@ -8,27 +8,21 @@
       "verdict": "held"
     },
     {
-      "name": "viewport",
+      "name": "screen-reader",
       "code": 0,
-      "took": 50,
+      "took": 145,
+      "verdict": "held"
+    },
+    {
+      "name": "a11y",
+      "code": 0,
+      "took": 262,
       "verdict": "held"
     },
     {
       "name": "drawn",
       "code": 0,
       "took": 225,
-      "verdict": "held"
-    },
-    {
-      "name": "drawn-once",
-      "code": 0,
-      "took": 359,
-      "verdict": "held"
-    },
-    {
-      "name": "lines",
-      "code": 0,
-      "took": 190,
       "verdict": "held"
     },
     {
@@ -40,13 +34,7 @@
     {
       "name": "scene-at-scale",
       "code": 0,
-      "took": 26,
-      "verdict": "held"
-    },
-    {
-      "name": "renderer",
-      "code": 0,
-      "took": 65,
+      "took": 25,
       "verdict": "held"
     }
   ]

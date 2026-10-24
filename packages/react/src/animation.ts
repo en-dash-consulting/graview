@@ -190,6 +190,8 @@ export function useAnimatedLayout(
          * over to join it.
          */
         ...(live.city ? { city: live.city } : {}),
+        // And where the world stood, which the ground's grids are drawn from.
+        pan: live.pan ?? { x: 0, y: 0 },
         nodes: live.nodes.map((node) => ({
           ...node,
           plane: Math.round(node.plane) as 0 | 1 | 2,

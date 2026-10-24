@@ -21,9 +21,10 @@
  *   a drag on a 1,000-record scene sets no React state, from altitude and
  *   on the ground: not one commit while the hand moves;
  *
- *   the ground grid moves with the picture while it is dragged and does not
- *   jump when it is let go: mid-drag the lattice has moved exactly as far
- *   as a building on it, and letting go moves neither;
+ *   every grid under the picture moves with it while it is dragged and
+ *   does not jump when it is let go: mid-drag the lattice from altitude and
+ *   the fine measure on the ground have each moved exactly as far as what
+ *   stands on them — a building, a card — and letting go moves none of it;
  *
  *   letting go of a drag draws the scene once and no card again: one
  *   render of the scene, nothing inside a card on the ground (a board of
@@ -247,12 +248,32 @@ try {
   /** Where the lattice is anchored and where a building on it stands, as drawn. */
   const ground = () =>
     page.evaluate(() => {
-      const lattice = document.querySelector(".graview-ground > .graview-lattice");
-      const [x, y] = (lattice ? getComputedStyle(lattice).backgroundPosition.split(",")[0] : "").trim().split(/\s+/).map((part) => Number.parseFloat(part));
+      const anchor = (selector) => {
+        const grid = document.querySelector(`.graview-ground > ${selector}`);
+        const [x, y] = (grid ? getComputedStyle(grid).backgroundPosition.split(",")[0] : "").trim().split(/\s+/).map((part) => Number.parseFloat(part));
+        return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
+      };
       const roofs = [...document.querySelectorAll("[data-graview-building] .graview-iso-roof")];
       const roof = roofs[Math.floor(roofs.length / 2)]?.getBoundingClientRect();
-      return { lattice: { x, y }, building: roof ? { x: roof.left, y: roof.top } : null };
+      const card = document.querySelector("[data-graview-stage] > [data-graview-view]")?.getBoundingClientRect();
+      return {
+        lattice: anchor(".graview-lattice"),
+        measure: anchor(".graview-measure"),
+        building: roof ? { x: roof.left, y: roof.top } : null,
+        card: card ? { x: card.left, y: card.top } : null,
+      };
     });
+  /** How far `grid` and `thing` moved from `rest` to `during`, and how far either moved again from `during` to `after`. */
+  const together = (rest, during, after, grid, thing) => {
+    const a = rest?.[grid], b = during?.[grid], c = after?.[grid], p = rest?.[thing], q = during?.[thing], r = after?.[thing];
+    if (!a || !b || !c || !p || !q || !r) return { ok: false, missing: [grid, thing] };
+    const gridMoved = { x: b.x - a.x, y: b.y - a.y };
+    const thingMoved = { x: q.x - p.x, y: q.y - p.y };
+    const gridJumped = Math.hypot(c.x - b.x, c.y - b.y);
+    const thingJumped = Math.hypot(r.x - q.x, r.y - q.y);
+    const ok = Math.hypot(thingMoved.x, thingMoved.y) > 30 && Math.abs(gridMoved.x - thingMoved.x) <= 1 && Math.abs(gridMoved.y - thingMoved.y) <= 1 && gridJumped <= 1 && thingJumped <= 1;
+    return { ok, gridMoved, thingMoved, gridJumped, thingJumped };
+  };
 
   /** A drag of 40 moves from open ground, held before it is let go. */
   const dragFrom = async (from, dx, dy) => {
@@ -288,23 +309,10 @@ try {
   report.measured.altitude = { moves, release, whileMoving, letGo, rest, during, after };
 
   claim("a drag on a 1,000-record scene sets no React state", whileMoving.commits === 0, { commits: whileMoving.commits, rendered: whileMoving.rendered });
-  const latticeMoved = during && rest ? { x: during.lattice.x - rest.lattice.x, y: during.lattice.y - rest.lattice.y } : null;
-  const buildingMoved = during?.building && rest?.building ? { x: during.building.x - rest.building.x, y: during.building.y - rest.building.y } : null;
-  const jump = after && during ? Math.hypot(after.lattice.x - during.lattice.x, after.lattice.y - during.lattice.y) : null;
-  const buildingJump = after?.building && during?.building ? Math.hypot(after.building.x - during.building.x, after.building.y - during.building.y) : null;
-  claim(
-    "the ground grid moves with the picture while it is dragged and does not jump when it is let go",
-    latticeMoved !== null &&
-      buildingMoved !== null &&
-      Math.hypot(latticeMoved.x, latticeMoved.y) > 100 &&
-      Math.abs(latticeMoved.x - buildingMoved.x) <= 1 &&
-      Math.abs(latticeMoved.y - buildingMoved.y) <= 1 &&
-      jump !== null &&
-      jump <= 1 &&
-      buildingJump !== null &&
-      buildingJump <= 1,
-    { latticeMoved, buildingMoved, latticeJumped: jump, buildingJumped: buildingJump },
-  );
+  const grids = {
+    "the lattice, from altitude": together(rest, during, after, "lattice", "building"),
+    "the fine measure, from altitude": together(rest, during, after, "measure", "building"),
+  };
   claim(`a drag's own moves keep the main thread under ${budget("drag-moves")} ms`, moves <= budget("drag-moves"), { measured: moves, budget: budget("drag-moves") });
   claim(
     `letting go of a drag draws the scene once and takes under ${budget("release")} ms`,
@@ -345,10 +353,20 @@ try {
   /* ── on the ground, over a board of every record ───────────────────── */
   const there = await groundNear({ x: 1380, y: 200 });
   if (!there) throw new Error("no open ground to drag from on the ground");
-  await dragFrom(there, -60, 60);
+  const still = await ground();
+  await dragFrom(there, -160, 80);
+  await afterFrames();
+  const held = await ground();
   const groundMoving = await react();
   const groundRelease = await busy(() => page.mouse.up());
   const groundLetGo = await react();
+  await page.waitForTimeout(300);
+  grids["the fine measure, on the ground"] = together(still, held, await ground(), "measure", "card");
+  claim(
+    "every grid under the picture moves with it while it is dragged and does not jump when it is let go",
+    Object.values(grids).every((one) => one.ok),
+    grids,
+  );
   report.measured.ground = { groundMoving, groundRelease, groundLetGo };
   claim("a drag on the ground over a board of 250 sets no React state", groundMoving.commits === 0, { commits: groundMoving.commits });
   claim(

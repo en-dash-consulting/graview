@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page",
-  "minified": 200,
+  "minified": 350,
   "gzipped": 100,
   "changeset": "the-scene-keeps-up-with-a-hand-on-a-large-app.md",
-  "note": "Raised when the scene came to keep up with a hand on a large app: up front are the presence's `sharing` kept while it says the same, so a pan is not a new context for every reader, and the drawn signal watching the stop less its pan, so a pan is not another place. Measured at 611_550 / 213_500 against 611_385 / 213_434 before it: 165 more minified, 66 gzipped."
+  "note": "Raised when the scene came to keep up with a hand on a large app: up front are the presence's `sharing` kept while it says the same, so a pan is not a new context for every reader, the drawn signal watching the stop less its pan, so a pan is not another place, and a layout saying how far the world is moved (`Layout.pan`), which the ground's grids are drawn from. Measured at 611_696 / 213_502 against 611_385 / 213_434 before it: 311 more minified, 68 gzipped."
 }

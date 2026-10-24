@@ -208,15 +208,16 @@ export function useWorldShift({
  * frame — six hundred milliseconds of a forty-move drag at a quarter speed.
  */
 function handOnTheGround(ground: HTMLElement | null, x: number, y: number) {
-  const lattice = ground?.querySelector<HTMLElement>(":scope > .graview-lattice");
-  if (!lattice) return;
-  if (x === 0 && y === 0) {
-    lattice.style.removeProperty("--graview-hand-x");
-    lattice.style.removeProperty("--graview-hand-y");
-    return;
+  // Both grids under the picture: the lattice from altitude and the fine measure on the ground (`.graview-measure`).
+  for (const grid of ground?.querySelectorAll<HTMLElement>(":scope > .graview-lattice, :scope > .graview-measure") ?? []) {
+    if (x === 0 && y === 0) {
+      grid.style.removeProperty("--graview-hand-x");
+      grid.style.removeProperty("--graview-hand-y");
+      continue;
+    }
+    grid.style.setProperty("--graview-hand-x", `${x}px`);
+    grid.style.setProperty("--graview-hand-y", `${y}px`);
   }
-  lattice.style.setProperty("--graview-hand-x", `${x}px`);
-  lattice.style.setProperty("--graview-hand-y", `${y}px`);
 }
 
 /** How far a pointer has to travel before a press is a drag: below it, a click is a click. */

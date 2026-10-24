@@ -278,6 +278,12 @@ export interface Layout {
   /** Present at altitude: the lattice the districts were placed on. */
   readonly city?: CityFrame;
   /**
+   * HOW FAR THE WHOLE WORLD IS MOVED: the pan baked into every coordinate,
+   * at every altitude, so what is drawn under the cards — the ground's grids
+   * — can stand where they stand. Absent when nothing is panned.
+   */
+  readonly pan?: { readonly x: number; readonly y: number };
+  /**
    * THE PART OF THE CANVAS THE READER SEES, when a panel floats over the rest
    * (`LayoutOptions.dock`): the camera's bounds and the edge signs are for
    * this, not for the whole painted scene. Absent when nothing covers it.
