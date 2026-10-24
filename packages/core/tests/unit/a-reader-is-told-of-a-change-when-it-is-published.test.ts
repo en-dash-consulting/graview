@@ -54,7 +54,7 @@ function app() {
     mutations: [add, rename, finish],
     policy: { grants: [{ roles: ["editor"], mutations: "*" }] },
     publishing,
-    snapshot: { nodes: [{ id: "task:milk", kind: "task", label: "Buy milk", done: false, notes: "Two litres" }], edges: [] } as never,
+    snapshot: { nodes: [{ id: "task:milk", kind: "task", label: "Buy milk", done: false, notes: "Two quarts" }], edges: [] } as never,
   });
 }
 
