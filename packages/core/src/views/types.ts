@@ -184,7 +184,7 @@ export const onePerPicture = <P extends Pictured>(places: readonly P[]): P[] => 
  * the place menu, a place leaves the bar's row, its drop-down and the
  * scene's tabs at once, and Show puts it back. What every bar reads.
  */
-export const offeredPlaces = <P extends { readonly hidden?: boolean | undefined }>(places: readonly P[]): readonly P[] => (places.some((place) => place.hidden) ? places.filter((place) => !place.hidden) : places);
+export const offeredPlaces = <P extends { readonly hidden?: boolean | undefined }>(places: readonly P[]): readonly P[] => places.filter((place) => !place.hidden);
 
 /** A place's own name in an address: its title, lower-cased and hyphenated. */
 export function placeSlug(title: string): string {

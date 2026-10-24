@@ -58,7 +58,8 @@
  * back as a new app, as Cloud does): a kind's list, a declared lens and a
  * view the host keeps, each hidden from the place menu while it is the
  * place open, leave the bar's row and drop-down at once, the page staying
- * where it is; the drop-down's Hidden lists them, and Show puts them back
+ * where it is and the bar still naming it as where you are, at a phone and
+ * a desk; the drop-down's Hidden lists them, and Show puts them back
  * (Roadmap f-hidden-view-leaves-the-bar).
  *
  *   node scripts/verify-drawn.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>] [--probe]
@@ -591,7 +592,7 @@ try {
           await row.click();
           left = await page.waitForFunction((label) => ![...document.querySelectorAll("[data-graview-embed] [data-place-path]")].filter((entry) => !entry.closest('[data-place-group="hidden"],[data-place-group="removed"]')).some((entry) => entry.textContent?.trim() === label), tidied.label, { timeout: 5_000 }).then(() => true, () => false);
           still = await page.evaluate(() => location.pathname);
-          named = await page.locator('[data-testid="app-places-open"]').first().textContent();
+          named = await page.evaluate(() => document.querySelector('[data-graview-embed] [data-testid="app-place-current"]')?.textContent ?? null);
           await shot(page, `hidden-${tidied.name}`);
           await page.locator('[data-testid="app-places-open"]').first().click();
           const foot = page.locator('[data-place-group="hidden"] li', { hasText: tidied.label });
@@ -695,7 +696,7 @@ report.checks.aDraftUnderABasePathIsDrawnAtItsPlace = {
 };
 report.checks.aViewHiddenFromThePlaceMenuLeavesTheBarAndComesBackOnShow = {
   seen: seen.tidied,
-  ok: TIDIED.every((tidied) => every(seen.tidied.filter((one) => one.name === tidied.name), (one) => one.drawn && one.before && one.offered && one.left && one.still === tidied.path && one.inFoot && one.back)),
+  ok: TIDIED.every((tidied) => every(seen.tidied.filter((one) => one.name === tidied.name), (one) => one.drawn && one.before && one.offered && one.left && one.still === tidied.path && one.named === tidied.label && one.inFoot && one.back)),
 };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 

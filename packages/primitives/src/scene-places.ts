@@ -76,7 +76,7 @@ export function scenePlacesOf(input: {
   const listed = pictures.filter((place) => !place.hidden || place === here);
   const places: BarPlace[] = [
     { key: WHOLE_KEY, label: WHOLE_LABEL, path: `${OVERVIEW_PATH}${overviewFragment(to(WHOLE_KEY, EMPTY_VIEW)!)}`, group: "home" },
-    ...listed.map((place) => ({ key: keyOf(place), label: placeLabel(place, all, input.schema), path: `${OVERVIEW_PATH}${overviewFragment(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind, ...(place.hidden ? { hidden: true } : {}) })),
+    ...listed.map((place) => ({ key: keyOf(place), label: placeLabel(place, all, input.schema), path: `${OVERVIEW_PATH}${overviewFragment(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind, hidden: place.hidden })),
   ];
   return { places, current: here ? keyOf(here) : WHOLE_KEY, to };
 }

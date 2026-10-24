@@ -2,7 +2,7 @@
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { Store, type AnySchema, type GraviewApp } from "@graview/core";
+import { offeredPlaces, Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { editDocument, readDocument } from "@graview/core/document";
 import { declaredViews, fetchDeclaredLenses } from "@graview/primitives";
@@ -120,7 +120,9 @@ describe("a lens kept off the lists, on the routed face", () => {
     const listed = [...host.querySelectorAll('[data-testid="places"] a, [data-testid="places"] [data-testid]')].map((one) => one.textContent ?? "").join(" | ");
     expect(listed).toContain("The week");
     expect(listed).not.toContain("By day");
-    expect(barPlaces({ store: context.store, principal: keeper, views: context.views }).map((place) => place.label)).not.toContain("By day");
+    // Marked hidden, there only to say where you are when it is open: offered nowhere (Roadmap f-hidden-view-leaves-the-bar).
+    expect(offeredPlaces(barPlaces({ store: context.store, principal: keeper, views: context.views })).map((place) => place.label)).not.toContain("By day");
+    expect(barPlaces({ store: context.store, principal: keeper, views: context.views }).find((place) => place.label === "By day")?.hidden).toBe(true);
     expect(barPlaces({ store: context.store, principal: keeper, views: context.views }).map((place) => place.label)).toContain("The week");
     expect([...host.querySelectorAll('[data-testid="app-places"] a')].map((a) => a.textContent)).not.toContain("By day");
     await done();

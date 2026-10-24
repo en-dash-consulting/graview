@@ -1,7 +1,7 @@
 import { allLabel, arrangedEntries, hueFor, kindPath, MOST_STANDING, offeredPlaces, onePerPicture, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, samePicture, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
 import { useQuickAskDrawn } from "./quick-ask-desk.js";
-import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
+import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
 import { barPanes } from "./bar-panes-door.js";
 /* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): fetched with the panes, and the tidying with it, once there is something to list and the list is open. */
@@ -138,7 +138,8 @@ export function barPlaces(input: {
   const stands = (kind: string, as?: string): boolean => (!store.graph.size.nodes || store.graph.count(kind) > 0) && (declared ? (as ? declared.places.has(`${kind}|${as}`) : declared.kinds.has(kind)) : !supporting.has(kind));
   const out: BarPlace[] = [{ key: HOME_KEY, label: "Home", path: HOME_PATH, group: "home", primary: true }];
   // A place at the scene's address is not offered: the address is the scene's (FR-132). Nor one kept off the lists (`hidden`): a link reaches it.
-  const seen = all.filter((place) => live.includes(place.kind) && place.as !== OVERVIEW_SLUG && !place.hidden);
+  const pictured = all.filter((place) => live.includes(place.kind) && place.as !== OVERVIEW_SLUG);
+  const seen = pictured.filter((place) => !place.hidden);
   /*
    * A PLACE TITLED AS A KIND'S LIST IS (`pages-place-named-as-a-list`):
    * the place the declaration drew is the one by that name — it stands, as
@@ -167,12 +168,17 @@ export function barPlaces(input: {
     const named = titled.has(label.toLowerCase());
     out.push({ key: `kind:${kind}`, label: named ? allLabel(store.schema, kind) : label, path: kindPath(store.schema, kind), group: "lists", kind, primary: named || hidden.has(kind) ? false : stands(kind), ...(hidden.has(kind) ? { hidden: true } : {}) });
   }
-  // Each picture once: one over several kinds is one entry, under the first of them this seat sees.
-  for (const place of onePerPicture(seen)) {
+  /*
+   * Each picture once: one over several kinds is one entry, under the first
+   * of them this seat sees. One kept off the lists (`hidden`) is marked, here
+   * only to say where you are when it is open, and offered nowhere
+   * (`offeredPlaces`, Roadmap f-hidden-view-leaves-the-bar).
+   */
+  for (const place of onePerPicture(pictured)) {
     if (arranged.some((entry) => entry.view && samePicture(entry.view, place))) continue;
     const path = pathOf(place);
     const standing = [place.kind, ...(place.over ?? [])].some((kind) => live.includes(kind) && stands(kind, place.as));
-    if (!out.some((held) => held.path === path)) out.push({ key: `place:${place.kind}:${place.as}`, label: placeLabel(place, all, store.schema), path, group: "pictures", kind: place.kind, primary: standing });
+    if (!out.some((held) => held.path === path)) out.push({ key: `place:${place.kind}:${place.as}`, label: placeLabel(place, all, store.schema), path, group: "pictures", kind: place.kind, primary: standing, hidden: place.hidden });
   }
   const connects = live.some((kind) => Object.keys((store.schema.tryDefinition(kind)?.edges ?? {}) as object).length > 0);
   if (connects) out.push({ key: "connections", label: "Connections", path: "/map", group: "pictures", primary: false });
@@ -496,10 +502,8 @@ export function AppBar({
    * the one open, it leaves the row and the drop-down at once, and the one
    * control names it only as where you are.
    */
-  const shown = useMemo(() => {
-    const from = onPages ? { places, current, reach } : scenePlaces;
-    return from && { ...from, places: offeredPlaces(from.places), here: from.places.find((place) => place.key === from.current)?.label };
-  }, [onPages, places, current, reach, scenePlaces]);
+  const from = onPages ? { places, current, reach } : scenePlaces;
+  const shown = from && { ...from, places: offeredPlaces(from.places), here: from.places.find((place) => place.key === from.current)?.label };
   const list = shown && shown.places.length > 0 ? shown : null;
   const currentAt = list ? list.places.findIndex((place) => place.key === list.current) : -1;
   const wordsAsked = Boolean(faces) && switchForm === "words";
@@ -570,7 +574,12 @@ export function AppBar({
   };
   // The place control: in the bar on a desk, as the page's first line on a phone; the places themselves on the row when they fit (FR-145).
   const scene = !onPages;
-  const stands = list && !compact && standing !== null ? standing.split(",").map(Number).filter((at) => at < list.places.length) : null;
+  /*
+   * ON A PLACE KEPT OFF THE LISTS, THE ONE CONTROL, at every width: it says
+   * where you are ("People"), and the row of places it is not among would
+   * say nowhere. Saying where you are is not offering it.
+   */
+  const stands = list && !compact && standing !== null && !(currentAt < 0 && list.here) ? standing.split(",").map(Number).filter((at) => at < list.places.length) : null;
   const placeControl = list ? <Places places={list.places} current={list.current} here={list.here} reach={list.reach} scene={scene} stands={stands} /> : null;
   const said = list ? list.places.map((place) => place.label).join("\n") : "";
   // What the row holds changed — the name, the places, the face, the brand — so the places and the words may fit now, or no longer.
