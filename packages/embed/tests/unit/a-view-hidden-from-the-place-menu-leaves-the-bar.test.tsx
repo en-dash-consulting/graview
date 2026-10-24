@@ -103,11 +103,11 @@ async function show(kept: KeptViews, what: { readonly view: string } | LensTidyE
 
 describe("a view hidden from the place menu", () => {
   const cases = [
-    { name: "a kind's list", face: "pages", path: "/seats", label: "Seats", named: true, what: { op: "set-lens-hidden", title: "seat", hidden: true } },
+    { name: "a kind's list", face: "pages", path: "/seats", label: "Seats", what: { op: "set-lens-hidden", title: "seat", hidden: true } },
     { name: "a declared lens", face: "pages", path: "/places/by-day", label: "By day", what: { op: "set-lens-hidden", title: "By day", on: "shift", hidden: true } },
     { name: "a view the host keeps", face: "pages", path: "/places/seat-chart", label: "Seat chart", what: { view: "seat-chart" } },
-    { name: "a view the host keeps, on the scene", face: "scene", stop: "#focus=aggregate:seat&in.view=seat-chart", label: "Seat chart", named: true, what: { view: "seat-chart" } },
-    { name: "a declared lens, on the scene", face: "scene", stop: "#focus=aggregate:shift&in.view=by-day", label: "By day", named: true, what: { op: "set-lens-hidden", title: "By day", on: "shift", hidden: true } },
+    { name: "a view the host keeps, on the scene", face: "scene", stop: "#focus=aggregate:seat&in.view=seat-chart", label: "Seat chart", what: { view: "seat-chart" } },
+    { name: "a declared lens, on the scene", face: "scene", stop: "#focus=aggregate:shift&in.view=by-day", label: "By day", what: { op: "set-lens-hidden", title: "By day", on: "shift", hidden: true } },
   ] as const;
   for (const one of cases) {
     it(`leaves the bar while it is the place open, and comes back on Show: ${one.name}`, async () => {
@@ -118,8 +118,8 @@ describe("a view hidden from the place menu", () => {
       await openPlaces(host);
       expect(hiddenFoot(host)).toContain(one.label);
       expect(offered(host)).not.toContain(one.label);
-      // Still open, and where a kind's list or the scene's picture is, the one control says so.
-      if ("named" in one) expect(host.querySelector('[data-testid="app-places-open"]')?.textContent).toBe(one.label);
+      // Still open, and the bar still says where you are.
+      expect(host.querySelector('[data-testid="app-place-current"]')?.textContent).toBe(one.label);
       await show(kept, one.what as never);
       await openPlaces(host);
       expect(offered(host)).toContain(one.label);
