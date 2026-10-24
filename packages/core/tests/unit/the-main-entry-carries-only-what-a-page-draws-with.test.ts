@@ -3,6 +3,8 @@ import * as arrange from "../../src/arrange.js";
 import * as blocks from "../../src/blocks.js";
 import * as catalog from "../../src/catalog.js";
 import * as city from "../../src/city.js";
+import * as csv from "../../src/csv.js";
+import * as shown from "../../src/shown.js";
 import * as check from "../../src/check.js";
 import * as describePlaces from "../../src/describe.js";
 import * as document from "../../src/document/index.js";
@@ -37,6 +39,10 @@ import * as tidying from "../../src/tidying.js";
  */
 const OFF_THE_PAGE = {
   "@graview/core/arrange": { from: arrange, names: ["admitArrangement", "arrange", "arrangeable", "arrangeAllows", "asksForThePast", "bucketStart", "conditionHolds", "edgesOf", "formatArrangement", "matches", "NO_ARRANGEMENT", "parseArrangement", "throughEdges", "kindListFindings", "listFieldsOf", "listGroup", "listOpening", "listSort", "orderListGroups", "withWorkedOut"] },
+  // Roadmap f-view-export-csv: a kind's list as its page shows it, which "Export CSV" writes — the list page's alone.
+  "@graview/core/shown": { from: shown, names: ["shownList"] },
+  // Roadmap f-view-export-csv: a place's list written as a spreadsheet, fetched when somebody presses "Export CSV".
+  "@graview/core/csv": { from: csv, names: ["CSV_BOM", "csvCell", "csvFileName", "csvSafe", "listCsv", "listCsvRows", "toCsv"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.

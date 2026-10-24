@@ -1,0 +1,7 @@
+{
+  "budget": "the pages face alone",
+  "minified": 2700,
+  "gzipped": 1700,
+  "changeset": "a-list-is-exported-as-it-is-shown.md",
+  "note": "Raised when a place's list came to be exported as it is shown (Roadmap f-view-export-csv): the kind's list draws from `shownList` on `@graview/core/shown` (1_074 B, in place of 331 of the list page's own lines), says what it shows for the place menu (`useShownListExport`, 441), its arranging line ends with Export CSV (about 200), and the place menu offers Export CSV and the owner's switch (537); the provider's `onExport` and a lens's `export: false` carried. The writer and the download load with the first press. Measured at 659_370 / 243_401 against 656_768 / 241_777 before it: 2_602 more minified, 1_624 gzipped (two chunks more as the new modules split the words' and the blocks' shared chunks)."
+}

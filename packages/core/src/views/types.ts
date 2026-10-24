@@ -37,6 +37,8 @@ export interface ViewRegistration<V = unknown> {
   readonly over?: readonly string[];
   /** A place kept off the lists (`ViewMeta.hidden`). */
   readonly hidden?: boolean;
+  /** A place that offers nobody "Export CSV" (`ViewMeta.export`). */
+  readonly export?: false;
   /** The name the host keeps this view by (`ViewMeta.name`). */
   readonly name?: string;
   /** A lens the declaration declares (`ViewMeta.declared`). */
@@ -85,6 +87,12 @@ export interface ViewMeta {
    */
   readonly hidden?: boolean;
   /**
+   * A PLACE THAT OFFERS NOBODY "EXPORT CSV" (Roadmap f-view-export-csv): a
+   * lens declared `export: false`. A place that lists records offers to
+   * write them as a spreadsheet unless it says this.
+   */
+  readonly export?: false;
+  /**
    * THE NAME THE HOST KEEPS THIS VIEW BY: a script view's manifest name
    * (`registerWorkerView` says it). What the place menu hands the host's
    * `keptViews` to hide, show, delete and restore it (Roadmap
@@ -132,6 +140,8 @@ export interface Place {
   readonly over?: readonly string[];
   /** Kept off the lists (`ViewMeta.hidden`): reached by its address, a link or `navigate`, never offered. */
   readonly hidden?: boolean;
+  /** Offers nobody "Export CSV" (`ViewMeta.export`). */
+  readonly export?: false;
   /** The name the host keeps it by (`ViewMeta.name`): a script view's. */
   readonly name?: string;
   /** A lens the declaration declares (`ViewMeta.declared`). */
@@ -319,7 +329,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
     homeView: () => homeView,
     register(kind, cell, view, meta) {
       // One picture over several kinds says so on each registration and each place it makes; one kept off the lists, likewise.
-      const over = { ...(meta?.over?.[1] ? { over: meta.over } : {}), ...(meta?.hidden ? { hidden: true } : {}), ...(meta?.name ? { name: meta.name } : {}), ...(meta?.declared ? { declared: true } : {}) };
+      const over = { ...(meta?.over?.[1] ? { over: meta.over } : {}), ...(meta?.hidden ? { hidden: true } : {}), ...(meta?.export === false ? { export: false as const } : {}), ...(meta?.name ? { name: meta.name } : {}), ...(meta?.declared ? { declared: true } : {}) };
       const registration: ViewRegistration<V> = {
         kind,
         cardinality: cell.cardinality,
@@ -477,6 +487,8 @@ export interface KindList {
   readonly sort?: string | KindListSort;
   /** A choice or yes-or-no field — or with the groups' order and which are closed. */
   readonly group?: string | KindListGroup;
+  /** `false`: the list offers nobody "Export CSV" (Roadmap f-view-export-csv). On when unsaid. */
+  readonly export?: boolean;
 }
 
 export interface KindListSort {

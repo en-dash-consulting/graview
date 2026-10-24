@@ -12,6 +12,7 @@ import { reachLens } from "./lens/reach.js";
 import { createTimelineLens, type TimelineOptions } from "./lens/timeline.js";
 import { Panel } from "./primitives/index.js";
 import { compileBlocks, PlacePageHead, SpecPlace, type SpecBlock } from "./spec-views.js";
+import { PlaceExportContext, type PlaceExport } from "./lens/place-export.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -94,7 +95,13 @@ export function declaredLensView(lens: DrawnLens): ViewComponent<AnySchema> {
   let view = MADE.get(lens);
   if (!view) {
     const Lens = made(lens);
-    const Titled = (props: ViewProps<AnySchema>) => <Lens {...props} label={lens.title} />;
+    // The place the lens is, told to its arranging line: what "Export CSV" names the file, and whether it offers it (Roadmap f-view-export-csv).
+    const place: PlaceExport = { title: lens.title, as: lens.as, ...(lens.export === false ? { export: false } : {}) };
+    const Titled = (props: ViewProps<AnySchema>) => (
+      <PlaceExportContext.Provider value={place}>
+        <Lens {...props} label={lens.title} />
+      </PlaceExportContext.Provider>
+    );
     MADE.set(lens, (view = Titled));
   }
   return view;

@@ -1,5 +1,6 @@
 import { admitArrangement, arrange, arrangeable } from "@graview/core/arrange";
 import {
+  pluralLabel,
   type AnySchema,
   type Arranged,
   type ArrangeOption,
@@ -8,8 +9,10 @@ import {
 } from "@graview/core";
 import { useGraview, useNavigation, type ViewProps } from "@graview/react";
 import { withPast } from "@graview/layout/view-moves";
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
 import { ArrangeBar, arrangementOf, withArrangement } from "../arrange-bar.js";
+import { exportShownList, placeExportKey, prefetchExport, useShownListExport, type ShownListToExport } from "../list-export.js";
+import { PlaceExportContext } from "./place-export.js";
 
 /**
  * A LENS ARRANGES BEFORE IT DRAWS.
@@ -44,6 +47,8 @@ export interface ArrangingOptions<S extends AnySchema> {
   readonly search?: readonly string[];
   /** What the line offers to filter by, its choice fields standing as chips: a lens's `options.filters`. */
   readonly filters?: readonly string[];
+  /** Whether the line offers "Export CSV" of what the lens shows. On unless declined, or unless the declaration offers it to nobody (`export: false`). */
+  readonly exportable?: boolean;
 }
 
 export interface Arranging<S extends AnySchema> {
@@ -69,7 +74,9 @@ const both = (a: ArrangeOption | undefined, b: ArrangeOption | undefined): Arran
 const ARRANGEMENT_WORDS = ["sort", "filter", "group", "q", "archived"] as const;
 
 export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: ArrangingOptions<S> = {}): Arranging<S> {
-  const { store } = useGraview<S>();
+  const { store, onExport } = useGraview<S>();
+  // The place a declared lens's door says it is, and whether it offers "Export CSV" (Roadmap f-view-export-csv).
+  const place = useContext(PlaceExportContext);
   const { view, go } = useNavigation();
   const said = ARRANGEMENT_WORDS.some((word) => view.within?.[word] !== undefined);
   const asked = said ? arrangementOf(view) : (options.arrangedBy ?? {});
@@ -105,9 +112,26 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
    * drawn wherever records stand behind the horizon, and says so.
    */
   const retired = props.retired !== undefined && props.retired > 0 && (handed[0]?.kind ?? kind) === kind ? props.retired : 0;
+  /*
+   * "EXPORT CSV": the records the lens shows, in its order and its groups,
+   * from its line and from the place menu — unless the lens declines it or
+   * its declaration offers it to nobody.
+   */
+  const full = props.fidelity === "full" && props.budget === undefined;
+  const exporting = kind !== undefined && full && options.exportable !== false && place?.export !== false;
+  const shownNow = (): ShownListToExport => ({
+    title: place?.title ?? pluralLabel(store.schema, String(kind)),
+    schema: store.schema,
+    graph: store.graph,
+    kind: String(kind),
+    groups: arranged.grouped ? arranged.groups : [{ nodes: arranged.nodes }],
+    grouped: arranged.grouped,
+    onExport,
+  });
+  useShownListExport(place ? placeExportKey(place.as) : undefined, shownNow, exporting);
   // No row on a picture with a budget: a lens handed a few of its members is a picture of itself, with no controls.
   const bar =
-    kind && allow !== false && props.fidelity === "full" && props.budget === undefined && (subject.length > 1 || retired > 0) ? (
+    kind && allow !== false && full && (subject.length > 1 || retired > 0) ? (
       <ArrangeBar
         schema={store.schema}
         graph={store.graph}
@@ -119,6 +143,7 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
         onChange={(next) => go(withArrangement(view, next))}
         kept={{ shown: arranged.nodes.length, of: subject.length }}
         {...(retired > 0 ? { past: { count: retired, widen: () => go(withPast(view, true)) } } : {})}
+        {...(exporting ? { exportList: () => void exportShownList(shownNow()), prefetchExport } : {})}
       />
     ) : null;
 

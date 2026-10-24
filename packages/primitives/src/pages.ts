@@ -12,6 +12,9 @@
  */
 export { ArrangeBar, arrangementCaption, arrangementOf, withArrangement } from "./arrange-bar.js";
 export type { ArrangeBarProps } from "./arrange-bar.js";
+// "Export CSV" (Roadmap f-view-export-csv): a kind's list says what it shows, and the press writes it.
+export { exportShownList, listExportKey, prefetchExport, useShownListExport } from "./list-export.js";
+export type { ShownListToExport } from "./list-export.js";
 export { DefaultViewElsewhere } from "./default-view.js";
 // A record's values as the scene draws them: changed in place, prose with its paragraphs kept (FR-146, FR-147).
 export { EditableValue, FieldLink, LongValue } from "./editable.js";

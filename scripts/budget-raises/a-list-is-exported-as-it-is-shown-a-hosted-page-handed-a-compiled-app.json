@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 200,
+  "gzipped": 100,
+  "changeset": "a-list-is-exported-as-it-is-shown.md",
+  "note": "Raised when a place's list came to be exported as it is shown (Roadmap f-view-export-csv), as the hosted page's raise of the same name says. Measured at 561_656 / 195_909 against 561_473 / 195_845: 183 more minified, 64 gzipped."
+}

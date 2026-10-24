@@ -1,5 +1,6 @@
-import { AppLink, ArrangeBar, CHOOSING_CSS, Files, focusInto, pageSays, prefetchSeveral, SeveralBarDoor, SkipLinks, useChoosing, useEndsAboveItsList } from "@graview/primitives/pages";
-import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, listGroup, listOpening, orderListGroups, parseArrangement, throughEdges, withWorkedOut } from "@graview/core/arrange";
+import { AppLink, ArrangeBar, CHOOSING_CSS, exportShownList, Files, focusInto, listExportKey, pageSays, prefetchExport, prefetchSeveral, SeveralBarDoor, SkipLinks, useChoosing, useEndsAboveItsList, useShownListExport, type ShownListToExport } from "@graview/primitives/pages";
+import { admitArrangement, arrangeable, formatArrangement, listGroup, listOpening, parseArrangement, throughEdges, withWorkedOut } from "@graview/core/arrange";
+import { shownList } from "@graview/core/shown";
 import {
   archivedFrom,
   humanizeField,
@@ -18,7 +19,7 @@ import {
 } from "@graview/core";
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { fieldSpecOf, firstPicture, withComputed } from "@graview/core/blocks";
-import { isDefaultView, type ViewProps } from "@graview/react/provider";
+import { isDefaultView, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts, kindMap } from "./facts.js";
@@ -169,44 +170,50 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     chosen.sort && declaredSort?.then && chosen.sort.by === declaredSort.by && chosen.sort.direction === declaredSort.direction ? { ...chosen, sort: declaredSort } : chosen;
   // The words may say `is:any` too, as they do in the Find box.
   const typed = parseQuery(arrangement.query ?? "");
-  const showingPast =
-    [...(arrangement.filter ?? []), ...typed.conditions].some(
-      (condition) => condition.key === "is" && (condition.value === "past" || condition.value === "any"),
-    ) ||
-    // `status:demo` where demos are past is the past, asked for by name.
-    asksForThePast(definition, [...(arrangement.filter ?? []), ...typed.conditions]);
-  const effective: Arrangement = showingPast || !definition?.lifecycle
-    ? arrangement
-    : { ...arrangement, filter: [...(arrangement.filter ?? []), { key: "is", value: "current" }] };
-  // A rank the kind works out is worked out once a record, over what this seat sees (FR-83).
-  const worked = new Map<string, Record<string, unknown>>();
-  const arranged = arrange(all, effective, {
+  const openedGroups = new Set((search.get("open") ?? "").split(",").filter(Boolean));
+  /*
+   * THE LIST AS SHOWN, worked out by the one function "Export CSV" writes
+   * from too (`shownList`): the horizon unless the past is asked for, a rank
+   * worked out over what this seat sees, and the declared groups in their
+   * order, the closed ones last and shut — a closed group opens for a
+   * person who presses it (`?open=done`), and stands open when the list is
+   * narrowed to find something.
+   */
+  const shown = shownList({
     schema: store.schema,
     graph: store.graph,
+    kind,
+    nodes: all,
+    arrangement,
+    offers,
+    declaredGroup,
     flagged,
     ...(typeof invariantContext?.["today"] === "string" ? { today: invariantContext["today"] as string } : {}),
-    read: (node, key) => {
-      let values = worked.get(node.id);
-      if (!values) worked.set(node.id, (values = withComputed(store.schema, store.graph as never, node as never) as unknown as Record<string, unknown>));
-      return values[key];
-    },
+    opened: openedGroups,
   });
+  const { showingPast, arranged } = shown;
+  const groupsDrawn = shown.groups;
   /*
-   * THE DECLARED GROUPS, IN THEIR ORDER, THE CLOSED ONES LAST AND SHUT —
-   * while the list is grouped the way the declaration groups it. A closed
-   * group opens for a person who presses it (the address keeps it open,
-   * `?open=done`), and stands open when the list is narrowed to find
-   * something: by words, or by the very field it groups.
+   * "EXPORT CSV" (Roadmap f-view-export-csv): the rows this list shows, as
+   * `shownList` says — in this order, with this filter, these words and
+   * these groups, a shut group's rows not among them — from the arranging
+   * line and the place menu, unless the declaration offers it to nobody
+   * (`pages.lists.<kind>.export: false`).
    */
-  const groupField = declaredGroup && arrangement.group?.by === declaredGroup.by && !arrangement.group.bucket ? offers.groups.find((offer) => offer.key === declaredGroup.by) : undefined;
-  const groupsDrawn =
-    declaredGroup && groupField && (groupField.type === "choice" || groupField.type === "boolean")
-      ? orderListGroups(arranged.groups, declaredGroup, { type: groupField.type, ...(groupField.options ? { options: groupField.options } : {}) })
-      : arranged.groups.map((group) => ({ ...group, closed: false }));
-  const openedGroups = new Set((search.get("open") ?? "").split(",").filter(Boolean));
-  const narrowedToFind = Boolean(arrangement.query) || (arrangement.filter ?? []).some((condition) => condition.key === declaredGroup?.by);
-  const groupKeyOf = (key: string) => (groupField?.type === "boolean" ? (key === "1" ? "true" : "false") : key);
-  const isShut = (group: { key: string; closed: boolean }) => group.closed && !narrowedToFind && !openedGroups.has(groupKeyOf(group.key));
+  const around = useGraviewIfAny();
+  const onExport = context.onExport ?? around?.onExport;
+  const exporting = declared?.export !== false;
+  const shownNow = (): ShownListToExport => ({
+    title: pluralOf(store, kind),
+    schema: store.schema,
+    graph: store.graph,
+    kind,
+    groups: shown.grouped ? shown.groups.filter((group) => !group.shut).map((group) => ({ label: group.label, nodes: group.nodes })) : [{ nodes: shown.nodes }],
+    grouped: shown.grouped,
+    onExport,
+  });
+  useShownListExport(listExportKey(kind), shownNow, exporting);
+  const isShut = (group: { shut: boolean }) => group.shut;
   const toggleGroup = (key: string) => {
     const params = new URLSearchParams(search);
     const next = new Set(openedGroups);
@@ -441,7 +448,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
    * some act on one of these at all.
    */
   // The records in the order they are drawn — by group, by section, else as arranged — which a range and Cmd/Ctrl-A read.
-  const drawn = arranged.grouped && grouping ? groupsDrawn.flatMap((group) => (isShut(group) ? [] : group.nodes)) : sections && sections.length > 1 ? sections.flatMap((section) => section.nodes) : members;
+  // A large list's sections keep its order, so what is drawn is what `shownList` says is shown.
+  const drawn = shown.nodes;
   const order = useMemo(() => drawn.map((node) => node.id), [drawn.map((node) => node.id).join("\n")]); // eslint-disable-line react-hooks/exhaustive-deps
   const choosing = useChoosing(order);
   // The records' own mark, for the skips into them.
@@ -662,6 +670,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             // `?q=` would be two answers to one question. An app's own shell
             // has no such box, so there the line keeps its own.
             query={context.framed === true && context.barAbove !== true}
+            {...(exporting ? { exportList: () => void exportShownList(shownNow()), prefetchExport } : {})}
           />
         ) : null}
         <style>{ROWS_CSS}</style>
@@ -739,7 +748,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
                       aria-expanded={!shut}
                       aria-controls={rowsId}
                       data-testid="list-group-toggle"
-                      onClick={() => toggleGroup(groupKeyOf(group.key))}
+                      onClick={() => toggleGroup(group.value)}
                     >
                       <span aria-hidden="true">{shut ? "▸" : "▾"}</span>
                       {group.label} <span>· {group.nodes.length}</span>

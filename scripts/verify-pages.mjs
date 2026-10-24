@@ -291,6 +291,79 @@ async function aListArrangesOnOneQuietLine() {
   report.checks.aShortListIsReadNotArranged = { seen: quiet.short, ok: quiet.short.length === 2 && quiet.short.every((one) => one.count === "1 reason" && one.controls === 0) };
 }
 
+/**
+ * A LIST IS EXPORTED AS IT IS SHOWN (Roadmap f-view-export-csv). Pressing
+ * "Export CSV" on todo's tasks — grouped by the list each is on, open ones
+ * only — downloads a CSV whose rows are the rows on screen, in their order,
+ * under their group's heading; and the reasons, whose list the declaration
+ * switched off (`pages.lists.reason.export: false`), offer it to nobody.
+ */
+async function aListIsExportedAsItIsShown() {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
+  await page.waitForSelector('[data-testid="arrange-export"]', { timeout: 20_000 });
+  const shown = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="list-group"]')].flatMap((section) => {
+      const heading = section.querySelector("h2")?.firstChild?.textContent?.trim() ?? "";
+      return [...section.querySelectorAll("li[data-graview-record]")].map((row) => ({ group: heading, text: (row.textContent ?? "").replace(/\s+/g, " ").trim() }));
+    }),
+  );
+  const button = await page.evaluate(() => {
+    const press = document.querySelector('[data-testid="arrange-export"]');
+    return { tag: press?.tagName ?? null, name: press?.getAttribute("aria-label") ?? press?.textContent?.trim() ?? null, filled: press ? getComputedStyle(press).backgroundColor : null };
+  });
+  // Pressed from the keyboard, where the keys are: the press keeps them.
+  await page.focus('[data-testid="arrange-export"]');
+  const [download] = await Promise.all([page.waitForEvent("download", { timeout: 10_000 }), page.keyboard.press("Enter")]);
+  const file = download.suggestedFilename();
+  const text = readFileSync(await download.path(), "utf8");
+  const rows = parseCsvText(text);
+  const [header, ...body] = rows;
+  const focus = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null);
+  await page.goto(`${at("todo")}/pages/reasons?today=2026-09-01`, { waitUntil: "networkidle" });
+  await page.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
+  await page.waitForTimeout(300);
+  const offOffers = await page.locator('[data-testid="arrange-export"]').count();
+  await page.close();
+  const matches = body.length === shown.length && body.every((row, at) => row[0] === shown[at]?.group && shown[at]?.text.includes(row[1] ?? "\u0000"));
+  report.checks.exportingAGroupedListWritesTheRowsOnScreenInTheirOrder = {
+    file,
+    header,
+    rows: body.slice(0, 6),
+    shown: shown.slice(0, 6),
+    count: { file: body.length, screen: shown.length },
+    bom: text.charCodeAt(0) === 0xfeff,
+    button,
+    focus,
+    ok: /^Tasks — \d{4}-\d{2}-\d{2}\.csv$/.test(file) && text.charCodeAt(0) === 0xfeff && header?.[0] === "Group" && header?.[1] === "Name" && shown.length > 3 && matches && button.tag === "BUTTON" && button.name === "Export CSV" && focus === "arrange-export",
+  };
+  report.checks.aListSwitchedOffOffersNoExport = { offers: offOffers, ok: offOffers === 0 };
+}
+
+/** RFC 4180, as `parseCsv` reads it: quoted cells, doubled quotes, CRLF, the byte-order mark. */
+function parseCsvText(text) {
+  const source = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+  for (let at = 0; at < source.length; at++) {
+    const char = source[at];
+    if (quoted) {
+      if (char === '"' && source[at + 1] === '"') (cell += '"'), at++;
+      else if (char === '"') quoted = false;
+      else cell += char;
+    } else if (char === '"') quoted = true;
+    else if (char === ",") row.push(cell), (cell = "");
+    else if (char === "\r" || char === "\n") {
+      if (char === "\r" && source[at + 1] === "\n") at++;
+      row.push(cell), rows.push(row), (row = []), (cell = "");
+    } else cell += char;
+  }
+  if (cell || row.length) row.push(cell), rows.push(row);
+  return rows;
+}
+
 async function anEmptyStateSaysWhatToDoNext(desk2) {
   /* An empty state that says what to do next, rather than a blank page. */
   await desk2.fill('[data-testid="nav-find"]', "zzzz");
@@ -1408,6 +1481,7 @@ try {
   const desk2 = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await aListYouArrangedIsALinkYouCanSend(desk2);
   await aListArrangesOnOneQuietLine();
+  await aListIsExportedAsItIsShown();
   await anEmptyStateSaysWhatToDoNext(desk2);
   await theWordsFindItOnAPage();
   await aRecordEditsWhereItIsShown(desk2);

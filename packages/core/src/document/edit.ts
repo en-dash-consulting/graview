@@ -34,6 +34,7 @@ import {
   type GraviewDocument,
 } from "./schema.js";
 import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES, unknownLensOption, viewReference } from "../places.js";
+import { LENSES_THAT_LIST, listsRecords } from "../lenses-that-list.js";
 import { placeSlug, VIEW_REFERENCE, type HostView, type KindList } from "../views/types.js";
 import { documentListFields, kindListFindings, kindListWords, listGroup, listSort, sortTypeOfDocumentField } from "../kind-list.js";
 import { computedOf, validateComputed } from "./computed.js";
@@ -133,6 +134,7 @@ export const EDIT_OPS = [
   "add-lens",
   "remove-lens",
   "set-lens-hidden",
+  "set-lens-export",
   "set-home",
   "arrange-pages",
   "set-computed",
@@ -253,6 +255,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "remove-lens": z.object({ op: z.literal("remove-lens"), title: lensTitle, on: kindName.optional() }).strict(),
     // A lens kept off the bar's places, the page list and the home's gallery, still reached by its address, a link or navigate.
     "set-lens-hidden": z.object({ op: z.literal("set-lens-hidden"), title: lensTitle, on: kindName.optional(), hidden: z.boolean() }).strict(),
+    // Whether a place that lists records offers "Export CSV" (a lens, or a kind's list by its kind or plural): on unless switched off.
+    "set-lens-export": z.object({ op: z.literal("set-lens-export"), title: lensTitle, on: kindName.optional(), export: z.boolean() }).strict(),
     "set-home": z.object({ op: z.literal("set-home"), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
     "arrange-pages": z
       .object({
@@ -915,6 +919,8 @@ class Editor {
         return this.removeLens(i, e);
       case "set-lens-hidden":
         return this.setLensHidden(i, e);
+      case "set-lens-export":
+        return this.setLensExport(i, e);
       case "set-home":
         return this.setHome(i, e.blocks);
       case "arrange-pages":
@@ -1040,7 +1046,7 @@ class Editor {
       was = lenses[at];
     }
     // A lens drawn anew in another's place stays off the lists if that one was.
-    const lens: Doc = { name, title: e.title, ...(e.on !== undefined ? { on: e.on } : {}), ...(e.bindings !== undefined ? { bindings: e.bindings } : {}), ...(e.options !== undefined ? { options: e.options } : {}), ...(was?.["hidden"] === true ? { hidden: true } : {}), ...(e.create === false ? { create: false } : {}) };
+    const lens: Doc = { name, title: e.title, ...(e.on !== undefined ? { on: e.on } : {}), ...(e.bindings !== undefined ? { bindings: e.bindings } : {}), ...(e.options !== undefined ? { options: e.options } : {}), ...(was?.["hidden"] === true ? { hidden: true } : {}), ...(was?.["export"] === false ? { export: false } : {}), ...(e.create === false ? { create: false } : {}) };
     // A title is an address: one lens a title on a kind.
     const clash = lenses.findIndex((other, index) => index !== at && isObject(other) && typeof other["title"] === "string" && placeSlug(other["title"]) === placeSlug(e.title) && (e.on === undefined || other["on"] === undefined || other["on"] === e.on));
     if (clash >= 0) return this.titleTaken(i, lenses[clash]!);
@@ -1182,6 +1188,45 @@ class Editor {
     else delete lens["hidden"];
     if (was === e.hidden) this.said.push(e.hidden ? `The lens "${title}" was already kept off the lists.` : `The lens "${title}" was already listed.`);
     else this.said.push(e.hidden ? `The lens "${title}" is kept off the bar and the page list; a link or navigate still reaches it.` : `The lens "${title}" is listed on the bar and the page list again.`);
+  }
+
+  /**
+   * "EXPORT CSV" OFFERED ON A PLACE, OR TO NOBODY (Roadmap f-view-export-csv):
+   * a lens that lists records, or a kind's list (`pages.lists.<kind>.export`)
+   * named by its kind or its plural where no lens has the title. On is the
+   * default, so turning it on takes the key away.
+   */
+  private setLensExport(i: number, e: Doc) {
+    const kind = e.on === undefined ? this.listNamed(e.title) : undefined;
+    if (kind !== undefined) return this.setListExport(kind, e.export);
+    const index = this.lensIndex(i, e.title, e.on);
+    if (index < 0) return;
+    const lens: Doc = this.doc.lenses[index];
+    const title = String(lens["title"]);
+    if (isShippedLens(String(lens["name"])) && !listsRecords(String(lens["name"]))) {
+      return this.fail(i, "export", `"${title}" is a ${String(lens["name"])} lens, which lists no records, so it has nothing to export`, `only ${LENSES_THAT_LIST.join(", ")} lenses and a kind's list offer "Export CSV"`);
+    }
+    const was = lens["export"] !== false;
+    if (e.export) delete lens["export"];
+    else lens["export"] = false;
+    if (was === e.export) this.said.push(e.export ? `The lens "${title}" already offers Export CSV.` : `The lens "${title}" already offers Export CSV to nobody.`);
+    else this.said.push(e.export ? `The lens "${title}" offers Export CSV again.` : `The lens "${title}" offers Export CSV to nobody.`);
+  }
+
+  /** A kind's list offering "Export CSV", or offering it to nobody. */
+  private setListExport(kind: string, exported: boolean) {
+    const plural = pluralWords(this.doc, kind);
+    const pages = (this.doc.pages ??= {});
+    const lists = (pages.lists ??= {});
+    const list = (lists[kind] ??= {});
+    const was = list.export !== false;
+    if (exported) delete list.export;
+    else list.export = false;
+    if (Object.keys(list).length === 0) delete lists[kind];
+    if (Object.keys(lists).length === 0) delete pages.lists;
+    if (Object.keys(pages).length === 0) delete this.doc.pages;
+    if (was === exported) this.said.push(exported ? `The list of ${plural} already offers Export CSV.` : `The list of ${plural} already offers Export CSV to nobody.`);
+    else this.said.push(exported ? `The list of ${plural} offers Export CSV again.` : `The list of ${plural} offers Export CSV to nobody.`);
   }
 
   /** The kind whose list a title names — the kind's name or its plural — where no lens is called that. */

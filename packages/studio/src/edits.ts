@@ -401,12 +401,17 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       const changed = !old || !node || !same(old, node) || !same(outEdges(before, id), outEdges(after, id));
       if (!changed) continue;
       /* A titled lens kept off the lists, or put back: `set-lens-hidden`, when that is all that changed. */
-      if (sort === "lens" && old && node && (old["hidden"] === true) !== (node["hidden"] === true)) {
-        const { hidden: _was, ...oldRest } = old;
-        const { hidden: _now, ...nodeRest } = node;
+      /* And one offering "Export CSV" or not: `set-lens-export`, likewise — both when both changed and nothing else did. */
+      const hiding = sort === "lens" && old !== undefined && node !== undefined && (old["hidden"] === true) !== (node["hidden"] === true);
+      const exporting = sort === "lens" && old !== undefined && node !== undefined && (old["export"] === false) !== (node["export"] === false);
+      if (old && node && (hiding || exporting)) {
+        const { hidden: _was, export: _wasExported, ...oldRest } = old;
+        const { hidden: _now, export: _nowExported, ...nodeRest } = node;
         const declared = (document.lenses ?? []).find((lens) => typeof lens["title"] === "string" && lensNodeId(lens as unknown as LensIdentity) === id);
         if (declared && same(oldRest, nodeRest) && same(outEdges(before, id), outEdges(after, id))) {
-          edits.push({ op: "set-lens-hidden", title: declared["title"] as string, ...(typeof declared["on"] === "string" ? { on: declared["on"] } : {}), hidden: node["hidden"] === true });
+          const at = typeof declared["on"] === "string" ? { on: declared["on"] } : {};
+          if (hiding) edits.push({ op: "set-lens-hidden", title: declared["title"] as string, ...at, hidden: node["hidden"] === true });
+          if (exporting) edits.push({ op: "set-lens-export", title: declared["title"] as string, ...at, export: node["export"] !== false });
           continue;
         }
       }

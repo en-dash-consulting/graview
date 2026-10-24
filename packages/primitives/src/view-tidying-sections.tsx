@@ -5,6 +5,7 @@ import { MenuSections } from "@graview/react/drawing";
 import { lazyModule, useGraviewIfAny, useNavigation, type MenuItem, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
 import { useCallback, useContext, useMemo, type ReactNode } from "react";
 import { NoticeBoardContext } from "./notices.js";
+import type { ShownListToExport } from "./list-export.js";
 
 /*
  * HIDE AND DELETE IN THE PLACE MENU (Roadmap f-place-menu-views), as much
@@ -15,6 +16,12 @@ import { NoticeBoardContext } from "./notices.js";
  * never right-clicked carries none of it. Its own module, beside the faces'
  * menus: `MenuSections` is the drawn faces' (`@graview/react/drawing`).
  */
+
+/** What a drawn place shows, by key (`list:<kind>`, `place:<as>`): what `useShownListExport` says, read off the page (`SHOWN_LISTS`). */
+const shownAt = (key: string) => (globalThis as { [key: symbol]: Map<string, () => ShownListToExport> | undefined })[Symbol.for("graview.shown-lists")]?.get(key);
+
+/** What a place's export switch is set on: a lens by its title and kind, a kind's list by its kind. */
+type ExportAbout = { readonly lens: string; readonly on?: string } | { readonly kind: string };
 
 const tidying = /* @__PURE__ */ lazyModule(retryingImport(() => import("./view-tidying.js")));
 
@@ -48,44 +55,62 @@ export function useViewTidyingSection(away?: (place: Place, after: Place | undef
   const views = context?.views;
   const board = useContext(NoticeBoardContext);
   return useMemo<MenuSectionSource | null>(() => {
-    if (!keeper || !views) return null;
+    if (!views) return null;
     return (target: MenuTarget) => {
       // What the host says as the menu opens.
-      const state = keeper.current();
+      const state = keeper?.current();
       const kind = kindOf(target);
+      const section = (items: MenuItem[]) => (items.length > 0 ? { id: "tidy-view", items, prepare: () => tidying.prefetch() } : null);
+      const tidy = <K extends "setListHidden" | "setHidden" | "remove" | "setExport" | "exportList">(name: K, ...args: unknown[]) => tidying.load().then((module) => (module[name] as (...given: unknown[]) => Promise<boolean>)(...args), () => false);
+      /*
+       * "EXPORT CSV" (Roadmap f-view-export-csv): the records the place
+       * shows, where it is drawn and lists records, unless its declaration
+       * offers it to nobody — and, for whoever may change the declaration,
+       * the switch that offers it or not, `set-lens-export`.
+       */
+      const exporting = (key: string, off: boolean, title: string, about: ExportAbout, owner: boolean): MenuItem[] => {
+        const shown = shownAt(key);
+        const items: MenuItem[] = shown && !off ? [{ id: "export-csv", label: "Export CSV", hint: "The records shown, as a spreadsheet", run: () => void tidy("exportList", shown()) }] : [];
+        if (owner && (off || shown)) items.push({ id: off ? "export-on" : "export-off", label: off ? "Turn on export" : "Turn off export", hint: off ? "Offer Export CSV here" : "Offer Export CSV to nobody", run: () => void tidy("setExport", title, about, keeper, off, board) });
+        return items;
+      };
       /*
        * A KIND'S LIST, on Pages: kept off the places (`pages.hide`) as a
        * change to the declaration — `set-lens-hidden` on the kind — by
        * whoever may change it. Still at its address, and Show brings it back.
        */
       if (target.place === undefined) {
-        if (target.face !== "pages" || kind === undefined || target.on !== undefined || !state.may.lenses || !keeper.lens) return null;
+        if (target.face !== "pages" || kind === undefined || target.on !== undefined) return null;
+        const owner = state?.may.lenses === true && keeper?.lens !== undefined;
+        const title = pluralLabel(context!.store.schema, kind);
         const hidden = views.arrangement?.()?.hide?.includes(kind) === true;
-        const setListHidden = (hide: boolean) => void tidying.load().then((module) => module.setListHidden(kind, pluralLabel(context!.store.schema, kind), keeper, hide, board), String);
-        const items: MenuItem[] = [hidden ? { id: "show-list", label: "Show", hint: "Back in the places, for everyone", run: () => setListHidden(false) } : { id: "hide-list", label: "Hide", hint: "Off the places, for everyone; still at its address", run: () => setListHidden(true) }];
-        return { id: "tidy-view", items, prepare: () => tidying.prefetch() };
+        return section([
+          ...(owner ? [{ id: hidden ? "show-list" : "hide-list", label: hidden ? "Show" : "Hide", hint: hidden ? "Back in the places, for everyone" : "Off the places, for everyone; still at its address", run: () => void tidy("setListHidden", kind, title, keeper, !hidden, board) }] : []),
+          ...exporting(`list:${kind}`, views.arrangement?.()?.lists?.[kind]?.export === false, title, { kind }, owner),
+        ]);
       }
       const place = views.places().find((one) => one.as === target.place && (kind === undefined || one.kind === kind || one.over?.includes(kind) === true));
       if (!place) return null;
-      const how = placeTidying(place, state, keeper);
-      if (!how) return null;
-      const setHidden = (hidden: boolean) => void tidying.load().then((module) => module.setHidden(place, how, keeper, hidden, board), String);
-      const items: MenuItem[] = [
-        place.hidden
-          ? { id: "show-view", label: "Show", hint: "Back in the places, for everyone", run: () => setHidden(false) }
-          : { id: "hide-view", label: "Hide", hint: "Off the places and the scene, for everyone", run: () => setHidden(true) },
-        {
-          id: "delete-view",
-          label: "Delete",
-          hint: `Kept ${REMOVED_VIEW_DAYS} days under Recently deleted`,
-          run: () => {
-            const after = placeAfter(views.places(), place);
-            void tidying.load().then((module) => module.remove(place, how, keeper, board).then((done) => done && away?.(place, after)), String);
-          },
-        },
-      ];
-      // What a press does, fetched while the pointer rests on the menu.
-      return { id: "tidy-view", items, prepare: () => tidying.prefetch() };
+      const how = keeper && state ? placeTidying(place, state, keeper) : null;
+      return section([
+        ...(how
+          ? [
+              place.hidden
+                ? { id: "show-view", label: "Show", hint: "Back in the places, for everyone", run: () => void tidy("setHidden", place, how, keeper, false, board) }
+                : { id: "hide-view", label: "Hide", hint: "Off the places and the scene, for everyone", run: () => void tidy("setHidden", place, how, keeper, true, board) },
+              {
+                id: "delete-view",
+                label: "Delete",
+                hint: `Kept ${REMOVED_VIEW_DAYS} days under Recently deleted`,
+                run: () => {
+                  const after = placeAfter(views.places(), place);
+                  void tidy("remove", place, how, keeper, board).then((done) => done && away?.(place, after));
+                },
+              },
+            ]
+          : []),
+        ...exporting(`place:${place.as}`, place.export === false, place.title, { lens: place.title, on: place.kind }, how === "lens"),
+      ]);
     };
   }, [keeper, views, board, away]);
 }

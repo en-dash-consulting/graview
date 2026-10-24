@@ -1,6 +1,6 @@
 ---
 name: graview-lists
-description: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
+description: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page or exported as CSV, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.
 ---
 
 # Lists that stay usable as an app grows
@@ -118,6 +118,16 @@ own actor tidying are `graview-tidying`.
    one") and `split-<kind>` ("Change from here") take `{ id, on }`; the
    record's page changes the rule with a picker beside the date.
 
+7. **Let a list leave as a spreadsheet — or say where it may not.** A
+   kind's list and a lens that lists records (calendar, timeline, coverage,
+   board, status board) end their arranging line with "Export CSV", also in
+   the place menu: the rows shown, in their order, filter, words and groups
+   (a "Group" column first), the name, then each field as the page says it,
+   under the seat's sight. Off for everyone with `"export": false` on the
+   lens or under `pages.lists.<kind>`; the owner's menu says "Turn off
+   export" (the edit `{ "op": "set-lens-export" }`). A host that
+   saves files passes `onExport`.
+
 ## Then find out whether it worked
 
 ```sh
@@ -129,7 +139,9 @@ and names the keys it can, a kind `pages.lists` names that is not there
 (`pages-kind-unknown`); it refuses a list sorted by what the kind does
 not have, grouped by a field that is not a choice or a yes or no, or
 closing a value that is not one of its choices (`pages-list-arrangement`,
-an error, in a sentence); and it warns of a card or row that puts a `text` field whole in
+an error, in a sentence); warns of an `export` that is not true or false
+(`lens-export-not-a-boolean`, `pages-list-export-not-a-boolean`) or on a
+lens with no records (`lens-export-lists-no-records`); and of a card or row that puts a `text` field whole in
 a text block (`view-whole-text`: "feature card shows summary whole; it will
 be clamped"). Then look at the list at a phone's width as well as a desk's:
 
