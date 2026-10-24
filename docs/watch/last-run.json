@@ -1,10 +1,22 @@
 {
-  "at": "2026-10-24T04:33:48.054Z",
+  "at": "2026-10-24T04:34:56.707Z",
   "results": [
+    {
+      "name": "drawn",
+      "code": 0,
+      "took": 229,
+      "verdict": "held"
+    },
     {
       "name": "address",
       "code": 0,
-      "took": 371,
+      "took": 354,
+      "verdict": "held"
+    },
+    {
+      "name": "scale",
+      "code": 0,
+      "took": 121,
       "verdict": "held"
     }
   ]

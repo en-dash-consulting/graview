@@ -3,8 +3,13 @@ import type { InterpolatedLayout } from "@graview/layout";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { districtOf, mapChoice, ribbonsOf, ribbonSentence } from "./map-choice.js";
 import { ribbonWidth } from "./ribbon-width.js";
-import { loopPoints, midpointOf, onCanvas, pathOf, routeOnTheGround, type Box, type PlotLike, type Point } from "./ribbons.js";
+import { groundOf, loopPoints, midpointOf, onCanvas, pathOf, routeBetweenFrames, routesFor, routesRemembered, routesSeen, type Box, type PlotLike, type Point } from "./ribbons.js";
 import "./provider.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
+
+/** The districts' name cards as last measured, by the plots, cell and tilt they were measured at: a city shown again routes with them at once. */
+const measuredCards = new Map<string, readonly Box[]>();
+const sameBoxes = (a: readonly Box[], b: readonly Box[]) =>
+  a.length === b.length && a.every((box, i) => Math.round(box.x) === Math.round(b[i]!.x) && Math.round(box.y) === Math.round(b[i]!.y) && Math.round(box.width) === Math.round(b[i]!.width) && Math.round(box.height) === Math.round(b[i]!.height));
 
 /**
  * THE RELATIONS FROM ALTITUDE: one ribbon per relation between two
@@ -63,10 +68,11 @@ export function Ribbons({ frame, width, height, pan, store, graphVersion: nodes,
    * them rather than behind them. Measured once the picture has landed, on
    * the canvas from the city's origin, so a pan moves nothing here.
    */
-  const [labels, setLabels] = useState<readonly Box[]>([]);
-  const labelsKey = labels.map((box) => `${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)},${Math.round(box.height)}`).join(";");
+  const cards = `${plotsKey}|${cell}|${tilt}`;
+  const [measured, setMeasured] = useState<{ readonly cards: string; readonly labels: readonly Box[] } | null>(null);
   const [svg, setSvg] = useState<SVGSVGElement | null>(null);
   const settled = frame.t >= 1;
+  const shownAtAll = Boolean(city) && Boolean(view.overview);
   useLayoutEffect(() => {
     const ground = svg?.parentElement;
     if (!ground || !city || !settled) return;
@@ -77,22 +83,45 @@ export function Ribbons({ frame, width, height, pan, store, graphVersion: nodes,
       const at = el.getBoundingClientRect();
       return at.width > 0 && at.height > 0 ? [{ x: at.left - box.left - ox, y: at.top - box.top - oy, width: at.width, height: at.height }] : [];
     });
-    const key = found.map((one) => `${Math.round(one.x)},${Math.round(one.y)},${Math.round(one.width)},${Math.round(one.height)}`).join(";");
-    if (key !== labelsKey) setLabels(found);
+    measuredCards.set(cards, found);
+    while (measuredCards.size > 16) measuredCards.delete(measuredCards.keys().next().value!);
+    setMeasured((was) => (was?.cards === cards && sameBoxes(was.labels, found) ? was : { cards, labels: found }));
     // Measured again when the plots or the city's scale move the cards.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [svg, settled, plotsKey, cell, tilt]);
+  }, [svg, settled, cards]);
+  /*
+   * ROUTED ONCE, WHEN THERE IS SOMETHING TO ROUTE FOR. Not while the city is
+   * on its way in — every frame of the way has another cell, and each was
+   * routed — nor before its name cards are measured, which routed it once
+   * without them and once again with; never for a picture routed already
+   * (`routesRemembered`); and a picture not seen before is routed between
+   * frames (`routeBetweenFrames`), its ribbons drawn when it lands. On the
+   * way in, the streets last routed for the same ground are drawn as the
+   * camera moves over them, or none are. A page drawn to a string, where
+   * nothing is measured and no frame follows, routes at once.
+   */
+  const most = Math.max(0, ...drawable.map((ribbon) => ribbon.links));
+  const asked = drawable.map((ribbon) => ({ key: ribbon.key, from: ribbon.from, to: ribbon.to, width: ribbonWidth(ribbon.links, most) }));
+  const ground = groundOf({ ribbons: asked, plots });
+  const drawnToAString = typeof window === "undefined";
+  // The cards measured for this very picture; else the ones last measured for it, before this mount; else none, where nothing is measured.
+  const labels = measured?.cards === cards ? measured.labels : (measuredCards.get(cards) ?? (drawnToAString ? [] : undefined));
+  const ready = cell > 0 && shownAtAll && settled && labels !== undefined;
+  const picture = ready ? { ribbons: asked, plots, cell, tilt, labels } : null;
+  const [landed, setLanded] = useState(0);
+  const waiting = picture !== null && !drawnToAString && routesRemembered(picture) === undefined;
+  const pictureKey = `${ground}|${cell}|${tilt}|${(labels ?? []).map((box) => `${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)},${Math.round(box.height)}`).join(";")}`;
+  useEffect(() => {
+    if (!waiting || !picture) return;
+    return routeBetweenFrames(picture, () => setLanded((n) => n + 1));
+    // `pictureKey` stands for the picture.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waiting, pictureKey]);
   const routed = useMemo(() => {
-    if (cell === 0) return [];
+    if (cell === 0 || !shownAtAll) return [];
+    const runs = picture ? (drawnToAString ? routesFor(picture) : routesRemembered(picture)) : routesSeen(ground, cell, tilt);
+    if (!runs) return [];
     const loops = new Map<string, number>();
-    const most = Math.max(0, ...drawable.map((ribbon) => ribbon.links));
-    const runs = routeOnTheGround({
-      ribbons: drawable.map((ribbon) => ({ key: ribbon.key, from: ribbon.from, to: ribbon.to, width: ribbonWidth(ribbon.links, most) })),
-      plots,
-      cell,
-      tilt,
-      labels,
-    });
     return drawable.flatMap((ribbon) => {
       let points: Point[] | undefined;
       if (ribbon.from === ribbon.to) {
@@ -103,9 +132,9 @@ export function Ribbons({ frame, width, height, pan, store, graphVersion: nodes,
       if (!points || points.length < 2) return [];
       return [{ ribbon, points, d: pathOf(points), middle: midpointOf(points), width: ribbonWidth(ribbon.links, most) }];
     });
-    // `plotsKey` stands for the plots; `drawable` follows the ribbons and the kit.
+    // `ground` stands for the ribbons, their widths and the plots; `labels` for the cards they were measured as.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cell, tilt, plotsKey, ribbons, kitDraws, hiddenKinds, labelsKey]);
+  }, [cell, tilt, ground, labels, settled, shownAtAll, landed]);
 
   /*
    * POINTED AT, NEVER PRESSED. A ribbon runs up to its districts' curbs,
@@ -159,12 +188,13 @@ export function Ribbons({ frame, width, height, pan, store, graphVersion: nodes,
     };
   }, [svg]);
 
-  if (!city || !view.overview || routed.length === 0) return null;
+  if (!city || !view.overview) return null;
   const choice = mapChoice(selection, view, kindOf);
   // A record's own links say it; an open lens is not drawn over.
   if (choice.records.length > 0 || choice.lens !== null) return null;
   const shown = choice.districts.length > 0 ? routed.filter(({ ribbon }) => choice.districts.includes(ribbon.from) || choice.districts.includes(ribbon.to)) : routed;
-  if (shown.length === 0) return null;
+  // Still to be measured or routed: the layer stands, empty, so the cards can be measured from it in the same frame.
+  if (shown.length === 0 && drawable.length === 0) return null;
   const asking = emphasis ?? null;
   const said = shown.find(({ ribbon }) => ribbon.key === pointed);
   bands.current = shown.map(({ ribbon, points, width: wide }) => ({ key: ribbon.key, points, reach: wide / 2 + 6 }));

@@ -79,6 +79,13 @@ export function tidyViews<S extends AnySchema, V>(registry: ViewRegistry<S, V>, 
       return cellOf(kind, cell);
     },
     all: () => registry.all().filter((one) => !(one.name !== undefined && gone.has(one.name))),
+    /*
+     * THE HOME, AS THE HOST KEEPS ITS VIEWS: the last home view given that
+     * is not deleted, or the derived home where every one is. Hidden is a
+     * word for the lists, which the home is not on.
+     */
+    homes: () => (registry.homes?.() ?? []).filter((one) => !(one.name !== undefined && gone.has(one.name))),
+    homeView: () => (registry.homes ? tidy.homes!().at(-1)?.view : registry.homeView?.()),
   };
   // A visit that has landed (`pages.first` taken) has landed on the tidied registry too: a view hidden or deleted is not a new visit.
   if (hasLanded(registry)) markLanded(tidy);

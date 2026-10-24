@@ -121,6 +121,8 @@ try {
           .map(([, when, length]) => [when, length])
           .slice(0, 8),
         longTasks: w.__long.length,
+        // The longest task the main thread was held for, in ms: a frame waits on all of it.
+        longestTask: Math.round(Math.max(0, ...w.__long)),
         dom: document.querySelectorAll("*").length,
         hosts: document.querySelectorAll("[data-graview-view]").length,
         strands: document.querySelectorAll("[data-graview-connector]").length,
@@ -278,6 +280,31 @@ try {
   const rise = await measure("rise", () => page.click('[data-testid="overview"]'), 1500);
 
   /*
+   * THE OVERVIEW, SHOWN AGAIN (Roadmap request:gv-scene-ribbon-routing-blocks).
+   * An app of twenty-five kinds froze for a second and a half each time it
+   * came back to the whole map, routing every ribbon again on the main
+   * thread. districts.html is that shape — twenty-five kinds, eight hundred
+   * records, seventy-five relations between them — and the way back is
+   * taken three times from a place and once out of a district. Measured
+   * before the fix on the machine this was written on: tasks of 4,199 and
+   * 3,725 ms; after it, none over 50.
+   */
+  const ribbonsDrawn = () => page.evaluate(() => document.querySelectorAll("[data-graview-ribbon]").length);
+  await page.goto(`${at("discography-preview")}/districts.html#overview=1`, { waitUntil: "load" });
+  await page.waitForFunction(() => document.querySelectorAll("[data-graview-ribbon]").length >= 75, null, { timeout: 60_000 });
+  await page.waitForTimeout(1000);
+  const returns = [];
+  for (let round = 1; round <= 3; round++) {
+    await measure(`districts, descend ${round}`, () => page.click('[data-testid="overview"]'), 1500);
+    returns.push(await measure(`districts, back to the overview ${round}`, () => page.click('[data-testid="overview"]'), 2000));
+  }
+  await travel("#overview=1&sel=kind%3Aclaim");
+  await page.waitForTimeout(2000);
+  returns.push(await measure("districts, escape out of a district", () => page.keyboard.press("Escape"), 2000));
+  const overviewAgain = { ribbons: await ribbonsDrawn(), hash: await page.evaluate(() => location.hash), longest: Math.max(...returns.map((stop) => stop.longestTask)) };
+  report.overviewAgain = overviewAgain;
+
+  /*
    * SIXTY FRAMES A SECOND, as this browser can measure it: headless Chromium
    * paces an idle frame at about 19 ms even with vsync off (the altitude,
    * still, baseline), so the p95 is held to 20 ms — a frame that fits — and
@@ -316,6 +343,8 @@ try {
     aTransitionHolds60: [descend, hub, rise].every((stop) => stop.first <= 150 && holds(stop)),
     // Selecting and typing at the hub never drop a frame past 50 ms after the first.
     aSelectionAndASearchAreCheap: quiet(select) && quiet(search),
+    // Back to the overview of twenty-five districts, from a place or out of a district: no task holds the main thread over 100 ms, and every ribbon is drawn once it lands.
+    returningToTheOverviewNeverHoldsTheMainThreadOver100ms: overviewAgain.longest <= 100 && overviewAgain.ribbons === 75,
     /*
      * THE GPU PATH draws the discography itself: views captured and drawn
      * at altitude and at the hub, nothing thrown.

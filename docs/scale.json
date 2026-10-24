@@ -1,167 +1,282 @@
 {
-  "at": "2026-10-15T01:51:18.787Z",
+  "at": "2026-10-24T04:32:55.695Z",
   "engine": "chromium",
   "stops": {
     "altitude, still": {
       "frames": 15,
-      "first": 18,
-      "p50": 18.1,
-      "p95": 18.2,
-      "worst": 18,
+      "first": 19,
+      "p50": 17.9,
+      "p95": 19.2,
+      "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 799,
+      "longestTask": 0,
+      "dom": 831,
       "hosts": 5,
       "strands": 0,
       "names": 4
     },
     "altitude, drag": {
-      "frames": 124,
-      "first": 18,
-      "p50": 17.8,
-      "p95": 18.4,
-      "worst": 19,
+      "frames": 133,
+      "first": 36,
+      "p50": 18.1,
+      "p95": 19.4,
+      "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 801,
+      "longestTask": 0,
+      "dom": 833,
       "hosts": 5,
       "strands": 0,
       "names": 4
     },
     "altitude, wheel": {
-      "frames": 105,
-      "first": 18,
-      "p50": 18,
-      "p95": 18.3,
-      "worst": 18,
+      "frames": 108,
+      "first": 19,
+      "p50": 18.7,
+      "p95": 19.4,
+      "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 803,
+      "longestTask": 0,
+      "dom": 835,
       "hosts": 5,
       "strands": 0,
       "names": 4
     },
     "descend": {
-      "frames": 200,
+      "frames": 175,
       "first": 19,
-      "p50": 5,
-      "p95": 18.2,
-      "worst": 19,
+      "p50": 6.8,
+      "p95": 19.2,
+      "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 499,
+      "longestTask": 0,
+      "dom": 531,
       "hosts": 6,
       "strands": 0,
       "names": 0
     },
     "focus the hub": {
-      "frames": 994,
-      "first": 54,
-      "p50": 0.7,
-      "p95": 18,
-      "worst": 18,
+      "frames": 868,
+      "first": 37,
+      "p50": 0.8,
+      "p95": 18.7,
+      "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 441,
+      "longestTask": 0,
+      "dom": 472,
       "hosts": 23,
       "strands": 27,
       "names": 0
     },
     "hub, drag": {
-      "frames": 1618,
+      "frames": 1484,
       "first": 19,
       "p50": 0.3,
-      "p95": 1.3,
-      "worst": 19,
+      "p95": 2.1,
+      "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 443,
+      "longestTask": 0,
+      "dom": 476,
       "hosts": 23,
       "strands": 27,
       "names": 0
     },
     "hub, move a card": {
-      "frames": 1076,
+      "frames": 955,
       "first": 19,
       "p50": 0.3,
-      "p95": 18,
-      "worst": 19,
+      "p95": 19,
+      "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 443,
+      "longestTask": 0,
+      "dom": 476,
       "hosts": 23,
       "strands": 27,
       "names": 0
     },
     "hub, wheel": {
-      "frames": 161,
+      "frames": 165,
       "first": 19,
       "p50": 17.2,
-      "p95": 18.4,
-      "worst": 19,
+      "p95": 19.3,
+      "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 443,
+      "longestTask": 0,
+      "dom": 476,
       "hosts": 23,
       "strands": 27,
       "names": 0
     },
     "hub, select": {
-      "frames": 70,
+      "frames": 69,
       "first": 36,
-      "p50": 18.1,
-      "p95": 18.4,
+      "p50": 19,
+      "p95": 19.4,
       "worst": 19,
       "slow": [],
       "longTasks": 1,
-      "dom": 375,
+      "longestTask": 60,
+      "dom": 410,
       "hosts": 23,
       "strands": 1,
       "names": 0
     },
     "hub, type in Find": {
-      "frames": 1029,
-      "first": 36,
+      "frames": 855,
+      "first": 56,
       "p50": 0.6,
-      "p95": 8,
-      "worst": 37,
+      "p95": 17.8,
+      "worst": 36,
       "slow": [
         [
-          172,
+          179,
           35
         ],
         [
-          293,
-          37
+          300,
+          36
         ]
       ],
       "longTasks": 1,
-      "dom": 815,
+      "longestTask": 56,
+      "dom": 848,
       "hosts": 23,
       "strands": 1,
       "names": 0
     },
     "rise": {
-      "frames": 5382,
-      "first": 19,
+      "frames": 2005,
+      "first": 21,
       "p50": 0.1,
-      "p95": 0.4,
-      "worst": 35,
+      "p95": 4.9,
+      "worst": 37,
       "slow": [
         [
-          852,
-          35
-        ],
+          866,
+          37
+        ]
+      ],
+      "longTasks": 0,
+      "longestTask": 0,
+      "dom": 4639,
+      "hosts": 5,
+      "strands": 0,
+      "names": 4
+    },
+    "districts, descend 1": {
+      "frames": 150,
+      "first": 19,
+      "p50": 8,
+      "p95": 19.5,
+      "worst": 33,
+      "slow": [],
+      "longTasks": 0,
+      "longestTask": 0,
+      "dom": 660,
+      "hosts": 15,
+      "strands": 0,
+      "names": 0
+    },
+    "districts, back to the overview 1": {
+      "frames": 686,
+      "first": 20,
+      "p50": 0.1,
+      "p95": 17.9,
+      "worst": 33,
+      "slow": [],
+      "longTasks": 0,
+      "longestTask": 0,
+      "dom": 4091,
+      "hosts": 25,
+      "strands": 0,
+      "names": 0
+    },
+    "districts, descend 2": {
+      "frames": 169,
+      "first": 19,
+      "p50": 7.5,
+      "p95": 19.2,
+      "worst": 20,
+      "slow": [],
+      "longTasks": 0,
+      "longestTask": 0,
+      "dom": 661,
+      "hosts": 15,
+      "strands": 0,
+      "names": 0
+    },
+    "districts, back to the overview 2": {
+      "frames": 4982,
+      "first": 27,
+      "p50": 0.1,
+      "p95": 0.2,
+      "worst": 47,
+      "slow": [
         [
-          1152,
+          673,
+          47
+        ]
+      ],
+      "longTasks": 0,
+      "longestTask": 0,
+      "dom": 4091,
+      "hosts": 25,
+      "strands": 0,
+      "names": 0
+    },
+    "districts, descend 3": {
+      "frames": 157,
+      "first": 19,
+      "p50": 7.7,
+      "p95": 19.2,
+      "worst": 20,
+      "slow": [],
+      "longTasks": 0,
+      "longestTask": 0,
+      "dom": 661,
+      "hosts": 15,
+      "strands": 0,
+      "names": 0
+    },
+    "districts, back to the overview 3": {
+      "frames": 5038,
+      "first": 26,
+      "p50": 0.1,
+      "p95": 0.2,
+      "worst": 34,
+      "slow": [
+        [
+          289,
           34
         ]
       ],
       "longTasks": 0,
-      "dom": 4585,
-      "hosts": 5,
+      "longestTask": 0,
+      "dom": 4091,
+      "hosts": 25,
       "strands": 0,
-      "names": 4
+      "names": 0
+    },
+    "districts, escape out of a district": {
+      "frames": 116,
+      "first": 18,
+      "p50": 17.9,
+      "p95": 19.3,
+      "worst": 20,
+      "slow": [],
+      "longTasks": 0,
+      "longestTask": 0,
+      "dom": 3811,
+      "hosts": 25,
+      "strands": 0,
+      "names": 0
     }
   },
   "pageErrors": [],
@@ -232,6 +347,161 @@
     },
     "after": "#focus=artist%3Atech-n9ne&sel=aggregate%3Aalbum%7Creleased-by%7Cin%7Ctype%3Dalbum"
   },
+  "overviewAgain": {
+    "ribbons": 75,
+    "hash": "#overview=1",
+    "longest": 0
+  },
+  "gpu": {
+    "pageErrors": [],
+    "discography": [
+      {
+        "stop": "altitude, still",
+        "frames": 57,
+        "fps": 54,
+        "p50": 18.6,
+        "p95": 18.8,
+        "slowShare": 0.58,
+        "drawn": 5,
+        "captures": 11,
+        "onDom": 0
+      },
+      {
+        "stop": "altitude, drag",
+        "frames": 2210,
+        "fps": 5000,
+        "p50": 0.2,
+        "p95": 0.4,
+        "slowShare": 0.01,
+        "drawn": 5,
+        "captures": 11,
+        "onDom": 0
+      },
+      {
+        "stop": "hub, still",
+        "frames": 57,
+        "fps": 54,
+        "p50": 18.6,
+        "p95": 18.8,
+        "slowShare": 0.61,
+        "drawn": 5,
+        "captures": 11,
+        "onDom": 0
+      },
+      {
+        "stop": "hub, drag",
+        "frames": 1172,
+        "fps": 5000,
+        "p50": 0.2,
+        "p95": 2,
+        "slowShare": 0.02,
+        "drawn": 5,
+        "captures": 11,
+        "onDom": 0
+      }
+    ],
+    "handedOn": {
+      "onDom": [
+        {
+          "id": "kind:album",
+          "off": 0.000015136718758412826
+        },
+        {
+          "id": "kind:artist",
+          "off": 0.000015136718758412826
+        },
+        {
+          "id": "kind:era",
+          "off": 0.00005078124999613465
+        },
+        {
+          "id": "kind:song",
+          "off": 0.000028808593725671017
+        },
+        {
+          "id": "kind:theme",
+          "off": 0.00005078124999613465
+        }
+      ],
+      "inCanvas": 18
+    },
+    "after": {
+      "64": {
+        "frames": 1394,
+        "fps": 833,
+        "p50": 1.2,
+        "p95": 3.2,
+        "slowShare": 0,
+        "capturesPerFrame": 4,
+        "onDom": 0
+      },
+      "128": {
+        "frames": 1289,
+        "fps": 909,
+        "p50": 1.1,
+        "p95": 3.2,
+        "slowShare": 0,
+        "capturesPerFrame": 4,
+        "onDom": 0
+      },
+      "256": {
+        "frames": 1177,
+        "fps": 625,
+        "p50": 1.6,
+        "p95": 3.4,
+        "slowShare": 0,
+        "capturesPerFrame": 4,
+        "onDom": 0
+      },
+      "512": {
+        "frames": 986,
+        "fps": 556,
+        "p50": 1.8,
+        "p95": 4.3,
+        "slowShare": 0,
+        "capturesPerFrame": 0,
+        "onDom": 512
+      }
+    },
+    "before": {
+      "64": {
+        "frames": 112,
+        "fps": 60,
+        "p50": 16.8,
+        "p95": 35.8,
+        "slowShare": 0.36,
+        "capturesPerFrame": 64,
+        "onDom": 0
+      },
+      "128": {
+        "frames": 58,
+        "fps": 29,
+        "p50": 34.2,
+        "p95": 53.5,
+        "slowShare": 0.93,
+        "capturesPerFrame": 128,
+        "onDom": 0
+      },
+      "256": {
+        "frames": 31,
+        "fps": 15,
+        "p50": 67.2,
+        "p95": 89.9,
+        "slowShare": 0.94,
+        "capturesPerFrame": 256,
+        "onDom": 0
+      },
+      "512": {
+        "frames": 17,
+        "fps": 8,
+        "p50": 132.3,
+        "p95": 154,
+        "slowShare": 0.94,
+        "capturesPerFrame": 512,
+        "onDom": 0
+      }
+    }
+  },
   "verdict": {
     "theCityAtAltitudeIsLight": true,
     "aHubStopIsBounded": true,
@@ -241,7 +511,12 @@
     "aHeldCardFollowsTheHand": true,
     "wheelHolds60": true,
     "aTransitionHolds60": true,
-    "aSelectionAndASearchAreCheap": true
+    "aSelectionAndASearchAreCheap": true,
+    "returningToTheOverviewNeverHoldsTheMainThreadOver100ms": true,
+    "theDiscographyDrawsOnTheGpuPath": true,
+    "aViewTheGpuCannotFollowIsDrawnOnTheDomInPlace": true,
+    "theGpuPathHolds55At256LiveViews": true,
+    "theGpuPathHolds55At512LiveViews": true
   },
   "passed": true
 }

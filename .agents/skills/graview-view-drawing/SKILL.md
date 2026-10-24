@@ -27,7 +27,7 @@ twice, so say what changes per push in a class or a `style` attribute.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`,
 `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image`, `feImage`, `foreignObject` and
-SMIL (use `@keyframes`); any
+SMIL; any
 `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on
 `img` any address but the ones below. In CSS: `url()` except `url(#id)` on
 `fill`, `stroke`, `clip-path`, `marker` or `filter`; `@import`; `@font-face`; `@property`;
@@ -41,7 +41,7 @@ and `search` are drawn as `div`, and `output` as `span`, each with what it
 holds. They lose their landmark or status role, and a selector for them in
 your stylesheet still matches. A `section` is never named, so it stays out of the landmarks. `role` takes
 no landmark or notice's role (`navigation`, `status`, `alert`, …) but a
-named `region`, for a scroller.
+named `region`.
 
 A control of your own keeps its role and state, and every `aria-*`:
 `<span role="checkbox" aria-checked="true" tabindex="0">`, `switch`,

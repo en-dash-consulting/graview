@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:27:37.407Z",
+  "at": "2026-10-24T04:27:01.983Z",
   "engines": [
     "chromium",
     "webkit",
@@ -12,7 +12,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -27,7 +27,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -44,7 +44,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5988/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -59,7 +59,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5988/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -78,7 +78,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -93,7 +93,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -110,7 +110,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5988/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -125,7 +125,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5988/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -144,7 +144,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 1,
@@ -159,7 +159,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 1,
@@ -176,7 +176,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5988/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 2,
@@ -191,7 +191,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/the-packages",
+              "href": "http://localhost:5988/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 2,
@@ -215,7 +215,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5988/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -231,7 +231,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5988/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -249,7 +249,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5988/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -265,7 +265,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5988/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -285,7 +285,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5988/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -301,7 +301,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5988/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -319,7 +319,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5988/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -335,7 +335,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5988/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -355,7 +355,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5988/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 3,
@@ -371,7 +371,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5988/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 3,
@@ -389,7 +389,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5988/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 4,
@@ -405,7 +405,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5988/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 4,
@@ -430,7 +430,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -445,7 +445,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -462,7 +462,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/open-questions",
+              "href": "http://localhost:5988/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 7,
@@ -477,7 +477,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2",
+              "href": "http://localhost:5988/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 7,
@@ -496,7 +496,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -511,7 +511,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -528,7 +528,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/open-questions",
+              "href": "http://localhost:5988/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 7,
@@ -543,7 +543,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2",
+              "href": "http://localhost:5988/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 7,
@@ -562,7 +562,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 5,
@@ -577,7 +577,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5988/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 5,
@@ -594,7 +594,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5888/apps/a2/open-questions",
+              "href": "http://localhost:5988/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 6,
@@ -609,7 +609,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5888/apps/a2",
+              "href": "http://localhost:5988/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 6,
@@ -787,7 +787,7 @@
       "seen": {
         "chromium": {
           "place": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5988/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 2,
@@ -802,7 +802,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5988/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 4,
@@ -818,7 +818,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5988/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 6,
@@ -835,7 +835,7 @@
         },
         "webkit": {
           "place": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5988/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 2,
@@ -850,7 +850,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5988/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 4,
@@ -866,7 +866,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5988/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 6,
@@ -883,7 +883,7 @@
         },
         "firefox": {
           "place": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5988/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 1,
@@ -898,7 +898,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5988/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 3,
@@ -914,7 +914,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5988/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 5,
@@ -3653,25 +3653,25 @@
       "seen": {
         "chromium 1440×900 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3680,25 +3680,25 @@
         },
         "chromium 390×844 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3707,25 +3707,25 @@
         },
         "webkit 1440×900 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3734,25 +3734,25 @@
         },
         "webkit 390×844 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3761,25 +3761,25 @@
         },
         "firefox 1440×900 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": null
@@ -3788,25 +3788,25 @@
         },
         "firefox 390×844 article": {
           "before": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5988/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": null
@@ -7589,148 +7589,6 @@
             "saysSlot": false,
             "facts": false
           }
-        }
-      },
-      "ok": true
-    },
-    "aDeletedHomeViewNeverDrawsOverTheLiveOne": {
-      "seen": {
-        "chromium 1440×900": {
-          "drawn": [
-            "eagles-nest"
-          ],
-          "says": [
-            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
-          ]
-        },
-        "chromium 390×844": {
-          "drawn": [
-            "eagles-nest"
-          ],
-          "says": [
-            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
-          ]
-        },
-        "webkit 1440×900": {
-          "drawn": [
-            "eagles-nest"
-          ],
-          "says": [
-            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
-          ]
-        },
-        "webkit 390×844": {
-          "drawn": [
-            "eagles-nest"
-          ],
-          "says": [
-            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
-          ]
-        },
-        "firefox 1440×900": {
-          "drawn": [
-            "eagles-nest"
-          ],
-          "says": [
-            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
-          ]
-        },
-        "firefox 390×844": {
-          "drawn": [
-            "eagles-nest"
-          ],
-          "says": [
-            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
-          ]
-        }
-      },
-      "ok": true
-    },
-    "aVisitorsFormOverACompiledAppRefusesAndAnswersAsBefore": {
-      "seen": {
-        "chromium 1440×900": {
-          "title": "RSVP",
-          "refused": {
-            "said": "Not yet: Email — invalid email address.",
-            "guests": []
-          },
-          "answered": {
-            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
-            "guests": [
-              "Ada Lovelace"
-            ]
-          },
-          "scripts": 35
-        },
-        "chromium 390×844": {
-          "title": "RSVP",
-          "refused": {
-            "said": "Not yet: Email — invalid email address.",
-            "guests": []
-          },
-          "answered": {
-            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
-            "guests": [
-              "Ada Lovelace"
-            ]
-          },
-          "scripts": 35
-        },
-        "webkit 1440×900": {
-          "title": "RSVP",
-          "refused": {
-            "said": "Not yet: Email — invalid email address.",
-            "guests": []
-          },
-          "answered": {
-            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
-            "guests": [
-              "Ada Lovelace"
-            ]
-          },
-          "scripts": 35
-        },
-        "webkit 390×844": {
-          "title": "RSVP",
-          "refused": {
-            "said": "Not yet: Email — invalid email address.",
-            "guests": []
-          },
-          "answered": {
-            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
-            "guests": [
-              "Ada Lovelace"
-            ]
-          },
-          "scripts": 35
-        },
-        "firefox 1440×900": {
-          "title": "RSVP",
-          "refused": {
-            "said": "Not yet: Email — invalid email address.",
-            "guests": []
-          },
-          "answered": {
-            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
-            "guests": [
-              "Ada Lovelace"
-            ]
-          },
-          "scripts": 35
-        },
-        "firefox 390×844": {
-          "title": "RSVP",
-          "refused": {
-            "said": "Not yet: Email — invalid email address.",
-            "guests": []
-          },
-          "answered": {
-            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
-            "guests": [
-              "Ada Lovelace"
-            ]
-          },
-          "scripts": 35
         }
       },
       "ok": true

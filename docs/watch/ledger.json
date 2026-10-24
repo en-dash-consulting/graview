@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:33:48.049Z",
+  "at": "2026-10-24T04:34:56.697Z",
   "open": 0,
   "problems": {
     "keyboard-lands-nowhere|a press on <div> \"#:#Pay the deposit\" left the keyboard on <body>": {
@@ -435,19 +435,6 @@
       "lastSeen": "2026-10-03T04:13:27.762Z",
       "status": "fixed",
       "fixedAt": "2026-10-03T04:29:38.019Z"
-    },
-    "page-error|React is not defined": {
-      "rule": "page-error",
-      "detail": "React is not defined",
-      "at": "",
-      "harnesses": [
-        "verify-address"
-      ],
-      "firstSeen": "2026-10-24T04:22:20.123Z",
-      "flaps": 0,
-      "lastSeen": "2026-10-24T04:22:20.123Z",
-      "status": "fixed",
-      "fixedAt": "2026-10-24T04:33:48.049Z"
     }
   }
 }

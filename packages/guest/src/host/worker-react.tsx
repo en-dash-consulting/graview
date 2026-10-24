@@ -1,6 +1,6 @@
 import type { AnySchema, KindOfSchema, Principal, Store } from "@graview/core";
 import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { useContext, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
@@ -175,11 +175,24 @@ const DRAFT_LINE = { margin: 0, display: "flex", flexWrap: "wrap", alignItems: "
  * f-fallback-lens-loses-gutter): what a view asked for — `bleed` — is the
  * view's alone, and the face that takes the gutter back for it passes by a
  * slot that holds this instead. No box of its own: it lays out as it would.
+ * Where the view failed, it also names the view and the reason (Roadmap
+ * r-visitor-sees-lens-not-view), so a visitor drawn the kind's own face where
+ * its owner was drawn the view says why to whoever looks
+ * (`data-worker-view-failed`: "source" for code that did not arrive).
  */
-function Instead({ view: View, props }: { readonly view: ViewComponent<AnySchema>; readonly props: ViewProps<AnySchema> }) {
+function Instead({ view: View, props, fellBack }: { readonly view: ViewComponent<AnySchema>; readonly props: ViewProps<AnySchema>; readonly fellBack?: { readonly name: string; readonly reason: WorkerViewFailure } }) {
   return (
-    <div data-worker-view-fallback="" style={{ display: "contents" }}>
+    <div data-worker-view-fallback="" {...(fellBack ? { "data-worker-view-fell-back": fellBack.name, "data-worker-view-failed": fellBack.reason } : {})} style={{ display: "contents" }}>
       <View {...props} />
+    </div>
+  );
+}
+
+/** The same mark around the home's own page, where the home's view fell back. */
+function FellBack({ name, reason, children }: { readonly name: string; readonly reason: WorkerViewFailure; readonly children: ReactNode }) {
+  return (
+    <div data-worker-view-fell-back={name} data-worker-view-failed={reason} style={{ display: "contents" }}>
+      {children}
     </div>
   );
 }
@@ -206,8 +219,8 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     if (!graview) return null;
     /* Not made yet at the moment drawn: the kind's own face, as where it fails. */
     if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Instead view={Fallback} props={props} /> : null;
-    /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94); nothing, where the surface is that face already. */
-    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Instead view={Fallback} props={props} />;
+    /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94), saying which view fell back and why; nothing, where the surface is that face already. */
+    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Instead view={Fallback} props={props} fellBack={{ name: definition.manifest.name, reason: failed }} />;
     /*
      * BESIDE THE RECORD'S OWN FIELDS (FR-149): what was drawn for the record
      * before, under the view — its fields, editable where an act writes
@@ -344,7 +357,13 @@ export function workerHome(definition: WorkerViewDefinition, options: { readonly
     const goTo = useGoTo();
     const [failed, setFailed] = useState<WorkerViewFailure | null>(null);
     const then = useDefinitionThen(definition);
-    if ((failed || then === null) && Fallback) return <Fallback context={context} />;
+    if (failed && Fallback)
+      return (
+        <FellBack name={definition.manifest.name} reason={failed}>
+          <Fallback context={context} />
+        </FellBack>
+      );
+    if (then === null && Fallback) return <Fallback context={context} />;
     if (then === null) return null;
     return (
       <WorkerViewMount
