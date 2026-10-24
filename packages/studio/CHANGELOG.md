@@ -1,5 +1,27 @@
 # @graview/studio
 
+## 0.1.53
+
+### Patch Changes
+
+- Updated dependencies [a1acdc1]
+- Updated dependencies [642145e]
+- Updated dependencies [642145e]
+- Updated dependencies [e30703c]
+- Updated dependencies [e30703c]
+- Updated dependencies [642145e]
+- Updated dependencies [642145e]
+- Updated dependencies [e30703c]
+- Updated dependencies [d28346b]
+- Updated dependencies [42009a4]
+  - @graview/core@0.1.53
+  - @graview/react@0.1.53
+  - @graview/pages@0.1.53
+  - @graview/primitives@0.1.53
+  - @graview/layout@0.1.53
+  - @graview/ship@0.1.53
+  - @graview/tools@0.1.53
+
 ## 0.1.52
 
 ### Patch Changes
