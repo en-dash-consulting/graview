@@ -67,11 +67,16 @@ export function scenePlacesOf(input: {
   const drawnBy = (place: Place): boolean => view.focusId === aggregateId(place.kind) && (showing === undefined ? all.filter((one) => one.kind === place.kind).at(-1) === place : showing === place.as);
   const on = all.find((place) => drawnBy(place) && (showing !== undefined || !view.overview));
   const here = on ? pictures.find((place) => samePicture(place, on)) : undefined;
-  // One kept off the lists (`hidden`) — a lens a custom home links to, a view somebody hid from the place menu — only while it is the one shown.
+  /*
+   * One kept off the lists (`hidden`) — a lens a custom home links to, a
+   * view somebody hid from the place menu — is here only while it is the one
+   * shown, and marked: the bar names it as where you are and offers it
+   * nowhere (`offeredPlaces`, Roadmap f-hidden-view-leaves-the-bar).
+   */
   const listed = pictures.filter((place) => !place.hidden || place === here);
   const places: BarPlace[] = [
     { key: WHOLE_KEY, label: WHOLE_LABEL, path: `${OVERVIEW_PATH}${overviewFragment(to(WHOLE_KEY, EMPTY_VIEW)!)}`, group: "home" },
-    ...listed.map((place) => ({ key: keyOf(place), label: placeLabel(place, all, input.schema), path: `${OVERVIEW_PATH}${overviewFragment(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind })),
+    ...listed.map((place) => ({ key: keyOf(place), label: placeLabel(place, all, input.schema), path: `${OVERVIEW_PATH}${overviewFragment(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind, ...(place.hidden ? { hidden: true } : {}) })),
   ];
   return { places, current: here ? keyOf(here) : WHOLE_KEY, to };
 }

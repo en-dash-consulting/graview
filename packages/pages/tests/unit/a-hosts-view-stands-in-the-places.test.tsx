@@ -81,10 +81,11 @@ describe("a kind pages.hide names", () => {
     expect(listed(html)).toContain("kind:task");
   });
 
-  it("still opens at its address, where the bar names it as the place you are on", () => {
+  it("still opens at its address, where the bar names it as the place you are on and offers it nowhere", () => {
     const html = draw("/notes", { hide: ["note", "source"] });
     expect(html).toContain("Tone: plain");
-    expect(listed(html)).toContain("kind:note");
+    // Not an entry even while it is open (Roadmap f-hidden-view-leaves-the-bar): the one control says where you are.
+    expect(listed(html)).not.toContain("kind:note");
     expect(listed(html)).not.toContain("kind:source");
     expect(html).toMatch(/data-testid="app-place-current"[^>]*>Notes</);
   });
