@@ -39,6 +39,11 @@ A titled view of many is a place too, at `/places/<its title as a slug>`:
 `data-place="live-threats"` reaches the view "Live threats", and the check
 knows it when its host hands the views it keeps. From code, `graview.navigate("offer:7")` goes by the same rules.
 
+In SVG the same `<a data-record>` is a link — a timeline's dot, a map's
+pin — with its address, the keyboard and Enter: `<svg role="group"
+aria-label="…"><a data-record="amendment:19" aria-label="19th, 1920"><circle
+…/></a></svg>`. It takes no `href` of yours; a link out is an HTML one.
+
 ## Links out
 
 `<a href="${node.url}">` is drawn where the address is one a record the
@@ -52,26 +57,29 @@ carry what it reads out.
 ## A card that opens
 
 Any element with `data-record` or `data-place` is a link, not only an
-`<a>`:
+`<a>`. Put an `<a>` to the same record on its heading:
 
 ```html
 <div class="card" data-record="threat:7">
-  <h3>Invoice phishing</h3>
+  <h3><a data-record="threat:7">Invoice phishing</a></h3>
   <span class="badge">critical</span><span class="badge">new</span>
   <p>Forty mailboxes got the fake invoice.</p>
   <button data-more="threat:7">More</button>
 </div>
 ```
 
-The host gives it the keyboard (`tabindex="0"`), makes it a link to
-assistive technology (`role="link"`; a list's item keeps its own role, and
-a table's row keeps its role and gives the keyboard to its first cell,
-where Enter opens the row), draws it with a pointer, `touch-action: manipulation` and a
-faint tap highlight, and follows it on a click, on Enter, and on a phone's
-tap. A press anywhere inside it opens it — its heading, a badge, a line —
-unless it lands on something with a press of its own: a button, a field,
-a `data-act`, a lightbox, a drop target, a control's `role`, another link.
-So "More" above toggles and opens nothing.
+The heading's `<a>` is the keyboard's and the screen reader's link; the
+card, a `<div>` or an `<li>` alike, takes no role and no tab stop of its
+own, and is a bigger target: the host draws it with a pointer,
+`touch-action: manipulation` and a faint tap highlight, and follows it on a
+click and a phone's tap anywhere inside it — its heading, a badge, a line —
+unless the press lands on something with a press of its own: a button, a
+field, a `data-act`, a lightbox, a drop target, a control's `role`, another
+link. So "More" above toggles and opens nothing, and the audit finds no
+link inside a link. A card with no such `<a>` is given the keyboard and
+`role="link"` itself (a list's item keeps its role; a table's row gives the
+keyboard to its first cell); then it may hold no button, and a heading
+that links elsewhere is a link inside a link.
 
 It is no link when it is a press scope: a `fieldset` or `role="group"`
 (the record a form's acts are done to), an element with `data-act`,

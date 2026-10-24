@@ -1,12 +1,12 @@
 {
-  "at": "2026-10-22T15:20:45.303Z",
+  "at": "2026-10-24T04:00:16.081Z",
   "transport": "worker",
   "engine": "chromium",
   "policy": {
     "name": "chatgpt",
     "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; worker-src blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; style-src-attr 'unsafe-inline'; img-src 'self' data: https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; font-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; connect-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; media-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; object-src 'none'; frame-src 'none'; base-uri 'self'",
     "sandbox": "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms",
-    "widgetOrigin": "http://localhost:5693"
+    "widgetOrigin": "http://localhost:5793"
   },
   "claims": {
     "the card and the hostile guest, built by buildGuestBundle, are classic scripts with nothing to load at run time": {
@@ -454,25 +454,25 @@
     "a guest that spins after ready is stopped as silent within limits.silentMs (1500 ms) and one interval of it": {
       "ok": true,
       "detail": {
-        "spun": 1498.4000000059605,
+        "spun": 1499.0999999940395,
         "failedAt": {
-          "builder": 479.5,
-          "spinner": 1562.5
+          "builder": 557.7000000178814,
+          "spinner": 1572.4000000059605
         },
         "drewAt": {
-          "spinner": 64.09999999403954
+          "spinner": 73.30000001192093
         },
         "pulse": {
-          "last": 5040.39999999851,
-          "longest": 173.90000000596046,
-          "ticks": 38
+          "last": 5095.9000000059605,
+          "longest": 157.39999997615814,
+          "ticks": 37
         },
         "spinnerStopped": true,
         "busyRunning": true,
         "building": {
-          "last": 5043.89999999851,
-          "longest": 169.30000000447035,
-          "ticks": 5
+          "last": 5098.4000000059605,
+          "longest": 154.89999997615814,
+          "ticks": 6
         },
         "builderStopped": true
       }
@@ -480,9 +480,9 @@
     "the widget's page kept its own timer while a guest spun, never more than 250 ms between 50 ms ticks": {
       "ok": true,
       "detail": {
-        "last": 5040.39999999851,
-        "longest": 173.90000000596046,
-        "ticks": 38
+        "last": 5095.9000000059605,
+        "longest": 157.39999997615814,
+        "ticks": 37
       }
     },
     "a guest that is busy but yields, for three times silentMs, is kept": {
@@ -511,9 +511,9 @@
           ]
         ],
         "building": {
-          "last": 5043.89999999851,
-          "longest": 169.30000000447035,
-          "ticks": 5
+          "last": 5098.4000000059605,
+          "longest": 154.89999997615814,
+          "ticks": 6
         },
         "stopped": true
       }

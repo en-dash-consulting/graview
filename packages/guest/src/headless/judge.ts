@@ -21,17 +21,32 @@ export type Judged =
   | { readonly ok: true; readonly parts: readonly DescribedPart[]; readonly problems: readonly DescribedProblem[]; readonly drawn: DrawnTranscript }
   | { readonly ok: false; readonly reason: HeadlessFailureReason; readonly detail: string };
 
+/* SMIL sets an attribute after the host judged it, and moves past a person's wish for less motion. */
+const SMIL = " SMIL can set an attribute after the host judged it, and runs past a person's reduced-motion setting: animate with CSS @keyframes, which is held to it.";
+/** Why the refusals a view's author meets most were made, and what to draw instead (2026-10-23). */
+const WHY: Readonly<Record<string, string>> = {
+  animate: SMIL,
+  animateTransform: SMIL,
+  animateMotion: SMIL,
+  set: SMIL,
+  feImage: " It loads an image: a filter here is made of the view's own pixels.",
+  "@property": " It registers a property for the whole page, the app's own --graview-* among them: animate a transform, an opacity or a color in @keyframes.",
+  "a href": " An <a> in SVG goes to a record or a place (data-record, data-place); a link out is an HTML <a href>.",
+  role: ` A role of the app's chrome or notices is the app's; role="region" is drawn while it has a name (aria-label).`,
+};
+
 /** One refusal of the open kit's, said to the author of the view, offering only what its host draws. */
 export function sayRefusal(refusal: ViewRefusal, host: ImageHost & { readonly linkOrigins?: readonly string[] } = {}): DescribedProblem {
   const element = "element" in refusal && refusal.element ? `<${refusal.element}>` : "";
   const name = refusal.name ? ` ${refusal.name}` : "";
+  const why = (key: string | undefined) => (key && Object.prototype.hasOwnProperty.call(WHY, key) ? WHY[key] : "");
   switch (refusal.reason) {
     case "element":
-      return { at: `drawing ${element}`, says: `Not drawn: ${element} is not in the open kit.` };
+      return { at: `drawing ${element}`, says: `Not drawn: ${element} is not in the open kit.${why("element" in refusal ? refusal.element : undefined)}` };
     case "attribute":
-      return { at: `drawing ${element}${name}`, says: `Not drawn: ${element || "an element"} does not take${name}.` };
+      return { at: `drawing ${element}${name}`, says: `Not drawn: ${element || "an element"} does not take${name}.${why(`${"element" in refusal ? refusal.element : ""}${name}`)}` };
     case "value":
-      return { at: `drawing ${element}${name}`, says: `Not drawn: the value of${name} is not one the open kit takes.` };
+      return { at: `drawing ${element}${name}`, says: `Not drawn: the value of${name} is not one the open kit takes.${why(refusal.name)}` };
     case "url":
       if ("element" in refusal && refusal.element === "a" && refusal.address !== undefined) return { at: `drawing ${element}${name}`, says: `Not drawn: ${linkRefusedWords(refusal.address, host.linkOrigins)}` };
       return { at: `drawing ${element}${name}`, says: refusal.address !== undefined && "element" in refusal && refusal.element === "img" ? `Not drawn: ${imageRefusedWords(refusal.address, host, "length" in refusal ? refusal.length : undefined)}` : `Not drawn: an address. A view loads nothing; an image is a data: image.` };
@@ -42,7 +57,7 @@ export function sayRefusal(refusal: ViewRefusal, host: ImageHost & { readonly li
     case "budget":
       return { at: "drawing", says: "Not drawn: more nodes than a view may draw." };
     case "css":
-      return { at: `stylesheet${name === " stylesheet" ? "" : name}`, says: `Not drawn: CSS the open kit leaves out${refusal.css ? ` (${refusal.css.reason}${refusal.css.name ? ` ${refusal.css.name}` : ""})` : ""}.` };
+      return { at: `stylesheet${name === " stylesheet" ? "" : name}`, says: `Not drawn: CSS the open kit leaves out${refusal.css ? ` (${refusal.css.reason}${refusal.css.name ? ` ${refusal.css.name}` : ""})` : ""}.${why(refusal.css?.name)}` };
   }
 }
 

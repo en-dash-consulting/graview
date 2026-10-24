@@ -135,8 +135,8 @@ describe("a view's accessible controls", () => {
     expect(page.refused.map((one) => `${one.reason} ${"element" in one ? one.element : ""} ${one.name ?? ""}`)).toEqual(["value span role", "value div role", "value span aria-live", "attribute section aria-label"]);
     expect(headlessDrawn(renders).refused).toEqual(page.refused);
     expect(page.refused.map((one) => sayRefusal(one).says)).toEqual([
-      "Not drawn: the value of role is not one the open kit takes.",
-      "Not drawn: the value of role is not one the open kit takes.",
+      'Not drawn: the value of role is not one the open kit takes. A role of the app\'s chrome or notices is the app\'s; role="region" is drawn while it has a name (aria-label).',
+      'Not drawn: the value of role is not one the open kit takes. A role of the app\'s chrome or notices is the app\'s; role="region" is drawn while it has a name (aria-label).',
       "Not drawn: the value of aria-live is not one the open kit takes.",
       "Not drawn: <section> does not take aria-label.",
     ]);
