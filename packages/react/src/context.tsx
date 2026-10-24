@@ -56,6 +56,9 @@ export type { ViewMode } from "./view-registry.js";
 /** Which visual scheme the scene is drawn in. */
 export type Scheme = "light" | "dark";
 
+/** Where "Export CSV" saves a list (Roadmap f-view-export-csv): handed the CSV text and the file name it is written as. */
+export type OnExport = (csv: string, filename: string) => void | Promise<void>;
+
 /**
  * A menu asked for at a point — and, when the gesture landed on something,
  * WHAT it landed on.
@@ -264,6 +267,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly menuSections?: readonly MenuSectionSource[] | undefined;
   /** THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (`keptViews` on the provider, else the provider's around it): read with `useKeptViews` from `@graview/primitives`. */
   readonly keptViews?: KeptViews | undefined;
+  /** WHERE "EXPORT CSV" SAVES A LIST (`onExport` on the provider, else the provider's around it); unsaid, the browser downloads it. */
+  readonly onExport?: OnExport | undefined;
   /**
    * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions): the host's
    * `subscriptions`, else the provider's around it, else this page's own,
@@ -597,6 +602,14 @@ export interface GraviewProviderProps<S extends AnySchema> {
    */
   readonly keptViews?: KeptViews | undefined;
   /**
+   * WHERE "EXPORT CSV" SAVES A LIST (Roadmap f-view-export-csv): handed the
+   * CSV text and the file name a place's list is written as, for a host
+   * that saves files itself — a service that keeps them, a guest frame
+   * that may not download. Unsaid, the provider around this one's, else
+   * the browser downloads the file.
+   */
+  readonly onExport?: OnExport | undefined;
+  /**
    * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions): a person's
    * subscriptions — made from the context menu, a record's page, after an
    * act, or by the chat — are kept here: `{ list, add, remove, onChange? }`
@@ -715,6 +728,7 @@ export function GraviewProvider<S extends AnySchema>({
   linkedRecords,
   menuSections,
   keptViews: hostKeptViews,
+  onExport: hostOnExport,
   subscriptions: hostSubscriptions,
   dismissals,
   whileAway,
@@ -728,6 +742,7 @@ export function GraviewProvider<S extends AnySchema>({
   const hostSections = menuSections ?? around?.menuSections;
   const signIn = hostSignIn ?? around?.signIn;
   const keptViews = hostKeptViews ?? around?.keptViews;
+  const onExport = hostOnExport ?? around?.onExport;
   /* Who is at the keyboard: see "WHO IS AT THE KEYBOARD" below. */
   const [seated, setSeated] = useState<Principal | null>(null);
   const seatNow = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
@@ -1163,6 +1178,7 @@ export function GraviewProvider<S extends AnySchema>({
       linkedRecords,
       menuSections: hostSections,
       ...(keptViews ? { keptViews } : {}),
+      ...(onExport ? { onExport } : {}),
       subscriptions,
       dismissals,
       whileAway,
@@ -1221,6 +1237,7 @@ export function GraviewProvider<S extends AnySchema>({
       linkedRecords,
       hostSections,
       keptViews,
+      onExport,
       subscriptions,
       dismissals,
       whileAway,

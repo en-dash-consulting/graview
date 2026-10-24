@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 110,
+  "gzipped": 50,
+  "changeset": "a-list-is-exported-as-it-is-shown.md",
+  "note": "Raised when a place's list came to be exported as it is shown (Roadmap f-view-export-csv): up front are only the provider's `onExport`, inherited from the provider around it, the frame handing it on, and `pages.lists.<kind>.export` in the document's shape. What a list says it shows, its press, the menu's rows, the writer and the download are the list's or fetched with the press. Measured at 611_487 / 213_472 against 611_385 / 213_428 before it: 102 more minified, 44 gzipped."
+}

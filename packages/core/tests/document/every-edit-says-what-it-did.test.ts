@@ -37,6 +37,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "add-lens": { op: "add-lens", title: "The shortlist", on: "vendor", options: { blocks: [{ headline: "{count(all('vendor')) | words} vendors" }, { list: "all('vendor')", sort: "name", as: "row" }] } },
   "remove-lens": { op: "remove-lens", title: "The shortlist" },
   "set-lens-hidden": { op: "set-lens-hidden", title: "The shortlist", hidden: true },
+  "set-lens-export": { op: "set-lens-export", title: "vendors", export: false },
   "set-home": { op: "set-home", blocks: [{ headline: "The wedding" }, { figure: "sum(all('vendor'), quote)", as: "money", currency: "USD", label: "Quoted so far" }] },
   "arrange-pages": { op: "arrange-pages", order: ["vendor", "category"], first: "vendors" },
   "set-computed": { op: "set-computed", kind: "category", name: "spent", expr: "sum(in('fills'), quote)", label: "Quoted" },

@@ -1,6 +1,6 @@
 {
   "name": "@graview/core",
-  "version": "0.1.51",
+  "version": "0.1.52",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -48,6 +48,14 @@
     "./arrange": {
       "types": "./dist/arrange.d.ts",
       "default": "./dist/arrange.js"
+    },
+    "./shown": {
+      "types": "./dist/shown.d.ts",
+      "default": "./dist/shown.js"
+    },
+    "./csv": {
+      "types": "./dist/csv.d.ts",
+      "default": "./dist/csv.js"
     },
     "./navigate": {
       "types": "./dist/navigate.d.ts",

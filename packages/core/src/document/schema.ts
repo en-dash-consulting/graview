@@ -417,6 +417,8 @@ function build() {
           sort: z.optional(ListSortSpec()),
           /* How it opens grouped: a choice or yes-or-no field — or { by, order, closed }, the closed groups last and shut. */
           group: z.optional(ListGroupSpec()),
+          /* False where the list offers nobody "Export CSV" (Roadmap f-view-export-csv): on when unsaid. */
+          export: z.optional(z.boolean()),
         }),
       ),
     ),

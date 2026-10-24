@@ -1,5 +1,5 @@
 import { minutesAsRead, type AnySchema, type DrawnLens } from "@graview/core";
-import type { ViewComponent, ViewProps } from "@graview/react/provider";
+import { useGraviewIfAny, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useContext, type ReactNode } from "react";
 import { createBoardLens, type BoardOptions } from "./lens/board.js";
 import type { CalendarOptions } from "./lens/calendar-options.js";
@@ -12,6 +12,7 @@ import { reachLens } from "./lens/reach.js";
 import { createTimelineLens, type TimelineOptions } from "./lens/timeline.js";
 import { Panel } from "./primitives/index.js";
 import { compileBlocks, PlacePageHead, SpecPlace, type SpecBlock } from "./spec-views.js";
+import { PlaceExportContext, type PlaceExport } from "./lens/place-export.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -94,7 +95,22 @@ export function declaredLensView(lens: DrawnLens): ViewComponent<AnySchema> {
   let view = MADE.get(lens);
   if (!view) {
     const Lens = made(lens);
-    const Titled = (props: ViewProps<AnySchema>) => <Lens {...props} label={lens.title} />;
+    const place: PlaceExport = { title: lens.title, as: lens.as, ...(lens.kinds[0] !== undefined ? { on: lens.kinds[0] } : {}) };
+    const off: PlaceExport = { ...place, export: false };
+    const Titled = (props: ViewProps<AnySchema>) => {
+      /*
+       * The place the lens is, told to its arranging line: what "Export CSV"
+       * names the file, and whether its declaration offers it (Roadmap
+       * f-view-export-csv) — read off the app here, as the lens is drawn,
+       * rather than carried on every place a page lists up front.
+       */
+      const declared = useGraviewIfAny()?.app?.lenses?.find((one) => one.title === lens.title && one.name === lens.lens);
+      return (
+        <PlaceExportContext.Provider value={declared?.export === false ? off : place}>
+          <Lens {...props} label={lens.title} />
+        </PlaceExportContext.Provider>
+      );
+    };
     MADE.set(lens, (view = Titled));
   }
   return view;

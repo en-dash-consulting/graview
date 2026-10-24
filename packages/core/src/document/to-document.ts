@@ -179,7 +179,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     ...(policy?.roles ? { roles: [...policy.roles] } : {}),
     ...(policy ? { policy: { grants, ...(policy.sees ? { sees: policy.sees.map((sight) => ({ ...sight })) } : {}) } } : {}),
     ...(app.modules ? { modules: modules(app.modules as Record<string, { mutations?: readonly string[] } & Record<string, unknown>>, unwritten) } : {}),
-    ...(app.lenses ? { lenses: app.lenses as unknown as Record<string, unknown>[] } : {}),
+    // A lens offers "Export CSV" unless it says not to: `export: true` is the default, and not written.
+    ...(app.lenses ? { lenses: app.lenses.map((lens) => (lens.export === true ? (({ export: _on, ...rest }) => rest)(lens) : lens)) as unknown as Record<string, unknown>[] } : {}),
     ...(app.pages ? { pages: app.pages as GraviewDocument["pages"] } : {}),
     ...(app.settings ? { settings: app.settings as unknown as Record<string, unknown>[] } : {}),
     ...(app.connections ? { connections: app.connections as GraviewDocument["connections"] } : {}),

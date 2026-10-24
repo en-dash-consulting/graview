@@ -81,6 +81,14 @@ export interface LensDeclaration {
    * (`set-lens-hidden` in a document).
    */
   readonly hidden?: boolean;
+  /**
+   * WHETHER IT OFFERS "EXPORT CSV" (Roadmap f-view-export-csv): a lens that
+   * lists records — a calendar, a timeline, a coverage, a board, a status
+   * board — offers to write the records it shows as a spreadsheet, in its
+   * order and with its filter, search and groups. `false` offers it to
+   * nobody (`set-lens-export` in a document). On when unsaid.
+   */
+  readonly export?: boolean;
   /** The kind it is a place over, when its bindings do not say (the reach lens) or say several. */
   readonly on?: string;
   /**

@@ -1,5 +1,6 @@
 import type { GraviewApp } from "./app.js";
-import { arrangedEntries, declaredLenses, MOST_STANDING, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, viewReference, type PlaceFinding, type ShippedLensName } from "./places.js";
+import { LENSES_THAT_LIST, listsRecords } from "./lenses-that-list.js";
+import { arrangedEntries, declaredLenses, isShippedLens, MOST_STANDING, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, viewReference, type PlaceFinding, type ShippedLensName } from "./places.js";
 import type { AnySchema } from "./schema/schema.js";
 import { allLabel, nounOf, pluralLabel, pluralOf } from "./schema/define-node.js";
 import { kindPath, onePerPicture, placePath, placeSlug, samePicture, sharesItsName, type HostView, type PagesArrangement, type Place } from "./views/types.js";
@@ -33,6 +34,14 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, opt
       findings.push({ severity: "warning", code: "lens-hidden-not-a-boolean", path: `lenses.${index}.hidden`, message: `${titled ? `"${lens.title}"` : `lenses.${index}`} says hidden is ${JSON.stringify(hidden)}, which is not true or false, so it is listed.`, fix: `Write "hidden": true to keep it off the lists, or drop it.` });
     } else if (hidden === true && !titled) {
       findings.push({ severity: "note", code: "lens-hidden-untitled", path: `lenses.${index}.hidden`, message: `lenses.${index} is hidden, but it has no title, so it is no place to hide.`, fix: `Give it a title to make it a place, or drop "hidden".` });
+    }
+    /* "EXPORT CSV" IS SWITCHED WITH TRUE OR FALSE, on a lens that has a list to write (Roadmap f-view-export-csv). */
+    const exported: unknown = lens.export;
+    const named = titled ? `"${lens.title}"` : `lenses.${index}`;
+    if (exported !== undefined && typeof exported !== "boolean") {
+      findings.push({ severity: "warning", code: "lens-export-not-a-boolean", path: `lenses.${index}.export`, message: `${named} says export is ${JSON.stringify(exported)}, which is not true or false, so it offers "Export CSV".`, fix: `Write "export": false to offer it to nobody, or drop it.` });
+    } else if (exported !== undefined && isShippedLens(lens.name) && !listsRecords(lens.name)) {
+      findings.push({ severity: "warning", code: "lens-export-lists-no-records", path: `lenses.${index}.export`, message: `${named} says export, but the ${lens.name} lens lists no records, so it has nothing to export and the switch does nothing.`, fix: `Drop "export": only ${LENSES_THAT_LIST.join(", ")} list records.` });
     }
   });
   const taken = places.find((place) => place.as === OVERVIEW_SLUG);

@@ -17,13 +17,13 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>graview-lists — Graview docs</title>
-<meta name="description" content="Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.">
+<meta name="description" content="Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page or exported as CSV, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
 <meta property="og:site_name" content="Graview">
 <meta property="og:title" content="graview-lists — Graview docs">
-<meta property="og:description" content="Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.">
+<meta property="og:description" content="Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page or exported as CSV, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://graview.dev/docs/skills/graview-lists.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -62,7 +62,7 @@ img { max-width: 100%; }
    "@type": "TechArticle",
    "@id": "https://graview.dev/docs/skills/graview-lists.html#article",
    "headline": "graview-lists — Graview docs",
-   "description": "Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.",
+   "description": "Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page or exported as CSV, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.",
    "url": "https://graview.dev/docs/skills/graview-lists.html",
    "inLanguage": "en",
    "image": "https://graview.dev/og.png",
@@ -1798,7 +1798,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-lists</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-lists</code> is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-lists</code> is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, several records acted on at once, a list printed as a static page or exported as CSV, and a date that repeats rather than a record each time — and verify each with graview check and the page itself rather than assuming it.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1829,9 +1829,12 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <ol>
 <li><strong>Let a weekly practice be one record, not fifty.</strong> A date that repeats is <code>{ "type": "date", "repeats": true }</code> (or <code>"datetime"</code>) in a document, <code>startsAtRepeat: repeatField()</code> beside <code>startsAt</code> in TypeScript. The record keeps its first occurrence in the date and the rule beside it: <code>"startsAtRepeat": { "every": "week", "on": ["tue"], "until": "2026-12-15" }</code> (<code>every</code> day, week, month or year; <code>interval</code>; <code>on</code> weekdays or days of the month, <code>-1</code> the last; <code>until</code>; <code>count</code>; <code>except</code>). Nothing is stored per occurrence: a rule, a sort, <code>today()</code> and "due in the next 7 days" read the next one, a calendar draws each, marked, and a row says "Every Tuesday, next Oct 27". <code>skip-&lt;kind&gt;</code>, <code>detach-&lt;kind&gt;</code> ("Change just this one") and <code>split-&lt;kind&gt;</code> ("Change from here") take <code>{ id, on }</code>; the record's page changes the rule with a picker beside the date.</li>
 </ol>
+<ol>
+<li><strong>Let a list leave as a spreadsheet — or say where it may not.</strong> A kind's list and a lens that lists records (calendar, timeline, coverage, board, status board) offer "Export CSV" beside the heading or on the lens's arranging line, and in the place menu: the rows shown, in their order, filter, words and groups (a "Group" column first), the name, then each field as the page says it, under the seat's sight. Off for everyone with <code>"export": false</code> on the lens or under <code>pages.lists.&lt;kind&gt;</code>; the owner's menu says "Turn off export" (the edit <code>{ "op": "set-lens-export" }</code>). A host that saves files passes <code>onExport</code>.</li>
+</ol>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">graview check src/domain/app.ts</code></pre></div>
-<p>It warns of a filter the kind cannot be filtered by (<code>pages-filter-unknown</code>) and names the keys it can, a kind <code>pages.lists</code> names that is not there (<code>pages-kind-unknown</code>); it refuses a list sorted by what the kind does not have, grouped by a field that is not a choice or a yes or no, or closing a value that is not one of its choices (<code>pages-list-arrangement</code>, an error, in a sentence); and it warns of a card or row that puts a <code>text</code> field whole in a text block (<code>view-whole-text</code>: "feature card shows summary whole; it will be clamped"). Then look at the list at a phone's width as well as a desk's:</p>
+<p>It warns of a filter the kind cannot be filtered by (<code>pages-filter-unknown</code>) and names the keys it can, a kind <code>pages.lists</code> names that is not there (<code>pages-kind-unknown</code>); it refuses a list sorted by what the kind does not have, grouped by a field that is not a choice or a yes or no, or closing a value that is not one of its choices (<code>pages-list-arrangement</code>, an error, in a sentence); warns of an <code>export</code> that is not true or false (<code>lens-export-not-a-boolean</code>, <code>pages-list-export-not-a-boolean</code>) or on a lens with no records (<code>lens-export-lists-no-records</code>); and of a card or row that puts a <code>text</code> field whole in a text block (<code>view-whole-text</code>: "feature card shows summary whole; it will be clamped"). Then look at the list at a phone's width as well as a desk's:</p>
 <div class="code" data-scroller><pre><code class="language-sh">graview describe src/domain/app.ts --place requests --seed seed.json --width 390</code></pre></div>
 <p>It says the list's headings, each record's card and what is filtered, as the page draws them. Run an act over three records, one of which it may not take: that one is named and stays chosen, and one undo takes back the rest.</p>
 <p>A right-click on a row, a value or the page's ground opens the scene's menu on the pages (Shift+right-click, a text field or selected text keep the browser's). A design's own row takes part as a link to its record or with <code>data-graview-record</code>, its own value with <code>data-graview-field</code> and <code>data-graview-editable</code>, which adds "Change …" to the menu.</p>

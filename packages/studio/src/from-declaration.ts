@@ -292,6 +292,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       ...(lens.binds ? { binds: lens.binds } : {}),
       ...(requires.length > 0 ? { requires: [...requires] } : {}),
       ...(lens.hidden === true ? { hidden: true } : {}),
+      ...(lens.export === false ? { export: false } : {}),
     });
   }
 

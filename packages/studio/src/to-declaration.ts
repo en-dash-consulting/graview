@@ -508,11 +508,13 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     const followed = followBindings(kept?.bindings, binds);
     if (!followed.ok) return [];
     // Kept off the lists, or not, as the studio now says (`set-lens-hidden`).
-    const { hidden: _kept, ...keptRest } = kept ?? {};
+    const { hidden: _kept, export: _keptExport, ...keptRest } = kept ?? {};
     return [
       {
         ...keptRest,
         ...(bool(lens, "hidden") ? { hidden: true } : {}),
+        // Offering "Export CSV" or not, likewise (`set-lens-export`).
+        ...((lens as { export?: unknown }).export === false ? { export: false } : {}),
         name: name(lens),
         requiredRoles,
         ...(str(lens, "binds") ? { binds: str(lens, "binds") as "fields" | "entities" } : {}),

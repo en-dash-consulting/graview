@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T18:50:05.242Z",
+  "at": "2026-10-24T04:43:56.889Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -293,6 +293,132 @@
           "controls": 0
         }
       ],
+      "ok": true
+    },
+    "exportingAGroupedListWritesTheRowsOnScreenInTheirOrder": {
+      "file": "Tasks — 2026-10-24.csv",
+      "header": [
+        "Group",
+        "Name",
+        "Finished",
+        "Due",
+        "Day",
+        "Blocked",
+        "Until"
+      ],
+      "rows": [
+        [
+          "Someday",
+          "Find someone who moves pianos",
+          "No",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Someday",
+          "Take down the shelves",
+          "No",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Someday",
+          "Touch up the paint",
+          "No",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "This week",
+          "Give notice on the flat",
+          "No",
+          "Sep 2, 2026",
+          "Wed",
+          "09:00",
+          "09:45"
+        ],
+        [
+          "This week",
+          "Hand back the keys",
+          "No",
+          "Sep 5, 2026",
+          "Fri",
+          "15:00",
+          "15:20"
+        ],
+        [
+          "This week",
+          "Move the broadband",
+          "No",
+          "Sep 4, 2026",
+          "Thu",
+          "10:00",
+          "10:25"
+        ]
+      ],
+      "shown": [
+        {
+          "group": "Someday",
+          "text": "Find someone who moves pianos⚠"
+        },
+        {
+          "group": "Someday",
+          "text": "Take down the shelves"
+        },
+        {
+          "group": "Someday",
+          "text": "Touch up the paint"
+        },
+        {
+          "group": "This week",
+          "text": "Give notice on the flatSep 2"
+        },
+        {
+          "group": "This week",
+          "text": "Hand back the keysSep 5"
+        },
+        {
+          "group": "This week",
+          "text": "Move the broadbandSep 4"
+        }
+      ],
+      "count": {
+        "file": 10,
+        "screen": 10
+      },
+      "bom": true,
+      "button": {
+        "tag": "BUTTON",
+        "name": "Export CSV",
+        "filled": "rgba(0, 0, 0, 0)"
+      },
+      "focus": "list-export",
+      "ok": true
+    },
+    "aGroupDrawnShutIsStillWritten": {
+      "heads": [
+        {
+          "shut": false,
+          "drawn": 10,
+          "counted": 10
+        },
+        {
+          "shut": true,
+          "drawn": 0,
+          "counted": 2
+        }
+      ],
+      "written": 12,
+      "ok": true
+    },
+    "aListSwitchedOffOffersNoExport": {
+      "offers": 0,
       "ok": true
     },
     "anEmptyStateSaysWhatToDoNext": {

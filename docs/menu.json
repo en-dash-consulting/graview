@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T00:45:59.005Z",
+  "at": "2026-10-24T02:40:51.832Z",
   "engine": "chromium",
   "checks": {
     "pinThenReorder": {
@@ -91,7 +91,7 @@
     },
     "theKeyboardKeepsItsPlace": {
       "afterAnAct": {
-        "where": "main",
+        "where": "aggregate:list",
         "inside": false,
         "body": false
       },
@@ -101,7 +101,7 @@
         "body": false
       },
       "afterAnAsk": {
-        "where": "main",
+        "where": "aggregate:list",
         "inside": false,
         "body": false
       },
@@ -110,6 +110,392 @@
         "Notes · 2 of 3: typed",
         "Attachments · 3 of 3: skipped"
       ],
+      "ok": true
+    },
+    "pagesMenuPassesAxe_desk": {
+      "open": true,
+      "axe": [],
+      "ok": true
+    },
+    "pagesRecordOpensTheMenu_desk": {
+      "row": {
+        "text": "InspectorPay the deposittaskWas due Aug 28, 2026Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time for it …☆Archive the task☆Leave this one alone☆Merge into another task …☆Note why this is here …☆Move it to another list …☆This has to happen first …☆Drop it☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+        "acts": [
+          "Give it a new date",
+          "Finish it",
+          "Rename",
+          "Change the task",
+          "Block time for it",
+          "Archive the task",
+          "Leave this one alone",
+          "Merge into another task",
+          "Note why this is here",
+          "Move it to another list",
+          "This has to happen first",
+          "Drop it",
+          "Remove the task"
+        ],
+        "rows": [
+          "open",
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "record": {
+        "text": "InspectorPay the deposittaskWas due Aug 28, 2026Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time for it …☆Archive the task☆Leave this one alone☆Merge into another task …☆Note why this is here …☆Move it to another list …☆This has to happen first …☆Drop it☆Remove the task☆Open in a new tabShow in the sceneNotify me when this changes…",
+        "acts": [
+          "Give it a new date",
+          "Finish it",
+          "Rename",
+          "Change the task",
+          "Block time for it",
+          "Archive the task",
+          "Leave this one alone",
+          "Merge into another task",
+          "Note why this is here",
+          "Move it to another list",
+          "This has to happen first",
+          "Drop it",
+          "Remove the task"
+        ],
+        "rows": [
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "ok": true
+    },
+    "pagesFieldOffersItsChange_desk": {
+      "field": {
+        "text": "InspectorPay the deposittaskWas due Aug 28, 2026Change “Finished”Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time for it …☆Archive the task☆Leave this one alone☆Merge into another task …☆Note why this is here …☆Move it to another list …☆This has to happen first …☆Drop it☆Remove the task☆Open in a new tabShow in the sceneNotify me when this changes…",
+        "acts": [
+          "Give it a new date",
+          "Finish it",
+          "Rename",
+          "Change the task",
+          "Block time for it",
+          "Archive the task",
+          "Leave this one alone",
+          "Merge into another task",
+          "Note why this is here",
+          "Move it to another list",
+          "This has to happen first",
+          "Drop it",
+          "Remove the task"
+        ],
+        "rows": [
+          "change-field",
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "editing": {
+        "tag": "input",
+        "inTheFacts": true,
+        "menuGone": true
+      },
+      "ok": true
+    },
+    "pagesBlockAndGroundOpenTheMenu_desk": {
+      "picked": "t-boxes",
+      "mark": {
+        "text": "InspectorOrder boxestaskIs done, but it waits for \"Find someone who moves pianos\"Put it back☆Finish \"Find someone who moves pianos\" too★Rename …☆Move the date …☆Change the task …☆Block time for it …☆Archive the task☆Leave this one alone☆Merge into another task …☆Note why this is here …☆Move it to another list …☆It no longer has to wait …☆This has to happen first …☆Drop it☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+        "acts": [
+          "Put it back",
+          "Finish \"Find someone who moves pianos\" too",
+          "Rename",
+          "Move the date",
+          "Change the task",
+          "Block time for it",
+          "Archive the task",
+          "Leave this one alone",
+          "Merge into another task",
+          "Note why this is here",
+          "Move it to another list",
+          "It no longer has to wait",
+          "This has to happen first",
+          "Drop it",
+          "Remove the task"
+        ],
+        "rows": [
+          "open",
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "ground": {
+        "text": "InspectorThe weekAdd a task …☆Open in a new tabShow in the sceneFind…Export CSV · The records shown, as a spreadsheetNotify me when a task is added…",
+        "acts": [
+          "Add a task"
+        ],
+        "rows": [
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "find",
+          "export-csv",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "list": {
+        "text": "InspectorTasksAdd a task …☆Open in a new tabShow in the sceneFind…Export CSV · The records shown, as a spreadsheetNotify me when a task is added…",
+        "acts": [
+          "Add a task"
+        ],
+        "rows": [
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "find",
+          "export-csv",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "ok": true
+    },
+    "pagesKeyboardOpensAndReturns_desk": {
+      "keyed": {
+        "Shift+F10": {
+          "opened": true,
+          "focusIn": true,
+          "closed": true,
+          "back": true
+        },
+        "ContextMenu": {
+          "opened": true,
+          "focusIn": true,
+          "closed": true,
+          "back": true
+        }
+      },
+      "ok": true
+    },
+    "pagesBrowserMenuKept_desk": {
+      "inFind": false,
+      "shifted": false,
+      "plain": true,
+      "ok": true
+    },
+    "pagesMenuPassesAxe_phone": {
+      "open": true,
+      "axe": [],
+      "ok": true
+    },
+    "pagesRecordOpensTheMenu_phone": {
+      "row": {
+        "text": "InspectorPay the deposittaskWas due Aug 28, 2026Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time for it …☆Archive the task☆Leave this one alone☆Merge into another task …☆Note why this is here …☆Move it to another list …☆This has to happen first …☆Drop it☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+        "acts": [
+          "Give it a new date",
+          "Finish it",
+          "Rename",
+          "Change the task",
+          "Block time for it",
+          "Archive the task",
+          "Leave this one alone",
+          "Merge into another task",
+          "Note why this is here",
+          "Move it to another list",
+          "This has to happen first",
+          "Drop it",
+          "Remove the task"
+        ],
+        "rows": [
+          "open",
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "record": {
+        "text": "InspectorPay the deposittaskWas due Aug 28, 2026Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time for it …☆Archive the task☆Leave this one alone☆Merge into another task …☆Note why this is here …☆Move it to another list …☆This has to happen first …☆Drop it☆Remove the task☆Open in a new tabShow in the sceneNotify me when this changes…",
+        "acts": [
+          "Give it a new date",
+          "Finish it",
+          "Rename",
+          "Change the task",
+          "Block time for it",
+          "Archive the task",
+          "Leave this one alone",
+          "Merge into another task",
+          "Note why this is here",
+          "Move it to another list",
+          "This has to happen first",
+          "Drop it",
+          "Remove the task"
+        ],
+        "rows": [
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "ok": true
+    },
+    "pagesFieldOffersItsChange_phone": {
+      "field": {
+        "text": "InspectorPay the deposittaskWas due Aug 28, 2026Change “Finished”Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time for it …☆Archive the task☆Leave this one alone☆Merge into another task …☆Note why this is here …☆Move it to another list …☆This has to happen first …☆Drop it☆Remove the task☆Open in a new tabShow in the sceneNotify me when this changes…",
+        "acts": [
+          "Give it a new date",
+          "Finish it",
+          "Rename",
+          "Change the task",
+          "Block time for it",
+          "Archive the task",
+          "Leave this one alone",
+          "Merge into another task",
+          "Note why this is here",
+          "Move it to another list",
+          "This has to happen first",
+          "Drop it",
+          "Remove the task"
+        ],
+        "rows": [
+          "change-field",
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "editing": {
+        "tag": "input",
+        "inTheFacts": true,
+        "menuGone": true
+      },
+      "ok": true
+    },
+    "pagesBlockAndGroundOpenTheMenu_phone": {
+      "picked": "t-boxes",
+      "mark": {
+        "text": "InspectorOrder boxestaskIs done, but it waits for \"Find someone who moves pianos\"Put it back☆Finish \"Find someone who moves pianos\" too★Rename …☆Move the date …☆Change the task …☆Block time for it …☆Archive the task☆Leave this one alone☆Merge into another task …☆Note why this is here …☆Move it to another list …☆It no longer has to wait …☆This has to happen first …☆Drop it☆Remove the task☆OpenOpen in a new tabShow in the sceneNotify me when this changes…",
+        "acts": [
+          "Put it back",
+          "Finish \"Find someone who moves pianos\" too",
+          "Rename",
+          "Move the date",
+          "Change the task",
+          "Block time for it",
+          "Archive the task",
+          "Leave this one alone",
+          "Merge into another task",
+          "Note why this is here",
+          "Move it to another list",
+          "It no longer has to wait",
+          "This has to happen first",
+          "Drop it",
+          "Remove the task"
+        ],
+        "rows": [
+          "open",
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "ground": {
+        "text": "InspectorThe weekAdd a task …☆Open in a new tabShow in the sceneFind…Export CSV · The records shown, as a spreadsheetNotify me when a task is added…",
+        "acts": [
+          "Add a task"
+        ],
+        "rows": [
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "find",
+          "export-csv",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "list": {
+        "text": "InspectorTasksAdd a task …☆Open in a new tabShow in the sceneFind…Export CSV · The records shown, as a spreadsheetNotify me when a task is added…",
+        "acts": [
+          "Add a task"
+        ],
+        "rows": [
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "find",
+          "export-csv",
+          "notify-me"
+        ],
+        "focusIn": true,
+        "inTheWindow": true
+      },
+      "ok": true
+    },
+    "pagesKeyboardOpensAndReturns_phone": {
+      "keyed": {
+        "Shift+F10": {
+          "opened": true,
+          "focusIn": true,
+          "closed": true,
+          "back": true
+        },
+        "ContextMenu": {
+          "opened": true,
+          "focusIn": true,
+          "closed": true,
+          "back": true
+        }
+      },
+      "ok": true
+    },
+    "pagesBrowserMenuKept_phone": {
+      "inFind": false,
+      "shifted": false,
+      "plain": true,
+      "ok": true
+    },
+    "pagesLongPressOpensTheMenu_phone": {
+      "how": "touch",
+      "rested": {
+        "text": "InspectorPay the deposittaskWas due Aug 28, 2026Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time for it …☆Archive the task☆Leave this one alone☆Merge into another task …☆Note why this is here …☆Move it to another list …☆This has to happen first …☆Drop it☆Remove the task☆Open in a new tabShow in the sceneNotify me when this changes…",
+        "acts": [
+          "Give it a new date",
+          "Finish it",
+          "Rename",
+          "Change the task",
+          "Block time for it",
+          "Archive the task",
+          "Leave this one alone",
+          "Merge into another task",
+          "Note why this is here",
+          "Move it to another list",
+          "This has to happen first",
+          "Drop it",
+          "Remove the task"
+        ],
+        "rows": [
+          "open-in-a-new-tab",
+          "in-the-scene",
+          "notify-me"
+        ],
+        "focusIn": false,
+        "inTheWindow": true
+      },
+      "stayed": true,
       "ok": true
     }
   },

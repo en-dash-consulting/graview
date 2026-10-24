@@ -177,6 +177,15 @@ export const samePicture = (a: Pictured, b: Pictured): boolean => a.as === b.as 
  */
 export const onePerPicture = <P extends Pictured>(places: readonly P[]): P[] => places.filter((place, at) => !places.slice(0, at).some((held) => samePicture(held, place)));
 
+/**
+ * WHAT A LIST OF PLACES OFFERS (Roadmap f-hidden-view-leaves-the-bar): none
+ * kept off the lists (`hidden`) — not even the one open, which stays open
+ * at its address, where a link and `navigate` still reach it. Hidden from
+ * the place menu, a place leaves the bar's row, its drop-down and the
+ * scene's tabs at once, and Show puts it back. What every bar reads.
+ */
+export const offeredPlaces = <P extends { readonly hidden?: boolean | undefined }>(places: readonly P[]): readonly P[] => places.filter((place) => !place.hidden);
+
 /** A place's own name in an address: its title, lower-cased and hyphenated. */
 export function placeSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -490,6 +499,8 @@ export interface KindList {
   readonly sort?: string | KindListSort;
   /** A choice or yes-or-no field — or with the groups' order and which are closed. */
   readonly group?: string | KindListGroup;
+  /** `false`: the list offers nobody "Export CSV" (Roadmap f-view-export-csv). On when unsaid. */
+  readonly export?: boolean;
 }
 
 export interface KindListSort {

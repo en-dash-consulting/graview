@@ -53,6 +53,15 @@
  *   under a base path, as Cloud serves an app (`/a/<app>`), a draft is
  *   drawn at its place and the root says the place's path within the app.
  *
+ * And the place menu as Cloud keeps it (`?tidy=1`: a keeper that holds
+ * what is hidden, and hands each change to a declared lens or a kind's list
+ * back as a new app, as Cloud does): a kind's list, a declared lens and a
+ * view the host keeps, each hidden from the place menu while it is the
+ * place open, leave the bar's row and drop-down at once, the page staying
+ * where it is and the bar still naming it as where you are, at a phone and
+ * a desk; the drop-down's Hidden lists them, and Show puts them back
+ * (Roadmap f-hidden-view-leaves-the-bar).
+ *
  *   node scripts/verify-drawn.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>] [--probe]
  */
 import { createServer } from "node:http";
@@ -204,7 +213,8 @@ async function buildHost() {
         import { mount as mountPages } from "@graview/embed/pages";
         import { guestView } from "@graview/guest/host";
         import { registerWorkerView } from "@graview/guest/host/views";
-        import { compileDocumentWithoutCheck } from "@graview/core/document";
+        import { compileDocumentWithoutCheck, editDocument } from "@graview/core/document";
+        import { memoryViews } from "@graview/core";
         import roadmap from ${JSON.stringify(ROADMAP)};
         const seed = ${JSON.stringify(SEED)};
         window.__drawn = [];
@@ -223,7 +233,24 @@ async function buildHost() {
           : registry;
         // The host's keeper, writing down every ask: a draft must ask it nothing.
         window.__keptAsked = [];
-        const keptViews = { current: () => ({ hidden: [], removed: [], may: { views: true, lenses: true } }), hide: (name) => void window.__keptAsked.push("hide " + name), show: (name) => void window.__keptAsked.push("show " + name), remove: (name) => void window.__keptAsked.push("remove " + name), restore: (name) => void window.__keptAsked.push("restore " + name) };
+        const asks = { current: () => ({ hidden: [], removed: [], may: { views: true, lenses: true } }), hide: (name) => void window.__keptAsked.push("hide " + name), show: (name) => void window.__keptAsked.push("show " + name), remove: (name) => void window.__keptAsked.push("remove " + name), restore: (name) => void window.__keptAsked.push("restore " + name) };
+        // The place menu as Cloud keeps it (?tidy=1): what is hidden held, and a change to the declaration handed back as a new app.
+        const tidy = params.has("tidy");
+        let declared = roadmap;
+        const keptViews = !tidy ? asks : memoryViews({
+          may: { views: true, lenses: true },
+          declaration: {
+            change: (edit) => {
+              const edited = editDocument(declared, [edit]);
+              if (!edited.ok) throw new Error(edited.findings.map((finding) => finding.message).join("; "));
+              declared = edited.document;
+              const next = compileDocumentWithoutCheck(declared, { today: () => "2026-10-19" });
+              if (next.ok) window.__handle.setApp(next.app, window.__handle.store);
+            },
+            restore: () => undefined,
+          },
+        });
+        const stageBoard = { manifest: ${JSON.stringify(DRAFTS.board.manifest)}, worker: { source: ${JSON.stringify(STAGE_SOURCE)} } };
         const home = { manifest: ${JSON.stringify(HOME_MANIFEST)}, worker: { source: ${JSON.stringify(HOME_SOURCE)} }, asset: (path) => path };
         window.__failures = [];
         const broken = { manifest: ${JSON.stringify(BROKEN_MANIFEST)}, worker: { source: ${JSON.stringify(BROKEN_SOURCE)} }, limits: { maxNodes: 10 }, onFailure: (reason) => window.__failures.push(reason) };
@@ -241,7 +268,7 @@ async function buildHost() {
             heading: 1,
             height: "100dvh",
             fonts: false,
-            views: (schema, registry) => framed(registerWorkerView(registerWorkerView(registry, home), broken)),
+            views: (schema, registry) => framed(tidy ? registerWorkerView(registerWorkerView(registry, home), stageBoard) : registerWorkerView(registerWorkerView(registry, home), broken)),
             onDrawn: (place) => window.__drawn.push({ ...place, at: performance.now() }),
             keptViews,
             ...(asked ? { draftView: { manifest: asked.manifest, source: asked.source, author: "Proposed by Claude", ...(asked.limits ? { limits: asked.limits } : {}) } } : {}),
@@ -362,7 +389,19 @@ const movedBetween = (before, after) => {
 const report = { at: new Date().toISOString(), engines, screens: SCREENS, late: { fontMs: FONT_LATE_MS, imageMs: IMAGE_LATE_MS }, checks: {} };
 const host = await buildHost();
 const errors = [];
-const seen = { home: [], still: [], move: [], failed: [], told: [], scene: [], drafts: [], gone: [], frames: [], silent: [], alone: [], aloneDraft: [], swaps: [], based: [] };
+const seen = { home: [], still: [], move: [], failed: [], told: [], scene: [], drafts: [], gone: [], frames: [], silent: [], alone: [], aloneDraft: [], swaps: [], based: [], tidied: [] };
+/* What the place menu hides while it is the place open: a kind's list, a declared lens, a view the host keeps. */
+const TIDIED = [
+  { name: "list", path: "/features", label: "Features", item: "hide-list" },
+  { name: "lens", path: "/places/up-next", label: "Up next", item: "hide-view" },
+  { name: "view", path: "/places/stage-board", label: "Stage board", item: "hide-view" },
+];
+/* Whether the bar offers a place by its name — on its row or in its drop-down; the drop-down's Hidden and Recently deleted are not offers. */
+const offers = (page, label) =>
+  page.evaluate(
+    (label) => [...document.querySelectorAll("[data-graview-embed] [data-place-path]")].filter((entry) => !entry.closest('[data-place-group="hidden"],[data-place-group="removed"]')).some((entry) => entry.textContent?.trim() === label),
+    label,
+  );
 let browser;
 try {
   for (const engine of engines) {
@@ -533,6 +572,39 @@ try {
         seen.based.push({ engine, screen: screen.name, mounting, drawn: basedDrawn, address: basedMark?.seen.address ?? null, draft: basedMark?.seen.draft ?? null });
         await based.close();
       }
+      for (const tidied of TIDIED) {
+        // Hidden from the place menu while it is the place open (Roadmap f-hidden-view-leaves-the-bar).
+        const address = `${tidied.path}?tidy=1`;
+        const { page, close } = await open(address);
+        const drawn = await said(page, address);
+        const before = await offers(page, tidied.label);
+        const standing = page.locator('[data-testid="app-places-standing"] [aria-current="page"]');
+        const stands = (await standing.count()) > 0 && (await standing.first().isVisible());
+        await (stands ? standing.first() : page.locator('[data-testid="app-places-open"]').first()).click({ button: "right" });
+        const row = page.locator(`[data-testid="context-menu"] [data-menu-item="${tidied.item}"]`);
+        const offered = await row.waitFor({ timeout: 10_000 }).then(() => true, () => false);
+        let left = false;
+        let still = null;
+        let named = null;
+        let inFoot = false;
+        let back = false;
+        if (offered) {
+          await row.click();
+          left = await page.waitForFunction((label) => ![...document.querySelectorAll("[data-graview-embed] [data-place-path]")].filter((entry) => !entry.closest('[data-place-group="hidden"],[data-place-group="removed"]')).some((entry) => entry.textContent?.trim() === label), tidied.label, { timeout: 5_000 }).then(() => true, () => false);
+          still = await page.evaluate(() => location.pathname);
+          named = await page.evaluate(() => document.querySelector('[data-graview-embed] [data-testid="app-place-current"]')?.textContent ?? null);
+          await shot(page, `hidden-${tidied.name}`);
+          await page.locator('[data-testid="app-places-open"]').first().click();
+          const foot = page.locator('[data-place-group="hidden"] li', { hasText: tidied.label });
+          inFoot = await foot.first().waitFor({ timeout: 5_000 }).then(() => true, () => false);
+          if (inFoot) {
+            await foot.first().locator("button").click();
+            back = await page.waitForFunction((label) => [...document.querySelectorAll("[data-graview-embed] [data-place-path]")].filter((entry) => !entry.closest('[data-place-group="hidden"],[data-place-group="removed"]')).some((entry) => entry.textContent?.trim() === label), tidied.label, { timeout: 5_000 }).then(() => true, () => false);
+          }
+        }
+        seen.tidied.push({ engine, screen: screen.name, name: tidied.name, drawn, before, stands, offered, left, still, named: named?.trim() ?? null, inFoot, back });
+        await close();
+      }
       if (PROBE) process.stdout.write(`${label}: ${JSON.stringify(Object.fromEntries(Object.entries(seen).map(([key, list]) => [key, list.at(-1)])))}\n`);
     }
     await browser.close();
@@ -621,6 +693,10 @@ const basedOn = (mounting) => seen.based.filter((one) => one.mounting === mounti
 report.checks.aDraftUnderABasePathIsDrawnAtItsPlace = {
   seen: seen.based,
   ok: ["whole", "alone"].every((mounting) => every(basedOn(mounting), (one) => one.drawn && one.address === `${BASE}/places/stage-board` && one.draft?.line === `Draft — ${DRAFTS.board.manifest.title}·Not kept` && one.draft.words.includes(DRAFTS.board.words))),
+};
+report.checks.aViewHiddenFromThePlaceMenuLeavesTheBarAndComesBackOnShow = {
+  seen: seen.tidied,
+  ok: TIDIED.every((tidied) => every(seen.tidied.filter((one) => one.name === tidied.name), (one) => one.drawn && one.before && one.offered && one.left && one.still === tidied.path && one.named === tidied.label && one.inFoot && one.back)),
 };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 

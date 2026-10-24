@@ -50,9 +50,14 @@ export interface KeptViewsState {
   readonly may: KeptViewsMay;
 }
 
-/** A declared lens's change from the place menu: kept off the lists or put back (`set-lens-hidden`), or deleted (`remove-lens`). */
+/**
+ * A declared lens's change from the place menu: kept off the lists or put
+ * back (`set-lens-hidden`), "Export CSV" offered or not (`set-lens-export`,
+ * on a kind's list by its kind), or deleted (`remove-lens`).
+ */
 export type LensTidyEdit =
   | { readonly op: "set-lens-hidden"; readonly title: string; readonly on?: string; readonly hidden: boolean }
+  | { readonly op: "set-lens-export"; readonly title: string; readonly on?: string; readonly export: boolean }
   | { readonly op: "remove-lens"; readonly title: string; readonly on?: string };
 
 /**

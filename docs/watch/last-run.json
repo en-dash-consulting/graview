@@ -1,40 +1,16 @@
 {
-  "at": "2026-10-24T06:51:07.827Z",
+  "at": "2026-10-24T04:47:10.006Z",
   "results": [
     {
-      "name": "navigation",
+      "name": "rota",
       "code": 0,
-      "took": 88,
+      "took": 62,
       "verdict": "held"
     },
     {
-      "name": "screen-reader",
+      "name": "pages",
       "code": 0,
-      "took": 145,
-      "verdict": "held"
-    },
-    {
-      "name": "a11y",
-      "code": 0,
-      "took": 262,
-      "verdict": "held"
-    },
-    {
-      "name": "drawn",
-      "code": 0,
-      "took": 225,
-      "verdict": "held"
-    },
-    {
-      "name": "panning",
-      "code": 0,
-      "took": 43,
-      "verdict": "held"
-    },
-    {
-      "name": "scene-at-scale",
-      "code": 0,
-      "took": 25,
+      "took": 193,
       "verdict": "held"
     }
   ]

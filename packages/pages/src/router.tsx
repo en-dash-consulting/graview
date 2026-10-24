@@ -701,6 +701,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.seats ? { seats: context.seats } : {}) /* So the person's button names the seat, not its principal id. */}
       onSeat={(seat) => (outer ? outer.takeSeat(seat) : setTaken({ from: handed.principal, seat }))}
       {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
+      {...(context.onExport ? { onExport: context.onExport } : {})}
       {...(context.ai ? { ai: context.ai } : {})}
       {...(context.subscriptions ? { subscriptions: context.subscriptions } : {})}
       dismissals={context.dismissals}

@@ -416,6 +416,11 @@ export function checkPagesArrangement<S extends AnySchema>(ctx: CheckContext<S>)
         fix: `Name a field, a relation, "is", or a choice at a relation's far end: ${offers.map((offer) => offer.key).join(", ")}.`,
       });
     });
+    // "Export CSV" is switched with true or false (Roadmap f-view-export-csv).
+    const exported: unknown = (list as { export?: unknown }).export;
+    if (exported !== undefined && typeof exported !== "boolean") {
+      ctx.add({ severity: "warning", code: "pages-list-export-not-a-boolean", where: `pages.lists.${kind}.export`, message: `The list of ${kind} says export is ${JSON.stringify(exported)}, which is not true or false, so it offers "Export CSV".`, fix: `Write "export": false to offer it to nobody, or drop it.` });
+    }
     // The order and grouping it opens in are refused when they name what the kind does not have: the list would open some other way, unsaid.
     for (const finding of kindListFindings(kind, list, listFieldsOf(ctx.app.schema, kind))) {
       ctx.add({ severity: "error", code: "pages-list-arrangement", where: finding.path, message: finding.message, fix: finding.fix });

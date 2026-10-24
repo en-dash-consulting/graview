@@ -71,7 +71,7 @@ These are pinned by tests, not by convention:
   (`checkApp`, `compileDocument`, `describeApp`) lives on
   `@graview/core/check`, the city and `sceneThumbnail` on `/scene` (the map alone, which the scene lays out with, on `/city`), the
   shipped drawings on `/figures`, a view's block resolver on `/blocks`,
-  a status board's reach and `resolveFor` on `/describe`, arranging a list on `/arrange`, where a view's navigate goes as an address (`narrowedPath`) on `/navigate`, a link's provenance on `/provenance`, the app as it stood (`pastOf`, `pastAt`, `seqAt`) on `/past`, the timeline around it (ticks, what "Restore to here" takes back) on `/history`, another app's records read as the viewer (`linkedRecordsOver`, `recordLinkedChange`) on `/linked`, an act's form on `/forms`,
+  a status board's reach and `resolveFor` on `/describe`, arranging a list on `/arrange`, a kind's list as its page shows it (`shownList`) on `/shown`, a list written as a spreadsheet (`toCsv`, `listCsv`) on `/csv`, where a view's navigate goes as an address (`narrowedPath`) on `/navigate`, a link's provenance on `/provenance`, the app as it stood (`pastOf`, `pastAt`, `seqAt`) on `/past`, the timeline around it (ticks, what "Restore to here" takes back) on `/history`, another app's records read as the viewer (`linkedRecordsOver`, `recordLinkedChange`) on `/linked`, an act's form on `/forms`,
   the matcher on `/search`, a record and an argument said in words on `/words`, what the seat and
   the seeding read (`answerSeenBy`, `placesOf`, `beginning`) on `/seat`, the app's
   own actor's suggestions (`suggest`, `suggestions`, `acceptSuggestion`, `declineSuggestion`, `declined`, `tidyingOf`, Activity's digest) on `/tidying`,
@@ -157,7 +157,7 @@ pinned at 1.49.1 on purpose.
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
   entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`, `./city`, `./provenance`, `./history`, `./past`, `./linked`, `./tidying`, `./catalog`, `./subscriptions`,
-  `./figures`, `./blocks`, `./describe`, `./arrange`, `./navigate`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./publishing`, `./typing`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
+  `./figures`, `./blocks`, `./describe`, `./arrange`, `./shown`, `./csv`, `./navigate`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./publishing`, `./typing`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
   `./lines`, `./testing` and the `./document.schema.json` the build writes; layout's `./view`, `./sizes` and `./view-moves`; guest's `./host/frame`; react's `./provider` and `./drawing`;
   tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep`, `./turn`, `./several`, `./inline-ai` and `./tidy` (the app's own actor's judges and `dream`, on no page); embed's `./pages`, `./form` (a visitor's form alone) and `./first-draw` (what a face's first draw opens, for a host's build); pages' `./static` (a place as static HTML, no React) and `./visitor-form`;
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and

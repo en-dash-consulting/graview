@@ -13,6 +13,7 @@ import { pluralOf, withArticle } from "../schema/define-node.js";
 import { ruleLineWords } from "../invariants/line.js";
 import { ruleLine } from "../lines.js";
 import { declaredLenses, isShippedLens } from "../places.js";
+import { listsRecords } from "../lenses-that-list.js";
 import { placesOf } from "../app-places.js";
 import { columnReach } from "../columns.js";
 import { computedOf } from "../document/computed.js";
@@ -141,7 +142,7 @@ export function describeApp<S extends AnySchema>(
       `${lensesDeclared.drawn.length} declared ${lensesDeclared.drawn.length === 1 ? "lens draws" : "lenses draw"} as places, with no view of the app's own: ${list(
         lensesDeclared.drawn.map((lens) => {
           const at = everywhere.find((place) => place.slug === lens.as && (place.kind === lens.kinds[0] || (lens.kinds[0] !== undefined && place.over?.includes(lens.kinds[0]))));
-          return `"${lens.title}" (the ${lens.lens} over ${list(lens.kinds.map((kind) => pluralOf(app.schema, kind)))}${lens.across ? ` across ${pluralOf(app.schema, lens.across)}` : ""}, at ${at?.address ?? placePath(lens.as)}${lens.hidden ? "; hidden: kept off the bar and the page list, reached by its address" : ""})`;
+          return `"${lens.title}" (the ${lens.lens} over ${list(lens.kinds.map((kind) => pluralOf(app.schema, kind)))}${lens.across ? ` across ${pluralOf(app.schema, lens.across)}` : ""}, at ${at?.address ?? placePath(lens.as)}${lens.hidden ? "; hidden: kept off the bar and the page list, reached by its address" : ""}${app.lenses?.[lens.index]?.export === false && listsRecords(lens.lens) ? "; offers nobody Export CSV" : ""})`;
         }),
       )}.`,
     );
@@ -185,6 +186,9 @@ export function describeApp<S extends AnySchema>(
     if (first) lines.push(`It opens on ${first.kind === null ? "its home" : `"${first.title}"`} (${first.address}).`);
     if (order.length > 0) lines.push(`The home and the city take the kinds in this order: ${list(order)}${order.length < kinds.length ? ", then the rest as declared" : ""}.`);
     if (hidden.length > 0) lines.push(`Left off the home, and still at their own addresses and in search: ${list(hidden)}.`);
+    // Every list offers "Export CSV" (Roadmap f-view-export-csv) but those its declaration switches off.
+    const unexported = Object.entries(app.pages.lists ?? {}).flatMap(([kind, one]) => (kinds.includes(kind) && one.export === false ? [kind] : []));
+    if (unexported.length > 0) lines.push(`Offers nobody Export CSV on the list of: ${list(unexported)}.`);
   }
   if (!app.views) {
     /*

@@ -343,9 +343,11 @@ export const lensNode = defineNode("lens", {
     requires: z.array(z.string()).optional(),
     /** Kept off the bar's places and the page list: still reached by its address, a link or `navigate` (`set-lens-hidden`). */
     hidden: z.boolean().optional(),
+    /** `false`: nobody is offered "Export CSV" on the place (`set-lens-export`). On when unsaid. */
+    export: z.boolean().optional(),
   }),
   label: (node) => node.label,
-  display: { labels: { label: "name", requires: "the slots it asks an app to bind", hidden: "kept off the lists" } },
+  display: { labels: { label: "name", requires: "the slots it asks an app to bind", hidden: "kept off the lists", export: "offers Export CSV" } },
 });
 
 export const brandNode = defineNode("brand", {
@@ -1060,6 +1062,23 @@ export const setLensHidden = act("set-lens-hidden", {
   },
 });
 
+/**
+ * "EXPORT CSV" OFFERED ON A PLACE, OR TO NOBODY (Roadmap f-view-export-csv):
+ * a lens that lists records offers to write them as a spreadsheet unless
+ * it says not to. Said to the document as `set-lens-export`.
+ */
+export const setLensExport = act("set-lens-export", {
+  title: "Offer Export CSV on the lens",
+  description: "Offer Export CSV on this lens, or offer it to nobody. A lens that lists records offers it unless it says not to.",
+  subject: { kinds: ["lens"], arg: "id" },
+  writes: ["export"],
+  input: z.object({ id: nodeRef(["lens"]), export: z.boolean() }),
+  describe: (args, graph) => `${args.export ? "Offer" : "Stop offering"} Export CSV on the lens ${labelOf(graph, args.id)}`,
+  apply(ctx, args) {
+    ctx.patchNode(args.id, { export: args.export ? undefined : false });
+  },
+});
+
 export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = [
   addKind,
   renameKind,
@@ -1089,6 +1108,7 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   removeSight,
   removeLens,
   setLensHidden,
+  setLensExport,
   addEdgeToAnotherApp,
 ];
 
