@@ -2,7 +2,7 @@ import { counted, isCurrent, labelOf, onePerPicture, placeLabel, sharesItsName, 
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
-import { isDefaultView, type ViewProps } from "@graview/react/provider";
+import { bleeds, isDefaultView, type ViewProps } from "@graview/react/provider";
 import { arrange, parseArrangement } from "@graview/core/arrange";
 import { useLayoutEffect, useRef, useState, type ComponentType, type RefObject } from "react";
 import { DerivedForm } from "./form.js";
@@ -26,7 +26,7 @@ import {
   rule,
   wide,
 } from "./page-typography.js";
-import { PageMain, PageTitle } from "./page-shell.js";
+import { Bleed, PageMain, PageTitle } from "./page-shell.js";
 import { HeadTrail } from "./place-here.js";
 import { PlacePageHead, SpecLinks } from "@graview/primitives/pages";
 import { blockContextFor, compileBlocks, resolveBlocks } from "@graview/core/blocks";
@@ -98,16 +98,19 @@ function LensOnPage<S extends AnySchema>({ context, place, chosen, filter }: { c
    */
   return (
     <ViewBoundary kind={place.kind} view={place.title}>
-      <View
-        nodes={members}
-        label={place.title}
-        fidelity="full"
-        cardinality="many"
-        mode="fullscreen"
-        selected={false}
-        {...(chosen && chosen.length > 0 ? { implicated: chosen } : {})}
-        {...(flagged.length > 0 ? { flagged } : {})}
-      />
+      {/* Edge to edge on a phone, where the view says `bleed`, as on the home and a record's page (Roadmap f-bleed-on-places). */}
+      <Bleed when={bleeds(View)}>
+        <View
+          nodes={members}
+          label={place.title}
+          fidelity="full"
+          cardinality="many"
+          mode="fullscreen"
+          selected={false}
+          {...(chosen && chosen.length > 0 ? { implicated: chosen } : {})}
+          {...(flagged.length > 0 ? { flagged } : {})}
+        />
+      </Bleed>
     </ViewBoundary>
   );
 }
@@ -577,8 +580,10 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
    * frame a list of cards became a box of its own to scroll, under the
    * page's own scroll. It is drawn in the page's column, as long as it is.
    */
-  const drawnBy = context.views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as)?.view as { flows?: boolean; creates?: boolean } | undefined;
+  const drawnBy = context.views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as)?.view as { flows?: boolean; creates?: boolean; ownHeading?: boolean } | undefined;
   const flows = drawnBy?.flows === true;
+  /* A view that draws its own heading (Roadmap f-place-header-repeats-view-title): the title is said to a screen reader only, and no count. */
+  const ownHeading = drawnBy?.ownHeading === true;
   /*
    * A PLACE THAT IS READ, NOT WRITTEN. Every place ended with the forms
    * that begin its kind; on a summary or a report that is a form nobody
@@ -604,7 +609,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
       <header style={{ display: "grid", gap: "var(--graview-space-2, 8px)" }}>
         {/* The section the picture is in, when the app named one (Roadmap gv-pages-where-am-i). */}
         <HeadTrail context={context} />
-        <PageTitle context={context}>{place.title}</PageTitle>
+        <PageTitle context={context} unseen={ownHeading}>{place.title}</PageTitle>
         {/*
           * WHAT THE PICTURE IS, NOT WHAT ONE OF ITS MEMBERS IS: how much is
           * in it, and — over two kinds — what it is across. The kind's own
@@ -612,9 +617,11 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           * kind's list page where it reads correctly. A lens that opens with a
           * headline says it here instead (`ledeOf`): one heading, one line.
           */}
-        <p style={ledeStyle} data-testid="place-lede" {...(headline !== undefined ? { "data-graview-lede": "headline" } : {})}>
-          {headline ?? `${overOf(store, kindsOfPlace(context, place), place.across)}.`}
-        </p>
+        {ownHeading ? null : (
+          <p style={ledeStyle} data-testid="place-lede" {...(headline !== undefined ? { "data-graview-lede": "headline" } : {})}>
+            {headline ?? `${overOf(store, kindsOfPlace(context, place), place.across)}.`}
+          </p>
+        )}
         {/* A picture drawn from blocks lists what its blocks say (their own `where`), so it is not said to be narrowed. */}
         {narrowedTo && !flows ? (
           <p style={{ ...quiet, margin: 0 }} data-testid="place-narrowed">

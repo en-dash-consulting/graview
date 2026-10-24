@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 639,
+  "gzipped": 124,
+  "note": "Raised when a view's place came to fit a phone and say less over it (Roadmap f-bleed-on-places, f-fallback-lens-loses-gutter, f-place-header-repeats-view-title, f-seen-in-phone-length): a place wraps a view that says bleed as the home and a record's page do, the bleed's rule passes by what is drawn in a view's stead, a place's title is said to a screen reader only over a view that draws its own heading, and a record's Seen in names each place once, folding past the third behind a button on a phone (`SeenIn`). Measured at 657_473 / 242_017 against 656_834 / 241_893 minified and gzipped."
+}

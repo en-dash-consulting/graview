@@ -72,7 +72,17 @@
  *   the view, then the slot's blocks, then the facts, while one whose view
  *   replaces the page draws the view alone (Roadmap
  *   feature:views-on-phones-…-full-bleed,
- *   feature:page-slot-blocks-on-a-kind-with-a-record-view-…).
+ *   feature:page-slot-blocks-on-a-kind-with-a-record-view-…);
+ *   a view whose content is wider than a phone (an SVG 640 wide in a box
+ *   that scrolls sideways) never widens the page, on a place and a
+ *   record's page; a place whose view says `bleed: true` spans the phone
+ *   as the home does; where a view that bleeds did not draw, the page drawn
+ *   in its stead keeps the column's gutters; a view that says `heading:
+ *   "own"` is titled once, by itself; and a record's "Seen in" names each
+ *   place once, past four the first three on a phone with a button for the rest
+ *   (Roadmap f-view-place-min-width, f-bleed-on-places,
+ *   f-fallback-lens-loses-gutter, f-place-header-repeats-view-title,
+ *   f-seen-in-phone-length).
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
@@ -118,10 +128,22 @@ const THE_MAP_SOURCE =`graview.onProps((props) => graview.render(graview.html\`<
 const FITTED_BASE = "/apps/a5";
 /** A page slot on each kind: the task's under a view that sits above the page, the person's under one that replaces it. */
 const FITTED_VIEWS = { task: { page: [{ headline: "Read the sources" }, { text: "Each source, in turn." }] }, person: { page: [{ headline: "Who they are" }] } };
+/** What a phone's width cannot hold: a chart 640 wide in a box that scrolls sideways, and a row of tabs (Roadmap f-view-place-min-width). */
+const WIDE_CONTENT = `<div class="scroller" style="overflow-x:auto"><svg width="640" height="40" style="min-width:640px"><rect width="640" height="40" fill="currentColor"></rect></svg></div><p class="tabs" style="white-space:nowrap">\${["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"].map((tab) => graview.html\`<button>Tab \${tab}</button>\`)}</p>`;
 const HERO = { name: "hero", attach: "home", cardinality: "many", bleed: true };
 const HERO_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="hero">The things to do</div>\`));`;
 const BRIEF = { name: "brief", attach: "task", cardinality: "one", bleed: true };
-const BRIEF_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="brief">\${props.node ? props.node.label : ""}</p>\`));`;
+const BRIEF_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="brief">\${props.node ? props.node.label : ""}</p>${WIDE_CONTENT}\`));`;
+/** A place whose view draws its own heading, and wide content (Roadmap f-place-header-repeats-view-title). */
+const WIDE = { name: "wide", title: "The wide", attach: "task", cardinality: "many", heading: "own" };
+const WIDE_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<h2 class="own">The wide</h2>${WIDE_CONTENT}\`));`;
+/** A place whose view bleeds (Roadmap f-bleed-on-places). */
+const EDGE = { name: "edge", title: "The edge", attach: "task", cardinality: "many", bleed: true };
+const EDGE_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="edge">\${props.nodes.length} tasks</div>${WIDE_CONTENT}\`));`;
+/** A place whose view bleeds and is refused before it starts — an act the app does not declare — so the kind's own face is drawn in its stead (Roadmap f-fallback-lens-loses-gutter). */
+const BROKEN = { name: "broken", title: "The broken", attach: "task", cardinality: "many", bleed: true, acts: ["no-such-act"] };
+/** A fifth place a task is seen in, so a phone's "Seen in" folds what is past the third (Roadmap f-seen-in-phone-length). */
+const PLAIN = { name: "plain", title: "The plain", attach: "task", cardinality: "many" };
 const CARD = { name: "card", attach: "person", cardinality: "one", replaces: "page" };
 const CARD_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="card">\${props.node ? props.node.label : ""}</p>\`));`;
 const SEED = {
@@ -271,7 +293,7 @@ async function buildHost() {
           ...(fitted
             ? {
                 views: (schema, registry) =>
-                  [[${JSON.stringify(HERO)}, ${JSON.stringify(HERO_SOURCE)}], [${JSON.stringify(BRIEF)}, ${JSON.stringify(BRIEF_SOURCE)}], [${JSON.stringify(CARD)}, ${JSON.stringify(CARD_SOURCE)}]].reduce(
+                  [[${JSON.stringify(HERO)}, ${JSON.stringify(HERO_SOURCE)}], [${JSON.stringify(BRIEF)}, ${JSON.stringify(BRIEF_SOURCE)}], [${JSON.stringify(CARD)}, ${JSON.stringify(CARD_SOURCE)}], [${JSON.stringify(WIDE)}, ${JSON.stringify(WIDE_SOURCE)}], [${JSON.stringify(EDGE)}, ${JSON.stringify(EDGE_SOURCE)}], [${JSON.stringify(BROKEN)}, ${JSON.stringify(EDGE_SOURCE)}], [${JSON.stringify(PLAIN)}, ${JSON.stringify(HERO_SOURCE)}]].reduce(
                     (views, [manifest, source]) => registerWorkerView(views, { manifest, worker: { source } }),
                     registry,
                   ),
@@ -837,7 +859,73 @@ try {
           saysSlot: (document.querySelector("[data-graview-face=pages]")?.textContent ?? "").includes("Who they are"),
           facts: document.querySelector('[data-graview-face=pages] [data-testid="record-fields"]') !== null,
         }));
-        one.fitted = { home, record, order, replaced };
+        /* A view's place on a phone (Roadmap f-view-place-min-width, f-bleed-on-places, f-fallback-lens-loses-gutter, f-place-header-repeats-view-title). */
+        await go(`${FITTED_BASE}/places/the-wide`);
+        await drawnIn("wide");
+        const wide = await measure("wide");
+        const heading = await tab.evaluate(() => {
+          const title = document.querySelector("[data-graview-face=pages] [data-graview-page-title]");
+          const box = title?.getBoundingClientRect();
+          const own = document.querySelector('[data-worker-view="wide"]')?.shadowRoot?.querySelector("h2.own");
+          return {
+            title: title?.textContent?.trim() ?? null,
+            titleDrawn: box ? box.width > 1 && box.height > 1 : null,
+            own: own?.textContent?.trim() ?? null,
+            count: document.querySelector('[data-testid="place-lede"]') !== null,
+            asList: document.querySelector('[data-testid="place-as-list"]') !== null,
+          };
+        });
+        await go(`${FITTED_BASE}/places/the-edge`);
+        await drawnIn("edge");
+        const edge = await measure("edge");
+        const edgeTitled = await tab.evaluate(() => {
+          const box = document.querySelector("[data-graview-face=pages] [data-graview-page-title]")?.getBoundingClientRect();
+          return { titleDrawn: box ? box.width > 1 && box.height > 1 : null, count: document.querySelector('[data-testid="place-lede"]') !== null };
+        });
+        await go(`${FITTED_BASE}/places/the-broken`);
+        await tab.waitForSelector("[data-graview-bleed] > [data-worker-view-fallback]", { timeout: 20_000 });
+        await tab.waitForTimeout(300);
+        const fallback = await tab.evaluate(() => {
+          const slot = document.querySelector("[data-graview-bleed]");
+          const main = slot?.closest("[data-graview-page-main]");
+          const box = slot?.getBoundingClientRect();
+          const style = main ? getComputedStyle(main) : null;
+          const inner = main && style ? main.getBoundingClientRect().left + parseFloat(style.paddingLeft) : null;
+          const column = main && style ? main.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) : null;
+          return {
+            drawn: document.querySelector('[data-worker-view-place="broken"]') === null && (slot?.textContent ?? "").trim() !== "",
+            left: box ? Math.round(box.left) : null,
+            width: box ? Math.round(box.width) : null,
+            columnLeft: inner === null ? null : Math.round(inner),
+            column: column === null ? null : Math.round(column),
+            sideScroll: document.documentElement.scrollWidth > window.innerWidth + 1,
+          };
+        });
+        /* Seen in on a record's page (Roadmap f-seen-in-phone-length): each place once, the first three on a phone. */
+        await go(`${FITTED_BASE}/tasks/t1`);
+        await drawnIn("brief");
+        const seenIn = await tab.evaluate(() => {
+          const row = document.querySelector('[data-graview-face=pages] [data-testid="seen-in"]');
+          const shown = (element) => element.getClientRects().length > 0;
+          const links = row ? [...row.querySelectorAll("a")] : [];
+          const more = row?.querySelector("button[data-graview-seen-more]");
+          return {
+            places: links.length,
+            shown: links.filter(shown).map((link) => link.textContent?.trim() ?? ""),
+            toScene: links.filter((link) => (link.getAttribute("href") ?? "").includes("#view=")).length,
+            more: more && shown(more) ? more.textContent?.trim() ?? "" : null,
+            height: row ? Math.round(row.getBoundingClientRect().height) : null,
+          };
+        });
+        if (seenIn.more) {
+          await tab.click('[data-testid="seen-in"] button[data-graview-seen-more]');
+          await tab.waitForTimeout(200);
+          seenIn.opened = await tab.evaluate(() => ({
+            shown: [...document.querySelectorAll('[data-testid="seen-in"] a')].filter((link) => link.getClientRects().length > 0).length,
+            keyboardOnAPlace: document.activeElement !== null && document.activeElement === document.querySelectorAll('[data-testid="seen-in"] a')[3],
+          }));
+        }
+        one.fitted = { home, record, order, replaced, wide, heading, edge, edgeTitled, fallback, seenIn };
       } catch (error) {
         one.fittedError = String(error?.message ?? error);
       }
@@ -1334,6 +1422,38 @@ try {
   report.checks.aViewThatReplacesThePageDrawsAloneAndItsSlotIsNot = {
     seen: fittedSeen,
     ok: fittedHold(({ replaced }) => replaced.drawn === "Ada" && !replaced.slot && !replaced.saysSlot && !replaced.facts),
+  };
+  /* Roadmap f-view-place-min-width: a view's wide content scrolls inside it; its place is the column's width, and the page never scrolls sideways. */
+  report.checks.aViewsWideContentNeverWidensThePageOnAPhone = {
+    seen: fittedSeen,
+    ok: fittedHold(({ wide, record }, name) => wide.width === wide.column && !wide.sideScroll && (/×844$/.test(name) ? record.width === record.safeWidth : record.width === record.column) && !record.sideScroll),
+  };
+  /* Roadmap f-bleed-on-places: a place whose view says bleed spans a phone less its safe areas, as the home does, and is the column's width at a desk. */
+  report.checks.aPlaceDeclaredBleedDrawsEdgeToEdge = {
+    seen: fittedSeen,
+    ok: fittedHold(({ edge }, name) => spans(edge, name)),
+  };
+  /* Roadmap f-fallback-lens-loses-gutter: where a view that bleeds did not draw, what is drawn in its stead stands in the column, inside the gutter. */
+  report.checks.aFallbackPageKeepsItsGutters = {
+    seen: fittedSeen,
+    ok: fittedHold(({ fallback }) => fallback.drawn && fallback.left === fallback.columnLeft && fallback.width === fallback.column && !fallback.sideScroll),
+  };
+  /* Roadmap f-place-header-repeats-view-title: a view that draws its own heading is titled once, by itself; the way to the list stays; any other place keeps its title and count. */
+  report.checks.aCustomPageViewsHeadingIsSaidOnce = {
+    seen: fittedSeen,
+    ok: fittedHold(({ heading, edgeTitled }) => heading.title === "The wide" && heading.titleDrawn === false && heading.own === "The wide" && !heading.count && heading.asList && edgeTitled.titleDrawn === true && edgeTitled.count),
+  };
+  /* Roadmap f-seen-in-phone-length: each place one link, none to the scene beside it; on a phone the first three and a button for the rest, which opens them with the keyboard on the first; at a desk, all. */
+  report.checks.seenInNamesEachPlaceOnceOnAPhone = {
+    seen: fittedSeen,
+    ok: fittedHold(({ seenIn }, name) =>
+      seenIn.places > 4 &&
+      seenIn.toScene === 0 &&
+      new Set(seenIn.shown).size === seenIn.shown.length &&
+      (/×844$/.test(name)
+        ? seenIn.shown.length === 3 && seenIn.more === `${seenIn.places - 3} more` && seenIn.opened?.shown === seenIn.places && seenIn.opened?.keyboardOnAPlace === true
+        : seenIn.shown.length === seenIn.places && seenIn.more === null),
+    ),
   };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);

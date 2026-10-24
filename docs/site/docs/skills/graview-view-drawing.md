@@ -26,7 +26,7 @@ A control of your own keeps its role and state, and every `aria-*`: `<span role=
 
 ### Its box, and the gutter
 
-On Pages a view is drawn in the page's column, which keeps a 20px gutter either side on a phone. Nothing the view draws passes its box: a negative margin is clipped at its edge, not widened. Say `bleed: true` in the manifest and on a phone (680px or less) the box takes the gutter back, keeping the safe areas: a hero is the phone's width. At a desk it is the column's width either way.
+On Pages a view is drawn in the page's column, which keeps a 20px gutter either side on a phone. Nothing the view draws passes its box: a negative margin is clipped at its edge, not widened. Say `bleed: true` in the manifest and on a phone (680px or less) the box takes the gutter back (on a place too), keeping the safe areas: a hero is the phone's width. At a desk it is the column's width either way.
 
 ### The images a view may show
 

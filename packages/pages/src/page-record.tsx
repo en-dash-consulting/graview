@@ -1,4 +1,4 @@
-import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
+import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Place, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
@@ -176,23 +176,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             style={{ ...button, ...quiet, justifySelf: "start" }}
           />
         ) : null}
-        {seenIn.length > 0 ? (
-          /* WHERE IT IS SEEN: the pictures this kind of thing appears in, each as a page and as a stop in the scene. */
-          <p style={{ ...quiet, margin: 0 }} data-testid="seen-in">
-            Seen in:{" "}
-            {seenIn.map((place, index) => (
-                <span key={placeKey(place)}>
-                  {index > 0 ? <span aria-hidden="true"> · </span> : null}
-                  <Link to={pathOfPlace(context, place)} style={link}>
-                    {place.title}
-                  </Link>{" "}
-                  <SceneLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet, display: "inline-block", minWidth: 24, textAlign: "center" }} title={`${place.title}, in the scene`} label={`${place.title}, in the scene`}>
-                    <span aria-hidden="true">↗</span>
-                  </SceneLink>
-                </span>
-              ))}
-          </p>
-        ) : null}
+        {seenIn.length > 0 ? <SeenIn context={context} places={seenIn} /> : null}
       </header>
 
       {node && isArchived(node) ? <ArchivedSaid context={context} id={id} kind={facts.kind} /> : null}
@@ -484,6 +468,49 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
     </PageMain>
   );
 }
+
+/**
+ * WHERE IT IS SEEN: the pictures this kind of thing appears in, each once,
+ * as a link to its page — the record's own "In the scene" above says where
+ * it stands there (Roadmap f-seen-in-phone-length: ten places, each with an
+ * arrow to the scene beside it, were five lines and twenty stops on a
+ * phone before the record's view). On a phone, past four, the first three
+ * are said and a button says how many more, and opens them.
+ */
+function SeenIn<S extends AnySchema>({ context, places }: { context: PageContext<S>; places: readonly Place[] }) {
+  const [open, setOpen] = useState(false);
+  const said = useRef<HTMLParagraphElement>(null);
+  // One more is said, not folded: a button for a single place is no shorter than the place.
+  const more = open || places.length <= SEEN_FIRST + 1 ? 0 : places.length - SEEN_FIRST;
+  return (
+    <p ref={said} style={{ ...quiet, margin: 0 }} data-testid="seen-in" {...(open ? { "data-open": "" } : {})}>
+      Seen in:{" "}
+      {places.map((place, index) => (
+        <span key={placeKey(place)} {...(more > 0 && index >= SEEN_FIRST ? { "data-graview-later": "" } : {})}>
+          {index > 0 ? <span aria-hidden="true"> · </span> : null}
+          <Link to={pathOfPlace(context, place)} style={link}>
+            {place.title}
+          </Link>
+        </span>
+      ))}
+      {more > 0 ? (
+        <>
+          {" "}
+          <button type="button" data-graview-seen-more="" aria-expanded="false" style={{ ...link, ...quiet, font: "inherit", background: "none", border: 0, padding: 0, cursor: "pointer" }} onClick={() => {
+              setOpen(true);
+              // The button goes with what it opened: the keyboard goes on to the first place it opened, never to the page's body.
+              requestAnimationFrame(() => said.current?.querySelectorAll<HTMLElement>("a")[SEEN_FIRST]?.focus());
+            }}>
+            {more} more
+          </button>
+          <style>{SEEN_CSS}</style>
+        </>
+      ) : null}
+    </p>
+  );
+}
+const SEEN_FIRST = 3;
+const SEEN_CSS = `[data-graview-seen-more]{display:none!important}@media (max-width:680px){[data-graview-seen-more]{display:inline!important}[data-testid=seen-in] [data-graview-later]{display:none}}`;
 
 /**
  * A RECORD A PERSON SAID TO LEAVE ALONE SAYS SO, AT THE HEAD OF ITS PAGE:

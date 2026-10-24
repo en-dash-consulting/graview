@@ -148,7 +148,8 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
     };
   }, [definition, store, principal]);
   useEffect(() => mounted.current?.update(), [scheme, brand, tick]);
-  const place = <div ref={holder} data-worker-view-place={definition.manifest.name} />;
+  /* Never wider than what holds it (Roadmap f-view-place-min-width): a grid item at its content's min-content width took a phone's page past its edge. */
+  const place = <div ref={holder} data-worker-view-place={definition.manifest.name} style={{ minWidth: 0 }} />;
   if (!definition.draft) return place;
   const title = definition.manifest.title ?? definition.manifest.name;
   /* A view proposed and not kept says so, as the seat's drawn panel does on `/~draft` (FR-187). */
@@ -168,6 +169,20 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
 
 /** The one line over a draft, as the seat's drawn panel wears it: a hairline under it, nothing more. */
 const DRAFT_LINE = { margin: 0, display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "4px 8px", fontSize: "0.875rem", color: "var(--graview-ink-muted)", borderBottom: "1px solid var(--graview-edge)", paddingBottom: 8 } as const;
+
+/**
+ * WHAT IS DRAWN IN A VIEW'S STEAD, MARKED SO (Roadmap
+ * f-fallback-lens-loses-gutter): what a view asked for — `bleed` — is the
+ * view's alone, and the face that takes the gutter back for it passes by a
+ * slot that holds this instead. No box of its own: it lays out as it would.
+ */
+function Instead({ view: View, props }: { readonly view: ViewComponent<AnySchema>; readonly props: ViewProps<AnySchema> }) {
+  return (
+    <div data-worker-view-fallback="" style={{ display: "contents" }}>
+      <View {...props} />
+    </div>
+  );
+}
 
 /**
  * A WORKER VIEW AS A VIEW OF A KIND (FR-91): what `registerWorkerView`
@@ -190,9 +205,9 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     const then = useDefinitionThen(definition);
     if (!graview) return null;
     /* Not made yet at the moment drawn: the kind's own face, as where it fails. */
-    if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Fallback {...props} /> : null;
+    if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Instead view={Fallback} props={props} /> : null;
     /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94); nothing, where the surface is that face already. */
-    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Fallback {...props} />;
+    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Instead view={Fallback} props={props} />;
     /*
      * BESIDE THE RECORD'S OWN FIELDS (FR-149): what was drawn for the record
      * before, under the view — its fields, editable where an act writes
@@ -285,6 +300,8 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
    * — and for a view whose manifest says `flows: false`, a fixed canvas.
    */
   (view as { flows?: boolean }).flows = manifest.flows !== false;
+  /* A view that draws its own heading (Roadmap f-place-header-repeats-view-title): its place says the title to a screen reader only. */
+  if (manifest.heading === "own") (view as { ownHeading?: boolean }).ownHeading = true;
   /*
    * ON THE SCENE, A PREVIEW (Roadmap f-view-content-height,
    * f-scene-record-view-card): a view is as tall as it draws, so the Scene
