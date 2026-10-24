@@ -300,9 +300,20 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
 
   let disposed = false;
   let pushes = 0;
+  /*
+   * THE PUSHES NOT YET ANSWERED (FR-207). A view's `pushed` for a push the
+   * host sent is the answer the host asked for, so it is not charged to the
+   * view's message allowance: the host decides how often it pushes, and a
+   * view drawing what it was handed is not flooding. Each push is answered
+   * free once; a second answer, or one for a push never sent, is charged
+   * as any message. The last 100 are kept, for a guest that never answers.
+   */
+  const unanswered = new Set<number>();
   const push = () => {
     if (disposed) return;
     pushes += 1;
+    unanswered.add(pushes);
+    if (unanswered.size > 100) unanswered.delete(unanswered.values().next().value!);
     const now = props();
     options.send({ type: "props", props: options.hand ? options.hand(now) : now, push: pushes });
   };
@@ -371,7 +382,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
   return {
     receive(data) {
       if (disposed) return;
-      if (!limiter.message()) {
+      const answers = isRecord(data) && data.nonce === options.nonce && data.type === "pushed" && typeof data.push === "number" && unanswered.delete(data.push);
+      if (!answers && !limiter.message()) {
         stats.dropped += 1;
         options.onFlood?.();
         return;

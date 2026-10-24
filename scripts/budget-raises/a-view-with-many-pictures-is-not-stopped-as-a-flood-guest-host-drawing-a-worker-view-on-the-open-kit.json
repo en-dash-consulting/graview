@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 353,
+  "gzipped": 142,
+  "note": "Raised when a view with many pictures stopped being stopped as a flood (changeset a-view-with-many-pictures-is-not-stopped-as-a-flood, FR-207): the session keeps the pushes a view has not answered, so its answer to one is not charged to its allowance, and the pictures that settle within 100 ms are pushed together. 201_482 / 76_288 before, 201_835 / 76_430 with it: 353 / 142 more."
+}
