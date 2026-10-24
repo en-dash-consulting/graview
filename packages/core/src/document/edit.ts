@@ -41,7 +41,7 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
-import { brandFindings, emojiIconSentence, subtitleSentence } from "./brand-check.js";
+import { brandFindings, emojiIconSentence, groundWords, subtitleSentence } from "./brand-check.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
 import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
@@ -50,6 +50,7 @@ import { isRecord as isObject, respellDocument } from "./respell.js";
 import { refName } from "./compiled.js";
 import { localeSentence, timeZoneSentence } from "./diff.js";
 import { accentProblem } from "../theme/accent.js";
+import { groundProblem } from "../theme/ground-check.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
 import { capitalize, listed as listOf } from "../capital.js";
 import { quoted } from "./quote.js";
@@ -198,6 +199,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
       .object({
         op: z.literal("set-brand"),
         accent: z.union([z.string(), z.null()]).optional(),
+        // The page background (Roadmap f-brand-ground): one color, or one for each scheme; null for Graview's.
+        ground: z.union([z.string(), z.object({ light: z.string().optional(), dark: z.string().optional() }).strict(), z.null()]).optional(),
         name: z.union([z.string().min(1).max(60), z.null()]).optional(),
         currency: z.union([z.string(), z.null()]).optional(),
         locale: z.union([z.string(), z.null()]).optional(),
@@ -610,7 +613,8 @@ class Editor {
    * set, null clears it, and what it does not name stays as it was. Each
    * is judged as `graview check` judges it — a mark that could act or load,
    * a face off the list — and an accent that does not read as given is
-   * refused with the pair, the ratio and a shade that would (FR-126).
+   * refused with the pair, the ratio and a shade that would (FR-126), as
+   * is a ground that ink, muted ink or the accent would not read on.
    */
   private setBrand(i: number, e: Doc) {
     const brand: Record<string, any> = clone(this.doc.brand ?? {});
@@ -634,6 +638,20 @@ class Editor {
       if (refused) return this.fail(i, "accent", refused.sentence, refused.suggestion ? `{"op": "set-brand", "accent": "${refused.suggestion}"}` : "pick a color of another hue");
       brand["accent"] = e.accent;
       this.said.push(`The app's accent color becomes ${e.accent}.`);
+    }
+    if (e.ground === null) {
+      if (brand["ground"] !== undefined) this.said.push("The app's page background goes back to Graview's.");
+      delete brand["ground"];
+    } else if (e.ground !== undefined) {
+      const accent = brand["accent"] as string | undefined;
+      const refused = groundProblem(e.ground, accent);
+      const fixed = (ground: unknown, also = "") => `{"op": "set-brand", "ground": ${JSON.stringify(ground).replace(/","/g, '", "').replace(/":"/g, '": "')}${also}}`;
+      if (refused) return this.fail(i, "ground", refused.sentence, refused.suggestion ? fixed(typeof e.ground === "string" ? refused.suggestion : { ...e.ground, [refused.scheme]: refused.suggestion }) : "pick a lighter color for the light scheme, a darker one for the dark");
+      // The accent the app keeps is judged on the new ground as it was on the old (FR-126).
+      const unread = accent ? accentProblem(accent, e.ground) : null;
+      if (unread) return this.fail(i, "ground", unread.sentence, unread.suggestion ? fixed(e.ground, `, "accent": "${unread.suggestion}"`) : "pick another ground, or another accent");
+      brand["ground"] = e.ground;
+      this.said.push(groundWords(e.ground));
     }
     if (e.currency === null) {
       delete brand["currency"];

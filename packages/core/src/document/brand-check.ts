@@ -1,5 +1,7 @@
 import { TIME_ZONE_FIX, timeZoneProblem } from "../days.js";
 import { accentProblem, documentSchemes } from "../theme/accent.js";
+import { groundProblem } from "../theme/ground-check.js";
+import type { Ground } from "../theme/ground.js";
 import { fontProblem } from "../theme/fonts.js";
 import { emojiProblem, markProblem } from "../theme/marks.js";
 import { error, warning, type Finding } from "./findings.js";
@@ -36,6 +38,12 @@ export function subtitleSentence(drawn: boolean): string {
 export function emojiIconSentence(emoji: string, hasLogo: boolean): string {
   return hasLogo ? `The app's page icon becomes ${emoji}.` : `The app's page icon and mark become ${emoji}.`;
 }
+/** What setting a page background does, said the same by an edit and by the preview of a change. */
+export function groundWords(ground: Ground): string {
+  const given = typeof ground === "string" ? { light: ground } : ground;
+  if (given.light && given.dark) return `The app's page background becomes ${given.light}, and ${given.dark} in the dark.`;
+  return given.light ? `The app's page background becomes ${given.light}.` : `The app's page background in the dark becomes ${given.dark}.`;
+}
 export const EMOJI_FIX = 'say { "favicon": { "emoji": "🏡" } } with one standard emoji; a skin tone, a flag or a joined emoji like 👩🏽‍🌾 counts as one';
 
 export function brandFindings(brand: Partial<BrandSpec> | undefined, options: BrandCheckOptions = {}): Finding[] {
@@ -64,10 +72,21 @@ export function brandFindings(brand: Partial<BrandSpec> | undefined, options: Br
   // A zone its times could not be said on (Roadmap f-app-time-zone), refused by name.
   const unzoned = typeof brand.timeZone === "string" ? timeZoneProblem(brand.timeZone) : undefined;
   if (unzoned) out.push(error("brand-time-zone", `${at}.timeZone`, unzoned, TIME_ZONE_FIX));
+  /*
+   * A page background (Roadmap f-brand-ground) is judged as an accent is:
+   * the pair that would not read, its ratio, and a shade that would. A
+   * ground refused leaves the accent judged on Graview's.
+   */
+  const ground = brand.ground ? groundProblem(brand.ground, brand.accent) : null;
+  if (brand.ground && ground) {
+    const fix = ground.suggestion ? `say { "ground": ${typeof brand.ground === "string" ? `"${ground.suggestion}"` : JSON.stringify({ ...brand.ground, [ground.scheme]: ground.suggestion }).replace(/,/g, ", ").replace(/:/g, ": ")} }` : "pick another color";
+    out.push(warning("brand-ground", `${at}.ground`, `${ground.sentence} The app keeps Graview's page background.`, fix));
+  }
+  const on = brand.ground && !ground ? brand.ground : undefined;
   if (brand.accent) {
-    const refused = accentProblem(brand.accent);
+    const refused = accentProblem(brand.accent, on);
     if (refused) {
-      const drawn = documentSchemes(brand.accent).ok ? "The app draws a shade it moved to read, not the color given." : "The app keeps Graview's colors.";
+      const drawn = documentSchemes(brand.accent, on).ok ? "The app draws a shade it moved to read, not the color given." : "The app keeps Graview's colors.";
       out.push(warning("brand-accent", `${at}.accent`, `${refused.sentence} ${drawn}`, refused.suggestion ? `say { "accent": "${refused.suggestion}" }` : "pick another color"));
     }
   }

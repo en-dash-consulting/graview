@@ -207,6 +207,18 @@ describe("while you were away", () => {
     expect(away.said).toBe("2 suggestions waiting · tidied one thing while you were away");
     expect(whileAway(store, { seq: store.log.length })).toMatchObject({ suggestedSince: 0, tidied: 0, said: "2 suggestions waiting" });
   });
+
+  it("leaves out of what waits the suggestions the reader said not now to, as the tray does (FR-212)", async () => {
+    const store = storeOf();
+    const since = store.log.length;
+    await dream(store, { now: NOW, judges: [links], applyAtLeast: 0.8 });
+    await dream(store, { now: NOW, judges: [archive] });
+    const [first] = suggestions(store);
+    const dismissed = [{ suggestion: first!.id, at: NOW }];
+    expect(whileAway(store, { seq: since }, undefined, { dismissed })).toMatchObject({ waiting: 1, suggestedSince: 1, tidied: 1, said: "One suggestion waiting · tidied one thing while you were away" });
+    // A "not now" whose time has passed hides nothing.
+    expect(whileAway(store, { seq: since }, undefined, { dismissed: [{ ...dismissed[0]!, until: "2000-01-01T00:00:00Z" }] })).toMatchObject({ waiting: 2 });
+  });
 });
 
 describe("a dream on a store kept on disk", () => {

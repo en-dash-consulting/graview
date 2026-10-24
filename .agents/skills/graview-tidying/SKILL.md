@@ -72,7 +72,10 @@ opens in and how its cards read are `graview-lists`.
    `applyAtLeast`. A host's schedule runs it (`graview dream <entry> --data
    ./data --model jev-latest --cache ./cache.json`), or reaches the store
    as the actor through `suggest_changes`, the tool only an `automated`
-   seat is offered. `whileAway(store, { seq })` is the tray's line.
+   seat is offered. `whileAway(store, { seq }, principal, { dismissed })`
+   is the tray's line, less what the reader said "not now" to; a host that
+   works it out after the first draw hands it over with
+   `handle.setWhileAway(away)` (a React host changes the prop).
 
 ## Then find out whether it worked
 

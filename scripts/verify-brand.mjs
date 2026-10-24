@@ -31,6 +31,12 @@
  * the brand asked to invert (a picture on white), it is inverted and
  * screened in the dark and left as given in the light.
  *
+ * And with the document's brand given a ground of its own, a light one
+ * alone (Roadmap f-brand-ground), in each scheme on each face: the page
+ * stands on it — the light one as given, and in the dark the darker shade
+ * of its hue the brand derives, never Graview's paper or navy; the scene
+ * on the deeper shade drawn from each — and a card is drawn apart from it.
+ *
  *   node scripts/verify-brand.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
 import { createServer } from "node:http";
@@ -62,9 +68,19 @@ const PAIR = {
   dark: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><rect width="24" height="24" fill="#fedcba"/></svg>',
 };
 const ON_WHITE = "/graview/assets/on-white.svg";
+/** A page background of the app's own: a light one alone, so the dark scheme's is derived. */
+const GROUND = "#eef3f8";
 const ON_WHITE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24" width="48" height="24"><rect width="48" height="24" fill="#fff"/><circle cx="24" cy="12" r="8" fill="#0b2545"/></svg>';
 /** The `system-serif` stack, as a browser says a computed font-family: compared without quotes or spaces. */
-const { SYSTEM_STACKS } = await import(resolve(repoRoot, "packages/core/dist/index.js"));
+const { SYSTEM_STACKS, groundSchemes, colorsIn } = await import(resolve(repoRoot, "packages/core/dist/index.js"));
+/** A color as a browser says a computed one: `rgb(r, g, b)`. */
+const rgbOf = (hex) => {
+  const { r, g, b } = colorsIn(hex)[0];
+  return `rgb(${r}, ${g}, ${b})`;
+};
+/** What each face stands on, from the brand's ground: the routed face on the ground, the scene on its deeper shade. */
+const drawnFrom = groundSchemes(GROUND);
+const GROUNDS = Object.fromEntries(["light", "dark"].map((scheme) => [scheme, { pages: rgbOf(drawnFrom[scheme].ground), graview: rgbOf(drawnFrom[scheme].groundDeep) }]));
 const flat = (family) => family.replace(/["'\s]/g, "").toLowerCase();
 const SERIF = flat(SYSTEM_STACKS["system-serif"]);
 
@@ -89,7 +105,10 @@ async function buildHost() {
         // A logo for each scheme, or a light one the brand asked to invert in the dark (TrueNorth's picture on white).
         const logos = ${JSON.stringify({ pair: { light: PAIR.light, dark: PAIR.dark }, invert: { light: ON_WHITE, darkFallback: "invert" } })};
         const logo = logos[asked.get("logo")];
-        const compiled = compileDocumentWithoutCheck(logo ? { ...enDash, brand: { ...enDash.brand, logo } } : enDash, { today: () => "2026-10-07" });
+        // A page background of the app's own (Roadmap f-brand-ground).
+        const ground = asked.get("ground");
+        const brand = { ...enDash.brand, ...(logo ? { logo } : {}), ...(ground ? { ground } : {}) };
+        const compiled = compileDocumentWithoutCheck({ ...enDash, brand }, { today: () => "2026-10-07" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
@@ -164,6 +183,18 @@ function read() {
     // Each mark's faces for a scheme, and which of them is drawn; and a light logo marked to invert, as it is styled.
     faces: marks.map((one) => [...one.querySelectorAll("[data-graview-scheme-only]")].map((face) => ({ scheme: face.getAttribute("data-graview-scheme-only"), drawn: getComputedStyle(face).display !== "none" && face.getBoundingClientRect().width > 0, fill: face.querySelector("rect")?.getAttribute("fill") ?? null }))),
     fallbacks: marks.filter((one) => one.hasAttribute("data-graview-logo-fallback")).map((one) => ({ filter: getComputedStyle(one).filter, blend: getComputedStyle(one).mixBlendMode })),
+    // What the face stands on, as drawn: the routed face's content, or the scene's ground; and a card's fill beside it.
+    ground: (() => {
+      let surface = [...document.querySelectorAll("[data-embed-content], .graview-ground")].find((one) => one.getBoundingClientRect().width > 0);
+      // What paints it: the nearest that is not see-through, itself or a parent.
+      while (surface && /^rgba\(.*, 0\)$|^transparent$/.test(getComputedStyle(surface).backgroundColor)) surface = surface.parentElement;
+      const probe = document.createElement("div");
+      probe.style.background = "var(--graview-panel)";
+      root?.appendChild(probe);
+      const panel = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return { drawn: surface ? getComputedStyle(surface).backgroundColor : null, token: root ? getComputedStyle(root).getPropertyValue("--graview-ground").trim() : null, panel };
+    })(),
   };
 }
 
@@ -173,6 +204,7 @@ const seen = [];
 const preferred = [];
 const icons = [];
 const logos = [];
+const grounds = [];
 let browser;
 try {
   for (const engine of engines) {
@@ -190,6 +222,7 @@ try {
     };
     for (const scheme of SCHEMES) for (const face of FACES) seen.push({ engine, scheme, face, ...(await open(`face=${face}&theme=${scheme}`)) });
     for (const scheme of SCHEMES) for (const face of FACES) for (const logo of ["pair", "invert"]) logos.push({ engine, scheme, face, logo, ...(await open(`face=${face}&theme=${scheme}&logo=${logo}`)) });
+    for (const scheme of SCHEMES) for (const face of FACES) grounds.push({ engine, scheme, face, ...(await open(`face=${face}&theme=${scheme}&ground=${encodeURIComponent(GROUND)}`)).ground });
     for (const face of FACES) preferred.push({ engine, face, system: "light", stamped: "none", drawn: (await open(`face=${face}`, "light")).drawn });
     icons.push({ engine, owned: (await open("face=pages&favicon=1")).icons, embedded: (await open("face=pages")).icons });
     await browser.close();
@@ -222,6 +255,11 @@ const checks = {
   aLightLogoIsInvertedInTheDarkOnlyWhereTheBrandAsked: {
     seen: logos.filter((one) => one.logo === "invert").map(({ engine, scheme, face, fallbacks }) => ({ engine, scheme, face, fallbacks })),
     ok: logos.some((one) => one.logo === "invert") && logos.filter((one) => one.logo === "invert").every((one) => one.fallbacks.length > 0 && one.fallbacks.every((mark) => (one.scheme === "dark" ? /invert\(1\)/.test(mark.filter) && /hue-rotate\(180deg\)/.test(mark.filter) && mark.blend === "screen" : mark.filter === "none" && mark.blend === "normal"))),
+  },
+  theAppsOwnGroundIsDrawnInBothSchemes: {
+    expected: GROUNDS,
+    seen: grounds,
+    ok: grounds.length === engines.length * SCHEMES.length * FACES.length && grounds.every((one) => one.token === (one.scheme === "light" ? GROUND : drawnFrom.dark.ground) && one.drawn === GROUNDS[one.scheme][one.face] && one.panel !== one.drawn) && drawnFrom.dark.ground !== GROUND,
   },
   noPageThrew: { errors, ok: errors.length === 0 },
 };

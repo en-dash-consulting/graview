@@ -185,7 +185,7 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     for (const n of keys(b)) if (n in a && !same((a as Record<string, unknown>)[n], (b as Record<string, unknown>)[n])) sentences.push(`The ${noun} "${(b as Record<string, { title?: string }>)[n]!.title ?? n}" changes.`);
   }
   sentences.push(...policySentences(before, after));
-  if (!same(before.brand?.accent, after.brand?.accent)) sentences.push("The app's colors change.");
+  if (!same(before.brand?.accent, after.brand?.accent) || !same(before.brand?.ground, after.brand?.ground)) sentences.push("The app's colors change.");
   sentences.push(...brandSentences(before.brand ?? {}, after.brand ?? {}, after.name));
   // The app's money (FR-100) and its locale (FR-178), said apart from its colors.
   if (!same(before.brand?.currency, after.brand?.currency)) {

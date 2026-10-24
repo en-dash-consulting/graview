@@ -1,12 +1,13 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
-import { foldDigests, suggestions, type ActivityRow } from "@graview/core/tidying";
+import { foldDigests, suggestions, type ActivityRow, type SuggestionsOptions } from "@graview/core/tidying";
 
 /*
  * WHILE YOU WERE AWAY: what the app's own actor did and suggested since a
  * person last looked, for the tray or the bar to say in one line — "3
  * suggestions waiting · tidied 12 things while you were away". Read as the
  * person may see the app: a suggestion or a change about a record they may
- * not see is not counted.
+ * not see is not counted, and one they said "not now" to (`dismissed`, as
+ * `suggestions` takes it) does not wait for them (FR-212).
  */
 
 /** Since when: a position in the log (`seq`, the first op not yet seen) or a moment (`at`, ISO). */
@@ -28,11 +29,11 @@ export interface WhileAway {
   readonly said: string | undefined;
 }
 
-/** What the app's own actor did and suggested since `since`, as `principal` (or the seat a seat's store is of) may see it. */
-export function whileAway<S extends AnySchema>(store: Store<S>, since: AwaySince, principal?: Principal): WhileAway {
+/** What the app's own actor did and suggested since `since`, as `principal` (or the seat a seat's store is of) may see it, less what they said "not now" to. */
+export function whileAway<S extends AnySchema>(store: Store<S>, since: AwaySince, principal?: Principal, options: SuggestionsOptions = {}): WhileAway {
   const seen = principal ? store.seenBy(principal) : store;
   const after = (op: { readonly seq: number; readonly at: string }) => (since.seq === undefined || op.seq >= since.seq) && (since.at === undefined || op.at > since.at);
-  const waitingNow = suggestions(seen);
+  const waitingNow = suggestions(seen, undefined, options);
   const ops = seen.log.all();
   const byId = new Map(ops.map((op) => [op.id, op]));
   const seqOf = (id: string) => byId.get(id);

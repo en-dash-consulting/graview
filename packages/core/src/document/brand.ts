@@ -1,5 +1,6 @@
 import { SCHEMES } from "../theme/palettes.js";
 import { documentSchemes } from "../theme/accent.js";
+import { groundFailure, groundSchemes } from "../theme/ground.js";
 import { stackOf } from "../theme/fonts.js";
 import type { Brand } from "../theme/types.js";
 import { warning, type Finding } from "./findings.js";
@@ -18,7 +19,14 @@ import type { GraviewDocument } from "./schema.js";
  */
 export function brandOf(document: GraviewDocument, findings: Finding[]): Brand {
   const spec = document.brand ?? {};
-  const derived = spec.accent ? documentSchemes(spec.accent) : undefined;
+  // A page background words would not read on is left off, as an unreadable accent is (Roadmap f-brand-ground).
+  let ground = spec.ground;
+  let derived = spec.accent ? documentSchemes(spec.accent, ground) : undefined;
+  if (ground && groundFailure(derived?.ok ? derived.schemes : groundSchemes(ground), spec.accent)) {
+    findings.push(warning("brand", "brand.ground", "words would not read on that page background, so the app keeps Graview's", "pick a lighter ground for the light scheme, a darker one for the dark"));
+    ground = undefined;
+    derived = spec.accent ? documentSchemes(spec.accent) : undefined;
+  }
   // A color that cannot be read is not a reason to refuse an app: it wears the default colors and says why.
   // The checker says which pair, its ratio and a shade that would pass (brand-check.ts, FR-126); a page says only this.
   if (derived && !derived.ok) findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colors: ${derived.why}`, "pick a color further from orange-red, or a darker one"));
@@ -34,7 +42,7 @@ export function brandOf(document: GraviewDocument, findings: Finding[]): Brand {
     : undefined;
   return {
     name,
-    schemes: derived?.ok ? derived.schemes : (SCHEMES as Brand["schemes"]),
+    schemes: derived?.ok ? derived.schemes : ground ? groundSchemes(ground) : (SCHEMES as Brand["schemes"]),
     ...(spec.currency ? { currency: spec.currency } : {}),
     ...(spec.locale ? { locale: spec.locale } : {}),
     ...(spec.timeZone ? { timeZone: spec.timeZone } : {}),

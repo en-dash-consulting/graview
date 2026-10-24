@@ -40,8 +40,8 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   const own = [...linkedFindings(document), ...actFindings(document), ...formatFindings(document), ...computedFindings(document), ...factFindings(document), ...roleFindings(document), ...brandFindings(document.brand, options.fonts ? { fonts: options.fonts } : {}), ...viewKeys(document.views, "views", undefined, document.lenses), ...connectionFindings(document, app as never)];
   if (hasErrors(own)) return { ok: false, findings: [...compiled.findings, ...own] };
   // Braces in a block's plain words (FR-99): asked here, with the checker, and not of a page that compiles without it.
-  // The checker's sentence for an accent (FR-126) says what the compile's did, and more: once is enough.
-  const said = own.some((f) => f.code === "brand-accent") ? compiled.findings.filter((f) => !(f.code === "brand" && f.path === "brand.accent")) : compiled.findings;
+  // The checker's sentence for an accent (FR-126) or a ground says what the compile's did, and more: once is enough.
+  const said = compiled.findings.filter((f) => !(f.code === "brand" && ((f.path === "brand.accent" && own.some((o) => o.code === "brand-accent")) || (f.path === "brand.ground" && own.some((o) => o.code === "brand-ground")))));
   const findings: Finding[] = [...said, ...own, ...viewBraces(document.views, "views", undefined, document.lenses)];
   const check = checkApp(app, options.views ? { views: options.views } : {});
   for (const f of check.findings) {
