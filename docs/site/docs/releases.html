@@ -1809,7 +1809,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
     </section>
     <section id="v0-1-51" aria-labelledby="h-v0-1-51">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-v0-1-51">0.1.51</h2></div>
-      <p class="release-when sm dim">Published October 23, 2026 · the current version</p>
+      <p class="release-when sm dim">Published October 23, 2026</p>
       <p class="release-headline">Several people type into one long text field at once and keep every word: over the wire, in the editor, in words, whatever the network does.</p>
       <ul>
 <li><strong>Over the wire.</strong> <code>remote.typing(node, field)</code> sends a field's typing a run at a time as <code>type-text</code>, and the server carries each run over everyone else's, so two pages typing into one field both keep their words, over the socket or the poll. A reader that never said it reads op format 3 is sent the whole text instead of a splice. <code>@graview/core/typing</code> loads the first time somebody types.</li>

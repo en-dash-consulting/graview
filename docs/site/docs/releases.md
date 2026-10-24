@@ -55,7 +55,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.51
 
-Published October 23, 2026 · the current version
+Published October 23, 2026
 
 Several people type into one long text field at once and keep every word: over the wire, in the editor, in words, whatever the network does.
 
