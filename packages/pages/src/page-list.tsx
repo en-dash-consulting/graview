@@ -529,6 +529,24 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
                 ))}
               </span>
             ) : null}
+            {!said.off && current.length > 0 ? (
+              /*
+               * "EXPORT CSV" BESIDE THE HEADING, after adding one: quiet and
+               * short, never the screen's one filled button. On the arranging
+               * line it took a row of its own wherever the chips filled the
+               * line, and the first record stood a row lower.
+               */
+              <button
+                type="button"
+                data-testid="list-export"
+                aria-label="Export CSV"
+                title="Export CSV"
+                onClick={() => void exportShownList(said)}
+                style={{ ...plain, minHeight: 28, margin: "-4px 0", ...(creators.length > 0 ? {} : { marginLeft: "auto" }), padding: "0 2px", border: 0, background: "none", font: "inherit", color: "var(--graview-ink-muted)", cursor: "pointer" }}
+              >
+                <span aria-hidden="true" style={{ marginRight: 4 }}>↓</span>CSV
+              </button>
+            ) : null}
           </div>
           {/*
             * THE WAY INTO THE RECORDS, the press after adding one (the
@@ -664,16 +682,6 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             // `?q=` would be two answers to one question. An app's own shell
             // has no such box, so there the line keeps its own.
             query={context.framed === true && context.barAbove !== true}
-            {...(said.off
-              ? {}
-              : {
-                  // Quiet and short, last on the line, named "Export CSV": never the screen's one filled button.
-                  end: (
-                    <button type="button" className="graview-arrange-open" data-testid="arrange-export" aria-label="Export CSV" title="Export CSV" onClick={() => void exportShownList(said)}>
-                      <span aria-hidden="true">↓</span>CSV
-                    </button>
-                  ),
-                })}
           />
         ) : null}
         <style>{ROWS_CSS}</style>

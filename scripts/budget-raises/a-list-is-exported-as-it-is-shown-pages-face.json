@@ -1,7 +1,7 @@
 {
   "budget": "the pages face alone",
-  "minified": 1700,
+  "minified": 1900,
   "gzipped": 900,
   "changeset": "a-list-is-exported-as-it-is-shown.md",
-  "note": "Raised when a place's list came to be exported as it is shown (Roadmap f-view-export-csv). 1_074 B of it is `shownList` (`@graview/core/shown`), which the kind's list now draws its rows with in place of its own lines (the list page is 162 B smaller net, its press and what it says it shows included). The rest, 624 B: what a list says it shows for the place menu and the menu's rows (`pages/src/list-export.ts`, 541), the menu reading them (115), the provider's `onExport` and the routes and the frame handing it on (116). The writer, the rows, the file's name and the download are fetched with the press (`@graview/core/csv`). Measured at 658_466 / 242_602 against 656_768 / 241_777 before it: 1_698 more minified, 825 gzipped."
+  "note": "Raised when a place's list came to be exported as it is shown (Roadmap f-view-export-csv). 1_074 B of it is `shownList` (`@graview/core/shown`), which the kind's list now draws its rows with in place of its own lines (the list page is 20 B larger net, its press beside the heading and what it says it shows included). The rest, 624 B: what a list says it shows for the place menu and the menu's rows (`pages/src/list-export.ts`, 541), the menu reading them (115), the provider's `onExport` and the routes and the frame handing it on (116). The writer, the rows, the file's name and the download are fetched with the press (`@graview/core/csv`). The press stands beside the heading rather than on the arranging line, where it took a row of its own whenever the chips filled the line. Measured at 658_648 / 242_615 against 656_768 / 241_777 before it: 1_880 more minified, 838 gzipped."
 }

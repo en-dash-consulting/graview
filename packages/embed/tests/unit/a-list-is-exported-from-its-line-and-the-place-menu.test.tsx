@@ -94,9 +94,9 @@ const keeper = (may: KeptViewsMay, changes: LensTidyEdit[] = []) => memoryViews(
 const names = (host: HTMLElement) => [...host.querySelectorAll<HTMLElement>(".graview-row-title")].map((link) => link.textContent!.trim());
 
 describe("a list exported from its line and the place menu", () => {
-  it("ends a kind's arranging line with a quiet Export CSV, a button by name, which writes the rows in the order the page draws them", async () => {
+  it("puts a quiet Export CSV beside a kind's heading, a button by name, which writes the rows in the order the page draws them", async () => {
     const { host, saved } = await open("/shifts?sort=label");
-    const button = host.querySelector<HTMLButtonElement>('[data-testid="arrange-export"]');
+    const button = host.querySelector<HTMLButtonElement>('[data-testid="list-export"]');
     expect(button?.tagName).toBe("BUTTON");
     expect(button?.getAttribute("aria-label")).toBe("Export CSV");
     await press(button);
@@ -110,7 +110,7 @@ describe("a list exported from its line and the place menu", () => {
 
   it("writes a Group column first when the list is grouped", async () => {
     const { host, saved } = await open("/shifts?group=day&sort=label");
-    await press(host.querySelector('[data-testid="arrange-export"]'));
+    await press(host.querySelector('[data-testid="list-export"]'));
     const [header, ...body] = parseCsv(saved[0]!.csv, { delimiter: "," });
     expect(header!.slice(0, 2)).toEqual(["Group", "Name"]);
     expect(body.map((row) => row[1])).toEqual(names(host));
@@ -138,7 +138,7 @@ describe("a list exported from its line and the place menu", () => {
   it("offers nobody Export where the declaration switched it off, and the owner Turn on export", async () => {
     const changes: LensTidyEdit[] = [];
     const { host } = await open("/shifts", { app: unexported, keptViews: keeper({ views: true, lenses: true }, changes) });
-    expect(host.querySelector('[data-testid="arrange-export"]')).toBeNull();
+    expect(host.querySelector('[data-testid="list-export"]')).toBeNull();
     await rightClick((await openPlaces(host)).querySelector('[data-testid="app-place-kind:shift"]'));
     expect(rows()).not.toContain("export-csv");
     await press(menu()!.querySelector('[data-menu-item="export-on"]'));
