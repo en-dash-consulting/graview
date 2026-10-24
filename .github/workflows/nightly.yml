@@ -68,7 +68,7 @@ jobs:
   # Chrome draws on the GPU, widen this shard again.
   harnesses:
     name: ${{ matrix.shard }} (${{ matrix.renderer }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # 75: installing the engines alone has taken 32–42 minutes on a slow day.
     timeout-minutes: 75
     strategy:
@@ -151,7 +151,7 @@ jobs:
 
   engines:
     if: github.event.schedule == '17 9 * * 1' || inputs.engines
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
