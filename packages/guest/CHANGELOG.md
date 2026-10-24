@@ -1,5 +1,23 @@
 # @graview/guest
 
+## 0.1.54
+
+### Patch Changes
+
+- 4a38be3: A view with many pictures is not stopped as a flood (FR-207). Cloud's "the-faces" drew sixty records each with a small photo and fell back to the app's own page, saying "It sent more than 120 messages in 1,000 ms": the host pushed the view again for every picture that settled, each push the view's whole props, which the view drew and answered — a render and a `pushed` a push — so sixty pictures settling within a second came back as more messages than a view may send in one. The host now pushes for pictures at most once in 100 ms (`PICTURES_SETTLE_MS`): the first picture to settle is pushed at once, and those that settle after it within the span go together at its end, and the view is not said to have drawn while a picture that settled waits for its push. And a view's `pushed` for a push the host sent is no longer charged to its message allowance: the host decides how often it pushes, so a view answering what it was handed is not flooding; each push is answered free once, and a second answer, or one for a push never sent, is charged as any message. `guest`'s test draws sixty-four pictures settling one by one across half a second through a view that answers each push as a real one does, and it is not stopped, is handed every picture's address, and is pushed far fewer times than it has pictures; a session counts a view's answers to its own pushes free, and charges a second answer and an answer to a push never sent. `pnpm verify guest` draws sixty-four jobs whose photographs the host answers 8 ms apart, counted from the first, and the view draws every one and is not stopped (`--transport=pictures`). The guest host carries 159 bytes more before a worker is drawn (54 gzipped), and as much registering and drawing one, under a raise of each budget by that (`scripts/budget-raises/a-view-with-many-pictures-is-not-stopped-as-a-flood-*.json`).
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas, the theme and the embed — unchanged. Additive on `@graview/guest` (`PICTURES_SETTLE_MS`). A view handed pictures is pushed a picture later by up to 100 ms. What Graview Cloud does: nothing in its code; a view like "the-faces" draws once it builds on this. `capabilities().shipped` gains FR-207.
+- Updated dependencies [57e12bc]
+- Updated dependencies [cdef481]
+- Updated dependencies [0270ca9]
+- Updated dependencies [0270ca9]
+- Updated dependencies [094255d]
+- Updated dependencies [cdef481]
+- Updated dependencies [7324969]
+- Updated dependencies [0270ca9]
+  - @graview/core@0.1.54
+  - @graview/react@0.1.54
+
 ## 0.1.53
 
 ### Patch Changes

@@ -1,5 +1,30 @@
 # @graview/primitives
 
+## 0.1.54
+
+### Patch Changes
+
+- b22d435: A field typed together stays open while a tour, a dialog or a popover holds the keyboard. Graview Cloud's typed-together harness found the live editor closed, and its caret lost, when a first-look tour opened over it: the tour took the keyboard, and the editor read any keyboard leaving its text area for anywhere but its own buttons as the person leaving the field. Now a keyboard that goes to a layer over the page — Graview's own overlays (`data-graview-overlay`, the first-look tour among them), a `dialog`, `role="dialog"` or `"alertdialog"`, a popover — leaves the editor open, the caret where it was in the text area; given back, the person types on. Where the layer closes and leaves the keyboard on nothing, the text area takes it back, its selection as it was; where the keyboard goes from the layer to somewhere else on the page, the editor closes as before. `primitives`' test opens a tour over the editor and gives the keyboard back, closes a dialog without giving it back, and moves on from a dialog to the page, and the editor stays open with its caret, takes the keyboard back with its caret, and closes. `pnpm verify typed-together` puts a tour's hint over Ada's editor in a served preview, its button focused, and takes it away: the editor stayed open, the text area has the keyboard back with her caret where it was, and what she types next lands there (`aTourThatTakesTheKeyboardLeavesTheEditorOpenAndGivesItsCaretBack`).
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas, the JavaScript API, the theme and the embed — unchanged. What Graview Cloud does: nothing in its code; its typed-together harness's first-look case holds once it builds on this.
+- cdef481: A host says where its history stops, and the timeline says it quietly rather than as a refusal (FR-213). Graview Cloud's Free plan keeps the full history for 30 days and refuses `archived` behind that, so a Free app compacted on ops 60 days old, scrubbed behind the horizon, captioned "The archive could not be read" over an alert. Now `HistoryHost.kept` (`{ since, sentence, action? }`, the type `KeptHistory` on `@graview/core/history`) says the time a host keeps its history since: playback never asks `archived` for a range made wholly before it — judged from the checkpoint's time, the log's and every op read so far — and the timeline says `sentence`, with `action` as a link, in a quiet line (`timeline-kept`, no alert) when it stands at a moment made at or before it. An answer of `archived` may say `keptFrom` (`ArchivedOps.keptFrom`): it holds no op before that seq, so the scrubber steps the past behind it by the epochs the archive handed, and a moment between them is before what is kept — `askArchived` answers `{ seq, behindKept: true }`, the caption says "Nothing this far back is kept" and the picture holds — never a refusal, and never asked again. `keptOf(store, host)` on `@graview/core/past` says what playback has learned so far: the stops behind the horizon, where it reaches change by change from, and the last moment made at or before `since`; `Playback.kept` carries it to the timeline, and `Playback.archive` gains `behindKept`. Core's test steps an archive that kept two epochs behind its `keptFrom` and asks nothing of one kept since after every archived change; primitives' draws the line with its link and no alert, and steps from the kept epoch. `pnpm verify playback` scrubs a host keeping a plan's window to the epoch its archive begins at, drawn as it stood (`theScrubbersFirstStopIsTheEpochTheArchiveBeginsAtDrawnAsItStood`), says the plan's line with its link and no alert (`aHostsKeptWindowIsAQuietLineWithItsLinkNotAnAlert`), and asks nothing of a host whose history is kept since after every archived change (`aRangeWhollyBeforeTheKeptTimeIsNeverAsked`). `capabilities().shipped` gains FR-213.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `capabilities().shipped` gains FR-213. Additive on `@graview/core/history` (`HistoryHost.kept`, `ArchivedOps.keptFrom`, `KeptHistory`), `@graview/core/past` (`keptOf`, `KeptPast`, `askArchived`'s `behindKept` answer) and `@graview/react` (`Playback.kept`, `Playback.archive.behindKept`). A hosted page carries 33 bytes more up front, within its budget (the scene face before it draws measures 1,023,948 B). What Graview Cloud does: hands the page `history.kept` with the plan's window start, its sentence and a link to its plans, and answers `archived` for a range behind the window with `keptFrom` (what `archivedSeenBy` answers from an archive that begins at an epoch, FR-214) rather than refusing it.
+- Updated dependencies [57e12bc]
+- Updated dependencies [cdef481]
+- Updated dependencies [0270ca9]
+- Updated dependencies [0270ca9]
+- Updated dependencies [094255d]
+- Updated dependencies [cdef481]
+- Updated dependencies [7324969]
+- Updated dependencies [0270ca9]
+- Updated dependencies [094255d]
+  - @graview/core@0.1.54
+  - @graview/react@0.1.54
+  - @graview/tools@0.1.54
+  - @graview/layout@0.1.54
+  - @graview/render@0.1.54
+
 ## 0.1.53
 
 ### Patch Changes

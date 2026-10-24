@@ -57,7 +57,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.53
 
-Published October 24, 2026 · the current version
+Published October 24, 2026
 
 The scene keeps up on a large app and its grid moves with the picture; views fit a phone and draw more; a store never reuses an id; a visitor's form loads light.
 
