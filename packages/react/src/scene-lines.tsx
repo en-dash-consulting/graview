@@ -11,7 +11,7 @@ import { orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadra
 import { channelRoute } from "./channels.js";
 import { captionBoxes, clipQuadratic, Connectors, connectorStrands, movedBy, tieRoute, type Owed } from "./connectors.js";
 import { watchDrawnLate } from "./drawn-late.js";
-import { drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
+import { drawingIn, drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
 import type { SceneNode } from "./scene-node.js";
 import { CAPTION_RISE, captionRuns, captionText, type CaptionEntry, type CaptionRun } from "@graview/layout";
 import { railInset } from "./rails.js";
@@ -204,6 +204,45 @@ export function Lines<S extends AnySchema>({
       watch?.disconnect();
     };
   }, [stageRef, views]);
+
+  /*
+   * AND WHAT EACH VIEW DRAWS INSIDE ITS BOX. A host is the box the layout
+   * gave it and keeps its size; the panel a line lands on stands in the
+   * middle of it, so a panel whose words settle a frame late moves up or
+   * down inside a box that never changed, and the lines measured before it
+   * pointed above or below the card (todo's rule-order on the nightly's
+   * runner). Watched afresh with each measurement, since a drawing can come
+   * after its view; a size first seen is only remembered, so watching
+   * measures nothing.
+   */
+  const drawnSizes = useRef(new WeakMap<Element, string>());
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (moving || holding || stage === null || typeof ResizeObserver === "undefined") return;
+    let queued = 0;
+    const watch = new ResizeObserver((entries) => {
+      let changed = false;
+      for (const { target, contentRect } of entries) {
+        const size = `${Math.round(contentRect.width)}x${Math.round(contentRect.height)}`;
+        if (drawnSizes.current.has(target) && drawnSizes.current.get(target) !== size) changed = true;
+        drawnSizes.current.set(target, size);
+      }
+      if (changed && queued === 0) {
+        queued = requestAnimationFrame(() => {
+          queued = 0;
+          remeasure((n) => n + 1);
+        });
+      }
+    });
+    for (const view of stage.querySelectorAll("[data-graview-view]")) {
+      const drawing = drawingIn(view);
+      if (drawing !== view) watch.observe(drawing);
+    }
+    return () => {
+      if (queued !== 0) cancelAnimationFrame(queued);
+      watch.disconnect();
+    };
+  }, [measured, moving, holding, stageRef]);
 
   /*
    * WHICH RECORD A PERSON IS AT: the pointer on it, or the keyboard. A tie

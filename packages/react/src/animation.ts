@@ -127,7 +127,22 @@ export function useAnimatedLayout(
      * renders of the whole scene, each drawing the same picture, after
      * every drag and every turn of the wheel.
      */
-    if (from.current === target && latest.current!.t >= 1) return;
+    if (from.current === target && latest.current!.t >= 1) {
+      /*
+       * BUT STILL THE ONE SETTLE TICK. A scene's first render starts here
+       * too (`from` begins as the target), and its lines were measured
+       * against cards not yet laid out; the flight this skips used to end
+       * with the render that measured them again. Only a hand's pan, painted
+       * where it lands before it was let go, has nothing to measure again.
+       */
+      if (!settle) return;
+      const tick = requestAnimationFrame(() => {
+        const again = interpolate(target, target, 1);
+        latest.current = again;
+        setCurrent(again);
+      });
+      return () => cancelAnimationFrame(tick);
+    }
 
     // Tween from wherever the scene actually IS, not from the last target:
     // interrupting a transition half way must not snap back to its start.

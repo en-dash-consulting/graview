@@ -190,9 +190,29 @@ const MEASURE = () => {
         to.x >= sb.left - 2 && to.x <= sb.right + 2 && to.y >= sb.top - 2 && to.y <= sb.bottom + 2,
       lands: [pickAt(e.p0), pickAt(e.p1)],
       length: Math.hypot(e.p1.x - e.p0.x, e.p1.y - e.p0.y),
+      ends: [at, to].map((p) => ({ x: Math.round(p.x), y: Math.round(p.y) })),
     });
   }
-  return { stage: { w: Math.round(sb.width), h: Math.round(sb.height) }, lines, sick };
+  /*
+   * WHAT A LINE ON NOTHING WAS NEAR, so a runner's failure can be read
+   * rather than guessed at: what is under each end, and the cards nearest it
+   * with where they stand.
+   */
+  const cards = [...document.querySelectorAll("[data-graview-pick], [data-graview-view]")].map((el) => {
+    const r = el.getBoundingClientRect();
+    return { id: el.getAttribute("data-graview-pick") ?? el.getAttribute("data-graview-view"), x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) };
+  });
+  for (const line of lines) {
+    if (line.lands[0] !== null || line.lands[1] !== null) continue;
+    line.near = line.ends.map((p) => ({
+      under: document.elementsFromPoint(p.x, p.y).slice(0, 4).map((el) => `${el.tagName.toLowerCase()}${el.className && typeof el.className === "string" ? "." + el.className.split(" ")[0] : ""}`),
+      cards: cards
+        .map((c) => ({ ...c, off: Math.round(Math.hypot(Math.max(c.x - p.x, 0, p.x - c.x - c.w), Math.max(c.y - p.y, 0, p.y - c.y - c.h))) }))
+        .sort((a, b) => a.off - b.off)
+        .slice(0, 3),
+    }));
+  }
+  return { stage: { x: Math.round(sb.left), y: Math.round(sb.top), w: Math.round(sb.width), h: Math.round(sb.height) }, lines, sick };
 };
 
 const faults = (shot, when) => {
@@ -210,6 +230,7 @@ const faults = (shot, when) => {
      */
     if (line.length > 4 && line.lands[0] === null && line.lands[1] === null) {
       out.push(`${when}: a ${line.kind} line has neither end on anything`);
+      report.astray.push({ when, kind: line.kind, stage: shot.stage, ends: line.ends, near: line.near });
     }
   }
   return out;
@@ -411,7 +432,7 @@ const RISEN = (id) => {
   };
 };
 
-const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, faults: [], seen: [], recordLinks: 0 };
+const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, faults: [], seen: [], recordLinks: 0, astray: [] };
 
 /* `--only=<app>` while iterating on one app's lines; the verdict is the whole run's. */
 const ONLY = process.argv.find((arg) => arg.startsWith("--only="))?.slice(7);

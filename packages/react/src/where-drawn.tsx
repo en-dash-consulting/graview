@@ -205,15 +205,24 @@ export function measureVisible(
   if (!stageEl || typeof document === "undefined") return null;
   const host = stageEl.querySelector(`[data-graview-view="${CSS.escape(id)}"]`);
   if (!host) return null;
-  const inner =
+  // Cut down to what shows: a host half under a scroller's fold anchors a
+  // line where its visible half is, and one wholly under it anchors none.
+  return visibleRect(drawingIn(host, preferBlock, slot), stageEl);
+}
+
+/**
+ * WHAT A VIEW DRAWS inside the box the layout gave it, which is what a line
+ * lands on: its panel, its kind's face or card, or a chip; the host itself
+ * when it draws none of those.
+ */
+export function drawingIn(host: Element, preferBlock = false, slot = false): Element {
+  return (
     (preferBlock ? host.querySelector(".graview-kind-block") : null) ??
     host.querySelector('[data-graview-primitive="panel"], .graview-kind-face, .graview-kind-card') ??
     // A chip in its slot is the chip, not the slot it was allotted: a line to the slot's edge stopped short of it.
     (slot ? null : host.querySelector(':scope > [data-graview-primitive="chip"]')) ??
-    host;
-  // Cut down to what shows: a host half under a scroller's fold anchors a
-  // line where its visible half is, and one wholly under it anchors none.
-  return visibleRect(inner, stageEl);
+    host
+  );
 }
 
 /**
