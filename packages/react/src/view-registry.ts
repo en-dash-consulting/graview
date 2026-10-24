@@ -160,9 +160,13 @@ export function layerViews<S extends AnySchema>(base: ReactViewRegistry<S>, over
   // The arrangement travels with the places it arranges (FR-80).
   const arranged = over.arrangement?.();
   if (arranged) base.arrange?.(arranged);
-  // And the home's own view (FR-81).
-  const home = over.homeView?.();
-  if (home) base.home?.(home);
+  // And the home's own view (FR-81), each as it was given, its name with it (FR-202).
+  const homes = over.homes?.() ?? [];
+  if (homes.length > 0) for (const home of homes) base.home?.(home.view, home.name !== undefined ? { name: home.name } : undefined);
+  else {
+    const home = over.homeView?.();
+    if (home) base.home?.(home);
+  }
   return base;
 }
 

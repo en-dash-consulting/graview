@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T04:03:50.498Z",
+  "at": "2026-10-24T04:27:37.407Z",
   "engines": [
     "chromium",
     "webkit",
@@ -12,7 +12,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -27,7 +27,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -44,7 +44,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5888/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -59,7 +59,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5888/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -78,7 +78,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -93,7 +93,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 2,
@@ -110,7 +110,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5888/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -125,7 +125,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5888/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 3,
@@ -144,7 +144,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 1,
@@ -159,7 +159,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
               "path": "/swap.html",
               "hash": "",
               "length": 1,
@@ -176,7 +176,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5888/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 2,
@@ -191,7 +191,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/the-packages",
+              "href": "http://localhost:5888/apps/a2/places/the-packages",
               "path": "/apps/a2/places/the-packages",
               "hash": "",
               "length": 2,
@@ -215,7 +215,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -231,7 +231,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -249,7 +249,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -265,7 +265,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -285,7 +285,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -301,7 +301,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 4,
@@ -319,7 +319,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -335,7 +335,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 5,
@@ -355,7 +355,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 3,
@@ -371,7 +371,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
               "path": "/swap.html",
               "hash": "",
               "length": 3,
@@ -389,7 +389,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 4,
@@ -405,7 +405,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2/places/overview#focus=pkg-start",
+              "href": "http://localhost:5888/apps/a2/places/overview#focus=pkg-start",
               "path": "/apps/a2/places/overview",
               "hash": "#focus=pkg-start",
               "length": 4,
@@ -430,7 +430,7 @@
         "chromium": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -445,7 +445,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -462,7 +462,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/open-questions",
+              "href": "http://localhost:5888/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 7,
@@ -477,7 +477,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2",
+              "href": "http://localhost:5888/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 7,
@@ -496,7 +496,7 @@
         "webkit": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -511,7 +511,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 6,
@@ -528,7 +528,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/open-questions",
+              "href": "http://localhost:5888/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 7,
@@ -543,7 +543,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2",
+              "href": "http://localhost:5888/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 7,
@@ -562,7 +562,7 @@
         "firefox": {
           "article": {
             "before": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 5,
@@ -577,7 +577,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+              "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
               "path": "/swap.html",
               "hash": "",
               "length": 5,
@@ -594,7 +594,7 @@
           },
           "address": {
             "before": {
-              "href": "http://localhost:5688/apps/a2/open-questions",
+              "href": "http://localhost:5888/apps/a2/open-questions",
               "path": "/apps/a2/open-questions",
               "hash": "",
               "length": 6,
@@ -609,7 +609,7 @@
               }
             },
             "after": {
-              "href": "http://localhost:5688/apps/a2",
+              "href": "http://localhost:5888/apps/a2",
               "path": "/apps/a2",
               "hash": "",
               "length": 6,
@@ -787,7 +787,7 @@
       "seen": {
         "chromium": {
           "place": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 2,
@@ -802,7 +802,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 4,
@@ -818,7 +818,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 6,
@@ -835,7 +835,7 @@
         },
         "webkit": {
           "place": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 2,
@@ -850,7 +850,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 4,
@@ -866,7 +866,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 6,
@@ -883,7 +883,7 @@
         },
         "firefox": {
           "place": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
             "path": "/swap.html",
             "hash": "",
             "length": 1,
@@ -898,7 +898,7 @@
             }
           },
           "focus": {
-            "href": "http://localhost:5688/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "href": "http://localhost:5888/swap.html?face=scene&stop=%23focus%3Dpkg-start",
             "path": "/swap.html",
             "hash": "",
             "length": 3,
@@ -914,7 +914,7 @@
             }
           },
           "gone": {
-            "href": "http://localhost:5688/swap.html?face=pages&path=%2Fopen-questions",
+            "href": "http://localhost:5888/swap.html?face=pages&path=%2Fopen-questions",
             "path": "/swap.html",
             "hash": "",
             "length": 5,
@@ -3653,25 +3653,25 @@
       "seen": {
         "chromium 1440×900 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3680,25 +3680,25 @@
         },
         "chromium 390×844 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3707,25 +3707,25 @@
         },
         "webkit 1440×900 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3734,25 +3734,25 @@
         },
         "webkit 390×844 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 2,
             "writes": 0,
             "heading": null
@@ -3761,25 +3761,25 @@
         },
         "firefox 1440×900 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": null
@@ -3788,25 +3788,25 @@
         },
         "firefox 390×844 article": {
           "before": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "The board"
           },
           "onRecord": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "Write the brief"
           },
           "after": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": "2 tasks and 1 person."
           },
           "reseated": {
-            "href": "http://localhost:5688/article.html?from=somewhere#the-picture",
+            "href": "http://localhost:5888/article.html?from=somewhere#the-picture",
             "length": 1,
             "writes": 0,
             "heading": null
@@ -6863,16 +6863,16 @@
           },
           "order": {
             "view": [
-              321,
-              478
+              323,
+              378
             ],
             "slot": [
-              490,
-              569
+              390,
+              470
             ],
             "facts": [
-              623,
-              735
+              524,
+              635
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -6881,56 +6881,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
           }
         },
         "chromium 390×844": {
@@ -6954,16 +6904,16 @@
           },
           "order": {
             "view": [
-              361,
-              517
+              363,
+              418
             ],
             "slot": [
-              529,
-              602
+              430,
+              502
             ],
             "facts": [
-              656,
-              767
+              556,
+              668
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -6972,58 +6922,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
           }
         },
         "webkit 1440×900": {
@@ -7047,16 +6945,16 @@
           },
           "order": {
             "view": [
-              320,
-              476
+              322,
+              377
             ],
             "slot": [
-              488,
-              566
+              389,
+              467
             ],
             "facts": [
-              620,
-              730
+              521,
+              631
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7065,56 +6963,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
           }
         },
         "webkit 390×844": {
@@ -7138,16 +6986,16 @@
           },
           "order": {
             "view": [
-              359,
-              515
+              361,
+              416
             ],
             "slot": [
-              527,
-              599
+              428,
+              500
             ],
             "facts": [
-              653,
-              763
+              554,
+              664
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7156,58 +7004,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
           }
         },
         "firefox 1440×900": {
@@ -7231,16 +7027,16 @@
           },
           "order": {
             "view": [
-              321,
-              478
+              323,
+              378
             ],
             "slot": [
-              490,
-              569
+              390,
+              470
             ],
             "facts": [
-              623,
-              735
+              524,
+              636
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7249,56 +7045,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
           }
         },
         "firefox 390×844": {
@@ -7322,16 +7068,16 @@
           },
           "order": {
             "view": [
-              361,
-              517
+              363,
+              418
             ],
             "slot": [
-              529,
-              601
+              430,
+              502
             ],
             "facts": [
-              655,
-              767
+              556,
+              668
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7340,58 +7086,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
           }
         }
       },
@@ -7420,16 +7114,16 @@
           },
           "order": {
             "view": [
-              321,
-              478
+              323,
+              378
             ],
             "slot": [
-              490,
-              569
+              390,
+              470
             ],
             "facts": [
-              623,
-              735
+              524,
+              635
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7438,56 +7132,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
           }
         },
         "chromium 390×844": {
@@ -7511,16 +7155,16 @@
           },
           "order": {
             "view": [
-              361,
-              517
+              363,
+              418
             ],
             "slot": [
-              529,
-              602
+              430,
+              502
             ],
             "facts": [
-              656,
-              767
+              556,
+              668
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7529,58 +7173,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
           }
         },
         "webkit 1440×900": {
@@ -7604,16 +7196,16 @@
           },
           "order": {
             "view": [
-              320,
-              476
+              322,
+              377
             ],
             "slot": [
-              488,
-              566
+              389,
+              467
             ],
             "facts": [
-              620,
-              730
+              521,
+              631
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7622,56 +7214,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
           }
         },
         "webkit 390×844": {
@@ -7695,16 +7237,16 @@
           },
           "order": {
             "view": [
-              359,
-              515
+              361,
+              416
             ],
             "slot": [
-              527,
-              599
+              428,
+              500
             ],
             "facts": [
-              653,
-              763
+              554,
+              664
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7713,58 +7255,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
           }
         },
         "firefox 1440×900": {
@@ -7788,16 +7278,16 @@
           },
           "order": {
             "view": [
-              321,
-              478
+              323,
+              378
             ],
             "slot": [
-              490,
-              569
+              390,
+              470
             ],
             "facts": [
-              623,
-              735
+              524,
+              636
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7806,56 +7296,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
           }
         },
         "firefox 390×844": {
@@ -7879,16 +7319,16 @@
           },
           "order": {
             "view": [
-              361,
-              517
+              363,
+              418
             ],
             "slot": [
-              529,
-              601
+              430,
+              502
             ],
             "facts": [
-              655,
-              767
+              556,
+              668
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7897,58 +7337,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
           }
         }
       },
@@ -7977,16 +7365,16 @@
           },
           "order": {
             "view": [
-              321,
-              478
+              323,
+              378
             ],
             "slot": [
-              490,
-              569
+              390,
+              470
             ],
             "facts": [
-              623,
-              735
+              524,
+              635
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -7995,56 +7383,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
           }
         },
         "chromium 390×844": {
@@ -8068,16 +7406,16 @@
           },
           "order": {
             "view": [
-              361,
-              517
+              363,
+              418
             ],
             "slot": [
-              529,
-              602
+              430,
+              502
             ],
             "facts": [
-              656,
-              767
+              556,
+              668
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -8086,58 +7424,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
           }
         },
         "webkit 1440×900": {
@@ -8161,16 +7447,16 @@
           },
           "order": {
             "view": [
-              320,
-              476
+              322,
+              377
             ],
             "slot": [
-              488,
-              566
+              389,
+              467
             ],
             "facts": [
-              620,
-              730
+              521,
+              631
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -8179,56 +7465,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
           }
         },
         "webkit 390×844": {
@@ -8252,16 +7488,16 @@
           },
           "order": {
             "view": [
-              359,
-              515
+              361,
+              416
             ],
             "slot": [
-              527,
-              599
+              428,
+              500
             ],
             "facts": [
-              653,
-              763
+              554,
+              664
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -8270,58 +7506,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
           }
         },
         "firefox 1440×900": {
@@ -8345,16 +7529,16 @@
           },
           "order": {
             "view": [
-              321,
-              478
+              323,
+              378
             ],
             "slot": [
-              490,
-              569
+              390,
+              470
             ],
             "facts": [
-              623,
-              735
+              524,
+              636
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -8363,56 +7547,6 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
           }
         },
         "firefox 390×844": {
@@ -8436,16 +7570,16 @@
           },
           "order": {
             "view": [
-              361,
-              517
+              363,
+              418
             ],
             "slot": [
-              529,
-              601
+              430,
+              502
             ],
             "facts": [
-              655,
-              767
+              556,
+              668
             ],
             "slotSays": "Read the sourcesEach source, in turn."
           },
@@ -8454,2844 +7588,149 @@
             "slot": false,
             "saysSlot": false,
             "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
           }
         }
       },
       "ok": true
     },
-    "aViewsWideContentNeverWidensThePageOnAPhone": {
+    "aDeletedHomeViewNeverDrawsOverTheLiveOne": {
       "seen": {
         "chromium 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              321,
-              478
-            ],
-            "slot": [
-              490,
-              569
-            ],
-            "facts": [
-              623,
-              735
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
+          "drawn": [
+            "eagles-nest"
+          ],
+          "says": [
+            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
+          ]
         },
         "chromium 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              361,
-              517
-            ],
-            "slot": [
-              529,
-              602
-            ],
-            "facts": [
-              656,
-              767
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
+          "drawn": [
+            "eagles-nest"
+          ],
+          "says": [
+            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
+          ]
         },
         "webkit 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              320,
-              476
-            ],
-            "slot": [
-              488,
-              566
-            ],
-            "facts": [
-              620,
-              730
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
+          "drawn": [
+            "eagles-nest"
+          ],
+          "says": [
+            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
+          ]
         },
         "webkit 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              359,
-              515
-            ],
-            "slot": [
-              527,
-              599
-            ],
-            "facts": [
-              653,
-              763
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
+          "drawn": [
+            "eagles-nest"
+          ],
+          "says": [
+            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
+          ]
         },
         "firefox 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              321,
-              478
-            ],
-            "slot": [
-              490,
-              569
-            ],
-            "facts": [
-              623,
-              735
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
+          "drawn": [
+            "eagles-nest"
+          ],
+          "says": [
+            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
+          ]
         },
         "firefox 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              361,
-              517
-            ],
-            "slot": [
-              529,
-              601
-            ],
-            "facts": [
-              655,
-              767
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
+          "drawn": [
+            "eagles-nest"
+          ],
+          "says": [
+            ":host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }\n:host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }\n[data-graview-view-root] { display: flow-root; color: var(--graview-ink, CanvasText); font-family: var(--graview-font-body, system-ui, sans-serif); line-height: 1.45; }\n:where([data-graview-view-root]) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; appearance: none; cursor: pointer; }\n:where([data-graview-view-root]) :where(a[data-graview-link]) { color: inherit; text-decoration: none; }\n[data-graview-view-root] :is([data-graview-link], [data-graview-press]) { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: rgb(128 128 128 / 0.16); }\n[data-graview-view-root] :focus-visible { outline: max(2px, var(--graview-focus-width, 2px)) solid var(--graview-focus-color, var(--graview-accent, Highlight)) !important; outline-offset: var(--graview-focus-offset, 2px) !important; }\n[data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }\n[data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }\n[data-graview-view-root] a[href]:not([data-graview-link])::after { content: \" ↗\" !important; content: \" ↗\" / \" (opens in a new tab)\" !important; }\nThe nest, live"
+          ]
         }
       },
       "ok": true
     },
-    "aPlaceDeclaredBleedDrawsEdgeToEdge": {
+    "aVisitorsFormOverACompiledAppRefusesAndAnswersAsBefore": {
       "seen": {
         "chromium 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
+          "title": "RSVP",
+          "refused": {
+            "said": "Not yet: Email — invalid email address.",
+            "guests": []
           },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
+          "answered": {
+            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
+            "guests": [
+              "Ada Lovelace"
+            ]
           },
-          "order": {
-            "view": [
-              321,
-              478
-            ],
-            "slot": [
-              490,
-              569
-            ],
-            "facts": [
-              623,
-              735
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
+          "scripts": 35
         },
         "chromium 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
+          "title": "RSVP",
+          "refused": {
+            "said": "Not yet: Email — invalid email address.",
+            "guests": []
           },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
+          "answered": {
+            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
+            "guests": [
+              "Ada Lovelace"
+            ]
           },
-          "order": {
-            "view": [
-              361,
-              517
-            ],
-            "slot": [
-              529,
-              602
-            ],
-            "facts": [
-              656,
-              767
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
+          "scripts": 35
         },
         "webkit 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
+          "title": "RSVP",
+          "refused": {
+            "said": "Not yet: Email — invalid email address.",
+            "guests": []
           },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
+          "answered": {
+            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
+            "guests": [
+              "Ada Lovelace"
+            ]
           },
-          "order": {
-            "view": [
-              320,
-              476
-            ],
-            "slot": [
-              488,
-              566
-            ],
-            "facts": [
-              620,
-              730
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
+          "scripts": 35
         },
         "webkit 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
+          "title": "RSVP",
+          "refused": {
+            "said": "Not yet: Email — invalid email address.",
+            "guests": []
           },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
+          "answered": {
+            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
+            "guests": [
+              "Ada Lovelace"
+            ]
           },
-          "order": {
-            "view": [
-              359,
-              515
-            ],
-            "slot": [
-              527,
-              599
-            ],
-            "facts": [
-              653,
-              763
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
+          "scripts": 35
         },
         "firefox 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
+          "title": "RSVP",
+          "refused": {
+            "said": "Not yet: Email — invalid email address.",
+            "guests": []
           },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
+          "answered": {
+            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
+            "guests": [
+              "Ada Lovelace"
+            ]
           },
-          "order": {
-            "view": [
-              321,
-              478
-            ],
-            "slot": [
-              490,
-              569
-            ],
-            "facts": [
-              623,
-              735
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
+          "scripts": 35
         },
         "firefox 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              361,
-              517
-            ],
-            "slot": [
-              529,
-              601
-            ],
-            "facts": [
-              655,
-              767
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
-        }
-      },
-      "ok": true
-    },
-    "aFallbackPageKeepsItsGutters": {
-      "seen": {
-        "chromium 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              321,
-              478
-            ],
-            "slot": [
-              490,
-              569
-            ],
-            "facts": [
-              623,
-              735
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
-        },
-        "chromium 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              361,
-              517
-            ],
-            "slot": [
-              529,
-              602
-            ],
-            "facts": [
-              656,
-              767
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
-        },
-        "webkit 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              320,
-              476
-            ],
-            "slot": [
-              488,
-              566
-            ],
-            "facts": [
-              620,
-              730
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
-        },
-        "webkit 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              359,
-              515
-            ],
-            "slot": [
-              527,
-              599
-            ],
-            "facts": [
-              653,
-              763
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
-        },
-        "firefox 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              321,
-              478
-            ],
-            "slot": [
-              490,
-              569
-            ],
-            "facts": [
-              623,
-              735
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
-        },
-        "firefox 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              361,
-              517
-            ],
-            "slot": [
-              529,
-              601
-            ],
-            "facts": [
-              655,
-              767
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
-        }
-      },
-      "ok": true
-    },
-    "aCustomPageViewsHeadingIsSaidOnce": {
-      "seen": {
-        "chromium 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              321,
-              478
-            ],
-            "slot": [
-              490,
-              569
-            ],
-            "facts": [
-              623,
-              735
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
-        },
-        "chromium 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              361,
-              517
-            ],
-            "slot": [
-              529,
-              602
-            ],
-            "facts": [
-              656,
-              767
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
-        },
-        "webkit 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              320,
-              476
-            ],
-            "slot": [
-              488,
-              566
-            ],
-            "facts": [
-              620,
-              730
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
-        },
-        "webkit 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              359,
-              515
-            ],
-            "slot": [
-              527,
-              599
-            ],
-            "facts": [
-              653,
-              763
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
-        },
-        "firefox 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              321,
-              478
-            ],
-            "slot": [
-              490,
-              569
-            ],
-            "facts": [
-              623,
-              735
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
-        },
-        "firefox 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              361,
-              517
-            ],
-            "slot": [
-              529,
-              601
-            ],
-            "facts": [
-              655,
-              767
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
-        }
-      },
-      "ok": true
-    },
-    "seenInNamesEachPlaceOnceOnAPhone": {
-      "seen": {
-        "chromium 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              321,
-              478
-            ],
-            "slot": [
-              490,
-              569
-            ],
-            "facts": [
-              623,
-              735
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
-        },
-        "chromium 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              361,
-              517
-            ],
-            "slot": [
-              529,
-              602
-            ],
-            "facts": [
-              656,
-              767
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
-        },
-        "webkit 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              320,
-              476
-            ],
-            "slot": [
-              488,
-              566
-            ],
-            "facts": [
-              620,
-              730
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
-        },
-        "webkit 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              359,
-              515
-            ],
-            "slot": [
-              527,
-              599
-            ],
-            "facts": [
-              653,
-              763
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
-        },
-        "firefox 1440×900": {
-          "home": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 340,
-            "width": 760,
-            "column": 760,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              321,
-              478
-            ],
-            "slot": [
-              490,
-              569
-            ],
-            "facts": [
-              623,
-              735
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 140,
-            "width": 1160,
-            "column": 1160,
-            "safeLeft": 0,
-            "safeWidth": 1440,
-            "viewport": 1440,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 140,
-            "width": 1160,
-            "columnLeft": 140,
-            "column": 1160,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge",
-              "The broken",
-              "The plain"
-            ],
-            "toScene": 0,
-            "more": null,
-            "height": 24
-          }
-        },
-        "firefox 390×844": {
-          "home": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "record": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "order": {
-            "view": [
-              361,
-              517
-            ],
-            "slot": [
-              529,
-              601
-            ],
-            "facts": [
-              655,
-              767
-            ],
-            "slotSays": "Read the sourcesEach source, in turn."
-          },
-          "replaced": {
-            "drawn": "Ada",
-            "slot": false,
-            "saysSlot": false,
-            "facts": false
-          },
-          "wide": {
-            "left": 20,
-            "width": 350,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "heading": {
-            "title": "The wide",
-            "titleDrawn": false,
-            "own": "The wide",
-            "count": false,
-            "asList": true
-          },
-          "edge": {
-            "left": 0,
-            "width": 390,
-            "column": 350,
-            "safeLeft": 0,
-            "safeWidth": 390,
-            "viewport": 390,
-            "sideScroll": false
-          },
-          "edgeTitled": {
-            "titleDrawn": true,
-            "count": true
-          },
-          "fallback": {
-            "drawn": true,
-            "left": 20,
-            "width": 350,
-            "columnLeft": 20,
-            "column": 350,
-            "sideScroll": false
-          },
-          "seenIn": {
-            "places": 5,
-            "shown": [
-              "The board",
-              "The wide",
-              "The edge"
-            ],
-            "toScene": 0,
-            "more": "2 more",
-            "height": 24,
-            "opened": {
-              "shown": 5,
-              "keyboardOnAPlace": true
-            }
-          }
+          "title": "RSVP",
+          "refused": {
+            "said": "Not yet: Email — invalid email address.",
+            "guests": []
+          },
+          "answered": {
+            "said": "Received — thank you.Thank you — the hosts will write to you a week before.",
+            "guests": [
+              "Ada Lovelace"
+            ]
+          },
+          "scripts": 35
         }
       },
       "ok": true

@@ -6,7 +6,7 @@
 pnpm add @graview/primitives
 ```
 
-Entry points: `@graview/primitives`, `@graview/primitives/frame`, `@graview/primitives/pages`, `@graview/primitives/scene`, `@graview/primitives/montserrat.css`, `@graview/primitives/montserrat-latin.woff2`
+Entry points: `@graview/primitives`, `@graview/primitives/frame`, `@graview/primitives/pages`, `@graview/primitives/form`, `@graview/primitives/scene`, `@graview/primitives/montserrat.css`, `@graview/primitives/montserrat-latin.woff2`
 
 ## What it is
 

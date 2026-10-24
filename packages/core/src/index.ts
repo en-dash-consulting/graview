@@ -407,6 +407,7 @@ export type { ArrangedEntry, DeclaredLenses, DrawnLens, Opening, PlaceFinding, S
 export type { AppPlace } from "./app-places.js";
 export type {
   Cardinality,
+  HomeRegistration,
   HostView,
   PagesArrangement,
   KindList,

@@ -160,22 +160,40 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
   const seen = store.seenBy(by);
   const mayLink = linking(store, by);
   const taken = new Set<string>();
-  /** The rows planned so far, by their label's key: a later row may link to one. */
-  const plannedByName = new Map<string, { id: string; kind: string; label: string }[]>();
+  /**
+   * THE ROWS THIS CALL MAKES, by their label's key and by what the call
+   * matches by: ANY row may link to one, above it or below it (FR-200).
+   */
+  const plannedByName = new Map<string, Planned[]>();
+  const plannedByMatch = new Map<string, Planned[]>();
   /** Far records whose one link of a relation this import has already given. */
   const filled = new Set<string>();
   const outcomes: ImportRowOutcome[] = [];
   const planned: { node: Record<string, unknown> & { id: string; kind: string }; edges: GraphEdge[]; replaced: GraphEdge[]; label: string }[] = [];
   const say = sentences(preview);
+  const match = options.match === undefined ? undefined : matcher(store, seen, definition, kind, options.match, header, columns, options.dayFirst === true);
+  /** A record of the kind the importer sees, by the field the call matches by (FR-200). */
+  const byMatchField = (() => {
+    if (options.match === undefined || options.match === "label") return undefined;
+    const field = options.match.field;
+    const found = new Map<string, Planned[]>();
+    for (const node of seen.graph.nodesOfKind(kind as never) as unknown as (Record<string, unknown> & { id: string })[]) {
+      if (typeof node[field] !== "string") continue;
+      const key = nameKey(node[field] as string);
+      found.set(key, [...(found.get(key) ?? []), { id: node.id, kind, label: labelOf(definition, node as never) || node.id }]);
+    }
+    return found;
+  })();
 
   /**
    * The links a row makes from or to the record `id` — a new one, or under
    * `match` one already there (`existing`): a link it already has is no
    * change, and the one link of a relation to one that it holds to another
    * record is replaced — said where the importer sees it, taken quietly
-   * where they do not (FR-55).
+   * where they do not (FR-55). A cell names a record of the app or a row of
+   * this call; a row of this call that is refused is said (`alive`).
    */
-  const linksFor = (id: string, cells: Record<string, unknown>, existing: boolean) => {
+  const linksFor = (id: string, cells: Record<string, unknown>, existing: boolean, alive: ReadonlySet<number>) => {
     const reasons: string[] = [];
     const links: ImportLink[] = [];
     const edges: GraphEdge[] = [];
@@ -194,7 +212,7 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
         continue;
       }
       for (const name of named) {
-        const found = resolve(store, column, name, by, plannedByName);
+        const found = resolve(store, column, name, by, { kind, byName: plannedByName, byMatch: plannedByMatch, ...(byMatchField ? { byMatchField } : {}), alive });
         if (!found.ok) {
           reasons.push(found.why);
           continue;
@@ -233,15 +251,30 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
     return { reasons, links, edges, replaced, severed };
   };
 
-  const match = options.match === undefined ? undefined : matcher(store, seen, definition, kind, options.match, header, columns, options.dayFirst === true);
-  /** Records rows above already change, by id, and the row that does. */
-  const changing = new Map<string, number>();
   const editAct = store.allMutations().find((mutation) => mutation.derived?.kind === kind && mutation.derived.act === "edit");
   const updated: { id: string; label: string; changes: ImportChange[]; links: readonly ImportLink[]; edges: GraphEdge[]; severed: GraphEdge[]; replaced: GraphEdge[] }[] = [];
 
+  /*
+   * FIRST, EVERY ROW WITHOUT ITS LINKS (FR-200): its fields read, the
+   * record it already is found, the record it makes named. Only then is a
+   * link cell read, so it may name a row below it as well as one above.
+   */
+  type Read =
+    | { readonly row: number; readonly done: ImportRowOutcome }
+    | {
+        readonly row: number;
+        readonly cells: Record<string, unknown>;
+        readonly id: string;
+        readonly label: string;
+        readonly fields: Record<string, unknown>;
+        readonly reasons: readonly string[];
+        /** The record the row already is, under `match`, and what the row changes on it. */
+        readonly found?: { readonly changes: readonly ImportChange[] };
+      };
+  const reads: Read[] = [];
   for (const { row, cells } of records) {
     if (forbidden && !match) {
-      outcomes.push({ row, made: false, action: "refuse", links: [], refused: [forbidden], sentence: say.refused(row, [forbidden]) });
+      reads.push({ row, done: { row, made: false, action: "refuse", links: [], refused: [forbidden], sentence: say.refused(row, [forbidden]) } });
       continue;
     }
     const reasons: string[] = [];
@@ -274,14 +307,12 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
     if (match) {
       const found = match(cells, fields, row, plannedByName);
       if (found.why) {
-        outcomes.push({ row, made: false, action: "refuse", links: [], refused: [...reasons, found.why], sentence: say.refused(row, [...reasons, found.why]) });
+        reads.push({ row, done: { row, made: false, action: "refuse", links: [], refused: [...reasons, found.why], sentence: say.refused(row, [...reasons, found.why]) } });
         continue;
       }
       if (found.node) {
         const node = found.node;
         const label = labelOf(definition, node as never) || node.id;
-        const before = changing.get(node.id);
-        if (before !== undefined) reasons.push(`row ${before} above already changes ${label}`);
         const changes: ImportChange[] = [];
         for (const [field, value] of Object.entries(fields)) {
           // The value it was found by, written as the sheet spells it, is the same value: no change.
@@ -298,22 +329,11 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
           const verdict = store.permits({ name: editAct!.name, args: { id: node.id, ...Object.fromEntries(changes.map((change) => [change.field, change.to])) } }, by);
           if (!verdict.ok) reasons.push(verdict.refusal.message);
         }
-        const linked = linksFor(node.id, cells, true);
-        reasons.push(...linked.reasons);
-        if (reasons.length > 0) {
-          outcomes.push({ row, made: false, action: "refuse", links: [], refused: reasons, sentence: say.refused(row, reasons) });
-          continue;
-        }
-        changing.set(node.id, row);
-        for (const edge of linked.edges) if (edge.to === node.id) filled.add(`${edge.kind} ${edge.from}`);
-        const changed = changes.length > 0 || linked.edges.length > 0;
-        if (changed) updated.push({ id: node.id, label, changes, links: linked.links, edges: linked.edges, severed: linked.severed, replaced: linked.replaced });
-        const words = changes.map((change) => `${fieldWords(definition, change.field)}: ${valueSaid(definition, change.field, change.from)} → ${valueSaid(definition, change.field, change.to)}`);
-        outcomes.push({ row, made: false, action: changed ? "change" : "leave", id: node.id, label, fields, changes, links: linked.links, refused: [], sentence: changed ? say.changed(row, label, words, linked.links) : say.left(row, label) });
+        reads.push({ row, cells, id: node.id, label, fields, reasons, found: { changes } });
         continue;
       }
       if (forbidden) {
-        outcomes.push({ row, made: false, action: "refuse", links: [], refused: [forbidden], sentence: say.refused(row, [forbidden]) });
+        reads.push({ row, done: { row, made: false, action: "refuse", links: [], refused: [forbidden], sentence: say.refused(row, [forbidden]) } });
         continue;
       }
     }
@@ -341,22 +361,77 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
 
     const label = labelFor(definition, kind, fields, row);
     const id = reasons.length === 0 ? mint(store, seen, by, taken, kind, label) : `import:${row}`;
-    const { links, edges, replaced } = (() => {
-      const linked = linksFor(id, cells, false);
-      reasons.push(...linked.reasons);
-      return linked;
-    })();
+    if (reasons.length === 0) {
+      taken.add(id);
+      const one: Planned = { id, kind, label, row };
+      const key = nameKey(label);
+      plannedByName.set(key, [...(plannedByName.get(key) ?? []), one]);
+      if (options.match !== undefined && options.match !== "label") {
+        const value = fields[options.match.field];
+        if (typeof value === "string") plannedByMatch.set(nameKey(value), [...(plannedByMatch.get(nameKey(value)) ?? []), one]);
+      }
+    }
+    reads.push({ row, cells, id, label, fields, reasons });
+  }
 
+  /*
+   * THEN THE LINKS, against the app and every row this call makes (FR-200).
+   * A row refused for its links is no record a cell can name, so the rows
+   * that named it are read again, until no more are refused: what is said
+   * is what lands, the preview's word for word.
+   */
+  type Linked = ReturnType<typeof linksFor>;
+  const linkAll = (alive: ReadonlySet<number>): Map<number, Linked> => {
+    filled.clear();
+    const linked = new Map<number, Linked>();
+    for (const read of reads) {
+      if ("done" in read) continue;
+      const links = linksFor(read.id, read.cells, read.found !== undefined, alive);
+      linked.set(read.row, links);
+      if (read.reasons.length === 0 && links.reasons.length === 0) for (const edge of links.edges) if (edge.to === read.id) filled.add(`${edge.kind} ${edge.from}`);
+    }
+    return linked;
+  };
+  let alive = new Set(reads.flatMap((read) => ("done" in read || read.found || read.reasons.length > 0 ? [] : [read.row])));
+  let linkedRows = linkAll(alive);
+  for (;;) {
+    const still = new Set([...alive].filter((row) => linkedRows.get(row)!.reasons.length === 0));
+    if (still.size === alive.size) break;
+    alive = still;
+    linkedRows = linkAll(alive);
+  }
+
+  /** Records rows above already change, by id, and the row that does. */
+  const changing = new Map<string, number>();
+  for (const read of reads) {
+    if ("done" in read) {
+      outcomes.push(read.done);
+      continue;
+    }
+    const { row, id, label, fields } = read;
+    const links = linkedRows.get(row)!;
+    if (read.found) {
+      const before = changing.get(id);
+      const reasons = [...(before !== undefined ? [`row ${before} above already changes ${label}`] : []), ...read.reasons, ...links.reasons];
+      if (reasons.length > 0) {
+        outcomes.push({ row, made: false, action: "refuse", links: [], refused: reasons, sentence: say.refused(row, reasons) });
+        continue;
+      }
+      changing.set(id, row);
+      const { changes } = read.found;
+      const changed = changes.length > 0 || links.edges.length > 0;
+      if (changed) updated.push({ id, label, changes: [...changes], links: links.links, edges: links.edges, severed: links.severed, replaced: links.replaced });
+      const words = changes.map((change) => `${fieldWords(definition, change.field)}: ${valueSaid(definition, change.field, change.from)} → ${valueSaid(definition, change.field, change.to)}`);
+      outcomes.push({ row, made: false, action: changed ? "change" : "leave", id, label, fields, changes, links: links.links, refused: [], sentence: changed ? say.changed(row, label, words, links.links) : say.left(row, label) });
+      continue;
+    }
+    const reasons = [...read.reasons, ...links.reasons];
     if (reasons.length > 0) {
       outcomes.push({ row, made: false, action: "refuse", links: [], refused: reasons, sentence: say.refused(row, reasons) });
       continue;
     }
-    taken.add(id);
-    for (const edge of edges) if (edge.to === id) filled.add(`${edge.kind} ${edge.from}`);
-    const key = nameKey(label);
-    plannedByName.set(key, [...(plannedByName.get(key) ?? []), { id, kind, label }]);
-    planned.push({ node: { ...fields, id, kind }, edges, replaced, label });
-    outcomes.push({ row, made: true, action: "make", id, label, fields, links, refused: [], sentence: say.made(row, label, links) });
+    planned.push({ node: { ...fields, id, kind }, edges: links.edges, replaced: links.replaced, label });
+    outcomes.push({ row, made: true, action: "make", id, label, fields, links: links.links, refused: [], sentence: say.made(row, label, links.links) });
   }
 
   const made = planned.length;
@@ -378,13 +453,30 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
     batchIntent,
     via,
   }));
-  const appended = planned.map((one) => ({
-    primitives: [{ op: "add-node", node: one.node } as Primitive, ...one.edges.map((edge) => ({ op: "add-edge", edge }) as Primitive), ...one.replaced.map((edge) => ({ op: "remove-edge", edge }) as Primitive)],
+  /*
+   * A ROW LINKED TO ONE BELOW IT (FR-200) is made with the links whose far
+   * end is there already; the rest follow once every row is made, each
+   * row's as one op, in the same batch.
+   */
+  const at = new Map(planned.map((one, index) => [one.node.id, index]));
+  const later = (edge: GraphEdge, index: number) => (at.get(edge.from === planned[index]!.node.id ? edge.to : edge.from) ?? -1) > index;
+  const appended = planned.map((one, index) => ({
+    primitives: [
+      { op: "add-node", node: one.node } as Primitive,
+      ...one.edges.filter((edge) => !later(edge, index)).map((edge) => ({ op: "add-edge", edge }) as Primitive),
+      ...one.replaced.map((edge) => ({ op: "remove-edge", edge }) as Primitive),
+    ],
     author: options.by,
     intent: `Add ${article(noun)} ${noun}: ${one.label}`,
     batchIntent,
     via,
   }));
+  const forward = planned.flatMap((one, index) => {
+    const edges = one.edges.filter((edge) => later(edge, index));
+    if (edges.length === 0) return [];
+    const far = edges.map((edge) => planned[at.get(edge.from === one.node.id ? edge.to : edge.from)!]!.label);
+    return [{ primitives: edges.map((edge) => ({ op: "add-edge", edge }) as Primitive), author: options.by, intent: `Link ${one.label} to ${andList(far)}`, batchIntent, via }];
+  });
   const patches = updated.filter((one) => one.changes.length > 0).map((one) => ({
     primitives: [{ op: "patch-node", id: one.id, before: Object.fromEntries(one.changes.map((change) => [change.field, change.from])), after: Object.fromEntries(one.changes.map((change) => [change.field, change.to])) } as Primitive],
     author: options.by,
@@ -394,7 +486,7 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
   }));
   if (options.admit) {
     const at = store.log.length;
-    const ops = [...patches, ...appended, ...relinked].map((one, index) => ({
+    const ops = [...patches, ...appended, ...forward, ...relinked].map((one, index) => ({
       id: `import:${index + 1}`,
       seq: at + index,
       batch: options.batch ?? "import",
@@ -408,7 +500,7 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
     const taken = planned.reduce((sum, one) => sum + one.replaced.length, 0) + updated.reduce((sum, one) => sum + one.replaced.length + one.severed.length, 0);
     options.admit({
       ops,
-      primitives: [...patches, ...appended, ...relinked].flatMap((one) => one.primitives),
+      primitives: [...patches, ...appended, ...forward, ...relinked].flatMap((one) => one.primitives),
       added: { nodes: made, edges: linked },
       removed: { nodes: 0, edges: taken },
       changed: { nodes: edits.length },
@@ -424,7 +516,7 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
    */
   const edited = edits.length > 0 ? store.applyAll(edits, { author: options.by, via, intent: batchIntent, ...(options.batch === undefined ? {} : { batch: options.batch }) }).ops : [];
   const batch = edited[0]?.batch ?? options.batch;
-  const rest = [...appended, ...relinked];
+  const rest = [...appended, ...forward, ...relinked];
   const ops = [...edited, ...(rest.length > 0 ? store.append(rest, batch === undefined ? {} : { batch }) : [])];
   const { introduces } = problemsMoved(store.allInvariants(), before, store.violations());
   return { ...result, kept: true, batch: ops[0]!.batch, ops, introduces };
@@ -478,21 +570,51 @@ function namesIn<S extends AnySchema>(store: Store<S>, column: Extract<ImportCol
   return parts.length > 1 ? parts : [text];
 }
 
+/** A record a row of this import makes (FR-200): its id, kind and label, and the row. */
+type Planned = { readonly id: string; readonly kind: string; readonly label: string; readonly row?: number };
+
+/** What a link cell may name beside the app's records: the rows this call makes, and what the call matches by (FR-200). */
+interface ThisCall {
+  readonly kind: string;
+  readonly byName: ReadonlyMap<string, readonly Planned[]>;
+  /** The rows by the value of the field the call matches by. */
+  readonly byMatch: ReadonlyMap<string, readonly Planned[]>;
+  /** The kind's records the importer sees, by that field. */
+  readonly byMatchField?: ReadonlyMap<string, readonly Planned[]>;
+  /** The rows still to be made: one refused is said, not linked. */
+  readonly alive: ReadonlySet<number>;
+}
+
 type Found = { ok: true; id: string; label: string; kind: string } | { ok: false; why: string };
 
-/** A name, resolved as an act resolves it, under the importer's sight; failing that, among the rows this import makes. */
-function resolve<S extends AnySchema>(store: Store<S>, column: Extract<ImportColumn, { as: "relation" }>, name: string, by: Principal, planned: ReadonlyMap<string, readonly { id: string; kind: string; label: string }[]>): Found {
+/**
+ * A name, resolved as an act resolves it, under the importer's sight;
+ * failing that, among the rows this import makes — any of them, above the
+ * cell or below it (FR-200) — by what the call matches by, then by label;
+ * failing that, a record of the kind by what the call matches by.
+ */
+function resolve<S extends AnySchema>(store: Store<S>, column: Extract<ImportColumn, { as: "relation" }>, name: string, by: Principal, call: ThisCall): Found {
   const found = store.resolveRef({ name: column.column, kinds: column.kinds }, name, by);
   if (found.ok) return { ok: true, id: found.id, label: found.label, kind: String(store.graph.getNode(found.id)!.kind) };
   if (found.reason === "ambiguous") {
     const labels = [...new Set(found.candidates.map((candidate) => candidate.label))];
     return { ok: false, why: `“${name}” under ${column.column} could be ${labels.length <= 5 ? orList(labels) : `any of ${labels.length} records`}` };
   }
-  const here = (planned.get(nameKey(name)) ?? []).filter((one) => column.kinds.includes(one.kind));
-  if (here.length === 1) return { ok: true, ...here[0]! };
-  if (here.length > 1) return { ok: false, why: `“${name}” under ${column.column} could be any of the ${here.length} rows above it so called` };
+  const key = nameKey(name);
+  const matching = column.kinds.includes(call.kind);
+  for (const rows of [matching ? call.byMatch : undefined, call.byName]) {
+    const here = (rows?.get(key) ?? []).filter((one) => column.kinds.includes(one.kind));
+    if (here.length > 1) return { ok: false, why: `“${name}” under ${column.column} could be any of the ${here.length} rows of this sheet so called` };
+    const one = here[0];
+    if (!one) continue;
+    if (one.row !== undefined && !call.alive.has(one.row)) return { ok: false, why: `row ${one.row}, which ${column.column} names as “${name}”, is refused` };
+    return { ok: true, id: one.id, kind: one.kind, label: one.label };
+  }
+  const there = matching ? (call.byMatchField?.get(key) ?? []) : [];
+  if (there.length === 1) return { ok: true, ...there[0]! };
+  if (there.length > 1) return { ok: false, why: `“${name}” under ${column.column} could be ${there.length <= 5 ? orList(there.map((one) => one.label)) : `any of ${there.length} records`}` };
   const nouns = [...new Set(column.kinds.map((one) => nounOf(store.schema.tryDefinition(one), one)))];
-  return { ok: false, why: `no ${nouns.length <= 3 ? orList(nouns) : "record"} is called “${name}”` };
+  return { ok: false, why: `no ${nouns.length <= 3 ? orList(nouns) : "record"} is called “${name}” under ${column.column}` };
 }
 
 /** What the record will be called: its kind's label, else its first words, else the row. */

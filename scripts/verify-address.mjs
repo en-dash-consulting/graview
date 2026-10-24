@@ -146,6 +146,24 @@ const BROKEN = { name: "broken", title: "The broken", attach: "task", cardinalit
 const PLAIN = { name: "plain", title: "The plain", attach: "task", cardinality: "many" };
 const CARD = { name: "card", attach: "person", cardinality: "one", replaces: "page" };
 const CARD_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="card">\${props.node ? props.node.label : ""}</p>\`));`;
+/*
+ * A DELETED HOME VIEW REGISTERED AFTER THE LIVE ONE (FR-202), as Graview
+ * Cloud hands a page its deleted views so Restore works in place: in the
+ * Eagles app the deleted `eagles-story` drew over the live `eagles-nest`.
+ */
+const HOMES_BASE = "/apps/a6";
+const NEST = { name: "eagles-nest", attach: "home", cardinality: "many" };
+const NEST_SOURCE = `graview.onProps(() => graview.render(graview.html\`<p class="nest">The nest, live</p>\`));`;
+const STORY = { name: "eagles-story", attach: "home", cardinality: "many" };
+const STORY_SOURCE = `graview.onProps(() => graview.render(graview.html\`<p class="story">The story, deleted this morning</p>\`));`;
+const STORY_REMOVED = { name: "eagles-story", title: "The story", at: "2026-10-22T09:00:00.000Z", until: "2026-11-21T09:00:00.000Z" };
+/*
+ * A VISITOR'S FORM AS GRAVIEW CLOUD SERVES IT (FR-201): `@graview/embed/form`
+ * over the app its host compiled, read with `appFrom` from
+ * `@graview/core/compiled`, never the document compiler.
+ */
+const FORM_BASE = "/form";
+const RSVP = resolve(repoRoot, "packages/core/tests/document/fixtures/rsvp.gdd.json");
 const SEED = {
   nodes: [
     { id: "t1", kind: "task", label: "Write the brief", status: "todo" },
@@ -177,12 +195,15 @@ async function buildHost() {
     stdin: {
       contents: `
         import { mount } from "@graview/embed";
+        import { mount as mountForm } from "@graview/embed/form";
+        import { appFrom, serializeCompiled } from "@graview/core/compiled";
         import { registerWorkerView } from "@graview/guest/host/views";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import { Store } from "@graview/core";
         import tasks from ${JSON.stringify(TASKS)};
         import proposal from ${JSON.stringify(PROPOSAL)};
         import proposalSeed from ${JSON.stringify(PROPOSAL_SEED)};
+        import rsvp from ${JSON.stringify(RSVP)};
         const compile = (document) => {
           const compiled = compileDocumentWithoutCheck(document, { today: () => "2026-09-01" });
           if (!compiled.ok) throw new Error("the document did not compile");
@@ -191,7 +212,9 @@ async function buildHost() {
         const cards = location.pathname.startsWith("${CARDS_BASE}");
         const kept = location.pathname.startsWith("${VIEWS_BASE}");
         const fitted = location.pathname.startsWith("${FITTED_BASE}");
-        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : fitted ? { ...tasks, pages: { first: "home" }, views: ${JSON.stringify(FITTED_VIEWS)} } : tasks) };
+        const homes = location.pathname.startsWith("${HOMES_BASE}");
+        const formPage = location.pathname.startsWith("${FORM_BASE}");
+        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : fitted ? { ...tasks, pages: { first: "home" }, views: ${JSON.stringify(FITTED_VIEWS)} } : homes ? { ...tasks, pages: { first: "home" } } : tasks) };
         const article = location.pathname.startsWith("/article");
         window.__navigated = [];
         /*
@@ -272,13 +295,20 @@ async function buildHost() {
             createElement(GraviewProvider, { store, views, initialView: { ...EMPTY_VIEW, focusId: "t1" } }, createElement(Shell, { scheme: "light", onScheme: () => {}, syncUrl: false, remembers: false, renderer: "dom" })),
           );
           window.__ready = true;
+        } else if (formPage) {
+          /* The host compiled the form's app on its server and hands it to the page as JSON; the page reads it without compiling. */
+          const handed = JSON.parse(JSON.stringify(serializeCompiled(compileDocumentWithoutCheck(rsvp))));
+          const read = appFrom(handed);
+          if (!read.ok) throw new Error("the compiled app could not be read");
+          window.__handle = mountForm(document.getElementById("app"), { app: read.app, seed: { nodes: [], edges: [] }, form: "rsvp", principal: "form:tok-1", scheme: "light", fonts: false });
+          window.__ready = true;
         } else {
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
           seed: ${JSON.stringify(SEED)},
           principal: { kind: "human", id: "p1", roles: ["owner"] },
           // As Cloud's shell: the Graview on a desk, the pages on a phone; the kept view's app on the pages at both.
-          face: article || kept || fitted ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
+          face: article || kept || fitted || homes ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
           // A view the host keeps, registered by its manifest's name as Cloud registers a chat's view.
           ...(kept
             ? {
@@ -299,6 +329,23 @@ async function buildHost() {
                   ),
               }
             : {}),
+          // The live home first, the deleted one after it, and the host listing it deleted (FR-202).
+          ...(homes
+            ? {
+                views: (schema, registry) =>
+                  [[${JSON.stringify(NEST)}, ${JSON.stringify(NEST_SOURCE)}], [${JSON.stringify(STORY)}, ${JSON.stringify(STORY_SOURCE)}]].reduce(
+                    (views, [manifest, source]) => registerWorkerView(views, { manifest, worker: { source } }),
+                    registry,
+                  ),
+                keptViews: {
+                  current: () => ({ hidden: [], removed: [${JSON.stringify(STORY_REMOVED)}], may: { views: true, lenses: false } }),
+                  hide: () => {},
+                  show: () => {},
+                  remove: () => {},
+                  restore: () => {},
+                },
+              }
+            : {}),
           bar: true,
           label: "The tasks",
           heading: article ? 2 : 1,
@@ -306,7 +353,7 @@ async function buildHost() {
           fonts: false,
           studio: false,
           onNavigate: (path, how) => window.__navigated.push([path, how]),
-          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : fitted ? "${FITTED_BASE}/" : "${BASE}/" }),
+          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : fitted ? "${FITTED_BASE}/" : homes ? "${HOMES_BASE}/" : "${BASE}/" }),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
         }`,
@@ -320,6 +367,8 @@ async function buildHost() {
     outdir: out,
     entryNames: "entry",
     define: { "process.env.NODE_ENV": '"development"' },
+    // Every package draws with React's automatic runtime (its tsconfig's `react-jsx`), which esbuild does not read for a .tsx a plugin resolved: the visitor's form is one.
+    jsx: "automatic",
     plugins: [graviewSources(repoRoot)],
     logLevel: "silent",
   });
@@ -332,7 +381,7 @@ async function buildHost() {
       return;
     }
     // Every address under the base is the one page, as a host that owns the page answers it.
-    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE, SHELL_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
+    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE, SHELL_BASE, HOMES_BASE, FORM_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
       response.writeHead(200, { "content-type": "text/html" });
       response.end(APP_PAGE);
       return;
@@ -929,6 +978,49 @@ try {
       } catch (error) {
         one.fittedError = String(error?.message ?? error);
       }
+      /*
+       * A DELETED HOME VIEW NEVER DRAWS (FR-202): registered after the live
+       * one, and listed by the host as deleted, the home draws the live one.
+       */
+      try {
+        await go(`${HOMES_BASE}/`);
+        await tab.waitForFunction(() => Boolean(document.querySelector("[data-worker-view]")?.shadowRoot?.querySelector("p")), null, { timeout: 20_000 }).catch(() => null);
+        await tab.waitForTimeout(400);
+        one.homes = await tab.evaluate(() => ({
+          drawn: [...document.querySelectorAll("[data-worker-view]")].map((view) => view.getAttribute("data-worker-view")),
+          says: [...document.querySelectorAll("[data-worker-view]")].map((view) => view.shadowRoot?.textContent?.trim() ?? ""),
+        }));
+      } catch (error) {
+        one.homesError = String(error?.message ?? error);
+      }
+      /*
+       * A VISITOR'S FORM OVER A COMPILED APP (FR-201) still refuses an answer
+       * that does not fit, in words, and lands one that does.
+       */
+      try {
+        await go(`${FORM_BASE}/`);
+        await tab.waitForSelector('[data-graview-embed="form"] form', { timeout: 20_000 });
+        const guests = () => tab.evaluate(() => window.__handle.store.snapshot().nodes.filter((node) => node.kind === "guest").map((node) => node.name));
+        await tab.fill('[data-graview-embed="form"] input[name="name"]', "Ada Lovelace");
+        await tab.selectOption('[data-graview-embed="form"] select[name="coming"]', "yes");
+        await tab.fill('[data-graview-embed="form"] input[name="email"]', "not an address");
+        // The browser's own check would stop the press before the form judged it: the form's own refusal is what is asked.
+        await tab.evaluate(() => {
+          const form = document.querySelector('[data-graview-embed="form"] form');
+          form.noValidate = true;
+          form.requestSubmit();
+        });
+        await tab.waitForTimeout(300);
+        const refused = { said: (await tab.textContent('[data-testid="refused"]').catch(() => null))?.trim() ?? null, guests: await guests() };
+        await tab.fill('[data-graview-embed="form"] input[name="email"]', "ada@example.com");
+        await tab.click('[data-graview-embed="form"] [data-graview-part="submit"]');
+        await tab.waitForSelector('[data-graview-embed="form"] [role="status"]', { timeout: 10_000 });
+        const answered = { said: (await tab.textContent('[data-graview-embed="form"] [role="status"]'))?.trim() ?? null, guests: await guests() };
+        const scripts = await tab.evaluate(() => performance.getEntriesByType("resource").filter((entry) => /\.js$/.test(entry.name)).length);
+        one.form = { title: await tab.textContent('[data-graview-embed="form"] h1'), refused, answered, scripts };
+      } catch (error) {
+        one.formError = String(error?.message ?? error);
+      }
       await context.close();
 
       // Somebody else's article: the history and the address are the article's, never the embed's.
@@ -1454,6 +1546,28 @@ try {
         ? seenIn.shown.length === 3 && seenIn.more === `${seenIn.places - 3} more` && seenIn.opened?.shown === seenIn.places && seenIn.opened?.keyboardOnAPlace === true
         : seenIn.shown.length === seenIn.places && seenIn.more === null),
     ),
+  };
+  /* FR-202: a home view the host lists as deleted is never drawn, though it registered after the live one. */
+  const homesSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.homesError ? { error: one.homesError } : one.homes]));
+  report.checks.aDeletedHomeViewNeverDrawsOverTheLiveOne = {
+    seen: homesSeen,
+    ok: pagesAt.length === engines.length * SIZES.length && pagesAt.every(([, one]) => !one.homesError && one.homes.drawn.includes("eagles-nest") && !one.homes.drawn.includes("eagles-story") && one.homes.says.some((said) => said.includes("The nest, live")) && !one.homes.says.some((said) => said.includes("deleted"))),
+  };
+  /* FR-201: a visitor's form read from a compiled app refuses an answer that does not fit and lands one that does. */
+  const formSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.formError ? { error: one.formError } : one.form]));
+  report.checks.aVisitorsFormOverACompiledAppRefusesAndAnswersAsBefore = {
+    seen: formSeen,
+    ok:
+      pagesAt.length === engines.length * SIZES.length &&
+      pagesAt.every(
+        ([, one]) =>
+          !one.formError &&
+          one.form.title === "RSVP" &&
+          /email/i.test(one.form.refused.said ?? "") &&
+          one.form.refused.guests.length === 0 &&
+          one.form.answered.guests.join() === "Ada Lovelace" &&
+          /Received/.test(one.form.answered.said ?? ""),
+      ),
   };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);

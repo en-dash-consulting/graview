@@ -1,17 +1,11 @@
 {
-  "at": "2026-10-24T04:04:54.288Z",
+  "at": "2026-10-24T04:33:48.054Z",
   "results": [
     {
-      "name": "a11y",
+      "name": "address",
       "code": 0,
-      "took": 306,
+      "took": 371,
       "verdict": "held"
-    },
-    {
-      "name": "guest",
-      "code": 0,
-      "took": 302,
-      "verdict": "flaky"
     }
   ]
 }

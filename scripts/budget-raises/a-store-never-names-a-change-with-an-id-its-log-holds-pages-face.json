@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 85,
+  "gzipped": 45,
+  "note": "Raised when a store came to count past the ids every path that takes ops takes (FR-204): `receive`, `rebase` and `append` wind the op and batch counters past the ids they land, as the constructor and `adopt` did, through one `countPast`. The pages face measured 657_047 / 241_868 with FR-202 beside it, 656_768 / 241_756 on main before both: 85 / 45 of the 279 / 112 are this."
+}

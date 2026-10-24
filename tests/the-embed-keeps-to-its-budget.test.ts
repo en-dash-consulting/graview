@@ -56,6 +56,23 @@ describe("the embed's bundle budget", () => {
     expect(every.lazy).toContain("@graview/studio");
   }, 60_000);
 
+  /*
+   * FR-201: A VISITOR'S FORM LOADS LIGHT. Graview Cloud's form page — the
+   * form, the compiled app read with `appFrom`, the store over the wire —
+   * loaded 668 KB first with React, 468 KB of it Graview's: the derived
+   * form imported its controls from the routed pages' barrel, which brought
+   * the bar, the lists and the document's blocks and parser. It loads under
+   * 400 KB of Graview's now, and well under the pages face.
+   */
+  it("loads a visitor's form handed a compiled app under 400 KB first, and well under the pages face", async () => {
+    const measured = (await measureBudgets(repo, (BUDGETS as { name: string }[]).filter((one) => one.name === "a visitor's form handed a compiled app" || one.name === "the pages face alone"))) as Measured[];
+    const form = measured.find((one) => one.name === "a visitor's form handed a compiled app")!;
+    const pages = measured.find((one) => one.name === "the pages face alone")!;
+    expect(form.over, `${form.minified} B minified, ${form.gzipped} B gzipped`).toBe(false);
+    expect(form.minified).toBeLessThan(400_000);
+    expect(form.minified).toBeLessThan(pages.minified * 0.6);
+  }, 60_000);
+
   it("fails a bundle that leaves a package it must load at once in a lazy chunk", async () => {
     const waiting = (BUDGETS as { name: string; entry: string }[])
       .filter((budget) => budget.name === "every face")
