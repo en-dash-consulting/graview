@@ -99,7 +99,7 @@ and the description stays in listings and on the name's hover):
 
 ```json
 "brand": {
-  "name": "En Dash", "accent": "#0f6e5c",
+  "name": "En Dash", "accent": "#0f6e5c", "ground": "#eef3f8",
   "logo": { "src": "/graview/assets/<sha256>.svg", "alt": "En Dash Consulting" },
   "favicon": "/graview/assets/<sha256>.svg",
   "typography": { "display": "system-serif", "body": "system-sans" },
@@ -120,6 +120,14 @@ and the description stays in listings and on the name's hover):
   text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the
   shade it names. Contrast is judged on colors alone; a logo is a picture
   and is not measured.
+- **A ground** is the page background, so apps stop sharing one off-white:
+  `"#eef3f8"`, or `{ "light": "#f4efe6", "dark": "#1a1612" }`; `null`
+  goes back to Graview's. Cards, the edge and floating sheets are drawn
+  from it; a light one alone gets a dark ground of its hue. One where ink,
+  muted ink or the accent drops below AA is refused like an accent —
+  "Muted ink #586174 on the ground #9a9a94 is 2.1:1; 4.5:1 is needed —
+  #dcdcda would pass." In TypeScript, `brandFromAccent({ accent, base:
+  groundSchemes("#eef3f8") })`.
 
 ## Styling by conversation
 

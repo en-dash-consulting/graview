@@ -294,6 +294,22 @@ function build() {
    */
   const BrandSpec = z.strictObject({
     accent: z.optional(z.string().check(z.regex(/^#[0-9a-fA-F]{6}$/, 'an accent is a color like "#c2577a"'))),
+    /*
+     * THE PAGE BACKGROUND (Roadmap f-brand-ground): the light scheme's
+     * color, or one for each scheme; the panel, the edge and a floating
+     * sheet are drawn from it, and a dark ground left unsaid takes the
+     * light one's hue. `graview check` says one words would not read on
+     * (`brand-ground`).
+     */
+    ground: z.optional(
+      z.union([
+        z.string().check(z.regex(/^#[0-9a-fA-F]{6}$/, 'a ground is a color like "#eef3f8"')),
+        z.strictObject({
+          light: z.optional(z.string().check(z.regex(/^#[0-9a-fA-F]{6}$/, 'a ground is a color like "#eef3f8"'))),
+          dark: z.optional(z.string().check(z.regex(/^#[0-9a-fA-F]{6}$/, 'a ground is a color like "#101826"'))),
+        }),
+      ]),
+    ),
     name: z.optional(str(1, 60)),
     currency: z.optional(z.string().check(z.regex(/^[A-Z]{3}$/, 'a currency is its three-letter code, like "USD" or "EUR"'))),
     // A language tag ("en-US", "de-DE"); `graview check` says when it is none (`brand-locale`).

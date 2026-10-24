@@ -1,5 +1,6 @@
 import { colorsIn, composite, contrast, hsl, rgbToHsl, type Rgba } from "./contrast.js";
 import { brandFromAccent, type DerivedBrand, type RefusedBrand } from "./derive.js";
+import { groundSchemes, type Ground } from "./ground.js";
 import { SCHEMES } from "./palettes.js";
 
 /*
@@ -12,7 +13,8 @@ import { SCHEMES } from "./palettes.js";
  * it could not tell. The dark scheme takes the shade of the same hue that
  * reads on its own grounds. When it does not read, the refusal names the
  * pair, the ratio and the ratio needed, and a shade that would pass: the
- * nearest of the same hue and saturation, by lightness alone.
+ * nearest of the same hue and saturation, by lightness alone. On an app
+ * with a ground of its own (`ground`), it is judged on that ground.
  */
 
 const BLACK: Rgba = { r: 0, g: 0, b: 0, a: 1 };
@@ -36,24 +38,27 @@ const said = (ratio: number) => `${Math.floor(ratio * 10) / 10}:1`;
 
 /**
  * The schemes a document's accent derives (FR-124): `brandFromAccent` over
- * Graview's own, and — where the only trouble is that the warning color
- * shares the accent's hue — with the warning drawn in the bad status's red,
- * since a document cannot name a warning color of its own.
+ * Graview's own — standing on the app's `ground` where it has one — and,
+ * where the only trouble is that the warning color shares the accent's
+ * hue, with the warning drawn in the bad status's red, since a document
+ * cannot name a warning color of its own.
  */
-export function documentSchemes(accent: string): DerivedBrand | RefusedBrand {
-  const derived = brandFromAccent({ accent, base: SCHEMES as never });
+export function documentSchemes(accent: string, ground?: Ground): DerivedBrand | RefusedBrand {
+  const base = groundSchemes(ground);
+  const derived = brandFromAccent({ accent, base });
   if (derived.ok || !derived.missing.every((part) => part.startsWith("warn"))) return derived;
-  return brandFromAccent({ accent, base: SCHEMES as never, warn: { light: SCHEMES.light.bad, dark: SCHEMES.dark.bad } });
+  return brandFromAccent({ accent, base, warn: { light: SCHEMES.light.bad, dark: SCHEMES.dark.bad } });
 }
 
 /** The first pair this color fails as given in the light scheme, or null when it reads. */
-function lightFailure(color: Rgba): Omit<AccentRefusal, "sentence" | "suggestion"> | null {
-  const ground = colorsIn(SCHEMES.light.ground)[0]!;
-  const panel = composite(colorsIn(SCHEMES.light.panel)[0]!, ground);
+function lightFailure(color: Rgba, ground: Ground | undefined): Omit<AccentRefusal, "sentence" | "suggestion"> | null {
+  const light = groundSchemes(ground).light;
+  const under = colorsIn(light.ground)[0]!;
+  const panel = composite(colorsIn(light.panel)[0]!, under);
   const onPanel = contrast(color, panel);
-  const onGround = contrast(color, ground);
+  const onGround = contrast(color, under);
   if (Math.min(onPanel, onGround) < AA) {
-    const [ratio, on] = onPanel <= onGround ? [onPanel, panel] : [onGround, ground];
+    const [ratio, on] = onPanel <= onGround ? [onPanel, panel] : [onGround, under];
     return { pair: { text: hex(color), on: hex(on) }, ratio, requires: AA };
   }
   const white = contrast(WHITE, color);
@@ -62,28 +67,28 @@ function lightFailure(color: Rgba): Omit<AccentRefusal, "sentence" | "suggestion
   return null;
 }
 
-function passes(color: Rgba): boolean {
-  return lightFailure(color) === null && documentSchemes(hex(color)).ok;
+function passes(color: Rgba, ground: Ground | undefined): boolean {
+  return lightFailure(color, ground) === null && documentSchemes(hex(color), ground).ok;
 }
 
 /**
  * Why a document may not take this accent, in one sentence with a fix, or
  * null when it may (FR-126): `"#e6c200 text on #ffffff is 1.7:1; 4.5:1 is
- * needed — #8a7400 would pass."`
+ * needed — #8a7400 would pass."` On the app's `ground`, where it has one.
  */
-export function accentProblem(accent: string): AccentRefusal | null {
+export function accentProblem(accent: string, ground?: Ground): AccentRefusal | null {
   const color = colorsIn(accent)[0];
   if (!color) return { sentence: `"${accent}" is not a color; an accent is one like "#c2577a".`, pair: { text: accent, on: "" }, ratio: 0, requires: AA };
-  const failure = lightFailure(color);
-  const derived = failure ? undefined : documentSchemes(accent);
+  const failure = lightFailure(color, ground);
+  const derived = failure ? undefined : documentSchemes(accent, ground);
   if (!failure && derived?.ok) return null;
-  const suggestion = nearestPassing(color);
+  const suggestion = nearestPassing(color, ground);
   /*
    * A hue the warning color stands on cannot be an accent at any shade:
    * "something is broken" would look like "this is selected". Said as that,
    * not as a contrast, since no lightness answers it.
    */
-  const asIs = derived ?? documentSchemes(accent);
+  const asIs = derived ?? documentSchemes(accent, ground);
   const clash = !asIs.ok && asIs.missing.some((part) => part.startsWith("warn"));
   const fix = suggestion
     ? ` — ${suggestion} would pass.`
@@ -97,7 +102,8 @@ export function accentProblem(accent: string): AccentRefusal | null {
     return { ...failure, sentence: `${pair} is ${said(failure.ratio)}; ${failure.requires}:1 is needed${fix}`, ...(suggestion ? { suggestion } : {}) };
   }
   const refused = derived as RefusedBrand;
-  const darkPanel = composite(colorsIn(SCHEMES.dark.panel)[0]!, colorsIn(SCHEMES.dark.ground)[0]!);
+  const dark = groundSchemes(ground).dark;
+  const darkPanel = composite(colorsIn(dark.panel)[0]!, colorsIn(dark.ground)[0]!);
   const pair = { text: hex(color), on: hex(darkPanel) };
   if (refused.missing.every((part) => part.startsWith("warn"))) {
     return { sentence: `${accent} reads as given, but the warning color is drawn in its hue, so "something is broken" would look like "this is selected"${suggestion ? fix : ", at any shade — pick another hue."}`, pair, ratio: contrast(color, darkPanel), requires: AA, ...(suggestion ? { suggestion } : {}) };
@@ -108,7 +114,7 @@ export function accentProblem(accent: string): AccentRefusal | null {
 }
 
 /** The nearest shade of the same hue and saturation that passes, by lightness alone, as hex; undefined when none does. */
-function nearestPassing(color: Rgba): string | undefined {
+function nearestPassing(color: Rgba, ground: Ground | undefined): string | undefined {
   const base = rgbToHsl(color);
   for (let step = 1; step <= 200; step++) {
     for (const l of [base.l - step / 200, base.l + step / 200]) {
@@ -116,7 +122,7 @@ function nearestPassing(color: Rgba): string | undefined {
       const shade = hsl(base.h, base.s, l);
       // Said as hex, so judged as hex: the color a chat sends back is this one, rounded.
       const rounded = colorsIn(hex(shade))[0]!;
-      if (passes(rounded)) return hex(rounded);
+      if (passes(rounded, ground)) return hex(rounded);
     }
   }
   return undefined;

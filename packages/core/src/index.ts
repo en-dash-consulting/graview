@@ -270,6 +270,10 @@ export { DOCUMENT_FONTS, familiesIn, fontProblem, isSystemFamily, stackOf, SYSTE
 export type { SystemStack } from "./theme/fonts.js";
 export { accentProblem, documentSchemes, passingShade } from "./theme/accent.js";
 export type { AccentRefusal } from "./theme/accent.js";
+export { darkGroundFor, groundSchemes } from "./theme/ground.js";
+export type { Ground } from "./theme/ground.js";
+export { groundProblem, groundReads } from "./theme/ground-check.js";
+export type { GroundRefusal } from "./theme/ground-check.js";
 export type { IsoFace, IsoShade, IsoWash, ResolvedShape, ResolvedTypography } from "./theme/look.js";
 // Two-way sync (the engine, its mappings and transports) is `@graview/core/sync`'s: a page draws without it.
 export {
