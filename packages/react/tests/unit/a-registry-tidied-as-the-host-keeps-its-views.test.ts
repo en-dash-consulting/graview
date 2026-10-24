@@ -37,6 +37,24 @@ describe("a registry tidied as the host keeps its views", () => {
     expect(tidied.resolve("task", many, "the-week")?.view).toBe("the board a chat drew");
   });
 
+  /*
+   * A DELETED HOME VIEW IS NOT THE HOME (Roadmap f-deleted-view-still-public).
+   * The home's own view had no name, so a host listing it as deleted could
+   * not take it off the home: whoever was handed the registry with it in —
+   * a signed-out visitor, say — was drawn the view its owner had deleted.
+   */
+  it("draws the home view given before a deleted one, and the derived home when every one is deleted", () => {
+    const views = registry();
+    views.home?.("the nest", { name: "nest" });
+    views.home?.("the story", { name: "story" });
+    expect(views.homeView?.()).toBe("the story");
+    const removed = (...names: string[]) => names.map((name) => ({ name, title: name, at: "2026-10-22T06:00:00.000Z", until: "2026-11-21T06:00:00.000Z" }));
+    expect(tidyViews(views, { hidden: [], removed: removed("story") }).homeView?.()).toBe("the nest");
+    expect(tidyViews(views, { hidden: [], removed: removed("story", "nest") }).homeView?.()).toBeUndefined();
+    // Hidden is a word for the lists, which the home is not on: a hidden home view is still the home.
+    expect(tidyViews(views, { hidden: ["story"], removed: [] }).homeView?.()).toBe("the story");
+  });
+
   it("is answered as the registry itself when nothing is tidied", () => {
     const views = registry();
     expect(tidyViews(views, { hidden: [], removed: [] })).toBe(views);
