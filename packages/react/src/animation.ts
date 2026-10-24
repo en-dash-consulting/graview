@@ -13,6 +13,13 @@ export interface TransitionOptions {
   readonly duration?: number;
   /** Skip animation entirely — tests, SSR, reduced-motion. */
   readonly enabled?: boolean;
+  /**
+   * Whether a cut (motion off) is drawn once more on the next frame, for
+   * whatever measures the DOM as it renders. On unless the DOM the cut is
+   * drawn over already stands where the cut puts it: a hand's pan, whose
+   * offset was painted on the world's layers before it was let go.
+   */
+  readonly settle?: boolean;
 }
 
 const DEFAULT_DURATION = 520;
@@ -42,9 +49,14 @@ export function useAnimatedLayout(
 ): InterpolatedLayout {
   const duration = options.duration ?? DEFAULT_DURATION;
   const enabled = (options.enabled ?? true) && !prefersReducedMotion();
+  const settle = options.settle ?? true;
 
   const from = useRef<Layout>(target);
-  const [current, setCurrent] = useState<InterpolatedLayout>(() =>
+  /*
+   * The state is what makes the frames of a flight render; what is DRAWN is
+   * `latest`, which a cut sets as it renders.
+   */
+  const [, setCurrent] = useState<InterpolatedLayout>(() =>
     interpolate(target, target, 1),
   );
   // The LIVE frame, kept in a ref.
@@ -54,8 +66,21 @@ export function useAnimatedLayout(
   // started — which made an interrupted transition resume from where the
   // previous one began, and made every navigation after the first jump back
   // two states before animating forward.
-  const latest = useRef<InterpolatedLayout>(current);
+  const latest = useRef<InterpolatedLayout | null>(null);
+  latest.current ??= interpolate(target, target, 1);
   const frame = useRef<number | null>(null);
+  /*
+   * A CUT IS DRAWN IN THE RENDER THAT ASKS FOR IT. With motion off the new
+   * layout was put into state by the effect after the render that brought
+   * it — a second render of the whole scene for every cut, and every pan a
+   * hand let go of was one. The layout it cuts to is known as it renders.
+   */
+  const cutTo = useRef<Layout | null>(null);
+  if (!enabled && cutTo.current !== target) {
+    cutTo.current = target;
+    latest.current = interpolate(target, target, 1);
+  }
+  if (enabled) cutTo.current = null;
   /*
    * WHEN THIS FLIGHT BEGAN, kept across restarts. A new target arriving
    * mid-flight — the camera re-centering a frame after a click, a host
@@ -71,9 +96,12 @@ export function useAnimatedLayout(
   useEffect(() => {
     if (!enabled || typeof requestAnimationFrame === "undefined") {
       from.current = target;
-      const settled = interpolate(target, target, 1);
-      latest.current = settled;
-      setCurrent(settled);
+      if (cutTo.current !== target) {
+        // Not cut as it rendered (no frame clock to animate with): into state, as before.
+        const settled = interpolate(target, target, 1);
+        latest.current = settled;
+        setCurrent(settled);
+      }
       /*
        * The same settle tick the tween gets, for the cut.
        *
@@ -83,7 +111,7 @@ export function useAnimatedLayout(
        * behind the cards until something else happened to re-render. One
        * more render on the next frame reads the settled geometry.
        */
-      if (typeof requestAnimationFrame === "undefined") return;
+      if (typeof requestAnimationFrame === "undefined" || !settle) return;
       const tick = requestAnimationFrame(() => {
         const again = interpolate(target, target, 1);
         latest.current = again;
@@ -92,10 +120,19 @@ export function useAnimatedLayout(
       return () => cancelAnimationFrame(tick);
     }
 
+    /*
+     * NOTHING TO TWEEN WHEN THE PICTURE IS ALREADY THERE. A hand letting go
+     * turns the motion back on with the layout it has just cut to, and this
+     * ran a half-second flight from that layout to itself: thirty-odd
+     * renders of the whole scene, each drawing the same picture, after
+     * every drag and every turn of the wheel.
+     */
+    if (from.current === target && latest.current!.t >= 1) return;
+
     // Tween from wherever the scene actually IS, not from the last target:
     // interrupting a transition half way must not snap back to its start.
     const now = performance.now();
-    const inFlight = clock.current !== null && latest.current.t < 1 && now - clock.current < duration;
+    const inFlight = clock.current !== null && latest.current!.t < 1 && now - clock.current < duration;
     const start = inFlight ? clock.current! : now;
     clock.current = start;
     // Where the easing already is, so the rest of the flight continues from
@@ -139,7 +176,7 @@ export function useAnimatedLayout(
       if (frame.current !== null) cancelAnimationFrame(frame.current);
       // Freeze where the interruption caught it, so the next tween starts
       // here — from the live frame, not the one this effect began with.
-      const live = latest.current;
+      const live = latest.current!;
       from.current = {
         ...target,
         /*
@@ -153,6 +190,8 @@ export function useAnimatedLayout(
          * over to join it.
          */
         ...(live.city ? { city: live.city } : {}),
+        // And where the world stood, which the ground's grids are drawn from.
+        pan: live.pan ?? { x: 0, y: 0 },
         nodes: live.nodes.map((node) => ({
           ...node,
           plane: Math.round(node.plane) as 0 | 1 | 2,
@@ -160,9 +199,9 @@ export function useAnimatedLayout(
         connectors: live.connectors,
       };
     };
-  }, [target, duration, enabled]);
+  }, [target, duration, enabled, settle]);
 
-  return current;
+  return latest.current;
 }
 
 /**

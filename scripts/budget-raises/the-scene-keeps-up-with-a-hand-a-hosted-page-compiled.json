@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 350,
+  "gzipped": 100,
+  "changeset": "the-scene-keeps-up-with-a-hand-on-a-large-app.md",
+  "note": "Raised when the scene came to keep up with a hand on a large app: up front are the presence's `sharing` kept while it says the same, the drawn signal watching the stop less its pan, and a layout saying how far the world is moved (`Layout.pan`), which the ground's grids are drawn from, as on the page that compiles. Measured at 561_784 / 195_931 against 561_473 / 195_856 before it: 311 more minified, 75 gzipped."
+}

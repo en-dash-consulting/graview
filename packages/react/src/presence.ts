@@ -256,15 +256,22 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
     return () => document.removeEventListener("keydown", onKey);
   }, [followingId]);
 
+  /*
+   * Kept while it says the same. `mine` is made again wherever this seat
+   * goes — a pan is a move — and a new object here told every reader of
+   * the context that something had changed.
+   */
+  const shares = mine !== null;
+  const sharing = useMemo(() => (shares ? { participant, name } : null), [shares, participant, name]);
   return useMemo(
     () => ({
       who,
-      sharing: mine ? { participant, name } : null,
+      sharing,
       following,
       follow,
       sayWhere,
       sayCaret,
     }),
-    [who, mine, participant, name, following, follow, sayCaret],
+    [who, sharing, following, follow, sayCaret],
   );
 }

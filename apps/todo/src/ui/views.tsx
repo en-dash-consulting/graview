@@ -244,7 +244,8 @@ const ListsView = ((props: ViewProps<S>) => {
                           broken.has(task.id) ? "var(--graview-warn)" : "var(--graview-edge)"
                         }`,
                         background: "var(--graview-panel-muted)",
-                        opacity: task.done ? 0.5 : lit.size > 0 && !lit.has(task.id) ? 0.55 : 1,
+                        // Done reads as done and still as words: at a half the struck name was 3.1:1 against the panel, under the 4.5 a name needs.
+                        opacity: task.done ? 0.65 : lit.size > 0 && !lit.has(task.id) ? 0.55 : 1,
                       }}
                     >
                       {/* The box is the visual language of the thing. It is

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T03:57:44.939Z",
+  "at": "2026-10-24T06:49:08.199Z",
   "tags": [
     "wcag2a",
     "wcag2aa",
@@ -1000,7 +1000,7 @@
           "at": "[data-key=\"threat:phishing\"]",
           "key": "threat:phishing",
           "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
-          "fix": "Put an <a> to the card's own record or place on its heading: the card is then a bigger target for a pointer, and the <a> the keyboard's way in.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
           "automatic": false
         },
         {
@@ -1010,7 +1010,7 @@
           "at": "[data-key=\"threat:vpn\"]",
           "key": "threat:vpn",
           "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
-          "fix": "Put an <a> to the card's own record or place on its heading: the card is then a bigger target for a pointer, and the <a> the keyboard's way in.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
           "automatic": false
         }
       ],
@@ -1052,7 +1052,7 @@
           "at": "[data-key=\"threat:phishing\"]",
           "key": "threat:phishing",
           "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
-          "fix": "Put an <a> to the card's own record or place on its heading: the card is then a bigger target for a pointer, and the <a> the keyboard's way in.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
           "automatic": false
         },
         {
@@ -1062,7 +1062,7 @@
           "at": "[data-key=\"threat:vpn\"]",
           "key": "threat:vpn",
           "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
-          "fix": "Put an <a> to the card's own record or place on its heading: the card is then a bigger target for a pointer, and the <a> the keyboard's way in.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
           "automatic": false
         }
       ],
@@ -1104,7 +1104,7 @@
           "at": "[data-key=\"threat:phishing\"]",
           "key": "threat:phishing",
           "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
-          "fix": "Put an <a> to the card's own record or place on its heading: the card is then a bigger target for a pointer, and the <a> the keyboard's way in.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
           "automatic": false
         },
         {
@@ -1114,7 +1114,7 @@
           "at": "[data-key=\"threat:vpn\"]",
           "key": "threat:vpn",
           "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
-          "fix": "Put an <a> to the card's own record or place on its heading: the card is then a bigger target for a pointer, and the <a> the keyboard's way in.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
           "automatic": false
         }
       ],
@@ -1156,7 +1156,7 @@
           "at": "[data-key=\"threat:phishing\"]",
           "key": "threat:phishing",
           "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
-          "fix": "Put an <a> to the card's own record or place on its heading: the card is then a bigger target for a pointer, and the <a> the keyboard's way in.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
           "automatic": false
         },
         {
@@ -1166,7 +1166,7 @@
           "at": "[data-key=\"threat:vpn\"]",
           "key": "threat:vpn",
           "says": "A link holds a <button> a person presses on its own: a screen reader reads the link as one thing and never reaches what is inside.",
-          "fix": "Put an <a> to the card's own record or place on its heading: the card is then a bigger target for a pointer, and the <a> the keyboard's way in.",
+          "fix": "Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).",
           "automatic": false
         }
       ],
