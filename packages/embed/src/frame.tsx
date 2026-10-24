@@ -2,7 +2,7 @@ import type { HistoryHost } from "@graview/core/history";
 import { faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
-import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type MenuSectionSource, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
+import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -376,6 +376,14 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly keptViews?: KeptViews;
   /**
+   * WHERE "EXPORT CSV" SAVES A LIST (Roadmap f-view-export-csv), on either
+   * face: handed the CSV text and the file name a place's list is written
+   * as ("Tasks — 2026-10-23.csv"), for a host that saves files itself — a
+   * service that keeps them, a guest frame that may not download. Unsaid,
+   * the browser downloads the file.
+   */
+  readonly onExport?: OnExport;
+  /**
    * WHAT A SIGNED-OUT READER COULD GAIN (FR-183), on either face: `{ label,
    * run, roles? }`, handed only while the reader is a visitor. Where every
    * act withheld from them is one a member could take (one of `roles`, the
@@ -674,6 +682,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     dismissals: props.dismissals,
     whileAway: props.whileAway,
     keptViews: props.keptViews,
+    onExport: props.onExport,
     signIn: props.signIn,
     menuSections: props.menuSections,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its

@@ -80,6 +80,8 @@ export interface ArrangeBarProps {
    * says "+1458 past" folded away (the tenth walk).
    */
   readonly past?: { readonly count: number; readonly widen: () => void };
+  /** What ends the line, after its chips: a list's "Export CSV" (Roadmap f-view-export-csv). */
+  readonly end?: ReactNode;
   readonly style?: CSSProperties;
 }
 
@@ -385,6 +387,7 @@ export function ArrangeBar(props: ArrangeBarProps) {
             <Chips offers={chipped} chips={props.chips} schema={schema} graph={graph} kind={kind} arrangement={arrangement} has={has} choose={choose} testId={id} />
           </Suspense>
         ) : null}
+        {props.end}
       </div>
     </div>
   );

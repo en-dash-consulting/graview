@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T00:54:31.291Z",
+  "at": "2026-10-24T04:43:56.886Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
@@ -41,8 +41,12 @@
     },
     "aGradientRatherThanADifference": {
       "coordinator": {
-        "offered": 10,
-        "withheld": [],
+        "offered": 7,
+        "withheld": [
+          "nobody",
+          "nobody",
+          "nobody"
+        ],
         "installation": true,
         "studio": true
       },
@@ -136,7 +140,6 @@
         {
           "width": 1440,
           "under": 48,
-          "seatFromTheFoot": 16,
           "relatedRepeats": [],
           "first": 241,
           "fromTop": 193,
@@ -147,31 +150,26 @@
           "scrolls": false,
           "end": {
             "end": 761,
-            "feet": [
-              846
-            ],
-            "last": "button act-open-add-shift",
+            "feet": [],
+            "last": "li record-row",
             "ok": true
           }
         },
         {
           "width": 390,
           "under": 93,
-          "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 342,
-          "fromTop": 249,
+          "first": 336,
+          "fromTop": 243,
           "lines": 1,
           "selects": 0,
           "count": "10 shifts",
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 715,
-            "feet": [
-              790
-            ],
-            "last": "button act-open-add-shift",
+            "end": 721,
+            "feet": [],
+            "last": "li record-row",
             "ok": true
           }
         }

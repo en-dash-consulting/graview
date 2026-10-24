@@ -49,7 +49,17 @@ export const todoApp = defineApp({
    * two pictures of the work. The rules, the reasons, the people and who
    * may do what are one press further, in "More" — there, not hidden.
    */
-  pages: { primary: ["task", "list", "The week", "The month"] },
+  pages: {
+    primary: ["task", "list", "The week", "The month"],
+    /*
+     * A LIST NOBODY EXPORTS (Roadmap f-view-export-csv). Every list offers
+     * "Export CSV" of what it shows; the reasons are the household's own
+     * words about why a task matters, so this one offers it to nobody.
+     * Grouped by whether they are finished, the finished tasks stand last
+     * and shut — and an export still writes them.
+     */
+    lists: { reason: { export: false }, task: { group: { by: "done", closed: ["true"] } } },
+  },
   /*
    * THREE PICTURES, DECLARED AND DRAWN (FR-79). Each lens here has a title,
    * so it is a place — a pill on the bar, a drive-in from altitude, a page

@@ -1,0 +1,2532 @@
+{
+  "at": "2026-10-24T04:44:36.823Z",
+  "engines": [
+    "chromium",
+    "webkit",
+    "firefox"
+  ],
+  "screens": [
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844,
+      "scheme": "dark"
+    },
+    {
+      "name": "desk",
+      "width": 1280,
+      "height": 800,
+      "scheme": "light"
+    }
+  ],
+  "late": {
+    "fontMs": 1500,
+    "imageMs": 1200
+  },
+  "checks": {
+    "theRootSaysDrawnOnceThePlaceSettles": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "drawn": true,
+          "afterMs": 1995
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "drawn": true,
+          "afterMs": 1915
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "drawn": true,
+          "afterMs": 2067
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "drawn": true,
+          "afterMs": 2033
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "drawn": true,
+          "afterMs": 2385
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "drawn": true,
+          "afterMs": 2036
+        }
+      ],
+      "ok": true
+    },
+    "whenItIsSaidTheLateFontTheViewsWordsAndItsLateImageAreThere": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "address": "/",
+          "atAbs": 1792817079621.0999,
+          "frame": null,
+          "draft": null,
+          "fonts": "loaded",
+          "lateFace": true,
+          "busy": false,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "failures": [],
+          "brokenStillDrawn": false,
+          "text": "A product's roadmap grown large: a hundred and twenty features with long summaries, the requests people made, and who voted for them."
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "address": "/",
+          "atAbs": 1792817124886.4,
+          "frame": null,
+          "draft": null,
+          "fonts": "loaded",
+          "lateFace": true,
+          "busy": false,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "failures": [],
+          "brokenStillDrawn": false,
+          "text": "A product's roadmap grown large: a hundred and twenty features with long summaries, the requests people made, and who voted for them."
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "address": "/",
+          "atAbs": 1792817170839,
+          "frame": null,
+          "draft": null,
+          "fonts": "loaded",
+          "lateFace": true,
+          "busy": false,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "failures": [],
+          "brokenStillDrawn": false,
+          "text": "A product's roadmap grown large: a hundred and twenty features with long summaries, the requests people made, and who voted for them."
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "address": "/",
+          "atAbs": 1792817218774,
+          "frame": null,
+          "draft": null,
+          "fonts": "loaded",
+          "lateFace": true,
+          "busy": false,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "failures": [],
+          "brokenStillDrawn": false,
+          "text": "A product's roadmap grown large: a hundred and twenty features with long summaries, the requests people made, and who voted for them."
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "address": "/",
+          "atAbs": 1792817267668,
+          "frame": null,
+          "draft": null,
+          "fonts": "loaded",
+          "lateFace": true,
+          "busy": false,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "failures": [],
+          "brokenStillDrawn": false,
+          "text": "A product's roadmap grown large: a hundred and twenty features with long summaries, the requests people made, and who voted for them."
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "address": "/",
+          "atAbs": 1792817318425,
+          "frame": null,
+          "draft": null,
+          "fonts": "loaded",
+          "lateFace": true,
+          "busy": false,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "failures": [],
+          "brokenStillDrawn": false,
+          "text": "A product's roadmap grown large: a hundred and twenty features with long summaries, the requests people made, and who voted for them."
+        }
+      ],
+      "ok": true
+    },
+    "nothingMovesAfterItIsSaid": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "compared": 122,
+          "moved": 0,
+          "grew": 0,
+          "stillSaid": "/"
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "compared": 113,
+          "moved": 0,
+          "grew": 0,
+          "stillSaid": "/"
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "compared": 122,
+          "moved": 0,
+          "grew": 0,
+          "stillSaid": "/"
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "compared": 113,
+          "moved": 0,
+          "grew": 0,
+          "stillSaid": "/"
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "compared": 122,
+          "moved": 0,
+          "grew": 0,
+          "stillSaid": "/"
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "compared": 113,
+          "moved": 0,
+          "grew": 0,
+          "stillSaid": "/"
+        }
+      ],
+      "ok": true
+    },
+    "aMoveTakesItOffAndTheNextPlacePutsItBackOnceItSettles": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "at": 3606,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            },
+            {
+              "value": "/features",
+              "at": 3816,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            }
+          ]
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "at": 3512,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            },
+            {
+              "value": "/features",
+              "at": 3726,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            }
+          ]
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "at": 3652,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            },
+            {
+              "value": "/features",
+              "at": 3871,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            }
+          ]
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "at": 3604,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            },
+            {
+              "value": "/features",
+              "at": 3822,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            }
+          ]
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "at": 3946,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            },
+            {
+              "value": "/features",
+              "at": 4172,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            }
+          ]
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "at": 3659,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            },
+            {
+              "value": "/features",
+              "at": 3880,
+              "address": "/features",
+              "busy": false,
+              "text": "Features + Add a feature Skip to the 3 features Skip to arranging them Something the product will do. Related: The requests it answers Also as: Up next · Broken board Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature 3 features Printable boards building A board printed as it is drawn. Pages Shared drafts planned Two people on one draft. Core"
+            }
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "aViewThatFailsCountsAsSettledWithWhatIsDrawnInItsPlace": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "drawn": true,
+          "seen": {
+            "address": "/places/broken-board",
+            "atAbs": 1792817086720.9001,
+            "frame": null,
+            "draft": null,
+            "fonts": "loaded",
+            "lateFace": true,
+            "busy": false,
+            "viewWords": null,
+            "picture": null,
+            "failures": [
+              "nodes"
+            ],
+            "brokenStillDrawn": false,
+            "text": "Broken board 3 features. All features as a list → Being built Printable boards building A board printed as it is drawn. Every feature Printable boards building A board printed as it is drawn. Shared drafts planned Two people on one draft. Weekly digest idea What changed, once a week. Add a feature Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature"
+          }
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "drawn": true,
+          "seen": {
+            "address": "/places/broken-board",
+            "atAbs": 1792817131884.7,
+            "frame": null,
+            "draft": null,
+            "fonts": "loaded",
+            "lateFace": true,
+            "busy": false,
+            "viewWords": null,
+            "picture": null,
+            "failures": [
+              "nodes"
+            ],
+            "brokenStillDrawn": false,
+            "text": "Broken board 3 features. All features as a list → Being built Printable boards building A board printed as it is drawn. Every feature Printable boards building A board printed as it is drawn. Shared drafts planned Two people on one draft. Weekly digest idea What changed, once a week. Add a feature Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature"
+          }
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "drawn": true,
+          "seen": {
+            "address": "/places/broken-board",
+            "atAbs": 1792817178097,
+            "frame": null,
+            "draft": null,
+            "fonts": "loaded",
+            "lateFace": true,
+            "busy": false,
+            "viewWords": null,
+            "picture": null,
+            "failures": [
+              "nodes"
+            ],
+            "brokenStillDrawn": false,
+            "text": "Broken board 3 features. All features as a list → Being built Printable boards building A board printed as it is drawn. Every feature Printable boards building A board printed as it is drawn. Shared drafts planned Two people on one draft. Weekly digest idea What changed, once a week. Add a feature Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature"
+          }
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "drawn": true,
+          "seen": {
+            "address": "/places/broken-board",
+            "atAbs": 1792817225755,
+            "frame": null,
+            "draft": null,
+            "fonts": "loaded",
+            "lateFace": true,
+            "busy": false,
+            "viewWords": null,
+            "picture": null,
+            "failures": [
+              "nodes"
+            ],
+            "brokenStillDrawn": false,
+            "text": "Broken board 3 features. All features as a list → Being built Printable boards building A board printed as it is drawn. Every feature Printable boards building A board printed as it is drawn. Shared drafts planned Two people on one draft. Weekly digest idea What changed, once a week. Add a feature Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature"
+          }
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "drawn": true,
+          "seen": {
+            "address": "/places/broken-board",
+            "atAbs": 1792817275249,
+            "frame": null,
+            "draft": null,
+            "fonts": "loaded",
+            "lateFace": true,
+            "busy": false,
+            "viewWords": null,
+            "picture": null,
+            "failures": [
+              "nodes"
+            ],
+            "brokenStillDrawn": false,
+            "text": "Broken board 3 features. All features as a list → Being built Printable boards building A board printed as it is drawn. Every feature Printable boards building A board printed as it is drawn. Shared drafts planned Two people on one draft. Weekly digest idea What changed, once a week. Add a feature Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature"
+          }
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "drawn": true,
+          "seen": {
+            "address": "/places/broken-board",
+            "atAbs": 1792817325652,
+            "frame": null,
+            "draft": null,
+            "fonts": "loaded",
+            "lateFace": true,
+            "busy": false,
+            "viewWords": null,
+            "picture": null,
+            "failures": [
+              "nodes"
+            ],
+            "brokenStillDrawn": false,
+            "text": "Broken board 3 features. All features as a list → Being built Printable boards building A board printed as it is drawn. Every feature Printable boards building A board printed as it is drawn. Shared drafts planned Two people on one draft. Weekly digest idea What changed, once a week. Add a feature Name * Stage — Idea Planned Building Shipped ▾ Area — Pages Scene Core Cloud ▾ Summary Add a feature"
+          }
+        }
+      ],
+      "ok": true
+    },
+    "onDrawnIsToldEachPlaceAsWhereSaysIt": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "told": [
+            {
+              "face": "pages",
+              "path": "/"
+            },
+            {
+              "face": "pages",
+              "path": "/features"
+            }
+          ]
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "told": [
+            {
+              "face": "pages",
+              "path": "/"
+            },
+            {
+              "face": "pages",
+              "path": "/features"
+            }
+          ]
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "told": [
+            {
+              "face": "pages",
+              "path": "/"
+            },
+            {
+              "face": "pages",
+              "path": "/features"
+            }
+          ]
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "told": [
+            {
+              "face": "pages",
+              "path": "/"
+            },
+            {
+              "face": "pages",
+              "path": "/features"
+            }
+          ]
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "told": [
+            {
+              "face": "pages",
+              "path": "/"
+            },
+            {
+              "face": "pages",
+              "path": "/features"
+            }
+          ]
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "told": [
+            {
+              "face": "pages",
+              "path": "/"
+            },
+            {
+              "face": "pages",
+              "path": "/features"
+            }
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "theSceneSaysItOnceItsCameraSettles": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "drawn": true,
+          "afterMs": 1932,
+          "marks": [
+            "/places/overview"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "drawn": true,
+          "afterMs": 1860,
+          "marks": [
+            "/places/overview"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "drawn": true,
+          "afterMs": 1942,
+          "marks": [
+            "/places/overview"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "drawn": true,
+          "afterMs": 1696,
+          "marks": [
+            "/places/overview"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "drawn": true,
+          "afterMs": 1786,
+          "marks": [
+            "/places/overview"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "drawn": true,
+          "afterMs": 1744,
+          "marks": [
+            "/places/overview"
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "aProposedViewIsPicturedWhereItAttachesBeforeItIsKept": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "name": "home",
+          "address": "/",
+          "drawn": true,
+          "scheme": "dark",
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest",
+          "pictureBytes": 34016
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "name": "board",
+          "address": "/places/stage-board",
+          "drawn": true,
+          "scheme": "dark",
+          "words": "idea Weekly digest planned Shared drafts building Printable boards",
+          "pictureBytes": 40413
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "name": "record",
+          "address": "/features/f1",
+          "drawn": true,
+          "scheme": "dark",
+          "words": "Printable boards: building",
+          "pictureBytes": 46956
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "name": "home",
+          "address": "/",
+          "drawn": true,
+          "scheme": "light",
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest",
+          "pictureBytes": 43938
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "name": "board",
+          "address": "/places/stage-board",
+          "drawn": true,
+          "scheme": "light",
+          "words": "idea Weekly digest planned Shared drafts building Printable boards",
+          "pictureBytes": 51884
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "name": "record",
+          "address": "/features/f1",
+          "drawn": true,
+          "scheme": "light",
+          "words": "Printable boards: building",
+          "pictureBytes": 64566
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "name": "home",
+          "address": "/",
+          "drawn": true,
+          "scheme": "dark",
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest",
+          "pictureBytes": 42927
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "name": "board",
+          "address": "/places/stage-board",
+          "drawn": true,
+          "scheme": "dark",
+          "words": "idea Weekly digest planned Shared drafts building Printable boards",
+          "pictureBytes": 49922
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "name": "record",
+          "address": "/features/f1",
+          "drawn": true,
+          "scheme": "dark",
+          "words": "Printable boards: building",
+          "pictureBytes": 55082
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "name": "home",
+          "address": "/",
+          "drawn": true,
+          "scheme": "light",
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest",
+          "pictureBytes": 62043
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "name": "board",
+          "address": "/places/stage-board",
+          "drawn": true,
+          "scheme": "light",
+          "words": "idea Weekly digest planned Shared drafts building Printable boards",
+          "pictureBytes": 71317
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "name": "record",
+          "address": "/features/f1",
+          "drawn": true,
+          "scheme": "light",
+          "words": "Printable boards: building",
+          "pictureBytes": 85973
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "name": "home",
+          "address": "/",
+          "drawn": true,
+          "scheme": "dark",
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest",
+          "pictureBytes": 45574
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "name": "board",
+          "address": "/places/stage-board",
+          "drawn": true,
+          "scheme": "dark",
+          "words": "idea Weekly digest planned Shared drafts building Printable boards",
+          "pictureBytes": 52942
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "name": "record",
+          "address": "/features/f1",
+          "drawn": true,
+          "scheme": "dark",
+          "words": "Printable boards: building",
+          "pictureBytes": 58360
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "name": "home",
+          "address": "/",
+          "drawn": true,
+          "scheme": "light",
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest",
+          "pictureBytes": 64288
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "name": "board",
+          "address": "/places/stage-board",
+          "drawn": true,
+          "scheme": "light",
+          "words": "idea Weekly digest planned Shared drafts building Printable boards",
+          "pictureBytes": 75891
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "name": "record",
+          "address": "/features/f1",
+          "drawn": true,
+          "scheme": "light",
+          "words": "Printable boards: building",
+          "pictureBytes": 88077
+        }
+      ],
+      "ok": true
+    },
+    "theDraftIsMarkedAsADraftWhereAPersonSeesIt": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "name": "home",
+          "marked": true,
+          "label": "Draft: The front",
+          "line": "Draft — The front·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "name": "board",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "name": "record",
+          "marked": true,
+          "label": "Draft: Feature card",
+          "line": "Draft — Feature card·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "name": "stopped",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "name": "home",
+          "marked": true,
+          "label": "Draft: The front",
+          "line": "Draft — The front·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "name": "board",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "name": "record",
+          "marked": true,
+          "label": "Draft: Feature card",
+          "line": "Draft — Feature card·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "name": "stopped",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "name": "home",
+          "marked": true,
+          "label": "Draft: The front",
+          "line": "Draft — The front·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "name": "board",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "name": "record",
+          "marked": true,
+          "label": "Draft: Feature card",
+          "line": "Draft — Feature card·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "name": "stopped",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "name": "home",
+          "marked": true,
+          "label": "Draft: The front",
+          "line": "Draft — The front·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "name": "board",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "name": "record",
+          "marked": true,
+          "label": "Draft: Feature card",
+          "line": "Draft — Feature card·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "name": "stopped",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "name": "home",
+          "marked": true,
+          "label": "Draft: The front",
+          "line": "Draft — The front·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "name": "board",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "name": "record",
+          "marked": true,
+          "label": "Draft: Feature card",
+          "line": "Draft — Feature card·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "name": "stopped",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "name": "home",
+          "marked": true,
+          "label": "Draft: The front",
+          "line": "Draft — The front·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "name": "board",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "name": "record",
+          "marked": true,
+          "label": "Draft: Feature card",
+          "line": "Draft — Feature card·Not kept",
+          "lineShown": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "name": "stopped",
+          "marked": true,
+          "label": "Draft: Stage board",
+          "line": "Draft — Stage board·Not kept",
+          "lineShown": true
+        }
+      ],
+      "ok": true
+    },
+    "theDraftStandsInForTheKeptViewOfItsName": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "places": 1,
+          "keptWords": false,
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest"
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "places": 1,
+          "keptWords": false,
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest"
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "places": 1,
+          "keptWords": false,
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest"
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "places": 1,
+          "keptWords": false,
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest"
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "places": 1,
+          "keptWords": false,
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest"
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "places": 1,
+          "keptWords": false,
+          "words": "The front, proposed Printable boards Shared drafts Weekly digest"
+        }
+      ],
+      "ok": true
+    },
+    "aDraftThatIsStoppedSaysWhyInItsPlace": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "drawn": true,
+          "stopped": "nodes",
+          "plainFace": true,
+          "words": "Stage board Printable boards Shared drafts Weekly digest This view was stopped. It drew more than the 4 things a view may draw."
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "drawn": true,
+          "stopped": "nodes",
+          "plainFace": true,
+          "words": "Stage board Printable boards Shared drafts Weekly digest This view was stopped. It drew more than the 4 things a view may draw."
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "drawn": true,
+          "stopped": "nodes",
+          "plainFace": true,
+          "words": "Stage board Printable boards Shared drafts Weekly digest This view was stopped. It drew more than the 4 things a view may draw."
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "drawn": true,
+          "stopped": "nodes",
+          "plainFace": true,
+          "words": "Stage board Printable boards Shared drafts Weekly digest This view was stopped. It drew more than the 4 things a view may draw."
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "drawn": true,
+          "stopped": "nodes",
+          "plainFace": true,
+          "words": "Stage board Printable boards Shared drafts Weekly digest This view was stopped. It drew more than the 4 things a view may draw."
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "drawn": true,
+          "stopped": "nodes",
+          "plainFace": true,
+          "words": "Stage board Printable boards Shared drafts Weekly digest This view was stopped. It drew more than the 4 things a view may draw."
+        }
+      ],
+      "ok": true
+    },
+    "nothingOfADraftIsKept": {
+      "seen": {
+        "drafts": [
+          {
+            "engine": "chromium",
+            "screen": "phone",
+            "name": "home",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "chromium",
+            "screen": "phone",
+            "name": "board",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "chromium",
+            "screen": "phone",
+            "name": "record",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "chromium",
+            "screen": "phone",
+            "name": "stopped",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "chromium",
+            "screen": "desk",
+            "name": "home",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "chromium",
+            "screen": "desk",
+            "name": "board",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "chromium",
+            "screen": "desk",
+            "name": "record",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "chromium",
+            "screen": "desk",
+            "name": "stopped",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "webkit",
+            "screen": "phone",
+            "name": "home",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "webkit",
+            "screen": "phone",
+            "name": "board",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "webkit",
+            "screen": "phone",
+            "name": "record",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "webkit",
+            "screen": "phone",
+            "name": "stopped",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "webkit",
+            "screen": "desk",
+            "name": "home",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "webkit",
+            "screen": "desk",
+            "name": "board",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "webkit",
+            "screen": "desk",
+            "name": "record",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "webkit",
+            "screen": "desk",
+            "name": "stopped",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "firefox",
+            "screen": "phone",
+            "name": "home",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "firefox",
+            "screen": "phone",
+            "name": "board",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "firefox",
+            "screen": "phone",
+            "name": "record",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "firefox",
+            "screen": "phone",
+            "name": "stopped",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "firefox",
+            "screen": "desk",
+            "name": "home",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "firefox",
+            "screen": "desk",
+            "name": "board",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "firefox",
+            "screen": "desk",
+            "name": "record",
+            "keptAsked": [],
+            "wrote": 0
+          },
+          {
+            "engine": "firefox",
+            "screen": "desk",
+            "name": "stopped",
+            "keptAsked": [],
+            "wrote": 0
+          }
+        ],
+        "after": [
+          {
+            "engine": "chromium",
+            "screen": "phone",
+            "name": "home",
+            "drafts": 0,
+            "keptHome": true
+          },
+          {
+            "engine": "chromium",
+            "screen": "phone",
+            "name": "board",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "chromium",
+            "screen": "phone",
+            "name": "record",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "chromium",
+            "screen": "phone",
+            "name": "stopped",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "chromium",
+            "screen": "desk",
+            "name": "home",
+            "drafts": 0,
+            "keptHome": true
+          },
+          {
+            "engine": "chromium",
+            "screen": "desk",
+            "name": "board",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "chromium",
+            "screen": "desk",
+            "name": "record",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "chromium",
+            "screen": "desk",
+            "name": "stopped",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "webkit",
+            "screen": "phone",
+            "name": "home",
+            "drafts": 0,
+            "keptHome": true
+          },
+          {
+            "engine": "webkit",
+            "screen": "phone",
+            "name": "board",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "webkit",
+            "screen": "phone",
+            "name": "record",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "webkit",
+            "screen": "phone",
+            "name": "stopped",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "webkit",
+            "screen": "desk",
+            "name": "home",
+            "drafts": 0,
+            "keptHome": true
+          },
+          {
+            "engine": "webkit",
+            "screen": "desk",
+            "name": "board",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "webkit",
+            "screen": "desk",
+            "name": "record",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "webkit",
+            "screen": "desk",
+            "name": "stopped",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "firefox",
+            "screen": "phone",
+            "name": "home",
+            "drafts": 0,
+            "keptHome": true
+          },
+          {
+            "engine": "firefox",
+            "screen": "phone",
+            "name": "board",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "firefox",
+            "screen": "phone",
+            "name": "record",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "firefox",
+            "screen": "phone",
+            "name": "stopped",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "firefox",
+            "screen": "desk",
+            "name": "home",
+            "drafts": 0,
+            "keptHome": true
+          },
+          {
+            "engine": "firefox",
+            "screen": "desk",
+            "name": "board",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "firefox",
+            "screen": "desk",
+            "name": "record",
+            "drafts": 0,
+            "keptHome": false
+          },
+          {
+            "engine": "firefox",
+            "screen": "desk",
+            "name": "stopped",
+            "drafts": 0,
+            "keptHome": false
+          }
+        ]
+      },
+      "ok": true
+    },
+    "aFrameGuestHoldsTheSignalUntilItHasDrawn": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "drawn": true,
+          "frame": {
+            "drawn": true,
+            "failed": null,
+            "height": 210
+          },
+          "markAt": 1792817102904,
+          "drewAt": 1792817102647,
+          "words": "A card drawn late"
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "drawn": true,
+          "frame": {
+            "drawn": true,
+            "failed": null,
+            "height": 210
+          },
+          "markAt": 1792817148202,
+          "drewAt": 1792817147970,
+          "words": "A card drawn late"
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "drawn": true,
+          "frame": {
+            "drawn": true,
+            "failed": null,
+            "height": 210
+          },
+          "markAt": 1792817195205,
+          "drewAt": 1792817194971,
+          "words": "A card drawn late"
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "drawn": true,
+          "frame": {
+            "drawn": true,
+            "failed": null,
+            "height": 210
+          },
+          "markAt": 1792817242831,
+          "drewAt": 1792817242596,
+          "words": "A card drawn late"
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "drawn": true,
+          "frame": {
+            "drawn": true,
+            "failed": null,
+            "height": 211
+          },
+          "markAt": 1792817294673,
+          "drewAt": 1792817294426,
+          "words": "A card drawn late"
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "drawn": true,
+          "frame": {
+            "drawn": true,
+            "failed": null,
+            "height": 211
+          },
+          "markAt": 1792817343969,
+          "drewAt": 1792817343696,
+          "words": "A card drawn late"
+        }
+      ],
+      "ok": true
+    },
+    "aFrameGuestThatNeverSaysReadyCountsAsSettled": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "drawn": true,
+          "afterMs": 2175,
+          "frame": {
+            "drawn": false,
+            "failed": "silent",
+            "height": 160
+          }
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "drawn": true,
+          "afterMs": 2166,
+          "frame": {
+            "drawn": false,
+            "failed": "silent",
+            "height": 160
+          }
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "drawn": true,
+          "afterMs": 2258,
+          "frame": {
+            "drawn": false,
+            "failed": "silent",
+            "height": 160
+          }
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "drawn": true,
+          "afterMs": 2277,
+          "frame": {
+            "drawn": false,
+            "failed": "silent",
+            "height": 160
+          }
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "drawn": true,
+          "afterMs": 2311,
+          "frame": {
+            "drawn": false,
+            "failed": "silent",
+            "height": 160
+          }
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "drawn": true,
+          "afterMs": 2399,
+          "frame": {
+            "drawn": false,
+            "failed": "silent",
+            "height": 160
+          }
+        }
+      ],
+      "ok": true
+    },
+    "thePagesAloneSayItOnceThePlaceSettles": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "drawn": true,
+          "embed": "pages",
+          "fonts": "loaded",
+          "lateFace": true,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "busy": false
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "drawn": true,
+          "embed": "pages",
+          "fonts": "loaded",
+          "lateFace": true,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "busy": false
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "drawn": true,
+          "embed": "pages",
+          "fonts": "loaded",
+          "lateFace": true,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "busy": false
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "drawn": true,
+          "embed": "pages",
+          "fonts": "loaded",
+          "lateFace": true,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "busy": false
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "drawn": true,
+          "embed": "pages",
+          "fonts": "loaded",
+          "lateFace": true,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "busy": false
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "drawn": true,
+          "embed": "pages",
+          "fonts": "loaded",
+          "lateFace": true,
+          "viewWords": "Printable boardsShared draftsWeekly digest",
+          "picture": {
+            "complete": true,
+            "width": 360
+          },
+          "busy": false
+        }
+      ],
+      "ok": true
+    },
+    "thePagesAloneDrawADraftWhereItAttaches": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "drawn": true,
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "drawn": true,
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "drawn": true,
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "drawn": true,
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "drawn": true,
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "drawn": true,
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        }
+      ],
+      "ok": true
+    },
+    "aDraftSwappedInPlaceIsSaidDrawnOnceTheNewOneHas": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "mounting": "whole",
+          "address": "/places/stage-board?draft=board",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "mounting": "alone",
+          "address": "/places/stage-board?draft=board&alone=1",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board&alone=1",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "mounting": "whole",
+          "address": "/places/stage-board?draft=board",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "mounting": "alone",
+          "address": "/places/stage-board?draft=board&alone=1",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board&alone=1",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "mounting": "whole",
+          "address": "/places/stage-board?draft=board",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "mounting": "alone",
+          "address": "/places/stage-board?draft=board&alone=1",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board&alone=1",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "mounting": "whole",
+          "address": "/places/stage-board?draft=board",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "mounting": "alone",
+          "address": "/places/stage-board?draft=board&alone=1",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board&alone=1",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "mounting": "whole",
+          "address": "/places/stage-board?draft=board",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "mounting": "alone",
+          "address": "/places/stage-board?draft=board&alone=1",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board&alone=1",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "mounting": "whole",
+          "address": "/places/stage-board?draft=board",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "mounting": "alone",
+          "address": "/places/stage-board?draft=board&alone=1",
+          "drawn": true,
+          "offInTheCall": false,
+          "back": true,
+          "marks": [
+            {
+              "value": null,
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": ""
+              }
+            },
+            {
+              "value": "/places/stage-board?draft=board&alone=1",
+              "draft": {
+                "line": "Draft — Stage board·Not kept",
+                "words": "Revised: Printable boards Revised: Shared drafts Revised: Weekly digest"
+              }
+            }
+          ],
+          "sameRoot": true,
+          "sameStore": true
+        }
+      ],
+      "ok": true
+    },
+    "aDraftUnderABasePathIsDrawnAtItsPlace": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "mounting": "whole",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "mounting": "alone",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "mounting": "whole",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "mounting": "alone",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "mounting": "whole",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "mounting": "alone",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "mounting": "whole",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "mounting": "alone",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "mounting": "whole",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "mounting": "alone",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "mounting": "whole",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "mounting": "alone",
+          "drawn": true,
+          "address": "/a/roadmap/places/stage-board",
+          "draft": {
+            "line": "Draft — Stage board·Not kept",
+            "words": "idea Weekly digest planned Shared drafts building Printable boards"
+          }
+        }
+      ],
+      "ok": true
+    },
+    "aViewHiddenFromThePlaceMenuLeavesTheBarAndComesBackOnShow": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "name": "list",
+          "drawn": true,
+          "before": true,
+          "stands": false,
+          "offered": true,
+          "left": true,
+          "still": "/features",
+          "named": "Features",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "name": "lens",
+          "drawn": true,
+          "before": true,
+          "stands": false,
+          "offered": true,
+          "left": true,
+          "still": "/places/up-next",
+          "named": "Up next",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "name": "view",
+          "drawn": true,
+          "before": true,
+          "stands": false,
+          "offered": true,
+          "left": true,
+          "still": "/places/stage-board",
+          "named": "Stage board",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "name": "list",
+          "drawn": true,
+          "before": true,
+          "stands": true,
+          "offered": true,
+          "left": true,
+          "still": "/features",
+          "named": "Features",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "name": "lens",
+          "drawn": true,
+          "before": true,
+          "stands": true,
+          "offered": true,
+          "left": true,
+          "still": "/places/up-next",
+          "named": "Up next",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "name": "view",
+          "drawn": true,
+          "before": true,
+          "stands": true,
+          "offered": true,
+          "left": true,
+          "still": "/places/stage-board",
+          "named": "Stage board",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "name": "list",
+          "drawn": true,
+          "before": true,
+          "stands": false,
+          "offered": true,
+          "left": true,
+          "still": "/features",
+          "named": "Features",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "name": "lens",
+          "drawn": true,
+          "before": true,
+          "stands": false,
+          "offered": true,
+          "left": true,
+          "still": "/places/up-next",
+          "named": "Up next",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "phone",
+          "name": "view",
+          "drawn": true,
+          "before": true,
+          "stands": false,
+          "offered": true,
+          "left": true,
+          "still": "/places/stage-board",
+          "named": "Stage board",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "name": "list",
+          "drawn": true,
+          "before": true,
+          "stands": true,
+          "offered": true,
+          "left": true,
+          "still": "/features",
+          "named": "Features",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "name": "lens",
+          "drawn": true,
+          "before": true,
+          "stands": true,
+          "offered": true,
+          "left": true,
+          "still": "/places/up-next",
+          "named": "Up next",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "webkit",
+          "screen": "desk",
+          "name": "view",
+          "drawn": true,
+          "before": true,
+          "stands": true,
+          "offered": true,
+          "left": true,
+          "still": "/places/stage-board",
+          "named": "Stage board",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "name": "list",
+          "drawn": true,
+          "before": true,
+          "stands": false,
+          "offered": true,
+          "left": true,
+          "still": "/features",
+          "named": "Features",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "name": "lens",
+          "drawn": true,
+          "before": true,
+          "stands": false,
+          "offered": true,
+          "left": true,
+          "still": "/places/up-next",
+          "named": "Up next",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "phone",
+          "name": "view",
+          "drawn": true,
+          "before": true,
+          "stands": false,
+          "offered": true,
+          "left": true,
+          "still": "/places/stage-board",
+          "named": "Stage board",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "name": "list",
+          "drawn": true,
+          "before": true,
+          "stands": true,
+          "offered": true,
+          "left": true,
+          "still": "/features",
+          "named": "Features",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "name": "lens",
+          "drawn": true,
+          "before": true,
+          "stands": true,
+          "offered": true,
+          "left": true,
+          "still": "/places/up-next",
+          "named": "Up next",
+          "inFoot": true,
+          "back": true
+        },
+        {
+          "engine": "firefox",
+          "screen": "desk",
+          "name": "view",
+          "drawn": true,
+          "before": true,
+          "stands": true,
+          "offered": true,
+          "left": true,
+          "still": "/places/stage-board",
+          "named": "Stage board",
+          "inFoot": true,
+          "back": true
+        }
+      ],
+      "ok": true
+    },
+    "noPageErrors": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "ok": true
+}

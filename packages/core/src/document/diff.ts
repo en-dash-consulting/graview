@@ -307,9 +307,12 @@ function lensSentences(before: readonly LooseLens[], after: readonly LooseLens[]
       // Kept off the lists or put back on them: said as itself, and whatever else changed besides.
       const hiding = (old["hidden"] === true) !== (lens["hidden"] === true);
       if (hiding) out.push(lens["hidden"] === true ? `${the} is kept off the bar and the page list; a link or navigate still reaches it.` : `${the} is listed on the bar and the page list again.`);
-      const { hidden: _was, ...oldRest } = old;
-      const { hidden: _now, ...rest } = lens;
-      if (!hiding || !same(oldRest, rest)) out.push(`${the} changes.`);
+      // "Export CSV" offered or not (Roadmap f-view-export-csv), likewise.
+      const exporting = (old["export"] === false) !== (lens["export"] === false);
+      if (exporting) out.push(lens["export"] === false ? `${the} offers Export CSV to nobody.` : `${the} offers Export CSV again.`);
+      const { hidden: _was, export: _wasExported, ...oldRest } = old;
+      const { hidden: _now, export: _nowExported, ...rest } = lens;
+      if ((!hiding && !exporting) || !same(oldRest, rest)) out.push(`${the} changes.`);
     }
   }
   for (const [key, lens] of was) if (!now.has(key)) out.push(`${lensName(lens).replace(/^A lens/, "The lens").replace(/^A /, "The ")} is removed.`);
@@ -346,6 +349,7 @@ function pagesSentences(before: Arrangement, after: Arrangement, kinds: GraviewD
     const words = kindListWords(after?.lists?.[kind] ?? {}, (key) => (spec?.computed?.[key] !== undefined ? "number" : sortTypeOfDocumentField(spec?.fields?.[key]?.type)));
     if (!same(before?.lists?.[kind]?.sort, after?.lists?.[kind]?.sort)) out.push(words.sort ? `The ${kind} list opens ${words.sort}.` : `The ${kind} list opens in its own order again.`);
     if (!same(before?.lists?.[kind]?.group, after?.lists?.[kind]?.group)) out.push(words.group ? `The ${kind} list opens ${words.group}.` : `The ${kind} list opens ungrouped again.`);
+    if ((before?.lists?.[kind]?.export === false) !== (after?.lists?.[kind]?.export === false)) out.push(after?.lists?.[kind]?.export === false ? `The ${kind} list offers Export CSV to nobody.` : `The ${kind} list offers Export CSV again.`);
   }
   if (out.length === 0) out.push("The app's pages change.");
   return out;

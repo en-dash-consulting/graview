@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T15:30:34.503Z",
+  "at": "2026-10-24T04:44:36.757Z",
   "engines": [
     "chromium",
     "webkit",
@@ -6669,13 +6669,15 @@
                 "/",
                 "/places/to-do",
                 "/tasks",
-                "/people",
                 "/places/the-board",
                 "/places/the-log",
                 "/places/the-map",
                 "/map"
               ],
-              "lists": [],
+              "lists": [
+                "/places/to-do",
+                "/tasks"
+              ],
               "current": "People"
             }
           },
@@ -6698,7 +6700,6 @@
                 "/",
                 "/places/to-do",
                 "/tasks",
-                "/people",
                 "/places/the-board",
                 "/places/the-log",
                 "/places/the-map",
@@ -6706,8 +6707,7 @@
               ],
               "lists": [
                 "/places/to-do",
-                "/tasks",
-                "/people"
+                "/tasks"
               ],
               "current": "People"
             }
@@ -6731,13 +6731,15 @@
                 "/",
                 "/places/to-do",
                 "/tasks",
-                "/people",
                 "/places/the-board",
                 "/places/the-log",
                 "/places/the-map",
                 "/map"
               ],
-              "lists": [],
+              "lists": [
+                "/places/to-do",
+                "/tasks"
+              ],
               "current": "People"
             }
           },
@@ -6760,7 +6762,6 @@
                 "/",
                 "/places/to-do",
                 "/tasks",
-                "/people",
                 "/places/the-board",
                 "/places/the-log",
                 "/places/the-map",
@@ -6768,8 +6769,7 @@
               ],
               "lists": [
                 "/places/to-do",
-                "/tasks",
-                "/people"
+                "/tasks"
               ],
               "current": "People"
             }
@@ -6793,13 +6793,15 @@
                 "/",
                 "/places/to-do",
                 "/tasks",
-                "/people",
                 "/places/the-board",
                 "/places/the-log",
                 "/places/the-map",
                 "/map"
               ],
-              "lists": [],
+              "lists": [
+                "/places/to-do",
+                "/tasks"
+              ],
               "current": "People"
             }
           },
@@ -6822,7 +6824,6 @@
                 "/",
                 "/places/to-do",
                 "/tasks",
-                "/people",
                 "/places/the-board",
                 "/places/the-log",
                 "/places/the-map",
@@ -6830,8 +6831,7 @@
               ],
               "lists": [
                 "/places/to-do",
-                "/tasks",
-                "/people"
+                "/tasks"
               ],
               "current": "People"
             }

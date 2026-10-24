@@ -6,7 +6,7 @@ import { VIEWS_PATH } from "./remote-views.js";
  * route, `/graview/views`. `GET` answers what is hidden and recently
  * deleted, and what the asking seat may do (`may`); `POST { hide | show |
  * remove | restore: <name> }` does it to a script view the host keeps, and
- * `POST { lens: <set-lens-hidden | remove-lens> }` to a declared lens, where
+ * `POST { lens: <set-lens-hidden | set-lens-export | remove-lens> }` to a declared lens, where
  * the host writes the declaration. Each is answered with the state after
  * it, or refused with a sentence: 403 where the seat may not, 400 where the
  * body says nothing this route does.
@@ -40,12 +40,12 @@ export function keepsTheApp(store: Store<AnySchema>, seat: Principal): boolean {
 
 const isLensEdit = (edit: unknown): edit is LensTidyEdit => {
   if (typeof edit !== "object" || edit === null) return false;
-  const { op, title, on, hidden } = edit as Record<string, unknown>;
+  const { op, title, on, hidden, export: exported } = edit as Record<string, unknown>;
   if (typeof title !== "string" || title === "" || (on !== undefined && typeof on !== "string")) return false;
-  return (op === "set-lens-hidden" && typeof hidden === "boolean") || op === "remove-lens";
+  return (op === "set-lens-hidden" && typeof hidden === "boolean") || (op === "set-lens-export" && typeof exported === "boolean") || op === "remove-lens";
 };
 
-const SAY = 'Say what to do with which view: { hide | show | remove | restore: "<its name>" }, or { lens: { op: "set-lens-hidden" | "remove-lens", title, on?, hidden? } }.';
+const SAY = 'Say what to do with which view: { hide | show | remove | restore: "<its name>" }, or { lens: { op: "set-lens-hidden" | "set-lens-export" | "remove-lens", title, on?, hidden?, export? } }.';
 
 /** What is hidden and deleted as the asking seat is told it, or one action done for it. */
 export async function answerViews(method: string, body: unknown, may: KeptViewsMay, views: KeptViews): Promise<ViewsAnswer> {

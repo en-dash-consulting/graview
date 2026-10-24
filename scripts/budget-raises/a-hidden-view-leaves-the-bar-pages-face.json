@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 118,
+  "gzipped": 52,
+  "note": "Raised when a view hidden from the place menu came to leave the bar even while it is the place open (Roadmap f-hidden-view-leaves-the-bar): every bar reads one predicate, `offeredPlaces`, and the one control still names a hidden place as where you are, at every width. Measured at 656_886 / 241_808 against 656_768 / 241_756: 118 / 52 more."
+}
