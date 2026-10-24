@@ -1,5 +1,24 @@
 # @graview/tools
 
+## 0.1.54
+
+### Patch Changes
+
+- 094255d: What was done while the reader was away leaves out what they said "not now" to, and may come after the first draw (FR-212). `whileAway(store, since, principal)` from `@graview/tools/tidy` counted in `waiting` the suggestions the reader had put out of sight, so its line said more waited than the tray showed; it takes `{ dismissed }` now, as `suggestions()` does (`whileAway(store, { seq }, principal, { dismissed })`), and a "not now" whose time has passed hides nothing. And `whileAway` was a `mount` option read once, so a host that works it out from the store it opens had to hold the page back to say one line on the tray: `EmbedHandle.setWhileAway(away)` and `PagesEmbedHandle.setWhileAway(away)` hand it over after the first draw, the Suggested tray saying it from the next render and nothing again for `undefined`; a React host's changed `whileAway` prop on `<Embed>` already reached the tray, and a test holds it now. The graview-tidying skill says both. Tools' tests hold that `waiting` and the line leave out a dismissed suggestion and keep one whose "not now" has passed; embed's hold that the tray says what the handle hands it after the first draw, on the whole embed and on the pages alone, and nothing once it is taken away, and that a changed prop reaches it without a remount.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas, and the theme — unchanged. The JavaScript API — additive: a fourth `options` argument on `whileAway`. The embed — additive: `setWhileAway` on `EmbedHandle` and `PagesEmbedHandle`. What Graview Cloud does: mounts without waiting for `whileAway`, calls `handle.setWhileAway(whileAway(store, { seq }, principal, { dismissed }))` once it has the store and the reader's dismissals, and again when either changes. `capabilities().shipped` gains FR-212.
+- Updated dependencies [57e12bc]
+- Updated dependencies [cdef481]
+- Updated dependencies [0270ca9]
+- Updated dependencies [0270ca9]
+- Updated dependencies [0270ca9]
+- Updated dependencies [094255d]
+- Updated dependencies [cdef481]
+- Updated dependencies [7324969]
+- Updated dependencies [0270ca9]
+  - @graview/core@0.1.54
+  - @graview/ship@0.1.54
+
 ## 0.1.53
 
 ### Patch Changes

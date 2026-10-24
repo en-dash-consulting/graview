@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.54`](https://graview.dev/docs/releases.html#v0-1-54)
 - [`0.1.53`](https://graview.dev/docs/releases.html#v0-1-53)
 - [`0.1.52`](https://graview.dev/docs/releases.html#v0-1-52)
 - [`0.1.51`](https://graview.dev/docs/releases.html#v0-1-51)
@@ -55,9 +56,26 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.53
+## 0.1.54
 
 Published October 24, 2026 · the current version
+
+An app stands on a ground of its own; an app that publishes tells its readers only what is published; history can stop at a plan's window; a view of many pictures draws; collaborators see records in one order.
+
+- **An app's own ground.** `brand.ground` (and `ground` on `set-brand`) gives an app its own page background, one color or a light and a dark one; cards, edges and the bar are drawn from it, a light ground alone gets a dark one of the same hue, and a ground that leaves ink, muted ink or the accent unreadable is refused with a shade that passes.
+- **Publishing, honestly.** In an app that publishes when ready, a reader is told of a change when it is published, not when it is made, and is told where a collaborator stands only on what it is served. Text typed together survives a bundler that tree-shakes, and a poll of who is here reads its own op format.
+- **History past a plan's window.** A host says where its history stops and the timeline says so quietly, stepping by snapshots before it; an archive may begin at an epoch (`archiveFrom`), so a host can let go of what lies behind it and keep playback, export and restore inside it.
+- **Views and typing.** A view with many pictures is pushed at most once every 100 ms and is never stopped as a flood; a field typed together stays open, its caret where it was, while a tour or dialog holds the keyboard.
+- **One order for everybody.** A live client lists records in the server's order after a call the server refused, as every other client does.
+- **The tray.** What was done while a person was away leaves out what they said not now to, and may be handed over after the first draw (`setWhileAway`).
+
+**Before you upgrade:** Additive: `brand.ground` and `set-brand`'s `ground` (with a `brand-ground` check warning), `HistoryHost.kept`, `ArchivedOps.keptFrom`, `archiveFrom`, `keptOf`, `AppBundle.checkpoint`, `whileAway`'s `dismissed` option, `setWhileAway` on an embed's handle, `readsPublished`, and `PICTURES_SETTLE_MS`. Changed: `askArchived` may answer `behindKept`; a reader of an app that publishes is matched for notifications at the publish; a poll of `/graview/here` that names no op format is answered in format 1; a view handed pictures may get one up to 100 ms later. Ops, stored formats and the wire are otherwise unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.54) · [The full changelog for 0.1.54](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0154)
+
+## 0.1.53
+
+Published October 24, 2026
 
 The scene keeps up on a large app and its grid moves with the picture; views fit a phone and draw more; a store never reuses an id; a visitor's form loads light.
 
