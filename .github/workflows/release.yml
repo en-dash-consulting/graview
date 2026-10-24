@@ -39,7 +39,7 @@ concurrency:
 
 jobs:
   version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: write
@@ -110,7 +110,7 @@ jobs:
   publish:
     needs: version
     if: needs.version.outputs.pending == 'false' && needs.version.outputs.unpublished == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # The required reviewer on this environment is the release's one approval.
     environment: npm
     # The tests take about 12 minutes before anything is published, and one
