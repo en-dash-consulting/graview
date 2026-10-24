@@ -34,6 +34,11 @@ export { handedLinks, judgeLink, linkRefusedWords } from "./external-links.js";
  * reach is the ring's as the control that took the keyboard draws it, measured as it takes it and handed to the rule
  * as a plain length (`--graview-ring-reach`: Chromium takes no calc() in `overflow-clip-margin`), never past 16px. Where the engine cannot (WebKit), a control that takes the
  * keyboard within that reach of the edge has its ring drawn inside its own edge (`data-graview-ring-inside`).
+ *
+ * LESS MOTION, WHERE A PERSON ASKS FOR IT (2026-10-23). Under `prefers-reduced-motion: reduce` every animation in a
+ * view runs once in a millisecond, to where it ends, on no scroll (a scroll-driven one included), and every transition
+ * is as short. It is `!important` in a layer of the host's: an important declaration in a layer wins over every
+ * unlayered one whatever its specificity, and a view's stylesheet can write no `@layer`.
  */
 export const REGION_CSS = `
 :host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }
@@ -46,6 +51,7 @@ export const REGION_CSS = `
 [data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }
 [data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }
 [data-graview-view-root] a[href]:not([data-graview-link])::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
+@layer graview-motion { @media (prefers-reduced-motion: reduce) { [data-graview-view-root] *, [data-graview-view-root] ::before, [data-graview-view-root] ::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; animation-timeline: auto !important; transition-duration: 1ms !important; scroll-behavior: auto !important; } } }
 `;
 
 /** How far the ring reaches past a control's edge by default — its 2px and its 2px offset — and the most the region lets any ring paint past its own. */

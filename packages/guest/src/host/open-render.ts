@@ -1,4 +1,4 @@
-import { HTML_NAMESPACE, OPEN_MAX_TEXT, SVG_NAMESPACE } from "../open-kit.js";
+import { HTML_NAMESPACE, NAMED_ROLES, OPEN_MAX_TEXT, SVG_NAMESPACE } from "../open-kit.js";
 import { isEmptyElement, judgeAttribute, judgeElement, type JudgeContext, type OpenNamespace, type OpenRefusal } from "./open-judge.js";
 
 /*
@@ -73,6 +73,9 @@ interface Drawn {
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const FIELDS = new Set(["input", "select", "textarea", "option"]);
 const FIELD_ATTRIBUTES = new Set(["value", "checked", "selected"]);
+/* What names an element, for a role drawn only while it has a name (`NAMED_ROLES`). */
+const NAMING = ["aria-label", "aria-labelledby", "title"];
+const named = (element: Element) => NAMING.some((name) => (element.getAttribute(name) ?? "").trim() !== "");
 
 export function createOpenRenderer(into: Node, options: OpenRendererOptions): OpenRenderer {
   const document = (into.ownerDocument ?? into) as Document;
@@ -84,6 +87,8 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
   byId.set(ROOT_ID, root);
   let size = 0;
   let over = false;
+  /* The role a view gave an element whose role is drawn only while it has a name: kept here while it has none. */
+  const heldRoles = new WeakMap<Element, string>();
   /* What a batch took out, by id, until it ends: put back as it was if the view only moved it. */
   const detached = new Map<string, Drawn>();
 
@@ -100,7 +105,27 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
     return undefined;
   };
 
-  const setAttribute = (drawn: Drawn, name: string, value: unknown) => {
+  /**
+   * A ROLE THAT NEEDS A NAME (2026-10-23): `role="region"` is drawn while the
+   * element has a name and held back while it has none, however the view
+   * orders its attributes or changes them. `say` refuses it out loud, once,
+   * where the view gave the role just now.
+   */
+  const settleRole = (drawn: Drawn, say: boolean) => {
+    const element = drawn.dom as Element;
+    const role = heldRoles.get(element) ?? element.getAttribute("role");
+    if (role === null || !role.split(/\s+/).some((one) => (NAMED_ROLES as readonly string[]).includes(one.toLowerCase()))) return void heldRoles.delete(element);
+    if (named(element)) {
+      heldRoles.delete(element);
+      if (element.getAttribute("role") !== role) element.setAttribute("role", role);
+      return;
+    }
+    heldRoles.set(element, role);
+    element.removeAttribute("role");
+    if (say) refuse({ reason: "value", element: drawn.name!, name: "role" });
+  };
+
+  const setAttribute = (drawn: Drawn, name: string, value: unknown, settle = true) => {
     const element = drawn.dom as Element;
     if (value !== null && value !== undefined && typeof value !== "string") return refuse({ reason: "value", element: drawn.name!, name });
     const judged = judgeAttribute(drawn.namespace!, drawn.name!, name, (value as string | null | undefined) ?? null, options);
@@ -108,6 +133,7 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
       /* Refused: what it would have said is not drawn, and anything it said before goes too. */
       const known = judgeAttribute(drawn.namespace!, drawn.name!, name, null, options);
       if (!("refused" in known)) element.removeAttribute(known.name);
+      if (!("refused" in known) && known.name === "role") heldRoles.delete(element);
       return refuse(judged.refused);
     }
     for (const one of judged.dropped ?? []) refuse(one);
@@ -115,8 +141,10 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
     const field = element as HTMLInputElement & HTMLOptionElement;
     /* What the field showed before the view spoke: a view that says what is already there has not changed it. */
     const before = isField ? (judged.name === "value" ? field.value : judged.name === "checked" ? field.checked : field.selected) : undefined;
+    if (judged.name === "role") heldRoles.delete(element);
     if (judged.value === null) element.removeAttribute(judged.name);
     else element.setAttribute(judged.name, judged.value);
+    if (settle && (judged.name === "role" || NAMING.includes(judged.name))) settleRole(drawn, judged.name === "role");
     options.onAttribute?.(element, judged.name);
     if (!isField) return;
     /* What a field holds live, as well as what it says. */
@@ -195,7 +223,10 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
     byId.set(id, drawn);
     ids.set(element, id);
     size += 1;
-    if (isRecord(raw["attributes"])) for (const [key, value] of Object.entries(raw["attributes"])) setAttribute(drawn, key, value);
+    if (isRecord(raw["attributes"])) {
+      for (const [key, value] of Object.entries(raw["attributes"])) setAttribute(drawn, key, value, false);
+      settleRole(drawn, true);
+    }
     options.decorate?.(element, judged.name, judged.namespace);
     /* A native element has attributes, never Remote DOM properties or listeners: those are a kit component's. */
     if (isRecord(raw["properties"])) for (const key of Object.keys(raw["properties"])) refuse({ reason: "attribute", element: judged.name, name: key });

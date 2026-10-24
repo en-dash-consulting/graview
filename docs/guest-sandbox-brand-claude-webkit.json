@@ -1,10 +1,10 @@
 {
-  "at": "2026-10-22T15:23:13.516Z",
+  "at": "2026-10-24T04:03:02.530Z",
   "transport": "brand",
   "engine": "webkit",
   "policy": {
     "name": "claude",
-    "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; font-src 'self' data:; media-src 'self' blob: data:; worker-src 'self' blob:; frame-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'self' http://127.0.0.1:5692; form-action 'self'; webrtc 'block'",
+    "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; font-src 'self' data:; media-src 'self' blob: data:; worker-src 'self' blob:; frame-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'self' http://127.0.0.1:5792; form-action 'self'; webrtc 'block'",
     "sandbox": "allow-scripts allow-forms"
   },
   "claims": {
@@ -27,7 +27,7 @@
           "font": "Georgia, \"Times New Roman\", serif"
         },
         "marked": false,
-        "src": "blob:null/f9d4fae1-88d0-462c-812d-8c8e028ce3b3",
+        "src": "blob:null/72352714-b846-4498-abf9-e18ce8f35390",
         "bytes": 192
       }
     },
@@ -52,7 +52,7 @@
     "the logo is handed as a blob: URL of the page itself, which the policy lets an image load from": {
       "ok": true,
       "detail": {
-        "src": "blob:null/f9d4fae1-88d0-462c-812d-8c8e028ce3b3"
+        "src": "blob:null/72352714-b846-4498-abf9-e18ce8f35390"
       }
     },
     "after the brand changes, the view says \"En Dash Consulting\" in the new display face, as the app's wordmark and headings do": {
@@ -74,7 +74,7 @@
           "font": "\"Courier New\", Courier, monospace"
         },
         "marked": true,
-        "src": "blob:null/70ad802d-aa20-4d74-bc51-9fcfe90f2c4e",
+        "src": "blob:null/a196da7d-2cd7-4f30-800a-91b001537e81",
         "bytes": 136
       }
     },
@@ -109,7 +109,7 @@
     "the last logo's blob: URL is let go once the new one is drawn": {
       "ok": true,
       "detail": {
-        "url": "blob:null/f9d4fae1-88d0-462c-812d-8c8e028ce3b3"
+        "url": "blob:null/72352714-b846-4498-abf9-e18ce8f35390"
       }
     },
     "nothing else was requested": {

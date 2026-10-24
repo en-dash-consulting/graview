@@ -16,24 +16,26 @@ A worker view (`graview-worker-view`: its manifest, its global, its limits) writ
 
 `<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows. On the routed pages the host gives each the address it goes to as its `href` (`/a/<app>/offers/offer%3A7`), so it shows on hover, copies, and opens in a new tab on Cmd- or Ctrl-click or a middle click; a plain click, a tap and Enter stay in the app. On the scene, which has no addresses, it is given the keyboard and a link's role instead — and so in an embed whose host keeps its own addresses (memory routing), unless the host says its address for a page with the embed's `hrefOf`. A `<button data-record>` goes there too. `<a href>` goes out only to an address a record was handed — its own url, `mailto:`, `tel:` (below). A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places. A titled view of many is a place too, at `/places/<its title as a slug>`: `data-place="live-threats"` reaches the view "Live threats", and the check knows it when its host hands the views it keeps. From code, `graview.navigate("offer:7")` goes by the same rules.
 
+In SVG the same `<a data-record>` is a link — a timeline's dot, a map's pin — with its address, the keyboard and Enter: `<svg role="group" aria-label="…"><a data-record="amendment:19" aria-label="19th, 1920"><circle …/></a></svg>`. It takes no `href` of yours; a link out is an HTML one.
+
 ### Links out
 
 `<a href="${node.url}">` is drawn where the address is one a record the view was shown holds, as it holds it — an `https:` page, a `mailto:`, a `tel:` — or an `https:` address on an origin the host lists (`links: { origins }` on the view's definition and a headless run). The host opens it in a new tab, no opener, no referrer, marked ↗. An address you build, `javascript:`, `data:` or `http:` is refused: a link a view made could carry what it reads out.
 
 ### A card that opens
 
-Any element with `data-record` or `data-place` is a link, not only an `<a>`:
+Any element with `data-record` or `data-place` is a link, not only an `<a>`. Put an `<a>` to the same record on its heading:
 
 ```html
 <div class="card" data-record="threat:7">
-  <h3>Invoice phishing</h3>
+  <h3><a data-record="threat:7">Invoice phishing</a></h3>
   <span class="badge">critical</span><span class="badge">new</span>
   <p>Forty mailboxes got the fake invoice.</p>
   <button data-more="threat:7">More</button>
 </div>
 ```
 
-The host gives it the keyboard (`tabindex="0"`), makes it a link to assistive technology (`role="link"`; a list's item keeps its own role, and a table's row keeps its role and gives the keyboard to its first cell, where Enter opens the row), draws it with a pointer, `touch-action: manipulation` and a faint tap highlight, and follows it on a click, on Enter, and on a phone's tap. A press anywhere inside it opens it — its heading, a badge, a line — unless it lands on something with a press of its own: a button, a field, a `data-act`, a lightbox, a drop target, a control's `role`, another link. So "More" above toggles and opens nothing.
+The heading's `<a>` is the keyboard's and the screen reader's link; the card, a `<div>` or an `<li>` alike, takes no role and no tab stop of its own, and is a bigger target: the host draws it with a pointer, `touch-action: manipulation` and a faint tap highlight, and follows it on a click and a phone's tap anywhere inside it — its heading, a badge, a line — unless the press lands on something with a press of its own: a button, a field, a `data-act`, a lightbox, a drop target, a control's `role`, another link. So "More" above toggles and opens nothing, and the audit finds no link inside a link. A card with no such `<a>` is given the keyboard and `role="link"` itself (a list's item keeps its role; a table's row gives the keyboard to its first cell); then it may hold no button, and a heading that links elsewhere is a link inside a link.
 
 It is no link when it is a press scope: a `fieldset` or `role="group"` (the record a form's acts are done to), an element with `data-act`, `data-lightbox`, `data-drop` or `data-field`, a field, or an element that holds a field to type into or pick from (a checkbox inside leaves its row a link). Link such a card's title instead: `<h3><a data-record="…">`.
 

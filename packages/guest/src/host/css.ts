@@ -769,8 +769,11 @@ function judgeValue(property: string | undefined, values: readonly ComponentValu
   return out;
 }
 
-/** One declaration, judged: kept as text, or refused. */
-function judgeDeclaration(declaration: Declaration, refuse: (refusal: CssRefusal) => void): string | undefined {
+/* What moves: held still where a person asks for less motion (host/open-draw.ts), so a style attribute, which outranks every sheet, says it without `!important`. */
+const MOTION = /^(animation|transition|scroll-behavior)/;
+
+/** One declaration, judged: kept as text, or refused. `attribute`: it is a style attribute's. */
+function judgeDeclaration(declaration: Declaration, refuse: (refusal: CssRefusal) => void, attribute = false): string | undefined {
   const custom = declaration.name.startsWith("--");
   const name = custom ? declaration.name : propertyName(declaration.name);
   if (!custom && !PROPERTIES.has(name)) {
@@ -792,7 +795,7 @@ function judgeDeclaration(declaration: Declaration, refuse: (refusal: CssRefusal
   const value = judgeValue(custom ? undefined : name, declaration.value, refuse);
   if (!value) return undefined;
   const said = serializeValues(value).trim();
-  return `${custom ? `--${serializeName(declaration.name.slice(2))}` : name}: ${said}${declaration.important ? " !important" : ""}`;
+  return `${custom ? `--${serializeName(declaration.name.slice(2))}` : name}: ${said}${declaration.important && !(attribute && MOTION.test(name)) ? " !important" : ""}`;
 }
 
 /** Whether a selector stays in the view's own tree: nothing on `CSS_REFUSED_SELECTORS`, nothing unreadable. */
@@ -1002,7 +1005,7 @@ export function sanitizeDeclarations(css: string, maxLength = OPEN_MAX_STYLESHEE
       refuse({ reason: "unreadable", name: "a rule in a style attribute" });
       continue;
     }
-    const said = judgeDeclaration(item, refuse);
+    const said = judgeDeclaration(item, refuse, true);
     if (said) kept.push(said);
   }
   return { css: kept.join("; "), refused };
