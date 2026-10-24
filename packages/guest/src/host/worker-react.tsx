@@ -248,11 +248,16 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
      * in place of the home the app declared, which is drawn if the view fails.
      */
     if (!views.home) throw new Error(`The worker view "${manifest.name}" is the home's body: draw it with workerHome, on the home.`);
-    // A draft that fails says why in its place (FR-187): the app's own home standing there would picture the proposal as fine.
-    const declared = definition.draft ? undefined : (views.homeView?.() as ViewComponent<AnySchema> | undefined);
+    /*
+     * A draft that fails says why in its place (FR-187): the app's own home standing there would picture the proposal as fine.
+     * What fails over is the app's own home, the last one no host's view gave (FR-202), never another view a host may have deleted.
+     */
+    const given = views.homes?.();
+    const declared = definition.draft ? undefined : ((given ? given.filter((one) => one.name === undefined).at(-1)?.view : views.homeView?.()) as ViewComponent<AnySchema> | undefined);
     const home = workerView(definition, declared ? { fallback: declared } : {});
     // Edge to edge on a phone, where its manifest says so: the pages face takes the gutter back for it.
-    views.home((manifest.bleed === true ? markBleeds(home) : home) as unknown as ViewComponent<S>);
+    // By its name, so the host's tidying keeps it undrawn once deleted, whatever registered after it (FR-202); a draft has none.
+    views.home((manifest.bleed === true ? markBleeds(home) : home) as unknown as ViewComponent<S>, definition.draft ? undefined : { name: manifest.name });
     return views;
   }
   const cell = { cardinality: manifest.cardinality, fidelity: "full" } as const;
@@ -293,7 +298,13 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
    * to its place, or, for a view of one record, to the record's page.
    */
   markPreviews(view, manifest.scene?.maxHeight !== undefined ? { maxHeight: manifest.scene.maxHeight } : {});
-  views.register(manifest.attach as KindOfSchema<S>, cell, view as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
+  // An untitled view is registered by its name too, so the host's tidying keeps it undrawn once deleted (FR-202).
+  views.register(
+    manifest.attach as KindOfSchema<S>,
+    cell,
+    view as unknown as ViewComponent<S>,
+    manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : draft ? undefined : { name: manifest.name },
+  );
   return views;
 }
 

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 85,
+  "gzipped": 34,
+  "changeset": "a-store-never-names-a-change-with-an-id-its-log-holds.md",
+  "note": "Raised when a store came to count past the ids every path that takes ops takes (FR-204): `receive`, `rebase` and `append` wind the op and batch counters past the ids they land, as the constructor and `adopt` did, through one `countPast`. Measured at 561_752 / 195_945 with FR-202 beside it, 561_667 / 195_911 without this: 85 / 34 more."
+}

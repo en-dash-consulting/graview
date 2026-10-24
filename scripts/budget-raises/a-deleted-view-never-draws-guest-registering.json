@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 103,
+  "gzipped": 34,
+  "note": "Raised when a worker view came to be registered by its name, titled or not, and a home by its name too (FR-202), so a host's tidying keeps a deleted one undrawn; a home's view fails over to the app's own home, the last one no view gave. 103 / 34 more than before it (31_729 / 14_268): measured at 31_832 / 14_302."
+}

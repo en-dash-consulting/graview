@@ -1,6 +1,6 @@
 import type { AnySchema, Brand, GraviewApp, Principal, Scheme, Store } from "@graview/core";
 import { formVisitor } from "@graview/core/forms";
-import { themeBaseCss } from "@graview/primitives/pages";
+import { themeBaseCss } from "@graview/primitives/form";
 import { VisitorFormPage } from "@graview/pages/visitor-form";
 import { useEffect, useId, useMemo, useState } from "react";
 import { flushSync } from "react-dom";

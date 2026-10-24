@@ -73,7 +73,15 @@ take names: an exact label, or the one label it starts. Several names in one
 cell — `Smith wedding; Garcia rehearsal dinner` — are several links, unless the
 relation is to one. A name is looked up under the importer's sight, so a record
 kept from them is one no row can name; failing that, among the rows the same
-import makes above it.
+import makes — any of them, above the cell or below it — by what the import
+matches by (`match: { column, field }`) and then by label. So a sheet whose
+rows name each other lands in one call: a model that succeeds the model on
+the next row, two rows that each name the other. Every row is made before any
+link, and the links whose far row comes later follow the records in the same
+batch ("Link Claude 3 to Claude 2"). A row that names a row which is itself
+refused is refused too, and says which ("row 3, which Succeeds names as
+“Claude 2”, is refused"); two rows of the sheet called the same are said
+rather than guessed between.
 
 ## What is kept
 
@@ -88,7 +96,7 @@ A row that does not fit is left out, with every reason it does not:
 - "“soon” under Booked on is not a date"
 - "“Juggling” under Category is none of its 12 choices"
 - "“Smith” under Event could be Smith reunion or Smith wedding"
-- "no event is called “Johnson gala”"
+- "no event is called “Johnson gala” under Event"
 - "it has no Name, which every vendor needs"
 
 and the rest still land. `result` says `made`, `linked`, `refused`, the columns

@@ -697,11 +697,25 @@ export class Store<S extends AnySchema> {
 
   /** Winds the default op and batch counters past every id the log holds, and past the horizon (FR-23). */
   private countPastTheLog(): void {
+    this.countPast(this.log.all());
+  }
+
+  /**
+   * Winds the default op and batch counters past the ids of `ops`, and past
+   * the horizon (FR-23). EVERY PATH THAT TAKES OPS CALLS IT (FR-204): the
+   * constructor and `adopt` with the whole log, `receive`, `rebase` and
+   * `append` with the ops they took. A store opened on part of a log that
+   * received the rest went on minting from where the part ended, and named
+   * its next change with an id the rest held: undoing one of the pair
+   * undid both, a client dropped the second as already known, and a backup
+   * holding both could not be imported.
+   */
+  private countPast(ops: readonly Operation[]): void {
     const trailing = (value: string): number => {
       const digits = /(\d+)$/.exec(value);
       return digits ? Number(digits[1]) : 0;
     };
-    for (const op of this.log.all()) {
+    for (const op of ops) {
       this.counter = Math.max(this.counter, trailing(op.batch));
       this.opCount = Math.max(this.opCount, trailing(op.id));
     }
@@ -1722,6 +1736,7 @@ export class Store<S extends AnySchema> {
       this.log.append(here);
       landed.push(here);
     }
+    this.countPast(landed);
     this.notify(diffTouched(before, this.graph.snapshot(), fresh.flatMap((op) => op.primitives)), landed);
     return landed;
   }
@@ -1781,6 +1796,8 @@ export class Store<S extends AnySchema> {
       }
     }
     for (const op of built) this.log.append(op);
+    // An id or batch the host named is the log's now: the next one minted counts past it (FR-204).
+    this.countPast(built);
     for (const op of built) tellTheWatchOfAnAuthor(op.author.id);
     this.notify(diffTouched(before, this.graph.snapshot(), built.flatMap((op) => op.primitives)), built);
     return built;
@@ -2147,6 +2164,8 @@ export class Store<S extends AnySchema> {
         known.add(op.id);
         landed.push(here);
       }
+      // What is pending is minted afresh below: past every id the server's ops just named (FR-204).
+      this.countPast(landed);
 
       // 3. What is still pending, again, on top: its typing carried over what landed (`@graview/core/typing`).
       const typed = TYPING.carried?.(tail, landed, change.pending);

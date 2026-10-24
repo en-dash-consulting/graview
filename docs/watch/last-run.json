@@ -1,10 +1,10 @@
 {
-  "at": "2026-10-23T03:10:28.894Z",
+  "at": "2026-10-24T04:33:48.054Z",
   "results": [
     {
-      "name": "declared",
+      "name": "address",
       "code": 0,
-      "took": 250,
+      "took": 371,
       "verdict": "held"
     }
   ]

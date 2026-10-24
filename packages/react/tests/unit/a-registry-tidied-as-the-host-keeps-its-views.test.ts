@@ -43,3 +43,43 @@ describe("a registry tidied as the host keeps its views", () => {
   });
 
 });
+
+/**
+ * A DELETED VIEW NEVER DRAWS, WHATEVER ORDER VIEWS REGISTER IN (FR-202).
+ * Graview Cloud hands a page its deleted views too, so Restore works in
+ * place; in its Eagles app a home view deleted that morning drew over the
+ * live one, since only a titled view of a kind was tidied by name, and the
+ * home went to whichever view registered last.
+ */
+describe("a deleted view the host still hands the page", () => {
+  const removed = (name: string) => ({ name, title: name, at: "2026-10-22T00:00:00.000Z", until: "2026-11-21T00:00:00.000Z" });
+
+  it("is never the home's body, registered after the live one", () => {
+    const views = createViewRegistry<typeof schema, string>(schema);
+    views.home?.("the app's own home");
+    views.home?.("eagles-nest", { name: "eagles-nest" });
+    views.home?.("eagles-story", { name: "eagles-story" });
+    expect(views.homeView?.()).toBe("eagles-story");
+    const tidied = tidyViews(views, { hidden: [], removed: [removed("eagles-story")] });
+    expect(tidied.homeView?.()).toBe("eagles-nest");
+    expect(tidyViews(views, { hidden: [], removed: [removed("eagles-story"), removed("eagles-nest")] }).homeView?.()).toBe("the app's own home");
+  });
+
+  it("is never its kind's picture when it has no title, registered after the live one", () => {
+    const views = createViewRegistry<typeof schema, string>(schema);
+    views.register("task", many, "the app's own list");
+    views.register("task", many, "the live list", { name: "live" });
+    views.register("task", many, "the deleted list", { name: "deleted" });
+    const tidied = tidyViews(views, { hidden: [], removed: [removed("deleted")] });
+    expect(tidied.resolve("task", many)?.view).toBe("the live list");
+    expect(tidied.lookup("task", many)).toBe("the live list");
+    expect(tidied.all().map((one) => one.view)).not.toContain("the deleted list");
+  });
+
+  it("keeps an untitled view drawn while it is only hidden, since it is on no list to be kept off", () => {
+    const views = createViewRegistry<typeof schema, string>(schema);
+    views.register("task", many, "the app's own list");
+    views.register("task", many, "the live list", { name: "live" });
+    expect(tidyViews(views, { hidden: ["live"], removed: [] }).resolve("task", many)?.view).toBe("the live list");
+  });
+});

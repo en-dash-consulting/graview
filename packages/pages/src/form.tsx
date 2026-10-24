@@ -11,7 +11,7 @@ import type { AmountMark } from "@graview/core";
 import { askedFormFields, changedArgs, editStart, formArgs, keptArguments, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
-import { Files, LinkedPicker, RepeatPicker, WhenInput } from "@graview/primitives/pages";
+import { Files, LinkedPicker, RepeatPicker, WhenInput } from "@graview/primitives/form";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 /**

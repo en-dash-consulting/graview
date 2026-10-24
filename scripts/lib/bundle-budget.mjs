@@ -207,9 +207,37 @@ export const BASES = [
      * It shares the derived form with the pages face, so it carries what
      * the routed face's form controls import (`@graview/primitives/pages`).
      * Set at 373_310 / 143_118, the budget just above it.
+     *
+     * Lowered from 380_000 / 146_000 (390_720 / 150_048 with its raises,
+     * measured at 390_538 / 149_936) when the derived form and the form's
+     * theme came to import their controls from `@graview/primitives/form`
+     * rather than the routed pages' barrel (FR-201): a bundler places in a
+     * page's first load every module its imports reach that anything in
+     * the bundle uses, and the barrel reached the bar, the lists, the
+     * arranging, the framework's views of a kind and, through them, the
+     * document's blocks and expression parser. Measured at
+     * 235_371 / 86_563; the budget just above it with its raises.
      */
-    minified: 380_000,
-    gzipped: 146_000,
+    minified: 226_800,
+    gzipped: 83_600,
+    load: "first",
+    lacks: ["@graview/studio", "@graview/guest"],
+  },
+  {
+    name: "a visitor's form handed a compiled app",
+    entry: `import { mount } from "@graview/embed/form"; import { appFrom } from "@graview/core/compiled"; import { openRemote } from "@graview/ship/browser"; globalThis.a = [mount, appFrom, openRemote];`,
+    /*
+     * What Graview Cloud's form page loads first (FR-201): the form, the
+     * app its host compiled read with `appFrom` from `@graview/core/compiled`,
+     * and the store the visitor is served (`openRemote`). Measured at
+     * 468_438 / 178_330 before the form stopped importing the routed pages'
+     * barrel, 668 KB with React; set at 308_835 / 113_728, the budget just
+     * above it. What is left of the document is what builds and runs the
+     * compiled app (`document/compiled`, the evaluator, the template): acts
+     * the page applies before the server answers are judged as there.
+     */
+    minified: 311_000,
+    gzipped: 114_800,
     load: "first",
     lacks: ["@graview/studio", "@graview/guest"],
   },
@@ -1001,6 +1029,8 @@ export async function bundleSize(repo, entry, load = "all") {
     format: "esm",
     platform: "browser",
     external: HOSTS_OWN,
+    // React's automatic runtime, as every package's tsconfig says (`react-jsx`): esbuild does not read it for a .tsx a plugin resolved, such as `@graview/embed/form`.
+    jsx: "automatic",
     define: { "process.env.NODE_ENV": '"production"' },
     plugins: [graviewSources(repo)],
     metafile: true,

@@ -489,7 +489,7 @@ function standingIn<S extends AnySchema>(views: ReactViewRegistry<S>, draft: Dra
       if (meta?.name !== draft.name) views.register(kind, cell, view, meta);
       return proxy;
     },
-    ...(views.home ? { home: (view: never) => (draft.home ? proxy : (views.home!(view), proxy)) } : {}),
+    ...(views.home ? { home: (view: never, meta?: { readonly name?: string }) => (draft.home ? proxy : (views.home!(view, meta), proxy)) } : {}),
   } as ReactViewRegistry<S>;
   return proxy;
 }
