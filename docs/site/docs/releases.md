@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.53`](https://graview.dev/docs/releases.html#v0-1-53)
 - [`0.1.52`](https://graview.dev/docs/releases.html#v0-1-52)
 - [`0.1.51`](https://graview.dev/docs/releases.html#v0-1-51)
 - [`0.1.50`](https://graview.dev/docs/releases.html#v0-1-50)
@@ -53,6 +54,21 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.53
+
+Published October 24, 2026 · the current version
+
+The scene keeps up on a large app and its grid moves with the picture; views fit a phone and draw more; a store never reuses an id; a visitor's form loads light.
+
+- **The scene on a large app.** A drag sets no React state, letting go costs about a third of what it did, and nothing animates to where it already is. Returning to the overview no longer stalls: its ribbons are routed once, remembered, and routed between frames when new. Every grid under the picture moves with it while it is dragged and does not jump when it is let go. A line lands on the card it joins even when the card's words settle a frame late.
+- **Views on phones.** A view's wide content scrolls inside it instead of widening the page; `bleed` works on a view's place; a fallback page keeps its gutters; a view that draws its own heading says `heading: "own"` and is titled once; Seen in names each place once.
+- **What a view may draw.** A named `region`, links inside a view's SVG, a card with its link on its heading, `mask-image`, `-webkit-text-stroke`, scroll-driven animation and SVG filters. `@property`, SMIL and `feImage` are refused, and the check says why.
+- **For hosts.** A store never names a new change with an id its log already holds; a deleted view never draws, a home's included; an import links a cell to any row of the same sheet, in one batch; a visitor's form loads from `@graview/primitives/form`, about 40% lighter. A view that fell back says which and why (`data-worker-view-fell-back`).
+
+**Before you upgrade:** Additive: `heading: "own"` in a view's manifest, `@graview/primitives/form`, `HomeRegistration` and a registry's `homes()`, `data-worker-view-fallback` / `-fell-back` / `-failed` marks, and the CSS and SVG a view may now draw. A view's `role="region"` without a name, and `@property`, SMIL and `feImage`, are refused where they were dropped. The ground's grids are elements of their own (`.graview-lattice`, `.graview-measure`) where they were the ground's background. Ops, stored formats and the wire are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.53) · [The full changelog for 0.1.53](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0153)
 
 ## 0.1.52
 

@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.53",
+      "date": "2026-10-24",
+      "headline": "The scene keeps up on a large app and its grid moves with the picture; views fit a phone and draw more; a store never reuses an id; a visitor's form loads light.",
+      "summary": "- **The scene on a large app.** A drag sets no React state, letting go costs about a third of what it did, and nothing animates to where it already is. Returning to the overview no longer stalls: its ribbons are routed once, remembered, and routed between frames when new. Every grid under the picture moves with it while it is dragged and does not jump when it is let go. A line lands on the card it joins even when the card's words settle a frame late.\n- **Views on phones.** A view's wide content scrolls inside it instead of widening the page; `bleed` works on a view's place; a fallback page keeps its gutters; a view that draws its own heading says `heading: \"own\"` and is titled once; Seen in names each place once.\n- **What a view may draw.** A named `region`, links inside a view's SVG, a card with its link on its heading, `mask-image`, `-webkit-text-stroke`, scroll-driven animation and SVG filters. `@property`, SMIL and `feImage` are refused, and the check says why.\n- **For hosts.** A store never names a new change with an id its log already holds; a deleted view never draws, a home's included; an import links a cell to any row of the same sheet, in one batch; a visitor's form loads from `@graview/primitives/form`, about 40% lighter. A view that fell back says which and why (`data-worker-view-fell-back`).",
+      "compatibility": "Additive: `heading: \"own\"` in a view's manifest, `@graview/primitives/form`, `HomeRegistration` and a registry's `homes()`, `data-worker-view-fallback` / `-fell-back` / `-failed` marks, and the CSS and SVG a view may now draw. A view's `role=\"region\"` without a name, and `@property`, SMIL and `feImage`, are refused where they were dropped. The ground's grids are elements of their own (`.graview-lattice`, `.graview-measure`) where they were the ground's background. Ops, stored formats and the wire are unchanged.",
+      "published": true
+    },
+    {
       "version": "0.1.52",
       "date": "2026-10-24",
       "headline": "A list exports as a CSV, just as it is shown, and a view hidden from the place menu leaves the bar.",
