@@ -1,0 +1,7 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 300,
+  "gzipped": 10,
+  "changeset": "an-app-stands-on-a-ground-of-its-own.md",
+  "note": "Raised when the 0.1.54 batch merged four pull requests each measured against main alone (#403 publishing-honest seams, #404 pictures that don't flood, #405 history from an epoch, #406 an app's own ground, with #408 a graph put back keeping where things stood): their raises each held alone and together came short by what they share. Measured on batch/0-1-54 at 311_261 / 114_539 against 311_000 / 114_800: 261 over minified."
+}
