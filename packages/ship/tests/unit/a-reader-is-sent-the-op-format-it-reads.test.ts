@@ -164,6 +164,39 @@ describe("a reader is sent the op format it reads", () => {
     await handler.close();
   });
 
+  it("a poll that says where its reader is answers the ops since in the format its request said (FR-210)", async () => {
+    const handler = await createStoreHandler({ app, store: aStore(), seatOf: () => kim });
+    const here = async (query: string) =>
+      (await (
+        await handler.handle(
+          new Request(`https://store.example/graview/here${query}`, { method: "POST", body: JSON.stringify({ presence: { participant: "human:kim:tab", hue: 1, stop: "/", at: "" }, seq: -1 }) }),
+        )
+      ).json()) as { ops: Operation[] };
+    expect((await here("")).ops).toHaveLength(2);
+    expect(carry((await here("")).ops)).toBe(true);
+    expect(bare((await here(`?opFormat=${FORMATS.op}`)).ops)).toBe(true);
+    await handler.close();
+  });
+
+  it("openRemote's poll that says where its reader is says the op format it reads (FR-210)", async () => {
+    const server = aStore();
+    const handler = await createStoreHandler({ app, store: server, seatOf: () => kim });
+    const asked: string[] = [];
+    const fetcher = ((url: string, init?: RequestInit) => {
+      asked.push(url);
+      return handler.handle(new Request(url, init));
+    }) as typeof fetch;
+    const remote = await openRemote({ app, url: "https://store.example", principal: kim, fetch: fetcher, live: false, pollMs: 0, visible: () => true });
+    remote.presence.here({ participant: "human:kim:tab", hue: 1, stop: "/", at: "" });
+    server.apply({ name: "add", args: { id: "c2", label: "Back" } }, { author: kim });
+    await remote.pull();
+    expect(asked.some((url) => url.includes(`/graview/here?opFormat=${FORMATS.op}`))).toBe(true);
+    expect(bare(remote.store.log.all())).toBe(true);
+    expect(remote.store.snapshot()).toEqual(server.snapshot());
+    remote.close();
+    await handler.close();
+  });
+
   it("a store on disk from before 0.1.43 opens, undoes, goes on in format 2, and is stamped so", async () => {
     const root = mkdtempSync(join(tmpdir(), "graview-op-format-"));
     scratch.push(root);

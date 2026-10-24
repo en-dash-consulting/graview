@@ -17,9 +17,10 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join, resolve, sep } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { gzipSync } from "node:zlib";
 import { HOSTED_BUDGET_NAMES, readRaises } from "./bundle-budget.mjs";
+import { hasSideEffects } from "./side-effects.mjs";
 
 /** What each face fetches as it is first drawn (`@graview/embed`'s doors). */
 export const FACE_DOORS = {
@@ -510,7 +511,9 @@ export function workspaceSources(repo) {
         const found = candidates.find((candidate) => existsSync(candidate));
         if (!found) return { errors: [{ text: `${args.path} has no source in packages/${pkg}/src` }] };
         const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-        return { path: found, sideEffects: manifest.sideEffects !== false };
+        // The source stands for the tarball's file it builds: kept for nothing but its effect when the package names either (FR-209).
+        const file = relative(root, found).split(sep).join("/");
+        return { path: found, sideEffects: hasSideEffects(manifest, file) || hasSideEffects(manifest, file.replace(/^src\//, "dist/").replace(/\.tsx?$/, ".js")) };
       });
     },
   };

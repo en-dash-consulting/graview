@@ -44,6 +44,7 @@ import { actingAs } from "./permissions/policy.js";
 import type { Principal } from "./permissions/types.js";
 import { actTitle, fieldWords, humanizeField, labelOf, nounOf, pluralOf, withArticle } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
+import { readsPublished } from "./publish.js";
 import { seatLens, seenBy } from "./seen.js";
 import type { Store } from "./store.js";
 import { nameOfAuthor } from "./who.js";
@@ -246,6 +247,37 @@ function batchesIn(ops: readonly Operation[]): readonly (readonly Operation[])[]
   return [...groups.values()];
 }
 
+/**
+ * WHAT A PUBLISH BRINGS A READER (FR-206): for each publish among `ops`,
+ * the ops readers were not served until it — from the publish before it
+ * that stands (or the start of the log) to the seq it publishes through —
+ * in the order they landed. An op since taken back, and the undo that took
+ * it back, both in what is published, are no change to a reader and are
+ * left out; a publish that takes readers back brings nothing.
+ */
+function publishedBy(store: Store<AnySchema>, ops: readonly Operation[]): Operation[] {
+  const { horizon } = store.log;
+  const all = store.log.all();
+  const out: Operation[] = [];
+  let undone: ReadonlySet<string> | undefined;
+  for (const publish of ops) {
+    if (publish.publishedThrough === undefined) continue;
+    undone ??= store.log.undoneIds();
+    let was = horizon;
+    for (let at = publish.seq - 1 - horizon; at >= 0; at--) {
+      const one = all[at]!;
+      if (one.publishedThrough !== undefined && !undone.has(one.id)) {
+        was = one.publishedThrough;
+        break;
+      }
+    }
+    const brought = all.slice(Math.max(was, horizon) - horizon, publish.publishedThrough - horizon).filter((one) => one.publishedThrough === undefined);
+    const ids = new Set(brought.map((one) => one.id));
+    out.push(...brought.filter((one) => !undone!.has(one.id) && !(one.undoes !== undefined && ids.has(one.undoes))));
+  }
+  return out;
+}
+
 export interface MatchOptions {
   /** The app these ops are of: only subscriptions to it are judged. Unsaid, every subscription handed in is. */
   readonly app?: string;
@@ -263,13 +295,26 @@ export interface MatchOptions {
  * in a match, and a field kept from them is neither said nor read by a
  * condition. A batch the subscriber made is no match unless `alsoMine`.
  * At most one match per batch per subscription.
+ *
+ * A reader of an app that publishes (FR-206) is served the app as it stood
+ * at the last publish, so a batch is no news to them when it lands: it is
+ * held until a publish brings it, and judged then, each batch the publish
+ * brings as its own, against the app as they are served it now.
  */
 export function matchSubscriptions<S extends AnySchema>(store: Store<S>, ops: readonly Operation[], subscriptions: readonly Subscription[], options: MatchOptions = {}): SubscriptionMatch[] {
   const any = store as unknown as Store<AnySchema>;
   const judged = subscriptions.filter((one) => options.app === undefined || one.app === options.app);
   if (judged.length === 0 || ops.length === 0) return [];
+  const readers = judged.filter((one) => readsPublished(any.publishing, one.who));
+  const working = readers.length === 0 ? judged : judged.filter((one) => !readers.includes(one));
+  return [...matchBatches(any, batchesIn(ops), working, options), ...(readers.length === 0 ? [] : matchBatches(any, batchesIn(publishedBy(any, ops)), readers, options))];
+}
+
+/** Each batch judged for each subscription, as its subscriber is served the app now. */
+function matchBatches(any: Store<AnySchema>, batches: readonly (readonly Operation[])[], judged: readonly Subscription[], options: MatchOptions): SubscriptionMatch[] {
   const matches: SubscriptionMatch[] = [];
-  for (const batch of batchesIn(ops)) {
+  if (judged.length === 0) return matches;
+  for (const batch of batches) {
     const first = batch[0]!;
     // A suggestion that waits changes nothing; a batch of no change is nobody's news.
     if (batch.every((op) => op.primitives.length === 0)) continue;

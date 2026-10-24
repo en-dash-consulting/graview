@@ -40,6 +40,7 @@ import {
   serverBatchIds,
   visitorPresence,
   opFormatOf,
+  opsFor,
   wireOf,
   type LivePeer,
   type LiveProtocol,
@@ -713,12 +714,13 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       const from = seqAt(body.seq);
       const since = from === undefined ? undefined : wire.since(asking, from);
       // Folded into the poll: the heartbeat carries back everybody else AND
-      // the ops since, so being here costs no round trip of its own.
+      // the ops since, so being here costs no round trip of its own — in the
+      // op format the poller said it reads, as `/graview/since` answers them (FR-210).
       // `participant` is the key the server holds this poller under, so it can leave itself out (FR-47).
       return send(200, {
         participant: mine.participant,
         who: wire.whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
-        ...(since ? { ops: since, cursor: cursorAt(since.at(-1)?.seq ?? from!) } : {}),
+        ...(since ? { ops: opsFor(opFormatOf(url), since, store), cursor: cursorAt(since.at(-1)?.seq ?? from!) } : {}),
         ...answering(asking),
         // A poller that only says where it is learns the hold, and its end, here too (FR-66).
         ...(holding ? { held: holding } : {}),
