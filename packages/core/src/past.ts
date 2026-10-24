@@ -234,20 +234,49 @@ function graphFrom<S extends AnySchema>(store: Store<S>, schema: S, base: GraphS
  */
 const ARCHIVE_CHUNK = 256;
 type Chunk = { readonly to: number; settled: boolean; refused?: string; waiting: Promise<void> };
-type Archive = { readonly ops: Map<number, Operation>; readonly epochs: Map<number, Epoch>; readonly chunks: Map<number, Chunk>; readonly marks: Map<number, GraphSnapshot> };
+type Archive = {
+  readonly ops: Map<number, Operation>;
+  readonly epochs: Map<number, Epoch>;
+  readonly chunks: Map<number, Chunk>;
+  readonly marks: Map<number, GraphSnapshot>;
+  /** Where the archive said it holds every op from (`ArchivedOps.keptFrom`, FR-213): behind it, only its epochs. */
+  keptFrom: number;
+};
 type Asks = NonNullable<HistoryHost["archived"]>;
 const ARCHIVES = new WeakMap<Asks, Archive>();
 
-/** What reading a moment behind the horizon needs: the epoch (or seq 0) it folds from, or the chunk still to be asked, on its way, or refused. */
-type Plan = { readonly from: number; readonly base: GraphSnapshot } | { readonly ask: number } | { readonly waiting: Promise<void> } | { readonly refused: string };
+/** What reading a moment behind the horizon needs: the epoch (or seq 0) it folds from, or the chunk still to be asked, on its way, or refused — or that it is before what the host keeps (FR-213). */
+type Plan = { readonly from: number; readonly base: GraphSnapshot } | { readonly ask: number } | { readonly waiting: Promise<void> } | { readonly refused: string } | { readonly behindKept: true };
 
 function archiveOf(ask: Asks): Archive {
   let archive = ARCHIVES.get(ask);
-  if (!archive) ARCHIVES.set(ask, (archive = { ops: new Map(), epochs: new Map(), chunks: new Map(), marks: new Map() }));
+  if (!archive) ARCHIVES.set(ask, (archive = { ops: new Map(), epochs: new Map(), chunks: new Map(), marks: new Map(), keptFrom: 0 }));
   return archive;
 }
 
-function planOf(archive: Archive, seq: number): Plan {
+/**
+ * THE LAST MOMENT MADE AT OR BEFORE THE TIME A HOST KEEPS ITS HISTORY SINCE
+ * (`HistoryHost.kept`, FR-213), as far as the changes read so far say: one
+ * past the newest op known — archived, the checkpoint's last, or the log's
+ * — made at or before `since`. -1 when none is known to be, or the host
+ * says no time.
+ */
+function keptThrough(store: Pick<Store<AnySchema>, "log">, archive: Archive, host: HistoryHost | undefined): number {
+  const since = host?.kept ? Date.parse(host.kept.since) : Number.NaN;
+  if (Number.isNaN(since)) return -1;
+  const before = (at: string | undefined) => at !== undefined && Date.parse(at) <= since;
+  let through = -1;
+  for (const [seq, op] of archive.ops) if (seq + 1 > through && before(op.at)) through = seq + 1;
+  const horizon = store.log.horizon;
+  // The checkpoint was made when the last op behind it was.
+  const checkpoint = store.log.epochs().find((epoch) => epoch.seq === horizon);
+  if (before(checkpoint?.at)) through = Math.max(through, horizon);
+  const ops = store.log.all();
+  for (let at = 0; at < ops.length && before(ops[at]!.at); at++) through = Math.max(through, horizon + at + 1);
+  return through;
+}
+
+function planOf(archive: Archive, seq: number, horizon: number, through = -1): Plan {
   let from = -1;
   let base: GraphSnapshot | undefined;
   for (const [at, epoch] of archive.epochs) if (at <= seq && at > from) [from, base] = [at, epoch.base];
@@ -261,8 +290,12 @@ function planOf(archive: Archive, seq: number): Plan {
     }
   }
   if (missing < 0 && base) return { from, base };
+  // Behind where the archive holds every op, only its epochs are moments: anything else there is before what it keeps.
+  if (Math.max(missing, 0) < archive.keptFrom) return { behindKept: true };
   const start = missing < 0 ? 0 : missing - (missing % ARCHIVE_CHUNK);
   const chunk = archive.chunks.get(start);
+  // A range made wholly before the time the host keeps its history since is never asked.
+  if (!chunk && Math.min(start + ARCHIVE_CHUNK, horizon) <= through) return { behindKept: true };
   if (!chunk || (chunk.settled && !chunk.refused && missing >= chunk.to)) return { ask: start };
   if (!chunk.settled) return { waiting: chunk.waiting };
   if (chunk.refused) return { refused: chunk.refused };
@@ -282,6 +315,7 @@ function askChunk(archive: Archive, ask: Asks, start: number, horizon: number): 
       if (!Array.isArray(handed?.ops)) throw new Error("its answer held no ops");
       for (const op of handed.ops) if (Number.isInteger(op?.seq) && op.seq < horizon && !archive.ops.has(op.seq)) archive.ops.set(op.seq, op);
       for (const epoch of handed.epochs ?? []) if (Number.isInteger(epoch?.seq) && epoch.seq < horizon && epoch.base) archive.epochs.set(epoch.seq, epoch);
+      if (Number.isInteger(handed.keptFrom) && handed.keptFrom! > archive.keptFrom) archive.keptFrom = Math.min(handed.keptFrom!, horizon);
     })
     .then(
       () => void (chunk.settled = true),
@@ -295,30 +329,82 @@ function askChunk(archive: Archive, ask: Asks, start: number, horizon: number): 
  * `undefined` when it can — every op it needs, and the epoch (or seq 0)
  * it folds from, are here — or when it is not behind the horizon, or the
  * host keeps no archive (`HistoryHost.archived`). Else the moment's `seq`
- * with `waiting` while a chunk is asked for (asking it the first time), or
- * with what the host's refusal, a failure or a gap in its answer said.
+ * with `waiting` while a chunk is asked for (asking it the first time),
+ * with what the host's refusal, a failure or a gap in its answer said, or
+ * `behindKept` when it is before what the host keeps (FR-213): behind the
+ * seq its archive holds every op from (`keptFrom`) and not an epoch it
+ * kept, or needing a range made wholly before `HistoryHost.kept.since`,
+ * which is never asked.
  */
-export function askArchived(store: Pick<Store<AnySchema>, "log">, seq: number, host: HistoryHost | undefined): { readonly seq: number; readonly waiting: Promise<void> } | { readonly seq: number; readonly refused: string } | undefined {
+export function askArchived(
+  store: Pick<Store<AnySchema>, "log">,
+  seq: number,
+  host: HistoryHost | undefined,
+): { readonly seq: number; readonly waiting: Promise<void> } | { readonly seq: number; readonly refused: string } | { readonly seq: number; readonly behindKept: true } | undefined {
   const ask = host?.archived;
   const horizon = store.log.horizon;
   if (!ask || seq >= horizon) return undefined;
   const archive = archiveOf(ask);
-  let plan = planOf(archive, seq);
+  const through = keptThrough(store, archive, host);
+  let plan = planOf(archive, seq, horizon, through);
   if ("ask" in plan) {
     askChunk(archive, ask, plan.ask, horizon);
-    plan = planOf(archive, seq);
+    plan = planOf(archive, seq, horizon, through);
   }
   return "base" in plan || "ask" in plan ? undefined : { seq, ...plan };
 }
 
-/** The moment at `seq` behind the horizon, folded from what the archive handed; refused, saying why, while it cannot be. */
-function archivedPast<S extends AnySchema>(store: Store<S>, seq: number, ask: Asks, declared: PastDeclaration | undefined): Store<S> {
-  const seat = seatOf(store);
-  if (seat) return archivedPast(seat.store, seq, ask, declared).seenBy(seat.principal);
-  if (!Number.isInteger(seq) || seq < 0) throw new RangeError(`No moment at seq ${seq}`);
+/** WHAT PLAYBACK HAS LEARNED OF WHERE THE HOST'S HISTORY STOPS (FR-213), as `keptOf` says it. */
+export interface KeptPast {
+  /**
+   * The moments behind the horizon a scrubber stops at, oldest first: the
+   * epochs the archive kept behind `from`, then every seq from `from` —
+   * whose gestures are not known until they are read.
+   */
+  readonly stops: readonly number[];
+  /**
+   * The first seq playback reaches change by change: where the archive
+   * said it holds every op from (`keptFrom`), or past the moments made at
+   * or before `HistoryHost.kept.since`, whichever is later; 0 until either
+   * is known, the horizon when everything archived is before it.
+   */
+  readonly from: number;
+  /** The last moment known to be made at or before `HistoryHost.kept.since`; -1 when none is, or the host says no time. */
+  readonly through: number;
+}
+
+/**
+ * WHERE THE HOST'S HISTORY STOPS, AS FAR AS PLAYBACK KNOWS (FR-213): the
+ * stops a timeline's scrubber walks behind the horizon, the seq it reaches
+ * change by change from, and the last moment made at or before the time
+ * the host keeps its history since — learned from `HistoryHost.kept`, the
+ * checkpoint, the log and each answer of the archive, so it moves as more
+ * is read. `undefined` when the host keeps no archive or the log was never
+ * compacted.
+ */
+export function keptOf(store: Pick<Store<AnySchema>, "log">, host: HistoryHost | undefined): KeptPast | undefined {
+  const ask = host?.archived;
+  const horizon = store.log.horizon;
+  if (!ask || horizon === 0) return undefined;
   const archive = archiveOf(ask);
-  const plan = planOf(archive, seq);
-  if (!("base" in plan)) throw new RangeError("refused" in plan ? plan.refused : `The changes before seq ${seq} are still being read from the archive`);
+  const through = keptThrough(store, archive, host);
+  const from = Math.min(Math.max(archive.keptFrom, through), horizon);
+  const kept = [...archive.epochs.keys()].filter((seq) => seq < from).sort((a, b) => a - b);
+  return { stops: [...kept, ...Array.from({ length: horizon - from }, (_, at) => from + at)], from, through };
+}
+
+/** The moment at `seq` behind the horizon, folded from what the archive handed; refused, saying why, while it cannot be. */
+function archivedPast<S extends AnySchema>(store: Store<S>, seq: number, host: HistoryHost & { readonly archived: Asks }, declared: PastDeclaration | undefined): Store<S> {
+  const seat = seatOf(store);
+  if (seat) return archivedPast(seat.store, seq, host, declared).seenBy(seat.principal);
+  if (!Number.isInteger(seq) || seq < 0) throw new RangeError(`No moment at seq ${seq}`);
+  const archive = archiveOf(host.archived);
+  const plan = planOf(archive, seq, store.log.horizon, keptThrough(store, archive, host));
+  if (!("base" in plan)) {
+    throw new RangeError(
+      "refused" in plan ? plan.refused : "behindKept" in plan ? `The moment at seq ${seq} is before what the archive keeps` : `The changes before seq ${seq} are still being read from the archive`,
+    );
+  }
   const graph = graphFrom(store, (declared?.schema ?? store.schema) as S, plan.base);
   const log: Operation[] = [];
   const every = store.pastEvery;
@@ -377,7 +463,7 @@ export function pastAt<S extends AnySchema>(store: Store<S>, when: number | stri
   const answer = askDeclaration(host, seq);
   const declaration = "declaration" in answer ? answer.declaration : declarationAt(host.declarations, seq);
   // Behind the horizon, the archive the host keeps (FR-196); without one, `pastOf` refuses it.
-  if (host.archived && seq < store.log.horizon) return archivedPast(store, seq, host.archived, declaration);
+  if (host.archived && seq < store.log.horizon) return archivedPast(store, seq, host as HistoryHost & { readonly archived: Asks }, declaration);
   return pastOf(store, seq, { declaration });
 }
 

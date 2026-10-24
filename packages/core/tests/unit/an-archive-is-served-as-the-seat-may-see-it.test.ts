@@ -212,7 +212,7 @@ describe("an archive is served as the seat may see it", () => {
     for (let turn = 0; turn < 10; turn++) {
       const answer = askArchived(page, 1, hostOf);
       if (!answer) break;
-      if ("refused" in answer) throw new Error(answer.refused);
+      if (!("waiting" in answer)) throw new Error("refused" in answer ? answer.refused : "before what the archive keeps");
       await answer.waiting;
     }
     const past = pastAt(page, 1, hostOf);
