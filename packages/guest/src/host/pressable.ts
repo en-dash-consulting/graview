@@ -26,7 +26,12 @@
  *     press of its own: a control, a bound act, another link. It is given
  *     the keyboard (`tabindex="0"`) and Enter follows it; it is a link to
  *     assistive technology unless it has a meaning of its own (a row, a
- *     list's item) or says another role.
+ *     list's item) or says another role. A card that carries its own link
+ *     — an `<a>` inside it to the same record or place, on its heading —
+ *     is given neither (`carriesItsLink`, 2026-10-23): the `<a>` is the
+ *     keyboard's way in and the screen reader's link, and the card only a
+ *     bigger target for a pointer and a finger, a `<div>` and an `<li>`
+ *     alike.
  *   · A BOUND PRESS is any element with `data-act`, save what can never be
  *     pressed by itself (`notPressable`): an option, a label (whose press
  *     presses its field too), and a field to type into or pick from that
@@ -134,6 +139,22 @@ export function opensOnPress(element: PressedElement, holdsEntry: boolean): bool
   if (holdsEntry || isField(element) || isHtml(element, "fieldset", "form", "label", "option") || element.localName === "graview-video") return false;
   if (element.hasAttribute("data-act") || element.hasAttribute("data-lightbox") || element.hasAttribute("data-drop") || element.hasAttribute("data-field")) return false;
   return element.getAttribute("role") !== "group";
+}
+
+/**
+ * WHETHER A CARD CARRIES ITS OWN LINK (2026-10-23): it is no `<a>` and no
+ * button, and holds an `<a>` (HTML's or SVG's) to the same record or place
+ * as its own. `inside` is what it holds, at any depth.
+ */
+export function carriesItsLink(element: PressedElement, inside: Iterable<PressedElement>): boolean {
+  if (element.localName === "a" || element.localName === "button") return false;
+  const record = element.getAttribute("data-record");
+  const place = element.getAttribute("data-place");
+  for (const one of inside) {
+    if (one.localName !== "a") continue;
+    if (record !== null ? one.getAttribute("data-record") === record : place !== null && one.getAttribute("data-place") === place) return true;
+  }
+  return false;
 }
 
 /**

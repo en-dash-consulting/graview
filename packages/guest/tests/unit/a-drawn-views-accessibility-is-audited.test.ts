@@ -82,7 +82,7 @@ describe("an audit of a drawn view", () => {
     expect(rules(button)).toContain("nested-interactive");
     const card = audit(`<div class="card" data-key="threat:vpn" data-record="threat:vpn"><h3>Old VPN</h3><button type="button">More</button></div>`);
     expect(card.problems).toEqual([expect.objectContaining({ rule: "nested-interactive", at: '[data-key="threat:vpn"]', automatic: false })]);
-    expect(card.problems[0]!.fix).toMatch(/<a data-record> on its heading/);
+    expect(card.problems[0]!.fix).toMatch(/<a> to the card's own record or place on its heading/);
     // A list's item keeps its own meaning: it is no link around the button.
     expect(audit(`<ul><li data-record="threat:vpn">Old VPN <button type="button">More</button></li></ul>`).problems).toEqual([]);
   });

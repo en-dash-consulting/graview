@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 70,
+  "gzipped": 20,
+  "note": "Raised when the 0.1.53 batch came together: views on phones (#395), what a view may draw (#394), Cloud's FR-200 to 204 (#397) and the scene's overview and a visitor's views (#396) each raised it for what it measured alone, two of them for the same home registered by its name, reconciled once. Together they measured 32_620 / 14_503 against the 32_558 / 14_486 those raises sum to: 62 / 17 more, held for a few bytes either side."
+}

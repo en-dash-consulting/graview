@@ -234,7 +234,8 @@ describe("what a view may write", () => {
   });
   it("every property on the allowlist is lower case and none is a url-taking one it should not be", () => {
     for (const property of CSS_PROPERTIES) expect(property).toBe(property.toLowerCase());
-    for (const banned of ["border-image", "border-image-source", "list-style-image", "mask-image", "-webkit-mask-image", "shape-outside", "offset-path", "src", "behavior", "-moz-binding"]) expect(CSS_PROPERTIES).not.toContain(banned);
+    /* A mask is kept (2026-10-23), as `mask` and `background-image` always were: every url() and image-set() in it is refused, so it draws a gradient and nothing it fetches. */
+    for (const banned of ["border-image", "border-image-source", "list-style-image", "shape-outside", "offset-path", "src", "behavior", "-moz-binding"]) expect(CSS_PROPERTIES).not.toContain(banned);
   });
 });
 

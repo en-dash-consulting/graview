@@ -1,4 +1,4 @@
-import { FIDELITIES, placeSlug, type AnySchema, type Fidelity, type KeptViews, type KeptViewsState, type Place, type ViewCell, type ViewRegistration, type ViewRegistry } from "@graview/core";
+import { FIDELITIES, placeSlug, type AnySchema, type Fidelity, type HomeRegistration, type KeptViews, type KeptViewsState, type Place, type ViewCell, type ViewRegistration, type ViewRegistry } from "@graview/core";
 import { hasLanded, markLanded } from "./context.js";
 import "./provider.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -22,7 +22,16 @@ export function tidyViews<S extends AnySchema, V>(registry: ViewRegistry<S, V>, 
   if (state.hidden.length === 0 && state.removed.length === 0) return registry;
   const gone = new Set(state.removed.filter((one) => !one.lens).map((one) => one.name));
   const hid = new Set(state.hidden);
-  const tidied = (registration: { readonly name?: string } | undefined): boolean => registration?.name !== undefined && (gone.has(registration.name) || hid.has(registration.name));
+  /*
+   * EVERY REGISTRATION A HOST'S VIEW MADE IS TIDIED BY ITS NAME (FR-202),
+   * titled or not: a deleted one is never drawn, whatever order the views
+   * registered in. Hiding keeps a place off the lists; a view with no title
+   * is on none, so only a titled one is kept from its kind's default by it.
+   */
+  const tidied = (registration: { readonly name?: string; readonly title?: string } | undefined): boolean =>
+    registration?.name !== undefined && (gone.has(registration.name) || (registration.title !== undefined && hid.has(registration.name)));
+  /* The home's body: the last home given that is not deleted (FR-202). */
+  const homes = (): readonly HomeRegistration<V>[] => (registry.homes?.() ?? []).filter((one) => one.name === undefined || !gone.has(one.name));
   /* What a cell draws when nothing tidied may: the last registration that would have won it, as the registry decides. */
   const exact = (kind: string, cardinality: ViewCell["cardinality"], fidelity: Fidelity): ViewRegistration<V> | undefined =>
     [...registry.registrations()].reverse().find((one) => one.kind === kind && one.cardinality === cardinality && one.fidelity === fidelity && !one.beside && !one.hidden && !tidied(one));
@@ -45,6 +54,15 @@ export function tidyViews<S extends AnySchema, V>(registry: ViewRegistry<S, V>, 
       registry.register(kind, cell, view, meta);
       return tidy;
     },
+    ...(registry.home
+      ? {
+          home(view: V | undefined, meta?: { readonly name?: string }) {
+            registry.home!(view, meta);
+            return tidy;
+          },
+        }
+      : {}),
+    ...(registry.homes ? { homes, homeView: () => homes().at(-1)?.view } : {}),
     lookup(kind, cell) {
       return registry.lookup(kind, cell) === undefined ? undefined : exact(kind, cell.cardinality, cell.fidelity)?.view;
     },
@@ -61,6 +79,13 @@ export function tidyViews<S extends AnySchema, V>(registry: ViewRegistry<S, V>, 
       return cellOf(kind, cell);
     },
     all: () => registry.all().filter((one) => !(one.name !== undefined && gone.has(one.name))),
+    /*
+     * THE HOME, AS THE HOST KEEPS ITS VIEWS: the last home view given that
+     * is not deleted, or the derived home where every one is. Hidden is a
+     * word for the lists, which the home is not on.
+     */
+    homes: () => (registry.homes?.() ?? []).filter((one) => !(one.name !== undefined && gone.has(one.name))),
+    homeView: () => (registry.homes ? tidy.homes!().at(-1)?.view : registry.homeView?.()),
   };
   // A visit that has landed (`pages.first` taken) has landed on the tidied registry too: a view hidden or deleted is not a new visit.
   if (hasLanded(registry)) markLanded(tidy);

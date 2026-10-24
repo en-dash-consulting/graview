@@ -1,0 +1,6 @@
+{
+  "budget": "a worker view's runtime",
+  "minified": 1612,
+  "gzipped": 538,
+  "note": "Raised when a view came to draw more (Roadmap f-view-svg-link-not-drawn, request gv-view-css-modern-effects): the runtime reads the open kit's tables to tell an author at once what the host will not draw, and they now hold SVG's <a>, filter and its fe* primitives, mask-image, -webkit-text-stroke and scroll-driven animation. Measured at 63_566 / 21_956 against 61_954 / 21_418: 1_612 / 538 more."
+}

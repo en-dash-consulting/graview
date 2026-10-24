@@ -10,18 +10,20 @@
  *
  *   fetch     `<script>`, `<iframe>`, `<object>`, `<embed>`, `<link>`, `<meta>`,
  *             `<base>`, `<style>` outside the view's own stylesheet, media and
- *             canvas, SVG `<image>`, `<feImage>`, `<foreignObject>`, SVG `<a>`,
- *             SMIL (which can rewrite an `href`), every `src`/`href`/`srcset`
+ *             canvas, SVG `<image>`, `<feImage>`, `<foreignObject>`, an `href`
+ *             on SVG's `<a>`, SMIL (which can rewrite an `href`), every `src`/`href`/`srcset`
  *             but an image's `data:` or same-origin `blob:` source and an SVG
  *             reference to `#id` in the view's own drawing, and in CSS every
  *             `url()` but `url(#id)` on a paint, `@import`, `@font-face`,
- *             `@namespace`, and every function not on `CSS_FUNCTIONS`
+ *             `@namespace`, `@property` (a registration is the whole page's),
+ *             and every function not on `CSS_FUNCTIONS`
  *             (`image-set()`, `cross-fade()`, `element()`, `paint()`,
  *             `attr()`, `expression()`, …).
  *   escape    `position: fixed`, `:host` and `::slotted`, the
  *             top layer (`popover`, `<dialog>`), `autofocus`, `accesskey`,
  *             and `<form>`, whose submission is a navigation.
  *   speak     `role="alert"`, the landmark roles the app's own chrome uses
+ *             (a `region` is drawn only while it has a name, `NAMED_ROLES`)
  *             and the elements that carry them (`<nav>`, `<header>`,
  *             `<footer>`, `<aside>`, `<search>` are drawn as `<div>`, `<output>`
  *             as `<span>`, and a `<section>` is never named),
@@ -167,7 +169,7 @@ const PRESENTATION = [
   "stroke-opacity", "stroke-miterlimit", "opacity", "color", "display", "visibility", "transform-origin", "clip-path", "clip-rule",
   "marker-start", "marker-mid", "marker-end", "font-family", "font-size", "font-weight", "font-style", "text-anchor", "dominant-baseline",
   "alignment-baseline", "letter-spacing", "text-decoration", "paint-order", "vector-effect", "shape-rendering", "pointer-events",
-  "stop-color", "stop-opacity", "overflow", "mask",
+  "stop-color", "stop-opacity", "overflow", "mask", "filter", "flood-color", "flood-opacity", "lighting-color", "color-interpolation-filters",
 ] as const;
 
 /** Attributes every SVG element takes. */
@@ -184,6 +186,9 @@ export const SVG_GLOBAL_ATTRIBUTES: Readonly<Record<string, OpenAttribute>> = {
 
 const box = { x: "geometry", y: "geometry", width: "geometry", height: "geometry" } as const;
 const viewport = { viewBox: "geometry", preserveAspectRatio: "geometry" } as const;
+const units = { oneOf: ["userSpaceOnUse", "objectBoundingBox"] } as const;
+const channel = { oneOf: ["R", "G", "B", "A"] } as const;
+const primitive = { ...box, in: "text", result: "text" } as const;
 const gradient = { gradientUnits: { oneOf: ["userSpaceOnUse", "objectBoundingBox"] }, gradientTransform: "geometry", spreadMethod: { oneOf: ["pad", "reflect", "repeat"] }, href: "fragment" } as const;
 
 /** The SVG elements a view may draw, by canonical (camel-cased) name. */
@@ -213,6 +218,33 @@ export const SVG_ELEMENTS: Readonly<Record<string, OpenElement>> = {
   mask: { attributes: { ...box, maskUnits: { oneOf: ["userSpaceOnUse", "objectBoundingBox"] }, maskContentUnits: { oneOf: ["userSpaceOnUse", "objectBoundingBox"] } } },
   pattern: { attributes: { ...box, ...viewport, patternUnits: { oneOf: ["userSpaceOnUse", "objectBoundingBox"] }, patternContentUnits: { oneOf: ["userSpaceOnUse", "objectBoundingBox"] }, patternTransform: "geometry", href: "fragment" } },
   marker: { attributes: { ...viewport, markerWidth: "geometry", markerHeight: "geometry", refX: "geometry", refY: "geometry", orient: "geometry", markerUnits: { oneOf: ["strokeWidth", "userSpaceOnUse"] } } },
+  /*
+   * A link in a drawing (2026-10-23): `<a data-record>` or `<a data-place>`,
+   * which the host makes a link as it does an HTML one — its address, the
+   * keyboard, Enter (host/links.ts). No `href` of the view's: a link out is
+   * an HTML `<a href>`, which the host opens with no opener and no referrer.
+   */
+  a: none,
+  /*
+   * SVG FILTERS (2026-10-23): grain, glow, duotone, a shadow. Each primitive
+   * makes pixels of the drawing's own; none names a resource (`<feImage>`,
+   * which loads one, stays out), and a filter is reached by `url(#id)`.
+   */
+  filter: { attributes: { ...box, filterUnits: units, primitiveUnits: units } },
+  feBlend: { attributes: { ...primitive, in2: "text", mode: "text" } },
+  feColorMatrix: { attributes: { ...primitive, type: { oneOf: ["matrix", "saturate", "hueRotate", "luminanceToAlpha"] }, values: "geometry" } },
+  feComponentTransfer: { attributes: primitive },
+  ...Object.fromEntries(["feFuncR", "feFuncG", "feFuncB", "feFuncA"].map((name) => [name, { attributes: { type: { oneOf: ["identity", "table", "discrete", "linear", "gamma"] }, tableValues: "geometry", slope: "number", intercept: "number", amplitude: "number", exponent: "number", offset: "number" } }])),
+  feComposite: { attributes: { ...primitive, in2: "text", operator: { oneOf: ["over", "in", "out", "atop", "xor", "lighter", "arithmetic"] }, k1: "number", k2: "number", k3: "number", k4: "number" } },
+  feDisplacementMap: { attributes: { ...primitive, in2: "text", scale: "number", xChannelSelector: channel, yChannelSelector: channel } },
+  feDropShadow: { attributes: { ...primitive, dx: "number", dy: "number", stdDeviation: "geometry" } },
+  feFlood: { attributes: primitive },
+  feGaussianBlur: { attributes: { ...primitive, stdDeviation: "geometry", edgeMode: { oneOf: ["duplicate", "wrap", "none"] } } },
+  feMerge: { attributes: primitive },
+  feMergeNode: { attributes: { in: "text" } },
+  feMorphology: { attributes: { ...primitive, operator: { oneOf: ["erode", "dilate"] }, radius: "geometry" } },
+  feOffset: { attributes: { ...primitive, dx: "number", dy: "number" } },
+  feTurbulence: { attributes: { ...box, result: "text", type: { oneOf: ["fractalNoise", "turbulence"] }, baseFrequency: "geometry", numOctaves: "number", seed: "number", stitchTiles: { oneOf: ["stitch", "noStitch"] } } },
 };
 
 /**
@@ -222,12 +254,21 @@ export const SVG_ELEMENTS: Readonly<Record<string, OpenElement>> = {
  */
 export const NEVER_DRAWN = {
   html: ["script", "iframe", "frame", "frameset", "object", "embed", "applet", "portal", "link", "meta", "base", "style", "form", "template", "slot", "noscript", "audio", "video", "source", "track", "picture", "canvas", "dialog", "datalist", "main", "html", "head", "body", "title"],
-  svg: ["image", "feImage", "filter", "foreignObject", "a", "script", "style", "animate", "animateMotion", "animateTransform", "set", "discard", "view", "switch", "cursor", "font-face"],
-  attributes: ["src (outside img)", "href (outside a, and on a any address the view was not handed)", "target", "rel", "download", "xlink:href (outside a #fragment)", "srcset", "sizes", "action", "formaction", "ping", "poster", "background", "on*", "popover", "popovertarget", "autofocus", "accesskey", "contenteditable", "is", "nonce", "autocomplete", "form", "list"],
+  svg: ["image", "feImage", "foreignObject", "script", "style", "animate", "animateMotion", "animateTransform", "set", "discard", "view", "switch", "cursor", "font-face"],
+  attributes: ["src (outside img)", "href (outside a, on SVG's a, and on a any address the view was not handed)", "target", "rel", "download", "xlink:href (outside a #fragment)", "srcset", "sizes", "action", "formaction", "ping", "poster", "background", "on*", "popover", "popovertarget", "autofocus", "accesskey", "contenteditable", "is", "nonce", "autocomplete", "form", "list"],
 } as const;
 
 /** Roles that would make a view speak as the app's own chrome or notices. */
-export const REFUSED_ROLES = ["alert", "alertdialog", "dialog", "banner", "main", "navigation", "contentinfo", "complementary", "search", "form", "region", "application", "status", "log", "marquee", "timer"] as const;
+export const REFUSED_ROLES = ["alert", "alertdialog", "dialog", "banner", "main", "navigation", "contentinfo", "complementary", "search", "form", "application", "status", "log", "marquee", "timer"] as const;
+
+/**
+ * Roles drawn only while the element has a name (2026-10-23): a `region` is
+ * a box a person can find by what it holds — a sideways scroller, a long
+ * table — which is no chrome of the app's (the region a view is drawn in is
+ * one too). Unnamed, it is a landmark that says nothing: its role is held
+ * back until it has a name (`aria-label`, `aria-labelledby` or `title`).
+ */
+export const NAMED_ROLES = ["region"] as const;
 
 /**
  * Elements whose own role is a landmark or a notice's, drawn as an element
@@ -282,6 +323,9 @@ export const CSS_PROPERTIES: readonly string[] = [
   "border-start-start-radius", "border-start-end-radius", "border-end-start-radius", "border-end-end-radius", "border-collapse", "border-spacing",
   "outline", "outline-width", "outline-style", "outline-color", "outline-offset", "box-shadow", "opacity", "visibility", "mix-blend-mode", "filter", "backdrop-filter",
   "clip-path", "accent-color", "caret-color", "color-scheme", "appearance", "-webkit-appearance",
+  /* A mask takes a gradient (2026-10-23): every url() and image-set() in it is refused as anywhere else. */
+  "mask-image", "mask-size", "mask-position", "mask-repeat", "mask-origin", "mask-clip", "mask-composite", "mask-mode", "mask-type",
+  "-webkit-mask", "-webkit-mask-image", "-webkit-mask-size", "-webkit-mask-position", "-webkit-mask-repeat", "-webkit-mask-origin", "-webkit-mask-clip", "-webkit-mask-composite",
   // type
   "font", "font-family", "font-size", "font-weight", "font-style", "font-stretch", "font-variant", "font-variant-numeric", "font-variant-caps", "font-variant-ligatures",
   "font-feature-settings", "font-variation-settings", "font-kerning", "font-optical-sizing", "font-size-adjust", "font-synthesis",
@@ -289,6 +333,7 @@ export const CSS_PROPERTIES: readonly string[] = [
   "text-decoration-color", "text-decoration-style", "text-decoration-thickness", "text-underline-offset", "text-underline-position", "text-shadow", "text-overflow",
   "text-wrap", "text-wrap-mode", "text-wrap-style", "white-space", "white-space-collapse", "word-break", "line-break", "hyphens", "tab-size", "direction", "unicode-bidi", "writing-mode",
   "text-orientation", "text-rendering", "-webkit-font-smoothing", "-webkit-line-clamp", "-webkit-box-orient", "line-clamp", "-webkit-text-fill-color", "-webkit-background-clip",
+  "-webkit-text-stroke", "-webkit-text-stroke-width", "-webkit-text-stroke-color",
   "list-style", "list-style-type", "list-style-position", "content", "quotes", "counter-reset", "counter-increment", "counter-set",
   "table-layout", "caption-side", "empty-cells",
   // motion
@@ -296,13 +341,16 @@ export const CSS_PROPERTIES: readonly string[] = [
   "transition", "transition-property", "transition-duration", "transition-timing-function", "transition-delay", "transition-behavior",
   "animation", "animation-name", "animation-duration", "animation-timing-function", "animation-delay", "animation-iteration-count", "animation-direction",
   "animation-fill-mode", "animation-play-state", "animation-composition", "will-change",
+  /* Scroll-driven (2026-10-23): a view's motion tied to a scroll, held still where a person asks for less motion (host/open-draw.ts). */
+  "animation-timeline", "animation-range", "animation-range-start", "animation-range-end", "scroll-timeline", "scroll-timeline-name", "scroll-timeline-axis",
+  "view-timeline", "view-timeline-name", "view-timeline-axis", "view-timeline-inset", "timeline-scope",
   // interaction
   "cursor", "pointer-events", "user-select", "-webkit-user-select", "touch-action", "resize", "scroll-behavior", "overscroll-behavior", "overscroll-behavior-x", "overscroll-behavior-y",
   "scroll-snap-type", "scroll-snap-align", "scroll-snap-stop", "scroll-margin", "scroll-padding", "scrollbar-width", "scrollbar-color", "scrollbar-gutter",
   // SVG
   "fill", "fill-opacity", "fill-rule", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset", "stroke-opacity", "stroke-miterlimit",
   "stop-color", "stop-opacity", "clip-rule", "marker", "marker-start", "marker-mid", "marker-end", "paint-order", "vector-effect", "shape-rendering", "text-anchor",
-  "dominant-baseline", "alignment-baseline", "r", "cx", "cy", "rx", "ry", "x", "y", "d", "mask",
+  "dominant-baseline", "alignment-baseline", "r", "cx", "cy", "rx", "ry", "x", "y", "d", "mask", "flood-color", "flood-opacity", "lighting-color", "color-interpolation-filters",
 ];
 
 /**
@@ -321,6 +369,7 @@ export const CSS_FUNCTIONS: readonly string[] = [
   "blur", "brightness", "contrast", "drop-shadow", "grayscale", "hue-rotate", "invert", "saturate", "sepia", "opacity",
   "circle", "ellipse", "inset", "polygon", "path", "xywh", "rect",
   "counter", "counters",
+  "scroll", "view",
 ];
 
 /**
@@ -329,9 +378,13 @@ export const CSS_FUNCTIONS: readonly string[] = [
  * view's own drawing is resolved in the view's own tree and fetches
  * nothing; anything else in a `url()` is refused wherever it is written.
  */
-export const CSS_FRAGMENT_PROPERTIES: readonly string[] = ["fill", "stroke", "clip-path", "mask", "marker", "marker-start", "marker-mid", "marker-end"];
+export const CSS_FRAGMENT_PROPERTIES: readonly string[] = ["fill", "stroke", "clip-path", "mask", "marker", "marker-start", "marker-mid", "marker-end", "filter"];
 
-/** The at-rules a stylesheet may hold. `@import`, `@font-face`, `@namespace`, `@property`, `@layer` and the rest are refused. */
+/**
+ * The at-rules a stylesheet may hold. `@import`, `@font-face`, `@namespace`,
+ * `@property`, `@layer` and the rest are refused: `@property` registers a
+ * custom property for the whole page, the app's own `--graview-*` too.
+ */
 export const CSS_AT_RULES: readonly string[] = ["media", "supports", "container", "keyframes"];
 
 /**

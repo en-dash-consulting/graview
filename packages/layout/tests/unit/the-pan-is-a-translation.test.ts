@@ -1,7 +1,7 @@
 import { createSchema, defineNode, Graph } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { aggregateId, EMPTY_VIEW, layout, panLayout } from "../../src/index.js";
+import { aggregateId, EMPTY_VIEW, interpolate, layout, panLayout } from "../../src/index.js";
 
 /**
  * THE PAN IS A TRANSLATION AND NOTHING ELSE.
@@ -80,6 +80,16 @@ describe("the pan is a translation", () => {
       expect(translated.height).toBe(panned.height);
     });
   }
+
+  it("says how far the world is moved at every altitude, and tweens it with the cards, so a grid under them can stand where they stand", () => {
+    const rest = layout(graph(), schema, states["the stack"], size);
+    const from = panLayout(rest, { x: 0, y: 0 });
+    const to = panLayout(rest, pan);
+    expect(rest.pan).toBeUndefined();
+    expect(to.pan).toEqual(pan);
+    expect(interpolate(from, to, 0.5).pan).toEqual({ x: pan.x / 2, y: pan.y / 2 });
+    expect(interpolate(rest, to, 1).pan).toEqual(pan);
+  });
 
   it("moves the cards and the lines between them by exactly the pan", () => {
     const rest = layout(graph(), schema, states["the stack"], size);

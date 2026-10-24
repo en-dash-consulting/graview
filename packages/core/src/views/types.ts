@@ -227,6 +227,12 @@ export function placeLabel(place: Pictured & { readonly title: string }, places:
   return sharesItsName(place, places) ? `${place.title} · ${(schema.tryDefinition(place.kind)?.plural ?? `${place.kind}s`).toLowerCase()}` : place.title;
 }
 
+/** One view given as the home's body (FR-81), with the name a host's view registered it under (FR-202). */
+export interface HomeRegistration<V = unknown> {
+  readonly view: V;
+  readonly name?: string;
+}
+
 export interface ViewRegistry<S extends AnySchema, V = unknown> {
   /**
    * Registering a view for a kind the schema never declared is a typecheck
@@ -276,9 +282,15 @@ export interface ViewRegistry<S extends AnySchema, V = unknown> {
    * as the home's body in place of the derived one, once there is
    * something to show. `home` sets it (the last word wins); a registry
    * that was never given one answers undefined and the home is derived.
+   *
+   * A host's view says its `name` (FR-202), so the host's tidying can keep
+   * a deleted one undrawn whatever order the views registered in: `homes`
+   * is every home given, in that order, and the tidied registry's
+   * `homeView` is the last one not deleted.
    */
-  home?(view: V | undefined): ViewRegistry<S, V>;
+  home?(view: V | undefined, meta?: { readonly name?: string }): ViewRegistry<S, V>;
   homeView?(): V | undefined;
+  homes?(): readonly HomeRegistration<V>[];
   /**
    * TAKES A PLACE AWAY: the named place `as` over `kind`, and the views it
    * answers to by that name. What the kind draws by default is untouched,
@@ -313,7 +325,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
   const order: ViewRegistration<V>[] = [];
 
   let arranged: PagesArrangement | undefined;
-  let homeView: V | undefined;
+  const homes: HomeRegistration<V>[] = [];
 
   const registry: ViewRegistry<S, V> = {
     arrange(arrangement) {
@@ -321,11 +333,12 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
       return registry;
     },
     arrangement: () => arranged,
-    home(view) {
-      if (view !== undefined) homeView = view;
+    home(view, meta) {
+      if (view !== undefined) homes.push({ view, ...(meta?.name !== undefined ? { name: meta.name } : {}) });
       return registry;
     },
-    homeView: () => homeView,
+    homeView: () => homes.at(-1)?.view,
+    homes: () => homes,
     register(kind, cell, view, meta) {
       // One picture over several kinds says so on each registration and each place it makes; one kept off the lists, likewise.
       const over = { ...(meta?.over?.[1] ? { over: meta.over } : {}), ...(meta?.hidden ? { hidden: true } : {}), ...(meta?.name ? { name: meta.name } : {}), ...(meta?.declared ? { declared: true } : {}) };

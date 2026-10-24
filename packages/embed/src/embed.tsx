@@ -723,9 +723,18 @@ function DrawnSignal({ rootRef, face, shown, path, stop, draft, onDrawn, parts }
   const { view } = useNavigation();
   const onScene = shown === "scene" || shown === "graview";
   const sceneStop = toUrl(view);
+  /*
+   * A PAN IS NOT ANOTHER PLACE. Where the camera stands is in the stop, so
+   * every drag let go of took the attribute off and watched the place settle
+   * again — a measure of the whole page every 50 ms for a fifth of a second
+   * — and told the host the same place had drawn once more. The place is the
+   * stop less its pan: what is drawn there does not change when it moves.
+   */
+  const { pan: _moved, ...still } = view;
+  const placeStop = view.pan ? toUrl(still) : sceneStop;
   // Where the reader is, as `where()` says it: the overview's path on the scene, with its stop.
   const place: EmbedWhere = { face, path: onScene ? OVERVIEW_PATH : shown === "picture" ? (stop ?? "#") : path, stop: sceneStop };
-  useDrawnSignal(rootRef, `${shown} ${onScene ? sceneStop : place.path} ${draft}`, place, onDrawn, parts);
+  useDrawnSignal(rootRef, `${shown} ${onScene ? placeStop : place.path} ${draft}`, place, onDrawn, parts);
   return null;
 }
 

@@ -1,6 +1,6 @@
 import type { AnySchema, KindOfSchema, Principal, Store } from "@graview/core";
 import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { useContext, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
@@ -148,7 +148,8 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
     };
   }, [definition, store, principal]);
   useEffect(() => mounted.current?.update(), [scheme, brand, tick]);
-  const place = <div ref={holder} data-worker-view-place={definition.manifest.name} />;
+  /* Never wider than what holds it (Roadmap f-view-place-min-width): a grid item at its content's min-content width took a phone's page past its edge. */
+  const place = <div ref={holder} data-worker-view-place={definition.manifest.name} style={{ minWidth: 0 }} />;
   if (!definition.draft) return place;
   const title = definition.manifest.title ?? definition.manifest.name;
   /* A view proposed and not kept says so, as the seat's drawn panel does on `/~draft` (FR-187). */
@@ -168,6 +169,33 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
 
 /** The one line over a draft, as the seat's drawn panel wears it: a hairline under it, nothing more. */
 const DRAFT_LINE = { margin: 0, display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "4px 8px", fontSize: "0.875rem", color: "var(--graview-ink-muted)", borderBottom: "1px solid var(--graview-edge)", paddingBottom: 8 } as const;
+
+/**
+ * WHAT IS DRAWN IN A VIEW'S STEAD, MARKED SO (Roadmap
+ * f-fallback-lens-loses-gutter): what a view asked for — `bleed` — is the
+ * view's alone, and the face that takes the gutter back for it passes by a
+ * slot that holds this instead. No box of its own: it lays out as it would.
+ * Where the view failed, it also names the view and the reason (Roadmap
+ * r-visitor-sees-lens-not-view), so a visitor drawn the kind's own face where
+ * its owner was drawn the view says why to whoever looks
+ * (`data-worker-view-failed`: "source" for code that did not arrive).
+ */
+function Instead({ view: View, props, fellBack }: { readonly view: ViewComponent<AnySchema>; readonly props: ViewProps<AnySchema>; readonly fellBack?: { readonly name: string; readonly reason: WorkerViewFailure } }) {
+  return (
+    <div data-worker-view-fallback="" {...(fellBack ? { "data-worker-view-fell-back": fellBack.name, "data-worker-view-failed": fellBack.reason } : {})} style={{ display: "contents" }}>
+      <View {...props} />
+    </div>
+  );
+}
+
+/** The same mark around the home's own page, where the home's view fell back. */
+function FellBack({ name, reason, children }: { readonly name: string; readonly reason: WorkerViewFailure; readonly children: ReactNode }) {
+  return (
+    <div data-worker-view-fell-back={name} data-worker-view-failed={reason} style={{ display: "contents" }}>
+      {children}
+    </div>
+  );
+}
 
 /**
  * A WORKER VIEW AS A VIEW OF A KIND (FR-91): what `registerWorkerView`
@@ -190,9 +218,9 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     const then = useDefinitionThen(definition);
     if (!graview) return null;
     /* Not made yet at the moment drawn: the kind's own face, as where it fails. */
-    if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Fallback {...props} /> : null;
-    /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94); nothing, where the surface is that face already. */
-    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Fallback {...props} />;
+    if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Instead view={Fallback} props={props} /> : null;
+    /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94), saying which view fell back and why; nothing, where the surface is that face already. */
+    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Instead view={Fallback} props={props} fellBack={{ name: definition.manifest.name, reason: failed }} />;
     /*
      * BESIDE THE RECORD'S OWN FIELDS (FR-149): what was drawn for the record
      * before, under the view — its fields, editable where an act writes
@@ -248,11 +276,16 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
      * in place of the home the app declared, which is drawn if the view fails.
      */
     if (!views.home) throw new Error(`The worker view "${manifest.name}" is the home's body: draw it with workerHome, on the home.`);
-    // A draft that fails says why in its place (FR-187): the app's own home standing there would picture the proposal as fine.
-    const declared = definition.draft ? undefined : (views.homeView?.() as ViewComponent<AnySchema> | undefined);
+    /*
+     * A draft that fails says why in its place (FR-187): the app's own home standing there would picture the proposal as fine.
+     * What fails over is the app's own home, the last one no host's view gave (FR-202), never another view a host may have deleted.
+     */
+    const given = views.homes?.();
+    const declared = definition.draft ? undefined : ((given ? given.filter((one) => one.name === undefined).at(-1)?.view : views.homeView?.()) as ViewComponent<AnySchema> | undefined);
     const home = workerView(definition, declared ? { fallback: declared } : {});
     // Edge to edge on a phone, where its manifest says so: the pages face takes the gutter back for it.
-    views.home((manifest.bleed === true ? markBleeds(home) : home) as unknown as ViewComponent<S>);
+    // By its name, so the host's tidying keeps it undrawn once deleted, whatever registered after it (FR-202); a draft has none.
+    views.home((manifest.bleed === true ? markBleeds(home) : home) as unknown as ViewComponent<S>, definition.draft ? undefined : { name: manifest.name });
     return views;
   }
   const cell = { cardinality: manifest.cardinality, fidelity: "full" } as const;
@@ -285,6 +318,8 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
    * — and for a view whose manifest says `flows: false`, a fixed canvas.
    */
   (view as { flows?: boolean }).flows = manifest.flows !== false;
+  /* A view that draws its own heading (Roadmap f-place-header-repeats-view-title): its place says the title to a screen reader only. */
+  if (manifest.heading === "own") (view as { ownHeading?: boolean }).ownHeading = true;
   /*
    * ON THE SCENE, A PREVIEW (Roadmap f-view-content-height,
    * f-scene-record-view-card): a view is as tall as it draws, so the Scene
@@ -293,7 +328,13 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
    * to its place, or, for a view of one record, to the record's page.
    */
   markPreviews(view, manifest.scene?.maxHeight !== undefined ? { maxHeight: manifest.scene.maxHeight } : {});
-  views.register(manifest.attach as KindOfSchema<S>, cell, view as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
+  // An untitled view is registered by its name too, so the host's tidying keeps it undrawn once deleted (FR-202).
+  views.register(
+    manifest.attach as KindOfSchema<S>,
+    cell,
+    view as unknown as ViewComponent<S>,
+    manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : draft ? undefined : { name: manifest.name },
+  );
   return views;
 }
 
@@ -316,7 +357,13 @@ export function workerHome(definition: WorkerViewDefinition, options: { readonly
     const goTo = useGoTo();
     const [failed, setFailed] = useState<WorkerViewFailure | null>(null);
     const then = useDefinitionThen(definition);
-    if ((failed || then === null) && Fallback) return <Fallback context={context} />;
+    if (failed && Fallback)
+      return (
+        <FellBack name={definition.manifest.name} reason={failed}>
+          <Fallback context={context} />
+        </FellBack>
+      );
+    if (then === null && Fallback) return <Fallback context={context} />;
     if (then === null) return null;
     return (
       <WorkerViewMount

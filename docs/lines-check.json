@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T01:30:19.334Z",
+  "at": "2026-10-24T05:43:13.125Z",
   "engine": "chromium",
   "checks": {
     "everyLineIsDrawable": true,
@@ -13,6 +13,8 @@
     "whileTheCardIsHeldEveryTieStartsOnItsDrawnEdge": true,
     "noLineOnTheGroundRunsBehindOrAcrossAnything": true,
     "aRecordRisenFromIsInThePanelBesideTheMapAndNotOverTheCity": true,
+    "aFocusedRecordsWordsStandOnGroundOfTheirOwn": true,
+    "aDistrictSaysWhatItHasNoRoomForOnce": true,
     "nothingThrew": true,
     "thereWereLinesToCheck": true
   },
@@ -66,11 +68,101 @@
   "recordLinks": 2,
   "groundAtRest": 0,
   "groundChosen": 8,
+  "words": [
+    {
+      "where": "gauntlet a talk with four small relations at 1440",
+      "words": 3,
+      "onCards": [],
+      "onWords": [],
+      "pastTheEdge": [],
+      "cut": []
+    },
+    {
+      "where": "gauntlet a talk with four small relations at 390",
+      "words": 3,
+      "onCards": [],
+      "onWords": [],
+      "pastTheEdge": [],
+      "cut": []
+    },
+    {
+      "where": "gauntlet a speaker with three hundred at 1440",
+      "words": 4,
+      "onCards": [],
+      "onWords": [],
+      "pastTheEdge": [],
+      "cut": []
+    },
+    {
+      "where": "gauntlet a speaker with three hundred at 390",
+      "words": 4,
+      "onCards": [],
+      "onWords": [],
+      "pastTheEdge": [],
+      "cut": []
+    },
+    {
+      "where": "discography a song with four relations at 1440",
+      "words": 4,
+      "onCards": [],
+      "onWords": [],
+      "pastTheEdge": [],
+      "cut": []
+    },
+    {
+      "where": "discography a song with four relations at 390",
+      "words": 4,
+      "onCards": [],
+      "onWords": [],
+      "pastTheEdge": [],
+      "cut": []
+    },
+    {
+      "where": "discography an artist with eleven hundred, chosen and holding the keyboard at 1440",
+      "words": 3,
+      "onCards": [],
+      "onWords": [],
+      "pastTheEdge": [],
+      "cut": []
+    },
+    {
+      "where": "discography an artist with eleven hundred, chosen and holding the keyboard at 390",
+      "words": 3,
+      "onCards": [],
+      "onWords": [],
+      "pastTheEdge": [],
+      "cut": []
+    }
+  ],
   "ground": {
-    "lines": 32,
+    "lines": 75,
     "ties": 10,
     "asked": 4
   },
+  "rests": [
+    {
+      "where": "gauntlet from altitude at 1440",
+      "rests": 4,
+      "plots": {
+        "kind:session": 1,
+        "kind:speaker": 1,
+        "kind:talk": 1,
+        "kind:workshop": 1
+      },
+      "stacked": []
+    },
+    {
+      "where": "gauntlet from altitude at 390",
+      "rests": 4,
+      "plots": {
+        "kind:session": 1,
+        "kind:speaker": 1,
+        "kind:talk": 1,
+        "kind:workshop": 1
+      },
+      "stacked": []
+    }
+  ],
   "pointer": [
     {
       "where": "discography artist:skatterman-snug-brim at 1440",

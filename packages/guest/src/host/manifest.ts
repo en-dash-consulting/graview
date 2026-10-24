@@ -34,6 +34,9 @@ import { plainNode, readAcross, type GuestViewInput } from "./session.js";
  *                what it listens on (`graview.on("wheel" | "drag" |
  *                "pinch", …)`), once a frame, and takes a wheel from the
  *                page only there (gestures.ts)
+ *   heading      "own": a place's view that draws its own heading — its
+ *                place on Pages says the title to a screen reader only,
+ *                and no count over it
  *   flows        false: a fixed canvas (a map, a chart) keeps the place's
  *                frame on Pages; left out, its place flows with the page
  *   scene        { maxHeight }: the tallest its preview on the Scene is
@@ -109,7 +112,7 @@ export interface WorkerViewManifest {
   readonly gestures?: boolean;
   /**
    * EDGE TO EDGE ON A PHONE: `true`, and where the pages face draws the
-   * view — the home's body, a record's page — on a phone (a face 680 pixels
+   * view — the home's body, a place, a record's page — on a phone (a face 680 pixels
    * wide or less), the view's box takes back the page's side gutter (20px
    * either side, `--graview-page-gutter`) and keeps the device's safe areas,
    * so it is the phone's width less those. At a desk it is the column's
@@ -118,6 +121,15 @@ export interface WorkerViewManifest {
    * included.
    */
   readonly bleed?: boolean;
+  /**
+   * WHO SAYS ITS TITLE (Roadmap f-place-header-repeats-view-title). Left
+   * out, a titled view's place on Pages says its title and how much it is
+   * over above the view. `"own"` is a view that draws its own heading: the
+   * place keeps its title for a screen reader and the keyboard, draws
+   * neither it nor the count, and the way to the kind's list stays. Only
+   * for a view that is a place.
+   */
+  readonly heading?: "own";
   /**
    * WHETHER ITS PLACE FLOWS WITH THE PAGE (Roadmap f-view-content-height).
    * Left out, a titled view's place on Pages is drawn in the page's column
@@ -213,6 +225,7 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   else if (manifest.replaces === "page" && (manifest.attach === "home" || manifest.cardinality !== "one")) findings.push('Only a view of one record replaces its page: replaces "page" needs cardinality one on a kind.');
   if (manifest.gestures !== undefined && typeof manifest.gestures !== "boolean") findings.push(`The view's gestures is "${String(manifest.gestures)}": it is true, or left out.`);
   if (manifest.bleed !== undefined && typeof manifest.bleed !== "boolean") findings.push(`The view's bleed is "${String(manifest.bleed)}": it is true, or left out.`);
+  if (manifest.heading !== undefined && (manifest.heading !== "own" || manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push(`The view's heading is "${String(manifest.heading)}": it is "own" on a view that is a place (a title, cardinality many), or left out.`);
   if (manifest.flows !== undefined && typeof manifest.flows !== "boolean") findings.push(`The view's flows is "${String(manifest.flows)}": it is false for a view that keeps its place's frame, or left out.`);
   else if (manifest.flows === false && (manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push("Only a view that is a place keeps a frame: flows false needs a title and cardinality many on a kind.");
   findings.push(...sceneProblems(manifest.scene));

@@ -216,7 +216,10 @@ export function Bleed({ when, children }: { readonly when: boolean; readonly chi
   );
 }
 
-const BLEED_CSS = `@media (max-width:680px){[data-graview-bleed]{margin-inline:min(0px,calc(env(safe-area-inset-left,0px) - var(--graview-page-gutter,20px))) min(0px,calc(env(safe-area-inset-right,0px) - var(--graview-page-gutter,20px)))}}`;
+// What a view that did not draw left in its slot (`data-worker-view-fallback`) keeps the gutter: the bleed was the view's.
+const BLEED_CSS = `@media (max-width:680px){[data-graview-bleed]:not(:has(>[data-worker-view-fallback])){margin-inline:min(0px,calc(env(safe-area-inset-left,0px) - var(--graview-page-gutter,20px))) min(0px,calc(env(safe-area-inset-right,0px) - var(--graview-page-gutter,20px)))}}`;
+
+const UNSEEN: React.CSSProperties = { position: "absolute", width: 1, height: 1, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" };
 
 /**
  * A PAGE'S OWN TITLE (FR-131): said under the app's name, which the bar
@@ -225,13 +228,14 @@ const BLEED_CSS = `@media (max-width:680px){[data-graview-bleed]{margin-inline:m
  */
 export function PageTitle<S extends AnySchema>({
   context,
+  unseen,
   children,
   ...rest
-}: { context: PageContext<S>; children?: ReactNode } & Record<`data-${string}`, string>) {
+}: { context: PageContext<S>; children?: ReactNode; /** Said to a screen reader and the keyboard only: what is under it draws its own heading. */ unseen?: boolean } & Record<`data-${string}`, string>) {
   // Under a shell of the app's own, which says the app however it likes, a page's title is its h1 again.
   const Tag = `h${context.titleLevel ?? (context.framed && !context.barAbove ? 1 : 2)}` as "h2";
   return (
-    <Tag style={h1} data-graview-page-title="" {...rest}>
+    <Tag style={unseen ? UNSEEN : h1} data-graview-page-title="" {...rest}>
       {children}
     </Tag>
   );

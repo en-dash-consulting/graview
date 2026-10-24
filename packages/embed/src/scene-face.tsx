@@ -3,7 +3,7 @@ import type { Scheme } from "@graview/core";
 import { BoardMoveSections, DraftDoor, GhostDoor, InlineAiSections, Inspector, LinesKey, MapPanel, NotifyDoor, NotifySections, OverviewButton, PastBar, QuickAskDoor, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, ShowInstallation, useCallLog, viewsCss, ViewTidyingSections } from "@graview/primitives/scene";
 import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
-import { BesideTheMap, Scene, UrlSync } from "@graview/react";
+import { BesideTheMap, PanFree, Scene, UrlSync } from "@graview/react";
 import { AUTO_SCENE_HEIGHT } from "./frame.js";
 
 /*
@@ -44,6 +44,12 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, quickAsk
       <SceneTrail />
       <OverviewButton />
       <LinesKey<S> />
+      {/*
+        * WHAT FLOATS OVER THE PICTURE IS NOT TOLD THE PAN (`PanFree`): letting
+        * go of a drag drew the panel beside the map, every record it lists,
+        * and the menu at the pointer again, to say nothing new.
+        */}
+      <PanFree>
       {/* A panel the AI drew, in place of the picture. */}
       <DraftDoor />
       {/* The quick ask: ⌘K's bar beside what is selected, and the answers it leaves there as cards, as on the whole-page Shell. */}
@@ -71,6 +77,7 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, quickAsk
       <SceneWayBack />
       {/* The app as it was, and the way through it (Roadmap f-playback), as on the whole-page Shell. */}
       <PastBar face="scene" />
+      </PanFree>
     </div>
     </BesideTheMap.Provider>
   );

@@ -39,7 +39,8 @@ export interface ResolvedViewProps {
  * here when the row has room for nothing else, is marked as here rather
  * than offered as somewhere to go.
  */
-export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
+// Drawn again when the districts it lists change, not each time the scene moves it.
+export const BeyondCard = memo(function BeyondCard({ kinds }: { kinds: readonly string[] }) {
   const { store } = useGraview();
   const { view, go } = useNavigation();
   const card = useRef<HTMLDivElement>(null);
@@ -138,7 +139,7 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
       ) : null}
     </div>
   );
-}
+}, (before, after) => before.kinds.length === after.kinds.length && before.kinds.every((kind, i) => kind === after.kinds[i]));
 
 /**
  * WHETHER TWO FRAMES ASK FOR THE SAME PICTURE.
@@ -432,6 +433,7 @@ function MissingView<S extends AnySchema>({
  * pixels says nothing and costs thousands of elements. Opened by the host's
  * own press (a double-click, or Enter), like every card.
  */
+// Drawn again when its picture changes, not when a pan moves it (`samePicture`).
 export const BandCard = memo(function BandCard({ node }: { readonly node: SceneNode }) {
   const { store } = useGraview();
   const found = useFound();
@@ -484,7 +486,7 @@ export const BandCard = memo(function BandCard({ node }: { readonly node: SceneN
       </span>
     </div>
   );
-});
+}, (before, after) => samePicture(before.node, after.node));
 
 /*
  * A group's members as a short key: their count and a hash of their ids.

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T15:22:22.310Z",
+  "at": "2026-10-24T04:02:07.223Z",
   "transport": "writes",
   "engine": "chromium",
   "claims": {
@@ -77,7 +77,7 @@
             "author": "person:erin",
             "via": "view:honest",
             "intent": "Say what package:start is: “Coaching and a sprint, to begin”",
-            "batch": "batch:2s3v1r051j2q:3"
+            "batch": "batch:5s234c6v4s3n:3"
           }
         ],
         "after": [

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T15:23:17.675Z",
+  "at": "2026-10-24T04:03:06.765Z",
   "transport": "brand",
   "engine": "chromium",
   "policy": {
@@ -116,11 +116,11 @@
         "requests": [
           {
             "type": "fetch",
-            "url": "http://localhost:5693/graview/assets/logo.png"
+            "url": "http://localhost:5793/graview/assets/logo.png"
           },
           {
             "type": "image",
-            "url": "http://localhost:5693/graview/assets/logo.png"
+            "url": "http://localhost:5793/graview/assets/logo.png"
           }
         ],
         "appMarks": 1,

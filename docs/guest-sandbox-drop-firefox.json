@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T15:23:49.440Z",
+  "at": "2026-10-24T04:03:41.120Z",
   "transport": "drop",
   "engine": "firefox",
   "claims": {
@@ -35,7 +35,7 @@
           }
         ],
         "batches": [
-          "batch:3b3g6m6p5z21:1"
+          "batch:0837736e3x51:1"
         ],
         "vias": [
           "view:journey"
@@ -69,7 +69,7 @@
           }
         ],
         "batches": [
-          "batch:3b3g6m6p5z21:1"
+          "batch:0837736e3x51:1"
         ],
         "vias": [
           "view:journey"
@@ -114,7 +114,7 @@
           "add-moment-to-day"
         ],
         "batches": [
-          "batch:022b63192n02:1"
+          "batch:2q485o051z2q:1"
         ],
         "vias": [
           "view:journey-handled"

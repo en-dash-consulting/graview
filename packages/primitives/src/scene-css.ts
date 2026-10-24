@@ -893,7 +893,8 @@ ${/* A RELATION THE BAND COULD NOT HOLD: a group with its count and first names,
   border: none;
   border-radius: inherit;
   background: none;
-  color: var(--graview-ink-muted);
+  ${/* In ink, not its muted tone: the card stands on the shelf, which recedes, and muted under that was 4.0:1 against its panel — a control's words need 4.5. */ ""}
+  color: var(--graview-ink);
   cursor: pointer;
   font: inherit;
   font-size: 0.875rem;
@@ -1166,6 +1167,13 @@ ${/* THE SCENE'S FOOT: a sheet over it. A control at the foot stood under
 .graview-zoom,
 .graview-edge-sign {
   --graview-scene-foot: var(--graview-sheet, 0px);
+}
+${/* PUT AWAY WHILE A HAND MOVES THE PICTURE (data-graview-hand, written by
+   the scene outside React): a sign names what lies past the edge of the
+   picture that has landed, and under a hand that picture is on its way
+   somewhere else. Back with the pan the hand made. */ ""}
+.graview-ground[data-graview-hand] .graview-edge-sign {
+  visibility: hidden;
 }
 @container (max-width: 639px) {
   .graview-zoom,

@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 132,
+  "gzipped": 65,
+  "note": "Raised when a deleted home view stopped being the home and a view that fell back began saying why (changeset a-deleted-home-view-is-not-the-home): the registry keeps every home view given with its name (`homes`), the tidied registry draws the last that is not deleted, and a failed worker view stands its fallback in an element naming it and the reason. 656_768 / 241_757 before, 656_900 / 241_822 with them: 132 / 65 more."
+}

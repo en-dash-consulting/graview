@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 194,
+  "gzipped": 58,
+  "changeset": "a-deleted-view-never-draws.md",
+  "note": "Raised when a deleted view came never to draw, whatever order views register in (FR-202): the registry keeps every home it is given with the name a host's view gave it (`homes`), and `layerViews` lays each over with its name. Measured at 611_664 / 213_535 with FR-204 beside it, against 611_385 / 213_431 on main: 194 / 58 of the 279 / 104 are this."
+}

@@ -16,31 +16,32 @@ it shows is one the host holds, made for it, or lists the origin of.
 HTML's sectioning, headings, text, lists, tables, `details`/`summary`,
 `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`,
 `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients,
-`clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`.
-Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and
-each element's own. CSS for layout, grid, flex, color, type, transitions,
-`@keyframes`, `@media`, `@supports` and `@container`. Each
+`clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter`
+and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and
+each element's own. CSS for layout, grid, flex, color, type, `mask-image`,
+`-webkit-text-stroke`, transitions, `@keyframes`, `animation-timeline`,
+`@media`, `@supports` and `@container`; reduced motion holds motion still. Each
 `graview.style(css)` adds a sheet after the last (a shared design system's,
 then the view's own), each judged alone; a sheet given again is not added
 twice, so say what changes per push in a class or a `style` attribute.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`,
-`style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image` and `foreignObject`; any
+`style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image`, `feImage`, `foreignObject` and
+SMIL; any
 `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on
 `img` any address but the ones below. In CSS: `url()` except `url(#id)` on
-`fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`;
+`fill`, `stroke`, `clip-path`, `marker` or `filter`; `@import`; `@font-face`; `@property`;
 `image-set()`, `attr()` and other unlisted functions; `position: fixed`;
 `:host`. `position: sticky` is kept — a header held in place sticks within
 the view, whose region is painted contained — and `all` takes its keywords
-(`button.toggle { all: unset }` takes the browser's chrome off a toggle). What the host leaves out it lists in `refused`;
-`graview.refused` is the runtime's own early word on the last render.
+(`all: unset` takes a button's chrome off). What the host leaves out it lists in `refused` (below).
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside`
 and `search` are drawn as `div`, and `output` as `span`, each with what it
 holds. They lose their landmark or status role, and a selector for them in
-your stylesheet still matches. A `section` is never named (no `aria-label`
-or `title`), so it stays out of the landmarks. `role` takes no landmark or
-notice's role (`navigation`, `region`, `status`, `alert`, …).
+your stylesheet still matches. A `section` is never named, so it stays out of the landmarks. `role` takes
+no landmark or notice's role (`navigation`, `status`, `alert`, …) but a
+named `region`.
 
 A control of your own keeps its role and state, and every `aria-*`:
 `<span role="checkbox" aria-checked="true" tabindex="0">`, `switch`,
@@ -66,9 +67,9 @@ again.
 On Pages a view is drawn in the page's column, which keeps a 20px gutter
 either side on a phone. Nothing the view draws passes its box: a negative
 margin is clipped at its edge, not widened. Say `bleed: true` in the
-manifest and on a phone (680px or less) the box takes the gutter back,
-keeping the safe areas: a hero is the phone's width. At a desk it is the
-column's width either way.
+manifest and on a phone (680px or less) the box takes the gutter back
+(on a place too), keeping the safe areas: a hero is the phone's width. At a
+desk it is the column's width either way.
 
 ## The images a view may show
 

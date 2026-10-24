@@ -108,12 +108,11 @@ describe("what a screen reader is told on the routed face", () => {
     expect(document.activeElement?.textContent).toBe("Staff");
   });
 
-  it("names the arrow beside a picture a record is seen in by the picture, and says no arrow aloud", () => {
+  it("names a picture a record is seen in once, by the picture, and the record's way to the scene says no arrow aloud", () => {
     const html = renderToStaticMarkup(<PagesApp context={{ store: store(), views: views(), sceneHref: "/" }} initialPath="/staff/priya" />);
     const page = new DOMParser().parseFromString(html, "text/html");
-    const arrow = page.querySelector('[data-testid="seen-in"] a[href="/#view=the-roster"]')!;
-    expect(arrow.textContent).toContain("↗");
-    expect(nameOf(arrow)).toBe("The roster, in the scene");
+    // Each picture is one stop (Roadmap f-seen-in-phone-length): the arrow beside it to the scene is gone, with its stop.
+    expect([...page.querySelectorAll('[data-testid="seen-in"] a')].map(nameOf)).toEqual(["The roster"]);
     expect(nameOf(page.querySelector('[data-testid="spatial-link"]')!)).toBe("In the scene");
   });
 

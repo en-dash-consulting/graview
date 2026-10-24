@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T15:21:00.476Z",
+  "at": "2026-10-24T04:00:40.461Z",
   "transport": "open",
   "engine": "webkit",
   "policy": "the app's own page, with no content security policy",
@@ -70,8 +70,8 @@
     "the progress ring turns: its keyframes are drawn and running": {
       "ok": true,
       "detail": {
-        "before": "matrix(-0.304033, 0.952661, -0.952661, -0.304033, 0, 0)",
-        "after": "matrix(-0.99863, -0.052336, 0.052336, -0.99863, 0, 0)"
+        "before": "matrix(-0.284015, 0.95882, -0.95882, -0.284015, 0, 0)",
+        "after": "matrix(-0.999328, -0.036644, 0.036644, -0.999328, 0, 0)"
       }
     },
     "after the app's toggle to dark, the same view takes the dark panel, edge and accent": {
@@ -306,7 +306,7 @@
           "href": null,
           "text": "a link out"
         },
-        "url": "http://127.0.0.1:5692/"
+        "url": "http://127.0.0.1:5792/"
       }
     },
     "srcset is not drawn": {
@@ -1063,7 +1063,7 @@
           "opener": true,
           "referrer": ""
         },
-        "url": "http://127.0.0.1:5692/"
+        "url": "http://127.0.0.1:5792/"
       }
     },
     "the same view run headless refuses the same two links and says each — no address it was handed, a scheme no link takes — and nothing else": {
@@ -1072,6 +1072,143 @@
         "Not drawn: The link \"https://cars.example/golf?read=Golf\" was not drawn: it is no address this view was handed. A view links out only to an address a record it was shown holds (a url field), as the record holds it; a record or a place of this app is <a data-record> or <a data-place>.",
         "Not drawn: The link \"javascript:alert(1)\" was not drawn: a view links only to an https:, mailto: or tel: address."
       ]
+    },
+    "a scrolling lane the view names with role=\"region\" and aria-label is a region in the engine's accessibility tree, and the speaker's unnamed one is drawn with no role": {
+      "ok": true,
+      "detail": {
+        "lane": {
+          "role": "region",
+          "tabindex": "0"
+        },
+        "regions": [
+          "Every car, by year"
+        ],
+        "unnamed": []
+      }
+    },
+    "a card the view bound to a record that carries its link on its heading is no second link: no role and no tab stop of its own, and its heading's <a> carries the record's address": {
+      "ok": true,
+      "detail": {
+        "link": true,
+        "role": null,
+        "tabindex": null,
+        "heading": {
+          "href": "/?at=car%3Agolf",
+          "tabindex": null
+        }
+      }
+    },
+    "an <a data-record> in the view's SVG is drawn, in SVG, with the host's address for the record as its href (its SMIL <animate> is not drawn)": {
+      "ok": true,
+      "detail": {
+        "namespace": "http://www.w3.org/2000/svg",
+        "href": "/?at=car%3Agolf",
+        "link": true,
+        "animate": false
+      }
+    },
+    "the SVG link takes the keyboard, and Enter on it and a click on its dot each open the car in the app": {
+      "ok": true,
+      "detail": {
+        "dotFocused": "dot",
+        "dotEntered": [
+          {
+            "record": "car:golf"
+          }
+        ],
+        "dotClicked": [
+          {
+            "record": "car:golf"
+          }
+        ]
+      }
+    },
+    "a click on the card's own line still opens the car, and Enter on its heading's link does too": {
+      "ok": true,
+      "detail": {
+        "faceClicked": [
+          {
+            "record": "car:golf"
+          }
+        ],
+        "faceEntered": [
+          {
+            "record": "car:golf"
+          }
+        ]
+      }
+    },
+    "a view's mask-image of a gradient, its -webkit-text-stroke and its SVG filter by url(#id) are drawn as the engine computes them, and its scroll-driven animation-timeline wherever the engine has one": {
+      "ok": true,
+      "detail": {
+        "lane": {
+          "role": "region",
+          "tabindex": "0"
+        },
+        "face": {
+          "link": true,
+          "role": null,
+          "tabindex": null,
+          "heading": {
+            "href": "/?at=car%3Agolf",
+            "tabindex": null
+          }
+        },
+        "dot": {
+          "namespace": "http://www.w3.org/2000/svg",
+          "href": "/?at=car%3Agolf",
+          "link": true,
+          "animate": false
+        },
+        "mask": "linear-gradient(90deg, rgba(0, 0, 0, 0), rgb(0, 0, 0) 20%, rgb(0, 0, 0) 80%, rgba(0, 0, 0, 0))",
+        "stroke": {
+          "width": "2px",
+          "color": "rgb(1, 2, 3)"
+        },
+        "timeline": {
+          "supported": false,
+          "drawn": null
+        },
+        "filter": {
+          "element": true,
+          "applied": "url(\"#glow\")"
+        },
+        "sheet": ".lane { display: flex; gap: 8px; overflow-x: auto; max-width: 200px; }\n.lane span { flex: 0 0 120px; }\n.reel { height: 20px; mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); background: var(--graview-accent); }\n.num { font: 700 48px/1 var(--graview-font-body); -webkit-text-stroke: 2px rgb(1, 2, 3); -webkit-text-fill-color: transparent; }\n@keyframes rise { from { opacity: 0.2; } to { opacity: 1; } }\n.reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }\n.pulse { animation: rise 2s linear infinite; }\n.dot { filter: url(\"#glow\"); }"
+      }
+    },
+    "where a person asks for less motion, every animation a view draws is held still — its pulse and the showcase's ring run once in a millisecond, its reveal on no scroll — whatever the view's own sheet says": {
+      "ok": true,
+      "detail": {
+        "pulse": {
+          "duration": "0.001s",
+          "count": "1"
+        },
+        "reveal": null,
+        "ring": "0.001s"
+      }
+    },
+    "@property and SMIL's <animate> are refused on the page and headless alike, each said with why — the page's whole registry, and @keyframes held to reduced motion — and nothing else the view drew is": {
+      "ok": true,
+      "detail": {
+        "page": [
+          {
+            "reason": "element",
+            "element": "animate"
+          },
+          {
+            "reason": "css",
+            "name": "stylesheet",
+            "css": {
+              "reason": "at-rule",
+              "name": "@property"
+            }
+          }
+        ],
+        "headless": [
+          "Not drawn: <animate> is not in the open kit. SMIL can set an attribute after the host judged it, and runs past a person's reduced-motion setting: animate with CSS @keyframes, which is held to it.",
+          "Not drawn: CSS the open kit leaves out (at-rule @property). It registers a property for the whole page, the app's own --graview-* among them: animate a transform, an opacity or a color in @keyframes."
+        ]
+      }
     },
     "no view failed": {
       "ok": true,
@@ -1088,14 +1225,15 @@
     "connections": 0
   },
   "requests": [
-    "http://127.0.0.1:5692/",
-    "blob:http://127.0.0.1:5692/76c225f2-0644-4b5e-bbb5-346085fab858",
-    "blob:http://127.0.0.1:5692/31a581b9-02d0-4050-9b2b-4dc63388a6b2",
-    "blob:http://127.0.0.1:5692/760cffd9-cc50-43f5-9555-3416ebaf6f71",
-    "blob:http://127.0.0.1:5692/ec453110-89a7-4811-a44d-55b6d6ca39f6",
-    "blob:http://127.0.0.1:5692/1c7a8538-2c6b-4508-8884-98fd8429801f",
-    "blob:http://127.0.0.1:5692/1d1a9487-c117-4905-950d-1189e1aa9987",
-    "blob:http://127.0.0.1:5692/6bb986a9-2a81-4f03-9566-738fe7ad2dac",
+    "http://127.0.0.1:5792/",
+    "blob:http://127.0.0.1:5792/1b1d4306-53f3-48bd-9d6b-f58103bf4338",
+    "blob:http://127.0.0.1:5792/2615b427-9c08-4a87-8b15-7e458169a478",
+    "blob:http://127.0.0.1:5792/b7bf40a1-587b-441b-9c60-747a224ac454",
+    "blob:http://127.0.0.1:5792/19d770d3-9585-41c9-8f06-7eb0c64f11a2",
+    "blob:http://127.0.0.1:5792/e0274bdb-10df-4c80-8981-5598095caf3a",
+    "blob:http://127.0.0.1:5792/e5644236-8893-4387-a20a-b12e974af3ad",
+    "blob:http://127.0.0.1:5792/4d545239-7262-416e-ae6b-74aa57f89101",
+    "blob:http://127.0.0.1:5792/1989d4a7-d5a4-4071-b036-6ae361ad465f",
     "https://cars.example/golf"
   ],
   "passed": true

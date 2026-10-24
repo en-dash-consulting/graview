@@ -414,6 +414,7 @@ export type {
   KindListSort,
   Fidelity,
   ViewCell,
+  HomeRegistration,
   ViewRegistration,
   ViewMeta,
   Place,

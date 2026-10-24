@@ -72,7 +72,17 @@
  *   the view, then the slot's blocks, then the facts, while one whose view
  *   replaces the page draws the view alone (Roadmap
  *   feature:views-on-phones-…-full-bleed,
- *   feature:page-slot-blocks-on-a-kind-with-a-record-view-…).
+ *   feature:page-slot-blocks-on-a-kind-with-a-record-view-…);
+ *   a view whose content is wider than a phone (an SVG 640 wide in a box
+ *   that scrolls sideways) never widens the page, on a place and a
+ *   record's page; a place whose view says `bleed: true` spans the phone
+ *   as the home does; where a view that bleeds did not draw, the page drawn
+ *   in its stead keeps the column's gutters; a view that says `heading:
+ *   "own"` is titled once, by itself; and a record's "Seen in" names each
+ *   place once, past four the first three on a phone with a button for the rest
+ *   (Roadmap f-view-place-min-width, f-bleed-on-places,
+ *   f-fallback-lens-loses-gutter, f-place-header-repeats-view-title,
+ *   f-seen-in-phone-length).
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
@@ -118,12 +128,42 @@ const THE_MAP_SOURCE =`graview.onProps((props) => graview.render(graview.html\`<
 const FITTED_BASE = "/apps/a5";
 /** A page slot on each kind: the task's under a view that sits above the page, the person's under one that replaces it. */
 const FITTED_VIEWS = { task: { page: [{ headline: "Read the sources" }, { text: "Each source, in turn." }] }, person: { page: [{ headline: "Who they are" }] } };
+/** What a phone's width cannot hold: a chart 640 wide in a box that scrolls sideways, and a row of tabs (Roadmap f-view-place-min-width). */
+const WIDE_CONTENT = `<div class="scroller" style="overflow-x:auto"><svg width="640" height="40" style="min-width:640px"><rect width="640" height="40" fill="currentColor"></rect></svg></div><p class="tabs" style="white-space:nowrap">\${["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"].map((tab) => graview.html\`<button>Tab \${tab}</button>\`)}</p>`;
 const HERO = { name: "hero", attach: "home", cardinality: "many", bleed: true };
 const HERO_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="hero">The things to do</div>\`));`;
 const BRIEF = { name: "brief", attach: "task", cardinality: "one", bleed: true };
-const BRIEF_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="brief">\${props.node ? props.node.label : ""}</p>\`));`;
+const BRIEF_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="brief">\${props.node ? props.node.label : ""}</p>${WIDE_CONTENT}\`));`;
+/** A place whose view draws its own heading, and wide content (Roadmap f-place-header-repeats-view-title). */
+const WIDE = { name: "wide", title: "The wide", attach: "task", cardinality: "many", heading: "own" };
+const WIDE_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<h2 class="own">The wide</h2>${WIDE_CONTENT}\`));`;
+/** A place whose view bleeds (Roadmap f-bleed-on-places). */
+const EDGE = { name: "edge", title: "The edge", attach: "task", cardinality: "many", bleed: true };
+const EDGE_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="edge">\${props.nodes.length} tasks</div>${WIDE_CONTENT}\`));`;
+/** A place whose view bleeds and is refused before it starts — an act the app does not declare — so the kind's own face is drawn in its stead (Roadmap f-fallback-lens-loses-gutter). */
+const BROKEN = { name: "broken", title: "The broken", attach: "task", cardinality: "many", bleed: true, acts: ["no-such-act"] };
+/** A fifth place a task is seen in, so a phone's "Seen in" folds what is past the third (Roadmap f-seen-in-phone-length). */
+const PLAIN = { name: "plain", title: "The plain", attach: "task", cardinality: "many" };
 const CARD = { name: "card", attach: "person", cardinality: "one", replaces: "page" };
 const CARD_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<p class="card">\${props.node ? props.node.label : ""}</p>\`));`;
+/*
+ * A DELETED HOME VIEW REGISTERED AFTER THE LIVE ONE (FR-202), as Graview
+ * Cloud hands a page its deleted views so Restore works in place: in the
+ * Eagles app the deleted `eagles-story` drew over the live `eagles-nest`.
+ */
+const HOMES_BASE = "/apps/a6";
+const NEST = { name: "eagles-nest", attach: "home", cardinality: "many" };
+const NEST_SOURCE = `graview.onProps(() => graview.render(graview.html\`<p class="nest">The nest, live</p>\`));`;
+const STORY = { name: "eagles-story", attach: "home", cardinality: "many" };
+const STORY_SOURCE = `graview.onProps(() => graview.render(graview.html\`<p class="story">The story, deleted this morning</p>\`));`;
+const STORY_REMOVED = { name: "eagles-story", title: "The story", at: "2026-10-22T09:00:00.000Z", until: "2026-11-21T09:00:00.000Z" };
+/*
+ * A VISITOR'S FORM AS GRAVIEW CLOUD SERVES IT (FR-201): `@graview/embed/form`
+ * over the app its host compiled, read with `appFrom` from
+ * `@graview/core/compiled`, never the document compiler.
+ */
+const FORM_BASE = "/form";
+const RSVP = resolve(repoRoot, "packages/core/tests/document/fixtures/rsvp.gdd.json");
 const SEED = {
   nodes: [
     { id: "t1", kind: "task", label: "Write the brief", status: "todo" },
@@ -155,12 +195,15 @@ async function buildHost() {
     stdin: {
       contents: `
         import { mount } from "@graview/embed";
+        import { mount as mountForm } from "@graview/embed/form";
+        import { appFrom, serializeCompiled } from "@graview/core/compiled";
         import { registerWorkerView } from "@graview/guest/host/views";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import { Store } from "@graview/core";
         import tasks from ${JSON.stringify(TASKS)};
         import proposal from ${JSON.stringify(PROPOSAL)};
         import proposalSeed from ${JSON.stringify(PROPOSAL_SEED)};
+        import rsvp from ${JSON.stringify(RSVP)};
         const compile = (document) => {
           const compiled = compileDocumentWithoutCheck(document, { today: () => "2026-09-01" });
           if (!compiled.ok) throw new Error("the document did not compile");
@@ -169,7 +212,9 @@ async function buildHost() {
         const cards = location.pathname.startsWith("${CARDS_BASE}");
         const kept = location.pathname.startsWith("${VIEWS_BASE}");
         const fitted = location.pathname.startsWith("${FITTED_BASE}");
-        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : fitted ? { ...tasks, pages: { first: "home" }, views: ${JSON.stringify(FITTED_VIEWS)} } : tasks) };
+        const homes = location.pathname.startsWith("${HOMES_BASE}");
+        const formPage = location.pathname.startsWith("${FORM_BASE}");
+        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : kept ? { ...tasks, pages: ${JSON.stringify(VIEWS_PAGES)} } : fitted ? { ...tasks, pages: { first: "home" }, views: ${JSON.stringify(FITTED_VIEWS)} } : homes ? { ...tasks, pages: { first: "home" } } : tasks) };
         const article = location.pathname.startsWith("/article");
         window.__navigated = [];
         /*
@@ -250,13 +295,20 @@ async function buildHost() {
             createElement(GraviewProvider, { store, views, initialView: { ...EMPTY_VIEW, focusId: "t1" } }, createElement(Shell, { scheme: "light", onScheme: () => {}, syncUrl: false, remembers: false, renderer: "dom" })),
           );
           window.__ready = true;
+        } else if (formPage) {
+          /* The host compiled the form's app on its server and hands it to the page as JSON; the page reads it without compiling. */
+          const handed = JSON.parse(JSON.stringify(serializeCompiled(compileDocumentWithoutCheck(rsvp))));
+          const read = appFrom(handed);
+          if (!read.ok) throw new Error("the compiled app could not be read");
+          window.__handle = mountForm(document.getElementById("app"), { app: read.app, seed: { nodes: [], edges: [] }, form: "rsvp", principal: "form:tok-1", scheme: "light", fonts: false });
+          window.__ready = true;
         } else {
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
           seed: ${JSON.stringify(SEED)},
           principal: { kind: "human", id: "p1", roles: ["owner"] },
           // As Cloud's shell: the Graview on a desk, the pages on a phone; the kept view's app on the pages at both.
-          face: article || kept || fitted ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
+          face: article || kept || fitted || homes ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
           // A view the host keeps, registered by its manifest's name as Cloud registers a chat's view.
           ...(kept
             ? {
@@ -271,10 +323,27 @@ async function buildHost() {
           ...(fitted
             ? {
                 views: (schema, registry) =>
-                  [[${JSON.stringify(HERO)}, ${JSON.stringify(HERO_SOURCE)}], [${JSON.stringify(BRIEF)}, ${JSON.stringify(BRIEF_SOURCE)}], [${JSON.stringify(CARD)}, ${JSON.stringify(CARD_SOURCE)}]].reduce(
+                  [[${JSON.stringify(HERO)}, ${JSON.stringify(HERO_SOURCE)}], [${JSON.stringify(BRIEF)}, ${JSON.stringify(BRIEF_SOURCE)}], [${JSON.stringify(CARD)}, ${JSON.stringify(CARD_SOURCE)}], [${JSON.stringify(WIDE)}, ${JSON.stringify(WIDE_SOURCE)}], [${JSON.stringify(EDGE)}, ${JSON.stringify(EDGE_SOURCE)}], [${JSON.stringify(BROKEN)}, ${JSON.stringify(EDGE_SOURCE)}], [${JSON.stringify(PLAIN)}, ${JSON.stringify(HERO_SOURCE)}]].reduce(
                     (views, [manifest, source]) => registerWorkerView(views, { manifest, worker: { source } }),
                     registry,
                   ),
+              }
+            : {}),
+          // The live home first, the deleted one after it, and the host listing it deleted (FR-202).
+          ...(homes
+            ? {
+                views: (schema, registry) =>
+                  [[${JSON.stringify(NEST)}, ${JSON.stringify(NEST_SOURCE)}], [${JSON.stringify(STORY)}, ${JSON.stringify(STORY_SOURCE)}]].reduce(
+                    (views, [manifest, source]) => registerWorkerView(views, { manifest, worker: { source } }),
+                    registry,
+                  ),
+                keptViews: {
+                  current: () => ({ hidden: [], removed: [${JSON.stringify(STORY_REMOVED)}], may: { views: true, lenses: false } }),
+                  hide: () => {},
+                  show: () => {},
+                  remove: () => {},
+                  restore: () => {},
+                },
               }
             : {}),
           bar: true,
@@ -284,7 +353,7 @@ async function buildHost() {
           fonts: false,
           studio: false,
           onNavigate: (path, how) => window.__navigated.push([path, how]),
-          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : fitted ? "${FITTED_BASE}/" : "${BASE}/" }),
+          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : kept ? "${VIEWS_BASE}/" : fitted ? "${FITTED_BASE}/" : homes ? "${HOMES_BASE}/" : "${BASE}/" }),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
         }`,
@@ -298,6 +367,8 @@ async function buildHost() {
     outdir: out,
     entryNames: "entry",
     define: { "process.env.NODE_ENV": '"development"' },
+    // Every package draws with React's automatic runtime (its tsconfig's `react-jsx`), which esbuild does not read for a .tsx a plugin resolved: the visitor's form is one.
+    jsx: "automatic",
     plugins: [graviewSources(repoRoot)],
     logLevel: "silent",
   });
@@ -310,7 +381,7 @@ async function buildHost() {
       return;
     }
     // Every address under the base is the one page, as a host that owns the page answers it.
-    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE, SHELL_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
+    if ([BASE, SWAP_BASE, CARDS_BASE, VIEWS_BASE, FITTED_BASE, SHELL_BASE, HOMES_BASE, FORM_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
       response.writeHead(200, { "content-type": "text/html" });
       response.end(APP_PAGE);
       return;
@@ -837,9 +908,118 @@ try {
           saysSlot: (document.querySelector("[data-graview-face=pages]")?.textContent ?? "").includes("Who they are"),
           facts: document.querySelector('[data-graview-face=pages] [data-testid="record-fields"]') !== null,
         }));
-        one.fitted = { home, record, order, replaced };
+        /* A view's place on a phone (Roadmap f-view-place-min-width, f-bleed-on-places, f-fallback-lens-loses-gutter, f-place-header-repeats-view-title). */
+        await go(`${FITTED_BASE}/places/the-wide`);
+        await drawnIn("wide");
+        const wide = await measure("wide");
+        const heading = await tab.evaluate(() => {
+          const title = document.querySelector("[data-graview-face=pages] [data-graview-page-title]");
+          const box = title?.getBoundingClientRect();
+          const own = document.querySelector('[data-worker-view="wide"]')?.shadowRoot?.querySelector("h2.own");
+          return {
+            title: title?.textContent?.trim() ?? null,
+            titleDrawn: box ? box.width > 1 && box.height > 1 : null,
+            own: own?.textContent?.trim() ?? null,
+            count: document.querySelector('[data-testid="place-lede"]') !== null,
+            asList: document.querySelector('[data-testid="place-as-list"]') !== null,
+          };
+        });
+        await go(`${FITTED_BASE}/places/the-edge`);
+        await drawnIn("edge");
+        const edge = await measure("edge");
+        const edgeTitled = await tab.evaluate(() => {
+          const box = document.querySelector("[data-graview-face=pages] [data-graview-page-title]")?.getBoundingClientRect();
+          return { titleDrawn: box ? box.width > 1 && box.height > 1 : null, count: document.querySelector('[data-testid="place-lede"]') !== null };
+        });
+        await go(`${FITTED_BASE}/places/the-broken`);
+        await tab.waitForSelector("[data-graview-bleed] > [data-worker-view-fallback]", { timeout: 20_000 });
+        await tab.waitForTimeout(300);
+        const fallback = await tab.evaluate(() => {
+          const slot = document.querySelector("[data-graview-bleed]");
+          const main = slot?.closest("[data-graview-page-main]");
+          const box = slot?.getBoundingClientRect();
+          const style = main ? getComputedStyle(main) : null;
+          const inner = main && style ? main.getBoundingClientRect().left + parseFloat(style.paddingLeft) : null;
+          const column = main && style ? main.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) : null;
+          return {
+            drawn: document.querySelector('[data-worker-view-place="broken"]') === null && (slot?.textContent ?? "").trim() !== "",
+            left: box ? Math.round(box.left) : null,
+            width: box ? Math.round(box.width) : null,
+            columnLeft: inner === null ? null : Math.round(inner),
+            column: column === null ? null : Math.round(column),
+            sideScroll: document.documentElement.scrollWidth > window.innerWidth + 1,
+          };
+        });
+        /* Seen in on a record's page (Roadmap f-seen-in-phone-length): each place once, the first three on a phone. */
+        await go(`${FITTED_BASE}/tasks/t1`);
+        await drawnIn("brief");
+        const seenIn = await tab.evaluate(() => {
+          const row = document.querySelector('[data-graview-face=pages] [data-testid="seen-in"]');
+          const shown = (element) => element.getClientRects().length > 0;
+          const links = row ? [...row.querySelectorAll("a")] : [];
+          const more = row?.querySelector("button[data-graview-seen-more]");
+          return {
+            places: links.length,
+            shown: links.filter(shown).map((link) => link.textContent?.trim() ?? ""),
+            toScene: links.filter((link) => (link.getAttribute("href") ?? "").includes("#view=")).length,
+            more: more && shown(more) ? more.textContent?.trim() ?? "" : null,
+            height: row ? Math.round(row.getBoundingClientRect().height) : null,
+          };
+        });
+        if (seenIn.more) {
+          await tab.click('[data-testid="seen-in"] button[data-graview-seen-more]');
+          await tab.waitForTimeout(200);
+          seenIn.opened = await tab.evaluate(() => ({
+            shown: [...document.querySelectorAll('[data-testid="seen-in"] a')].filter((link) => link.getClientRects().length > 0).length,
+            keyboardOnAPlace: document.activeElement !== null && document.activeElement === document.querySelectorAll('[data-testid="seen-in"] a')[3],
+          }));
+        }
+        one.fitted = { home, record, order, replaced, wide, heading, edge, edgeTitled, fallback, seenIn };
       } catch (error) {
         one.fittedError = String(error?.message ?? error);
+      }
+      /*
+       * A DELETED HOME VIEW NEVER DRAWS (FR-202): registered after the live
+       * one, and listed by the host as deleted, the home draws the live one.
+       */
+      try {
+        await go(`${HOMES_BASE}/`);
+        await tab.waitForFunction(() => Boolean(document.querySelector("[data-worker-view]")?.shadowRoot?.querySelector("p")), null, { timeout: 20_000 }).catch(() => null);
+        await tab.waitForTimeout(400);
+        one.homes = await tab.evaluate(() => ({
+          drawn: [...document.querySelectorAll("[data-worker-view]")].map((view) => view.getAttribute("data-worker-view")),
+          says: [...document.querySelectorAll("[data-worker-view]")].map((view) => view.shadowRoot?.textContent?.trim() ?? ""),
+        }));
+      } catch (error) {
+        one.homesError = String(error?.message ?? error);
+      }
+      /*
+       * A VISITOR'S FORM OVER A COMPILED APP (FR-201) still refuses an answer
+       * that does not fit, in words, and lands one that does.
+       */
+      try {
+        await go(`${FORM_BASE}/`);
+        await tab.waitForSelector('[data-graview-embed="form"] form', { timeout: 20_000 });
+        const guests = () => tab.evaluate(() => window.__handle.store.snapshot().nodes.filter((node) => node.kind === "guest").map((node) => node.name));
+        await tab.fill('[data-graview-embed="form"] input[name="name"]', "Ada Lovelace");
+        await tab.selectOption('[data-graview-embed="form"] select[name="coming"]', "yes");
+        await tab.fill('[data-graview-embed="form"] input[name="email"]', "not an address");
+        // The browser's own check would stop the press before the form judged it: the form's own refusal is what is asked.
+        await tab.evaluate(() => {
+          const form = document.querySelector('[data-graview-embed="form"] form');
+          form.noValidate = true;
+          form.requestSubmit();
+        });
+        await tab.waitForTimeout(300);
+        const refused = { said: (await tab.textContent('[data-testid="refused"]').catch(() => null))?.trim() ?? null, guests: await guests() };
+        await tab.fill('[data-graview-embed="form"] input[name="email"]', "ada@example.com");
+        await tab.click('[data-graview-embed="form"] [data-graview-part="submit"]');
+        await tab.waitForSelector('[data-graview-embed="form"] [role="status"]', { timeout: 10_000 });
+        const answered = { said: (await tab.textContent('[data-graview-embed="form"] [role="status"]'))?.trim() ?? null, guests: await guests() };
+        const scripts = await tab.evaluate(() => performance.getEntriesByType("resource").filter((entry) => /\.js$/.test(entry.name)).length);
+        one.form = { title: await tab.textContent('[data-graview-embed="form"] h1'), refused, answered, scripts };
+      } catch (error) {
+        one.formError = String(error?.message ?? error);
       }
       await context.close();
 
@@ -1334,6 +1514,60 @@ try {
   report.checks.aViewThatReplacesThePageDrawsAloneAndItsSlotIsNot = {
     seen: fittedSeen,
     ok: fittedHold(({ replaced }) => replaced.drawn === "Ada" && !replaced.slot && !replaced.saysSlot && !replaced.facts),
+  };
+  /* Roadmap f-view-place-min-width: a view's wide content scrolls inside it; its place is the column's width, and the page never scrolls sideways. */
+  report.checks.aViewsWideContentNeverWidensThePageOnAPhone = {
+    seen: fittedSeen,
+    ok: fittedHold(({ wide, record }, name) => wide.width === wide.column && !wide.sideScroll && (/×844$/.test(name) ? record.width === record.safeWidth : record.width === record.column) && !record.sideScroll),
+  };
+  /* Roadmap f-bleed-on-places: a place whose view says bleed spans a phone less its safe areas, as the home does, and is the column's width at a desk. */
+  report.checks.aPlaceDeclaredBleedDrawsEdgeToEdge = {
+    seen: fittedSeen,
+    ok: fittedHold(({ edge }, name) => spans(edge, name)),
+  };
+  /* Roadmap f-fallback-lens-loses-gutter: where a view that bleeds did not draw, what is drawn in its stead stands in the column, inside the gutter. */
+  report.checks.aFallbackPageKeepsItsGutters = {
+    seen: fittedSeen,
+    ok: fittedHold(({ fallback }) => fallback.drawn && fallback.left === fallback.columnLeft && fallback.width === fallback.column && !fallback.sideScroll),
+  };
+  /* Roadmap f-place-header-repeats-view-title: a view that draws its own heading is titled once, by itself; the way to the list stays; any other place keeps its title and count. */
+  report.checks.aCustomPageViewsHeadingIsSaidOnce = {
+    seen: fittedSeen,
+    ok: fittedHold(({ heading, edgeTitled }) => heading.title === "The wide" && heading.titleDrawn === false && heading.own === "The wide" && !heading.count && heading.asList && edgeTitled.titleDrawn === true && edgeTitled.count),
+  };
+  /* Roadmap f-seen-in-phone-length: each place one link, none to the scene beside it; on a phone the first three and a button for the rest, which opens them with the keyboard on the first; at a desk, all. */
+  report.checks.seenInNamesEachPlaceOnceOnAPhone = {
+    seen: fittedSeen,
+    ok: fittedHold(({ seenIn }, name) =>
+      seenIn.places > 4 &&
+      seenIn.toScene === 0 &&
+      new Set(seenIn.shown).size === seenIn.shown.length &&
+      (/×844$/.test(name)
+        ? seenIn.shown.length === 3 && seenIn.more === `${seenIn.places - 3} more` && seenIn.opened?.shown === seenIn.places && seenIn.opened?.keyboardOnAPlace === true
+        : seenIn.shown.length === seenIn.places && seenIn.more === null),
+    ),
+  };
+  /* FR-202: a home view the host lists as deleted is never drawn, though it registered after the live one. */
+  const homesSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.homesError ? { error: one.homesError } : one.homes]));
+  report.checks.aDeletedHomeViewNeverDrawsOverTheLiveOne = {
+    seen: homesSeen,
+    ok: pagesAt.length === engines.length * SIZES.length && pagesAt.every(([, one]) => !one.homesError && one.homes.drawn.includes("eagles-nest") && !one.homes.drawn.includes("eagles-story") && one.homes.says.some((said) => said.includes("The nest, live")) && !one.homes.says.some((said) => said.includes("deleted"))),
+  };
+  /* FR-201: a visitor's form read from a compiled app refuses an answer that does not fit and lands one that does. */
+  const formSeen = Object.fromEntries(pagesAt.map(([name, one]) => [name, one.formError ? { error: one.formError } : one.form]));
+  report.checks.aVisitorsFormOverACompiledAppRefusesAndAnswersAsBefore = {
+    seen: formSeen,
+    ok:
+      pagesAt.length === engines.length * SIZES.length &&
+      pagesAt.every(
+        ([, one]) =>
+          !one.formError &&
+          one.form.title === "RSVP" &&
+          /email/i.test(one.form.refused.said ?? "") &&
+          one.form.refused.guests.length === 0 &&
+          one.form.answered.guests.join() === "Ada Lovelace" &&
+          /Received/.test(one.form.answered.said ?? ""),
+      ),
   };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);

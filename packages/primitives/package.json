@@ -17,6 +17,10 @@
       "types": "./dist/pages.d.ts",
       "default": "./dist/pages.js"
     },
+    "./form": {
+      "types": "./dist/form.d.ts",
+      "default": "./dist/form.js"
+    },
     "./scene": {
       "types": "./dist/scene.d.ts",
       "default": "./dist/scene.js"

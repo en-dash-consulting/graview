@@ -16,6 +16,8 @@ export interface InterpolatedLayout {
   readonly t: number;
   /** The destination's lattice, when it has one. */
   readonly city?: CityFrame;
+  /** How far the whole world is moved, part-way between the two (`Layout.pan`). */
+  readonly pan?: { readonly x: number; readonly y: number };
 }
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -174,6 +176,8 @@ export function interpolate(from: Layout, to: Layout, t: number): InterpolatedLa
     height: lerp(from.height, to.height, clamped),
     t: clamped,
     ...(mixCity(from.city, to.city, clamped) ? { city: mixCity(from.city, to.city, clamped)! } : {}),
+    // The world's own move tweens with the cards it moves, so a grid under them travels with them.
+    ...(from.pan || to.pan ? { pan: { x: lerp(from.pan?.x ?? 0, to.pan?.x ?? 0, clamped), y: lerp(from.pan?.y ?? 0, to.pan?.y ?? 0, clamped) } } : {}),
   };
 }
 

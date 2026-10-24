@@ -1303,6 +1303,7 @@ export function layout<S extends AnySchema>(
     width: opts.width,
     height: opts.height,
     ...(city ? { city: city.frame } : {}),
+    ...(state.pan && (state.pan.x !== 0 || state.pan.y !== 0) ? { pan: { x: state.pan.x, y: state.pan.y } } : {}),
     ...(dockRight > 0 || dockBottom > 0 ? { visible: { width: opts.width - dockRight, height: opts.height - dockBottom } } : {}),
   };
 
@@ -1405,5 +1406,6 @@ export function panLayout(placed: Layout, pan: { x: number; y: number }): Layout
       y2: connector.y2 + pan.y,
     })),
     ...(placed.city ? { city: { ...placed.city, pan: { x: pan.x, y: pan.y } } } : {}),
+    pan: { x: pan.x, y: pan.y },
   };
 }

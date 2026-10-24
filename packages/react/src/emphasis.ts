@@ -56,8 +56,18 @@ export function useImplicated(): readonly string[] {
 export function useReached(): readonly string[] {
   const { store, selection } = useGraview();
   const nodes = useGraph();
+  const violations = useViolations();
   return useMemo(() => {
-    if (selection.length === 0) return [];
+    if (selection.length === 0) return NOTHING_REACHED;
+    /*
+     * ONCE PER SELECTION, HOWEVER MANY ASK. Every card in the scene and the
+     * panel beside it asks what the selection reaches, and each walked every
+     * edge and judged every rule over the whole graph for itself — choosing
+     * a district of a thousand-record app was most of a second of this.
+     */
+    const key = selection.join("\n");
+    const held = reachedBy.get(store);
+    if (held && held.violations === violations && held.key === key) return held.reached;
     const chosen = new Set(selection);
     const reached = new Set(chosen);
     for (const edge of store.graph.allEdges()) {
@@ -72,14 +82,23 @@ export function useReached(): readonly string[] {
      * from its violations, which name the nodes they implicate, so selecting
      * one now lights those wherever they are drawn.
      */
-    for (const violation of store.violations()) {
+    for (const violation of violations) {
       if (violation.subjectId !== undefined && chosen.has(violation.subjectId)) {
         for (const id of violation.nodeIds) reached.add(id);
       }
     }
-    return [...reached];
-  }, [store, selection, nodes]);
+    const answer = [...reached];
+    reachedBy.set(store, { violations, key, reached: answer });
+    return answer;
+    // `nodes` is the graph's tick; the violations are judged once per tick (`useViolations`).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, selection, nodes, violations]);
 }
+
+/** The selection reached nothing: one empty answer, so a reader keyed on it is not told it changed. */
+const NOTHING_REACHED: readonly string[] = [];
+/** The last answer per store: the graph it was worked out on (its violations are judged once per change of it) and the selection. */
+const reachedBy = new WeakMap<object, { readonly violations: unknown; readonly key: string; readonly reached: readonly string[] }>();
 
 /** Stands in the implicated set when a search found nothing, so every view dims. */
 export const NOTHING_FOUND = "search:nothing";

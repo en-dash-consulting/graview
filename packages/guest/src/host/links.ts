@@ -3,7 +3,7 @@ import { sectionSlug } from "@graview/core/navigate";
 import { filterOfWhere } from "./where.js";
 import type { GuestPlace } from "../protocol.js";
 import { nowhere, placeNamed, quoted, whereOfWords } from "./links-words.js";
-import { isEntry, linkPressed, opensOnPress, takesRole } from "./pressable.js";
+import { carriesItsLink, isEntry, linkPressed, opensOnPress, takesRole } from "./pressable.js";
 
 export { nowhere, placesSaid, quoted, whereOfWords } from "./links-words.js";
 
@@ -36,7 +36,10 @@ export { nowhere, placesSaid, quoted, whereOfWords } from "./links-words.js";
  * `<button data-record>` is followed the same way; a button bound to an
  * act (`data-act`) is that act's press, and its `data-record` the act's
  * record. A table's row keeps its role: its first cell takes the keyboard,
- * and Enter there follows the row.
+ * and Enter there follows the row. An `<a>` in the view's SVG is a link
+ * the same way (2026-10-23), with its address and the keyboard. A card
+ * that carries its own link on its heading takes no role and no tab stop
+ * (pressable.ts, `carriesItsLink`): a press on it is still followed.
  *
  * A view's code asks the same with `graview.navigate`, and is held to the
  * same.
@@ -159,6 +162,7 @@ const listsSaid = (slugs: readonly string[]) =>
   slugs.length === 0 ? "" : ` Its lists: ${slugs.slice(0, 8).map((slug) => `"${slug}"`).join(", ")}${slugs.length > 8 ? ` and ${slugs.length - 8} more` : ""}.`;
 
 const HTML = "http://www.w3.org/1999/xhtml";
+const SVG = "http://www.w3.org/2000/svg";
 /** A modified press — a new tab, a new window, a download — or a button not the main one: the browser's to take, where the link has an address. */
 const modified = (event: Event) => {
   const mouse = event as MouseEvent;
@@ -243,7 +247,7 @@ export function createLinks(options: LinksOptions): Links {
        * view never writes it: an `href` the view gave is a link out
        * (external-links.ts), left as the open kit drew it.
        */
-      const anchor = element.localName === "a" && element.namespaceURI === HTML;
+      const anchor = element.localName === "a" && (element.namespaceURI === HTML || element.namespaceURI === SVG);
       const given = element.getAttribute("href");
       const own = addressed.get(element);
       const viewsOwn = given !== null && own?.href !== given;
@@ -260,6 +264,13 @@ export function createLinks(options: LinksOptions): Links {
       }
       if (viewsOwn) addressed.delete(element);
       else unaddress(element);
+      /* A card whose heading carries its link: the `<a>` is the keyboard's and the screen reader's, the card a pointer's target only. */
+      if (carriesItsLink(element, element.querySelectorAll("a"))) {
+        unrole(element);
+        untab(element);
+        unrow(element);
+        return;
+      }
       if (!element.hasAttribute("role") && (anchor || takesRole(element))) {
         element.setAttribute("role", "link");
         roled.add(element);

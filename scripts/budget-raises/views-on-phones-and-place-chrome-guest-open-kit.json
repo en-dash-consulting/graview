@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 238,
+  "gzipped": 40,
+  "note": "Raised when a view's place came to fit a phone (Roadmap f-view-place-min-width, f-fallback-lens-loses-gutter, f-place-header-repeats-view-title): the region a view draws in is `min-width: 0`, what is drawn in a view's stead is marked so a bleed passes it by, and a manifest's `heading: \"own\"` is judged. Measured at 196_109 / 74_528 against 195_871 / 74_488 minified and gzipped."
+}

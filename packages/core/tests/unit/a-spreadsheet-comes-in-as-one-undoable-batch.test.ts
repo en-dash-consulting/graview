@@ -140,7 +140,7 @@ describe("a spreadsheet comes in", () => {
       "“about a thousand” under Quote is not a number",
       "“soon” under Booked on is not a date",
       expect.stringMatching(/^“9” under Rating does not fit: /),
-      "no event is called “Johnson gala”",
+      "no event is called “Johnson gala” under Event",
     ]);
     expect(row(58).refused).toEqual([
       "“maybe” under Deposit paid is not a yes or a no",
@@ -237,7 +237,7 @@ describe("a spreadsheet comes in", () => {
     const store = storeOf({ policy });
     const helper = { kind: "human" as const, id: "jo", roles: ["helper"] };
     const result = importRows(store, "vendor", [["Vendor name", "Event"], ["Bloom & Co", "Smith wedding"]], { "Vendor name": "name", Event: "serves" }, { by: helper });
-    expect(result.rows[0]!.refused).toEqual(["no event is called “Smith wedding”"]);
+    expect(result.rows[0]!.refused).toEqual(["no event is called “Smith wedding” under Event"]);
   });
 
   it("asks the host's admit with the import as planned, and keeps nothing it refuses", () => {

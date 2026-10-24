@@ -2576,7 +2576,7 @@ Source: https://graview.dev/docs/packages/primitives.html
 pnpm add @graview/primitives
 ```
 
-Entry points: `@graview/primitives`, `@graview/primitives/frame`, `@graview/primitives/pages`, `@graview/primitives/scene`, `@graview/primitives/montserrat.css`, `@graview/primitives/montserrat-latin.woff2`
+Entry points: `@graview/primitives`, `@graview/primitives/frame`, `@graview/primitives/pages`, `@graview/primitives/form`, `@graview/primitives/scene`, `@graview/primitives/montserrat.css`, `@graview/primitives/montserrat-latin.woff2`
 
 ## What it is
 
@@ -2655,11 +2655,11 @@ The provider holds the store, the view registry, the current view, the selection
 
 A part fetched only when it is first drawn is a `lazyModule` over `retryingImport(() => import("./part.js"))` (from `@graview/core/retry`), drawn with its `part(draw, { what })`. Until it arrives, its place says so in one line with a "Try again" button (`lazy-part-missing`, `lazy-part-retry`) rather than throwing; it is asked for again when the browser is back online, when it is drawn again, on `prefetch()`, and when the button is pressed (`retryLazyParts`). Every part the framework fetches as it is drawn — the person's menu, the problems' rows, the faces, the views and lenses, the studio, the assistant — is one.
 
-## What it exports (161)
+## What it exports (163)
 
 Read off the package's own barrel, so this is what is there today.
 
-`ACTIVITY_HOLD_MS`, `adjustment`, `afterFirstDraw`, `altitudeOpacity`, `anchorOf`, `applySettings`, `AUDIENCE_ROW`, `bandRows`, `BesideTheMap`, `bleeds`, `BLEEDS`, `channelRoute`, `clipPolyline`, `clipQuadratic`, `connectorStrands`, `createAiDesk`, `createMotionStore`, `createPartsWatch`, `createPointerStore`, `createSeatTalk`, `createViews`, `DEFAULT_VIEW`, `DefaultDrawnElsewhere`, `districtOf`, `ErrorReportContext`, `Figure`, `firstDrawn`, `foldRobots`, `GoToContext`, `GraviewProvider`, `hasLanded`, `HEARTBEAT_MS`, `honorSetting`, `HostFilesContext`, `inTopLayer`, `isDefaultView`, `KeptViewsProvider`, `kitConnector`, `landingIn`, `latticePoints`, `layerViews`, `lazyModule`, `lazyPart`, `loadSetting`, `mapChoice`, `markActivity`, `markBleeds`, `markDefaultView`, `markLanded`, `markPreviews`, `markReplacesPage`, `matchWith`, `MenuSections`, `NOTHING_FOUND`, `Occupants`, `onScreen`, `openingView`, `orthogonalPoints`, `PageDoor`, `PageDoorContext`, `partArriving`, `participantOf`, `partsArriving`, `partsWaiting`, `PartsWatchContext`, `partsWatchMoved`, `PersonFigure`, `pickedFrom`, `PLACE_MENU_EVENT`, `placeDrawn`, `placeOthers`, `placePane`, `placeWatched`, `PlaybackContext`, `polylineD`, `POPOVER_STYLE`, `POPOVERS`, `prepareAffordances`, `PRESENCE_SETTINGS`, `previewOf`, `PREVIEWS`, `raiseOverPopovers`, `rememberSetting`, `REPLACES_PAGE`, `replacesPage`, `ResolvedView`, `retryLazyParts`, `RIBBON_WIDTH`, `ribbonSentence`, `ribbonsOf`, `ribbonWidth`, `ROBOT_REST_MS`, `roundedPolylineD`, `routedQuadratic`, `routePoint`, `Scene`, `ScenePreviewing`, `SeatMarks`, `seatTalkKey`, `selectionFor`, `SHARE_OVER`, `SHARE_WHERE`, `stackOpacity`, `standingFor`, `tabSession`, `tieRoute`, `TypingContext`, `UrlSync`, `useActivity`, `useAffordances`, `useAiDeskState`, `useAnimatedLayout`, `useApplyAffordance`, `useAttention`, `useBacktrack`, `useDrawnSize`, `useEditableFields`, `useFlagged`, `useFound`, `useGoTo`, `useGraph`, `useGraview`, `useGraviewIfAny`, `useHostFiles`, `useImplicated`, `useJackIn`, `useKit`, `useLiveStore`, `useLocalIntelligence`, `useMarqueeRoom`, `useMenuPrepare`, `useMenuSections`, `useNavigation`, `useNode`, `useOwnPlayback`, `usePlayback`, `usePopover`, `usePresenceState`, `useReached`, `useReadersServed`, `useRobots`, `useScenePointer`, `useSceneStill`, `useSeatTalkState`, `useSeatWork`, `useSelection`, `useTextMeasure`, `useTheKeyboardLandsSomewhere`, `useTheWatchKnowsWhatIsUnseen`, `useTidiedViews`, `useTopLayer`, `useTouched`, `useUrlSync`, `useViewMode`, `useViolations`, `useWhereIs`, `ViewBoundary`, `ViewContentHeight`, `ViewModeProvider`, `VISIT_EACH_UP_TO`, `whereIsIn`
+`ACTIVITY_HOLD_MS`, `adjustment`, `afterFirstDraw`, `altitudeOpacity`, `anchorOf`, `applySettings`, `AUDIENCE_ROW`, `bandRows`, `BesideTheMap`, `bleeds`, `BLEEDS`, `channelRoute`, `clipPolyline`, `clipQuadratic`, `connectorStrands`, `createAiDesk`, `createMotionStore`, `createPartsWatch`, `createPointerStore`, `createSeatTalk`, `createViews`, `DEFAULT_VIEW`, `DefaultDrawnElsewhere`, `districtOf`, `ErrorReportContext`, `Figure`, `firstDrawn`, `foldRobots`, `GoToContext`, `GraviewProvider`, `hasLanded`, `HEARTBEAT_MS`, `honorSetting`, `HostFilesContext`, `inTopLayer`, `isDefaultView`, `KeptViewsProvider`, `kitConnector`, `landingIn`, `latticePoints`, `layerViews`, `lazyModule`, `lazyPart`, `loadSetting`, `mapChoice`, `markActivity`, `markBleeds`, `markDefaultView`, `markLanded`, `markPreviews`, `markReplacesPage`, `matchWith`, `MenuSections`, `NOTHING_FOUND`, `Occupants`, `onScreen`, `openingView`, `orthogonalPoints`, `PageDoor`, `PageDoorContext`, `PanFree`, `partArriving`, `participantOf`, `partsArriving`, `partsWaiting`, `PartsWatchContext`, `partsWatchMoved`, `PersonFigure`, `pickedFrom`, `PLACE_MENU_EVENT`, `placeDrawn`, `placeOthers`, `placePane`, `placeWatched`, `PlaybackContext`, `polylineD`, `POPOVER_STYLE`, `POPOVERS`, `prepareAffordances`, `PRESENCE_SETTINGS`, `previewOf`, `PREVIEWS`, `raiseOverPopovers`, `rememberSetting`, `REPLACES_PAGE`, `replacesPage`, `ResolvedView`, `retryLazyParts`, `RIBBON_WIDTH`, `ribbonSentence`, `ribbonsOf`, `ribbonWidth`, `ROBOT_REST_MS`, `roundedPolylineD`, `routedQuadratic`, `routePoint`, `Scene`, `ScenePreviewing`, `SeatMarks`, `seatTalkKey`, `selectionFor`, `SHARE_OVER`, `SHARE_WHERE`, `stackOpacity`, `standingFor`, `tabSession`, `tieRoute`, `TypingContext`, `UrlSync`, `useActivity`, `useAffordances`, `useAiDeskState`, `useAnimatedLayout`, `useApplyAffordance`, `useAttention`, `useBacktrack`, `useDrawnSize`, `useEditableFields`, `useFlagged`, `useFound`, `useGoTo`, `useGraph`, `useGraview`, `useGraviewIfAny`, `useHostFiles`, `useImplicated`, `useJackIn`, `useKit`, `useLiveStore`, `useLocalIntelligence`, `useMarqueeRoom`, `useMenuPrepare`, `useMenuSections`, `useNavigation`, `useNode`, `useOwnPlayback`, `usePanFreeContext`, `usePlayback`, `usePopover`, `usePresenceState`, `useReached`, `useReadersServed`, `useRobots`, `useScenePointer`, `useSceneStill`, `useSeatTalkState`, `useSeatWork`, `useSelection`, `useTextMeasure`, `useTheKeyboardLandsSomewhere`, `useTheWatchKnowsWhatIsUnseen`, `useTidiedViews`, `useTopLayer`, `useTouched`, `useUrlSync`, `useViewMode`, `useViolations`, `useWhereIs`, `ViewBoundary`, `ViewContentHeight`, `ViewModeProvider`, `VISIT_EACH_UP_TO`, `whereIsIn`
 
 ---
 
@@ -4462,7 +4462,7 @@ The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, P
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) — `graview create` does — and the face puts the scene's provider under its routes:
 
-- `/places`, `/places/<as>` — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath unless the lens says `create: false`). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record.
+- `/places`, `/places/<as>` — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath unless the lens says `create: false`). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record. A script view that draws its own heading says `heading: "own"` in its manifest: its place then draws no title or count over it.
 - `/map` — `kindMap(store)`: every declared relation in its words with its live count, also a section on the home page. A kind's list says what it relates to, arranged in the shared words (`?sort=due:desc`, `?filter=done:false`, `?group=due:month`, `?q=tape`) a lens carries in its fragment, so an arrangement is a link; `?by=`, `?<edge>=<id>`, `?with=` and `?past=1` still land. A record links back.
 - `/search?q=` — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places `<PageFind>` or `<PageUndo>` where it wants them, else they are drawn around it (`without: ["find"]` goes without; at a bar's height, `graview-pages-design`).
 - **The quick ask** (⌘K, where `ai` gives a model): a bar and answer card by the page's heading, the ROUTE what "this" means. `context.quickAsk: false` draws none.
@@ -5209,11 +5209,11 @@ A worker view (`graview-worker-view`: its manifest, its global, its writes and i
 
 ### What it may draw
 
-HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, transitions, `@keyframes`, `@media`, `@supports` and `@container`. Each `graview.style(css)` adds a sheet after the last (a shared design system's, then the view's own), each judged alone; a sheet given again is not added twice, so say what changes per push in a class or a `style` attribute.
+HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol`, `use href="#id"`, `filter` and its `fe*`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, `mask-image`, `-webkit-text-stroke`, transitions, `@keyframes`, `animation-timeline`, `@media`, `@supports` and `@container`; reduced motion holds motion still. Each `graview.style(css)` adds a sheet after the last (a shared design system's, then the view's own), each judged alone; a sheet given again is not added twice, so say what changes per push in a class or a `style` attribute.
 
-Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image` and `foreignObject`; any `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` is kept — a header held in place sticks within the view, whose region is painted contained — and `all` takes its keywords (`button.toggle { all: unset }` takes the browser's chrome off a toggle). What the host leaves out it lists in `refused`; `graview.refused` is the runtime's own early word on the last render.
+Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image`, `feImage`, `foreignObject` and SMIL; any `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`; `@import`; `@font-face`; `@property`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` is kept — a header held in place sticks within the view, whose region is painted contained — and `all` takes its keywords (`all: unset` takes a button's chrome off). What the host leaves out it lists in `refused` (below).
 
-A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They lose their landmark or status role, and a selector for them in your stylesheet still matches. A `section` is never named (no `aria-label` or `title`), so it stays out of the landmarks. `role` takes no landmark or notice's role (`navigation`, `region`, `status`, `alert`, …).
+A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They lose their landmark or status role, and a selector for them in your stylesheet still matches. A `section` is never named, so it stays out of the landmarks. `role` takes no landmark or notice's role (`navigation`, `status`, `alert`, …) but a named `region`.
 
 A control of your own keeps its role and state, and every `aria-*`: `<span role="checkbox" aria-checked="true" tabindex="0">`, `switch`, `aria-pressed`, `aria-expanded` with `aria-controls` naming an id you drew, tabs (`aria-selected`), `slider` (`aria-valuenow`). Hear Space and Enter on `keydown`. A headless run draws them as the page does.
 
@@ -5223,7 +5223,7 @@ A control of your own keeps its role and state, and every `aria-*`: `<span role=
 
 ### Its box, and the gutter
 
-On Pages a view is drawn in the page's column, which keeps a 20px gutter either side on a phone. Nothing the view draws passes its box: a negative margin is clipped at its edge, not widened. Say `bleed: true` in the manifest and on a phone (680px or less) the box takes the gutter back, keeping the safe areas: a hero is the phone's width. At a desk it is the column's width either way.
+On Pages a view is drawn in the page's column, which keeps a 20px gutter either side on a phone. Nothing the view draws passes its box: a negative margin is clipped at its edge, not widened. Say `bleed: true` in the manifest and on a phone (680px or less) the box takes the gutter back (on a place too), keeping the safe areas: a hero is the phone's width. At a desk it is the column's width either way.
 
 ### The images a view may show
 
@@ -5395,24 +5395,26 @@ A worker view (`graview-worker-view`: its manifest, its global, its limits) writ
 
 `<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows. On the routed pages the host gives each the address it goes to as its `href` (`/a/<app>/offers/offer%3A7`), so it shows on hover, copies, and opens in a new tab on Cmd- or Ctrl-click or a middle click; a plain click, a tap and Enter stay in the app. On the scene, which has no addresses, it is given the keyboard and a link's role instead — and so in an embed whose host keeps its own addresses (memory routing), unless the host says its address for a page with the embed's `hrefOf`. A `<button data-record>` goes there too. `<a href>` goes out only to an address a record was handed — its own url, `mailto:`, `tel:` (below). A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places. A titled view of many is a place too, at `/places/<its title as a slug>`: `data-place="live-threats"` reaches the view "Live threats", and the check knows it when its host hands the views it keeps. From code, `graview.navigate("offer:7")` goes by the same rules.
 
+In SVG the same `<a data-record>` is a link — a timeline's dot, a map's pin — with its address, the keyboard and Enter: `<svg role="group" aria-label="…"><a data-record="amendment:19" aria-label="19th, 1920"><circle …/></a></svg>`. It takes no `href` of yours; a link out is an HTML one.
+
 ### Links out
 
 `<a href="${node.url}">` is drawn where the address is one a record the view was shown holds, as it holds it — an `https:` page, a `mailto:`, a `tel:` — or an `https:` address on an origin the host lists (`links: { origins }` on the view's definition and a headless run). The host opens it in a new tab, no opener, no referrer, marked ↗. An address you build, `javascript:`, `data:` or `http:` is refused: a link a view made could carry what it reads out.
 
 ### A card that opens
 
-Any element with `data-record` or `data-place` is a link, not only an `<a>`:
+Any element with `data-record` or `data-place` is a link, not only an `<a>`. Put an `<a>` to the same record on its heading:
 
 ```html
 <div class="card" data-record="threat:7">
-  <h3>Invoice phishing</h3>
+  <h3><a data-record="threat:7">Invoice phishing</a></h3>
   <span class="badge">critical</span><span class="badge">new</span>
   <p>Forty mailboxes got the fake invoice.</p>
   <button data-more="threat:7">More</button>
 </div>
 ```
 
-The host gives it the keyboard (`tabindex="0"`), makes it a link to assistive technology (`role="link"`; a list's item keeps its own role, and a table's row keeps its role and gives the keyboard to its first cell, where Enter opens the row), draws it with a pointer, `touch-action: manipulation` and a faint tap highlight, and follows it on a click, on Enter, and on a phone's tap. A press anywhere inside it opens it — its heading, a badge, a line — unless it lands on something with a press of its own: a button, a field, a `data-act`, a lightbox, a drop target, a control's `role`, another link. So "More" above toggles and opens nothing.
+The heading's `<a>` is the keyboard's and the screen reader's link; the card, a `<div>` or an `<li>` alike, takes no role and no tab stop of its own, and is a bigger target: the host draws it with a pointer, `touch-action: manipulation` and a faint tap highlight, and follows it on a click and a phone's tap anywhere inside it — its heading, a badge, a line — unless the press lands on something with a press of its own: a button, a field, a `data-act`, a lightbox, a drop target, a control's `role`, another link. So "More" above toggles and opens nothing, and the audit finds no link inside a link. A card with no such `<a>` is given the keyboard and `role="link"` itself (a list's item keeps its role; a table's row gives the keyboard to its first cell); then it may hold no button, and a heading that links elsewhere is a link inside a link.
 
 It is no link when it is a press scope: a `fieldset` or `role="group"` (the record a form's acts are done to), an element with `data-act`, `data-lightbox`, `data-drop` or `data-field`, a field, or an element that holds a field to type into or pick from (a checkbox inside leaves its row a link). Link such a card's title instead: `<h3><a data-record="…">`.
 
@@ -7293,7 +7295,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 446 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 447 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -7309,7 +7311,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | --- | --- | --- |
 | `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 70 |
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
-| `entry` | One subpath a package exports, as a product imports it. | 101 |
+| `entry` | One subpath a package exports, as a product imports it. | 102 |
 | `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 30 |
 | `check` | A thing graview check can say, read out of the checker's source. | 124 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |

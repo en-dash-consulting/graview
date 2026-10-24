@@ -1,49 +1,49 @@
 {
-  "at": "2026-10-24T03:15:47.815Z",
+  "at": "2026-10-24T12:24:18.174Z",
   "packages": {
     "@graview/core": {
       "files": 1276,
-      "tarballBytes": 1499028,
+      "tarballBytes": 1502029,
       "ok": true
     },
     "create-graview": {
       "files": 11,
-      "tarballBytes": 3662,
+      "tarballBytes": 3661,
       "ok": true
     },
     "@graview/embed": {
       "files": 63,
-      "tarballBytes": 93904,
+      "tarballBytes": 94199,
       "ok": true
     },
     "graview": {
       "files": 182,
-      "tarballBytes": 725600,
+      "tarballBytes": 730956,
       "ok": true
     },
     "@graview/guest": {
       "files": 300,
-      "tarballBytes": 430013,
+      "tarballBytes": 438249,
       "ok": true
     },
     "@graview/layout": {
       "files": 67,
-      "tarballBytes": 107524,
+      "tarballBytes": 107832,
       "ok": true
     },
     "@graview/pages": {
       "files": 135,
-      "tarballBytes": 193200,
+      "tarballBytes": 194154,
       "ok": true
     },
     "@graview/primitives": {
       "files": 638,
-      "tarballBytes": 834688,
+      "tarballBytes": 836105,
       "ok": true
     },
     "@graview/react": {
-      "files": 311,
-      "tarballBytes": 364344,
+      "files": 315,
+      "tarballBytes": 377944,
       "ok": true
     },
     "@graview/render": {
@@ -58,7 +58,7 @@
     },
     "@graview/skills": {
       "files": 47,
-      "tarballBytes": 105236,
+      "tarballBytes": 105549,
       "ok": true
     },
     "@graview/studio": {
@@ -68,7 +68,7 @@
     },
     "@graview/tools": {
       "files": 235,
-      "tarballBytes": 366448,
+      "tarballBytes": 366447,
       "ok": true
     }
   },
@@ -79,12 +79,12 @@
     {
       "name": "the pages face alone",
       "load": "first",
-      "minified": 658466,
-      "gzipped": 242602,
+      "minified": 659973,
+      "gzipped": 243137,
       "chunks": 39,
       "budget": {
-        "minified": 658534,
-        "gzipped": 242793
+        "minified": 660302,
+        "gzipped": 243296
       },
       "carries": [],
       "defers": [],
@@ -103,12 +103,12 @@
     {
       "name": "a visitor's form alone",
       "load": "first",
-      "minified": 390604,
-      "gzipped": 149915,
-      "chunks": 36,
+      "minified": 235585,
+      "gzipped": 86583,
+      "chunks": 8,
       "budget": {
-        "minified": 390720,
-        "gzipped": 150048
+        "minified": 237920,
+        "gzipped": 87798
       },
       "carries": [],
       "defers": [],
@@ -123,10 +123,33 @@
       "over": false
     },
     {
+      "name": "a visitor's form handed a compiled app",
+      "load": "first",
+      "minified": 309049,
+      "gzipped": 113762,
+      "chunks": 10,
+      "budget": {
+        "minified": 311000,
+        "gzipped": 114800
+      },
+      "carries": [],
+      "defers": [],
+      "lazy": [
+        "@graview/core",
+        "@graview/layout",
+        "@graview/primitives",
+        "@graview/react",
+        "@graview/render",
+        "@graview/ship",
+        "@graview/tools"
+      ],
+      "over": false
+    },
+    {
       "name": "embed without the studio",
       "load": "first",
-      "minified": 387228,
-      "gzipped": 136212,
+      "minified": 387917,
+      "gzipped": 136449,
       "chunks": 9,
       "budget": {
         "minified": 725090,
@@ -152,8 +175,8 @@
     {
       "name": "every face",
       "load": "all",
-      "minified": 2257834,
-      "gzipped": 826670,
+      "minified": 2271709,
+      "gzipped": 831510,
       "chunks": 166,
       "budget": {
         "minified": 2500880,
@@ -179,8 +202,8 @@
     {
       "name": "embed with the studio handed in",
       "load": "first",
-      "minified": 1598805,
-      "gzipped": 566510,
+      "minified": 1603835,
+      "gzipped": 568199,
       "chunks": 78,
       "budget": {
         "minified": 1881752,
@@ -235,7 +258,7 @@
       "name": "the guest host, before a worker is drawn",
       "load": "first",
       "minified": 24914,
-      "gzipped": 11644,
+      "gzipped": 11638,
       "chunks": 8,
       "budget": {
         "minified": 24945,
@@ -253,12 +276,12 @@
     {
       "name": "the guest host, registering a worker view",
       "load": "first",
-      "minified": 31729,
-      "gzipped": 14268,
+      "minified": 32620,
+      "gzipped": 14501,
       "chunks": 10,
       "budget": {
-        "minified": 31743,
-        "gzipped": 14271
+        "minified": 32628,
+        "gzipped": 14506
       },
       "carries": [],
       "defers": [],
@@ -273,7 +296,7 @@
       "name": "the guest host, drawing a worker",
       "load": "first",
       "minified": 22853,
-      "gzipped": 9486,
+      "gzipped": 9487,
       "chunks": 4,
       "budget": {
         "minified": 22853,
@@ -290,12 +313,12 @@
     {
       "name": "the guest host, drawing a worker view on the open kit",
       "load": "all",
-      "minified": 195871,
-      "gzipped": 74484,
+      "minified": 201482,
+      "gzipped": 76288,
       "chunks": 16,
       "budget": {
-        "minified": 195871,
-        "gzipped": 74488
+        "minified": 201482,
+        "gzipped": 76294
       },
       "carries": [],
       "defers": [],
@@ -308,12 +331,12 @@
     {
       "name": "a worker view's runtime",
       "load": "all",
-      "minified": 61954,
-      "gzipped": 21418,
+      "minified": 63566,
+      "gzipped": 21956,
       "chunks": 1,
       "budget": {
-        "minified": 61954,
-        "gzipped": 21418
+        "minified": 63566,
+        "gzipped": 21956
       },
       "carries": [],
       "defers": [],

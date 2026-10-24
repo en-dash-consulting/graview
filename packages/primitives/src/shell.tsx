@@ -1,5 +1,5 @@
 import { faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles, type KeptViews, type ResolveApp } from "@graview/core";
-import { BesideTheMap, HostFilesContext, KeptViewsProvider, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
+import { BesideTheMap, HostFilesContext, KeptViewsProvider, PanFree, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode, useRef } from "react";
 import { withOverview } from "@graview/layout/view";
@@ -285,6 +285,8 @@ function ShellFace<S extends AnySchema>({
         <OverviewButton />
         {/* What the lines mean, beside Up: the picture's own key. */}
         <LinesKey<S> />
+        {/* What floats over the picture is not told the pan (`PanFree`): a drag let go of draws none of it again. */}
+        <PanFree>
         {/* A panel the AI drew, in place of the picture. */}
         <DraftDoor />
         {/* THE QUICK ASK: ⌘K's bar beside what is selected, and the answers it leaves there as cards. */}
@@ -312,6 +314,7 @@ function ShellFace<S extends AnySchema>({
         <SceneWayBack />
         {/* The app as it was, and the way through it (Roadmap f-playback): over the picture while the timeline is open. */}
         <PastBar face="scene" />
+        </PanFree>
       </main>
       <Notices board={board} anchor={scene} />
       {firstLook ? <FirstLookDoor firstLook={firstLook} root={inShell} app={appKeyOf(brand, store.schema)} /> : null}

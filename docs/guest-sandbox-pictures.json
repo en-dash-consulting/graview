@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T15:23:23.390Z",
+  "at": "2026-10-24T04:03:13.303Z",
   "transport": "pictures",
   "engine": "chromium",
   "claims": {
@@ -70,11 +70,11 @@
       "ok": true,
       "detail": [
         {
-          "url": "http://127.0.0.1:5692/graview/files/porch-3f9a.png",
+          "url": "http://127.0.0.1:5792/graview/files/porch-3f9a.png",
           "type": "fetch"
         },
         {
-          "url": "http://127.0.0.1:5692/graview/files/step-77c1.png",
+          "url": "http://127.0.0.1:5792/graview/files/step-77c1.png",
           "type": "fetch"
         }
       ]
@@ -83,11 +83,11 @@
       "ok": true,
       "detail": [
         {
-          "url": "http://127.0.0.1:5692/graview/files/porch-3f9a.png",
+          "url": "http://127.0.0.1:5792/graview/files/porch-3f9a.png",
           "type": "fetch"
         },
         {
-          "url": "http://127.0.0.1:5692/graview/files/step-77c1.png",
+          "url": "http://127.0.0.1:5792/graview/files/step-77c1.png",
           "type": "fetch"
         }
       ]
@@ -141,11 +141,11 @@
       "ok": true,
       "detail": [
         {
-          "url": "http://127.0.0.1:5692/a/jobs/graview/files/porch-3f9a.png",
+          "url": "http://127.0.0.1:5792/a/jobs/graview/files/porch-3f9a.png",
           "type": "fetch"
         },
         {
-          "url": "http://127.0.0.1:5692/a/jobs/graview/files/step-77c1.png",
+          "url": "http://127.0.0.1:5792/a/jobs/graview/files/step-77c1.png",
           "type": "fetch"
         }
       ]
@@ -168,11 +168,11 @@
         ],
         "requests": [
           {
-            "url": "http://127.0.0.1:5692/a/jobs/graview/files/porch-3f9a.png",
+            "url": "http://127.0.0.1:5792/a/jobs/graview/files/porch-3f9a.png",
             "type": "fetch"
           },
           {
-            "url": "http://127.0.0.1:5692/a/jobs/graview/files/step-77c1.png",
+            "url": "http://127.0.0.1:5792/a/jobs/graview/files/step-77c1.png",
             "type": "fetch"
           }
         ]
@@ -202,9 +202,9 @@
           ]
         },
         "requests": [
-          "http://127.0.0.1:5692/a/jobs/graview/files/porch-3f9a.png",
-          "http://127.0.0.1:5692/a/jobs/graview/files/step-77c1.png",
-          "http://127.0.0.1:5692/a/jobs/graview/files/plan-02bd.svg"
+          "http://127.0.0.1:5792/a/jobs/graview/files/porch-3f9a.png",
+          "http://127.0.0.1:5792/a/jobs/graview/files/step-77c1.png",
+          "http://127.0.0.1:5792/a/jobs/graview/files/plan-02bd.svg"
         ]
       }
     },

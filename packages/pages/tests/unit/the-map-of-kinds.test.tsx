@@ -124,7 +124,8 @@ describe("the map of kinds", () => {
     expect(morning).toContain('href="/people?does=m"');
     expect(morning).toContain('data-testid="seen-in"');
     expect(morning).toContain('href="/places/the-rota"');
-    expect(morning).toContain('href="/#view=the-rota"');
+    // Once, to its page: the record's own "In the scene" says where it stands there (Roadmap f-seen-in-phone-length).
+    expect(morning).not.toContain('href="/#view=the-rota"');
     expect(ana).not.toContain('data-testid="seen-in"');
   });
 });

@@ -20,6 +20,11 @@
  *             the region's containment and paint over the app's own bar;
  *   speaker   landmarks and notices by element, by role and by a named
  *             section, read back from each engine's accessibility tree;
+ *   effects   what a view may draw since 2026-10-23: a scrolling lane it
+ *             names with role="region", a card that carries its link on its
+ *             heading, an <a data-record> in its SVG, a mask, an outlined
+ *             numeral, a scroll-driven reveal and an SVG filter — and
+ *             @property and SMIL refused, said with why, headless too;
  *   controls  a view's own accessible controls — a span with
  *             role="checkbox" and aria-checked, ticked by a press, a
  *             switch, tabs, a radio group, a slider — read back from the
@@ -163,7 +168,7 @@ graview.style(".said header { color: rgb(1, 2, 3); }");
 graview.onProps(() => graview.render(graview.html\`
   <div class="said"><nav id="said-nav">Main menu</nav><header>The app</header></div><footer>Footer</footer><aside>Aside</aside><search>Search</search>
   <section aria-label="Notices">Named by aria-label</section><section title="Updates">Named by title</section><output>Saved</output>
-  <div role="complementary">c</div><div role="search">s</div><div role="form" aria-label="Sign in">f</div><div role="region" aria-label="Region">r</div>
+  <div role="complementary">c</div><div role="search">s</div><div role="form" aria-label="Sign in">f</div><div role="region">An unnamed region</div>
   <div role="status">st</div><div role="log">lg</div><nav role="none" tabindex="0" aria-label="Back door">Presentational, but focusable and named</nav>
   <p id="said-done">said</p>\`));
 `);
@@ -218,6 +223,38 @@ graview.onProps(function (props) {
 `;
   const linkerJs = await viewScript(linkerSource);
 
+  /*
+   * What a view may draw since 2026-10-23 (Civics Desk's timeline, the Eagles' faces and effects): a sideways lane named as a
+   * region, a card whose heading carries its link, a dot on an SVG timeline that is a link to the car, a carousel's edge faded by
+   * a mask, an outlined numeral, a reveal on the scroll, a glow from an SVG filter; and @property and SMIL, which stay out.
+   */
+  const effectsSource = `
+graview.style(\`
+@property --turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.lane { display: flex; gap: 8px; overflow-x: auto; max-width: 200px; }
+.lane span { flex: 0 0 120px; }
+.reel { height: 20px; mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); background: var(--graview-accent); }
+.num { font: 700 48px/1 var(--graview-font-body); -webkit-text-stroke: 2px rgb(1, 2, 3); -webkit-text-fill-color: transparent; }
+@keyframes rise { from { opacity: 0.2; } to { opacity: 1; } }
+.reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% cover 40%; }
+.pulse { animation: rise 2s linear infinite; }
+.dot { filter: url(#glow); }
+\`);
+graview.onProps(function (props) {
+  var car = (props.nodes || []).find(function (node) { return node.kind === "car"; }) || {};
+  graview.render(graview.html\`
+    <div id="lane" class="lane" role="region" aria-label="Every car, by year" tabindex="0"><span>1974</span><span>1983</span><span>1991</span><span>1997</span></div>
+    <div id="face" class="face" data-record="\${car.id}"><h3><a id="face-link" data-record="\${car.id}">\${car.label}</a></h3><p id="face-line">Five doors, one owner.</p></div>
+    <svg id="timeline" viewBox="0 0 100 20" width="200" height="40" role="group" aria-label="Cars, by year">
+      <defs><filter id="glow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <a id="dot" data-record="\${car.id}" aria-label="\${"The " + car.label}"><circle class="dot" cx="10" cy="10" r="4" fill="currentColor"><animate attributeName="r" values="4;6;4" dur="1s" repeatCount="indefinite"/></circle></a>
+    </svg>
+    <div id="reel" class="reel"></div><p id="num" class="num">88</p><p id="reveal" class="reveal">Revealed</p><p id="pulse" class="pulse">Pulsing</p>
+    <p id="effects-done">drawn</p>\`);
+});
+`;
+  const effectsJs = await viewScript(effectsSource);
+
   const widgetJs = (
     await build({
       stdin: {
@@ -226,8 +263,10 @@ import { mountWorkerView } from "./packages/guest/dist/host/worker.js";
 ${SHOWROOM}
 const failures = [];
 const views = {};
-for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER], ["speaker", SPEAKER], ["controls", CONTROLS], ["linker", LINKER]]) {
-  views[name] = mountWorkerView(document.getElementById(name), { manifest: { name, attach: "car", cardinality: "many", reads: { kinds: ["shopper"] } }, worker: { script }, store, principal: bethan, onFailure: (reason, detail) => failures.push([name, reason, detail]) });
+for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER], ["speaker", SPEAKER], ["controls", CONTROLS], ["linker", LINKER], ["effects", EFFECTS]]) {
+  /* The effects view is on a face whose places are addresses: its links carry the host's own (hrefOf), and are followed in the app. */
+  const goes = name === "effects" ? { onNavigate: (to) => went.push(to), hrefOf: (to) => ("record" in to ? "/?at=" + encodeURIComponent(to.record) : undefined) } : {};
+  views[name] = mountWorkerView(document.getElementById(name), { manifest: { name, attach: "car", cardinality: "many", reads: { kinds: ["shopper"] } }, worker: { script }, store, principal: bethan, ...goes, onFailure: (reason, detail) => failures.push([name, reason, detail]) });
 }
 window.__host = {
   ...host,
@@ -248,14 +287,14 @@ window.__host = {
       define: { "process.env.NODE_ENV": '"production"' },
     })
   ).outputFiles[0].text;
-  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)}; const SPEAKER = ${JSON.stringify(speakerJs)}; const CONTROLS = ${JSON.stringify(controlsJs)}; const LINKER = ${JSON.stringify(linkerJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
+  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)}; const SPEAKER = ${JSON.stringify(speakerJs)}; const CONTROLS = ${JSON.stringify(controlsJs)}; const LINKER = ${JSON.stringify(linkerJs)}; const EFFECTS = ${JSON.stringify(effectsJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
   const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>The app</title><style>${TOKENS(core)}
 body { margin: 0; background: var(--graview-ground); color: var(--graview-ink); font-family: var(--graview-font-body); }
 #bar { height: 48px; display: flex; align-items: center; padding: 0 12px; border-bottom: 1px solid var(--graview-edge); }
 main { display: grid; gap: 16px; padding: 16px; }
 #showcase, #escapes, #prober { border: 1px dashed var(--graview-edge); }
 .probe-panel { background-color: var(--graview-panel); border-top: 1px solid var(--graview-edge); color: var(--graview-accent); }
-</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div><div id="speaker"></div><div id="controls"></div><div id="linker"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
+</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div><div id="speaker"></div><div id="controls"></div><div id="linker"></div><div id="effects"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
 
   const attacker = { requests: [], connections: 0 };
   const servers = [
@@ -317,6 +356,7 @@ main { display: grid; gap: 16px; padding: 16px; }
     await waitFor("speaker", "#said-done", "the speaker");
     await waitFor("controls", "#controls-done", "the controls");
     await waitFor("linker", "#linker-done", "the linker");
+    await waitFor("effects", "#effects-done", "the effects");
     /* Long enough for anything kept to have been fetched: images, fonts, a preconnect. */
     await tab.waitForTimeout(1_500);
 
@@ -595,6 +635,100 @@ main { display: grid; gap: 16px; padding: 16px; }
       "the same view run headless refuses the same two links and says each — no address it was handed, a scheme no link takes — and nothing else",
       linkRun.ok && linkSaid.length === 2 && linkSaid.some((said) => said.includes('"https://cars.example/golf?read=Golf" was not drawn: it is no address this view was handed')) && linkSaid.some((said) => said.includes('"javascript:alert(1)" was not drawn: a view links only to an https:, mailto: or tel: address')),
       linkRun.ok ? linkSaid : linkRun,
+    );
+    // ── what a view may draw since 2026-10-23 ──
+    const effects = await app.evaluate(() => {
+      const root = document.querySelector("#effects [data-worker-view]").shadowRoot;
+      const one = (id) => root.getElementById(id);
+      const style = (id) => getComputedStyle(one(id));
+      const face = one("face");
+      const dot = one("dot");
+      return {
+        lane: { role: one("lane").getAttribute("role"), tabindex: one("lane").getAttribute("tabindex") },
+        face: { link: face.hasAttribute("data-graview-link"), role: face.getAttribute("role"), tabindex: face.getAttribute("tabindex"), heading: { href: one("face-link").getAttribute("href"), tabindex: one("face-link").getAttribute("tabindex") } },
+        dot: dot && { namespace: dot.namespaceURI, href: dot.getAttribute("href"), link: dot.hasAttribute("data-graview-link"), animate: dot.querySelector("animate") !== null },
+        mask: style("reel").maskImage || style("reel").webkitMaskImage,
+        stroke: { width: style("num").webkitTextStrokeWidth, color: style("num").webkitTextStrokeColor },
+        timeline: { supported: CSS.supports("animation-timeline", "view()"), drawn: style("reveal").animationTimeline ?? null },
+        filter: { element: root.querySelector("filter#glow feGaussianBlur") !== null, applied: getComputedStyle(root.querySelector("circle.dot")).filter },
+        sheet: root.querySelector("style[data-graview-view-style]").textContent,
+      };
+    });
+    const effectsRefused = await app.evaluate(() => window.__host.refused().effects);
+    if (!proxied) {
+      const effectsTree = await tab.accessibility.snapshot({ root: await app.evaluateHandle(() => document.querySelector("#effects [data-worker-view]")), interestingOnly: false });
+      const regions = [];
+      const walkRegions = (node) => {
+        for (const child of node?.children ?? []) {
+          if (String(child.role).toLowerCase() === "region") regions.push(child.name);
+          walkRegions(child);
+        }
+      };
+      walkRegions(effectsTree);
+      const unnamed = spoken.filter((role) => String(role).toLowerCase() === "region");
+      claim(
+        'a scrolling lane the view names with role="region" and aria-label is a region in the engine\'s accessibility tree, and the speaker\'s unnamed one is drawn with no role',
+        effects.lane.role === "region" && effects.lane.tabindex === "0" && regions.includes("Every car, by year") && unnamed.length === 0,
+        { lane: effects.lane, regions, unnamed },
+      );
+    }
+    claim(
+      "a card the view bound to a record that carries its link on its heading is no second link: no role and no tab stop of its own, and its heading's <a> carries the record's address",
+      effects.face.link && effects.face.role === null && effects.face.tabindex === null && effects.face.heading.href === "/?at=car%3Agolf",
+      effects.face,
+    );
+    claim(
+      "an <a data-record> in the view's SVG is drawn, in SVG, with the host's address for the record as its href (its SMIL <animate> is not drawn)",
+      effects.dot?.namespace === "http://www.w3.org/2000/svg" && effects.dot.link && effects.dot.href === "/?at=car%3Agolf" && !effects.dot.animate,
+      effects.dot,
+    );
+    const pressedAt = async (selector, how) => {
+      await app.evaluate(() => (window.__host.went.length = 0));
+      if (how === "click") await app.locator(`#effects ${selector}`).click();
+      else {
+        await app.locator(`#effects ${selector}`).focus();
+        await tab.keyboard.press("Enter");
+      }
+      for (let i = 0; i < 20 && (await app.evaluate(() => window.__host.went.length)) === 0; i += 1) await tab.waitForTimeout(50);
+      return app.evaluate(() => [...window.__host.went]);
+    };
+    const dotFocused = await app.evaluate(() => {
+      const root = document.querySelector("#effects [data-worker-view]").shadowRoot;
+      root.getElementById("dot").focus();
+      return root.activeElement?.id ?? null;
+    });
+    const dotEntered = await pressedAt("#dot", "enter");
+    const dotClicked = await pressedAt("#dot circle", "click");
+    claim("the SVG link takes the keyboard, and Enter on it and a click on its dot each open the car in the app", dotFocused === "dot" && JSON.stringify(dotEntered) === JSON.stringify([{ record: "car:golf" }]) && JSON.stringify(dotClicked) === JSON.stringify([{ record: "car:golf" }]), { dotFocused, dotEntered, dotClicked });
+    const faceClicked = await pressedAt("#face-line", "click");
+    const faceEntered = await pressedAt("#face-link", "enter");
+    claim("a click on the card's own line still opens the car, and Enter on its heading's link does too", JSON.stringify(faceClicked) === JSON.stringify([{ record: "car:golf" }]) && JSON.stringify(faceEntered) === JSON.stringify([{ record: "car:golf" }]), { faceClicked, faceEntered });
+    claim(
+      "a view's mask-image of a gradient, its -webkit-text-stroke and its SVG filter by url(#id) are drawn as the engine computes them, and its scroll-driven animation-timeline wherever the engine has one",
+      /linear-gradient/.test(effects.mask) && effects.stroke.width === "2px" && effects.stroke.color === "rgb(1, 2, 3)" && effects.filter.element && /url\(.*#glow/.test(effects.filter.applied) &&
+        /animation-timeline: view\(\)/.test(effects.sheet) && (!effects.timeline.supported || effects.timeline.drawn === "view()"),
+      effects,
+    );
+    await tab.emulateMedia({ reducedMotion: "reduce" });
+    const still = await app.evaluate(() => {
+      const root = document.querySelector("#effects [data-worker-view]").shadowRoot;
+      const pulse = getComputedStyle(root.getElementById("pulse"));
+      const reveal = getComputedStyle(root.getElementById("reveal"));
+      return { pulse: { duration: pulse.animationDuration, count: pulse.animationIterationCount }, reveal: reveal.animationTimeline ?? null, ring: getComputedStyle(document.querySelector("#showcase [data-worker-view]").shadowRoot.querySelector(".ring")).animationDuration };
+    });
+    await tab.emulateMedia({ reducedMotion: "no-preference" });
+    claim(
+      "where a person asks for less motion, every animation a view draws is held still — its pulse and the showcase's ring run once in a millisecond, its reveal on no scroll — whatever the view's own sheet says",
+      still.pulse.duration === "0.001s" && still.pulse.count === "1" && still.ring === "0.001s" && (still.reveal === null || still.reveal === "auto"),
+      still,
+    );
+    const effectsRun = await guestHeadless.runWorkerViewHeadless({ store: linkStore, principal: { kind: "human", id: "u:bethan" }, run: guestNode.nodeIsolate(), manifest: { name: "effects", attach: "car", cardinality: "many" }, source: effectsSource });
+    const effectsSaid = effectsRun.ok ? effectsRun.description.problems.map((problem) => problem.says) : [];
+    claim(
+      "@property and SMIL's <animate> are refused on the page and headless alike, each said with why — the page's whole registry, and @keyframes held to reduced motion — and nothing else the view drew is",
+      effectsRefused.length === 2 && effectsRefused.some((one) => one.reason === "element" && one.element === "animate") && effectsRefused.some((one) => one.css?.name === "@property") && !/@property/.test(effects.sheet) &&
+        effectsSaid.length === 2 && effectsSaid.some((said) => /registers a property for the whole page/.test(said)) && effectsSaid.some((said) => /animate with CSS @keyframes/.test(said)),
+      { page: effectsRefused, headless: effectsRun.ok ? effectsSaid : effectsRun },
     );
     const failures = await app.evaluate(() => window.__host.failures);
     claim("no view failed", failures.length === 0, failures);

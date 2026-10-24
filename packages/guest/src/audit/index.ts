@@ -24,7 +24,7 @@
  * before it is judged. It is a tool, not drawing: no page loads it up front.
  */
 import { clickedOf } from "../host/clicked.js";
-import { clicksItself, focusable, isEntry, isKeyControl, isPress, opensOnPress, takesRole, type PressedElement } from "../host/pressable.js";
+import { carriesItsLink, clicksItself, focusable, isEntry, isKeyControl, isPress, opensOnPress, takesRole, type PressedElement } from "../host/pressable.js";
 import { measureView } from "./measure.js";
 import { AUDIT_RULES, type AuditImpact, type AuditProblem, type AuditRuleId, type ViewAudit } from "./rules.js";
 
@@ -226,7 +226,9 @@ export function markAsTheHost(root: AuditedNode): void {
     const holdsEntry = elementsOf(element).some(isEntry);
     if (!opensOnPress(element, holdsEntry)) continue;
     element.setAttribute("data-graview-link", "");
-    const anchor = isHtml(element, "a");
+    /* A card whose heading carries its link is a pointer's target only: no role, no tab stop. */
+    if (carriesItsLink(element, elementsOf(element))) continue;
+    const anchor = element.localName === "a";
     if (!element.hasAttribute("role") && (anchor || takesRole(element))) element.setAttribute("role", "link");
     if (isHtml(element, "tr")) {
       const cell = childrenOf(element).find((child) => child.localName === "td" || child.localName === "th");
@@ -301,6 +303,8 @@ export function auditView(root: AuditedNode, options: AuditViewOptions = {}): Vi
   };
   const shown = all.filter((one) => !hiddenFromAt(one));
   const named = (element: AuditedElement) => nameOf(element, byId, labels) !== "";
+  /* A card the host made a link whose heading carries the same link: the `<a>` is the control, the card no control at all. */
+  const carried = new Set(shown.filter((one) => one.hasAttribute("data-graview-link") && carriesItsLink(one, elementsOf(one))));
 
   /* KEYBOARD AND ROLE: what a person can click is reached by Tab, and says what it is. */
   for (const element of shown) {
@@ -311,6 +315,7 @@ export function auditView(root: AuditedNode, options: AuditViewOptions = {}): Vi
     const hears = clicked.has(element);
     if (!link && !press && !hears) continue;
     if (nativeControl(element) && tabbable(element)) continue;
+    if (carried.has(element) && !hears) continue;
     /* A table's row takes the keyboard on its first cell (host/links.ts). */
     if (isHtml(element, "tr") && childrenOf(element).some((cell) => (cell.localName === "td" || cell.localName === "th") && tabbable(cell))) continue;
     const reached = tabbable(element) || (hears && elementsOf(element).some((inner) => tabbable(inner) && (nativeControl(inner) || inner.hasAttribute("data-graview-press") || inner.hasAttribute("data-graview-link"))));
@@ -334,7 +339,7 @@ export function auditView(root: AuditedNode, options: AuditViewOptions = {}): Vi
 
   /* NAME: every control and link has one. */
   for (const element of shown) {
-    if (!isControl(element) || named(element)) continue;
+    if (!isControl(element) || carried.has(element) || named(element)) continue;
     const role = roleOf(element);
     const button = isHtml(element, "button") || role === "button" || element.hasAttribute("data-graview-press");
     const field = isHtml(element, "input", "select", "textarea") || ["textbox", "searchbox", "combobox", "slider", "spinbutton"].includes(role ?? "");
@@ -378,7 +383,7 @@ export function auditView(root: AuditedNode, options: AuditViewOptions = {}): Vi
       element,
       "serious",
       `A ${role} holds a <${inner.localName}> a person presses on its own: a screen reader reads the ${role} as one thing and never reaches what is inside.`,
-      card ? 'Leave the card plain and put an <a data-record> on its heading, or draw the card as an <li> (it keeps its own meaning).' : `Move the <${inner.localName}> out of the ${role}, beside it.`,
+      card ? "Put an <a> to the card's own record or place on its heading: the card is then a bigger target for a pointer, and the <a> the keyboard's way in." : `Move the <${inner.localName}> out of the ${role}, beside it.`,
     );
   }
 
@@ -409,7 +414,7 @@ export function auditView(root: AuditedNode, options: AuditViewOptions = {}): Vi
    */
   const judgeScroll = (element: AuditedElement) => {
     if ((tabbable(element) && named(element)) || holdsTabbable(element)) return;
-    say("scroll-region", element, "serious", "A box that scrolls by itself and holds nothing Tab reaches: the keyboard cannot scroll it, and what is past its edge is out of reach.", 'Give it tabindex="0", role="group" and aria-label="what it holds", or let it flow with the page.');
+    say("scroll-region", element, "serious", "A box that scrolls by itself and holds nothing Tab reaches: the keyboard cannot scroll it, and what is past its edge is out of reach.", 'Give it tabindex="0", role="region" and aria-label="what it holds", or let it flow with the page.');
   };
   /* Measured on a page, a box scrolls when what it holds is bigger than it; said in the drawing alone, when it says it scrolls. */
   const measure = options.measure !== false && laidOut(root);

@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 5373,
+  "gzipped": 1766,
+  "note": "Raised when a view came to draw more (Roadmap f-view-style-role-region, f-view-svg-link-not-drawn, f-view-card-heading-link-nested, request gv-view-css-modern-effects): the open kit's tables take SVG's <a> and filter with its fe* primitives, mask-image, -webkit-text-stroke and scroll-driven animation; the renderer holds role=\"region\" back until it has a name; a card that carries its link on its heading is no second link; and the region's own sheet holds every animation still under reduced motion. The host holds the view's runtime as text, so the runtime's own growth is counted here again (1.6 KB of the raise). Fetched only when a worker view first draws; a page's first load is unchanged. Measured at 201_244 / 76_250 against 195_871 / 74_484: 5_373 / 1_766 more."
+}
