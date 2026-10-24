@@ -88,7 +88,16 @@ describe("useAnimatedLayout", () => {
     const target = at(300);
     act(() => root.render(<Picture target={target} enabled={false} settle={false} />));
     const before = renders;
-    act(() => root.render(<Picture target={target} enabled={true} />));
+    act(() => root.render(<Picture target={target} enabled={true} settle={false} />));
+    frames(40);
+    expect(shown!.nodes[0]!.x).toBe(300);
+    expect(shown!.t).toBe(1);
+    expect(renders - before).toBe(1);
+  });
+
+  it("draws a scene's first layout once more on the next frame, for the lines measured before its cards stood", () => {
+    act(() => root.render(<Picture target={at(300)} enabled={true} />));
+    const before = renders;
     frames(40);
     expect(shown!.nodes[0]!.x).toBe(300);
     expect(shown!.t).toBe(1);
