@@ -115,20 +115,27 @@ export function useWorldShift({
   const settledLive = useRef(settled);
   settledLive.current = settled;
   const layers = useCallback(() => [...(stage.current?.querySelectorAll<HTMLElement>("[data-graview-world]") ?? [])], [stage]);
+  const put = useCallback(
+    ({ x, y }: { x: number; y: number }) => {
+      const move = x === 0 && y === 0 ? "" : `translate3d(${x}px, ${y}px, 0)`;
+      for (const layer of layers()) layer.style.transform = move;
+      handOnTheGround(stage.current, x, y);
+    },
+    [layers, stage],
+  );
   const paint = useCallback(() => {
     if (painting.current !== 0) return;
     painting.current = requestAnimationFrame(() => {
       painting.current = 0;
-      const { x, y } = live.current;
-      const move = x === 0 && y === 0 ? "" : `translate3d(${x}px, ${y}px, 0)`;
-      for (const layer of layers()) layer.style.transform = move;
+      put(live.current);
     });
-  }, [layers]);
+  }, [put]);
   const clear = useCallback(() => {
     settling.current = false;
     for (const layer of layers()) layer.style.transform = "";
+    handOnTheGround(stage.current, 0, 0);
     settledLive.current();
-  }, [layers]);
+  }, [layers, stage]);
 
   /** Where the hand has taken the picture, against where the view says it is. */
   const shiftTo = useCallback(
@@ -143,6 +150,15 @@ export function useWorldShift({
   const settle = useCallback((): boolean => {
     const { x, y } = live.current;
     if (x === 0 && y === 0) return false;
+    /*
+     * WHERE THE HAND LAST WAS, PAINTED NOW: a move after the last frame is
+     * part of the pan, and the render that commits it measures its lines
+     * from the DOM as it stands — which is then exactly where the pan puts
+     * every card, so it needs no second look (`settle` in animation.ts).
+     */
+    if (painting.current !== 0) cancelAnimationFrame(painting.current);
+    painting.current = 0;
+    put({ x, y });
     live.current = { x: 0, y: 0 };
     settling.current = true;
     setView((current) => {
@@ -160,7 +176,7 @@ export function useWorldShift({
       if (settling.current) clear();
     }, 300);
     return true;
-  }, [setView, clear]);
+  }, [setView, clear, put]);
 
   /*
    * CLEARED ONLY ONCE THE WORLD HAS ACTUALLY MOVED. Clearing the transform
@@ -174,6 +190,33 @@ export function useWorldShift({
   /** The offset the hand has made so far, not yet in the view. */
   const offset = useCallback(() => live.current, []);
   return { shiftTo, settle, settling, offset };
+}
+
+/**
+ * THE GROUND MOVES WITH THE PICTURE. The lattice the city stands on is
+ * drawn on the ground (`.graview-lattice`), anchored where the city's cell
+ * (0,0) meets the canvas (`--graview-lattice-x`/`-y`, from the committed
+ * pan), and it is not one of the world's layers: while a hand moved the
+ * layers, the grid stood still under the cards and jumped to meet them when
+ * the pan was let go. So the offset the hand has made is said on the
+ * lattice too, in the same frame as the transform (`--graview-hand-x`/`-y`,
+ * which the theme adds to the anchor), and taken off in the same commit
+ * that moves the anchor by as much.
+ *
+ * ON THE LATTICE ALONE: a custom property is inherited, and said on the
+ * ground it recalculated the style of every element in the scene each
+ * frame — six hundred milliseconds of a forty-move drag at a quarter speed.
+ */
+function handOnTheGround(ground: HTMLElement | null, x: number, y: number) {
+  const lattice = ground?.querySelector<HTMLElement>(":scope > .graview-lattice");
+  if (!lattice) return;
+  if (x === 0 && y === 0) {
+    lattice.style.removeProperty("--graview-hand-x");
+    lattice.style.removeProperty("--graview-hand-y");
+    return;
+  }
+  lattice.style.setProperty("--graview-hand-x", `${x}px`);
+  lattice.style.setProperty("--graview-hand-y", `${y}px`);
 }
 
 /** How far a pointer has to travel before a press is a drag: below it, a click is a click. */

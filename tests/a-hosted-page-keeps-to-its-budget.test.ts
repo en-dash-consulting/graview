@@ -145,7 +145,8 @@ describe("a hosted page", () => {
     // 993 KB since text came to be typed together over the wire (collaborative text, phase 3): `remote.typing`, which imports its door, the insides it hands it, a whole write's merge base and the store's hook for carrying pending typing over a rebase: the scene face measured 1_016_710 B, 992 more than before it (1_015_718).
     // 994 KB since a field typed together came to be edited live (collaborative text, phase 4): the provider's `typing`, the context an editor finds it by and the presence's caret: the scene face measured 1_017_143 B, 433 more than before it (1_016_710).
     // 995 KB since typing came to be said in words and hardened (collaborative text, phases 5 and 6): Activity folding one person's runs into one field and saying them, and the rebase and the remote's undo fixes the fuzz found: the scene face measured 1_018_704 B, 1_561 more than before it (1_017_143).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(995 * 1024);
+    // 999 KB since the scene came to keep up with a hand on a large app: no React state while a drag moves, the lattice an element a hand moves, a cut drawn in the render that asks for it, the pan out of the layout's key, and the cards and what floats over the picture free of the pan (`PanFree`): the scene face measured 1_022_079 B, 3_375 more than before it (1_018_704).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(999 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

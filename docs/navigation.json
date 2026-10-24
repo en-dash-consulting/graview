@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T00:43:23.991Z",
+  "at": "2026-10-24T05:37:14.430Z",
   "engine": "chromium",
   "steps": [
     {
@@ -15,8 +15,8 @@
       "arrows": false,
       "trail": null,
       "captions": [
-        "the list it is on",
-        "why this is here"
+        "why this is here",
+        "the list it is on"
       ]
     },
     {
@@ -34,8 +34,8 @@
       "arrows": false,
       "trail": null,
       "captions": [
-        "the list it is on",
-        "why this is here"
+        "why this is here",
+        "the list it is on"
       ]
     },
     {
@@ -51,8 +51,8 @@
       "arrows": false,
       "trail": null,
       "captions": [
-        "the list it is on",
-        "why this is here"
+        "why this is here",
+        "the list it is on"
       ]
     },
     {
@@ -66,14 +66,14 @@
       "step": "lists with every task raised",
       "url": "#focus=aggregate%3Alist&relation=task",
       "arrows": false,
-      "trail": "Tasks×",
+      "trail": "Tasks↘×",
       "captions": []
     },
     {
       "step": "the week with the lists raised",
       "url": "#focus=aggregate%3Atask&relation=list",
       "arrows": false,
-      "trail": "Lists×",
+      "trail": "Lists↘×",
       "captions": []
     }
   ],
@@ -97,7 +97,7 @@
     "altitude": {
       "label": "Close the map",
       "pressed": "true",
-      "name": "Close the map, down to What is left",
+      "name": "Close the map, down to The week",
       "wingOpacity": 0,
       "registered": true
     },
@@ -105,8 +105,10 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565435,
-      "registered": true
+      "wingOpacity": 0.355249,
+      "registered": true,
+      "frames": 44,
+      "transitioned": true
     },
     "groundAgain": {
       "label": "Up",
@@ -156,7 +158,7 @@
         "name": "2 problems in Tasks",
         "said": "2",
         "title": "2 problems in Tasks — \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\" (and 1 more). Press to see them and how to fix them.",
-        "width": 35.671875,
+        "width": 36.125,
         "height": 24
       }
     ],
@@ -259,61 +261,81 @@
         {
           "id": "kind:list",
           "was": "clear",
+          "atThePress": "clear",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:list",
           "was": "clear",
+          "atThePress": "clear",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:list",
           "was": "clear",
+          "atThePress": "clear",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:reason",
           "was": "off the screen",
+          "atThePress": "off the screen",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:reason",
           "was": "off the screen",
+          "atThePress": "clear",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:task",
           "was": "off the screen",
+          "atThePress": "off the screen",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:task",
           "was": "off the screen",
+          "atThePress": "clear",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:task",
           "was": "off the screen",
+          "atThePress": "clear",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:task",
           "was": "off the screen",
+          "atThePress": "clear",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:task",
           "was": "off the screen",
+          "atThePress": "clear",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         }
       ]
@@ -329,55 +351,73 @@
         {
           "id": "kind:reason",
           "was": "off the screen",
+          "atThePress": "off the screen",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:reason",
           "was": "off the screen",
+          "atThePress": "clear",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:rule",
           "was": "off the screen",
+          "atThePress": "off the screen",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:rule",
           "was": "off the screen",
+          "atThePress": "clear",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:task",
           "was": "partly",
+          "atThePress": "off the screen",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:task",
           "was": "partly",
+          "atThePress": "partly",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:task",
           "was": "partly",
+          "atThePress": "partly",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:task",
           "was": "partly",
+          "atThePress": "partly",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         },
         {
           "id": "kind:task",
           "was": "partly",
+          "atThePress": "partly",
           "coveredWhenLanded": false,
+          "underInFlight": false,
           "afterwards": "clear"
         }
       ]
@@ -388,7 +428,7 @@
     "landedOn": "#focus=aggregate%3Alist",
     "views": 5,
     "pane": null,
-    "seat": "Ask Things",
+    "seat": null,
     "victim": "t-deposit",
     "ok": true
   },
@@ -485,12 +525,12 @@
       "up": true
     },
     "midway": {
-      "t": 286,
-      "x": 225.82476806640625,
-      "y": 550.0591278076172,
+      "t": 284,
+      "x": 230.90133666992188,
+      "y": 548.8335876464844,
       "width": 1200
     },
-    "frames": 80,
+    "frames": 81,
     "plot": {
       "x": 186.70000457763672,
       "y": 560.5500030517578
@@ -509,12 +549,16 @@
     "theGroundTravelsWithTheCards": {
       "steps": 1,
       "jumps": 0,
+      "share": 0,
       "first": 101,
       "last": 101,
-      "xSteps": 29,
+      "xSteps": 30,
       "xJumps": 0,
+      "xShare": 0.08743169398907104,
       "xFirst": 300,
       "xLast": -66,
+      "frames": 35,
+      "movingMs": 464,
       "ok": true
     }
   },

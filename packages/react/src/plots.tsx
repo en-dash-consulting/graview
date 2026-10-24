@@ -113,6 +113,15 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
    * tall as its value reads — done flat, active raised.
    */
   const drawn = useRef(new Map<string, PlotDrawing>());
+  /*
+   * EACH RECORD'S NAME, SAID ONCE PER CHANGE OF THE GRAPH. A plot is drawn
+   * again whenever the city's cell changes — every step of a zoom — and
+   * every block on it said its record's label again, a template rendered
+   * for each of a thousand records to write the same names.
+   */
+  const named = useRef<{ readonly nodes: unknown; readonly names: Map<string, string> }>({ nodes: undefined, names: new Map() });
+  if (named.current.nodes !== nodes) named.current = { nodes, names: new Map() };
+  const names = named.current.names;
   const kept = new Map<string, PlotDrawing>();
   for (const node of tiles) {
     const members = node.aggregate?.memberIds ?? [];
@@ -130,8 +139,12 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     const none = { x: 0, y: 0 };
     const definition = store.schema.tryDefinition(node.kind);
     const nameOf = (id: string) => {
+      const said = names.get(id);
+      if (said !== undefined) return said;
       const record = store.graph.getNode(id);
-      return record ? labelOf(definition, record) : id;
+      const name = record ? labelOf(definition, record) : id;
+      names.set(id, name);
+      return name;
     };
     const lanes: string[][] = state ? state.values.map(() => []) : [[]];
     const tiers: StateTier[] = state ? [...state.tiers] : ["waiting"];

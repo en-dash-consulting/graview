@@ -463,8 +463,11 @@ ${/* DRAWN AS TILES, one cell each. A repeating gradient at the lattice's
    corners and centers of the tiles are its vertices, and a tile corner is
    pinned where the city's cell (0,0) meets the canvas. The far weave is the
    same tile at half size. */ ""}
-.graview-ground::after {
-  content: "";
+${/* AN ELEMENT OF ITS OWN, the last on the ground, where the ground's
+   ::after was: a hand dragging the picture says how far on this alone, so
+   the frame it paints recalculates one element's style and not the two
+   thousand a custom property on the ground would reach. */ ""}
+.graview-ground > .graview-lattice {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -483,8 +486,11 @@ ${/* DRAWN AS TILES, one cell each. A repeating gradient at the lattice's
     calc(var(--graview-lattice-tile) / 2) calc(var(--graview-lattice-rise) / 2),
     calc(var(--graview-lattice-tile) / 2) calc(var(--graview-lattice-rise) / 2);
   ${/* Anchored where the city's cell (0,0) meets the canvas, so a plot placed
-     by the map sits ON the grid a person can see, and pans with it. */ ""}
-  background-position: var(--graview-lattice-x, 0px) var(--graview-lattice-y, 0px);
+     by the map sits ON the grid a person can see, and pans with it — and
+     with a hand while it drags the picture, which says how far it has taken
+     it in --graview-hand-x/-y on this element until the pan it made is
+     committed. */ ""}
+  background-position: calc(var(--graview-lattice-x, 0px) + var(--graview-hand-x, 0px)) calc(var(--graview-lattice-y, 0px) + var(--graview-hand-y, 0px));
   ${/* Twice the square grid's weight: fields are meant to be seen, the grid is meant to be felt. */ ""}
   opacity: calc(var(--graview-kit-lattice, 1) * var(--graview-grid-alpha) * 2 * var(--graview-altitude));
   mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);

@@ -1,6 +1,6 @@
 import { humanizeField, labelOf, nounOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
-import { useGraph, useGraview } from "@graview/react/provider";
+import { useGraph, useGraview, useViolations } from "@graview/react/provider";
 import { useState, type CSSProperties } from "react";
 import { Chip } from "./primitives/index.js";
 import { hueFor } from "@graview/render";
@@ -47,8 +47,10 @@ export function Connections({ id, max = 8, empty, hide }: ConnectionsProps) {
   useGraph();
   // What it JUDGES counts as a connection: a rule's violations name the
   // nodes it is about, and a card saying "nothing is connected" over a band
-  // of them was two surfaces disagreeing.
-  const all = groupsFor(store, id, store.violations());
+  // of them was two surfaces disagreeing. Judged once per change of the
+  // graph (`useViolations`), not every rule over every record each time a
+  // panel listing this drew.
+  const all = groupsFor(store, id, useViolations());
   /* The groups opened past their first chips, by key: "+N more" opens one, "Show fewer" closes it. */
   const [opened, setOpened] = useState<ReadonlySet<string>>(() => new Set());
   const groups = hide

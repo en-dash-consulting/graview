@@ -1,0 +1,156 @@
+{
+  "at": "2026-10-24T05:47:06.489Z",
+  "engine": "chromium",
+  "slowdown": 4,
+  "records": 1016,
+  "links": 4067,
+  "claims": {
+    "a drag on a 1,000-record scene sets no React state": {
+      "ok": true,
+      "commits": 0,
+      "rendered": 0
+    },
+    "the ground grid moves with the picture while it is dragged and does not jump when it is let go": {
+      "ok": true,
+      "latticeMoved": {
+        "x": -240,
+        "y": 80
+      },
+      "buildingMoved": {
+        "x": -240,
+        "y": 80
+      },
+      "latticeJumped": 0,
+      "buildingJumped": 0
+    },
+    "a drag's own moves keep the main thread under 700 ms": {
+      "ok": true,
+      "measured": 326,
+      "budget": 700
+    },
+    "letting go of a drag draws the scene once and takes under 250 ms": {
+      "ok": true,
+      "measured": 104,
+      "budget": 250,
+      "commits": 2,
+      "renderedInCards": 0,
+      "rendered": 73
+    },
+    "the wheel's pan draws no card again and takes under 250 ms": {
+      "ok": true,
+      "measured": 119,
+      "budget": 250,
+      "commits": 2
+    },
+    "entering a district of 250 records takes under 2000 ms": {
+      "ok": true,
+      "measured": 1368,
+      "budget": 2000,
+      "elements": 3419
+    },
+    "a drag on the ground over a board of 250 sets no React state": {
+      "ok": true,
+      "commits": 0
+    },
+    "letting go on the ground draws no card on the board again and takes under 220 ms": {
+      "ok": true,
+      "measured": 99,
+      "budget": 220,
+      "renderedInCards": 0,
+      "rendered": 61,
+      "commits": 3
+    },
+    "no page error": {
+      "ok": true,
+      "errors": []
+    }
+  },
+  "measured": {
+    "altitude": {
+      "moves": 326,
+      "release": 104,
+      "whileMoving": {
+        "commits": 0,
+        "rendered": 0,
+        "inCards": 0
+      },
+      "letGo": {
+        "commits": 2,
+        "rendered": 73,
+        "inCards": 0
+      },
+      "rest": {
+        "lattice": {
+          "x": -40,
+          "y": 594.6
+        },
+        "building": {
+          "x": 497,
+          "y": 781
+        }
+      },
+      "during": {
+        "lattice": {
+          "x": -280,
+          "y": 674.6
+        },
+        "building": {
+          "x": 257,
+          "y": 861
+        }
+      },
+      "after": {
+        "lattice": {
+          "x": -280,
+          "y": 674.6
+        },
+        "building": {
+          "x": 257,
+          "y": 861
+        }
+      }
+    },
+    "wheel": {
+      "wheel": 119,
+      "wheeled": {
+        "commits": 2,
+        "rendered": 73,
+        "inCards": 0
+      }
+    },
+    "biggest": {
+      "id": "kind:issue",
+      "name": "issues",
+      "n": 250
+    },
+    "besideTheMap": {
+      "ms": 6099,
+      "note": "reported, not held: the relations' ribbons are routed here (ribbons.ts)"
+    },
+    "goIn": {
+      "ms": 1368,
+      "cards": 0,
+      "elements": 3419
+    },
+    "ground": {
+      "groundMoving": {
+        "commits": 0,
+        "rendered": 0,
+        "inCards": 0
+      },
+      "groundRelease": 99,
+      "groundLetGo": {
+        "commits": 3,
+        "rendered": 61,
+        "inCards": 0
+      }
+    }
+  },
+  "pageErrors": [],
+  "reference": {
+    "ms": 81,
+    "setOn": 87,
+    "factor": 1
+  },
+  "passed": true
+}

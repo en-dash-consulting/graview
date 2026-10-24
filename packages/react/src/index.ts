@@ -53,6 +53,7 @@ export {
 } from "./scene.js";
 export type { SceneNode, Strand } from "./scene.js";
 export { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
+export { PanFree, usePanFreeContext } from "./pan-free.js";
 export { SeatMarks } from "./seat-marks.js";
 export type { SeatAct, SeatWork } from "./animation.js";
 export type { TransitionOptions } from "./animation.js";

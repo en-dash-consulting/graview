@@ -1167,6 +1167,13 @@ ${/* THE SCENE'S FOOT: a sheet over it. A control at the foot stood under
 .graview-edge-sign {
   --graview-scene-foot: var(--graview-sheet, 0px);
 }
+${/* PUT AWAY WHILE A HAND MOVES THE PICTURE (data-graview-hand, written by
+   the scene outside React): a sign names what lies past the edge of the
+   picture that has landed, and under a hand that picture is on its way
+   somewhere else. Back with the pan the hand made. */ ""}
+.graview-ground[data-graview-hand] .graview-edge-sign {
+  visibility: hidden;
+}
 @container (max-width: 639px) {
   .graview-zoom,
   .graview-edge-sign {

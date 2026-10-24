@@ -40,6 +40,8 @@ export const OWN = {
   "typed-together": 5252,
   /** `graview preview` of the meetings document, for `verify-date-inputs` to type and pick a meeting's start and end on both faces. */
   "date-inputs": 5254,
+  /** `graview preview` of a made-up field survey of a thousand records, for `verify-scene-at-scale` to time a hand on its scene. */
+  "scene-at-scale": 5204,
   /** The discography's production build, `vite preview`, for `verify-scale`. */
   "discography-preview": 5198,
   /** The app `smoke-create` scaffolds, and the linked one after it. */

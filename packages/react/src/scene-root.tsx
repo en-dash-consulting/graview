@@ -46,7 +46,8 @@ import { mapChoice } from "./map-choice.js";
 import { useActivity } from "./attention.js";
 import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
 import { SeatMarks } from "./seat-marks.js";
-import { matchWith, useFound, useGraph, useGraview, type GraviewContextValue } from "./context.js";
+import { GraviewContext, matchWith, useFound, useGraph, useGraview, type GraviewContextValue } from "./context.js";
+import { samePanless, usePanFreeContext } from "./pan-free.js";
 import { search, touchWeights } from "@graview/core/search";
 import { kitConnector, useKit } from "./kit.js";
 
@@ -288,10 +289,19 @@ function useLaidOut<S extends AnySchema>(
   const inPlace = held !== null && !view.overview;
   // Only a pin the layout needs is a dependency: a card moved in place must not re-lay the stop.
   const pinned = inPlace ? null : held;
+  /*
+   * KEYED ON THE STOP LESS ITS PAN, by what it holds: a view that differs
+   * only in its pan is a new object all the same, and keyed on that, the
+   * pan a hand let go of laid the whole city out again — communities,
+   * plots, bands and the rules' counts — to draw what `panLayout` moves.
+   */
+  const stop = useRef(view);
+  if (!samePanless(stop.current, view)) stop.current = view;
+  const place = stop.current;
   const atRest = useMemo(() => {
-    const still = view.pan ? { ...view, pan: undefined } : view;
+    const still = place.pan ? { ...place, pan: undefined } : place;
     return pinned ? withPin(still, pinned.id, { x: pinned.x, y: pinned.y }) : still;
-  }, [view, pinned]);
+  }, [place, pinned]);
   const laid = useMemo<Layout>(
     () => layout(store.graph, store.schema, atRest, sized),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -322,11 +332,36 @@ function useLaidOut<S extends AnySchema>(
  * each one lagged the picture behind the fingers the way a tweened drag
  * did. While the wheel is turning, and for a beat after, the picture snaps
  * to it.
+ *
+ * AND A HAND ON THE SCENE IS NOT STATE. Whether a hand or a wheel is moving
+ * the picture was React state, so the first move of every drag re-rendered
+ * the whole scene — every card, every line, every plot — to draw the same
+ * picture with a different cursor, and letting go rendered it all once more
+ * to say the hand had gone. It is a ref the renders read: the render that
+ * commits the gesture's pan reads that a hand made it, and cuts to it rather
+ * than tweening. What a person sees of the hand — the grabbing cursor, no
+ * text selected under it, the signs at the edge put away while the picture
+ * is between places — is written on the ground itself (`markHand`), outside
+ * React, as the transform the hand paints is.
  */
-function useSteering() {
-  const [dragging, setDragging] = useState(false);
-  const [steering, setSteering] = useState(false);
+function useSteering(ground: RefObject<HTMLDivElement | null>, motion: { set(moving: boolean): void }) {
+  const dragging = useRef(false);
+  const steering = useRef(false);
   const steeringUntil = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Whether a transition is running, as of the last render: told to `motion` once the hand is off. */
+  const tweening = useRef(false);
+  const mark = useCallback(() => {
+    markHand(ground.current, { dragging: dragging.current, steering: steering.current });
+    motion.set(dragging.current || steering.current || tweening.current);
+  }, [ground, motion]);
+  const setDragging = useCallback(
+    (on: boolean) => {
+      if (dragging.current === on) return;
+      dragging.current = on;
+      mark();
+    },
+    [mark],
+  );
   /*
    * A WHEEL LETS GO TOO, and this is how it says so: the live shift's
    * `settle`, wired by the scene once the shift exists — it needs the
@@ -334,7 +369,10 @@ function useSteering() {
    */
   const settleLive = useRef<() => boolean>(() => false);
   const steer = useCallback(() => {
-    setSteering(true);
+    if (!steering.current) {
+      steering.current = true;
+      mark();
+    }
     if (steeringUntil.current) clearTimeout(steeringUntil.current);
     steeringUntil.current = setTimeout(() => {
       steeringUntil.current = null;
@@ -346,15 +384,33 @@ function useSteering() {
        * drag fell into; the layout effect closes both.
        */
       if (settleLive.current()) return;
-      setSteering(false);
+      steering.current = false;
+      mark();
     }, 160);
-  }, []);
+  }, [mark]);
   // The gesture ends with the world already where the hand left it, so nothing tweens there afterwards.
-  const settled = () => {
-    setDragging(false);
-    setSteering(false);
-  };
-  return [dragging, steering, setDragging, steer, settleLive, settled] as const;
+  const settled = useCallback(() => {
+    dragging.current = false;
+    steering.current = false;
+    mark();
+  }, [mark]);
+  return { dragging, steering, tweening, setDragging, steer, settleLive, settled };
+}
+
+/**
+ * THE HAND, SAID ON THE GROUND. `data-graview-hand` while a hand or a wheel
+ * moves the picture (the theme puts the signs at the edge away under it:
+ * they name what lies past the edge of a picture that has not landed yet),
+ * and the grabbing cursor and no text selection while a drag owns the
+ * pointer. The scene's own style says `cursor: grab` and never changes it,
+ * so React never writes over what is written here.
+ */
+function markHand(ground: HTMLElement | null, { dragging, steering }: { readonly dragging: boolean; readonly steering: boolean }) {
+  if (!ground) return;
+  if (dragging || steering) ground.setAttribute("data-graview-hand", dragging ? "drag" : "wheel");
+  else ground.removeAttribute("data-graview-hand");
+  ground.style.cursor = dragging ? "grabbing" : "grab";
+  ground.style.userSelect = dragging ? "none" : "";
 }
 
 /**
@@ -405,16 +461,28 @@ function usePointerReport(pointer: PointerStore, stage: RefObject<HTMLDivElement
     return pointer.onActive((active) => {
       const element = stage.current;
       if (!element) return;
-      const move = (event: PointerEvent) => {
+      const report = (event: PointerEvent) => {
         const rect = element.getBoundingClientRect();
         pointer.set({ x: event.clientX - rect.left, y: event.clientY - rect.top });
+      };
+      /*
+       * NOT WHILE A HAND HOLDS THE GROUND: what listens waits for the hand
+       * to let go (`subject.ts`), and asking where the ground is on every
+       * move of a drag laid the page out again under each frame the hand
+       * painted. Where the hand let go is said when it does.
+       */
+      const move = (event: PointerEvent) => {
+        if (event.buttons !== 0) return;
+        report(event);
       };
       const leave = () => pointer.set(null);
       if (active) {
         element.addEventListener("pointermove", move);
+        element.addEventListener("pointerup", report);
         element.addEventListener("pointerleave", leave);
         detach = () => {
           element.removeEventListener("pointermove", move);
+          element.removeEventListener("pointerup", report);
           element.removeEventListener("pointerleave", leave);
         };
       } else {
@@ -874,14 +942,34 @@ export function Scene<S extends AnySchema>({
   // A district under the hand is placed here while it is dragged, and written into the view on release.
   const district = useHeldDistrict();
   const [result, inPlace] = useLaidOut(store, view, district.held, sized, nodes, seen.pan);
-  const [dragging, steering, setDragging, steer, settleLive, settled] = useSteering();
+  const hand = useSteering(wrapperRef, motion);
+  const { setDragging, steer, settleLive, settled } = hand;
+  // Read as this render is drawn: the render that commits a hand's pan is drawn while the hand is still on it.
+  const handOn = hand.dragging.current || hand.steering.current;
   // The picture as it is right now, part-way between the last view and this
   // one. Everything downstream draws the tween, not the destination.
   const firstMeasured = useFirstMeasured(size);
-  const frame = useAnimatedLayout(result, { enabled: animate && !dragging && !steering && size !== null && !firstMeasured });
+  /* THE HAND: dragging the ground to look around and a district to place it — see scene-hand.ts. */
+  const shift = useWorldShift({
+    stage: wrapperRef,
+    pan: view.pan,
+    setView,
+    settled,
+  });
+  /*
+   * A hand's pan is cut to with its offset already painted where the cut
+   * puts every card, so it needs no second look; a zoom by the wheel moves
+   * the geometry itself and does (`settle`, animation.ts).
+   */
+  const zoomed = useRef(false);
+  if (!shift.settling.current) zoomed.current = false;
+  const painted = shift.settling.current && !zoomed.current;
+  const frame = useAnimatedLayout(result, { enabled: animate && !handOn && size !== null && !firstMeasured, settle: !painted });
   // Whether anything is moving: the hand, the wheel, or a transition not yet landed.
   // `t` is the tween's progress: a landed frame is at 1 (the frame is always a fresh object, never `result`).
-  useEffect(() => motion.set(dragging || steering || frame.t < 1), [motion, dragging, steering, frame]);
+  hand.tweening.current = frame.t < 1;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the hand's refs are read when the frame changes
+  useEffect(() => motion.set(hand.dragging.current || hand.steering.current || frame.t < 1), [motion, frame]);
   const touched = useTouched<S>();
   const seatWork = useSeatWork<S>();
 
@@ -897,17 +985,11 @@ export function Scene<S extends AnySchema>({
 
   const useDom = attach === null;
   // The DOM path's blur, only while its frames keep to the budget (scene-blur.ts).
-  const domBlur = useDomBlurWithinBudget(blurred && useDom, dragging || steering || frame.t < 1);
+  // Judged while a transition moves blurred hosts; a hand moves the layers they are on by a transform, which repaints none of them.
+  const domBlur = useDomBlurWithinBudget(blurred && useDom, frame.t < 1);
 
   const activityOf = useActivityOf<S>();
 
-  /* THE HAND: dragging the ground to look around and a district to place it — see scene-hand.ts. */
-  const shift = useWorldShift({
-    stage: wrapperRef,
-    pan: view.pan,
-    setView,
-    settled,
-  });
   // Wired here, where the shift exists; see the ref's own note in `useSteering`.
   settleLive.current = shift.settle;
   const { onGroundDown, onCardDown, onDragMove, onDragUp, swallow } = useSceneDrag({
@@ -936,6 +1018,7 @@ export function Scene<S extends AnySchema>({
     const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, current * factor));
     if (Math.abs(next - current) < 1e-4) return;
     zoomLive.current = next;
+    zoomed.current = true;
     steer();
     setZoom(next);
     const box = wrapperRef.current?.getBoundingClientRect();
@@ -990,6 +1073,9 @@ export function Scene<S extends AnySchema>({
    */
   // On the capture path a view the renderer handed on is drawn as the DOM path draws it.
   const hostedOnDom = (id: string) => useDom || onDom.has(id);
+  // What the cards read of the context: the same, less the pan the scene moves them by (pan-free.tsx).
+  const cards = usePanFreeContext(context);
+  const forCards = (drawn: ReactNode) => <GraviewContext.Provider value={cards as unknown as GraviewContextValue<AnySchema>}>{drawn}</GraviewContext.Provider>;
   const hosts = frame.nodes.filter((node) => node.screenOf === undefined).map((node) => (
     <SceneViewHost
       key={node.id}
@@ -1081,7 +1167,8 @@ export function Scene<S extends AnySchema>({
          */
         width: "100%",
         height: "100%",
-        cursor: dragging ? "grabbing" : "grab",
+        // Never changed by a render: the hand writes the grabbing cursor while it holds the ground (`markHand`).
+        cursor: "grab",
         touchAction: "none",
         ["--graview-altitude" as string]: view.overview ? 1 : 0,
         /*
@@ -1100,7 +1187,6 @@ export function Scene<S extends AnySchema>({
               ["--graview-lattice-y" as string]: `${(frame.city.originY + frame.city.pan.y).toFixed(1)}px`,
             }
           : {}),
-        ...(dragging ? { userSelect: "none" as const } : {}),
 
         // The stage is sized to the measurement, but a stale measurement
         // during a resize can briefly exceed it. Clipping keeps the scene
@@ -1170,7 +1256,7 @@ export function Scene<S extends AnySchema>({
           data-graview-world=""
           style={{ ...stage, overflow: "hidden" }}
         >
-          {hosts}
+          {forCards(hosts)}
         </div>
       ) : (
         /*
@@ -1190,7 +1276,7 @@ export function Scene<S extends AnySchema>({
             data-graview-under-canvas=""
             style={{ position: "absolute", left: 0, top: 0, ...extent, overflow: "hidden" }}
           >
-            {hosts.filter((host) => onDom.has(String(host.key)))}
+            {forCards(hosts.filter((host) => onDom.has(String(host.key))))}
           </div>
           <canvas
             ref={canvasRef}
@@ -1200,11 +1286,11 @@ export function Scene<S extends AnySchema>({
             {...extent}
             style={{ display: "block", position: "relative", ...extent }}
           >
-            {hosts.filter((host) => !onDom.has(String(host.key)))}
+            {forCards(hosts.filter((host) => !onDom.has(String(host.key))))}
           </canvas>
         </div>
       )}
-      {view.overview && !dragging ? (
+      {view.overview ? (
         /* What the window does not reach, named on the edge it lies past (see edge-signs.tsx). */
         <EdgeSigns
           result={result}
@@ -1284,6 +1370,8 @@ export function Scene<S extends AnySchema>({
         stageRef={wrapperRef}
       />
       {children}
+      {/* THE LATTICE, last on the ground as its ::after was: the theme draws it, anchored by the ground's --graview-lattice-x/-y, and a hand moves it (scene-hand.ts). */}
+      <div className="graview-lattice" aria-hidden="true" />
     </div>
   );
 }
