@@ -337,6 +337,47 @@ try {
     claim("aWordComposedWithAnInputMethodLandsWhole", true, { skipped: true, why: `${ENGINE} has no Input.imeSetComposition to compose with: Chromium's verdict holds this claim` });
   }
 
+  /*
+   * A layer over the page takes Ada's keyboard (Roadmap f-live-editor-blur):
+   * a tour's hint, as the first-look tour draws one, its button focused.
+   * Her editor stays open, and when the hint goes and leaves the keyboard
+   * on nothing, the text area has it back with her caret where it was, and
+   * what she types next lands there.
+   */
+  const AFTER_TOUR = "tour ";
+  const caretAt = await ada.evaluate((selector) => {
+    const text = document.querySelector(selector);
+    text.focus();
+    const at = Math.min(5, text.value.length);
+    text.setSelectionRange(at, at);
+    const pane = document.createElement("div");
+    pane.setAttribute("data-graview-overlay", "");
+    pane.setAttribute("role", "dialog");
+    pane.setAttribute("data-tour-hint", "");
+    const next = document.createElement("button");
+    next.textContent = "Next";
+    pane.append(next);
+    document.body.append(pane);
+    next.focus();
+    return at;
+  }, area);
+  await new Promise((settle) => setTimeout(settle, 400));
+  const underTheTour = await ada.evaluate((selector) => ({ open: document.querySelector(selector) !== null, keyboard: document.activeElement?.textContent ?? null }), area);
+  await ada.evaluate(() => document.querySelector("[data-tour-hint]")?.remove());
+  await new Promise((settle) => setTimeout(settle, 400));
+  const afterTheTour = await ada.evaluate((selector) => {
+    const text = document.querySelector(selector);
+    return { open: text !== null, focused: document.activeElement === text, caret: text ? [text.selectionStart, text.selectionEnd] : null };
+  }, area);
+  const beforeTyping = await stored();
+  await ada.keyboard.type(AFTER_TOUR, { delay: 40 });
+  const afterTour = await converge((text) => text.includes(AFTER_TOUR));
+  claim(
+    "aTourThatTakesTheKeyboardLeavesTheEditorOpenAndGivesItsCaretBack",
+    underTheTour.open && underTheTour.keyboard === "Next" && afterTheTour.open && afterTheTour.focused && afterTheTour.caret?.[0] === caretAt && afterTour.ok && afterTour.text?.slice(caretAt, caretAt + AFTER_TOUR.length) === AFTER_TOUR && afterTour.text?.slice(0, caretAt) === beforeTyping.slice(0, caretAt),
+    { caretAt, underTheTour, afterTheTour, ...holding(afterTour, AFTER_TOUR) },
+  );
+
   /* What the seat the body is hidden from was sent, start to end: no splice, no typed word, no caret. */
   const final = await stored();
   const typedWords = [ADA_TYPES, BO_TYPES, QUICK, SLOW, AWAY, HERE, THEIRS];

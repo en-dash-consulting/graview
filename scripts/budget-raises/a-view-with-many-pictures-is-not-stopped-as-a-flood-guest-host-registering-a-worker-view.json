@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 159,
+  "gzipped": 57,
+  "note": "Raised when a view with many pictures stopped being stopped as a flood (changeset a-view-with-many-pictures-is-not-stopped-as-a-flood, FR-207): the session keeps the pushes a view has not answered, so its answer to one is not charged to its allowance. 32_620 / 14_501 before, 32_779 / 14_558 with it: 159 / 57 more."
+}

@@ -35,6 +35,10 @@
  * characters a view's own data: image may be, on a page whose policy
  * refuses blob: images, as Graview Cloud's does. The view is handed a
  * short blob: address and the page draws the data: image behind it.
+ *
+ * Then sixty-four jobs, each with a small photograph answered a little
+ * after the one before (FR-207, Graview Cloud's "the-faces"): the view
+ * draws every one and is not stopped as a flood.
  */
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -47,6 +51,15 @@ export const PHOTOS_MANIFEST = { name: "job-photos", title: "Job photos", attach
 export const JOURNEY_MANIFEST = { ...PHOTOS_MANIFEST, pictures: true };
 /* Where the full-size photograph is kept on the porch, in place of its own (FR-192). */
 const MOMENT = "/graview/files/harbor-6d1f.jpg";
+/* How many jobs, each with a small photograph, the "?many" page draws (FR-207): more than half the 120 messages a view may send in a second. */
+const MANY = 64;
+/*
+ * Each face's photograph is answered this many ms after the one before,
+ * counted from when the first was asked for — not from when each is asked,
+ * which a browser's six connections to a host would spread over seconds —
+ * so the sixty-four settle one by one in about half a second.
+ */
+const FACE_STAGGER_MS = 8;
 
 /*
  * A RECORD'S VIDEO IN A VIEW (0.1.37): "Job reel" places the porch's clip
@@ -168,6 +181,8 @@ export async function picturesSuite({ repoRoot, build, browser, claim, report, H
     "/graview/files/clip-5d0a.webm": { type: "video/webm", body: readFileSync(resolve(repoRoot, "scripts/fixtures/files/clip.webm")) },
     "/graview/files/clip-5d0a.png": { type: "image/png", body: png(32, 32, [58, 123, 213]) },
     [MOMENT]: { type: "image/jpeg", body: moment },
+    /* The faces (FR-207), each a little later than the one before. */
+    ...Object.fromEntries(Array.from({ length: MANY }, (_, i) => [`/graview/files/face-${i}.png`, { type: "image/png", body: png(40, 40, [(i * 37) % 256, 120, 200]), at: i * FACE_STAGGER_MS }])),
   };
   const js = (
     await build({
@@ -188,12 +203,15 @@ const once = asked.has("files");
 const reel = asked.has("reel");
 /* "?moment": the porch holds one full-size EXIF JPEG, drawn by a pictures: true view on a page that refuses blob: images (FR-192). */
 const full = asked.has("moment");
+/* "?many": sixty-four jobs Ana is on, each with a small photograph, drawn by a pictures: true view (FR-207, Graview Cloud's "the-faces"). */
+const many = asked.has("many");
+const faces = Array.from({ length: ${MANY} }, (_, i) => ({ id: "job:face-" + i, kind: "job", label: "Face " + i, photos: [{ href: "/graview/files/face-" + i + ".png", name: "face-" + i + ".png", type: "image/png", bytes: 120, width: 40, height: 40 }] }));
 const moment = { href: ${JSON.stringify(MOMENT)}, name: "IMG_4032.jpg", type: "image/jpeg", bytes: ${moment.length}, width: 1200, height: 900, caption: "The harbor at dusk" };
-const definition = { manifest: reel ? ${JSON.stringify(REEL_MANIFEST)} : full ? ${JSON.stringify(JOURNEY_MANIFEST)} : ${JSON.stringify(PHOTOS_MANIFEST)}, worker: { source: reel ? ${JSON.stringify(REEL_JS)} : ${JSON.stringify(PHOTOS_JS)} }, ...(base && !once ? { file: (href) => base + href } : {}), onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
+const definition = { manifest: reel ? ${JSON.stringify(REEL_MANIFEST)} : full || many ? ${JSON.stringify(JOURNEY_MANIFEST)} : ${JSON.stringify(PHOTOS_MANIFEST)}, worker: { source: reel ? ${JSON.stringify(REEL_JS)} : ${JSON.stringify(PHOTOS_JS)} }, ...(base && !once ? { file: (href) => base + href } : {}), onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
 const clip = { href: FILES.clip, name: "porch.webm", type: "video/webm", bytes: 624, width: 32, height: 32, duration: 1, poster: FILES.clipPoster, caption: "The porch, panned" };
 window.__handle = mount(document.getElementById("app"), {
   app: jobsApp,
-  seed: reel ? { ...jobsSeed, nodes: jobsSeed.nodes.map((node) => (node.id === "job:porch" ? { ...node, clip } : node)) } : full ? { ...jobsSeed, nodes: jobsSeed.nodes.map((node) => (node.id === "job:porch" ? { ...node, photos: [moment], papers: [] } : node)) } : jobsSeed,
+  seed: reel ? { ...jobsSeed, nodes: jobsSeed.nodes.map((node) => (node.id === "job:porch" ? { ...node, clip } : node)) } : full ? { ...jobsSeed, nodes: jobsSeed.nodes.map((node) => (node.id === "job:porch" ? { ...node, photos: [moment], papers: [] } : node)) } : many ? { ...jobsSeed, nodes: [...jobsSeed.nodes.filter((node) => node.kind !== "job"), ...faces], edges: faces.map((face) => ({ kind: "on", from: face.id, to: "crew:ana" })) } : jobsSeed,
   principal: ana,
   face: "pages",
   path: asked.has("record") ? recordPath(jobsApp.schema, "job", asked.get("record")) : reel ? "/places/job-reel" : "/places/job-photos",
@@ -223,6 +241,8 @@ window.__handle = mount(document.getElementById("app"), {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Jobs</title><style>body{margin:0}#app{position:relative;height:1400px}</style></head><body><div id="app"></div><script>${js.replace(/<\/script/gi, "<\\/script")}</script></body></html>`;
   /* What reached the files route: the path, and whether it carried the reader's session. */
   const asked = [];
+  /* When the first face's photograph was asked for: each is answered `at` ms after it (FR-207). */
+  let facesAsked;
   const server = createServer((req, res) => {
     const page = req.url.split("?")[0];
     if (page === "/" || page === "/a/jobs/") {
@@ -248,8 +268,13 @@ window.__handle = mount(document.getElementById("app"), {
         res.writeHead(206, { "content-type": file.type, "accept-ranges": "bytes", "content-range": `bytes ${start}-${end}/${file.body.length}`, "content-length": String(end - start + 1), "cache-control": "no-store" });
         return res.end(file.body.subarray(start, end + 1));
       }
-      res.writeHead(200, { "content-type": file.type, "cache-control": "no-store", ...(file.type.startsWith("video/") ? { "accept-ranges": "bytes" } : {}) });
-      return res.end(file.body);
+      const answer = () => {
+        res.writeHead(200, { "content-type": file.type, "cache-control": "no-store", ...(file.type.startsWith("video/") ? { "accept-ranges": "bytes" } : {}) });
+        res.end(file.body);
+      };
+      if (file.at === undefined) return answer();
+      facesAsked ??= Date.now();
+      return void setTimeout(answer, Math.max(0, facesAsked + file.at - Date.now()));
     }
     res.writeHead(404);
     res.end();
@@ -430,6 +455,28 @@ window.__handle = mount(document.getElementById("app"), {
     claim("on a page that refuses blob: images, a pictures: true view draws the full-size EXIF JPEG on a record, at its own 1200×900, the data: image the host made", full.natural.join("x") === "1200x900" && full.scheme === "data" && full.length > 512_000 && full.alt === "The harbor at dusk", full);
     claim("the host fetched the photograph once, with the reader's session", asked.length === 1 && asked[0].path === MOMENT && asked[0].signed, asked);
     claim("the full-size photograph's view did not fail, nothing was refused and nothing was left out", full.failures.length === 0 && full.problems.length === 0, { failures: full.failures, problems: full.problems });
+
+    /*
+     * SIXTY-FOUR PICTURES SETTLING WITHIN A SECOND (FR-207). Graview Cloud's
+     * "the-faces" fell back as a flood: pushed again for every picture that
+     * settled, the view answered more than the 120 messages it may send in a
+     * second. Each face's photograph is answered 8 ms after the one before.
+     */
+    asked.length = 0;
+    await tab.goto(`${HOST}/?many`, { waitUntil: "load" });
+    await until(() => {
+      const root = document.querySelector('[data-worker-view="job-photos"]')?.shadowRoot;
+      const images = [...(root?.querySelectorAll("img") ?? [])];
+      return window.__failures.length > 0 || (images.length === 64 && images.every((image) => image.complete && image.naturalWidth > 0));
+    }, "the sixty-four faces, drawn, or the view failed");
+    await tab.waitForTimeout(1_200);
+    const crowd = await tab.evaluate(() => {
+      const root = document.querySelector('[data-worker-view="job-photos"]')?.shadowRoot;
+      const images = [...(root?.querySelectorAll("img") ?? [])];
+      return { drawn: images.filter((image) => image.complete && image.naturalWidth > 0 && image.getAttribute("src")?.startsWith("blob:")).length, failures: window.__failures, problems: window.__problems, fellBack: document.querySelector('[data-worker-view-failed]')?.getAttribute("data-worker-view-failed") ?? null };
+    });
+    claim("a pictures: true view of sixty-four records, their pictures settling one by one within a second, is not stopped as a flood and draws every picture", crowd.drawn === MANY && crowd.failures.length === 0 && crowd.fellBack === null, crowd);
+    claim("the host fetched each of the sixty-four pictures once, with the reader's session", asked.length === MANY && new Set(asked.map((one) => one.path)).size === MANY && asked.every((one) => one.signed), { asked: asked.length, distinct: new Set(asked.map((one) => one.path)).size });
     await context.close();
   } finally {
     server.close();

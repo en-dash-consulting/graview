@@ -3,7 +3,7 @@ import { Store, type AnySchema, type Principal } from "@graview/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ana, FILES, jobsApp, jobsSeed, sam } from "../../../../scripts/fixtures/jobs-app.js";
 import { checkManifest, workerViewProps, type WorkerViewManifest } from "../../src/host/manifest.js";
-import { createGuestPictures, type GuestPictureLimits } from "../../src/host/pictures.js";
+import { createGuestPictures, PICTURES_SETTLE_MS, type GuestPictureLimits } from "../../src/host/pictures.js";
 import { createGuestHost } from "../../src/host/session.js";
 import { mountGuestView } from "../../src/host/frame.js";
 import { runWorkerViewHeadless } from "../../src/headless/index.js";
@@ -77,8 +77,10 @@ function host(principal: Principal, manifest: WorkerViewManifest, limits?: Guest
   return { sent, said, last: () => sent[sent.length - 1]!, pictures };
 }
 
+/* Every fetch answered, and the push for the pictures that settled after the first, which waits out the span pushes go together in (FR-207). */
 const settled = async () => {
   for (let i = 0; i < 20; i += 1) await new Promise((done) => setTimeout(done, 0));
+  await new Promise((done) => setTimeout(done, PICTURES_SETTLE_MS));
 };
 const job = (props: GuestProps, id: string) => (props.nodes ?? []).find((node) => node.id === id) as unknown as { photos: GuestFile[]; papers?: GuestFile[] } | undefined;
 
