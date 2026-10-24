@@ -270,6 +270,10 @@ export { DOCUMENT_FONTS, familiesIn, fontProblem, isSystemFamily, stackOf, SYSTE
 export type { SystemStack } from "./theme/fonts.js";
 export { accentProblem, documentSchemes, passingShade } from "./theme/accent.js";
 export type { AccentRefusal } from "./theme/accent.js";
+export { darkGroundFor, groundSchemes } from "./theme/ground.js";
+export type { Ground } from "./theme/ground.js";
+export { groundProblem, groundReads } from "./theme/ground-check.js";
+export type { GroundRefusal } from "./theme/ground-check.js";
 export type { IsoFace, IsoShade, IsoWash, ResolvedShape, ResolvedTypography } from "./theme/look.js";
 // Two-way sync (the engine, its mappings and transports) is `@graview/core/sync`'s: a page draws without it.
 export {
@@ -326,7 +330,7 @@ export { FIELD_SIGHT, recordsOf, sees, sightedKinds } from "./permissions/sight.
 export { writersOf, type Writers } from "./ops/writers.js";
 export type { FieldsKept, RecordedLog, Records } from "./permissions/sight.js";
 export { hidesFrom, logSeenBy, seatLens, seenBy, seesId, servesReaders, type SeenOptions } from "./seen.js";
-export { onPublish, PUBLISH, type Publishing } from "./publish.js";
+export { onPublish, PUBLISH, readsPublished, type Publishing } from "./publish.js";
 // Notify me (Roadmap f-notify-subscriptions): what a subscription is, and the store a page keeps them in; the matcher and their words are `@graview/core/subscriptions`.
 export { keptSubscription, memorySubscriptions, subscriberOf, subscriptionId } from "./subscription-shape.js";
 export type { MatchedRecord, OnSubscriptionMatch, Subscription, SubscriptionDraft, SubscriptionMatch, SubscriptionStore, SubscriptionWhen } from "./subscription-shape.js";

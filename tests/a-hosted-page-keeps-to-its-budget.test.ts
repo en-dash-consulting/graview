@@ -147,7 +147,9 @@ describe("a hosted page", () => {
     // 995 KB since typing came to be said in words and hardened (collaborative text, phases 5 and 6): Activity folding one person's runs into one field and saying them, and the rebase and the remote's undo fixes the fuzz found: the scene face measured 1_018_704 B, 1_561 more than before it (1_017_143).
     // 996 KB since a place's list came to be exported as it is shown (Roadmap f-view-export-csv): the place menu reading what a drawn list says of itself, and the provider's `onExport` — the menu's rows are the list's, and the writer and the download are fetched with the press: the scene face measured 1_018_918 B, 214 more than before it (1_018_704), 38 over 995.
     // 1000 KB since the 0.1.53 batch: a store came to count past every id it takes (FR-204) and a deleted view never to draw, a home's included (FR-202), 279 B; and the scene came to keep up with a hand on a large app (no React state while a drag moves, the grids under the picture elements a hand moves, a cut drawn in the render that asks for it, the pan out of the layout's key, `PanFree`, the ground's grids drawn where the world is moved to), 3_934 B: together the scene face measured 1_023_244 B with the export (1_018_918 before them).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1000 * 1024);
+    // 1001 KB since a graph put back to a snapshot it held came to keep where things stood, so a live client lists records in the server's order after a refused call: the scene face measured 1_024_206 B, 291 more than before it (1_023_915).
+    // 1003 KB since an app came to stand on a ground of its own: the compile draws the panel, the edge and a floating sheet from the brand's `ground` and derives a dark one from a light one (`ground.ts`): the scene face measured 1_026_185 B, 2_270 more than before it (1_023_915).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1003 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

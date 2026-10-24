@@ -255,6 +255,85 @@ describe("a field typed together, under a host that carries typing", () => {
   });
 });
 
+/*
+ * A LAYER OVER THE PAGE TAKES THE KEYBOARD FOR A MOMENT (Roadmap
+ * f-live-editor-blur). Graview Cloud's typed-together harness found the
+ * live editor closed, its caret lost, when a first-look tour opened over it
+ * and took the keyboard: leaving for a dialog, a tour or a popover is not
+ * leaving the field.
+ */
+describe("a field typed together, when a layer over the page takes the keyboard", () => {
+  /** A layer as a tour or a dialog draws one, over the page, its button taking the keyboard. */
+  const layer = async (as: "tour" | "dialog") => {
+    const pane = document.createElement("div");
+    if (as === "tour") pane.setAttribute("data-graview-overlay", "");
+    pane.setAttribute("role", "dialog");
+    const button = document.createElement("button");
+    button.textContent = "Next";
+    pane.appendChild(button);
+    document.body.appendChild(pane);
+    await act(async () => button.focus());
+    return { pane, button };
+  };
+
+  it("stays open while a tour holds the keyboard, and has it back, its caret where it was, when the tour gives it back", async () => {
+    const store = storeWith("The quick fox");
+    const { typing } = typingInto(store);
+    const area = await open(store, liveFor(typing));
+    area.focus();
+    area.setSelectionRange(4, 9);
+    const { pane } = await layer("tour");
+    expect(host!.querySelector("textarea")).toBe(area);
+    await act(async () => {
+      area.focus();
+      pane.remove();
+    });
+    expect(document.activeElement).toBe(area);
+    expect([area.selectionStart, area.selectionEnd]).toEqual([4, 9]);
+  });
+
+  it("takes the keyboard back, its caret where it was, when a dialog that held it closes without giving it back", async () => {
+    const store = storeWith("The quick fox");
+    const { typing } = typingInto(store);
+    const area = await open(store, liveFor(typing));
+    area.focus();
+    area.setSelectionRange(9, 9);
+    const { pane } = await layer("dialog");
+    expect(host!.querySelector("textarea")).toBe(area);
+    await act(async () => pane.remove());
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(host!.querySelector("textarea")).toBe(area);
+    expect(document.activeElement).toBe(area);
+    expect([area.selectionStart, area.selectionEnd]).toEqual([9, 9]);
+  });
+
+  it("closes once the keyboard goes from the layer to somewhere else on the page", async () => {
+    const store = storeWith("The quick fox");
+    const { typing } = typingInto(store);
+    const area = await open(store, liveFor(typing));
+    area.focus();
+    const { pane } = await layer("dialog");
+    const elsewhere = document.createElement("button");
+    document.body.appendChild(elsewhere);
+    await act(async () => elsewhere.focus());
+    expect(host!.querySelector("textarea")).toBeNull();
+    pane.remove();
+    elsewhere.remove();
+  });
+
+  it("still closes when the keyboard goes straight to somewhere else on the page", async () => {
+    const store = storeWith("The quick fox");
+    const { typing } = typingInto(store);
+    const area = await open(store, liveFor(typing));
+    area.focus();
+    const elsewhere = document.createElement("button");
+    document.body.appendChild(elsewhere);
+    await act(async () => elsewhere.focus());
+    expect(host!.querySelector("textarea")).toBeNull();
+    elsewhere.remove();
+  });
+});
+
 describe("without a host that carries typing", () => {
   it("prose typed together keeps the draft and its Save", async () => {
     const store = storeWith("x");

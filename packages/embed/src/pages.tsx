@@ -1,5 +1,5 @@
 import type { AnySchema, Brand, Person, Principal, Store } from "@graview/core";
-import { createPartsWatch, ErrorReportContext, GraviewProvider, PartsWatchContext, type Scheme } from "@graview/react/provider";
+import { createPartsWatch, ErrorReportContext, GraviewProvider, PartsWatchContext, type AwaySummary, type Scheme } from "@graview/react/provider";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDrawnSignal } from "./drawn.js";
 import { draftWaits, fetchDraftHost, Settling, useDraft, type EmbedDraftView } from "./draft.js";
@@ -148,6 +148,8 @@ export interface PagesEmbedHandle {
   setHostContext(context: EmbedHostContext): void;
   /** Re-dress the embed: another brand, or the same brand with a different kit. */
   setBrand(brand: Brand | undefined): void;
+  /** What the app's own actor did while the reader was away, now (FR-212): the tray says it from the next render; `undefined` says nothing again. */
+  setWhileAway(away: AwaySummary | undefined): void;
   /** What the embed is called (FR-128): its accessible name, and the name each landmark inside is said after. */
   setLabel(label: string): void;
   /** The host's own actions in the profile menu (FR-72), now. */
@@ -174,6 +176,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     people(people: readonly Person[]): void;
     hostContext(context: EmbedHostContext): void;
     brand(brand: Brand | undefined): void;
+    whileAway(away: AwaySummary | undefined): void;
     path(path: string): void;
     label(label: string): void;
     hostActions(actions: PagesEmbedOptions["hostActions"]): void;
@@ -187,10 +190,11 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     const [people, setPeople] = useState<readonly Person[] | undefined>(options.people);
     const [hostContext, setHostContext] = useState<EmbedHostContext | undefined>(options.hostContext);
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
+    const [whileAway, setWhileAway] = useState<AwaySummary | undefined>(options.whileAway);
     const [label, setLabel] = useState<string | undefined>(options.label);
     const [hostActions, setHostActions] = useState<PagesEmbedOptions["hostActions"]>(options.hostActions);
     const [draft, setDraft] = useState<EmbedDraftView | null | undefined>(options.draftView);
-    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, label: setLabel, hostActions: setHostActions, draft: setDraft };
+    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setLabel, hostActions: setHostActions, draft: setDraft };
     return (
       <PagesEmbed<S>
         {...options}
@@ -202,6 +206,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
         {...(hostContext ? { hostContext } : {})}
         {...(brand ? { brand } : {})}
         {...(path !== undefined ? { path } : {})}
+        whileAway={whileAway}
         label={label}
         hostActions={hostActions}
         draftView={draft}
@@ -221,6 +226,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     setPeople: (people) => flushSync(() => set?.people(people)),
     setHostContext: (context) => flushSync(() => set?.hostContext(context)),
     setBrand: (brand) => flushSync(() => set?.brand(brand)),
+    setWhileAway: (away) => flushSync(() => set?.whileAway(away)),
     setLabel: (label) => flushSync(() => set?.label(label)),
     setHostActions: (actions) => flushSync(() => set?.hostActions(actions)),
     setDraftView: (draft) => flushSync(() => set?.draft(draft)),

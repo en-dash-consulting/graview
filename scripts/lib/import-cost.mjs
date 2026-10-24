@@ -11,8 +11,9 @@
 // without --bundled), which is what a Node server pays.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { hasSideEffects } from "./side-effects.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -109,11 +110,21 @@ const cpu = process.cpuUsage(before);
 process.stdout.write(JSON.stringify({ cpu: (cpu.user + cpu.system) / 1000, wall }));
 `;
 
-/** Resolves @graview/* to this checkout's built packages, wherever the importer lives. */
+/**
+ * Resolves @graview/* to this checkout's built packages, wherever the
+ * importer lives — with the package's `sideEffects` said, as wrangler reads
+ * it: a path a plugin answers is otherwise kept whole, so a bare import of
+ * an entry the package does not name was measured here and dropped there
+ * (FR-209).
+ */
 const workspace = {
   name: "graview-workspace",
   setup(build) {
-    build.onResolve({ filter: /^@graview\// }, (args) => ({ path: entryFile(args.path) }));
+    build.onResolve({ filter: /^@graview\// }, (args) => {
+      const path = entryFile(args.path);
+      const dir = join(ROOT, "packages", args.path.split("/")[1]);
+      return { path, sideEffects: hasSideEffects(JSON.parse(readFileSync(join(dir, "package.json"), "utf8")), relative(dir, path)) };
+    });
   },
 };
 

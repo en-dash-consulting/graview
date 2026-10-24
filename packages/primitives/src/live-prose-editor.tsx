@@ -168,6 +168,49 @@ function LiveEditor({
     onDone(left);
   };
 
+  /*
+   * WHILE A LAYER HOLDS THE KEYBOARD (Roadmap f-live-editor-blur): a
+   * first-look tour, a dialog or a popover opened over the page takes the
+   * keyboard, and the editor stays open, its caret where it was in the text
+   * area. Given back, it goes on. Where the layer closes and leaves the
+   * keyboard on nothing, the text area takes it back. Where it goes from
+   * the layer to somewhere else on the page, the person has left the field.
+   */
+  const held = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => () => held.current?.(), []);
+  const holdFor = (over: Element) => {
+    held.current?.();
+    const document = over.ownerDocument;
+    const editor = area.current?.closest("[data-graview-live]");
+    const moved = (event: FocusEvent) => {
+      const target = event.target;
+      if (target instanceof Node && editor?.contains(target)) return letGo();
+      if (target instanceof Element && target.closest(LAYER)) return;
+      letGo();
+      done(true);
+    };
+    // The layer gone or shut, and the keyboard on nothing: the text area has it back, its selection as it was.
+    const closed = () => {
+      const active = document.activeElement;
+      if (active !== null && active !== document.body) return;
+      if (over.isConnected && layerOpen(over)) return;
+      letGo();
+      area.current?.focus({ preventScroll: true });
+    };
+    const watch = new MutationObserver(closed);
+    watch.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["open", "hidden"] });
+    document.addEventListener("focusin", moved);
+    // A popover hidden says so only in its `toggle`, which does not bubble: heard on the way down.
+    document.addEventListener("toggle", closed, true);
+    const letGo = () => {
+      held.current = undefined;
+      watch.disconnect();
+      document.removeEventListener("focusin", moved);
+      document.removeEventListener("toggle", closed, true);
+    };
+    held.current = letGo;
+  };
+
   const others = [...live.who.values()].filter((one) => one.caret?.node === nodeId && one.caret.field === field);
 
   return (
@@ -220,6 +263,9 @@ function LiveEditor({
               // Moving to the editor's own buttons is not leaving it.
               const next = event.relatedTarget;
               if (next instanceof Node && event.currentTarget.closest("[data-graview-live]")?.contains(next)) return;
+              // Nor is a layer over the page taking the keyboard for a moment: a tour, a dialog, a popover.
+              const over = next instanceof Element ? next.closest(LAYER) : null;
+              if (over) return holdFor(over);
               done(true);
             }}
             style={TEXT_AREA}
@@ -286,6 +332,23 @@ function Carets({ text, others, area, log }: { readonly text: string; readonly o
     </div>
   );
 }
+
+/** A layer over the page that takes the keyboard for a moment: Graview's own overlays (a first-look tour among them), a dialog, a popover. */
+const LAYER = '[data-graview-overlay], dialog, [role="dialog"], [role="alertdialog"], [popover]';
+
+/** Whether a layer is still open: not hidden, a dialog not shut, a popover not hidden. */
+const layerOpen = (layer: Element) => {
+  if (layer.hasAttribute("hidden")) return false;
+  if (layer instanceof HTMLDialogElement && !layer.open) return false;
+  if (layer.hasAttribute("popover")) {
+    try {
+      return layer.matches(":popover-open");
+    } catch {
+      // An engine without popovers: the attribute alone says nothing about whether it is open.
+    }
+  }
+  return true;
+};
 
 /** How often a caret moved while typing is said, at most. */
 const CARET_MS = 120;

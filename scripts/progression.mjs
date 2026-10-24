@@ -53,15 +53,24 @@ function startVite() {
  * request off this machine is kept too, so a chapter that needs the
  * network says so whether or not the network was there.
  */
+/*
+ * Each error is kept as it was said, with what said it — the page's own
+ * exception, a console error and where in the source it was logged, a
+ * request that failed — and the page it was said on, so a chapter that
+ * fails `everyChapterRenderedWithoutErrors` on CI says which error, not how
+ * many.
+ */
 function listen(page, entry) {
-  page.on("pageerror", (error) => entry.errors.push(String(error.message ?? error)));
+  const on = () => new URL(page.url(), "http://localhost").pathname.split("/").pop() || page.url();
+  page.on("pageerror", (error) => entry.errors.push(`page error on ${on()}: ${String(error.stack ?? error.message ?? error).split("\n").slice(0, 3).join(" | ")}`));
   page.on("console", (message) => {
     if (message.type() !== "error") return;
     // Said again, with its address, by the request's own failure below.
     if (/^Failed to load resource: net::/.test(message.text())) return;
-    entry.errors.push(message.text());
+    const { url, lineNumber } = message.location();
+    entry.errors.push(`console error on ${on()}: ${message.text()}${url ? ` (at ${url}:${lineNumber + 1})` : ""}`);
   });
-  page.on("requestfailed", (request) => entry.errors.push(`${request.failure()?.errorText ?? "failed"}: ${request.url()}`));
+  page.on("requestfailed", (request) => entry.errors.push(`request failed on ${on()}: ${request.failure()?.errorText ?? "failed"}: ${request.url()}`));
   page.on("request", (request) => {
     const { protocol, hostname } = new URL(request.url());
     if (/^https?:$/.test(protocol) && hostname !== "localhost" && hostname !== "127.0.0.1" && !entry.offTheMachine.includes(request.url())) entry.offTheMachine.push(request.url());
@@ -288,6 +297,7 @@ try {
     await context.close();
     report.chapters.push(entry);
     process.stdout.write(`${entry.n} ${entry.slug}: check ${check.ok ? "ok" : "FAILED"} · ${entry.saw?.standing ?? ""} · ${entry.errors.length} console errors\n`);
+    for (const error of entry.errors) process.stdout.write(`  ${error}\n`);
   }
 
   /*
@@ -336,6 +346,7 @@ try {
     await context.close();
     report.recipes.push(entry);
     process.stdout.write(`recipe ${recipe.slug}: check ${entry.check.ok ? "ok" : "FAILED"} · ${entry.saw?.standing ?? ""} · ${entry.saw?.districts.length ?? 0} districts · ${entry.errors.length} console errors\n`);
+    for (const error of entry.errors) process.stdout.write(`  ${error}\n`);
   }
 } catch (error) {
   report.error = String(error?.stack ?? error).slice(0, 4000);
@@ -395,7 +406,33 @@ report.verdict = {
   theDeclarationIsAGraphInChapterFifteen: (report.chapters[14]?.saw?.districts ?? []).some((d) => /^kinds/i.test(d)) && (report.chapters[14]?.saw?.districts ?? []).some((d) => /^acts/i.test(d)) && report.chapters[14]?.check?.ok === true,
   theGardenWearsItsOwnFaceInChapterThirteen: report.chapters[12]?.saw?.design === true && report.chapters[12]?.saw?.fitsAPhone === true && /Every plot has someone|waits? for a caretaker/.test(report.chapters[12]?.saw?.page ?? ""),
 };
+/*
+ * WHY A CLAIM ABOUT ERRORS FAILED: each chapter or recipe that broke it,
+ * with the errors it heard and the pictures it is missing, in the verdict
+ * and in the log — CI keeps the log, not docs/progression.json.
+ */
+const unclean = (entries, name) =>
+  entries
+    .filter((one) => one.errors.length > 0 || !one.pictures.light || !one.pictures.dark || (name === "recipe" && one.offTheMachine.length > 0))
+    .map((one) => ({
+      [name]: one.n !== undefined ? `${one.n} ${one.slug}` : one.slug,
+      errors: one.errors,
+      ...(!one.pictures.light || !one.pictures.dark ? { missingPictures: ["light", "dark"].filter((scheme) => !one.pictures[scheme]) } : {}),
+      ...(name === "recipe" && one.offTheMachine.length > 0 ? { offTheMachine: one.offTheMachine } : {}),
+    }));
+report.why = {
+  ...(report.verdict.everyChapterRenderedWithoutErrors ? {} : { everyChapterRenderedWithoutErrors: unclean(report.chapters, "chapter") }),
+  ...(report.verdict.everyRecipeRunsOnItsPage ? {} : { everyRecipeRunsOnItsPage: unclean(report.recipes, "recipe") }),
+};
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;
 writeFileSync(resolve(repoRoot, "docs/progression.json"), `${JSON.stringify(report, null, 2)}\n`);
 process.stdout.write(`${JSON.stringify(report.verdict, null, 2)}\n`);
+for (const [claim, entries] of Object.entries(report.why)) {
+  process.stdout.write(`\n${claim} is false:\n`);
+  for (const one of entries) {
+    process.stdout.write(`  ${one.chapter ? `chapter ${one.chapter}` : `recipe ${one.recipe}`}${one.missingPictures ? ` (no ${one.missingPictures.join(" or ")} picture)` : ""}\n`);
+    for (const error of one.errors) process.stdout.write(`    ${error}\n`);
+    for (const address of one.offTheMachine ?? []) process.stdout.write(`    asked the network: ${address}\n`);
+  }
+}
 process.exit(report.passed ? 0 : 1);

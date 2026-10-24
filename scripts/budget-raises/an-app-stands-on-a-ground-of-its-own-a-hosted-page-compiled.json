@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 2019,
+  "gzipped": 662,
+  "changeset": "an-app-stands-on-a-ground-of-its-own.md",
+  "note": "Raised when an app came to stand on a ground of its own: what draws the brand draws the panel, the muted panel, the edge, the bar and a floating sheet from the brand's `ground`, derives a dark ground from a light one, and leaves off a ground ink, muted ink or the accent would not read on (`ground.ts`: `groundSchemes`, `darkGroundFor`, `groundFailure`). Measured at 564_284 / 196_776 against 562_265 / 196_114."
+}

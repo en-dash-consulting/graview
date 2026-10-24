@@ -8,6 +8,8 @@ import {
   isUnset,
   namesUnseen,
   participantKey,
+  readsPublished,
+  recordsOf,
   redact,
   seatLens,
   sha256Hex,
@@ -951,9 +953,24 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       // A visitor whose announced time has passed is never told of, though a host may still hold it.
       const now = Date.now();
       const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
-      if (!sighted(principal)) return standing;
+      const behind = readsPublished(store.publishing, principal);
+      if (!sighted(principal) && !behind) return standing;
       const lens = seatLens(store, principal);
-      return presenceSeenBy(standing, seesId(store, principal), (node, field) => !keptField(lens, node, field));
+      const seen = seesId(store, principal);
+      const kept = (node: string, field: string) => keptField(lens, node, field);
+      if (!behind) return presenceSeenBy(standing, seen, (node, field) => !kept(node, field));
+      /*
+       * WHERE SOMEBODY STANDS, AS A READER IS SERVED THE APP (FR-211): a
+       * record not yet published is one the reader may not be told of — an
+       * id the log knows that its view does not hold — and a caret is told
+       * only in text the reader is served as it now reads, since where
+       * somebody types in words not yet published says what they are.
+       */
+      const served = seenBy(store, principal).graph;
+      const records = recordsOf(store.log);
+      const sees = (id: string) => seen(id) && (served.getNode(id) !== undefined || (store.graph.getNode(id) === undefined && records.kindOf(id) === undefined));
+      const read = (node: string, field: string) => (served.getNode(node) as Record<string, unknown> | undefined)?.[field] === (store.graph.getNode(node) as Record<string, unknown> | undefined)?.[field];
+      return presenceSeenBy(standing, sees, (node, field) => !kept(node, field) && read(node, field));
     },
     claim(batch, seat) {
       if (batch === undefined || batch === null || batch === "") return {};

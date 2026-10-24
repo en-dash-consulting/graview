@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 300,
+  "gzipped": 100,
+  "changeset": "a-graph-put-back-keeps-where-things-stood.md",
+  "note": "Raised when a graph put back to a snapshot it held came to keep where things stood, as the hosted page's raise of the same name says. Measured at 562_556 / 196_199 against 562_265 / 196_114 at c417d7fae: 291 more minified, 85 gzipped."
+}

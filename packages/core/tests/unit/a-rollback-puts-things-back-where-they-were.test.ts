@@ -54,6 +54,30 @@ describe("a rollback", () => {
     expect(order(client)).toEqual(was);
   });
 
+  it("still knows where a removed node stood after a call the store refused in between", () => {
+    const client = new Store({ schema, snapshot: seed });
+    const was = order(client);
+    const { batch } = client.apply({ name: "remove-task", args: { id: "b" } });
+    // Refused: b is gone. The store puts its graph back, and that put-back must not forget where b stood.
+    expect(() => client.apply({ name: "edit-task", args: { id: "b", label: "B!" } })).toThrow();
+    client.rebase({ confirmed: [], pending: [], drop: [batch] });
+    expect(order(client)).toEqual(was);
+  });
+
+  it("still knows where a removed node stood after a pending batch the rebase could not apply again", () => {
+    const server = new Store({ schema, snapshot: seed });
+    const client = new Store({ schema, snapshot: server.snapshot(), log: server.log.all() });
+    const removal = client.apply({ name: "remove-task", args: { id: "b" } });
+    const edit = client.apply({ name: "edit-task", args: { id: "d", label: "D?" } });
+    // The server removes d first, so the client's edit of d no longer applies when it is put back on top.
+    const theirs = server.apply({ name: "remove-task", args: { id: "d" } });
+    const rebased = client.rebase({ confirmed: theirs.ops, pending: [removal.batch, edit.batch] });
+    expect(rebased.refused.map((refusal) => refusal.batch)).toEqual([edit.batch]);
+    // The server refuses the removal after all: b goes back where it stood, as it stands on the server.
+    client.rebase({ confirmed: [], pending: [], drop: [removal.batch] });
+    expect(order(client)).toEqual(order(server));
+  });
+
   it("leaves the server's order and the client's the same once the server's ops land", () => {
     const server = new Store({ schema, snapshot: seed });
     const client = new Store({ schema, snapshot: server.snapshot(), log: server.log.all() });

@@ -896,7 +896,8 @@ async function opening<S extends AnySchema>(
   const pulled = async (): Promise<readonly Operation[]> => {
     // Presence rides the poll only while somebody is looking (FR-49).
     if (mine && !socketReady() && visible()) {
-      const response = await reach(`${options.url}/graview/here`, {
+      // The op format it reads, as `/graview/since` says it: the ops since ride the answer (FR-210).
+      const response = await reach(`${options.url}/graview/here?opFormat=${FORMATS.op}`, {
         method: "POST",
         headers,
         body: JSON.stringify({ presence: mine, seq: cursorAt(seen) }),

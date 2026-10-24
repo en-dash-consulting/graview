@@ -4,7 +4,7 @@ import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } f
 import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { afterFirstDraw, createPartsWatch, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, PartsWatchContext, useNavigation, type ErrorReport, type PageDoor, type PartsWatch, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { afterFirstDraw, createPartsWatch, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, PartsWatchContext, useNavigation, type AwaySummary, type ErrorReport, type PageDoor, type PartsWatch, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
@@ -882,6 +882,13 @@ export interface EmbedHandle {
   /** Re-dress the embed: another brand, or the same brand with a different kit. */
   setBrand(brand: Brand | undefined): void;
   /**
+   * WHAT THE APP'S OWN ACTOR DID WHILE THE READER WAS AWAY, now (FR-212):
+   * the `whileAway` a host works out once the page has drawn, handed over
+   * without holding the page back; the Suggested tray says it from the
+   * next render, and `undefined` says nothing again.
+   */
+  setWhileAway(away: AwaySummary | undefined): void;
+  /**
    * ANOTHER VIEW PROPOSED AND NOT KEPT, OR NONE (FR-187): the draft drawn
    * where it attaches swapped in place, without a remount — the store, the
    * place and the seat stay. `data-graview-drawn` comes off in the call and
@@ -919,6 +926,7 @@ interface Setters {
   people(people: readonly Person[]): void;
   hostContext(context: EmbedHostContext): void;
   brand(brand: Brand | undefined): void;
+  whileAway(away: AwaySummary | undefined): void;
   label(label: string | undefined): void;
   hostActions(actions: EmbedOptions["hostActions"]): void;
   draft(draft: EmbedDraftView | null): void;
@@ -978,6 +986,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     const [people, setPeople] = useState<readonly Person[] | undefined>(options.people);
     const [hostContext, setHostContext] = useState<EmbedHostContext | undefined>(options.hostContext);
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
+    const [whileAway, setWhileAway] = useState<AwaySummary | undefined>(options.whileAway);
     const [called, setCalled] = useState<string | undefined>(options.label);
     const [hostActions, setHostActions] = useState<EmbedOptions["hostActions"]>(options.hostActions);
     const [swap, setSwap] = useState<Swap | undefined>(undefined);
@@ -988,7 +997,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         setPath(undefined);
         setStop(undefined);
       },
-      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, quickAsk: setQuickAsk, people: setPeople, hostContext: setHostContext, brand: setBrand, label: setCalled, hostActions: setHostActions, draft: setDraft };
+      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, quickAsk: setQuickAsk, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setCalled, hostActions: setHostActions, draft: setDraft };
     return (
       <Whereabouts.Provider value={here}>
       <Embed<S>
@@ -1008,6 +1017,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         {...(people ? { people } : {})}
         {...(hostContext ? { hostContext } : {})}
         {...(brand ? { brand } : {})}
+        whileAway={whileAway}
         label={called}
         hostActions={hostActions}
         draftView={draft}
@@ -1081,6 +1091,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setPeople: (people) => flushSync(() => setters?.people(people)),
     setHostContext: (context) => flushSync(() => setters?.hostContext(context)),
     setBrand: (brand) => flushSync(() => setters?.brand(brand)),
+    setWhileAway: (away) => flushSync(() => setters?.whileAway(away)),
     setDraftView: (draft) => flushSync(() => setters?.draft(draft)),
     setLabel: (given) => {
       label = given;

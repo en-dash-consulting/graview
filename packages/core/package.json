@@ -202,7 +202,9 @@
     "./dist/field-sight.js",
     "./src/field-sight.ts",
     "./dist/publishing.js",
-    "./src/publishing.ts"
+    "./src/publishing.ts",
+    "./dist/typing.js",
+    "./src/typing.ts"
   ],
   "repository": {
     "type": "git",

@@ -36,6 +36,8 @@ export interface GuestPictureLimits {
 export const PICTURE_WIDTH = 1_200;
 /** The `src` a headless run hands a picture in place of the address the page's host makes: a blank GIF, one pixel. */
 export const PICTURE_STAND_IN = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+/** The least time between two pushes for pictures that settled, in ms: those that settle within it go together (FR-207). */
+export const PICTURES_SETTLE_MS = 100;
 /** A file larger than this, as the record says it, is not fetched for a guest at all. */
 export const PICTURE_FETCH_BYTES = 40_000_000;
 
@@ -203,14 +205,28 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
   const drawnFor = new Map<string, string>();
   const told = new Set<string>();
   let disposed = false;
-  let moving = false;
+  /*
+   * PUSHED AGAIN AT MOST ONCE IN `PICTURES_SETTLE_MS` (FR-207): each push is
+   * the view's whole props, drawn and answered, so sixty pictures settling
+   * one by one were sixty pushes, and more messages back than a view may
+   * send in a second. The first picture to settle is pushed at once; those
+   * that settle after it within the span wait for its end, and go together.
+   */
+  let moving: number | true | undefined;
+  let movedAt = -Infinity;
   const moved = () => {
-    if (moving || disposed) return;
-    moving = true;
-    queueMicrotask(() => {
-      moving = false;
-      if (!disposed) options.moved();
-    });
+    if (moving !== undefined || disposed) return;
+    const go = () => {
+      moving = undefined;
+      if (disposed) return;
+      movedAt = window.performance.now();
+      options.moved();
+    };
+    const wait = movedAt + PICTURES_SETTLE_MS - window.performance.now();
+    if (wait <= 0) {
+      moving = true;
+      queueMicrotask(go);
+    } else moving = window.setTimeout(go, wait);
   };
   const tell = (text: string) => {
     if (told.has(text)) return;
@@ -344,9 +360,11 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
       return handed;
     },
     drawn: (src) => drawnFor.get(src),
-    waiting: () => [...entries.values()].some((entry) => entry.state === "pending"),
+    /* A picture that settled and is not yet pushed is still waited for: the view has not been handed it. */
+    waiting: () => moving !== undefined || [...entries.values()].some((entry) => entry.state === "pending"),
     dispose() {
       disposed = true;
+      if (moving !== undefined && moving !== true) window.clearTimeout(moving);
       for (const entry of entries.values()) release(entry);
       entries.clear();
       drawnFor.clear();

@@ -29,10 +29,11 @@ const MAKER_INK: Record<Maker, string> = {
 /**
  * The stops a scrubber walks: the start, then the moment after each change.
  * Behind the undo horizon, when the host keeps the archive (FR-196), every
- * seq from the start: its gestures are not known until it is read.
+ * seq from the start — its gestures are not known until it is read — or,
+ * once the host has said where its history stops (FR-213), the moments it
+ * kept whole and every seq from where it keeps each change.
  */
-function stopsOf(ticks: readonly PlaybackTick[], horizon: number, archived: boolean): number[] {
-  const behind = archived ? Array.from({ length: horizon }, (_, seq) => seq) : [];
+function stopsOf(ticks: readonly PlaybackTick[], horizon: number, behind: readonly number[]): number[] {
   return [...new Set([...behind, horizon, ...ticks.map((tick) => tick.seq)])].sort((a, b) => a - b);
 }
 
@@ -84,9 +85,13 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
   const horizon = live.log.horizon;
   // Behind the horizon is the host's archive (FR-196): reached when it keeps one, and said to be archived when it does not.
   const archived = horizon > 0 && playback.host?.archived !== undefined;
-  const stops = useMemo(() => stopsOf(ticks, horizon, archived), [ticks, horizon, archived]);
+  const kept = playback.kept;
+  const behind = useMemo(() => (!archived ? [] : (kept?.stops ?? Array.from({ length: horizon }, (_, seq) => seq))), [archived, kept, horizon]);
+  const stops = useMemo(() => stopsOf(ticks, horizon, behind), [ticks, horizon, behind]);
   const reading = playback.archive;
   const seq = reading?.seq ?? playback.past?.seq ?? length;
+  // Where the host's history stops (FR-213): said in a quiet line at a moment made at or before it, or before what its archive keeps.
+  const keptLine = playback.host?.kept && (reading?.behindKept || (kept !== undefined && (seq <= kept.through || (kept.from > 0 && seq <= kept.from)))) ? playback.host.kept : undefined;
   const index = indexOf(stops, seq);
   const last = stops.length - 1;
   const folded = seq < horizon && playback.past?.seq === seq ? playback.past.store.log.all().at(-1) : undefined;
@@ -118,7 +123,9 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
   const caption = reading
     ? reading.refused
       ? "The archive could not be read"
-      : "Reading the older changes from the archive…"
+      : reading.behindKept
+        ? "Nothing this far back is kept"
+        : "Reading the older changes from the archive…"
     : tick
       ? `${who(tick) === "you" ? "You" : who(tick)}: ${tick.said}`
       : "Nothing had happened yet";
@@ -301,6 +308,19 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
       {reading?.refused ? (
         <span role="alert" data-testid="archive-refused" style={{ color: "var(--graview-warn)" }}>
           {reading.refused}
+        </span>
+      ) : null}
+      {keptLine ? (
+        <span data-testid="timeline-kept" style={{ color: "var(--graview-ink-faint)" }}>
+          {keptLine.sentence}
+          {keptLine.action ? (
+            <>
+              {" "}
+              <a data-testid="timeline-kept-action" href={keptLine.action.href} style={{ color: "var(--graview-ink-muted)" }}>
+                {keptLine.action.label}
+              </a>
+            </>
+          ) : null}
         </span>
       ) : null}
       {horizon > 0 && !archived ? (
