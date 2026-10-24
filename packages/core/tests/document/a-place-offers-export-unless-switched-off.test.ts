@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { createViewRegistry, declaredLenses, type AnySchema, type GraviewApp } from "../../src/index.js";
+import type { AnySchema, GraviewApp } from "../../src/index.js";
 import { checkApp, compileDocument, describeApp } from "../../src/check.js";
 import { diffDocuments, editDocument, readDocument, toDocument } from "../../src/document/index.js";
 
@@ -53,17 +53,6 @@ describe("a place that offers Export CSV unless switched off", () => {
     expect(outcome.ok).toBe(false);
     if (outcome.ok) return;
     expect(outcome.findings[0]?.message).toContain("lists no records");
-  });
-
-  it("is carried to the place: the drawn lens and a registration's place say export false, and nothing when on", () => {
-    const off = editDocument(hall, [{ op: "set-lens-export", title: "The month", export: false }]);
-    if (!off.ok) throw new Error("not off");
-    const app = appOf(off.document);
-    expect(declaredLenses(app).drawn.find((lens) => lens.title === "The month")?.export).toBe(false);
-    expect(declaredLenses(app).drawn.find((lens) => lens.title === "The week")).not.toHaveProperty("export");
-    const registry = createViewRegistry(app.schema);
-    registry.register("shift" as never, { cardinality: "many", fidelity: "full" }, "month", { title: "The month", export: false });
-    expect(registry.places()).toEqual([{ kind: "shift", title: "The month", as: "the-month", export: false }]);
   });
 
   it("is checked: export that is not true or false, and export on a lens that lists no records, are found", () => {

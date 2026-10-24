@@ -1,5 +1,8 @@
 import { admitArrangement, arrange, arrangeable } from "@graview/core/arrange";
+import { readableFields } from "@graview/core/words";
+import { withComputed } from "@graview/core/blocks";
 import {
+  labelOf,
   pluralLabel,
   type AnySchema,
   type Arranged,
@@ -11,7 +14,7 @@ import { useGraview, useNavigation, type ViewProps } from "@graview/react";
 import { withPast } from "@graview/layout/view-moves";
 import { useContext, type ReactNode } from "react";
 import { ArrangeBar, arrangementOf, withArrangement } from "../arrange-bar.js";
-import { exportShownList, placeExportKey, prefetchExport, useShownListExport, type ShownListToExport } from "../list-export.js";
+import { ExportPress, placeExportKey, shownListSaid, useShownListExport } from "../list-export.js";
 import { PlaceExportContext } from "./place-export.js";
 
 /**
@@ -118,17 +121,10 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
    * its declaration offers it to nobody.
    */
   const full = props.fidelity === "full" && props.budget === undefined;
-  const exporting = kind !== undefined && full && options.exportable !== false && place?.export !== false;
-  const shownNow = (): ShownListToExport => ({
-    title: place?.title ?? pluralLabel(store.schema, String(kind)),
-    schema: store.schema,
-    graph: store.graph,
-    kind: String(kind),
-    groups: arranged.grouped ? arranged.groups : [{ nodes: arranged.nodes }],
-    grouped: arranged.grouped,
-    onExport,
-  });
-  useShownListExport(place ? placeExportKey(place.as) : undefined, shownNow, exporting);
+  const exporting = kind !== undefined && full && options.exportable !== false;
+  const shownSaid = shownListSaid(place?.export === false, { lens: place?.title ?? "", ...(place?.on !== undefined ? { on: place.on } : {}) }, () => ({ title: place?.title ?? pluralLabel(store.schema, String(kind)), schema: store.schema, graph: store.graph as never, kind: String(kind), groups: arranged.groups, grouped: arranged.grouped, onExport, words: { labelOf, readableFields, withComputed } }));
+  // Said for the place menu only where a declaration names the place: its switch is the declaration's.
+  useShownListExport(place && exporting ? placeExportKey(place.as) : undefined, shownSaid);
   // No row on a picture with a budget: a lens handed a few of its members is a picture of itself, with no controls.
   const bar =
     kind && allow !== false && full && (subject.length > 1 || retired > 0) ? (
@@ -143,7 +139,7 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
         onChange={(next) => go(withArrangement(view, next))}
         kept={{ shown: arranged.nodes.length, of: subject.length }}
         {...(retired > 0 ? { past: { count: retired, widen: () => go(withPast(view, true)) } } : {})}
-        {...(exporting ? { exportList: () => void exportShownList(shownNow()), prefetchExport } : {})}
+        {...(exporting && !shownSaid.off ? { end: <ExportPress said={shownSaid} /> } : {})}
       />
     ) : null;
 

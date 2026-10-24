@@ -42,7 +42,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-view-export-csv: a kind's list as its page shows it, which "Export CSV" writes — the list page's alone.
   "@graview/core/shown": { from: shown, names: ["shownList"] },
   // Roadmap f-view-export-csv: a place's list written as a spreadsheet, fetched when somebody presses "Export CSV".
-  "@graview/core/csv": { from: csv, names: ["CSV_BOM", "csvCell", "csvFileName", "csvSafe", "listCsv", "listCsvRows", "toCsv"] },
+  "@graview/core/csv": { from: csv, names: ["CSV_BOM", "csvCell", "csvFileName", "csvSafe", "listCsv", "listCsvRows", "saveShownList", "switchExport", "toCsv"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.

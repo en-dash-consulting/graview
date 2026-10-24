@@ -5,7 +5,9 @@ import { arrangeable, listGroup } from "../../src/arrange.js";
 import { shownList } from "../../src/shown.js";
 import { CSV_BOM, csvCell, csvFileName, csvSafe, listCsv, listCsvRows, toCsv } from "../../src/csv.js";
 import { parseCsv } from "../../src/import/index.js";
-import { createSchema, defineNode, Graph, Store, z, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
+import { readableFields } from "../../src/words.js";
+import { withComputed } from "../../src/blocks.js";
+import { createSchema, defineNode, Graph, labelOf, Store, z, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
 import type { GraviewDocument } from "../../src/document/index.js";
 
 /**
@@ -53,6 +55,9 @@ const desk: GraviewDocument = {
   pages: { lists: { question: { group: { by: "status", order: ["answered", "new"], closed: ["done"] } } } },
 } as unknown as GraviewDocument;
 
+/** How a record is said, as a page that draws the list hands it in. */
+const words = { labelOf, readableFields, withComputed };
+
 const agent: Principal = { kind: "human", id: "person:ada", roles: ["agent"] };
 const visitor: Principal = { kind: "human", id: "person:vic", roles: ["visitor"] };
 
@@ -92,7 +97,8 @@ function shownAs(store: Store<AnySchema>, app: GraviewApp<AnySchema>, opened: Re
   });
 }
 
-const groupsOf = (shown: ReturnType<typeof shownAs>) => shown.groups.filter((group) => !group.shut).map((group) => ({ label: group.label, nodes: group.nodes }));
+/** What the export writes: every group the list keeps, a shut one too — shutting a group is how it is drawn, not what the list holds. */
+const groupsOf = (shown: ReturnType<typeof shownAs>) => shown.groups;
 
 describe("the CSV writer", () => {
   it("quotes a cell holding a comma, a quote, a CR or an LF, doubling the quotes inside, and ends each row with CRLF after a byte-order mark", () => {
@@ -129,34 +135,36 @@ describe("a list exported as it is shown", () => {
     expect(shownAs(store, app, new Set(["done"])).nodes.map((node) => node.id)).toEqual(["q:door", "q:cafe", "q:wifi", "q:old"]);
   });
 
-  it("writes a Group column first, then the name, then each field the page reads, said as the page says it — computed ones too", () => {
+  it("writes a Group column first, then the name, then each field the page reads, said as the page says it — computed ones too, and a shut group's rows with the rest", () => {
     const { app, store } = opened();
     const shown = shownAs(store.seenBy(agent), app);
-    const rows = listCsvRows({ schema: store.schema, graph: store.seenBy(agent).graph, kind: "question", groups: groupsOf(shown), grouped: shown.grouped, locale: "en-US", timeZone: "UTC" });
+    const rows = listCsvRows({ words, schema: store.schema, graph: store.seenBy(agent).graph, kind: "question", groups: groupsOf(shown), grouped: shown.grouped, locale: "en-US", timeZone: "UTC" });
     expect(rows[0]).toEqual(["Group", "Name", "Status", "Asked", "Bounty", "Secret", "Worth"]);
     expect(rows.slice(1).map((row) => row.slice(0, 2))).toEqual([
       ["answered", '=HYPERLINK("http://x")'],
       ["new", "Where is the café, \"downstairs\"?"],
       ["new", "Why is the wifi slow?"],
+      // Drawn shut, and written all the same.
+      ["done", "Old one"],
     ]);
     const wifi = rows.find((row) => row[1] === "Why is the wifi slow?")!;
     expect(wifi).toEqual(["new", "Why is the wifi slow?", "New", "Oct 2, 2026", "$1,250", "router 0451", "2500"]);
     // The formula is written as text in the file.
-    expect(listCsv({ schema: store.schema, graph: store.graph, kind: "question", groups: groupsOf(shown), grouped: true })).toContain(`"'=HYPERLINK(""http://x"")"`);
+    expect(listCsv({ words, schema: store.schema, graph: store.graph, kind: "question", groups: groupsOf(shown), grouped: true })).toContain(`"'=HYPERLINK(""http://x"")"`);
   });
 
   it("never writes a field the kind's display.hide keeps off its page", () => {
     const step = defineNode("step", { fields: z.object({ label: z.string(), order: z.number(), note: z.string().optional() }), display: { hide: ["order"] } });
     const schema = createSchema([step]);
     const graph = Graph.from(schema, { nodes: [{ id: "s1", kind: "step", label: "Pack", order: 7, note: "boxes" }], edges: [] } as never);
-    const rows = listCsvRows({ schema, graph: graph as never, kind: "step", groups: [{ nodes: graph.nodesOfKind("step") }], grouped: false });
+    const rows = listCsvRows({ words, schema, graph: graph as never, kind: "step", groups: [{ nodes: graph.nodesOfKind("step") }], grouped: false });
     expect(rows).toEqual([["Name", "Note"], ["Pack", "boxes"]]);
   });
 
   it("writes no Group column when the list is not grouped, and the rows in the list's own order", () => {
     const { store } = opened();
     const shown = shownList({ schema: store.schema, graph: store.graph, kind: "question", nodes: store.graph.nodesOfKind("question" as never) as never, arrangement: { sort: { by: "asked", direction: "desc" }, filter: [{ key: "status", value: "new" }] }, offers: arrangeable(store.schema, "question") });
-    const rows = listCsvRows({ schema: store.schema, graph: store.graph, kind: "question", groups: [{ nodes: shown.nodes }], grouped: shown.grouped });
+    const rows = listCsvRows({ words, schema: store.schema, graph: store.graph, kind: "question", groups: [{ nodes: shown.nodes }], grouped: shown.grouped });
     expect(rows[0]![0]).toBe("Name");
     expect(rows.slice(1).map((row) => row[0])).toEqual(["Why is the wifi slow?", "Where is the café, \"downstairs\"?"]);
   });
@@ -165,7 +173,7 @@ describe("a list exported as it is shown", () => {
     const { app, store } = opened();
     const seen = store.seenBy(visitor);
     const shown = shownAs(seen, app);
-    const rows = listCsvRows({ schema: seen.schema, graph: seen.graph, kind: "question", groups: groupsOf(shown), grouped: shown.grouped });
+    const rows = listCsvRows({ words, schema: seen.schema, graph: seen.graph, kind: "question", groups: groupsOf(shown), grouped: shown.grouped });
     expect(rows[0]).not.toContain("Secret");
     expect(rows[0]).not.toContain("Bounty");
     const text = toCsv(rows);

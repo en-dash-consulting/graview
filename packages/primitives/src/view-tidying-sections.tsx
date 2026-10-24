@@ -5,7 +5,7 @@ import { MenuSections } from "@graview/react/drawing";
 import { lazyModule, useGraviewIfAny, useNavigation, type MenuItem, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
 import { useCallback, useContext, useMemo, type ReactNode } from "react";
 import { NoticeBoardContext } from "./notices.js";
-import type { ShownListToExport } from "./list-export.js";
+import type { ShownListSaid } from "@graview/core/csv";
 
 /*
  * HIDE AND DELETE IN THE PLACE MENU (Roadmap f-place-menu-views), as much
@@ -18,10 +18,7 @@ import type { ShownListToExport } from "./list-export.js";
  */
 
 /** What a drawn place shows, by key (`list:<kind>`, `place:<as>`): what `useShownListExport` says, read off the page (`SHOWN_LISTS`). */
-const shownAt = (key: string) => (globalThis as { [key: symbol]: Map<string, () => ShownListToExport> | undefined })[Symbol.for("graview.shown-lists")]?.get(key);
-
-/** What a place's export switch is set on: a lens by its title and kind, a kind's list by its kind. */
-type ExportAbout = { readonly lens: string; readonly on?: string } | { readonly kind: string };
+const shownAt = (key: string) => (globalThis as { [key: symbol]: Map<string, () => ShownListSaid> | undefined })[Symbol.for("graview.shown-lists")]?.get(key);
 
 const tidying = /* @__PURE__ */ lazyModule(retryingImport(() => import("./view-tidying.js")));
 
@@ -61,19 +58,15 @@ export function useViewTidyingSection(away?: (place: Place, after: Place | undef
       const state = keeper?.current();
       const kind = kindOf(target);
       const section = (items: MenuItem[]) => (items.length > 0 ? { id: "tidy-view", items, prepare: () => tidying.prefetch() } : null);
-      const tidy = <K extends "setListHidden" | "setHidden" | "remove" | "setExport" | "exportList">(name: K, ...args: unknown[]) => tidying.load().then((module) => (module[name] as (...given: unknown[]) => Promise<boolean>)(...args), () => false);
+      const tidy = <K extends "setListHidden" | "setHidden" | "remove">(name: K, ...args: unknown[]) => tidying.load().then((module) => (module[name] as (...given: unknown[]) => Promise<boolean>)(...args), () => false);
       /*
        * "EXPORT CSV" (Roadmap f-view-export-csv): the records the place
        * shows, where it is drawn and lists records, unless its declaration
        * offers it to nobody — and, for whoever may change the declaration,
        * the switch that offers it or not, `set-lens-export`.
        */
-      const exporting = (key: string, off: boolean, title: string, about: ExportAbout, owner: boolean): MenuItem[] => {
-        const shown = shownAt(key);
-        const items: MenuItem[] = shown && !off ? [{ id: "export-csv", label: "Export CSV", hint: "The records shown, as a spreadsheet", run: () => void tidy("exportList", shown()) }] : [];
-        if (owner && (off || shown)) items.push({ id: off ? "export-on" : "export-off", label: off ? "Turn on export" : "Turn off export", hint: off ? "Offer Export CSV here" : "Offer Export CSV to nobody", run: () => void tidy("setExport", title, about, keeper, off, board) });
-        return items;
-      };
+      // What the list drawn here says of itself: its rows, made by the list.
+      const exporting = (key: string, owner: boolean): MenuItem[] => shownAt(key)?.().menu(owner, keeper, board) ?? [];
       /*
        * A KIND'S LIST, on Pages: kept off the places (`pages.hide`) as a
        * change to the declaration — `set-lens-hidden` on the kind — by
@@ -86,7 +79,7 @@ export function useViewTidyingSection(away?: (place: Place, after: Place | undef
         const hidden = views.arrangement?.()?.hide?.includes(kind) === true;
         return section([
           ...(owner ? [{ id: hidden ? "show-list" : "hide-list", label: hidden ? "Show" : "Hide", hint: hidden ? "Back in the places, for everyone" : "Off the places, for everyone; still at its address", run: () => void tidy("setListHidden", kind, title, keeper, !hidden, board) }] : []),
-          ...exporting(`list:${kind}`, views.arrangement?.()?.lists?.[kind]?.export === false, title, { kind }, owner),
+          ...exporting(`list:${kind}`, owner),
         ]);
       }
       const place = views.places().find((one) => one.as === target.place && (kind === undefined || one.kind === kind || one.over?.includes(kind) === true));
@@ -109,7 +102,7 @@ export function useViewTidyingSection(away?: (place: Place, after: Place | undef
               },
             ]
           : []),
-        ...exporting(`place:${place.as}`, place.export === false, place.title, { lens: place.title, on: place.kind }, how === "lens"),
+        ...exporting(`place:${place.as}`, how === "lens"),
       ]);
     };
   }, [keeper, views, board, away]);

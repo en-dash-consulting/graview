@@ -1,4 +1,5 @@
-import { AppLink, ArrangeBar, CHOOSING_CSS, exportShownList, Files, focusInto, listExportKey, pageSays, prefetchExport, prefetchSeveral, SeveralBarDoor, SkipLinks, useChoosing, useEndsAboveItsList, useShownListExport, type ShownListToExport } from "@graview/primitives/pages";
+import { AppLink, ArrangeBar, CHOOSING_CSS, Files, focusInto, pageSays, prefetchSeveral, SeveralBarDoor, SkipLinks, useChoosing, useEndsAboveItsList } from "@graview/primitives/pages";
+import { exportShownList, shownListSaid, useShownListExport } from "./list-export.js";
 import { admitArrangement, arrangeable, formatArrangement, listGroup, listOpening, parseArrangement, throughEdges, withWorkedOut } from "@graview/core/arrange";
 import { shownList } from "@graview/core/shown";
 import {
@@ -18,6 +19,7 @@ import {
   type NodeOfSchema,
 } from "@graview/core";
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
+import { readableFields } from "@graview/core/words";
 import { fieldSpecOf, firstPicture, withComputed } from "@graview/core/blocks";
 import { isDefaultView, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
@@ -194,25 +196,17 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
   const { showingPast, arranged } = shown;
   const groupsDrawn = shown.groups;
   /*
-   * "EXPORT CSV" (Roadmap f-view-export-csv): the rows this list shows, as
+   * "EXPORT CSV" (Roadmap f-view-export-csv): the rows this list keeps, as
    * `shownList` says — in this order, with this filter, these words and
-   * these groups, a shut group's rows not among them — from the arranging
-   * line and the place menu, unless the declaration offers it to nobody
-   * (`pages.lists.<kind>.export: false`).
+   * these groups, a group drawn shut among them (shutting one is how it is
+   * drawn, not what the list holds) — from the arranging line and the place
+   * menu, unless the declaration offers it to nobody
+   * (`pages.lists.<kind>.export: false`). What writes it is fetched with
+   * the press.
    */
   const around = useGraviewIfAny();
-  const onExport = context.onExport ?? around?.onExport;
-  const exporting = declared?.export !== false;
-  const shownNow = (): ShownListToExport => ({
-    title: pluralOf(store, kind),
-    schema: store.schema,
-    graph: store.graph,
-    kind,
-    groups: shown.grouped ? shown.groups.filter((group) => !group.shut).map((group) => ({ label: group.label, nodes: group.nodes })) : [{ nodes: shown.nodes }],
-    grouped: shown.grouped,
-    onExport,
-  });
-  useShownListExport(listExportKey(kind), shownNow, exporting);
+  const said = shownListSaid(declared?.export === false, { kind }, () => ({ title: pluralOf(store, kind), schema: store.schema, graph: store.graph as never, kind, groups: shown.groups, grouped: shown.grouped, onExport: context.onExport ?? around?.onExport, words: { labelOf, readableFields, withComputed } }));
+  useShownListExport(`list:${kind}`, said);
   const isShut = (group: { shut: boolean }) => group.shut;
   const toggleGroup = (key: string) => {
     const params = new URLSearchParams(search);
@@ -670,7 +664,16 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             // `?q=` would be two answers to one question. An app's own shell
             // has no such box, so there the line keeps its own.
             query={context.framed === true && context.barAbove !== true}
-            {...(exporting ? { exportList: () => void exportShownList(shownNow()), prefetchExport } : {})}
+            {...(said.off
+              ? {}
+              : {
+                  // Quiet and short, last on the line, named "Export CSV": never the screen's one filled button.
+                  end: (
+                    <button type="button" className="graview-arrange-open" data-testid="arrange-export" aria-label="Export CSV" title="Export CSV" onClick={() => void exportShownList(said)}>
+                      <span aria-hidden="true">↓</span>CSV
+                    </button>
+                  ),
+                })}
           />
         ) : null}
         <style>{ROWS_CSS}</style>

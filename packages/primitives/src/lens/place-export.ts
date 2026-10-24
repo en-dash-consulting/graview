@@ -11,6 +11,8 @@ import { createContext } from "react";
 export interface PlaceExport {
   readonly title: string;
   readonly as: string;
+  /** The kind it stands on, which `set-lens-export` names it by beside its title. */
+  readonly on?: string;
   /** `false`: the declaration offers nobody "Export CSV" here. */
   readonly export?: false;
 }

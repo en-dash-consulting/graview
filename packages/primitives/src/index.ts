@@ -46,8 +46,7 @@ export { ARRANGE_NARROW, ArrangeBar, arrangementCaption, arrangementOf, CHIP_FIE
 export { useArranging } from "./lens/arranging.js";
 export type { Arranging, ArrangingOptions } from "./lens/arranging.js";
 export type { ArrangeBarProps } from "./arrange-bar.js";
-export { exportShownList, listExportKey, placeExportKey, prefetchExport, shownListAt, useShownListExport } from "./list-export.js";
-export type { ShownListToExport } from "./list-export.js";
+export { ExportPress, exportShownList, listExportKey, placeExportKey, shownListSaid, useShownListExport } from "./list-export.js";
 export { PlaceExportContext } from "./lens/place-export.js";
 export type { PlaceExport } from "./lens/place-export.js";
 export { Connections } from "./connections.js";

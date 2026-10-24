@@ -1,32 +1,18 @@
-import { retryingImport } from "@graview/core/retry";
-import type { AnySchema, ArrangeGraph } from "@graview/core";
-import { lazyModule, type OnExport } from "@graview/react/provider";
-import { useEffect, useRef } from "react";
+import type { ShownListSaid } from "@graview/core/csv";
+import { createElement, useEffect, type ReactElement } from "react";
 
 /*
- * "EXPORT CSV" (Roadmap f-view-export-csv). A place that lists records
- * offers to write the records it shows — in its order, with its filter,
- * its words and its groups — as a spreadsheet: from the list's own
- * arranging line, and from the place menu. The place says what it shows
- * here (`useShownListExport`), under the key the menu asks by, so both
- * write the one list; what writes it (`@graview/core/csv`) is fetched with
- * the press, so a page that never exports carries none of it.
+ * "EXPORT CSV" (Roadmap f-view-export-csv), as a lens says it. A lens that
+ * lists records says what it shows while it is drawn (`useShownListExport`),
+ * in the page's map the place menu reads (`Symbol.for("graview.shown-lists")`,
+ * `ShownListSaid` on `@graview/core/csv`), and ends its arranging line with
+ * `ExportPress`. Everything that writes and saves the list —
+ * `@graview/core/csv`'s `saveShownList` — is fetched with the press. The
+ * routed face's list keeps a copy of these few lines of its own, so a page
+ * that draws no list carries none of them.
  */
 
-/** A place's list as it is shown, ready to write: what `listCsv` reads, and the title the file is named by. */
-export interface ShownListToExport {
-  /** The place's title, which names the file: "Tasks — 2026-10-23.csv". */
-  readonly title: string;
-  readonly schema: AnySchema;
-  /** The graph the records are read in, as the seat sees it. */
-  readonly graph: ArrangeGraph;
-  readonly kind: string;
-  /** The records shown, in order, by group (one unnamed group when the list is not grouped). */
-  readonly groups: readonly { readonly label?: string; readonly nodes: readonly { readonly id: string; readonly kind: string }[] }[];
-  readonly grouped: boolean;
-  /** Where the host saves it; unsaid, the browser downloads it. */
-  readonly onExport?: OnExport | undefined;
-}
+type Lists = { [key: symbol]: Map<string, () => ShownListSaid> | undefined };
 
 /** The key a kind's list on the routed face is said under. */
 export const listExportKey = (kind: string): string => `list:${kind}`;
@@ -34,43 +20,40 @@ export const listExportKey = (kind: string): string => `list:${kind}`;
 /** The key a place (a lens) is said under. */
 export const placeExportKey = (as: string): string => `place:${as}`;
 
-/**
- * WHAT EACH DRAWN PLACE SHOWS, by key: kept on the page under a name of its
- * own (`SHOWN_LISTS`), so the place menu reads it without importing this
- * module — the menu is drawn by both faces before any list is.
- */
-export const SHOWN_LISTS = Symbol.for("graview.shown-lists");
-const shown: Map<string, () => ShownListToExport> = ((globalThis as { [SHOWN_LISTS]?: Map<string, () => ShownListToExport> })[SHOWN_LISTS] ??= new Map());
-
-/**
- * SAYS WHAT A PLACE SHOWS, while it is drawn, for the place menu to export
- * by its key. `read` is asked when somebody presses Export, so it says the
- * list as it is then. Nothing is said while `on` is false.
- */
-export function useShownListExport(key: string | undefined, read: () => ShownListToExport, on = true): void {
-  const latest = useRef(read);
-  latest.current = read;
+/** Says what a place shows while it is drawn, for the place menu: asked when the menu opens, so it says the list as it is then. */
+export function useShownListExport(key: string | undefined, said: ShownListSaid): void {
+  // Said again as each draw says it, so the menu reads the list as it is now.
   useEffect(() => {
-    if (key === undefined || !on) return;
-    const say = () => latest.current();
-    shown.set(key, say);
-    return () => {
-      if (shown.get(key) === say) shown.delete(key);
-    };
-  }, [key, on]);
+    if (key === undefined) return;
+    const lists = ((globalThis as Lists)[Symbol.for("graview.shown-lists")] ??= new Map());
+    lists.set(key, () => said);
+    return () => void lists.delete(key);
+  });
 }
 
-/** What the place under `key` shows now, when it is drawn and offers "Export CSV". */
-export function shownListAt(key: string): (() => ShownListToExport) | undefined {
-  return shown.get(key);
+/** What a place shows, written and saved: fetched with the press. */
+export const exportShownList = (said: ShownListSaid): Promise<void> => import("@graview/core/csv").then((csv) => csv.saveShownList(said.read()));
+
+/** What a list says it shows, with the place menu's rows for it: "Export CSV", and the owner's switch, each fetched with the press. */
+export function shownListSaid(off: boolean, about: ShownListSaid["about"], read: ShownListSaid["read"]): ShownListSaid {
+  const said: ShownListSaid = {
+    off,
+    about,
+    read,
+    menu: (owner, keeper, board) => [
+      ...(off ? [] : [{ id: "export-csv", label: "Export CSV", run: () => void exportShownList(said) }]),
+      ...(owner && keeper ? [{ id: off ? "export-on" : "export-off", label: off ? "Turn on export" : "Turn off export", run: () => void import("@graview/core/csv").then((csv) => csv.switchExport(said, keeper, off, board)) }] : []),
+    ],
+  };
+  return said;
 }
 
-const writing = /* @__PURE__ */ lazyModule(retryingImport(() => import("./list-export-run.js")));
-
-/** Fetches what writes a list, while the pointer rests on Export. */
-export const prefetchExport = (): void => writing.prefetch();
-
-/** Writes a shown list as CSV and saves it: handed to the host's `onExport`, else downloaded by the browser. */
-export function exportShownList(list: ShownListToExport): Promise<void> {
-  return writing.load().then((module) => module.saveShownList(list));
+/** The arranging line's last press: quiet, short, and named "Export CSV". */
+export function ExportPress({ said }: { readonly said: ShownListSaid }): ReactElement {
+  return createElement(
+    "button",
+    { type: "button", className: "graview-arrange-open", "data-testid": "arrange-export", "aria-label": "Export CSV", title: "Export CSV", onClick: () => void exportShownList(said) },
+    createElement("span", { "aria-hidden": "true" }, "↓"),
+    "CSV",
+  );
 }

@@ -3,7 +3,6 @@ import { useGraview, useGraviewIfAny } from "@graview/react/provider";
 import { useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { NoticeBoardContext, type NoticeBoard } from "./notices.js";
 import type { BarGo, BarPlace } from "./app-bar.js";
-import { saveShownList } from "./list-export-run.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
@@ -60,24 +59,6 @@ export function setHidden(place: Place, how: "view" | "lens", keeper: KeptViews,
 export function setListHidden(kind: string, title: string, keeper: KeptViews, hidden: boolean, board: NoticeBoard | null): Promise<boolean> {
   return tidy(board, () => keeper.lens?.({ op: "set-lens-hidden", title: kind, hidden }), hidden ? `“${title}” could not be hidden.` : `“${title}” could not be shown.`);
 }
-
-/**
- * "EXPORT CSV" OFFERED ON A PLACE, OR TO NOBODY (Roadmap f-view-export-csv):
- * a change to the declaration, `set-lens-export` — on a lens by its title,
- * on a kind's list by its kind — said once it is done.
- */
-export async function setExport(title: string, about: { readonly lens: string; readonly on?: string } | { readonly kind: string }, keeper: KeptViews, on: boolean, board: NoticeBoard | null): Promise<boolean> {
-  const done = await tidy(
-    board,
-    () => keeper.lens?.("kind" in about ? { op: "set-lens-export", title: about.kind, export: on } : { op: "set-lens-export", title: about.lens, ...(about.on !== undefined ? { on: about.on } : {}), export: on }),
-    on ? `Export could not be turned on for “${title}”.` : `Export could not be turned off for “${title}”.`,
-  );
-  if (done) board?.notify({ kind: "toast", sentence: on ? `“${title}” offers Export CSV again.` : `“${title}” offers Export CSV to nobody now.` });
-  return done;
-}
-
-/** Writes what a place shows as CSV and saves it, from the place menu (Roadmap f-view-export-csv). */
-export const exportList = saveShownList;
 
 /** Restores a deleted view, by the name the host lists it under. */
 export function restore(removed: Pick<RemovedView, "name" | "title">, keeper: KeptViews, board: NoticeBoard | null): Promise<boolean> {

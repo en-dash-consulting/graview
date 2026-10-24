@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T02:37:59.390Z",
+  "at": "2026-10-24T03:12:47.840Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -399,6 +399,22 @@
         "filled": "rgba(0, 0, 0, 0)"
       },
       "focus": "arrange-export",
+      "ok": true
+    },
+    "aGroupDrawnShutIsStillWritten": {
+      "heads": [
+        {
+          "shut": false,
+          "drawn": 10,
+          "counted": 10
+        },
+        {
+          "shut": true,
+          "drawn": 0,
+          "counted": 2
+        }
+      ],
+      "written": 12,
       "ok": true
     },
     "aListSwitchedOffOffersNoExport": {

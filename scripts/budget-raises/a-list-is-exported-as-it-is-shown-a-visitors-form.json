@@ -1,7 +1,0 @@
-{
-  "budget": "a visitor's form alone",
-  "minified": 1200,
-  "gzipped": 1000,
-  "changeset": "a-list-is-exported-as-it-is-shown.md",
-  "note": "Raised when a place's list came to be exported as it is shown (Roadmap f-view-export-csv): the routed face's barrel a form is drawn from carries the arranging line's Export CSV (about 300 B) and what a list says it shows (423), and a lens's `export: false` carried. Measured at 391_726 / 150_819 against 390_598 / 149_918 before it: 1_128 more minified, 901 gzipped (two chunks more)."
-}

@@ -103,8 +103,6 @@ export interface DrawnLens {
   readonly options: Readonly<Record<string, unknown>>;
   /** Kept off the lists (`LensDeclaration.hidden`): reached by its address, a link or `navigate`. */
   readonly hidden?: boolean;
-  /** `false`: nobody is offered "Export CSV" on it (`LensDeclaration.export`). */
-  readonly export?: false;
   /** `false`: its page leaves off the forms that begin its kind (`LensDeclaration.create`). */
   readonly create?: false;
 }
@@ -374,7 +372,7 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
     if (create !== undefined && typeof create !== "boolean") {
       findings.push({ severity: "warning", code: "lens-create", path: `${at}.create`, message: `"${title}" says create ${JSON.stringify(create)}, which is neither true nor false, so its page keeps the forms that begin its kind.`, fix: `Say "create": false to leave them off, or drop it.` });
     }
-    drawn.push({ index, lens: lens.name, title, as, kinds: stands, ...(across ? { across } : {}), options, ...(lens.hidden === true ? { hidden: true } : {}), ...(lens.export === false ? { export: false as const } : {}), ...(create === false ? { create: false as const } : {}) });
+    drawn.push({ index, lens: lens.name, title, as, kinds: stands, ...(across ? { across } : {}), options, ...(lens.hidden === true ? { hidden: true } : {}), ...(create === false ? { create: false as const } : {}) });
   });
   return { drawn, undrawn, findings };
 }

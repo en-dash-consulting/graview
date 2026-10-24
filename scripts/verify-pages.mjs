@@ -320,6 +320,23 @@ async function aListIsExportedAsItIsShown() {
   const rows = parseCsvText(text);
   const [header, ...body] = rows;
   const focus = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null);
+  /*
+   * A GROUP DRAWN SHUT IS STILL WRITTEN: grouped by whether they are
+   * finished, the finished tasks stand last and shut (`pages.lists.task.group.closed`),
+   * and the file holds every row each heading counts.
+   */
+  await page.goto(`${at("todo")}/pages/tasks?group=done&today=2026-09-01`, { waitUntil: "networkidle" });
+  await page.waitForSelector('[data-testid="arrange-export"]', { timeout: 20_000 });
+  const heads = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="list-group"]')].map((section) => ({
+      shut: section.getAttribute("data-closed") === "shut",
+      drawn: section.querySelectorAll("li[data-graview-record]").length,
+      counted: Number(((section.querySelector("h2")?.textContent ?? "").match(/(\d+)\D*$/) ?? [])[1] ?? NaN),
+    })),
+  );
+  await page.focus('[data-testid="arrange-export"]');
+  const [shutDownload] = await Promise.all([page.waitForEvent("download", { timeout: 10_000 }), page.keyboard.press("Enter")]);
+  const shutRows = parseCsvText(readFileSync(await shutDownload.path(), "utf8")).slice(1);
   await page.goto(`${at("todo")}/pages/reasons?today=2026-09-01`, { waitUntil: "networkidle" });
   await page.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
   await page.waitForTimeout(300);
@@ -336,6 +353,12 @@ async function aListIsExportedAsItIsShown() {
     button,
     focus,
     ok: /^Tasks — \d{4}-\d{2}-\d{2}\.csv$/.test(file) && text.charCodeAt(0) === 0xfeff && header?.[0] === "Group" && header?.[1] === "Name" && shown.length > 3 && matches && button.tag === "BUTTON" && button.name === "Export CSV" && focus === "arrange-export",
+  };
+  const counted = heads.reduce((sum, head) => sum + head.counted, 0);
+  report.checks.aGroupDrawnShutIsStillWritten = {
+    heads,
+    written: shutRows.length,
+    ok: heads.some((head) => head.shut && head.drawn === 0 && head.counted > 0) && shutRows.length === counted && shutRows.length > heads.reduce((sum, head) => sum + head.drawn, 0),
   };
   report.checks.aListSwitchedOffOffersNoExport = { offers: offOffers, ok: offOffers === 0 };
 }

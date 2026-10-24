@@ -80,15 +80,8 @@ export interface ArrangeBarProps {
    * says "+1458 past" folded away (the tenth walk).
    */
   readonly past?: { readonly count: number; readonly widen: () => void };
-  /**
-   * "EXPORT CSV" (Roadmap f-view-export-csv): given, the line ends with a
-   * quiet press that writes the records shown — in this order, with this
-   * filter, these words and these groups — as a spreadsheet. A place that
-   * offers nobody the export hands none.
-   */
-  readonly exportList?: () => void;
-  /** Fetches what writes the list, while the pointer rests on Export. */
-  readonly prefetchExport?: () => void;
+  /** What ends the line, after its chips: a list's "Export CSV" (Roadmap f-view-export-csv). */
+  readonly end?: ReactNode;
   readonly style?: CSSProperties;
 }
 
@@ -394,24 +387,7 @@ export function ArrangeBar(props: ArrangeBarProps) {
             <Chips offers={chipped} chips={props.chips} schema={schema} graph={graph} kind={kind} arrangement={arrangement} has={has} choose={choose} testId={id} />
           </Suspense>
         ) : null}
-        {props.exportList ? (
-          /*
-           * Quiet, as the line's other words are — never the screen's one
-           * filled button — and last, short, so a line that held its chips on
-           * one row still does: its name is said whole.
-           */
-          <button
-            type="button"
-            className="graview-arrange-open"
-            data-testid={`${id}-export`}
-            aria-label="Export CSV"
-            title="Export CSV: the records shown, as a spreadsheet"
-            onPointerEnter={props.prefetchExport}
-            onClick={props.exportList}
-          >
-            <span aria-hidden="true">↓</span>CSV
-          </button>
-        ) : null}
+        {props.end}
       </div>
     </div>
   );
