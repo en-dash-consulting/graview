@@ -1,5 +1,6 @@
 import { servesReaders, type AnySchema, type Principal, type Publishing, type Store } from "@graview/core";
 import type { HistoryHost } from "@graview/core/history";
+import type { KeptPast } from "@graview/core/past";
 import { retryingImport } from "@graview/core/retry";
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from "react";
 
@@ -43,10 +44,19 @@ export interface Playback<S extends AnySchema = AnySchema> {
   /**
    * A MOMENT BEHIND THE UNDO HORIZON, WHILE IT IS READ FROM THE HOST'S
    * ARCHIVE (FR-196): its seq, and what the host's refusal or failure said
-   * when it could not be. Meanwhile `past` is the picture shown before.
-   * `null` when no moment is waiting on the archive.
+   * when it could not be, or `behindKept` when it is before what the host
+   * keeps (FR-213). Meanwhile `past` is the picture shown before. `null`
+   * when no moment is waiting on the archive.
    */
-  readonly archive: { readonly seq: number; readonly refused?: string } | null;
+  readonly archive: { readonly seq: number; readonly refused?: string; readonly behindKept?: true } | null;
+  /**
+   * WHERE THE HOST'S HISTORY STOPS, AS FAR AS PLAYBACK KNOWS (FR-213): the
+   * stops behind the horizon, where it reaches change by change from, and
+   * the last moment made at or before `HistoryHost.kept.since`
+   * (`keptOf`), learned as the archive is read. `undefined` while the past is
+   * not fetched, or when the host keeps no archive.
+   */
+  readonly kept?: KeptPast | undefined;
   /** Whether `store` is this playback's — now's or the moment's, whole or as one seat sees it. */
   owns(store: Store<AnySchema>, principal: Principal): boolean;
 }
@@ -130,8 +140,11 @@ export function useOwnPlayback<S extends AnySchema>(live: Store<S>, principal: P
   }, [folds, inherited, seq]);
   // A mark the host handed without its declaration is asked for (`history.declarationAt`); the moment waits on the answer.
   const [answered, setAnswered] = useState(0);
-  // A moment behind the horizon is first read from the host's archive (FR-196): held however long that takes, and said when it is refused.
-  const asked = useMemo(() => (inherited || seq === null || seq >= live.log.length || !folds ? undefined : (folds.askArchived(live, seq, host) ?? folds.askDeclaration(host, seq))), [inherited, live, seq, host, folds, answered]);
+  // A moment behind the horizon is first read from the host's archive (FR-196): held however long that takes, and said when it is refused. And what it has said of where it stops (FR-213), read again as each chunk of it arrives.
+  const [asked, kept] = useMemo(
+    () => (inherited || seq === null || !folds ? [] : [seq >= live.log.length ? undefined : (folds.askArchived(live, seq, host) ?? folds.askDeclaration(host, seq)), folds.keptOf(live, host)]),
+    [inherited, live, seq, host, folds, answered],
+  );
   const waiting = asked && "waiting" in asked ? asked.waiting : undefined;
   const reading = asked && "seq" in asked ? asked : null;
   const [late, setLate] = useState<Promise<void> | undefined>(undefined);
@@ -167,6 +180,6 @@ export function useOwnPlayback<S extends AnySchema>(live: Store<S>, principal: P
     [live, past],
   );
   const open = seq !== null;
-  const own = useMemo<Playback<S>>(() => ({ past, open, show, live, host, owns, archive: reading }), [past, open, show, live, host, owns, reading]);
+  const own = useMemo<Playback<S>>(() => ({ past, open, show, live, host, owns, archive: reading, kept }), [past, open, show, live, host, owns, reading, kept]);
   return inherited ? outer : own;
 }

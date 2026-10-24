@@ -63,6 +63,29 @@ export type ViewVersion = { readonly source: string } | Readonly<Record<string, 
 export interface ArchivedOps {
   readonly ops: readonly Operation[];
   readonly epochs?: readonly Epoch[];
+  /**
+   * WHERE THE ARCHIVE HOLDS EVERY OP FROM (FR-213): behind this seq it
+   * holds none — a plan keeps a window of history, and the host kept only
+   * the epoch it began at (`archiveFrom`, FR-214) and any it kept whole
+   * before it. Playback stops behind it only at the epochs handed, and a
+   * moment between them is before what is kept: said quietly, never as a
+   * refusal, and never asked of the archive again.
+   */
+  readonly keptFrom?: number;
+}
+
+/**
+ * HOW FAR BACK A HOST KEEPS THE HISTORY (FR-213), as a plan says it: the
+ * time the full history is kept since, the sentence a timeline says when
+ * it is scrubbed to a moment at or before it ("The Free plan keeps 30 days
+ * of history."), and what a person may do about it — a link the line
+ * carries. A range of the archive wholly before `since` is never asked.
+ */
+export interface KeptHistory {
+  /** An ISO time: the changes made before it are not kept whole. */
+  readonly since: string;
+  readonly sentence: string;
+  readonly action?: { readonly label: string; readonly href: string };
 }
 
 /**
@@ -99,6 +122,13 @@ export interface HistoryHost {
    * past it folds is read, never changed: undo still stops at the horizon.
    */
   readonly archived?: (from: number, to: number) => Promise<ArchivedOps | readonly Operation[]>;
+  /**
+   * WHERE THE HOST'S HISTORY STOPS (FR-213): the time it keeps the full
+   * history since. The timeline says `sentence` in a quiet line when it is
+   * at or before it, and `archived` is never asked for a range made wholly
+   * before it.
+   */
+  readonly kept?: KeptHistory;
 }
 
 /** One gesture on the timeline, or one declaration change made outside the log. */

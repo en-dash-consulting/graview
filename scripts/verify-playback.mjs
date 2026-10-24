@@ -14,7 +14,13 @@
  * it as the uncompacted store stood, reading the archive once rather than
  * per tick and offering no restore behind the horizon; a host that refuses
  * is said on the timeline with the present untouched; and without an
- * archive the timeline begins at the horizon and says so.
+ * archive the timeline begins at the horizon and says so. Then a host that
+ * keeps a plan's window of history (FR-213, FR-214): its archive begins at
+ * the epoch made at the second change (`archiveFrom`), answered for the
+ * seat by `archivedSeenBy`, and the scrubber's first stop is that moment,
+ * drawn as it stood, with the plan's sentence and link in a quiet line and
+ * no alert; and a host whose history is kept since a time after every
+ * archived change is never asked for the archive at all.
  *
  *   node scripts/verify-playback.mjs [--engine=chromium|webkit|firefox] [--quick] [--headed]
  *
@@ -43,6 +49,10 @@ const shot = async (page, name) => {
 const ADDED = ["Measure the hallway", "Label the boxes", "Defrost the freezer"];
 /** `@graview/core/past` as the todo example's dev server serves it (its alias is the source), so the page's own store classes fold it. */
 const PAST = `/@fs${resolve(repoRoot, "packages/core/src/past.ts")}`;
+/** `@graview/core/seat` the same way: what a host answers the archive with for a seat (`archivedSeenBy`), and the archive from an epoch it keeps (`archiveFrom`). */
+const SEAT = `/@fs${resolve(repoRoot, "packages/core/src/seat.ts")}`;
+/** What a plan says of the history it keeps (FR-213). */
+const KEPT_SENTENCE = "The Free plan keeps 30 days of history.";
 
 /*
  * THE STORE ITSELF, for the claims that compare a screen with what
@@ -166,15 +176,24 @@ const showOldest = async (page) => {
  * one as `__todoHistory` before the page loads — the ops and epochs the
  * harness's own compaction moved out, served a range at a time. `?archive=`
  * says which host: `kept` hands them, `refuses` refuses, `none` keeps no
- * archive at all.
+ * archive at all; `window` keeps a plan's window, its archive beginning at
+ * an epoch and answered for the seat by `archivedSeenBy` (FR-214), and
+ * `before` keeps its history since a time after every archived change
+ * (FR-213).
  */
-const HAND_THE_ARCHIVE = () => {
+const HAND_THE_ARCHIVE = (sentence) => {
   const which = new URLSearchParams(window.location.search).get("archive");
-  if (which !== "kept" && which !== "refuses") return;
+  if (!["kept", "refuses", "window", "before"].includes(which)) return;
+  const kept = { sentence, action: { label: "See plans", href: "#plans" } };
   window.__todoHistory = {
+    ...(which === "window" ? { kept: { since: "2000-01-01T00:00:00.000Z", ...kept } } : which === "before" ? { kept: { since: "2999-01-01T00:00:00.000Z", ...kept } } : {}),
     archived: async (from, to) => {
       (window.__archiveAsked ??= []).push([from, to]);
       if (which === "refuses") throw new Error("Forbidden: this seat may not read the archive");
+      if (which === "window") {
+        const store = window.__playbackStores.find((one) => one.schema.kinds.includes("task"));
+        return window.__playbackSeat.archivedSeenBy(store, window.__playbackWindow, { kind: "human" }, { from, to });
+      }
       const archive = window.__playbackArchive ?? { ops: [], epochs: [] };
       return { ops: archive.ops.filter((op) => op.seq >= from && op.seq < to), epochs: archive.epochs.filter((epoch) => epoch.seq >= from && epoch.seq < to) };
     },
@@ -184,12 +203,14 @@ const HAND_THE_ARCHIVE = () => {
 /**
  * The grown store compacted behind its fourth gesture, as Cloud's rooms
  * compact: the graph at every seq as the whole log said it before, and the
- * archive kept where the host hands it from.
+ * archive kept where the host hands it from — whole, and as a plan's window
+ * keeps it, from the epoch made at the second gesture (`archiveFrom`).
  */
 const compact = (page) =>
   page.evaluate(
-    async ([module, added]) => {
+    async ([module, added, seat]) => {
       const { pastOf } = await import(module);
+      window.__playbackSeat = await import(seat);
       const store = window.__playbackStores.find((one) => one.schema.kinds.includes("task"));
       const key = (snapshot) => JSON.stringify([[...snapshot.nodes].map((node) => JSON.stringify(node)).sort(), [...snapshot.edges].map((edge) => `${edge.kind}:${edge.from}->${edge.to}`).sort()]);
       const whole = [];
@@ -199,11 +220,13 @@ const compact = (page) =>
         whole.push({ key: key(past.graph.snapshot()), added: added.filter((label) => tasks.some((task) => task.label === label)), deposit: past.graph.getNode("t-deposit")?.label ?? null });
       }
       const at = store.batches()[3].ops[0].seq;
+      const second = store.batches()[1].ops[0].seq;
       window.__playbackArchive = store.compact(store.checkpoint({ seq: at }));
+      window.__playbackWindow = window.__playbackSeat.archiveFrom(store, window.__playbackArchive, second);
       window.__playbackNow = key(store.graph.snapshot());
-      return { horizon: store.log.horizon, length: store.log.length, archived: window.__playbackArchive.ops.length, whole };
+      return { horizon: store.log.horizon, length: store.log.length, archived: window.__playbackArchive.ops.length, keptFrom: window.__playbackWindow.epochs[0].seq, whole };
     },
-    [PAST, ADDED],
+    [PAST, ADDED, SEAT],
   );
 
 /**
@@ -231,6 +254,9 @@ const drawnBehind = (page, seq) =>
       horizon: store.log.horizon,
       length: store.log.length,
       refused: document.querySelector('[data-testid="archive-refused"]')?.textContent?.trim() ?? null,
+      alerts: document.querySelectorAll('[data-testid="timeline"] [role="alert"]').length,
+      kept: document.querySelector('[data-testid="timeline-kept"]')?.textContent?.trim() ?? null,
+      keptHref: document.querySelector('[data-testid="timeline-kept-action"]')?.getAttribute("href") ?? null,
       saysArchived: document.querySelector('[data-testid="timeline-horizon"]')?.textContent?.trim() ?? null,
       band: document.querySelector('[data-testid="timeline-archived"]') !== null,
     };
@@ -331,7 +357,7 @@ try {
       // FR-196: a compacted store, its archive handed back by the host; then a host that refuses, and one that keeps none.
       const behindContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
       await behindContext.addInitScript(KEEP_THE_STORE);
-      await behindContext.addInitScript(HAND_THE_ARCHIVE);
+      await behindContext.addInitScript(HAND_THE_ARCHIVE, KEPT_SENTENCE);
       const behind = await behindContext.newPage();
       behind.on("pageerror", (error) => run.errors.push(String(error).slice(0, 200)));
       const kept = await compactedUnder(behind, "kept");
@@ -356,6 +382,22 @@ try {
       const none = await compactedUnder(behind, "none");
       await scrub(behind, 0);
       run.noArchive = { horizon: none.compacted.horizon, opened: none.opened, shown: await drawn(behind), store: await drawnBehind(behind, none.compacted.horizon) };
+
+      // FR-213, FR-214: a plan's window, its archive beginning at an epoch and answered for the seat; then a host whose history is kept since after every archived change.
+      const windowed = await compactedUnder(behind, "window");
+      const keptFrom = windowed.compacted.keptFrom;
+      // Every seq behind the horizon is a stop until the archive is read; once it is, the epoch it begins at is the first.
+      await scrub(behind, keptFrom);
+      await behind.waitForFunction((seq) => document.querySelector('[data-testid="timeline"]')?.getAttribute("data-graview-past") === String(seq), keptFrom, { timeout: 20_000 }).catch(() => {});
+      await behind.waitForTimeout(300);
+      run.window = { keptFrom, horizon: windowed.compacted.horizon, shown: await drawn(behind), store: await drawnBehind(behind, keptFrom), was: windowed.compacted.whole[keptFrom] };
+      await shot(behind, `${engine}-scene-kept-window`);
+      await scrub(behind, 1);
+      run.window.after = { shown: await drawn(behind), store: await drawnBehind(behind, keptFrom + 1), was: windowed.compacted.whole[keptFrom + 1] };
+
+      const before = await compactedUnder(behind, "before");
+      await scrub(behind, 0);
+      run.before = { horizon: before.compacted.horizon, opened: before.opened, shown: await drawn(behind), store: await drawnBehind(behind, before.compacted.horizon) };
       await behindContext.close();
     } catch (error) {
       run.error = String(error).slice(0, 1200);
@@ -394,6 +436,10 @@ report.checks = {
   nothingIsRestoredOrChangedBehindTheHorizon: every((run) => [run.atOne, run.atLastArchived].every((at) => !at.shown.restore && at.shown.acts === 0 && at.shown.undo === 0 && at.store.present && at.store.horizon === run.compacted.horizon)),
   aRefusedArchiveIsSaidAndThePresentIsUntouched: every((run) => /Forbidden/.test(run.refused?.store.refused ?? "") && run.refused.store.present && run.refused.store.length === run.compacted.length && run.refused.shown.past === run.refused.opened),
   withoutAnArchiveTheTimelineBeginsAtTheHorizonAndSaysSo: every((run) => /archived/.test(run.noArchive?.store.saysArchived ?? "") && !run.noArchive.store.band && run.noArchive.shown.past === String(run.noArchive.horizon)),
+  // FR-213, FR-214: a plan's window of history is a quiet line with its link, its first stop the epoch the archive begins at, drawn as it stood; nothing wholly before the kept time is asked.
+  aHostsKeptWindowIsAQuietLineWithItsLinkNotAnAlert: every((run) => [run.window, run.before].every((at) => at?.store.kept?.startsWith(KEPT_SENTENCE) && at.store.keptHref === "#plans" && at.store.alerts === 0 && at.store.refused === null && at.store.present)),
+  theScrubbersFirstStopIsTheEpochTheArchiveBeginsAtDrawnAsItStood: every((run) => run.window?.keptFrom > 0 && run.window.keptFrom < run.window.horizon && run.window.shown.past === String(run.window.keptFrom) && run.window.shown.index === 0 && run.window.store.key === run.window.was.key && exactly(run.window.shown, run.window.was) && run.window.after.store.key === run.window.after.was.key && exactly(run.window.after.shown, run.window.after.was)),
+  aRangeWhollyBeforeTheKeptTimeIsNeverAsked: every((run) => run.before?.store.asked.length === 0 && run.before.shown.past === String(run.before.horizon) && run.before.shown.index === 0),
   noPageErrors: every((run) => run.errors.length === 0),
 };
 report.ok = Object.values(report.checks).every(Boolean) && !report.error;

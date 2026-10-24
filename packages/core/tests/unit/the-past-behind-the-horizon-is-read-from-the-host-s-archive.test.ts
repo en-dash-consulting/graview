@@ -74,7 +74,7 @@ async function read(store: Store<typeof schema>, seq: number, host: HistoryHost)
   for (let turn = 0; turn < 20; turn++) {
     const answer = askArchived(store, seq, host);
     if (!answer) return undefined;
-    if ("refused" in answer) return answer.refused;
+    if (!("waiting" in answer)) return "refused" in answer ? answer.refused : "before what the archive keeps";
     await answer.waiting;
   }
   throw new Error("the archive never finished");
