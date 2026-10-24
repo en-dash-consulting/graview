@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-24T03:12:47.840Z",
+  "at": "2026-10-24T04:43:56.889Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -296,7 +296,7 @@
       "ok": true
     },
     "exportingAGroupedListWritesTheRowsOnScreenInTheirOrder": {
-      "file": "Tasks — 2026-10-23.csv",
+      "file": "Tasks — 2026-10-24.csv",
       "header": [
         "Group",
         "Name",
@@ -398,7 +398,7 @@
         "name": "Export CSV",
         "filled": "rgba(0, 0, 0, 0)"
       },
-      "focus": "arrange-export",
+      "focus": "list-export",
       "ok": true
     },
     "aGroupDrawnShutIsStillWritten": {

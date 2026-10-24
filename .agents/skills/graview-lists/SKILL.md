@@ -120,8 +120,8 @@ own actor tidying are `graview-tidying`.
 
 7. **Let a list leave as a spreadsheet — or say where it may not.** A
    kind's list and a lens that lists records (calendar, timeline, coverage,
-   board, status board) end their arranging line with "Export CSV", also in
-   the place menu: the rows shown, in their order, filter, words and groups
+   board, status board) offer "Export CSV" beside the heading or on the
+   lens's arranging line, and in the place menu: the rows shown, in their order, filter, words and groups
    (a "Group" column first), the name, then each field as the page says it,
    under the seat's sight. Off for everyone with `"export": false` on the
    lens or under `pages.lists.<kind>`; the owner's menu says "Turn off

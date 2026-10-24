@@ -301,7 +301,7 @@ async function aListArrangesOnOneQuietLine() {
 async function aListIsExportedAsItIsShown() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
-  await page.waitForSelector('[data-testid="arrange-export"]', { timeout: 20_000 });
+  await page.waitForSelector('[data-testid="list-export"]', { timeout: 20_000 });
   const shown = await page.evaluate(() =>
     [...document.querySelectorAll('[data-testid="list-group"]')].flatMap((section) => {
       const heading = section.querySelector("h2")?.firstChild?.textContent?.trim() ?? "";
@@ -309,11 +309,11 @@ async function aListIsExportedAsItIsShown() {
     }),
   );
   const button = await page.evaluate(() => {
-    const press = document.querySelector('[data-testid="arrange-export"]');
+    const press = document.querySelector('[data-testid="list-export"]');
     return { tag: press?.tagName ?? null, name: press?.getAttribute("aria-label") ?? press?.textContent?.trim() ?? null, filled: press ? getComputedStyle(press).backgroundColor : null };
   });
   // Pressed from the keyboard, where the keys are: the press keeps them.
-  await page.focus('[data-testid="arrange-export"]');
+  await page.focus('[data-testid="list-export"]');
   const [download] = await Promise.all([page.waitForEvent("download", { timeout: 10_000 }), page.keyboard.press("Enter")]);
   const file = download.suggestedFilename();
   const text = readFileSync(await download.path(), "utf8");
@@ -326,7 +326,7 @@ async function aListIsExportedAsItIsShown() {
    * and the file holds every row each heading counts.
    */
   await page.goto(`${at("todo")}/pages/tasks?group=done&today=2026-09-01`, { waitUntil: "networkidle" });
-  await page.waitForSelector('[data-testid="arrange-export"]', { timeout: 20_000 });
+  await page.waitForSelector('[data-testid="list-export"]', { timeout: 20_000 });
   const heads = await page.evaluate(() =>
     [...document.querySelectorAll('[data-testid="list-group"]')].map((section) => ({
       shut: section.getAttribute("data-closed") === "shut",
@@ -334,13 +334,13 @@ async function aListIsExportedAsItIsShown() {
       counted: Number(((section.querySelector("h2")?.textContent ?? "").match(/(\d+)\D*$/) ?? [])[1] ?? NaN),
     })),
   );
-  await page.focus('[data-testid="arrange-export"]');
+  await page.focus('[data-testid="list-export"]');
   const [shutDownload] = await Promise.all([page.waitForEvent("download", { timeout: 10_000 }), page.keyboard.press("Enter")]);
   const shutRows = parseCsvText(readFileSync(await shutDownload.path(), "utf8")).slice(1);
   await page.goto(`${at("todo")}/pages/reasons?today=2026-09-01`, { waitUntil: "networkidle" });
   await page.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
   await page.waitForTimeout(300);
-  const offOffers = await page.locator('[data-testid="arrange-export"]').count();
+  const offOffers = await page.locator('[data-testid="list-export"]').count();
   await page.close();
   const matches = body.length === shown.length && body.every((row, at) => row[0] === shown[at]?.group && shown[at]?.text.includes(row[1] ?? "\u0000"));
   report.checks.exportingAGroupedListWritesTheRowsOnScreenInTheirOrder = {
@@ -352,7 +352,7 @@ async function aListIsExportedAsItIsShown() {
     bom: text.charCodeAt(0) === 0xfeff,
     button,
     focus,
-    ok: /^Tasks — \d{4}-\d{2}-\d{2}\.csv$/.test(file) && text.charCodeAt(0) === 0xfeff && header?.[0] === "Group" && header?.[1] === "Name" && shown.length > 3 && matches && button.tag === "BUTTON" && button.name === "Export CSV" && focus === "arrange-export",
+    ok: /^Tasks — \d{4}-\d{2}-\d{2}\.csv$/.test(file) && text.charCodeAt(0) === 0xfeff && header?.[0] === "Group" && header?.[1] === "Name" && shown.length > 3 && matches && button.tag === "BUTTON" && button.name === "Export CSV" && focus === "list-export",
   };
   const counted = heads.reduce((sum, head) => sum + head.counted, 0);
   report.checks.aGroupDrawnShutIsStillWritten = {
