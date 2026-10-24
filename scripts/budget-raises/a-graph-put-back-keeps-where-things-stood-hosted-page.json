@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 300,
+  "gzipped": 100,
+  "changeset": "a-graph-put-back-keeps-where-things-stood.md",
+  "note": "Raised when a graph put back to a snapshot it held came to keep where each record and link stood, and where each one it had taken out stood, so a live client's rollback after a refused call lists records in the server's order: the graph's restore keeping the ranks it held. Measured at 612_484 / 213_772 against 612_193 / 213_701 at c417d7fae: 291 more minified, 71 gzipped."
+}

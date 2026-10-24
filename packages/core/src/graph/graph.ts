@@ -316,10 +316,28 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
 
   /** Puts the graph back to a snapshot it held, as stored and silently: nothing a listener saw ever changed. */
   private restore(snapshot: GraphSnapshot<NodeOfSchema<S>>): void {
+    const stood = new Map([...this.lapsed, ...this.ranks]);
     for (const held of [this.nodes, this.edges, this.linkIds, this.outIndex, this.inIndex, this.ranks, this.lapsed, this.counts, this.archived]) held.clear();
     this.reordered = false;
     for (const node of snapshot.nodes) this.insertNode(node, true);
     for (const edge of snapshot.edges) this.insertEdge(edge, true);
+    /*
+     * A GRAPH PUT BACK KEEPS WHERE THINGS STOOD. A store puts its graph back
+     * to a snapshot it held whenever a call is refused, and this used to rank
+     * everything afresh and forget what had been taken out — so a pending
+     * removal rolled back after a refused call put its record back at the
+     * END, and a client listed the same records in another order than the
+     * server's (the live wire's convergence test, about three runs in five).
+     * When every node and every link restored had a rank, in the order it
+     * stands (nodes first, then links), this is a graph this one held: each
+     * keeps its rank, and what is not in it keeps its own for a rollback. A
+     * graph from elsewhere is ranked afresh, as it always was.
+     */
+    const keys = [...this.ranks.keys()];
+    if (keys.every((key, at) => stood.get(key)! > (key[0] === keys[at - 1]?.[0] ? stood.get(keys[at - 1]!)! : 0))) {
+      for (const [key, rank] of stood) (this.ranks.has(key) ? this.ranks : this.lapsed).set(key, rank);
+      while (this.lapsed.size > 4096) this.lapsed.delete(this.lapsed.keys().next().value!);
+    }
   }
 
   /** One more, or one fewer, record of `kind`. */
