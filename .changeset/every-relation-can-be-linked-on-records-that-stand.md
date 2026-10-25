@@ -1,7 +1,0 @@
----
-"@graview/core": patch
----
-
-Every relation can be linked and unlinked on records that already stand (Roadmap f-connect-every-relation). Threat Watch's source offered "Unlink a threat" and no "Link a threat", so a source already made could never be linked to another threat. The cause: its `add-source` made a source and linked it to a threat in one press, and any act that `connects` a relation replaced the derived `connect-<kind>-<relation>` — by the relation's name alone, whatever kind the act stood on. An act that makes a record links only the one it makes, so now only a declared act that makes nothing and stands on one end of the relation (its subject is the kind that declares it, or a kind it reaches) replaces the derived connect, and the same for a sever and the derived disconnect. Secret Santa's matches (made by `draw`) and org's people's strengths gain the connect they had lost the same way. A test over every golden document and every Cloud template holds that each relation not declared `acts: "none"`, nor to another app's kind, has an act that links it and (unless append-only) one that unlinks it on records that stand.
-
-Compatibility: ops and primitives, stored formats, the wire and the declaration — unchanged. Derived tool names and input schemas — additive: a relation that a creating act also links is given its `connect-<kind>-<relation>` (and `disconnect-<kind>-<relation>` where a creating act severed it). What Graview Cloud does: takes this build; Threat Watch's sources offer "Link a threat" with no change to its document.

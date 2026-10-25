@@ -1,5 +1,31 @@
 # @graview/studio
 
+## 0.1.56
+
+### Patch Changes
+
+- 5bb8e6e: Every option of a choice has a label a person reads (Roadmap f-option-labels). Option values added to an enum field showed as their ids in views: a worker view was handed `state-sponsored` and nothing to say it with, and a list grouped by a choice headed each group with the option's id. An enum field in a document now takes `optionLabels` — `{ "state-sponsored": "State-sponsored" }` — and an option given none is said as its id spoken ("Hacktivism"; "state-sponsored" alone is "State sponsored"). Every face says it: a record's facts and glance, a form's picker, a change's sentence, a group's heading (a list's, and the Group column of its CSV), and a worker view, whose props carry `choices` — kind → field → option → label for the kinds of the records it is handed, so it draws `props.choices.actor.motive[node.motive]`. `set-options` carries a label for an option it adds or one already offered (`labels: { "state-sponsored": "State-sponsored" }`, `null` going back to the id's words), and says it ("now also offers \"state-sponsored\" (State-sponsored)"); a label goes with its option when the option is removed or the field retyped, and a label for no option is refused. Core's tests hold a label kept, said on each face and relabeled; guest's that a view is handed `choices` and the record keeps the id. The studio's relations made only as a record is made (a field's kind, an act's kinds, a grant's roles and acts, a sight's) say `acts: "none"`, so none is given a derived connect now that a creating act no longer replaces it (Roadmap f-connect-every-relation).
+  
+  Compatibility: ops and primitives and stored formats — unchanged. The declaration — additive: `optionLabels` on an enum field, `labels` on `set-options`. Derived tool names and input schemas — unchanged. The wire — additive: `GuestProps.choices`. The JavaScript API — additive: `choiceWords` on `@graview/core`. A list grouped by a choice now heads its groups (and a CSV's Group column) with the option's words rather than its id. What Graview Cloud does: takes this build; `propose_change`'s option edits pass a label as `set-options` `labels` when one is given, and custom views draw `props.choices`.
+- Updated dependencies [c7bdc23]
+- Updated dependencies [3149e79]
+- Updated dependencies [d3ab92d]
+- Updated dependencies [d97578e]
+- Updated dependencies [846963c]
+- Updated dependencies [3149e79]
+- Updated dependencies [8e25c9f]
+- Updated dependencies [5bb8e6e]
+- Updated dependencies [605a44f]
+- Updated dependencies [d97578e]
+- Updated dependencies [92040e8]
+  - @graview/core@0.1.56
+  - @graview/primitives@0.1.56
+  - @graview/pages@0.1.56
+  - @graview/ship@0.1.56
+  - @graview/tools@0.1.56
+  - @graview/layout@0.1.56
+  - @graview/react@0.1.56
+
 ## 0.1.55
 
 ### Patch Changes

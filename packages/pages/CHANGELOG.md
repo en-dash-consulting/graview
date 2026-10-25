@@ -1,5 +1,33 @@
 # @graview/pages
 
+## 0.1.56
+
+### Patch Changes
+
+- c7bdc23: A date may know only its year or its month, and a wrong date can be taken away (Roadmap f-partial-dates). History often knows a year alone — APT1 was first seen in 2006 — and an agent that could keep only a day stored `2006-01-01`, a false exact date. A document's `date` now holds a year (`2006`) or a month (`2016-05`) as well as a day: said "2006" and "May 2016" wherever a day is said (a record's facts, a card's glance, a template, a change's sentence, `dayAsRead` and `whenAsRead`), sorted as written so a year comes before the months and days within it and a month before its days, and grouped by year or month in the year or month it names (a finer bucket gives it a group of its own, before the days within it). The date's editor on both faces reads "2006", "May 2016", "5/2016" and "2016-05" as a year or a month alone and says it back ("May 2016 (a month alone)"), and an import reads such a cell into a date column. A TypeScript date field (`ISO_DAY`) is unchanged; a document's date field's pattern is `DATE_VALUE` (`^\d{4}(?:-(?:0[1-9]|1[0-2])(?:-\d{2})?)?$`), which also refuses a month 13 it used to take, and its argument shape says `partial: true`.
+  
+  Clearing: `edit-<kind>` refused `null` ("expected string") and `""` for a date, and `importRows` read an empty cell as no change, so a wrong date could not be removed. Now `null` clears any field a record may be without (declared optional, not required and with no default) on a derived edit — the act says which in `clearable`, and `null` reaches `apply` past the field's own parse, so its tool schema is the field's as before; a required field still refuses it. `importRows(…, { match, blanksClear: true })` clears such a field where a found record's row leaves its cell blank ("First seen: Jan 1, 2006 → nothing"), through the kind's edit act. Core's tests hold a year and a month kept, said, sorted, grouped and read from a sheet, a wrong month refused, `null` clearing and undone, a required field refusing it, and an import that clears only when it says so; a pages test types "May 2016" into an act's form and "2006-02" over a year on the record. A hosted page carries 1.9 KB more up front, and one handed a compiled app 1.7 KB more, under raises of their budgets with Roadmap f-option-labels (`scripts/budget-raises/a-date-may-know-only-its-year-or-its-month-*.json`); the pages face alone and a visitor's form are raised alike, and the scene face's limit before it draws moves to 1007 KB.
+  
+  Compatibility: ops and primitives, stored formats and the wire — unchanged; a record that holds a year or a month alone is an ordinary string. The declaration — unchanged in shape; a document's date accepts a year or a month alone and refuses a month past 12. Derived tool names and input schemas — a document's date says the pattern above (announced on the conformance fixture `document:vendors`), and a derived edit accepts `null` for a field it may clear. The JavaScript API — additive: `DATE_VALUE` and `PARTIAL_DAY` on `@graview/core`, `readPartialDay` on `@graview/core/words`, `ImportOptions.blanksClear`, `MutationDefinitionSpec.clearable`, `partial` on a date's `ArgShape` and `FormField`, and `partial` on `WhenInput`. What Graview Cloud does: takes this build; its agents keep `2006` rather than `2006-01-01` and clear a wrong date with `null`, and its `import_rows` passes `blanksClear` when the person asks that blank cells clear.
+- d3ab92d: A home says the problems of the records it draws, and no others (Roadmap f-problems-in-context). The derived home said "Rules are broken — see what, and what would fix it" in the warning color for a rule broken on any record anywhere, so a home whose own records were all in order opened on a warning about a kind it does not show. The home now points to a problem only when it names a record its gallery or its jobs draw (`drawnInTheGallery`); a rule broken on a kind the home leaves off (`pages.hide`) is said by the bar's count alone, which still opens the whole list, and the home says neither the warning nor "All rules hold." A home of the app's own (a home view, a worker view or blocks) is handed the broken records as `flagged`, as a place's lens is, to mark where it draws them, and the page says nothing over it. A rule the app wrote that a record does not meet is said in the page's quiet ink (`data-graview-problems-tone="rule"`); a rule that could not be judged at all, in the warning color (`"error"`). What a store enforces is unchanged, and a list or place that draws a broken record still marks it on that record. A hosted page carries nothing more up front; the pages face alone carries 0.5 KB more minified and 0.2 KB gzipped, and every face 0.5 KB more gzipped, with the Suggested tray's wrapping and Activity's merges beside it (`scripts/budget-raises/a-home-says-the-problems-of-the-records-it-draws-*.json`).
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. The look: the home's problem line is `[data-testid="problems-here"]`, and a home view's props carry `flagged`.
+- Updated dependencies [c7bdc23]
+- Updated dependencies [3149e79]
+- Updated dependencies [d97578e]
+- Updated dependencies [846963c]
+- Updated dependencies [3149e79]
+- Updated dependencies [8e25c9f]
+- Updated dependencies [5bb8e6e]
+- Updated dependencies [605a44f]
+- Updated dependencies [d97578e]
+- Updated dependencies [92040e8]
+  - @graview/core@0.1.56
+  - @graview/primitives@0.1.56
+  - @graview/tools@0.1.56
+  - @graview/layout@0.1.56
+  - @graview/react@0.1.56
+
 ## 0.1.55
 
 ### Patch Changes

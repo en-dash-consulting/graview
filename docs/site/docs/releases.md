@@ -59,7 +59,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.55
 
-Published October 25, 2026 · the current version
+Published October 25, 2026
 
 An app says who it is for and what they come to do; graview check judges the look and one call composes it; the home opens on those questions; an app learns from what people could not do.
 
