@@ -339,7 +339,7 @@ function useNearTheWindow(ref: RefObject<HTMLElement | null>): boolean {
  * is the way to the picture's page. A picture with nothing in it says so and
  * names the act that would begin it, rather than showing a blank frame.
  */
-export function GalleryCard<S extends AnySchema>({ context, entry }: { context: PageContext<S>; entry: GalleryEntry }) {
+export function GalleryCard<S extends AnySchema>({ context, entry, small = false }: { context: PageContext<S>; entry: GalleryEntry; /** Under the jobs: its name at the reading size. */ small?: boolean }) {
   const { store, brand, principal } = context;
   const { ref, width } = useMeasuredWidth(PICTURE_WIDTH_UNMEASURED);
   const near = useNearTheWindow(ref);
@@ -438,7 +438,7 @@ export function GalleryCard<S extends AnySchema>({ context, entry }: { context: 
       <span style={{ display: "grid", gap: 2, minWidth: 0 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           {isPlace ? null : <KindMark kind={entry.kind} brand={brand} schema={store.schema} size={8} />}
-          <span style={{ fontFamily: DISPLAY, fontSize: "var(--graview-text-heading)", fontWeight: "var(--graview-weight-display)", lineHeight: 1.3, overflowWrap: "anywhere", textWrap: "balance" }}>{entry.title}</span>
+          <span style={{ fontFamily: DISPLAY, fontSize: small ? "var(--graview-text-body)" : "var(--graview-text-heading)", fontWeight: "var(--graview-weight-display)", lineHeight: 1.3, overflowWrap: "anywhere", textWrap: "balance" }}>{entry.title}</span>
         </span>
         <span style={quiet}>
           {entry.place ? overOf(store, kindsOfPlace(context, entry.place), entry.place.across) : overOf(store, entry.kind)}
@@ -460,6 +460,13 @@ export const cards: React.CSSProperties = {
   gridTemplateColumns: "repeat(auto-fill, minmax(min(420px, 100%), 1fr))",
 };
 
+/** The gallery under the jobs: the same cards, smaller — two across at a phone's width, three or four on a desk. */
+const smallCards: React.CSSProperties = {
+  display: "grid",
+  gap: "20px 16px",
+  gridTemplateColumns: "repeat(auto-fill, minmax(clamp(140px, 22%, 260px), 1fr))",
+};
+
 /*
  * A card's frame answers the hand: its edge brightens under the pointer and
  * under focus. A stylesheet rather than state, because a hundred cards
@@ -477,15 +484,15 @@ const GALLERY_CSS = `
  * every kind that has none — so no installation lands on an empty page,
  * and the pictures are the biggest thing on it.
  */
-export function Gallery<S extends AnySchema>({ context }: { context: PageContext<S> }) {
+export function Gallery<S extends AnySchema>({ context, small = false }: { context: PageContext<S>; /** Under the jobs (f-design-composer): the same pictures, three across a desk and two a phone, what the app holds after what its people came to do. */ small?: boolean }) {
   useStoreTick(context.store);
   const entries = galleryOf(context);
   if (entries.length === 0) return null;
   return (
-    <section style={cards} data-testid="gallery">
+    <section style={small ? smallCards : cards} data-testid="gallery" {...(small ? { "data-small": "" } : {})}>
       <style>{GALLERY_CSS}</style>
       {entries.map((entry) => (
-        <GalleryCard key={entry.key} context={context} entry={entry} />
+        <GalleryCard key={entry.key} context={context} entry={entry} small={small} />
       ))}
     </section>
   );

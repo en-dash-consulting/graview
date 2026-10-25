@@ -169,7 +169,32 @@ describe("the checker judges the look", () => {
   it("leaves a job's two findings to the jobs it is handed, and says nothing of them without any", () => {
     const document = base({ lenses: [board] });
     expect(designFindings(document, { jobs: [] })).toEqual([]);
-    const said = designFindings(document, { jobs: [{ name: "unfiled", ask: "Which areas have nothing in them?", kind: "area" }] });
+    const homed = base({ lenses: [board], views: { home: [{ headline: "{count(all('feature'))} features" }] } });
+    const said = designFindings(homed, { jobs: [{ name: "unfiled", ask: "Which areas have nothing in them?", kind: "area" }] });
     expect(codes(said)).toEqual(expect.arrayContaining(["design-job-unanswered", "design-place-for-no-job"]));
+  });
+
+  it("counts a job answered by the derived home, which opens on the jobs, and says it only of a declared home that lists none of its records", () => {
+    const job = { name: "unplaced", ask: "Which features have no area?", kind: "feature", where: "count(out('partOf')) == 0", sort: "name" };
+    const derived = base({ purpose: { jobs: [job] } });
+    expect(only(designFindings(derived), "design-job-unanswered")).toEqual([]);
+
+    const homed = base({ purpose: { jobs: [job] }, views: { home: [{ headline: "{count(all('feature'))} features" }] } });
+    const [unanswered] = only(designFindings(homed), "design-job-unanswered");
+    expect(unanswered).toMatchObject({ severity: "warning", path: "purpose.jobs.0" });
+    expect(unanswered!.edits).toEqual([
+      {
+        op: "set-home",
+        blocks: [
+          { headline: "{count(all('feature'))} features" },
+          { title: "Which features have no area?" },
+          { list: "all('feature') where (count(out('partOf')) == 0)", as: "row", limit: 5, empty: "Nothing right now.", sort: { by: "name", direction: "asc" } },
+        ],
+      },
+    ]);
+    const answered = editDocument(homed, unanswered!.edits!);
+    if (!answered.ok) throw new Error(JSON.stringify(answered.findings));
+    expect(only(designFindings(answered.document), "design-job-unanswered")).toEqual([]);
+    expect(compileDocument(answered.document).findings.filter((f) => f.severity === "error")).toEqual([]);
   });
 });

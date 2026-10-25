@@ -62,6 +62,8 @@ export function PagesContent<S extends AnySchema>({
             titleLevel,
             views,
             settings: props.app.settings ?? [],
+            /* The app itself: its jobs open the home (f-design-composer), and the provider under the pages describes its places. */
+            app: props.app,
             ...(presence ? { presence } : {}),
             ...(brand ? { brand } : {}),
             ...(props.locale ? { locale: props.locale } : {}),

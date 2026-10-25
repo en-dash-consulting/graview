@@ -6,6 +6,7 @@ import * as city from "../../src/city.js";
 import * as csv from "../../src/csv.js";
 import * as shown from "../../src/shown.js";
 import * as check from "../../src/check.js";
+import * as compose from "../../src/compose.js";
 import * as describePlaces from "../../src/describe.js";
 import * as document from "../../src/document/index.js";
 import * as figures from "../../src/figures.js";
@@ -84,6 +85,8 @@ const OFF_THE_PAGE = {
   },
   // Roadmap f-learned-suggestions: the app's own actor suggesting changes to the app from evidence of use, accepted through the editor or declined for good — a host's and a command's, on no page.
   "@graview/core/learn": { from: learn, names: ["acceptAppSuggestion", "declineAppSuggestion", "keptDecisions", "LEARNING_ACTOR", "learnFromUse", "learningFrom", "memoryLearned"] },
+  // Roadmap f-design-composer: jobs inferred and one design proposed whole — a host's, on no page.
+  "@graview/core/compose": { from: compose, names: ["ACCENT_PALETTE", "accentFor", "composeDesign", "inferJobs", "MOST_INFERRED_JOBS"] },
   "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "existingViewsOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {

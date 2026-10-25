@@ -28,6 +28,10 @@ export interface DesignJob {
   readonly name: string;
   readonly ask: string;
   readonly kind: string;
+  /** Which records answer it, in the rule language: what a home's list of them is narrowed by. */
+  readonly where?: string;
+  /** Their order: a field, or `{ by, direction }`. */
+  readonly sort?: string | { readonly by: string; readonly direction?: "asc" | "desc" };
 }
 
 /** The jobs a document says, read as loosely as a page reads `purpose`: one without a kind or a question is the job checker's to refuse, not this file's to judge. */
@@ -565,26 +569,48 @@ function noCardForMainKind(document: GraviewDocument): Finding[] {
 
 /*
  * THE TWO FINDINGS ABOUT JOBS, asked only of the jobs an app says it is for
- * (f-app-jobs): a job no picture answers — nothing titled over the kind it
- * asks about, only the list of everything — and a picture no job asks for,
- * which is the first to keep off the bar. That one is a note: jobs say what
+ * (f-app-jobs): a job nothing answers, and a picture no job asks for, which
+ * is the first to keep off the bar. That one is a note: jobs say what
  * people come to do most, not everything an app may show (todo's "Who may do
  * what" answers no job and is still worth a place).
+ *
+ * The derived home answers every job itself (f-design-composer): with no
+ * `views.home`, the home opens on the jobs, each with its count, its first
+ * records and its act. A declared home answers one where it lists the job's
+ * kind, and so does a titled place over the kind. Only a declared home that
+ * does neither leaves a job unanswered, and the edit gives the home the
+ * job's question and its records.
  */
 function jobFindings(document: GraviewDocument, jobs: readonly DesignJob[]): Finding[] {
   if (jobs.length === 0) return [];
   const findings: Finding[] = [];
   const lenses = lensesOf(document);
-  jobs.forEach((job, index) => {
-    if (lenses.some((lens) => listed(lens) && kindsOfLens(lens).includes(job.kind))) return;
-    findings.push(warning("design-job-unanswered", `purpose.jobs.${index}`, `No place answers "${job.ask}": nothing is drawn of ${pluralOfKind(document, job.kind)} but the list of every one.`, `add a place over ${pluralOfKind(document, job.kind)} that shows what the job asks`));
-  });
+  const home = homeOf(document);
+  if (home) {
+    const homeLists = new Set(leaves(home).flatMap((block) => (typeof block["list"] === "string" ? [...readsOf(block["list"]).kinds] : [])));
+    let blocks: readonly unknown[] = home;
+    jobs.forEach((job, index) => {
+      if (homeLists.has(job.kind) || lenses.some((lens) => listed(lens) && kindsOfLens(lens).includes(job.kind))) return;
+      blocks = [...blocks, ...jobBlocks(job)];
+      const said = `No place answers "${job.ask}": the home is the app's own and lists no ${pluralOfKind(document, job.kind)}, and nothing else draws them but the list of every one.`;
+      findings.push(warning("design-job-unanswered", `purpose.jobs.${index}`, said, "give the home the job's question and its records", [{ op: "set-home", blocks: blocks as readonly ViewBlock[] }]));
+    });
+  }
   const asked = new Set(jobs.map((job) => job.kind));
   lenses.forEach((lens, index) => {
     if (!listed(lens) || kindsOfLens(lens).length === 0 || kindsOfLens(lens).some((kind) => asked.has(kind))) return;
     findings.push({ ...warning("design-place-for-no-job", `lenses.${index}`, `"${titleOf(lens)}" answers none of the jobs this app says it is for.`, `keep it off the bar (set-lens-hidden), or say the job it answers`, [{ op: "set-lens-hidden", title: titleOf(lens)!, hidden: true }]), severity: "note" });
   });
   return findings;
+}
+
+/** A job on a declared home: its question, then the first of its records in its order, saying so when there are none. */
+function jobBlocks(job: DesignJob): Block[] {
+  const sort = typeof job.sort === "string" ? { by: job.sort, direction: "asc" } : job.sort ? { by: job.sort.by, direction: job.sort.direction ?? "asc" } : undefined;
+  return [
+    { title: job.ask },
+    { list: job.where ? `all('${job.kind}') where (${job.where})` : `all('${job.kind}')`, as: "row", limit: 5, empty: "Nothing right now.", ...(sort && sort.by !== "label" ? { sort } : {}) },
+  ];
 }
 
 /**

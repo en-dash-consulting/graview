@@ -39,6 +39,8 @@ export default defineConfig({
       "@graview/core/linked": fileURLToPath(new URL("./packages/core/src/linked.ts", import.meta.url)),
       "@graview/core/tidying": fileURLToPath(new URL("./packages/core/src/tidying.ts", import.meta.url)),
       "@graview/core/catalog": fileURLToPath(new URL("./packages/core/src/catalog.ts", import.meta.url)),
+      "@graview/core/jobs": fileURLToPath(new URL("./packages/core/src/jobs.ts", import.meta.url)),
+      "@graview/core/compose": fileURLToPath(new URL("./packages/core/src/compose.ts", import.meta.url)),
       "@graview/core/subscriptions": fileURLToPath(new URL("./packages/core/src/subscriptions.ts", import.meta.url)),
       "@graview/core/friction": fileURLToPath(new URL("./packages/core/src/friction.ts", import.meta.url)),
       "@graview/core/learn": fileURLToPath(new URL("./packages/core/src/learn.ts", import.meta.url)),

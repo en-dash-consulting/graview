@@ -97,6 +97,10 @@
       "types": "./dist/learn.d.ts",
       "default": "./dist/learn.js"
     },
+    "./compose": {
+      "types": "./dist/compose.d.ts",
+      "default": "./dist/compose.js"
+    },
     "./subscriptions": {
       "types": "./dist/subscriptions.d.ts",
       "default": "./dist/subscriptions.js"

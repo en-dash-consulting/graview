@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 0,
+  "gzipped": 8,
+  "note": "Raised when the design-intent batch came together (Roadmap f-app-jobs, f-design-critic, f-friction-log, f-design-composer, f-learned-suggestions): each raise was measured on its own branch, and the jobs home, the friction log's door and the aliases search reads compress 7 to 8 bytes worse side by side than apart. Measured at 667_245 / 245_538 and 245_539 (gzip varies by a byte between runs) against a limit of 667_266 / 245_531."
+}
