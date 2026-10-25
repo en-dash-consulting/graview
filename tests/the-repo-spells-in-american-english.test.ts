@@ -81,6 +81,8 @@ const ALLOWED: readonly RegExp[] = [
   /\bwas `[^`]*`/g,
 ];
 const ALLOWED_IN: Readonly<Record<string, readonly RegExp[]>> = {
+  // A status people type, read as one that has ended however they spell it.
+  "packages/core/src/compose.ts": [/"cancelled"/g],
   // Google Calendar's own status for a deleted event.
   "packages/core/src/sync/google-calendar.ts": [/"cancelled"/g],
   "packages/core/tests/integration/sync.test.ts": [/"cancelled"/g],
