@@ -58,7 +58,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.54
 
-Published October 24, 2026 · the current version
+Published October 24, 2026
 
 An app stands on a ground of its own; an app that publishes tells its readers only what is published; history can stop at a plan's window; a view of many pictures draws; collaborators see records in one order.
 
