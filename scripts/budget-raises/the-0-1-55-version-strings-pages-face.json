@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 0,
+  "gzipped": 12,
+  "note": "Raised in the 0.1.55 Version packages pull request: nothing was added, but the new version strings compress 4 bytes worse than 0.1.54's beside the design-intent batch, whose raise left the gzipped limit a byte above its measurement. Measured at 667_245 / 245_543 against a limit of 667_266 / 245_539; the rest leaves room for gzip's byte of jitter between runs."
+}
