@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page handed a compiled app",
   "minified": 135,
-  "gzipped": 0,
+  "gzipped": 66,
   "changeset": "an-app-says-who-it-is-for-and-what-they-come-to-do.md",
-  "note": "Raised when the jobs and the friction log landed together (Roadmap f-app-jobs, f-friction-log): an app's `purpose` read loosely on the page and handed to the seat's ask, measured on top of the friction log's own raise. Each fit its budget alone; together they were over. Measured at 565_517 minified against 565_382 with the friction log alone: 135 more; gzipped held."
+  "note": "Raised when the jobs and the friction log landed together (Roadmap f-app-jobs, f-friction-log): an app's `purpose`, read loosely on the page, handed to the seat's ask beside the friction log's door. Each fit its budget alone; together they were over. Measured at 565_517 / 197_223 against 565_382 / 197_157 with the friction log alone: 135 more minified, 66 gzipped."
 }
