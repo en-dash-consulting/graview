@@ -26,7 +26,7 @@ const find = (node: { childNodes: ArrayLike<unknown> }, name: string): Found | u
   return undefined;
 };
 
-describe("a section labelled by its own heading", () => {
+describe("a section labeled by its own heading", () => {
   it("is drawn with the attribute pointing at the heading, which comes after it", () => {
     const drawn = draw([[0, "~", element("section", { "aria-labelledby": "ls-h", class: "list" }, [element("h2", { id: "ls-h" }, [text("Drivers")])]), 0]]);
     expect(find(drawn.root as never, "section")!.getAttribute("aria-labelledby")).toBe("ls-h");

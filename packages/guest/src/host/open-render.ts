@@ -130,7 +130,7 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
   /**
    * A NAME TAKEN FROM THE VIEW'S OWN DRAWING (FR-219): an `aria-labelledby`
    * or `aria-describedby` is drawn as it is given, and judged when the batch
-   * ends — the heading a section is labelled by often comes after it — by
+   * ends — the heading a section is labeled by often comes after it — by
    * whether every id it names is an element the view drew. One naming
    * nothing there is taken back and said, and drawn again once it does.
    */
