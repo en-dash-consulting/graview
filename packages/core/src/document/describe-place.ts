@@ -59,6 +59,8 @@ export interface DescribePlaceOptions<S extends AnySchema> {
    * record's page whose kind has a view of one says where it is drawn — at
    * the head, then the kind's page slot, then the facts — or, where the
    * view replaces the page, the view alone, and that the slot is not drawn.
+   * A kind's list page whose kind has a view of many that replaces the page
+   * is that view under the heading (FR-203).
    */
   readonly views?: readonly DescribedHostView[];
 }
@@ -243,7 +245,9 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     described = { slug: at.slug, title: at.title, kind: at.kind, address: at.address };
     const lens = at.lens ? declaredLenses(app as never).drawn.find((one) => one.as === at.slug && (at.kind === null || one.kinds.includes(at.kind))) : undefined;
     // Where a kind's records are listed, the acts that make one are offered — unless the lens's page leaves them off (`create: false`): each form said field by field, as this seat is asked it.
-    if (at.kind !== null && lens?.create !== false && at.view === undefined) forms = creatingActs(store, principal, at.kind).map((act) => describeActForm(store, principal, act));
+    /* A kind's list page a view of many the host keeps replaces (FR-203): the view alone under the heading, and no form but what it offers. */
+    const listView = at.kind !== null && at.view === undefined && !lens ? options.views?.find((one) => one.attach === at.kind && one.cardinality === "many" && one.replaces === "page" && !one.hidden) : undefined;
+    if (at.kind !== null && lens?.create !== false && at.view === undefined && !listView) forms = creatingActs(store, principal, at.kind).map((act) => describeActForm(store, principal, act));
     if (at.view !== undefined && !lens) {
       /*
        * A VIEW'S OWN PLACE (`/places/<slug>`, a titled view of many the host
@@ -322,6 +326,10 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
       const members = lens.kinds.flatMap((kind) => graph.nodesOfKind(kind).filter((node) => isCurrent(schema.tryDefinition(kind), node)));
       parts.push({ t: "text", text: `A ${lens.lens} of ${members.length} ${lens.kinds.map((kind) => kindWord(schema, kind, members.length)).join(" and ")}.` });
       parts.push({ t: "list", as: "name", columns: 1, groups: [{ items: members.map((node) => item(node, "name", 1)) }] });
+    } else if (listView) {
+      drawnBy = `view:${listView.name}`;
+      parts.push({ t: "heading", level: 1, text: at.title });
+      parts.push({ t: "view", name: listView.name, ...(listView.title ? { title: listView.title } : {}), replaces: true, ...(listView.parts ? { parts: listView.parts } : {}) });
     } else {
       // A kind's list page: each current record by its row.
       drawnBy = "derived";

@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 843,
+  "gzipped": 191,
+  "note": "Raised when a view of many came to be its kind's list page (FR-203, Graview Cloud's players list): the list page draws a view whose manifest says `replaces: \"page\"` under its heading in place of the list (`ListOfView`, page-list.tsx), and `describePlace` says a list page so replaced. Measured at 2_334_007 / 852_671 against 2_333_164 / 852_480: 843 / 191 more."
+}

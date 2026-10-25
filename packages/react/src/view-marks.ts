@@ -26,17 +26,19 @@ export function isDefaultView(view: unknown): boolean {
  * The mark a record's own view carries when it replaces the whole record
  * page (FR-149): a worker view whose manifest says `replaces: "page"`. The
  * pages face then draws it alone under the record's heading, without the
- * facts, the links and what can be done.
+ * facts, the links and what can be done. On a kind's view of many (FR-203),
+ * it is the kind's list page: drawn under the list's heading, without the
+ * list.
  */
 export const REPLACES_PAGE: unique symbol = Symbol.for("graview.replaces-page");
 
-/** Marks a view of one record as the whole record page. Returns the same component. */
+/** Marks a view as the whole of its page: a record's, or its kind's list. Returns the same component. */
 export function markReplacesPage<V extends object>(view: V): V {
   Object.defineProperty(view, REPLACES_PAGE, { value: true, enumerable: false });
   return view;
 }
 
-/** Whether a view of one record replaces the whole record page. */
+/** Whether a view replaces the whole of its page: a record's, or its kind's list. */
 export function replacesPage(view: unknown): boolean {
   return typeof view === "function" && (view as { [REPLACES_PAGE]?: boolean })[REPLACES_PAGE] === true;
 }

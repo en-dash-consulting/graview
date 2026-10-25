@@ -44,10 +44,13 @@ describe("a manifest's replaces", () => {
     expect(checkManifest(replacing, store())).toEqual([]);
     expect(checkManifest(beside, store())).toEqual([]);
   });
-  it("is said wrong when it is not page, or on a view of many or of the home", () => {
+  it("is sound as page on a view of many, which is then its kind's list page (FR-203)", () => {
+    expect(checkManifest({ ...replacing, cardinality: "many" }, store())).toEqual([]);
+    expect(checkManifest({ ...replacing, cardinality: "many", title: "The deliverables" }, store())).toEqual([]);
+  });
+  it("is said wrong when it is not page, or on the home", () => {
     expect(checkManifest({ ...beside, replaces: "card" as never }, store())).toEqual([expect.stringMatching(/replaces.*"card".*page/)]);
-    expect(checkManifest({ ...replacing, cardinality: "many" }, store())).toEqual([expect.stringMatching(/one record/)]);
-    expect(checkManifest({ ...replacing, attach: "home", cardinality: "many" }, store())).toEqual([expect.stringMatching(/one record/)]);
+    expect(checkManifest({ ...replacing, attach: "home", cardinality: "many" }, store())).toEqual([expect.stringMatching(/home.*replaces/)]);
   });
 });
 
@@ -106,5 +109,29 @@ describe("on Pages, the record's page", () => {
     const said = await page({ ...replacing, acts: ["no-such-act"] }, 300);
     expect(said.view).toBe(false);
     expect(said.twice).toBe(true);
+  });
+});
+
+describe("on Pages, the kind's list page (FR-203)", () => {
+  const list = async (manifest: WorkerViewManifest) => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<PagesApp context={{ store: store(), views: registry(manifest) as never, principal: nick }} initialPath="/deliverables" />));
+    await act(async () => new Promise((done) => setTimeout(done, 20)));
+    const said = {
+      view: Boolean(host.querySelector('[data-testid="list-view"] [data-worker-view-place="deliverables"]')),
+      rows: Boolean(host.querySelector('[data-testid="records"]')),
+    };
+    await act(async () => root.unmount());
+    host.remove();
+    return said;
+  };
+  const many: WorkerViewManifest = { name: "deliverables", attach: "deliverable", cardinality: "many" };
+  it("is the view of many in place of the list when its manifest says it replaces the page", async () => {
+    expect(await list({ ...many, replaces: "page" })).toEqual({ view: true, rows: false });
+  });
+  it("is the app's own list when it does not", async () => {
+    expect(await list(many)).toEqual({ view: false, rows: true });
   });
 });
