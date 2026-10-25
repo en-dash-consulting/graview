@@ -110,6 +110,22 @@ async function buildHost() {
           store.apply({ name: "wait-for", args: { taskId: "t-broadband", blockerId: "t-notice" } }, { author: actor, lineage: { basis: "The broadband moves with the notice date", confidence: 0.9 } });
           suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage: { basis: "The post is redirected from the day notice is given", confidence: 0.45 } });
         }
+        /*
+         * A crowded tray, when the page asks: a task renamed to 120 characters with no space, and a suggestion for each task it could
+         * wait for, each based on a sentence that names it — as Threat Watch's seventeen named "@tanstack/react-router".
+         */
+        if (asked.get("crowd")) {
+          const store = window.__handle.store;
+          const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+          const long = "@tanstack/" + "react_router_devtools_".repeat(6);
+          store.apply({ name: "rename", args: { id: "t-keys", label: long.slice(0, 120) } }, { author: options.principal });
+          for (const node of store.graph.nodesOfKind("task")) {
+            if (node.id === "t-keys") continue;
+            try {
+              suggest(store, [{ name: "wait-for", args: { taskId: "t-keys", blockerId: node.id } }], { author: actor, lineage: { basis: long + " shares a scope with " + node.id, confidence: 0.6 } });
+            } catch {}
+          }
+        }
         window.__handle.drawn().then(() => { window.__ready = true; });`,
       resolveDir: resolve(repoRoot, "packages/embed"),
       loader: "js",
@@ -723,6 +739,54 @@ try {
       notNow[face] = { said, after, ok };
     }
     report.checks.notNowIsOnePersonsAndTheTraySaysWhatWasDoneWhileTheyWereAway = { ...notNow, ok: Object.values(notNow).every((one) => one.ok) };
+  }
+  /*
+   * ---- The Suggested tray never scrolls sideways (f-suggested-tray-overflow), on both faces at 320 px: a dozen suggestions on a
+   * task whose name is 120 characters with no space wrap their sentences and basis lines, wrap their chip rows and cut the long
+   * chip with an ellipsis and its whole name in its title — the panel and every row no wider than they are drawn, and the panel
+   * inside the page.
+   */
+  {
+    const crowded = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 320, height: 720 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&crowd=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      const said = await page.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+        const panel = document.querySelector('[data-testid="suggested"]');
+        if (!panel) return null;
+        const wide = (one) => one.scrollWidth > one.clientWidth;
+        const rows = [...panel.querySelectorAll('[data-testid="suggestion"]')];
+        const box = panel.getBoundingClientRect();
+        const long = [...panel.querySelectorAll('[data-graview-primitive="chip"]')].find((chip) => (chip.textContent ?? "").startsWith("@tanstack/"));
+        return {
+          rows: rows.length,
+          panel: { scrollWidth: panel.scrollWidth, clientWidth: panel.clientWidth, left: Math.round(box.left), right: Math.round(box.right), page: innerWidth },
+          wideRows: rows.filter(wide).map((row) => ({ scrollWidth: row.scrollWidth, clientWidth: row.clientWidth })),
+          chip: long ? { title: long.getAttribute("title"), width: Math.round(long.getBoundingClientRect().width), cut: long.scrollWidth >= long.clientWidth } : null,
+        };
+      });
+      await page.close();
+      const ok =
+        said !== null &&
+        said.rows >= 10 &&
+        said.panel.scrollWidth <= said.panel.clientWidth &&
+        said.wideRows.length === 0 &&
+        said.panel.left >= 0 &&
+        said.panel.right <= said.panel.page &&
+        said.chip !== null &&
+        said.chip.title?.length === 120 &&
+        said.chip.width <= said.panel.clientWidth;
+      crowded[face] = { said, ok };
+    }
+    report.checks.theSuggestedTrayNeverScrollsSideways = { ...crowded, ok: Object.values(crowded).every((one) => one.ok) };
   }
   /* ---- FR-75: a host speaks in the app's own notices */
   {
