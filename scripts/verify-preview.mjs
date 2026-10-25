@@ -385,7 +385,7 @@ try {
   /*
    * ---- an app that publishes (Roadmap f-publishing-lifecycle): the RSVP declared `on-publish`, the hosts working on it and
    * everyone reading its tables. A visitor's form answer lands on the store; a table the hosts add is not served to a reader
-   * until they publish, and then is, with `servedThrough` saying how far.
+   * until they publish, and then is, with `servedThrough` a new cursor (opaque: a client neither reads nor compares one).
    */
   {
     const dir = mkdtempSync(join(tmpdir(), "graview-publishing-"));
@@ -443,7 +443,7 @@ try {
         readerTablesBefore: tables(before.reader),
         readerTablesAfter: tables(after),
         servedThrough: { before: before.reader.servedThrough ?? null, after: after.servedThrough ?? null },
-        ok: received && answered && unpublishedHidden && publishedShown && typeof after.servedThrough === "number" && after.servedThrough > (before.reader.servedThrough ?? -1),
+        ok: received && answered && unpublishedHidden && publishedShown && typeof after.servedThrough === "string" && after.servedThrough !== before.reader.servedThrough,
       };
     } catch (error) {
       report.checks.aReaderIsServedWhatWasPublished = { error: String(error?.stack ?? error), ok: false };
