@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 340,
+  "note": "Raised when the 0.1.57 builds landed together: `rename-view` (Roadmap f-rename-view) adds an edit to the document editor every face carries, beside a view of many standing in for its kind's list page (FR-203). Measured at 2_335_829 / 853_132 against 2_510_898 / 852_808: 324 B more gzipped."
+}

@@ -21,6 +21,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "remove-field": { op: "remove-field", kind: "vendor", field: "notes" },
   "add-relation": { op: "add-relation", kind: "vendor", relation: "recommendedBy", to: ["vendor"] },
   "rename-relation": { op: "rename-relation", kind: "vendor", relation: "fills", to: "covers" },
+  "rename-view": { op: "rename-view", view: "eagles-nest", to: "vendor-board" },
   "remove-relation": { op: "remove-relation", kind: "vendor", relation: "fills" },
   "add-act": { op: "add-act", act: "mark-booked", title: "Mark booked", on: "vendor", sets: { status: "booked" } },
   "remove-act": { op: "remove-act", act: "decline" },
@@ -56,7 +57,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "set-aliases": { op: "set-aliases", kind: "vendor", field: "quote", aliases: ["cost", "fee"] },
 };
 /** An edit that needs something the fixture does not have, and what to do first. */
-const FIRST: Partial<Record<(typeof EDIT_OPS)[number], Record<string, unknown>>> = { "remove-lens": ONE_OF_EACH["add-lens"], "set-lens-hidden": ONE_OF_EACH["add-lens"], "remove-grant": ONE_OF_EACH["add-grant"], "remove-sight": ONE_OF_EACH["add-sight"], "edit-job": ONE_OF_EACH["add-job"], "remove-job": ONE_OF_EACH["add-job"] };
+const FIRST: Partial<Record<(typeof EDIT_OPS)[number], Record<string, unknown>>> = { "remove-lens": ONE_OF_EACH["add-lens"], "set-lens-hidden": ONE_OF_EACH["add-lens"], "remove-grant": ONE_OF_EACH["add-grant"], "remove-sight": ONE_OF_EACH["add-sight"], "edit-job": ONE_OF_EACH["add-job"], "remove-job": ONE_OF_EACH["add-job"], "rename-view": { op: "arrange-pages", first: "view:eagles-nest" } };
 
 describe("every edit says what it did", () => {
   it.each(EDIT_OPS.map((op) => [op]))("%s", (op) => {

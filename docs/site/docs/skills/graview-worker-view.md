@@ -22,11 +22,11 @@ Every view comes with a manifest the host enforces:
 
 - `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
 - `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
-- A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page, nothing scrolling inside. On the Scene it is a card held to its box, faded where cut, with Open to its page (Expand with no Pages). `flows: false` keeps a frame on Pages (a map); `scene: { maxHeight }` holds the card lower (80–4000px).
+- A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page, nothing scrolling inside. On the Scene it is a card held to its box, faded where cut, with Open to its page. `flows: false` keeps a frame on Pages (a map); `scene: { maxHeight }` holds the card lower (80–4000px).
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
-- A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`).
+- A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`). On a view of many, it is its kind's list page (`/<plural>`).
 - `gestures: true` lets it hear a wheel, a drag and a pinch (below). `bleed: true` draws it edge to edge on a phone (`graview-view-drawing`).
 - `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path, and lets the view place a record's video (`<graview-video>`) and open the host's full-screen viewer: `graview-view-drawing` says how a view shows them.
 
@@ -87,7 +87,7 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 ### Then find out whether it worked
 
 1. `graview check` the app the view names: a manifest is only as sound as the declaration it reads. `checkManifest(manifest, store)` and `checkViewSource(source)` from `@graview/guest/host/views` must both say nothing.
-2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or the one `--record <id>` names. Run it on an empty seed too. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
+2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or the one `--record <id>` names. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
 3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means the view never ran: a page with a Content-Security-Policy needs `worker-src blob:` and `style-src 'unsafe-inline'`, and the note under the plain face names what it lacks.
 4. Toggle the app to dark. Does the view restyle?
 5. Follow each link, and tap each card on a phone, as `graview-view-links` says. A view that writes is pressed as `graview-view-forms` says.

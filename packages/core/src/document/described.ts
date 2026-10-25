@@ -38,7 +38,8 @@ export type DescribedPart =
    * a titled view's own place (`DescribePlaceOptions.views`): by its
    * manifest's name, with what it drew when the host said (`parts`, a
    * headless run's). `replaces`: it is the whole page, and nothing of the
-   * record's own is drawn beside it. `flows`: on its own place, whether it
+   * record's own — or, on a kind's list page (FR-203), no list — is drawn
+   * beside it. `flows`: on its own place, whether it
    * flows with the page (`true`) or keeps a frame of its own (`false`), as
    * the host said; unsaid when the host did not.
    */
