@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 32,
+  "gzipped": 1,
+  "changeset": "the-home-opens-on-the-jobs-and-one-design-is-composed.md",
+  "note": "Raised when the design-intent batch merged the app's jobs and the critic, each measured against main alone (f-app-jobs: a compiled app keeps `purpose`; f-design-critic: a finding may carry its `edits`): together they came 32 bytes over minified. The composer adds nothing up front: the pages are fetched. Measured on batch/design-intent at 564_718 / 196_819 against 564_686 / 197_161."
+}

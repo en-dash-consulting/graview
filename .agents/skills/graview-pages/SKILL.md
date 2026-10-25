@@ -62,6 +62,13 @@ yet") rather than refusing it; a host hands its manifests as `views` to
 (`views.home`), replaces this body, and the app opens on it (FR-136):
 40 blocks at its top (a group is one; 120 in all), and a `figure` may say
 `emphasis: "large"`.
+**No home, and `purpose.jobs`** (the face handed `app`): the home opens
+on the jobs. The first with records waiting is the title, its count, five
+records, its `act` on each; others follow smaller, an empty one a quiet
+line, the gallery after. A drawn home answers a job only by listing its
+kind (`design-job-unanswered`). `composeDesign(document)`
+(`@graview/core/compose`) proposes jobs (`inferJobs`), the critic's edits
+and an accent as one change.
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) —
 `graview create` does — and the face puts the scene's provider

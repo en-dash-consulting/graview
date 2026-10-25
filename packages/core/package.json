@@ -89,6 +89,10 @@
       "types": "./dist/jobs.d.ts",
       "default": "./dist/jobs.js"
     },
+    "./compose": {
+      "types": "./dist/compose.d.ts",
+      "default": "./dist/compose.js"
+    },
     "./subscriptions": {
       "types": "./dist/subscriptions.d.ts",
       "default": "./dist/subscriptions.js"

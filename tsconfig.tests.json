@@ -30,6 +30,8 @@
       "@graview/core/linked": ["./packages/core/src/linked.ts"],
       "@graview/core/tidying": ["./packages/core/src/tidying.ts"],
       "@graview/core/catalog": ["./packages/core/src/catalog.ts"],
+      "@graview/core/jobs": ["./packages/core/src/jobs.ts"],
+      "@graview/core/compose": ["./packages/core/src/compose.ts"],
       "@graview/core/subscriptions": ["./packages/core/src/subscriptions.ts"],
       "@graview/core/forms": ["./packages/core/src/forms.ts"],
       "@graview/core/lines": ["./packages/core/src/lines.ts"],

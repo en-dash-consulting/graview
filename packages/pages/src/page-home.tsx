@@ -7,6 +7,7 @@ import { kindMap } from "./facts.js";
 import { pluralSlug } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { Gallery } from "./page-places.js";
+import { answeredJobs, JobsOnTheHome } from "./page-jobs.js";
 import {
   KindMark,
   h2,
@@ -116,6 +117,14 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   }
   const live = new Set(liveKinds(store, context.principal));
   const relations = kindMap(store).relations.filter((relation) => live.has(relation.from) && (relation.to === "*" || live.has(relation.to)));
+  /*
+   * THE JOBS LEAD (Roadmap f-design-composer). An app that says what its
+   * people come to do opens on it: the first job with records waiting is
+   * the page's title, and what the app holds — the standing, the pictures —
+   * follows, smaller. An app with no jobs keeps this home as it was.
+   */
+  const answered = answeredJobs(context);
+  const leads = answered.some((one) => one.count > 0);
 
   return (
     <PageMain context={context} style={wide}>
@@ -123,8 +132,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         {/* The app is named once, on the bar (FR-131); the line under its name is said here, where it is about the app. */}
         {brand?.subtitle && brand.subtitleDrawn !== false ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null}
         {/* THE NUMBERS ARE THE HEADLINE: what is here, said once, as big as the page says anything. */}
-        <PageTitle context={context} data-testid="standing">{summary}</PageTitle>
-        <p style={{ ...lede, display: "grid", gap: 4 }} data-testid="standing-card">
+        {leads ? null : <PageTitle context={context} data-testid="standing">{summary}</PageTitle>}
+        {leads && violations.length === 0 ? null : <p style={{ ...lede, display: "grid", gap: 4 }} data-testid="standing-card">
           {present.length === 0 && beginning ? (
             <span>
               Begin with “{beginning.creator?.title ?? beginning.creator?.name}”, under{" "}
@@ -141,10 +150,26 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
               {seeWhatIsBroken}
             </Link>
           )}
-        </p>
+        </p>}
       </header>
 
-      <Gallery context={context} />
+      {answered.length > 0 ? (
+        <>
+          <JobsOnTheHome context={context} answered={answered} />
+          {/* What the app holds, after what its people came to do: the standing in a line, the pictures smaller. */}
+          <section style={{ display: "grid", gap: 20 }} data-testid="after-the-jobs">
+            {leads ? (
+              <p style={{ ...quiet, margin: 0 }} data-testid="standing">
+                {summary}
+                {violations.length === 0 ? " All rules hold." : ""}
+              </p>
+            ) : null}
+            <Gallery context={context} small />
+          </section>
+        </>
+      ) : (
+        <Gallery context={context} />
+      )}
 
       {/* THE KINDS, AS ONE ROW OF COUNTS: each the way into its list; the rest of what a kind is, is said there. */}
       <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="kinds">

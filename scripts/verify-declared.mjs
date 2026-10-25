@@ -98,6 +98,21 @@ const TASKS_SEED = {
     { id: "e2", kind: "assigned-to", from: "t2", to: "p2" },
   ],
 };
+/** The tasks with due dates, for the jobs home (f-design-composer): seven late, two of them assigned, one done, one still to come, none due today. */
+const JOBS_SEED = {
+  nodes: [
+    ...["Write the brief", "Book the hall", "Order the chairs", "Print the programs", "Call the caterer", "Hire a photographer", "Draft the seating plan"].map((label, i) => ({ id: `j${i + 1}`, kind: "task", label, status: i % 3 === 1 ? "doing" : "todo", due: `2026-08-${String(10 + i * 3).padStart(2, "0")}` })),
+    { id: "j8", kind: "task", label: "Send the invitations", status: "done", due: "2026-08-05" },
+    // Due long after any day the harness runs on: the store keeps the real clock.
+    { id: "j9", kind: "task", label: "Thank the volunteers", status: "todo", due: "2036-09-20" },
+    { id: "p1", kind: "person", label: "Ada" },
+    { id: "p2", kind: "person", label: "Grace" },
+  ],
+  edges: [
+    { id: "e1", kind: "assigned-to", from: "j1", to: "p2" },
+    { id: "e2", kind: "assigned-to", from: "j3", to: "p1" },
+  ],
+};
 /** People by skills, through a strength (FR-111): the Strengths lens, as Graview Cloud's org app declares it. */
 const STRENGTHS = resolve(repoRoot, "packages/core/tests/document/fixtures/org-strengths.gdd.json");
 const STRENGTHS_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/org-strengths.seed.json");
@@ -195,6 +210,20 @@ async function buildHost() {
             : lens.title === "Releases by era" ? { ...lens, options: { sort: { by: "released" } } }
             : lens),
         };
+        /* The tasks again, saying what the team comes to do (f-app-jobs) and drawing no home of its own: the home opens on the jobs (f-design-composer). */
+        const working = asked.get("doc") === "jobs";
+        const { pages: _first, ...unarranged } = tasks;
+        const jobbed = {
+          ...unarranged,
+          purpose: {
+            for: "A small team sharing one board, mostly on phones",
+            jobs: [
+              { name: "late", ask: "What's late?", kind: "task", where: "status != 'done' and due < today()", sort: "due", act: "set-status" },
+              { name: "unassigned", ask: "What has nobody on it?", kind: "task", where: "status != 'done' and count(out('assigned-to')) == 0", sort: "label", act: "assign" },
+              { name: "due-today", ask: "What's due today?", kind: "task", where: "status != 'done' and due == today()" },
+            ],
+          },
+        };
         const proposal = asked.get("doc") === "lifelogics";
         const board = asked.get("doc") === "tasks";
         const org = asked.get("doc") === "strengths";
@@ -202,17 +231,17 @@ async function buildHost() {
         const dollars = asked.get("doc") === "money";
         /* A document as a store that sorts its keys keeps it: the deal's fields alphabetical, its name among them. */
         const kept = asked.get("sorted") === "1" ? { ...money, kinds: { ...money.kinds, deal: { ...money.kinds.deal, fields: Object.fromEntries(Object.entries(money.kinds.deal.fields).sort(([a], [b]) => a.localeCompare(b))) } } } : money;
-        const compiled = compileDocumentWithoutCheck(fab ? discography : laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? kept : reviewed ? review : hall, { today: () => "2026-09-01" });
+        const compiled = compileDocumentWithoutCheck(working ? jobbed : fab ? discography : laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? kept : reviewed ? review : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: fab ? beatlesSeed : laidOut ? layoutSeed : proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : reviewed ? reviewSeed : ${JSON.stringify(SEED)},
+          seed: working ? ${JSON.stringify(JOBS_SEED)} : fab ? beatlesSeed : laidOut ? layoutSeed : proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : reviewed ? reviewSeed : ${JSON.stringify(SEED)},
           /* "none": the app's to choose — its home view, else the scene (FR-136). */
           ...(asked.get("face") === "none" ? {} : { face: asked.get("face") ?? "scene" }),
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
           principal: proposal || org || changed || dollars || reviewed || laidOut || fab
             ? { kind: "human", id: "u:owner", roles: ["owner"] }
-            : board
+            : board || working
               ? asked.get("as") === "viewer" ? { kind: "human", id: "p2", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] }
               : { kind: "human", id: "m1", roles: ["keeper"] },
           label: "The hall",
@@ -974,6 +1003,97 @@ try {
       after,
       ok: before.listed === 100 && before.button === "Show 58 more" && after.listed === 158 && !after.button && after.headings.join() === "Harrison,Lennon,McCartney,Starkey",
     };
+  }
+
+  /*
+   * ---- The home opens on the jobs (f-design-composer): the tasks saying what
+   * the team comes to do and no home of their own, at a desk and a phone, in
+   * both schemes — the first job with records waiting is the page's title,
+   * five of its records each offering the act, a job with nothing waiting one
+   * quiet line, the places after them and smaller, one filled button at most,
+   * nothing spilling sideways. Then the act is taken from the home.
+   */
+  {
+    const seen = {};
+    for (const size of SIZES) {
+      for (const scheme of SCHEMES) {
+        const page = await open("doc=jobs&face=pages&path=%2F", size, scheme);
+        await page.waitForSelector('[data-testid="jobs"]', { timeout: 20_000 }).catch(() => {});
+        seen[`${size.width}-${scheme}`] = await page.evaluate(() => {
+          const jobs = document.querySelector('[data-testid="jobs"]');
+          const lead = document.querySelector('[data-testid="job"][data-leads]');
+          const gallery = document.querySelector('[data-testid="gallery"]');
+          const embed = document.querySelector("[data-graview-embed]");
+          // A filled button on the first screen: a button or a link drawn on the accent, read as the page computes it.
+          const probe = document.createElement("span");
+          probe.style.background = "var(--graview-accent)";
+          (embed ?? document.body).appendChild(probe);
+          const accent = getComputedStyle(probe).backgroundColor;
+          probe.remove();
+          const filled = [...document.querySelectorAll("[data-graview-embed] button, [data-graview-embed] a")].filter((one) => {
+            const box = one.getBoundingClientRect();
+            return box.width > 0 && box.bottom > 0 && box.top < innerHeight && getComputedStyle(one).backgroundColor === accent;
+          }).length;
+          const firstRow = lead?.querySelector('[data-testid="job-row"]')?.getBoundingClientRect();
+          return {
+            title: document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null,
+            leads: lead?.getAttribute("data-job") ?? null,
+            count: lead?.querySelector('[data-testid="job-count"]')?.textContent?.trim() ?? null,
+            rows: lead ? lead.querySelectorAll('[data-testid="job-row"]').length : 0,
+            acts: lead ? lead.querySelectorAll('[data-testid="job-act"]').length : 0,
+            more: lead?.querySelector('[data-testid="job-more"]')?.textContent?.trim() ?? null,
+            others: [...document.querySelectorAll('[data-testid="job"]:not([data-leads])')].map((job) => job.getAttribute("data-job")),
+            quiet: [...document.querySelectorAll('[data-testid="job-quiet"]')].map((line) => line.textContent?.trim()),
+            galleryAfter: jobs !== null && gallery !== null && (jobs.compareDocumentPosition(gallery) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+            gallerySmall: gallery?.hasAttribute("data-small") ?? false,
+            // The lead's first record is on the first screen.
+            firstRowInView: firstRow !== undefined && firstRow.bottom <= innerHeight,
+            filled,
+            spills: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 || (embed ? embed.scrollWidth > embed.clientWidth + 1 : false),
+          };
+        });
+        await shoot(page, `jobs-home-${size.width}-${scheme}`);
+        // And what follows the jobs: the standing in a line, the places smaller.
+        await page.evaluate(() => document.querySelector('[data-testid="after-the-jobs"]')?.scrollIntoView({ block: "start" }));
+        await page.waitForTimeout(800);
+        await shoot(page, `jobs-home-${size.width}-${scheme}-after`);
+        await page.close();
+      }
+    }
+    report.checks.theHomeOpensOnTheJobsAtADeskAndAPhoneInBothSchemes = {
+      seen,
+      ok: Object.values(seen).every(
+        (one) =>
+          one.title === "What's late?" &&
+          one.leads === "late" &&
+          one.count === "7 tasks" &&
+          one.rows === 5 &&
+          one.acts === 5 &&
+          one.more === "2 more" &&
+          one.others.join() === "unassigned" &&
+          one.quiet.join() === "What's due today? No tasks right now." &&
+          one.galleryAfter &&
+          one.gallerySmall &&
+          one.firstRowInView &&
+          one.filled <= 1 &&
+          !one.spills,
+      ),
+    };
+
+    const page = await open("doc=jobs&face=pages&path=%2F", { width: 390, height: 844 });
+    await page.waitForSelector('[data-testid="job-act"]', { timeout: 20_000 });
+    await page.click('[data-job="late"] [data-testid="job-act"]');
+    await page.waitForSelector('[data-testid="form-set-status"]', { timeout: 10_000 });
+    await page.selectOption('[data-testid="form-set-status"] select', "done").catch(() => {});
+    await page.click('[data-testid="form-set-status"] button[type="submit"]');
+    await page.waitForTimeout(600);
+    const acted = await page.evaluate(() => ({
+      count: document.querySelector('[data-job="late"] [data-testid="job-count"]')?.textContent?.trim() ?? null,
+      first: document.querySelector('[data-job="late"] [data-testid="job-row"]')?.getAttribute("data-graview-record") ?? null,
+      focus: document.activeElement?.closest('[data-testid="jobs"]') !== null,
+    }));
+    await page.close();
+    report.checks.theJobsActIsTakenFromTheHomeAndItsRecordLeavesTheJob = { acted, ok: acted.count === "6 tasks" && acted.first === "j2" && acted.focus };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
