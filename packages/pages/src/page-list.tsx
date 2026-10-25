@@ -21,7 +21,8 @@ import {
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { readableFields } from "@graview/core/words";
 import { fieldSpecOf, firstPicture, withComputed } from "@graview/core/blocks";
-import { isDefaultView, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
+import { ViewBoundary } from "@graview/react/drawing";
 import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts, kindMap } from "./facts.js";
@@ -44,7 +45,7 @@ import {
   quiet,
   rule,
 } from "./page-typography.js";
-import { PageMain, PageTitle } from "./page-shell.js";
+import { Bleed, PageMain, PageTitle } from "./page-shell.js";
 import { HeadTrail } from "./place-here.js";
 import { capitalize } from "./page-typography.js";
 
@@ -111,7 +112,48 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
       </PageMain>
     );
   }
+  /*
+   * A VIEW OF MANY THAT SAYS IT IS THE LIST PAGE (FR-203: a worker view
+   * whose manifest says `replaces: "page"`) is drawn under the list's
+   * heading in place of the list, as a view of one that says so is a
+   * record's page (FR-149). Whichever view the kind draws at many × full,
+   * as the host's tidying leaves the registry: a view it deleted or hid
+   * stands in for nothing, and the list is the app's own again.
+   */
+  const own = context.views?.lookup(kind, { cardinality: "many", fidelity: "full" });
+  if (own !== undefined && replacesPage(own)) return <ListOfView context={context} kind={kind} view={own as ComponentType<ViewProps<S>>} />;
   return <ListPage context={context} kind={kind} />;
+}
+
+/**
+ * THE KIND'S LIST PAGE, AS ITS VIEW DRAWS IT (FR-203): the trail and the
+ * heading, then the view over the kind's current members — no arranging
+ * line, no rows, no forms: what is done here is what the view offers.
+ * Should the view fail, the kind's own face is drawn in its place.
+ */
+function ListOfView<S extends AnySchema>({ context, kind, view: View }: { readonly context: PageContext<S>; readonly kind: string; readonly view: ComponentType<ViewProps<S>> }) {
+  const { store, invariantContext } = context;
+  useStoreTick(store);
+  const definition = store.schema.tryDefinition(kind);
+  const plural = pluralOf(store, kind);
+  const members = store.graph.nodesOfKind(kind).filter((node) => isCurrent(definition, node));
+  const flagged = [...new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds))];
+  return (
+    <PageMain context={context}>
+      <header style={{ display: "grid", gap: 4 }}>
+        <HeadTrail context={context} />
+        <PageTitle context={context}>{plural}</PageTitle>
+      </header>
+      <section data-testid="list-view" style={{ display: "grid", minWidth: 0 }}>
+        <ViewBoundary kind={kind} view={plural}>
+          {/* Edge to edge on a phone, where the view says `bleed`, as on a record's page and a place. */}
+          <Bleed when={bleeds(View)}>
+            <View nodes={members as never} label={plural} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
+          </Bleed>
+        </ViewBoundary>
+      </section>
+    </PageMain>
+  );
 }
 
 /**

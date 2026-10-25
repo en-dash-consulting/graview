@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 840,
+  "gzipped": 170,
+  "note": "Raised when a view of many came to be its kind's list page (FR-203, Graview Cloud's players list): the list page draws a view whose manifest says `replaces: \"page\"` under its heading in place of the list (`ListOfView`, page-list.tsx), a titled one's place offers no way back to the list it already is, and `checkManifest` takes the key on a view of many. Measured at 671_311 / 246_830 against 670_471 / 246_660: 840 / 170 more."
+}

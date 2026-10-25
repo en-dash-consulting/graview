@@ -17,7 +17,9 @@ import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session
  *   acts         the acts it may ask for (FR-92 says when one applies)
  *   replaces     "page", for a view of one record drawn alone in place of
  *                the record's own fields (FR-149); left out, it sits above
- *                them and they stay editable
+ *                them and they stay editable. On a view of many, drawn in
+ *                place of the kind's list page (FR-203); left out, the list
+ *                is the app's own
  *   accepts      the fields files dropped on it go in (FR-193): each a kind
  *                and its image, video or file field — `[{ kind: "moment",
  *                field: "photo" }]` — for an element it draws marked
@@ -75,7 +77,10 @@ export interface WorkerViewManifest {
    * above the record's own fields, which stay editable: on the scene the
    * record drawn at full, on Pages the record's page. `"page"` draws the
    * view alone in their place, and the record is then changed only through
-   * the view. Only for `cardinality: "one"` on a kind.
+   * the view. On a view of a kind's many records (FR-203), `"page"` draws
+   * it under the heading of the kind's list page (`/<plural>`) in place of
+   * the list; left out, the list page is the app's own and a titled view is
+   * at its own place only. Not on the home.
    */
   readonly replaces?: "page";
   /**
@@ -222,7 +227,7 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   if (manifest.cardinality !== "one" && manifest.cardinality !== "many") findings.push(`The view's cardinality is "${String(manifest.cardinality)}", not one or many.`);
   if (manifest.attach === "home" && manifest.cardinality !== "many") findings.push("A view of the home draws many records: its cardinality is many.");
   if (manifest.replaces !== undefined && manifest.replaces !== "page") findings.push(`The view's replaces is "${String(manifest.replaces)}": the one thing a view replaces is "page", or leave it out to draw the view above the record's own fields.`);
-  else if (manifest.replaces === "page" && (manifest.attach === "home" || manifest.cardinality !== "one")) findings.push('Only a view of one record replaces its page: replaces "page" needs cardinality one on a kind.');
+  else if (manifest.replaces === "page" && manifest.attach === "home") findings.push('The home\'s view is the home already: replaces "page" is for a view of a kind, of one record (its page) or of many (its list).');
   if (manifest.gestures !== undefined && typeof manifest.gestures !== "boolean") findings.push(`The view's gestures is "${String(manifest.gestures)}": it is true, or left out.`);
   if (manifest.bleed !== undefined && typeof manifest.bleed !== "boolean") findings.push(`The view's bleed is "${String(manifest.bleed)}": it is true, or left out.`);
   if (manifest.heading !== undefined && (manifest.heading !== "own" || manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push(`The view's heading is "${String(manifest.heading)}": it is "own" on a view that is a place (a title, cardinality many), or left out.`);

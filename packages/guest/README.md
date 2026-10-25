@@ -392,8 +392,12 @@ is its heading, the view, then its facts and what can be done (FR-149).
 With `replaces: "page"` in its manifest it is drawn alone in their place —
 on the scene the view only, on Pages the view under the heading with what
 is wrong and what has happened — and the record is then changed only
-through what the view offers. `checkManifest` refuses `replaces` on a view
-of many or of the home. With `attach: "home"`,
+through what the view offers. A view of many (`cardinality: "many"`) with
+`replaces: "page"` is its kind's list page (FR-203): `/<plural>` draws it
+under the list's heading in place of the list, and the kind's own face if
+it fails; left out, the list page is the app's own, and a titled view of
+many is drawn at its own place only. `checkManifest` refuses `replaces` on
+the home's view. With `attach: "home"`,
 `registerWorkerView` makes it the home's own view (FR-81). That is the
 routed home's body — the page the app opens on, full width on a desk as on
 a phone (FR-136) — in place of the home the app declared, which is drawn if the view fails.

@@ -26,11 +26,11 @@ Every view comes with a manifest the host enforces:
 
 - `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
 - `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
-- A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page, nothing scrolling inside. On the Scene it is a card held to its box, faded where cut, with Open to its page (Expand with no Pages). `flows: false` keeps a frame on Pages (a map); `scene: { maxHeight }` holds the card lower (80–4000px).
+- A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page, nothing scrolling inside. On the Scene it is a card held to its box, faded where cut, with Open to its page. `flows: false` keeps a frame on Pages (a map); `scene: { maxHeight }` holds the card lower (80–4000px).
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
-- A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`).
+- A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`). On a view of many, it is its kind's list page (`/<plural>`).
 - `gestures: true` lets it hear a wheel, a drag and a pinch (below). `bleed: true` draws it edge to edge on a phone (`graview-view-drawing`).
 - `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path, and lets the view place a record's video (`<graview-video>`) and open the host's full-screen viewer: `graview-view-drawing` says how a view shows them.
 
@@ -167,7 +167,7 @@ is first drawn.
    do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act
    its manifest does not name), `manifest` or `source`. A view of one
    record runs over the first of its kind the seat sees, or the one
-   `--record <id>` names. Run it on an empty seed too. In code, `runWorkerViewHeadless` from
+   `--record <id>` names. In code, `runWorkerViewHeadless` from
    `@graview/guest/headless` does the same in an isolate you supply.
 3. Open the place on both faces as that member. Is anything shown that
    they should not see? Does the region carry no `data-worker-view-failed`?

@@ -265,7 +265,8 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
  * registry drew there before (the framework's own face of the kind) is what
  * is drawn if the view fails — and, for a view of one record, what is drawn
  * under it (FR-149): the record's own fields, editable, unless the manifest
- * says `replaces: "page"`.
+ * says `replaces: "page"`. A view of many that says so is the kind's list
+ * page, in place of the list (FR-203).
  */
 export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry<S>, definition: WorkerViewDefinition): ReactViewRegistry<S> {
   const { manifest } = definition;
@@ -299,7 +300,8 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
   /* A draft (FR-187): no fallback, so a failure is said in its place, and no name, so nothing tidies it and the place menu offers it nothing to keep. */
   const draft = definition.draft === true;
   const view = workerView(definition, { ...(before && !draft ? { fallback: before } : {}), ...(one && manifest.replaces !== "page" && before ? { beside: before } : {}) });
-  if (one && manifest.replaces === "page") markReplacesPage(view);
+  /* A view of many that replaces the page is the kind's list page (FR-203): drawn under its heading, in place of the list. */
+  if (manifest.replaces === "page") markReplacesPage(view);
   /*
    * THE KIND'S PAGE SLOT, UNDER IT (Roadmap feature:page-slot-blocks-…): a
    * view beside what was drawn before draws that under it — the kind's page

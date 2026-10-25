@@ -2,7 +2,7 @@ import { counted, isCurrent, labelOf, onePerPicture, placeLabel, sharesItsName, 
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
-import { bleeds, isDefaultView, type ViewProps } from "@graview/react/provider";
+import { bleeds, isDefaultView, replacesPage, type ViewProps } from "@graview/react/provider";
 import { arrange, parseArrangement } from "@graview/core/arrange";
 import { useLayoutEffect, useRef, useState, type ComponentType, type RefObject } from "react";
 import { DerivedForm } from "./form.js";
@@ -611,6 +611,8 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
    */
   const creates = drawnBy?.creates !== false;
   const headline = ledeOf(context, (drawnBy as { lede?: unknown } | undefined)?.lede);
+  /* A view that is its kind's list page as well (FR-203): its list is this picture again, so it is not offered as another way to see them. */
+  const isTheList = replacesPage(drawnBy) && context.views?.lookup(place.kind, { cardinality: "many", fidelity: "full" }) === drawnBy;
   const facts = kindFacts(store, place.kind, {
     ...(principal ? { principal } : {}),
     ...(context.invariantContext ? { context: context.invariantContext } : {}),
@@ -659,7 +661,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         ) : null}
         {/* What belongs to the picture alone: its kind as a list. The other places are the bar's (FR-138). */}
         <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
-          {kindsOfPlace(context, place).map((kind, index) => (
+          {kindsOfPlace(context, place).filter((kind) => !(isTheList && kind === place.kind)).map((kind, index) => (
             <Link key={kind} to={`/${pluralSlug(store.schema, kind)}`} style={{ ...onward, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
               <Onward>All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list</Onward>
             </Link>
