@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 2098,
+  "gzipped": 954,
+  "note": "Raised when a worker view came to be handed its records' computed values (Roadmap f-computed-in-views), as the guest host carries it, and the app's own actor came to withdraw its own suggestions without declining them (Roadmap f-withdraw-own-suggestions), which the store reads when it refuses a declined change. Measured at 2_324_658 / 849_778 against 2_322_560 / 848_824: 2_098 / 954 more."
+}

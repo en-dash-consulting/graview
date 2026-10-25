@@ -26,7 +26,7 @@
  */
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
-import { checkManifest, manifestActs, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
+import { checkManifest, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
 import { judgeDestination, listsOf } from "../host/links.js";
 import { guestPlacesOf, placeNamed } from "../host/links-words.js";
@@ -298,7 +298,9 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const viewPlaces = [...(options.views ?? []), manifest].flatMap((view) => viewPlaceOf(view) ?? []).map((place) => ({ as: place.as, title: place.title, kind: place.kind }));
   const places = guestPlacesOf([...(options.places ?? []), ...viewPlaces]);
   const placesUnsure = options.views === undefined;
-  const shown = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places });
+  /* A record's computed values beside its fields, as the page hands them (Roadmap f-computed-in-views). */
+  const computed = readsComputed(store, manifest) ? (await import("../host/computed.js")).computedOn(store.schema) : undefined;
+  const shown = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places, ...(computed ? { computed } : {}) });
   /*
    * A view that asks for pictures (FR-175) is handed each file without the
    * host's path. Headless, no bytes are fetched, so a picture comes with a

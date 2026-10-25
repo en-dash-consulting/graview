@@ -27,7 +27,7 @@ export { answerViews, keepsTheApp, VIEWS_PATH } from "./views.js";
 export type { ViewsAnswer, ViewsPost } from "./views.js";
 export { remoteViews } from "./remote-views.js";
 export type { RemoteViewsOptions } from "./remote-views.js";
-export { announcePresence, authoredBy, isClientBatch, liveProtocol, opFormatOf, opsFor, presenceFrom, seatOfTab, serverBatchIds, visitorPresence, wireRefusalOf } from "./live-protocol.js";
+export { announcePresence, authoredBy, isClientBatch, liveProtocol, opFormatOf, opsFor, presenceFrom, seatOfTab, serverBatchIds, visitorPresence, whoFor, wireRefusalOf } from "./live-protocol.js";
 export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked } from "./live-protocol.js";
 export { GOOGLE_TOKEN_URL, runConnections, sayReport } from "./connections.js";
 export type { ConnectionStates, ConnectionStateStore, ConnectionTokenRequest, RunConnectionsOptions, RunningConnections } from "./connections.js";

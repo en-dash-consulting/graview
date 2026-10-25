@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 18625,
+  "gzipped": 7471,
+  "note": "Raised when a worker view came to be handed its records' computed values (Roadmap f-computed-in-views): measured with every chunk, so it carries the evaluator the host fetches before a view whose kinds have computed values starts (`@graview/core/blocks`' computedValues, the rule language). Measured at 220_455 / 83_906 against 201_830 / 76_435: 18_625 / 7_471 more."
+}

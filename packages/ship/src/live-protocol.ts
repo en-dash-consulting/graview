@@ -814,6 +814,39 @@ const WITHHELD_KEYS = new WeakMap<object, string>();
  */
 const OPAQUE_BATCHES = new WeakMap<object, Map<string, Map<string, string>>>();
 
+/**
+ * WHO IS HERE, AS A SEAT IS SERVED THE APP (FR-211; exported, FR-215): the
+ * presences `who` as `principal` may be told of them. A visitor whose
+ * announced time has passed is dropped; a stop, hover or caret on a record
+ * or field the seat's sight withholds is said as nowhere; and a reader of an
+ * app that publishes is told nothing of a record, or a caret in text, it is
+ * not yet served. It is what `/graview/who`, `/graview/here` and a socket's
+ * `presence` answer, for a host that answers those routes itself.
+ */
+export function whoFor<S extends AnySchema>(store: Store<S>, principal: Principal, who: readonly Presence[]): Presence[] {
+  // A visitor whose announced time has passed is never told of, though a host may still hold it.
+  const now = Date.now();
+  const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
+  const behind = readsPublished(store.publishing, principal);
+  if (!hidesFrom(store, principal) && !behind) return standing;
+  const lens = seatLens(store, principal);
+  const seen = seesId(store, principal);
+  const kept = (node: string, field: string) => keptField(lens, node, field);
+  if (!behind) return presenceSeenBy(standing, seen, (node, field) => !kept(node, field));
+  /*
+   * WHERE SOMEBODY STANDS, AS A READER IS SERVED THE APP (FR-211): a
+   * record not yet published is one the reader may not be told of — an
+   * id the log knows that its view does not hold — and a caret is told
+   * only in text the reader is served as it now reads, since where
+   * somebody types in words not yet published says what they are.
+   */
+  const served = seenBy(store, principal).graph;
+  const records = recordsOf(store.log);
+  const sees = (id: string) => seen(id) && (served.getNode(id) !== undefined || (store.graph.getNode(id) === undefined && records.kindOf(id) === undefined));
+  const read = (node: string, field: string) => (served.getNode(node) as Record<string, unknown> | undefined)?.[field] === (store.graph.getNode(node) as Record<string, unknown> | undefined)?.[field];
+  return presenceSeenBy(standing, sees, (node, field) => !kept(node, field) && read(node, field));
+}
+
 export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: string): Wire<S> {
   const sighted = (principal: Principal): boolean => hidesFrom(store, principal);
   /*
@@ -949,29 +982,7 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       const all = store.log.all();
       return unattributed(principal, log, (op, at) => (all[at]?.id === op.id ? all[at]!.author : all.find((one) => one.id === op.id)?.author));
     },
-    whoFor: (principal, who) => {
-      // A visitor whose announced time has passed is never told of, though a host may still hold it.
-      const now = Date.now();
-      const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
-      const behind = readsPublished(store.publishing, principal);
-      if (!sighted(principal) && !behind) return standing;
-      const lens = seatLens(store, principal);
-      const seen = seesId(store, principal);
-      const kept = (node: string, field: string) => keptField(lens, node, field);
-      if (!behind) return presenceSeenBy(standing, seen, (node, field) => !kept(node, field));
-      /*
-       * WHERE SOMEBODY STANDS, AS A READER IS SERVED THE APP (FR-211): a
-       * record not yet published is one the reader may not be told of — an
-       * id the log knows that its view does not hold — and a caret is told
-       * only in text the reader is served as it now reads, since where
-       * somebody types in words not yet published says what they are.
-       */
-      const served = seenBy(store, principal).graph;
-      const records = recordsOf(store.log);
-      const sees = (id: string) => seen(id) && (served.getNode(id) !== undefined || (store.graph.getNode(id) === undefined && records.kindOf(id) === undefined));
-      const read = (node: string, field: string) => (served.getNode(node) as Record<string, unknown> | undefined)?.[field] === (store.graph.getNode(node) as Record<string, unknown> | undefined)?.[field];
-      return presenceSeenBy(standing, sees, (node, field) => !kept(node, field) && read(node, field));
-    },
+    whoFor: (principal, who) => whoFor(store, principal, who),
     claim(batch, seat) {
       if (batch === undefined || batch === null || batch === "") return {};
       if (!isClientBatch(batch)) {

@@ -74,7 +74,7 @@ These are pinned by tests, not by convention:
   a status board's reach and `resolveFor` on `/describe`, arranging a list on `/arrange`, a kind's list as its page shows it (`shownList`) on `/shown`, a list written as a spreadsheet (`toCsv`, `listCsv`) on `/csv`, where a view's navigate goes as an address (`narrowedPath`) on `/navigate`, a link's provenance on `/provenance`, the app as it stood (`pastOf`, `pastAt`, `seqAt`) on `/past`, the timeline around it (ticks, what "Restore to here" takes back) on `/history`, another app's records read as the viewer (`linkedRecordsOver`, `recordLinkedChange`) on `/linked`, an act's form on `/forms`,
   the matcher on `/search`, a record and an argument said in words on `/words`, what the seat and
   the seeding read (`answerSeenBy`, `placesOf`, `beginning`) on `/seat`, the app's
-  own actor's suggestions (`suggest`, `suggestions`, `acceptSuggestion`, `declineSuggestion`, `declined`, `tidyingOf`, Activity's digest) on `/tidying`,
+  own actor's suggestions (`suggest`, `suggestions`, `acceptSuggestion`, `declineSuggestion`, `withdrawSuggestion`, `declined`, `tidyingOf`, Activity's digest) on `/tidying`,
   what the inline AI may pick from, the state a model reads and an AI
   interaction's entry (`catalogOf`, `aiContextOf`, `AiInteraction`) on `/catalog`,
   what a person asked to be told of, matched against a commit under their

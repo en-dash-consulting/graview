@@ -1,5 +1,5 @@
 import { isAutomated, type AnySchema, type Author, type Store, type Via } from "@graview/core";
-import { declined, suggest, suggestionKey, suggestions } from "@graview/core/tidying";
+import { declined, suggest, suggestionKey, suggestions, withdrawSuggestion } from "@graview/core/tidying";
 import type { HostAi } from "../ai.js";
 import { askAll, type DreamBudget, type DreamCache, type DreamUsage } from "./asking.js";
 import { blocksOf } from "./blocking.js";
@@ -36,7 +36,12 @@ export interface DreamOptions {
   readonly model?: DreamModel;
   /** The host's AI, as a seat is handed it: its Fast slot (or `decide`) judges, and its `near` ranker widens the pairs. Ignored when it says `off`. */
   readonly ai?: HostAi;
-  /** How sure each severity must be to be made unasked, and to be asked at all (`BANDS` when unsaid). */
+  /**
+   * How sure each severity must be to be made unasked, and to be asked at
+   * all (`BANDS` when unsaid). A suggestion of this actor's still waiting
+   * that falls below the band it is now asked at is withdrawn
+   * (`withdrawSuggestion`): it leaves the tray, and is not declined.
+   */
   readonly bands?: Partial<Record<Severity, Partial<Band>>>;
   /** Requests at once. 6 when unsaid. */
   readonly concurrency?: number;
@@ -72,10 +77,12 @@ export interface DreamOutcome {
   /**
    * suggested: waits for a person; applied: made, with lineage; dropped: not
    * sure enough to ask, or the model chose none; waiting: already
-   * suggested; declined: a person said no before; refused: the store said
-   * no, in `error`.
+   * suggested; declined: a person said no before; withdrawn: a suggestion
+   * of this actor's that waited, taken back because it is below the band
+   * it is now asked at (`id`, the suggestion); refused: the store said no,
+   * in `error`.
    */
-  readonly outcome: "suggested" | "applied" | "dropped" | "waiting" | "declined" | "refused";
+  readonly outcome: "suggested" | "applied" | "dropped" | "waiting" | "declined" | "withdrawn" | "refused";
   readonly calls: Candidate["calls"];
   readonly basis: string;
   readonly confidence: number;
@@ -184,10 +191,34 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
   // The judges' own rules, for whatever the model did not judge: the floor.
   const floor: Weighed[] = judges.flatMap((judge) => judge.judge(context).map((candidate) => ({ ...candidate, severity: judge.severity ?? "archive" }))).filter((candidate) => !covered.has(coverOf(candidate)));
 
-  const waiting = new Set(suggestions(whole).map((one) => suggestionKey(one.calls)));
   const outcomes: DreamOutcome[] = [];
   const said = (candidate: Weighed, outcome: DreamOutcome["outcome"], more: Partial<DreamOutcome> = {}) =>
     outcomes.push({ judge: candidate.judge, outcome, calls: candidate.calls, basis: candidate.basis, confidence: candidate.confidence, about: candidate.about, ...(candidate.model ? { model: candidate.model } : {}), ...more });
+
+  /*
+   * WHAT IT NO LONGER STANDS BY (Roadmap f-withdraw-own-suggestions): a
+   * suggestion of this actor's still waiting, made when it was asked at a
+   * lower bar, that is below the band it is asked at now — a host raised
+   * merges to 0.8, and merges at 0.56 stayed in the tray. Withdrawn, so it
+   * leaves the tray; not declined, so nobody is recorded as having said no.
+   */
+  const severities = new Map([...JUDGES, ...judges].map((judge) => [judge.name, judge.severity ?? "archive"] as const));
+  for (const one of suggestions(whole)) {
+    const judge = one.lineage?.actor;
+    const confidence = one.lineage?.confidence;
+    const severity = judge !== undefined ? severities.get(judge) : undefined;
+    if (one.author.kind !== principal.kind || one.author.id !== principal.id || severity === undefined || typeof confidence !== "number") continue;
+    if (routeOf(confidence, severity, options.bands) !== "drop") continue;
+    const candidate: Weighed = { judge: judge!, calls: one.calls, basis: one.lineage?.basis ?? "", confidence, about: one.about, severity, ...(one.lineage?.model ? { model: one.lineage.model } : {}) };
+    try {
+      withdrawSuggestion(whole, one.id, { author: principal, ...(options.via ? { via: options.via } : {}) });
+      said(candidate, "withdrawn", { id: one.id });
+    } catch (error) {
+      said(candidate, "refused", { id: one.id, error: error instanceof Error ? error.message : String(error) });
+    }
+  }
+
+  const waiting = new Set(suggestions(whole).map((one) => suggestionKey(one.calls)));
   const fresh: { readonly candidate: Weighed; readonly route: Route; readonly at: number }[] = [];
   const seen = new Set<string>();
   for (const candidate of [...judged, ...floor] as Weighed[]) {
@@ -243,6 +274,7 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
   }
   const suggested = outcomes.filter((one) => one.outcome === "suggested").length;
   const applied = outcomes.filter((one) => one.outcome === "applied").length;
+  const withdrawn = outcomes.filter((one) => one.outcome === "withdrawn").length;
   return {
     run,
     outcomes,
@@ -254,6 +286,12 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
       options.applyAtLeast === undefined
         ? "Nothing was applied: the host did not let the actor apply on its own (applyAtLeast), so every change sure enough to ask about was suggested."
         : `Changes at least ${options.applyAtLeast} sure, and sure enough for how much they would undo, were applied where the app and its people allow it.`,
-    said: suggested + applied === 0 ? "Nothing to tidy." : [suggested > 0 ? `Suggested ${plural(suggested, "change")}` : "", applied > 0 ? `applied ${plural(applied, "change")}` : ""].filter(Boolean).join(" and ").replace(/^a/, "A") + ".",
+    said:
+      suggested + applied + withdrawn === 0
+        ? "Nothing to tidy."
+        : [suggested > 0 ? `Suggested ${plural(suggested, "change")}` : "", applied > 0 ? `applied ${plural(applied, "change")}` : "", withdrawn > 0 ? `withdrew ${plural(withdrawn, "suggestion")} now below the bar` : ""]
+            .filter(Boolean)
+            .join(" and ")
+            .replace(/^[aw]/, (first) => first.toUpperCase()) + ".",
   };
 }

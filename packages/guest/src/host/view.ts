@@ -5,7 +5,7 @@ import type { AnySchema, FileValue, HostFiles, Principal, Store } from "@graview
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
-import { checkManifest, workerViewProps, type WorkerViewManifest } from "./manifest.js";
+import { checkManifest, readsComputed, workerViewProps, type ComputedOn, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
@@ -41,6 +41,8 @@ const mediaChunk = retryingImport(() => import("./media.js"));
 const dropChunk = retryingImport(() => import("./drop.js"));
 /* A wheel, a drag and a pinch over what the view drew (0.1.42), fetched only for a view whose manifest says gestures and that listens for one. */
 const gesturesChunk = retryingImport(() => import("./gestures.js"));
+/* A record's computed values (Roadmap f-computed-in-views), fetched only for a view whose kinds have them, before it starts. */
+const computedChunk = retryingImport(() => import("./computed.js"));
 
 export type WorkerViewFailure =
   /** Its manifest names a kind, an edge or an act the app does not declare (FR-91): it was never started. */
@@ -302,6 +304,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   };
   /* What the view was last shown: the plain face drawn in its place, if it fails. */
   let lastProps: GuestProps | undefined;
+  /* What works out its records' computed values, once fetched (below). */
+  let computed: ComputedOn | undefined;
   let session: GuestHost | undefined;
   let started: StartedWorker | undefined;
   let drawing: OpenDrawing | undefined;
@@ -385,7 +389,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const plainFace = (_: HTMLElement, reason: WorkerViewFailure, said: string) => {
     const props = lastProps ?? (() => {
       try {
-        return workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}) });
+        return workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), ...(computed ? { computed } : {}) });
       } catch {
         return undefined;
       }
@@ -454,6 +458,12 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * view is never handed a record's path to a file.
    */
   let pictures: GuestPictureHand | undefined;
+  /* Its records' computed values, beside their fields (Roadmap f-computed-in-views): the worker starts once they can be worked out. */
+  const computedReady: Promise<unknown> = readsComputed(options.store, manifest)
+    ? computedChunk().then(({ computedOn }) => {
+        computed = computedOn(options.store.schema);
+      })
+    : Promise.resolve();
   /* What is dropped on what it draws (FR-193): below, with the drawing. */
   let drops: GuestDrops | undefined;
   const picturesReady: Promise<unknown> = manifest.pictures
@@ -823,7 +833,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           given.postMessage(message);
         },
         props: () => {
-          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), ...(options.places ? { places: guestPlacesOf(options.places()) } : {}) });
+          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), ...(options.places ? { places: guestPlacesOf(options.places()) } : {}), ...(computed ? { computed } : {}) });
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
           lastProps = props;
           return props;
@@ -871,21 +881,28 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       push();
     },
   }));
+  /* What the worker waits for before it starts: the pictures' host, and what works out computed values, where the view needs them. */
+  const waits = manifest.pictures !== undefined || readsComputed(options.store, manifest);
+  const ready = (): Promise<unknown> =>
+    Promise.all([
+      picturesReady.catch(() => Promise.reject(new Error("the view's pictures could not be loaded"))),
+      computedReady.catch(() => Promise.reject(new Error("the view's computed values could not be worked out"))),
+    ]);
   const run = (code: WorkerViewCode) => {
     if ("source" in code) {
-      void (manifest.pictures ? Promise.all([viewScript(code.source), picturesReady]).then(([script]) => script) : viewScript(code.source)).then(
+      void (waits ? Promise.all([viewScript(code.source), ready()]).then(([script]) => script) : viewScript(code.source)).then(
         (script) => {
           if (!failed) begin({ script });
         },
-        () => fail("start", "the view's runtime could not be loaded"),
+        (error: unknown) => fail("start", error instanceof Error && error.message.startsWith("the view's") ? error.message : "the view's runtime could not be loaded"),
       );
-    } else if (!manifest.pictures) begin(code);
+    } else if (!waits) begin(code);
     else
-      void picturesReady.then(
+      void ready().then(
         () => {
           if (!failed) begin(code);
         },
-        () => fail("start", "the view's pictures could not be loaded"),
+        (error: unknown) => fail("start", error instanceof Error ? error.message : "the view's pictures could not be loaded"),
       );
   };
   /*
