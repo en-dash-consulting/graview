@@ -1,5 +1,23 @@
 # @graview/tools
 
+## 0.1.56
+
+### Patch Changes
+
+- d97578e: The app's own actor withdraws its own suggestions that fall below the bar it is given (Roadmap f-withdraw-own-suggestions). Graview Cloud raised its merge floor to 0.8 (`bands: { merge: { ask: 0.8 } }`), and the merges already waiting at 0.56–0.61 stayed in the Suggested tray: `declineSuggestion` records a person's "never again", and `suggest` sets `expiresAt` only on a new suggestion. Now `withdrawSuggestion(store, id)` on `@graview/core/tidying` takes a suggestion back as its maker — an undo of it by whoever suggested it, which changes nothing and takes it out of the tray, and is no decline: nobody said no, so `declined` says nothing of it and the same change may be suggested again should the actor come to be sure enough. Only its maker withdraws one; a person declines it. Undone, the suggestion waits again. And `dream()` withdraws each of its own suggestions still waiting whose confidence is below the band it is now given for its judge's severity, before it judges anything: each is an outcome `withdrawn` (its `id` the suggestion), and the run says "Withdrew 2 suggestions now below the bar." What a person suggested, and what is still sure enough, stay. The store reads a suggestion its maker took back as withdrawn when it refuses a declined change, so a hosted page carries 0.1 KB more up front (86 bytes, 10 gzipped; `scripts/budget-raises/the-actor-withdraws-its-own-suggestions-hosted-page.json`). Tools' test gives a run a merge bar of 0.8 over three of its suggestions at 0.58, 0.56 and 0.86 and finds the two below it withdrawn, neither declined and the same change suggestible again, and a person's suggestion and one at 0.81 left waiting; a person may not withdraw the actor's suggestion, and their decline is kept.
+  
+  Compatibility: ops and primitives — an op is unchanged; an undo of a suggestion by the author of the suggestion is no longer read as declining it (`declinesIn`, `declinedIn`), which no store wrote before. Stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. Additive on `@graview/core/tidying` (`withdrawSuggestion`) and `@graview/tools/tidy` (`DreamOutcome.outcome` gains `"withdrawn"`). What Graview Cloud does: nothing more than pass the bands it uses to `dream()`; the next run withdraws the merges waiting below 0.8.
+- Updated dependencies [c7bdc23]
+- Updated dependencies [3149e79]
+- Updated dependencies [d97578e]
+- Updated dependencies [3149e79]
+- Updated dependencies [8e25c9f]
+- Updated dependencies [5bb8e6e]
+- Updated dependencies [605a44f]
+- Updated dependencies [d97578e]
+  - @graview/core@0.1.56
+  - @graview/ship@0.1.56
+
 ## 0.1.55
 
 ### Patch Changes

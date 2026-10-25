@@ -1,5 +1,34 @@
 # @graview/primitives
 
+## 0.1.56
+
+### Patch Changes
+
+- c7bdc23: A date may know only its year or its month, and a wrong date can be taken away (Roadmap f-partial-dates). History often knows a year alone — APT1 was first seen in 2006 — and an agent that could keep only a day stored `2006-01-01`, a false exact date. A document's `date` now holds a year (`2006`) or a month (`2016-05`) as well as a day: said "2006" and "May 2016" wherever a day is said (a record's facts, a card's glance, a template, a change's sentence, `dayAsRead` and `whenAsRead`), sorted as written so a year comes before the months and days within it and a month before its days, and grouped by year or month in the year or month it names (a finer bucket gives it a group of its own, before the days within it). The date's editor on both faces reads "2006", "May 2016", "5/2016" and "2016-05" as a year or a month alone and says it back ("May 2016 (a month alone)"), and an import reads such a cell into a date column. A TypeScript date field (`ISO_DAY`) is unchanged; a document's date field's pattern is `DATE_VALUE` (`^\d{4}(?:-(?:0[1-9]|1[0-2])(?:-\d{2})?)?$`), which also refuses a month 13 it used to take, and its argument shape says `partial: true`.
+  
+  Clearing: `edit-<kind>` refused `null` ("expected string") and `""` for a date, and `importRows` read an empty cell as no change, so a wrong date could not be removed. Now `null` clears any field a record may be without (declared optional, not required and with no default) on a derived edit — the act says which in `clearable`, and `null` reaches `apply` past the field's own parse, so its tool schema is the field's as before; a required field still refuses it. `importRows(…, { match, blanksClear: true })` clears such a field where a found record's row leaves its cell blank ("First seen: Jan 1, 2006 → nothing"), through the kind's edit act. Core's tests hold a year and a month kept, said, sorted, grouped and read from a sheet, a wrong month refused, `null` clearing and undone, a required field refusing it, and an import that clears only when it says so; a pages test types "May 2016" into an act's form and "2006-02" over a year on the record. A hosted page carries 1.9 KB more up front, and one handed a compiled app 1.7 KB more, under raises of their budgets with Roadmap f-option-labels (`scripts/budget-raises/a-date-may-know-only-its-year-or-its-month-*.json`); the pages face alone and a visitor's form are raised alike, and the scene face's limit before it draws moves to 1007 KB.
+  
+  Compatibility: ops and primitives, stored formats and the wire — unchanged; a record that holds a year or a month alone is an ordinary string. The declaration — unchanged in shape; a document's date accepts a year or a month alone and refuses a month past 12. Derived tool names and input schemas — a document's date says the pattern above (announced on the conformance fixture `document:vendors`), and a derived edit accepts `null` for a field it may clear. The JavaScript API — additive: `DATE_VALUE` and `PARTIAL_DAY` on `@graview/core`, `readPartialDay` on `@graview/core/words`, `ImportOptions.blanksClear`, `MutationDefinitionSpec.clearable`, `partial` on a date's `ArgShape` and `FormField`, and `partial` on `WhenInput`. What Graview Cloud does: takes this build; its agents keep `2006` rather than `2006-01-01` and clear a wrong date with `null`, and its `import_rows` passes `blanksClear` when the person asks that blank cells clear.
+- 846963c: Activity names each merge, removal and archive in a batch, whatever the batch calls itself (Roadmap f-activity-names-merges). A batch that carried its own intent — an agent's "Cursor: merge-actor, edit-threat" — was one row in those words alone, so a count that dropped (software 79 → 78) was never explained. The row now says the batch's intent and then, by each op's own sentence, every op that takes a record out of the counts: "Cursor: merge-actor, edit-threat — Merge APT-1 into APT1; Remove Comment Crew; Archive Sandworm". An op that changes a record and takes nothing out is still said by the batch's words; an undo says what it took back in its own; an op the seat may not see is not said. Both faces' Activity read it, and so does each change inside a digest.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged.
+- 92040e8: The Suggested tray never scrolls sideways (Roadmap f-suggested-tray-overflow). With seventeen suggestions in Threat Watch, each one's sentence ("Merge @tanstack/react-router into @tanstack/* (42 packages)"), its "based on …" line and its record chips ran past the panel's right edge, and the panel scrolled sideways. The panel is now no wider than the page (`min(320px, 100vw − 16px)`) and hides what would run sideways; its rows and their lines may shrink (`min-width: 0`, one `minmax(0, 1fr)` column), the sentence, the basis and a refusal break anywhere (`overflow-wrap: anywhere`), the chip row and the Accept, Decline and Not now row wrap, and a chip still too wide is cut with an ellipsis, its whole name in its title. `pnpm verify chrome` holds it at 320 px on both faces with a record named in 120 characters and no space (`theSuggestedTrayNeverScrollsSideways`): before, the panel held 932 px of content in 318.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. The look: the tray's lines carry `data-graview-suggestion-words` and its chip row `data-graview-suggestion-records`.
+- Updated dependencies [c7bdc23]
+- Updated dependencies [3149e79]
+- Updated dependencies [d97578e]
+- Updated dependencies [3149e79]
+- Updated dependencies [8e25c9f]
+- Updated dependencies [5bb8e6e]
+- Updated dependencies [605a44f]
+- Updated dependencies [d97578e]
+  - @graview/core@0.1.56
+  - @graview/tools@0.1.56
+  - @graview/layout@0.1.56
+  - @graview/react@0.1.56
+  - @graview/render@0.1.56
+
 ## 0.1.55
 
 ### Patch Changes
