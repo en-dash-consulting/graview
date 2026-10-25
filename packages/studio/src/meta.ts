@@ -93,7 +93,7 @@ export const fieldNode = defineNode("field", {
     markdown: z.boolean().optional(),
   }),
   edges: {
-    of: { to: ["kind"], cardinality: "one", description: "the kind it belongs to", inverse: "its fields" },
+    of: { to: ["kind"], cardinality: "one", description: "the kind it belongs to", inverse: "its fields", acts: "none" },
   },
   label: (node) => node.label,
   display: { labels: { label: "name" } },
@@ -147,8 +147,8 @@ export const edgeNode = defineNode("edge", {
     toAnotherApp: z.array(z.string()).optional(),
   }),
   edges: {
-    "from-kind": { to: ["kind"], cardinality: "one", description: "the kind it is declared on", inverse: "its edges" },
-    "to-kind": { to: ["kind"], description: "the kinds it may reach", inverse: "the edges that reach it" },
+    "from-kind": { to: ["kind"], cardinality: "one", description: "the kind it is declared on", inverse: "its edges", acts: "none" },
+    "to-kind": { to: ["kind"], description: "the kinds it may reach", inverse: "the edges that reach it", acts: "none" },
   },
   label: (node) => node.label,
   display: { labels: { label: "name", description: "reading from this end", inverse: "reading from the far end", appendOnly: "append only", toAny: "to any kind", toAnotherApp: "to another app's kind" } },
@@ -184,7 +184,7 @@ export const actNode = defineNode("act", {
     derived: z.boolean(),
   }),
   edges: {
-    on: { to: ["kind"], description: "the kinds it acts on", inverse: "the acts on it" },
+    on: { to: ["kind"], description: "the kinds it acts on", inverse: "the acts on it", acts: "none" },
     creates: { to: ["kind"], description: "the kind it brings into being", inverse: "how one comes to be", acts: "none" },
     connects: { to: ["edge"], description: "the relation it makes", inverse: "the acts that make it", acts: "none" },
     severs: { to: ["edge"], description: "the relation it breaks", inverse: "the acts that break it", acts: "none" },
@@ -230,7 +230,7 @@ export const ruleNode = defineNode("rule", {
     says: z.string().optional(),
   }),
   edges: {
-    over: { to: ["kind"], description: "the kind it judges", inverse: "the rules over it" },
+    over: { to: ["kind"], description: "the kind it judges", inverse: "the rules over it", acts: "none" },
     repairs: { to: ["act"], description: "the acts that put it right", inverse: "the rules it repairs" },
   },
   label: (node) => node.label,
@@ -278,10 +278,10 @@ export const grantNode = defineNode("grant", {
     allKinds: z.boolean(),
   }),
   edges: {
-    lets: { to: ["role"], description: "the roles it lets", inverse: "what they are let do" },
-    may: { to: ["act"], description: "the acts it allows", inverse: "who may take it" },
+    lets: { to: ["role"], description: "the roles it lets", inverse: "what they are let do", acts: "none" },
+    may: { to: ["act"], description: "the acts it allows", inverse: "who may take it", acts: "none" },
     // Its own name: `over` is the rule's, and one name is one relation.
-    "allows-on": { to: ["kind"], description: "the kinds it allows those acts on", inverse: "who may act on it" },
+    "allows-on": { to: ["kind"], description: "the kinds it allows those acts on", inverse: "who may act on it", acts: "none" },
   },
   label: (node) => node.label,
   display: { labels: { self: "on their own record only", ownEnd: "on their own end of the link only", allActs: "every act", allKinds: "every kind" } },
@@ -315,8 +315,8 @@ export const sightNode = defineNode("sight", {
     hide: z.array(z.string()).optional(),
   }),
   edges: {
-    "seen-by": { to: ["role"], description: "the roles it lets see", inverse: "what they see" },
-    shows: { to: ["kind"], description: "the kinds it shows", inverse: "who sees it" },
+    "seen-by": { to: ["role"], description: "the roles it lets see", inverse: "what they see", acts: "none" },
+    shows: { to: ["kind"], description: "the kinds it shows", inverse: "who sees it", acts: "none" },
   },
   label: (node) => node.label,
   display: { labels: { own: "their own records only", via: "only what this relation joins to them", everyone: "everybody" } },
