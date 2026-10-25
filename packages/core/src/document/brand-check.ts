@@ -1,6 +1,6 @@
 import { TIME_ZONE_FIX, timeZoneProblem } from "../days.js";
 import { accentProblem, documentSchemes } from "../theme/accent.js";
-import { groundProblem } from "../theme/ground-check.js";
+import { darkPageFor, groundProblem } from "../theme/ground-check.js";
 import type { Ground } from "../theme/ground.js";
 import { fontProblem } from "../theme/fonts.js";
 import { emojiProblem, markProblem } from "../theme/marks.js";
@@ -87,7 +87,11 @@ export function brandFindings(brand: Partial<BrandSpec> | undefined, options: Br
     const refused = accentProblem(brand.accent, on);
     if (refused) {
       const drawn = documentSchemes(brand.accent, on).ok ? "The app draws a shade it moved to read, not the color given." : "The app keeps Graview's colors.";
-      out.push(warning("brand-accent", `${at}.accent`, `${refused.sentence} ${drawn}`, refused.suggestion ? `say { "accent": "${refused.suggestion}" }` : "pick another color"));
+      // A bright accent that reads on a dark page is answered with that pair too (Roadmap f-dark-brand-accent).
+      const page = darkPageFor(brand.accent, on);
+      const onPage = page ? `keep ${brand.accent} on a dark page: say { "ground": { "light": "${page.light}", "dark": "${page.dark}" } }` : undefined;
+      const shade = refused.suggestion ? `say { "accent": "${refused.suggestion}" }` : undefined;
+      out.push(warning("brand-accent", `${at}.accent`, `${refused.sentence} ${drawn}`, shade && onPage ? `${shade}, or ${onPage}` : (shade ?? (onPage ? onPage.replace(/^k/, "K") : "pick another color"))));
     }
   }
   return out;
