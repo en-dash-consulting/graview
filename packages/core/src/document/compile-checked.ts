@@ -1,4 +1,5 @@
-import { checkApp } from "../cli/check.js";
+import { checkApp, dropAnsweredGlances } from "../cli/check.js";
+import { designFindings } from "./design-findings.js";
 import { actFindings } from "./act-findings.js";
 import { linkedFindings } from "./linked-findings.js";
 import { connectionFindings } from "./connection-findings.js";
@@ -43,14 +44,17 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   // The checker's sentence for an accent (FR-126) or a ground says what the compile's did, and more: once is enough.
   const said = compiled.findings.filter((f) => !(f.code === "brand" && ((f.path === "brand.accent" && own.some((o) => o.code === "brand-accent")) || (f.path === "brand.ground" && own.some((o) => o.code === "brand-ground")))));
   const findings: Finding[] = [...said, ...own, ...viewBraces(document.views, "views", undefined, document.lenses)];
-  const check = checkApp(app, options.views ? { views: options.views } : {});
+  // The look is judged of the document itself, in its own words and paths, so the framework's check is not asked it again.
+  const check = checkApp(app, { ...(options.views ? { views: options.views } : {}), design: false });
   for (const f of check.findings) {
     // Located and said in the document's own words: `acts.finish.on`, never `defineMutation("finish")`.
-    const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: inDocumentText(f.message, document), ...(f.fix ? { fix: inDocumentText(f.fix, document) } : {}) } as const;
+    const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: inDocumentText(f.message, document), ...(f.fix ? { fix: inDocumentText(f.fix, document) } : {}), ...(f.edits ? { edits: f.edits } : {}) } as const;
     // The document already said it, at the same path (a blocks lens's words are held by both): once is enough.
     if (compiled.findings.some((said) => said.code === f.code && said.path === finding.path)) continue;
     findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);
   }
+  findings.push(...designFindings(document));
+  dropAnsweredGlances(findings, "check:glance-unchosen", (f) => /^kinds\.([^.]+)\./.exec(f.path)?.[1]);
   if (hasErrors(findings)) return { ok: false, findings };
   return { ...compiled, findings };
 }
