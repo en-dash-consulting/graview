@@ -1,5 +1,6 @@
 import * as z from "../schema/zod.js";
 import { ConnectionSpec } from "../document/connection-spec.js";
+import { PurposeSpec } from "../document/purpose-spec.js";
 import { DocumentSpec, FieldSpec, KindSpec } from "../document/schema.js";
 import { BLOCK_KEYS, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_SLOTS, VIEW_TONES } from "../document/views.js";
 import { SHIPPED_LENSES, SHIPPED_LENS_NAMES } from "../places.js";
@@ -93,6 +94,12 @@ export function documentJsonSchema(version: string): Json {
     type: "object",
     propertyNames: at(properties, "connections", "propertyNames"),
     additionalProperties: connection,
+  };
+  // A purpose likewise (Roadmap f-app-jobs, `purpose-spec.ts`): read loosely by the compiler, judged by the checker, said here whole.
+  const { $schema: _purpose, ...purpose } = z.toJSONSchema(built(PurposeSpec) as z.ZodMiniType, { io: "input", unrepresentable: "any" }) as Json;
+  properties["purpose"] = {
+    ...purpose,
+    description: "Who the app is for (`for`), and up to twelve jobs they come to it to do: each a question in their words (`ask`), answered by the records of one kind (`kind`) a rule-language condition holds for (`where`), in an order (`sort`), with the act they usually take next (`act`), for some roles or everybody (`roles`).",
   };
   rest["$defs"] = { ...((rest["$defs"] as Json | undefined) ?? {}), ...blockDefs() };
   return {

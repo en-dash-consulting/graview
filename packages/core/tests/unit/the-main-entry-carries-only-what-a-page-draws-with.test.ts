@@ -6,12 +6,16 @@ import * as city from "../../src/city.js";
 import * as csv from "../../src/csv.js";
 import * as shown from "../../src/shown.js";
 import * as check from "../../src/check.js";
+import * as compose from "../../src/compose.js";
 import * as describePlaces from "../../src/describe.js";
 import * as document from "../../src/document/index.js";
 import * as figures from "../../src/figures.js";
 import * as fieldSight from "../../src/field-sight.js";
 import * as forms from "../../src/forms.js";
+import * as friction from "../../src/friction.js";
 import * as history from "../../src/history.js";
+import * as jobs from "../../src/jobs.js";
+import * as learn from "../../src/learn.js";
 import * as past from "../../src/past.js";
 import * as importing from "../../src/import/index.js";
 import * as jsonSchema from "../../src/json-schema.js";
@@ -57,7 +61,7 @@ const OFF_THE_PAGE = {
   "@graview/core/forms": { from: forms, names: ["askedFormFields", "changedArgs", "editStart", "formArgs", "formComplete", "formField", "formFields", "keptArguments", "undecidableArguments", "VISITOR_ROLE", "formReceived", "formVisitor", "pickersIn", "visitorForm", "visitorSeesKind"] },
   "@graview/core/import": { from: importing, names: ["coerceCell", "ImportMappingError", "importRows", "parseCsv", "previewImport", "proposeMapping", "readBoolean", "readDateTime", "readDay", "readNumber", "readOption"] },
   "@graview/core/describe": { from: describePlaces, names: ["columnActs", "columnChoices", "columnMoves", "columnOf", "columnReach", "columnSteps", "describePlace", "placeText", "resolveFor", "shadowedPageSlots", "statusColumns"] },
-  "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt", "clockReaders"] },
+  "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt", "clockReaders", "designFindings"] },
   "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "districtBlocks", "districtState", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "TIER_HEIGHT", "TILTED", "toIso", "TOP_DOWN", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail"] },
   // The map alone, laid out before the scene draws; what stands on the ground is /scene's, fetched with the ground.
   "@graview/core/city": { from: city, names: ["BLOCK", "cityExtent", "cityMap", "districtState", "MAX_SIDE", "PITCH", "plotsOverlap", "sharedEdges", "sideFor", "TILTED", "toIso", "TOP_DOWN"] },
@@ -72,6 +76,17 @@ const OFF_THE_PAGE = {
   // Roadmap f-ai-candidate-catalog: what the inline AI may pick from, the state a model reads and what an interaction leaves behind, fetched when somebody first opens it.
   // Roadmap f-notify-subscriptions: what a person asked to be told of, matched against a commit under their sight — the host's and a sheet's, fetched when somebody first subscribes.
   "@graview/core/subscriptions": { from: subscriptions, names: ["holdTypingRuns", "matchSubscriptions", "subscriptionProblem", "subscriptionWords", "TYPING_QUIET_MS", "watchSubscriptions"] },
+  // Roadmap f-app-jobs: an app's jobs resolved and answered as a seat sees it — a design's, a seat's and a host's, fetched when one is drawn.
+  "@graview/core/jobs": { from: jobs, names: ["answerJob", "jobIsFor", "jobsFor", "jobsOf", "MOST_JOBS"] },
+  // Roadmap f-friction-log: what people looked for and could not do — kept, counted across people, said to a model; a page records through the main entry's `recordFriction` alone.
+  "@graview/core/friction": {
+    from: friction,
+    names: ["callShape", "FRICTION_KEPT_MOST", "FRICTION_LIMITS", "FRICTION_RETENTION_DAYS", "FRICTION_TYPES", "frictionDigest", "frictionEvent", "frictionOf", "frictionSinkTo", "keptFriction", "memoryFriction", "ownFriction", "toolMistakes", "withinRetention"],
+  },
+  // Roadmap f-learned-suggestions: the app's own actor suggesting changes to the app from evidence of use, accepted through the editor or declined for good — a host's and a command's, on no page.
+  "@graview/core/learn": { from: learn, names: ["acceptAppSuggestion", "declineAppSuggestion", "keptDecisions", "LEARNING_ACTOR", "learnFromUse", "learningFrom", "memoryLearned"] },
+  // Roadmap f-design-composer: jobs inferred and one design proposed whole — a host's, on no page.
+  "@graview/core/compose": { from: compose, names: ["ACCENT_PALETTE", "accentFor", "composeDesign", "inferJobs", "MOST_INFERRED_JOBS"] },
   "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "existingViewsOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {

@@ -45,6 +45,20 @@ export const todoApp = defineApp({
   settings: readerSettings(),
   brand: thingsBrand,
   /*
+   * WHO IT IS FOR AND WHAT THEY COME TO DO (Roadmap f-app-jobs). Not a
+   * picture and not a page: the questions a household brings to its list,
+   * in its own words, each answered by the tasks a rule holds for, in an
+   * order, with the act they take next. `graview check` holds each to the
+   * declaration; the describer, a seat's model and a design read them.
+   */
+  purpose: {
+    for: "A household keeping one list of chores and errands together, mostly on phones",
+    jobs: [
+      { name: "late", ask: "What's late?", kind: "task", where: "not done and due < today()", sort: "due", act: "finish" },
+      { name: "unplanned", ask: "What still needs a slot this week?", kind: "task", where: "not done and day == null", sort: "due", act: "plan-it" },
+    ],
+  },
+  /*
    * WHAT STANDS ON THE BAR (FR-145, ranked): the tasks, the lists and the
    * two pictures of the work. The rules, the reasons, the people and who
    * may do what are one press further, in "More" — there, not hidden.

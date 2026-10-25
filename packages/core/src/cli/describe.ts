@@ -1,4 +1,6 @@
 import { capitalize } from "../capital.js";
+import { gridSortOf } from "../grid-sort.js";
+import { jobIsFor } from "../job-shape.js";
 import { arrangeable } from "../arrangement.js";
 import { kindListWords } from "../kind-list.js";
 import { searchableFields } from "../search.js";
@@ -82,6 +84,44 @@ export function describeApp<S extends AnySchema>(
   const declared = app.mutations ?? [];
   const acts = [...declared, ...deriveMutations(app.schema, declared)];
   const lines: string[] = [`${app.name} — ${kinds.length} kinds, ${acts.length} acts (${declared.length} declared, ${acts.length - declared.length} derived).`];
+
+  /*
+   * WHO IT IS FOR AND WHAT THEY COME TO DO (Roadmap f-app-jobs): the app's
+   * own words before anything derived, so a reader — a person, a model, a
+   * design — starts from its people. Asked as a seat, only that seat's jobs.
+   */
+  const jobs = (app.purpose?.jobs ?? []).filter((job) => !options.as || jobIsFor(job, options.as.roles));
+  if (app.purpose?.for !== undefined || jobs.length > 0) {
+    lines.push("", "## Who it is for");
+    if (app.purpose?.for !== undefined) lines.push(`Who uses it: ${app.purpose.for.replace(/([^.!?])$/, "$1.")}`);
+    if (jobs.length > 0) lines.push("They come to it to ask:");
+    for (const job of jobs) {
+      const sort = gridSortOf(job.sort);
+      const answer = [
+        `the ${app.schema.tryDefinition(job.kind) ? pluralOf(app.schema, job.kind).toLowerCase() : job.kind}${job.where ? ` where ${job.where}` : ""}`,
+        ...(sort ? [`sorted by ${sort.by}${sort.direction === "desc" ? ", highest first" : ""}`] : []),
+        ...(job.act ? [`then "${job.act}"`] : []),
+      ].join(", ");
+      lines.push(`  "${job.ask}" — ${answer}${job.roles && job.roles.length > 0 && !options.as ? ` (for ${list([...job.roles])})` : ""}.`);
+    }
+  }
+
+  /*
+   * THE OTHER WORDS PEOPLE USE (Roadmap f-learned-suggestions): "supplier"
+   * for a vendor, "cost" for its price — what search finds a kind by and a
+   * model is told, said once so a reader maps the people's words to the app's.
+   */
+  const otherWords = kinds.flatMap((kind) => {
+    const definition = app.schema.tryDefinition(kind) as { aliases?: readonly string[]; fieldAliases?: Readonly<Record<string, readonly string[]>> } | undefined;
+    const quoted = (words: readonly string[]) => list(words.map((word) => `"${word}"`));
+    return [
+      ...(definition?.aliases?.length ? [`  ${pluralOf(app.schema, kind)} are also called ${quoted(definition.aliases)}.`] : []),
+      ...Object.entries(definition?.fieldAliases ?? {})
+        .filter(([, words]) => words.length > 0)
+        .map(([field, words]) => `  ${kind}'s ${field} is also called ${quoted(words)}.`),
+    ];
+  });
+  if (otherWords.length > 0) lines.push("", "## Other words people use", ...otherWords);
 
   /*
    * WHAT A BLANK INSTALLATION MEETS. The first screen of every product, the

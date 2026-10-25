@@ -1855,13 +1855,14 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 <h3>What to make yours next</h3>
 <p>The scaffold is deliberately the framework's own face. A product replaces it in this order, and each step has a skill and a worked chapter in <code>apps/seedbed</code> behind it:</p>
 <ol>
+<li><strong>Who it is for.</strong> <code>purpose: { for, jobs }</code> on <code>defineApp</code> or the document: the questions its people bring, each a <code>kind</code>, a rule-language <code>where</code>, a <code>sort</code> and the next <code>act</code>. <code>graview check</code> holds each (<code>job-*</code>); describe and the seat read them (<code>@graview/core/jobs</code>).</li>
 <li><strong>The words.</strong> Every edge gets <code>description</code> and <code>inverse</code> — how it reads from each end — or <code>graview check</code> says <code>edge-without-inverse</code> and the far end is captioned with the edge kind's name. Every mutation gets a <code>title</code> and <code>description</code>; they are the button and the tool schema. (<code>graview-node-kind</code>.)</li>
 <li><strong>A lens with a name.</strong> A lens registered over a group with a <code>title</code> is a PLACE — a tab on the app bar, one press from anywhere. Start from the three that ship; write your own when the domain has a picture of itself, the way the garden has a map. (<code>graview-lens</code>, chapters 10-13.)</li>
 <li><strong>The pages.</strong> One page in the product's words first, then, when the product needs to look like a product, every surface: the shell, the home, the lists, the records, the problems — over the same store, acts, rules and permissions. (<code>graview-pages</code>, chapters 9 and 13.)</li>
 <li><strong>A seat and a policy.</strong> Who may do what, declared once; the strip, the pages and the agent's tools all narrow from it. (<code>graview-permissions</code>, <code>graview-agent-seat</code>, chapters 5 and 7.)</li>
 <li><strong>A brand, and shipping.</strong> The name, the mark, the typefaces, the palette the checker holds to AA; a version and a migration so a stored graph is carried forward. (<code>graview-brand</code>, <code>graview-ship</code>, chapters 8 and 12.)</li>
 </ol>
-<p>Work with an agent beside the declaration: describe a kind, let it draft the edges, acts and rule, run <code>pnpm verify</code>, look, declare more.</p>
+<p>Work with an agent beside the declaration: describe a kind, let it draft, run <code>pnpm verify</code>, look, declare more.</p>
 <h3>The CI a product on Graview needs</h3>
 <p>Copy the shape from the framework's own <code>.github/workflows/ci.yml</code>, minus the packaging steps you do not need. What earns its place:</p>
 <ul>
@@ -1870,13 +1871,12 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 <li><strong>Headless tests</strong> — the domain tier has no DOM in it. Test that your rules fire on graphs that break them and that their repairs resolve them; that is the test that catches a real regression.</li>
 <li><strong>An accessibility run, in BOTH schemes.</strong> Copy <code>apps/todo/scripts/run-a11y.mjs</code>: the real accessibility tree through CDP, plus axe-core. A light palette that clears AA in the dark is what it catches.</li>
 </ul>
-<p>Later: a browser harness, a JSON verdict per claim.</p>
 <h3>Supported browsers</h3>
-<p>Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (<code>pnpm engines</code>). The floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and degrades to a clean cut where that is missing — write no fallback. A host's <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The scene draws on the GPU where the browser can capture into WebGPU and on the DOM path elsewhere, silently, with one accessibility tree (<code>renderer</code>, <code>blur</code> on the Shell) — never a requirement.</p>
+<p>Build for the DOM path: Chromium, WebKit and Firefox, all verified (<code>pnpm engines</code>). The floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and cuts cleanly where it is missing — write no fallback. A host's <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API; without either the seat says AI isn't available. The scene draws on the GPU where it can and on the DOM path elsewhere, with one accessibility tree — never a requirement.</p>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm verify        # typecheck, tests, build, graview check
 graview doctor     # one Graview release everywhere; React's pair; PATH from a checkout</code></pre></div>
-<p>Run the project's own <code>graview</code>, not <code>npx -y graview@&lt;pin&gt;</code>: inside a pnpm workspace that already holds the release, npx finds no bin (<code>sh: graview: command not found</code>).</p>
+<p>Run the project's own <code>graview</code>, not <code>npx -y graview@&lt;pin&gt;</code>: inside a pnpm workspace holding the release, npx finds no bin.</p>
 <p>Report the real output. On a new app the useful early findings are <code>mutation-untitled</code>, <code>mutation-undescribed</code>, <code>edge-without-inverse</code> and <code>required-invariant-unregistered</code> — things that look fine until somebody reads the interface or an agent reads a tool schema.</p>
 <h3>What the check cannot see</h3>
 <ul>

@@ -47,6 +47,15 @@ export { remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./remote-subscriptions.
 export type { SubscriptionsAnswer, SubscriptionsPost } from "./subscriptions.js";
 export type { RemoteSubscriptionsOptions } from "./remote-subscriptions.js";
 export { fileSubscriptions } from "./file-subscriptions.js";
+// The friction log (Roadmap f-friction-log): the wire's door, its client, the file `graview serve` keeps it in, and a browser's storage.
+export { FRICTION_MAX_BYTES, FRICTION_PER_MINUTE, frictionDoor } from "./friction.js";
+export type { FrictionAnswer, FrictionDoorOptions } from "./friction.js";
+export { FRICTION_PATH, remoteFriction } from "./remote-friction.js";
+export type { RemoteFriction, RemoteFrictionOptions } from "./remote-friction.js";
+export { fileFriction } from "./file-friction.js";
+// What people answered to the app's own suggestions about itself (Roadmap f-learned-suggestions): `learned.json` beside the store.
+export { fileLearned } from "./file-learned.js";
+export { browserFriction } from "./browser-friction.js";
 // The views a person tidies from the place menu (Roadmap f-place-menu-views): the route's answer, its client, and the file `graview serve` keeps them in.
 export { answerViews, keepsTheApp, VIEWS_PATH } from "./views.js";
 export type { ViewsAnswer, ViewsPost } from "./views.js";
@@ -61,7 +70,7 @@ export { announcePresence, authoredBy, isClientBatch, liveProtocol, opFormatOf, 
 export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked } from "./live-protocol.js";
 export { SEAT_HEADERS, seatFromHeaders, serveStore, WIRE } from "./serve.js";
 export type { ServeOptions, ServedStore } from "./serve.js";
-export { backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, connectionsFileOf, subscriptionsFileOf, syncSeed } from "./cli.js";
+export { backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, connectionsFileOf, frictionFileOf, learnedFileOf, subscriptionsFileOf, syncSeed } from "./cli.js";
 export { heldBy, holdFileOf, holdStore, sayHeld } from "./store-hold.js";
 export type { StoreHold, StoreHolder } from "./store-hold.js";
 export type { PreviewPage } from "./cli.js";

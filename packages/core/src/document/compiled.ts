@@ -401,12 +401,16 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     // A relation as the kind declares it, less the name it had in the version before, which is the migration's.
     const edgeDecls = Object.fromEntries(Object.entries(localEdges(spec.edges)).map(([n, { renamedFrom: _, ...e }]) => [n, e]));
     // What the definition says as the document says it, where it is said.
-    const said = <K extends "plural" | "noun" | "description" | "figure" | "fieldRoles" | "lifecycle" | "people">(key: K) => (spec[key] ? { [key]: spec[key] } : {});
+    const fieldAliases = Object.entries(spec.fields).flatMap(([n, f]) => (f.aliases ? [[n, f.aliases] as const] : []));
+    const said = <K extends "plural" | "noun" | "aliases" | "description" | "figure" | "fieldRoles" | "lifecycle" | "people">(key: K) => (spec[key] ? { [key]: spec[key] } : {});
     return defineNode(kind, {
       fields: z.object(shape) as never,
       edges: edgeDecls,
       ...said("plural"),
       ...said("noun"),
+      ...said("aliases"),
+      // Other words for its fields (Roadmap f-learned-suggestions), by field.
+      ...(fieldAliases.length > 0 ? { fieldAliases: Object.fromEntries(fieldAliases) } : {}),
       ...said("description"),
       ...(labelParts ? { label: (node: { id: string }) => renderTemplate(labelParts, { node: node as AnyGraphNode, kinds: shapes, today: today(), money }) || node.id } : {}),
       ...(describeParts ? { describe: (node: { id: string }) => renderTemplate(describeParts, { node: node as AnyGraphNode, kinds: shapes, today: today(), money }) } : {}),
@@ -715,6 +719,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     ...(document.forms ? { forms: document.forms as never } : {}),
     // When edits reach readers (Roadmap f-publishing-lifecycle): the store a host makes honors it.
     ...(document.publishing ? { publishing: document.publishing } : {}),
+    // Who it is for and what they come to do (Roadmap f-app-jobs): data the checker, the describer and a seat read.
+    ...(document.purpose ? { purpose: document.purpose } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
     ...(plan.viewSpecs ? { viewSpecs: plan.viewSpecs as never } : {}),
     // And its home view, about no one record, is the app's home (FR-81).

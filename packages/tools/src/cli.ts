@@ -4,7 +4,11 @@ import { entryArg, loadApp } from "@graview/core/cli";
 import { instantiateTemplate } from "@graview/core/check";
 import { sayFindings, templateSeedPrimitives } from "@graview/core/document";
 import { memorySubscriptions, Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal, type SubscriptionStore } from "@graview/core";
-import { backendFrom, fileSubscriptions, holdStore, openRemote, openStore, remoteSubscriptions, sayHeld, subscriptionsFileOf, type RemoteRefusal, type RemoteStore } from "@graview/ship";
+import { backendFrom, fileFriction, fileLearned, fileSubscriptions, frictionFileOf, holdStore, learnedFileOf, openRemote, openStore, remoteFriction, remoteSubscriptions, sayHeld, seatHeaders, subscriptionsFileOf, type RemoteRefusal, type RemoteStore } from "@graview/ship";
+import { frictionSinkTo, toolMistakes, type FrictionDraft } from "@graview/core/friction";
+import { learningOf, readFriction } from "./learn-cli.js";
+
+export { learn, LEARN_USAGE } from "./learn-cli.js";
 import { createMcpAdapter } from "./agent/adapters.js";
 import { createToolRuntime } from "./agent/tools.js";
 import { serveMcpStdio } from "./mcp-stdio.js";
@@ -26,13 +30,16 @@ import type { DreamAnswers, DreamCache, DreamModel } from "./tidy.js";
 
 export const MCP_USAGE = `  graview mcp <entry> [--data <dir> | --sqlite <file> | --remote-url <url>]
                       [--seed <file>] [--as <seat>] [--roles a,b] [--header "k: v"]
-                      [--read-only] [--list]
+                      [--read-only] [--list] [--no-friction]
       Speaks MCP over stdio for the app's store, so an agent with only a
       shell attaches to the same tools the in-app seat has: the reads, the
       previews, undo, and every act the seat's principal may run. Against a
       folder (default ./data), a SQLite file, or a running graview serve.
       --list prints the seat's tools as tools/list JSON and exits — the
-      catalog a host registers without hand-writing a schema.
+      catalog a host registers without hand-writing a schema. A tool call
+      refused as invalid is kept beside the store with the form of the next
+      call of that tool that worked (friction.json, or the server's
+      /graview/friction); --no-friction keeps none.
 
   graview apply <entry> (--call <name> --args '<json>' | --plan <file> | --undo <batch>)
                         [--preview] [--intent "..."] [--as <seat>] [--roles a,b]
@@ -98,6 +105,10 @@ export interface Host<S extends AnySchema> {
   refusals(): RemoteRefusal[];
   /** Where "Notify me" is kept for this store: the server's, or the file beside it that `graview serve` reads (Roadmap f-notify-subscriptions). */
   readonly subscriptions: SubscriptionStore;
+  /** Keeps what the seat could not do where the store is: the server's door, or a file beside the folder. */
+  friction(draft: FrictionDraft): void;
+  /** The files beside a store on disk: the friction log and the answers to what the app learned (Roadmap f-learned-suggestions). None for a remote. */
+  readonly files?: { readonly friction: string; readonly learned: string };
   close(): Promise<void>;
 }
 
@@ -111,12 +122,14 @@ export async function openHost<S extends AnySchema>(
   const url = flag(argv, "--remote-url");
   if (url) {
     const remote: RemoteStore<S> = await openRemote({ app, url, principal, headers: headersFrom(argv), pollMs: 0, via });
+    const frictionDoor = remoteFriction({ url, headers: { ...seatHeaders(principal), ...headersFrom(argv) } });
     let heard: RemoteRefusal[] = [];
     remote.onRefusal((_sentence, refusal) => heard.push(refusal));
     return {
       store: remote.store,
       where: url,
       subscriptions: remoteSubscriptions({ url, principal, headers: headersFrom(argv) }),
+      friction: (draft) => frictionDoor.sink(draft, principal),
       settled: () => remote.settled(),
       refresh: async () => {
         await remote.pull();
@@ -128,6 +141,7 @@ export async function openHost<S extends AnySchema>(
       },
       close: async () => {
         await remote.settled();
+        await frictionDoor.idle();
         remote.close();
       },
     };
@@ -140,6 +154,7 @@ export async function openHost<S extends AnySchema>(
    */
   const hold = holdStore(backend.holdFile, via === "mcp" ? "mcp" : "apply");
   if ("heldBy" in hold) throw new Error(sayHeld(hold.heldBy, backend.where, "Writing to it from here", { remote: true }).trimEnd());
+  const keepFriction = frictionSinkTo(fileFriction(frictionFileOf(backend, app.name)), principal);
   let opened;
   try {
     opened = await openStore({ app, adapter: backend.adapter, scope: app.name, ...(backend.seed ? { seed: backend.seed } : {}) });
@@ -150,7 +165,9 @@ export async function openHost<S extends AnySchema>(
   return {
     store: opened.store,
     where: backend.where,
+    files: { friction: frictionFileOf(backend, app.name), learned: learnedFileOf(backend, app.name) },
     subscriptions: fileSubscriptions(subscriptionsFileOf(backend, app.name)),
+    friction: (draft) => keepFriction(draft, undefined),
     settled: () => opened.flush(),
     refresh: async () => {},
     refusals: () => [],
@@ -201,39 +218,26 @@ export async function mcp(argv: readonly string[]): Promise<number> {
      */
     const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}), ...(app.intelligence ? { intelligence: app.intelligence } : {}), ...(app.brand?.timeZone ? { timeZone: app.brand.timeZone } : {}) });
     // A served seat keeps subscriptions wherever its store is, so the catalog lists the tools that keep them.
-    const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: memorySubscriptions() }));
+    const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: memorySubscriptions(), learned: () => [] }));
     process.stdout.write(`${JSON.stringify({ tools: adapter.listTools() }, null, 2)}\n`);
     return 0;
   }
 
   const host = await openHost(app, argv, principal, "mcp");
-  const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: host.subscriptions });
-  const inner = createMcpAdapter(runtime);
-  say(`graview mcp: ${app.name} as ${principal.id} on ${host.where} — ${inner.listTools().length} tools\n`);
-
+  // What the app's own actor learned from use, read at each call from the files beside the store (Roadmap f-learned-suggestions).
+  const files = host.files;
+  const learned = files ? () => learningOf(app, host.store, readFriction(flag(argv, "--friction") ?? files.friction), fileLearned(files.learned).list()).suggestions : undefined;
+  const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: host.subscriptions, ...(learned ? { learned } : {}) });
   /*
-   * THE VERDICT BEFORE THE ANSWER. The runtime answers as soon as the local
-   * store has moved; against a remote the server has not spoken yet, and
-   * against a folder the write has not landed. A reply that said "done" and
-   * was then refused would be the one lie an agent cannot recover from, so
-   * each call waits for settlement and reports a refusal as the error it is.
+   * A TOOL CALL REFUSED AS INVALID IS WHAT AN AGENT COULD NOT DO (Roadmap
+   * f-friction-log), kept beside the store with the form of the next call
+   * of that tool that worked — so the tool surface can learn what models
+   * get wrong. --no-friction keeps none.
    */
-  const adapter = {
-    listTools: () => inner.listTools(),
-    async callTool(name: string, args: Record<string, unknown> = {}) {
-      const mutating = runtime.definitions.find((tool) => tool.name === name)?.mutating ?? false;
-      if (!mutating) await host.refresh();
-      const result = await inner.callTool(name, args);
-      await host.settled();
-      const refused = host.refusals();
-      if (refused.length > 0) {
-        const first = refused[0]!;
-        const text = refused.map((refusal) => refusal.sentence).join("\n");
-        return { content: [{ type: "text" as const, text }], structuredContent: { reason: first.reason, error: text, ...(first.wouldNeed ? { wouldNeed: first.wouldNeed } : {}) }, isError: true };
-      }
-      return result;
-    },
-  };
+  const mistakes = argv.includes("--no-friction") ? undefined : toolMistakes((draft) => host.friction(draft));
+  say(`graview mcp: ${app.name} as ${principal.id} on ${host.where} — ${runtime.definitions.length} tools\n`);
+
+  const adapter = settledAdapter(runtime, host, mistakes);
 
   await serveMcpStdio({
     adapter,
@@ -244,8 +248,45 @@ export async function mcp(argv: readonly string[]): Promise<number> {
     output: process.stdout,
     onRequest: (method, ok) => say(`graview mcp: ${method} ${ok ? "ok" : "failed"}\n`),
   });
+  mistakes?.flush();
   await host.close();
   return 0;
+}
+
+/**
+ * THE VERDICT BEFORE THE ANSWER. The runtime answers as soon as the local
+ * store has moved; against a remote the server has not spoken yet, and
+ * against a folder the write has not landed. A reply that said "done" and
+ * was then refused would be the one lie an agent cannot recover from, so
+ * each call waits for settlement and reports a refusal as the error it is —
+ * and tells `mistakes` what became of it (Roadmap f-friction-log).
+ */
+export function settledAdapter<S extends AnySchema>(
+  runtime: ReturnType<typeof createToolRuntime<S>>,
+  host: Pick<Host<S>, "refresh" | "settled" | "refusals">,
+  mistakes?: ReturnType<typeof toolMistakes>,
+) {
+  const inner = createMcpAdapter(runtime);
+  return {
+    listTools: () => inner.listTools(),
+    async callTool(name: string, args: Record<string, unknown> = {}) {
+      const mutating = runtime.definitions.find((tool) => tool.name === name)?.mutating ?? false;
+      if (!mutating) await host.refresh();
+      const result = await inner.callTool(name, args);
+      await host.settled();
+      const refused = host.refusals();
+      const act = runtime.definitions.find((tool) => tool.name === name)?.act;
+      if (refused.length > 0) {
+        const first = refused[0]!;
+        const text = refused.map((refusal) => refusal.sentence).join("\n");
+        mistakes?.heard(name, act, args, { ok: false, reason: first.reason, message: text });
+        return { content: [{ type: "text" as const, text }], structuredContent: { reason: first.reason, error: text, ...(first.wouldNeed ? { wouldNeed: first.wouldNeed } : {}) }, isError: true };
+      }
+      const said = result.isError ? (result.structuredContent as { reason?: string; error?: string } | undefined) : undefined;
+      mistakes?.heard(name, act, args, result.isError ? { ok: false, ...(said?.reason ? { reason: said.reason } : {}), message: said?.error ?? result.content.map((part) => part.text).join("\n") } : { ok: true });
+      return result;
+    },
+  };
 }
 
 /** What the log now says about a change, small enough to read and complete enough to act on. */

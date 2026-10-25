@@ -25,6 +25,7 @@
  * inline AI is fetched when somebody first opens it.
  */
 import { fieldSpecOf } from "./document/field-spec.js";
+import { frictionDigest, type FrictionDigest, type FrictionEvent } from "./friction.js";
 import { fieldWriters, subjectKindsOf } from "./mutations/derive-edits.js";
 import { nodeRefArgs } from "./mutations/node-ref.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
@@ -34,6 +35,7 @@ import type { Principal } from "./permissions/types.js";
 import { fieldWords, humanizeField, labelOf, nounOf, pluralOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import { seatOf } from "./seat-of.js";
+import { jobIsFor, type AppPurpose } from "./job-shape.js";
 import type { Store } from "./store.js";
 
 // ── targets ─────────────────────────────────────────────────────────────────
@@ -580,6 +582,10 @@ export interface SchemaDigestKind {
   readonly plural: string;
   readonly fields: Readonly<Record<string, string>>;
   readonly relations: Readonly<Record<string, readonly string[]>>;
+  /** Other words people use for one ("supplier" for a vendor), when the app declares them (Roadmap f-learned-suggestions). */
+  readonly aliases?: readonly string[];
+  /** Other words people use for a field it shows, by field. */
+  readonly fieldAliases?: Readonly<Record<string, readonly string[]>>;
 }
 
 /** The declaration, as a model is told it: the kinds this viewer sees and the acts it may run. `version` changes when either does. */
@@ -613,6 +619,20 @@ export interface AiContextState {
   readonly neighbors: readonly (AiRecordBrief & { readonly relation: string; readonly direction: "out" | "in" })[];
   readonly recent: readonly { readonly intent: string; readonly at: string; readonly by: string }[];
   readonly schema: SchemaDigest;
+  /**
+   * Who the app is for and what this viewer comes to it to ask (Roadmap
+   * f-app-jobs), when the caller hands the app's `purpose`: its `for`, and
+   * each job whose roles include the viewer's and whose kind they may see.
+   */
+  readonly purpose?: AiPurposeState;
+  /** What people looked for and could not do lately (`frictionDigest`), when the host handed `friction`. */
+  readonly friction?: FrictionDigest;
+}
+
+/** The app's purpose as a model is told it: who it is for, and the questions this viewer brings to it. */
+export interface AiPurposeState {
+  readonly for?: string;
+  readonly jobs: readonly { readonly name: string; readonly ask: string; readonly kind: string }[];
 }
 
 export interface AiContextOptions {
@@ -623,6 +643,15 @@ export interface AiContextOptions {
   readonly selection?: readonly string[];
   /** How many recent changes, newest first. 6 when unsaid. */
   readonly recent?: number;
+  /** The app's purpose (`app.purpose`): said to the model as this viewer may hear it. Unsaid, the state says none. */
+  readonly purpose?: AppPurpose;
+  /**
+   * THE FRICTION LOG, AS THE HOST KEEPS IT (Roadmap f-friction-log): the
+   * events, read from wherever the host stores them. Said as a digest —
+   * counted across people, no refusal's sentence — under `friction`.
+   * Core reads no storage of its own: unsaid, there is none.
+   */
+  readonly friction?: readonly FrictionEvent[];
 }
 
 const DIGESTS = new WeakMap<object, Map<string, SchemaDigest>>();
@@ -662,7 +691,17 @@ export function schemaDigestOf<S extends AnySchema>(given: Store<S>, principal: 
     }
     const relations: Record<string, readonly string[]> = {};
     for (const [edge, declared] of Object.entries(edgesOf(schema, kind))) relations[edge] = declared.to === "*" ? [...visible] : declared.to.filter((one) => visible.has(one));
-    return { kind, noun: nounOf(schema.tryDefinition(kind), kind), plural: pluralOf(schema, kind), fields, relations };
+    const definition = schema.tryDefinition(kind) as { aliases?: readonly string[]; fieldAliases?: Readonly<Record<string, readonly string[]>> } | undefined;
+    const fieldAliases = Object.entries(definition?.fieldAliases ?? {}).filter(([field, words]) => field in fields && words.length > 0);
+    return {
+      kind,
+      noun: nounOf(schema.tryDefinition(kind), kind),
+      plural: pluralOf(schema, kind),
+      fields,
+      relations,
+      ...(definition?.aliases && definition.aliases.length > 0 ? { aliases: definition.aliases } : {}),
+      ...(fieldAliases.length > 0 ? { fieldAliases: Object.fromEntries(fieldAliases) } : {}),
+    };
   });
   const acts = may.map((mutation) => ({ name: mutation.name, title: mutation.title ?? humanizeField(mutation.name), ...(mutation.subject ? { on: subjectKindsOf(schema, mutation).filter((one) => visible.has(one)) } : {}) }));
   const body = { kinds, acts };
@@ -723,6 +762,8 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
     .slice(-(options.recent ?? 6))
     .reverse()
     .map((batch) => ({ intent: batch.intent, at: batch.at, by: byWords(batch.author) }));
+  const jobs = (options.purpose?.jobs ?? []).filter((job) => jobIsFor(job, principal.roles) && visible.has(job.kind)).map((job) => ({ name: job.name, ask: job.ask, kind: job.kind }));
+  const purpose = options.purpose && (options.purpose.for !== undefined || jobs.length > 0) ? { ...(options.purpose.for !== undefined ? { for: options.purpose.for } : {}), jobs } : undefined;
   return {
     ...(options.place !== undefined ? { place: options.place } : {}),
     target: targetState,
@@ -730,6 +771,8 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
     neighbors: neighbors.slice(0, 24),
     recent,
     schema: schemaDigestOf(whole, principal),
+    ...(purpose ? { purpose } : {}),
+    ...(options.friction ? { friction: frictionDigest(options.friction, schema) } : {}),
   };
 }
 

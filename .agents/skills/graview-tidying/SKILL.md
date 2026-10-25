@@ -1,6 +1,6 @@
 ---
 name: graview-tidying
-description: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.
+description: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.
 ---
 
 # Tidy without losing anything
@@ -77,6 +77,22 @@ opens in and how its cards read are `graview-lists`.
    works it out after the first draw hands it over with
    `handle.setWhileAway(away)` (a React host changes the prop).
 
+5. **Let it learn the app from use.** `learnFromUse({ document, friction,
+   log, records, declined, opens })` from `@graview/core/learn` suggests
+   changes to the declaration itself, each resting on at least `minPeople`
+   (3) distinct people: another word for a kind or a field people searched
+   with and found nothing (`add-alias`; a kind's or field's `aliases`,
+   which search finds and a model is told), a text field whose values
+   repeat retyped to a choice, a date field beside dates written into words
+   (nothing is moved), one act for two people take one after the other
+   (only document acts that set fields), a clearer description for an act
+   agents call wrongly, and a place a host's `opens` counts say nobody
+   opens. It changes nothing: `acceptAppSuggestion` applies the edits
+   through `editDocument` with `lineage: { basis, suggestion: key }`, and
+   `declineAppSuggestion` is kept (`learned.json` beside the store) and
+   handed back as `declined`, never offered again. `graview learn <entry>
+   --data ./data` prints them; `--accept <key>` or `--decline <key>`.
+
 ## Then find out whether it worked
 
 ```sh
@@ -85,8 +101,9 @@ npx graview check --document app.json   # a document
 ```
 
 Report **the actual output**. In a document it warns `tidying-redundant`
-where a relation says `"never"` that its kind's own `tidying` already says.
-The rest is behavior, so try it:
+where a relation says `"never"` that its kind's own `tidying` already says,
+and refuses an alias another kind or field is already called
+(`alias-taken`). The rest is behavior, so try it:
 
 - Archive one record by its act and ask `graview describe <entry> --place
   <slug>` again: it is gone from the list and the count, and
@@ -97,6 +114,8 @@ The rest is behavior, so try it:
   record left alone refuses the actor's change by name.
 - Run `graview dream` twice: the second run suggests nothing new, and its
   JSON says each finding is already waiting.
+- Run `graview learn` after `--decline <key>`: that suggestion is gone,
+  and one person's hundred searches never make one.
 
 ## What the check cannot see
 

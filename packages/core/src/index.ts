@@ -333,6 +333,9 @@ export { hidesFrom, logSeenBy, seatLens, seenBy, seesId, servesReaders, type See
 export { onPublish, PUBLISH, readsPublished, type Publishing } from "./publish.js";
 // Notify me (Roadmap f-notify-subscriptions): what a subscription is, and the store a page keeps them in; the matcher and their words are `@graview/core/subscriptions`.
 export { keptSubscription, memorySubscriptions, subscriberOf, subscriptionId } from "./subscription-shape.js";
+// The one door what somebody could not do is recorded through (Roadmap f-friction-log): kept, counted and said on `@graview/core/friction`.
+export { attachFriction, isVisitorAuthor, recordFriction } from "./friction-record.js";
+export type { FrictionDraft, FrictionSink } from "./friction-record.js";
 export type { MatchedRecord, OnSubscriptionMatch, Subscription, SubscriptionDraft, SubscriptionMatch, SubscriptionStore, SubscriptionWhen } from "./subscription-shape.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchOfAPressRefusedByItsInput, tellTheWatchWhatIsUnseen } from "./watched.js";
@@ -491,5 +494,6 @@ export type { Beginning, KindBeginning } from "./beginning.js";
 export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export type { VisitorFormDeclaration } from "./visitor-form-shape.js";
+export type { AppPurpose, JobDeclaration, JobSort } from "./job-shape.js";
 export { foldPresence, nextExpiry, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
 export type { Participant, Presence, PresenceCaret, PresenceChannel, PresenceRobot } from "./presence.js";

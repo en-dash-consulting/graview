@@ -28,6 +28,7 @@ import {
 } from "@graview/core";
 import { judgeWithLines } from "@graview/core/lines";
 import { holdTypingRuns, matchSubscriptions } from "@graview/core/subscriptions";
+import { memoryFriction, type FrictionStore } from "@graview/core/friction";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
 import { LIVE_PATH, type Limit, type LimitAnswer, type LimitAsked, type LiveConnection, type LiveSocket } from "./live.js";
@@ -52,6 +53,8 @@ import {
 import { openStore, type Compaction, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import { answerSubscriptions } from "./subscriptions.js";
+import { frictionDoor } from "./friction.js";
+import { FRICTION_PATH } from "./remote-friction.js";
 import { SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
 import { VIEWS_PATH } from "./remote-views.js";
 import { answerViews, keepsTheApp } from "./views.js";
@@ -118,6 +121,7 @@ export const WIRE = [
   { method: "GET", path: "/graview/who", says: "who is here right now" },
   { method: "POST", path: "/graview/leave", says: "say you have gone — only ever yourself" },
   { method: "GET", path: SUBSCRIPTIONS_PATH, says: "the asking seat's own subscriptions (Notify me); POST `{ add: { when, alsoMine? } }` keeps one for the seat's person, `{ remove: id }` takes one of theirs away; 400 with a sentence when it could never be told anything, 403 for a seat with no id" },
+  { method: "GET", path: FRICTION_PATH, says: "the asking seat's own friction (what it searched for and found nothing, asked and was not answered, pressed and was refused) and the counts across people, never who; POST `{ event }` keeps one, its author the session's, never the body's: 201, 202 for a visitor (never kept), 400 for what is not one of the four, 413 over 2 KB, 429 with `Retry-After` past the rate, 410 where the host keeps none" },
   { method: "GET", path: VIEWS_PATH, says: "the views the asking seat may tidy from the place menu: what is hidden, what was deleted in the last thirty days, and `may`; POST `{ hide | show | remove | restore: name }` for a script view the host keeps, `{ lens: set-lens-hidden | set-lens-export | remove-lens }` for a declared lens (set-lens-hidden and set-lens-export on a kind for its list) where the host writes the declaration; answered with the state after it, 403 with a sentence where the seat may not" },
   { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence, declaration and reload; 426 to a plain request" },
 ] as const;
@@ -266,6 +270,18 @@ interface HandlerOptions<S extends AnySchema> {
    * typing is told once, when the typist stops (`holdTypingRuns`).
    */
   readonly onSubscriptionMatch?: OnSubscriptionMatch;
+  /**
+   * WHERE THE FRICTION LOG IS KEPT (Roadmap f-friction-log): the host's
+   * `FrictionStore`, posted to and read at `/graview/friction`. Unsaid,
+   * the handler keeps it in memory for as long as it runs; `graview serve`
+   * keeps it in a file beside the store (`fileFriction`). `false` keeps
+   * none: the route answers 410, and a client stops sending.
+   */
+  readonly friction?: FrictionStore | false;
+  /** How long friction is kept and read back, in days: 90 unsaid. */
+  readonly frictionRetentionDays?: number;
+  /** How many events one person may post a minute: 30 unsaid. */
+  readonly frictionPerMinute?: number;
   /** How long a run of typing is held before the hook is told of it; `TYPING_QUIET_MS` (5 s) unsaid, 0 tells every run at once. */
   readonly typingQuietMs?: number;
 }
@@ -587,6 +603,15 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
   const subscriptions = options.subscriptions ?? memorySubscriptions();
   /** The views a person tidies: the host's, else this handler's memory. */
   const keptViews = options.views ?? memoryViews();
+  /** What people could not do: the host's, else this handler's memory; nothing where the host keeps none. */
+  const friction =
+    options.friction === false
+      ? undefined
+      : frictionDoor({
+          store: options.friction ?? memoryFriction({ ...(options.frictionRetentionDays !== undefined ? { retentionDays: options.frictionRetentionDays } : {}) }),
+          ...(options.frictionRetentionDays !== undefined ? { retentionDays: options.frictionRetentionDays } : {}),
+          ...(options.frictionPerMinute !== undefined ? { perMinute: options.frictionPerMinute } : {}),
+        });
   let serving = serve(options.app, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
   /** Set while the declaration is being changed: every request and message waits for it. */
   let changing: Promise<void> | undefined;
@@ -770,6 +795,13 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     if (url.pathname === SUBSCRIPTIONS_PATH) {
       const answer = await answerSubscriptions(request.method, request.method === "POST" ? await read(request) : undefined, await seat(), { store, app: app.name, subscriptions });
       return send(answer.status, answer.body);
+    }
+
+    if (url.pathname === FRICTION_PATH) {
+      if (!friction) return send(410, { error: "This host keeps no record of what people could not do.", reason: "missing" });
+      // The author is the session's, as an act's is: `seat()`, never the body.
+      const answer = await friction(request.method, request.method === "POST" ? await request.text() : "", await seat());
+      return send(answer.status, answer.body, answer.headers);
     }
 
     if (url.pathname === VIEWS_PATH) {

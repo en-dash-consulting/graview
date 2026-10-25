@@ -91,6 +91,15 @@ export interface NodeDefinitionSpec<
    * the id, spoken ("work-order" → "work order").
    */
   readonly noun?: string;
+  /**
+   * OTHER WORDS PEOPLE SAY FOR ONE, lower case: "supplier" for a vendor.
+   * Search finds the kind by them, a model is told them and `graview
+   * describe` says them; they are never shown as its name (Roadmap
+   * f-learned-suggestions). A document's `aliases`.
+   */
+  readonly aliases?: readonly string[];
+  /** Other words people say for a field, by field: `{ price: ["cost"] }`. A document field's `aliases`. */
+  readonly fieldAliases?: Readonly<Record<string, readonly string[]>>;
   readonly description?: string;
   /**
    * Maps a node onto the invariant it requires. The engine uses this to detect

@@ -85,6 +85,22 @@
       "types": "./dist/catalog.d.ts",
       "default": "./dist/catalog.js"
     },
+    "./jobs": {
+      "types": "./dist/jobs.d.ts",
+      "default": "./dist/jobs.js"
+    },
+    "./friction": {
+      "types": "./dist/friction.d.ts",
+      "default": "./dist/friction.js"
+    },
+    "./learn": {
+      "types": "./dist/learn.d.ts",
+      "default": "./dist/learn.js"
+    },
+    "./compose": {
+      "types": "./dist/compose.d.ts",
+      "default": "./dist/compose.js"
+    },
     "./subscriptions": {
       "types": "./dist/subscriptions.d.ts",
       "default": "./dist/subscriptions.js"

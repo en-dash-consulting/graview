@@ -4,6 +4,8 @@ import { deriveArchiveMutations, deriveEditMutations, deriveRemoveMutations } fr
 import { deriveRepeatMutations } from "../mutations/derive-repeats.js";
 import { deriveRelationMutations } from "../mutations/derive-relations.js";
 import type { AnySchema } from "../schema/schema.js";
+import { designFindings } from "../document/design-findings.js";
+import { toDocument } from "../document/to-document.js";
 
 /**
  * `note` is a QUESTION ASKED OUT LOUD, not a problem.
@@ -19,6 +21,8 @@ import type { AnySchema } from "../schema/schema.js";
  */
 import {
   checkAccents,
+  checkJobs,
+  checkAliases,
   checkActsFromEnds,
   checkBlankInstallation,
   checkEditableFields,
@@ -75,6 +79,11 @@ export interface CheckResult {
 export interface CheckOptions {
   /** The views the host keeps (`HostView`; a script view's manifest is one): what `view:<name>` in `pages` may name. Unsaid, such a name is a note. */
   readonly views?: readonly HostView[];
+  /**
+   * Whether the look is judged too (`designFindings`, Roadmap f-design-critic):
+   * unsaid, yes. A document's compile judges its own document and says no here.
+   */
+  readonly design?: boolean;
 }
 
 /**
@@ -125,11 +134,28 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: Check
   checkHiddenReads(ctx);
   checkFactRules(ctx);
   checkClockRules(ctx);
+  checkJobs(ctx);
+  checkAliases(ctx);
+  // The look: places that repeat, more than a person scans, a home with nothing to read first — judged of the app written as a document.
+  if (options.design !== false) {
+    for (const f of designFindings(toDocument(app).document)) add({ severity: f.severity, code: f.code, where: f.path, message: f.message, fix: f.fix ?? "", ...(f.edits ? { edits: f.edits } : {}) });
+  }
+  dropAnsweredGlances(findings, "glance-unchosen", (f) => /^defineNode\("([^"]+)"\)/.exec(f.where)?.[1]);
 
   const errors = findings.filter((f) => f.severity === "error").length;
   const notes = findings.filter((f) => f.severity === "note").length;
   const warnings = findings.length - errors - notes;
   return { app: app.name, findings, errors, warnings, notes, ok: errors === 0 };
+}
+
+/**
+ * A glance the main kind is told to choose by its design finding, with the
+ * edit, need not be asked again as a note: once is enough, the louder one.
+ */
+export function dropAnsweredGlances<F extends { readonly code: string; readonly edits?: readonly Record<string, unknown>[] }>(findings: F[], glance: string, kindOf: (f: F) => string | undefined): void {
+  const told = new Set(findings.filter((f) => f.code === "design-no-card-for-main-kind").flatMap((f) => (f.edits ?? []).map((edit) => edit["kind"])));
+  if (told.size === 0) return;
+  for (let i = findings.length - 1; i >= 0; i--) if (findings[i]!.code === glance && told.has(kindOf(findings[i]!))) findings.splice(i, 1);
 }
 
 export function formatFindings(result: CheckResult): string {
@@ -140,7 +166,8 @@ export function formatFindings(result: CheckResult): string {
   const lines = result.findings.map(
     (f) =>
       `${said[f.severity]} [${f.code}] ${f.where}\n` +
-      `        ${f.message}\n        fix: ${f.fix}`,
+      `        ${f.message}\n        fix: ${f.fix}` +
+      (f.edits ?? []).map((edit) => `\n        edit: ${JSON.stringify(edit)}`).join(""),
   );
   return [
     `graview check: ${result.app}`,

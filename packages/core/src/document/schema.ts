@@ -1,5 +1,6 @@
 import * as z from "../schema/zod.js";
 import { LINKED_TARGET } from "../schema/linked.js";
+import type { AppPurpose } from "../job-shape.js";
 
 /*
  * THE GRAVIEW DECLARATION DOCUMENT, v1 — as data a stranger can hand us.
@@ -23,6 +24,10 @@ const MARK_MAX = 64 * 1024;
 export const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 /** Field names are identifiers so a rule can say them bare: `quote != null`. */
 export const FIELD_NAME = /^[a-z][A-Za-z0-9]*$/;
+/** Another word for a kind or a field (Roadmap f-learned-suggestions): one to three lower-case words of letters, digits, `'` and `-`, at most 40 characters. */
+export const ALIAS = /^[a-z0-9\u00df-\u00ff'-]+( [a-z0-9\u00df-\u00ff'-]+){0,2}$/;
+/** The most aliases a kind or a field keeps. */
+export const MOST_ALIASES = 12;
 const RESERVED_FIELDS = new Set(["id", "kind"]);
 
 /**
@@ -73,6 +78,8 @@ function build() {
       notInherited,
     );
   const sentence = str(1, 500);
+  /** Another word for a kind or a field: lower-case words, as people search with them. */
+  const alias = z.string().check(z.maxLength(40), z.regex(ALIAS, 'an alias is up to three lower-case words, like "supplier"'));
   const expression = str(1, 2000);
   const template = str(1, 300);
 
@@ -83,6 +90,8 @@ function build() {
       description: z.optional(sentence),
       /** What the field is called on screen, where its name does not say it. */
       label: z.optional(str(1, 60)),
+      /** Other words people say for it ("cost" for a price): said to a model and by describe, never shown as its name (Roadmap f-learned-suggestions). */
+      aliases: z.optional(some(alias, 1, MOST_ALIASES)),
       options: z.optional(some(str(1, 80), 1, 100)),
       of: z.optional(z.enum(["string", "number", "date", "image", "video", "file"])),
       default: z.optional(z.unknown()),
@@ -144,6 +153,8 @@ function build() {
   const KindSpec = z.strictObject({
     noun: z.optional(str(1, 40)),
     plural: z.optional(str(1, 40)),
+    /** Other words people say for one ("supplier" for a vendor): search finds the kind by them, and a model is told them (Roadmap f-learned-suggestions). */
+    aliases: z.optional(some(alias, 1, MOST_ALIASES)),
     description: z.optional(sentence),
     fields: z.record(fieldName, FieldSpec).check(z.refine((f: Record<string, unknown>) => Object.keys(f).length > 0, "a kind has at least one field")),
     label: z.optional(template),
@@ -494,6 +505,12 @@ function build() {
      * checker's to judge, and the JSON schema says it to an editor.
      */
     connections: z.optional(z.record(name("connection"), loose)),
+    /**
+     * Who the app is for, and the jobs they come to it to do (Roadmap f-app-jobs, `job-shape.ts`). Read
+     * loosely here, as a page that draws the app answers no job; its shape (`PurposeSpec`,
+     * `./purpose-spec.ts`) is the checker's to judge and an edit's to hold, and the JSON schema says it.
+     */
+    purpose: z.optional(loose as unknown as z.ZodMiniType<AppPurpose>),
     /** Forms for visitors, by name: each one act, its fields, and what the visitor is told once it is received. */
     forms: z.optional(z.record(name("form"), FormSpec)),
     /**

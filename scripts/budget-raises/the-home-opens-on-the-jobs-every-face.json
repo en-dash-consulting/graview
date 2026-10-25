@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 1880,
+  "note": "Raised when the home came to open on the app's jobs (Roadmap f-design-composer): every face carries the pages face, and the jobs home (`page-jobs.tsx` and `@graview/core/jobs`) is drawn as the home first draws. Minified stays under the limit; gzipped it measured 848_851 against a limit of 846_976 on batch/design-intent with the composer merged, 1,875 over."
+}

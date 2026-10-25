@@ -55,6 +55,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       edges?: Record<string, { to: readonly string[] | "*"; cardinality?: "one" | "many"; description?: string; inverse?: string; appendOnly?: boolean; tidying?: "never" }>;
       plural?: string;
       noun?: string;
+      aliases?: readonly string[];
+      fieldAliases?: Readonly<Record<string, readonly string[]>>;
       description?: string;
       label?: unknown;
       describe?: unknown;
@@ -84,7 +86,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       const read = fieldOf(field);
       if ("spec" in read && isRepeatField(definition?.fields?.shape?.[repeatKey(name)]) && (read.spec.type === "date" || read.spec.type === "datetime")) (read.spec as { repeats?: boolean }).repeats = true;
       const beside = definition?.defaults?.[name];
-      if ("spec" in read) fields[name] = beside !== undefined && read.spec.default === undefined ? ({ ...read.spec, default: beside } as FieldSpec) : read.spec;
+      const aliases = definition?.fieldAliases?.[name];
+      if ("spec" in read) fields[name] = { ...(beside !== undefined && read.spec.default === undefined ? { ...read.spec, default: beside } : read.spec), ...(aliases && aliases.length > 0 ? { aliases: [...aliases] } : {}) } as FieldSpec;
       else findings.push(error("field-is-code", `${at}.fields.${name}`, `the field "${name}" cannot be written in a document: ${read.why}`));
     }
     if (typeof definition?.label === "function") findings.push(warning("label-is-code", `${at}.label`, `${kind}'s label is a function; the document names it by its first required word field instead`, 'write it as a template, like "{name}"'));
@@ -113,6 +116,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     kinds[kind] = {
       fields: Object.keys(fields).length > 0 ? fields : { label: { type: "string", required: true } },
       ...(definition?.noun ? { noun: definition.noun } : {}),
+      ...(definition?.aliases && definition.aliases.length > 0 ? { aliases: [...definition.aliases] } : {}),
       ...(definition?.plural ? { plural: definition.plural } : {}),
       ...(definition?.description ? { description: definition.description } : {}),
       ...(definition?.lifecycle ? { lifecycle: { field: definition.lifecycle.field, retired: [...definition.lifecycle.retired] as [string | number | boolean, ...(string | number | boolean)[]] } } : {}),
@@ -186,6 +190,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     ...(app.connections ? { connections: app.connections as GraviewDocument["connections"] } : {}),
     ...(app.forms ? { forms: structuredClone(app.forms) as GraviewDocument["forms"] } : {}),
     ...(app.publishing ? { publishing: structuredClone(app.publishing) as GraviewDocument["publishing"] } : {}),
+    // Who it is for and its jobs are data (Roadmap f-app-jobs); a job's next act the document could not carry is left out, as a grant's is.
+    ...(app.purpose ? { purpose: { ...structuredClone(app.purpose), ...(app.purpose.jobs ? { jobs: app.purpose.jobs.map((job) => (job.act !== undefined && unwritten.has(job.act) ? (({ act: _act, ...rest }) => structuredClone(rest))(job) : structuredClone(job))) } : {}) } as GraviewDocument["purpose"] } : {}),
     // View specs are already data: they are the document's views (FR-03).
     ...((app.viewSpecs && Object.keys(app.viewSpecs).length > 0) || app.home ? { views: { ...(app.viewSpecs ?? {}), ...(app.home ? { home: app.home } : {}) } as unknown as GraviewDocument["views"] } : {}),
     // The palette is code; the app's money, locale and time zone are data, and go across (FR-100).

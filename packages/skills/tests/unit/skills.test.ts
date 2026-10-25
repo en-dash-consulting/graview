@@ -21,6 +21,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/linked-findings.ts"), "utf8"),
   // …and one such relation alone, judged by the check and an `add-relation` edit in the same words.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/linked-relation-findings.ts"), "utf8"),
+  // What the look is found wanting by (Roadmap f-design-critic): `design-*`, said with the checker.
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/document/design-findings.ts"), "utf8"),
 ].join("\n");
 
 /**

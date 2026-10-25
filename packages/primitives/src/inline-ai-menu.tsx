@@ -54,6 +54,8 @@ export function askOf(env: InlineEnv, target: AiTarget, said?: string): InlineAs
     ...(acts ? { acts } : {}),
     ...(env.place ? { place: env.place } : {}),
     ...(said ? { said } : {}),
+    // Who the app is for and this viewer's jobs (Roadmap f-app-jobs), told to the model in its state.
+    ...(env.app.purpose ? { purpose: env.app.purpose } : {}),
   };
 }
 
