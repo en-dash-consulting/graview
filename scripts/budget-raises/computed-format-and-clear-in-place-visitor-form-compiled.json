@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 1047,
+  "gzipped": 313,
+  "note": "Raised when a computed field came to be said as its format and kept off a record by `hidden` (Roadmap f-computed-format, FR-217: the computed amount and hidden readers beside a field's, round() in the rule language and its words, set-format and set-computed on a computed field) and a field emptied in place came to send null, or say it cannot be empty (Roadmap f-clear-date-in-place). Measured at 316_550 / 116_332 against main's 315_503 / 116_019: 1_047 / 313 more."
+}
