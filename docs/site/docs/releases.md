@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.55`](https://graview.dev/docs/releases.html#v0-1-55)
 - [`0.1.54`](https://graview.dev/docs/releases.html#v0-1-54)
 - [`0.1.53`](https://graview.dev/docs/releases.html#v0-1-53)
 - [`0.1.52`](https://graview.dev/docs/releases.html#v0-1-52)
@@ -55,6 +56,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.55
+
+Published October 25, 2026 · the current version
+
+An app says who it is for and what they come to do; graview check judges the look and one call composes it; the home opens on those questions; an app learns from what people could not do.
+
+- **Who it is for, and what they come to do.** A document or `defineApp` takes `purpose`: `for`, a sentence about its people, and up to twelve `jobs`, each a question in their words answered by the records of one kind a rule holds for, in an order, with the act they usually take next. `graview check` holds each to the declaration (`job-*`), four edits change them, and `@graview/core/jobs` answers one as the viewer may see it. The seat, the MCP and `describeApp` say the purpose.
+- **A judgment of the look.** `graview check` says `design-*` warnings: a place that repeats another, too many places, a home with no focus, a card that repeats its title, a raw value, a main kind with no card, a job nothing answers. Each finding carries the edits that fix it, removals included.
+- **One design, composed.** `@graview/core/compose` infers jobs an app never said (`inferJobs`), and `composeDesign` returns the whole change: the jobs, the critic's edits applied until nothing is left to say, an accent where the brand has none. With no declared home, the derived home opens on the jobs: the question as its title, how many, the first records and their act.
+- **What people could not do.** A search that found nothing, a question nobody answered, an act refused and an agent's invalid call are kept in the graph's own words, never a visitor's, counted across people (`@graview/core/friction`, `/graview/friction`; `graview serve --no-friction` turns it off).
+- **Learning from use.** `@graview/core/learn` turns that log, the op log and the records into suggestions for the declaration (another name for a word several people searched with and found nothing, a choice or a date field for text written that way, one act for two people take in a row), each shown by at least three people, accepted or declined like the app's own actor's; `graview learn` and the `list_app_suggestions` tool offer them. Kinds and fields gain `aliases`.
+
+**Before you upgrade:** Additive: `purpose` and its edits (`set-purpose`, `add-job`, `edit-job`, `remove-job`), `aliases` (`add-alias`, `set-aliases`), a `Finding`'s optional `edits`, `design-*` warnings (`CheckOptions.design: false` leaves them out), `@graview/core/jobs`, `/compose`, `/friction` and `/learn`, `recordFriction` and `attachFriction`, `aiContextOf`'s `purpose` and `friction`, and the `/graview/friction` route. Changed: the derived home of an app with jobs leads with them; `graview serve` writes `friction.json` and `learned.json` beside the store, outside the op log and every export. Ops and the rest of the wire are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.55) · [The full changelog for 0.1.55](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0155)
 
 ## 0.1.54
 
