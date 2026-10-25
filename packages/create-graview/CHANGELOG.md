@@ -1,5 +1,12 @@
 # create-graview
 
+## 0.1.55
+
+### Patch Changes
+
+- Updated dependencies [a2c056b]
+  - graview@0.1.55
+
 ## 0.1.54
 
 ### Patch Changes
