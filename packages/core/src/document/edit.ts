@@ -308,6 +308,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         expr: z.union([z.string().min(1).max(2000), z.null()]).optional(),
         label: z.union([z.string().min(1).max(60), z.null()]).optional(),
         description: z.union([z.string().min(1).max(500), z.null()]).optional(),
+        // Kept off a record's page, card and CSV, still worked out for a sort, a rule or a view (FR-217): true hides it, false or null shows it.
+        hidden: z.union([z.boolean(), z.null()]).optional(),
       })
       .strict(),
     // Who the people are, and who may do and see what (FR-170): a grant and a sight as the document holds one.
@@ -1831,6 +1833,8 @@ class Editor {
       if (e[key] === null) delete next[key];
       else if (e[key] !== undefined) next[key] = e[key];
     }
+    if (e.hidden === true) next.hidden = true;
+    else if (e.hidden === false || e.hidden === null) delete next.hidden;
     try {
       parseExpr(next.expr);
     } catch (err) {
@@ -1838,7 +1842,7 @@ class Editor {
       throw err;
     }
     // Kept short where it was said short: a bare expression is the same field as { expr }.
-    (spec.computed ??= {})[name] = next.label === undefined && next.description === undefined ? next.expr : next;
+    (spec.computed ??= {})[name] = Object.keys(next).length === 1 ? next.expr : next;
     const findings = validateComputed(
       new Map(Object.entries(this.doc.kinds).map(([kind, k]: [string, Doc]) => [kind, { fields: new Set(Object.keys(k.fields)), edges: new Set(Object.keys(k.edges ?? {})), computed: computedOf(k) }])),
       (kind, n) => `kinds.${kind}.computed.${n}`,
@@ -1847,6 +1851,7 @@ class Editor {
     if (findings.length > 0) return;
     if (existing === undefined) this.said.push(`${plural} work out "${name}": ${next.expr}${next.label ? `, shown as "${next.label}"` : ""}.`);
     else if (was.expr !== next.expr) this.said.push(`How ${pluralWords(this.doc, e.kind)} work out "${name}" changes: ${next.expr}.`);
+    else if (e.hidden !== undefined && e.label === undefined && e.description === undefined) this.said.push(next.hidden ? `${plural}' "${name}" is kept off their pages, cards and CSV, and still worked out for sorts, rules and views.` : `${plural}' "${name}" is shown on their pages, cards and CSV.`);
     else this.said.push(`${plural}' "${name}" is ${next.label ? `shown as "${next.label}"` : "shown by its name"}${next.description ? `, described as "${next.description}"` : ""}.`);
   }
 
@@ -2333,6 +2338,8 @@ class Editor {
    * The values stay as they are; every face says them anew.
    */
   private setFormat(i: number, e: Doc) {
+    const worked = this.doc.kinds[e.kind]?.computed?.[e.field];
+    if (worked !== undefined && !this.doc.kinds[e.kind].fields[e.field]) return this.setComputedFormat(i, e, worked);
     const f = this.field(i, e.kind, e.field);
     if (!f) return;
     if (e.format === undefined && e.unit === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration" for a number, "markdown" for a text field, or null for neither), a "unit" ("EUR", "kg", or null), or both');
@@ -2352,6 +2359,28 @@ class Editor {
     }
     const now = formatWords(f, this.doc.brand);
     this.said.push(`${e.kind}'s ${e.field} is said as ${now ?? "a plain number"}${before ? `, where it was ${before.replace(/ — .*/, "")}` : ""}; its values are kept.`);
+  }
+
+  /**
+   * HOW A COMPUTED FIELD'S NUMBER IS SAID (FR-217), as a number field's is:
+   * money, a percent or a duration, and a unit — each set by a value,
+   * cleared by `null`, kept when left out. A computed field works out a
+   * number, so Markdown is no format of one. Kept short where nothing but
+   * its expression is left.
+   */
+  private setComputedFormat(i: number, e: Doc, worked: string | Doc) {
+    if (e.format === undefined && e.unit === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration", or null for none), a "unit" ("EUR", "kg", or null), or both');
+    if (e.format === "markdown") return this.fail(i, "format", `${e.field} is worked out, not written, so it cannot be Markdown; a computed field is said as "money", "percent" or "duration"`);
+    const spec = this.doc.kinds[e.kind];
+    const next: Doc = typeof worked === "string" ? { expr: worked } : { ...worked };
+    const before = formatWords(next, this.doc.brand);
+    for (const key of ["format", "unit"]) {
+      if (e[key] === null) delete next[key];
+      else if (e[key] !== undefined) next[key] = e[key];
+    }
+    spec.computed[e.field] = Object.keys(next).length === 1 ? next.expr : next;
+    const now = formatWords(next, this.doc.brand);
+    this.said.push(`${e.kind}'s ${e.field} is worked out as before and said as ${now ?? "a plain number"}${before ? `, where it was ${before.replace(/ — .*/, "")}` : ""}.`);
   }
 
   /** A number's range (FR-114): a key given sets it, `null` clears it, one left out stays. */

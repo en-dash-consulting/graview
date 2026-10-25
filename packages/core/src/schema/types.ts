@@ -259,6 +259,23 @@ export type ComputedField =
        * duration fields says it without being told.
        */
       readonly as?: "duration";
+      /**
+       * How its number is said, as a stored number field's is (FR-217):
+       * money, a fraction as a percent ("82%"), or a whole number of minutes
+       * as a duration — and a `unit`, a currency like "EUR" or a measure like
+       * "kg". A page, a card and a list's CSV say it so.
+       */
+      readonly format?: "money" | "percent" | "duration";
+      readonly unit?: string;
+      /**
+       * Kept off what a record says of itself — its page, its card, a row of
+       * its list's CSV — while it is still worked out for whatever reads it:
+       * a list or a lens sorted by it, a rule, a view, a template (FR-217).
+       * A helper like a share used to rank seasons.
+       */
+      readonly hidden?: boolean;
+      /** The currency and locale a document's brand says money in, written by the compile beside `format`; a declaration in code leaves it out. */
+      readonly amount?: { readonly format?: "money" | "percent"; readonly unit?: string; readonly currency?: string; readonly locale?: string };
     };
 
 /**

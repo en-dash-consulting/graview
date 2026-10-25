@@ -8,7 +8,7 @@ import { repeatingDateAsRead } from "../repeat-words.js";
 import { isRepeatField } from "../repeat.js";
 import { isMarkdownField } from "./markdown.js";
 import { excerptOf } from "../excerpt-of.js";
-import { fieldSays, typedHref, typedWords } from "./field-words.js";
+import { fieldSays, typedHref, typedWords, workedOutAmount, workedOutHidden } from "./field-words.js";
 import { amountOf } from "./amount-mark.js";
 import { sayAmount } from "../document/amount.js";
 import type { AnyNodeDefinition, PageFields } from "./types.js";
@@ -186,6 +186,8 @@ export function readableFields(
   const entries = keys.map((key) => [key, node[key]] as const);
   for (const [key, value] of entries) {
     if (skip.has(key) || value === undefined || value === null) continue;
+    // A computed field kept off what a record says of itself (FR-217): still worked out for a sort, a rule or a view.
+    if (workedOutHidden(definition, key)) continue;
     const format = display?.format?.[key];
     // A picture or a document (FR-162) is drawn, not said on a glance; its words are its names.
     const files = format ? [] : filesOf(value);
@@ -231,7 +233,7 @@ export function readableFields(
     const typed = format ? undefined : fieldSays(definition, key);
     const href = typedHref(typed, value);
     // A number said as its field declares it: money in the app's currency, a fraction as a percent ("$10,000", never 10000).
-    const amount = !format && !typed && typeof value === "number" ? amountOf((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]) : undefined;
+    const amount = !format && !typed && typeof value === "number" ? (amountOf((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]) ?? workedOutAmount(definition, key)) : undefined;
     const whole = linked
       ? linked.refs.length > 1 ? `${linked.refs.length} linked records` : "linked record"
       : format

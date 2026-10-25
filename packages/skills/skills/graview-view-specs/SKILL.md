@@ -90,6 +90,10 @@ fields, edges, label, roles — is `graview-node-kind`.
    one worked out from the record alone (no graph is in hand). A document's
    top-level `computed` holds facts of the whole graph, read as
    `fact('name')`; a kind's is changed with `set-computed`.
+   `{ expr, format: "percent" }` (or `"money"`, `"duration"`, a `unit`;
+   `set-format` sets it) says it so on its page, cards and CSV;
+   `round(x, 3)` rounds; `hidden: true` keeps a helper off its page, cards
+   and CSV while lists, lenses, rules and views still sort and read by it.
 
 5. **Say counts and times in words.** Templates say counts in words:
    `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"),

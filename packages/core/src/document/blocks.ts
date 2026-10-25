@@ -14,7 +14,7 @@ import { capitalize } from "../capital.js";
 import { filesOf, isImage, isVideo, type FileValue } from "../schema/files.js";
 import { fileSaid } from "../schema/file-fields.js";
 import { momentAsRead, numberAsRead } from "../days.js";
-import { fieldSays, typedHref, typedWords } from "../schema/field-words.js";
+import { fieldSays, typedHref, typedWords, workedOutAmount } from "../schema/field-words.js";
 import type { TypedField } from "../schema/typed-fields.js";
 import { amountOf } from "../schema/amount-mark.js";
 import { sayAmount } from "./amount.js";
@@ -409,7 +409,7 @@ const typedOf = (ctx: BlockContext, key: string): TypedField | undefined => {
   return type === "phone" || type === "place" || type === "duration" ? type : fieldSays(ctx.definition, key);
 };
 /** What the record's field is said as, where its declaration says (`markAmount`): a field named bare, `{price}`, is said as money. */
-const amountAt = (ctx: BlockContext, key: string) => amountOf((ctx.definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]);
+const amountAt = (ctx: BlockContext, key: string) => amountOf((ctx.definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]) ?? workedOutAmount(ctx.definition as never, key);
 
 function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof VIEW_FIELD_FORMATS)[number] | undefined, currency?: string): string {
   if (value === null || value === undefined || value === "") return NOTHING;
