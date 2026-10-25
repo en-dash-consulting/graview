@@ -19,7 +19,7 @@ import { farEnd } from "./far-end.js";
 import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
 import { JobSpec } from "./purpose-spec.js";
 import { aliasWord, documentAliasFindings } from "../alias-findings.js";
-import { withArticle } from "../schema/define-node.js";
+import { humanizeField, withArticle } from "../schema/define-node.js";
 import { linkedRelationFindings } from "./linked-relation-findings.js";
 import { linkedRelationOfSpec, reachesAnotherApp, type LinkedRelation } from "../schema/linked.js";
 import {
@@ -194,7 +194,7 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "add-field": z.object({ op: z.literal("add-field"), kind: kindName, field: fieldName, fill: z.unknown().optional(), spec: z.record(z.string(), z.unknown()).optional() }).passthrough(),
     "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
     "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date", "image", "video", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
-    "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional() }).strict(),
+    "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional(), labels: z.record(z.string().min(1).max(80), z.union([z.string().min(1).max(80), z.null()])).optional() }).strict(),
     "set-format": z.object({ op: z.literal("set-format"), kind: kindName, field: fieldName, format: z.union([z.enum(["money", "percent", "duration", "markdown"]), z.null()]).optional(), unit: z.union([z.string().min(1).max(12), z.null()]).optional() }).strict(),
     "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
     "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
@@ -2206,6 +2206,11 @@ class Editor {
     f.type = e.type;
     if (e.type === "enum") f.options = e.options ?? f.options;
     else delete f.options;
+    // An option's label goes with the option.
+    if (f.optionLabels) {
+      f.optionLabels = Object.fromEntries(Object.entries(f.optionLabels).filter(([o]) => (f.options ?? []).includes(o)));
+      if (Object.keys(f.optionLabels).length === 0) delete f.optionLabels;
+    }
     if (e.type === "list") f.of = e.of ?? f.of ?? "string";
     else delete f.of;
     if (e.format) f.format = e.format;
@@ -2283,10 +2288,25 @@ class Editor {
     if (unknown.length) return this.fail(i, "remove", `${e.field} does not offer ${unknown.map((o) => `"${o}"`).join(", ")}; it offers ${f.options.join(", ")}`);
     const options = [...f.options.filter((o: string) => !remove.includes(o)), ...add];
     if (options.length === 0) return this.fail(i, "remove", "a choice keeps at least one option");
+    // What an option is called on screen (Roadmap f-option-labels): a label given sets it, `null` goes back to the option's id spoken.
+    const labels = Object.entries((e.labels ?? {}) as Record<string, string | null>);
+    const unlabeled = labels.filter(([o]) => !options.includes(o)).map(([o]) => o);
+    if (unlabeled.length) return this.fail(i, "labels", `${e.field} does not offer ${unlabeled.map((o) => `"${o}"`).join(", ")}; label one of ${options.join(", ")}`);
+    if (!add.length && !remove.length && !labels.length) return this.fail(i, "add", 'say what to "add", what to "remove", or the "labels" of options');
     f.options = options;
+    const kept: Record<string, string> = Object.fromEntries(Object.entries((f.optionLabels ?? {}) as Record<string, string>).filter(([o]) => options.includes(o)));
+    for (const [o, label] of labels) {
+      if (label === null) delete kept[o];
+      else kept[o] = label;
+    }
+    if (Object.keys(kept).length > 0) f.optionLabels = kept;
+    else delete f.optionLabels;
+    const spoken = (o: string) => (kept[o] !== undefined && kept[o] !== o ? `"${o}" (${kept[o]})` : `"${o}"`);
     const out: string[] = [];
-    if (add.length) out.push(`now also offers ${add.map((o) => `"${o}"`).join(", ")}`);
+    if (add.length) out.push(`now also offers ${add.map(spoken).join(", ")}`);
     if (remove.length) out.push(`no longer offers ${remove.map((o) => `"${o}"`).join(", ")}`);
+    const relabeled = labels.filter(([o]) => !add.includes(o));
+    if (relabeled.length) out.push(relabeled.map(([o, label]) => (label === null ? `says "${o}" as ${humanizeField(o)}` : `says "${o}" as ${label}`)).join(", "));
     if (f.default !== undefined && remove.includes(f.default)) {
       delete f.default;
       out.push("has no default now");

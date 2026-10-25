@@ -141,14 +141,14 @@ describe("a list exported as it is shown", () => {
     const rows = listCsvRows({ words, schema: store.schema, graph: store.seenBy(agent).graph, kind: "question", groups: groupsOf(shown), grouped: shown.grouped, locale: "en-US", timeZone: "UTC" });
     expect(rows[0]).toEqual(["Group", "Name", "Status", "Asked", "Bounty", "Secret", "Worth"]);
     expect(rows.slice(1).map((row) => row.slice(0, 2))).toEqual([
-      ["answered", '=HYPERLINK("http://x")'],
-      ["new", "Where is the café, \"downstairs\"?"],
-      ["new", "Why is the wifi slow?"],
+      ["Answered", '=HYPERLINK("http://x")'],
+      ["New", "Where is the café, \"downstairs\"?"],
+      ["New", "Why is the wifi slow?"],
       // Drawn shut, and written all the same.
-      ["done", "Old one"],
+      ["Done", "Old one"],
     ]);
     const wifi = rows.find((row) => row[1] === "Why is the wifi slow?")!;
-    expect(wifi).toEqual(["new", "Why is the wifi slow?", "New", "Oct 2, 2026", "$1,250", "router 0451", "2500"]);
+    expect(wifi).toEqual(["New", "Why is the wifi slow?", "New", "Oct 2, 2026", "$1,250", "router 0451", "2500"]);
     // The formula is written as text in the file.
     expect(listCsv({ words, schema: store.schema, graph: store.graph, kind: "question", groups: groupsOf(shown), grouped: true })).toContain(`"'=HYPERLINK(""http://x"")"`);
   });

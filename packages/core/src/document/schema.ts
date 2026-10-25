@@ -93,6 +93,12 @@ function build() {
       /** Other words people say for it ("cost" for a price): said to a model and by describe, never shown as its name (Roadmap f-learned-suggestions). */
       aliases: z.optional(some(alias, 1, MOST_ALIASES)),
       options: z.optional(some(str(1, 80), 1, 100)),
+      /**
+       * What an enum field's options are called on screen, by option
+       * (Roadmap f-option-labels): `{ "state-sponsored": "State-sponsored" }`.
+       * An option without one is said as its id spoken ("State sponsored").
+       */
+      optionLabels: z.optional(z.record(str(1, 80), str(1, 80))),
       of: z.optional(z.enum(["string", "number", "date", "image", "video", "file"])),
       default: z.optional(z.unknown()),
       unit: z.optional(str(undefined, 12)),
@@ -122,6 +128,9 @@ function build() {
       z.superRefine((f, ctx) => {
         if (f.type === "enum" && !f.options) ctx.addIssue({ code: "custom", message: 'an enum field lists its "options"', path: ["options"] });
         if (f.type !== "enum" && f.options) ctx.addIssue({ code: "custom", message: '"options" belongs only on an enum field', path: ["options"] });
+        for (const option of Object.keys(f.optionLabels ?? {})) {
+          if (!f.options?.includes(option)) ctx.addIssue({ code: "custom", message: `"${option}" is labeled, and is none of the field's options`, path: ["optionLabels", option] });
+        }
         if (f.type !== "list" && f.of) ctx.addIssue({ code: "custom", message: '"of" belongs only on a list field', path: ["of"] });
         if (f.repeats && f.type !== "date" && f.type !== "datetime") ctx.addIssue({ code: "custom", message: '"repeats" belongs only on a date or datetime field', path: ["repeats"] });
       }),
