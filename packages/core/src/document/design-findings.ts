@@ -567,7 +567,9 @@ function noCardForMainKind(document: GraviewDocument): Finding[] {
  * THE TWO FINDINGS ABOUT JOBS, asked only of the jobs an app says it is for
  * (f-app-jobs): a job no picture answers — nothing titled over the kind it
  * asks about, only the list of everything — and a picture no job asks for,
- * which is the first to keep off the bar.
+ * which is the first to keep off the bar. That one is a note: jobs say what
+ * people come to do most, not everything an app may show (todo's "Who may do
+ * what" answers no job and is still worth a place).
  */
 function jobFindings(document: GraviewDocument, jobs: readonly DesignJob[]): Finding[] {
   if (jobs.length === 0) return [];
@@ -580,7 +582,7 @@ function jobFindings(document: GraviewDocument, jobs: readonly DesignJob[]): Fin
   const asked = new Set(jobs.map((job) => job.kind));
   lenses.forEach((lens, index) => {
     if (!listed(lens) || kindsOfLens(lens).length === 0 || kindsOfLens(lens).some((kind) => asked.has(kind))) return;
-    findings.push(warning("design-place-for-no-job", `lenses.${index}`, `"${titleOf(lens)}" answers none of the jobs this app says it is for.`, `keep it off the bar (set-lens-hidden), or say the job it answers`, [{ op: "set-lens-hidden", title: titleOf(lens)!, hidden: true }]));
+    findings.push({ ...warning("design-place-for-no-job", `lenses.${index}`, `"${titleOf(lens)}" answers none of the jobs this app says it is for.`, `keep it off the bar (set-lens-hidden), or say the job it answers`, [{ op: "set-lens-hidden", title: titleOf(lens)!, hidden: true }]), severity: "note" });
   });
   return findings;
 }
