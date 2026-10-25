@@ -5,6 +5,7 @@ import { readSnapshot } from "@graview/core/snapshot";
 import type { GraviewApp, PersistenceAdapter } from "@graview/core";
 import { createFileAdapter } from "./file-adapter.js";
 import { fileSubscriptions } from "./file-subscriptions.js";
+import { fileFriction } from "./file-friction.js";
 import { fileViews } from "./file-views.js";
 import { LIVE_PATH } from "./live.js";
 import { openStore } from "./open-store.js";
@@ -31,7 +32,7 @@ import type { StoredMeta } from "./meta.js";
  * changes nothing else, which is the actual claim about adapters.
  */
 export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <file>]
-                       [--host <address>] [--trust-seat-headers] [--no-sync]
+                       [--host <address>] [--trust-seat-headers] [--no-sync] [--no-friction]
       Serves the app's store over HTTP, and live over a WebSocket at
       /graview/live. The op log is the wire: a client sends calls, the
       store judges them under the caller's own seat, and the ops come back,
@@ -42,7 +43,10 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       --trust-seat-headers says the network in front of it can be trusted.
       The app's declared connections (a Google calendar) run beside it, with
       credentials from the environment and their cursors beside the data;
-      --no-sync leaves them off.
+      --no-sync leaves them off. What people looked for and could not do
+      (a search that found nothing, an act refused) is kept for 90 days in
+      friction.json beside the data, each person reading only their own and
+      the counts, never a visitor's; --no-friction keeps none.
 
   graview sync-seed <entry> --seed <file> [--data <dir> | --sqlite <file>]
                             [--apply] [--prune] [--json]
@@ -153,6 +157,12 @@ export function subscriptionsFileOf(backend: Pick<StoreBackend, "adapter" | "whe
   return root !== undefined ? join(root, scope, "subscriptions.json") : `${backend.where}.subscriptions.json`;
 }
 
+/** Where `graview serve` keeps the friction log (Roadmap f-friction-log): beside the store, as the subscriptions are. */
+export function frictionFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
+  const root = (backend.adapter as { root?: string }).root;
+  return root !== undefined ? join(root, scope, "friction.json") : `${backend.where}.friction.json`;
+}
+
 /** Where `graview serve` keeps the views a person tidied from the place menu (Roadmap f-place-menu-views): beside the store, as the subscriptions are. */
 export function viewsFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
   const root = (backend.adapter as { root?: string }).root;
@@ -221,6 +231,8 @@ export async function serve(argv: readonly string[]): Promise<number> {
     subscriptions: fileSubscriptions(subscriptionsFileOf(backend, app.name)),
     // The views a person hid or deleted from the place menu, kept beside the store, thirty days for a deleted one.
     views: fileViews(viewsFileOf(backend, app.name)),
+    // What people could not do, kept beside the store for ninety days, or not at all.
+    friction: argv.includes("--no-friction") ? false : fileFriction(frictionFileOf(backend, app.name)),
     onSubscriptionMatch: (match) => {
       process.stdout.write(`graview serve: notify ${match.subscription.who.name ?? match.subscription.who.id}: ${match.said}\n`);
     },

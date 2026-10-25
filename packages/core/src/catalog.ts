@@ -25,6 +25,7 @@
  * inline AI is fetched when somebody first opens it.
  */
 import { fieldSpecOf } from "./document/field-spec.js";
+import { frictionDigest, type FrictionDigest, type FrictionEvent } from "./friction.js";
 import { fieldWriters, subjectKindsOf } from "./mutations/derive-edits.js";
 import { nodeRefArgs } from "./mutations/node-ref.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
@@ -613,6 +614,8 @@ export interface AiContextState {
   readonly neighbors: readonly (AiRecordBrief & { readonly relation: string; readonly direction: "out" | "in" })[];
   readonly recent: readonly { readonly intent: string; readonly at: string; readonly by: string }[];
   readonly schema: SchemaDigest;
+  /** What people looked for and could not do lately (`frictionDigest`), when the host handed `friction`. */
+  readonly friction?: FrictionDigest;
 }
 
 export interface AiContextOptions {
@@ -623,6 +626,13 @@ export interface AiContextOptions {
   readonly selection?: readonly string[];
   /** How many recent changes, newest first. 6 when unsaid. */
   readonly recent?: number;
+  /**
+   * THE FRICTION LOG, AS THE HOST KEEPS IT (Roadmap f-friction-log): the
+   * events, read from wherever the host stores them. Said as a digest —
+   * counted across people, no refusal's sentence — under `friction`.
+   * Core reads no storage of its own: unsaid, there is none.
+   */
+  readonly friction?: readonly FrictionEvent[];
 }
 
 const DIGESTS = new WeakMap<object, Map<string, SchemaDigest>>();
@@ -730,6 +740,7 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
     neighbors: neighbors.slice(0, 24),
     recent,
     schema: schemaDigestOf(whole, principal),
+    ...(options.friction ? { friction: frictionDigest(options.friction, schema) } : {}),
   };
 }
 

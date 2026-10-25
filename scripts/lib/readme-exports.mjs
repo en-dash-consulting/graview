@@ -44,6 +44,8 @@ export const NOT_EXPORTS = new Map([
   ["graviewRenderer", "a page global an operator sets to choose the renderer, not an export"],
   ["GRAVIEW_RENDERER", "an environment variable the harnesses read, not an export"],
   ["seatOf", "an option of serveStore, not an export"],
+  ["frictionPerMinute", "an option of createStoreHandler and serveStore, not an export (Roadmap f-friction-log)"],
+  ["frictionRetentionDays", "an option of createStoreHandler and serveStore, not an export (Roadmap f-friction-log)"],
   ["attachRenderer", "a prop of the Scene, not an export"],
   ["onConflict", "a method of openRemote's store, not an export"],
   ["onStatus", "a method of openRemote's store, not an export"],

@@ -1,5 +1,6 @@
 import {
   nounOf,
+  recordFriction,
   withArticle,
   type AnyMutationDefinition,
   type AnySchema,
@@ -12,6 +13,7 @@ import { formFields } from "@graview/core/forms";
 import type { Affordance } from "@graview/tools";
 import { useGraviewIfAny, type AiDesk } from "@graview/react/provider";
 import { openQuickAsk, useQuickAskDrawn } from "@graview/primitives/pages";
+import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
@@ -50,6 +52,19 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
   const named = found.hits.filter((hit) => hit.about === "kind" || hit.about === "place" || hit.about === "rule");
   const kinds = [...new Set(records.map((hit) => hit.kind))];
   const asked = q.trim();
+  const nothing = asked.length >= 2 && found.hits.length === 0;
+  const onlyKind = found.searched.kinds.length === 1 ? found.searched.kinds[0] : undefined;
+  /*
+   * WORDS THAT FOUND NOTHING ARE WHAT SOMEBODY COULD NOT FIND (Roadmap
+   * f-friction-log): recorded once they settle — the box writes the address
+   * at every keystroke, and "inv" on the way to "invoice" is no miss — as
+   * the store's host keeps them, if it keeps them at all.
+   */
+  useEffect(() => {
+    if (!nothing) return;
+    const settled = setTimeout(() => recordFriction(store, { type: "search-miss", words: asked, ...(onlyKind ? { kind: onlyKind } : {}) }, principal), SEARCH_SETTLED_MS);
+    return () => clearTimeout(settled);
+  }, [store, asked, nothing, onlyKind, principal]);
 
   return (
     <PageMain context={context}>
@@ -144,6 +159,9 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
     </PageMain>
   );
 }
+
+/** How long words stand before a search that found nothing is recorded as a miss. */
+const SEARCH_SETTLED_MS = 1500;
 
 /** What made a hit a hit, when it was not the name: "Notes: …the van on Friday…". */
 export function WhyLine({ why }: { why: Hit["why"] }) {

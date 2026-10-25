@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { bindSchema, createSchema, defineNode, nodeRef, Store, type Principal } from "@graview/core";
+import { attachFriction, bindSchema, createSchema, defineNode, nodeRef, Store, type Principal } from "@graview/core";
 import { acceptGhost, answerHere, answerOf, stubFast, stubThinking } from "../../src/inline-ai.js";
 import { inlineAiOn, type AnswerProvider, type HostAi } from "../../src/ai.js";
 
@@ -71,5 +71,15 @@ describe("a quick ask", () => {
     expect(inlineAiOn({ answer: { model: "x", answer: async () => ({ text: "yes" }) } })).toBe(true);
     const none = await answerHere({}, { store: make(), target, principal: me, said: "anything" });
     expect(none.interaction).toMatchObject({ outcome: "failed", failed: "AI isn't on here." });
+  });
+
+  it("records a question the seat had no answer to as what somebody could not find out, and not one AI was off for", async () => {
+    const store = make();
+    const heard: unknown[] = [];
+    attachFriction(store, (draft, by) => heard.push([draft, by]));
+    const empty: HostAi = { answer: { model: "host-answer", answer: async () => ({ text: "", pick: [] }) } };
+    await answerHere(empty, { store, target: { on: "place", place: "home" }, principal: me, said: "Who is free on Friday?" });
+    await answerHere({}, { store, target, principal: me, said: "anything" });
+    expect(heard).toEqual([[{ type: "unanswered", question: "Who is free on Friday?", place: "home" }, me]]);
   });
 });

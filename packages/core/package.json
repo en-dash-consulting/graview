@@ -85,6 +85,10 @@
       "types": "./dist/catalog.d.ts",
       "default": "./dist/catalog.js"
     },
+    "./friction": {
+      "types": "./dist/friction.d.ts",
+      "default": "./dist/friction.js"
+    },
     "./subscriptions": {
       "types": "./dist/subscriptions.d.ts",
       "default": "./dist/subscriptions.js"

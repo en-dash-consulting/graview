@@ -2,6 +2,8 @@ import {
   humanizeField,
   nounOf,
   labelOf,
+  recordFriction,
+  refusalOf,
   type AnySchema,
   type Principal,
   type Store,
@@ -699,6 +701,10 @@ export function DerivedForm<S extends AnySchema>({
         } catch (error) {
           // A refusal is a result, on a page exactly as in the strip.
           setFailed(failureWords(store.schema, store.allMutations(), error));
+          // And what somebody could not do (Roadmap f-friction-log): the act, the refusal's code and the kind it was on.
+          const subject = mutation.subject ? prefilled[mutation.subject.arg] : undefined;
+          const kind = typeof subject === "string" ? (store.graph.getNode(subject)?.kind as string | undefined) : undefined;
+          recordFriction(store, { type: "refused", act: mutation.name, code: refusalOf(error).reason, ...(kind ? { kind } : {}) }, principal);
         }
       }}
       data-graview-part="form"

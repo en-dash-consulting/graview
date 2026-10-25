@@ -31,6 +31,10 @@ export { openRemote, RemoteRefusedError, seatHeaders } from "./remote.js";
 // Notify me (Roadmap f-notify-subscriptions): the asking seat's subscriptions on a served store.
 export { remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
 export type { RemoteSubscriptionsOptions } from "./remote-subscriptions.js";
+// The friction log (Roadmap f-friction-log): the door's client, and a browser's storage for a page that holds its own store.
+export { FRICTION_PATH, remoteFriction } from "./remote-friction.js";
+export type { RemoteFriction, RemoteFrictionOptions } from "./remote-friction.js";
+export { browserFriction } from "./browser-friction.js";
 // The views a person tidies from the place menu (Roadmap f-place-menu-views): `keptViews` over a served store.
 export { remoteViews, VIEWS_PATH } from "./remote-views.js";
 export type { RemoteViewsOptions, ViewsPost } from "./remote-views.js";

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 808,
+  "gzipped": 416,
+  "changeset": "what-people-could-not-do-is-recorded.md",
+  "note": "Raised when what people looked for and could not do came to be recorded (Roadmap f-friction-log): the one door a page records through (`recordFriction`, `attachFriction`, a weak map and a check, on core's main entry) and `openRemote` posting each draft to `/graview/friction` and recording an act the server refused where it takes it back. What is kept, counted and said is `@graview/core/friction`'s and the server's, never on the page. Measured at 565_382 / 197_157 against 564_574 / 196_741 at ce6e6c3fb: 808 more minified, 416 gzipped."
+}
