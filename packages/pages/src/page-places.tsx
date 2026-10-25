@@ -267,6 +267,18 @@ export function galleryOf<S extends AnySchema>(context: PageContext<S>): readonl
 }
 
 /**
+ * THE RECORDS THE GALLERY DRAWS (Roadmap f-problems-in-context): every
+ * current member of each kind a card pictures — a place's own kinds, and
+ * each kind with no picture of its own. What the home says of a broken
+ * rule is said of these; a rule broken on a record of a kind the home
+ * leaves off (`pages.hide`) is the bar's count's, not the home's.
+ */
+export function drawnInTheGallery<S extends AnySchema>(context: PageContext<S>): ReadonlySet<string> {
+  const kinds = new Set(galleryOf(context).flatMap((entry) => (entry.place ? kindsOfPlace(context, entry.place) : [entry.kind])));
+  return new Set([...kinds].flatMap((kind) => membersOf(context.store, kind).map((node) => node.id)));
+}
+
+/**
  * The scale a picture is drawn at inside its card. The frame's width is
  * measured and the lens is laid out WIDER than the card by this factor, so
  * its type lands near ten pixels whether the card is 560 wide on a desk or
