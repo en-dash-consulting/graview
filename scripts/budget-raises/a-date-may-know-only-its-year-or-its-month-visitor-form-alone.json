@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 1805,
+  "gzipped": 578,
+  "note": "Raised when a date came to know only its year or its month (Roadmap f-partial-dates), with every option said by its label (Roadmap f-option-labels): a form's date editor reads and says a year or a month alone, a date's pattern and an edit's `clearable` fields. 236_323 / 86_876 before, 238_128 / 87_454 with them: 1_805 / 578 more."
+}

@@ -295,7 +295,9 @@ export { actTitle, allLabel, article, counted, pluralLabel, pluralOf, fieldWords
 export { choiceWords } from "./schema/choice-words.js";
 // Days, times and numbers as a person reads them, in the reader's or the app's locale (FR-178), and instants on the person's or the app's clock (Roadmap f-app-time-zone).
 export {
+  DATE_VALUE,
   DEFAULT_LOCALE,
+  PARTIAL_DAY,
   dayAsRead,
   dayOfMoment,
   dayOfMonthAsRead,

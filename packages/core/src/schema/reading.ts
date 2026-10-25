@@ -1,7 +1,6 @@
 import { dayAsRead, DATE_VALUE, ISO_MOMENT, momentAsRead } from "../days.js";
 import { fieldWords, labelOf, nounOf, type ReadableField } from "./define-node.js";
 import { valueWords } from "./value-words.js";
-import { fieldSpecOf } from "../document/field-spec.js";
 import { filesOf, isVideo, videoWords } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
 import { linkedRefsOf, linkedRelationOf } from "./linked.js";
@@ -309,8 +308,11 @@ function choicesOf(definition: AnyNodeDefinition | undefined, key: string): read
 
 /** Whether a field holds a date: a year or a month alone (`2006`, `2016-05`) is said as one only there (Roadmap f-partial-dates). */
 function isDateField(definition: AnyNodeDefinition | undefined, key: string): boolean {
-  const field = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key];
-  return field !== undefined && fieldSpecOf(field)?.type === "date";
+  type Def = { readonly type?: string; readonly innerType?: unknown; readonly checks?: readonly { readonly _zod?: { readonly def?: { readonly pattern?: RegExp } } }[] };
+  let at = ((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key] as { _zod?: { def?: Def } } | undefined)?._zod?.def;
+  for (let depth = 0; depth < 6 && at?.innerType !== undefined; depth++) at = (at.innerType as { _zod?: { def?: Def } })._zod?.def;
+  // A document's date: the pattern that takes a year or a month alone.
+  return at?.type === "string" && (at.checks ?? []).some((check) => check._zod?.def?.pattern?.source === DATE_VALUE.source);
 }
 
 /** Whether a field is one of a declared set of values (`z.enum`), under optional, default and nullable. */

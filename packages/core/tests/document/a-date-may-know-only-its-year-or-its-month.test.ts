@@ -70,7 +70,7 @@ describe("a date that knows only its year or its month", () => {
     }
     const ctx = { schema: store.schema, graph: store.graph } as never;
     const sorted = arrange(store.graph.nodesOfKind("actor" as never) as never, { sort: { by: "firstSeen" } } as never, ctx);
-    expect((sorted.nodes as readonly { firstSeen: string }[]).map((node) => node.firstSeen)).toEqual(["2006", "2015-12-31", "2016", "2016-05", "2016-05-20"]);
+    expect((sorted.nodes as unknown as readonly { firstSeen: string }[]).map((node) => node.firstSeen)).toEqual(["2006", "2015-12-31", "2016", "2016-05", "2016-05-20"]);
     // Grouped by year, a year alone is in its year; by month, a month alone is in its month and a year alone stands by itself before them.
     const byYear = arrange(store.graph.nodesOfKind("actor" as never) as never, { group: { by: "firstSeen", bucket: "year" } } as never, ctx);
     expect(byYear.groups.map((group) => [group.label, group.nodes.length])).toEqual([["2006", 1], ["2015", 1], ["2016", 3]]);
