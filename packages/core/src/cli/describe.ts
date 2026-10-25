@@ -107,6 +107,23 @@ export function describeApp<S extends AnySchema>(
   }
 
   /*
+   * THE OTHER WORDS PEOPLE USE (Roadmap f-learned-suggestions): "supplier"
+   * for a vendor, "cost" for its price — what search finds a kind by and a
+   * model is told, said once so a reader maps the people's words to the app's.
+   */
+  const otherWords = kinds.flatMap((kind) => {
+    const definition = app.schema.tryDefinition(kind) as { aliases?: readonly string[]; fieldAliases?: Readonly<Record<string, readonly string[]>> } | undefined;
+    const quoted = (words: readonly string[]) => list(words.map((word) => `"${word}"`));
+    return [
+      ...(definition?.aliases?.length ? [`  ${pluralOf(app.schema, kind)} are also called ${quoted(definition.aliases)}.`] : []),
+      ...Object.entries(definition?.fieldAliases ?? {})
+        .filter(([, words]) => words.length > 0)
+        .map(([field, words]) => `  ${kind}'s ${field} is also called ${quoted(words)}.`),
+    ];
+  });
+  if (otherWords.length > 0) lines.push("", "## Other words people use", ...otherWords);
+
+  /*
    * WHAT A BLANK INSTALLATION MEETS. The first screen of every product, the
    * one the author never sees because their own graph has data in it.
    */

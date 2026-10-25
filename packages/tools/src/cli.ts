@@ -4,8 +4,11 @@ import { entryArg, loadApp } from "@graview/core/cli";
 import { instantiateTemplate } from "@graview/core/check";
 import { sayFindings, templateSeedPrimitives } from "@graview/core/document";
 import { memorySubscriptions, Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal, type SubscriptionStore } from "@graview/core";
-import { backendFrom, fileFriction, fileSubscriptions, frictionFileOf, holdStore, openRemote, openStore, remoteFriction, remoteSubscriptions, sayHeld, seatHeaders, subscriptionsFileOf, type RemoteRefusal, type RemoteStore } from "@graview/ship";
+import { backendFrom, fileFriction, fileLearned, fileSubscriptions, frictionFileOf, holdStore, learnedFileOf, openRemote, openStore, remoteFriction, remoteSubscriptions, sayHeld, seatHeaders, subscriptionsFileOf, type RemoteRefusal, type RemoteStore } from "@graview/ship";
 import { frictionSinkTo, toolMistakes, type FrictionDraft } from "@graview/core/friction";
+import { learningOf, readFriction } from "./learn-cli.js";
+
+export { learn, LEARN_USAGE } from "./learn-cli.js";
 import { createMcpAdapter } from "./agent/adapters.js";
 import { createToolRuntime } from "./agent/tools.js";
 import { serveMcpStdio } from "./mcp-stdio.js";
@@ -104,6 +107,8 @@ export interface Host<S extends AnySchema> {
   readonly subscriptions: SubscriptionStore;
   /** Keeps what the seat could not do where the store is: the server's door, or a file beside the folder. */
   friction(draft: FrictionDraft): void;
+  /** The files beside a store on disk: the friction log and the answers to what the app learned (Roadmap f-learned-suggestions). None for a remote. */
+  readonly files?: { readonly friction: string; readonly learned: string };
   close(): Promise<void>;
 }
 
@@ -160,6 +165,7 @@ export async function openHost<S extends AnySchema>(
   return {
     store: opened.store,
     where: backend.where,
+    files: { friction: frictionFileOf(backend, app.name), learned: learnedFileOf(backend, app.name) },
     subscriptions: fileSubscriptions(subscriptionsFileOf(backend, app.name)),
     friction: (draft) => keepFriction(draft, undefined),
     settled: () => opened.flush(),
@@ -212,13 +218,16 @@ export async function mcp(argv: readonly string[]): Promise<number> {
      */
     const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}), ...(app.intelligence ? { intelligence: app.intelligence } : {}), ...(app.brand?.timeZone ? { timeZone: app.brand.timeZone } : {}) });
     // A served seat keeps subscriptions wherever its store is, so the catalog lists the tools that keep them.
-    const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: memorySubscriptions() }));
+    const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: memorySubscriptions(), learned: () => [] }));
     process.stdout.write(`${JSON.stringify({ tools: adapter.listTools() }, null, 2)}\n`);
     return 0;
   }
 
   const host = await openHost(app, argv, principal, "mcp");
-  const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: host.subscriptions });
+  // What the app's own actor learned from use, read at each call from the files beside the store (Roadmap f-learned-suggestions).
+  const files = host.files;
+  const learned = files ? () => learningOf(app, host.store, readFriction(flag(argv, "--friction") ?? files.friction), fileLearned(files.learned).list()).suggestions : undefined;
+  const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: host.subscriptions, ...(learned ? { learned } : {}) });
   /*
    * A TOOL CALL REFUSED AS INVALID IS WHAT AN AGENT COULD NOT DO (Roadmap
    * f-friction-log), kept beside the store with the form of the next call

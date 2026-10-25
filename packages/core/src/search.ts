@@ -633,6 +633,8 @@ function kindStrength(schema: AnySchema, kind: string, words: readonly string[])
     { field: "plural", text: pluralOf(definition, kind) },
     { field: "kind", text: humanizeField(kind) },
     ...(definition?.noun ? [{ field: "noun", text: definition.noun }] : []),
+    // Another word people use for one (Roadmap f-learned-suggestions): "supplier" finds the vendors.
+    ...(definition?.aliases ?? []).map((text) => ({ field: "alias", text })),
   ];
   let best: { strength: Exclude<MatchStrength, "field">; field: string; text: string } | undefined;
   for (const candidate of candidates) {

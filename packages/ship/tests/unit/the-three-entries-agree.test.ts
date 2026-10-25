@@ -61,6 +61,8 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   fileFriction: "node:fs",
   browserFriction: "localStorage",
   frictionFileOf: "the CLI",
+  fileLearned: "node:fs",
+  learnedFileOf: "the CLI",
   fileConnectionState: "node:fs",
   readEnvFile: "node:fs",
   connectionsFileOf: "the CLI",

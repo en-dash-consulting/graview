@@ -55,6 +55,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       edges?: Record<string, { to: readonly string[] | "*"; cardinality?: "one" | "many"; description?: string; inverse?: string; appendOnly?: boolean; tidying?: "never" }>;
       plural?: string;
       noun?: string;
+      aliases?: readonly string[];
+      fieldAliases?: Readonly<Record<string, readonly string[]>>;
       description?: string;
       label?: unknown;
       describe?: unknown;
@@ -84,7 +86,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       const read = fieldOf(field);
       if ("spec" in read && isRepeatField(definition?.fields?.shape?.[repeatKey(name)]) && (read.spec.type === "date" || read.spec.type === "datetime")) (read.spec as { repeats?: boolean }).repeats = true;
       const beside = definition?.defaults?.[name];
-      if ("spec" in read) fields[name] = beside !== undefined && read.spec.default === undefined ? ({ ...read.spec, default: beside } as FieldSpec) : read.spec;
+      const aliases = definition?.fieldAliases?.[name];
+      if ("spec" in read) fields[name] = { ...(beside !== undefined && read.spec.default === undefined ? { ...read.spec, default: beside } : read.spec), ...(aliases && aliases.length > 0 ? { aliases: [...aliases] } : {}) } as FieldSpec;
       else findings.push(error("field-is-code", `${at}.fields.${name}`, `the field "${name}" cannot be written in a document: ${read.why}`));
     }
     if (typeof definition?.label === "function") findings.push(warning("label-is-code", `${at}.label`, `${kind}'s label is a function; the document names it by its first required word field instead`, 'write it as a template, like "{name}"'));
@@ -113,6 +116,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     kinds[kind] = {
       fields: Object.keys(fields).length > 0 ? fields : { label: { type: "string", required: true } },
       ...(definition?.noun ? { noun: definition.noun } : {}),
+      ...(definition?.aliases && definition.aliases.length > 0 ? { aliases: [...definition.aliases] } : {}),
       ...(definition?.plural ? { plural: definition.plural } : {}),
       ...(definition?.description ? { description: definition.description } : {}),
       ...(definition?.lifecycle ? { lifecycle: { field: definition.lifecycle.field, retired: [...definition.lifecycle.retired] as [string | number | boolean, ...(string | number | boolean)[]] } } : {}),

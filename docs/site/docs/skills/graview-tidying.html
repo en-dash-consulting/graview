@@ -17,13 +17,13 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>graview-tidying — Graview docs</title>
-<meta name="description" content="Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.">
+<meta name="description" content="Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
 <meta property="og:site_name" content="Graview">
 <meta property="og:title" content="graview-tidying — Graview docs">
-<meta property="og:description" content="Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.">
+<meta property="og:description" content="Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://graview.dev/docs/skills/graview-tidying.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -62,7 +62,7 @@ img { max-width: 100%; }
    "@type": "TechArticle",
    "@id": "https://graview.dev/docs/skills/graview-tidying.html#article",
    "headline": "graview-tidying — Graview docs",
-   "description": "Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.",
+   "description": "Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.",
    "url": "https://graview.dev/docs/skills/graview-tidying.html",
    "inLanguage": "en",
    "image": "https://graview.dev/og.png",
@@ -1798,7 +1798,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-tidying</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-tidying</code> is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-tidying</code> is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1818,15 +1818,19 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <ol>
 <li><strong>Let it dream.</strong> <code>dream(store, { now, limit, ai })</code> from <code>@graview/tools/tidy</code> runs the actor once. Code puts forward near-duplicates, the records a relation might mean, finished records and empty choices; the host's System One model (<code>ai.fast</code>, Jev) does the judging, one request per candidate; code routes each answer by how much the change would undo (<code>BANDS</code>) — made, suggested with its basis ("Jev: 0.93 that …"), or dropped. Without a model, or when it fails or the budget runs out, the floor is the judges' own rules: a shared name or email, a link the record's text names, a finished record unchanged for 30 days. It skips what was declined, what waits, what is left alone or changed in the last day, and applies nothing unless the host passes <code>applyAtLeast</code>. A host's schedule runs it (`graview dream &lt;entry&gt; --data ./data --model jev-latest --cache ./cache.json`), or reaches the store as the actor through <code>suggest_changes</code>, the tool only an <code>automated</code> seat is offered. <code>whileAway(store, { seq }, principal, { dismissed })</code> is the tray's line, less what the reader said "not now" to; a host that works it out after the first draw hands it over with <code>handle.setWhileAway(away)</code> (a React host changes the prop).</li>
 </ol>
+<ol>
+<li><strong>Let it learn the app from use.</strong> `learnFromUse({ document, friction, log, records, declined, opens })<code> from </code>@graview/core/learn` suggests changes to the declaration itself, each resting on at least <code>minPeople</code> (3) distinct people: another word for a kind or a field people searched with and found nothing (<code>add-alias</code>; a kind's or field's <code>aliases</code>, which search finds and a model is told), a text field whose values repeat retyped to a choice, a date field beside dates written into words (nothing is moved), one act for two people take one after the other (only document acts that set fields), a clearer description for an act agents call wrongly, and a place a host's <code>opens</code> counts say nobody opens. It changes nothing: <code>acceptAppSuggestion</code> applies the edits through <code>editDocument</code> with <code>lineage: { basis, suggestion: key }</code>, and <code>declineAppSuggestion</code> is kept (<code>learned.json</code> beside the store) and handed back as <code>declined</code>, never offered again. `graview learn &lt;entry&gt; --data ./data<code> prints them; </code>--accept &lt;key&gt;<code> or </code>--decline &lt;key&gt;`.</li>
+</ol>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">graview check src/domain/app.ts
 npx graview check --document app.json   # a document</code></pre></div>
-<p>Report <strong>the actual output</strong>. In a document it warns <code>tidying-redundant</code> where a relation says <code>"never"</code> that its kind's own <code>tidying</code> already says. The rest is behavior, so try it:</p>
+<p>Report <strong>the actual output</strong>. In a document it warns <code>tidying-redundant</code> where a relation says <code>"never"</code> that its kind's own <code>tidying</code> already says, and refuses an alias another kind or field is already called (<code>alias-taken</code>). The rest is behavior, so try it:</p>
 <ul>
 <li>Archive one record by its act and ask `graview describe &lt;entry&gt; --place &lt;slug&gt;` again: it is gone from the list and the count, and <code>?archived=true</code> finds it. Bring it back; its links are still there.</li>
 <li>Merge two records and undo the merge: both come back with their links.</li>
 <li>Have a test actor (<code>automated: true</code>) suggest a link and decline it from the tray: <code>suggest(store, …)</code> of the same calls then refuses, and a record left alone refuses the actor's change by name.</li>
 <li>Run <code>graview dream</code> twice: the second run suggests nothing new, and its JSON says each finding is already waiting.</li>
+<li>Run <code>graview learn</code> after <code>--decline &lt;key&gt;</code>: that suggestion is gone, and one person's hundred searches never make one.</li>
 </ul>
 <h3>What the check cannot see</h3>
 <p>Whether a rule should still count an archived record: it does not unless it asks with <code>all(kind, true)</code>, and a total that should include last season's says so on purpose. Whether the actor's confident changes deserved their confidence — read a day of its Activity row before raising what it applies without asking. And which of two duplicates should stay: <code>into</code> is the one you name, so name the one with the history.</p>

@@ -1,6 +1,6 @@
 # graview-tidying
 
-`graview-tidying` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.
+`graview-tidying` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -20,6 +20,8 @@ A list that grows fills with what is finished and what was entered twice, and th
 
 1. **Let it dream.** `dream(store, { now, limit, ai })` from `@graview/tools/tidy` runs the actor once. Code puts forward near-duplicates, the records a relation might mean, finished records and empty choices; the host's System One model (`ai.fast`, Jev) does the judging, one request per candidate; code routes each answer by how much the change would undo (`BANDS`) — made, suggested with its basis ("Jev: 0.93 that …"), or dropped. Without a model, or when it fails or the budget runs out, the floor is the judges' own rules: a shared name or email, a link the record's text names, a finished record unchanged for 30 days. It skips what was declined, what waits, what is left alone or changed in the last day, and applies nothing unless the host passes `applyAtLeast`. A host's schedule runs it (`graview dream <entry> --data ./data --model jev-latest --cache ./cache.json`), or reaches the store as the actor through `suggest_changes`, the tool only an `automated` seat is offered. `whileAway(store, { seq }, principal, { dismissed })` is the tray's line, less what the reader said "not now" to; a host that works it out after the first draw hands it over with `handle.setWhileAway(away)` (a React host changes the prop).
 
+1. **Let it learn the app from use.** `learnFromUse({ document, friction, log, records, declined, opens })` from `@graview/core/learn` suggests changes to the declaration itself, each resting on at least `minPeople` (3) distinct people: another word for a kind or a field people searched with and found nothing (`add-alias`; a kind's or field's `aliases`, which search finds and a model is told), a text field whose values repeat retyped to a choice, a date field beside dates written into words (nothing is moved), one act for two people take one after the other (only document acts that set fields), a clearer description for an act agents call wrongly, and a place a host's `opens` counts say nobody opens. It changes nothing: `acceptAppSuggestion` applies the edits through `editDocument` with `lineage: { basis, suggestion: key }`, and `declineAppSuggestion` is kept (`learned.json` beside the store) and handed back as `declined`, never offered again. `graview learn <entry> --data ./data` prints them; `--accept <key>` or `--decline <key>`.
+
 ### Then find out whether it worked
 
 ```sh
@@ -27,12 +29,13 @@ graview check src/domain/app.ts
 npx graview check --document app.json   # a document
 ```
 
-Report **the actual output**. In a document it warns `tidying-redundant` where a relation says `"never"` that its kind's own `tidying` already says. The rest is behavior, so try it:
+Report **the actual output**. In a document it warns `tidying-redundant` where a relation says `"never"` that its kind's own `tidying` already says, and refuses an alias another kind or field is already called (`alias-taken`). The rest is behavior, so try it:
 
 - Archive one record by its act and ask `graview describe <entry> --place <slug>` again: it is gone from the list and the count, and `?archived=true` finds it. Bring it back; its links are still there.
 - Merge two records and undo the merge: both come back with their links.
 - Have a test actor (`automated: true`) suggest a link and decline it from the tray: `suggest(store, …)` of the same calls then refuses, and a record left alone refuses the actor's change by name.
 - Run `graview dream` twice: the second run suggests nothing new, and its JSON says each finding is already waiting.
+- Run `graview learn` after `--decline <key>`: that suggestion is gone, and one person's hundred searches never make one.
 
 ### What the check cannot see
 
@@ -40,6 +43,6 @@ Whether a rule should still count an archived record: it does not unless it asks
 
 ---
 
-Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said — verified with graview check and by undoing it rather than assuming nothing was lost.
+Tidy a Graview app without losing anything — set records aside (archive, bring back) instead of deleting them, merge a duplicate into the one that stays, and let the app's own actor link and prune by suggestion a person accepts or declines, held to what people said, and suggest changes to the app itself learned from how several people use it — verified with graview check and by undoing it rather than assuming nothing was lost.
 
 The page: https://graview.dev/docs/skills/graview-tidying.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

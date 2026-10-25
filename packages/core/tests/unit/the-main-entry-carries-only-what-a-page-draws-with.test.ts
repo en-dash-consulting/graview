@@ -14,6 +14,7 @@ import * as forms from "../../src/forms.js";
 import * as friction from "../../src/friction.js";
 import * as history from "../../src/history.js";
 import * as jobs from "../../src/jobs.js";
+import * as learn from "../../src/learn.js";
 import * as past from "../../src/past.js";
 import * as importing from "../../src/import/index.js";
 import * as jsonSchema from "../../src/json-schema.js";
@@ -81,6 +82,8 @@ const OFF_THE_PAGE = {
     from: friction,
     names: ["callShape", "FRICTION_KEPT_MOST", "FRICTION_LIMITS", "FRICTION_RETENTION_DAYS", "FRICTION_TYPES", "frictionDigest", "frictionEvent", "frictionOf", "frictionSinkTo", "keptFriction", "memoryFriction", "ownFriction", "toolMistakes", "withinRetention"],
   },
+  // Roadmap f-learned-suggestions: the app's own actor suggesting changes to the app from evidence of use, accepted through the editor or declined for good — a host's and a command's, on no page.
+  "@graview/core/learn": { from: learn, names: ["acceptAppSuggestion", "declineAppSuggestion", "keptDecisions", "LEARNING_ACTOR", "learnFromUse", "learningFrom", "memoryLearned"] },
   "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "existingViewsOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {

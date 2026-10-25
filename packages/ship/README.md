@@ -164,6 +164,21 @@ of it is in the op log or an export. A visitor — somebody answering a form who
 app — is never recorded, on the page, in the client or at the server. A host turns it off with
 `friction: false` (or `graview serve --no-friction`, `graview mcp --no-friction`).
 
+### What the app learns from it
+
+The app's own actor reads the friction log, the op log and the records, and suggests changes
+to the app itself (`learnFromUse`, `@graview/core/learn`): another word for a kind or a field
+people searched with and found nothing (`add-alias`), a choice for a text field whose values
+repeat, a date field beside dates written into words (nothing is moved), one act for two that
+people take one after the other, a clearer description for an act agents call wrongly, and,
+from counts a host passes, a place nobody opens. Each rests on at least three distinct people,
+never one person's habit, and says only counts: how many people, how many times. Nothing
+changes until a person answers. `graview learn` prints them; `--accept <key>` applies one to a
+document app through the editor, as one change with its lineage, and `--decline <key>` keeps
+the answer in `learned.json` beside the store (`fileLearned`, `learnedFileOf`), so it is never
+suggested again. `graview mcp` lists them with a read (`list_app_suggestions`); a seat's
+context never carries them.
+
 ## The live wire
 
 `openRemote({ live: true })` holds a WebSocket to `/graview/live`, and every op is pushed down

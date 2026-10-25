@@ -163,6 +163,12 @@ export function frictionFileOf(backend: Pick<StoreBackend, "adapter" | "where">,
   return root !== undefined ? join(root, scope, "friction.json") : `${backend.where}.friction.json`;
 }
 
+/** Where the answers to the app's own suggestions about itself are kept (Roadmap f-learned-suggestions): beside the store, with the friction log they are learned from. */
+export function learnedFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
+  const root = (backend.adapter as { root?: string }).root;
+  return root !== undefined ? join(root, scope, "learned.json") : `${backend.where}.learned.json`;
+}
+
 /** Where `graview serve` keeps the views a person tidied from the place menu (Roadmap f-place-menu-views): beside the store, as the subscriptions are. */
 export function viewsFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
   const root = (backend.adapter as { root?: string }).root;

@@ -335,17 +335,19 @@ export interface FrictionDigest {
 /** A word as it is compared with the app's names: lower case, a plural's `s` gone. */
 const stem = (word: string): string => (word.length > 3 && word.endsWith("s") && !word.endsWith("ss") ? word.slice(0, -1) : word);
 
-/** Every word the app's kinds and fields are called by. */
+/** Every word the app's kinds and fields are called by, their aliases among them. */
 function namesOf(schema: AnySchema): ReadonlySet<string> {
   const names = new Set<string>();
   const add = (text: string) => {
     for (const word of text.toLowerCase().split(/[^\p{L}\p{N}]+/u)) if (word.length > 0) names.add(stem(word));
   };
   for (const kind of schema.kinds as readonly string[]) {
-    const definition = schema.tryDefinition(kind) as { fields?: { shape?: Record<string, unknown> } } | undefined;
+    const definition = schema.tryDefinition(kind) as { fields?: { shape?: Record<string, unknown> }; aliases?: readonly string[]; fieldAliases?: Readonly<Record<string, readonly string[]>> } | undefined;
     add(kind);
     add(nounOf(definition as never, kind));
     add(pluralOf(schema, kind));
+    // And the other words the app answers to (Roadmap f-learned-suggestions): a word it took as an alias is no longer unknown.
+    for (const alias of [...(definition?.aliases ?? []), ...Object.values(definition?.fieldAliases ?? {}).flat()]) add(alias);
     for (const field of Object.keys(definition?.fields?.shape ?? {})) {
       add(field);
       add(humanizeField(field));

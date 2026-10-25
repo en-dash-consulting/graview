@@ -582,6 +582,10 @@ export interface SchemaDigestKind {
   readonly plural: string;
   readonly fields: Readonly<Record<string, string>>;
   readonly relations: Readonly<Record<string, readonly string[]>>;
+  /** Other words people use for one ("supplier" for a vendor), when the app declares them (Roadmap f-learned-suggestions). */
+  readonly aliases?: readonly string[];
+  /** Other words people use for a field it shows, by field. */
+  readonly fieldAliases?: Readonly<Record<string, readonly string[]>>;
 }
 
 /** The declaration, as a model is told it: the kinds this viewer sees and the acts it may run. `version` changes when either does. */
@@ -687,7 +691,17 @@ export function schemaDigestOf<S extends AnySchema>(given: Store<S>, principal: 
     }
     const relations: Record<string, readonly string[]> = {};
     for (const [edge, declared] of Object.entries(edgesOf(schema, kind))) relations[edge] = declared.to === "*" ? [...visible] : declared.to.filter((one) => visible.has(one));
-    return { kind, noun: nounOf(schema.tryDefinition(kind), kind), plural: pluralOf(schema, kind), fields, relations };
+    const definition = schema.tryDefinition(kind) as { aliases?: readonly string[]; fieldAliases?: Readonly<Record<string, readonly string[]>> } | undefined;
+    const fieldAliases = Object.entries(definition?.fieldAliases ?? {}).filter(([field, words]) => field in fields && words.length > 0);
+    return {
+      kind,
+      noun: nounOf(schema.tryDefinition(kind), kind),
+      plural: pluralOf(schema, kind),
+      fields,
+      relations,
+      ...(definition?.aliases && definition.aliases.length > 0 ? { aliases: definition.aliases } : {}),
+      ...(fieldAliases.length > 0 ? { fieldAliases: Object.fromEntries(fieldAliases) } : {}),
+    };
   });
   const acts = may.map((mutation) => ({ name: mutation.name, title: mutation.title ?? humanizeField(mutation.name), ...(mutation.subject ? { on: subjectKindsOf(schema, mutation).filter((one) => visible.has(one)) } : {}) }));
   const body = { kinds, acts };

@@ -18,10 +18,14 @@ const refusedFormat = (format: string, type: string): string => {
 import { farEnd } from "./far-end.js";
 import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
 import { JobSpec } from "./purpose-spec.js";
+import { aliasWord, documentAliasFindings } from "../alias-findings.js";
+import { withArticle } from "../schema/define-node.js";
 import { linkedRelationFindings } from "./linked-relation-findings.js";
 import { linkedRelationOfSpec, reachesAnotherApp, type LinkedRelation } from "../schema/linked.js";
 import {
   ActSpec,
+  ALIAS,
+  MOST_ALIASES,
   EDGE_NAME,
   EdgeSpec,
   FIELD_NAME,
@@ -152,6 +156,8 @@ export const EDIT_OPS = [
   "add-job",
   "edit-job",
   "remove-job",
+  "add-alias",
+  "set-aliases",
 ] as const;
 export type EditOp = (typeof EDIT_OPS)[number];
 
@@ -326,6 +332,10 @@ function buildShapes(): Record<EditOp, z.ZodType> {
       })
       .strict(),
     "remove-job": z.object({ op: z.literal("remove-job"), name: jobName }).strict(),
+    // Another word people use for a kind, or for one of its fields (Roadmap f-learned-suggestions).
+    "add-alias": z.object({ op: z.literal("add-alias"), kind: kindName, field: fieldName.optional(), alias: z.string().min(1).max(40) }).strict(),
+    // All of a kind's or a field's other words at once; null or [] takes them away.
+    "set-aliases": z.object({ op: z.literal("set-aliases"), kind: kindName, field: fieldName.optional(), aliases: z.union([z.array(z.string().min(1).max(40)).max(MOST_ALIASES), z.null()]) }).strict(),
   };
 }
 let shapes: Record<EditOp, z.ZodType> | undefined;
@@ -989,7 +999,47 @@ class Editor {
         return this.editJob(i, e);
       case "remove-job":
         return this.removeJob(i, e.name);
+      case "add-alias":
+        return this.setAliases(i, e.kind, e.field, [...this.aliasesOf(e.kind, e.field), e.alias], e.alias);
+      case "set-aliases":
+        return this.setAliases(i, e.kind, e.field, e.aliases ?? []);
     }
+  }
+
+  // ── other words for a kind or a field (Roadmap f-learned-suggestions) ──
+
+  private aliasesOf(kind: string, field?: string): readonly string[] {
+    const spec = this.doc.kinds[kind];
+    return (field ? spec?.fields?.[field]?.aliases : spec?.aliases) ?? [];
+  }
+
+  /**
+   * A kind's or a field's aliases, as words people search with: lower case,
+   * each once. Refused, in the checker's words, when one is not a word or is
+   * what something else in the app is already called. `added` is the one
+   * word `add-alias` gave, said alone.
+   */
+  private setAliases(i: number, kind: string, field: string | undefined, given: readonly string[], added?: string) {
+    const spec = this.kind(i, kind);
+    if (!spec) return;
+    const target: Doc | undefined = field ? this.field(i, kind, field) : spec;
+    if (!target) return;
+    const said = [...new Set(given.map(aliasWord))];
+    const at = added === undefined ? "aliases" : "alias";
+    for (const [n, word] of said.entries()) if (!ALIAS.test(word)) return this.fail(i, added === undefined ? `aliases.${n}` : at, `"${word}" is not a word people search with: one to three words of letters and digits`, 'like "supplier" or "wedding venue"');
+    if (said.length > MOST_ALIASES) return this.fail(i, at, `at most ${MOST_ALIASES} other words for one ${field ? "field" : "kind"}`);
+    const before = target.aliases;
+    if (said.length === 0) delete target.aliases;
+    else target.aliases = said;
+    const wrong = documentAliasFindings(this.doc as GraviewDocument).filter((finding) => finding.path.startsWith(`kinds.${kind}${field ? `.fields.${field}` : ""}.aliases`));
+    if (wrong.length > 0) {
+      if (before === undefined) delete target.aliases;
+      else target.aliases = before;
+      return this.fail(i, at, wrong[0]!.message, wrong[0]!.fix);
+    }
+    const whose = field ? `${kind}'s ${field}` : withArticle(spec.noun ?? words(kind));
+    if (added !== undefined) this.said.push(`Search and the seat take “${aliasWord(added)}” as another word for ${whose}.`);
+    else this.said.push(said.length === 0 ? `${capitalize(whose)} has no other words now.` : `Other words for ${whose}: ${listOf(said.map((word) => `“${word}”`))}.`);
   }
 
   // ── who the app is for, and what they come to do (Roadmap f-app-jobs) ──
