@@ -137,6 +137,7 @@ export const EDIT_OPS = [
   "set-label",
   "set-describe",
   "set-view",
+  "rename-view",
   "set-glance",
   "set-page-fields",
   "add-lens",
@@ -168,6 +169,8 @@ export type DocumentEdit = { readonly op: EditOp } & { readonly [key: string]: u
 /** Words the rule language keeps: a field or relation renamed to one could not be named in a rule. */
 const KEYWORDS = new Set(["and", "or", "not", "in", "where", "true", "false", "null"]);
 const MAX_EDITS = 50;
+/** A view's name, as a worker view's manifest must say it (`@graview/guest`'s `manifestFindings`). */
+const VIEW_NAME = /^[a-z0-9][a-z0-9-]{0,62}$/;
 
 // ── shapes ─────────────────────────────────────────────────────────────────
 
@@ -245,6 +248,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "set-describe": z.object({ op: z.literal("set-describe"), kind: kindName, describe: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
     // A kind's slot; the front page (`slot: "home"`, no kind); or a blocks lens's blocks, by its title (FR-84).
     "set-view": z.object({ op: z.literal("set-view"), kind: kindName.optional(), slot: z.enum([...VIEW_SLOTS, "home"]).optional(), lens: lensTitle.optional(), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
+    // A view the host keeps, by its name (`view:<name>` or bare), and what it is called now (Roadmap f-rename-view).
+    "rename-view": z.object({ op: z.literal("rename-view"), view: z.string().min(1).max(80), to: z.string().min(1).max(80) }).strict(),
     "set-glance": z.object({ op: z.literal("set-glance"), kind: kindName, fields: z.array(fieldName).max(20) }).strict(),
     // How a record's page orders and groups its facts (FR-148): these first, then each group under its title; none of either takes the choice away.
     "set-page-fields": z
@@ -974,6 +979,8 @@ class Editor {
       }
       case "set-view":
         return this.setView(i, e);
+      case "rename-view":
+        return this.renameView(i, e.view, e.to);
       case "set-glance": {
         // What a glance at one says (FR-39): fields of this kind, each once, in the order given; none takes the choice away.
         const spec = this.kind(i, e.kind);
@@ -1704,7 +1711,7 @@ class Editor {
    */
   private viewNamed(i: number, path: string, word: string): string | null | undefined {
     const name = viewReference(word.trim());
-    const views = this.options.views?.filter((view) => view.attach !== "home" && view.cardinality !== "one" && Boolean(view.title));
+    const views = this.keptViews()?.filter((view) => view.attach !== "home" && view.cardinality !== "one" && Boolean(view.title));
     if (!views) {
       if (name === undefined) return undefined;
       // On the host's word: drawn where it is named once the host registers it (`graview check` says so).
@@ -1717,12 +1724,69 @@ class Editor {
     return (this.fail(i, path, `the host keeps no view named "${name}"`, `name one of ${views.map((one) => `"${VIEW_REFERENCE}${one.name}" (${one.title})`).join(", ") || "none: the host keeps no picture of a kind"}`), null);
   }
 
+  /** The views the host keeps, under the names this batch has given them so far (`rename-view`). */
+  private keptViews(): readonly HostView[] | undefined {
+    if (this.renamedViews.size === 0) return this.options.views;
+    return this.options.views?.map((view) => (this.renamedViews.has(view.name) ? { ...view, name: this.renamedViews.get(view.name)! } : view));
+  }
+
+  /** Each view this batch renamed: its name as the host keeps it, to the name it has now. */
+  private readonly renamedViews = new Map<string, string>();
+
+  /**
+   * A VIEW RENAMED (Roadmap f-rename-view): every `view:<name>` the
+   * arrangement holds — the order, the place the app opens on, the bar —
+   * follows the new name. The view itself, and every version of it the
+   * host keeps, is the host's to move: this edit is what tells it to.
+   * Refused: a name that is no view's name (a manifest's rule), a name
+   * another view has, and a view nothing names — the host's list where it
+   * says its views, the document's own references where it does not.
+   */
+  private renameView(i: number, word: string, to: string) {
+    const from = viewReference(word.trim()) ?? word.trim();
+    const name = viewReference(to.trim()) ?? to.trim();
+    if (!VIEW_NAME.test(name)) return this.fail(i, "to", `"${to}" is not a view's name: lower-case letters, digits and hyphens, like "${placeSlug(to) || "vendor-board"}"`);
+    const pages = (this.doc.pages ?? {}) as Doc;
+    const named = (one: string): boolean => pages.first === VIEW_REFERENCE + one || (["order", "primary"] as const).some((part) => Array.isArray(pages[part]) && pages[part].includes(VIEW_REFERENCE + one));
+    const views = this.keptViews();
+    const view = views?.find((one) => one.name === from);
+    if (views ? !view : !named(from))
+      return this.fail(
+        i,
+        "view",
+        views ? `the host keeps no view named "${from}"` : `nothing in this app names a view "${from}", and its host did not say its views`,
+        views ? `name one of ${views.map((one) => `"${one.name}"`).join(", ") || "none: the host keeps no view"}` : undefined,
+      );
+    if (name === from) return this.fail(i, "to", `the view is already called "${from}"`);
+    const other = views?.find((one) => one.name === name);
+    if (other || named(name)) return this.fail(i, "to", `another view is already called "${name}"${other?.title ? ` (${other.title})` : ""}`, "choose a name no other view has");
+    const moved: string[] = [];
+    const rename = (one: string) => (one === VIEW_REFERENCE + from ? VIEW_REFERENCE + name : one);
+    if (Array.isArray(pages.order) && pages.order.includes(VIEW_REFERENCE + from)) {
+      pages.order = pages.order.map(rename);
+      moved.push("the order");
+    }
+    if (pages.first === VIEW_REFERENCE + from) {
+      pages.first = VIEW_REFERENCE + name;
+      moved.push("the place the app opens on");
+    }
+    if (Array.isArray(pages.primary) && pages.primary.includes(VIEW_REFERENCE + from)) {
+      pages.primary = pages.primary.map(rename);
+      moved.push("the bar");
+    }
+    const original = [...this.renamedViews].find(([, now]) => now === from)?.[0] ?? from;
+    this.renamedViews.set(original, name);
+    if (this.pending.delete(from)) this.pending.add(name);
+    const called = view?.attach === "home" ? `The home's view "${from}"` : `The view "${view?.title ?? from}"`;
+    this.said.push(`${called} is now called "${name}"${moved.length > 0 ? `; ${listOf(moved)} name it so` : ""}.`);
+  }
+
   /** The views this edit names on the host's word, said once they are written. */
   private readonly pending = new Set<string>();
 
   /** What a fix says a view is named by. */
   private viewsSaid(): string {
-    const views = this.options.views?.filter((view) => view.attach !== "home" && view.cardinality !== "one" && Boolean(view.title));
+    const views = this.keptViews()?.filter((view) => view.attach !== "home" && view.cardinality !== "one" && Boolean(view.title));
     if (!views) return `a view its host keeps, as "${VIEW_REFERENCE}<its name>"`;
     return views.length > 0 ? `a view its host keeps (${views.map((one) => `"${one.title}"`).join(", ")})` : "a view (its host keeps none)";
   }
@@ -1730,7 +1794,7 @@ class Editor {
   /** A host's view in a sentence: its title, where the host said it. */
   private viewWords(word: string): string {
     const name = viewReference(word)!;
-    const title = this.options.views?.find((view) => view.name === name)?.title;
+    const title = this.keptViews()?.find((view) => view.name === name)?.title;
     return `the view "${title ?? name}"${this.pending.has(name) ? " (once the host registers it)" : ""}`;
   }
 
