@@ -4,6 +4,7 @@ import { slug } from "../mutations/define-mutation.js";
 import { isAppAddress } from "../schema/app-link.js";
 import { PHONE } from "../schema/typed-fields.js";
 import { parseDuration } from "../schema/field-words.js";
+import { readPartialDay } from "../when-typed.js";
 
 /**
  * A CELL, READ AS THE FIELD IT GOES IN (FR-177). A spreadsheet holds what a
@@ -198,7 +199,8 @@ export function coerceCell(spec: FieldSpec, input: unknown, said: string, option
       return value === undefined ? { ok: false, why: `${quoted} under ${said} is not a yes or a no` } : { ok: true, value };
     }
     case "date": {
-      const value = readDay(input, options);
+      // A day; else a year or a month alone, which the field keeps or refuses (Roadmap f-partial-dates).
+      const value = readDay(input, options) ?? readPartialDay(input);
       return value === undefined ? { ok: false, why: `${quoted} under ${said} is not a date` } : { ok: true, value };
     }
     case "datetime": {

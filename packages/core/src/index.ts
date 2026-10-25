@@ -291,9 +291,13 @@ export { excerpt } from "./excerpt.js";
 export { gridSortOf, gridSortProblem, sortForGrid, type GridSort } from "./grid-sort.js";
 export { coverageUnlinkedWords } from "./coverage-words.js";
 export { actTitle, allLabel, article, counted, pluralLabel, pluralOf, fieldWords, humanizeField, nounOf, summarize, withArticle } from "./schema/define-node.js";
+// What each option of a kind's choices is called, for a view handed records as they are kept (Roadmap f-option-labels).
+export { choiceWords } from "./schema/choice-words.js";
 // Days, times and numbers as a person reads them, in the reader's or the app's locale (FR-178), and instants on the person's or the app's clock (Roadmap f-app-time-zone).
 export {
+  DATE_VALUE,
   DEFAULT_LOCALE,
+  PARTIAL_DAY,
   dayAsRead,
   dayOfMoment,
   dayOfMonthAsRead,

@@ -3,7 +3,7 @@ import { isAppLinkField } from "../schema/app-link.js";
 import { isMarkdownField } from "../schema/markdown.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
 import { descriptionOf } from "../schema/zod.js";
-import { isMoment } from "../days.js";
+import { DATE_VALUE, isMoment } from "../days.js";
 import type { FieldSpec } from "./schema.js";
 
 /*
@@ -59,7 +59,8 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
       if (format === "url") return { spec: { type: "url", ...base } };
       if (format === "date") return { spec: { type: "date", ...base } };
       if (format === "datetime" || checks.some((check) => check?.["fn"] === isMoment)) return { spec: { type: "datetime", ...base } };
-      if (checks.some((check) => check?.["format"] === "regex" && DATE.test(String((check?.["pattern"] as RegExp | undefined)?.source ?? "")))) return { spec: { type: "date", ...base } };
+      // A day's pattern, or a document date's, which takes a month or a year alone too (Roadmap f-partial-dates).
+      if (checks.some((check) => check?.["format"] === "regex" && (DATE.test(String((check?.["pattern"] as RegExp | undefined)?.source ?? "")) || (check?.["pattern"] as RegExp | undefined)?.source === DATE_VALUE.source))) return { spec: { type: "date", ...base } };
       return { spec: { type: "string", ...base, ...together("string") } };
     }
     case "number": {

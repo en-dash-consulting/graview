@@ -100,6 +100,16 @@ export const ANNOUNCED: readonly Announcement[] = [
     "fixture": "document:shortlist-0.1.10",
     "version": "0.1.37",
     "what": "Every relation is given connect-<kind>-<relation> and disconnect-<kind>-<relation> ({ id, to }) unless an act of the app connects or severs it — the vendor's fills relation, which no act made or broke, gives connect-vendor-fills and disconnect-vendor-fills, new tools."
+  },
+  {
+    "fixture": "document:vendors",
+    "version": "0.1.56",
+    "what": "Roadmap f-partial-dates: a document's date takes a month or a year alone, so add-vendor's and edit-vendor's due say the pattern ^\\d{4}(?:-(?:0[1-9]|1[0-2])(?:-\\d{2})?)?$. Roadmap f-add-id-kind-prefix: the id a creating act takes begins with its kind, and add-category's, add-vendor's and add-to-category's id say so (\"vendor:\")."
+  },
+  {
+    "fixture": "document:two-lines",
+    "version": "0.1.56",
+    "what": "Roadmap f-add-id-kind-prefix: add-chore's id begins with its kind, and its description says so (\"chore:\")."
   }
 ];
 
@@ -325,7 +335,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
             "id": {
               "type": "string",
               "minLength": 1,
-              "description": "Optional: the id for the category this makes. Refused if the graph already has it; left out, one is minted from the label."
+              "description": "Optional: the id for the category this makes, beginning with its kind (\"category:\"). Refused if the graph already has it; left out, one is minted from the label."
             }
           },
           "required": [
@@ -357,7 +367,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
             },
             "due": {
               "type": "string",
-              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "pattern": "^\\d{4}(?:-(?:0[1-9]|1[0-2])(?:-\\d{2})?)?$",
               "description": "when they need an answer"
             },
             "notes": {
@@ -367,7 +377,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
             "id": {
               "type": "string",
               "minLength": 1,
-              "description": "Optional: the id for the vendor this makes. Refused if the graph already has it; left out, one is minted from the label."
+              "description": "Optional: the id for the vendor this makes, beginning with its kind (\"vendor:\"). Refused if the graph already has it; left out, one is minted from the label."
             }
           },
           "required": [
@@ -527,7 +537,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
             },
             "due": {
               "type": "string",
-              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "pattern": "^\\d{4}(?:-(?:0[1-9]|1[0-2])(?:-\\d{2})?)?$",
               "description": "when they need an answer"
             },
             "notes": {
@@ -784,7 +794,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
             "id": {
               "type": "string",
               "minLength": 1,
-              "description": "Optional: the id for the chore this makes. Refused if the graph already has it; left out, one is minted from the label."
+              "description": "Optional: the id for the chore this makes, beginning with its kind (\"chore:\"). Refused if the graph already has it; left out, one is minted from the label."
             }
           },
           "required": [

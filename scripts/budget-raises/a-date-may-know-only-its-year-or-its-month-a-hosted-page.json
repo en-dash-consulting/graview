@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1947,
+  "gzipped": 617,
+  "changeset": "a-date-may-know-only-its-year-or-its-month.md",
+  "note": "Raised when a date came to know only its year or its month and a wrong one to be cleared (Roadmap f-partial-dates), with every option said by its label (Roadmap f-option-labels): a year or a month said and grouped (`dayAsRead`, `bucketStart`), a document date's pattern and the editor's reading of a year or a month alone, an edit's `clearable` fields taken past their parse, an option's label compiled into the kind's words and a worker view's `choices`. Measured at 617_986 / 215_661 against main's 616_039 / 215_044."
+}

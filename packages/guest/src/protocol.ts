@@ -241,6 +241,14 @@ export interface GuestProps {
    */
   readonly locale?: string;
   readonly timeZone?: string;
+  /**
+   * WHAT EACH OPTION OF A CHOICE IS CALLED (Roadmap f-option-labels), for
+   * the kinds of the records handed: kind → field → option → its label,
+   * as every other face says it. A record keeps the option's id
+   * (`"state-sponsored"`); a view draws `props.choices.actor.motive[node.motive]`
+   * ("State-sponsored").
+   */
+  readonly choices?: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, string>>>>>>;
 }
 
 

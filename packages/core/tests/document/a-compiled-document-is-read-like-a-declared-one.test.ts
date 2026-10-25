@@ -6,6 +6,7 @@ import { formFields } from "../../src/forms.js";
 import { mutationToolSchema } from "../../src/schema/json-schema.js";
 import { readDocument } from "../../src/document/index.js";
 import { compileDocument } from "../../src/check.js";
+import { DATE_VALUE } from "../../src/days.js";
 
 /**
  * A COMPILED DOCUMENT IS READ LIKE A DECLARED ONE. The framework builds a
@@ -40,7 +41,7 @@ describe("a compiled document", () => {
   });
 
   it("asks for an integer, a date and a choice as a declared kind's would be asked for", () => {
-    const declared = defineNode("vendor", { fields: z.object({ status: z.enum(["researching", "contacted", "booked", "declined"]), due: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), seats: z.number().int().optional() }) });
+    const declared = defineNode("vendor", { fields: z.object({ status: z.enum(["researching", "contacted", "booked", "declined"]), due: z.string().regex(DATE_VALUE).optional(), seats: z.number().int().optional() }) });
     for (const field of ["status", "due", "seats"]) expect(argShape(vendor.fields, field)).toEqual(argShape(declared.fields, field));
     expect(formFields(act("set-quote").input).map((field) => field.control)).toEqual(["node", "number"]);
   });

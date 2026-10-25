@@ -69,12 +69,12 @@ describe("a kind's list as its declaration opens it", () => {
     const page = await open("/requests");
     expect(page.host.querySelector("[data-testid='records']")?.getAttribute("data-grouped")).toBe("status");
     expect(groupsOf(page.host)).toEqual([
-      { head: "planned 1", shut: false, rows: ["r1"] },
+      { head: "Planned 1", shut: false, rows: ["r1"] },
       // Nine votes each tie on the rank; the tiebreak puts them by name.
-      { head: "new 3", shut: false, rows: ["r5", "r2", "r6"] },
-      { head: "considering 1", shut: false, rows: ["r7"] },
-      { head: "▸done · 2 requests", shut: true, rows: [] },
-      { head: "▸declined · 1 request", shut: true, rows: [] },
+      { head: "New 3", shut: false, rows: ["r5", "r2", "r6"] },
+      { head: "Considering 1", shut: false, rows: ["r7"] },
+      { head: "▸Done · 2 requests", shut: true, rows: [] },
+      { head: "▸Declined · 1 request", shut: true, rows: [] },
     ]);
     const toggle = page.host.querySelector<HTMLButtonElement>("[data-testid='list-group-toggle']")!;
     expect(toggle.tagName).toBe("BUTTON");
@@ -90,7 +90,7 @@ describe("a kind's list as its declaration opens it", () => {
     const toggle = () => page.host.querySelector<HTMLButtonElement>("[data-testid='list-group-toggle']")!;
     await act(async () => toggle().click());
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
-    expect(groupsOf(page.host)[3]).toEqual({ head: "▾done · 2 requests", shut: false, rows: ["r3", "r8"] });
+    expect(groupsOf(page.host)[3]).toEqual({ head: "▾Done · 2 requests", shut: false, rows: ["r3", "r8"] });
     expect(page.host.querySelector(`#${toggle().getAttribute("aria-controls")}`)?.hasAttribute("hidden")).toBe(false);
     // The other closed group stays shut.
     expect(groupsOf(page.host)[4]?.shut).toBe(true);
@@ -105,8 +105,8 @@ describe("a kind's list as its declaration opens it", () => {
     await opened.close();
     const found = await open("/requests?q=board&group=status&sort=rank:desc");
     expect(groupsOf(found.host).map((group) => [group.head, group.rows])).toEqual([
-      ["new 1", ["r2"]],
-      ["▾done · 1 request", ["r8"]],
+      ["New 1", ["r2"]],
+      ["▾Done · 1 request", ["r8"]],
     ]);
     await found.close();
   });

@@ -24,9 +24,14 @@ import type { AnyMutationDefinition } from "./types.js";
  *   had; a many one linked and unlinked ("Link a traveler"). Each reads
  *   from the other end too ("Link a moment"), so a line or the far
  *   record's page offers it in its own words.
- * - Replaced by what the app declares: any act that `connects` the
- *   relation replaces the derived connect, any that `severs` it the
- *   derived disconnect, and an act of the same name keeps its name.
+ * - Replaced by what the app declares: an act that `connects` the
+ *   relation on records that already stand — it makes none, and stands on
+ *   one end — replaces the derived connect, one that `severs` it the
+ *   derived disconnect, and an act of the same name keeps its name. An act
+ *   that MAKES a record and links it (Threat Watch's "Add a source", made
+ *   covering a threat) links only the record it makes, so it replaces
+ *   nothing (Roadmap f-connect-every-relation): without the pair, a source
+ *   made could never be linked to another threat.
  * - A relation declared `acts: "none"` is read from what was declared, and
  *   given neither.
  * - An `appendOnly` relation is never unmade, so it is given no
@@ -45,9 +50,15 @@ export function deriveRelationMutations<S extends AnySchema>(
   mutations: readonly AnyMutationDefinition<S>[],
 ): AnyMutationDefinition<S>[] {
   const taken = new Set(mutations.map((mutation) => mutation.name));
-  const declared = mutations.filter((mutation) => !mutation.derived);
-  const connected = new Set(declared.flatMap((mutation) => mutation.connects ?? []));
-  const severed = new Set(declared.flatMap((mutation) => mutation.severs ?? []));
+  // What links records that already stand: a declared act that makes none.
+  const declared = mutations.filter((mutation) => !mutation.derived && !mutation.creates?.length);
+  /** Whether a declared act makes or breaks this kind's relation, standing on one of its ends. */
+  const replaces = (verb: "connects" | "severs", kind: string, relation: string, edge: EdgeDeclaration): boolean =>
+    declared.some((mutation) => {
+      if (!(mutation[verb] ?? []).includes(relation)) return false;
+      const on = mutation.subject?.kinds;
+      return on === undefined || on === "*" || on.includes(kind as never) || edge.to === "*" || on.some((one) => edge.to.includes(one));
+    });
   const derived: AnyMutationDefinition<S>[] = [];
   const named = (graph: { getNode(id: string): unknown }, id: unknown): string => {
     const node = graph.getNode(String(id)) as ({ id: string; kind: string } & Record<string, unknown>) | undefined;
@@ -75,7 +86,7 @@ export function deriveRelationMutations<S extends AnySchema>(
       const noun = words.from;
       for (const act of RELATION_ACTS) {
         const name = relationActName(act, kind, relation);
-        if (taken.has(name) || edge.acts === "none" || (act === "connect" ? connected.has(relation) : severed.has(relation) || edge.appendOnly)) continue;
+        if (taken.has(name) || edge.acts === "none" || (act === "connect" ? replaces("connects", kind, relation, edge) : replaces("severs", kind, relation, edge) || edge.appendOnly)) continue;
         const { title, fromTheOtherEnd } = relationActTitles(act, words);
         const reading = edge.description ? `: ${edge.description.replace(/\.$/, "")}` : "";
         derived.push({

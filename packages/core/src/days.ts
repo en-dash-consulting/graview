@@ -34,6 +34,17 @@ export const DEFAULT_LOCALE = "en-US";
 /** A day as the record holds it: `YYYY-MM-DD`, nothing before or after. */
 export const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * A DATE THAT KNOWS ONLY ITS YEAR OR ITS MONTH (Roadmap f-partial-dates):
+ * `2006`, `2016-05`. History often knows no more, and `2006-01-01` would
+ * claim a day nobody knows. Sorted as written, a year comes before the
+ * months and days within it, and a month before its days.
+ */
+export const PARTIAL_DAY = /^\d{4}(?:-(?:0[1-9]|1[0-2]))?$/;
+
+/** What a document's date holds: a day, a month (`2016-05`) or a year (`2006`) alone. */
+export const DATE_VALUE = /^\d{4}(?:-(?:0[1-9]|1[0-2])(?:-\d{2})?)?$/;
+
 /** A moment as the record holds it: a day, a `T` or a space, and a time of day, with or without seconds and a zone. */
 export const ISO_MOMENT = /^\d{4}(-\d\d){2}[T ]\d\d:\d\d(:[\d.]+)?(Z|[+-][\d:]+)?$/;
 
@@ -193,8 +204,13 @@ function said(at: number, options: Intl.DateTimeFormatOptions & Intl.NumberForma
 const UTC = "UTC";
 const stampOf = (day: string): number => Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10));
 
-/** A `YYYY-MM-DD` day as a person reads it: "Aug 28, 2026" in en-US, "28 Aug 2026" in en-GB. Anything else is said as it is. */
+/**
+ * A `YYYY-MM-DD` day as a person reads it: "Aug 28, 2026" in en-US, "28 Aug
+ * 2026" in en-GB; a month alone (`2016-05`) as "May 2016", a year alone as
+ * itself. Anything else is said as it is.
+ */
 export function dayAsRead(day: string, locale?: string): string {
+  if (PARTIAL_DAY.test(day)) return day.length === 4 ? day : monthAsRead(day, {}, locale);
   return ISO_DAY.test(day) ? said(stampOf(day), { year: "numeric", month: "short", day: "numeric", timeZone: UTC }, locale) : day;
 }
 
@@ -269,7 +285,7 @@ export function numberAsRead(value: number, locale?: string, options: Intl.Numbe
 }
 
 /** A day or a moment as it is read; anything else as it is. */
-export const whenAsRead = (value: string, locale?: string, timeZone?: string): string => (ISO_DAY.test(value) ? dayAsRead(value, locale) : momentAsRead(value, locale, timeZone));
+export const whenAsRead = (value: string, locale?: string, timeZone?: string): string => (DATE_VALUE.test(value) ? dayAsRead(value, locale) : momentAsRead(value, locale, timeZone));
 
 /**
  * A day with its weekday: "Thursday, Sep 17" (en-US), "Thursday 17 Sep"

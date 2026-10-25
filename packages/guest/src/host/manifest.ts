@@ -2,7 +2,7 @@ import { localeFor, timeZoneFor, type AnySchema, type FileKind, type Principal, 
 import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
-import { plainNode, readAcross, type GuestViewInput } from "./session.js";
+import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session.js";
 
 /*
  * A WORKER VIEW IS A PLACE, WITH A MANIFEST THE HOST ENFORCES (FR-91).
@@ -368,6 +368,8 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     // The locale and the clock every other surface says a day and a time in (Roadmap f-app-time-zone).
     locale: localeFor(),
     timeZone: timeZoneFor(),
+    // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
+    ...choicesOf(store.schema, [...own, ...listed.values()]),
     // A link names a place by its slug, so each slug once: a picture over several kinds is one place to a view.
     ...(given.places ? { places: given.places.filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
   };

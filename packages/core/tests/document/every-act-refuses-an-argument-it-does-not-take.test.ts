@@ -36,24 +36,24 @@ const refused = (run: () => unknown): unknown => {
 function vendorStore() {
   const app = compiled(vendors);
   const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [] });
-  store.apply({ name: "add-vendor", args: { id: "vendor-bloom", name: "Bloom & Co" } });
+  store.apply({ name: "add-vendor", args: { id: "vendor:bloom", name: "Bloom & Co" } });
   return { app, store };
 }
 
 describe("a document's act", () => {
   it("refuses set-quote { id, quote, color } as invalid, naming color and what it takes, and changes nothing", () => {
     const { store } = vendorStore();
-    const error = refused(() => store.apply({ name: "set-quote", args: { id: "vendor-bloom", quote: 2400, color: "red" } }));
+    const error = refused(() => store.apply({ name: "set-quote", args: { id: "vendor:bloom", quote: 2400, color: "red" } }));
     expect(error).toBeInstanceOf(InvalidArguments);
     expect(refusalOf(error).reason).toBe("invalid");
     expect(refusalOf(error).sentence).toContain('does not take "color"; it takes "id", "quote"');
-    expect(store.graph.getNode("vendor-bloom")).not.toHaveProperty("quote");
+    expect(store.graph.getNode("vendor:bloom")).not.toHaveProperty("quote");
   });
 
   it("still takes id on an act that creates: the id of the record it makes", () => {
     const { store } = vendorStore();
-    store.apply({ name: "add-category", args: { id: "category-florist", name: "Florist" } });
-    expect(store.graph.getNode("category-florist")).toMatchObject({ kind: "category", name: "Florist" });
+    store.apply({ name: "add-category", args: { id: "category:florist", name: "Florist" } });
+    expect(store.graph.getNode("category:florist")).toMatchObject({ kind: "category", name: "Florist" });
     const error = refused(() => store.apply({ name: "add-category", args: { name: "Venue", color: "red" } }));
     expect(refusalOf(error).sentence).toMatch(/does not take "color"; it takes .*"id"/);
   });
@@ -63,17 +63,17 @@ describe("a document's act", () => {
     const before = store.log.length;
     refused(() =>
       store.applyAll([
-        { name: "set-quote", args: { id: "vendor-bloom", quote: 2400 } },
-        { name: "book", args: { id: "vendor-bloom", when: "June" } },
+        { name: "set-quote", args: { id: "vendor:bloom", quote: 2400 } },
+        { name: "book", args: { id: "vendor:bloom", when: "June" } },
       ]),
     );
     expect(store.log.length).toBe(before);
-    expect(store.graph.getNode("vendor-bloom")).not.toHaveProperty("quote");
+    expect(store.graph.getNode("vendor:bloom")).not.toHaveProperty("quote");
   });
 
   it("refuses a stray in a preview as the apply would", () => {
     const { store } = vendorStore();
-    expect(refusalOf(refused(() => store.preview({ name: "book", args: { id: "vendor-bloom", when: "June" } }))).reason).toBe("invalid");
+    expect(refusalOf(refused(() => store.preview({ name: "book", args: { id: "vendor:bloom", when: "June" } }))).reason).toBe("invalid");
   });
 
   it("says so in its tool: additionalProperties is false", () => {
@@ -130,8 +130,8 @@ describe("a TypeScript mutation, whose product writes z.object as it always has"
 
   it("takes id on an act that creates, and names it among what it takes", () => {
     const one = store();
-    one.apply({ name: "add-task", args: { id: "task-hall", label: "Hall" } });
-    expect(one.graph.getNode("task-hall")).toMatchObject({ label: "Hall" });
+    one.apply({ name: "add-task", args: { id: "task:hall", label: "Hall" } });
+    expect(one.graph.getNode("task:hall")).toMatchObject({ label: "Hall" });
     expect((refused(() => one.apply({ name: "add-task", args: { label: "Deposit", due: "June" } })) as Error).message).toContain('does not take "due"; it takes "label", "id"');
   });
 

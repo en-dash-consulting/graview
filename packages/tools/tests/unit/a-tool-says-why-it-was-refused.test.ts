@@ -21,26 +21,26 @@ const planner = { kind: "agent" as const, id: "helper", roles: ["planner"] };
 async function withADeclinedVendor() {
   const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}) });
   const runtime = createToolRuntime(store, { author: planner });
-  const made = await runtime.call("add-vendor", { id: "vendor-bloom", name: "Bloom & Co" });
+  const made = await runtime.call("add-vendor", { id: "vendor:bloom", name: "Bloom & Co" });
   expect(made.ok).toBe(true);
-  expect((await runtime.call("decline", { id: "vendor-bloom" })).ok).toBe(true);
+  expect((await runtime.call("decline", { id: "vendor:bloom" })).ok).toBe(true);
   return runtime;
 }
 
 describe("a tool says why it was refused", () => {
   it("refused: booking a declined vendor is the act's own rule saying no", async () => {
     const runtime = await withADeclinedVendor();
-    expect(await runtime.call("book", { id: "vendor-bloom" })).toEqual({ ok: false, error: "Bloom & Co was declined; reopen them first", reason: "refused" });
+    expect(await runtime.call("book", { id: "vendor:bloom" })).toEqual({ ok: false, error: "Bloom & Co was declined; reopen them first", reason: "refused" });
   });
 
   it("invalid: a call that changes nothing is the call as sent", async () => {
     const runtime = await withADeclinedVendor();
-    expect(await runtime.call("edit-vendor", { id: "vendor-bloom" })).toMatchObject({ ok: false, reason: "invalid" });
+    expect(await runtime.call("edit-vendor", { id: "vendor:bloom" })).toMatchObject({ ok: false, reason: "invalid" });
   });
 
   it("says the reason to an MCP client as structured content, beside the sentence", async () => {
     const adapter = createMcpAdapter(await withADeclinedVendor());
-    expect(await adapter.callTool("book", { id: "vendor-bloom" })).toEqual({
+    expect(await adapter.callTool("book", { id: "vendor:bloom" })).toEqual({
       content: [{ type: "text", text: "Bloom & Co was declined; reopen them first" }],
       structuredContent: { reason: "refused", error: "Bloom & Co was declined; reopen them first" },
       isError: true,
