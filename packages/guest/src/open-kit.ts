@@ -422,6 +422,14 @@ export const CSS_KEYWORD_PROPERTIES: Readonly<Record<string, readonly string[]>>
 /** Selectors a view's stylesheet may not write: each reaches past the view's own tree. */
 export const CSS_REFUSED_SELECTORS: readonly string[] = ["host", "host-context", "slotted", "part", "backdrop", "picker", "view-transition", "view-transition-group", "view-transition-image-pair", "view-transition-old", "view-transition-new"];
 
+/**
+ * The prefixed pseudo-elements a view's stylesheet may write: every other
+ * `-webkit-` or `-moz-` selector is refused, as a name the open kit cannot
+ * read the reach of. `::-webkit-details-marker` is Safari's `summary::marker`
+ * (FR-221): a disclosure's own triangle, drawn or hidden, in its own tree.
+ */
+export const CSS_PREFIXED_SELECTORS: readonly string[] = ["-webkit-details-marker"];
+
 /** The largest stylesheet, in characters, a view may give. */
 export const OPEN_MAX_STYLESHEET = 64_000;
 /** The longest attribute value, in characters; geometry (`d`, `points`) may be longer. */
