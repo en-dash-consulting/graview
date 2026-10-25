@@ -89,6 +89,7 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 | GET | `/graview/who` | who is here right now |
 | POST | `/graview/leave` | say you have gone — only ever yourself |
 | GET | `/graview/subscriptions` | the asking seat's own subscriptions (Notify me); POST `{ add: { when, alsoMine? } }` keeps one for the seat's person, `{ remove: id }` takes one of theirs away; 400 with a sentence when it could never be told anything, 403 for a seat with no id |
+| GET | `/graview/friction` | the asking seat's own friction and the counts across people, never who; POST `{ event }` keeps one, its author the session's: 201, 202 for a visitor (never kept), 400, 413 over 2 KB, 429 past the rate, 410 where the host keeps none |
 | GET | `/graview/live` | the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence, declaration and reload; 426 to a plain request |
 
 Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential from
@@ -131,6 +132,37 @@ createStoreHandler({
   onSubscriptionMatch: (match) => sendEmail(match.subscription.who, match.said, match.records),
 });
 ```
+
+### What people could not do
+
+The friction log (`@graview/core/friction`) is what happened before a change, or instead of
+one: words searched for that found nothing (`search-miss`), a question the seat could not
+answer (`unanswered`), an act refused with its code (`refused`), a tool call refused as
+`invalid` and the form that worked after it (`tool-invalid`). A page records through
+`recordFriction(store, draft, by)`; `openRemote` posts each to `/graview/friction`, where the
+handler keeps it in `friction` (any `FrictionStore`: `{ add, list }`; in memory when unsaid;
+`false` keeps none) with the author the session's, at most 2 KB a post and 30 a minute from one
+person (`frictionPerMinute`), for `frictionRetentionDays` (90). A visitor is never recorded.
+A GET answers the asker's own events and `frictionOf`'s counts: across distinct people, and
+words fewer than two people used are not said. `graview serve` keeps it in `friction.json`
+beside the store (`fileFriction`), which `graview mcp` on the same store writes too;
+`--no-friction` keeps none, and `openRemote({ friction: false })` sends none. A page that holds
+its own store keeps it with `openStore({ friction: browserFriction(localStorage, { key }) })`.
+
+**What is recorded, and who sees it.** Only those four things, in the app's own words: the
+words searched for on the routed face's search page that found nothing (once they stand still for a moment, never each
+keystroke), the name of an act that was refused and the refusal's code, a question the quick ask
+had no answer to and the place it was asked on, and an agent's tool call refused as invalid with
+its sentence and the names and types (never the values) of the call that worked after it. Never
+a click, a selector, a record's contents or a page's address. Each event keeps who made it as a
+seat's kind and id, not a name or a session. A person reads their own events; everybody else —
+the app's keepers, a model, Graview Cloud's Insights — reads counts across distinct people, and
+words fewer than two people used are not said to anybody but the person who typed them. A
+model's digest (`frictionDigest`, `aiContextOf({ friction })`) carries no refusal's sentence.
+Events are kept for 90 days unless the host says otherwise, then let go on the next write; nothing
+of it is in the op log or an export. A visitor — somebody answering a form who never joined the
+app — is never recorded, on the page, in the client or at the server. A host turns it off with
+`friction: false` (or `graview serve --no-friction`, `graview mcp --no-friction`).
 
 ## The live wire
 

@@ -25,6 +25,7 @@
  * inline AI is fetched when somebody first opens it.
  */
 import { fieldSpecOf } from "./document/field-spec.js";
+import { frictionDigest, type FrictionDigest, type FrictionEvent } from "./friction.js";
 import { fieldWriters, subjectKindsOf } from "./mutations/derive-edits.js";
 import { nodeRefArgs } from "./mutations/node-ref.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
@@ -620,6 +621,8 @@ export interface AiContextState {
    * each job whose roles include the viewer's and whose kind they may see.
    */
   readonly purpose?: AiPurposeState;
+  /** What people looked for and could not do lately (`frictionDigest`), when the host handed `friction`. */
+  readonly friction?: FrictionDigest;
 }
 
 /** The app's purpose as a model is told it: who it is for, and the questions this viewer brings to it. */
@@ -638,6 +641,13 @@ export interface AiContextOptions {
   readonly recent?: number;
   /** The app's purpose (`app.purpose`): said to the model as this viewer may hear it. Unsaid, the state says none. */
   readonly purpose?: AppPurpose;
+  /**
+   * THE FRICTION LOG, AS THE HOST KEEPS IT (Roadmap f-friction-log): the
+   * events, read from wherever the host stores them. Said as a digest —
+   * counted across people, no refusal's sentence — under `friction`.
+   * Core reads no storage of its own: unsaid, there is none.
+   */
+  readonly friction?: readonly FrictionEvent[];
 }
 
 const DIGESTS = new WeakMap<object, Map<string, SchemaDigest>>();
@@ -748,6 +758,7 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
     recent,
     schema: schemaDigestOf(whole, principal),
     ...(purpose ? { purpose } : {}),
+    ...(options.friction ? { friction: frictionDigest(options.friction, schema) } : {}),
   };
 }
 

@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 960,
+  "gzipped": 412,
+  "note": "Raised when what people looked for and could not do came to be recorded (Roadmap f-friction-log): the form's `openRemote` carries the door it posts to and the refusal it records where it takes a change back, though a visitor's remote never attaches the door and a visitor is never recorded; and the form records an act it was refused through the same `recordFriction`, which drops a visitor. Measured at 312_221 / 114_951 against 311_261 / 114_539 at ce6e6c3fb."
+}

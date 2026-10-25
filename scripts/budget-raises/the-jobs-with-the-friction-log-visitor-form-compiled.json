@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 68,
+  "gzipped": 29,
+  "note": "Raised when the jobs and the friction log landed together (Roadmap f-app-jobs, f-friction-log): an app's `purpose` read loosely on the page and handed to the seat's ask, measured on top of the friction log's own raise. Each fit its budget alone; together they were over. Measured at 312_289 / 114_980 against 312_221 / 114_951 with the friction log alone: 68 more minified, 29 gzipped."
+}

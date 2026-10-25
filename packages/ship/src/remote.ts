@@ -1,8 +1,10 @@
 import {
+  attachFriction,
   FIELD_SIGHT,
   FieldRevisions,
   foldPresence,
   ReceiveError,
+  recordFriction,
   refusalOf,
   REMOTE_PRESENCE_TTL_MS,
   samePresence,
@@ -27,6 +29,7 @@ import {
 } from "@graview/core";
 import type { StorageLike } from "./browser-adapter.js";
 import { cursorAt } from "./cursor.js";
+import { FRICTION_PATH } from "./remote-friction.js";
 import { LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 import type { RemoteTyping, TypingInsides } from "./remote-typing.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
@@ -100,6 +103,14 @@ export interface RemoteOptions<S extends AnySchema> {
   readonly pollMs?: number;
   readonly fetch?: typeof fetch;
   readonly storeOptions?: Record<string, unknown>;
+  /**
+   * WHAT SOMEBODY COULD NOT DO, POSTED TO THE SERVER (Roadmap f-friction-log):
+   * a search that found nothing, an act refused, a question left
+   * unanswered, recorded through `recordFriction` and kept by the host at
+   * `/graview/friction`, the author the session's. On unless `false`;
+   * never for a visitor; and a host that keeps none is asked once.
+   */
+  readonly friction?: boolean;
   /**
    * Headers sent with every request — a gateway's `authorization`, a
    * tenant, whatever the host in front of `graview serve` asks for. The
@@ -692,6 +703,13 @@ async function opening<S extends AnySchema>(
    * closed unless field sight is loaded.
    */
   FIELD_SIGHT.served.add(store);
+  // What somebody could not do goes to the host's door: never a visitor's (a form's answer), never where the host turned it off.
+  // Posted and never awaited, the author the session's; a host that keeps none (410), or a server before the door (404), is not asked again.
+  let frictionKept = options.friction !== false && options.principal?.kind !== "visitor";
+  if (frictionKept)
+    attachFriction(store, (event) => {
+      if (frictionKept) void call(`${options.url}${FRICTION_PATH}`, { method: "POST", headers, body: JSON.stringify({ event }) }).then((answer) => void (frictionKept = answer.status !== 404 && answer.status !== 410), () => {});
+    });
   // The day turning judges the rules that read the clock again, as the browser reads it (FR-176).
   const stopTicking = tickEachDay(store);
 
@@ -1494,6 +1512,13 @@ async function opening<S extends AnySchema>(
     }
     const made = asked.get(batch);
     asked.delete(batch);
+    // An act the server refused is what somebody could not do — in the act's name and the refusal's code, with the kind it was on.
+    const first = made?.calls[0];
+    if (first && !(error instanceof StaleWrite)) {
+      const arg = store.allMutations().find((one) => one.name === first.name)?.subject?.arg;
+      const kind = arg && store.graph.getNode((first.args as Record<string, string>)[arg]!)?.kind;
+      recordFriction(store, { type: "refused", act: first.name, code: refusal.reason, ...(kind ? { kind } : {}) }, options.principal);
+    }
     if (error instanceof StaleWrite) tally.conflicts++;
     /*
      * A stale write means this client is behind: theirs is on the server

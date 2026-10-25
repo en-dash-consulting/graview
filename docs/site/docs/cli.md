@@ -118,11 +118,14 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
     --trust-seat-headers says the network in front of it can be trusted.
     The app's declared connections (a Google calendar) run beside it, with
     credentials from the environment and their cursors beside the data;
-    --no-sync leaves them off.
+    --no-sync leaves them off. What people looked for and could not do
+    (a search that found nothing, an act refused) is kept for 90 days in
+    friction.json beside the data, each person reading only their own and
+    the counts, never a visitor's; --no-friction keeps none.
 
 ```
 
-[--host <address>] [--trust-seat-headers] [--no-sync] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it; on any other --host it will not start unless
+[--host <address>] [--trust-seat-headers] [--no-sync] [--no-friction] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it; on any other --host it will not start unless
 
 ## graview shots
 

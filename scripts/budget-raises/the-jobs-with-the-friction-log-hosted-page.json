@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 81,
+  "gzipped": 0,
+  "changeset": "an-app-says-who-it-is-for-and-what-they-come-to-do.md",
+  "note": "Raised when the jobs and the friction log landed together (Roadmap f-app-jobs, f-friction-log): an app's `purpose` read loosely on the page and handed to the seat's ask, measured on top of the friction log's own raise. Each fit its budget alone; together they were over. Measured at 615_694 minified against 615_613 with the friction log alone: 81 more; gzipped held."
+}

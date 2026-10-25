@@ -33,7 +33,7 @@
  * when the inline AI is first opened: a page whose reader never right-
  * clicks carries none of it.
  */
-import { labelOf, pluralOf, type AnySchema, type AppPurpose, type Author, type MutationCall, type Principal, type Store } from "@graview/core";
+import { labelOf, pluralOf, recordFriction, type AnySchema, type AppPurpose, type Author, type MutationCall, type Principal, type Store } from "@graview/core";
 import {
   aiContextOf,
   catalogOf,
@@ -577,7 +577,13 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   } catch (error) {
     return failedResult(asked, said, "ask", error instanceof Error ? error.message : String(error));
   }
-  if (!text && picked.length === 0) return failedResult(asked, said, "ask", "The AI had no answer to that here.");
+  if (!text && picked.length === 0) {
+    // The seat could not answer (Roadmap f-friction-log): the question, and the place it was asked on. A provider that failed is not this.
+    const place = ask.target.on === "place" || ask.target.on === "lens" ? ask.target.place : undefined;
+    const kind = ask.target.on === "list" ? ask.target.kind : ask.target.on === "lens" ? ask.target.kind : undefined;
+    recordFriction(ask.store, { type: "unanswered", question: said, ...(place ? { place } : {}), ...(kind ? { kind } : {}) }, ask.principal);
+    return failedResult(asked, said, "ask", "The AI had no answer to that here.");
+  }
   const model = asked.usage.at(-1)?.model;
   // A change picked is a proposal, previewed as the person: never made until it is accepted.
   const proposals = picked.flatMap(({ candidate, confidence }) => {

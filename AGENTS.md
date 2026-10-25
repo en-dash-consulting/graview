@@ -83,6 +83,9 @@ These are pinned by tests, not by convention:
   shapes and the page's own store (`memorySubscriptions`) stay on the main entry,
   an app's jobs resolved and answered as a seat sees it (`jobsOf`, `jobsFor`,
   `answerJob`) on `/jobs` — the `purpose` shape stays on the main entry,
+  what people looked for and could not do — kept, counted across people, said
+  to a model, and the one door a page records through (`frictionEvent`,
+  `frictionOf`, `ownFriction`, `frictionDigest`, `recordFriction`) on `/friction`,
   and a kind's JSON Schema and an act's tool schema on `/json-schema`
   (`packages/core/tests/unit/the-main-entry-carries-only-what-a-page-draws-with.test.ts`).
   A page its host hands a compiled app imports `@graview/core/compiled`
@@ -158,7 +161,7 @@ pinned at 1.49.1 on purpose.
   deprecated aliases for a package nobody depends on yet; the changelog
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
-  entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`, `./city`, `./provenance`, `./history`, `./past`, `./linked`, `./tidying`, `./catalog`, `./jobs`, `./subscriptions`,
+  entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`, `./city`, `./provenance`, `./history`, `./past`, `./linked`, `./tidying`, `./catalog`, `./jobs`, `./subscriptions`, `./friction`,
   `./figures`, `./blocks`, `./describe`, `./arrange`, `./shown`, `./csv`, `./navigate`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./publishing`, `./typing`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
   `./lines`, `./testing` and the `./document.schema.json` the build writes; layout's `./view`, `./sizes` and `./view-moves`; guest's `./host/frame`; react's `./provider` and `./drawing`;
   tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep`, `./turn`, `./several`, `./inline-ai` and `./tidy` (the app's own actor's judges and `dream`, on no page); embed's `./pages`, `./form` (a visitor's form alone) and `./first-draw` (what a face's first draw opens, for a host's build); pages' `./static` (a place as static HTML, no React) and `./visitor-form`;

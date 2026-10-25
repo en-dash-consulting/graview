@@ -1,4 +1,5 @@
 import {
+  attachFriction,
   assertReadable,
   formatStamp,
   Graph,
@@ -17,6 +18,7 @@ import {
   type StoreOptions,
   type VerifyResult,
 } from "@graview/core";
+import { frictionSinkTo, type FrictionStore } from "@graview/core/friction";
 import { rememberArchive } from "./export.js";
 import { migrateSnapshot } from "./migrations.js";
 import type { StoredMeta } from "./meta.js";
@@ -65,6 +67,14 @@ export interface OpenStoreOptions<S extends AnySchema> {
   readonly assumeVersion?: number;
   /** Told when a persistence write fails; absent, failures reach the console. */
   readonly onPersistError?: (error: unknown) => void;
+  /**
+   * WHERE WHAT SOMEBODY COULD NOT DO IS KEPT (Roadmap f-friction-log), for
+   * a page that holds its own store: `browserFriction` over the page's
+   * storage, or a host's own. What the page records through
+   * `recordFriction` goes there, as whoever recorded it. Absent, nothing
+   * is recorded.
+   */
+  readonly friction?: FrictionStore;
   /**
    * Discard what is stored for this scope and start from the seed. The
    * way back to the example for a demo that has been edited into a corner —
@@ -408,6 +418,8 @@ export async function openStore<S extends AnySchema>(
   // A full export of this store reads what a normal open did not load (FR-23).
   const loadArchive = adapter.loadArchive?.bind(adapter);
   if (loadArchive) rememberArchive(store, () => loadArchive(scope));
+
+  if (options.friction) attachFriction(store, frictionSinkTo(options.friction));
 
   return {
     store,

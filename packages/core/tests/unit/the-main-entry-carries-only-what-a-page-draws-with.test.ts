@@ -11,6 +11,7 @@ import * as document from "../../src/document/index.js";
 import * as figures from "../../src/figures.js";
 import * as fieldSight from "../../src/field-sight.js";
 import * as forms from "../../src/forms.js";
+import * as friction from "../../src/friction.js";
 import * as history from "../../src/history.js";
 import * as jobs from "../../src/jobs.js";
 import * as past from "../../src/past.js";
@@ -75,6 +76,11 @@ const OFF_THE_PAGE = {
   "@graview/core/subscriptions": { from: subscriptions, names: ["holdTypingRuns", "matchSubscriptions", "subscriptionProblem", "subscriptionWords", "TYPING_QUIET_MS", "watchSubscriptions"] },
   // Roadmap f-app-jobs: an app's jobs resolved and answered as a seat sees it — a design's, a seat's and a host's, fetched when one is drawn.
   "@graview/core/jobs": { from: jobs, names: ["answerJob", "jobIsFor", "jobsFor", "jobsOf", "MOST_JOBS"] },
+  // Roadmap f-friction-log: what people looked for and could not do — kept, counted across people, said to a model; a page records through the main entry's `recordFriction` alone.
+  "@graview/core/friction": {
+    from: friction,
+    names: ["callShape", "FRICTION_KEPT_MOST", "FRICTION_LIMITS", "FRICTION_RETENTION_DAYS", "FRICTION_TYPES", "frictionDigest", "frictionEvent", "frictionOf", "frictionSinkTo", "keptFriction", "memoryFriction", "ownFriction", "toolMistakes", "withinRetention"],
+  },
   "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "existingViewsOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
