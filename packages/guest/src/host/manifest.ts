@@ -2,7 +2,7 @@ import { localeFor, timeZoneFor, type AnySchema, type FileKind, type Principal, 
 import { fileFieldKind } from "./marks.js";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
-import { plainNode, readAcross, type GuestViewInput } from "./session.js";
+import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session.js";
 
 /*
  * A WORKER VIEW IS A PLACE, WITH A MANIFEST THE HOST ENFORCES (FR-91).
@@ -244,6 +244,38 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   return findings;
 }
 
+/**
+ * THE RELATIONS A VIEW USES AND IS NOT HANDED (Roadmap f-reads-edges-warning):
+ * a manifest's `reads.kinds` hands a view those records, and only
+ * `reads.edges` the links between them, so a view that walks a relation it
+ * does not read draws every record beside nothing. Said only of a relation
+ * that joins two kinds the view is handed AND that its code names, as a
+ * quoted string (`"madeBy"`, `'madeBy'`, `` `madeBy` ``): a view of seasons
+ * that reads games and draws no era is never told to read `eras`. A view
+ * that names no relation is told of none.
+ */
+export function unreadEdges<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "attach" | "reads">, source: string): readonly string[] {
+  const kinds = [...new Set([...(manifest.attach === "home" ? [] : [manifest.attach]), ...(manifest.reads?.kinds ?? [])])];
+  if (kinds.length < 2) return [];
+  const read = new Set(manifest.reads?.edges ?? []);
+  const named = (edge: string) => new RegExp(`(["'\`])${edge.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\1`).test(source);
+  return store.schema.edgeKinds.filter((name) => {
+    const edge = store.schema.edge(name);
+    return !read.has(name) && edge !== undefined && edge.from.some((kind) => kinds.includes(kind)) && (edge.to === "*" || edge.to.some((kind) => kinds.includes(kind))) && named(name);
+  });
+}
+
+/** "\"models\" names madeBy but does not read it, so …: add \"madeBy\" to its manifest's reads.edges.", or nothing when it reads every relation it names. */
+export function unreadEdgesSentence<S extends AnySchema>(store: Pick<Store<S>, "schema">, manifest: Pick<WorkerViewManifest, "name" | "attach" | "reads">, source: string): string | undefined {
+  const edges = unreadEdges(store, manifest, source);
+  if (edges.length === 0) return undefined;
+  const joined = (words: readonly string[], last: string) => (words.length < 2 ? (words[0] ?? "") : `${words.slice(0, -1).join(", ")} ${last} ${words[words.length - 1]}`);
+  return `"${manifest.name}" names ${joined(edges, "and")} but does not read ${edges.length > 1 ? "them" : "it"}, so the view is handed no such links: add ${joined(
+    edges.map((edge) => `"${edge}"`),
+    "and",
+  )} to its manifest's reads.edges.`;
+}
+
 export interface WorkerViewPropsInput {
   readonly manifest: WorkerViewManifest;
   /** Where the view is drawn: the record, or the members, the face hands it. */
@@ -251,6 +283,22 @@ export interface WorkerViewPropsInput {
   readonly theme?: GuestTheme;
   /** The app's named places, which the view may link to (FR-93). */
   readonly places?: readonly GuestPlace[];
+  /**
+   * A record's computed values, worked out over the graph it is handed —
+   * the viewer's (`computedOn`, `@graview/guest/host/computed`). Apart, so
+   * registering a view carries no evaluator: the host fetches it before a
+   * view whose kinds have computed values starts (`readsComputed`).
+   */
+  readonly computed?: ComputedOn;
+}
+
+/** A record's computed values over the viewer's graph, by name; none for a kind that has none. */
+export type ComputedOn = (graph: unknown, node: unknown) => Readonly<Record<string, unknown>>;
+
+/** Whether any kind a view is handed records of has computed values: its own kind's, or one it reads. */
+export function readsComputed<S extends AnySchema>(store: Store<S>, manifest: WorkerViewManifest): boolean {
+  const kinds = [...(manifest.attach === "home" ? [] : [manifest.attach]), ...(manifest.reads?.kinds ?? [])];
+  return kinds.some((kind) => Object.keys((store.schema.tryDefinition(kind as never) as { readonly computed?: object } | undefined)?.computed ?? {}).length > 0);
 }
 
 /**
@@ -295,10 +343,18 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
       ...(mutation.subject ? { subject: { kinds: mutation.subject.kinds as readonly string[] | "*", arg: mutation.subject.arg } } : {}),
     }));
   const visible = (ids: readonly string[] | undefined) => ids?.filter((id) => shown.has(id));
+  /*
+   * A RECORD'S COMPUTED VALUES, BESIDE ITS FIELDS (Roadmap f-computed-in-views):
+   * what its page shows, so a view need not count again from the edges. Worked
+   * out over the viewer's graph (`seenBy`), as every page works them out, so a
+   * record or a field the viewer may not see adds nothing to one.
+   */
+  const computed = given.computed;
+  const plain = (one: unknown) => (computed ? { ...plainNode(store, one), ...computed(graph, one) } : plainNode(store, one));
   return {
     view: manifest.name,
-    ...(own[0] ? { node: plainNode(store, own[0]) } : {}),
-    nodes: [...listed.values()].map((one) => plainNode(store, one)),
+    ...(own[0] ? { node: plain(own[0]) } : {}),
+    nodes: [...listed.values()].map(plain),
     edges,
     ...(manifest.title !== undefined ? { label: manifest.title } : input.label !== undefined ? { label: input.label } : {}),
     cardinality: manifest.cardinality,
@@ -312,6 +368,8 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     // The locale and the clock every other surface says a day and a time in (Roadmap f-app-time-zone).
     locale: localeFor(),
     timeZone: timeZoneFor(),
+    // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
+    ...choicesOf(store.schema, [...own, ...listed.values()]),
     // A link names a place by its slug, so each slug once: a picture over several kinds is one place to a view.
     ...(given.places ? { places: given.places.filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
   };

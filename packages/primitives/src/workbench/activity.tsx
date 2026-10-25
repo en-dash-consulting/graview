@@ -1,4 +1,4 @@
-import { humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author, type Batch } from "@graview/core";
+import { ARCHIVED, humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author, type Batch, type Operation } from "@graview/core";
 import { viaSaid } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
 import { digestWords, foldDigests, typedRowWords } from "@graview/core/tidying";
@@ -64,9 +64,29 @@ export interface Change {
   readonly digest?: readonly Change[];
 }
 
+/** Whether an op takes a record out of the counts: removes it, or sets it aside (an archive, or the one a merge folds away). */
+const takesOut = (op: Operation): boolean =>
+  // An undo says what it took back in its own intent.
+  op.undoes === undefined &&
+  op.primitives.some((primitive) => primitive.op === "remove-node" || (primitive.op === "patch-node" && primitive.after[ARCHIVED] === true && primitive.before[ARCHIVED] !== true));
+
+/**
+ * WHAT A BATCH'S ROW SAYS (Roadmap f-activity-names-merges): what it was
+ * for — its caller's own words, an agent's "Cursor: merge-actor,
+ * edit-threat", else its first op's sentence — and then, by each op's own
+ * sentence, every one that takes a record out of the counts: "Merge
+ * @tanstack/react-router into @tanstack/*", a removal, an archive. A count
+ * that drops (software 79 → 78) is then said where the change is, whatever
+ * the batch called itself. An op this seat may not see is not said.
+ */
+export function batchWords(batch: Pick<Batch, "intent" | "ops">): string {
+  const out = [...new Set(batch.ops.filter((op) => !isWithheld(op) && takesOut(op)).map((op) => op.intent))].filter((said) => said !== batch.intent);
+  return out.length === 0 ? batch.intent : `${batch.intent} — ${out.join("; ")}`;
+}
+
 /** One batch as a row of Activity. */
 const changeOf = (store: { readonly schema: AnySchema }, batch: Batch, carried: ReadonlyMap<string, string> = carriedNames(store, [batch])): Change => ({
-  intent: batch.intent,
+  intent: batchWords(batch),
   author: batch.author.kind,
   ...(batch.author.id ? { authorId: batch.author.id } : {}),
   by: batch.author,

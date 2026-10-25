@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker",
+  "minified": 32,
+  "gzipped": 0,
+  "note": "Raised when the 0.1.56 builds came together: a view's computed values (Roadmap f-computed-in-views) and its choices said in words (f-option-labels) each fit on their own branch, and together the host's drawing entry is 2 bytes over. Measured at 26_733 / 11_259 against a limit of 26_731 / 11_345."
+}

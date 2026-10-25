@@ -65,6 +65,14 @@ export interface ImportOptions {
    * one. Unsaid, every row makes a record, as before.
    */
   readonly match?: ImportMatch;
+  /**
+   * A BLANK CELL CLEARS (Roadmap f-partial-dates). Under `match`, a row's
+   * blank cell is no change unless this says so: then it takes the value
+   * away from a field the record may be without — a wrong date, a stale
+   * note — through the kind's edit act, as `null` does there. A field
+   * every record needs is left as it is.
+   */
+  readonly blanksClear?: boolean;
 }
 
 /** A link a row makes: the relation, which way it runs, and the record at the far end. */
@@ -279,12 +287,20 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
     }
     const reasons: string[] = [];
     const fields: Record<string, unknown> = {};
+    /** The fields whose cells are blank: cleared on a record the row finds, where the import says a blank clears. */
+    const blanks = new Set<string>();
     for (const column of columns) {
       if (column.as !== "field") continue;
       const raw = cells[column.column];
-      if (isBlank(raw)) continue;
+      if (isBlank(raw)) {
+        blanks.add(column.field);
+        continue;
+      }
       const loose = column.spec.type !== "string" && column.spec.type !== "text" && column.spec.type !== "boolean";
-      if (loose && typeof raw === "string" && BLANK.has(raw.trim().toLowerCase())) continue;
+      if (loose && typeof raw === "string" && BLANK.has(raw.trim().toLowerCase())) {
+        blanks.add(column.field);
+        continue;
+      }
       const read = coerceCell(column.spec, raw, column.column, {
         ...(options.dayFirst ? { dayFirst: true } : {}),
         optionWords: (option) => valueWords(definition, column.field, option),
@@ -320,9 +336,17 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
           changes.push({ field, from: node[field], to: value });
           if (!(editAct?.writes ?? []).includes(field)) reasons.push(`${fieldWords(definition, field)} is not something “${editAct?.title ?? `Change the ${noun}`}” changes, so a sheet cannot change it`);
         }
+        // What a blank cell clears, where the import says so: a value the record has, of a field it may be without.
+        const cleared = options.blanksClear ? [...blanks].filter((field) => node[field] !== undefined && !fieldSpecFor(definition, field)?.spec?.required && !(definition.defaults && Object.hasOwn(definition.defaults, field))) : [];
+        for (const field of cleared) {
+          changes.push({ field, from: node[field], to: null });
+          if (!(editAct?.writes ?? []).includes(field)) reasons.push(`${fieldWords(definition, field)} is not something “${editAct?.title ?? `Change the ${noun}`}” changes, so a sheet cannot clear it`);
+        }
         if (reasons.length === 0 && changes.length > 0) {
           try {
-            schema.parseNode({ ...node, ...fields });
+            const kept: Record<string, unknown> = { ...node, ...fields };
+            for (const field of cleared) delete kept[field];
+            schema.parseNode(kept);
           } catch (error) {
             reasons.push(...issuesSaid(definition, error));
           }

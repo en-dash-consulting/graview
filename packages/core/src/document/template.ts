@@ -1,7 +1,7 @@
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
-import { dayAsRead, dayOfMoment, ISO_DAY, ISO_MOMENT, isoToday, momentAsRead, numberAsRead, timeAsRead } from "../days.js";
+import { DATE_VALUE, dayAsRead, dayOfMoment, ISO_DAY, ISO_MOMENT, isoToday, momentAsRead, numberAsRead, timeAsRead } from "../days.js";
 import { capitalize, listed } from "../capital.js";
 import { excerpt } from "../excerpt.js";
 import { formatMoney, type Money } from "./money.js";
@@ -186,7 +186,7 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
     }
     default:
       // A day or a moment said into a sentence — "was due {due}" — is said as a person reads it, never as it is kept.
-      return typeof value === "string" && ISO_DAY.test(value) ? dayAsRead(value, money?.locale) : typeof value === "string" && ISO_MOMENT.test(value) ? momentAsRead(value, money?.locale, money?.timeZone) : String(value);
+      return typeof value === "string" && DATE_VALUE.test(value) ? dayAsRead(value, money?.locale) : typeof value === "string" && ISO_MOMENT.test(value) ? momentAsRead(value, money?.locale, money?.timeZone) : String(value);
   }
 }
 

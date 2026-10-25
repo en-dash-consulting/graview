@@ -1,4 +1,4 @@
-import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead } from "../days.js";
+import { dayAsRead, DATE_VALUE, ISO_MOMENT, momentAsRead } from "../days.js";
 import { fieldWords, labelOf, nounOf, type ReadableField } from "./define-node.js";
 import { valueWords } from "./value-words.js";
 import { filesOf, isVideo, videoWords } from "./files.js";
@@ -251,7 +251,7 @@ export function readableFields(
            * (`stored`). And a CHOICE as it is declared — its `display.format`,
            * else the value spoken — never the code it is kept as ("tue").
            */
-          typeof value === "string" && ISO_DAY.test(value)
+          typeof value === "string" && DATE_VALUE.test(value) && (value.length === 10 || isDateField(definition, key))
           ? dayAsRead(value, options.locale)
           : typeof value === "string" && ISO_MOMENT.test(value)
           ? momentAsRead(value, options.locale, options.timeZone)
@@ -304,6 +304,15 @@ function choicesOf(definition: AnyNodeDefinition | undefined, key: string): read
   let at = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key] as { _zod?: { def?: { type?: string; innerType?: unknown; entries?: Record<string, unknown> } } } | undefined;
   for (let depth = 0; depth < 6 && at?._zod?.def?.innerType !== undefined; depth++) at = at._zod.def.innerType as typeof at;
   return at?._zod?.def?.type === "enum" && at._zod.def.entries ? Object.values(at._zod.def.entries).map(String) : undefined;
+}
+
+/** Whether a field holds a date: a year or a month alone (`2006`, `2016-05`) is said as one only there (Roadmap f-partial-dates). */
+function isDateField(definition: AnyNodeDefinition | undefined, key: string): boolean {
+  type Def = { readonly type?: string; readonly innerType?: unknown; readonly checks?: readonly { readonly _zod?: { readonly def?: { readonly pattern?: RegExp } } }[] };
+  let at = ((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key] as { _zod?: { def?: Def } } | undefined)?._zod?.def;
+  for (let depth = 0; depth < 6 && at?.innerType !== undefined; depth++) at = (at.innerType as { _zod?: { def?: Def } })._zod?.def;
+  // A document's date: the pattern that takes a year or a month alone.
+  return at?.type === "string" && (at.checks ?? []).some((check) => check._zod?.def?.pattern?.source === DATE_VALUE.source);
 }
 
 /** Whether a field is one of a declared set of values (`z.enum`), under optional, default and nullable. */

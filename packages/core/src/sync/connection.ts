@@ -170,7 +170,7 @@ export function connection<S extends AnySchema>(run: ConnectionRun<S>): Connecti
         // An event of the other sort (all-day for a timed kind, or timed for a day) has no value here to keep.
         if (!creates || values[declaration.fields.start] === undefined) return null;
         made += 1;
-        return { name: creates, args: { id: `${declaration.kind}-${run.name}-${id.slice(0, 16)}-${made}`, ...values } };
+        return { name: creates, args: { id: `${declaration.kind}:${run.name}-${id.slice(0, 16)}-${made}`, ...values } };
       },
     },
     run.state,

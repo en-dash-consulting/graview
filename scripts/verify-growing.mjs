@@ -146,6 +146,8 @@ const ORDERED = `(roadmap) => ({
   } },
 })`;
 const byStatus = (status) => requests.filter((request) => request.status === status);
+// An option with no label of its own is said from its id, so a group's heading reads "Done", not "done".
+const said = (status) => status.charAt(0).toUpperCase() + status.slice(1);
 const ranked = [...features]
   .sort((a, b) => answering(b.id) - answering(a.id) || a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }))
   .map((feature) => feature.id);
@@ -532,7 +534,7 @@ try {
         const after = await page.evaluate(groupState);
         const search = await page.evaluate(() => location.search);
         await shot(page, "requests-done-opened");
-        seen.opened.push({ engine, screen: screen.name, done: after.find((group) => group.head.includes("done")), declined: after.find((group) => group.head.includes("declined")), search });
+        seen.opened.push({ engine, screen: screen.name, done: after.find((group) => group.head.includes(said("done"))), declined: after.find((group) => group.head.includes(said("declined"))), search });
         await close();
 
         // A person sorts it another way (the address the arranging line writes): the groups stand, the closed ones last.
@@ -702,7 +704,7 @@ report.checks.theFeaturesStageAndAreaStandAsChips = {
   seen: seen.rows.map((one) => ({ engine: one.engine, screen: one.screen, chips: one.chips })),
   ok: every(seen.rows, (one) => one.chips.join() === "stage,area"),
 };
-const heads = (status, shut) => (shut ? `▸${status} · ${byStatus(status).length} requests` : `${status} ${byStatus(status).length}`);
+const heads = (status, shut) => (shut ? `▸${said(status)} · ${byStatus(status).length} requests` : `${said(status)} ${byStatus(status).length}`);
 report.checks.aDeclaredListOpensItsGroupsInOrderWithDoneAndDeclinedShutLast = {
   seen: seen.grouped,
   ok: every(seen.grouped, (one) =>

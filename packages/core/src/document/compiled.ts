@@ -42,7 +42,7 @@ import { rememberDocument } from "./remembered.js";
 import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
 import { markAmount } from "../schema/amount-mark.js";
-import { ISO_DAY, isMoment, isoToday } from "../days.js";
+import { DATE_VALUE, ISO_DAY, isMoment, isoToday } from "../days.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 
 /*
@@ -236,7 +236,8 @@ export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): 
       schema = z.boolean();
       break;
     case "date":
-      schema = z.string().check(z.regex(ISO_DAY, "a date like 2026-10-02"));
+      // A day, or a month or a year alone where no more is known (Roadmap f-partial-dates).
+      schema = z.string().check(z.regex(DATE_VALUE, "a date like 2026-10-02, or a month (2016-05) or a year (2006) alone"));
       break;
     case "datetime":
       schema = z.string().check(z.refine(isMoment, "a date and time like 2026-10-02T14:30:00Z"));
@@ -395,6 +396,15 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...computed.filter(([, c]) => c.label).map(([n, c]) => [n, c.label!]),
     ]);
     const named = Object.keys(labels).length > 0;
+    /*
+     * A CHOICE SAID BY ITS OPTION'S LABEL (Roadmap f-option-labels): an enum
+     * field's `optionLabels`, else the option's id spoken ("state-sponsored"
+     * is "State sponsored"), on every face that says a value — a card, a
+     * page, a form's picker, a group's heading, a change in Activity.
+     */
+    const optionLabeled = Object.entries(spec.fields).filter(([, f]) => f.type === "enum" && f.optionLabels && Object.keys(f.optionLabels).length > 0);
+    const format = Object.fromEntries(optionLabeled.map(([n, f]) => [n, (value: unknown) => (typeof value === "string" && Object.hasOwn(f.optionLabels!, value) ? f.optionLabels![value]! : humanizeField(String(value)))]));
+    const formatted = optionLabeled.length > 0;
     // Defaults stay out of the zod schema (hydration must not invent values) and ride beside it, for a repair to read.
     const defaults = Object.fromEntries(Object.entries(spec.fields).filter(([, f]) => f.default !== undefined).map(([n, f]) => [n, f.default]));
     madeAs.set(kind, defaults);
@@ -422,8 +432,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...(spec.tidying ? { tidying: spec.tidying } : {}),
       // As the document says them, each the compile read as a length of time saying `as: "duration"` (`durations.ts`).
       ...(computed.length > 0 ? { computed: Object.fromEntries(computed.map(([n, c]) => [n, durations?.includes(n) ? { ...c, as: "duration" } : spec.computed![n]])) } : {}),
-      ...(named || spec.glance || spec.page
-        ? { display: { ...(named ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
+      ...(named || formatted || spec.glance || spec.page
+        ? { display: { ...(named ? { labels } : {}), ...(formatted ? { format } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
         : {}),
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
     } as never);

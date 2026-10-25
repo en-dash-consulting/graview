@@ -54,9 +54,9 @@ const mutations = [addTask, finish];
 const seed = {
   nodes: [
     { id: "today", kind: "list", label: "Today" },
-    { id: "t-milk", kind: "task", label: "Buy milk", done: false },
+    { id: "task:milk", kind: "task", label: "Buy milk", done: false },
   ],
-  edges: [{ kind: "holds", from: "today", to: "t-milk" }],
+  edges: [{ kind: "holds", from: "today", to: "task:milk" }],
 };
 
 describe("a create can name its id", () => {
@@ -85,10 +85,10 @@ describe("a create can name its id", () => {
 
   it("makes the node with exactly that id, and the call carries it into the log", () => {
     const store = new Store({ schema, mutations, snapshot: seed as never });
-    const result = store.apply({ name: "add-task", args: { listId: "today", label: "Book the van", id: "t-van" } });
-    expect(store.graph.getNode("t-van")).toMatchObject({ kind: "task", label: "Book the van" });
-    expect(store.graph.outEdges("today").map((edge) => edge.to)).toContain("t-van");
-    expect(result.ops[0]?.mutation?.args).toMatchObject({ id: "t-van" });
+    const result = store.apply({ name: "add-task", args: { listId: "today", label: "Book the van", id: "task:van" } });
+    expect(store.graph.getNode("task:van")).toMatchObject({ kind: "task", label: "Book the van" });
+    expect(store.graph.outEdges("today").map((edge) => edge.to)).toContain("task:van");
+    expect(result.ops[0]?.mutation?.args).toMatchObject({ id: "task:van" });
     // And without one, the label mints it as before.
     store.apply({ name: "add-task", args: { listId: "today", label: "Order boxes" } });
     expect(store.graph.getNode("task:order-boxes")).toBeDefined();
@@ -97,15 +97,15 @@ describe("a create can name its id", () => {
   it("refuses an id the graph already has, by name, rather than suffixing it", () => {
     const store = new Store({ schema, mutations, snapshot: seed as never });
     expect(() =>
-      store.apply({ name: "add-task", args: { listId: "today", label: "Buy milk again", id: "t-milk" } }),
-    ).toThrow(/Id "t-milk" is already taken/);
+      store.apply({ name: "add-task", args: { listId: "today", label: "Buy milk again", id: "task:milk" } }),
+    ).toThrow(/Id "task:milk" is already taken/);
     expect(store.graph.allNodes()).toHaveLength(2);
   });
 
   it("previews with the id too, so what is shown is what would land", () => {
     const store = new Store({ schema, mutations, snapshot: seed as never });
-    const preview = store.preview({ name: "add-task", args: { listId: "today", label: "Van", id: "t-van" } });
-    expect(preview.diff.addedNodes.map((node) => node.id)).toEqual(["t-van"]);
+    const preview = store.preview({ name: "add-task", args: { listId: "today", label: "Van", id: "task:van" } });
+    expect(preview.diff.addedNodes.map((node) => node.id)).toEqual(["task:van"]);
   });
 });
 
@@ -119,12 +119,12 @@ describe("the derived remove act", () => {
     expect(remove.derived).toEqual({ kind: "task", act: "remove" });
 
     const store = new Store({ schema, mutations, snapshot: seed as never });
-    const result = store.apply({ name: "remove-task", args: { id: "t-milk" } });
+    const result = store.apply({ name: "remove-task", args: { id: "task:milk" } });
     expect(result.intent).toBe("Remove Buy milk");
-    expect(store.graph.getNode("t-milk")).toBeUndefined();
+    expect(store.graph.getNode("task:milk")).toBeUndefined();
     expect(store.graph.outEdges("today")).toHaveLength(0);
     store.undo(result.batch);
-    expect(store.graph.getNode("t-milk")).toBeDefined();
+    expect(store.graph.getNode("task:milk")).toBeDefined();
     expect(store.graph.outEdges("today")).toHaveLength(1);
   });
 
@@ -162,15 +162,15 @@ describe("the derived remove act", () => {
     expect(store.permittedMutations(helper).map((m) => m.name)).not.toContain("remove-task");
     expect(store.permittedMutations(owner).map((m) => m.name)).not.toContain("remove-list");
 
-    const verdict = store.permits({ name: "remove-task", args: { id: "t-milk" } }, helper);
+    const verdict = store.permits({ name: "remove-task", args: { id: "task:milk" } }, helper);
     expect(verdict.ok).toBe(false);
     if (!verdict.ok) {
       expect(verdict.refusal.wouldNeed).toEqual(["owner"]);
       expect(verdict.refusal.message).toMatch(/owner can/);
     }
-    expect(() => store.apply({ name: "remove-task", args: { id: "t-milk" } }, { author: helper })).toThrow(/Not permitted/);
+    expect(() => store.apply({ name: "remove-task", args: { id: "task:milk" } }, { author: helper })).toThrow(/Not permitted/);
     // Riding the act that makes a task, an owner removes the tasks they made, not the rest (W-201).
-    const theirs = store.permits({ name: "remove-task", args: { id: "t-milk" } }, owner);
+    const theirs = store.permits({ name: "remove-task", args: { id: "task:milk" } }, owner);
     expect(theirs.ok).toBe(false);
     if (!theirs.ok) expect(theirs.refusal.message).toMatch(/only on what you made/);
     store.apply({ name: "add-task", args: { listId: "today", label: "Eggs" } }, { author: owner });
@@ -179,8 +179,8 @@ describe("the derived remove act", () => {
     expect(store.graph.getNode(eggs.id)).toBeUndefined();
     // A grant that names the act reaches every task.
     const named = new Store({ schema, mutations, policy: { grants: [{ roles: ["owner"], mutations: ["remove-task"] }] }, snapshot: seed as never });
-    named.apply({ name: "remove-task", args: { id: "t-milk" } }, { author: owner });
-    expect(named.graph.getNode("t-milk")).toBeUndefined();
+    named.apply({ name: "remove-task", args: { id: "task:milk" } }, { author: owner });
+    expect(named.graph.getNode("task:milk")).toBeUndefined();
   });
 
   it("is counted by the checker as an act a grant may name", () => {

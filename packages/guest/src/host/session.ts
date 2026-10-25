@@ -1,4 +1,4 @@
-import { localeFor, PermissionDeniedError, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
+import { choiceWords, localeFor, PermissionDeniedError, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
 /* The links' judging — a filter held to the kind's fields — fetched with the first navigate, so a frame's host carries none of it before. */
@@ -220,6 +220,13 @@ export function createGuestLimiter(limits: GuestLimits = {}, now: () => number =
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+/** The `choices` a view is handed: each option of the handed records' kinds' choices, by its label (Roadmap f-option-labels); nothing when they have none. */
+export function choicesOf(schema: AnySchema, nodes: readonly unknown[]): Pick<GuestProps, "choices"> {
+  const kinds = nodes.flatMap((node) => (isRecord(node) && typeof node["kind"] === "string" ? [node["kind"]] : []));
+  const choices = choiceWords(schema as never, kinds);
+  return Object.keys(choices).length > 0 ? { choices } : {};
+}
+
 /**
  * A record as a guest is handed it: plain data, with its `label` as the host
  * labels it (the kind's own `label`, else its label field, else its id) —
@@ -294,7 +301,9 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       // The locale and the clock every other surface says a day and a time in (Roadmap f-app-time-zone).
       locale: localeFor(),
       timeZone: timeZoneFor(),
-      ...(options.placesShown ? { places: options.placesShown().map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
+      // Each option of the handed records' choices, by its label (Roadmap f-option-labels).
+      ...choicesOf(options.store.schema, [...(node ? [node] : []), ...(listed ?? [])]),
+      ...(options.placesShown ?{ places: options.placesShown().map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
     };
   };
 

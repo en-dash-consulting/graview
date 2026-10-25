@@ -129,6 +129,8 @@ export function declinesIn(ops: readonly Operation[], meanings?: ActMeanings): R
   const declines = new Map<string, Operation>();
   for (const op of ops) {
     const target = op.undoes !== undefined && !undone.has(op.id) && !op.withheld ? byId.get(op.undoes) : undefined;
+    // A suggestion its own maker took back was withdrawn, not declined: nobody said no to it (`withdrawSuggestion`).
+    if (target?.suggests && target.author.kind === op.author.kind && target.author.id === op.author.id) continue;
     const calls = target?.suggests ?? (target?.mutation && (target.lineage || op.undoneLineage) ? [target.mutation] : []);
     if (calls.length > 0) for (const asked of [calls, ...calls.map((call) => [call])]) declines.set(meaningKey(asked, meanings), op);
   }

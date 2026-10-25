@@ -269,6 +269,7 @@ export function EditableValue<S extends AnySchema>({
           value={draft === "" ? undefined : draft}
           time={editable.shape.time === true}
           instant={editable.shape.instant === true}
+          partial={editable.shape.partial === true}
           onChange={(next) => setDraft(next ?? "")}
           onLeave={(next) => done(next, { left: true })}
           onCancel={() => close(true)}

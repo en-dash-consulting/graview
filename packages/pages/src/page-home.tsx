@@ -1,4 +1,4 @@
-import { counted as countOf, isCurrent, numberAsRead, type AnySchema } from "@graview/core";
+import { counted as countOf, isCurrent, numberAsRead, type AnySchema, type Violation } from "@graview/core";
 import { bleeds, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
@@ -6,7 +6,7 @@ import { HomeLine } from "@graview/primitives/pages";
 import { kindMap } from "./facts.js";
 import { pluralSlug } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { Gallery } from "./page-places.js";
+import { drawnInTheGallery, Gallery } from "./page-places.js";
 import { answeredJobs, JobsOnTheHome } from "./page-jobs.js";
 import {
   KindMark,
@@ -28,6 +28,23 @@ import { Bleed, PageMain, PageTitle } from "./page-shell.js";
 
 
 /**
+ * WHAT TO DO, NOT HOW MANY (FR-122), about the records the home draws. The
+ * app bar says the count — its standing (FR-131) — so the home points to
+ * the problems rather than saying the number again. A rule the app wrote
+ * that a record does not meet is the app's business, said in the page's
+ * quiet ink; a rule that could not be judged at all is an error, said in
+ * the warning color (Roadmap f-problems-in-context).
+ */
+function ProblemsHere({ violations }: { readonly violations: readonly Violation[] }) {
+  const error = violations.some((violation) => violation.status === "could-not-judge" || violation.status === "over-budget");
+  return (
+    <Link to="/problems" data-testid="problems-here" data-graview-problems-tone={error ? "error" : "rule"} style={{ ...link, color: error ? "var(--graview-warn)" : "var(--graview-ink-muted)" }}>
+      {violations.length === 1 ? "A rule is broken" : "Rules are broken"} — see what, and what would fix it
+    </Link>
+  );
+}
+
+/**
  * THE FRONT PAGE IS THE GALLERY.
  *
  * It opens with the standing as its headline — what this installation holds,
@@ -45,12 +62,6 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   const { store, brand, invariantContext } = context;
   useStoreTick(store);
   const violations = store.violations(invariantContext);
-  /*
-   * WHAT TO DO, NOT HOW MANY (FR-122). The app bar says the count — its
-   * standing (FR-131) — so the home points to the
-   * problems rather than saying the number again.
-   */
-  const seeWhatIsBroken = `${violations.length === 1 ? "A rule is broken" : "Rules are broken"} — see what, and what would fix it`;
   const recent = [...store.log.all()].slice(-5).reverse();
   // In the declaration's order, less what it leaves off the home (FR-80).
   const kinds = homeKinds(context);
@@ -93,6 +104,14 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   const HomeView = context.views?.homeView?.() as ComponentType<ViewProps<S>> | undefined;
   const anything = (store.schema.kinds as readonly string[]).some((kind) => store.graph.nodesOfKind(kind as never).length > 0);
   if (HomeView && anything) {
+    /*
+     * A HOME OF ITS OWN MARKS ITS OWN RECORDS (Roadmap f-problems-in-context).
+     * What it draws is the view's to know, so it is handed the records a
+     * broken rule names (`flagged`), as a place's lens is, and marks them
+     * where it draws them; the page says nothing over it. The bar's count
+     * still says how many and opens every one.
+     */
+    const flagged = [...new Set(violations.flatMap((violation) => violation.nodeIds))];
     const line = brand?.subtitle && brand.subtitleDrawn !== false ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null;
     // A home written as blocks says the app's line under its own headline (`HomeLine`); any other home view, over it.
     const placesItsLine = (HomeView as unknown as Record<symbol, unknown>)[Symbol.for("graview.home-blocks")] === true;
@@ -100,15 +119,10 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
       <PageMain context={context} style={wide}>
         <div style={{ display: "grid", gap: 12 }} data-testid="home-view">
           {placesItsLine ? null : line}
-          {violations.length > 0 ? (
-            <Link to="/problems" style={{ ...link, color: "var(--graview-warn)" }}>
-              {seeWhatIsBroken}
-            </Link>
-          ) : null}
           <HomeLine.Provider value={placesItsLine ? line : null}>
             {/* Edge to edge on a phone, where the view says `bleed` (Bleed). */}
             <Bleed when={bleeds(HomeView)}>
-              <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} />
+              <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
             </Bleed>
           </HomeLine.Provider>
         </div>
@@ -125,6 +139,17 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
    */
   const answered = answeredJobs(context);
   const leads = answered.some((one) => one.count > 0);
+  /*
+   * THE PROBLEMS OF WHAT THE HOME DRAWS (Roadmap f-problems-in-context): a
+   * rule broken on a record its pictures or its jobs show. One broken on a
+   * record the home leaves off is the bar's count's, which opens the whole
+   * list; the home says nothing of it, and does not say all rules hold.
+   */
+  const drawn = new Set([...drawnInTheGallery(context), ...answered.flatMap((one) => one.ids)]);
+  const here = violations.filter((violation) => violation.nodeIds.some((id) => drawn.has(id)));
+  const beginsHere = present.length === 0 && beginning !== undefined;
+  // Said under the headline when there is a beginning, a problem here, or nothing broken anywhere and no job leads.
+  const standingCard = beginsHere || here.length > 0 || (violations.length === 0 && !leads);
 
   return (
     <PageMain context={context} style={wide}>
@@ -133,7 +158,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         {brand?.subtitle && brand.subtitleDrawn !== false ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null}
         {/* THE NUMBERS ARE THE HEADLINE: what is here, said once, as big as the page says anything. */}
         {leads ? null : <PageTitle context={context} data-testid="standing">{summary}</PageTitle>}
-        {leads && violations.length === 0 ? null : <p style={{ ...lede, display: "grid", gap: 4 }} data-testid="standing-card">
+        {standingCard ? <p style={{ ...lede, display: "grid", gap: 4 }} data-testid="standing-card">
           {present.length === 0 && beginning ? (
             <span>
               Begin with “{beginning.creator?.title ?? beginning.creator?.name}”, under{" "}
@@ -143,14 +168,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
               .
             </span>
           ) : null}
-          {violations.length === 0 ? (
-            <span>All rules hold.</span>
-          ) : (
-            <Link to="/problems" style={{ ...link, color: "var(--graview-warn)" }}>
-              {seeWhatIsBroken}
-            </Link>
-          )}
-        </p>}
+          {violations.length === 0 ? <span>All rules hold.</span> : here.length > 0 ? <ProblemsHere violations={here} /> : null}
+        </p> : null}
       </header>
 
       {answered.length > 0 ? (

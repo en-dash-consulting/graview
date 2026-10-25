@@ -1,5 +1,5 @@
 import { defOf } from "../schema/zod.js";
-import { isMoment } from "../days.js";
+import { DATE_VALUE, isMoment } from "../days.js";
 import { fileKindOf } from "../schema/files.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
 import { amountOf, type AmountMark } from "../schema/amount-mark.js";
@@ -40,6 +40,8 @@ export type ArgShape =
       readonly time?: true;
       /** A moment that names an instant (a document's `datetime`, `z.iso.datetime()`): typed on the reader's clock and kept in UTC with its `Z`. Without it, a time is kept as the wall time written. */
       readonly instant?: true;
+      /** A date that may know only its year or its month (`2006`, `2016-05`): a document's date (Roadmap f-partial-dates). */
+      readonly partial?: true;
     }
   /**
    * A number, and its range where it says one: `step` is what its values are
@@ -158,7 +160,7 @@ export function describeArg(schema: unknown): ArgShape {
     const sources = [own, ...checks.map((check) => check.pattern)].filter((pattern): pattern is RegExp => pattern instanceof RegExp).map((pattern) => pattern.source);
     if (sources.some((source) => source.includes("\\d{4}"))) {
       // A time of day in the pattern as well: `T\d{2}:\d{2}`, or a space before it.
-      return sources.some((source) => source.includes("\\d{2}:\\d{2}")) ? { type: "date", time: true } : { type: "date" };
+      return sources.some((source) => source.includes("\\d{2}:\\d{2}")) ? { type: "date", time: true } : sources.includes(DATE_VALUE.source) ? { type: "date", partial: true } : { type: "date" };
     }
     // Prose: more than 500 characters allowed — a document's `text` (FR-147), asked for in a text area.
     const long = checks.some((check) => check.check === "max_length" && typeof (check as { maximum?: unknown }).maximum === "number" && (check as { maximum: number }).maximum > 500);

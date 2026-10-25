@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 2155,
+  "gzipped": 675,
+  "note": "Raised when a date came to know only its year or its month (Roadmap f-partial-dates), with every option said by its label (Roadmap f-option-labels): a form's date editor reads and says a year or a month alone, a document date's pattern, an edit's `clearable` fields and an option's label compiled into the kind's words. Measured at 314_590 / 115_702 against main's 312_435 / 115_027: 2_155 / 675 more."
+}

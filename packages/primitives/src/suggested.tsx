@@ -99,9 +99,16 @@ export function SuggestedTray() {
           data-graview-offstage=""
           style={{
             ...POPOVER_STYLE,
-            width: 320,
+            /*
+             * NEVER SIDEWAYS: never wider than the page, and what it holds wraps
+             * rather than widening it. Seventeen suggestions naming
+             * "@tanstack/react-router" ran their sentences, their basis and their
+             * chips past the right edge, and the panel scrolled sideways.
+             */
+            width: "min(320px, calc(100vw - 16px))",
             maxHeight: "min(52cqh, 460px)",
-            overflow: "auto",
+            overflowX: "hidden",
+            overflowY: "auto",
             display: "flex",
             flexDirection: "column",
             gap: 9,
@@ -119,7 +126,7 @@ export function SuggestedTray() {
             </p>
           ) : null}
           <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-faint)" }}>{waiting.length > 0 ? "Not made yet: each waits for you." : "What it did is in Activity."}</p>
-          <ol data-testid="suggestions" style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 10, fontSize: "0.8125rem" }}>
+          <ol data-testid="suggestions" style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, fontSize: "0.8125rem", minWidth: 0 }}>
             {waiting.map((one) => (
               <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} />
             ))}
@@ -133,6 +140,9 @@ export function SuggestedTray() {
     </div>
   );
 }
+
+/** A line of the tray's that breaks anywhere rather than widen it: a record's name may be one unbroken word longer than the panel. */
+const WRAPS = { minWidth: 0, overflowWrap: "anywhere" } as const;
 
 /** What each answer to a suggestion is said as, once the row it was on is gone. */
 const HEARD = { accept: "Accepted.", decline: "Declined: it will not be suggested again.", later: "Hidden from you until tomorrow." } as const;
@@ -156,23 +166,24 @@ function SuggestionRow({ suggestion, notNow, settled }: { readonly suggestion: S
     }
   };
   return (
-    <li data-testid="suggestion" data-suggestion={suggestion.id} style={{ display: "grid", gap: 5, lineHeight: 1.45 }}>
-      <span>
+    <li data-testid="suggestion" data-suggestion={suggestion.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 5, lineHeight: 1.45, minWidth: 0 }}>
+      <span data-graview-suggestion-words="" style={WRAPS}>
         <strong style={{ fontWeight: 600 }}>{by}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>suggests</span> {suggestion.intent}
       </span>
       {suggestion.lineage ? (
-        <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}>
+        <span data-graview-lineage="" style={{ ...WRAPS, color: "var(--graview-ink-faint)" }}>
           {lineageWords(suggestion.lineage)}
         </span>
       ) : null}
       {suggestion.about.length > 0 ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+        <div data-graview-suggestion-records="" style={{ display: "flex", flexWrap: "wrap", gap: 4, minWidth: 0 }}>
+          {/* A chip still too wide for the row is cut with an ellipsis, its whole name in its title (Chip). */}
           {suggestion.about.slice(0, 4).map((id) => (
             <Chip key={id} label={nameOf(store, id)} pickId={id} />
           ))}
         </div>
       ) : null}
-      <div style={{ display: "flex", gap: 6 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, minWidth: 0 }}>
         <button type="button" data-testid="suggestion-accept" onClick={() => void settle("accept")} style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}>
           Accept
         </button>
@@ -194,7 +205,7 @@ function SuggestionRow({ suggestion, notNow, settled }: { readonly suggestion: S
         </span>
       </div>
       {refused ? (
-        <span data-testid="suggestion-refused" role="alert" style={{ fontSize: "0.75rem", color: "var(--graview-warn)" }}>
+        <span data-testid="suggestion-refused" role="alert" style={{ ...WRAPS, fontSize: "0.75rem", color: "var(--graview-warn)" }}>
           {refused}
         </span>
       ) : null}

@@ -62,6 +62,8 @@ export interface ScalarField {
   readonly time?: true;
   /** A date and time that names an instant: typed on the reader's clock, kept in UTC with its `Z` (see `ArgShape`). */
   readonly instant?: true;
+  /** A date that may be given as a year or a month alone ("2006", "May 2016"; Roadmap f-partial-dates). */
+  readonly partial?: true;
   /** Prose (FR-147): asked for in a text area that keeps its line breaks. */
   readonly long?: true;
   /** Another app's address (FR-171): asked for as one — `@owner/app`, its id, or its https:// address. */
@@ -183,7 +185,7 @@ export function formField(name: string, schema: unknown): FormField {
   if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}), ...(isAppLinkField(field) ? { app: true as const } : {}), ...(isMarkdownField(field) ? { markdown: true as const } : {}), ...(scalar.holds ? { holds: scalar.holds } : {}) };
   // A length of time is typed as words ("1h 30m") and sent as minutes.
   if (scalar.type === "number" && scalar.duration) return { control: "text", name, optional, holds: "duration" };
-  if (scalar.type === "date") return { control: "date", name, optional, ...(scalar.time ? { time: true as const } : {}), ...(scalar.instant ? { instant: true as const } : {}) };
+  if (scalar.type === "date") return { control: "date", name, optional, ...(scalar.time ? { time: true as const } : {}), ...(scalar.instant ? { instant: true as const } : {}), ...(scalar.partial ? { partial: true as const } : {}) };
   if (scalar.type === "number") {
     return {
       control: "number",

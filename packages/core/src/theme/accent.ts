@@ -1,7 +1,6 @@
 import { colorsIn, composite, contrast, hsl, rgbToHsl, type Rgba } from "./contrast.js";
 import { brandFromAccent, type DerivedBrand, type RefusedBrand } from "./derive.js";
 import { groundSchemes, type Ground } from "./ground.js";
-import { SCHEMES } from "./palettes.js";
 
 /*
  * A DOCUMENT'S ACCENT, AS GIVEN (FR-126).
@@ -47,7 +46,8 @@ export function documentSchemes(accent: string, ground?: Ground): DerivedBrand |
   const base = groundSchemes(ground);
   const derived = brandFromAccent({ accent, base });
   if (derived.ok || !derived.missing.every((part) => part.startsWith("warn"))) return derived;
-  return brandFromAccent({ accent, base, warn: { light: SCHEMES.light.bad, dark: SCHEMES.dark.bad } });
+  // The bad status of the ground it stands on: a dark page in the light scheme draws the dark scheme's.
+  return brandFromAccent({ accent, base, warn: { light: base.light.bad, dark: base.dark.bad } });
 }
 
 /** The first pair this color fails as given in the light scheme, or null when it reads. */

@@ -89,9 +89,9 @@ describe("MCP over stdio, against a folder", () => {
     c.ask("initialize", { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "test", version: "0" } });
     c.tell("notifications/initialized");
     c.ask("tools/list");
-    c.ask("tools/call", { name: "add-task", arguments: { listId: "today", label: "Book the van", id: "t-van" } });
-    c.ask("tools/call", { name: "get_node", arguments: { id: "t-van" } });
-    c.ask("tools/call", { name: "add-task", arguments: { listId: "today", label: "Twice", id: "t-van" } });
+    c.ask("tools/call", { name: "add-task", arguments: { listId: "today", label: "Book the van", id: "task:van" } });
+    c.ask("tools/call", { name: "get_node", arguments: { id: "task:van" } });
+    c.ask("tools/call", { name: "add-task", arguments: { listId: "today", label: "Twice", id: "task:van" } });
     c.ask("nothing/here");
     c.end();
     await serving;
@@ -103,7 +103,7 @@ describe("MCP over stdio, against a folder", () => {
     const names = (tools!.result!["tools"] as { name: string }[]).map((t) => t.name);
     expect(names).toEqual(expect.arrayContaining(["get_graph", "preview_mutation", "undo_batch", "add-task", "finish", "remove-task"]));
     expect(added!.result).not.toHaveProperty("isError");
-    expect(JSON.parse((read!.result!["content"] as { text: string }[])[0]!.text).data.node).toMatchObject({ id: "t-van", label: "Book the van" });
+    expect(JSON.parse((read!.result!["content"] as { text: string }[])[0]!.text).data.node).toMatchObject({ id: "task:van", label: "Book the van" });
     expect(taken!.result).toMatchObject({ isError: true });
     expect((taken!.result!["content"] as { text: string }[])[0]!.text).toMatch(/already taken/);
     expect(unknown!.error).toMatchObject({ code: -32601 });
@@ -112,7 +112,7 @@ describe("MCP over stdio, against a folder", () => {
     const log = readFileSync(join(root, "lists", "log.jsonl"), "utf8").trim().split("\n").map((line) => JSON.parse(line) as { author: { id: string }; batch: string });
     expect(log.at(-1)?.author.id).toBe("cursor");
     const later = await openStore({ app, adapter: createFileAdapter(root), scope: app.name });
-    expect(later.store.graph.getNode("t-van")).toBeDefined();
+    expect(later.store.graph.getNode("task:van")).toBeDefined();
     expect(later.store.canUndo(log.at(-1)!.batch).ok).toBe(true);
     later.close();
   });
@@ -154,13 +154,13 @@ describe("the same host, against a served store", () => {
     const keeper = seatFrom(["--roles", "keeper"], "graview-mcp");
     const host = await openHost(app, ["--remote-url", served.url], keeper);
     const runtime = createToolRuntime(host.store, { author: keeper });
-    const result = await runtime.call("add-task", { listId: "today", label: "Van", id: "t-van" });
+    const result = await runtime.call("add-task", { listId: "today", label: "Van", id: "task:van" });
     expect(result.ok).toBe(true);
     await host.settled();
     expect(host.refusals()).toEqual([]);
     // The server has it once, and this client's log carries the server's op beside its provisional one.
-    expect(served.store.graph.getNode("t-van")).toBeDefined();
-    expect(host.store.graph.allNodes().filter((node) => node.id === "t-van")).toHaveLength(1);
+    expect(served.store.graph.getNode("task:van")).toBeDefined();
+    expect(host.store.graph.allNodes().filter((node) => node.id === "task:van")).toHaveLength(1);
     expect(host.store.log.all().some((op) => !op.id.startsWith("local-") && op.author.id === "graview-mcp")).toBe(true);
     await host.close();
 
@@ -173,7 +173,7 @@ describe("the same host, against a served store", () => {
       seatOf: () => ({ kind: "human" }),
     });
     const stranger = await openHost(app, ["--remote-url", hostile.url], { kind: "agent", id: "s", roles: ["keeper"] });
-    const attempt = await createToolRuntime(stranger.store, { author: { kind: "agent", id: "s", roles: ["keeper"] } }).call("finish", { taskId: "t-van" }).catch(() => ({ ok: false as const, error: "" }));
+    const attempt = await createToolRuntime(stranger.store, { author: { kind: "agent", id: "s", roles: ["keeper"] } }).call("finish", { taskId: "task:van" }).catch(() => ({ ok: false as const, error: "" }));
     await stranger.settled();
     expect(attempt.ok === false || stranger.refusals().length > 0).toBe(true);
     await stranger.close();

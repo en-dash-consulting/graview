@@ -1,14 +1,18 @@
-import { documentSchemes } from "./accent.js";
+import { accentProblem, documentSchemes } from "./accent.js";
 import { colorsIn, hsl, rgbToHsl } from "./contrast.js";
-import { givenGrounds, groundFailure, groundSchemes, groundWith, hex, type Ground, type GroundFailure } from "./ground.js";
+import { givenGrounds, groundFailure, groundSchemes, groundWith, hex, isDarkGround, type Ground, type GroundFailure } from "./ground.js";
 import type { Scheme } from "./types.js";
 
 /*
  * WHETHER AN APP CAN STAND ON ITS GROUND (Roadmap f-brand-ground), judged
- * as an accent is (FR-126): ink, muted ink and the accent, as the page
- * draws them, on the ground and on a card drawn from it, in both schemes.
- * When one drops below 4.5:1 the refusal names the pair, its ratio, what
- * is needed and the nearest shade of that ground that would pass.
+ * as an accent is (FR-126): every pair the compiled palette is held to
+ * (`checkBrandContrast`) — ink, muted and faint ink, the accent, the status
+ * colors and the lit edge, on the ground and on what is drawn from it — in
+ * both schemes. When one drops short the refusal names the pair, its
+ * ratio, what is needed and the nearest shade of that ground that would
+ * pass: a shade that passes everything set-brand then judges, the app's
+ * accent on it included, so sending it back is kept (Roadmap
+ * f-ground-suggestion-passes).
  */
 
 const AA = 4.5;
@@ -67,20 +71,24 @@ export function groundProblem(ground: Ground, accent?: string): GroundRefusal | 
   // A dark ground drawn from the light one moves with neither: the light one's hue is what to change.
   const suggestion = own ? nearestPassing(ground, failure.scheme, accent) : undefined;
   const groundSaid = own ?? `${hex(failure.ground)}, drawn from ${given.light}`;
-  const on = failure.card ? `a card (${hex(failure.card)}) on the ground ${groundSaid}` : `the ground ${groundSaid}`;
+  const on = failure.card ? `${failure.surface} (${hex(failure.card)}) on the ground ${groundSaid}` : `the ground ${groundSaid}`;
   const fix = suggestion ? ` — ${suggestion} would pass.` : own ? "; no shade of this color does, so pick another." : `; give the dark scheme a ground of its own.`;
-  const sentence = `${failure.scheme === "dark" ? "In the dark scheme, " : ""}${failure.what} ${hex(failure.text)} on ${on} is ${said(failure.ratio)}; ${AA}:1 is needed${fix}`;
+  const sentence = `${failure.scheme === "dark" ? "In the dark scheme, " : ""}${failure.what} ${hex(failure.text)} on ${on} is ${said(failure.ratio)}; ${failure.requires}:1 is needed${fix}`;
   return {
     sentence: sentence.replace(/^./, (first) => first.toUpperCase()),
     scheme: failure.scheme,
     pair: { text: hex(failure.text), on: hex(failure.card ?? failure.ground) },
     ratio: failure.ratio,
-    requires: AA,
+    requires: failure.requires,
     ...(suggestion ? { suggestion } : {}),
   };
 }
 
-/** The nearest shade of one scheme's ground, same hue and saturation, by lightness alone, for which every pair reads; undefined when none does. */
+/**
+ * The nearest shade of one scheme's ground, same hue and saturation, by
+ * lightness alone, on which every pair reads and the app's accent is kept
+ * as set-brand keeps it; undefined when none does.
+ */
 function nearestPassing(ground: Ground, scheme: Scheme, accent: string | undefined): string | undefined {
   const color = colorsIn(givenGrounds(ground)[scheme]!)[0]!;
   const base = rgbToHsl(color);
@@ -89,8 +97,26 @@ function nearestPassing(ground: Ground, scheme: Scheme, accent: string | undefin
       if (l < 0 || l > 1) continue;
       // Said as hex, so judged as hex: the color a chat sends back is this one, rounded.
       const shade = hex(hsl(base.h, base.s, l));
-      if (failureOn(groundWith(ground, scheme, shade), accent) === null) return shade;
+      const moved = groundWith(ground, scheme, shade);
+      if (failureOn(moved, accent) === null && (accent === undefined || accentProblem(accent, moved) === null)) return shade;
     }
   }
   return undefined;
+}
+
+/**
+ * The dark page an accent reads on as given, when the light scheme's
+ * ground is what it fails on (Roadmap f-dark-brand-accent): the app's
+ * dark ground — its own, drawn from its light one, or Graview's — for
+ * both schemes, so a refusal of a bright accent answers with a pair that
+ * passes (gold on black) beside the darker shade. Undefined when the
+ * accent does not read there either, or the ground is dark already.
+ */
+export function darkPageFor(accent: string, ground?: Ground): { light: string; dark: string } | undefined {
+  const page = groundSchemes(ground);
+  const light = colorsIn(page.light.ground)[0];
+  if (!light || isDarkGround(light)) return undefined;
+  const dark = hex(colorsIn(page.dark.ground)[0]!);
+  const pair = { light: dark, dark };
+  return groundReads(pair, accent) && accentProblem(accent, pair) === null ? pair : undefined;
 }

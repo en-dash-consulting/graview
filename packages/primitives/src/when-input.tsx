@@ -1,4 +1,4 @@
-import { readWhenTyped, storedOfWall, wallNow, wallOfStored, zoneSaid, type WallTime } from "@graview/core/words";
+import { readPartialDay, readWhenTyped, storedOfWall, wallNow, wallOfStored, zoneSaid, type WallTime } from "@graview/core/words";
 import { Suspense, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import { WhenPicker } from "./when-picker-door.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
@@ -27,6 +27,8 @@ export interface WhenInputProps {
   readonly time: boolean;
   /** Whether a time is kept as an instant (UTC, with its `Z`) rather than as the wall time written. */
   readonly instant?: boolean;
+  /** Whether the field may know only a year or a month ("2006", "May 2016"), kept as `2006` or `2016-05` (Roadmap f-partial-dates). */
+  readonly partial?: boolean;
   /** What the field is called, as a screen reader says the box. */
   readonly label: string;
   readonly name?: string;
@@ -69,12 +71,27 @@ export function wallAsRead(wall: WallTime, time: boolean, locale: string | undef
   return format.format(stamp).replace(/ /g, " ");
 }
 
+/** A year or a month alone as `dayAsRead` says it: "2006", "May 2016" (Roadmap f-partial-dates). Said here, so the editor reaches nothing of `@graview/core`'s main entry. */
+function partAsRead(part: string, locale: string | undefined): string {
+  if (part.length === 4) return part;
+  const stamp = Date.UTC(+part.slice(0, 4), +part.slice(5, 7) - 1, 1);
+  try {
+    return new Intl.DateTimeFormat(locale ?? "en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(stamp);
+  } catch {
+    return new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(stamp);
+  }
+}
+
 /** The editor itself: controlled by the value the field keeps. */
-export function WhenInput({ value, time, instant = false, label, name, required, autoFocus, autoSelect, locale, onChange, onLeave, onCancel, inputRef, boxStyle }: WhenInputProps): ReactNode {
+export function WhenInput({ value, time, instant = false, partial = false, label, name, required, autoFocus, autoSelect, locale, onChange, onLeave, onCancel, inputRef, boxStyle }: WhenInputProps): ReactNode {
   const id = useId();
   const box = useRef<HTMLInputElement | null>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
+  // A year or a month alone, where the field may know no more (Roadmap f-partial-dates): "2006", "May 2016".
+  const partOf = (typed: string | undefined): string | undefined => (partial && !time && typed !== undefined ? readPartialDay(typed) : undefined);
   const said = (stored: string | undefined) => {
+    const part = partOf(stored);
+    if (part !== undefined) return partAsRead(part, locale);
     const wall = wallOfStored(stored);
     return wall ? wallAsRead(wall, time, locale) : (stored ?? "");
   };
@@ -104,10 +121,11 @@ export function WhenInput({ value, time, instant = false, label, name, required,
   const zone = time && instant ? zoneSaid(locale) : undefined;
   const untouched = text === said(value);
   const base = wallOfStored(value);
-  const reading = untouched ? base : readWhenTyped(text, { today: wallNow().day, time, ...(base ? { base } : {}), ...(locale ? { locale } : {}) });
-  const stored = untouched ? value : reading ? storedOfWall(reading, { time, instant }) : undefined;
+  const part = untouched ? partOf(value) : partOf(text);
+  const reading = part !== undefined ? undefined : untouched ? base : readWhenTyped(text, { today: wallNow().day, time, ...(base ? { base } : {}), ...(locale ? { locale } : {}) });
+  const stored = untouched ? value : part !== undefined ? part : reading ? storedOfWall(reading, { time, instant }) : undefined;
   const empty = text.trim() === "";
-  const unread = !empty && reading === undefined;
+  const unread = !empty && reading === undefined && part === undefined;
 
   // A box that reads as no day says so to the form it is in, which will not send it.
   useEffect(() => {
@@ -120,6 +138,8 @@ export function WhenInput({ value, time, instant = false, label, name, required,
   };
   const type = (next: string) => {
     setText(next);
+    const alone = partOf(next);
+    if (alone !== undefined) return hand(alone);
     const wall = next.trim() === "" ? undefined : readWhenTyped(next, { today: wallNow().day, time, ...(base ? { base } : {}), ...(locale ? { locale } : {}) });
     hand(wall ? storedOfWall(wall, { time, instant }) : undefined);
   };
@@ -136,7 +156,7 @@ export function WhenInput({ value, time, instant = false, label, name, required,
     });
   };
 
-  const words = empty ? `Type a date, or pick one — ${HINT}` : unread ? `Not a date this reads — ${HINT}` : reading ? `${wallAsRead(reading, time, locale, true)}${zone ? ` ${zone.short}` : ""}` : "";
+  const words = empty ? `Type a date, or pick one — ${HINT}` : unread ? `Not a date this reads — ${HINT}` : part !== undefined ? `${partAsRead(part, locale)} (${part.length === 4 ? "a year" : "a month"} alone)` : reading ?`${wallAsRead(reading, time, locale, true)}${zone ? ` ${zone.short}` : ""}` : "";
   const setRef = (element: HTMLInputElement | null) => {
     box.current = element;
     if (typeof inputRef === "function") inputRef(element);
