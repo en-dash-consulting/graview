@@ -184,6 +184,23 @@ export function declineSuggestion<S extends AnySchema>(store: Store<S>, id: stri
 }
 
 /**
+ * WITHDRAW A SUGGESTION ITS MAKER NO LONGER STANDS BY (Roadmap
+ * f-withdraw-own-suggestions): an undo of it by whoever suggested it — the
+ * app's own actor, once a host raised the bar it is asked at — which
+ * changes nothing, takes it out of the tray, and is no decline: nobody said
+ * no to it, so the actor may suggest it again should it come to be sure
+ * enough. Only its maker withdraws a suggestion; a person declines one
+ * (`declineSuggestion`). Undone, it waits again.
+ */
+export function withdrawSuggestion<S extends AnySchema>(store: Store<S>, id: string, options: ApplyOptions = {}): ApplyResult<S> {
+  const whole = seatOf(store)?.store ?? store;
+  const author = options.author ?? keptOf(whole).by;
+  const suggestion = waitingFor(whole, id, author);
+  if (suggestion.author.kind !== author.kind || suggestion.author.id !== author.id) throw new GraphError("Only who made a suggestion withdraws it: a person declines it (declineSuggestion).");
+  return whole.undo(suggestion.batch, { ...options, author });
+}
+
+/**
  * The op that declined these calls — the whole suggestion, or any one of
  * them on its own, as asked or meaning the same (`meaningKey`) — or
  * undefined: what an actor asks before it suggests.

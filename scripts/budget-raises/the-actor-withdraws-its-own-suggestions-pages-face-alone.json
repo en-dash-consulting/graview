@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 160,
+  "gzipped": 28,
+  "note": "Raised when the app's own actor came to withdraw its own suggestions below the bar it is given (Roadmap f-withdraw-own-suggestions): the store, which refuses a change a person declined, reads a suggestion its maker took back as withdrawn, not declined. With `capabilities().shipped` naming FR-215. Measured at 667_405 / 245_571 against 667_245 / 245_543: 160 / 28 more."
+}

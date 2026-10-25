@@ -53,8 +53,8 @@ graview.navigate({ place: "features", where: { stage: "building" }, section: "Sh
 
 `props` holds `node`, the record a view of one is drawn for, and `nodes`,
 the records a view of many is drawn for and those it reads. A record is
-plain data: its `id`, `kind` and `label`, and each field on it by name, so
-a deliverable's draft is `props.node.draft`; there is no `fields` key. A
+plain data: `id`, `kind`, `label`, and each field and computed value by
+name (`props.node.draft`), as the viewer sees it; no `fields` key. A
 view of one finds its record in `node`, never in `nodes`. Then `edges`
 (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name,
 title }`, those the viewer may run), `places` (`{ as, title }`), and `theme`

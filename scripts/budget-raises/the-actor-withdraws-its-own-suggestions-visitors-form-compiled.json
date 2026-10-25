@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 86,
+  "gzipped": 16,
+  "note": "Raised when the app's own actor came to withdraw its own suggestions below the bar it is given (Roadmap f-withdraw-own-suggestions): the store, which refuses a change a person declined, reads a suggestion its maker took back as withdrawn, not declined. Measured at 312_521 / 115_043 against 312_435 / 115_027: 86 / 16 more."
+}

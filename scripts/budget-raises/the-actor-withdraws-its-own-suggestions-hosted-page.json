@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 86,
+  "gzipped": 10,
+  "changeset": "the-actor-withdraws-its-own-suggestions-below-the-bar.md",
+  "note": "Raised when the app's own actor came to withdraw its own suggestions below the bar it is given (Roadmap f-withdraw-own-suggestions): the store, which refuses a change a person declined, reads a suggestion its maker took back as withdrawn, not declined. The store is on every page, so this is up front. Measured at 616_125 / 215_054 against 616_039 / 215_044: 86 / 10 more."
+}

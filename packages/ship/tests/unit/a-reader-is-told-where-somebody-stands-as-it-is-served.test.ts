@@ -1,7 +1,7 @@
 import { bindSchema, createSchema, defineApp, defineNode, PUBLISH, Store, TYPE_TEXT, type Presence, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createStoreHandler } from "../../src/runtime.js";
+import { createStoreHandler, whoFor as whoIsHereFor } from "../../src/runtime.js";
 
 /**
  * A READER IS TOLD WHERE SOMEBODY STANDS AS IT IS SERVED THE APP (FR-211).
@@ -81,6 +81,23 @@ describe("a reader of an app that publishes is told who is here", () => {
     expect(toRae!.caret).toBeUndefined();
     store.apply({ name: PUBLISH, args: {} } as never, { author: eve });
     expect((await whoFor("rae")).find((one) => one.participant.startsWith("human:eve"))!.caret).toMatchObject({ node: "t0", field: "notes" });
+    await handler.close();
+  });
+});
+
+describe("a host that answers who is here itself (FR-215)", () => {
+  it("is told by the exported whoFor exactly what /graview/who tells each seat", async () => {
+    const { store, handler, here, whoFor } = await room();
+    store.apply({ name: "add", args: { id: "draft", label: "Draft", notes: "Secret plans" } }, { author: eve });
+    await here("eve", { stop: "/task/draft", over: "draft", caret: { node: "draft", field: "notes", anchor: 3, head: 3, rev: store.log.length } });
+    await here("wes", { stop: "/task/t0", over: "t0" });
+    const everyone = await whoFor("eve");
+    expect(everyone.length).toBeGreaterThanOrEqual(2);
+    for (const seat of ["eve", "wes", "rae"]) expect(whoIsHereFor(store, SEATS[seat]!, everyone)).toEqual(await whoFor(seat));
+    const toRae = whoIsHereFor(store, rae, everyone).find((one) => one.participant.startsWith("human:eve"));
+    expect(toRae).toMatchObject({ stop: "", over: null });
+    expect(toRae!.caret).toBeUndefined();
+    expect(JSON.stringify(whoIsHereFor(store, rae, everyone))).not.toContain("draft");
     await handler.close();
   });
 });

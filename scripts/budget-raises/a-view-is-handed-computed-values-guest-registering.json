@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 3339,
+  "gzipped": 1500,
+  "note": "Raised when a worker view came to be handed its records' computed values (Roadmap f-computed-in-views): the host fetches what works them out (`@graview/core/blocks`' evaluator, guest's host/computed.ts) as a chunk of its own, only before a view whose kinds have computed values starts, and the modules that chunk shares with what the guest host loads first (days, repeat, a linked relation, a kind's label) keep the parts it reads there; and a view is told of the relations its code names and does not read (`unreadEdges`, Roadmap f-reads-edges-warning). Measured at 36_113 / 16_061 against 32_774 / 14_561: 3_339 / 1_500 more."
+}
