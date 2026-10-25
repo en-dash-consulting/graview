@@ -38,6 +38,6 @@ export { typedFieldOf } from "./schema/typed-field-of.js";
 export { amountBox, amountInBox, readAmount } from "./amount-input.js";
 export type { AmountBox } from "./amount-input.js";
 // A day or a moment typed as people say it — "tomorrow 3pm", "Fri 10:30", "17 Oct" — kept as the field keeps it (Roadmap f-date-inputs).
-export { readWhenTyped } from "./when-typed.js";
+export { readPartialDay, readWhenTyped } from "./when-typed.js";
 export { endAfterStartMoved, namesInstant, startAndEndOf, storedOfWall, wallNow, wallOfStored, zoneSaid } from "./wall-time.js";
 export type { WallTime } from "./wall-time.js";

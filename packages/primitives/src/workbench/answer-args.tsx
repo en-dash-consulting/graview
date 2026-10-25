@@ -476,6 +476,7 @@ export function AnswerArgs({
               value={draft === "" ? undefined : draft}
               time={shape.time === true}
               instant={shape.instant === true}
+              partial={shape.partial === true}
               onChange={(next) => setDraft(next ?? "")}
               onCancel={onCancel}
               boxStyle={{ fontSize: "0.875rem", padding: "5px 8px", borderRadius: 7, border: "1px solid var(--graview-edge)", background: "var(--graview-panel)", color: "var(--graview-ink)" }}

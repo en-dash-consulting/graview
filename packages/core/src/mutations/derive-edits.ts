@@ -3,7 +3,7 @@ import * as z from "../schema/zod.js";
 import { filesOf } from "../schema/files.js";
 import { amountOf } from "../schema/amount-mark.js";
 import { sayAmount } from "../document/amount.js";
-import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead } from "../days.js";
+import { DATE_VALUE, dayAsRead, ISO_MOMENT, momentAsRead } from "../days.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
 import { labelOf } from "../schema/define-node.js";
 import { LEFT_ALONE } from "../graph/archived.js";
@@ -192,6 +192,8 @@ export function deriveEditMutations<S extends AnySchema>(
       subject: { kinds: [kind], arg: "id" },
       writes: fields,
       ...(Object.keys(writtenBy).length > 0 ? { writtenBy } : {}),
+      // What `null` clears (Roadmap f-partial-dates): the fields a record may be without.
+      ...(fields.some((field) => clearable(shape[field]!)) ? { clearable: fields.filter((field) => clearable(shape[field]!)) } : {}),
       // Strict (FR-110): an argument it does not take is refused, naming those it does — never dropped, leaving nothing to change.
       input: z.strictObject({
         id: refTo([kind]),
@@ -202,7 +204,9 @@ export function deriveEditMutations<S extends AnySchema>(
         const patch: Record<string, unknown> = {};
         for (const field of fields) {
           const value = (args as Record<string, unknown>)[field];
-          if (value !== undefined) patch[field] = value;
+          // `null` clears a field a record may be without (Roadmap f-partial-dates): a wrong date is taken away, not overwritten with a guess.
+          if (value === null) patch[field] = undefined;
+          else if (value !== undefined) patch[field] = value;
         }
         if (Object.keys(patch).length === 0) {
           throw new ActRefusal(`Nothing to change — give at least one of ${said.join(", ")} a value.`, "invalid");
@@ -268,13 +272,23 @@ function valueSaid(definition: AnyNodeDefinition, schema: unknown, field: string
     return amount ? sayAmount(value, amount) : typedFieldOf(schema) === "duration" ? `${value >= 60 ? `${Math.floor(value / 60)} h ` : ""}${value % 60 || value < 60 ? `${value % 60} min` : ""}`.trim() : String(value);
   }
   if (typeof value !== "string") return "a new value";
-  if (ISO_DAY.test(value)) return dayAsRead(value);
+  if (DATE_VALUE.test(value)) return dayAsRead(value);
   if (ISO_MOMENT.test(value)) return momentAsRead(value);
   // A choice by its option's words; anything else written, by its start (FR-180) and in quotes.
   for (let def = z.defOf(schema) as { readonly type?: string; readonly innerType?: unknown } | undefined; def; def = z.defOf(def.innerType) as typeof def) {
     if (def.type === "enum") return humanizeField(value);
   }
   return `“${excerpt(value, 60)}”`;
+}
+
+/**
+ * A FIELD AN EDIT MAY CLEAR (Roadmap f-partial-dates): one a record may be
+ * without — declared optional, not required and not filled by a default.
+ * `edit-<kind> { published: null }` takes the value away; a required field
+ * refuses `null` as it refuses any value it does not take.
+ */
+function clearable(schema: z.ZodMiniType): boolean {
+  return (schema as { _zod?: { def?: { type?: string } } })._zod?.def?.type === "optional";
 }
 
 /**

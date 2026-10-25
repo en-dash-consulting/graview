@@ -136,7 +136,7 @@ describe("a document's date and time is asked for as one", () => {
     const add = compiled.app.mutations!.find((one) => one.name === "add-meeting")!;
     const shape = (add.input as unknown as { shape: Record<string, unknown> }).shape;
     expect(describeArg(shape["starts"])).toEqual({ type: "date", time: true, instant: true });
-    expect(describeArg(shape["on"])).toEqual({ type: "date" });
+    expect(describeArg(shape["on"])).toEqual({ type: "date", partial: true });
     expect(formFields(add.input).find((field) => field.name === "starts")).toMatchObject({ control: "date", time: true, instant: true });
   });
 });

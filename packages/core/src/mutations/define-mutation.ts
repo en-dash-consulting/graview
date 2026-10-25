@@ -265,7 +265,17 @@ export function compileMutation<S extends AnySchema>(
     const stray = Object.keys(given).filter((key) => !taken.includes(key) && (given as Record<string, unknown>)[key] !== undefined);
     if (stray.length > 0) throw new InvalidArguments(definition.name, [{ path: [], message: doesNotTake(stray, taken, definition.writtenBy) }]);
   }
-  const parsed = definition.input.safeParse(given);
+  /*
+   * WHAT `null` CLEARS (Roadmap f-partial-dates): an argument the act says
+   * is `clearable` is taken past its field's own parse as `null`, so a
+   * wrong date is taken away and the input's tool schema stays the field's.
+   */
+  const cleared =
+    definition.clearable && typeof given === "object" && given !== null && !Array.isArray(given)
+      ? definition.clearable.filter((key) => (given as Record<string, unknown>)[key] === null)
+      : [];
+  const parsed = definition.input.safeParse(cleared.length > 0 ? Object.fromEntries(Object.entries(given as Record<string, unknown>).filter(([key]) => !cleared.includes(key))) : given);
+  if (parsed.success) for (const key of cleared) (parsed.data as Record<string, unknown>)[key] = null;
   if (!parsed.success) {
     // A strict input's own refusal of an argument (a derived edit's), said the same way.
     const takes = Object.keys((definition.input as { shape?: Record<string, unknown> }).shape ?? {});

@@ -146,6 +146,13 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    */
   readonly writtenBy?: Readonly<Record<string, readonly string[]>>;
   /**
+   * Arguments that take `null` to clear the field they write (Roadmap
+   * f-partial-dates): a derived edit's fields a record may be without.
+   * `null` reaches `apply` as `null`, past the input's own parse, so the
+   * input and its tool schema stay the field's own.
+   */
+  readonly clearable?: readonly string[];
+  /**
    * Fields of the SUBJECT this mutation sets to a fixed value, whatever it
    * is told: `mark-fixed` sets `status` to `"fixed"`. A named step, read as
    * one — a status board offers it as the move to that value's column

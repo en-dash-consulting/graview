@@ -2,7 +2,7 @@ import { reaches, type Archived } from "./graph/archived.js";
 import { humanizeField, labelOf } from "./schema/define-node.js";
 import { tellApart } from "./schema/reading.js";
 import { matchNode, parseQuery } from "./search.js";
-import { dayAsRead, isoToday, monthAsRead } from "./days.js";
+import { dayAsRead, isoToday, monthAsRead, PARTIAL_DAY } from "./days.js";
 import { dateOn } from "./repeat.js";
 import {
   arrangeable,
@@ -121,8 +121,20 @@ function sortValue(ctx: ArrangeContext, node: ArrangeNode, by: string): unknown 
 
 const DAY = /^(\d{4})-(\d{2})-(\d{2})/;
 
-/** The first day of the bucket a date falls in, as YYYY-MM-DD; weeks start on Monday, in UTC. */
+/**
+ * The first day of the bucket a date falls in, as YYYY-MM-DD; weeks start
+ * on Monday, in UTC. A date that knows only its year or its month (Roadmap
+ * f-partial-dates) is in the year or the month it names, and in a finer
+ * bucket stands by itself (`2016`, `2016-05`), before the days within it.
+ */
 export function bucketStart(date: string, bucket: DateBucket): string | undefined {
+  if (PARTIAL_DAY.test(date)) {
+    const [y, m] = [date.slice(0, 4), date.slice(5, 7)];
+    if (bucket === "year") return `${y}-01-01`;
+    if (bucket === "decade") return `${String(Number(y) - (Number(y) % 10)).padStart(4, "0")}-01-01`;
+    if (bucket === "month" && m) return `${y}-${m}-01`;
+    return date;
+  }
   const match = DAY.exec(date);
   if (!match) return undefined;
   const [, y, m, d] = match;
@@ -138,6 +150,7 @@ export function bucketStart(date: string, bucket: DateBucket): string | undefine
 
 /** A bucket's heading, its days said in the page's locale (FR-178): "September 2026", "Week of Aug 24, 2026". */
 function bucketLabel(start: string, bucket: DateBucket): string {
+  if (PARTIAL_DAY.test(start)) return dayAsRead(start);
   if (bucket === "month") return monthAsRead(start);
   if (bucket === "week") return `Week of ${dayAsRead(start)}`;
   if (bucket === "year") return start.slice(0, 4);
@@ -260,7 +273,8 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
         put(value ? "1" : "0", value ? "Yes" : "No", node);
       } else {
         const format = definition?.display?.format?.[grouping.by];
-        put(String(value), format ? format(value) : String(value), node);
+        // A choice's group is headed by its option's label, never its id (Roadmap f-option-labels).
+        put(String(value), format ? format(value) : type === "choice" ? humanizeField(String(value)) : String(value), node);
       }
       continue;
     }

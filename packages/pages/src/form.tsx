@@ -291,6 +291,7 @@ function Control<S extends AnySchema>({
               value={typeof value === "string" && value !== "" ? value : undefined}
               time={spec.time === true}
               instant={spec.instant === true}
+              partial={spec.partial === true}
               onChange={onChange}
             />
           </div>

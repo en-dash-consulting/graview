@@ -122,6 +122,26 @@ function near(today: string, year: number | undefined, month: number, date: numb
 }
 
 /**
+ * A YEAR OR A MONTH ALONE, as typed or written in a sheet (Roadmap
+ * f-partial-dates): "2006" is `2006`; "2016-05", "5/2016", "May 2016" and
+ * "May, 2016" are `2016-05`. For a date that may know no more; undefined
+ * for anything else, a whole day among them.
+ */
+export function readPartialDay(input: unknown): string | undefined {
+  if (typeof input === "number") return Number.isInteger(input) && input >= 1000 && input <= 9999 ? String(input) : undefined;
+  const text = String(input).trim().toLowerCase().replace(/,/g, " ").replace(/\s+/g, " ");
+  if (/^\d{4}$/.test(text)) return Number(text) >= 1000 ? text : undefined;
+  const month = (year: string, at: number) => (at >= 1 && at <= 12 && Number(year) >= 1000 ? `${year}-${String(at).padStart(2, "0")}` : undefined);
+  let match = /^(\d{4})[-/](\d{1,2})$/.exec(text);
+  if (match) return month(match[1]!, Number(match[2]));
+  match = /^(\d{1,2})\/(\d{4})$/.exec(text);
+  if (match) return month(match[2]!, Number(match[1]));
+  match = new RegExp(`^${MONTH_WORD}\\.? (\\d{4})$`).exec(text);
+  if (match) return month(match[2]!, monthOf(match[1]!));
+  return undefined;
+}
+
+/**
  * What a person typed, read as a day and — for a field with a time — a time
  * of day on their wall. `today` is the reader's today; `base` is what the
  * field held, so a time typed alone keeps its day and a day typed alone keeps
