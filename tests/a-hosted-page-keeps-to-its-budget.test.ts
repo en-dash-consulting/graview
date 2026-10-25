@@ -150,7 +150,8 @@ describe("a hosted page", () => {
     // 1001 KB since a graph put back to a snapshot it held came to keep where things stood, so a live client lists records in the server's order after a refused call: the scene face measured 1_024_206 B, 291 more than before it (1_023_915).
     // 1003 KB since an app came to stand on a ground of its own: the compile draws the panel, the edge and a floating sheet from the brand's `ground` and derives a dark one from a light one (`ground.ts`): the scene face measured 1_026_185 B, 2_270 more than before it (1_023_915).
     // 1004 KB since what people could not do came to be recorded (Roadmap f-friction-log): the one door a page records through, `openRemote` posting to `/graview/friction` and recording an act the server refused, a search that found nothing and a form's refusal on the routed face: the scene face measured 1_027_242 B, 715 more than before it (1_026_527).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1004 * 1024);
+    // 1005 KB since a ground came to be judged on every pair the check holds a palette to and a dark ground for the light scheme to be drawn as a dark page (Roadmap f-ground-suggestion-passes, f-dark-brand-accent): the scene face measured 1_028_552 B, 456 over 1004.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1005 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

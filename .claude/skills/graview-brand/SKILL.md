@@ -118,13 +118,17 @@ and the description stays in listings and on the name's hover):
 - **An accent** must read as given in light: `set-brand` refuses one that
   does not with the pair, its ratio and the shade that would pass — "#e6c200
   text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the
-  shade it names. Contrast is judged on colors alone; a logo is a picture
-  and is not measured.
+  shade it names. It is judged on the ground it is drawn on: gold on a
+  black ground is kept, and gold on paper is also answered with the dark
+  page it reads on. Contrast is judged on colors alone; a logo is a
+  picture and is not measured.
 - **A ground** is the page background, so apps stop sharing one off-white:
   `"#eef3f8"`, or `{ "light": "#f4efe6", "dark": "#1a1612" }`; `null`
   goes back to Graview's. Cards, the edge and floating sheets are drawn
-  from it; a light one alone gets a dark ground of its hue. One where ink,
-  muted ink or the accent drops below AA is refused like an accent —
+  from it; a light one alone gets a dark ground of its hue, and a dark one
+  for light is drawn as a dark page. One where any pair `graview check`
+  holds (faint ink on a card too) drops short is refused like an accent,
+  with a shade that passes all of them —
   "Muted ink #586174 on the ground #9a9a94 is 2.1:1; 4.5:1 is needed —
   #dcdcda would pass." In TypeScript, `brandFromAccent({ accent, base:
   groundSchemes("#eef3f8") })`.

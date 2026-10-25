@@ -56,7 +56,8 @@ import { isRecord as isObject, respellDocument } from "./respell.js";
 import { refName } from "./compiled.js";
 import { localeSentence, timeZoneSentence } from "./diff.js";
 import { accentProblem } from "../theme/accent.js";
-import { groundProblem } from "../theme/ground-check.js";
+import { darkPageFor, groundProblem } from "../theme/ground-check.js";
+import type { Ground } from "../theme/ground.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
 import { capitalize, listed as listOf } from "../capital.js";
 import { quoted } from "./quote.js";
@@ -669,8 +670,46 @@ class Editor {
       this.said.push("The app goes back to Graview's colors.");
     } else if (e.accent !== undefined) {
       if (!/^#[0-9a-fA-F]{6}$/.test(e.accent)) return this.fail(i, "accent", 'an accent is a color like "#c2577a"');
-      const refused = accentProblem(e.accent);
-      if (refused) return this.fail(i, "accent", refused.sentence, refused.suggestion ? `{"op": "set-brand", "accent": "${refused.suggestion}"}` : "pick a color of another hue");
+    }
+    /*
+     * The accent and the ground are judged together, as the page draws
+     * them: the ground first — the words on it — then the
+     * accent on the ground it is actually drawn on, this edit's or the
+     * app's (Roadmap f-dark-brand-accent), then the whole palette once
+     * more, so what is kept is what `checkBrandContrast` passes.
+     */
+    const accent = e.accent === null ? undefined : ((e.accent ?? brand["accent"]) as string | undefined);
+    const ground = e.ground === null ? undefined : ((e.ground ?? brand["ground"]) as Ground | undefined);
+    const json = (value: unknown) => JSON.stringify(value).replace(/","/g, '", "').replace(/":"/g, '": "');
+    const fixed = (ground: unknown, also = "") => `{"op": "set-brand", "ground": ${json(ground)}${also}}`;
+    if (e.ground !== undefined && e.ground !== null) {
+      // With the accent the app keeps, the ground is judged with it; an accent this edit also sets is judged on the ground next.
+      const refused = groundProblem(e.ground, e.accent === undefined ? accent : undefined);
+      if (refused) return this.fail(i, "ground", refused.sentence, refused.suggestion ? fixed(typeof e.ground === "string" ? refused.suggestion : { ...e.ground, [refused.scheme]: refused.suggestion }) : "pick a lighter color for the light scheme, a darker one for the dark");
+    }
+    if (accent !== undefined && (e.accent !== undefined || e.ground !== undefined)) {
+      const unread = accentProblem(accent, ground);
+      if (unread) {
+        // A bright accent that reads on a dark page is answered with that pair as well as with a darker shade, never refused outright.
+        const page = darkPageFor(accent, ground);
+        if (e.accent !== undefined) {
+          // The shade is judged on this edit's ground, so the fix carries it.
+          const withGround = e.ground !== undefined ? `, "ground": ${json(e.ground)}` : "";
+          const fixes = [
+            ...(unread.suggestion ? [`{"op": "set-brand", "accent": "${unread.suggestion}"${withGround}}`] : []),
+            ...(page ? [`keep ${accent} on a dark page: {"op": "set-brand", "accent": "${accent}", "ground": ${json(page)}}`] : []),
+          ];
+          return this.fail(i, "accent", unread.sentence, fixes.length > 0 ? capitalize(fixes.join(", or ")) : "pick a color of another hue");
+        }
+        // The accent the app keeps is judged on the new ground as it was on the old (FR-126).
+        return this.fail(i, "ground", unread.sentence, unread.suggestion ? fixed(e.ground, `, "accent": "${unread.suggestion}"`) : "pick another ground, or another accent");
+      }
+    }
+    if (ground !== undefined && (e.accent !== undefined || e.ground !== undefined)) {
+      const refused = groundProblem(ground, accent);
+      if (refused) return this.fail(i, e.ground !== undefined ? "ground" : "accent", refused.sentence, refused.suggestion ? fixed(typeof ground === "string" ? refused.suggestion : { ...ground, [refused.scheme]: refused.suggestion }) : "pick another ground, or another accent");
+    }
+    if (e.accent !== undefined && e.accent !== null) {
       brand["accent"] = e.accent;
       this.said.push(`The app's accent color becomes ${e.accent}.`);
     }
@@ -678,13 +717,6 @@ class Editor {
       if (brand["ground"] !== undefined) this.said.push("The app's page background goes back to Graview's.");
       delete brand["ground"];
     } else if (e.ground !== undefined) {
-      const accent = brand["accent"] as string | undefined;
-      const refused = groundProblem(e.ground, accent);
-      const fixed = (ground: unknown, also = "") => `{"op": "set-brand", "ground": ${JSON.stringify(ground).replace(/","/g, '", "').replace(/":"/g, '": "')}${also}}`;
-      if (refused) return this.fail(i, "ground", refused.sentence, refused.suggestion ? fixed(typeof e.ground === "string" ? refused.suggestion : { ...e.ground, [refused.scheme]: refused.suggestion }) : "pick a lighter color for the light scheme, a darker one for the dark");
-      // The accent the app keeps is judged on the new ground as it was on the old (FR-126).
-      const unread = accent ? accentProblem(accent, e.ground) : null;
-      if (unread) return this.fail(i, "ground", unread.sentence, unread.suggestion ? fixed(e.ground, `, "accent": "${unread.suggestion}"`) : "pick another ground, or another accent");
       brand["ground"] = e.ground;
       this.said.push(groundWords(e.ground));
     }

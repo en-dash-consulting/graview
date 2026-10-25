@@ -37,7 +37,8 @@ describe("set-brand refuses an accent that does not read, naming the pair, the r
     };
     expect(Math.abs(hueOf(suggestion) - hueOf("#e6c200"))).toBeLessThan(2);
     expect(contrast(colorsIn(suggestion)[0]!, colorsIn(SCHEMES.light.ground)[0]!)).toBeGreaterThanOrEqual(4.5);
-    expect(outcome.ok ? "" : outcome.findings[0]!.fix).toBe(`{"op": "set-brand", "accent": "${suggestion}"}`);
+    // Beside the dark page a bright accent reads on as given (Roadmap f-dark-brand-accent).
+    expect(outcome.ok ? "" : outcome.findings[0]!.fix).toMatch(new RegExp(`^\\{"op": "set-brand", "accent": "${suggestion}"\\}, or keep #e6c200 on a dark page: `));
   });
 
   it("takes the suggestion, and the app compiles wearing it with nothing said about its colors", () => {
@@ -68,7 +69,7 @@ describe("check says the same of a document that holds such an accent", () => {
     const said = compiled.findings.filter((f) => f.path === "brand.accent");
     expect(said).toHaveLength(1);
     expect(said[0]!.message).toMatch(/#e6c200 text on #f7f7f2 is 1\.6:1; 4\.5:1 is needed — #[0-9a-f]{6} would pass\./);
-    expect(said[0]!.fix).toMatch(/^say \{ "accent": "#[0-9a-f]{6}" \}$/);
+    expect(said[0]!.fix).toMatch(/^say \{ "accent": "#[0-9a-f]{6}" \}, or keep #e6c200 on a dark page: say \{ "ground": /);
   });
 
   it("an accent the derivation moved to read is said too, with the shade it would have needed", () => {

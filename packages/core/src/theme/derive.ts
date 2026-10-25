@@ -172,7 +172,7 @@ export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | Ref
  * invertible in closed form, and a hundred steps is cheap for something that
  * runs once per theme.
  */
-function visibleAlpha(color: Rgba, ground: Rgba, preferred: number, ratio: number): number {
+export function visibleAlpha(color: Rgba, ground: Rgba, preferred: number, ratio: number): number {
   for (let step = Math.round(preferred * 100); step <= 100; step++) {
     const alpha = step / 100;
     if (contrast(composite({ ...color, a: alpha }, ground), ground) >= ratio) return alpha;
