@@ -1,4 +1,4 @@
-import { HTML_NAMESPACE, NAMED_ROLES, OPEN_MAX_TEXT, SVG_NAMESPACE } from "../open-kit.js";
+import { HTML_NAMESPACE, NAMED_ROLES, OPEN_MAX_TEXT, REFERENCE_ATTRIBUTES, SVG_NAMESPACE } from "../open-kit.js";
 import { isEmptyElement, judgeAttribute, judgeElement, type JudgeContext, type OpenNamespace, type OpenRefusal } from "./open-judge.js";
 
 /*
@@ -91,6 +91,8 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
   const heldRoles = new WeakMap<Element, string>();
   /* What a batch took out, by id, until it ends: put back as it was if the view only moved it. */
   const detached = new Map<string, Drawn>();
+  /* Each `aria-labelledby` and `aria-describedby` the view gave, by element, and whether it is drawn: settled as each batch ends. */
+  const references = new Map<Drawn, Map<string, { readonly value: string; drawn: boolean }>>();
 
   const refuse = (refusal: OpenRefusal) => {
     refused.push(refusal);
@@ -125,6 +127,49 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
     if (say) refuse({ reason: "value", element: drawn.name!, name: "role" });
   };
 
+  /**
+   * A NAME TAKEN FROM THE VIEW'S OWN DRAWING (FR-219): an `aria-labelledby`
+   * or `aria-describedby` is drawn as it is given, and judged when the batch
+   * ends — the heading a section is labelled by often comes after it — by
+   * whether every id it names is an element the view drew. One naming
+   * nothing there is taken back and said, and drawn again once it does.
+   */
+  const settleReferences = () => {
+    if (references.size === 0) return;
+    const present = new Set<string>();
+    const walk = (node: Drawn) => {
+      for (const child of node.children) {
+        if (child.refused || child.text) continue;
+        const id = (child.dom as Element).getAttribute("id");
+        if (id) present.add(id);
+        walk(child);
+      }
+    };
+    walk(root);
+    for (const [drawn, given] of references) {
+      if (drawn.id === undefined || byId.get(drawn.id) !== drawn) {
+        references.delete(drawn);
+        continue;
+      }
+      const element = drawn.dom as Element;
+      for (const [name, state] of given) {
+        const named = state.value.split(/\s+/).filter((id) => id !== "");
+        const missing = named.filter((id) => !present.has(id));
+        if (named.length > 0 && missing.length === 0) {
+          if (state.drawn) continue;
+          state.drawn = true;
+          element.setAttribute(name, state.value);
+          settleRole(drawn, false);
+        } else if (state.drawn) {
+          state.drawn = false;
+          element.removeAttribute(name);
+          refuse({ reason: "reference", element: drawn.name!, name, ids: missing.length > 0 ? missing : named });
+          settleRole(drawn, true);
+        }
+      }
+    }
+  };
+
   const setAttribute = (drawn: Drawn, name: string, value: unknown, settle = true) => {
     const element = drawn.dom as Element;
     if (value !== null && value !== undefined && typeof value !== "string") return refuse({ reason: "value", element: drawn.name!, name });
@@ -142,6 +187,13 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
     /* What the field showed before the view spoke: a view that says what is already there has not changed it. */
     const before = isField ? (judged.name === "value" ? field.value : judged.name === "checked" ? field.checked : field.selected) : undefined;
     if (judged.name === "role") heldRoles.delete(element);
+    if (REFERENCE_ATTRIBUTES.includes(judged.name)) {
+      const given = references.get(drawn) ?? new Map<string, { readonly value: string; drawn: boolean }>();
+      if (judged.value === null) given.delete(judged.name);
+      else given.set(judged.name, { value: judged.value, drawn: true });
+      if (given.size > 0) references.set(drawn, given);
+      else references.delete(drawn);
+    }
     if (judged.value === null) element.removeAttribute(judged.name);
     else element.setAttribute(judged.name, judged.value);
     if (settle && (judged.name === "role" || NAMING.includes(judged.name))) settleRole(drawn, judged.name === "role");
@@ -320,6 +372,7 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
         /* What was taken out and not put back in this batch is gone. */
         for (const gone of detached.values()) forget(gone);
         detached.clear();
+        settleReferences();
       }
     },
     get refused() {

@@ -26,7 +26,7 @@
  *             (a `region` is drawn only while it has a name, `NAMED_ROLES`)
  *             and the elements that carry them (`<nav>`, `<header>`,
  *             `<footer>`, `<aside>`, `<search>` are drawn as `<div>`, `<output>`
- *             as `<span>`, and a `<section>` is never named),
+ *             as `<span>`, and a `<section>` is named only by its own heading),
  *             `aria-live="assertive"`, and password and file inputs.
  *
  * The host draws from this declaration (host/open-render.ts, with
@@ -281,8 +281,22 @@ export const NAMED_ROLES = ["region"] as const;
  */
 export const HTML_DRAWN_AS: Readonly<Record<string, string>> = { nav: "div", header: "div", footer: "div", aside: "div", search: "div", output: "span" };
 
-/** Attributes that would name an element: a named `<section>` is a region landmark, so a section is never named. */
-export const UNNAMED_ELEMENTS: Readonly<Record<string, readonly string[]>> = { section: ["aria-label", "aria-labelledby", "title"] };
+/**
+ * Attributes that would name an element: a named `<section>` is a region
+ * landmark, so a section is named only by its own heading (FR-219):
+ * `aria-labelledby`, drawn while every id it names is an element of the
+ * view's own drawing (`REFERENCE_ATTRIBUTES`). A label or a title in words
+ * of its own stays refused.
+ */
+export const UNNAMED_ELEMENTS: Readonly<Record<string, readonly string[]>> = { section: ["aria-label", "title"] };
+
+/**
+ * Attributes that name other elements by id: drawn while every id they name
+ * is an element of the view's own drawing, held back and said while one
+ * names nothing there (FR-219). The view is drawn in a shadow root, so its
+ * ids are its own and are drawn as the view wrote them.
+ */
+export const REFERENCE_ATTRIBUTES: readonly string[] = ["aria-labelledby", "aria-describedby"];
 
 /** `aria-*`, by pattern. */
 export function isAriaAttribute(name: string): boolean {

@@ -56,6 +56,11 @@ export function sayRefusal(refusal: ViewRefusal, host: ImageHost & { readonly li
       return { at: "drawing", says: "Not drawn: a record the drawing's format does not know." };
     case "budget":
       return { at: "drawing", says: "Not drawn: more nodes than a view may draw." };
+    case "reference": {
+      const ids = "ids" in refusal && refusal.ids ? refusal.ids : [];
+      const said = ids.length > 0 ? ids.map((id) => `"${id}"`).join(", ") : "no id";
+      return { at: `drawing ${element}${name}`, says: `Not drawn: ${element || "an element"}${name} names ${said}, ${ids.length === 1 ? "which is" : "which are"} no element of this view. It names elements the view draws itself, by their id (<h2 id="…">), drawn once each is there.` };
+    }
     case "css":
       return { at: `stylesheet${name === " stylesheet" ? "" : name}`, says: `Not drawn: CSS the open kit leaves out${refusal.css ? ` (${refusal.css.reason}${refusal.css.name ? ` ${refusal.css.name}` : ""})` : ""}.${why(refusal.css?.name)}` };
   }

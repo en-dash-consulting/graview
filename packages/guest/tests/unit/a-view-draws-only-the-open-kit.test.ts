@@ -128,9 +128,10 @@ describe("the attributes a view may not set", () => {
     ["div", { role: "form" }],
     ["div", { role: "region" }],
     ["div", { role: "none navigation" }],
-    /* A named section is a region landmark. */
+    /* A named section is a region landmark: it is named only by a heading of its own (FR-219), never by an id it does not draw. */
     ["section", { "aria-label": "Notices" }],
     ["section", { "aria-labelledby": "x" }],
+    ["div", { "aria-describedby": "nowhere" }],
     ["section", { title: "Updates" }],
     ["div", { "aria-live": "assertive" }],
     ["div", { tabindex: "5" }],
