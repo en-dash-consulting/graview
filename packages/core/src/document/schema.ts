@@ -1,5 +1,6 @@
 import * as z from "../schema/zod.js";
 import { LINKED_TARGET } from "../schema/linked.js";
+import type { AppPurpose } from "../job-shape.js";
 
 /*
  * THE GRAVIEW DECLARATION DOCUMENT, v1 — as data a stranger can hand us.
@@ -494,6 +495,12 @@ function build() {
      * checker's to judge, and the JSON schema says it to an editor.
      */
     connections: z.optional(z.record(name("connection"), loose)),
+    /**
+     * Who the app is for, and the jobs they come to it to do (Roadmap f-app-jobs, `job-shape.ts`). Read
+     * loosely here, as a page that draws the app answers no job; its shape (`PurposeSpec`,
+     * `./purpose-spec.ts`) is the checker's to judge and an edit's to hold, and the JSON schema says it.
+     */
+    purpose: z.optional(loose as unknown as z.ZodMiniType<AppPurpose>),
     /** Forms for visitors, by name: each one act, its fields, and what the visitor is told once it is received. */
     forms: z.optional(z.record(name("form"), FormSpec)),
     /**

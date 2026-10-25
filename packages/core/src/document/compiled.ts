@@ -715,6 +715,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     ...(document.forms ? { forms: document.forms as never } : {}),
     // When edits reach readers (Roadmap f-publishing-lifecycle): the store a host makes honors it.
     ...(document.publishing ? { publishing: document.publishing } : {}),
+    // Who it is for and what they come to do (Roadmap f-app-jobs): data the checker, the describer and a seat read.
+    ...(document.purpose ? { purpose: document.purpose } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
     ...(plan.viewSpecs ? { viewSpecs: plan.viewSpecs as never } : {}),
     // And its home view, about no one record, is the app's home (FR-81).

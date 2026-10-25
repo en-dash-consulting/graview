@@ -542,6 +542,15 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     ...(base?.intelligence ? { intelligence: base.intelligence } : {}),
     ...(base?.version !== undefined ? { version: base.version } : {}),
     ...(base?.migrations ? { migrations: base.migrations } : {}),
+    // Who it is for and what they come to do (Roadmap f-app-jobs): carried, a renamed kind's jobs following it and a removed kind's let go.
+    ...(base?.purpose
+      ? {
+          purpose: {
+            ...base.purpose,
+            ...(base.purpose.jobs ? { jobs: base.purpose.jobs.map((job) => ({ ...job, kind: follow(job.kind) })).filter((job) => liveKinds.has(job.kind)) } : {}),
+          },
+        }
+      : {}),
     // The connections are carried, not edited here yet: a renamed kind's calendar follows it.
     ...(base?.connections
       ? { connections: Object.fromEntries(Object.entries(base.connections).map(([key, connection]) => [key, { ...connection, kind: follow(connection.kind) }])) }

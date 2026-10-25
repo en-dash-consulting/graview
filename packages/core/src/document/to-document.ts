@@ -186,6 +186,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     ...(app.connections ? { connections: app.connections as GraviewDocument["connections"] } : {}),
     ...(app.forms ? { forms: structuredClone(app.forms) as GraviewDocument["forms"] } : {}),
     ...(app.publishing ? { publishing: structuredClone(app.publishing) as GraviewDocument["publishing"] } : {}),
+    // Who it is for and its jobs are data (Roadmap f-app-jobs); a job's next act the document could not carry is left out, as a grant's is.
+    ...(app.purpose ? { purpose: { ...structuredClone(app.purpose), ...(app.purpose.jobs ? { jobs: app.purpose.jobs.map((job) => (job.act !== undefined && unwritten.has(job.act) ? (({ act: _act, ...rest }) => structuredClone(rest))(job) : structuredClone(job))) } : {}) } as GraviewDocument["purpose"] } : {}),
     // View specs are already data: they are the document's views (FR-03).
     ...((app.viewSpecs && Object.keys(app.viewSpecs).length > 0) || app.home ? { views: { ...(app.viewSpecs ?? {}), ...(app.home ? { home: app.home } : {}) } as unknown as GraviewDocument["views"] } : {}),
     // The palette is code; the app's money, locale and time zone are data, and go across (FR-100).

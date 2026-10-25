@@ -16,6 +16,8 @@ const refusedFormat = (format: string, type: string): string => {
   return `${sentence}; ${fix}`;
 };
 import { farEnd } from "./far-end.js";
+import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
+import { JobSpec } from "./purpose-spec.js";
 import { linkedRelationFindings } from "./linked-relation-findings.js";
 import { linkedRelationOfSpec, reachesAnotherApp, type LinkedRelation } from "../schema/linked.js";
 import {
@@ -146,6 +148,10 @@ export const EDIT_OPS = [
   "remove-grant",
   "add-sight",
   "remove-sight",
+  "set-purpose",
+  "add-job",
+  "edit-job",
+  "remove-job",
 ] as const;
 export type EditOp = (typeof EDIT_OPS)[number];
 
@@ -173,6 +179,7 @@ function buildShapes(): Record<EditOp, z.ZodType> {
   const edgeName = z.string().regex(EDGE_NAME, 'relation names are one camelCase word, like "tendedBy"');
   const actName = z.string().regex(NAME, 'act names are lower-case words joined by hyphens, like "mark-paid"');
   const lensTitle = z.string().min(1).max(80);
+  const jobName = z.string().regex(NAME, 'job names are lower-case words joined by hyphens, like "unbooked-soon"');
 
   return {
     "add-kind": z.object({ op: z.literal("add-kind"), kind: kindName, act: z.boolean().optional() }).passthrough(),
@@ -301,6 +308,24 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "remove-grant": z.object({ op: z.literal("remove-grant") }).passthrough(),
     "add-sight": z.object({ op: z.literal("add-sight") }).passthrough(),
     "remove-sight": z.object({ op: z.literal("remove-sight") }).passthrough(),
+    // Who the app is for, in words (Roadmap f-app-jobs); null takes the sentence away.
+    "set-purpose": z.object({ op: z.literal("set-purpose"), for: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
+    // A job as the document holds one (`purpose.jobs[]`), placed at `at` or last.
+    "add-job": z.object({ op: z.literal("add-job"), job: z.record(z.string(), z.unknown()), at: z.number().int().min(0).optional() }).strict(),
+    // A job by its name, each key given set, null clearing an optional one.
+    "edit-job": z
+      .object({
+        op: z.literal("edit-job"),
+        name: jobName,
+        ask: z.string().min(1).max(200).optional(),
+        kind: kindName.optional(),
+        where: z.union([z.string().min(1).max(2000), z.null()]).optional(),
+        sort: z.union([listKey, z.object({ by: listKey, direction: listDirection }).strict(), z.null()]).optional(),
+        act: z.union([actName, z.null()]).optional(),
+        roles: z.union([z.array(z.string().regex(NAME)).min(1).max(40), z.null()]).optional(),
+      })
+      .strict(),
+    "remove-job": z.object({ op: z.literal("remove-job"), name: jobName }).strict(),
   };
 }
 let shapes: Record<EditOp, z.ZodType> | undefined;
@@ -956,7 +981,85 @@ class Editor {
       case "add-sight":
       case "remove-sight":
         return this.policyEdit(i, e);
+      case "set-purpose":
+        return this.setPurpose(e);
+      case "add-job":
+        return this.addJob(i, e);
+      case "edit-job":
+        return this.editJob(i, e);
+      case "remove-job":
+        return this.removeJob(i, e.name);
     }
+  }
+
+  // ── who the app is for, and what they come to do (Roadmap f-app-jobs) ──
+
+  private setPurpose(e: Doc) {
+    const purpose: Doc = { ...(this.doc.purpose ?? {}) };
+    if (e.for === null) delete purpose.for;
+    else purpose.for = e.for;
+    this.keepPurpose(purpose);
+    this.said.push(e.for === null ? "The app no longer says whom it is for." : `The app says it is for ${quotedAtTheEnd(e.for)}`);
+  }
+
+  /** The purpose as it now stands, or none when it says nothing. */
+  private keepPurpose(purpose: Doc) {
+    if (Array.isArray(purpose.jobs) && purpose.jobs.length === 0) delete purpose.jobs;
+    if (Object.keys(purpose).length === 0) delete this.doc.purpose;
+    else this.doc.purpose = purpose;
+  }
+
+  /** The job a name names, or -1 having said why. */
+  private jobIndex(i: number, name: string): number {
+    const jobs: Doc[] = this.doc.purpose?.jobs ?? [];
+    const index = jobs.findIndex((job) => job.name === name);
+    if (index < 0) this.fail(i, "name", `there is no job "${name}"${jobs.length > 0 ? `; the jobs are ${jobs.map((job) => `"${job.name}"`).join(", ")}` : ""}`);
+    return index;
+  }
+
+  /** A job placed among the others, judged as `graview check` judges it (`job-*`): kept only when nothing is wrong with it. */
+  private placeJob(i: number, job: Doc, at: number, replacing: boolean): boolean {
+    const jobs: Doc[] = [...(this.doc.purpose?.jobs ?? [])];
+    if (replacing) jobs[at] = job;
+    else jobs.splice(at, 0, job);
+    const wrong = jobFindings({ ...this.doc.purpose, jobs }, jobWorldOfDocument(this.doc)).filter((finding) => finding.index === at || (finding.code === "jobs-too-many" && !replacing) || (finding.code === "job-name-taken" && jobs[finding.index ?? -1]?.name === job.name));
+    for (const finding of wrong) this.failAs(finding.code, i, finding.code === "jobs-too-many" ? "" : `job.${finding.key ?? ""}`, finding.message, finding.fix);
+    if (wrong.length > 0) return false;
+    this.keepPurpose({ ...(this.doc.purpose ?? {}), jobs });
+    return true;
+  }
+
+  private addJob(i: number, e: Doc) {
+    const parsed = JobSpec.safeParse(e.job);
+    if (!parsed.success) return this.refuse(i, parsed.error.issues.map((issue) => ({ ...issue, path: ["job", ...issue.path] })), "a job");
+    const job = parsed.data as Doc;
+    const jobs: Doc[] = this.doc.purpose?.jobs ?? [];
+    if (!this.placeJob(i, job, Math.min(e.at ?? jobs.length, jobs.length), false)) return;
+    this.said.push(`A new job, ${quoted(job.ask)}: ${jobWords(this.doc, job)}.`);
+  }
+
+  private editJob(i: number, e: Doc) {
+    const index = this.jobIndex(i, e.name);
+    if (index < 0) return;
+    const job: Doc = { ...this.doc.purpose.jobs[index] };
+    const changed = (["ask", "kind", "where", "sort", "act", "roles"] as const).filter((key) => e[key] !== undefined);
+    if (changed.length === 0) return this.fail(i, "", "an edit-job names at least one of ask, kind, where, sort, act or roles to change", `{"op": "edit-job", "name": "${e.name}", "ask": "…"}`);
+    for (const key of changed) {
+      if (e[key] === null) {
+        if (key === "ask" || key === "kind") return this.fail(i, key, `a job always has its ${key}`);
+        delete job[key];
+      } else job[key] = e[key];
+    }
+    if (!this.placeJob(i, job, index, true)) return;
+    this.said.push(`The job "${job.name}", ${quoted(job.ask)}, is now ${jobWords(this.doc, job)}.`);
+  }
+
+  private removeJob(i: number, name: string) {
+    const index = this.jobIndex(i, name);
+    if (index < 0) return;
+    const [job] = this.doc.purpose.jobs.splice(index, 1);
+    this.keepPurpose({ ...this.doc.purpose });
+    this.said.push(`The job "${job.name}" (${quotedAtTheEnd(job.ask)}) is removed.`);
   }
 
   /** How a record's page orders and groups its facts (FR-148): judged as the compile judges `kinds.<kind>.page`. */
@@ -1942,7 +2045,7 @@ class Editor {
         if (exprMentions(this.doc, typeof c === "string" ? c : c.expr, new Set([other]), swept)) gone.push(...this.dropComputed(other, name));
       }
     }
-    gone.push(...this.pruneViews(swept), ...this.pruneLenses(swept));
+    gone.push(...this.pruneViews(swept), ...this.pruneLenses(swept), ...this.pruneJobs(swept));
     // The arrangement names kinds (FR-80): a kind that is gone is no longer ordered or hidden, nor where the app opens.
     if (this.doc.pages) {
       for (const part of ["order", "hide", "primary"] as const) {
@@ -2316,6 +2419,12 @@ class Editor {
       if (kept.length > 0) rule.repairs = kept;
       else delete rule.repairs;
     }
+    // A job asks the same question without it: only what people do next is let go.
+    for (const job of (this.doc.purpose?.jobs ?? []) as Doc[]) {
+      if (job.act !== act) continue;
+      delete job.act;
+      gone.push(`what the job "${job.name}" does next`);
+    }
     return gone;
   }
 
@@ -2340,6 +2449,7 @@ class Editor {
     this.doc.acts = acts;
     for (const g of this.doc.policy?.grants ?? []) if (Array.isArray(g.mutations)) g.mutations = g.mutations.map((m: string) => (m === from ? to : m));
     for (const rule of Object.values(this.doc.rules ?? {}) as Doc[]) for (const r of rule.repairs ?? []) if (r.act === from) r.act = to;
+    for (const job of (this.doc.purpose?.jobs ?? []) as Doc[]) if (job.act === from) job.act = to;
   }
 
   // ── every place a name is said ──
@@ -2543,7 +2653,40 @@ class Editor {
       if (doc.pages.first === r.from) doc.pages.first = r.to;
       if (JSON.stringify(doc.pages) !== before) touched.push("the pages");
     }
+
+    // Jobs (Roadmap f-app-jobs): what each is answered by, what its where reads, what it sorts by and the act it names.
+    for (const job of (doc.purpose?.jobs ?? []) as Doc[]) {
+      const before = JSON.stringify(job);
+      if (job.where !== undefined) job.where = exprAt(job.where, new Set([job.kind]));
+      const by = typeof job.sort === "string" ? job.sort : job.sort?.by;
+      if (r.t === "field" && job.kind === r.kind && by === r.from) job.sort = typeof job.sort === "string" ? r.to : { ...job.sort, by: r.to };
+      if (r.t === "kind" && job.kind === r.from) job.kind = r.to;
+      if (job.act !== undefined && r.t === "kind") job.act = renamedAct(job.act, r.from, r.to);
+      if (job.act !== undefined && (r.t === "kind" || r.t === "edge")) job.act = renamedRelationAct(job.act, doc.kinds, r);
+      if (JSON.stringify(job) !== before) touched.push(`the job "${job.name}"`);
+    }
     return touched;
+  }
+
+  /** Jobs that can no longer be answered as asked go — a where that reads what is going, a kind that is gone — and an order by it is let go. */
+  private pruneJobs(r: Rename): string[] {
+    const purpose = this.doc.purpose;
+    if (!purpose?.jobs) return [];
+    const gone: string[] = [];
+    purpose.jobs = purpose.jobs.filter((job: Doc) => {
+      if ((r.t === "kind" && job.kind === r.from) || exprMentions(this.doc, job.where, new Set([job.kind]), r)) {
+        gone.push(`the job "${job.name}"`);
+        return false;
+      }
+      const by = typeof job.sort === "string" ? job.sort : job.sort?.by;
+      if (r.t === "field" && job.kind === r.kind && by === r.from) {
+        delete job.sort;
+        gone.push(`the order of the job "${job.name}"`);
+      }
+      return true;
+    });
+    this.keepPurpose({ ...purpose });
+    return gone;
   }
 
   /**
@@ -2623,6 +2766,7 @@ class Editor {
     if (doc.rules && Object.keys(doc.rules).length === 0) delete doc.rules;
     gone.push(...this.pruneViews(r));
     gone.push(...this.pruneLenses(r));
+    gone.push(...this.pruneJobs(r));
     return gone;
   }
 
@@ -2792,6 +2936,17 @@ class Editor {
     }
     return said;
   }
+}
+
+/** How a job is answered, in words: "answered by the vendors where status != 'booked', sorted by due, then book". */
+function jobWords(doc: Doc, job: Doc): string {
+  const sort = typeof job.sort === "string" ? { by: job.sort, direction: "asc" } : job.sort;
+  return [
+    `answered by the ${pluralWords(doc, job.kind).toLowerCase()}${job.where ? ` where ${job.where}` : ""}`,
+    ...(sort ? [`sorted by ${sort.by}${sort.direction === "desc" ? ", highest first" : ""}`] : []),
+    ...(job.act ? [`then "${job.act}"`] : []),
+    ...(job.roles ? [`for ${listOf(job.roles)}`] : []),
+  ].join(", ");
 }
 
 /** What the people and the policy make together, as `graview check` judges it (`checkPeople`), said over the document. */

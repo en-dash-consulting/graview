@@ -34,6 +34,7 @@ import type { Principal } from "./permissions/types.js";
 import { fieldWords, humanizeField, labelOf, nounOf, pluralOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import { seatOf } from "./seat-of.js";
+import { jobIsFor, type AppPurpose } from "./job-shape.js";
 import type { Store } from "./store.js";
 
 // ── targets ─────────────────────────────────────────────────────────────────
@@ -613,6 +614,18 @@ export interface AiContextState {
   readonly neighbors: readonly (AiRecordBrief & { readonly relation: string; readonly direction: "out" | "in" })[];
   readonly recent: readonly { readonly intent: string; readonly at: string; readonly by: string }[];
   readonly schema: SchemaDigest;
+  /**
+   * Who the app is for and what this viewer comes to it to ask (Roadmap
+   * f-app-jobs), when the caller hands the app's `purpose`: its `for`, and
+   * each job whose roles include the viewer's and whose kind they may see.
+   */
+  readonly purpose?: AiPurposeState;
+}
+
+/** The app's purpose as a model is told it: who it is for, and the questions this viewer brings to it. */
+export interface AiPurposeState {
+  readonly for?: string;
+  readonly jobs: readonly { readonly name: string; readonly ask: string; readonly kind: string }[];
 }
 
 export interface AiContextOptions {
@@ -623,6 +636,8 @@ export interface AiContextOptions {
   readonly selection?: readonly string[];
   /** How many recent changes, newest first. 6 when unsaid. */
   readonly recent?: number;
+  /** The app's purpose (`app.purpose`): said to the model as this viewer may hear it. Unsaid, the state says none. */
+  readonly purpose?: AppPurpose;
 }
 
 const DIGESTS = new WeakMap<object, Map<string, SchemaDigest>>();
@@ -723,6 +738,8 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
     .slice(-(options.recent ?? 6))
     .reverse()
     .map((batch) => ({ intent: batch.intent, at: batch.at, by: byWords(batch.author) }));
+  const jobs = (options.purpose?.jobs ?? []).filter((job) => jobIsFor(job, principal.roles) && visible.has(job.kind)).map((job) => ({ name: job.name, ask: job.ask, kind: job.kind }));
+  const purpose = options.purpose && (options.purpose.for !== undefined || jobs.length > 0) ? { ...(options.purpose.for !== undefined ? { for: options.purpose.for } : {}), jobs } : undefined;
   return {
     ...(options.place !== undefined ? { place: options.place } : {}),
     target: targetState,
@@ -730,6 +747,7 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
     neighbors: neighbors.slice(0, 24),
     recent,
     schema: schemaDigestOf(whole, principal),
+    ...(purpose ? { purpose } : {}),
   };
 }
 

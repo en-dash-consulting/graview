@@ -69,13 +69,14 @@ The routed face is one branch in `main.tsx`: when the path starts with `/pages`,
 
 The scaffold is deliberately the framework's own face. A product replaces it in this order, and each step has a skill and a worked chapter in `apps/seedbed` behind it:
 
-1. **The words.** Every edge gets `description` and `inverse` — how it reads from each end — or `graview check` says `edge-without-inverse` and the far end is captioned with the edge kind's name. Every mutation gets a `title` and `description`; they are the button and the tool schema. (`graview-node-kind`.)
-2. **A lens with a name.** A lens registered over a group with a `title` is a PLACE — a tab on the app bar, one press from anywhere. Start from the three that ship; write your own when the domain has a picture of itself, the way the garden has a map. (`graview-lens`, chapters 10-13.)
-3. **The pages.** One page in the product's words first, then, when the product needs to look like a product, every surface: the shell, the home, the lists, the records, the problems — over the same store, acts, rules and permissions. (`graview-pages`, chapters 9 and 13.)
-4. **A seat and a policy.** Who may do what, declared once; the strip, the pages and the agent's tools all narrow from it. (`graview-permissions`, `graview-agent-seat`, chapters 5 and 7.)
-5. **A brand, and shipping.** The name, the mark, the typefaces, the palette the checker holds to AA; a version and a migration so a stored graph is carried forward. (`graview-brand`, `graview-ship`, chapters 8 and 12.)
+1. **Who it is for.** `purpose: { for, jobs }` on `defineApp` or the document: the questions its people bring, each a `kind`, a rule-language `where`, a `sort` and the next `act`. `graview check` holds each (`job-*`); describe and the seat read them (`@graview/core/jobs`).
+2. **The words.** Every edge gets `description` and `inverse` — how it reads from each end — or `graview check` says `edge-without-inverse` and the far end is captioned with the edge kind's name. Every mutation gets a `title` and `description`; they are the button and the tool schema. (`graview-node-kind`.)
+3. **A lens with a name.** A lens registered over a group with a `title` is a PLACE — a tab on the app bar, one press from anywhere. Start from the three that ship; write your own when the domain has a picture of itself, the way the garden has a map. (`graview-lens`, chapters 10-13.)
+4. **The pages.** One page in the product's words first, then, when the product needs to look like a product, every surface: the shell, the home, the lists, the records, the problems — over the same store, acts, rules and permissions. (`graview-pages`, chapters 9 and 13.)
+5. **A seat and a policy.** Who may do what, declared once; the strip, the pages and the agent's tools all narrow from it. (`graview-permissions`, `graview-agent-seat`, chapters 5 and 7.)
+6. **A brand, and shipping.** The name, the mark, the typefaces, the palette the checker holds to AA; a version and a migration so a stored graph is carried forward. (`graview-brand`, `graview-ship`, chapters 8 and 12.)
 
-Work with an agent beside the declaration: describe a kind, let it draft the edges, acts and rule, run `pnpm verify`, look, declare more.
+Work with an agent beside the declaration: describe a kind, let it draft, run `pnpm verify`, look, declare more.
 
 ### The CI a product on Graview needs
 
@@ -86,11 +87,9 @@ Copy the shape from the framework's own `.github/workflows/ci.yml`, minus the pa
 - **Headless tests** — the domain tier has no DOM in it. Test that your rules fire on graphs that break them and that their repairs resolve them; that is the test that catches a real regression.
 - **An accessibility run, in BOTH schemes.** Copy `apps/todo/scripts/run-a11y.mjs`: the real accessibility tree through CDP, plus axe-core. A light palette that clears AA in the dark is what it catches.
 
-Later: a browser harness, a JSON verdict per claim.
-
 ### Supported browsers
 
-Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The scene draws on the GPU where the browser can capture into WebGPU and on the DOM path elsewhere, silently, with one accessibility tree (`renderer`, `blur` on the Shell) — never a requirement.
+Build for the DOM path: Chromium, WebKit and Firefox, all verified (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and cuts cleanly where it is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the seat says AI isn't available. The scene draws on the GPU where it can and on the DOM path elsewhere, with one accessibility tree — never a requirement.
 
 ### Then find out whether it worked
 
@@ -99,7 +98,7 @@ pnpm verify        # typecheck, tests, build, graview check
 graview doctor     # one Graview release everywhere; React's pair; PATH from a checkout
 ```
 
-Run the project's own `graview`, not `npx -y graview@<pin>`: inside a pnpm workspace that already holds the release, npx finds no bin (`sh: graview: command not found`).
+Run the project's own `graview`, not `npx -y graview@<pin>`: inside a pnpm workspace holding the release, npx finds no bin.
 
 Report the real output. On a new app the useful early findings are `mutation-untitled`, `mutation-undescribed`, `edge-without-inverse` and `required-invariant-unregistered` — things that look fine until somebody reads the interface or an agent reads a tool schema.
 

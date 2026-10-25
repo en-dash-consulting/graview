@@ -13,6 +13,7 @@ import type { ViewRegistry } from "./views/types.js";
 import type { HomeView, ViewSpecsByKind } from "./document/views.js";
 import type { PagesArrangement } from "./views/types.js";
 import type { VisitorFormDeclaration } from "./visitor-form-shape.js";
+import type { AppPurpose } from "./job-shape.js";
 
 /**
  * Everything one application declares, in one object. `graview check` and
@@ -279,6 +280,18 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * form's role (`visitor`) its act, and name it in no sight.
    */
   readonly forms?: Readonly<Record<string, VisitorFormDeclaration>>;
+  /**
+   * WHO IT IS FOR AND WHAT THEY COME TO DO (Roadmap f-app-jobs): a sentence
+   * about its people, and up to twelve jobs — a question in their words,
+   * answered by the records of one kind a rule-language condition holds for
+   * (`where`, the same words a document writes; the TypeScript path reads
+   * the rule language too), in an order, with the act they usually take
+   * next. `graview check` holds each to the declaration (`job-*`);
+   * `@graview/core/jobs` answers one as a seat may see it (`answerJob`).
+   *
+   *   purpose: { for: "Two people sharing chores", jobs: [{ name: "due-today", ask: "What's due today?", kind: "task", where: "not done and due <= today()", sort: "due", act: "complete" }] }
+   */
+  readonly purpose?: AppPurpose;
 }
 
 /**

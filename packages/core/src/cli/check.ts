@@ -19,6 +19,7 @@ import type { AnySchema } from "../schema/schema.js";
  */
 import {
   checkAccents,
+  checkJobs,
   checkActsFromEnds,
   checkBlankInstallation,
   checkEditableFields,
@@ -125,6 +126,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: Check
   checkHiddenReads(ctx);
   checkFactRules(ctx);
   checkClockRules(ctx);
+  checkJobs(ctx);
 
   const errors = findings.filter((f) => f.severity === "error").length;
   const notes = findings.filter((f) => f.severity === "note").length;

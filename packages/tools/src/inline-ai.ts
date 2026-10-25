@@ -33,7 +33,7 @@
  * when the inline AI is first opened: a page whose reader never right-
  * clicks carries none of it.
  */
-import { labelOf, pluralOf, type AnySchema, type Author, type MutationCall, type Principal, type Store } from "@graview/core";
+import { labelOf, pluralOf, type AnySchema, type AppPurpose, type Author, type MutationCall, type Principal, type Store } from "@graview/core";
 import {
   aiContextOf,
   catalogOf,
@@ -109,6 +109,8 @@ export interface InlineAsk<S extends AnySchema = AnySchema> {
   readonly said?: string;
   /** The interaction's id, when the face made one; else one is made. */
   readonly interaction?: string;
+  /** The app's purpose (`app.purpose`, Roadmap f-app-jobs): who it is for and this viewer's jobs, said to the model in its state. */
+  readonly purpose?: AppPurpose;
 }
 
 /** One proposed change, as a ghost draws it and an acceptance applies it. */
@@ -188,7 +190,7 @@ interface Asked {
 function begin<S extends AnySchema>(ai: HostAi, ask: InlineAsk<S>): Asked {
   const id = ask.interaction ?? interactionId();
   const catalog = catalogOf(ask.store, ask.target, { principal: ask.principal, ...(ask.acts ? { acts: ask.acts } : {}), ...(ask.places ? { places: ask.places } : {}) });
-  const state = aiContextOf(ask.store, ask.target, { principal: ask.principal, ...(ask.place ? { place: ask.place } : {}), ...(ask.selection ? { selection: ask.selection } : {}) });
+  const state = aiContextOf(ask.store, ask.target, { principal: ask.principal, ...(ask.place ? { place: ask.place } : {}), ...(ask.selection ? { selection: ask.selection } : {}), ...(ask.purpose ? { purpose: ask.purpose } : {}) });
   const usage: AiUsage[] = [];
   return {
     id,
