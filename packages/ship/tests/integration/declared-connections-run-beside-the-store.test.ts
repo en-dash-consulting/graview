@@ -145,7 +145,7 @@ describe("a served store's declared connections", () => {
     const opened = open(document());
     const running = runConnections({ ...opened, env, fetch: remote.fetch, token: () => "t", settle: 10 });
     await running.runNow();
-    opened.store.apply({ name: "add-meeting", args: { id: "plan", name: "Planning", starts: "2026-11-03T15:00:00Z", ends: "2026-11-03T16:00:00Z" } }, { author: { kind: "human", id: "nick" } });
+    opened.store.apply({ name: "add-meeting", args: { id: "meeting:plan", name: "Planning", starts: "2026-11-03T15:00:00Z", ends: "2026-11-03T16:00:00Z" } }, { author: { kind: "human", id: "nick" } });
     await new Promise((settled) => setTimeout(settled, 80));
     await running.stop();
     expect([...remote.events.values()].map((event) => event["summary"])).toEqual(["Planning"]);

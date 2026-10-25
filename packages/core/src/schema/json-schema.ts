@@ -170,7 +170,8 @@ export function mutationToolSchema(mutation: {
     properties["id"] = {
       type: "string",
       minLength: 1,
-      description: `Optional: the id for the ${made} this makes. Refused if the graph already has it; left out, one is minted from the label.`,
+      // It says its kind, as a minted id does (Roadmap f-add-id-kind-prefix): `apt1` is refused, naming `actor:apt1`.
+      description: `Optional: the id for the ${made} this makes, beginning with its kind (${mutation.creates!.map((kind) => `"${kind}:"`).join(" or ")}). Refused if the graph already has it; left out, one is minted from the label.`,
     };
     base["properties"] = properties;
   }

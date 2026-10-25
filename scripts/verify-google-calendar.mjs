@@ -201,17 +201,17 @@ try {
   await pass();
 
   /* ----------------------------------------------- here, then there */
-  act("add-meeting", { id: "standup", name: `Standup ${run}`, starts: "2026-11-02T15:00:00Z", ends: "2026-11-02T15:30:00Z" });
+  act("add-meeting", { id: "meeting:standup", name: `Standup ${run}`, starts: "2026-11-02T15:00:00Z", ends: "2026-11-02T15:30:00Z" });
   const sent = await pass();
-  const standupId = engine.snapshot.links["standup"]?.id;
+  const standupId = engine.snapshot.links["meeting:standup"]?.id;
   const there = standupId ? await google("GET", `/${standupId}`) : undefined;
-  claim("aMeetingMadeHereReachesGoogle", sent.pushed.includes("standup") && there?.summary === `Standup ${run}` && sameInstant(there?.start?.dateTime, "2026-11-02T15:00:00Z"), {
+  claim("aMeetingMadeHereReachesGoogle", sent.pushed.includes("meeting:standup") && there?.summary === `Standup ${run}` && sameInstant(there?.start?.dateTime, "2026-11-02T15:00:00Z"), {
     pushed: sent.pushed,
     google: there ? { summary: there.summary, start: there.start, end: there.end } : null,
   });
 
   const quiet = await pass();
-  claim("graviewsOwnWriteIsNotEchoedBackAsAChange", quiet.applied.length === 0 && quiet.pushed.length === 0 && node("standup")?.name === `Standup ${run}`, {
+  claim("graviewsOwnWriteIsNotEchoedBackAsAChange", quiet.applied.length === 0 && quiet.pushed.length === 0 && node("meeting:standup")?.name === `Standup ${run}`, {
     applied: quiet.applied,
     echoes: quiet.echoes,
     pushed: quiet.pushed,
@@ -226,9 +226,9 @@ try {
   });
   const took = await pass();
   const review = meetings().find((one) => one.name === `Review ${run}`);
-  claim("aChangeMadeInGoogleLandsHere", took.applied.includes("standup") && node("standup")?.name === `Standup, moved ${run}` && node("standup")?.starts === "2026-11-02T16:00:00Z", {
+  claim("aChangeMadeInGoogleLandsHere", took.applied.includes("meeting:standup") && node("meeting:standup")?.name === `Standup, moved ${run}` && node("meeting:standup")?.starts === "2026-11-02T16:00:00Z", {
     applied: took.applied,
-    here: { name: node("standup")?.name, starts: node("standup")?.starts },
+    here: { name: node("meeting:standup")?.name, starts: node("meeting:standup")?.starts },
   });
   claim("anEventMadeInGoogleIsMadeHere", Boolean(review) && review.starts === "2026-11-04T18:00:00Z" && engine.snapshot.links[review.id]?.id === madeThere.id, {
     here: review ? { id: review.id, name: review.name, starts: review.starts } : null,
@@ -306,12 +306,12 @@ try {
   /* -------------------------------------------- an access token refused */
   tokens.stale = true;
   tokens.asked.length = 0;
-  act("edit-meeting", { id: "standup", name: `Standup, after the token ${run}` });
+  act("edit-meeting", { id: "meeting:standup", name: `Standup, after the token ${run}` });
   const afterToken = await engine.run();
   const standupAfter = await google("GET", `/${standupId}`);
   claim(
     "anAccessTokenGoogleRefusesIsRefreshedAndTheRunGoesOn",
-    !afterToken.offline && tokens.asked.includes("refresh") && afterToken.pushed.includes("standup") && standupAfter.summary === `Standup, after the token ${run}`,
+    !afterToken.offline && tokens.asked.includes("refresh") && afterToken.pushed.includes("meeting:standup") && standupAfter.summary === `Standup, after the token ${run}`,
     { asked: [...tokens.asked], offline: afterToken.offline, pushed: afterToken.pushed, refused: afterToken.refused },
   );
 
@@ -377,9 +377,9 @@ try {
   const byColor = declared({ color: "Basil" });
   await byColor.pass();
   const colorIn = byColor.mine().map((one) => one.name);
-  byColor.store.apply({ name: "add-meeting", args: { id: "sown", name: `Sown here ${run}`, starts: "2026-11-06T21:00:00Z", ends: "2026-11-06T22:00:00Z" } }, byColor.as);
+  byColor.store.apply({ name: "add-meeting", args: { id: "meeting:sown", name: `Sown here ${run}`, starts: "2026-11-06T21:00:00Z", ends: "2026-11-06T22:00:00Z" } }, byColor.as);
   await byColor.pass();
-  const sownId = byColor.engine.snapshot.links["sown"]?.id;
+  const sownId = byColor.engine.snapshot.links["meeting:sown"]?.id;
   const sownThere = sownId ? await google("GET", `/${sownId}`) : undefined;
   const colorEcho = await byColor.pass();
   await google("PATCH", `/${basilEvent.id}`, { colorId: "4" });
@@ -407,14 +407,14 @@ try {
   const byTag = declared({ tag });
   await byTag.pass();
   const tagIn = byTag.store.graph.allNodes().filter((one) => one.kind === "meeting").map((one) => one.name);
-  byTag.store.apply({ name: "add-meeting", args: { id: "demo", name: "Demo", starts: "2026-11-07T19:00:00Z", ends: "2026-11-07T20:00:00Z" } }, byTag.as);
+  byTag.store.apply({ name: "add-meeting", args: { id: "meeting:demo", name: "Demo", starts: "2026-11-07T19:00:00Z", ends: "2026-11-07T20:00:00Z" } }, byTag.as);
   await byTag.pass();
-  const demoId = byTag.engine.snapshot.links["demo"]?.id;
+  const demoId = byTag.engine.snapshot.links["meeting:demo"]?.id;
   const demoThere = demoId ? await google("GET", `/${demoId}`) : undefined;
   const tagEcho = await byTag.pass();
   claim(
     "aDeclaredConnectionFilteredToATagKeepsTheTaggedEventsAndTagsItsOwn",
-    tagIn.length === 1 && tagIn[0] === "Review" && demoThere?.summary === `Demo ${tag}` && tagEcho.applied.length === 0 && byTag.store.graph.getNode("demo")?.name === "Demo",
+    tagIn.length === 1 && tagIn[0] === "Review" && demoThere?.summary === `Demo ${tag}` && tagEcho.applied.length === 0 && byTag.store.graph.getNode("meeting:demo")?.name === "Demo",
     {
       tag: "#<run id>",
       madeHere: tagIn,

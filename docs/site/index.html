@@ -2207,9 +2207,9 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   var ASK = typed.textContent;
   var LABEL = host.getAttribute("data-label") || undefined;
   var GUIDES = [
-    { module: "module-packages-search", id: "doc-guide-search", title: "Search", path: "docs/guides/search.md" },
-    { module: "module-packages-shared-types", id: "doc-guide-shared-types", title: "Shared types", path: "docs/guides/shared-types.md" },
-    { module: "module-packages-telemetry", id: "doc-guide-telemetry", title: "Telemetry", path: "docs/guides/telemetry.md" },
+    { module: "module-packages-search", id: "doc:guide-search", title: "Search", path: "docs/guides/search.md" },
+    { module: "module-packages-shared-types", id: "doc:guide-shared-types", title: "Shared types", path: "docs/guides/shared-types.md" },
+    { module: "module-packages-telemetry", id: "doc:guide-telemetry", title: "Telemetry", path: "docs/guides/telemetry.md" },
   ];
   var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var handle = null;
