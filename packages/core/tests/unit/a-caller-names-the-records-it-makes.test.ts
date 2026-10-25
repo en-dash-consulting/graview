@@ -11,6 +11,8 @@ import { bindSchema, createSchema, defineNode, nodeRef, seatMark, Store, type An
  * an offline batch or an agent's chain can name its records up front and
  * refer to them before any server answers. A free, well-formed id is
  * honored exactly; a taken one is refused in a sentence, never renamed.
+ * And it says its kind, as a minted one does (Roadmap f-add-id-kind-prefix):
+ * `apt1` is refused with the id it would be, `actor:apt1`.
  */
 const list = defineNode("list", { fields: z.object({ label: z.string().min(1) }), edges: { holds: { to: ["task"] } } });
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1) }) });
@@ -54,12 +56,12 @@ describe("a caller names the records it makes", () => {
   it("lets an agent's chain make two records and link them by its own ids, in one batch", () => {
     const store = open();
     const result = store.applyAll([
-      { name: "add-list", args: { id: "list-7f3a", label: "Groceries" } },
-      { name: "add-task", args: { id: "task-0b91", label: "Buy milk" } },
-      { name: "file", args: { listId: "list-7f3a", taskId: "task-0b91" } },
+      { name: "add-list", args: { id: "list:7f3a", label: "Groceries" } },
+      { name: "add-task", args: { id: "task:0b91", label: "Buy milk" } },
+      { name: "file", args: { listId: "list:7f3a", taskId: "task:0b91" } },
     ]);
-    expect(store.graph.out("list-7f3a", "holds").map((node) => node.id)).toEqual(["task-0b91"]);
-    expect(result.minted).toEqual(["list-7f3a", "task-0b91", undefined]);
+    expect(store.graph.out("list:7f3a", "holds").map((node) => node.id)).toEqual(["task:0b91"]);
+    expect(result.minted).toEqual(["list:7f3a", "task:0b91", undefined]);
     // One gesture, one undo: the chain comes back out whole.
     store.undo(result.batch);
     expect(store.graph.size).toEqual({ nodes: 0, edges: 0 });
@@ -67,32 +69,47 @@ describe("a caller names the records it makes", () => {
 
   it("refuses a taken id in a sentence and keeps none of the batch, rather than renaming the record", () => {
     const store = open();
-    store.apply({ name: "add-task", args: { id: "task-0b91", label: "Buy milk" } });
+    store.apply({ name: "add-task", args: { id: "task:0b91", label: "Buy milk" } });
     expect(() =>
       store.applyAll([
-        { name: "add-list", args: { id: "list-7f3a", label: "Groceries" } },
-        { name: "add-task", args: { id: "task-0b91", label: "Buy bread" } },
+        { name: "add-list", args: { id: "list:7f3a", label: "Groceries" } },
+        { name: "add-task", args: { id: "task:0b91", label: "Buy bread" } },
       ]),
-    ).toThrow(/Id "task-0b91" is already taken/);
-    expect(store.graph.allNodes().map((node) => node.id)).toEqual(["task-0b91"]);
+    ).toThrow(/Id "task:0b91" is already taken/);
+    expect(store.graph.allNodes().map((node) => node.id)).toEqual(["task:0b91"]);
   });
 
   it("takes a client's own id as a hint: made under it when free, minted as ever when taken, and a later call of the change follows it", () => {
     const store = open();
-    store.apply({ name: "add-list", args: { label: "Groceries" }, mintedHint: "list-local-1" });
-    expect(store.graph.getNode("list-local-1")).toBeDefined();
+    store.apply({ name: "add-list", args: { label: "Groceries" }, mintedHint: "list:local-1" });
+    expect(store.graph.getNode("list:local-1")).toBeDefined();
     store.apply({ name: "add-task", args: { label: "Buy milk" } });
     const result = store.applyAll([
       { name: "add-task", args: { label: "Buy milk" }, mintedHint: "task:buy-milk" },
-      { name: "file", args: { listId: "list-local-1", taskId: "task:buy-milk" } },
+      { name: "file", args: { listId: "list:local-1", taskId: "task:buy-milk" } },
     ]);
     expect(result.minted?.[0]).toBe("task:buy-milk-2");
-    expect(store.graph.out("list-local-1", "holds").map((node) => node.id)).toEqual(["task:buy-milk-2"]);
+    expect(store.graph.out("list:local-1", "holds").map((node) => node.id)).toEqual(["task:buy-milk-2"]);
     // The log keeps the calls as the store read them: no hint, and the later call naming the record made.
     expect(result.ops.map((op) => op.mutation)).toEqual([
       { name: "add-task", args: { label: "Buy milk" } },
-      { name: "file", args: { listId: "list-local-1", taskId: "task:buy-milk-2" } },
+      { name: "file", args: { listId: "list:local-1", taskId: "task:buy-milk-2" } },
     ]);
+  });
+
+  it("refuses an id that does not say its kind, naming the one it would be, and keeps none of the batch", () => {
+    const store = open();
+    expect(() =>
+      store.applyAll([
+        { name: "add-list", args: { id: "list:7f3a", label: "Groceries" } },
+        { name: "add-task", args: { id: "apt1", label: "Buy milk" } },
+      ]),
+    ).toThrow(/Id "apt1" does not say its kind: ask for "task:apt1"/);
+    expect(() => store.apply({ name: "add-task", args: { id: "list:apt1", label: "Buy milk" } })).toThrow(/ask for "task:apt1"/);
+    expect(store.graph.size.nodes).toBe(0);
+    // A client's guess at an id that does not say its kind is no id to take: one is minted, as ever.
+    const result = store.apply({ name: "add-task", args: { label: "Buy milk" }, mintedHint: "apt1" });
+    expect(result.minted).toEqual(["task:buy-milk"]);
   });
 
   it("refuses an id that is not one: empty, too long, or with a space in it", () => {
@@ -131,12 +148,12 @@ describe("a caller names the records it makes", () => {
     const app = compiled.app as GraviewApp<AnySchema>;
     const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], snapshot: { nodes: [], edges: [] } as never });
     store.applyAll([
-      { name: "add-plan", args: { id: "plan-pro", name: "Pro" } },
-      { name: "add-feature", args: { id: "feature-seats", name: "Seats" } },
-      { name: "set-tier", args: { id: "feature-seats", to: "plan-pro" } },
+      { name: "add-plan", args: { id: "plan:pro", name: "Pro" } },
+      { name: "add-feature", args: { id: "feature:seats", name: "Seats" } },
+      { name: "set-tier", args: { id: "feature:seats", to: "plan:pro" } },
     ]);
-    expect(store.graph.out("feature-seats", "tier").map((node) => node.id)).toEqual(["plan-pro"]);
-    expect(() => store.apply({ name: "add-plan", args: { id: "plan-pro", name: "Pro again" } })).toThrow(/already taken/);
+    expect(store.graph.out("feature:seats", "tier").map((node) => node.id)).toEqual(["plan:pro"]);
+    expect(() => store.apply({ name: "add-plan", args: { id: "plan:pro", name: "Pro again" } })).toThrow(/already taken/);
   });
 
   it("lets a seat that does not see everything ask for an id of its own, and no other", () => {

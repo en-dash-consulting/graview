@@ -176,9 +176,9 @@ describe("the whole calendar, both ways", () => {
     expect(nodes().map((node) => [node["name"], node["starts"]])).toEqual([["Standup", at(15)], ["Retro", at(18)]]);
     expect(store.log.all().at(-1)!.author).toEqual({ kind: "system", id: "google-calendar" });
 
-    store.apply({ name: "add-meeting", args: { id: "plan", name: "Planning", starts: at(20), ends: at(21) } }, as("nick"));
+    store.apply({ name: "add-meeting", args: { id: "meeting:plan", name: "Planning", starts: at(20), ends: at(21) } }, as("nick"));
     const sent = await engine.run();
-    expect(sent.pushed).toEqual(["plan"]);
+    expect(sent.pushed).toEqual(["meeting:plan"]);
     const there = remote.live().find((event) => event["summary"] === "Planning")!;
     expect(there["start"]).toEqual({ dateTime: at(20) });
     // Made here, and said so in Google: a private property naming the app.
@@ -195,7 +195,7 @@ describe("one color", () => {
     await engine.run();
     expect(nodes().map((node) => node["name"])).toEqual(["Garden"]);
 
-    store.apply({ name: "add-meeting", args: { id: "seeds", name: "Seeds", starts: at(15), ends: at(16) } }, as("nick"));
+    store.apply({ name: "add-meeting", args: { id: "meeting:seeds", name: "Seeds", starts: at(15), ends: at(16) } }, as("nick"));
     await engine.run();
     expect(remote.live().find((event) => event["summary"] === "Seeds")!["colorId"]).toBe("10");
     // Its own write comes back in the filter, as an echo, not as a second Seeds.
@@ -219,12 +219,12 @@ describe("a title tag", () => {
     await engine.run();
     expect(nodes().map((node) => node["name"]).sort()).toEqual(["Review", "kickoff"]);
 
-    store.apply({ name: "add-meeting", args: { id: "demo", name: "Demo", starts: at(16), ends: at(17) } }, as("nick"));
+    store.apply({ name: "add-meeting", args: { id: "meeting:demo", name: "Demo", starts: at(16), ends: at(17) } }, as("nick"));
     await engine.run();
     expect(remote.live().map((event) => event["summary"])).toContain("Demo #graview");
     const quiet = await engine.run();
     expect(quiet.applied).toEqual([]);
-    expect(nodes().find((node) => node["id"] === "demo")!["name"]).toBe("Demo");
+    expect(nodes().find((node) => node["id"] === "meeting:demo")!["name"]).toBe("Demo");
   });
 
   it("keeps the tag in the name when the declaration says keep", async () => {
@@ -243,7 +243,7 @@ describe("read only", () => {
     const [board] = nodes();
     expect(board!["name"]).toBe("Board");
     expect(() => store.apply({ name: "edit-meeting", args: { id: board!["id"], name: "Bored" } }, as("nick"))).toThrow(/comes from a Google calendar this app only reads/);
-    expect(() => store.apply({ name: "add-meeting", args: { id: "x", name: "Mine" } }, as("nick"))).toThrow(/only reads/);
+    expect(() => store.apply({ name: "add-meeting", args: { id: "meeting:x", name: "Mine" } }, as("nick"))).toThrow(/only reads/);
     const report = await engine.run();
     expect(report.pushed).toEqual([]);
     expect(remote.live().map((event) => event["summary"])).toEqual(["Board"]);
@@ -268,8 +268,8 @@ describe("read only, under a declared policy (FR-181)", () => {
 
     const member = { author: { kind: "human" as const, id: "nick", roles: ["member"] }, intent: "by hand" };
     expect(() => store.apply({ name: "edit-meeting", args: { id: nodes()[0]!["id"], name: "Bored" } }, member)).toThrow(/only reads/);
-    expect(store.permits({ name: "add-meeting", args: { id: "x", name: "Mine" } }, member.author).ok).toBe(false);
-    expect(store.permits({ name: "add-meeting", args: { id: "x", name: "Mine" } }, { kind: "system", id: "google-calendar" }).ok).toBe(true);
+    expect(store.permits({ name: "add-meeting", args: { id: "meeting:x", name: "Mine" } }, member.author).ok).toBe(false);
+    expect(store.permits({ name: "add-meeting", args: { id: "meeting:x", name: "Mine" } }, { kind: "system", id: "google-calendar" }).ok).toBe(true);
     void as;
   });
 
@@ -282,7 +282,7 @@ describe("read only, under a declared policy (FR-181)", () => {
       applyAll(calls, { ...options, admit: () => { throw new Error("Nothing lands while the host is read only."); } });
     const report = await engine.run();
     expect(report.offline).toBe(false);
-    expect(report.refused).toEqual([{ localId: expect.stringMatching(/^meeting-team-/), resource: "events", id: expect.any(String), error: "Nothing lands while the host is read only." }]);
+    expect(report.refused).toEqual([{ localId: expect.stringMatching(/^meeting:team-/), resource: "events", id: expect.any(String), error: "Nothing lands while the host is read only." }]);
     expect(nodes()).toEqual([]);
   });
 });
@@ -296,7 +296,7 @@ describe("an all-day kind", () => {
     await engine.run();
     expect(nodes().map((node) => [node["name"], node["from"], node["to"]])).toEqual([["Retreat", "2026-11-05", "2026-11-06"]]);
 
-    store.apply({ name: "add-offsite", args: { id: "fair", name: "Fair", from: "2026-11-09", to: "2026-11-09" } }, as("nick"));
+    store.apply({ name: "add-offsite", args: { id: "offsite:fair", name: "Fair", from: "2026-11-09", to: "2026-11-09" } }, as("nick"));
     await engine.run();
     const fair = remote.live().find((event) => event["summary"] === "Fair")!;
     expect([fair["start"], fair["end"]]).toEqual([{ date: "2026-11-09" }, { date: "2026-11-10" }]);

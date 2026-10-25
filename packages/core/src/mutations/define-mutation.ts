@@ -375,6 +375,21 @@ export function compileMutation<S extends AnySchema>(
     },
     freshId(label, prefix) {
       if (requested !== undefined && !minted.has(requested)) {
+        /*
+         * AN ID ASKED FOR SAYS ITS KIND, as every minted one does (Roadmap
+         * f-add-id-kind-prefix). `apt1` was kept as `apt1` beside
+         * `actor:apt29`, and a later call that named it `actor:apt1`, as
+         * every other actor is named, missed it. Kept exactly as asked
+         * (f-1-0-client-ids), so refused with the id it would be, never
+         * quietly renamed: a batch that names it again names it the same.
+         */
+        if (prefix && !requested.startsWith(`${prefix}:`)) {
+          const bare = requested.includes(":") ? requested.slice(requested.indexOf(":") + 1) : requested;
+          throw new GraphError(
+            `Id "${requested}" does not say its kind: ask for "${prefix}:${bare || requested}"`,
+            `Every ${prefix} id starts "${prefix}:", the ones "${definition.name}" mints and the ones a caller asks for alike, so a later call names it as it names the rest.`,
+          );
+        }
         if (!mayAsk(requested)) {
           throw new GraphError(`"${definition.name}" makes its own id here`, `Leave id out${mark ? `, or end it "${mark}"` : ""}.`);
         }
@@ -389,7 +404,7 @@ export function compileMutation<S extends AnySchema>(
       }
       // A client's own guess at the first id (`hint`): taken when free, else minted as ever — never refused.
       const hint = options.hint;
-      if (requested === undefined && !minted.size && validId(hint) && mayAsk(hint) && !held(hint)) return minted.add(hint), hint;
+      if (requested === undefined && !minted.size && validId(hint) && (!prefix || hint.startsWith(`${prefix}:`)) && mayAsk(hint) && !held(hint)) return minted.add(hint), hint;
       const base = prefix ? `${prefix}:${slug(label)}` : slug(label);
       /*
        * AN ID THAT SAYS NOTHING OF WHAT THE SEAT MAY NOT SEE (FR-55). Stepping
