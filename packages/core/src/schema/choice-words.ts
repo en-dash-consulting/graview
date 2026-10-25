@@ -1,4 +1,4 @@
-import { humanizeField } from "./define-node.js";
+import { humanizeField } from "./humanize.js";
 import type { AnyNodeDefinition } from "./types.js";
 
 /**
