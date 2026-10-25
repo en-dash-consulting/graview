@@ -25,6 +25,8 @@ export interface Finding {
   readonly message: string;
   /** The concrete edit that would fix it. */
   readonly fix: string;
+  /** The same, as the document edits a host applies (`editDocument`'s words), where they can be written down. */
+  readonly edits?: readonly Record<string, unknown>[];
 }
 
 /**
