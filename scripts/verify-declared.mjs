@@ -382,13 +382,14 @@ try {
     await page.close();
     const listed = await open(`face=pages&path=${encodeURIComponent("/rooms")}`, { width: 1280, height: 900 });
     const byLink = await listed.evaluate(() => document.body.textContent?.includes("The cellar") ?? false);
-    // On its own page the bar lists it, so a person always sees where they are.
-    const listedWhileOn = await listed.evaluate(() => [...document.querySelectorAll("[data-graview-embed] [data-place-path]")].some((tab) => tab.getAttribute("data-place-path") === "/rooms"));
+    // A hidden place stays off the bar even while it is open (offeredPlaces, 0.1.52); the page's own title says where a person is.
+    const offStillWhileOn = await listed.evaluate(() => ![...document.querySelectorAll("[data-graview-embed] [data-place-path]")].some((tab) => tab.getAttribute("data-place-path") === "/rooms"));
+    const titledWhileOn = await listed.evaluate(() => document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null);
     await listed.close();
     const searched = await open(`face=pages&path=${encodeURIComponent("/search?q=cellar")}`, { width: 1280, height: 900 });
     const bySearch = await searched.evaluate(() => document.body.textContent?.includes("The cellar") ?? false);
     await searched.close();
-    report.checks.theHiddenKindLeavesTheNavAndIsReachedByLinkAndSearch = { byLink, inNav: home.nav.includes("/rooms"), listedWhileOn, bySearch, ok: byLink && bySearch && !home.nav.includes("/rooms") && listedWhileOn };
+    report.checks.theHiddenKindLeavesTheNavAndIsReachedByLinkAndSearch = { byLink, inNav: home.nav.includes("/rooms"), offStillWhileOn, titledWhileOn, bySearch, ok: byLink && bySearch && !home.nav.includes("/rooms") && offStillWhileOn && Boolean(titledWhileOn) };
   }
 
   /*
