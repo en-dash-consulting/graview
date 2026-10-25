@@ -247,9 +247,9 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "set-label": z.object({ op: z.literal("set-label"), kind: kindName, field: fieldName.optional(), label: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
     "set-describe": z.object({ op: z.literal("set-describe"), kind: kindName, describe: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
     // A kind's slot; the front page (`slot: "home"`, no kind); or a blocks lens's blocks, by its title (FR-84).
+    "set-view": z.object({ op: z.literal("set-view"), kind: kindName.optional(), slot: z.enum([...VIEW_SLOTS, "home"]).optional(), lens: lensTitle.optional(), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
     // A view the host keeps, by its name (`view:<name>` or bare), and what it is called now (Roadmap f-rename-view).
     "rename-view": z.object({ op: z.literal("rename-view"), view: z.string().min(1).max(80), to: z.string().min(1).max(80) }).strict(),
-    "set-view": z.object({ op: z.literal("set-view"), kind: kindName.optional(), slot: z.enum([...VIEW_SLOTS, "home"]).optional(), lens: lensTitle.optional(), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
     "set-glance": z.object({ op: z.literal("set-glance"), kind: kindName, fields: z.array(fieldName).max(20) }).strict(),
     // How a record's page orders and groups its facts (FR-148): these first, then each group under its title; none of either takes the choice away.
     "set-page-fields": z
