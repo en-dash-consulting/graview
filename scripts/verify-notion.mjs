@@ -129,7 +129,7 @@ try {
   const made = await api("POST", "/databases", {
     parent: { type: "page_id", page_id: parent },
     title: [{ type: "text", text: { content: `Graview harness ${run}` } }],
-    properties: {
+    initial_data_source: { properties: {
       Name: { title: {} },
       Notes: { rich_text: {} },
       Estimate: { number: { format: "number" } },
@@ -143,9 +143,10 @@ try {
       Phone: { phone_number: {} },
       Owner: { people: {} },
       Twice: { formula: { expression: 'prop("Estimate") * 2' } },
-    },
+    } },
   });
   databaseId = made.id;
+  const sourceId = made.data_sources[0].id;
 
   const compiled = compileDocument(document(databaseId));
   if (!compiled.ok) throw new Error(`the harness's own declaration does not check: ${compiled.findings.map((finding) => finding.message).join("; ")}`);
@@ -180,7 +181,7 @@ try {
   claim("theFirstRunReadsTheDatabaseAndSendsNothing", !first.offline && first.applied.length === 0 && first.pushed.length === 0, { offline: first.offline, problem: first.problem ?? null });
 
   const theirs = await api("POST", "/pages", {
-    parent: { database_id: databaseId },
+    parent: { type: "data_source_id", data_source_id: sourceId },
     properties: {
       Name: notionProperty("title", `Paint the fence ${run}`),
       Notes: notionProperty("rich_text", "Two coats"),
@@ -242,7 +243,7 @@ try {
   const longThere = longId ? await api("GET", `/pages/${longId}`) : undefined;
   claim("longWordsGoInPiecesAndComeBackWhole", longSent.refused.length === 0 && longThere && textOf(longThere, "Notes") === long, { pieces: longThere?.properties.Notes.rich_text.map((piece) => piece.plain_text.length) ?? null, refused: longSent.refused.map((one) => one.error) });
 
-  for (let n = 1; n <= 5; n++) await api("POST", "/pages", { parent: { database_id: databaseId }, properties: { Name: notionProperty("title", `Page ${n} ${run}`) } });
+  for (let n = 1; n <= 5; n++) await api("POST", "/pages", { parent: { type: "data_source_id", data_source_id: sourceId }, properties: { Name: notionProperty("title", `Page ${n} ${run}`) } });
   await settle();
   const paged = notion({ databaseId, token: () => secret, fetch: fetched, pageSize: 2 });
   let pulled = await paged.pull(undefined);
@@ -278,7 +279,7 @@ try {
   const resynced = await engine.run();
   claim("aWholeReadLosesAndDuplicatesNothing", resynced.applied.length === 0 && resynced.pushed.length === 0 && resynced.gone.length === 0 && tasks().length === before, { applied: resynced.applied.length, pushed: resynced.pushed.length, gone: resynced.gone.length, records: tasks().length });
 
-  await api("PATCH", `/pages/${theirs.id}`, { archived: true });
+  await api("PATCH", `/pages/${theirs.id}`, { in_trash: true });
   await settle();
   let goneThere;
   for (let tries = 0; tries < (stubbed ? 1 : 6); tries++) {
@@ -292,7 +293,7 @@ try {
   act("remove-task", { id: "task:long" });
   const removed = await engine.run();
   const longAfter = await api("GET", `/pages/${longId}`);
-  claim("aRecordRemovedHereIsArchivedInNotion", removed.pushed.includes("task:long") && longAfter.archived === true, { archived: longAfter.archived });
+  claim("aRecordRemovedHereIsArchivedInNotion", removed.pushed.includes("task:long") && longAfter.in_trash === true, { inTrash: longAfter.in_trash });
 
   const kept = JSON.stringify([store.log.all(), store.graph.allNodes(), engine.snapshot, said]);
   claim("theSecretIsKeptNowhere", !kept.includes(secret), {});
@@ -300,11 +301,42 @@ try {
   /* ---------------------------------------------- everything it made, archived */
   for (const one of tasks()) act("remove-task", { id: one.id });
   const removedAll = await engine.run();
-  for (const page of (await api("POST", `/databases/${databaseId}/query`, { page_size: 100 })).results) {
-    if (textOf(page, "Name").includes(run)) await api("PATCH", `/pages/${page.id}`, { archived: true });
+
+  /* ------------------------------------ a database of several data sources */
+  // Notion's tables under one name: a second source in the run's database. A
+  // connection that names none is told which there are; one that names the
+  // second, by its name, reads its pages and none of the first's.
+  const second = await api("POST", "/data_sources", {
+    parent: { type: "database_id", database_id: databaseId },
+    title: [{ type: "text", text: { content: "Health checks" } }],
+    properties: { Name: { title: {} }, Vet: { rich_text: {} } },
+  });
+  await api("POST", "/pages", { parent: { type: "data_source_id", data_source_id: second.id }, properties: { Name: notionProperty("title", `Comet ${run}`) } });
+  await settle();
+  // A connection already running keeps the source it found; one opened now finds two.
+  const unnamed = await open(engine.snapshot).engine.run();
+  claim("aDatabaseOfSeveralSourcesSaysThemToAConnectionThatNamesNone", unnamed.offline && /holds 2 data sources — .*Health checks — so the connection says which with source/.test(unnamed.problem ?? ""), { said: unnamed.problem ?? null });
+  const checks = compileDocument({
+    format: "graview-document",
+    formatVersion: 1,
+    name: `Notion harness checks ${run}`,
+    kinds: { check: { fields: { name: { type: "string", required: true }, vet: { type: "string" } } } },
+    acts: { "add-check": { creates: "check" } },
+    connections: { checks: { system: "notion", database: databaseId, source: "Health checks", kind: "check", properties: { name: "Name", vet: "Vet" }, direction: "read" } },
+  });
+  if (!checks.ok) throw new Error(`the harness's second declaration does not check: ${checks.findings.map((finding) => finding.message).join("; ")}`);
+  const checksStore = new Store({ schema: checks.app.schema, mutations: checks.app.mutations ?? [], snapshot: { nodes: [], edges: [] } });
+  const named = await connection({ name: "checks", declaration: checks.app.connections.checks, app: checks.app, store: checksStore, databaseId, token: () => secret, fetch: fetched }).engine.run();
+  const read = checksStore.graph.allNodes().map((node) => node.name);
+  claim("aDatabaseOfSeveralSourcesIsReadThroughTheOneItNames", !named.offline && read.length === 1 && read[0] === `Comet ${run}`, { read, problem: named.problem ?? null });
+
+  for (const source of [sourceId, second.id]) {
+    for (const page of (await api("POST", `/data_sources/${source}/query`, { page_size: 100 })).results) {
+      if (textOf(page, "Name").includes(run)) await api("PATCH", `/pages/${page.id}`, { in_trash: true });
+    }
   }
   await settle();
-  const left = (await api("POST", `/databases/${databaseId}/query`, { page_size: 100 })).results.filter((page) => !page.archived);
+  const left = (await api("POST", `/data_sources/${sourceId}/query`, { page_size: 100 })).results.filter((page) => !page.in_trash);
   claim("everythingTheRunMadeIsArchived", removedAll.refused.length === 0 && left.length === 0 && tasks().length === 0, { refused: removedAll.refused.map((one) => one.error), leftInNotion: left.length });
 
   report.passed = Object.values(report.checks).every((check) => check.ok);

@@ -56,7 +56,9 @@ function build() {
    * default) or handed by the host, never written here. `properties` maps a
    * field to a property by name, with the property's type when the checker
    * should judge it; absent, every field whose name a property has is kept
-   * in step, and the kind's name field is the database's title.
+   * in step, and the kind's name field is the database's title. A database
+   * that holds several data sources (Notion's tables under one name) says
+   * which with `source`, its name or id; one of a single source needs none.
    */
   const notionTypes = Object.keys(NOTION_FITS) as [string, ...string[]];
   const notionType = z.enum(notionTypes, `a property's type is one a connection keeps in step: ${notionTypes.join(", ")}`);
@@ -65,6 +67,8 @@ function build() {
     description: z.optional(sentence),
     /* The database's id (the 32 characters in its link, before ?v=), or the environment variable that holds it. */
     database: z.union([z.string().check(z.regex(NOTION_ID, "a Notion database's id is the 32 characters in its link, before ?v=")), z.strictObject({ env: envName })]),
+    /* The data source, by its name in Notion or its id, when the database holds several. */
+    source: z.optional(str(1, 200)),
     auth,
     kind: kindName,
     /* This kind's field → the database's property, by its name in Notion, or `{ name, type }` with its type. */

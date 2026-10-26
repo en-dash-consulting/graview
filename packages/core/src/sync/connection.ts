@@ -304,6 +304,7 @@ function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
   let engine: SyncEngine<S> | undefined;
   const remote = notion({
     databaseId: run.databaseId,
+    ...(declaration.source ? { source: declaration.source } : {}),
     token: () => run.token(),
     ...(run.secretName ? { secretName: run.secretName } : {}),
     ...(run.fetch ? { fetch: run.fetch } : {}),

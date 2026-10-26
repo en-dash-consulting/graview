@@ -5,7 +5,11 @@ import type { RemoteAck, RemoteChange, RemoteSystem, RemoteWrite } from "./types
 /**
  * A Notion database, as a transport.
  *
- * One database is one resource (`pages`), and each of its pages one record.
+ * One data source of a database is one resource (`pages`), and each of its
+ * pages one record. A database holds one data source, or several (since
+ * Notion's 2025-09-03 API, a database may gather several tables under one
+ * name); a database of one is read through it, and one of several is named
+ * by `source`, its name or its id, or refused with a sentence naming them.
  * Everything Notion-specific is here — property objects, `last_edited_time`,
  * `has_more`, `archived` — and the engine sees plain values keyed by the
  * names its mapping uses:
@@ -35,11 +39,13 @@ import type { RemoteAck, RemoteChange, RemoteSystem, RemoteWrite } from "./types
  */
 
 export const NOTION_API = "https://api.notion.com/v1";
-export const NOTION_VERSION = "2022-06-28";
+export const NOTION_VERSION = "2025-09-03";
 
 export interface NotionOptions {
   /** The database's id: the 32 characters in its link, before `?v=`. */
   readonly databaseId: string;
+  /** The data source to keep in step, by its name or id, when the database holds several. */
+  readonly source?: string;
   /** The internal integration's secret, asked before every request. */
   token(): Promise<string> | string;
   /** What the secret is called where it is kept (`NOTION_TOKEN`), for the sentence a refusal says. Never its value. */
@@ -273,9 +279,10 @@ export function notion(options: NotionOptions): RemoteSystem {
     }
   };
 
-  /** The database's properties, by name — and a sentence when the integration cannot see it. */
-  let schema: Map<string, Property> | undefined;
-  const database = async (): Promise<Map<string, Property>> => {
+  /** The data source this connection keeps in step: the database's only one, or the one `source` names. */
+  let sourceId: string | undefined;
+  const dataSource = async (): Promise<string> => {
+    if (sourceId) return sourceId;
     let answer: Json;
     try {
       answer = await call("GET", `/databases/${encodeURIComponent(databaseId)}`);
@@ -292,6 +299,32 @@ export function notion(options: NotionOptions): RemoteSystem {
       }
       throw error;
     }
+    const sources = ((answer["data_sources"] as Json[] | undefined) ?? []).map((one) => ({ id: String(one["id"]), name: String(one["name"] ?? "") }));
+    const title = ((answer["title"] as Json[] | undefined) ?? []).map((part) => String(part["plain_text"] ?? "")).join("") || databaseId;
+    const named = options.source;
+    const chosen = named
+      ? (sources.find((one) => notionKey(one.id) === notionKey(named)) ?? sources.find((one) => one.name === named) ?? sources.find((one) => loose(one.name) === loose(named)))
+      : sources.length === 1
+        ? sources[0]
+        : undefined;
+    if (!chosen) {
+      const list = sources.map((one) => one.name || one.id).join(", ");
+      throw new NotionError(
+        named
+          ? `notion: the database ${title} has no data source ${named}; it holds ${list || "none"}`
+          : `notion: the database ${title} holds ${sources.length} data sources — ${list} — so the connection says which with source`,
+        400,
+        "validation_error",
+      );
+    }
+    sourceId = chosen.id;
+    return chosen.id;
+  };
+
+  /** The data source's properties, by name — and a sentence when the integration cannot see it. */
+  let schema: Map<string, Property> | undefined;
+  const database = async (): Promise<Map<string, Property>> => {
+    const answer = await call("GET", `/data_sources/${encodeURIComponent(await dataSource())}`);
     const properties = new Map<string, Property>();
     for (const [name, property] of Object.entries((answer["properties"] as Record<string, Json> | undefined) ?? {})) {
       const type = String(property["type"]);
@@ -351,7 +384,7 @@ export function notion(options: NotionOptions): RemoteSystem {
     const pages: Json[] = [];
     let start: string | undefined;
     for (;;) {
-      const answer = await call("POST", `/databases/${encodeURIComponent(databaseId)}/query`, {
+      const answer = await call("POST", `/data_sources/${encodeURIComponent(await dataSource())}/query`, {
         page_size: options.pageSize ?? 100,
         sorts: [{ timestamp: "last_edited_time", direction: "ascending" }],
         ...(since ? { filter: { timestamp: "last_edited_time", last_edited_time: { on_or_after: since } } } : {}),
@@ -371,7 +404,7 @@ export function notion(options: NotionOptions): RemoteSystem {
     try {
       const page = await call("GET", `/pages/${encodeURIComponent(id)}`);
       const parent = page["parent"] as Json | undefined;
-      return page["archived"] === true || page["in_trash"] === true || notionKey(String(parent?.["database_id"] ?? "")) !== notionKey(databaseId);
+      return page["archived"] === true || page["in_trash"] === true || notionKey(String(parent?.["data_source_id"] ?? "")) !== notionKey(await dataSource());
     } catch (error) {
       if (error instanceof NotionError && error.status === 404) return true;
       throw error;
@@ -423,7 +456,7 @@ export function notion(options: NotionOptions): RemoteSystem {
   async function one(write: RemoteWrite, resolved: Map<string, Property>): Promise<RemoteAck> {
     if (write.deleted && write.id) {
       try {
-        await call("PATCH", `/pages/${encodeURIComponent(write.id)}`, { archived: true });
+        await call("PATCH", `/pages/${encodeURIComponent(write.id)}`, { in_trash: true });
       } catch (error) {
         // Already gone there is what a delete asks for.
         if (!(error instanceof NotionError && error.status === 404)) throw error;
@@ -441,7 +474,7 @@ export function notion(options: NotionOptions): RemoteSystem {
     try {
       page = write.id
         ? await call("PATCH", `/pages/${encodeURIComponent(write.id)}`, { properties })
-        : await call("POST", "/pages", { parent: { database_id: databaseId }, properties });
+        : await call("POST", "/pages", { parent: { type: "data_source_id", data_source_id: await dataSource() }, properties });
     } catch (error) {
       if (write.id && error instanceof NotionError && error.status === 404) {
         throw new NotionError(`notion: the page ${write.id} is not one the integration can see any more: it was deleted, or its database is no longer shared with the integration`, 404, error.code);

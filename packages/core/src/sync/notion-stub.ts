@@ -4,9 +4,10 @@ import { notionKey, notionProperty } from "./notion.js";
 /**
  * A SCRIPTED NOTION: the endpoints a Notion connection reaches, in memory.
  *
- * Retrieve, make and archive a database; query one (a `last_edited_time`
- * filter, oldest first, `has_more` and `next_cursor`); make, read and
- * change a page, archive one. It answers as Notion does where a connection
+ * Retrieve, make and archive a database, and the data sources it holds
+ * (Notion's 2025-09-03 API: a database of one source, or of several); query
+ * a source (a `last_edited_time` filter, oldest first, `has_more` and
+ * `next_cursor`); make, read and change a page, put one in the trash. It answers as Notion does where a connection
  * would notice: a secret it does not take is 401, a database not shared
  * with the integration is 404, a piece of rich text over 2000 characters or
  * a status option the database lacks is 400, and `limit(n)` answers the
@@ -35,12 +36,27 @@ export interface ScriptedRequest {
   readonly body?: Json;
 }
 
-interface Database {
+/** One data source: a table of pages under a database. */
+interface Source {
   id: string;
   title: string;
   properties: Map<string, { id: string; name: string; type: string; options: string[] }>;
+  database: Container;
+}
+
+/** A database: a name, shared or not, holding its data sources. */
+interface Container {
+  id: string;
+  title: string;
+  sources: Source[];
   shared: boolean;
   archived: boolean;
+}
+
+interface SourceSpec {
+  readonly title?: string;
+  readonly properties: Readonly<Record<string, string>>;
+  readonly options?: Readonly<Record<string, readonly string[]>>;
 }
 
 export interface ScriptedNotion {
@@ -48,15 +64,19 @@ export interface ScriptedNotion {
   readonly secret: string;
   /** Every request answered, in order (never the secret). */
   readonly requests: ScriptedRequest[];
-  /** A database shared with the integration, with properties by name and type ("Status": "status"); its id. */
-  database(spec: { readonly title?: string; readonly properties: Readonly<Record<string, string>>; readonly options?: Readonly<Record<string, readonly string[]>> }): string;
+  /** A database shared with the integration, of one data source with properties by name and type ("Status": "status"); its id. */
+  database(spec: SourceSpec): string;
+  /** Another data source in a database, with its own properties; its id. */
+  source(databaseId: string, spec: SourceSpec): string;
+  /** A database's data sources' ids, in order. */
+  sources(databaseId: string): string[];
   /** Shares a database with the integration, or takes it back. */
   share(databaseId: string, shared: boolean): void;
   /** A page as Notion would answer it. */
   page(id: string): Json | undefined;
-  /** A database's pages, archived ones too when asked. */
+  /** A database's or a data source's pages (a database's first source), archived ones too when asked. */
   pages(databaseId: string, archived?: boolean): Json[];
-  /** Another person makes a page, with plain values by property name (people as names). */
+  /** Another person makes a page in a database's first source, or in the source named, with plain values by property name (people as names). */
   add(databaseId: string, values: Readonly<Record<string, unknown>>): Json;
   /** Another person changes a page's properties, with plain values by property name. */
   edit(pageId: string, values: Readonly<Record<string, unknown>>): Json;
@@ -90,7 +110,8 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
   const secret = options.secret ?? "secret_scriptedNotionIntegrationSecret0001";
   let clock = Date.parse(options.start ?? "2026-10-25T10:00:00.000Z");
   let made = 0;
-  const databases = new Map<string, Database>();
+  const databases = new Map<string, Container>();
+  const sources = new Map<string, Source>();
   const pages = new Map<string, Json>();
   const requests: ScriptedRequest[] = [];
   let limited = 0;
@@ -98,11 +119,16 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
 
   const minute = () => new Date(Math.floor(clock / 60_000) * 60_000).toISOString();
   const findDatabase = (id: string) => databases.get(notionKey(id));
+  const findSource = (id: string) => sources.get(notionKey(id));
+  /** A source by its id, or a database's first. */
+  const sourceOrFirst = (id: string) => findSource(id) ?? findDatabase(id)?.sources[0];
+  const sourceOfPage = (page: Json) => findSource(String((page["parent"] as Json)["data_source_id"]));
+  const inTrash = (page: Json) => page["in_trash"] === true;
   const findPage = (id: string) => pages.get(notionKey(id));
   const shown = (page: Json) => structuredClone(page);
 
   /** A property object as the API was handed it, kept as Notion answers it. */
-  const kept = (database: Database, name: string, input: Json): Json => {
+  const kept = (database: Source, name: string, input: Json): Json => {
     const property = database.properties.get(name);
     if (!property) throw new Refusal(400, "validation_error", `${name} is not a property that exists.`);
     const type = property.type;
@@ -141,7 +167,7 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
   };
 
   /** A new page's properties: every one of the database's, empty unless given. */
-  const blank = (database: Database): Json => {
+  const blank = (database: Source): Json => {
     const out: Json = {};
     for (const property of database.properties.values()) {
       out[property.name] = kept(database, property.name, { [property.type]: property.type in EMPTY ? EMPTY[property.type] : null });
@@ -149,12 +175,12 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     return out;
   };
 
-  const writeProperties = (database: Database, page: Json, input: Json) => {
+  const writeProperties = (database: Source, page: Json, input: Json) => {
     const properties = page["properties"] as Json;
     for (const [name, value] of Object.entries(input)) properties[name] = kept(database, name, value as Json);
   };
 
-  const plain = (database: Database, values: Readonly<Record<string, unknown>>): Json => {
+  const plain = (database: Source, values: Readonly<Record<string, unknown>>): Json => {
     const out: Json = {};
     for (const [name, value] of Object.entries(values)) {
       const type = database.properties.get(name)?.type;
@@ -168,7 +194,7 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     page["last_edited_time"] = minute();
   };
 
-  const makePage = (database: Database, input: Json): Json => {
+  const makePage = (database: Source, input: Json): Json => {
     made += 1;
     const page: Json = {
       object: "page",
@@ -177,7 +203,7 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
       last_edited_time: minute(),
       archived: false,
       in_trash: false,
-      parent: { type: "database_id", database_id: database.id },
+      parent: { type: "data_source_id", data_source_id: database.id, database_id: database.database.id },
       properties: blank(database),
     };
     writeProperties(database, page, input);
@@ -185,11 +211,20 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     return page;
   };
 
-  const databaseShown = (database: Database): Json => ({
+  const titled = (title: string) => [{ type: "text", text: { content: title }, plain_text: title }];
+  const databaseShown = (database: Container): Json => ({
     object: "database",
     id: database.id,
-    title: [{ type: "text", text: { content: database.title }, plain_text: database.title }],
-    archived: database.archived,
+    title: titled(database.title),
+    in_trash: database.archived,
+    data_sources: database.sources.map((source) => ({ id: source.id, name: source.title })),
+  });
+
+  const sourceShown = (database: Source): Json => ({
+    object: "data_source",
+    id: database.id,
+    title: titled(database.title),
+    parent: { type: "database_id", database_id: database.database.id },
     properties: Object.fromEntries(
       [...database.properties.values()].map((property) => [
         property.name,
@@ -198,44 +233,73 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     ),
   });
 
-  const visible = (id: string): Database => {
+  const visible = (id: string): Container => {
     const database = findDatabase(id);
-    if (!database || !database.shared || database.archived) throw new Refusal(404, "object_not_found", `Could not find database with ID: ${id}. Make sure the relevant pages and databases are shared with your integration.`);
+    if (!database || !database.shared || database.archived) {
+      if (findSource(id)) throw new Refusal(400, "validation_error", `Provided database_id ${id} is a data source, not a database. Use the data sources API instead, or pass the ID of the database itself.`);
+      throw new Refusal(404, "object_not_found", `Could not find database with ID: ${id}. Make sure the relevant pages and databases are shared with your integration.`);
+    }
     return database;
   };
+  const visibleSource = (id: string): Source => {
+    const source = findSource(id);
+    if (!source || !source.database.shared || source.database.archived) throw new Refusal(404, "object_not_found", `Could not find data_source with ID: ${id}. Make sure the relevant pages and databases are shared with your integration.`);
+    return source;
+  };
 
-  const createDatabase = (spec: { title?: string; properties: Readonly<Record<string, string>>; options?: Readonly<Record<string, readonly string[]>> }): Database => {
+  const createSource = (database: Container, spec: SourceSpec): Source => {
     made += 1;
-    const database: Database = { id: uuid(made, "d0"), title: spec.title ?? "Untitled", properties: new Map(), shared: true, archived: false };
+    const source: Source = { id: uuid(made, "c0"), title: spec.title ?? database.title, properties: new Map(), database };
     let at = 0;
     for (const [name, type] of Object.entries(spec.properties)) {
       at += 1;
-      database.properties.set(name, { id: type === "title" ? "title" : `p${at}`, name, type, options: [...(spec.options?.[name] ?? [])] });
+      source.properties.set(name, { id: type === "title" ? "title" : `p${at}`, name, type, options: [...(spec.options?.[name] ?? [])] });
     }
+    database.sources.push(source);
+    sources.set(notionKey(source.id), source);
+    return source;
+  };
+
+  const createDatabase = (spec: SourceSpec): Container => {
+    made += 1;
+    const database: Container = { id: uuid(made, "d0"), title: spec.title ?? "Untitled", sources: [], shared: true, archived: false };
     databases.set(notionKey(database.id), database);
+    createSource(database, spec);
     return database;
   };
+
+  /** A data source's properties as the API is handed them: names to `{ <type>: { options? } }`. */
+  const specOf = (body: Json | undefined, title: string): SourceSpec => {
+    const properties: Record<string, string> = {};
+    const options: Record<string, string[]> = {};
+    for (const [name, spec] of Object.entries((body?.["properties"] as Record<string, Json>) ?? {})) {
+      const type = Object.keys(spec)[0]!;
+      properties[name] = type;
+      const listed = (spec[type] as Json | undefined)?.["options"] as Json[] | undefined;
+      if (listed) options[name] = listed.map((option) => String(option["name"]));
+    }
+    return { title, properties, options };
+  };
+  const words = (parts: unknown) => ((parts as Json[] | undefined) ?? []).map((part) => String((part["text"] as Json)?.["content"] ?? "")).join("");
 
   const answer = (method: string, path: string, body: Json): Json => {
     let match: RegExpExecArray | null;
     if (method === "POST" && path === "/databases") {
-      const properties: Record<string, string> = {};
-      const options: Record<string, string[]> = {};
-      for (const [name, spec] of Object.entries((body["properties"] as Record<string, Json>) ?? {})) {
-        const type = Object.keys(spec)[0]!;
-        properties[name] = type;
-        const listed = (spec[type] as Json | undefined)?.["options"] as Json[] | undefined;
-        if (listed) options[name] = listed.map((option) => String(option["name"]));
-      }
-      const title = ((body["title"] as Json[] | undefined) ?? []).map((part) => String((part["text"] as Json)?.["content"] ?? "")).join("");
-      return databaseShown(createDatabase({ title, properties, options }));
+      if (body["properties"]) throw new Refusal(400, "validation_error", "body.properties should be not present, instead was `{…}`. A database's properties are its data source's: send initial_data_source.properties.");
+      return databaseShown(createDatabase(specOf(body["initial_data_source"] as Json | undefined, words(body["title"]))));
+    }
+    if (method === "POST" && path === "/data_sources") {
+      const database = visible(String((body["parent"] as Json | undefined)?.["database_id"] ?? ""));
+      return sourceShown(createSource(database, specOf(body, words(body["title"]))));
     }
     if ((match = /^\/databases\/([^/]+)$/.exec(path)) && method === "GET") return databaseShown(visible(decodeURIComponent(match[1]!)));
-    if ((match = /^\/databases\/([^/]+)\/query$/.exec(path)) && method === "POST") {
-      const database = visible(decodeURIComponent(match[1]!));
+    if ((match = /^\/databases\/([^/]+)\/query$/.exec(path))) throw new Refusal(400, "invalid_request_url", "Invalid request URL: a database is queried through its data source, POST /v1/data_sources/{id}/query.");
+    if ((match = /^\/data_sources\/([^/]+)$/.exec(path)) && method === "GET") return sourceShown(visibleSource(decodeURIComponent(match[1]!)));
+    if ((match = /^\/data_sources\/([^/]+)\/query$/.exec(path)) && method === "POST") {
+      const database = visibleSource(decodeURIComponent(match[1]!));
       const since = ((body["filter"] as Json | undefined)?.["last_edited_time"] as Json | undefined)?.["on_or_after"] as string | undefined;
       const all = [...pages.values()]
-        .filter((page) => notionKey(String((page["parent"] as Json)["database_id"])) === notionKey(database.id) && page["archived"] !== true)
+        .filter((page) => sourceOfPage(page) === database && !inTrash(page))
         .filter((page) => !since || String(page["last_edited_time"]) >= since)
         .sort((a, b) => String(a["last_edited_time"]).localeCompare(String(b["last_edited_time"])));
       const size = Math.min(Number(body["page_size"] ?? 100), 100);
@@ -245,20 +309,29 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
       return { object: "list", results, has_more: more, next_cursor: more ? String(start + size) : null };
     }
     if (method === "POST" && path === "/pages") {
-      const database = visible(String((body["parent"] as Json | undefined)?.["database_id"] ?? ""));
-      return shown(makePage(database, (body["properties"] as Json) ?? {}));
+      const parent = (body["parent"] as Json | undefined) ?? {};
+      if (parent["database_id"] && !parent["data_source_id"]) {
+        const database = visible(String(parent["database_id"]));
+        if (database.sources.length > 1) throw new Refusal(400, "validation_error", "Databases with multiple data sources are not supported as a page's parent: use parent.data_source_id.");
+        return shown(makePage(database.sources[0]!, (body["properties"] as Json) ?? {}));
+      }
+      return shown(makePage(visibleSource(String(parent["data_source_id"] ?? "")), (body["properties"] as Json) ?? {}));
     }
     if ((match = /^\/pages\/([^/]+)$/.exec(path))) {
       const page = findPage(decodeURIComponent(match[1]!));
-      const database = page ? findDatabase(String((page["parent"] as Json)["database_id"])) : undefined;
-      if (!page || !database?.shared) throw new Refusal(404, "object_not_found", `Could not find page with ID: ${match[1]}. Make sure the relevant pages and databases are shared with your integration.`);
+      const database = page ? sourceOfPage(page) : undefined;
+      if (!page || !database?.database.shared) throw new Refusal(404, "object_not_found", `Could not find page with ID: ${match[1]}. Make sure the relevant pages and databases are shared with your integration.`);
       if (method === "GET") return shown(page);
       if (method === "PATCH") {
-        if (page["archived"] === true && body["archived"] !== false) {
-          if (body["archived"] === true) return shown(page);
+        const trashing = body["in_trash"] ?? body["archived"];
+        if (inTrash(page) && trashing !== false) {
+          if (trashing === true) return shown(page);
           throw new Refusal(400, "validation_error", "Can't edit block that is archived. You must unarchive the block before editing.");
         }
-        if (typeof body["archived"] === "boolean") page["archived"] = body["archived"];
+        if (typeof trashing === "boolean") {
+          page["in_trash"] = trashing;
+          page["archived"] = trashing;
+        }
         if (body["properties"]) writeProperties(database, page, body["properties"] as Json);
         touch(page);
         return shown(page);
@@ -273,6 +346,7 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
       const page = findPage(decodeURIComponent(match[1]!));
       if (!page) throw new Refusal(404, "object_not_found", "Could not find block.");
       page["archived"] = true;
+      page["in_trash"] = true;
       touch(page);
       return { object: "block", id: page["id"], archived: true };
     }
@@ -313,6 +387,12 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     secret,
     requests,
     database: (spec) => createDatabase(spec).id,
+    source(databaseId, spec) {
+      const database = findDatabase(databaseId);
+      if (!database) throw new Error(`scripted notion: no database ${databaseId}`);
+      return createSource(database, spec).id;
+    },
+    sources: (databaseId) => findDatabase(databaseId)?.sources.map((source) => source.id) ?? [],
     share(databaseId, shared) {
       const database = findDatabase(databaseId);
       if (database) database.shared = shared;
@@ -321,17 +401,19 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
       const page = findPage(id);
       return page ? shown(page) : undefined;
     },
-    pages: (databaseId, archived = false) =>
-      [...pages.values()].filter((page) => notionKey(String((page["parent"] as Json)["database_id"])) === notionKey(databaseId) && (archived || page["archived"] !== true)).map(shown),
+    pages: (databaseId, archived = false) => {
+      const source = sourceOrFirst(databaseId);
+      return [...pages.values()].filter((page) => source !== undefined && sourceOfPage(page) === source && (archived || !inTrash(page))).map(shown);
+    },
     add(databaseId, values) {
-      const database = findDatabase(databaseId);
+      const database = sourceOrFirst(databaseId);
       if (!database) throw new Error(`scripted notion: no database ${databaseId}`);
       return shown(makePage(database, plain(database, values)));
     },
     edit(pageId, values) {
       const page = findPage(pageId);
       if (!page) throw new Error(`scripted notion: no page ${pageId}`);
-      const database = findDatabase(String((page["parent"] as Json)["database_id"]))!;
+      const database = sourceOfPage(page)!;
       writeProperties(database, page, plain(database, values));
       touch(page);
       return shown(page);
@@ -340,6 +422,7 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
       const page = findPage(pageId);
       if (!page) throw new Error(`scripted notion: no page ${pageId}`);
       page["archived"] = true;
+      page["in_trash"] = true;
       touch(page);
     },
     limit(count, after = 1) {

@@ -373,3 +373,47 @@ describe("read only", () => {
     expect(() => store.apply({ name: "edit-task", args: { id: board!["id"], name: "Bored" } }, as("nick"))).toThrow(/comes from a Notion database this app only reads/);
   });
 });
+
+describe("a database of several data sources", () => {
+  /** A database whose first source is the tasks and whose second is somebody's other table. */
+  function twoSources(declared: Record<string, unknown>) {
+    const run = opened(declared);
+    const other = run.stub.source(run.db, { title: "Health checks", properties: { Name: "title", Vet: "rich_text" } });
+    const [tasksSource] = run.stub.sources(run.db);
+    return { ...run, other, tasksSource: tasksSource! };
+  }
+
+  it("keeps in step the source it names, by its name or its id, and leaves the other alone", async () => {
+    const { stub, db, engine, nodes, store, as, other, tasksSource } = twoSources(database({ source: "tasks" }));
+    stub.add(tasksSource, { Name: "Fence" });
+    stub.add(other, { Name: "Comet", Vet: "Dr. Holly" });
+    await engine.run();
+    expect(nodes().map((node) => node["name"])).toEqual(["Fence"]);
+
+    store.apply({ name: "add-task", args: { id: "task:gate", name: "Gate" } }, as("nick"));
+    await engine.run();
+    expect(stub.pages(tasksSource).map((page) => (page["parent"] as Record<string, unknown>)["data_source_id"])).toEqual([tasksSource, tasksSource]);
+    expect(stub.pages(other)).toHaveLength(1);
+
+    const byId = twoSources(database({ source: other }));
+    byId.stub.add(byId.other, { Name: "Comet" });
+    await byId.engine.run();
+    expect(byId.nodes().map((node) => node["name"])).toEqual(["Comet"]);
+    expect(stub.requests.some((request) => request.path.startsWith(`/databases/${db}/query`))).toBe(false);
+  });
+
+  it("says which sources a database holds when the connection names none, or one it does not hold", async () => {
+    const none = twoSources(database());
+    const report = await none.engine.run();
+    expect(report.offline).toBe(true);
+    expect(report.problem).toMatch(/the database Tasks holds 2 data sources — Tasks, Health checks — so the connection says which with source/);
+
+    const wrong = twoSources(database({ source: "Groomings" }));
+    expect((await wrong.engine.run()).problem).toMatch(/the database Tasks has no data source Groomings; it holds Tasks, Health checks/);
+  });
+
+  it("is judged by the checker, a source being a name or an id", () => {
+    expect(codes(tasks({ team: database({ source: "Reindeer Fleet" }) }))).toEqual([]);
+    expect(codes(tasks({ team: database({ source: "" }) }))).not.toEqual([]);
+  });
+});
