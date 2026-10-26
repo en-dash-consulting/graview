@@ -2093,6 +2093,8 @@ export class Store<S extends AnySchema> {
         const judged = this.rootOf(target);
         const by = actingAs(judged.author as Principal).id;
         if (!judged.mutation) {
+          // A change that changed nothing (a suggestion, an announcement) is anybody's who sees it to take back: declining a suggestion is one.
+          if (judged.primitives.length === 0) continue;
           /*
            * A CHANGE NO ACT MADE — an import, a sync, a connection, a host's
            * repair (`applyPrimitives`) — has no act to judge it as, and its

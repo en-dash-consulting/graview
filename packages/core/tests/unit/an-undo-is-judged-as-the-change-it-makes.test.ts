@@ -93,3 +93,18 @@ describe("what a page offers to take back", () => {
     expect(store.graph.getNode("n2")).toBeUndefined();
   });
 });
+
+describe("a change that changed nothing", () => {
+  it("is taken back by whoever sees it: a person declines the app's own actor's suggestion", async () => {
+    const { suggest, declineSuggestion, suggestions } = await import("../../src/tidying.js");
+    const store = storeOf();
+    store.apply({ name: "publish", args: { id: "n3", label: "Draft" } }, { author: admin });
+    const actor: Principal = { kind: "system", id: "tidying", automated: true } as Principal;
+    suggest(store, [{ name: "publish", args: { id: "n4", label: "Another" } }], { author: actor, lineage: { basis: "a guess", confidence: 0.4 } } as never);
+    const waiting = suggestions(store, guest);
+    expect(waiting.length).toBe(1);
+    expect(store.mayUndo(waiting[0]!.batch, guest).ok).toBe(true);
+    declineSuggestion(store, waiting[0]!.id, { author: guest });
+    expect(suggestions(store, guest).length).toBe(0);
+  });
+});
