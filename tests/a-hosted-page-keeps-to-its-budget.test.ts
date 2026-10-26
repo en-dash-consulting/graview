@@ -161,6 +161,7 @@ describe("a hosted page", () => {
     // 1023 KB since data came never to become code or markup: a typeface held to names quoted in pairs before it is written into a style sheet, the scoper ending a string at a line break, a figure drawn only once svgProblem has read it and a plan review applying only the rows a person kept: the scene face measured 1_046_976 B, 470 more than main (1_046_506).
     // 1023 KB since a lineage came to say which fields its basis read and a merge of two records of one name to say which is which: the scene face measured 1_046_772 B, 266 more than main (1_046_506).
     // 1023 KB since a removed record's id came never to be made again, a seat acting for a person to read another app as that person, and an id never to quote a field a sight keeps: the scene face measured 1_047_010 B, 504 more than main (1_046_506).
+    // 1023 KB since workspace state that only the log's tail carried came to be kept past a compaction (the modules on and what stood published, kept by a checkpoint and read there): the scene face measured 1_047_001 B, 495 more than main (1_046_506).
     // MEASURE-ON-COMBINED-BATCH
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1027 * 1024);
   });

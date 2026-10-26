@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 2653,
+  "note": "Raised when workspace state that only the log's tail carried came to be kept past a compaction: a checkpoint keeps the modules on and what stood published at its seq, the store and `@graview/core/publishing` read them there, a compaction holds the publish an undo of the latest goes back to, an undo that would send readers behind the horizon is refused, and an epoch behind a windowed archive's beginning is judged under the modules on now. The worker had 562 bytes of room under 2_255_092. Measured at 2_257_183 B against 2_254_530."
+}

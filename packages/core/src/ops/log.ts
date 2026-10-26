@@ -74,6 +74,27 @@ export interface Epoch {
    * checkpoint without it serves such a field cleared, whoever wrote it.
    */
   readonly writers?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /**
+   * THE MODULES ON AT ITS SEQ, on a checkpoint (`horizon`, FR-12): the set
+   * the last op before it to say one left (`enabledModules`), or the one
+   * the checkpoint before it kept. The op that turned a module off goes to
+   * the archive with the ops before it, and without this a store opened on
+   * the checkpoint and the tail would turn every module back on. Written by
+   * `store.checkpoint` when the log said a set; a store reads it when no op
+   * in its tail says another. Absent (no set was ever said, or written
+   * before it existed), the store's starting set stands, as it did.
+   */
+  readonly enabledModules?: readonly string[];
+  /**
+   * HOW FAR READERS WERE SERVED AT ITS SEQ, on a checkpoint (`horizon`,
+   * Roadmap f-publishing-lifecycle): the `publishedThrough` of the last
+   * publish before it that stands, or the one the checkpoint before it
+   * kept. The publish op goes to the archive with the ops before it, and
+   * without this a store opened on the checkpoint, or one whose latest
+   * publish was undone, would know of no publish at all. Written by
+   * `store.checkpoint` in an app that publishes, once something was.
+   */
+  readonly publishedThrough?: number;
 }
 
 /**
@@ -185,6 +206,12 @@ export class OperationLog {
   /** The epochs this log can be folded from, oldest first. */
   epochs(): readonly Epoch[] {
     return this.marks;
+  }
+
+  /** The checkpoint the log begins at (FR-23): the last epoch marked `horizon`, if any. */
+  horizonEpoch(): Epoch | undefined {
+    for (let at = this.marks.length - 1; at >= 0; at--) if (this.marks[at]!.horizon) return this.marks[at];
+    return undefined;
   }
 
   /** The epoch the current graph folds from, if any was marked. */
