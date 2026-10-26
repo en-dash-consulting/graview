@@ -42,7 +42,23 @@ export interface WrittenFile {
   readonly kept: readonly string[];
 }
 
-export const q = (text: string): string => JSON.stringify(text);
+// JSON leaves U+2028 and U+2029 bare, and either ends a `//` comment the string is said in.
+export const q = (text: string): string => JSON.stringify(text).replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+/*
+ * DECLARATION TEXT IS WRITTEN AS TEXT. A title, a name or an argument came
+ * from a person, a document or a model; each goes into the file in the form
+ * its place reads as words — a string, a template literal's text, a comment
+ * that cannot close, a quoted key — never as code.
+ */
+/** Text for inside a backtick template literal: a backtick and `${` stay text. */
+const inTemplate = (text: string): string => text.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+/** Text for inside a block comment: one line, and nothing in it closes the comment. */
+export const inComment = (text: string): string => text.replace(/\*\//g, "* /").replace(/[\r\n\u2028\u2029]/g, " ");
+const WORD = /^[A-Za-z_$][\w$]*$/;
+/** A property's key: the word itself, or quoted when it is not one. */
+const key = (name: string): string => (WORD.test(name) ? name : q(name));
+/** Reading a property: `.word`, or `["not a word"]`. */
+const member = (name: string): string => (WORD.test(name) ? `.${name}` : `[${q(name)}]`);
 export const camel = (slug: string): string => slug.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 const pascal = (slug: string): string => {
   const c = camel(slug);
@@ -243,7 +259,7 @@ export function kindLines(
   for (const field of fields) {
     if (!field.repeats || (field.type !== "date" && field.type !== "datetime")) continue;
     uses.repeatField = true;
-    lines.push(`    ${field.name}Repeat: repeatField(),`);
+    lines.push(`    ${key(`${field.name}Repeat`)}: repeatField(),`);
   }
   lines.push(`  }),`);
   if (edges.length > 0) {
@@ -340,35 +356,37 @@ export function actLines(
   if (connects.length > 0) lines.push(`  connects: [${connects.map((edge) => q(label(edge))).join(", ")}],`);
   if (severs.length > 0) lines.push(`  severs: [${severs.map((edge) => q(label(edge))).join(", ")}],`);
   if (writes.length > 0) lines.push(`  writes: [${writes.map(q).join(", ")}],`);
+  // The history's sentence is a template literal; the title is its text.
+  const said = inTemplate(str(act, "title") ?? actName);
   if (creates.length > 0) {
     const kind = creates[0]!;
     const kindNode = read.ofKind("kind").find((node) => label(node) === kind);
     const fields = kindNode ? fieldsOf(read, kindNode).filter((field) => field.name !== "label") : [];
     const asked = fields.filter((field) => field.required && field.type !== "list");
-    lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${field.name}: ${zodSource(field.type, false, field.options, uses)}`).join("")} }),`);
-    lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.label}\`,`);
+    lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${key(field.name)}: ${zodSource(field.type, false, field.options, uses)}`).join("")} }),`);
+    lines.push(`  describe: (args) => \`${said}: \${args.label}\`,`);
     body.push(`    ctx.addNode({`);
     body.push(`      id: ctx.freshId(args.label, ${q(kind)}),`);
     body.push(`      kind: ${q(kind)},`);
     body.push(`      label: args.label,`);
-    for (const field of fields) if (field.required) body.push(`      ${field.name}: args.${field.name} ?? ${defaultSource(field.type, field.options)},`);
+    for (const field of fields) if (field.required) body.push(`      ${key(field.name)}: args${member(field.name)} ?? ${defaultSource(field.type, field.options)},`);
     body.push(`    });`);
   } else if (connects[0] ?? severs[0]) {
     const edge = (connects[0] ?? severs[0])!;
     const targets = read.out(edge.id, "to-kind").map((target) => label(target));
     const making = connects.length > 0;
-    lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds}), ${far}: nodeRef(${targets.length > 0 ? `[${targets.map(q).join(", ")}]` : '"*"'}) }),`);
-    lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})} ${making ? "→" : "⇸"} \${nameOf(graph as Reader, args.${far})}\`,`);
-    body.push(`    ctx.${making ? "addEdge" : "removeEdge"}({ kind: ${q(label(edge))}, from: args.${arg}, to: args.${far} });`);
+    lines.push(`  input: z.object({ ${key(arg)}: nodeRef(${subjectKinds}), ${key(far)}: nodeRef(${targets.length > 0 ? `[${targets.map(q).join(", ")}]` : '"*"'}) }),`);
+    lines.push(`  describe: (args, graph) => \`${said}: \${nameOf(graph as Reader, args${member(arg)})} ${making ? "→" : "⇸"} \${nameOf(graph as Reader, args${member(far)})}\`,`);
+    body.push(`    ctx.${making ? "addEdge" : "removeEdge"}({ kind: ${q(label(edge))}, from: args${member(arg)}, to: args${member(far)} });`);
   } else {
     const declared = new Map<string, { type: FieldType; options: string[] | undefined }>();
     for (const kindNode of read.ofKind("kind")) if (on.includes(label(kindNode))) for (const field of fieldsOf(read, kindNode)) declared.set(field.name, { type: field.type, options: field.options });
-    lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds})${writes.map((field) => `, ${field}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options, uses) : "z.string().optional()"}`).join("")} }),`);
-    lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})}\`,`);
+    lines.push(`  input: z.object({ ${key(arg)}: nodeRef(${subjectKinds})${writes.map((field) => `, ${key(field)}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options, uses) : "z.string().optional()"}`).join("")} }),`);
+    lines.push(`  describe: (args, graph) => \`${said}: \${nameOf(graph as Reader, args${member(arg)})}\`,`);
     if (writes.length > 0) {
       body.push(`    const patch: Record<string, unknown> = {};`);
-      for (const field of writes) body.push(`    if (args.${field} !== undefined) patch[${q(field)}] = args.${field};`);
-      body.push(`    if (Object.keys(patch).length > 0) ctx.patchNode(args.${arg}, patch);`);
+      for (const field of writes) body.push(`    if (args${member(field)} !== undefined) patch[${q(field)}] = args${member(field)};`);
+      body.push(`    if (Object.keys(patch).length > 0) ctx.patchNode(args${member(arg)}, patch);`);
     } else {
       body.push(`    // Declared in the studio with no create, connect, sever or write: give it a body.`);
       body.push(`    void ctx;`);
@@ -469,7 +487,8 @@ export function ruleLines(read: Read, rule: Node, kept: boolean): string[] {
 export function declarationFiles(snapshot: GraphSnapshot | Reading, options: SourceOptions = {}): WrittenFile[] {
   const read = new Read(snapshot as Reading);
   const schemaVar = options.schemaVar ?? "schema";
-  const name = options.name ?? "the app";
+  // The app's name is said in the files' comments, so it is written as one line that cannot close one.
+  const name = inComment(options.name ?? "the app");
   const baseActs = new Set((options.base?.mutations ?? []).map((mutation) => mutation.name));
   const baseRules = new Set((options.base?.invariants ?? []).map((rule) => rule.name));
   const keptActs: string[] = [];
