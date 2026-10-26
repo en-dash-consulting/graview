@@ -1,7 +1,7 @@
 import { bindSchema, createSchema, defineNode, Store } from "@graview/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { localCompletion, NO_AI, openAiCompatibleCompletion, seatResponder, xaiCompletion } from "../../src/index.js";
+import { localCompletion, NO_AI, openAiCompatibleCompletion, seatResponder, WEBLLM_URL, xaiCompletion } from "../../src/index.js";
 
 /**
  * The models a host can give a seat: the graph always answers first, a
@@ -100,6 +100,16 @@ describe("the on-device model warms off the critical path", () => {
     expect(local.ready()).toBe(true);
     expect(states).toEqual(["warming", "ready"]);
     expect(await local.complete({ prompt: "x" })).toEqual({ text: "local words" });
+  });
+
+  it("fetches WebLLM at one pinned version, or from the address the host gives", async () => {
+    expect(WEBLLM_URL).toBe("https://esm.run/@mlc-ai/web-llm@0.2.83");
+    vi.stubGlobal("navigator", { gpu: {} });
+    const module = `export async function CreateMLCEngine(model) { return { chat: { completions: { create: async () => ({ choices: [{ message: { content: "from the host's copy: " + model } }] }) } } }; }`;
+    const local = localCompletion({ model: "pinned-test-model", webllm: `data:text/javascript,${encodeURIComponent(module)}` });
+    await local.warm();
+    expect(local.failed()).toBeNull();
+    expect(await local.complete({ prompt: "x" })).toEqual({ text: "from the host's copy: pinned-test-model" });
   });
 });
 

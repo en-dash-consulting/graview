@@ -54,6 +54,9 @@ const store = spawn(
     "apps/rota/src/data/example.json",
     "--port",
     String(portFor("served")),
+    // The roster opened against it is the rota dev server's page: another origin, named.
+    "--allow-origin",
+    at("rota"),
   ],
   { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"], detached: true },
 );

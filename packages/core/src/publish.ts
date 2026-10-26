@@ -1,4 +1,5 @@
 import type { AnyMutationDefinition } from "./mutations/types.js";
+import type { Epoch, OperationLog } from "./ops/log.js";
 import type { Operation } from "./ops/types.js";
 import { actingAs, isSystem } from "./permissions/policy.js";
 import type { Principal, Refusal } from "./permissions/types.js";
@@ -53,8 +54,12 @@ export interface PublishingServed {
   act?: (store: object, declared: ReadonlyMap<string, unknown>) => AnyMutationDefinition<never> | undefined;
   /** Whether this principal may publish, and when not, why. */
   verdict?: (store: object, principal: Principal) => { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal };
-  /** How far a store's readers are served. */
-  seq?: (store: object) => number | undefined;
+  /** How far a store's readers are served — or were, at a seq before the head (a checkpoint's). */
+  seq?: (store: object, at?: number) => number | undefined;
+  /** How far they are served once the latest publish is undone, when that is known and in the log. */
+  previous?: (store: object) => readonly number[];
+  /** Why undoing these ops, one a publish, cannot be: readers would go back behind the undo horizon. */
+  undo?: (log: Pick<OperationLog, "all" | "undoneIds" | "epochs">, ops: readonly Operation[], horizon: Epoch) => string | undefined;
   /** The marker op a publish writes, appended to the store's log. */
   /** What a seat view's module lends it, set by that module (`seen.ts`): so the reader's view imports none of a page's first chunk. */
   kit?: {

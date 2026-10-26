@@ -1,4 +1,4 @@
-import { bindSchema, createSchema, defineApp, defineNode, nodeRef } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineNode, FRESH_KEY, nodeRef } from "@graview/core";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
@@ -214,20 +214,48 @@ describe("the browser adapter", () => {
 });
 
 describe("when a load starts fresh", () => {
-  it("is asked for by ?fresh=1, and a person's browser otherwise remembers", () => {
-    expect(browserStartsFresh({ search: "?fresh=1" }, { webdriver: false })).toBe(true);
-    expect(browserStartsFresh({ search: "?today=2026-09-01" }, { webdriver: false })).toBe(false);
-    expect(browserStartsFresh({ search: "" }, {})).toBe(false);
+  it("is asked for by this tab's own Start fresh control, and a person's browser otherwise remembers", () => {
+    const session = memoryStorage();
+    const href = freshHref({ href: "http://x/?today=2026-09-01#focus=t1" }, session);
+    const asked = new URL(href).searchParams.get("fresh")!;
+    expect(asked).toMatch(/^[0-9a-f]{32}$/);
+    expect(session.map.get(FRESH_KEY)).toBe(asked);
+    expect(browserStartsFresh({ search: new URL(href).search }, { webdriver: false }, session)).toBe(true);
+    // Once: the value is forgotten as it is read, so the same address again remembers.
+    expect(session.map.has(FRESH_KEY)).toBe(false);
+    expect(browserStartsFresh({ search: new URL(href).search }, { webdriver: false }, session)).toBe(false);
+    expect(browserStartsFresh({ search: "?today=2026-09-01" }, { webdriver: false }, session)).toBe(false);
+    expect(browserStartsFresh({ search: "" }, {}, session)).toBe(false);
+  });
+
+  it("discards nothing for a ?fresh=1 another site sent a person to", async () => {
+    const storage = memoryStorage();
+    const session = memoryStorage();
+    const adapter = createBrowserAdapter({ storage, prefix: "test" });
+    const first = await openStore({ app, adapter, seed, fresh: browserStartsFresh({ search: "" }, { webdriver: false }, session) });
+    first.store.apply({ name: "rename", args: { id: "p1", label: "Kept" } });
+    await first.flush();
+    first.close();
+    for (const search of ["?fresh=1", "?utm=x&fresh=1&remember=1", "?fresh=guessed"]) {
+      expect(browserStartsFresh({ search }, { webdriver: false }, session)).toBe(false);
+      // Nor one whose tab holds another value than the address says.
+      session.setItem(FRESH_KEY, "another");
+      expect(browserStartsFresh({ search }, { webdriver: false }, session)).toBe(false);
+      const again = await openStore({ app, adapter, seed, fresh: browserStartsFresh({ search }, { webdriver: false }, session) });
+      expect((again.store.graph.getNode("p1") as { label: string } | undefined)?.label).toBe("Kept");
+      again.close();
+    }
   });
 
   it("is the default for a driven browser, unless it asks to remember", () => {
-    expect(browserStartsFresh({ search: "" }, { webdriver: true })).toBe(true);
-    expect(browserStartsFresh({ search: "?remember=1" }, { webdriver: true })).toBe(false);
-    // Fresh outranks remember: the control that says "start fresh" must win.
-    expect(browserStartsFresh({ search: "?remember=1&fresh=1" }, { webdriver: true })).toBe(true);
+    const session = memoryStorage();
+    expect(browserStartsFresh({ search: "" }, { webdriver: true }, session)).toBe(true);
+    expect(browserStartsFresh({ search: "?remember=1" }, { webdriver: true }, session)).toBe(false);
+    // A harness asks with ?fresh=1, and fresh outranks remember.
+    expect(browserStartsFresh({ search: "?remember=1&fresh=1" }, { webdriver: true }, session)).toBe(true);
   });
 
-  it("drops the fresh flag from the address once honored, keeping the rest", () => {
+  it("drops the fresh flag from the address once read, keeping the rest", () => {
     const replaced: string[] = [];
     forgetFreshParam({
       location: { href: "http://x/?today=2026-09-01&fresh=1#focus=t1" },
@@ -235,16 +263,15 @@ describe("when a load starts fresh", () => {
     });
     expect(replaced).toEqual(["http://x/?today=2026-09-01#focus=t1"]);
     forgetFreshParam({
+      location: { href: "http://x/?today=2026-09-01&fresh=0a1b" },
+      history: { replaceState: (_d, _u, url) => void replaced.push(url) },
+    });
+    expect(replaced).toHaveLength(2);
+    forgetFreshParam({
       location: { href: "http://x/?today=2026-09-01" },
       history: { replaceState: (_d, _u, url) => void replaced.push(url) },
     });
-    expect(replaced).toHaveLength(1);
-  });
-
-  it("names the address a start-fresh control goes to", () => {
-    expect(freshHref({ href: "http://x/?today=2026-09-01#focus=t1" })).toBe(
-      "http://x/?today=2026-09-01&fresh=1#focus=t1",
-    );
+    expect(replaced).toHaveLength(2);
   });
 
   // A page cannot keep an epoch's copy of the graph, so it must not fold and hash the whole log to adopt one on every open.

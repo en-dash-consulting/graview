@@ -1,4 +1,4 @@
-import { ARCHIVED, humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author, type Batch, type Operation } from "@graview/core";
+import { ARCHIVED, freshAddress, humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author, type Batch, type Operation } from "@graview/core";
 import { viaSaid } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
 import { digestWords, foldDigests, typedRowWords } from "@graview/core/tidying";
@@ -282,7 +282,13 @@ export function UndoTurn({ batch }: { readonly batch: string | readonly string[]
     [store, batch, length],
   );
 
-  if (lookingBack || (!check.ok && check.ops.length === 0)) return null;
+  // Offered only when the store would take it back for this seat: an undo shown and then refused is the watch's "offered then refused".
+  const may = useMemo(
+    () => (check.ok ? store.mayUndo(batch, principal) : { ok: true as const }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, batch, length, principal, check],
+  );
+  if (lookingBack || (!check.ok && check.ops.length === 0) || !may.ok) return null;
   const blocked = !check.ok;
   const alsoNeeded = blocked ? check.includeBatches : [];
 
@@ -391,17 +397,15 @@ export function ShowAsItWas({ seq, intent }: { readonly seq: number; readonly in
  * An app that remembers its edits in the browser needs a visible way OUT of
  * them: a demo that can be edited into a corner with no exit teaches
  * distrust, and "clear your site data" is not an affordance. The control
- * goes to the same address with `fresh=1` — the framework's own convention,
- * read by `browserStartsFresh` in `@graview/ship` — so it is a navigation
- * like any other stop: the seed loads, the flag is dropped from the address,
- * and what you do next is remembered again.
+ * goes to the same address with `fresh=<a value this tab keeps>`
+ * (`freshAddress`) — the framework's own convention, read by
+ * `browserStartsFresh` in `@graview/ship`, which honors only the value this
+ * tab wrote, never a `?fresh=1` another site linked to — so it is a
+ * navigation like any other stop: the seed loads, the flag is dropped from
+ * the address, and what you do next is remembered again.
  */
 export function StartFresh() {
-  const href = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("fresh", "1");
-    return url.toString();
-  };
+  const href = () => freshAddress(window.location.href);
   return (
     <a
       href="#fresh"

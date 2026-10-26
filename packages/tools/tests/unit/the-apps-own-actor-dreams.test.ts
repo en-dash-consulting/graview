@@ -187,7 +187,7 @@ describe("a dream", () => {
     expect(report.outcomes.map((one) => one.outcome)).toEqual(["applied", "suggested"]);
     const made = store.log.all().find((op) => op.primitives.length > 0)!;
     expect(made.author).toEqual(actor);
-    expect(made.lineage).toEqual({ basis: "Its supplier is “Harbor Catering”, the name of a vendor", confidence: 0.85, actor: "links", run: expect.any(String) });
+    expect(made.lineage).toEqual({ basis: "Its supplier is “Harbor Catering”, the name of a vendor", confidence: 0.85, actor: "links", run: expect.any(String), read: ["task:order#supplier", "task:order#label", "vendor:harbor#label"] });
   });
 
 

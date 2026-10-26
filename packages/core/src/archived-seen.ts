@@ -161,19 +161,23 @@ function servedAlone<S extends AnySchema>(store: Store<S>, epoch: Epoch, princip
   if (epoch.removed === undefined) return undefined;
   const inside = store as unknown as Opened<S>;
   const Made = store.constructor as new (options: StoreOptions<S>) => Store<S>;
+  // Judged under the modules on now, as the seat's own view and the whole archive are (FR-12) — not the ones that epoch kept.
+  const { enabledModules: _then, ...judged } = epoch;
   const alone = new Made({
     schema: store.schema,
     ...given("policy", store.policy),
     ...given("modules", inside.declaredModules),
-    ...given("enabledModules", inside.startingModules),
+    ...given("enabledModules", inside.declaredModules ? [...store.modules.enabled] : undefined),
     principal: inside.by,
     log: [],
-    epochs: [{ ...epoch, horizon: true }],
+    epochs: [{ ...judged, horizon: true }],
     snapshot: epoch.base as never,
     validate: false,
     now: inside.now,
   });
-  return unmarked(alone.seenBy(principal).log.epochs()[0]!);
+  // What only the store judges by is never the seat's, whether or not its view is kept from anything (FR-199).
+  const { removed: _removed, writers: _writers, ...served } = unmarked(alone.seenBy(principal).log.epochs()[0]!);
+  return served;
 }
 
 /**

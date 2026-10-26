@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { decisionBridge, decisionBridgeHandler, decisionKey } from "../../src/dev.js";
+import { decisionBridge, decisionBridgeHandler, decisionKey, doorCookie } from "../../src/dev.js";
+
+// The door's key for this file, so no test reaches for the one kept in a home folder; a page let in holds it as a cookie.
+process.env["GRAVIEW_DOOR_KEY"] ??= "the-door-tests-key-0123456789abcdef";
 
 /**
  * THE DOOR TO A DECISION PROVIDER, with the key on the server side of it.
@@ -22,7 +25,7 @@ const respond = () => {
 const request = (method: string, body?: string) =>
   ({
     method,
-    headers: { host: "localhost:5173" },
+    headers: { host: "localhost:5173", cookie: doorCookie() },
     on: (event: string, handler: (chunk?: Buffer) => void) => {
       if (event === "data" && body) handler(Buffer.from(body));
       if (event === "end") handler();

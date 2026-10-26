@@ -25,7 +25,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { serving, vacant } from "./lib/serve.mjs";
@@ -36,6 +36,8 @@ const ENGINE = engineName();
 
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
 const app = await serving("todo", portFor("todo"), repoRoot);
+// The page is opened from the address the dev server prints, its doors' key in it, as a person opens it: the seat then says what a server with no model says.
+const { doorKey, DOOR_KEY_PARAM } = await import(pathToFileURL(resolve(repoRoot, "packages/ship/dist/dev.js")).href);
 let browser;
 
 /** The written schema, read out of the download link the studio offers. */
@@ -331,7 +333,7 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
 
   const open = async (as) => {
-    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=${as}`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=${as}&${DOOR_KEY_PARAM}=${encodeURIComponent(doorKey())}`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(800);
     await profile();

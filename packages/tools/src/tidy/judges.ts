@@ -27,6 +27,13 @@ export interface Candidate {
   readonly confidence: number;
   /** The records it is about, so a model and a report can name them. */
   readonly about: readonly string[];
+  /**
+   * The fields its basis read, `<id>#<field>`: kept on the change's lineage
+   * (`lineage.read`), so a seat whose sight keeps one is not told the basis.
+   * Left out, the basis is taken to have read every field the records it is
+   * about hold — a model's, which read them all.
+   */
+  readonly read?: readonly string[];
 }
 
 /** What a judge is handed: the store as the actor sees it, and the run's clock and limits. */
@@ -38,6 +45,8 @@ export interface JudgeContext {
   readonly touched: ReadonlyMap<string, number>;
   /** Records changed more recently than this many milliseconds are left for now. */
   readonly quietFor: number;
+  /** When each record was made and by whom, from the log; a record the log never made (a seed's) is absent, and was made before any that is. */
+  readonly made?: ReadonlyMap<string, Made>;
   /** How old, in days, a finished record is before it is a candidate to set aside. */
   readonly olderThanDays: number;
 }
@@ -68,23 +77,61 @@ export function mayTouch(context: JudgeContext, node: Node): boolean {
 export const actNamed = (store: Store<AnySchema>, name: string) => store.allMutations().find((act) => act.name === name);
 
 export const named = (schema: AnySchema, node: Node): string => labelOf(schema.tryDefinition(node.kind), node);
+
+/** A field of a record a basis read, as a lineage says it. */
+export const fieldRead = (node: { readonly id: string }, field: string): string => `${node.id}#${field}`;
+
+/** The fields of a record its name reads, `<id>#<field>`: what a basis that says the name read. */
+export function nameRead(schema: AnySchema, node: Node): string[] {
+  const read: string[] = [];
+  const watched = new Proxy(node, {
+    get(target, field, receiver) {
+      if (typeof field === "string" && field !== "id" && field !== "kind" && !read.includes(fieldRead(target, field))) read.push(fieldRead(target, field));
+      return Reflect.get(target, field, receiver);
+    },
+  });
+  named(schema, watched);
+  return read;
+}
+
+/** Every field a record holds a value in, `<id>#<field>`: what a basis that read the whole record read. */
+export const wholeRead = (node: Node): string[] => Object.keys(node).filter((field) => field !== "id" && field !== "kind" && node[field] !== undefined && node[field] !== null && node[field] !== "").map((field) => fieldRead(node, field));
 export const noun = (schema: AnySchema, kind: string): string => nounOf(schema.tryDefinition(kind), kind);
 export const fieldsOf = (schema: AnySchema, kind: string): string[] => Object.keys((schema.tryDefinition(kind)?.fields.shape ?? {}) as Record<string, unknown>);
 
 /** Fields whose value names one thing and only that thing: two records that share one are the same. */
 export const KEY_FIELD = /^(e-?mail|email-?address|code|sku|reference|ref|external-?id|key)$/i;
 
-/** The one of several that stays: the one with the most links and history, else the first made. */
-export function keeperOf(store: Store<AnySchema>, nodes: readonly Node[], touched: ReadonlyMap<string, number>): Node {
-  const weight = (node: Node) => store.graph.out(node.id).length + store.graph.in(node.id).length;
-  return [...nodes].sort((a, b) => weight(b) - weight(a) || (touched.get(a.id) ?? 0) - (touched.get(b.id) ?? 0))[0]!;
+/** When a record was made, and who made it, as the log says. */
+export interface Made {
+  readonly at: number;
+  /** The maker, `<kind>:<id>` of the op's author. */
+  readonly by: string;
 }
+
+/**
+ * THE ONE OF SEVERAL THAT STAYS: the one made first — a record from before
+ * the log (a seed's) before any the log made — and only among records made
+ * at one moment, the one with the most links and history. Not the most
+ * links alone: anybody who may link to a kind can add links, so a
+ * duplicate planted beside somebody else's record could be made to stay,
+ * and theirs merged away into it; nobody can make a record earlier than
+ * one that is already there.
+ */
+export function keeperOf(store: Store<AnySchema>, nodes: readonly Node[], touched: ReadonlyMap<string, number>, made: ReadonlyMap<string, Made> = new Map()): Node {
+  const madeAt = (node: Node) => made.get(node.id)?.at ?? Number.NEGATIVE_INFINITY;
+  const weight = (node: Node) => store.graph.out(node.id).length + store.graph.in(node.id).length;
+  return [...nodes].sort((a, b) => madeAt(a) - madeAt(b) || weight(b) - weight(a) || (touched.get(a.id) ?? 0) - (touched.get(b.id) ?? 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))[0]!;
+}
+
+/** Who made a record, `<kind>:<id>`, or undefined for one from before the log. */
+export const makerOf = (context: Pick<JudgeContext, "made">, id: string): string | undefined => context.made?.get(id)?.by;
 
 /**
  * DUPLICATES → MERGE. Records of one kind that share a name — case,
  * accents and spacing aside, as an import matches a row to its record
  * (`nameKey`) — or a key a record has only one of (an email, a code). The
- * one with the most links stays; each other is merged into it
+ * one made first stays (`keeperOf`); each other is merged into it
  * (`merge-<kind>`). An exact name is surer than one that matches only with
  * its punctuation aside; a shared key is surest.
  */
@@ -101,8 +148,8 @@ export const duplicates: Judge = {
       const records = store.graph.nodesOfKind(kind as never) as unknown as Node[];
       const keys = fieldsOf(schema, kind).filter((field) => KEY_FIELD.test(field));
       const merged = new Set<string>();
-      const groups: { readonly nodes: Node[]; readonly basis: (keeper: Node) => string; readonly confidence: number }[] = [];
-      const group = (key: (node: Node) => string | undefined, basis: (keeper: Node, value: string) => string, confidence: number) => {
+      const groups: { readonly nodes: Node[]; readonly basis: (keeper: Node) => string; readonly confidence: number; readonly field?: string }[] = [];
+      const group = (key: (node: Node) => string | undefined, basis: (keeper: Node, value: string) => string, confidence: number, field?: string) => {
         const by = new Map<string, Node[]>();
         for (const node of records) {
           if (merged.has(node.id)) continue;
@@ -110,21 +157,23 @@ export const duplicates: Judge = {
           if (value) by.set(value, [...(by.get(value) ?? []), node]);
         }
         for (const [value, nodes] of by) if (nodes.length > 1) {
-          groups.push({ nodes, basis: (keeper) => basis(keeper, value), confidence });
+          groups.push({ nodes, basis: (keeper) => basis(keeper, value), confidence, ...(field !== undefined ? { field } : {}) });
           for (const node of nodes) merged.add(node.id);
         }
       };
       for (const field of keys) {
-        group((node) => (typeof node[field] === "string" && node[field].trim() ? nameKey(node[field]) : undefined), (_keeper, value) => `Both have the ${field} ${value}`, 0.95);
+        group((node) => (typeof node[field] === "string" && node[field].trim() ? nameKey(node[field]) : undefined), (_keeper, value) => `Both have the ${field} ${value}`, 0.95, field);
       }
       group((node) => nameKey(named(schema, node)) || undefined, (keeper) => `Same name as “${named(schema, keeper)}” (another ${noun(schema, kind)})`, 0.9);
       group((node) => fold(named(schema, node)).replace(/ /g, "") || undefined, (keeper) => `Nearly the same name as “${named(schema, keeper)}”, punctuation and spacing aside`, 0.75);
-      for (const { nodes, basis, confidence } of groups) {
-        const keeper = keeperOf(store, nodes, context.touched);
+      for (const { nodes, basis, confidence, field } of groups) {
+        const keeper = keeperOf(store, nodes, context.touched, context.made);
         if (!mayTouch(context, keeper)) continue;
         for (const node of nodes) {
           if (node.id === keeper.id || !mayTouch(context, node)) continue;
-          out.push({ judge: "duplicates", calls: [{ name: `merge-${kind}`, args: { id: node.id, into: keeper.id } }], basis: basis(keeper), confidence, about: [node.id, keeper.id] });
+          // A shared key read both records' key; a shared name, both names.
+          const read = field !== undefined ? [fieldRead(node, field), fieldRead(keeper, field)] : [...nameRead(schema, node), ...nameRead(schema, keeper)];
+          out.push({ judge: "duplicates", calls: [{ name: `merge-${kind}`, args: { id: node.id, into: keeper.id } }], basis: basis(keeper), confidence, about: [node.id, keeper.id], read });
         }
       }
     }
@@ -212,6 +261,8 @@ export const links: Judge = {
               basis: exact ? `Its ${field} is “${named(schema, far)}”, the name of ${/^[aeiou]/i.test(farNoun) ? "an" : "a"} ${farNoun}` : `Its ${field} names “${named(schema, far)}”`,
               confidence: exact ? 0.85 : 0.5,
               about: [node.id, far.id],
+              // What the record's field says, and the names it was matched against.
+              read: [fieldRead(node, field), ...nameRead(schema, node), ...nameRead(schema, far)],
             });
           }
         }
@@ -246,16 +297,31 @@ export function finishedOf(schema: AnySchema, kind: string, today: string): ((no
 
 /** When a record last moved: the log's last change to it, else the date its declaration reads it by (a lifecycle date, an end or due role). */
 export function lastMoved(schema: AnySchema, node: Node, touched: ReadonlyMap<string, number>): number | undefined {
+  return movedBy(schema, node, touched)?.at;
+}
+
+/** When a record last moved, and the field that said so, when a field did rather than the log. */
+function movedBy(schema: AnySchema, node: Node, touched: ReadonlyMap<string, number>): { readonly at: number; readonly field?: string } | undefined {
   const logged = touched.get(node.id);
-  if (logged !== undefined) return logged;
+  if (logged !== undefined) return { at: logged };
   const definition = schema.tryDefinition(node.kind);
   const roles = definition?.fieldRoles ?? {};
   for (const field of [definition?.lifecycle?.retired === "date" ? definition.lifecycle.field : undefined, roles["end"], roles["due"], roles["at"], roles["start"]]) {
     const value = field ? node[field] : undefined;
     const at = typeof value === "string" ? Date.parse(value) : Number.NaN;
-    if (!Number.isNaN(at)) return at;
+    if (!Number.isNaN(at)) return { at, field: field! };
   }
   return undefined;
+}
+
+/** The field a kind says it is finished by, as `finishedOf` reads it. */
+function finishedField(schema: AnySchema, kind: string): string | undefined {
+  const definition = schema.tryDefinition(kind);
+  if (!definition) return undefined;
+  if (definition.lifecycle) return definition.lifecycle.field;
+  const state = districtState(schema, kind);
+  if (state && state.tiers.includes("done")) return state.field;
+  return fieldsOf(schema, kind).find((field) => /^(done|completed|closed|finished)$/i.test(field));
 }
 
 /**
@@ -281,9 +347,11 @@ export const archive: Judge = {
       for (const node of store.graph.nodesOfKind(kind as never) as unknown as Node[]) {
         if (!mayTouch(context, node)) continue;
         const why = finished(node);
-        const moved = why ? lastMoved(schema, node, context.touched) : undefined;
-        if (!why || moved === undefined) continue;
+        const movedAt = why ? movedBy(schema, node, context.touched) : undefined;
+        if (!why || movedAt === undefined) continue;
+        const moved = movedAt.at;
         const days = Math.floor((context.now - moved) / DAY);
+        const by = finishedField(schema, kind);
         if (days < context.olderThanDays) continue;
         out.push({
           judge: "archive",
@@ -292,6 +360,7 @@ export const archive: Judge = {
           // Older is surer, never certain: a person may still be reading it.
           confidence: Math.min(0.8, 0.6 + days / 365),
           about: [node.id],
+          read: [...(by !== undefined ? [fieldRead(node, by)] : []), ...(movedAt.field !== undefined ? [fieldRead(node, movedAt.field)] : [])],
         });
       }
     }

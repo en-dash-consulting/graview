@@ -1,0 +1,7 @@
+---
+"@graview/studio": patch
+---
+
+The studio writes what a declaration says back into TypeScript as text, never as code. A new act's title went raw into the template literal of its history sentence, so a title with `${…}` in it ran when the act was described, and the app's name went raw into the comment at the head of `schema.ts`, `mutations.ts`, `invariants.ts` and `policy.ts`, so a document named `Vendors */ globalThis.x = 1; /*` added a statement that ran when the checkout imported the file. Both reach the files the studio door writes into `src/domain` and the ones `studio.files()` hands back. Now the title is written as the template literal's text (a backtick, `${` and a backslash escaped), the name as one line no `*/` in it can close, an act's argument or written field that is not a word as a quoted key (`args["…"]`), and a quoted string with U+2028 and U+2029 escaped, so none can end the `//` comment it is said in. `declaration-text-is-written-back-as-text.test.ts` writes a document named with `*/` and a new act titled with `${…}`, a backtick and a backslash, imports every file, finds nothing ran, and reads the act's sentence back word for word; an act writing a field named like code is written with its name quoted.
+
+Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. The files the studio writes read the same for a title, a name and arguments that are plain words.

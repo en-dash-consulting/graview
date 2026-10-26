@@ -593,10 +593,24 @@ export function presenceFrom(told: Presence, seat: Principal, now: Date = new Da
   const caret = caretOf(claimedCaret);
   // The session is what follows the seat's own `kind:id:` — an id may hold a colon (`shopper:bethan`).
   const own = `${seat.kind}:${seat.id ?? ""}:`;
-  const session = claimed.startsWith(own) ? claimed.slice(own.length) : (claimed.split(":").at(-1) ?? "");
-  const key = participant ?? (seat.id ? participantKey({ kind: seat.kind, id: seat.id, session }) : claimed);
+  const after = claimed.startsWith(own) ? claimed.slice(own.length) : (claimed.split(":").at(-1) ?? "");
+  // A seat with no id has a session with no colon, or `kind::odd:s` would be the key of an id that begins with one.
+  const session = seat.id ? after : (after.split(":").at(-1) ?? "");
+  // Always the seat's own namespace: one with no id is `kind::session`, where no identified person stands.
+  const key = participant ?? participantKey({ kind: seat.kind, ...(seat.id ? { id: seat.id } : {}), session });
   const name = seat.name ?? claimedName;
   return { ...said, participant: key, kind: seat.kind, ...(name ? { name } : {}), ...forWhom(seat), ...(caret ? { caret } : {}), at: now.toISOString() };
+}
+
+/**
+ * WHETHER A PARTICIPANT KEY IS THIS SEAT'S OWN, to say it has gone: under
+ * its `kind:id:`, or — for a seat with no id — `kind::session` and nothing
+ * more, so an id that begins with a colon is not reached through it.
+ */
+export function ownsParticipant(seat: Principal, key: string): boolean {
+  const own = `${seat.kind}:${seat.id ?? ""}:`;
+  if (!key.startsWith(own)) return false;
+  return seat.id ? true : !key.slice(own.length).includes(":");
 }
 
 /** A caret as a client said it (Roadmap f-collab-text), kept only when it is one: a record, a field, and three counts. */

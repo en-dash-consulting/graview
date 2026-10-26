@@ -1,7 +1,7 @@
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createMemoryAdapter, createSchema, defineApp, defineNode, memoryViews, type LensTidyEdit } from "@graview/core";
+import { createMemoryAdapter, createSchema, defineApp, defineNode, memoryViews, type LensTidyEdit, type Principal } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { fileViews, remoteViews, serveStore, VIEWS_PATH, type ServedStore } from "../../src/index.js";
@@ -17,8 +17,8 @@ import { fileViews, remoteViews, serveStore, VIEWS_PATH, type ServedStore } from
 const task = defineNode("task", { fields: z.object({ label: z.string() }) });
 const schema = createSchema([task]);
 const app = defineApp({ name: "tidied", schema, policy: { roles: ["keeper", "reader"], grants: [{ roles: ["keeper"], mutations: "*" }] } });
-const keeper = { kind: "human" as const, id: "nick", roles: ["keeper"] };
-const reader = { kind: "human" as const, id: "ada", roles: ["reader"] };
+const keeper: Principal = { kind: "human", id: "nick", roles: ["keeper"] };
+const reader: Principal = { kind: "human", id: "ada", roles: ["reader"] };
 
 let served: ServedStore<typeof schema> | undefined;
 afterEach(async () => {
@@ -74,6 +74,55 @@ describe("a served store's views a person tidied", () => {
     await editor.ready;
     expect(editor.current().may).toEqual({ views: true, lenses: false });
     await expect(editor.lens({ op: "remove-lens", title: "By day" })).rejects.toThrow("Only the app's owner hides or deletes a lens the app declares.");
+  });
+
+  it("judges an agent as the store judges it: by the roles it shares with its person, and by its declared may", async () => {
+    const guarded = defineApp({
+      name: "tidied",
+      schema,
+      policy: { roles: ["keeper", "reader"], grants: [{ roles: ["keeper"], mutations: "*" }] },
+      intelligence: [{ name: "reader-bot", kind: "llm", may: [] }],
+    } as never);
+    let asking: Principal = keeper;
+    served = await serveStore({ app: guarded as never, adapter: createMemoryAdapter(), seatOf: () => asking });
+    const hide = async (seat: Principal, name: string) => {
+      asking = seat;
+      return (await fetch(`${served!.url}${VIEWS_PATH}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hide: name }) })).status;
+    };
+    // An agent with a keeper's roles, acting for a reader, may do only what the reader may.
+    expect(await hide({ kind: "agent", id: "helper", roles: ["keeper"], onBehalfOf: reader }, "for-a-reader")).toBe(403);
+    // A provider declared able to do nothing keeps nothing, whatever roles it carries.
+    expect(await hide({ kind: "agent", id: "reader-bot", roles: ["keeper"] }, "may-nothing")).toBe(403);
+    // The keeper still does, and an agent acting for the keeper with the keeper's roles too.
+    expect(await hide(keeper, "by-the-keeper")).toBe(200);
+    expect(await hide({ kind: "agent", id: "helper", roles: ["keeper"], onBehalfOf: keeper }, "for-the-keeper")).toBe(200);
+    asking = keeper;
+    const state = (await (await fetch(`${served.url}${VIEWS_PATH}`)).json()) as { hidden: string[] };
+    expect(state.hidden).toEqual(["by-the-keeper", "for-the-keeper"]);
+  });
+
+  it("never lets a seat that may not restore a deleted lens replace or clear it under the lens's name", async () => {
+    const restored: string[] = [];
+    let asking: Principal = keeper;
+    served = await serveStore({
+      app,
+      adapter: createMemoryAdapter(),
+      seatOf: () => asking,
+      views: memoryViews({ declaration: { change: () => undefined, restore: (entry) => void restored.push(entry.title) } }),
+      mayTidyViews: (seat) => ({ views: true, lenses: seat.id === "nick" }),
+    });
+    const post = async (seat: Principal, body: unknown) => {
+      asking = seat;
+      return fetch(`${served!.url}${VIEWS_PATH}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    };
+    expect((await post(keeper, { lens: { op: "remove-lens", title: "Calendar" } })).status).toBe(200);
+    expect((await post(reader, { restore: "lens:Calendar" })).status).toBe(403);
+    expect((await post(reader, { remove: "lens:Calendar" })).status).toBe(403);
+    expect((await post(reader, { hide: "lens:Calendar" })).status).toBe(403);
+    expect((await post(reader, { show: "lens:Calendar" })).status).toBe(403);
+    // The owner's restore still reaches the declaration.
+    expect((await post(keeper, { restore: "lens:Calendar" })).status).toBe(200);
+    expect(restored).toEqual(["Calendar"]);
   });
 
   it("are kept in a file beside the store, read again when it starts", async () => {

@@ -3,6 +3,7 @@ import type { GuestDomEvent, GuestDroppedFile, GuestRefusal } from "../protocol.
 import { fieldFor, planDrop, takes, type DropPlan } from "./drop-plan.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import { isStoredFile } from "./marks.js";
+import type { DropGrant } from "./writes.js";
 
 const isImage = (file: FileValue) => file.type.startsWith("image/");
 const isVideo = (file: FileValue) => file.type.startsWith("video/");
@@ -51,8 +52,11 @@ export interface GuestDropsOptions<S extends AnySchema> {
   readonly send: (message: GuestDomEvent) => void;
   /** Apply the change a drop the view does not hear makes: as the viewer, through the view. */
   readonly change: (calls: readonly MutationCall[], intent: string) => { readonly ok: true; readonly intent: string } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
-  /** A file the host stored and handed the view: one it may hand back in an act's argument. */
-  readonly handed: (file: FileValue) => void;
+  /**
+   * A file the host stored and handed the view: one it may hand back in an
+   * act's argument, once, on the record the drop was bound to (writes.ts).
+   */
+  readonly handed: (file: FileValue, drop: DropGrant) => void;
   /** Whether the pointer is coarse (a phone): then a tap on a drop target opens the picker. `(pointer: coarse)` by default. */
   readonly coarse?: () => boolean;
   /** Something about a drop target, said once for the host's problems: why an element marked `data-drop` is not one. */
@@ -325,7 +329,10 @@ export function createGuestDrops<S extends AnySchema>(window: Window & typeof gl
       const at = fileAt(value.at) ?? (Number.isFinite(file.lastModified) && file.lastModified > 0 ? new Date(file.lastModified).toISOString() : undefined);
       kept.push({ field: field.field, value, ...(at ? { at } : {}) });
     }
-    for (const one of kept) options.handed(one.value);
+    /* The record the drop was bound to: its data-drop-connect's, or the data-record it was drawn in, one the view was shown. */
+    const bound = element.closest("[data-record]")?.getAttribute("data-record") ?? undefined;
+    const target = plan.connect?.record ?? (bound !== undefined && options.shown().has(bound) ? bound : undefined);
+    for (const one of kept) options.handed(one.value, target === undefined ? {} : { target });
     sayRefused(problems);
     if (options.hears()) {
       const target = options.idOf(element);

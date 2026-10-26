@@ -197,7 +197,7 @@ async function pairsOf(context: JudgeContext, options: BlockingOptions): Promise
       }
     }
     for (const { a, b, strength, evidence, keys } of byPair.values()) {
-      const keeper = keeperOf(store, [a, b], context.touched);
+      const keeper = keeperOf(store, [a, b], context.touched, context.made);
       const other = keeper.id === a.id ? b : a;
       const keyFields = new Set([...keys, ...fieldsOf(schema, kind).filter((field) => KEY_FIELD.test(field) && typeof a[field] === "string" && typeof b[field] === "string" && String(a[field]).trim() && String(b[field]).trim())]);
       if (label) keyFields.delete(label);

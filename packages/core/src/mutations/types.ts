@@ -180,6 +180,16 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    * outrank the app's.
    */
   readonly pinned?: boolean;
+  /**
+   * Whether this act's own rule lets it run on a record now, asked without
+   * its other arguments: a document act's `allowedWhen` (false where the
+   * rule cannot be judged without them). Read where the act lends its
+   * permission to something that never runs it — typing into a field it
+   * writes (`type-text`) — so a field the act has locked ("only while the
+   * ticket is open") is locked to typing too. Absent, nothing is known
+   * against it: a TypeScript act that refuses by its own rule says it here.
+   */
+  allowedOn?(graph: GraphReader<NodeOfSchema<S>>, subject: string): boolean;
   /** One-line description of a concrete application, for previews and logs. */
   describe?(args: z.infer<I>, graph: GraphReader<NodeOfSchema<S>>): string;
   apply(context: MutationContext<S>, args: z.infer<I>): void;

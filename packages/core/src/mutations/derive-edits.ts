@@ -424,7 +424,10 @@ function perKind<S extends AnySchema>(schema: S, mutations: readonly AnyMutation
           const node = act === "remove" && graph.getNode(String(args["id"]));
           // What files a removed record takes with it (FR-162): the host decides what becomes of their bytes. Each file once, however many of its fields hold it.
           const files = node ? new Set(Object.values(node).flatMap((value) => filesOf(value).map((file) => file.href))).size : 0;
-          return `${verb} ${named(graph, args["id"])}${act === "merge" ? ` into ${named(graph, args["into"])}` : ""}${files ? ` and its ${files} file${files > 1 ? "s" : ""}` : ""}`;
+          // Two records of one name: the sentence says which is merged into which, by id, or it reads the same both ways.
+          const twins = act === "merge" && named(graph, args["id"]) === named(graph, args["into"]);
+          const said = (id: unknown) => (twins ? `${named(graph, id)} (${String(id)})` : named(graph, id));
+          return `${verb} ${said(args["id"])}${act === "merge" ? ` into ${said(args["into"])}` : ""}${files ? ` and its ${files} file${files > 1 ? "s" : ""}` : ""}`;
         },
         // Leave alone is a mark like archived, set and cleared by a patch: nothing when it is already so.
         apply: marks

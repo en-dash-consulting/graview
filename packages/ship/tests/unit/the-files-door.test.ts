@@ -3,7 +3,12 @@ import type { AddressInfo } from "node:net";
 import { isFileValue } from "@graview/core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { filesAt } from "../../src/browser.js";
-import { DEV_FILES_KINDS, devFiles, devFilesHandler } from "../../src/dev.js";
+import { DEV_FILES_KINDS, devFiles, devFilesHandler, doorCookie } from "../../src/dev.js";
+
+// The door's key for this file, so no test reaches for the one kept in a home folder; a page let in holds it as a cookie.
+process.env["GRAVIEW_DOOR_KEY"] ??= "the-files-door-test-key-0123456789";
+/** A request as the page let in sends it: with the door's cookie. */
+const knock = (url: string, init: RequestInit = {}) => fetch(url, { ...init, headers: { ...(init.headers as Record<string, string>), cookie: doorCookie() } });
 
 /**
  * FR-163. A DEV SERVER'S FILES: the door a file field's editor sends to under
@@ -22,7 +27,7 @@ beforeAll(async () => {
 });
 afterAll(() => new Promise<void>((done) => server.close(() => done())));
 
-const files = () => filesAt(`${base}/__graview/files`, { maxBytes: 64, kinds: ["image/*", "application/pdf"], fetch: (url, init) => fetch(url, { ...init, headers: { ...(init?.headers as Record<string, string>), origin: base } }) });
+const files = () => filesAt(`${base}/__graview/files`, { maxBytes: 64, kinds: ["image/*", "application/pdf"], fetch: (url, init) => fetch(url, { ...init, headers: { ...(init?.headers as Record<string, string>), origin: base, cookie: doorCookie() } }) });
 
 describe("the dev server's files", () => {
   it("keeps what it is sent and answers the value a record keeps, at a path on this host", async () => {
@@ -34,7 +39,7 @@ describe("the dev server's files", () => {
 
   it("serves it back as its type, never sniffed; a picture or a PDF inline, anything else never run", async () => {
     const value = await files().upload(new Blob(["%PDF-1.4"], { type: "application/pdf" }), "quote.pdf");
-    const served = await fetch(`${base}${value.href}`);
+    const served = await knock(`${base}${value.href}`);
     expect(served.status).toBe(200);
     expect(served.headers.get("content-type")).toBe("application/pdf");
     expect(served.headers.get("x-content-type-options")).toBe("nosniff");
@@ -45,23 +50,27 @@ describe("the dev server's files", () => {
   it("never runs what it serves as this app's page: an SVG, which can carry a script, is drawn by an <img> but sandboxed when opened", async () => {
     const svg = "<svg><script>parent.x=document.cookie</script></svg>";
     const value = await files().upload(new Blob([svg], { type: "image/svg+xml" }), "badge.svg");
-    const served = await fetch(`${base}${value.href}`);
+    const served = await knock(`${base}${value.href}`);
     expect(served.headers.get("content-type")).toBe("image/svg+xml");
     expect(served.headers.get("content-security-policy")).toMatch(/(^|;\s*)sandbox(;|$)/);
     // A raster picture is sandboxed too: what the record says it is never decides what the bytes may do.
     const png = await files().upload(new Blob(["PNG pixels"], { type: "image/png" }), "porch.png");
-    expect((await fetch(`${base}${png.href}`)).headers.get("content-security-policy")).toMatch(/(^|;\s*)sandbox(;|$)/);
+    expect((await knock(`${base}${png.href}`)).headers.get("content-security-policy")).toMatch(/(^|;\s*)sandbox(;|$)/);
   });
 
   it("says what it takes, and refuses past its size or outside its kinds in words the editor says", async () => {
-    expect(await (await fetch(`${base}/__graview/files`)).json()).toEqual({ maxBytes: 64, kinds: ["image/*", "application/pdf"] });
+    expect(await (await knock(`${base}/__graview/files`)).json()).toEqual({ maxBytes: 64, kinds: ["image/*", "application/pdf"] });
     await expect(files().upload(new Blob(["x".repeat(65)], { type: "image/png" }), "big.png")).rejects.toThrow("it is more than 64 bytes, the most this server takes");
     await expect(files().upload(new Blob(["GIF89a"], { type: "text/html" }), "page.html")).rejects.toThrow("this server doesn't take text/html files");
   });
 
   it("answers this app's own page only", async () => {
-    const elsewhere = await fetch(`${base}/__graview/files`, { method: "POST", body: "x", headers: { "content-type": "image/png", origin: "https://elsewhere.example" } });
+    const elsewhere = await knock(`${base}/__graview/files`, { method: "POST", body: "x", headers: { "content-type": "image/png", origin: "https://elsewhere.example" } });
     expect(elsewhere.status).toBe(403);
+    // A program that says nothing of where it came from, and holds no key, is not the page either.
+    const unsaid = await fetch(`${base}/__graview/files`, { method: "POST", body: "x", headers: { "content-type": "image/png" } });
+    expect(unsaid.status).toBe(403);
+    expect((await fetch(`${base}/__graview/files`)).status).toBe(403);
   });
 
   it("is a dev-server plugin and nothing else, taking pictures, videos, PDFs and plain text by default", () => {
@@ -82,17 +91,17 @@ describe("the dev server's videos (0.1.37)", () => {
   afterAll(() => new Promise<void>((done) => videos.close(() => done())));
 
   it("keeps a video by its ending and serves it inline, a range at a time, as a player asks for it", async () => {
-    const send = filesAt(`${at}/__graview/files`, { maxBytes: 1_000, kinds: DEV_FILES_KINDS, fetch: (url, init) => fetch(url, { ...init, headers: { ...(init?.headers as Record<string, string>), origin: at } }) });
+    const send = filesAt(`${at}/__graview/files`, { maxBytes: 1_000, kinds: DEV_FILES_KINDS, fetch: (url, init) => fetch(url, { ...init, headers: { ...(init?.headers as Record<string, string>), origin: at, cookie: doorCookie() } }) });
     const value = await send.upload(new Blob(["0123456789"], { type: "video/quicktime" }), "IMG_4410.MOV");
     expect(value).toMatchObject({ name: "IMG_4410.MOV", type: "video/quicktime", bytes: 10 });
     expect(value.href).toMatch(/\.mov$/);
-    const whole = await fetch(`${at}${value.href}`);
+    const whole = await knock(`${at}${value.href}`);
     expect([whole.status, whole.headers.get("accept-ranges"), whole.headers.get("content-disposition")?.split(";")[0]]).toEqual([200, "bytes", "inline"]);
-    const part = await fetch(`${at}${value.href}`, { headers: { range: "bytes=2-5" } });
+    const part = await knock(`${at}${value.href}`, { headers: { range: "bytes=2-5" } });
     expect([part.status, part.headers.get("content-range"), part.headers.get("content-length"), await part.text()]).toEqual([206, "bytes 2-5/10", "4", "2345"]);
-    const tail = await fetch(`${at}${value.href}`, { headers: { range: "bytes=7-" } });
+    const tail = await knock(`${at}${value.href}`, { headers: { range: "bytes=7-" } });
     expect([tail.status, await tail.text()]).toEqual([206, "789"]);
-    const past = await fetch(`${at}${value.href}`, { headers: { range: "bytes=20-30" } });
+    const past = await knock(`${at}${value.href}`, { headers: { range: "bytes=20-30" } });
     expect([past.status, past.headers.get("content-range")]).toEqual([416, "bytes */10"]);
   });
 });

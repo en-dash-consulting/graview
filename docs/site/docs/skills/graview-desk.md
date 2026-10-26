@@ -17,7 +17,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ```ts // vite.config.ts import { localIntelligence } from "@graview/ship/dev"; plugins: [localIntelligence({ path: "/__graview/local", budgetUsd: 2 })] ```
 
-Read it with `useLocalIntelligence(path)` from `@graview/react`. The spawned session gets Read and only Read, a turn per photograph plus three, a dollar budget, a closed stdin and an environment with every `CLAUDE*` variable stripped. `apply: "serve"` means a build carries no door: a deployed copy probes, gets nothing, and reads as **closed** — which is a state, not a fault.
+Read it with `useLocalIntelligence(path)` from `@graview/react`. The spawned session gets Read and only Read, beneath its own temporary folder (`Read(./**)`), the prompt after `--`, a turn per photograph plus three, a dollar budget, a closed stdin and only the environment it needs (`PATH`, `HOME`, the locale, proxies, `ANTHROPIC_*`). Every dev door answers only the page opened from the address the dev server prints (`?graview_door=<key>`, the key in `~/.graview/door-key`): open that once. `apply: "serve"` means a build carries no door: a deployed copy probes, gets nothing, and reads as **closed** — which is a state, not a fault.
 
 1. **A plan** — what came back, as an object rather than a list: ordered by the chain, judged against the policy and the provider's `may`, reviewable. `planFrom(store, proposals, { app, principal })`.
 2. **A review** — `<PlanReview plan={plan} onApplied={...} />`. Applied as one turn, so `store.undo(batch)` takes the whole thing back.

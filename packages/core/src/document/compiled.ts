@@ -25,6 +25,7 @@ import {
   type Violation,
 } from "../index.js";
 import { refTo } from "../mutations/node-ref.js";
+import { mayKeepField } from "../permissions/sight.js";
 import { ActRefusal } from "../refused.js";
 import * as z from "../schema/zod.js";
 import { fileSchema } from "../schema/files.js";
@@ -519,6 +520,20 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         writes,
         ...(Object.keys(writesOther).length > 0 ? { writesOther } : {}),
         ...(Object.keys(sets).length > 0 ? { sets } : {}),
+        // Its condition, judged on a record without the call's arguments: what lends typing into a field it writes (`type-text`).
+        ...(guard
+          ? {
+              allowedOn: (graph: GraphReader, id: string) => {
+                const subject = graph.getNode(id);
+                if (!subject || (subjectKinds.length > 0 && !subjectKinds.includes(subject.kind))) return false;
+                try {
+                  return evaluateExpr(guard, { graph, subject, kinds: shapes, bindings: {}, today: today() }) === true;
+                } catch {
+                  return false;
+                }
+              },
+            }
+          : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {
           const subject = typeof input[SUBJECT_ARG] === "string" ? graph.getNode(input[SUBJECT_ARG] as string) : undefined;
           // Never the first string it was handed (FR-169): that was a stream's maturity read as its name.
@@ -587,7 +602,9 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                 if (v !== undefined) node[field] = v;
               }
               const labelField = defaultLabelField(kind);
-              const id = context.freshId(String((labelField && node[labelField]) ?? effect.create), effect.create);
+              // An id is served wherever its record is: never minted from a name some sight keeps from a role (Roadmap f-field-sight).
+              const kept = labelField !== undefined && mayKeepField(document.policy?.sees, effect.create, labelField);
+              const id = context.freshId(kept ? effect.create : String((labelField && node[labelField]) ?? effect.create), effect.create);
               context.addNode({ ...node, id } as never);
               if (effect.as) made.set(effect.as, id);
             } else if ("connect" in effect || "sever" in effect) {

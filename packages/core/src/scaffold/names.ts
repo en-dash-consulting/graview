@@ -48,6 +48,10 @@ export function validateScaffoldOptions(options: {
   const problems: string[] = [];
   if (!options.name || options.name.trim().length === 0) {
     problems.push("a name is required — the product's name, as a person would say it");
+  } else if (/[\u0000-\u001f\u007f\u2028\u2029]/.test(options.name)) {
+    // The name is written into comments and string literals of the files
+    // made; a line break or a control character in it would end one.
+    problems.push("the name has a line break or a control character in it; a name is one line of text");
   }
   const kind = options.kind ?? "item";
   if (!SLUG.test(kind)) {
@@ -111,10 +115,26 @@ export function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+/** Text for inside a double-quoted string literal. */
 export function escapeString(text: string): string {
   return text.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
+/** Text for inside a backtick template literal: a backtick and `${` stay text. */
 export function escapeTemplate(text: string): string {
-  return text.replace(/\\/g, "\\\\").replace(/`/g, "\`").replace(/\$\{/g, "\${");
+  return text.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+}
+
+/** Text for inside a block comment (JS or CSS): nothing in it can close the comment. */
+export function escapeComment(text: string): string {
+  return text.replace(/\*\//g, "* /").replace(/[\r\n\u2028\u2029]/g, " ");
+}
+
+/**
+ * Text for between two JSX tags: plain words stay plain, and a name with a
+ * brace, an angle bracket or an ampersand in it is written as a string
+ * expression, so JSX reads none of them as markup or code.
+ */
+export function escapeJsxText(text: string): string {
+  return /[{}<>&]/.test(text) ? `{${JSON.stringify(text)}}` : text;
 }

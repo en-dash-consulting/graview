@@ -232,6 +232,14 @@ export interface McpDoorOptions {
   readonly allow: Iterable<string>;
   /** Host names the server answers to besides this machine's own (`ownHost`). */
   readonly hosts?: Iterable<string>;
+  /**
+   * Asked of every request beside its origin, before its body is read. A
+   * browser says where a request came from and a program that is no browser
+   * says nothing, so on a dev server pass `fromThisApp` from
+   * `@graview/ship/dev`, which asks for the key only the person who started
+   * the server holds.
+   */
+  readonly admit?: (request: DoorRequest) => boolean;
   /** The most a request may send, in bytes. Default 1 MB. */
   readonly limit?: number;
 }
@@ -259,6 +267,7 @@ export function mcpDoor(options: McpDoorOptions): (request: DoorRequest, respons
     if ((request.url ?? "").split("?")[0] !== path) return next();
     if (request.method !== "POST") return answer(response, 405, { ok: false, error: "Refused: the door takes a POST." });
     if (!sameOrigin(request.headers, hosts)) return answer(response, 403, { ok: false, error: "Refused: not from this page's own origin." });
+    if (options.admit && !options.admit(request)) return answer(response, 403, { ok: false, error: "Refused: not from a page this server let in." });
     const type = request.headers["content-type"];
     // The media type itself: one a page on another site may send unasked (`text/plain; x=application/json`) is not JSON.
     if (typeof type !== "string" || type.split(";")[0]!.trim().toLowerCase() !== "application/json") {

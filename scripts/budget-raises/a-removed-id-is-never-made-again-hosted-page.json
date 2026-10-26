@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 103,
+  "gzipped": 43,
+  "changeset": "a-removed-id-is-never-made-again.md",
+  "note": "Raised when an id the log once held came never to be made again: the store hands an act whether the log ever held an id (`everHeld`, read off the log's record index), so `freshId`, an id asked for and a hint step past a removed record's id and its maker is never taken for the next one's. The store is on every page, so this is up front. Measured at 621_444 / 216_759 against 621_341 / 216_716 minified and gzipped."
+}

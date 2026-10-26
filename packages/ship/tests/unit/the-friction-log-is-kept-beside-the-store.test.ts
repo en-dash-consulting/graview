@@ -33,6 +33,7 @@ const seed = { nodes: [{ id: "t1", kind: "task", label: "Book the hall", done: f
 
 const ada: Principal = { kind: "human", id: "ada", roles: ["keeper"] };
 const bo: Principal = { kind: "human", id: "bo", roles: ["keeper"] };
+const cy: Principal = { kind: "human", id: "cy", roles: ["keeper"] };
 const guest: Principal = { kind: "visitor", id: "visitor:rsvp:1" };
 
 let served: ServedStore<typeof schema> | undefined;
@@ -58,13 +59,26 @@ describe("the friction log on the server", () => {
     served = await serveStore({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true });
     await post(served.url, ada, { event: { type: "search-miss", words: "invoice" } });
     await post(served.url, bo, { event: { type: "search-miss", words: "Invoice" } });
+    await post(served.url, cy, { event: { type: "search-miss", words: "invoice" } });
     await post(served.url, bo, { event: { type: "search-miss", words: "bo's own private words" } });
     const asAda = await read(served.url, ada);
     expect(asAda.mine.map((event) => event.type === "search-miss" && event.words)).toEqual(["invoice"]);
+    // The counts are of everybody but the asker: Bo and Cy.
     expect(asAda.counts.people).toBe(2);
     expect(asAda.counts.searches).toEqual([{ words: "invoice", people: 2, times: 2 }]);
     expect(JSON.stringify(asAda)).not.toContain("private");
     expect(JSON.stringify(asAda.counts)).not.toContain("bo");
+  });
+
+  it("never confirms one other person's words to an asker who posts them as a guess", async () => {
+    served = await serveStore({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true });
+    await post(served.url, bo, { event: { type: "unanswered", question: "Who approved the merger codename zebra?" } });
+    await post(served.url, ada, { event: { type: "search-miss", words: "giraffe zebra" } });
+    await post(served.url, ada, { event: { type: "unanswered", question: "who approved the merger codename zebra" } });
+    const asAda = (await read(served.url, ada)) as unknown as { counts: { words: unknown[]; questions: unknown[] } };
+    expect(asAda.counts.words).toEqual([]);
+    expect(asAda.counts.questions).toEqual([]);
+    expect(JSON.stringify(asAda.counts)).not.toContain("zebra");
   });
 
   it("a visitor's search is never recorded, and a visitor reads nothing of it", async () => {

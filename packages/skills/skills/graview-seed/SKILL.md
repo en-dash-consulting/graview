@@ -101,7 +101,7 @@ preview app.json --seed seed.json` serves the scene and Pages over a
 snapshot (`{ "nodes": [{ "id", "kind", …fields }], "edges": [{ "kind",
 "from", "to" }] }`) so you can walk in as a person would.
 
-Then open it with an empty store (`?fresh=1` with a ship browser adapter) and
+Then open it with an empty store (Start fresh, with a ship browser adapter) and
 go through your own front door. A test holds it: derive the affordances of
 each root kind on an empty graph and assert the way in is offered, and that a
 kind deeper in the chain offers nothing and says what it waits for.

@@ -14,10 +14,10 @@ import {
   type LocalBridgeAsk,
   type LocalBridgeStatus,
 } from "@graview/core";
-import { fromThisApp, readBody, sendJson, type DevServerPlugin } from "./door.js";
+import { DOOR_CLOSED, DOOR_LOCKED, fromThisApp, openDoors, probeWithoutKey, readBody, sendJson, type DevServerPlugin } from "./door.js";
 
-export { sameOrigin } from "./door.js";
-export type { DevServerPlugin } from "./door.js";
+export { DOOR_CLOSED, DOOR_COOKIE, DOOR_KEY_PARAM, DOOR_LOCKED, doorCookie, doorKey, doorKeyFile, doorLogin, fromThisApp, loopbackHost, openDoors, sameOrigin } from "./door.js";
+export type { DevServer, DevServerPlugin } from "./door.js";
 
 /**
  * THE FOURTH DOOR: a process on this machine, and the dev server as the
@@ -121,12 +121,59 @@ export const runProcess: Runner = (command, args, { cwd, env, timeoutMs }) =>
     });
   });
 
-/** The environment a spawned session gets: this one, minus the parent session's own. */
+/**
+ * What a spawned session may read of this environment, by name: where
+ * programs and home are, the locale and the temporary folder, the proxy and
+ * certificates a network needs, and the CLI's own sign-in (`ANTHROPIC_*`).
+ * Nothing else the dev server holds — another service's key, a database's
+ * address — reaches a session a page's words steer.
+ */
+const PASSED = new Set([
+  "PATH",
+  "HOME",
+  "USER",
+  "LOGNAME",
+  "SHELL",
+  "TMPDIR",
+  "TEMP",
+  "TMP",
+  "LANG",
+  "LC_ALL",
+  "LC_CTYPE",
+  "TZ",
+  "TERM",
+  "XDG_CONFIG_HOME",
+  "XDG_DATA_HOME",
+  "XDG_CACHE_HOME",
+  "XDG_RUNTIME_DIR",
+  "NODE_EXTRA_CA_CERTS",
+  "SSL_CERT_FILE",
+  "SSL_CERT_DIR",
+  "HTTP_PROXY",
+  "HTTPS_PROXY",
+  "NO_PROXY",
+  "http_proxy",
+  "https_proxy",
+  "no_proxy",
+  // Windows: where home and programs are, and the shell the CLI runs under.
+  "USERPROFILE",
+  "APPDATA",
+  "LOCALAPPDATA",
+  "SystemRoot",
+  "ComSpec",
+  "PATHEXT",
+]);
+
+/**
+ * The environment a spawned session gets: the names it needs (`PASSED`) and
+ * the CLI's own sign-in (`ANTHROPIC_*`), never the parent session's
+ * (`CLAUDE*`) and nothing else.
+ */
 export function environmentFor(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const out: NodeJS.ProcessEnv = {};
   for (const [key, value] of Object.entries(env)) {
     if (key.startsWith("CLAUDE")) continue;
-    out[key] = value;
+    if (PASSED.has(key) || key.startsWith("ANTHROPIC_")) out[key] = value;
   }
   return out;
 }
@@ -154,7 +201,6 @@ export function argumentsFor(
         `Read every one of them with the Read tool before you answer.\n\n`;
   return [
     "-p",
-    `${lead}${prompt}`,
     "--output-format",
     "json",
     "--no-session-persistence",
@@ -162,14 +208,20 @@ export function argumentsFor(
     // decoding pixels by hand; Write would let it change the machine.
     "--tools",
     "Read",
+    // And Read only beneath the working directory, the session's own
+    // temporary folder: words from the graph or a photograph that ask it to
+    // read ~/.ssh are asking for something it was never allowed.
     "--allowedTools",
-    "Read",
+    "Read(./**)",
     // One turn per photograph, and a few to answer in.
     "--max-turns",
     String(files.length + 3),
     "--max-budget-usd",
     String(options.budgetUsd ?? DEFAULTS.budgetUsd),
     ...(options.model === undefined ? [] : ["--model", options.model]),
+    // The prompt last, after "--": words that begin with a dash are words, never a flag.
+    "--",
+    `${lead}${prompt}`,
   ];
 }
 
@@ -206,9 +258,9 @@ export function parseEnvelope(stdout: string): string {
 /**
  * Photographs and a prompt in, text out.
  *
- * The temporary directory is the session's working directory, so a Read tool
- * needs no extra permission to see the files, and it is removed whatever
- * happens.
+ * The temporary directory is the session's working directory, and the one
+ * place its Read tool is allowed (`Read(./**)`), so it sees the photographs
+ * and nothing else of the machine; it is removed whatever happens.
  */
 export async function askLocally(
   ask: LocalBridgeAsk,
@@ -284,7 +336,8 @@ export function localIntelligenceHandler(options: LocalIntelligenceOptions = {})
   const probe = probeLocal(options);
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
-      send(res, 403, { error: "The local door answers this app only." });
+      if (probeWithoutKey(req)) send(res, 200, { available: false, reason: DOOR_CLOSED });
+      else send(res, 403, { error: DOOR_LOCKED });
       return;
     }
     if (req.method === "GET") {
@@ -324,6 +377,7 @@ export function localIntelligence(options: LocalIntelligenceOptions = {}): DevSe
     name: "graview:local-intelligence",
     apply: "serve",
     configureServer(server) {
+      openDoors(server);
       server.middlewares.use(options.path ?? LOCAL_BRIDGE_PATH, (req, res) => {
         void handler(req, res);
       });
@@ -383,7 +437,8 @@ export function decisionBridgeHandler(options: DecisionBridgeOptions = {}) {
   const call = options.fetch ?? (globalThis.fetch as NonNullable<DecisionBridgeOptions["fetch"]>);
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
-      send(res, 403, { error: "The decision door answers this app only." });
+      if (probeWithoutKey(req)) send(res, 200, { available: false, reason: DOOR_CLOSED });
+      else send(res, 403, { error: DOOR_LOCKED });
       return;
     }
     const key = decisionKey(env);
@@ -439,6 +494,7 @@ export function decisionBridge(options: DecisionBridgeOptions = {}): DevServerPl
     name: "graview:decision-bridge",
     apply: "serve",
     configureServer(server) {
+      openDoors(server);
       server.middlewares.use(options.path ?? DECISION_BRIDGE_PATH, (req, res) => {
         void handler(req, res);
       });
@@ -529,7 +585,9 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
   const modelOf = () => env["GRAVIEW_AI_MODEL"]?.trim() || options.model || AI_DEFAULTS.model;
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
-      sendJson(res, 403, { error: "The model door answers this app only." });
+      // The page's probe, opened without the key: no model here until it is opened from the printed address.
+      if (probeWithoutKey(req)) sendJson(res, 200, { configured: false, howTo: DOOR_CLOSED });
+      else sendJson(res, 403, { error: DOOR_LOCKED });
       return;
     }
     const key = keyOf();
@@ -622,6 +680,7 @@ export function aiDevProxy(options: AiDevProxyOptions = {}): DevServerPlugin {
     name: "graview:ai-dev-proxy",
     apply: "serve",
     configureServer(server) {
+      openDoors(server);
       server.middlewares.use(options.path ?? AI_BRIDGE_PATH, (req, res) => {
         void handler(req, res);
       });

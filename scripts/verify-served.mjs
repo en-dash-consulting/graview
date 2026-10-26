@@ -40,6 +40,9 @@ function startServer() {
       "apps/rota/src/data/example.json",
       "--port",
       String(PORT),
+      // The rota page opens it from its own dev server: another origin, named.
+      "--allow-origin",
+      at("rota"),
     ],
     { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"], detached: true },
   );

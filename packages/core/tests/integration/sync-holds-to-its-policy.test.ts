@@ -492,6 +492,23 @@ describe("a remote that speaks MCP", () => {
     expect(allowTools(["a"])("b")).toBe("b is not a tool this sync uses (it uses a).");
   });
 
+  it("asks of a request what its host says beside its origin: on a dev server, the key `fromThisApp` asks for", async () => {
+    const reached: string[] = [];
+    const door = mcpDoor({ allow: ["get_item"], call: async (name) => (reached.push(name), 1), admit: (request) => request.headers["cookie"] === "key=yes" });
+    const knock = (headers: Record<string, string>) =>
+      new Promise<number>((done) => {
+        const listeners: Record<string, (chunk?: unknown) => void> = {};
+        const response = { statusCode: 200, setHeader: () => undefined, end: () => done(response.statusCode) };
+        door({ method: "POST", url: "/graview/mcp", headers: { host: "localhost:5173", "content-type": "application/json", ...headers }, on: ((event: string, listener: (chunk?: unknown) => void) => (listeners[event] = listener)) as DoorRequest["on"] }, response, () => done(0));
+        listeners["data"]?.(JSON.stringify({ name: "get_item" }));
+        listeners["end"]?.();
+      });
+    expect(await knock({})).toBe(403);
+    expect(reached).toEqual([]);
+    expect(await knock({ cookie: "key=yes" })).toBe(200);
+    expect(reached).toEqual(["get_item"]);
+  });
+
   it("the page's side posts to the door and says the door's refusal", async () => {
     const call = doorClient({
       fetch: async (url, init) => {

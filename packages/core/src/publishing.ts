@@ -20,7 +20,7 @@
  */
 import type { GraphDiff } from "./graph/diff.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
-import type { OperationLog } from "./ops/log.js";
+import type { Epoch, OperationLog } from "./ops/log.js";
 import type { Operation } from "./ops/types.js";
 import { pastOf } from "./past.js";
 import type { Principal, Refusal } from "./permissions/types.js";
@@ -59,27 +59,47 @@ export const publishMutation = <S extends AnySchema>(): AnyMutationDefinition<S>
 /** What of a store publishing reads and writes: its declaration, its log, and whether it is a past. */
 type Held = { readonly publishing: Publishing | undefined; readonly past?: unknown; readonly log: OperationLog };
 
+/** What of a log publishing reads: its ops, what was undone, and the checkpoint it begins at. */
+type Published = Pick<OperationLog, "all" | "undoneIds" | "epochs">;
+
+/**
+ * The `publishedThrough` of the standing publish ops before `before`,
+ * newest first, as many as `count` — and, when the tail holds fewer, the
+ * one its checkpoint kept (FR-23), since what stood published behind the
+ * horizon was archived with the ops that said it.
+ */
+function standingPublishes(log: Published, before: number, count: number): number[] {
+  const ops = log.all();
+  const found: number[] = [];
+  let undone: Set<string> | undefined;
+  for (let at = ops.length - 1; at >= 0 && found.length < count; at--) {
+    const op = ops[at]!;
+    if (op.seq >= before || op.publishedThrough === undefined || (undone ??= log.undoneIds()).has(op.id)) continue;
+    found.push(op.publishedThrough);
+  }
+  if (found.length < count) {
+    const kept = [...log.epochs()].reverse().find((epoch) => epoch.horizon)?.publishedThrough;
+    if (kept !== undefined) found.push(kept);
+  }
+  return found;
+}
+
 /**
  * HOW FAR READERS ARE SERVED: the `publishedThrough` of the last publish
  * op that stands (an undone one does not — undoing a publish takes readers
- * back to the one before), or `undefined` when nothing was ever published.
- * Kept per log while its length and last op are the ones it was read at.
+ * back to the one before), else the one the checkpoint the log begins at
+ * kept, or `undefined` when nothing was ever published. Kept per log while
+ * its length and last op are the ones it was read at.
  */
-const READ = new WeakMap<object, { readonly length: number; readonly last: string | undefined; readonly seq: number | undefined }>();
-export function publishedSeqOf(log: Pick<OperationLog, "all" | "undoneIds">): number | undefined {
+const READ = new WeakMap<object, { readonly length: number; readonly last: string | undefined; readonly from: readonly Epoch[]; readonly seq: number | undefined }>();
+export function publishedSeqOf(log: Published): number | undefined {
   const ops = log.all();
   const last = ops.at(-1)?.id;
+  const from = log.epochs();
   const held = READ.get(log);
-  if (held && held.length === ops.length && held.last === last) return held.seq;
-  let seq: number | undefined;
-  let undone: Set<string> | undefined;
-  for (let at = ops.length - 1; at >= 0; at--) {
-    const op = ops[at]!;
-    if (op.publishedThrough === undefined || (undone ??= log.undoneIds()).has(op.id)) continue;
-    seq = op.publishedThrough;
-    break;
-  }
-  READ.set(log, { length: ops.length, last, seq });
+  if (held && held.length === ops.length && held.last === last && held.from === from) return held.seq;
+  const seq = standingPublishes(log, Number.POSITIVE_INFINITY, 1)[0];
+  READ.set(log, { length: ops.length, last, from, seq });
   return seq;
 }
 
@@ -195,5 +215,30 @@ PUBLISHING.verdict = (held, principal) => {
   const refusal = publishRefusal((held as Held).publishing, principal);
   return refusal ? { ok: false, refusal } : { ok: true };
 };
-PUBLISHING.seq = (held) => (publishes((held as Held).publishing) ? publishedSeqOf((held as Held).log) : undefined);
+PUBLISHING.seq = (held, at) => {
+  const { publishing, log } = held as Held;
+  if (!publishes(publishing)) return undefined;
+  return at === undefined ? publishedSeqOf(log) : standingPublishes(log, at, 1)[0];
+};
+PUBLISHING.previous = (held) => {
+  const { publishing, log } = held as Held;
+  // One behind the horizon is not held: an undo that would go back to it is refused instead (`PUBLISHING.undo`).
+  return publishes(publishing) ? standingPublishes(log, Number.POSITIVE_INFINITY, 2).slice(1).filter((seq) => seq >= log.horizon) : [];
+};
 PUBLISHING.op = publishOp;
+/*
+ * NOT A PUBLISH WHOSE PREDECESSOR IS BEHIND THE UNDO HORIZON (FR-23).
+ * Undoing a publish takes readers back to the one before, served as the
+ * app stood then; a past behind the horizon no longer folds from the log,
+ * and readers would be served the horizon instead — what the undo meant to
+ * withdraw. A publish through an earlier seq the log holds takes back what
+ * was published instead.
+ */
+PUBLISHING.undo = (log, ops, horizon) => {
+  if (horizon.seq === 0) return undefined;
+  const taking = new Set(ops.map((op) => op.id));
+  const now = standingPublishes(log, Number.POSITIVE_INFINITY, 1)[0];
+  const after = standingPublishes({ all: () => log.all().filter((op) => !taking.has(op.id)), undoneIds: () => log.undoneIds(), epochs: () => log.epochs() }, Number.POSITIVE_INFINITY, 1)[0];
+  if (after === now || (after !== undefined && after >= horizon.seq)) return undefined;
+  return `Cannot undo this publish: what was published before it is behind the undo horizon at op ${horizon.seq}, so readers could not be served it again. Publish through an earlier change instead.`;
+};

@@ -96,7 +96,11 @@ Who is asking is the host's to say: `serveStore({ seatOf })` reads its own crede
 the `Request` and returns the principal every call is judged under, or a promise of it. The framework's clients also send the seat
 as headers (`SEAT_HEADERS`: who, as what, by what name, and for whom), and a store believes
 them only when told to — `serveStore({ trustSeatHeaders: true })`, which `graview serve`
-sets for a server on 127.0.0.1 and says so. A store with neither answers 401 on every route
+sets for a server on 127.0.0.1 and says so. There it keeps to its own origin and host
+(`serveStore({ ownOrigin })`) and the origins `--allow-origin` names
+(`serveStore({ allowOrigins })`, each echoed in its CORS answer in place of `*`), and reads
+no `x-graview-kind: system` as the system's seat (`serveStore({ trustSystemSeat })`, which
+`--trust-seat-headers` turns on). A store with neither answers 401 on every route
 but health. Whatever a host asks for rides along: `openRemote({ headers })` sends them with
 every request, and the framework never reads them. What a call came through (`via`: `web`,
 `api`, `mcp:Claude`), recorded on the op, is the host's word too: `viaOf(request, seat)` says
@@ -125,10 +129,17 @@ match on its output. A page reaches a served store's with `remoteSubscriptions({
 from `@graview/ship/browser`, handed to the provider, or to the embed's `mount`, as
 `subscriptions`; it is a module of its own, so a page that imports it carries no rule parser.
 
+A subscription keeps its person as they were when they subscribed, roles and all. A host whose
+people's roles change says who each subscriber is now with `subscriberNow(who)` — their present
+principal, or undefined for one it no longer knows, who is told nothing — and every commit is
+judged as that person is now. Unsaid, a subscription is judged with the person as they
+subscribed: such a host removes a person's subscriptions when it takes a role away.
+
 ```ts
 createStoreHandler({
   app, adapter, seatOf,
   subscriptions: myUsersSubscriptions,           // the host's own storage
+  subscriberNow: (who) => myUsers.principalOf(who.id),
   onSubscriptionMatch: (match) => sendEmail(match.subscription.who, match.said, match.records),
 });
 ```

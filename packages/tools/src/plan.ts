@@ -198,6 +198,19 @@ export function planFrom<S extends AnySchema>(
         ),
       };
     }
+    /*
+     * A PLAN'S NAMES ARE ITS OWN. A name equal to a record's id would let
+     * the review show something new while the calls that point at it read
+     * as the record standing there; it is refused rather than guessed at.
+     */
+    if (call.as !== undefined && store.graph.getNode(call.as) !== undefined) {
+      return {
+        call,
+        at,
+        dependsOn,
+        refusal: refusal(call.mutation, `Calls what it makes "${call.as}", which is already a record's id; a plan names what it makes in words of its own.`),
+      };
+    }
     let known = true;
     try {
       store.mutation(call.mutation);
@@ -224,6 +237,26 @@ export function planFrom<S extends AnySchema>(
     }
     return { call, at, dependsOn };
   });
+
+  /*
+   * WHAT WAITS FOR A CALL THAT CANNOT RUN CANNOT RUN EITHER. Refused for the
+   * seat, or for a name of its own, the call makes nothing, and a call
+   * pointing at what it would have made is pointing at nothing.
+   */
+  for (let grew = true; grew; ) {
+    grew = false;
+    const makeable = new Set(entries.flatMap((entry) => (entry.refusal === undefined && entry.call.as !== undefined ? [entry.call.as] : [])));
+    entries.forEach((entry, index) => {
+      if (entry.refusal !== undefined) return;
+      const missing = entry.dependsOn.filter((name) => !makeable.has(name));
+      if (missing.length === 0) return;
+      entries[index] = {
+        ...entry,
+        refusal: refusal(entry.call.mutation, `Waits for ${missing.map((name) => `"${name}"`).join(", ")}, which this plan cannot make.`),
+      };
+      grew = true;
+    });
+  }
 
   const makes: Record<string, number> = {};
   for (const entry of entries) {
@@ -291,8 +324,17 @@ export function applyPlan<S extends AnySchema>(
   const made: Record<string, string> = {};
   let applied = 0;
 
+  /*
+   * A name means what an earlier call in this batch made, and only that.
+   * One that made nothing — or more than one thing — stops the plan, and
+   * the name is never handed on as if it were an id: a record may have it.
+   */
   const resolve = (value: unknown): unknown => {
-    if (isPlanReference(value)) return made[value.$plan] ?? value.$plan;
+    if (isPlanReference(value)) {
+      const id = made[value.$plan];
+      if (id === undefined) throw new Error(`Refers to "${value.$plan}", which nothing earlier in this plan made.`);
+      return id;
+    }
     if (Array.isArray(value)) return value.map(resolve);
     if (value !== null && typeof value === "object") {
       return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, resolve(item)]));
@@ -301,9 +343,9 @@ export function applyPlan<S extends AnySchema>(
   };
 
   for (const entry of plan.ready) {
-    const args = resolve(entry.call.args) as Record<string, unknown>;
-    options.before?.(entry, args);
     try {
+      const args = resolve(entry.call.args) as Record<string, unknown>;
+      options.before?.(entry, args);
       /*
        * THE LOG KEEPS THE NUMBER. A review shows how sure a proposer was
        * beside each row and orders by it; the op that lands still records

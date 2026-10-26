@@ -1,5 +1,5 @@
 import { closeSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, writeFileSync, appendFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { assertHead, bareOp, type Epoch, type LogArchive, type Operation, type PersistenceAdapter } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 import type { StoredMeta } from "./meta.js";
@@ -55,8 +55,25 @@ function lastLine(path: string): string | undefined {
   }
 }
 
+/**
+ * THE ONE FOLDER A SCOPE NAMES, directly beneath the root. A scope is an
+ * app's name more often than not, and a declaration document names itself:
+ * one holding a slash, a backslash, a NUL, or that is "." or "..", would
+ * reach a folder outside the data directory — loaded, written over, and on
+ * a fresh start removed — so it is refused before any file is touched.
+ */
+export function scopeDirectory(root: string, scope: string): string {
+  if (scope === "" || scope === "." || scope === ".." || /[\\/\0]/.test(scope)) {
+    throw new Error(`graview ship: ${JSON.stringify(scope)} cannot name a store's folder: a scope is one name, with no slash, and is not "." or "..".`);
+  }
+  const base = resolve(root);
+  const directory = resolve(base, scope);
+  if (dirname(directory) !== base) throw new Error(`graview ship: ${JSON.stringify(scope)} would name a folder outside ${base}.`);
+  return directory;
+}
+
 export function createFileAdapter(root: string): FileAdapter {
-  const place = (scope: string, file: string) => join(root, scope, file);
+  const place = (scope: string, file: string) => join(scopeDirectory(root, scope), file);
   const read = <T>(path: string): T | null => {
     if (!existsSync(path)) return null;
     return JSON.parse(readFileSync(path, "utf8")) as T;
@@ -99,7 +116,7 @@ export function createFileAdapter(root: string): FileAdapter {
       write(place(scope, "snapshot.json"), snapshot);
     },
     async delete(scope) {
-      rmSync(join(root, scope), { recursive: true, force: true });
+      rmSync(scopeDirectory(root, scope), { recursive: true, force: true });
     },
     async loadLog(scope) {
       /*

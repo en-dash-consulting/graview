@@ -10,7 +10,7 @@ import { checkManifest, workerViewProps, type WorkerViewManifest } from "../../s
 import { fileKindOf, refArgsOf } from "../../src/host/marks.js";
 import { createOpenDrawing } from "../../src/host/open-draw.js";
 import { createGuestHost } from "../../src/host/session.js";
-import { judgeCodeAct } from "../../src/host/writes.js";
+import { judgeCodeAct, type DropGrant } from "../../src/host/writes.js";
 import type { GuestDomEvent, HostMessage } from "../../src/protocol.js";
 import { createViewRuntime } from "../../src/worker/view-global.js";
 
@@ -83,8 +83,8 @@ function region(s: Store<AnySchema>, options: { principal?: Principal; manifest?
   const answers: HostMessage[] = [];
   const props = () => workerViewProps(s, principal, { manifest });
   const shown = () => new Set((props().nodes ?? []).map((node) => node.id));
-  const handed = new Map<string, FileValue>();
-  const context = { shown: shown(), file: (href: string) => handed.get(href), dropped: (href: string) => handed.has(href) };
+  const handed = new Map<string, { readonly file: FileValue; readonly drop: DropGrant }>();
+  const context = { shown: shown(), file: (href: string) => handed.get(href)?.file, dropped: (href: string) => handed.get(href)?.drop };
   const session = createGuestHost({ store: s, principal, view: manifest.name, nonce: "n", send: (message) => answers.push(message), props, judgeAct: (name, args) => judgeCodeAct(s, manifest, name, args, context) });
   let drawing: ReturnType<typeof createOpenDrawing> | undefined;
   const drops = createGuestDrops(window, {
@@ -98,7 +98,7 @@ function region(s: Store<AnySchema>, options: { principal?: Principal; manifest?
     idOf: (one) => drawing?.renderer.idOf(one),
     send: (message) => told.push(message),
     change: (calls, intent) => session.change(calls, intent),
-    handed: (file) => handed.set(file.href, file),
+    handed: (file, drop) => handed.set(file.href, { file, drop }),
     coarse: () => options.coarse === true,
   });
   drawing = createOpenDrawing(shadow, { origin: "null", send: (message) => told.push(message), before: (event, at, root) => (drops.before(event, at, root) ? false : undefined) });

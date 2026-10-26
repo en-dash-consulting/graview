@@ -597,8 +597,10 @@ act's argument takes a file only as the host handed it — in a drop, or on
 a record the view was shown — and it goes as the host kept it; any other
 `href` is refused `malformed`. Where sight is not total, an act from the
 view's code applies only from a press, as ever, except one whose every
-argument is a drop's file, a record the view was shown, a record the same
-change makes, or a value the app declares. A headless run says a
+argument is a drop's file, the record the drop was bound to (its
+`data-drop-connect`, or the `data-record` it was drawn in), or a record
+the same change makes — and each dropped file goes in one act, once. A
+headless run says a
 `data-drop` its manifest does not accept, and a `data-drop-connect` that
 names no record the view was shown.
 

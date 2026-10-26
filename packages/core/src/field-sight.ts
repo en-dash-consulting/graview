@@ -166,10 +166,12 @@ function touchesKept(op: Operation, lens: SeatLens): boolean {
  * WHETHER AN OP'S SENTENCE READ A FIELD THE SEAT MAY NOT SEE: a label or a
  * `describe` that reads one ("Call 555 0101") carries the value in words.
  * The op says which fields its sentence read (`<id>#<field>` in
- * `described`), so such an op is withheld whatever the field held.
+ * `described`), and which its lineage's basis read ("Both have the code
+ * 7731", `lineage.read`, and an undo's `undoneLineage.read`), so such an
+ * op is withheld whatever the field held.
  */
 const quotesKept = (op: Operation, lens: SeatLens): boolean =>
-  (op.described ?? []).some((entry) => {
+  [...(op.described ?? []), ...(op.lineage?.read ?? []), ...(op.undoneLineage?.read ?? [])].some((entry) => {
     const at = entry.lastIndexOf("#");
     return at > 0 && keptOf(lens, entry.slice(0, at))?.(entry.slice(at + 1)) === true;
   });

@@ -103,13 +103,19 @@ export function typeTextMutation<S extends AnySchema>(store: TypingStore): AnyMu
  * THAT field of its kind — a declared act whose `writes` names it, or the
  * kind's own `edit-<kind>` that takes it (and so whoever that rides). Typing
  * is writing the field a keystroke at a time; there is no second list.
+ *
+ * And only an act that could run on THIS record now (`allows`, the store's
+ * to say): one whose module is on and whose own rule holds for the record
+ * (`allowedOn`). An act that may amend a ticket's notes only while it is
+ * open lent its grant to typing over them once it was closed.
  */
-export function typeTextVia<S extends AnySchema>(schema: S, mutations: readonly AnyMutationDefinition<S>[], kind: string | undefined, field: unknown): readonly string[] {
+export function typeTextVia<S extends AnySchema>(schema: S, mutations: readonly AnyMutationDefinition<S>[], kind: string | undefined, field: unknown, allows: (mutation: AnyMutationDefinition<S>) => boolean = () => true): readonly string[] {
   const definition = kind === undefined ? undefined : schema.tryDefinition(kind);
   if (!definition || typeof field !== "string") return [];
   const via = new Set<string>();
   for (const mutation of mutations) {
     if (mutation.name === TYPE_TEXT || !subjectKindsOf(schema, mutation).includes(kind!) || !fieldsWrittenBy(mutation, definition as never).includes(field)) continue;
+    if (!allows(mutation)) continue;
     via.add(mutation.name);
     for (const ridden of derivedVia(schema, mutations, mutation) ?? []) via.add(ridden);
   }

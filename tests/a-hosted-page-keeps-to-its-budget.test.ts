@@ -157,7 +157,14 @@ describe("a hosted page", () => {
     // 1021 KB since Find's list came to stay still under the pointer and a record's acts to be asked for (the desk's panel, a narrow strip's "⋯", marked words, each kind's "All N" row, the keys said): the scene face measured 1_045_225 B, 10_558 more than main (1_034_667).
     // 1012 KB since a Notion connection came to land through the acts that fit it: the compile reads the fields a connection maps onto each kind's plan and the checker chooses the act a page is made through: the scene face measured 1_035_948 B, 1_281 more than main (1_034_667).
     // 1022 KB once both came together: Find staying still and acts asked for, and a Notion connection landing through the acts that fit it: the scene face measured 1_046_506 B.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1022 * 1024);
+    // 1025 KB since the store came to judge what an act rides by the rule it rides (an undo of an undo, a merge's other record, a kept link, a change to one day of a series, a keystroke, a record withheld whole): the scene face measured 1_048_660 B, 2_154 more than main (1_046_506).
+    // 1023 KB since data came never to become code or markup: a typeface held to names quoted in pairs before it is written into a style sheet, the scoper ending a string at a line break, a figure drawn only once svgProblem has read it and a plan review applying only the rows a person kept: the scene face measured 1_046_976 B, 470 more than main (1_046_506).
+    // 1023 KB since a lineage came to say which fields its basis read and a merge of two records of one name to say which is which: the scene face measured 1_046_772 B, 266 more than main (1_046_506).
+    // 1023 KB since a removed record's id came never to be made again, a seat acting for a person to read another app as that person, and an id never to quote a field a sight keeps: the scene face measured 1_047_010 B, 504 more than main (1_046_506).
+    // 1023 KB since workspace state that only the log's tail carried came to be kept past a compaction (the modules on and what stood published, kept by a checkpoint and read there): the scene face measured 1_047_001 B, 495 more than main (1_046_506).
+    // 1023 KB since Start fresh came to be asked for in its own tab (a one-time value in sessionStorage, `freshAddress`): the scene face measured 1_046_736 B, 230 more than main (1_046_506).
+    // 1027 KB once the security audit's seven fix branches came together (each line above measured its own branch against main): the scene face measured 1_050_625 B, 4_119 more than main (1_046_506).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1027 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

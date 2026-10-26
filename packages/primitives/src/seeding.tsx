@@ -14,6 +14,7 @@ import {
   applyPlan,
   dependentsOf,
   deriveAffordances,
+  planFrom,
   firstJsonObject,
   resolveProposal,
   validateProposals,
@@ -406,7 +407,19 @@ function rowsOf(
   about: (mutation: string) => { readonly subjectArg?: string; readonly makes: boolean },
 ): readonly PlanRow[] {
   const rows: PlanRow[] = [];
+  /*
+   * A plan's names and the graph's ids are kept apart: a call on a record
+   * already standing is never filed under something new that the plan
+   * happened to give the same name, where the review would show the new
+   * thing and the press would act on the record.
+   */
   const byOwner = new Map<string, number>();
+  const keys = new Set<string>();
+  const keyFor = (wanted: string, entry: PlanEntry) => {
+    const key = keys.has(wanted) ? `${wanted}:${entry.at}` : wanted;
+    keys.add(key);
+    return key;
+  };
   for (const entry of plan.entries) {
     const made = entry.call.as;
     const { subjectArg, makes } = about(entry.call.mutation);
@@ -417,8 +430,8 @@ function rowsOf(
      * to the thing it is about.
      */
     if (made !== undefined || makes) {
-      if (made !== undefined) byOwner.set(made, rows.length);
-      rows.push({ key: made ?? `${entry.call.mutation}:${entry.at}`, ...(made ? { name: made } : {}), entries: [entry] });
+      if (made !== undefined) byOwner.set(`plan:${made}`, rows.length);
+      rows.push({ key: keyFor(made ?? `${entry.call.mutation}:${entry.at}`, entry), ...(made ? { name: made } : {}), entries: [entry] });
       continue;
     }
     /*
@@ -432,15 +445,15 @@ function rowsOf(
     const planned = planRefName(raw);
     const standing = typeof raw === "string" ? raw : undefined;
     const owner = planned ?? standing ?? entry.dependsOn[0];
-    const at = owner === undefined ? undefined : byOwner.get(owner);
+    const ownerKey = planned !== undefined ? `plan:${planned}` : standing !== undefined ? `node:${standing}` : owner === undefined ? undefined : `plan:${owner}`;
+    const at = ownerKey === undefined ? undefined : byOwner.get(ownerKey);
     if (at !== undefined) {
       rows[at] = { ...rows[at]!, entries: [...rows[at]!.entries, entry] };
       continue;
     }
-    const key = owner ?? `${entry.call.mutation}:${entry.at}`;
-    byOwner.set(key, rows.length);
+    if (ownerKey !== undefined) byOwner.set(ownerKey, rows.length);
     rows.push({
-      key,
+      key: keyFor(owner ?? `${entry.call.mutation}:${entry.at}`, entry),
       ...(planned !== undefined ? { name: planned } : {}),
       ...(standing !== undefined ? { about: standing } : {}),
       entries: [entry],
@@ -465,10 +478,11 @@ function labelOf(
   labelIn: (id: string) => string | undefined,
 ): { readonly text: string; readonly named: boolean } {
   const first = row.entries[0]!;
-  const label = first.call.args["label"];
-  if (typeof label === "string" && label.length > 0) return { text: label, named: true };
+  // A row about a record already standing is named by that record: it is what the press will change.
   const standing = row.about === undefined ? undefined : labelIn(row.about);
   if (standing !== undefined && standing.length > 0) return { text: standing, named: true };
+  const label = first.call.args["label"];
+  if (typeof label === "string" && label.length > 0) return { text: label, named: true };
   return { text: titleOf(first.call.mutation)?.title ?? first.call.mutation, named: false };
 }
 
@@ -593,12 +607,24 @@ function PlanReviewInside<S extends AnySchema>({
     }
   }
 
-  const live = rows.filter(
-    (row) =>
-      !row.entries.some((entry) => entry.refusal !== undefined) &&
-      !(row.name !== undefined && declined.includes(row.name)) &&
-      row.entries.some((entry) => kept.entries.some((other) => other.call === entry.call)),
-  ).length;
+  /*
+   * WHAT THE PRESS RUNS IS WHAT IS DRAWN LIVE. A row struck through —
+   * declined, refused, or carried out by a decline — runs none of the calls
+   * filed under it, and what the rows kept is planned again, so a call that
+   * waits on one that will not run is refused rather than run on its own.
+   */
+  const isOut = (row: PlanRow) =>
+    row.entries.some((entry) => entry.refusal !== undefined) ||
+    (row.name !== undefined && declined.includes(row.name)) ||
+    !kept.entries.some((other) => other.call === row.entries[0]!.call);
+  const liveRows = rows.filter((row) => !isOut(row));
+  const live = liveRows.length;
+  const liveCalls = new Set(liveRows.flatMap((row) => row.entries.map((entry) => entry.call)));
+  const toRun = planFrom(
+    store,
+    kept.entries.filter((entry) => liveCalls.has(entry.call)).map((entry) => entry.call),
+    options ?? {},
+  );
 
   const Frame = bare
     ? ({ children }: { readonly children: ReactNode }) => (
@@ -630,10 +656,7 @@ function PlanReviewInside<S extends AnySchema>({
           const first = row.entries[0]!;
           const refused = row.entries.find((entry) => entry.refusal !== undefined);
           const name = row.name;
-          const out =
-            refused !== undefined ||
-            (name !== undefined && declined.includes(name)) ||
-            !kept.entries.some((other) => other.call === first.call);
+          const out = isOut(row);
           /* What would go with it, said before the press rather than after. */
           const goesWith =
             name === undefined
@@ -728,9 +751,9 @@ function PlanReviewInside<S extends AnySchema>({
             type="button"
             data-testid="plan-apply"
             data-graview-part="plan-apply"
-            disabled={kept.ready.length === 0}
+            disabled={live === 0 || toRun.ready.length === 0}
             onClick={() => {
-              const result = applyPlan(store, kept, {
+              const result = applyPlan(store, toRun, {
                 ...(principal ? { author: principal } : {}),
                 ...(batch ? { batch } : {}),
                 /*
@@ -753,7 +776,7 @@ function PlanReviewInside<S extends AnySchema>({
               onApplied?.(result.batch, result.applied);
             }}
           >
-            Apply {kept.ready.length === 1 ? "it" : "all"}
+            Apply {toRun.ready.length === 1 ? "it" : "all"}
           </button>
           {onDiscard ? (
             <button type="button" data-testid="plan-discard" data-graview-part="plan-discard" onClick={onDiscard}>

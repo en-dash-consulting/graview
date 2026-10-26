@@ -41,9 +41,11 @@ exporting the app itself is `graview-ship`.
 
 3. **A remote that speaks MCP** is `mcpRemote({ call, pull, push })`:
    `call` is `mcpClient({ url, allow })` in Node, or `doorClient()` in a
-   page behind `mcpDoor({ call, allow })` on the dev server — the door holds
-   the token, takes only JSON from its own origin on this machine (`hosts`
-   names others), and only the allowed tools. It knows no seat: never put it
+   page behind `mcpDoor({ call, allow, admit: fromThisApp })` on the dev
+   server (`fromThisApp`, `openDoors` from `@graview/ship/dev`) — the door
+   holds the token, takes only JSON from its own origin on this machine
+   (`hosts` names others), from the page opened at the address the dev
+   server printed, and only the allowed tools. It knows no seat: never put it
    where sight is a boundary.
 
 4. **Keep it in step with a Google calendar by declaring it.** A

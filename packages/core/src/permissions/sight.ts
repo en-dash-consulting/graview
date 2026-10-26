@@ -52,6 +52,16 @@ export const FIELD_SIGHT: {
 export const partialSight = (sight: Sight): boolean => sight.fields !== undefined || (sight.hide?.length ?? 0) > 0;
 
 /**
+ * WHETHER SOME SIGHT MAY KEEP A FIELD OF A KIND FROM SOME ROLE: it hides it,
+ * or shows the kind with a list of fields that leaves it out. A record's id
+ * is served wherever the record is, so an id is never minted from such a
+ * field (Roadmap f-field-sight): it would say the value to a role the field
+ * is kept from.
+ */
+export const mayKeepField = (sees: readonly Pick<Sight, "kinds" | "fields" | "hide">[] | undefined, kind: string, field: string): boolean =>
+  (sees ?? []).some((sight) => sight.kinds.includes(kind) && (sight.hide?.includes(field) === true || (sight.fields !== undefined && !sight.fields.includes(field))));
+
+/**
  * WHETHER A STORE MAY SHOW A SIGHT THAT SHOWS ONLY SOME FIELDS: field sight
  * is loaded and keeps them, or the store is a mirror of what its host
  * served (`FIELD_SIGHT.served`). Otherwise such a sight shows nothing.

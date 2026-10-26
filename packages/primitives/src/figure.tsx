@@ -77,10 +77,11 @@ export function KindFigure<S extends AnySchema>({
       data-graview-figure={kind}
       data-graview-figure-kind="figure"
       /*
-       * The art is trusted because it is DECLARED: it comes from the app's
-       * own `defineNode` or its brand, both of which are code this bundle
-       * already runs, and `graview check` has read it. A figure arriving
-       * from a graph would be a different question with a different answer.
+       * The art is DECLARED — the app's own `defineNode`, its brand, or a
+       * document compiled into one, which somebody else may have written —
+       * so it is judged here and not only by `graview check`: `figureSvg`
+       * hands back inline art only when the parser-aligned reader finds
+       * nothing in it that could run or reach outside the picture.
        */
       dangerouslySetInnerHTML={drawing}
       style={{

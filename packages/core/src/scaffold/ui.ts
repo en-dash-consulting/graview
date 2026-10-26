@@ -1,4 +1,4 @@
-import { type Ids, escapeHtml, escapeString, escapeTemplate } from "./names.js";
+import { type Ids, escapeComment, escapeHtml, escapeJsxText, escapeString } from "./names.js";
 
 /*
  * THE FACES A NEW PROJECT HAS: the page, the embed, the scene, the pages
@@ -37,8 +37,8 @@ export function embedHtml(ids: Ids): string {
 <title>${escapeHtml(ids.name)}, on somebody else's page</title>
 <link rel="icon" href="data:," />
 <style>
-  /* THE HOST PAGE'S OWN LOOK. Nothing here is ${escapeHtml(ids.name)}'s, and
-     nothing ${escapeHtml(ids.name)} draws may reach out and change it: the
+  /* THE HOST PAGE'S OWN LOOK. Nothing here is ${escapeComment(escapeHtml(ids.name))}'s, and
+     nothing ${escapeComment(escapeHtml(ids.name))} draws may reach out and change it: the
      embed themes itself inside its own element. */
   body {
     margin: 0 auto;
@@ -78,7 +78,7 @@ import { ${ids.appVar}, createStore } from "./domain/app.js";
 import { views } from "./ui/views.js";
 
 /**
- * ${escapeTemplate(ids.name).toUpperCase()} ON SOMEBODY ELSE'S PAGE.
+ * ${escapeComment(ids.name).toUpperCase()} ON SOMEBODY ELSE'S PAGE.
  *
  * The embed brings its own strip, its own theme scoped to the element it is
  * given, and this app's named places — no Shell, nothing on the host page
@@ -163,7 +163,7 @@ export interface ${ids.AppComponent}Props {
 
 /**
  * The whole application. \`Shell\` is the command bar, the scene, the
- * inspector and the rail, derived; what ${escapeTemplate(ids.name)} adds is a
+ * inspector and the rail, derived; what ${escapeComment(ids.name)} adds is a
  * sentence for when nothing is wrong and a seat for an agent. If this file
  * grows, ask whether the declaration should have grown instead.
  */
@@ -334,7 +334,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           * give the kind a \`noun\` ("car" for a kind called vehicle) and
           * this says it, where a word typed at scaffold time would not.
           */}
-        <p style={pageStyles.eyebrow}>{withArticle(nounOf(store.schema.tryDefinition(node.kind), node.kind)).replace(/^./, (first) => first.toUpperCase())} in ${escapeTemplate(ids.name)}</p>
+        <p style={pageStyles.eyebrow}>{withArticle(nounOf(store.schema.tryDefinition(node.kind), node.kind)).replace(/^./, (first) => first.toUpperCase())} in ${escapeJsxText(ids.name)}</p>
         {/* The name, pressed, is the field that changes it — as on the derived page. */}
         <h1 style={pageStyles.h1}>{inPlace && node["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} said={facts.label} /> : facts.label}</h1>
         {/*
@@ -531,8 +531,9 @@ if (!root) throw new Error("no #root");
 /*
  * THE APP REMEMBERS. Persistence is the op log; \`openStore\` is the lifecycle
  * every deployment repeats. Here it is the browser adapter, so an edit
- * survives a reload, attributed and undoable. \`?fresh=1\` returns to empty;
- * a driven browser starts fresh unless it asks to remember (\`?remember=1\`),
+ * survives a reload, attributed and undoable. "Start fresh" returns to empty
+ * (the address it goes to carries a value only this tab knows, so a link to
+ * \`?fresh=1\` from elsewhere discards nothing); a driven browser starts fresh unless it asks to remember (\`?remember=1\`),
  * so a harness specifies the app rather than its own residue.
  */
 const opened = await openStore({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MissingRecordError, refusalOf, Store, type AnySchema, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, MissingRecordError, nodeRef, refusalOf, seenBy, Store, z, type AnySchema, type Principal } from "../../src/index.js";
 import { compileDocument } from "../../src/check.js";
 import { FIXTURES } from "../../src/conformance/index.js";
 import { MUTATIONS, policyOf, SCHEMA } from "../support/unseen-worlds.js";
@@ -73,5 +73,73 @@ describe("a refusal is no oracle", () => {
     const act = (app.mutations ?? []).find((mutation) => mutation.subject && mutation.subject.kinds !== "*")!;
     const said = refusal(() => s.apply({ name: act.name, args: { [act.subject!.arg]: "vendor:nobody" } }));
     expect(said).toMatchObject({ missing: true, reason: "missing" });
+  });
+
+  /*
+   * WITHHELD WHOLE IS NOT THERE EITHER. A task must name its project, and a
+   * member may see tasks but no project: a task somebody else wrote is
+   * withheld from the member whole. Asked by a grant drawn by kind ("a
+   * member, on tasks"), its kind was read off the record all the same, so
+   * the member was refused `missing` for it and `forbidden` for an id that
+   * names nothing — and an id it minted stepped past it.
+   */
+  describe("a record withheld whole", () => {
+    const project = defineNode("project", { fields: z.object({ title: z.string() }) });
+    const task = defineNode("task", { fields: z.object({ title: z.string(), project: nodeRef(["project"]) }) });
+    const schema = createSchema([project, task]);
+    const { defineMutation } = bindSchema(schema);
+    const rename = defineMutation("rename", {
+      title: "Rename",
+      subject: { kinds: ["task"], arg: "id" },
+      writes: ["title"],
+      input: z.object({ id: nodeRef(["task"]), title: z.string() }),
+      apply(ctx, args) {
+        ctx.patchNode(args.id, { title: args.title });
+      },
+    });
+    const file = defineMutation("file", {
+      title: "File a task",
+      creates: ["task"],
+      input: z.object({ title: z.string() }),
+      apply(ctx, args) {
+        ctx.addNode({ id: ctx.freshId(args.title, "task"), kind: "task", title: args.title, project: "project:hidden" } as never);
+      },
+    });
+    const member: Principal = { kind: "human", id: "m1", roles: ["member"] };
+    const make = () =>
+      new Store<AnySchema>({
+        schema: schema as unknown as AnySchema,
+        mutations: [rename, file] as never,
+        policy: { grants: [{ roles: ["member"], mutations: "*", kinds: ["task"] }, { roles: ["member"], mutations: ["file"] }], sees: [{ roles: ["member"], kinds: ["task"] }] },
+        snapshot: {
+          nodes: [
+            { id: "project:hidden", kind: "project", title: "Hidden" },
+            { id: "task:withheld", kind: "task", title: "Withheld", project: "project:hidden" },
+          ],
+          edges: [],
+        } as never,
+      });
+
+    it("is refused, and permitted, exactly as an id that names nothing", () => {
+      const s = make();
+      expect(seenBy(s, member).graph.has("task:withheld")).toBe(false);
+      const call = (id: string) => ({ name: "rename", args: { id, title: "x" } });
+      expect(refusal(() => make().apply(call("task:withheld"), { author: member }))).toEqual(refusal(() => make().apply(call("task:nothing"), { author: member })));
+      expect(s.permits(call("task:withheld"), member)).toEqual(s.permits(call("task:nothing"), member));
+      expect(s.graph.getNode("task:withheld")).toMatchObject({ title: "Withheld" });
+    });
+
+    it("mints an id for the seat that says nothing of it", () => {
+      const made = (title: string) => {
+        const s = make();
+        return s.apply({ name: "file", args: { title } }, { author: member }).diff.addedNodes[0]!.id;
+      };
+      const over = made("Withheld");
+      const clear = made("Elsewhere");
+      // The same shape whether or not a record the seat is not served holds the plain slug: its own, never a random suffix.
+      expect(over.startsWith("task:withheld.")).toBe(true);
+      expect(clear.startsWith("task:elsewhere.")).toBe(true);
+      expect(over.slice("task:withheld".length)).toBe(clear.slice("task:elsewhere".length));
+    });
   });
 });

@@ -9,7 +9,7 @@ import {
   type StudioDoorStatus,
 } from "@graview/core";
 import type * as TS from "typescript";
-import { fromThisApp, readBody, sendJson, type DevServerPlugin } from "./door.js";
+import { DOOR_LOCKED, fromThisApp, openDoors, readBody, sendJson, type DevServerPlugin } from "./door.js";
 import { declaredCode, editDeclaration } from "./source-edit.js";
 import { typecheckWith } from "./typecheck.js";
 
@@ -61,7 +61,7 @@ export function studioDoorHandler(options: StudioDoorOptions = {}) {
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     const send = (status: number, body: StudioDoorStatus | StudioDoorAnswer | StudioDoorSource) => sendJson(res, status, body);
     if (!fromThisApp(req)) {
-      send(403, { error: "The studio door answers this app only." });
+      send(403, { error: DOOR_LOCKED });
       return;
     }
     // The declaration folder must be inside the app: a `domain` of "../x" is a misconfiguration, not a door.
@@ -141,6 +141,7 @@ export function studioDoor(options: StudioDoorOptions = {}): DevServerPlugin {
     name: "graview:studio-door",
     apply: "serve",
     configureServer(server) {
+      openDoors(server);
       server.middlewares.use(options.path ?? STUDIO_DOOR_PATH, (req, res) => {
         void handler(req, res);
       });

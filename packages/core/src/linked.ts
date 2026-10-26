@@ -48,7 +48,14 @@ export interface LinkedHome {
   readonly href?: (ref: LinkedRecordRef) => string;
 }
 
-const asPrincipal = (viewer: LinkedViewer): Principal => ({ kind: viewer.kind, ...(viewer.id === undefined ? {} : { id: viewer.id }), ...(viewer.roles ? { roles: viewer.roles } : {}) }) as Principal;
+// Who it acts for goes with it, so the far store's sight reads the delegation through as the near one's does.
+const asPrincipal = (viewer: LinkedViewer): Principal =>
+  ({
+    kind: viewer.kind,
+    ...(viewer.id === undefined ? {} : { id: viewer.id }),
+    ...(viewer.roles ? { roles: viewer.roles } : {}),
+    ...(viewer.onBehalfOf ? { onBehalfOf: asPrincipal(viewer.onBehalfOf) } : {}),
+  }) as Principal;
 
 const NOT_A_FIELD = new Set(["id", "kind"]);
 

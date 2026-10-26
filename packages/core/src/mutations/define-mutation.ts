@@ -237,6 +237,20 @@ export function compileMutation<S extends AnySchema>(
      */
     /** The id a client minted for the first record, as a hint (`MutationCall.mintedHint`): taken when free and its to ask for, else minted as ever. */
     readonly hint?: string | undefined;
+    /**
+     * WHETHER THE LOG EVER HELD AN ID, a record since removed included. Who
+     * made a record is the first add of its id in the log, so an id it once
+     * held is never made again — minted, asked for or hinted — or the maker
+     * of the removed record would be taken for the new one's.
+     */
+    readonly everHeld?: (id: string) => boolean;
+    /**
+     * WHETHER SOME SIGHT MAY KEEP A FIELD OF A KIND FROM SOME ROLE (Roadmap
+     * f-field-sight). An id is served wherever its record is, so a name
+     * handed to `freshId` that is an argument for such a field is not minted
+     * from: the id is minted from the kind's name instead.
+     */
+    readonly keeps?: (kind: string, field: string) => boolean;
     readonly check?: (primitives: readonly Primitive[], definition: { readonly name: string; readonly creates?: readonly string[] | undefined; readonly input: unknown }) => readonly string[];
   } = {},
 ): CompiledMutation {
@@ -300,7 +314,7 @@ export function compileMutation<S extends AnySchema>(
   const mark = options.me === undefined ? undefined : `.${seatMark(options.me)}`;
   const mayAsk = (id: string) => !options.seesInFull || options.seesInFull() || (mark !== undefined && new RegExp(`\\${mark}(-[0-9a-z]+)?$`).test(id));
   // An id any record holds, seen or not: a minted id never lands on one.
-  const held = (id: string) => reader.has(id) || graph.has(id) || minted.has(id);
+  const held = (id: string) => reader.has(id) || graph.has(id) || minted.has(id) || options.everHeld?.(id) === true;
   let mergedInto: string | undefined;
   /** Every link touching a record, each once, taken off; what it reached is read. */
   const unlink = (id: string): Set<GraphEdge> => {
@@ -406,7 +420,7 @@ export function compileMutation<S extends AnySchema>(
         if (held(requested)) {
           throw new GraphError(
             `Id "${requested}" is already taken`,
-            `"${definition.name}" was asked to make a node with that id, and the graph has one. Pick another, or leave id out and let the act mint one.`,
+            `"${definition.name}" was asked to make a node with that id, and the graph has or had one. Pick another, or leave id out and let the act mint one.`,
           );
         }
         minted.add(requested);
@@ -415,6 +429,8 @@ export function compileMutation<S extends AnySchema>(
       // A client's own guess at the first id (`hint`): taken when free, else minted as ever — never refused.
       const hint = options.hint;
       if (requested === undefined && !minted.size && validId(hint) && (!prefix || hint.startsWith(`${prefix}:`)) && mayAsk(hint) && !held(hint)) return minted.add(hint), hint;
+      // A name that is the value of a field some sight keeps from a role is not quoted in the id: the kind's name is.
+      if (prefix && options.keeps && Object.entries(args).some(([field, value]) => value === label && options.keeps!(prefix, field))) label = prefix;
       const base = prefix ? `${prefix}:${slug(label)}` : slug(label);
       /*
        * AN ID THAT SAYS NOTHING OF WHAT THE SEAT MAY NOT SEE (FR-55). Stepping
@@ -427,8 +443,10 @@ export function compileMutation<S extends AnySchema>(
        * a hidden record anyway (an id somebody asked for), and for a seat
        * that is nobody, the suffix is one no guess collides with.
        */
-      const seen = (one: string) => (options.seen ? options.seen.has(one) : graph.has(one)) || minted.has(one);
-      const id = mintId(base, { seen, held, limited: options.seesInFull !== undefined && !options.seesInFull(prefix), me: options.me });
+      const limited = options.seesInFull !== undefined && !options.seesInFull(prefix);
+      // A seat that sees every record of the kind steps past one removed, as past one held: `task:plan-2`.
+      const seen = (one: string) => (options.seen ? options.seen.has(one) : graph.has(one)) || minted.has(one) || (!limited && options.everHeld?.(one) === true);
+      const id = mintId(base, { seen, held, limited, me: options.me });
       minted.add(id);
       return id;
     },

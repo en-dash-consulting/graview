@@ -62,6 +62,14 @@ export interface Lineage {
    * served the op withheld, as for any id an op names.
    */
   readonly evidence?: readonly string[];
+  /**
+   * THE FIELDS THE BASIS READ, as `<id>#<field>`: "Both have the code
+   * 7731" read each record's code. A basis is words, and words carry what
+   * they quote, so a seat whose sight keeps one of these fields is served
+   * the op withheld, as for an act's sentence that read one (`described`).
+   * At most 200, each 3–240 characters.
+   */
+  readonly read?: readonly string[];
 }
 
 /** The longest basis an op keeps: a reason, not a transcript. */
@@ -70,6 +78,8 @@ export const LINEAGE_BASIS_LIMIT = 500;
 export const LINEAGE_MODEL_LIMIT = 120;
 /** The most records a lineage names as its evidence. */
 export const LINEAGE_EVIDENCE_LIMIT = 50;
+/** The most fields a lineage says its basis read. */
+export const LINEAGE_READ_LIMIT = 200;
 /** The longest a whole lineage is, written out as JSON: what bounds the keys a later build adds. */
 export const LINEAGE_LIMIT = 4000;
 
@@ -78,6 +88,9 @@ const NAMES = ["model", "suggestion", "interaction", "actor", "run"];
 
 /** A string of 1–120 characters. */
 const isName = (value: unknown): value is string => typeof value === "string" && value.length > 0 && value.length <= LINEAGE_MODEL_LIMIT;
+
+/** A field a basis read: `<id>#<field>`, 3–240 characters. */
+const isFieldRead = (value: unknown): value is string => typeof value === "string" && value.length <= 240 && value.lastIndexOf("#") > 0 && value.lastIndexOf("#") < value.length - 1;
 
 /** A value as JSON keeps it — a copy, so nothing the caller holds changes the op — or undefined when JSON keeps nothing of it. */
 const asJson = (value: unknown): unknown => {
@@ -90,7 +103,8 @@ const asJson = (value: unknown): unknown => {
  * build does not know kept as JSON keeps it (a later build's) — or a
  * GraphError: a basis of 1–500 characters, a confidence from 0 to 1, a
  * model, suggestion, interaction, actor and run of 1–120 characters,
- * evidence of at most 50 such ids, no key that would reach a prototype, and
+ * evidence of at most 50 such ids, the fields its basis read as at most
+ * 200 `<id>#<field>`, no key that would reach a prototype, and
  * the whole at most 4000 characters written out. Asked before anything is
  * kept; nothing said is no lineage.
  */
@@ -108,10 +122,11 @@ export function lineageOf(value: unknown): Lineage | undefined {
     if (key === "confidence") fits &&= typeof said === "number" && said >= 0 && said <= 1;
     else if (NAMES.includes(key)) fits &&= isName(said);
     else if (key === "evidence") fits &&= Array.isArray(said) && said.length <= LINEAGE_EVIDENCE_LIMIT && said.every(isName);
+    else if (key === "read") fits &&= Array.isArray(said) && said.length <= LINEAGE_READ_LIMIT && said.every(isFieldRead);
     else fits &&= key !== "__proto__" && key !== "constructor" && key !== "prototype" && (said = asJson(said)) !== undefined;
     if (fits) kept[key] = said;
   }
-  if (!fits) throw new GraphError("A lineage is { basis: 1 to 500 characters, confidence?: 0 to 1, model?, suggestion?, interaction?, actor?, run?: 1 to 120 characters, evidence?: up to 50 ids }");
+  if (!fits) throw new GraphError("A lineage is { basis: 1 to 500 characters, confidence?: 0 to 1, model?, suggestion?, interaction?, actor?, run?: 1 to 120 characters, evidence?: up to 50 ids, read?: up to 200 <id>#<field> }");
   if (JSON.stringify(kept).length > LINEAGE_LIMIT) throw new GraphError(`A lineage is at most ${LINEAGE_LIMIT} characters written out.`);
   return kept as unknown as Lineage;
 }

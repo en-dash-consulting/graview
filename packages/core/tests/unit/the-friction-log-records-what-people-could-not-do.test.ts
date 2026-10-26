@@ -137,8 +137,30 @@ describe("the friction log", () => {
     const store = new Store({ schema });
     const without = aiContextOf(store, { on: "place", place: "home" }, { principal: ada });
     expect(without).not.toHaveProperty("friction");
-    const events = [ev(ada, { type: "search-miss", words: "invoice" }), ev(bo, { type: "search-miss", words: "invoice" })];
+    const events = [ev(ada, { type: "search-miss", words: "invoice" }), ev(bo, { type: "search-miss", words: "invoice" }), ev(cy, { type: "search-miss", words: "invoice" })];
     const withIt = aiContextOf(store, { on: "place", place: "home" }, { principal: ada, friction: events });
     expect(withIt.friction?.unknownWords).toEqual([{ words: "invoice", people: 2 }]);
+  });
+
+  it("never lets a reader's own words confirm what one other person typed: the reader's events are left out of their counts", () => {
+    // Bo asked once; Ada guesses his words and posts them herself.
+    const events = [
+      ev(bo, { type: "unanswered", question: "Who approved the merger codename zebra?" }),
+      ev(ada, { type: "search-miss", words: "giraffe zebra" }),
+      ev(ada, { type: "unanswered", question: "who approved the merger codename zebra" }),
+      ev(claudeForAda, { type: "search-miss", words: "zebra" }),
+    ];
+    const toAda = frictionOf(events, { minPeople: 2, reader: { kind: "human", id: "ada" } });
+    expect(toAda.questions).toEqual([]);
+    expect(toAda.words).toEqual([]);
+    expect(JSON.stringify(toAda)).not.toContain("zebra");
+    // An agent reading for Ada is Ada: it is told no more than she is.
+    expect(frictionOf(events, { minPeople: 2, reader: { kind: "agent", id: "claude", onBehalfOf: { kind: "human", id: "ada" } } }).words).toEqual([]);
+    // Nor is a model reading beside her.
+    const store = new Store({ schema });
+    expect(aiContextOf(store, { on: "place", place: "home" }, { principal: ada, friction: events }).friction?.questions).toEqual([]);
+    // Two people other than the reader are still counted.
+    const toCy = frictionOf([...events, ev(cy, { type: "search-miss", words: "zebra" })], { minPeople: 2, reader: { kind: "human", id: "cy" } });
+    expect(toCy.words.find((one) => one.word === "zebra")).toMatchObject({ people: 2 });
   });
 });

@@ -68,7 +68,7 @@ export { fileConnectionState, readEnvFile } from "./connections-file.js";
 export type { AdapterStoreHandlerOptions, DeclarationChange, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
 export { announcePresence, authoredBy, isClientBatch, liveProtocol, opFormatOf, opsFor, presenceFrom, seatOfTab, serverBatchIds, visitorPresence, whoFor, wireRefusalOf } from "./live-protocol.js";
 export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked } from "./live-protocol.js";
-export { SEAT_HEADERS, seatFromHeaders, serveStore, WIRE } from "./serve.js";
+export { MAX_BODY_BYTES, SEAT_HEADERS, seatFromHeaders, serveStore, WIRE } from "./serve.js";
 export type { ServeOptions, ServedStore } from "./serve.js";
 export { backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, connectionsFileOf, frictionFileOf, learnedFileOf, subscriptionsFileOf, syncSeed } from "./cli.js";
 export { heldBy, holdFileOf, holdStore, sayHeld } from "./store-hold.js";

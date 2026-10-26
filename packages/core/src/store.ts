@@ -20,7 +20,8 @@ import type {
 import { compileMutation } from "./mutations/define-mutation.js";
 import { actSpelledAs, nearestAct } from "./mutations/act-spelling.js";
 import { InvalidArguments } from "./mutations/invalid-arguments.js";
-import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
+import { deriveMutations, derivedVia, removeVia } from "./mutations/derive-edits.js";
+import { repeatingFields, repeatMakes } from "./mutations/derive-repeats.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { namesMade, resolveMade } from "./mutations/made.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
@@ -35,7 +36,7 @@ import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
 import { nounOf } from "./schema/define-node.js";
-import { behind, fieldsJudged, partialSight, recordsOf } from "./permissions/sight.js";
+import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -781,6 +782,8 @@ export class Store<S extends AnySchema> {
         break;
       }
     }
+    // No op in the tail says a set: the one the checkpoint kept stands, since the op that said it was archived with it (FR-12, FR-23).
+    said ??= this.log.horizonEpoch()?.enabledModules;
     const projection =
       held && said === held.said ? held.projection : resolveModules(this.declaredModules, said ?? this.startingModules);
     this.projected = { projection, length: all.length, last, said };
@@ -886,7 +889,13 @@ export class Store<S extends AnySchema> {
       return [...new Set(all.filter((one) => one.derived?.relation === call?.args["kind"]).flatMap((one) => derivedVia(this.schema, all, one) ?? []))];
     }
     // Typing into a field: whoever may run an act that writes that field of that record.
-    if (mutation !== undefined && mutation === this.typer) return TYPING.via!(this.schema, [...this.mutations.values()] as never, this.subjectKindOf(call!, principal), call?.args["field"]);
+    if (mutation !== undefined && mutation === this.typer) {
+      // Through an act that could run on this record now: its module on, its own rule holding for the record as this principal is served it.
+      const node = call?.args["node"];
+      const served = principal === undefined || isSystem(principal) ? this.graph : seenBy(this, principal).graph;
+      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && (writer.allowedOn === undefined || (typeof node === "string" && writer.allowedOn(served as never, node)));
+      return TYPING.via!(this.schema, [...this.mutations.values()] as never, this.subjectKindOf(call!, principal), call?.args["field"], allows as never);
+    }
     if (!mutation?.derived) return undefined;
     return derivedVia(this.schema, [...this.mutations.values()], mutation);
   }
@@ -940,7 +949,14 @@ export class Store<S extends AnySchema> {
     const mutation = this.mutations.get(call.name) ?? (call.name === PUBLISH ? this.publisher : undefined);
     // Publishing is the declaration's `publishers`, not a grant's.
     if (mutation && mutation === this.publisher) return PUBLISHING.verdict!(this, principal) as ReturnType<typeof permits>;
-    const id = mutation?.subject && call.args[mutation.subject.arg];
+    /*
+     * KEEPING A LINK ONLY THE DERIVED ACTS MAKE is judged as they are: on
+     * the record it leaves, so riding everybody's grant it reaches only the
+     * links of records this principal made (W-201). A link a declared act
+     * makes or breaks is that act's, which carries no such rule.
+     */
+    const keeping = mutation !== undefined && mutation === this.keeper && keepLinkVia(this.mutations.values(), call.args["kind"]).length === 0;
+    const id = keeping ? call.args["from"] : mutation?.subject && call.args[mutation.subject.arg];
     /*
      * An own-end grant holds the records the call names at the far end of
      * what it links, and every link the act would make or break: a connect
@@ -948,11 +964,12 @@ export class Store<S extends AnySchema> {
      * names. A call that cannot be compiled is refused by `apply`, in its
      * own words.
      */
-    return permits(
+    const kind = this.subjectKindOf(call, principal);
+    const verdict = permits(
       this.policy,
       principal,
       call.name,
-      this.subjectKindOf(call, principal),
+      kind,
       this.viaOf(mutation, call, principal),
       typeof id === "string" ? id : undefined,
       this.words,
@@ -967,10 +984,42 @@ export class Store<S extends AnySchema> {
         return far;
       },
       // Who made the record a derived act is about: riding only everybody's grant, it reaches what this principal made (W-201).
-      mutation !== undefined && (mutation.derived !== undefined || mutation === this.typer) ? () => recordsOf(this.log).creatorOf(id as string) : undefined,
+      mutation !== undefined && (mutation.derived !== undefined || mutation === this.typer || keeping) ? () => this.madeBy(mutation, call, id) : undefined,
       // Taking a record out, or folding it away, rides the making of the kind only over what this principal made (W-201).
       mutation?.derived !== undefined && UNMAKING.has(mutation.derived.act),
     );
+    if (!verdict.ok || !mutation?.derived || !this.repeatMakes(mutation, call, id, principal)) return verdict;
+    /*
+     * AND A CHANGE TO ONE DAY THAT MAKES A RECORD ("change just this one",
+     * "change from here" past the first day) rides the kind's edit for the
+     * series, and the making of the kind for the record it makes: who may
+     * retitle a shift has not been trusted with making one.
+     */
+    return permits(this.policy, principal, call.name, kind, removeVia([...this.mutations.values()], mutation.derived.kind), typeof id === "string" ? id : undefined, this.words);
+  }
+
+  /** Whether a call of a repeat act makes a record (`repeatMakes`), read off the series as this principal is served it. */
+  private repeatMakes(mutation: AnyMutationDefinition<S>, call: MutationCall, id: unknown, principal: Principal): boolean {
+    const act = mutation.derived!.act;
+    if (act !== "detach" && act !== "split") return false;
+    const definition = this.schema.tryDefinition(mutation.derived!.kind);
+    if (!definition) return false;
+    const node = typeof id === "string" ? (isSystem(principal) ? this.graph : seenBy(this, principal).graph).getNode(id) : undefined;
+    return repeatMakes(act, call.args, node as Record<string, unknown> | undefined, repeatingFields(definition as never));
+  }
+
+  /**
+   * WHO MADE WHAT A DERIVED ACT CHANGES (W-201): its subject — and, for a
+   * merge, the record it folds into too, which takes every tie of the one
+   * folded away. Both are to be one principal's for the merge to be theirs;
+   * asked before that one is chosen, the subject alone.
+   */
+  private madeBy(mutation: AnyMutationDefinition<S>, call: MutationCall, id: unknown): string | undefined {
+    const records = recordsOf(this.log);
+    const by = records.creatorOf(id as string);
+    const into = call.args["into"];
+    if (mutation.derived?.act === "merge" && typeof into === "string" && records.creatorOf(into) !== by) return undefined;
+    return by;
   }
 
   /** The ids a call names in its record arguments: its subject's too, unless `subject` is false (the far ends of what it links). */
@@ -1051,7 +1100,11 @@ export class Store<S extends AnySchema> {
    */
   private sighted(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
     // Who `$me` is: the person, for an agent acting for one (Roadmap f-act-as-me).
-    const me = { me: author && actingAs(author).id };
+    const me = {
+      me: author && actingAs(author).id,
+      everHeld: (id: string) => recordsOf(this.log).kindOf(id) !== undefined,
+      keeps: (kind: string, field: string) => mayKeepField(this.policy?.sees, kind, field),
+    };
     if (author === undefined || !hidesFrom(this, author)) return me;
     // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
     const hidden = seesId(this, author);
@@ -1238,8 +1291,15 @@ export class Store<S extends AnySchema> {
      * reviewer on every topic with "a chair or a reviewer can".
      */
     if (typeof id !== "string") return subject.kinds !== "*" && subject.kinds.length === 1 ? (subject.kinds[0] as string) : undefined;
-    // A record the principal may not see is judged as one that is not there: its kind is not the policy's to read aloud (FR-55).
-    if (!isSystem(principal) && !seesId(this, principal)(id)) return undefined;
+    /*
+     * A record the principal is not served is judged as one that is not
+     * there: its kind is not the policy's to read aloud (FR-55). Served,
+     * not only in sight, as `missingFor` reads it: a record withheld whole
+     * for a field it cannot do without answered a grant drawn by kind as
+     * its kind, and an absent id as no kind, so the refusal told the two
+     * apart.
+     */
+    if (!isSystem(principal) && !seenBy(this, principal).graph.has(id)) return undefined;
     return this.graph.getNode(id)?.kind as string | undefined;
   }
 
@@ -1956,24 +2016,8 @@ export class Store<S extends AnySchema> {
      * what you may have done — the mutation each operation ran, judged
      * again now.
      */
-    if (this.policy || this.publisher) {
-      for (const target of check.ops) {
-        if (!target.mutation) continue;
-        /*
-         * AND AN ACT DONE AS ITS AUTHOR (`$me`, `ctx.me`) IS THEIRS TO TAKE
-         * BACK: it wrote their own record where its call never named it, so
-         * the same call by another would have done something else. "Vote for
-         * it" is everybody's to run, and undoing Ann's was taking back her vote.
-         */
-        const by = actingAs(target.author as Principal).id;
-        const names = (value: unknown) => JSON.stringify(value).includes(JSON.stringify(by));
-        const verdict =
-          by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(target.mutation.args) && names(target.primitives)
-            ? { ok: false as const, refusal: { mutation: target.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }
-            : this.permits(target.mutation, author as Principal);
-        if (!verdict.ok) this.refuse({ ...verdict.refusal, message: `Not permitted to undo "${target.intent}": ${verdict.refusal.message}` }, author.id, true);
-      }
-    }
+    const refused = this.undoRefusal(check.ops, author);
+    if (refused) this.refuse(refused, author.id, true);
 
     const rollback = this.graph.snapshot();
     const before = this.violations();
@@ -2020,6 +2064,76 @@ export class Store<S extends AnySchema> {
       ...this.moved(before, after),
       violationsAfter: after,
     };
+  }
+
+  /**
+   * Whether this principal may take these batches back: the log's answer
+   * (`canUndo`) and the policy's, the same judgment `undo` makes. What a
+   * page offers to take back is asked here, so an undo it shows is never
+   * one the store refuses.
+   */
+  mayUndo(batchIds: string | readonly string[], principal: Principal = this.by as Principal): { readonly ok: true } | { readonly ok: false; readonly refusal?: Refusal; readonly check?: UndoCheck } {
+    const check = this.canUndo(batchIds);
+    if (!check.ok) return { ok: false, check };
+    const refusal = this.undoRefusal(check.ops, principal);
+    return refusal ? { ok: false, refusal } : { ok: true };
+  }
+
+  /** What refuses `author` taking these ops back, or nothing: what you may undo is what you may have done. */
+  private undoRefusal(ops: readonly Operation[], author: Author | Principal): Refusal | undefined {
+    if (this.policy || this.publisher) {
+      for (const target of ops) {
+        /*
+         * AN UNDO OF AN UNDO PUTS BACK THE CHANGE IT TOOK BACK, and is judged
+         * as that change — redo is one, and let through unasked it put back
+         * an act its seat was refused. Undoing that again takes the change
+         * back once more, judged as it again: however long the chain, the
+         * change at its root.
+         */
+        const judged = this.rootOf(target);
+        const by = actingAs(judged.author as Principal).id;
+        if (!judged.mutation) {
+          // A change that changed nothing (a suggestion, an announcement) is anybody's who sees it to take back: declining a suggestion is one.
+          if (judged.primitives.length === 0) continue;
+          /*
+           * A CHANGE NO ACT MADE — an import, a sync, a connection, a host's
+           * repair (`applyPrimitives`) — has no act to judge it as, and its
+           * author was its authority. It is taken back by the system, by
+           * whoever made it, or by a seat the policy grants every act.
+           */
+          if (this.policy && !isSystem(author as Principal) && by !== actingAs(author as Principal).id && !this.grantsEveryAct(author as Principal)) {
+            return { mutation: "undo", wouldNeed: [], message: `Not permitted to undo "${target.intent}": no act made it, so only whoever did may take it back.` };
+          }
+          continue;
+        }
+        /*
+         * AND AN ACT DONE AS ITS AUTHOR (`$me`, `ctx.me`) IS THEIRS TO TAKE
+         * BACK: it wrote their own record where its call never named it, so
+         * the same call by another would have done something else. "Vote for
+         * it" is everybody's to run, and undoing Ann's was taking back her vote.
+         */
+        const names = (value: unknown) => JSON.stringify(value).includes(JSON.stringify(by));
+        const verdict =
+          by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(judged.mutation.args) && names(judged.primitives)
+            ? { ok: false as const, refusal: { mutation: judged.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }
+            : this.permits(judged.mutation, author as Principal);
+        if (!verdict.ok) return { ...verdict.refusal, message: `Not permitted to undo "${target.intent}": ${verdict.refusal.message}` };
+      }
+    }
+    return undefined;
+  }
+
+  /** The change an undo of an undo puts back: the op at the root of its chain, or the last undo the log still holds of it. */
+  private rootOf(op: Operation): Operation {
+    let at = op;
+    for (let undone = at.undoes === undefined ? undefined : this.log.get(at.undoes); undone !== undefined; undone = at.undoes === undefined ? undefined : this.log.get(at.undoes)) at = undone;
+    return at;
+  }
+
+  /** Whether the policy grants this principal every act, on every record: what taking back a change no act made asks of anybody but its author. */
+  private grantsEveryAct(principal: Principal): boolean {
+    const acting = actingAs(principal);
+    return (this.policy?.grants ?? []).some((grant) => grantsTo(grant, acting) && grant.mutations === "*" && (grant.kinds === undefined || grant.kinds === "*") && !grant.self && !grant.ownEnd);
   }
 
   /** An author named as Activity names one, for a sentence that refuses them. */
@@ -2349,7 +2463,8 @@ export class Store<S extends AnySchema> {
     }
     // Never past a seq somebody is served at: a reader's past (`pastOf`) folds from the log, so the lowest pin is the furthest it goes.
     // And readers' own (Roadmap f-publishing-lifecycle): what was published — or, before the first publish, where the log begins.
-    const readers = onPublish(this.publishing) ? [this.publishedSeq ?? 0] : [];
+    // The publish before it too, where undoing the latest takes readers back to, so the past they are served then still folds from the log.
+    const readers = onPublish(this.publishing) ? [this.publishedSeq ?? 0, ...(PUBLISHING.previous?.(this) ?? [])] : [];
     const pinned = [...(options.pins ?? []), ...readers].filter((pin) => Number.isInteger(pin));
     if (pinned.length > 0) seq = Math.min(seq, ...pinned);
     seq = Math.min(Math.max(seq, this.log.horizon), this.log.length);
@@ -2370,7 +2485,19 @@ export class Store<S extends AnySchema> {
     const records = recordsOf(this.log);
     const writers = writersBehind(this.log, seq, checkpoint.base.nodes, (value) => namesUnseen(value, (id) => !base.has(id) && records.kindOf(id) === undefined));
     const kept = (map: object | undefined) => map && Object.keys(map).length > 0;
-    return { ...checkpoint, ...(kept(creators) && { creators }), ...(removed && { removed }), ...(kept(writers) && { writers }) };
+    /*
+     * The modules on at its seq and how far readers were served there, which the ops before it said and which go to the
+     * archive with them: so a module off stays off (FR-12) and a store whose publish ops were archived still knows what
+     * stood published (Roadmap f-publishing-lifecycle).
+     */
+    return {
+      ...checkpoint,
+      ...(kept(creators) && { creators }),
+      ...(removed && { removed }),
+      ...(kept(writers) && { writers }),
+      ...given("enabledModules", ops.slice(0, seq - this.log.horizon).reverse().find((op) => op.enabledModules)?.enabledModules ?? this.log.horizonEpoch()?.enabledModules),
+      ...given("publishedThrough", PUBLISHING.seq?.(this, seq)),
+    };
   }
 
   /**

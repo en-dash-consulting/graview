@@ -152,6 +152,8 @@ const stored = {
 };
 
 let vite;
+/** The key the dev server printed for its doors; the first page is opened with it. */
+let doorKey = "";
 let browser;
 try {
   rmSync(scratch, { recursive: true, force: true });
@@ -161,12 +163,20 @@ try {
   await vacant(MODEL_PORT, PORT);
   await new Promise((ready) => model.listen(MODEL_PORT, ready));
   vite = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], { cwd: scratch, stdio: ["ignore", "pipe", "pipe"], detached: true });
-  await new Promise((ready, fail) => {
-    const timer = setTimeout(() => fail(new Error("the rehearsal's vite did not start")), 60_000);
+  /*
+   * The studio's door answers only a page let in with the key the dev server
+   * prints, as `pnpm dev` does for a person: the rehearsal waits for that
+   * line and opens its first page at the address it names.
+   */
+  doorKey = await new Promise((ready, fail) => {
+    const timer = setTimeout(() => fail(new Error("the rehearsal's vite did not print its doors' address")), 60_000);
+    let said = "";
     vite.stdout.on("data", (chunk) => {
-      if (String(chunk).includes(String(PORT))) {
+      said += String(chunk);
+      const key = /graview_door=([A-Za-z0-9_-]+)/.exec(said)?.[1];
+      if (key) {
         clearTimeout(timer);
-        ready(undefined);
+        ready(key);
       }
     });
   });
@@ -202,7 +212,7 @@ try {
     },
     { stored, model: `http://localhost:${MODEL_PORT}/v1` },
   );
-  await page.goto(`http://localhost:${PORT}/?remember=1`, { waitUntil: "load" });
+  await page.goto(`http://localhost:${PORT}/?remember=1&graview_door=${doorKey}`, { waitUntil: "load" });
   await page.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
   const storedEdges = async () => ((await keptInPage(page, "graview:seedbed:snapshot"))?.edges ?? []).length;
   report.debug = { afterSeeding: await storedEdges() };

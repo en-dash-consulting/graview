@@ -9,7 +9,7 @@ import { checkManifest, readsComputed, workerViewProps, type ComputedOn, type Wo
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
-import { judgeCodeAct } from "./writes.js";
+import { judgeCodeAct, type DropGrant } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
 import { checkViewSource } from "./view-source.js";
 import { viewScript } from "./view-script.js";
@@ -604,7 +604,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    */
   let dropsAsked = false;
   let hearsDrop = false;
-  const handed = new Map<string, FileValue>();
+  const handed = new Map<string, { readonly file: FileValue; readonly drop: DropGrant }>();
   const wantDrops = () => {
     if (dropsAsked || !manifest.accepts?.length) return;
     dropsAsked = true;
@@ -627,7 +627,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
             tally();
             return outcome;
           },
-          handed: (file) => handed.set(file.href, file),
+          handed: (file, drop) => handed.set(file.href, { file, drop }),
           onProblem: (said) => {
             port?.postMessage({ type: "notice", text: said });
             options.onProblem?.(said);
@@ -839,7 +839,12 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           return props;
         },
         ...(pictures ? { hand: pictures.hand } : {}),
-        judgeAct: (name, args) => judgeCodeAct(options.store, manifest, name, args, { shown, file: (href) => handed.get(href) ?? fileOnShown(href), dropped: (href) => handed.has(href) }),
+        judgeAct: (name, args) => {
+          const judged = judgeCodeAct(options.store, manifest, name, args, { shown, file: (href) => handed.get(href)?.file ?? fileOnShown(href), dropped: (href) => handed.get(href)?.drop });
+          /* A dropped file goes in one act, once (FR-193): what this act spent the host hands to none again. */
+          if (judged.ok) for (const href of judged.spent ?? []) handed.delete(href);
+          return judged;
+        },
         /* A view that hears `drop` is left the drop (FR-193). */
         onHears: (events) => {
           if (events.includes("drop")) hearsDrop = true;
