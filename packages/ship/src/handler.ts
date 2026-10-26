@@ -35,6 +35,7 @@ import { LIVE_PATH, type Limit, type LimitAnswer, type LimitAsked, type LiveConn
 import {
   announcePresence,
   liveProtocol,
+  ownsParticipant,
   presenceFrom,
   presenceSeenBy,
   seatOfTab,
@@ -756,8 +757,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       const body = (await read(request)) as { participant?: string };
       const asking = await seat();
       // Only your own: a seat says it has gone, never that somebody else has.
-      const own = asking.id ? `${asking.kind}:${asking.id}:` : "";
-      if (typeof body.participant === "string" && body.participant.startsWith(own)) {
+      if (typeof body.participant === "string" && ownsParticipant(asking, body.participant)) {
         forget(body.participant);
         tellWhoIsHere();
       }
