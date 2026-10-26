@@ -1374,6 +1374,46 @@ async function aSearchIsAStop() {
       lit: [...document.querySelectorAll('.graview-kind-card[data-graview-emphasis="lit"]')].map((el) => el.closest("[data-graview-view]")?.getAttribute("data-graview-view")),
     }));
     await find.keyboard.press("Escape");
+    /*
+     * THE LIST STAYS STILL UNDER THE POINTER, AND ACTS ARE ASKED FOR. A
+     * record the pointer passed over unfolded its acts under it and every
+     * row below jumped. The pointer crosses three records: each is lit, and
+     * no row is put in, taken out or moved; the lit record's acts stand in
+     * the panel beside the list, and → reaches them there.
+     */
+    await find.keyboard.press("/");
+    await find.keyboard.type("the", { delay: 40 });
+    await find.waitForTimeout(700);
+    const rowsNow = () =>
+      find.evaluate(() =>
+        [...document.querySelectorAll('[data-testid="find-list"] [role="option"]')].map((el) => {
+          const r = el.getBoundingClientRect();
+          return `${el.id}@${Math.round(r.top)}:${Math.round(r.height)}`;
+        }),
+      );
+    const still = { before: await rowsNow(), lit: [] };
+    const records = find.locator('[data-testid="find-hit"][data-about="node"]');
+    for (let at = 0; at < Math.min(3, await records.count()); at++) {
+      const box = await records.nth(at).boundingBox();
+      if (!box) continue;
+      await find.mouse.move(box.x + 30, box.y + box.height / 2, { steps: 3 });
+      await find.waitForTimeout(250);
+      const wanted = await records.nth(at).getAttribute("id");
+      still.lit.push((await find.locator('[data-testid="find-box"]').getAttribute("aria-activedescendant")) === wanted);
+    }
+    still.after = await rowsNow();
+    still.actsInList = await find.locator('[data-testid="find-list"] [data-testid="find-act"]').count();
+    still.panelActs = await find.locator('[data-testid="find-panel"] [data-testid="find-act"]').count();
+    await find.keyboard.press("ArrowDown");
+    await find.keyboard.press("ArrowRight");
+    await find.waitForTimeout(200);
+    still.rightReaches = await find.evaluate(() => {
+      const id = document.querySelector('[data-testid="find-box"]')?.getAttribute("aria-activedescendant");
+      const el = id ? document.getElementById(id) : null;
+      return el?.getAttribute("data-testid") === "find-act" && document.querySelector('[data-testid="find-panel"]')?.contains(el) === true;
+    });
+    still.keysTaught = (await find.locator('[data-testid="find-keys"]').textContent().catch(() => "")) ?? "";
+    await find.keyboard.press("Escape");
     await find.close();
 
     const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -1390,7 +1430,7 @@ async function aSearchIsAStop() {
     const onAPhone = await phone.evaluate(() => {
       const strip = document.querySelector('[data-testid="find-strip"]').getBoundingClientRect();
       const box = document.querySelector('[data-testid="find-box"]').getBoundingClientRect();
-      const small = [...document.querySelectorAll('[data-testid="find-box"], [data-testid="find-hit"]')]
+      const small = [...document.querySelectorAll('[data-testid="find-box"], [data-testid="find-hit"], [data-testid="find-acts-open"]')]
         .map((el) => el.getBoundingClientRect())
         .filter((r) => r.width > 0 && (r.height < 23.5 || r.width < 23.5)).length;
       return {
@@ -1400,12 +1440,24 @@ async function aSearchIsAStop() {
         boxBottom: Math.round(box.bottom),
         boxWidth: Math.round(box.width),
         small,
+        actsBefore: document.querySelectorAll('[data-testid="find-act"]').length,
+        panel: document.querySelector('[data-testid="find-panel"]') !== null,
       };
     });
+    // On a phone a record's acts are asked for: its "⋯" opens them under its row, and only then.
+    const more = phone.locator('[data-testid="find-acts-open"]').first();
+    onAPhone.asks = await more.isVisible().catch(() => false);
+    if (onAPhone.asks) {
+      await more.click();
+      await phone.waitForTimeout(300);
+      onAPhone.actsAfter = await phone.locator('[data-testid="find-act"]').count();
+      onAPhone.smallActs = await phone.evaluate(() => [...document.querySelectorAll('[data-testid="find-act"]')].map((el) => el.getBoundingClientRect()).filter((r) => r.height < 23.5).length);
+      onAPhone.scrollAfter = await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+    }
     await phone.close();
 
     report.search = {
-      reached, lit, before, typedHistory, active, landed, back, cleared, onAPhone, typo,
+      reached, lit, before, typedHistory, active, landed, back, cleared, onAPhone, typo, still,
       ok:
         reached === "find-box" &&
         lit.url.includes("q=deposit") &&
@@ -1688,6 +1740,24 @@ const theVerdict = () => ({
     report.search?.onAPhone?.strip?.width >= report.search?.onAPhone?.width - 1 &&
     report.search?.onAPhone?.strip?.top >= report.search?.onAPhone?.boxBottom - 1 &&
     report.search?.onAPhone?.small === 0,
+  // The pointer crossing three records lights each, and no row of the list is put in, taken out or moved; no act is unfolded in the list.
+  theListStaysStillUnderThePointer:
+    (report.search?.still?.lit ?? []).length === 3 &&
+    report.search.still.lit.every(Boolean) &&
+    JSON.stringify(report.search.still.before) === JSON.stringify(report.search.still.after) &&
+    report.search.still.actsInList === 0,
+  // A record's acts are asked for: beside the list on a desk, reached there by →; under the row on a phone only once its "⋯" is pressed.
+  actsOpenOnlyWhenAskedFor:
+    (report.search?.still?.panelActs ?? 0) > 0 &&
+    report.search?.still?.rightReaches === true &&
+    report.search?.onAPhone?.panel === false &&
+    report.search?.onAPhone?.actsBefore === 0 &&
+    report.search?.onAPhone?.asks === true &&
+    (report.search?.onAPhone?.actsAfter ?? 0) > 0 &&
+    report.search?.onAPhone?.smallActs === 0 &&
+    report.search?.onAPhone?.scrollAfter === true,
+  // The strip says its keys under the list on a desk.
+  theStripTeachesItsKeys: /move/.test(report.search?.still?.keysTaught ?? "") && /actions/.test(report.search?.still?.keysTaught ?? ""),
   // "depsoit" finds "Pay the deposit": a row said as near the word typed, the count says how many are near, and its district lights.
   aTypoFindsTheRecordSaidAsNear:
     (report.search?.typo?.rows ?? []).some((row) => row.near && row.text.includes("Pay the deposit")) &&
