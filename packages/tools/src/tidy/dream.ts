@@ -4,7 +4,7 @@ import type { HostAi } from "../ai.js";
 import { askAll, type DreamBudget, type DreamCache, type DreamUsage } from "./asking.js";
 import { blocksOf } from "./blocking.js";
 import { asksOf, coverOf, type Judgment } from "./judging.js";
-import { JUDGES, type Candidate, type Judge, type JudgeContext } from "./judges.js";
+import { JUDGES, wholeRead, type Candidate, type Judge, type JudgeContext } from "./judges.js";
 import { routeOf, type Band, type Route, type Severity } from "./policy.js";
 import { nearOf, systemOneOf, type DreamModel } from "./system-one.js";
 
@@ -249,7 +249,14 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
       said(candidate, "dropped", { error: "One of the two was already proposed to merge into another in this run." });
       continue;
     }
-    const lineage = { basis: candidate.basis, confidence: candidate.confidence, run, actor: candidate.judge, ...(candidate.model ? { model: candidate.model } : {}) };
+    /*
+     * WHAT THE BASIS READ, kept on the lineage: a seat whose sight keeps one
+     * of those fields is not told the basis, which may quote it. A basis that
+     * does not say — a model's, which read the records whole — read every
+     * field they hold.
+     */
+    const read = [...new Set(candidate.read ?? candidate.about.flatMap((id) => (context.store.graph.getNode(id) ? wholeRead(context.store.graph.getNode(id) as never) : [])))];
+    const lineage = { basis: candidate.basis, confidence: candidate.confidence, run, actor: candidate.judge, ...(candidate.model ? { model: candidate.model } : {}), ...(read.length > 0 ? { read } : {}) };
     try {
       if (route === "act" && options.applyAtLeast !== undefined && candidate.confidence >= options.applyAtLeast) {
         const result = whole.applyAll(candidate.calls, { author: principal, lineage, ...(options.via ? { via: options.via } : {}) });
