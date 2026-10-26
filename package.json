@@ -48,7 +48,7 @@
     "calendar": "node scripts/verify-calendar.mjs",
     "dev:rota": "pnpm --filter @graview/rota dev",
     "rota": "node scripts/verify-rota.mjs",
-    "serve:rota": "node packages/graview/dist/cli.js serve apps/rota/dist/domain/app.js --data apps/rota/data --seed apps/rota/src/data/example.json --port 5196",
+    "serve:rota": "node packages/graview/dist/cli.js serve apps/rota/dist/domain/app.js --data apps/rota/data --seed apps/rota/src/data/example.json --port 5196 --allow-origin http://localhost:5195",
     "served": "node scripts/verify-served.mjs",
     "desk": "node scripts/verify-desk.mjs",
     "site:css": "node scripts/site-css.mjs",

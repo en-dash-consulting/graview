@@ -35,6 +35,7 @@ import { LIVE_PATH, type Limit, type LimitAnswer, type LimitAsked, type LiveConn
 import {
   announcePresence,
   liveProtocol,
+  ownsParticipant,
   presenceFrom,
   presenceSeenBy,
   seatOfTab,
@@ -158,6 +159,14 @@ interface HandlerOptions<S extends AnySchema> {
    * for a server bound to loopback only, and says so.
    */
   readonly trustSeatHeaders?: boolean;
+  /**
+   * AND BELIEVE `x-graview-kind: system` AMONG THEM — off by default. The
+   * system's seat passes every policy and every sight check, so a store
+   * that trusts the seat headers reads a header naming it as a person's
+   * seat unless the host says the system's own clients reach it this way
+   * (`graview serve --trust-seat-headers` does).
+   */
+  readonly trustSystemSeat?: boolean;
   /** Where the data is, for the health report to say out loud. */
   readonly where?: string;
   /** How long a presence stands after its last word. Three heartbeats by default. */
@@ -422,11 +431,18 @@ export interface StoreHandler<S extends AnySchema> {
 
 // A kind the host's headers name that this build does not know is a person's seat, never the system's: a seat is minted by the host, and fails closed.
 const KINDS: ReadonlySet<string> = new Set(AUTHOR_KINDS);
+// And `system`, which passes every policy and every sight, is believed from a header only where the host said so (`trustSystemSeat`).
+const KINDS_BUT_SYSTEM: ReadonlySet<string> = new Set(AUTHOR_KINDS.filter((kind) => kind !== "system"));
 const list = (value: string | null) => (value ? value.split(",").filter(Boolean) : undefined);
 const decoded = (value: string | null) => (value ? decodeURIComponent(value) : undefined);
 
-/** A seat read from a request's headers — only ever when the host trusts them. */
-export function seatFromHeaders(request: Request): Principal {
+/**
+ * A seat read from a request's headers — only ever when the host trusts
+ * them. `x-graview-kind: system` is read as a person's seat unless `system`
+ * is said: the system's seat passes every policy and every sight, so a
+ * header names it only where the host said it may.
+ */
+export function seatFromHeaders(request: Request, { system = false }: { readonly system?: boolean } = {}): Principal {
   const header = (name: string) => request.headers.get(name);
   const id = header(SEAT_HEADERS.seat);
   const roles = list(header(SEAT_HEADERS.roles));
@@ -436,7 +452,7 @@ export function seatFromHeaders(request: Request): Principal {
   const forRoles = list(header(SEAT_HEADERS.forRoles));
   const forName = decoded(header(SEAT_HEADERS.forName));
   return {
-    kind: (kind && KINDS.has(kind) ? kind : "human") as Principal["kind"],
+    kind: (kind && (system ? KINDS : KINDS_BUT_SYSTEM).has(kind) ? kind : "human") as Principal["kind"],
     ...(id ? { id } : {}),
     ...(roles ? { roles } : {}),
     ...(name ? { name } : {}),
@@ -568,7 +584,8 @@ interface Serving {
 type Swap = (app: GraviewApp<AnySchema>, open: () => Promise<{ store: Store<AnySchema>; flush?: (landed: readonly Operation[]) => Promise<void>; migrated: readonly string[] }>) => Promise<void>;
 
 function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, adapterName = "held by the host"): { handler: Omit<StoreHandler<S>, "declarationChanged">; swap: Swap } {
-  const seatOf = options.seatOf ?? (options.trustSeatHeaders ? seatFromHeaders : undefined);
+  const system = options.trustSystemSeat === true;
+  const seatOf = options.seatOf ?? (options.trustSeatHeaders ? (request: Request) => seatFromHeaders(request, { system }) : undefined);
   const flush = async (landed: readonly Operation[] = []): Promise<void> => {
     await serving.flush?.(landed);
   };
@@ -756,8 +773,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       const body = (await read(request)) as { participant?: string };
       const asking = await seat();
       // Only your own: a seat says it has gone, never that somebody else has.
-      const own = asking.id ? `${asking.kind}:${asking.id}:` : "";
-      if (typeof body.participant === "string" && body.participant.startsWith(own)) {
+      if (typeof body.participant === "string" && ownsParticipant(asking, body.participant)) {
         forget(body.participant);
         tellWhoIsHere();
       }

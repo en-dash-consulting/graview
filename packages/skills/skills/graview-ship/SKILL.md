@@ -125,7 +125,9 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    the seat headers the framework's clients send only with
    `trustSeatHeaders: true` (`graview serve` sets it on 127.0.0.1 and
    refuses another `--host` without `--trust-seat-headers`); with neither,
-   it answers 401.
+   it answers 401. On 127.0.0.1 it answers only its own origin, and a page
+   on another one `--allow-origin` names (a dev server's app that opens
+   the store with `openRemote`), and no header there names the system's seat.
 
 6. **A host serving document apps compiles once, on the server.** Send
    `serializeCompiled(compileDocument(document))` beside the document, and

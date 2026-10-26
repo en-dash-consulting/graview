@@ -17,6 +17,12 @@ import type { Duplex } from "node:stream";
 const GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 /** No message on the live wire comes close; a frame claiming more is a client to close. */
 const MAX_MESSAGE_BYTES = 16 * 1024 * 1024;
+/**
+ * Nor in more fragments than this: each costs a frame's work, and a peer
+ * sending empty continuations would otherwise grow one message's work
+ * without ever growing its bytes.
+ */
+const MAX_FRAGMENTS = 1024;
 
 export interface ServerSocket {
   send(text: string): void;
@@ -48,8 +54,19 @@ export function acceptSocket(stream: Duplex, key: string, head: Buffer, events: 
   );
   (stream as { setNoDelay?: (noDelay: boolean) => void }).setNoDelay?.(true);
   let open = true;
+  /*
+   * WHAT HAS ARRIVED, joined only once the next step can use it. `buffered`
+   * is what `read` parses; the chunks after it wait in `waiting` until
+   * `needed` bytes are there — a frame trickled in a thousand chunks is
+   * copied once, not once per chunk.
+   */
   let buffered: Buffer = head.length > 0 ? Buffer.from(head) : Buffer.alloc(0);
+  let waiting: Buffer[] = [];
+  let waitingBytes = 0;
+  let needed = 2;
+  // The message in progress: its fragments, their running total, and its opcode.
   let parts: Buffer[] = [];
+  let partsBytes = 0;
   let partsOpcode = 0;
 
   const frame = (opcode: number, payload: Buffer): Buffer => {
@@ -88,7 +105,8 @@ export function acceptSocket(stream: Duplex, key: string, head: Buffer, events: 
   };
 
   const read = () => {
-    while (buffered.length >= 2) {
+    needed = 2;
+    while (open && buffered.length >= 2) {
       const first = buffered[0]!;
       const second = buffered[1]!;
       const fin = (first & 0x80) !== 0;
@@ -97,11 +115,11 @@ export function acceptSocket(stream: Duplex, key: string, head: Buffer, events: 
       let length = second & 0x7f;
       let at = 2;
       if (length === 126) {
-        if (buffered.length < 4) return;
+        if (buffered.length < 4) return void (needed = 4);
         length = buffered.readUInt16BE(2);
         at = 4;
       } else if (length === 127) {
-        if (buffered.length < 10) return;
+        if (buffered.length < 10) return void (needed = 10);
         const big = buffered.readBigUInt64BE(2);
         if (big > BigInt(MAX_MESSAGE_BYTES)) return close(1009, "Too big.");
         length = Number(big);
@@ -109,7 +127,7 @@ export function acceptSocket(stream: Duplex, key: string, head: Buffer, events: 
       }
       // A client's frames are masked, always (RFC 6455 §5.1).
       if (!masked) return close(1002, "A client's frames are masked.");
-      if (buffered.length < at + 4 + length) return;
+      if (buffered.length < at + 4 + length) return void (needed = at + 4 + length);
       const mask = buffered.subarray(at, at + 4);
       const payload = Buffer.from(buffered.subarray(at + 4, at + 4 + length));
       for (let i = 0; i < payload.length; i++) payload[i] = payload[i]! ^ mask[i % 4]!;
@@ -130,24 +148,37 @@ export function acceptSocket(stream: Duplex, key: string, head: Buffer, events: 
       }
       if (opcode === 0xa) continue;
       if (opcode === 0x1 || opcode === 0x2) {
+        // A new message while one is in progress is not how a client speaks (RFC 6455 §5.4).
+        if (parts.length > 0) return close(1002, "A message began inside another.");
         parts = [payload];
+        partsBytes = payload.length;
         partsOpcode = opcode;
       } else if (opcode === 0x0) {
+        if (parts.length === 0) return close(1002, "A continuation with no message.");
+        if (parts.length >= MAX_FRAGMENTS) return close(1008, "Too many fragments.");
         parts.push(payload);
+        partsBytes += payload.length;
       } else {
         return close(1002, "An opcode this server does not speak.");
       }
-      if (parts.reduce((sum, part) => sum + part.length, 0) > MAX_MESSAGE_BYTES) return close(1009, "Too big.");
+      if (partsBytes > MAX_MESSAGE_BYTES) return close(1009, "Too big.");
       if (!fin) continue;
-      const message = Buffer.concat(parts);
+      const message = parts.length === 1 ? parts[0]! : Buffer.concat(parts, partsBytes);
       parts = [];
+      partsBytes = 0;
       if (partsOpcode !== 0x1) return close(1003, "The live wire is text.");
       events.message(message.toString("utf8"));
     }
   };
 
   stream.on("data", (chunk: Buffer) => {
-    buffered = buffered.length === 0 ? chunk : Buffer.concat([buffered, chunk]);
+    if (!open) return;
+    waiting.push(chunk);
+    waitingBytes += chunk.length;
+    if (buffered.length + waitingBytes < needed) return;
+    buffered = buffered.length === 0 && waiting.length === 1 ? waiting[0]! : Buffer.concat([buffered, ...waiting], buffered.length + waitingBytes);
+    waiting = [];
+    waitingBytes = 0;
     read();
   });
   stream.on("end", finish);
