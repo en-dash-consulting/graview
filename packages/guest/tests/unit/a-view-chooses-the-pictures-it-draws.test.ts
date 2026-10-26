@@ -27,7 +27,7 @@ const circuits: GuestNode[] = [
   { id: "circuit:monza", kind: "circuit", label: "Monza", map: picture("monza-map.png"), photo: picture("monza-photo.png") },
   { id: "circuit:spa", kind: "circuit", label: "Spa", map: picture("spa-map.png"), photo: picture("spa-photo.png") },
 ] as unknown as GuestNode[];
-const props: GuestProps = { nodes: [...drivers, ...circuits] } as GuestProps;
+const props = { view: "season", edges: [], acts: [], nodes: [...drivers, ...circuits] } as unknown as GuestProps;
 
 let fetched: string[] = [];
 afterEach(() => vi.restoreAllMocks());

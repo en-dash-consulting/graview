@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 2402,
+  "gzipped": 917,
+  "note": "Raised when a worker view came to name a section by its own heading (FR-219): the renderer keeps each aria-labelledby and aria-describedby a view gives and, as each batch ends, draws it while every id it names is an element of the view and takes it back, said, while one names nothing; the stylesheet keeps ::-webkit-details-marker (FR-221); and the pictures' host reckons only the kinds and fields a view chose (FR-220). Measured at 223_529 / 85_118 against 221_127 / 84_201: 2_402 / 917 more."
+}

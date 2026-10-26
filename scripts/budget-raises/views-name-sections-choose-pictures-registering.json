@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 1076,
+  "gzipped": 384,
+  "note": "Raised when a worker view came to choose the pictures it draws (FR-220): checkManifest judges a manifest's pictures as kinds or fields by kind, refusing a kind that is none, one the view is not handed, and a field that holds no picture or holds videos, each in a sentence. Measured at 37_869 / 16_752 against 36_793 / 16_368: 1_076 / 384 more."
+}
