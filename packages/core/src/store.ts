@@ -1238,8 +1238,15 @@ export class Store<S extends AnySchema> {
      * reviewer on every topic with "a chair or a reviewer can".
      */
     if (typeof id !== "string") return subject.kinds !== "*" && subject.kinds.length === 1 ? (subject.kinds[0] as string) : undefined;
-    // A record the principal may not see is judged as one that is not there: its kind is not the policy's to read aloud (FR-55).
-    if (!isSystem(principal) && !seesId(this, principal)(id)) return undefined;
+    /*
+     * A record the principal is not served is judged as one that is not
+     * there: its kind is not the policy's to read aloud (FR-55). Served,
+     * not only in sight, as `missingFor` reads it: a record withheld whole
+     * for a field it cannot do without answered a grant drawn by kind as
+     * its kind, and an absent id as no kind, so the refusal told the two
+     * apart.
+     */
+    if (!isSystem(principal) && !seenBy(this, principal).graph.has(id)) return undefined;
     return this.graph.getNode(id)?.kind as string | undefined;
   }
 

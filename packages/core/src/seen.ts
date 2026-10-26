@@ -10,6 +10,7 @@ import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
 import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged, type Records } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import { diffSnapshots } from "./graph/diff.js";
+import { nodeRefKinds } from "./mutations/node-ref.js";
 import { PUBLISHING, readsPublished, type Publishing } from "./publish.js";
 
 const NOTHING: ReadonlySet<string> = new Set();
@@ -49,8 +50,18 @@ export function seesEveryRecord(store: Judged & { readonly schema: { readonly ki
   const acting = actingAs(author);
   // A sight that shows only some fields shows no record until they can be judged: it fails closed here as in `sees`.
   const judged = fieldsJudged(store);
-  const full = (kind: string) => !off.has(kind) && (sights.length === 0 || sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via && (judged || !partialSight(sight))));
-  const everything = store.schema.kinds.every(full);
+  const inSight = (kind: string) => !off.has(kind) && (sights.length === 0 || sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via && (judged || !partialSight(sight))));
+  /*
+   * AND NONE OF IT WITHHELD WHOLE (`seatLens`): a record whose required
+   * field names one the seat may not see is not served to it, so a kind
+   * whose every record must name one of a kind not wholly in sight is not
+   * wholly served either — an id minted past one of its records would say
+   * the record is there. Which ids a field names is judged by sight alone,
+   * so this asks no further than one step.
+   */
+  const wholly = store.schema.kinds.every(inSight);
+  const full = (kind: string) => inSight(kind) && requiredRefs(store.schema, kind).every((targets) => targets.every((target) => (target === "*" ? wholly : inSight(target))));
+  const everything = wholly && store.schema.kinds.every(full);
   return (kind) => everything || (kind !== undefined && full(kind));
 }
 
@@ -77,6 +88,15 @@ export function seesId(store: Judged, principal: Principal): (id: string) => boo
     if (kind === undefined) return true;
     return !off.has(kind) && sees(store.policy, principal, { id, kind }, { out: () => [], in: () => [] }, records, fieldsJudged(store));
   };
+}
+
+/** The kinds each required field of a kind that names a record may name: what a record of it cannot be served without. */
+function requiredRefs(schema: { readonly tryDefinition?: (kind: string) => unknown } | undefined, kind: string): (readonly string[])[] {
+  const shape = (schema?.tryDefinition?.(kind) as { fields?: { shape?: Record<string, { safeParse?(value: unknown): { success: boolean } }> } } | undefined)?.fields?.shape ?? {};
+  return Object.values(shape).flatMap((declared) => {
+    const targets = nodeRefKinds(declared);
+    return targets && declared.safeParse?.(undefined).success === false ? [targets] : [];
+  });
 }
 
 const NO_LINKS = { out: () => [], in: () => [] };
