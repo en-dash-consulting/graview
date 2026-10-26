@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.58`](https://graview.dev/docs/releases.html#v0-1-58)
 - [`0.1.57`](https://graview.dev/docs/releases.html#v0-1-57)
 - [`0.1.56`](https://graview.dev/docs/releases.html#v0-1-56)
 - [`0.1.55`](https://graview.dev/docs/releases.html#v0-1-55)
@@ -59,9 +60,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.58
+
+Published October 26, 2026 · the current version
+
+A Notion database is a connection, kept in step both ways, its tables' relations as links; Find's results stay still under the pointer and offer a record's acts when asked.
+
+- **Notion, both ways.** `connections.<name>` with `"system": "notion"` keeps one Notion data source in step with one kind, through an internal integration's secret that is never written in the document, the log or an export. It speaks Notion's 2025-09-03 API: a database of several data sources names one with `source`. Title, text, number, select and status, multi-select, date, checkbox, URL, email and phone go both ways; people are read; formulas, rollups and files are left alone and said once.
+- **Relations as links.** A relation property maps to an edge of the kind, to a kind another Notion connection keeps; a link made on either side arrives on the other, a page not read yet is linked once its table is, and both sides of a two-way relation settle with nothing sent.
+- **Pages land through the acts that fit.** A page from Notion becomes a record through an act that makes one from its mapped fields alone, a mapped field is kept in the kind's derived edit even when another act writes it, and a page that cannot become a record is said once until it changes.
+- **Find stays still.** Passing over a result only lights it; on a desk a panel beside the list shows the lit record and its acts, and on a phone a record's ⋯ opens them. Matched words are marked, each kind shows its best few with a row to all of them, and the keys are said under the list.
+- **A new project's test imports what it calls.**
+
+**Before you upgrade:** Additive: `"system": "notion"` connections, with `source` and edges mapped in `properties`, and the checker's `connection-properties`, `connection-relation`, `connection-relation-target`, `connection-connect`, `connection-disconnect`, `connection-read-only` and `connection-secret`; a `SyncState` may carry `unresolved` and `skipped`, which an earlier build drops; `SyncReport.problem`. Changed: a kind a connection keeps has an `edit-<kind>` that takes every mapped field; `connection-creates` is also said when no act makes the kind from its mapped fields alone; `creatingAct` takes the mapped fields; `ConnectionRun.calendarId` is optional beside `databaseId`. Ops, the wire and the rest of the derived tools are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.58) · [The full changelog for 0.1.58](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0158)
+
 ## 0.1.57
 
-Published October 25, 2026 · the current version
+Published October 25, 2026
 
 A view can be renamed, and a view of many can be its kind's list page; a computed value is said as its format and rounded; a date emptied in place is cleared; a text block says how many lines it shows; worker views name their sections, choose their pictures and style a disclosure's marker.
 
