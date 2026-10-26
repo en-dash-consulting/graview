@@ -60,7 +60,8 @@ exporting the app itself is `graview-ship`.
 
 5. **Keep it in step with a Notion database by declaring it.**
    `system: "notion"`, `database` (its 32-character id, or `{ env }`),
-   `kind`, `properties` (field → property name, or `{ name, type }` for the
+   `source` when the database holds several data sources (one's name or
+   id; refused otherwise with a sentence naming them), `kind`, `properties` (field → property name, or `{ name, type }` for the
    checker to judge the type; absent, each field finds the property of its
    name and the name field the title), `direction`, `conflicts`, `every`,
    `paused`. The secret is an internal integration's, read from
