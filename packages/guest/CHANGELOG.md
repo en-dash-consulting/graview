@@ -1,5 +1,41 @@
 # @graview/guest
 
+## 0.1.59
+
+### Patch Changes
+
+- adb3bdc: A drop on a worker view allows the one change it was made for, and nothing the view's code picks (FR-193, FR-92). Where some members may not see some records, an act from a view's own code applied when it carried a dropped file and every other argument was a dropped file, any record the view was shown, a record the same change made, or a value the app declares. The host never forgot a file it handed in a drop, so after one drop the view's code could keep sending acts with the same file for as long as it was mounted, up to a hundred calls a message, choosing for each which shown day or which declared value went in it — and a run of choices can spell what only this viewer may see: a family member's view put five moments on days that spelled, in base 3, a code in a vault a friend may not read, and the friend read it back from the days. Now the drop is bound to its gesture: the host keeps the record each drop was bound to (its `data-drop-connect`, or the `data-record` the target was drawn in, one the view was shown), an act under the drop's exception takes that record and no other, takes no value the view chose, and spends every dropped file it carries, so the host hands none of them to an act again; one file in several calls of one change is refused. A drop the view does not hear is made into records by the host as before. `CodeActContext.dropped` answers the drop (`DropGrant`, its `target`) rather than a yes, `judgeCodeAct` says what it `spent`, and the drop's `handed` hook is given the drop with the file. `a-drop-allows-only-the-change-it-was-made-for` holds it: the dropped files become moments on the day they were dropped on, from the view's own act, as one change; a moment on another day the view was shown is refused `press-only`; a second act with a file is refused, and so is one file in five calls of a change; words of the view's own beside the files are refused. With the field-sight check of `sightIsTotal`, the guest host registering a worker view carries 280 bytes more (92 gzipped), and drawing one on the open kit 533 (188), under raises of their own (`scripts/budget-raises/sight-side-channels-guest-*.json`).
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. A view that handles its own drop where sight is not total puts each file in one act on the record the drop was bound to; one that passed a declared value or another shown record beside the files now has its act refused `press-only`, and asks for a press for it.
+- 5002b90: A sight that keeps fields from everybody no longer counts as total sight for a worker view's writes. `sightIsTotal` counted a kind as seen whole by everybody whenever a `roles: "*"` sight named it, without looking at its `hide` or `fields`, so in an app where everybody sees every offer but not its cost, and staff see the cost through a second sight, a view running for a staff member could take the cost from its props and write it, from its own code with no press, into a summary a client reads. Now a sight with `hide` or a `fields` list shows a kind in part and does not count, so the view's own acts fall back to a press the host saw (or a drop's files). `a-worker-views-writes-cannot-leak` holds it with an everybody sight that hides the cost and one that lists every field but the cost: the app's sight is not total, and the view's act carrying the cost is refused `press-only`.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. A worker view in an app whose everybody sight keeps fields now acts from a press, as one in any app whose sight is not total does.
+- Updated dependencies [83fe4cb]
+- Updated dependencies [c33c732]
+- Updated dependencies [85f0794]
+- Updated dependencies [5bf24ba]
+- Updated dependencies [350fc01]
+- Updated dependencies [d4360ef]
+- Updated dependencies [6b5d16f]
+- Updated dependencies [cf757d1]
+- Updated dependencies [fd6c21a]
+- Updated dependencies [85f9fc3]
+- Updated dependencies [bd67c9b]
+- Updated dependencies [ee5a7c0]
+- Updated dependencies [f14058b]
+- Updated dependencies [419b8e8]
+- Updated dependencies [d14a1f9]
+- Updated dependencies [4a8ecdf]
+- Updated dependencies [aba4773]
+- Updated dependencies [2471cc2]
+- Updated dependencies [e3566ea]
+- Updated dependencies [58da61a]
+- Updated dependencies [d1d4e11]
+- Updated dependencies [359b324]
+- Updated dependencies [6bc7bb0]
+  - @graview/core@0.1.59
+  - @graview/react@0.1.59
+
 ## 0.1.58
 
 ### Patch Changes

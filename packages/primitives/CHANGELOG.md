@@ -1,5 +1,58 @@
 # @graview/primitives
 
+## 0.1.59
+
+### Patch Changes
+
+- 5bf24ba: A document's typeface is a list of names quoted in pairs, and an embed's scoped theme keeps every rule in its box even when it is not. A face with a quote it never closed — `"display": "Georgia'"` — passed `graview check` (the check took the quote off before it looked the name up) and the page's brand (which refused only `url(`, `@import` and `;{}<>\`), and was written into the embed's style sheet. CSS ends a string at the end of its line, but `withinTheBox`, which puts every rule of an embed's sheet under its element, read the string on to the next matching quote, so it missed where the block ended and left the rules after it as they were: 43 selectors (`h1`–`h4`, `code`, `kbd`, `samp`, the button states and many `.graview-*` rules) restyled the host page outside the embed, through the whole embed, the pages embed and a visitor's form alike. Now one rule judges a face in the checker and in `brandOf`: each family is a name with no quote in it, or one in a single matching pair with none inside, and a face with a line break, a control character or `/*` is refused, so `"Times New Roman"` and `'Source Serif 4'` are taken and written as given while `Georgia'` is refused (`brand-font`: "Georgia' is not quoted in one pair") and never written. And `withinTheBox` ends a string at a line break as CSS does, so a face that reached it some other way still cannot carry the rules after it out of the box. `the-whole-brand-is-in-the-document.test.ts` holds seven unbalanced faces refused and unwritten and four quoted ones taken; `a-scoped-theme-styles-nothing-outside-its-box.test.ts` reads the sheet as CSS does and finds every rule in the box for brands with an open quote in a face. The one rule rides with the brand a page compiles, so a hosted page carries 0.4 KB more up front (433 bytes minified, 223 gzipped), and one handed a compiled app 0.4 KB (433, 161), under raises naming this changeset.
+  
+  Compatibility: ops and primitives, stored formats, the wire, derived tool names and input schemas — unchanged. The declaration and check finding codes — no new code: `brand-font` is also said of a face with a quote not closed in its pair, a line break, a control character or `/*`, which compiled before and is refused now; a page compiled without the check leaves such a face out, as it leaves out one that loads.
+- 350fc01: A kind's figure is judged as the page reads it, and judged again where it is drawn. `figureFaults` found attributes by looking for a space or a quote before each name, but the HTML parser also takes a `/` as the gap between two attributes, so `<path d="…"/onclick="…"/>` passed `graview check`, the checked `compileDocument` and a model's `drawFigure` as a plain path, and `KindFigure` drew it with a live click handler (a smuggled `style` could stretch it over the page). Now `figureFaults` first reads the art with `svgProblem`, the reader a logo is judged by, which walks tags as the parser does and refuses a handler, a style sheet or anything that reaches outside the picture ("it cannot be drawn as it is: it has an event handler (an on… attribute)"), and its own scan of attribute names counts a `/` as a gap. `figureSvg` hands back inline art only when `svgProblem` finds nothing in it that could run or reach outside it, so `KindFigure` and the studio's proposed drawing draw nothing that could run even from a figure nothing checked — a brand's own drawing, a document compiled without the check. A figure that only breaks the house style (a literal color) still draws. Every shipped figure passes. `a-figure-is-judged-as-the-page-reads-it.test.ts` holds three slashed payloads faulted, undrawn and refused by `compileDocument`; `a-figure-that-could-act-is-not-drawn.test.tsx` holds that `KindFigure` draws no handler from a kind's figure or a brand's. A visitor's form draws figures and did not carry `svgProblem`, so it grows about 4.3 KB; with the other fixes of this batch (a typeface quoted in pairs, a plan review applying only the rows kept) a visitor's form carries 4_368 / 1_818 bytes more (4_739 / 1_970 handed a compiled app), the pages face 104 / 28, every face 948 / 455, Cloud's worker 835 and the scene before it draws 470, each under a raise of its own (`scripts/budget-raises/data-is-never-code-*.json`).
+  
+  Compatibility: ops and primitives, stored formats, the wire, derived tool names and input schemas — unchanged. The declaration and check finding codes — no new code: `figure` is said of art with an attribute written after a `/`, which compiled before and is refused now.
+- e3566ea: What a page offers to take back is what the store would take back. Activity's "undo" asked only the log (`canUndo`), and the corner's take-back control judged a change no act made as anybody's, so once undo came to judge a change no act made (an import, a sync, the app's own actor), a seat was offered an undo the store then refused — the watch's "offered then refused", on Activity at `?tidy=1`. `store.mayUndo(batches, principal)` now answers with the same judgment `undo` makes, log and policy both; Activity's row and the take-back control offer only what it allows, and `undo` itself refuses through it, so the two cannot drift. Core's undo test holds that every `mayUndo` answer agrees with what `undo` then does. A change that changed nothing — a suggestion, which a person declines by taking it back — is anybody's who sees it to take back, so declining the app's own actor's suggestion is not refused. A hosted page carries 0.2 KB more up front.
+  
+  Compatibility: additive — `Store.mayUndo` is new; an undo control no longer appears on a change the seat may not take back.
+- 5301cbe: A plan's review applies only the rows a person kept, and a plan's name means only what the plan made. `PlanReview` filed a call on a standing record under a row the plan was making whenever the plan gave the new thing that record's id as its name (`as: "b_herbs"`), so the review read "New Tomatoes" while the calls under it renamed and dug up Herb Bed; declining the row drew it struck through and still ran them, and Apply stayed pressable under "0 of 1 to run". A call waiting on one the seat may not make stayed ready, and `applyPlan` handed a `{ $plan }` name that made nothing on as the literal id, so it acted on whatever record had it. Now a plan's names are its own — `planFrom` refuses a name that is already a record's id, and refuses a call that waits for one it cannot make ("Waits for "seedlings", which this plan cannot make.") — and `applyPlan` stops and takes back what ran when a name it needs made nothing ("Refers to "fresh", which nothing earlier in this plan made."). In the review, a call on a standing record is its own row, named by that record; the press runs only the calls of rows drawn live, planned again so nothing runs without what it waits for, and is not offered when no row is live. `a-plan-name-means-only-what-the-plan-made.test.ts` holds the name refused, the dependent refused, the stop and the undo; `apply-runs-only-the-rows-a-person-kept.test.tsx` holds the standing record named in its own row, a declined row and a refused one running nothing, and a kept row beside a declined one running alone.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. A plan whose name is a record's id, or whose call waits on a refused one, is refused where it ran before.
+- d1d4e11: Starting fresh is asked for in the tab that does it, never by a link from somewhere else. Every app `graview create` writes opens its store with `fresh: browserStartsFresh()`, which read `?fresh=1` in the address as asking — so any site, or a message, that sent a person to `https://<app>/?fresh=1` erased their records, their history and their undo with nothing to take back, and `forgetFreshParam` then tidied the flag away. Now the Start fresh controls (the workbench's and the routed face's, and the seedbed's "Load the example garden") keep a one-time value in this tab's `sessionStorage` and go to `?fresh=<that value>` (`freshAddress` and `FRESH_KEY` on `@graview/core`; `freshHref` in `@graview/ship/browser` makes the same address), and `browserStartsFresh` honors the address only when it carries the value the tab kept, forgetting it as it reads it. A `?fresh=1` from elsewhere, a guessed value, or the same address loaded twice discards nothing, and `forgetFreshParam` drops `fresh` from the address whatever it says. A driven browser is unchanged: it starts fresh unless it says `?remember=1`, and takes `?fresh=1` as asking, so every harness and `graview create`'s scaffold work as they did. Ship's browser-adapter test holds that a store opened under `?fresh=1`, `?utm=x&fresh=1&remember=1` or a value the tab did not keep still holds what a person made, and that the control's own address starts fresh once. The graview-ship and graview-seed skills say Start fresh rather than `?fresh=1`.
+  
+  The one-time value costs a hosted page 0.3 KB more up front (286 bytes minified, 189 gzipped), and a page handed a compiled app 0.3 KB (286, 117), under raises naming this changeset; the pages face alone 239 / 96, a visitor's form handed a compiled app 286 / 133, every face 175 / 123 and the guest host registering a worker view 4 gzipped, each under a raise of its own, and the scene before it draws 230 bytes more, under 1023 KB.
+  
+  Compatibility: ops and primitives, the wire, the declaration and derived tool names and input schemas — unchanged. Stored formats — unchanged: what the browser adapter keeps is read and written as before; only what asks for it to be discarded changed. A host whose own control navigates to `?fresh=1` in a person's browser goes through `freshAddress` (or `freshHref`) now, or the address is not honored.
+- Updated dependencies [83fe4cb]
+- Updated dependencies [c33c732]
+- Updated dependencies [85f0794]
+- Updated dependencies [5bf24ba]
+- Updated dependencies [350fc01]
+- Updated dependencies [d4360ef]
+- Updated dependencies [6b5d16f]
+- Updated dependencies [cf757d1]
+- Updated dependencies [fd6c21a]
+- Updated dependencies [85f9fc3]
+- Updated dependencies [bd67c9b]
+- Updated dependencies [ee5a7c0]
+- Updated dependencies [6d09126]
+- Updated dependencies [f14058b]
+- Updated dependencies [419b8e8]
+- Updated dependencies [d14a1f9]
+- Updated dependencies [4a8ecdf]
+- Updated dependencies [aba4773]
+- Updated dependencies [2471cc2]
+- Updated dependencies [e3566ea]
+- Updated dependencies [5301cbe]
+- Updated dependencies [58da61a]
+- Updated dependencies [d1d4e11]
+- Updated dependencies [359b324]
+- Updated dependencies [6bc7bb0]
+- Updated dependencies [b336f0e]
+  - @graview/core@0.1.59
+  - @graview/tools@0.1.59
+  - @graview/react@0.1.59
+  - @graview/layout@0.1.59
+  - @graview/render@0.1.59
+
 ## 0.1.58
 
 ### Patch Changes

@@ -62,7 +62,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.58
 
-Published October 26, 2026 · the current version
+Published October 26, 2026
 
 A Notion database is a connection, kept in step both ways, its tables' relations as links; Find's results stay still under the pointer and offer a record's acts when asked.
 
