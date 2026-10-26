@@ -1,4 +1,4 @@
-import type { AnySchema, KeptViews, KeptViewsMay, LensTidyEdit, Principal, Store } from "@graview/core";
+import { actingAs, type AnySchema, type KeptViews, type KeptViewsMay, type LensTidyEdit, type Principal, type Store } from "@graview/core";
 import { VIEWS_PATH } from "./remote-views.js";
 
 /**
@@ -27,14 +27,24 @@ export interface ViewsAnswer {
  * WHETHER A SEAT KEEPS THE APP — what `graview serve` lets tidy views when
  * its host says nothing (`mayTidyViews`): where something is administered,
  * whoever administers it; with a policy and nothing administered, whoever
- * may do every act on every kind; with neither, whoever is here.
+ * may do every act on every kind; with neither, whoever is here. The seat is
+ * judged as the store judges it: an agent acting for a person by the roles
+ * they share (`actingAs`), and a declared provider only where its `may`
+ * leaves no act out.
  */
 export function keepsTheApp(store: Store<AnySchema>, seat: Principal): boolean {
+  if (seat.kind === "agent" && seat.id !== undefined) {
+    const declared = store.intelligence.find((provider) => provider.name === seat.id)?.may;
+    if (declared) {
+      const allowed = new Set(declared);
+      if (!store.allMutations().every((mutation) => allowed.has(mutation.name))) return false;
+    }
+  }
   const administered = [...store.modules.administered.keys()];
   if (administered.length > 0) return administered.some((name) => store.mayAdminister(name, seat));
   const policy = store.policy;
   if (!policy) return true;
-  const roles = seat.roles ?? [];
+  const roles = actingAs(seat).roles ?? [];
   return policy.grants.some((grant) => grant.mutations === "*" && !grant.self && (grant.kinds === undefined || grant.kinds === "*") && (grant.roles === "*" || roles.some((role) => (grant.roles as readonly string[]).includes(role))));
 }
 
