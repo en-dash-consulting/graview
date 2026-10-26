@@ -22,6 +22,8 @@
  */
 
 /** A kind's figure: inline SVG, or the name of one from the shipped set. */
+import { svgProblem } from "../theme/marks.js";
+
 export type Figure = string;
 
 /**
@@ -114,10 +116,19 @@ export const FIGURES: Readonly<Record<string, string>> = {
 
 export const FIGURE_NAMES = Object.keys(FIGURES);
 
-/** The SVG a figure names, or the figure itself when it is already one. */
+/**
+ * The SVG a figure names, or the figure itself when it is already one —
+ * and only when it is safe to put in a page. What draws a figure hands the
+ * art to innerHTML, and a page may be given a figure nothing judged (a
+ * document compiled without the check, a brand's own drawing, a proposal),
+ * so this asks again: art that could run or reach outside itself is no
+ * figure, and nothing is drawn.
+ */
 export function figureSvg(figure: Figure | undefined): string | undefined {
   if (!figure) return undefined;
-  return FIGURES[figure] ?? (figure.trimStart().startsWith("<svg") ? figure : undefined);
+  const shipped = FIGURES[figure];
+  if (shipped) return shipped;
+  return figure.trimStart().startsWith("<svg") && figureDangers(figure).length === 0 ? figure : undefined;
 }
 
 /**
@@ -216,18 +227,34 @@ export function figureFaults(figure: Figure): readonly string[] {
   if (!/stroke\s*=\s*"currentColor"/.test(figure)) {
     faults.push('nothing in it is stroked with currentColor, so it will not be drawn in the kind\'s ink.');
   }
-  /*
-   * THE VOCABULARY IS CLOSED. Named rather than stripped: a drawing with a
-   * script in it is not a drawing with a fixable blemish, and whoever is
-   * about to keep it should be told what was in it.
-   */
+  faults.push(...figureDangers(figure));
+  return [...new Set(faults)];
+}
+
+/**
+ * What in inline art could act or is not a drawing — the part of the
+ * judgment `figureSvg` asks again before anything draws it.
+ *
+ * THE MARKUP IS READ AS THE PAGE READS IT FIRST. `svgProblem` walks the tags
+ * as the HTML parser does — it takes a `/` between attributes as a space,
+ * so `<path d="…"/onclick="…"/>` is a path with a handler, not a path —
+ * and refuses anything that could run or reach outside the picture.
+ *
+ * THEN THE VOCABULARY IS CLOSED. Named rather than stripped: a drawing with
+ * a script in it is not a drawing with a fixable blemish, and whoever is
+ * about to keep it should be told what was in it.
+ */
+function figureDangers(figure: string): string[] {
+  const faults: string[] = [];
+  const unsafe = svgProblem(figure);
+  if (unsafe) faults.push(`it cannot be drawn as it is: ${unsafe}.`);
   for (const [, element] of figure.matchAll(/<\s*\/?\s*([a-zA-Z][\w:-]*)/g)) {
     const name = (element ?? "").toLowerCase();
     if (!DRAWING_ELEMENTS.has(name)) faults.push(`it contains <${element}>, which is not something a line drawing is made of.`);
   }
-  for (const [, attribute] of figure.matchAll(/[\s"']([a-zA-Z][\w:-]*)\s*=/g)) {
+  for (const [, attribute] of figure.matchAll(/[\s"'/]([a-zA-Z][\w:-]*)\s*=/g)) {
     const name = (attribute ?? "").toLowerCase();
     if (!DRAWING_ATTRIBUTES.has(name)) faults.push(`it carries ${attribute}, which is not a drawing attribute.`);
   }
-  return [...new Set(faults)];
+  return faults;
 }
