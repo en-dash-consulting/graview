@@ -75,7 +75,7 @@ const OFF_THE_PAGE = {
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "archivedSeenBy", "archiveFrom", "beginning", "placesFrom", "placesOf", "viewPlaceOf"] },
   // Roadmap f-ai-candidate-catalog: what the inline AI may pick from, the state a model reads and what an interaction leaves behind, fetched when somebody first opens it.
   // Roadmap f-notify-subscriptions: what a person asked to be told of, matched against a commit under their sight — the host's and a sheet's, fetched when somebody first subscribes.
-  "@graview/core/subscriptions": { from: subscriptions, names: ["holdTypingRuns", "matchSubscriptions", "subscriptionProblem", "subscriptionWords", "TYPING_QUIET_MS", "watchSubscriptions"] },
+  "@graview/core/subscriptions": { from: subscriptions, names: ["holdTypingRuns", "matchSubscriptions", "subscribersNow", "subscriptionProblem", "subscriptionWords", "TYPING_QUIET_MS", "watchSubscriptions"] },
   // Roadmap f-app-jobs: an app's jobs resolved and answered as a seat sees it — a design's, a seat's and a host's, fetched when one is drawn.
   "@graview/core/jobs": { from: jobs, names: ["answerJob", "jobIsFor", "jobsFor", "jobsOf", "MOST_JOBS"] },
   // Roadmap f-friction-log: what people looked for and could not do — kept, counted across people, said to a model; a page records through the main entry's `recordFriction` alone.
