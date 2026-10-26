@@ -113,4 +113,24 @@ describe("graview create --template", () => {
       }
     }
   });
+
+  it("imports every name each file calls, and nothing it does not use, with or without a template", async () => {
+    // tests/domain.test.ts called checkApp and instantiateTemplate without importing them, and app.ts imported both and used neither.
+    const ts = await import("typescript");
+    for (const options of [{ name: "Vendor shortlist", template: template as never }, { name: "Field Notes" }]) {
+      const files = new Map(scaffoldProject(options).files.filter((file) => /\.tsx?$/.test(file.path)).map((file) => [`/project/${file.path}`, file.contents]));
+      const compilerOptions = { noEmit: true, noUnusedLocals: true, noResolve: true, types: [], lib: ["lib.es2022.d.ts", "lib.dom.d.ts", "lib.dom.iterable.d.ts"], jsx: ts.JsxEmit.Preserve, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, skipLibCheck: true };
+      const host = ts.createCompilerHost(compilerOptions);
+      const read = host.getSourceFile.bind(host);
+      host.getSourceFile = (name, version) => (files.has(name) ? ts.createSourceFile(name, files.get(name)!, version, true) : read(name, version));
+      const program = ts.createProgram([...files.keys()], compilerOptions, host);
+      // Cannot find name (2304, 2552), declared and never read (6133), every import unused (6192): what a module that does not resolve still says.
+      const named = [...files.keys()].flatMap((path) =>
+        [...program.getSemanticDiagnostics(program.getSourceFile(path)), ...program.getSyntacticDiagnostics(program.getSourceFile(path))]
+          .filter((one) => [2304, 2552, 6133, 6192].includes(one.code))
+          .map((one) => `${path.slice("/project/".length)}: ${ts.flattenDiagnosticMessageText(one.messageText, " ")}`),
+      );
+      expect(named, options.name).toEqual([]);
+    }
+  });
 });

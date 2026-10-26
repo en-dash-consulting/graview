@@ -12,7 +12,10 @@
  * database said as sentences, a whole read that loses and duplicates
  * nothing, an archive each way, the secret kept nowhere, two tables joined
  * by a dual relation kept as links both ways and converging with nothing
- * sent, and everything the run made archived again.
+ * sent, a table whose kind other acts make and write — a page landing
+ * through the act that fits it, a status a named step moves changed in
+ * Notion, a blank row said once and arriving once filled — and everything
+ * the run made archived again.
  *
  * WHAT TO SET UP, ONCE:
  *
@@ -444,6 +447,67 @@ try {
     trashed.push((await api("GET", `/databases/${id}`).then((one) => one.in_trash === true, () => true)));
   }
   claim("theLinkedTablesAreTrashed", trashed.length === 2 && trashed.every(Boolean), { trashed: trashed.filter(Boolean).length });
+
+  /* ------------------- the acts a change lands through, in an app that declares more */
+  // A workshop whose first act that makes a toy logs one on a reindeer, whose status a named step moves and whose count an act adds to.
+  const toyTable = await table("toys", { Name: { title: {} }, Status: { select: { options: [{ name: "Not Started" }, { name: "In Progress" }, { name: "Complete" }] } }, Made: { number: { format: "number" } } });
+  const workshop = compileDocument({
+    format: "graview-document",
+    formatVersion: 1,
+    name: `Notion harness workshop ${run}`,
+    kinds: {
+      reindeer: { fields: { name: { type: "string", required: true } } },
+      toy: { fields: { name: { type: "string", required: true }, status: { type: "enum", options: ["Not Started", "In Progress", "Complete"], required: true }, completed: { type: "integer", min: 0 } } },
+    },
+    acts: {
+      "add-reindeer": { creates: "reindeer" },
+      "log-toy": { on: "reindeer", creates: "toy" },
+      "make-toy": { creates: "toy" },
+      "set-toy-status": { on: "toy", writes: ["status"] },
+      "add-made": { on: "toy", args: { more: { type: "integer", required: true, min: 1 } }, sets: { completed: { expr: "either(completed, 0) + more" } } },
+    },
+    connections: { toys: { system: "notion", database: toyTable.id, kind: "toy", properties: { name: "Name", status: "Status", completed: "Made" }, direction: "both" } },
+  });
+  claim("theCheckerPassesAConnectionWhoseFieldsAnotherActWrites", workshop.ok && workshop.findings.every((finding) => finding.severity !== "error"), { errors: workshop.findings.filter((finding) => finding.severity === "error").map((finding) => `${finding.code} ${finding.path}`) });
+  if (!workshop.ok) throw new Error(`the harness's workshop declaration does not check: ${workshop.findings.map((finding) => finding.message).join("; ")}`);
+  const shop = new Store({ schema: workshop.app.schema, mutations: workshop.app.mutations ?? [], snapshot: { nodes: [], edges: [] } });
+  const toyEngine = connection({ name: "toys", declaration: workshop.app.connections.toys, app: workshop.app, store: shop, databaseId: toyTable.id, token: () => secret, fetch: fetched }).engine;
+  const toys = () => shop.graph.allNodes().filter((node) => node.kind === "toy");
+  const toyRefusals = [];
+  const untilShop = async (check, tries = stubbed ? 1 : 6) => {
+    for (let at = 0; at < tries; at++) {
+      if (at > 0) await settle();
+      const one = await toyEngine.run();
+      toyRefusals.push(...one.refused);
+      if (check(one)) return one;
+    }
+    return undefined;
+  };
+  const lastAct = () => shop.log.all().at(-1)?.mutation?.name;
+
+  const horse = await api("POST", "/pages", { parent: { type: "data_source_id", data_source_id: toyTable.data_sources[0].id }, properties: { Name: notionProperty("title", `Rocking horse ${run}`), Status: notionProperty("select", "Not Started") } });
+  await settle();
+  await untilShop(() => toys().length === 1);
+  claim("aPageMadeInNotionLandsThroughAnActThatFitsIt", toys().length === 1 && lastAct() === "make-toy" && toyRefusals.length === 0, { act: lastAct() ?? null, refused: toyRefusals.map((one) => one.error) });
+
+  await api("PATCH", `/pages/${horse.id}`, { properties: { Status: notionProperty("select", "In Progress"), Made: notionProperty("number", 12) } });
+  await settle();
+  await untilShop(() => toys()[0]?.status === "In Progress");
+  claim("aChangeInNotionToAFieldAnotherActWritesLands", toys()[0]?.status === "In Progress" && toys()[0]?.completed === 12 && lastAct() === "edit-toy" && shop.log.all().at(-1)?.author.id === "notion", { status: toys()[0]?.status ?? null, completed: toys()[0]?.completed ?? null, act: lastAct() ?? null });
+
+  const blank = await api("POST", "/pages", { parent: { type: "data_source_id", data_source_id: toyTable.data_sources[0].id }, properties: {} });
+  toyRefusals.length = 0;
+  for (let pass = 0; pass < 3; pass++) {
+    await settle();
+    toyRefusals.push(...(await toyEngine.run()).refused);
+  }
+  const saidOfBlank = toyRefusals.filter((one) => one.id === blank.id).length;
+  await api("PATCH", `/pages/${blank.id}`, { properties: { Name: notionProperty("title", `Spinning top ${run}`), Status: notionProperty("select", "Not Started") } });
+  await settle();
+  await untilShop(() => toys().some((toy) => toy.name === `Spinning top ${run}`));
+  claim("aBlankPageIsSaidOnceAndArrivesOnceFilled", saidOfBlank === 1 && toys().some((toy) => toy.name === `Spinning top ${run}`) && toyEngine.snapshot.skipped === undefined, { saidOfBlank, arrived: toys().some((toy) => toy.name === `Spinning top ${run}`) });
+
+  for (const id of linkedTables.splice(0)) await api("DELETE", `/blocks/${id}`);
 
   for (const source of [sourceId, second.id]) {
     for (const page of (await api("POST", `/data_sources/${source}/query`, { page_size: 100 })).results) {

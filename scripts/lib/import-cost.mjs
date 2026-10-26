@@ -14,6 +14,7 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { hasSideEffects } from "./side-effects.mjs";
+import { readRaises } from "./bundle-budget.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -86,7 +87,26 @@ export const WORKER_SHAPED = join(ROOT, "scripts/fixtures/cloud-worker-imports.m
 // 2_026_000 since text is typed together (collaborative text, phase 2: `@graview/ship/runtime` loads `@graview/core/typing`, the `type-text` act and a whole write merged as a splice, so `transformSplices`, `diffSplice` and `text/since.ts` are in the worker): 2_021_456 B measured, 15_725 more than before it (2_005_731).
 // 2_020_000 since the 0.1.49 batch came together (every form in one order, act spellings, suggestion and lineage shapes): 2_010_374 B measured.
 // 2_250_000 — Nick, 2026-10-23: one deliberate raise for the road to 1.0; the 75 ms startup CPU still guards cold starts. The 0.1.50 batch together measured 2_059_703 B.
-export const WORKER_BUDGET = { cpu: 75, bytes: 2_250_000, zod: 260_000 };
+/**
+ * What the worker's bytes are held to past that base: raise files, like the
+ * bundles' (`scripts/budget-raises/`), that name `"Cloud's worker"`, the
+ * bytes they add and a note saying what grew and what it measured — never
+ * an edit of the base.
+ */
+export const WORKER_BUDGET_NAME = "Cloud's worker";
+const WORKER_BASE = { cpu: 75, bytes: 2_250_000, zod: 260_000 };
+export const WORKER_BUDGET = { ...WORKER_BASE, bytes: WORKER_BASE.bytes + workerRaises(readRaises()).reduce((sum, raise) => sum + raise.bytes, 0) };
+
+/** The raises filed for the worker's bytes, each judged: whole bytes above 0, and a note. */
+export function workerRaises(raises) {
+  const mine = raises.filter((raise) => raise.budget === WORKER_BUDGET_NAME);
+  for (const raise of mine) {
+    const where = `scripts/budget-raises/${raise.file ?? "(a raise)"}`;
+    if (!Number.isInteger(raise.bytes) || raise.bytes <= 0) throw new Error(`${where} must say how many bytes it adds to ${WORKER_BUDGET_NAME}, as a whole number above 0`);
+    if (typeof raise.note !== "string" || raise.note.trim().length < 20) throw new Error(`${where} carries no note: say what grew, why, and what it measured, in a sentence`);
+  }
+  return mine;
+}
 
 /** The file an entry resolves to in its package's dist/. */
 export function entryFile(entry) {

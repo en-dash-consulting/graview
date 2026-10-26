@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module, without types.
 import { BASES, BUDGETS, measureBudgets, readRaises, withRaises } from "../scripts/lib/bundle-budget.mjs";
+// @ts-expect-error — a plain .mjs module, without types.
+import { WORKER_BUDGET, workerRaises } from "../scripts/lib/import-cost.mjs";
 
 /**
  * THE EMBED KEEPS TO ITS BUDGET (FR-19). A chat's widget that shows only
@@ -140,6 +142,15 @@ describe("a budget's raises", () => {
 
   it("fails a raise that does not say its bytes as whole numbers", () => {
     expect(() => withRaises(BASES, raisesOf({ "vague.json": { budget: "every face", minified: "a little", gzipped: 10, note } }))).toThrow(/vague\.json must say how many bytes minified/);
+  });
+
+  it("leaves the worker's raises to the worker's budget, which holds its base plus their bytes and refuses one without its bytes or a note", () => {
+    const raises = raisesOf({ "worker.json": { budget: "Cloud's worker", bytes: 1200, note } });
+    expect(() => withRaises(BASES, raises)).not.toThrow();
+    expect(workerRaises(raises).map((raise: { bytes: number }) => raise.bytes)).toEqual([1200]);
+    expect(WORKER_BUDGET.bytes).toBe(2_250_000 + (workerRaises(readRaises()) as { bytes: number }[]).reduce((sum, raise) => sum + raise.bytes, 0));
+    expect(() => workerRaises(raisesOf({ "vague.json": { budget: "Cloud's worker", bytes: "some", note } }))).toThrow(/vague\.json must say how many bytes it adds to Cloud's worker/);
+    expect(() => workerRaises(raisesOf({ "quiet.json": { budget: "Cloud's worker", bytes: 10 } }))).toThrow(/quiet\.json carries no note/);
   });
 
   it("reads every raise in the tree, and every one of them holds", () => {

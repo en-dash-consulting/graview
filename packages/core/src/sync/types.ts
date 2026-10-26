@@ -173,6 +173,13 @@ export interface SyncState {
    * sent to take them away, and each is linked here once its record is.
    */
   readonly unresolved?: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>>;
+  /**
+   * RECORDS THERE THAT COULD NOT BECOME ONE HERE: by `<resource>:<id>`, the
+   * version this store refused to make a record of (a blank row in Notion,
+   * with no name and no date). Said once, in `refused`, and not tried again
+   * until the remote's version of it changes.
+   */
+  readonly skipped?: Readonly<Record<string, string>>;
 }
 
 /**
