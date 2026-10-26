@@ -31,15 +31,24 @@ const envelope = (result: string) => JSON.stringify({ result, is_error: false })
 const PHOTO = `data:image/png;base64,${Buffer.from("not really a png").toString("base64")}`;
 
 describe("what a spawned session is given", () => {
-  it("gets Read and only Read, a turn per photograph plus three, and a budget", () => {
+  it("gets Read and only Read, allowed only beneath its own folder, a turn per photograph plus three, and a budget", () => {
     const argv = argumentsFor("Describe the ground.", ["photo-1.jpg", "photo-2.jpg"], { budgetUsd: 2 });
     expect(argv).toContain("--tools");
     expect(argv[argv.indexOf("--tools") + 1]).toBe("Read");
-    expect(argv[argv.indexOf("--allowedTools") + 1]).toBe("Read");
+    expect(argv[argv.indexOf("--allowedTools") + 1]).toBe("Read(./**)");
+    expect(argv.filter((one) => one.startsWith("Read"))).toEqual(["Read", "Read(./**)"]);
     expect(argv[argv.indexOf("--max-turns") + 1]).toBe("5");
     expect(argv[argv.indexOf("--max-budget-usd") + 1]).toBe("2");
     /* And it is told where the photographs are, or it will not look. */
-    expect(argv[argv.indexOf("-p") + 1]).toContain("photo-1.jpg, photo-2.jpg");
+    expect(argv.at(-1)).toContain("photo-1.jpg, photo-2.jpg");
+  });
+
+  it("takes the prompt as words after --, never as a flag", () => {
+    const argv = argumentsFor("--dangerously-skip-permissions --allowedTools Bash", [], {});
+    expect(argv.at(-2)).toBe("--");
+    expect(argv.at(-1)).toBe("--dangerously-skip-permissions --allowedTools Bash");
+    expect(argv.indexOf("--")).toBe(argv.length - 2);
+    expect(argv.indexOf("-p")).toBe(0);
   });
 
   it("names a model only when one was asked for", () => {
@@ -52,11 +61,25 @@ describe("what a spawned session is given", () => {
     expect(env).toEqual({ PATH: "/usr/bin", HOME: "/home/a" });
   });
 
+  it("gets only the names it needs and its own sign-in, never the dev server's other secrets", () => {
+    const env = environmentFor({
+      PATH: "/usr/bin",
+      HOME: "/home/a",
+      LANG: "en_US.UTF-8",
+      ANTHROPIC_API_KEY: "sk-dummy",
+      TYPESAFE_API_KEY: "ts-dummy",
+      DATABASE_URL: "postgres://dummy",
+      AWS_SECRET_ACCESS_KEY: "dummy",
+      GOOGLE_REFRESH_TOKEN: "dummy",
+    });
+    expect(env).toEqual({ PATH: "/usr/bin", HOME: "/home/a", LANG: "en_US.UTF-8", ANTHROPIC_API_KEY: "sk-dummy" });
+  });
+
   it("runs in the directory the photographs were written to", async () => {
     const { calls, run } = ranWith({ stdout: envelope("Seven areas.") });
     await askLocally({ prompt: "Describe the ground.", photos: [PHOTO] }, { run });
     expect(calls[0]?.cwd).toContain("graview-local-");
-    expect(calls[0]?.args[1]).toContain("photo-1.png");
+    expect(calls[0]?.args.at(-1)).toContain("photo-1.png");
   });
 });
 
