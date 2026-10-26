@@ -1,5 +1,30 @@
 # @graview/primitives
 
+## 0.1.57
+
+### Patch Changes
+
+- 2173a1e: A date emptied where it is shown is cleared (Roadmap f-clear-date-in-place). Since 0.1.56 `null` clears a field a record may be without on a derived edit, but the page's in-place editor sent nothing when a person emptied a date, so a wrong date could be changed and never removed. Now emptying a field in place — a date first, and any field that can be emptied: words, a number, an amount — sends the edit `null` where the act clears that field, and the record has none, one change that can be undone; an emptied number is no longer read as zero. A field the record cannot be without keeps its value and says so beside it: `Name can't be empty; it keeps APT1.` An editable field from `@graview/tools/edit` says which with `clearable`: true where its act takes `null` for that field (a derived edit's `clearable`). Primitives' test empties a date in place and the record then has none, empties a text and a number the same way, and finds a required name kept with its sentence.
+  
+  Compatibility: unchanged on every surface. `EditableField` gains `clearable`, an addition.
+- 67e4b0d: A text block says how many lines a card or a row shows of it (FR-218), Roadmap f-card-text-clamp. A card cuts a text block at three lines and a row at one, so `{"text": "{awards}", "tone": "accent"}` on a footballer's card stopped at the third award at 390 pixels and nothing showed the rest in place. A text block may now say `"lines": 6` — that many lines before the text is cut short — or `"lines": 0` to show it whole, on whichever slot draws it; said nowhere, the card keeps its three and the row its one. `graview check` refuses any other value at the block's path (`view-lines`: `lines is 13, and a text block's lines is a whole number from 1 to 12, or 0 to show it whole`), refuses `lines` on any block but text (`unknown-key`), and no longer warns `view-whole-text` of a long text a block measures on purpose. `@graview/core/document.schema.json` says it. The graview-view-specs skill says so. A hosted page carries 0.4 KB more up front (409 bytes minified, 169 gzipped), the pages face alone 555 more (174) and every face 952 (375), each under a raise of its budget (`scripts/budget-raises/a-text-block-says-how-many-lines-it-shows-*.json`), and the scene before it draws 955 more, under 1009 KB. Primitives' test draws a card's text with `lines: 6` and with `lines: 0` and finds each said on the element, and the default when it says nothing, and the check takes 0 to 12 and refuses -1, 2.5, 13, "6", true and null. A "more" control that opens the rest in place is not part of this: a card is a link to its record, whose page says the text whole.
+  
+  Compatibility: ops and primitives, stored formats, derived tool names and input schemas — unchanged. The declaration and check finding codes — additive: a text block's `lines`, and the finding `view-lines`; a build that predates it refuses `lines` as a key a text block does not say. The wire — additive: `capabilities().shipped` gains FR-218. What Graview Cloud does: lets an agent's view spec say `lines` on a text block once `capabilities().shipped` has FR-218.
+- Updated dependencies [6e51c72]
+- Updated dependencies [2173a1e]
+- Updated dependencies [67e4b0d]
+- Updated dependencies [4104b12]
+- Updated dependencies [67e4b0d]
+- Updated dependencies [994bfe2]
+- Updated dependencies [3eaff17]
+- Updated dependencies [dda9073]
+- Updated dependencies [6a43f94]
+  - @graview/core@0.1.57
+  - @graview/tools@0.1.57
+  - @graview/react@0.1.57
+  - @graview/layout@0.1.57
+  - @graview/render@0.1.57
+
 ## 0.1.56
 
 ### Patch Changes

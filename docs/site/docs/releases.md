@@ -60,7 +60,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.56
 
-Published October 25, 2026 · the current version
+Published October 25, 2026
 
 An id names its kind; a date may know only its year or month, and an option has a readable label; a brand's suggested shade passes; a view is handed its computed values; the tray, the home's problems and Activity read better.
 
