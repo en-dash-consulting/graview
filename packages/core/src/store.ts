@@ -887,7 +887,13 @@ export class Store<S extends AnySchema> {
       return [...new Set(all.filter((one) => one.derived?.relation === call?.args["kind"]).flatMap((one) => derivedVia(this.schema, all, one) ?? []))];
     }
     // Typing into a field: whoever may run an act that writes that field of that record.
-    if (mutation !== undefined && mutation === this.typer) return TYPING.via!(this.schema, [...this.mutations.values()] as never, this.subjectKindOf(call!, principal), call?.args["field"]);
+    if (mutation !== undefined && mutation === this.typer) {
+      // Through an act that could run on this record now: its module on, its own rule holding for the record as this principal is served it.
+      const node = call?.args["node"];
+      const served = principal === undefined || isSystem(principal) ? this.graph : seenBy(this, principal).graph;
+      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && (writer.allowedOn === undefined || (typeof node === "string" && writer.allowedOn(served as never, node)));
+      return TYPING.via!(this.schema, [...this.mutations.values()] as never, this.subjectKindOf(call!, principal), call?.args["field"], allows as never);
+    }
     if (!mutation?.derived) return undefined;
     return derivedVia(this.schema, [...this.mutations.values()], mutation);
   }

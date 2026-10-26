@@ -519,6 +519,20 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         writes,
         ...(Object.keys(writesOther).length > 0 ? { writesOther } : {}),
         ...(Object.keys(sets).length > 0 ? { sets } : {}),
+        // Its condition, judged on a record without the call's arguments: what lends typing into a field it writes (`type-text`).
+        ...(guard
+          ? {
+              allowedOn: (graph: GraphReader, id: string) => {
+                const subject = graph.getNode(id);
+                if (!subject || (subjectKinds.length > 0 && !subjectKinds.includes(subject.kind))) return false;
+                try {
+                  return evaluateExpr(guard, { graph, subject, kinds: shapes, bindings: {}, today: today() }) === true;
+                } catch {
+                  return false;
+                }
+              },
+            }
+          : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {
           const subject = typeof input[SUBJECT_ARG] === "string" ? graph.getNode(input[SUBJECT_ARG] as string) : undefined;
           // Never the first string it was handed (FR-169): that was a stream's maturity read as its name.
