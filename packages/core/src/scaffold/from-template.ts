@@ -40,7 +40,7 @@ export function templateJson(template: GraviewTemplate): string {
 export function documentAppTs(ids: Ids): string {
   return `import { Store, type AnySchema, type GraviewApp, type StoreOptions } from "@graview/core";
 import { sayFindings } from "@graview/core/document";
-import { compileDocument, checkApp, instantiateTemplate } from "@graview/core/check";
+import { compileDocument } from "@graview/core/check";
 import document from "./app.json" with { type: "json" };
 
 /**
@@ -104,6 +104,7 @@ export const ${ids.brandVar}: Brand = brandOf();
 
 export function documentTest(ids: Ids): string {
   return `import { type Principal } from "@graview/core";
+import { checkApp, instantiateTemplate } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import template from "../template.json" with { type: "json" };
 import document from "../src/domain/app.json" with { type: "json" };
