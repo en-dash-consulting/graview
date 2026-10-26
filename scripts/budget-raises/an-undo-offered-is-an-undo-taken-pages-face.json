@@ -1,2 +1,6 @@
-{ "budget": "the pages face alone", "minified": 90, "gzipped": 20,
-  "note": "Raised when what a page offers to take back came to be what the store would take back: Store.mayUndo answers with undo's own judgment, and Activity's row and the take-back control ask it. Measured at 677_058 / 248_685 against 676_987 / 248_723." }
+{
+  "budget": "the pages face alone",
+  "minified": 130,
+  "gzipped": 20,
+  "note": "Raised when what a page offers to take back came to be what the store would take back: Store.mayUndo answers with undo's own judgment, and Activity's row and the take-back control ask it. Measured at 677_058 / 248_685 against 676_987 / 248_723. Then 40 B more minified when a change that changed nothing (a suggestion declined) came to be anybody's who sees it to take back."
+}
