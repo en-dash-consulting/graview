@@ -145,6 +145,33 @@ describe("check refuses a face from anywhere but the list", () => {
     expect(typography.body).toBeUndefined();
   });
 
+  /*
+   * A FACE IS A LIST OF NAMES, quoted in pairs or not at all. A quote that
+   * never closes runs the style sheet's string past the end of its rule,
+   * and whatever reads the sheet by its braces is then reading something
+   * else than the browser does. One rule judges it in the checker and in
+   * the page's brand, so a face the checker takes is never dropped.
+   */
+  const unbalanced = ["Georgia'", 'Georgia"', "'Georgia\"", "Georgia, 'Times New Roman", '"Times "New" Roman"', "Georgia\n, serif", "Georgia /* x */"];
+  for (const face of unbalanced) {
+    it(`refuses ${JSON.stringify(face)}, and the page never writes it`, () => {
+      const found = refusals(withBrand({ typography: { display: face } }));
+      expect(found.map((f) => `${f.code} at ${f.path}`)).toEqual(["brand-font at brand.typography.display"]);
+      const result = compileDocumentWithoutCheck(withBrand({ typography: { display: face } }));
+      if (!result.ok) throw new Error("does not compile");
+      expect((result.app as GraviewApp<AnySchema>).brand?.typography?.display).toBeUndefined();
+    });
+  }
+
+  it("takes faces quoted in pairs, and writes them as given", () => {
+    for (const face of ['"Times New Roman", serif', "'Source Serif 4', Georgia, serif", "Times New Roman, serif", '"Georgia"']) {
+      expect(refusals(withBrand({ typography: { display: face } })), face).toEqual([]);
+      const result = compileDocumentWithoutCheck(withBrand({ typography: { display: face } }));
+      if (!result.ok) throw new Error("does not compile");
+      expect((result.app as GraviewApp<AnySchema>).brand?.typography?.display, face).toBe(face);
+    }
+  });
+
   it("takes a face the host says it serves itself", () => {
     const result = compileDocument(withBrand({ typography: { body: '"Comic Neue", sans-serif' } }), { fonts: ["Comic Neue"] });
     expect(result.ok).toBe(true);

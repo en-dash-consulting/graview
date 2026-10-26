@@ -25,6 +25,8 @@ function splitList(prelude: string): string[] {
   for (const ch of prelude) {
     if (quote) {
       if (ch === quote) quote = null;
+      // As CSS reads it: a string a line break comes to before its quote ends there.
+      else if (ch === "\n") quote = null;
     } else if (ch === '"' || ch === "'") quote = ch;
     else if (ch === "(" || ch === "[") depth++;
     else if (ch === ")" || ch === "]") depth--;
@@ -60,6 +62,10 @@ function rulesOf(css: string, at: readonly string[] = []): Rule[] {
       const ch = text[j]!;
       if (quote) {
         if (ch === quote) quote = null;
+        else if (ch === "\n") {
+          // A string a line break comes to ends there, and the line break is read as what it is.
+          quote = null;
+        }
       } else if (ch === '"' || ch === "'") quote = ch;
       else if (ch === "{") depth++;
       else if (ch === "}") depth--;
@@ -96,7 +102,19 @@ function inside(selector: string, scope: string): boolean {
 
 describe("a scoped theme styles nothing outside its box (FR-64)", () => {
   const SCOPE = ".graview-embed-7";
-  const brands = [GRAVIEW_BRAND, { ...GRAVIEW_BRAND, shape: { radius: 4, density: 0.9 }, typography: { display: "Georgia, serif", body: "system-ui", mono: "Menlo" } }];
+  const brands = [
+    GRAVIEW_BRAND,
+    { ...GRAVIEW_BRAND, shape: { radius: 4, density: 0.9 }, typography: { display: "Georgia, serif", body: "system-ui", mono: "Menlo" } },
+    { ...GRAVIEW_BRAND, typography: { display: '"Times New Roman", "Source Serif 4", serif' } },
+    /*
+     * A face with a quote it never closes. The checker and the brand refuse
+     * one now, but the scoper must not need them to: CSS ends the string at
+     * the line's end, and so does the scoper, so the rules after it are
+     * still put in the box.
+     */
+    { ...GRAVIEW_BRAND, typography: { display: "Georgia'" } },
+    { ...GRAVIEW_BRAND, typography: { body: 'Georgia"', display: "system-serif", mono: "system-mono" } },
+  ];
 
   for (const scheme of ["dark", "light"] as const) {
     for (const [n, brand] of brands.entries()) {

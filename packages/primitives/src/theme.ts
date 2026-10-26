@@ -217,7 +217,7 @@ export function withinTheBox(css: string, scope: string): string {
   return walk(css);
 }
 
-/** The index of the brace that closes the block opened at `open`, past strings and comments. */
+/** The index of the brace that closes the block opened at `open`, past strings and comments, read as CSS reads them. */
 function blockEnd(text: string, open: number): number {
   let depth = 0;
   let quote: string | null = null;
@@ -226,6 +226,8 @@ function blockEnd(text: string, open: number): number {
     if (quote) {
       if (ch === "\\") j++;
       else if (ch === quote) quote = null;
+      // CSS ends a string a line break comes to before its quote, and reads the line break as what it is.
+      else if (ch === "\n" || ch === "\r" || ch === "\f") quote = null;
     } else if (ch === '"' || ch === "'") quote = ch;
     else if (ch === "/" && text[j + 1] === "*") j = text.indexOf("*/", j + 2) + 1 || text.length;
     else if (ch === "{") depth++;
@@ -243,6 +245,7 @@ function splitSelectors(list: string): string[] {
   for (const ch of list) {
     if (quote) {
       if (ch === quote) quote = null;
+      else if (ch === "\n" || ch === "\r" || ch === "\f") quote = null;
     } else if (ch === '"' || ch === "'") quote = ch;
     else if (ch === "(" || ch === "[") depth++;
     else if (ch === ")" || ch === "]") depth--;
