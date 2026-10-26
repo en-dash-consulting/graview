@@ -12,7 +12,7 @@ import { edgeWords, valueWords } from "../schema/value-words.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { actingAs } from "../permissions/policy.js";
-import { FIELD_SIGHT } from "../permissions/sight.js";
+import { FIELD_SIGHT, recordsOf } from "../permissions/sight.js";
 import { seesEveryRecord } from "../seen.js";
 import { problemsMoved, type PlannedChange, type Store } from "../store.js";
 import { andList, coerceCell, orList, splitCell } from "./coerce.js";
@@ -666,10 +666,13 @@ function labelFor(definition: AnyNodeDefinition, kind: string, fields: Record<st
  * of, their own (FR-55), so the id says nothing of a record kept from them.
  */
 function mint<S extends AnySchema>(store: Store<S>, seen: Store<S>, by: Principal, taken: ReadonlySet<string>, kind: string, label: string): string {
+  // An id the log ever held, a removed record's included, is never made again: who made a record is the first add of its id.
+  const ever = (id: string) => recordsOf(store.log).kindOf(id) !== undefined;
+  const limited = !seesEveryRecord(store, by)(kind);
   return mintId(`${kind}:${slug(label)}`, {
-    seen: (id) => seen.graph.has(id) || taken.has(id),
-    held: (id) => store.graph.has(id) || taken.has(id),
-    limited: !seesEveryRecord(store, by)(kind),
+    seen: (id) => seen.graph.has(id) || taken.has(id) || (!limited && ever(id)),
+    held: (id) => store.graph.has(id) || taken.has(id) || ever(id),
+    limited,
     me: actingAs(by).id,
   });
 }

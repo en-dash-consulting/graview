@@ -1051,7 +1051,7 @@ export class Store<S extends AnySchema> {
    */
   private sighted(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
     // Who `$me` is: the person, for an agent acting for one (Roadmap f-act-as-me).
-    const me = { me: author && actingAs(author).id };
+    const me = { me: author && actingAs(author).id, everHeld: (id: string) => recordsOf(this.log).kindOf(id) !== undefined };
     if (author === undefined || !hidesFrom(this, author)) return me;
     // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
     const hidden = seesId(this, author);
