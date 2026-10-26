@@ -29,7 +29,7 @@ describe("a store on disk", () => {
     for (const scope of ["../victim", "..", ".", "", "a/b", "/abs", "a\\b", "a\0b"]) {
       await expect(adapter.load(scope)).rejects.toThrow(/cannot name a store's folder|outside/);
       await expect(adapter.save(scope, { nodes: [], edges: [] } as never)).rejects.toThrow();
-      await expect(adapter.appendOps(scope, [{ seq: 0 } as never])).rejects.toThrow();
+      await expect(adapter.appendOps!(scope, [{ seq: 0 } as never])).rejects.toThrow();
       await expect(adapter.delete(scope)).rejects.toThrow();
       for (const fileOf of [connectionsFileOf, subscriptionsFileOf, frictionFileOf, learnedFileOf, viewsFileOf]) expect(() => fileOf({ adapter, where: data }, scope)).toThrow();
     }
