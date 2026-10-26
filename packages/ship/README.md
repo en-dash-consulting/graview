@@ -96,7 +96,10 @@ Who is asking is the host's to say: `serveStore({ seatOf })` reads its own crede
 the `Request` and returns the principal every call is judged under, or a promise of it. The framework's clients also send the seat
 as headers (`SEAT_HEADERS`: who, as what, by what name, and for whom), and a store believes
 them only when told to — `serveStore({ trustSeatHeaders: true })`, which `graview serve`
-sets for a server on 127.0.0.1 and says so. A store with neither answers 401 on every route
+sets for a server on 127.0.0.1 and says so. There it keeps to its own origin and host
+(`ownOrigin`) and the origins `--allow-origin` names (`allowOrigins`, each echoed in its CORS
+answer in place of `*`), and reads no `x-graview-kind: system` as the system's seat
+(`trustSystemSeat`, which `--trust-seat-headers` turns on). A store with neither answers 401 on every route
 but health. Whatever a host asks for rides along: `openRemote({ headers })` sends them with
 every request, and the framework never reads them. What a call came through (`via`: `web`,
 `api`, `mcp:Claude`), recorded on the op, is the host's word too: `viaOf(request, seat)` says

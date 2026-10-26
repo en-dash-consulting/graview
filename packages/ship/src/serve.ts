@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { gzipSync } from "node:zlib";
 import type { Duplex } from "node:stream";
 import type { AnySchema, CompactOptions, Operation } from "@graview/core";
-import { sameOrigin } from "@graview/core/sync";
+import { ownHost, sameOrigin } from "@graview/core/sync";
 import { createStoreHandler, SEAT_HEADERS, seatFromHeaders, WIRE, type AdapterStoreHandlerOptions, type StoreHandler } from "./handler.js";
 import type { Compaction, OpenedStore } from "./open-store.js";
 import { LIVE_PATH, LIVE_SUBPROTOCOL } from "./live.js";
@@ -38,8 +38,18 @@ export interface ServeOptions<S extends AnySchema> extends AdapterStoreHandlerOp
    * How `graview preview`, which believes the seat its own page names, keeps
    * another site's page, or one that rebinds its name here, out of that seat.
    * Off by default: a store an embed reaches is reached from other origins.
+   * On, the store's answers name no origin but `allowOrigins`' to a
+   * browser (no `Access-Control-Allow-Origin: *`).
    */
   readonly ownOrigin?: boolean;
+  /**
+   * THE OTHER PAGES `ownOrigin` LETS IN: origins (`http://localhost:5195`)
+   * whose pages may use this server too — a dev server's app opened
+   * against `graview serve` (`?server=…`). Each is answered with its own
+   * origin in `Access-Control-Allow-Origin`, and only at a host that is
+   * this machine. Nothing besides this server's own page when absent.
+   */
+  readonly allowOrigins?: readonly string[];
   /**
    * The most bytes a request's body may carry: one that says more, or sends
    * more as it streams (chunked too), is answered 413 before any route or
@@ -75,10 +85,33 @@ export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, 
 const CLOSE_GRACE_MS = 1500;
 
 export async function serveStore<S extends AnySchema>(options: ServeOptions<S>): Promise<ServedStore<S>> {
-  const { port: wanted, host, answer, ownOrigin = false, maxBodyBytes = MAX_BODY_BYTES, ...rest } = options;
+  const { port: wanted, host, answer, ownOrigin = false, allowOrigins = [], maxBodyBytes = MAX_BODY_BYTES, ...rest } = options;
   const handler = await createStoreHandler(rest);
   const NOT_OURS = JSON.stringify({ error: "Refused: not from this server's own page.", reason: "forbidden" });
-  const refused = (incoming: IncomingMessage) => ownOrigin && !sameOrigin(incoming.headers);
+  const allowed = new Set(allowOrigins.map(originOf).filter((origin): origin is string => origin !== undefined));
+  /** The origin a request's page is on, when it is one this server lets in besides its own (and at a host that is this machine). */
+  const allowedOrigin = (incoming: IncomingMessage): string | undefined => {
+    const origin = originOf(incoming.headers.origin);
+    const at = incoming.headers.host;
+    return origin !== undefined && allowed.has(origin) && ownHost(typeof at === "string" ? at : undefined) ? origin : undefined;
+  };
+  const refused = (incoming: IncomingMessage) => ownOrigin && !sameOrigin(incoming.headers) && allowedOrigin(incoming) === undefined;
+  /*
+   * WHICH PAGES MAY READ THE ANSWER. The handler says `*`, for an embed on
+   * any origin; a server that keeps to its own page says none, or the one
+   * allowed origin that asked, so a page elsewhere cannot read what a seat
+   * it claimed was served.
+   */
+  const corsOf = (incoming: IncomingMessage): ((headers: Record<string, string>) => void) | undefined => {
+    if (!ownOrigin) return undefined;
+    const origin = allowedOrigin(incoming);
+    return (headers) => {
+      delete headers["access-control-allow-origin"];
+      if (origin === undefined) return;
+      headers["access-control-allow-origin"] = origin;
+      headers["vary"] = headers["vary"] ? `${headers["vary"]}, Origin` : "Origin";
+    };
+  };
 
   const server = createServer((incoming, outgoing) => {
     if (refused(incoming)) {
@@ -88,7 +121,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     }
     void requestOf(incoming, maxBodyBytes)
       .then(async (request) => (answer ? await answer(request) : undefined) ?? handler.handle(request))
-      .then((response) => write(outgoing, response, takesGzip(incoming)))
+      .then((response) => write(outgoing, response, takesGzip(incoming), corsOf(incoming)))
       .catch((error: unknown) => {
         if (error instanceof TooLarge) {
           // Said, and the connection closed behind it: what is still coming is not read.
@@ -216,7 +249,7 @@ async function requestOf(incoming: IncomingMessage, limit = MAX_BODY_BYTES): Pro
  * when its declared length is over the limit, and the moment what has
  * streamed passes it — a chunked body says no length.
  */
-function bodyOf(incoming: IncomingMessage, limit: number): Promise<Buffer> {
+function bodyOf(incoming: IncomingMessage, limit: number): Promise<Buffer<ArrayBuffer>> {
   const declared = Number(incoming.headers["content-length"]);
   if (Number.isFinite(declared) && declared > limit) return Promise.reject(new TooLarge());
   return new Promise((done, fail) => {
@@ -252,6 +285,17 @@ function bodyOf(incoming: IncomingMessage, limit: number): Promise<Buffer> {
   });
 }
 
+/** An origin as a browser names it (`http://localhost:5195`), or nothing for what is not one. */
+function originOf(said: string | readonly string[] | undefined): string | undefined {
+  if (typeof said !== "string" || said === "null") return undefined;
+  try {
+    const url = new URL(said);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Whether the asker takes a gzipped answer. */
 function takesGzip(incoming: IncomingMessage): boolean {
   return /\bgzip\b/.test(String(incoming.headers["accept-encoding"] ?? ""));
@@ -268,12 +312,13 @@ const SMALLEST_COMPRESSED = 1024;
  * server sends about a third of that — and on a phone's network the bytes
  * are the wait. What is already encoded, small, or not text is sent as is.
  */
-async function write(outgoing: ServerResponse, response: Response, gzip = false): Promise<void> {
+async function write(outgoing: ServerResponse, response: Response, gzip = false, cors?: (headers: Record<string, string>) => void): Promise<void> {
   const raw = Buffer.from(await response.arrayBuffer());
   const headers: Record<string, string> = {};
   response.headers.forEach((value, name) => {
     headers[name] = value;
   });
+  cors?.(headers);
   const compress = gzip && raw.length >= SMALLEST_COMPRESSED && !headers["content-encoding"] && COMPRESSIBLE.test(headers["content-type"] ?? "");
   const body = compress ? gzipSync(raw) : raw;
   if (compress) {

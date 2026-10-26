@@ -32,15 +32,20 @@ import type { StoredMeta } from "./meta.js";
  * changes nothing else, which is the actual claim about adapters.
  */
 export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <file>]
-                       [--host <address>] [--trust-seat-headers] [--no-sync] [--no-friction]
+                       [--host <address>] [--trust-seat-headers] [--allow-origin <origin>]
+                       [--no-sync] [--no-friction]
       Serves the app's store over HTTP, and live over a WebSocket at
       /graview/live. The op log is the wire: a client sends calls, the
       store judges them under the caller's own seat, and the ops come back,
       pushed to every socket as they land. Data lives in <dir> (default
       ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and
       believes the seat a request names in its headers, because only this
-      machine can reach it; on any other --host it will not start unless
-      --trust-seat-headers says the network in front of it can be trusted.
+      machine can reach it — from a program, or from a page on its own
+      origin; a page on another origin is refused unless --allow-origin
+      names it (say it once per origin, as http://localhost:5195), and
+      no header names the system's seat. On any other --host it will not
+      start unless --trust-seat-headers says the network in front of it can
+      be trusted, and then it believes every seat header, the system's too.
       The app's declared connections (a Google calendar, a Notion database) run beside it, with
       credentials from the environment and their cursors beside the data;
       --no-sync leaves them off. What people looked for and could not do
@@ -88,6 +93,11 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
 
 /** The same store, whichever command asked: parsed from the flags every store command shares. */
 export const STORE_FLAGS = `--data <dir> (default ./data) | --sqlite <file>, and --seed <file> for a first install`;
+
+/** Every value a flag said more than once is given. */
+function flags(argv: readonly string[], name: string): string[] {
+  return argv.flatMap((arg, at) => (arg === name && argv[at + 1] !== undefined ? [argv[at + 1]!] : []));
+}
 
 export function flag(argv: readonly string[], name: string): string | undefined {
   const at = argv.indexOf(name);
@@ -202,9 +212,18 @@ async function entryOf(argv: readonly string[], command: string, usage: string):
  * so they are believed and the command says so; anywhere else it refuses
  * to start unless told the network in front of it is trusted.
  */
-export function seatTrust(host: string, trustFlag: boolean): { readonly trust: boolean; readonly says: string } | { readonly refuse: string } {
-  if (LOOPBACK.has(host)) return { trust: true, says: `believes seat headers: listening on ${host}, which only this machine reaches` };
-  if (trustFlag) return { trust: true, says: `believes seat headers on ${host}, because --trust-seat-headers says the network in front of it is trusted` };
+export function seatTrust(
+  host: string,
+  trustFlag: boolean,
+): { readonly trust: boolean; readonly says: string; readonly ownOrigin: boolean; readonly system: boolean } | { readonly refuse: string } {
+  /*
+   * Said, the network in front is the operator's word, the system's seat among the headers it carries.
+   * Unsaid, on loopback, "only this machine" is held to: a page on another
+   * origin in this machine's browser — or one rebinding its name here — is
+   * refused (`ownOrigin`), and no header names the system's seat.
+   */
+  if (trustFlag) return { trust: true, ownOrigin: false, system: true, says: `believes seat headers on ${host}, because --trust-seat-headers says the network in front of it is trusted` };
+  if (LOOPBACK.has(host)) return { trust: true, ownOrigin: true, system: false, says: `believes seat headers: listening on ${host}, which only this machine reaches, and only from its own origin or one --allow-origin names` };
   return {
     refuse:
       `graview serve: refusing to listen on ${host} while believing seat headers — anyone who can reach it could claim any seat.\n` +
@@ -232,6 +251,9 @@ export async function serve(argv: readonly string[]): Promise<number> {
     port,
     host,
     trustSeatHeaders: trust.trust,
+    trustSystemSeat: trust.system,
+    ownOrigin: trust.ownOrigin,
+    allowOrigins: flags(argv, "--allow-origin"),
     where: backend.where,
     // Notify me: kept beside the store, and each match said here, where a host would deliver it.
     subscriptions: fileSubscriptions(subscriptionsFileOf(backend, app.name)),
