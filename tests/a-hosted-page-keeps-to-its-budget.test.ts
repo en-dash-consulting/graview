@@ -153,7 +153,7 @@ describe("a hosted page", () => {
     // 1008 KB since this batch came together: a ground judged on every pair the check holds (Roadmap f-ground-suggestion-passes, f-dark-brand-accent), a date that knows only its year or month (f-partial-dates) and every option said by its label (f-option-labels): the scene face measured 1_032_107 B, 4_379 more than main (1_027_728).
     // 1010 KB since a computed value is said as its format (Roadmap f-computed-format, FR-217) and a date emptied in place is cleared (f-clear-date-in-place): the scene face measured 1_033_712 B, 1_605 more than main (1_032_107).
     // 1009 KB since a text block came to say how many lines a card or a row shows of it (FR-218): its `lines` compiled, resolved and drawn on the element: the scene face measured 1_033_062 B, 955 more than main (1_032_107).
-    // 1011 KB once both came together in one batch: the scene face measured SCENE_BYTES B.
+    // 1011 KB once both came together in one batch: the scene face measured 1_034_667 B, 2_560 more than main (1_032_107).
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1011 * 1024);
   });
 
