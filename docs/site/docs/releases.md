@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.57`](https://graview.dev/docs/releases.html#v0-1-57)
 - [`0.1.56`](https://graview.dev/docs/releases.html#v0-1-56)
 - [`0.1.55`](https://graview.dev/docs/releases.html#v0-1-55)
 - [`0.1.54`](https://graview.dev/docs/releases.html#v0-1-54)
@@ -57,6 +58,23 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.57
+
+Published October 25, 2026 · the current version
+
+A view can be renamed, and a view of many can be its kind's list page; a computed value is said as its format and rounded; a date emptied in place is cleared; a text block says how many lines it shows; worker views name their sections, choose their pictures and style a disclosure's marker.
+
+- **Renaming a view.** The edit `rename-view` moves every `view:<name>` the document holds (the order, the place the app opens on, the bar) and says so; a taken name or one that is no view's name is refused.
+- **A view of many as the list page.** A worker view whose manifest says `replaces: "page"` on `cardinality: "many"` is drawn on its kind's list page in place of the list, as a view of one already replaces a record's page.
+- **Computed values read well.** A computed field takes `format` (`money`, `percent`, `duration`), `unit` and `hidden`; `set-format` names a computed field; the rule language has `round(x, places)`. A hidden computed value still sorts a list and feeds a view.
+- **Clearing in place.** Emptying a date, a text, a number or an amount where it is shown clears it, one change that can be undone; a field a record cannot be without keeps its value and says so beside it.
+- **Text that shows more.** A text block may say `lines` (1 to 12, or 0 for all of it) on a card or a row.
+- **Worker views.** A section may be named by its own heading with `aria-labelledby`; a manifest's `pictures` may choose kinds or fields (`["circuit"]`, `{ "circuit": "photo" }`) so the 12 MB go to what the view draws; `::-webkit-details-marker` is kept beside `summary::marker`; a home view that bleeds starts right under the bar on a phone. The worker view skill says to draw a choice by its label from `props.choices`.
+
+**Before you upgrade:** Additive: the `rename-view` edit; `replaces: "page"` on a view of many; a computed field's `format`, `unit` and `hidden`, `set-computed`'s `hidden`, `set-format` on a computed field and `round`; a text block's `lines` and the finding `view-lines`; a manifest's `pictures` as a list or by field; `aria-labelledby` and `aria-describedby` naming the view's own elements; `::-webkit-details-marker`; `EditableField`'s `clearable`; FR-203 and FR-216 to FR-221 in `capabilities().shipped`. A build that predates them refuses the new keys. Changed: an emptied field in place sends `null` rather than nothing, and an emptied number is no longer read as zero; `aria-labelledby` naming an id the view does not draw is held back. Ops, stored formats and derived tools are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.57) · [The full changelog for 0.1.57](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0157)
 
 ## 0.1.56
 
