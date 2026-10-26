@@ -283,6 +283,25 @@ export interface MatchOptions {
   readonly app?: string;
   /** The host's directory of seats and people, so `byName` says a person's name. */
   readonly seats?: readonly { readonly label: string; readonly principal: Principal }[];
+  /**
+   * WHO A SUBSCRIBER IS NOW. A subscription keeps its person as they were
+   * when they asked, roles and all; a host that has since changed their
+   * roles says who they are now, and each subscription is judged as that
+   * person — undefined for one it no longer knows, who is told nothing.
+   * Unsaid, a subscription is judged with the person as they subscribed,
+   * so a host that changes a person's roles or takes their seat away
+   * either says this or removes their subscriptions itself.
+   */
+  readonly subscriber?: (who: Principal) => Principal | undefined;
+}
+
+/** Each subscription with its person as the host says they are now, leaving out one it no longer knows. */
+export function subscribersNow(subscriptions: readonly Subscription[], now: ((who: Principal) => Principal | undefined) | undefined): Subscription[] {
+  if (!now) return [...subscriptions];
+  return subscriptions.flatMap((subscription) => {
+    const who = now(subscription.who);
+    return who === undefined ? [] : [who === subscription.who ? subscription : { ...subscription, who }];
+  });
 }
 
 /**
@@ -303,7 +322,10 @@ export interface MatchOptions {
  */
 export function matchSubscriptions<S extends AnySchema>(store: Store<S>, ops: readonly Operation[], subscriptions: readonly Subscription[], options: MatchOptions = {}): SubscriptionMatch[] {
   const any = store as unknown as Store<AnySchema>;
-  const judged = subscriptions.filter((one) => options.app === undefined || one.app === options.app);
+  const judged = subscribersNow(
+    subscriptions.filter((one) => options.app === undefined || one.app === options.app),
+    options.subscriber,
+  );
   if (judged.length === 0 || ops.length === 0) return [];
   const readers = judged.filter((one) => readsPublished(any.publishing, one.who));
   const working = readers.length === 0 ? judged : judged.filter((one) => !readers.includes(one));

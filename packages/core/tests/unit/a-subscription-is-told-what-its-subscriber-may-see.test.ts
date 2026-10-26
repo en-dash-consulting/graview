@@ -204,3 +204,17 @@ describe("a subscription", () => {
     expect(told.map((match) => match.intent)).toEqual(["Mark “Buy milk” done"]);
   });
 });
+
+describe("a subscriber whose roles changed since they subscribed", () => {
+  it("is judged as the host says they are now, and told nothing once it no longer knows them", () => {
+    const store = app();
+    const added = store.apply({ name: "add-task", args: { label: "Gus's own" } }, { author: gus }).diff.addedNodes[0]!.id;
+    const owned = sub(olga, { on: "changed", kind: "task" }, { alsoMine: true });
+    const ops = landed(store, () => store.apply({ name: "keep-secret", args: { id: added, secret: "under the mat" } }, { author: olga }));
+    // As she subscribed, an owner, Olga sees the secret; made a guest since, she sees none of Gus's tasks.
+    expect(JSON.stringify(matchSubscriptions(store, ops, [owned]))).toContain("under the mat");
+    expect(matchSubscriptions(store, ops, [owned], { subscriber: (who) => ({ ...who, roles: ["guest"] }) })).toEqual([]);
+    expect(matchSubscriptions(store, ops, [owned], { subscriber: () => undefined })).toEqual([]);
+    expect(matchSubscriptions(store, ops, [owned], { subscriber: (who) => who })).toHaveLength(1);
+  });
+});

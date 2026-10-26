@@ -271,6 +271,17 @@ interface HandlerOptions<S extends AnySchema> {
    */
   readonly onSubscriptionMatch?: OnSubscriptionMatch;
   /**
+   * WHO A SUBSCRIBER IS NOW: the host's own word for the person a
+   * subscription was kept for (`subscription.who`, as they were when they
+   * subscribed) — their roles today, or undefined for a person it no longer
+   * knows, who is told nothing. Every commit is judged as each subscriber
+   * is now, so a person whose roles were taken away is not told of a record
+   * they may no longer see. Unsaid, a subscription is judged with the
+   * person as they subscribed: a host whose people's roles change says
+   * this, or removes their subscriptions when it changes them.
+   */
+  readonly subscriberNow?: (who: Principal) => Principal | undefined | Promise<Principal | undefined>;
+  /**
    * WHERE THE FRICTION LOG IS KEPT (Roadmap f-friction-log): the host's
    * `FrictionStore`, posted to and read at `/graview/friction`. Unsaid,
    * the handler keeps it in memory for as long as it runs; `graview serve`
@@ -866,7 +877,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
   );
   function notify(store: Store<AnySchema>, ops: readonly Operation[]): void {
     const app = serving.app.name;
-    const tell = (all: readonly Subscription[]) => {
+    const match = (all: readonly Subscription[]) => {
       let matches: SubscriptionMatch[];
       try {
         matches = matchSubscriptions(store, ops, all, { app });
@@ -875,6 +886,16 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         return;
       }
       for (const match of matches) told.tell(match);
+    };
+    /* Each subscriber as the host says they are now, when it says: at once where it answers at once. */
+    const tell = (all: readonly Subscription[]) => {
+      const now = options.subscriberNow;
+      if (!now) return match(all);
+      const mine = all.filter((one) => one.app === app);
+      const answers = mine.map((one) => now(one.who));
+      const judged = (whos: readonly (Principal | undefined)[]) => mine.flatMap((one, at) => (whos[at] === undefined ? [] : [{ ...one, who: whos[at]! }]));
+      if (answers.every((answer) => !(answer instanceof Promise))) return match(judged(answers as readonly (Principal | undefined)[]));
+      void Promise.all(answers).then((whos) => match(judged(whos)), report);
     };
     try {
       const listed = subscriptions.list();

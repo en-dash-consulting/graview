@@ -125,10 +125,17 @@ match on its output. A page reaches a served store's with `remoteSubscriptions({
 from `@graview/ship/browser`, handed to the provider, or to the embed's `mount`, as
 `subscriptions`; it is a module of its own, so a page that imports it carries no rule parser.
 
+A subscription keeps its person as they were when they subscribed, roles and all. A host whose
+people's roles change says who each subscriber is now with `subscriberNow(who)` — their present
+principal, or undefined for one it no longer knows, who is told nothing — and every commit is
+judged as that person is now. Unsaid, a subscription is judged with the person as they
+subscribed: such a host removes a person's subscriptions when it takes a role away.
+
 ```ts
 createStoreHandler({
   app, adapter, seatOf,
   subscriptions: myUsersSubscriptions,           // the host's own storage
+  subscriberNow: (who) => myUsers.principalOf(who.id),
   onSubscriptionMatch: (match) => sendEmail(match.subscription.who, match.said, match.records),
 });
 ```
