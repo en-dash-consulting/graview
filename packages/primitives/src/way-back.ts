@@ -49,10 +49,8 @@ export function lastChangeOf<S extends AnySchema>(store: Store<S>, principal?: P
     const author = batch.author;
     const mine = author.kind === "human" && (principal?.id === undefined || author.id === undefined || author.id === principal.id);
     if (!mine) continue;
-    const check = store.canUndo(batch.id);
-    if (!check.ok) continue;
-    const permitted = check.ops.every((op) => !op.mutation || store.permits(op.mutation, principal).ok);
-    if (!permitted) continue;
+    // The store's own judgment of taking it back, log and policy both: what is offered is what it would do.
+    if (!store.mayUndo(batch.id, principal).ok) continue;
     return { batch: batch.id, intent: batch.intent };
   }
   return undefined;

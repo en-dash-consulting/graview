@@ -282,7 +282,13 @@ export function UndoTurn({ batch }: { readonly batch: string | readonly string[]
     [store, batch, length],
   );
 
-  if (lookingBack || (!check.ok && check.ops.length === 0)) return null;
+  // Offered only when the store would take it back for this seat: an undo shown and then refused is the watch's "offered then refused".
+  const may = useMemo(
+    () => (check.ok ? store.mayUndo(batch, principal) : { ok: true as const }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, batch, length, principal, check],
+  );
+  if (lookingBack || (!check.ok && check.ops.length === 0) || !may.ok) return null;
   const blocked = !check.ok;
   const alsoNeeded = blocked ? check.includeBatches : [];
 

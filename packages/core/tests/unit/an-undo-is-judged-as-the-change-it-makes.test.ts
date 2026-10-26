@@ -74,3 +74,22 @@ describe("a change no act made", () => {
     expect(store.graph.getNode("note:synced")).toBeUndefined();
   });
 });
+
+describe("what a page offers to take back", () => {
+  it("is what the store would take back: mayUndo answers as undo judges, so nothing offered is then refused", () => {
+    const store = storeOf();
+    const sync = imported(store);
+    const published = store.apply({ name: "publish", args: { id: "n2", label: "Draft" } }, { author: admin });
+    // A change no act made: refused to the guest, offered to the system.
+    expect(store.mayUndo(sync.batch, guest).ok).toBe(false);
+    expect(store.mayUndo(sync.batch, { kind: "system", id: "host" }).ok).toBe(true);
+    // An act: offered to whoever may do it, and to nobody else.
+    expect(store.mayUndo(published.batch, admin).ok).toBe(true);
+    expect(store.mayUndo(published.batch, guest).ok).toBe(false);
+    // Every answer agrees with what undo then does: the refused ones throw, the offered one takes it back.
+    expect(() => store.undo(sync.batch, { author: guest })).toThrow(PermissionDeniedError);
+    expect(() => store.undo(published.batch, { author: guest })).toThrow(PermissionDeniedError);
+    store.undo(published.batch, { author: admin });
+    expect(store.graph.getNode("n2")).toBeUndefined();
+  });
+});
