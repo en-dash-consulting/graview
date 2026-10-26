@@ -390,6 +390,8 @@ function call(e: Extract<Expr, { t: "call" }>, kind: Kind, r: Reader): Parts {
       return [word("length of"), ...say(arg(0), kind, r)];
     case "lower":
       return say(arg(0), kind, r);
+    case "round":
+      return [...say(arg(0), kind, r), word(e.args.length === 2 && literalOf(arg(1)) ? `rounded to ${String((arg(1) as { value: unknown }).value)} places` : "rounded")];
     case "contains":
     case "startsWith":
       return [...say(arg(0), kind, r), word(e.fn === "contains" ? "contains" : "starts with"), ...sayAt(arg(1), kind, r, fieldAt(arg(0), kind, r))];

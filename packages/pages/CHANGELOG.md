@@ -1,5 +1,30 @@
 # @graview/pages
 
+## 0.1.57
+
+### Patch Changes
+
+- 67e4b0d: A home view that bleeds starts right under the bar on a phone (FR-216), Roadmap f-bleed-top-on-phones. At 390 pixels a home whose worker view says `bleed: true` took back its side gutters and kept the page's 40 pixels of top padding, so the view sat under an empty band between the section nav and its first pixel — and a home view may not say `heading: "own"` to lose it. The home's page now gives its top padding back too on a face 680 pixels wide or less, so the view starts flush under the bar; at a desk the column keeps its spacing, as a view that bleeds keeps the column's width there. Where the view did not draw, what stands in its place keeps the padding, as it keeps the gutter. Guest's test opens the home with a view that bleeds and finds the page marked and the phone-only rule, and without `bleed` finds neither; `verify-address` measures the view's top against the page's at 390 and 1440 (`aHomeViewThatBleedsStartsUnderTheBarOnAPhoneAndKeepsItsSpacingAtADesk`). The pages face alone carries 244 bytes more minified (78 gzipped) and every face 244 (84), each under a raise of its budget (`scripts/budget-raises/a-home-view-that-bleeds-starts-under-the-bar-*.json`); a hosted page's first load is unchanged. `capabilities().shipped` gains FR-216.
+  
+  Compatibility: ops and primitives, stored formats, the declaration and check finding codes, derived tool names and input schemas — unchanged. The wire — additive: `capabilities().shipped` gains FR-216. What Graview Cloud does: nothing; an app whose home view says `bleed: true` starts under the bar on a phone once it runs this build.
+- dda9073: A view of many may be its kind's list page (FR-203). In Graview Cloud an agent designed a view of a team's players and could not make it the players' list: a view of many was drawn at its own `/places/<slug>` when titled and nowhere when not, and `/players` always kept the app's own list. A worker view whose manifest says `replaces: "page"` on `cardinality: "many"` is now drawn on its kind's list page under the list's heading in place of the list — no arranging line, no rows, no forms: what is done there is what the view offers — as a view of one that says so is a record's page (FR-149); a titled one is its own place as well, which then offers no "All players as a list" back to itself. Should it fail, the kind's own face is drawn in its place. The list page reads whichever view the kind draws at many × full as the host's tidying leaves the registry, so a view the host deleted or hid stands in for nothing and the list is the app's own again; the host decides who may set the key, as for a view of one. `checkManifest` accepts the key on a view of many and refuses it only on the home's view, and `describePlace` says a list page so replaced as its heading and the view (`drawnBy: "view:<name>"`), with no form. The graview-worker-view skill and the guest guide say so. Pages' test opens `/players` with a view of many that replaces the page and finds the view and no rows, and without the key finds the derived list; guest's registers a real worker view each way and opens `/deliverables`; core's describes both. The pages face alone carries 840 bytes more minified (170 gzipped) and every face 843 (191), each under a raise of its budget (`scripts/budget-raises/a-view-of-many-may-be-its-kinds-list-page-*.json`); a hosted page's first load is unchanged. `capabilities().shipped` gains FR-203.
+  
+  Compatibility: ops and primitives and stored formats — unchanged. The declaration — unchanged; `describePlace` says a kind's list page a host's view of many replaces as that view. Derived tool names and input schemas — unchanged. The wire — additive: a worker view's manifest may say `replaces: "page"` on a view of many, which an earlier build refuses; `capabilities().shipped` gains FR-203. What Graview Cloud does: lets an agent's list view say `replaces: "page"` once `capabilities().shipped` has FR-203, gated as it gates a view of one's.
+- Updated dependencies [6e51c72]
+- Updated dependencies [2173a1e]
+- Updated dependencies [67e4b0d]
+- Updated dependencies [4104b12]
+- Updated dependencies [67e4b0d]
+- Updated dependencies [994bfe2]
+- Updated dependencies [3eaff17]
+- Updated dependencies [dda9073]
+- Updated dependencies [6a43f94]
+  - @graview/core@0.1.57
+  - @graview/primitives@0.1.57
+  - @graview/tools@0.1.57
+  - @graview/react@0.1.57
+  - @graview/layout@0.1.57
+
 ## 0.1.56
 
 ### Patch Changes

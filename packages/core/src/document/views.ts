@@ -95,7 +95,8 @@ type OneBlock =
       readonly empty?: string;
       readonly as?: (typeof LIST_AS)[number];
     }
-  | { readonly text: string; readonly tone?: ToneSpec }
+  /** `lines`: how many lines a card or a row shows before it cuts the text short (FR-218); `0` shows it whole. */
+  | { readonly text: string; readonly tone?: ToneSpec; readonly lines?: number }
   | { readonly badge: string; readonly tone?: ToneSpec }
   | { readonly field: string; readonly as?: ViewFieldFormat; readonly currency?: string; readonly label?: string }
   /** A record's pictures (FR-162): the first, small (`thumb`), or every one, each opening full size (`gallery`). */
@@ -124,7 +125,7 @@ export const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
   title: [],
   headline: [],
   list: ["sort", "limit", "group", "empty", "as"],
-  text: ["tone"],
+  text: ["tone", "lines"],
   badge: ["tone"],
   field: ["as", "currency", "label"],
   image: ["as", "label"],
@@ -137,7 +138,7 @@ export const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
 };
 const BLOCK_TYPES = Object.keys(BLOCK_KEYS);
 const SHAPES =
-  '{"title": "{name}"}, {"headline": "{count(all(\'offer\'))} offers"}, {"figure": expr, "as"?: "number"|"money"|"percent", "currency"?, "label"?, "emphasis"?: "large"}, {"list": expr, "sort"?, "limit"?, "group"?, "empty"?, "as"?: "card"|"row"}, {"text": "…", "tone"?}, {"badge": "{status}", "tone"?}, {"field": "quote", "as"?, "currency"?, "label"?}, {"image": "photos", "as"?: "thumb"|"gallery"}, {"progress": {"value": expr, "max": expr}, "label"?}, {"group": [blocks], "direction"?: "row"|"column"}, {"when": expr, "show": [blocks]}, {"divider": true}, {"figure": true}';
+  '{"title": "{name}"}, {"headline": "{count(all(\'offer\'))} offers"}, {"figure": expr, "as"?: "number"|"money"|"percent", "currency"?, "label"?, "emphasis"?: "large"}, {"list": expr, "sort"?, "limit"?, "group"?, "empty"?, "as"?: "card"|"row"}, {"text": "…", "tone"?, "lines"?: 0-12}, {"badge": "{status}", "tone"?}, {"field": "quote", "as"?, "currency"?, "label"?}, {"image": "photos", "as"?: "thumb"|"gallery"}, {"progress": {"value": expr, "max": expr}, "label"?}, {"group": [blocks], "direction"?: "row"|"column"}, {"when": expr, "show": [blocks]}, {"divider": true}, {"figure": true}';
 
 /** Whether a field holds pictures or documents: an `image` or `file`, or a list of them (FR-162). */
 export const holdsFiles = (spec: { readonly type: string; readonly of?: string } | undefined): boolean => /^(image|video|file)$/.test(spec?.of ?? spec?.type ?? "");
@@ -229,7 +230,7 @@ function expression(source: unknown, path: string, scope: Scope): void {
   }
 }
 
-function template(source: unknown, path: string, scope: Scope, block?: "text" | "headline"): void {
+function template(source: unknown, path: string, scope: Scope, block?: "text" | "headline", measured = false): void {
   const text = block === "text";
   if (typeof source !== "string" || source.length === 0 || source.length > 300) {
     scope.findings.push(error("view-template", path, 'a template is words with {field} in braces, like "{name}" or "{quote|money}", at most 300 characters'));
@@ -253,7 +254,8 @@ function template(source: unknown, path: string, scope: Scope, block?: "text" | 
      * thirty-line summary made a row of cards a wall of text; it is clamped
      * where it is drawn, and the check says how to say less on purpose.
      */
-    if (text && !part.format && part.expr.t === "ident" && (scope.slot === "card" || scope.slot === "row") && scope.spec.prose?.(part.expr.name)) {
+    // A text block that says its `lines` (FR-218) has measured what it shows on purpose.
+    if (text && !measured && !part.format && part.expr.t === "ident" && (scope.slot === "card" || scope.slot === "row") && scope.spec.prose?.(part.expr.name)) {
       const field = part.expr.name;
       scope.findings.push(warning("view-whole-text", path, `${scope.kind} ${scope.slot} shows ${field} whole; it will be clamped. Use {${field}|excerpt} or move it to the page.`, `write {${field}|excerpt}, or {${field}|excerpt: 80} for fewer characters`));
     }
@@ -268,6 +270,15 @@ function template(source: unknown, path: string, scope: Scope, block?: "text" | 
       scope.findings.push(warning("view-headline-long", path, `${about(scope)}${scope.slot ? ` ${scope.slot}` : ""} heads it with ${field}, a long text, drawn at a headline's size; a headline is a few words.`, `say it in a text block, {"text": "{${field}}"}, or head it with {${field}|excerpt: 60}`));
     }
   }
+}
+
+/** The most lines a text block may ask a card or a row for; past it the text is the page's to say whole. */
+export const MAX_TEXT_LINES = 12;
+
+/** A text block's `lines` (FR-218): a whole number of lines, 1 to 12, or 0 for the text whole. */
+function lines(value: unknown, path: string, scope: Scope): void {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= MAX_TEXT_LINES) return;
+  scope.findings.push(error("view-lines", path, `lines is ${JSON.stringify(value)}, and a text block's lines is a whole number from 1 to ${MAX_TEXT_LINES}, or 0 to show it whole`, '{"text": "{awards}", "lines": 6}, or "lines": 0 for no cut at all'));
 }
 
 function tone(value: unknown, path: string, scope: Scope): void {
@@ -321,8 +332,9 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
     case "headline":
     case "text":
     case "badge":
-      template(value, `${path}.${type}`, scope, type === "text" || type === "headline" ? type : undefined);
+      template(value, `${path}.${type}`, scope, type === "text" || type === "headline" ? type : undefined, type === "text" && "lines" in raw);
       if ("tone" in raw) tone(raw["tone"], `${path}.tone`, scope);
+      if (type === "text" && "lines" in raw) lines(raw["lines"], `${path}.lines`, scope);
       return;
     // A field, or a field's pictures and documents (FR-162).
     case "image":

@@ -38,7 +38,9 @@ export type OpenRefusalReason =
   /** A record the format does not know, or one about a node that is not drawn. */
   | "record"
   /** More nodes than the view is allowed. */
-  | "budget";
+  | "budget"
+  /** An `aria-labelledby` or `aria-describedby` naming an id no element of the view's own drawing has: `ids` says which. */
+  | "reference";
 
 export interface OpenRefusal {
   readonly reason: OpenRefusalReason;
@@ -49,6 +51,8 @@ export interface OpenRefusal {
   readonly address?: string;
   /** How long that address was, in characters, where it was refused for its length: a view's own `data:` image past `OPEN_MAX_IMAGE`. */
   readonly length?: number;
+  /** The ids a reference named that no element of the view has (`reference`). */
+  readonly ids?: readonly string[];
 }
 
 /** An element as the host draws it, or a refusal. */

@@ -118,7 +118,7 @@ and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`;
 (`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list
 key sorts by its first value, then its next), `first(S)` for one record,
 `either(a, b)` for the first that is something; `if(cond, a, b)`, which
-works out only the branch it takes; `present`, `len`, dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set
+works out only the branch it takes; `round(x, places)`; `present`, `len`, dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set
 and give each record reached once; sets meet with `&`, join with `|` and part
 with `-` — LifeLogics' coverage is one figure,
 `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step

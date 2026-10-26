@@ -2,7 +2,7 @@ import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@g
 import { blockContextFor, blocksName, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
 import type { ViewSlot, ViewSpecsByKind } from "@graview/core/document";
 import { isDefaultView, useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { createContext, Fragment, Suspense, useContext, useRef, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
+import { createContext, Fragment, Suspense, useContext, useRef, useState, type ComponentType, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { useEndsAboveItsList } from "./stretched-link.js";
 import { DefaultView, useDefaultElsewhere } from "./default-view.js";
 import { RecordHeadContext } from "./record-head.js";
@@ -61,6 +61,23 @@ export interface AlreadySaid {
   readonly field?: string;
   /** The value, and its words as the heading says them. */
   readonly values: readonly string[];
+}
+
+/**
+ * A TEXT BLOCK'S OWN LINES (FR-218): `{"text": "{awards}", "lines": 6}`
+ * shows six lines on a card or a row before it cuts the text short, and
+ * `"lines": 0` shows it whole — where the card's three and the row's one
+ * would cut a list of awards at its third line with nothing to show the
+ * rest. Said on the element, so it beats the slot's clamp wherever the
+ * block is drawn. A line of facts keeps its own flow (`box` false).
+ */
+function linesOf(lines: number | undefined, box: boolean): { readonly "data-graview-lines"?: string; readonly style?: CSSProperties } {
+  if (lines === undefined) return {};
+  if (lines === 0) return { "data-graview-lines": "all", style: { WebkitLineClamp: "none", lineClamp: "none", maxHeight: "none", overflow: "visible" } };
+  return {
+    "data-graview-lines": String(lines),
+    style: { ...(box ? { display: "-webkit-box", WebkitBoxOrient: "vertical" as const } : {}), WebkitLineClamp: lines, lineClamp: lines, overflow: "hidden", maxHeight: `${lines * 1.45}em` },
+  };
 }
 
 /** Past this many characters a headline is a sentence or more, drawn a step smaller and clamped (`[data-long]`). */
@@ -134,7 +151,7 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
       // A value with lines in it keeps them — its paragraphs and lists (FR-146); one line of words stays a line. A Markdown field is drawn as prose (FR-180).
       if (block.markdown || hasShape(block.text)) {
         return (
-          <div className="graview-spec-text" {...(block.tone ? { "data-graview-tone": block.tone } : {})}>
+          <div className="graview-spec-text" {...(block.tone ? { "data-graview-tone": block.tone } : {})} {...linesOf(block.lines, true)}>
             <TextBody text={block.text} markdown={block.markdown} />
           </div>
         );
@@ -142,7 +159,7 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
       // A card's or a row's line of facts with a choice in it: the choices as chips, the rest quiet after them, in the order written.
       if (block.runs) {
         return (
-          <p className="graview-spec-text graview-spec-meta" {...(block.tone ? { "data-graview-tone": block.tone } : {})}>
+          <p className="graview-spec-text graview-spec-meta" {...(block.tone ? { "data-graview-tone": block.tone } : {})} {...linesOf(block.lines, false)}>
             {block.runs.map((run, at) => (
               <Fragment key={at}>
                 {/* A space between two facts, for whoever hears or copies the line; the gap is what is seen. Two runs of words keep their dot, in the words, never a mark of its own. */}
@@ -160,7 +177,7 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
         );
       }
       return (
-        <p className="graview-spec-text" {...(block.tone ? { "data-graview-tone": block.tone } : {})}>
+        <p className="graview-spec-text" {...(block.tone ? { "data-graview-tone": block.tone } : {})} {...linesOf(block.lines, true)}>
           {block.text}
         </p>
       );

@@ -18,7 +18,7 @@ A kind declared is drawn already: a card, a row, a page. When that default is wr
 
 In a document the same is the top-level `views.<kind>`, and the edit is `{ "op": "set-view", "kind": "fixture", "slot": "card", "blocks": [...] }` (`null` gives the default back).
 
-`card` is drawn beside the focus and on the pages face's gallery, `row` as the one line a member is among many (a focused group, the list page), and `page` above the default record. Tones are `good`, `warn`, `bad`, `neutral` and `accent`, the theme's own. Nothing in a spec runs: no CSS, no markup, and the only link drawn is an http(s) `url` field's own value, or a listed record. The scaffold's `views()` draws them (`registerViewSpecs`); so does the embed, by itself.
+`card` is drawn beside the focus and on the pages face's gallery, `row` as the one line a member is among many (a focused group, the list page), and `page` above the default record. Tones are `good`, `warn`, `bad`, `neutral` and `accent`, the theme's own. A card shows three lines of a `text` block and a row one; `{ text: "{awards}", lines: 6 }` shows six, `lines: 0` the text whole (`view-lines` refuses past 12). Nothing in a spec runs: no CSS, no markup, and the only link drawn is an http(s) `url` field's own value, or a listed record. The scaffold's `views()` draws them (`registerViewSpecs`); so does the embed, by itself.
 
 A row is a link to its record, so it is always named: one whose blocks show no `title`, no `headline` and no words holding the record's whole name (`{severity} · {status}` alone) is drawn with the name first, and `describe_place` says it so. Lead with `{ "title": "{name}" }` to choose how the name reads.
 
@@ -36,7 +36,7 @@ A kind that also has a worker view of one record draws, on its record page, the 
 
 ```ts computed: { net: { expr: "sum(out('includes'), list * units) * (100 - either(first(all('party') where role == 'client').discount, 0)) / 100", label: "After the discount" }, } ```
 
-Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused (`computed-written`). It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). A document's top-level `computed` holds facts of the whole graph, read as `fact('name')`; a kind's is changed with `set-computed`.
+Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused (`computed-written`). It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). A document's top-level `computed` holds facts of the whole graph, read as `fact('name')`; a kind's is changed with `set-computed`. `{ expr, format: "percent" }` (or `"money"`, `"duration"`, a `unit`; `set-format` sets it) says it so on its page, cards and CSV; `round(x, 3)` rounds; `hidden: true` keeps a helper off its page, cards and CSV while lists, lenses, rules and views still sort and read by it.
 
 1. **Say counts and times in words.** Templates say counts in words: `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three"), `{at | time}` ("10:47 AM"). A field's label, a group's heading and what an empty list says are words, not templates: braces there would be drawn as typed, and `view-braces` warns of them. A `describe` or `label` written in code is not a template either: say the value in code (`momentAsRead(node.startsAt)`), and `describe-template-in-code` warns of `{field}` returned there.
 
@@ -50,7 +50,7 @@ npx graview check --document app.json   # a document
 Report **the actual output**, including warnings. What it catches here:
 
 - `view-field`, `view-name`, `view-tone` — a view spec naming a field the kind lacks, or a tone outside the kit; `view-key` — two blocks under one key; `view-template`, `view-expression` — a template or a condition it cannot read; `view-depth` — lists nested past three
-- `view-whole-text` — a card or row putting a long `text` field whole in a text block (`graview-lists` says how a card shows its start)
+- `view-whole-text` — a card or row putting a long `text` field whole in a text block, unless it says `lines` (`graview-lists` says how a card shows its start)
 - `view-headline-long` — a headline bound to a long `text`, Markdown or long string field whole, which a focus card drew at display size: say it in a `text` block, or head it with `{call|excerpt: 60}` (a headline past about 90 characters is drawn a step smaller and clamped to four lines)
 - `computed-cycle` — values worked out from each other; `computed-clash` — a computed name that is already a field; `computed-cost` — work that grows with the cube of the graph (a warning at the square)
 

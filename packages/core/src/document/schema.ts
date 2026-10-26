@@ -157,7 +157,19 @@ function build() {
   });
 
   /** A computed field: its expression, or the expression with the words it is shown by (FR-83). */
-  const ComputedSpec = z.union([expression, z.strictObject({ expr: expression, label: z.optional(str(1, 60)), description: z.optional(sentence) })]);
+  const ComputedSpec = z.union([
+    expression,
+    z.strictObject({
+      expr: expression,
+      label: z.optional(str(1, 60)),
+      description: z.optional(sentence),
+      /** How its number is said, as a number field's is (FR-217): money, a percent, a duration; and its `unit`. Set with `set-format`. */
+      format: z.optional(z.enum(["money", "percent", "duration"])),
+      unit: z.optional(str(1, 12)),
+      /** Kept off a record's page, card and CSV, and still worked out for a sort, a rule or a view (FR-217). */
+      hidden: z.optional(z.boolean()),
+    }),
+  ]);
 
   const KindSpec = z.strictObject({
     noun: z.optional(str(1, 40)),

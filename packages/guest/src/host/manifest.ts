@@ -24,8 +24,10 @@ import { choicesOf, plainNode, readAcross, type GuestViewInput } from "./session
  *                and its image, video or file field — `[{ kind: "moment",
  *                field: "photo" }]` — for an element it draws marked
  *                `data-drop="<kind>"` (drop.ts)
- *   pictures     true, or { width }: each file on a record it is handed
- *                comes as a `GuestFile`, a picture with an address the
+ *   pictures     true, the kinds it draws pictures of (["circuit"]), or
+ *                { width } with fields by kind ({ circuit: "photo" },
+ *                FR-220): each file on a record it is handed comes as a
+ *                `GuestFile`, a picture it chose with an address the
  *                host made from the bytes (FR-175, pictures.ts); and it
  *                may place a record's video (`<graview-video>`) and open
  *                the host's full-screen viewer (`data-lightbox`, media.ts)
@@ -90,7 +92,10 @@ export interface WorkerViewManifest {
    * a picture with `src`, an address the host made from the bytes, made
    * smaller where it is wider than `width`; a document by its name, type
    * and size — never as the host's path to it. Left out, a file is handed
-   * as the record keeps it.
+   * as the record keeps it. It may choose which pictures it draws
+   * (FR-220): the kinds, `["circuit"]`, or the fields by kind beside
+   * `width`, `{ circuit: "photo" }`; a picture it did not choose is handed
+   * by its facts alone, never fetched nor reckoned against its budget.
    */
   readonly pictures?: GuestPictures;
   /**
@@ -184,14 +189,47 @@ function acceptsProblems<S extends AnySchema>(accepts: unknown, store: Store<S>)
   return problems;
 }
 
-/** What `pictures` asks for, said wrongly, in sentences; empty when it is sound. */
-function picturesProblems(pictures: unknown): readonly string[] {
+/**
+ * What `pictures` asks for, said wrongly, in sentences; empty when it is
+ * sound. A kind it chooses (FR-220) is one the view is handed records of —
+ * its own, or one it reads — and a field one of that kind's that holds a
+ * picture or a file.
+ */
+function picturesProblems<S extends AnySchema>(pictures: unknown, store: Store<S>, manifest: WorkerViewManifest): readonly string[] {
   if (pictures === undefined || pictures === true) return [];
-  if (typeof pictures !== "object" || pictures === null || Array.isArray(pictures)) return ['The view\'s pictures is true, or { "width": <the widest it draws a picture, in pixels> }.'];
-  const { width, ...rest } = pictures as { width?: unknown };
+  const shape = 'The view\'s pictures is true; the kinds whose pictures it draws, ["circuit"]; or { "width": <the widest it draws a picture, in pixels> } with the fields it draws them from, by kind, { "circuit": "photo" }.';
+  if (typeof pictures !== "object" || pictures === null) return [shape];
+  const handed = new Set<string>([...(manifest.attach === "home" ? [] : [manifest.attach]), ...(manifest.reads?.kinds ?? [])]);
+  const kinds = new Set<string>(store.schema.kinds as readonly string[]);
   const problems: string[] = [];
-  if (Object.keys(rest).length > 0) problems.push(`The view's pictures says ${Object.keys(rest).map((key) => `"${key}"`).join(", ")}: only "width" is read.`);
-  if (width !== undefined && !(Number.isInteger(width) && (width as number) >= 16 && (width as number) <= 4_096)) problems.push("The view's pictures width is a whole number of pixels from 16 to 4096.");
+  const kind = (name: string) => {
+    if (!kinds.has(name)) return void problems.push(`The view's pictures chooses "${name}", which is no kind of this app.`);
+    if (!handed.has(name)) problems.push(`The view's pictures chooses "${name}", whose records it is not handed: add "${name}" to its reads.kinds.`);
+  };
+  if (Array.isArray(pictures)) {
+    if (pictures.length === 0 || !pictures.every((one) => typeof one === "string")) return [shape];
+    for (const name of pictures as string[]) kind(name);
+    return problems;
+  }
+  for (const [key, value] of Object.entries(pictures)) {
+    if (key === "width" && typeof value !== "string" && !Array.isArray(value)) {
+      if (!(Number.isInteger(value) && (value as number) >= 16 && (value as number) <= 4_096)) problems.push("The view's pictures width is a whole number of pixels from 16 to 4096.");
+      continue;
+    }
+    const fields = typeof value === "string" ? [value] : Array.isArray(value) && value.length > 0 && value.every((one) => typeof one === "string") ? (value as string[]) : undefined;
+    if (!fields) {
+      problems.push(`The view's pictures says "${key}": beside "width", it names a kind and the field it draws pictures from, "circuit": "photo", or its fields, "circuit": ["photo", "map"].`);
+      continue;
+    }
+    const before = problems.length;
+    kind(key);
+    if (problems.length > before) continue;
+    for (const field of fields) {
+      const found = fileFieldOf(store, key, field);
+      if (!found) problems.push(`The view's pictures chooses ${key}'s "${field}", which holds no picture.`);
+      else if (found.as === "video") problems.push(`The view's pictures chooses ${key}'s "${field}", which holds videos: the host plays a video where the view places it, and hands no picture of it.`);
+    }
+  }
   return problems;
 }
 
@@ -235,7 +273,7 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   else if (manifest.flows === false && (manifest.attach === "home" || manifest.cardinality !== "many" || manifest.title === undefined)) findings.push("Only a view that is a place keeps a frame: flows false needs a title and cardinality many on a kind.");
   findings.push(...sceneProblems(manifest.scene));
   if (manifest.scene !== undefined && (manifest.attach === "home" || manifest.cardinality !== "many")) findings.push("Only a view of a kind's members is drawn on the Scene as a card: scene needs cardinality many on a kind.");
-  findings.push(...picturesProblems(manifest.pictures));
+  findings.push(...picturesProblems(manifest.pictures, store, manifest));
   findings.push(...acceptsProblems(manifest.accepts, store));
   for (const kind of manifest.reads?.kinds ?? []) if (!kinds.has(kind)) findings.push(`The view reads "${kind}", which is no kind of this app.`);
   for (const edge of manifest.reads?.edges ?? []) if (!edges.has(edge)) findings.push(`The view reads the edge "${edge}", which no kind of this app declares.`);

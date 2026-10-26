@@ -1,6 +1,7 @@
 import { localeFor, numberAsRead } from "../days.js";
 import { typedFieldOf } from "./typed-field-of.js";
 import type { TypedField } from "./typed-fields.js";
+import type { AmountMark } from "./amount-mark.js";
 
 /*
  * A PHONE NUMBER, A PLACE AND A DURATION, SAID AND LINKED (`typed-fields.ts`
@@ -105,11 +106,35 @@ const ownField = (definition: Readable | undefined, key: string): TypedField | u
  * (`document/durations.ts`) and a TypeScript declaration says itself. A face
  * reads that and nothing of the expression's words.
  */
-const workedOutAs = (definition: Readable, key: string): unknown => {
-  const computed = definition.computed as Record<string, string | { readonly as?: string }> | undefined;
+type WorkedOut = { readonly as?: string; readonly format?: string; readonly unit?: string; readonly hidden?: boolean; readonly amount?: AmountMark };
+const workedOut = (definition: Readable | undefined, key: string): WorkedOut | undefined => {
+  const computed = definition?.computed as Record<string, string | WorkedOut> | undefined;
   const entry = computed && Object.hasOwn(computed, key) ? computed[key] : undefined;
-  return typeof entry === "object" ? entry.as : undefined;
+  return typeof entry === "object" ? entry : undefined;
 };
+const workedOutAs = (definition: Readable, key: string): unknown => {
+  const entry = workedOut(definition, key);
+  return entry?.as ?? (entry?.format === "duration" ? "duration" : undefined);
+};
+
+/**
+ * WHAT A COMPUTED FIELD'S NUMBER IS SAID AS (FR-217): money or a percent,
+ * in a unit — what a document's compile writes as `amount`, in the brand's
+ * currency and locale, else what a declaration in code says as `format`
+ * and `unit`. Undefined for a plain number, and for a stored field.
+ */
+export function workedOutAmount(definition: Readable | undefined, key: string): AmountMark | undefined {
+  const entry = workedOut(definition, key);
+  if (!entry) return undefined;
+  if (entry.amount) return entry.amount;
+  const format = entry.format === "money" || entry.format === "percent" ? entry.format : undefined;
+  return format || (!entry.format && entry.unit) ? { ...(format ? { format } : {}), ...(entry.unit ? { unit: entry.unit } : {}) } : undefined;
+}
+
+/** Whether a computed field is kept off what a record says of itself — its page, card and CSV — while still worked out (FR-217). */
+export function workedOutHidden(definition: Readable | undefined, key: string): boolean {
+  return workedOut(definition, key)?.hidden === true;
+}
 
 /** What a kind's field holds where it is a phone, a place or a duration: a stored field's mark, or a computed field that works out a length of time. */
 export function fieldSays(definition: Readable | undefined, key: string): TypedField | undefined {

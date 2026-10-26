@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 952,
+  "gzipped": 375,
+  "note": "Raised when a text block came to say how many lines a card or a row shows of it (FR-218): the block's `lines` checked, compiled and resolved, said in the document's JSON Schema, and the card drawing it on the element. Measured at 2_336_781 / 853_496 against main's 2_335_829 / 853_121: 952 / 375 more."
+}

@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.56)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.57)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -801,6 +801,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.57`](https://graview.dev/docs/releases.html#v0-1-57)
 - [`0.1.56`](https://graview.dev/docs/releases.html#v0-1-56)
 - [`0.1.55`](https://graview.dev/docs/releases.html#v0-1-55)
 - [`0.1.54`](https://graview.dev/docs/releases.html#v0-1-54)
@@ -855,9 +856,26 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.56
+## 0.1.57
 
 Published October 25, 2026 · the current version
+
+A view can be renamed, and a view of many can be its kind's list page; a computed value is said as its format and rounded; a date emptied in place is cleared; a text block says how many lines it shows; worker views name their sections, choose their pictures and style a disclosure's marker.
+
+- **Renaming a view.** The edit `rename-view` moves every `view:<name>` the document holds (the order, the place the app opens on, the bar) and says so; a taken name or one that is no view's name is refused.
+- **A view of many as the list page.** A worker view whose manifest says `replaces: "page"` on `cardinality: "many"` is drawn on its kind's list page in place of the list, as a view of one already replaces a record's page.
+- **Computed values read well.** A computed field takes `format` (`money`, `percent`, `duration`), `unit` and `hidden`; `set-format` names a computed field; the rule language has `round(x, places)`. A hidden computed value still sorts a list and feeds a view.
+- **Clearing in place.** Emptying a date, a text, a number or an amount where it is shown clears it, one change that can be undone; a field a record cannot be without keeps its value and says so beside it.
+- **Text that shows more.** A text block may say `lines` (1 to 12, or 0 for all of it) on a card or a row.
+- **Worker views.** A section may be named by its own heading with `aria-labelledby`; a manifest's `pictures` may choose kinds or fields (`["circuit"]`, `{ "circuit": "photo" }`) so the 12 MB go to what the view draws; `::-webkit-details-marker` is kept beside `summary::marker`; a home view that bleeds starts right under the bar on a phone. The worker view skill says to draw a choice by its label from `props.choices`.
+
+**Before you upgrade:** Additive: the `rename-view` edit; `replaces: "page"` on a view of many; a computed field's `format`, `unit` and `hidden`, `set-computed`'s `hidden`, `set-format` on a computed field and `round`; a text block's `lines` and the finding `view-lines`; a manifest's `pictures` as a list or by field; `aria-labelledby` and `aria-describedby` naming the view's own elements; `::-webkit-details-marker`; `EditableField`'s `clearable`, each announced in `capabilities().shipped`. A build that predates them refuses the new keys. Changed: an emptied field in place sends `null` rather than nothing, and an emptied number is no longer read as zero; `aria-labelledby` naming an id the view does not draw is held back. Ops, stored formats and derived tools are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.57) · [The full changelog for 0.1.57](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0157)
+
+## 0.1.56
+
+Published October 25, 2026
 
 An id names its kind; a date may know only its year or month, and an option has a readable label; a brand's suggested shade passes; a view is handed its computed values; the tray, the home's problems and Activity read better.
 
@@ -3848,7 +3866,7 @@ A document's repair may also be an act from the OTHER end of the rule's relation
 
 A rule in the rule language is drawn as its shape, in the declaration's labels: "◆ Scenario margin ≥ target margin, when plan's price > $0", and broken, with the record's values: "A club on Team — margin 44% < target margin 50%". Its title is a second line under that, so keep it short ("Margin above target") or leave it out; "A scenario keeps the target margin" only says the shape again, less clearly. Label a field that reads badly when spoken (`display.labels`) rather than writing round it.
 
-Fields and one-edge hops by name, `out('edge')`, `in('edge')`, `all('kind')` and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`; `sum`/`min`/`max(S, expr)` with an expression per member (`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list key sorts by its first value, then its next), `first(S)` for one record, `either(a, b)` for the first that is something; `if(cond, a, b)`, which works out only the branch it takes; `present`, `len`, dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set and give each record reached once; sets meet with `&`, join with `|` and part with `-` — LifeLogics' coverage is one figure, `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step read from what the seat may see. (Inside a template's braces, a `|` within brackets joins; the last bar outside them is the formatter's.) A kind's `computed` fields read like stored ones, and `fact('name')` reads a fact of the whole graph — a document's top-level `computed`, like `"mapProposed": "every(all('area'), proposed)"` — so a rule over the graph, a block and a face's own screen say it once (`factValues` from `@graview/core/blocks`; `describe_place` on the home lists them). Every evaluation has a step budget: a rule that reads too much is `over-budget`, never a hang.
+Fields and one-edge hops by name, `out('edge')`, `in('edge')`, `all('kind')` and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`; `sum`/`min`/`max(S, expr)` with an expression per member (`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list key sorts by its first value, then its next), `first(S)` for one record, `either(a, b)` for the first that is something; `if(cond, a, b)`, which works out only the branch it takes; `round(x, places)`; `present`, `len`, dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set and give each record reached once; sets meet with `&`, join with `|` and part with `-` — LifeLogics' coverage is one figure, `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step read from what the seat may see. (Inside a template's braces, a `|` within brackets joins; the last bar outside them is the formatter's.) A kind's `computed` fields read like stored ones, and `fact('name')` reads a fact of the whole graph — a document's top-level `computed`, like `"mapProposed": "every(all('area'), proposed)"` — so a rule over the graph, a block and a face's own screen say it once (`factValues` from `@graview/core/blocks`; `describe_place` on the home lists them). Every evaluation has a step budget: a rule that reads too much is `over-budget`, never a hang.
 
 The same language works out what a document's act sets, so a repair can be one declared act that does all of it: org's `assign-ownership` is `on: "component"`, `connects: "owns"` (from the person given, as the relation is declared), `replaces: ["owns", "proposedOwner"]` (the links it supersedes), and `sets: { ownership: { expr: "if(to == 'person-nick', 'nick_owns', 'owned_elsewhere')" } }`; `setsOther` sets the record at the link's other end. Each previews and undoes as one act.
 
@@ -5309,7 +5327,7 @@ HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`,
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image`, `feImage`, `foreignObject` and SMIL; any `srcset` or `on*` attribute; `href` but a link out (`graview-view-links`); `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path`, `marker` or `filter`; `@import`; `@font-face`; `@property`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` is kept — a header held in place sticks within the view, whose region is painted contained — and `all` takes its keywords (`all: unset` takes a button's chrome off). What the host leaves out it lists in `refused` (below).
 
-A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They lose their landmark or status role, and a selector for them in your stylesheet still matches. A `section` is never named, so it stays out of the landmarks. `role` takes no landmark or notice's role (`navigation`, `status`, `alert`, …) but a named `region`.
+A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They lose their landmark or status role, and a selector for them in your stylesheet still matches. A `section` is named only by a heading it draws (`aria-labelledby`). `role` takes no landmark or notice's role (`navigation`, `status`, `alert`, …) but a named `region`.
 
 A control of your own keeps its role and state, and every `aria-*`: `<span role="checkbox" aria-checked="true" tabindex="0">`, `switch`, `aria-pressed`, `aria-expanded` with `aria-controls` naming an id you drew, tabs (`aria-selected`), `slider` (`aria-valuenow`). Hear Space and Enter on `keydown`. A headless run draws them as the page does.
 
@@ -5565,7 +5583,7 @@ A kind declared is drawn already: a card, a row, a page. When that default is wr
 
 In a document the same is the top-level `views.<kind>`, and the edit is `{ "op": "set-view", "kind": "fixture", "slot": "card", "blocks": [...] }` (`null` gives the default back).
 
-`card` is drawn beside the focus and on the pages face's gallery, `row` as the one line a member is among many (a focused group, the list page), and `page` above the default record. Tones are `good`, `warn`, `bad`, `neutral` and `accent`, the theme's own. Nothing in a spec runs: no CSS, no markup, and the only link drawn is an http(s) `url` field's own value, or a listed record. The scaffold's `views()` draws them (`registerViewSpecs`); so does the embed, by itself.
+`card` is drawn beside the focus and on the pages face's gallery, `row` as the one line a member is among many (a focused group, the list page), and `page` above the default record. Tones are `good`, `warn`, `bad`, `neutral` and `accent`, the theme's own. A card shows three lines of a `text` block and a row one; `{ text: "{awards}", lines: 6 }` shows six, `lines: 0` the text whole (`view-lines` refuses past 12). Nothing in a spec runs: no CSS, no markup, and the only link drawn is an http(s) `url` field's own value, or a listed record. The scaffold's `views()` draws them (`registerViewSpecs`); so does the embed, by itself.
 
 A row is a link to its record, so it is always named: one whose blocks show no `title`, no `headline` and no words holding the record's whole name (`{severity} · {status}` alone) is drawn with the name first, and `describe_place` says it so. Lead with `{ "title": "{name}" }` to choose how the name reads.
 
@@ -5583,7 +5601,7 @@ A kind that also has a worker view of one record draws, on its record page, the 
 
 ```ts computed: { net: { expr: "sum(out('includes'), list * units) * (100 - either(first(all('party') where role == 'client').discount, 0)) / 100", label: "After the discount" }, } ```
 
-Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused (`computed-written`). It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). A document's top-level `computed` holds facts of the whole graph, read as `fact('name')`; a kind's is changed with `set-computed`.
+Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused (`computed-written`). It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). A document's top-level `computed` holds facts of the whole graph, read as `fact('name')`; a kind's is changed with `set-computed`. `{ expr, format: "percent" }` (or `"money"`, `"duration"`, a `unit`; `set-format` sets it) says it so on its page, cards and CSV; `round(x, 3)` rounds; `hidden: true` keeps a helper off its page, cards and CSV while lists, lenses, rules and views still sort and read by it.
 
 1. **Say counts and times in words.** Templates say counts in words: `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three"), `{at | time}` ("10:47 AM"). A field's label, a group's heading and what an empty list says are words, not templates: braces there would be drawn as typed, and `view-braces` warns of them. A `describe` or `label` written in code is not a template either: say the value in code (`momentAsRead(node.startsAt)`), and `describe-template-in-code` warns of `{field}` returned there.
 
@@ -5597,7 +5615,7 @@ npx graview check --document app.json   # a document
 Report **the actual output**, including warnings. What it catches here:
 
 - `view-field`, `view-name`, `view-tone` — a view spec naming a field the kind lacks, or a tone outside the kit; `view-key` — two blocks under one key; `view-template`, `view-expression` — a template or a condition it cannot read; `view-depth` — lists nested past three
-- `view-whole-text` — a card or row putting a long `text` field whole in a text block (`graview-lists` says how a card shows its start)
+- `view-whole-text` — a card or row putting a long `text` field whole in a text block, unless it says `lines` (`graview-lists` says how a card shows its start)
 - `view-headline-long` — a headline bound to a long `text`, Markdown or long string field whole, which a focus card drew at display size: say it in a `text` block, or head it with `{call|excerpt: 60}` (a headline past about 90 characters is drawn a step smaller and clamped to four lines)
 - `computed-cycle` — values worked out from each other; `computed-clash` — a computed name that is already a field; `computed-cost` — work that grows with the cube of the graph (a warning at the square)
 
@@ -5712,13 +5730,13 @@ Every view comes with a manifest the host enforces:
 
 - `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
 - `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
-- A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page, nothing scrolling inside. On the Scene it is a card held to its box, faded where cut, with Open to its page. `flows: false` keeps a frame on Pages (a map); `scene: { maxHeight }` holds the card lower (80–4000px).
+- A view is as tall as it draws, measured by the host: set no height. On Pages it flows with the page, nothing scrolling inside. On the Scene it is a card held to its box, with Open to its page. `flows: false` keeps a frame on Pages (a map); `scene: { maxHeight }` holds the card lower (80–4000px).
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the kind's page blocks and the record's own fields, which stay editable. `replaces: "page"` draws it alone, and the page blocks never (`graview-view-specs`). On a view of many, it is its kind's list page (`/<plural>`).
 - `gestures: true` lets it hear a wheel, a drag and a pinch (below). `bleed: true` draws it edge to edge on a phone (`graview-view-drawing`).
-- `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path, and lets the view place a record's video (`<graview-video>`) and open the host's full-screen viewer: `graview-view-drawing` says how a view shows them.
+- `pictures: true` hands each picture on a record with an address the host made from its bytes, never its path, and lets the view place a record's video and open the host's full-screen viewer (`graview-view-drawing`). They share 12 MB: name the kinds it draws, `["circuit"]`, or fields, `{ circuit: "photo" }`.
 
 A manifest that names a kind, an edge or an act the app does not declare is refused before the view starts.
 
@@ -5736,7 +5754,7 @@ graview.navigate("offer:7")     // a record, else a place or a kind's list by sl
 graview.navigate({ place: "features", where: { stage: "building" }, section: "Shipping soon" })
 ```
 
-`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: `id`, `kind`, `label`, and each field and computed value by name (`props.node.draft`), as the viewer sees it; no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made), and `locale` and `timeZone`: say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, hour: "numeric", minute: "2-digit" })`, the clock the rest of the app says it on, never a zone of your own. `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
+`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: `id`, `kind`, `label`, and each field and computed value by name (`props.node.draft`), as the viewer sees it; no `fields` key. A view of one finds its record in `node`, never in `nodes`. A choice holds its option's id; draw the label `props.choices` gives by kind, field and option: `props.choices.actor.motive[node.motive]`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `ink`, `radius` …, the app's `name` and `logo`), and `locale` and `timeZone`: say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, hour: "numeric", minute: "2-digit" })`, the clock the rest of the app says it on, never a zone of your own. `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
 
 ### Links and buttons, by default
 
@@ -5744,9 +5762,9 @@ To go somewhere, `<a data-record>` or `<a data-place>`; to do something, a `<but
 
 ### Gestures
 
-With `gestures: true`, `graview.on("wheel" | "drag" | "pinch", selector, fn)` hears them over what the selector matches, at most once a frame with the deltas summed. Each carries `x`, `y` (pixels from the matched element's top left) and its `width`, `height`. A `wheel` has `deltaX`, `deltaY`, `deltaMode`, `ctrlKey`, `metaKey`; a `drag` has `phase` (`start`, `move`, `end`), `pointerId`, `button`, `pressure` and `dx`, `dy` since the last; a `pinch` (Safari's, or a trackpad's Control-wheel) has `phase`, `scale` since the last and `rotation`. The page scrolls everywhere else; say `touch-action: none` on what drags. Without the flag the check says so.
+With `gestures: true`, `graview.on("wheel" | "drag" | "pinch", selector, fn)` hears them over what the selector matches, at most once a frame with the deltas summed. Each carries `x`, `y` from the matched element's top left and its `width`, `height`; a `wheel` adds `deltaX`, `deltaY`, `deltaMode`, `ctrlKey`, `metaKey`, a `drag` `phase`, `pointerId`, `button`, `pressure`, `dx`, `dy`, a `pinch` (a trackpad's Control-wheel too) `phase`, `scale`, `rotation`. The page scrolls everywhere else; say `touch-action: none` on what drags. Without the flag the check says so.
 
-HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, and the only images a view may show (the app's logo, the app's own images, the pictures on records) are `graview-view-drawing`. What the host leaves out it lists in `refused`.
+HTML, SVG and stylesheets, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, and the only images a view may show (the app's logo, the app's own images, the pictures on records) are `graview-view-drawing`. What the host leaves out it lists in `refused`. A `<section aria-labelledby="h">` is named by its own `<h2 id="h">`; `summary::marker` and `::-webkit-details-marker` style a disclosure's triangle.
 
 ### Links
 
@@ -5758,11 +5776,11 @@ An act must be in the manifest. Where every member sees every record, `graview.a
 
 ### Limits
 
-About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set. Work a view schedules with timers between pushes is not timed per push. It may keep its worker busy just under the heartbeat's 5 s; the page stays responsive, the person's CPU does not: never spin.
+About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any, the view is stopped and its records' plain face drawn instead, with why. Draw summaries, not every row of a huge set. Timers between pushes are not timed per push, and a worker kept busy under the heartbeat's 5 s spends the person's CPU: never spin.
 
 ### Worked examples
 
-`examples/offers-list.js` is a list lens: rows linking to their records, and a note typed and pressed in. `examples/front-page.js` is a home: a headline, a figure, an SVG ring and cards linking to a place. `examples/a-record.js` is a view of one record: a deliverable's subject and its draft as paragraphs, read off `props.node`, and "Edit draft" with the draft prefilled. `examples/a-map-that-pans-and-zooms.js` is an SVG map whose viewBox a wheel and a pinch zoom around the pointer and a drag pans. Each opens with its manifest.
+`examples/offers-list.js` is a list lens: rows linking to their records, and a note typed and pressed in. `examples/front-page.js` is a home: a headline, a figure, an SVG ring and cards linking to a place. `examples/a-record.js` is a view of one record: a deliverable's draft read off `props.node`, and "Edit draft" prefilled. `examples/a-map-that-pans-and-zooms.js` is an SVG map whose viewBox a wheel and a pinch zoom around the pointer and a drag pans. Each opens with its manifest.
 
 ### Registering it
 
@@ -5778,7 +5796,7 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 
 1. `graview check` the app the view names: a manifest is only as sound as the declaration it reads. `checkManifest(manifest, store)` and `checkViewSource(source)` from `@graview/guest/host/views` must both say nothing.
 2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or the one `--record <id>` names. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
-3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means the view never ran: a page with a Content-Security-Policy needs `worker-src blob:` and `style-src 'unsafe-inline'`, and the note under the plain face names what it lacks.
+3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means it never ran: the note under the plain face names what the page's Content-Security-Policy lacks (`worker-src blob:`).
 4. Toggle the app to dark. Does the view restyle?
 5. Follow each link, and tap each card on a phone, as `graview-view-links` says. A view that writes is pressed as `graview-view-forms` says.
 
@@ -7391,7 +7409,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 455 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 456 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -7416,7 +7434,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 58 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 59 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made

@@ -78,12 +78,14 @@ describe("null propagates, and every production says what it does with it", () =
     ["fact('longest')", null],
     // FR-173: nothing is not archived.
     ["archived(first(out('for')))", false],
+    // FR-217: nothing rounded is nothing.
+    ["round(hours, 2)", null],
   ])("%s → %j", (source, expected) => {
     expect(on(source)).toEqual(expected);
   });
 
   it("names every function the language knows, and a test above reaches each with nothing", () => {
-    expect([...FUNCTIONS].sort()).toEqual(["all", "archived", "contains", "count", "date", "days", "either", "every", "exists", "fact", "first", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "some", "sort", "startsWith", "sum", "today"]);
+    expect([...FUNCTIONS].sort()).toEqual(["all", "archived", "contains", "count", "date", "days", "either", "every", "exists", "fact", "first", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "round", "some", "sort", "startsWith", "sum", "today"]);
   });
 });
 

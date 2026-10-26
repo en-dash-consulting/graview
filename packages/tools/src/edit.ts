@@ -57,6 +57,12 @@ export interface EditableField {
    * question is still worth offering, and hiding it would be a lie.
    */
   readonly open: readonly OpenParameter[];
+  /**
+   * Whether emptying the field takes its value away: the act clears it with
+   * `null` (a derived edit's `clearable`, a field a record may be without).
+   * Emptied otherwise, the field cannot be empty, and the control says so.
+   */
+  readonly clearable: boolean;
   /** The call for a new value. */
   call(value: unknown): { name: string; args: Record<string, unknown> };
 }
@@ -135,6 +141,7 @@ export function editableFields<S extends AnySchema>(
         takesValue,
         alternatives: [],
         open,
+        clearable: takesValue && (mutation.clearable?.includes(name) ?? false),
         call: (value) => ({
           name: mutation.name,
           args: takesValue

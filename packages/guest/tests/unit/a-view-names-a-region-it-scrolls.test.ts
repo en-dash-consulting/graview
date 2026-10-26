@@ -32,7 +32,7 @@ const at = (drawn: ReturnType<typeof draw>, id: string) => {
 
 describe("a region a view draws", () => {
   it("is drawn with its name, whichever attribute the view gave first", () => {
-    const drawn = draw([[0, "~", element("div", {}, [element("div", { id: "lane", role: "region", "aria-label": "Amendments, by year", tabindex: "0" }), element("div", { "aria-labelledby": "h", id: "lane-2", role: "region" })]), 0]]);
+    const drawn = draw([[0, "~", element("div", {}, [element("div", { id: "lane", role: "region", "aria-label": "Amendments, by year", tabindex: "0" }), element("div", { "aria-labelledby": "h", id: "lane-2", role: "region" }), element("h2", { id: "h" })]), 0]]);
     expect(at(drawn, "lane").getAttribute("role")).toBe("region");
     expect(at(drawn, "lane-2").getAttribute("role")).toBe("region");
     expect(drawn.refused).toEqual([]);

@@ -431,7 +431,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       archives: spec.archives,
       ...(spec.tidying ? { tidying: spec.tidying } : {}),
       // As the document says them, each the compile read as a length of time saying `as: "duration"` (`durations.ts`).
-      ...(computed.length > 0 ? { computed: Object.fromEntries(computed.map(([n, c]) => [n, durations?.includes(n) ? { ...c, as: "duration" } : spec.computed![n]])) } : {}),
+      ...(computed.length > 0 ? { computed: Object.fromEntries(computed.map(([n, c]) => [n, workedOutAs(c, durations?.includes(n) ?? false, money) ?? spec.computed![n]])) } : {}),
       ...(named || formatted || spec.glance || spec.page
         ? { display: { ...(named ? { labels } : {}), ...(formatted ? { format } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
         : {}),
@@ -742,4 +742,22 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   rememberDocument(app, document);
   PLANS.set(app, plan);
   return { ok: true, app, document, findings: plan.findings, sights: document.policy?.sees, kinds: shapes };
+}
+
+/**
+ * A COMPUTED FIELD AS A FACE READS IT (FR-217): a length of time where the
+ * compile read one or its document says `format: "duration"` (`as:
+ * "duration"`), and money or a percent in the brand's currency and locale
+ * (`amount`), as a number field of that format is marked. With nothing to
+ * add, it is left as the document wrote it.
+ */
+function workedOutAs(entry: { readonly expr: string; readonly format?: string; readonly unit?: string }, duration: boolean, money: { readonly currency?: string; readonly locale?: string } | undefined): Record<string, unknown> | undefined {
+  const asDuration = duration || entry.format === "duration";
+  const amounted = entry.format === "money" || entry.format === "percent" || (!entry.format && entry.unit !== undefined);
+  if (!asDuration && !amounted) return undefined;
+  return {
+    ...entry,
+    ...(asDuration ? { as: "duration" } : {}),
+    ...(amounted ? { amount: { ...money, ...(entry.format ? { format: entry.format } : {}), ...(entry.unit ? { unit: entry.unit } : {}) } } : {}),
+  };
 }
