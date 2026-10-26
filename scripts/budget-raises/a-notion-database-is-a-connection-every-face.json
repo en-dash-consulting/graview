@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 5700,
+  "gzipped": 1720,
+  "note": "Raised when a Notion database came to be a connection (Roadmap f-notion-connection): the studio checks the document it edits, so the checker's judgment of a Notion connection (`connection-findings.ts`, `connection-spec.ts` and the property table in `sync/notion-types.ts`) rides with every face; the transport and the scripted Notion stay on `@graview/core/sync`, which no face reaches. Measured at 2_341_464 / 854_818 against 2_335_829 / 853_132: 5_635 / 1_686 more."
+}

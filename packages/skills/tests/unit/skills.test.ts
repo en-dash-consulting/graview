@@ -23,6 +23,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/linked-relation-findings.ts"), "utf8"),
   // What the look is found wanting by (Roadmap f-design-critic): `design-*`, said with the checker.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/design-findings.ts"), "utf8"),
+  // What a declared connection is found wanting by (`connection-*`, Roadmap f-notion-connection), said with the checker.
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/document/connection-findings.ts"), "utf8"),
 ].join("\n");
 
 /**

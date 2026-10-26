@@ -1,5 +1,5 @@
 import type { AnySchema, GraviewApp, Store } from "@graview/core";
-import { connection, type ConnectionDeclaration, type Fetcher, type GoogleTokenRequest, type SyncReport, type SyncState } from "@graview/core/sync";
+import { NOTION_AUTH_ENV, connection, sharedLinks, type ConnectionDeclaration, type Fetcher, type GoogleTokenRequest, type SyncReport, type SyncState } from "@graview/core/sync";
 
 /**
  * THE APP'S DECLARED CONNECTIONS, RUN BESIDE ITS STORE (`connections.<name>`).
@@ -16,11 +16,21 @@ import { connection, type ConnectionDeclaration, type Fetcher, type GoogleTokenR
  * declaration names, are `./connections-file.ts`'s (main entry only).
  *
  * Credentials are never in the declaration. By default they come from the
- * environment: `<auth.env>_CLIENT_ID`, `_CLIENT_SECRET` and `_REFRESH_TOKEN`
- * (auth.env is "GOOGLE" unless declared), and failing that from the
- * KEY=value file `auth.file` names. A host that keeps tokens itself (Graview
- * Cloud, per workspace) hands `token` instead, and is asked again with
- * `{ refresh: true }` when Google refuses one.
+ * environment, and failing that from the KEY=value file `auth.file` names:
+ * for a Google calendar `<auth.env>_CLIENT_ID`, `_CLIENT_SECRET` and
+ * `_REFRESH_TOKEN` (auth.env is "GOOGLE" unless declared); for a Notion
+ * database the internal integration's secret, `<auth.env>_TOKEN` (auth.env
+ * is "NOTION" unless declared, so `NOTION_TOKEN`). A host that keeps them
+ * itself (Graview Cloud, per workspace) hands `token` instead — Google's
+ * access token, asked again with `{ refresh: true }` when Google refuses
+ * one, or Notion's secret.
+ *
+ * Every connection shares one set of links (`sharedLinks()`), so a Notion
+ * relation finds the record another connection keeps (a check's reindeer, in
+ * the fleet's table), and after each pass every engine links what it held
+ * for a page another one has linked since — the order they run in does not
+ * matter. A host gets this by running them here; one that makes its own
+ * engines with `connection()` passes them one `links`.
  */
 
 export interface ConnectionTokenRequest extends GoogleTokenRequest {
@@ -36,13 +46,19 @@ export interface RunConnectionsOptions<S extends AnySchema> {
   readonly state?: ConnectionStateStore;
   /** Reads the KEY=value file a declaration's `auth.file` names (`readEnvFile`). Absent: that file is not read. */
   readFile?(path: string): Readonly<Record<string, string>>;
-  /** THE HOST SEAM: an access token for a connection. Absent: minted from the credentials the declaration names. */
+  /**
+   * THE HOST SEAM: a connection's credential — a Google access token, or a
+   * Notion integration's secret (`declaration.system` says which). Absent:
+   * read from the credentials the declaration names.
+   */
   token?(request: ConnectionTokenRequest): Promise<string> | string;
-  /** The calendar's id, when the host keeps it. Absent: the declaration's, or the environment variable it names. */
+  /** A Google calendar's id, when the host keeps it. Absent: the declaration's, or the environment variable it names. */
   calendar?(request: { readonly connection: string; readonly declaration: ConnectionDeclaration }): string | undefined;
+  /** A Notion database's id, when the host keeps it. Absent: the declaration's, or the environment variable it names. */
+  database?(request: { readonly connection: string; readonly declaration: ConnectionDeclaration }): string | undefined;
   /** Where credentials and a calendar's `env` are read. `process.env` by default. */
   readonly env?: Readonly<Record<string, string | undefined>>;
-  /** Google's API and its token endpoint, for a test to script. */
+  /** Google's API and its token endpoint, and Notion's API, for a test to script (`scriptedNotion().fetch`). */
   readonly fetch?: Fetcher;
   /** Run nothing, and say so: `graview serve --no-sync`. */
   readonly paused?: boolean;
@@ -101,17 +117,22 @@ function refreshingToken(credentials: { readonly clientId: string; readonly clie
 
 /** One pass's news in a line, or nothing when there was none. */
 export function sayReport(report: SyncReport): string | undefined {
+  const notion = report.system === "notion";
+  const place = notion ? "Notion" : "the calendar";
   const said: string[] = [];
-  if (report.applied.length) said.push(`took ${report.applied.length} from the calendar`);
-  if (report.pushed.length) said.push(`sent ${report.pushed.length} to it`);
+  if (report.applied.length) said.push(`took ${report.applied.length} from ${place}`);
+  if (report.pushed.length) said.push(`sent ${report.pushed.length} to ${notion ? "Notion" : "it"}`);
   if (report.gone.length) said.push(`${report.gone.length} gone there`);
-  // A change coming in that this store refused names the calendar's event, which may have no record here.
-  if (report.refused.length) said.push(`refused: ${report.refused.map((one) => `${one.resource ? `the calendar's ${one.id}` : one.localId} (${one.error})`).join(", ")}`);
+  // A change coming in that this store refused names the calendar's event or Notion's page, which may have no record here.
+  if (report.refused.length) said.push(`refused: ${report.refused.map((one) => `${one.resource ? `${notion ? "Notion's page" : "the calendar's"} ${one.id}` : one.localId} (${one.error})`).join(", ")}`);
   if (report.resolved.length) said.push(`${report.resolved.length} conflict${report.resolved.length === 1 ? "" : "s"} settled`);
   if (report.conflicts.length) said.push(`${report.conflicts.length} conflict${report.conflicts.length === 1 ? "" : "s"} held`);
-  if (report.offline) said.push("could not reach the calendar; will try again");
+  if (report.offline) said.push(`could not reach ${place}${report.problem ? ` (${report.problem})` : ""}; will try again`);
   return said.length > 0 ? said.join(" · ") : undefined;
 }
+
+/** The systems a connection's changes are authored by: a change of theirs landing here starts no pass. */
+const CONNECTION_SYSTEMS = new Set(["google-calendar", "notion"]);
 
 export function runConnections<S extends AnySchema>(options: RunConnectionsOptions<S>): RunningConnections {
   const say = options.say ?? (() => undefined);
@@ -119,6 +140,7 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
   const env = options.env ?? (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
   const kept: ConnectionStates = options.state?.read() ?? {};
   const engines: { name: string; every: number; engine: ReturnType<typeof connection<S>>["engine"] }[] = [];
+  const links = sharedLinks();
 
   for (const [name, declaration] of declared) {
     if (options.paused || declaration.paused) {
@@ -126,7 +148,43 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
       continue;
     }
     const lookup = lookupFor(declaration, env, options.readFile);
-    const calendarId = options.calendar?.({ connection: name, declaration }) ?? (typeof declaration.calendar === "string" ? declaration.calendar : lookup(declaration.calendar.env));
+    if (declaration.system === "notion") {
+      const databaseId = options.database?.({ connection: name, declaration }) ?? (typeof declaration.database === "string" ? declaration.database : lookup(declaration.database.env));
+      if (!databaseId) {
+        say(`${name}: not started: no database id in ${typeof declaration.database === "string" ? "the declaration" : declaration.database.env}`);
+        continue;
+      }
+      const secretName = `${declaration.auth?.env ?? NOTION_AUTH_ENV}_TOKEN`;
+      let secret: () => Promise<string> | string;
+      if (options.token) {
+        const host = options.token;
+        secret = () => host({ connection: name, declaration });
+      } else {
+        const value = lookup(secretName);
+        if (!value) {
+          say(`${name}: not started: ${secretName} is not set${declaration.auth?.file ? ` in the environment or ${declaration.auth.file}` : " in the environment"}`);
+          continue;
+        }
+        secret = () => value;
+      }
+      const made = connection<S>({
+        name,
+        declaration,
+        app: options.app,
+        store: options.store,
+        databaseId,
+        token: secret,
+        ...(options.token ? {} : { secretName }),
+        ...(options.fetch ? { fetch: options.fetch } : {}),
+        ...(kept[name] ? { state: kept[name] } : {}),
+        say: (line) => say(`${name}: ${line}`),
+        links,
+      });
+      engines.push({ name, every: (declaration.every ?? 30) * 1000, engine: made.engine });
+      say(`${name}: ${declaration.direction === "read" ? "reading" : "keeping in step with"} a Notion database into ${declaration.kind}, every ${declaration.every ?? 30} s`);
+      continue;
+    }
+    const calendarId =options.calendar?.({ connection: name, declaration }) ?? (typeof declaration.calendar === "string" ? declaration.calendar : lookup(declaration.calendar.env));
     if (!calendarId) {
       say(`${name}: not started: no calendar id in ${typeof declaration.calendar === "string" ? "the declaration" : declaration.calendar.env}`);
       continue;
@@ -177,6 +235,18 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
         say(`${name}: the pass failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
+    // A page one connection's relation reached before another connection read it is linked now, with nothing sent.
+    for (const { name, engine } of engines) {
+      try {
+        const linked = engine.resolveHeld();
+        if (linked.length > 0) {
+          say(`${name}: linked ${linked.length} to records another connection read`);
+          kept[name] = engine.snapshot;
+        }
+      } catch (error) {
+        say(`${name}: linking failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
     options.state?.write(kept);
     return reports;
   };
@@ -202,7 +272,7 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
     timers.push(setInterval(() => void runNow(), every));
     // A change made here — not one a connection itself landed — starts a pass soon after.
     unsubscribe = options.store.subscribe((_diff, ops) => {
-      if (ops.every((op) => op.author.kind === "system" && op.author.id === "google-calendar")) return;
+      if (ops.every((op) => op.author.kind === "system" && CONNECTION_SYSTEMS.has(op.author.id ?? ""))) return;
       if (settling) clearTimeout(settling);
       settling = setTimeout(() => void runNow(), options.settle ?? 1500);
     });

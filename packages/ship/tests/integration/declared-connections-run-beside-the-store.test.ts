@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
-import type { Fetcher } from "@graview/core/sync";
+import { scriptedNotion, type Fetcher } from "@graview/core/sync";
 import { fileConnectionState, readEnvFile, runConnections, sayReport } from "../../src/index.js";
 
 /**
@@ -160,5 +160,112 @@ describe("a pass's line (FR-181)", () => {
       state: { links: {}, outbox: [] },
     };
     expect(sayReport(report)).toBe("refused: the calendar's g1 (Nothing lands while the host is read only.)");
+  });
+});
+
+/* ------------------------------------------- a Notion database (f-notion-connection) */
+
+const tasks = (connection: Record<string, unknown> = {}) => ({
+  format: "graview-document",
+  formatVersion: 1,
+  name: "Tasks",
+  kinds: { task: { fields: { name: { type: "string", required: true }, done: { type: "boolean" } } } },
+  acts: { "add-task": { creates: "task" } },
+  connections: { board: { system: "notion", database: { env: "TASKS_DATABASE" }, kind: "task", properties: { name: "Name", done: "Done" }, direction: "both", ...connection } },
+});
+
+describe("a served store's declared Notion database", () => {
+  it("runs with the integration's secret from the environment, credits Notion, and sends a record made here", async () => {
+    const notion = scriptedNotion();
+    const database = notion.database({ properties: { Name: "title", Done: "checkbox" } });
+    notion.add(database, { Name: "Water the plants" });
+    const opened = open(tasks());
+    const said: string[] = [];
+    const running = runConnections({ ...opened, env: { TASKS_DATABASE: database, NOTION_TOKEN: notion.secret }, fetch: notion.fetch, say: (line) => said.push(line) });
+    expect(running.running).toEqual(["board"]);
+    await running.runNow();
+    const records = () => opened.store.graph.allNodes().filter((node) => node.kind === "task") as unknown as Record<string, unknown>[];
+    expect(records().map((record) => record["name"])).toEqual(["Water the plants"]);
+    expect(opened.store.log.all().at(-1)!.author).toEqual({ kind: "system", id: "notion" });
+    expect(said).toContain("board: took 1 from Notion");
+
+    opened.store.apply({ name: "add-task", args: { id: "task:feed", name: "Feed the cat" } }, { author: { kind: "human", id: "nick" } });
+    await running.runNow();
+    await running.stop();
+    expect(notion.pages(database)).toHaveLength(2);
+    expect(said).toContain("board: sent 1 to Notion");
+    expect(said.join("\n")).not.toContain(notion.secret);
+  });
+
+  it("asks the host for the secret when it keeps it, and reads the database's id the host keeps", async () => {
+    const notion = scriptedNotion();
+    const database = notion.database({ properties: { Name: "title", Done: "checkbox" } });
+    const asked: unknown[] = [];
+    const running = runConnections({
+      ...open(tasks()),
+      env: {},
+      fetch: notion.fetch,
+      database: ({ connection }) => (connection === "board" ? database : undefined),
+      token: (request) => {
+        asked.push([request.connection, request.declaration.system]);
+        return notion.secret;
+      },
+    });
+    const reports = await running.runNow();
+    await running.stop();
+    expect(reports["board"]!.offline).toBe(false);
+    expect(asked[0]).toEqual(["board", "notion"]);
+  });
+
+  it("says a missing secret by its name, and a refused one as the reason it could not reach Notion", async () => {
+    const said: string[] = [];
+    const missing = runConnections({ ...open(tasks()), env: { TASKS_DATABASE: "1f2e3d4c5b6a79881f2e3d4c5b6a7988" }, say: (line) => said.push(line) });
+    expect(missing.running).toEqual([]);
+    expect(said).toEqual(["board: not started: NOTION_TOKEN is not set in the environment"]);
+
+    const notion = scriptedNotion();
+    const database = notion.database({ properties: { Name: "title", Done: "checkbox" } });
+    said.length = 0;
+    const refused = runConnections({ ...open(tasks({ auth: { env: "WORK_NOTION" } })), env: { TASKS_DATABASE: database, WORK_NOTION_TOKEN: "secret_NotTheOneNotionTakes000000000000" }, fetch: notion.fetch, say: (line) => said.push(line) });
+    await refused.runNow();
+    await refused.stop();
+    expect(said.at(-1)).toMatch(/^board: could not reach Notion \(notion: Notion refused WORK_NOTION_TOKEN \(HTTP 401\).*\); will try again$/);
+    expect(said.join("\n")).not.toContain("secret_NotTheOne");
+  });
+});
+
+/* ------------------------------ several Notion tables joined by a relation (f-notion-several-tables) */
+
+describe("a served store's Notion tables joined by a relation", () => {
+  it("links a page of one connection to a record another connection reads, in one pass whichever runs first, and sends nothing", async () => {
+    const notion = scriptedNotion();
+    const fleet = notion.database({ title: "Reindeer Fleet", properties: { Name: "title" } });
+    const checks = notion.database({ title: "Reindeer Health Checks", properties: { Name: "title", "Reindeer Fleet": "relation" }, relations: { "Reindeer Fleet": { to: fleet, dual: true } } });
+    const comet = notion.add(fleet, { Name: "Comet" });
+    notion.add(checks, { Name: "Hooves", "Reindeer Fleet": [String(comet["id"])] });
+    // The checks are declared first, so they run before the fleet they reach is read.
+    const opened = open({
+      format: "graview-document",
+      formatVersion: 1,
+      name: "North Pole",
+      kinds: {
+        reindeer: { fields: { name: { type: "string", required: true } } },
+        check: { fields: { name: { type: "string", required: true } }, edges: { reindeer: { to: ["reindeer"], cardinality: "one" } } },
+      },
+      acts: { "add-reindeer": { creates: "reindeer" }, "add-check": { creates: "check" } },
+      connections: {
+        checks: { system: "notion", database: checks, kind: "check", properties: { name: "Name", reindeer: "Reindeer Fleet" }, direction: "both" },
+        fleet: { system: "notion", database: fleet, kind: "reindeer", properties: { name: "Name" }, direction: "both" },
+      },
+    });
+    const said: string[] = [];
+    const running = runConnections({ ...opened, env: { NOTION_TOKEN: notion.secret }, fetch: notion.fetch, say: (line) => said.push(line) });
+    await running.runNow();
+    const named = (kind: string, name: string) => opened.store.graph.allNodes().find((node) => node.kind === kind && (node as unknown as Record<string, unknown>)["name"] === name)!.id;
+    expect(opened.store.graph.out(named("check", "Hooves"), "reindeer").map((node) => node.id)).toEqual([named("reindeer", "Comet")]);
+    expect(said).toContain("checks: linked 1 to records another connection read");
+    const again = await running.runNow();
+    await running.stop();
+    expect(Object.values(again).every((report) => report.pushed.length === 0 && report.applied.length === 0)).toBe(true);
   });
 });

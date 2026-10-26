@@ -62,7 +62,7 @@ export function googleCalendarMapping(options: {
 export type Fetcher = (
   url: string,
   init?: { method?: string; headers?: Record<string, string>; body?: string },
-) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
+) => Promise<{ ok: boolean; status: number; json(): Promise<unknown>; readonly headers?: { get(name: string): string | null } }>;
 
 /** What the adapter asks of a token source: `refresh` when Google just refused the last one. */
 export interface GoogleTokenRequest {

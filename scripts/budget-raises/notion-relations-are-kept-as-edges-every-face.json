@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 2500,
+  "gzipped": 720,
+  "note": "Raised when a Notion connection came to keep relations as edges (Roadmap f-notion-several-tables): the studio checks the document it edits, so the checker's judgment of a relation mapped in a Notion connection's properties (`connection-findings.ts`: a relation property mapped to a field or a field's property to an edge, an edge to a kind no Notion connection keeps, the connect and disconnect acts a link lands through) rides with every face; the engine's edges, the shared links and the transport stay on `@graview/core/sync`, which no face reaches. Measured at 2_350_565 / 857_810 against 2_348_116 / 857_120: 2_449 / 690 more."
+}
