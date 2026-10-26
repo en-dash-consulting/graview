@@ -163,7 +163,7 @@ describe("a hosted page", () => {
     // 1023 KB since a removed record's id came never to be made again, a seat acting for a person to read another app as that person, and an id never to quote a field a sight keeps: the scene face measured 1_047_010 B, 504 more than main (1_046_506).
     // 1023 KB since workspace state that only the log's tail carried came to be kept past a compaction (the modules on and what stood published, kept by a checkpoint and read there): the scene face measured 1_047_001 B, 495 more than main (1_046_506).
     // 1023 KB since Start fresh came to be asked for in its own tab (a one-time value in sessionStorage, `freshAddress`): the scene face measured 1_046_736 B, 230 more than main (1_046_506).
-    // MEASURE-ON-COMBINED-BATCH
+    // 1027 KB once the security audit's seven fix branches came together (each line above measured its own branch against main): the scene face measured 1_050_625 B, 4_119 more than main (1_046_506).
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1027 * 1024);
   });
 
