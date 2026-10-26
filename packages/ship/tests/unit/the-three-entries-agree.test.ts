@@ -68,6 +68,7 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   connectionsFileOf: "the CLI",
   FileAdapter: "node:fs",
   serveStore: "node:http",
+  MAX_BODY_BYTES: "serveStore's, which is node:http's",
   ServeOptions: "node:http",
   ServedStore: "node:http",
   serve: "the CLI",

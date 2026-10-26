@@ -40,7 +40,18 @@ export interface ServeOptions<S extends AnySchema> extends AdapterStoreHandlerOp
    * Off by default: a store an embed reaches is reached from other origins.
    */
   readonly ownOrigin?: boolean;
+  /**
+   * The most bytes a request's body may carry: one that says more, or sends
+   * more as it streams (chunked too), is answered 413 before any route or
+   * `seatOf` is asked — read in memory before either, a body is the cost
+   * of reaching the port. `MAX_BODY_BYTES` (16 MiB, a live message's
+   * limit) unless said.
+   */
+  readonly maxBodyBytes?: number;
 }
+
+/** The largest body a request may carry unless the host says otherwise: what a live message may (`websocket.ts`). */
+export const MAX_BODY_BYTES = 16 * 1024 * 1024;
 
 export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, "close" | "opened"> {
   readonly opened: OpenedStore<S>;
@@ -64,7 +75,7 @@ export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, 
 const CLOSE_GRACE_MS = 1500;
 
 export async function serveStore<S extends AnySchema>(options: ServeOptions<S>): Promise<ServedStore<S>> {
-  const { port: wanted, host, answer, ownOrigin = false, ...rest } = options;
+  const { port: wanted, host, answer, ownOrigin = false, maxBodyBytes = MAX_BODY_BYTES, ...rest } = options;
   const handler = await createStoreHandler(rest);
   const NOT_OURS = JSON.stringify({ error: "Refused: not from this server's own page.", reason: "forbidden" });
   const refused = (incoming: IncomingMessage) => ownOrigin && !sameOrigin(incoming.headers);
@@ -75,10 +86,18 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
       outgoing.end(NOT_OURS);
       return;
     }
-    void requestOf(incoming)
+    void requestOf(incoming, maxBodyBytes)
       .then(async (request) => (answer ? await answer(request) : undefined) ?? handler.handle(request))
       .then((response) => write(outgoing, response, takesGzip(incoming)))
       .catch((error: unknown) => {
+        if (error instanceof TooLarge) {
+          // Said, and the connection closed behind it: what is still coming is not read.
+          const text = JSON.stringify({ error: `A request's body is at most ${maxBodyBytes} bytes.`, reason: "limit" });
+          if (!outgoing.headersSent) outgoing.writeHead(413, { "content-type": "application/json", "content-length": Buffer.byteLength(text), connection: "close" });
+          outgoing.once("finish", () => incoming.socket.destroy());
+          outgoing.end(text);
+          return;
+        }
         const text = JSON.stringify({ error: error instanceof Error ? error.message : String(error) });
         if (!outgoing.headersSent) outgoing.writeHead(500, { "content-type": "application/json", "content-length": Buffer.byteLength(text) });
         outgoing.end(text);
@@ -173,20 +192,63 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
   };
 }
 
-/** Node's request as the `Request` every other runtime hands a handler. */
-async function requestOf(incoming: IncomingMessage): Promise<Request> {
+/** A body over the limit: answered 413. */
+class TooLarge extends Error {}
+
+/** Node's request as the `Request` every other runtime hands a handler, its body no larger than `limit`. */
+async function requestOf(incoming: IncomingMessage, limit = MAX_BODY_BYTES): Promise<Request> {
   const headers = new Headers();
   for (const [name, value] of Object.entries(incoming.headers)) {
     if (value === undefined) continue;
     for (const one of Array.isArray(value) ? value : [value]) headers.append(name, one);
   }
   const method = incoming.method ?? "GET";
-  const chunks: Buffer[] = [];
-  if (method !== "GET" && method !== "HEAD") for await (const chunk of incoming) chunks.push(chunk as Buffer);
+  const body = method !== "GET" && method !== "HEAD" ? await bodyOf(incoming, limit) : undefined;
   return new Request(new URL(incoming.url ?? "/", "http://localhost"), {
     method,
     headers,
-    ...(chunks.length > 0 ? { body: Buffer.concat(chunks) } : {}),
+    ...(body && body.length > 0 ? { body } : {}),
+  });
+}
+
+/**
+ * A request's body, counted as it arrives: refused before a byte is read
+ * when its declared length is over the limit, and the moment what has
+ * streamed passes it — a chunked body says no length.
+ */
+function bodyOf(incoming: IncomingMessage, limit: number): Promise<Buffer> {
+  const declared = Number(incoming.headers["content-length"]);
+  if (Number.isFinite(declared) && declared > limit) return Promise.reject(new TooLarge());
+  return new Promise((done, fail) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    const stop = () => {
+      incoming.off("data", data);
+      incoming.off("end", end);
+      incoming.off("error", error);
+    };
+    const data = (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > limit) {
+        stop();
+        incoming.pause();
+        chunks.length = 0;
+        fail(new TooLarge());
+        return;
+      }
+      chunks.push(chunk);
+    };
+    const end = () => {
+      stop();
+      done(Buffer.concat(chunks, size));
+    };
+    const error = (problem: Error) => {
+      stop();
+      fail(problem);
+    };
+    incoming.on("data", data);
+    incoming.on("end", end);
+    incoming.on("error", error);
   });
 }
 
