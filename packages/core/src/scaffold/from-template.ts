@@ -1,5 +1,5 @@
 import type { GraviewTemplate } from "../document/graview-template.js";
-import { type Ids, escapeString, slugify } from "./names.js";
+import { type Ids, escapeString, escapeTemplate, slugify } from "./names.js";
 
 /*
  * A PROJECT FROM A TEMPLATE (FR-08): the same checkout `graview create`
@@ -94,7 +94,7 @@ import { ${ids.appVar} } from "./app.js";
 function brandOf(): Brand {
   if (${ids.appVar}.brand) return ${ids.appVar}.brand;
   const derived = brandFromAccent({ accent: "${ids.accent}", base: { dark: DARK, light: LIGHT } });
-  if (!derived.ok) throw new Error(\`${escapeString(ids.name)} cannot be derived from ${ids.accent}: \${derived.why}\`);
+  if (!derived.ok) throw new Error(\`${escapeTemplate(ids.name)} cannot be derived from ${ids.accent}: \${derived.why}\`);
   return { name: ${ids.appVar}.name, schemes: derived.schemes };
 }
 

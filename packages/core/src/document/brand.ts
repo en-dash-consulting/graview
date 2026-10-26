@@ -1,7 +1,7 @@
 import { SCHEMES } from "../theme/palettes.js";
 import { documentSchemes } from "../theme/accent.js";
 import { groundFailure, groundSchemes } from "../theme/ground.js";
-import { stackOf } from "../theme/fonts.js";
+import { stackOf, stackShapeProblem } from "../theme/fonts.js";
 import type { Brand } from "../theme/types.js";
 import { warning, type Finding } from "./findings.js";
 import { logoParts } from "./logo.js";
@@ -32,11 +32,11 @@ export function brandOf(document: GraviewDocument, findings: Finding[]): Brand {
   if (derived && !derived.ok) findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colors: ${derived.why}`, "pick a color further from orange-red, or a darker one"));
   const logo = logoParts(spec.logo);
   const name = spec.name ?? document.name;
-  // A face is written into a style sheet, so one that could end its rule or load is left out even where the checker never ran.
+  // A face is written into a style sheet, so one that could end its rule, leave a string open or load is left out even where the checker never ran: the checker's own rule.
   const typography = spec.typography
     ? Object.fromEntries(
         Object.entries(spec.typography)
-          .filter(([, value]) => typeof value === "string" && !/url\(|@import|[;{}<>\\]/i.test(value))
+          .filter(([, value]) => typeof value === "string" && stackShapeProblem(value) === null)
           .map(([role, value]) => [role, stackOf(value as string)]),
       )
     : undefined;

@@ -546,8 +546,9 @@ function Argument<S extends AnySchema>({
  *
  * It is safe to show because `figureFaults` — the checker's own function,
  * which `drawFigure` already ran — holds a figure to a closed vocabulary of
- * drawing elements and drawing attributes. Anything a model smuggled in
- * besides line art was refused before it ever reached a proposal.
+ * drawing elements and drawing attributes, read as the page's parser reads
+ * them; and `figureSvg` asks again here, so a proposal that reached the
+ * panel some other way still draws nothing that could run.
  */
 function ProposedDrawing({ offer }: { readonly offer: Offer }) {
   const art = offer.proposal.mutation === "set-figure" ? figureSvg(String(offer.proposal.args["figure"] ?? "")) : undefined;

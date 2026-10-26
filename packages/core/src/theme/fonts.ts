@@ -62,6 +62,25 @@ export function stackOf(value: string): string {
 }
 
 /**
+ * Why a stack is not a plain list of family names, or null — the one rule
+ * the checker (`fontProblem`) and a page's brand (`brandOf`) hold a face to
+ * before it is written into a style sheet. Each family is a name with no
+ * quote in it, or a name in one matching pair of quotes with none inside;
+ * nothing ends a line, opens a comment, closes a rule or loads anything. A
+ * quote left open runs the sheet's string to the end of its line, and the
+ * rules after it are read by the browser as something else.
+ */
+export function stackShapeProblem(value: string): string | null {
+  if (/url\(|@import|[;{}<>\\]|\/\*|[\u0000-\u001f\u007f]/i.test(value)) return "it is not a list of font names; a document names a face, never where one comes from";
+  for (const part of value.split(",")) {
+    const family = part.trim();
+    if (/^"[^"']*"$/.test(family) || /^'[^"']*'$/.test(family)) continue;
+    if (/["']/.test(family)) return `${family} is not quoted in one pair; write a face as Georgia or "Times New Roman"`;
+  }
+  return null;
+}
+
+/**
  * Why a document may not name this stack, or null (FR-124). `served` is the
  * web fonts the host serves beyond `DOCUMENT_FONTS`.
  */
@@ -69,7 +88,9 @@ export function fontProblem(value: string, served: readonly string[] = []): stri
   if (value in SYSTEM_STACKS) return null;
   const origin = /(?:https?:)?\/\/([^/\s'"),;]+)/i.exec(value)?.[1];
   if (origin) return `it loads a font from ${origin}, and a document names a face, never where one comes from`;
-  if (/url\(|@import|[;{}<>:\\]/i.test(value)) return "it is not a list of font names; a document names a face, never where one comes from";
+  if (/:/.test(value)) return "it is not a list of font names; a document names a face, never where one comes from";
+  const shape = stackShapeProblem(value);
+  if (shape) return shape;
   const allowed = lower([...DOCUMENT_FONTS, ...served]);
   const families = familiesIn(value);
   if (families.length === 0) return "it names no face";
