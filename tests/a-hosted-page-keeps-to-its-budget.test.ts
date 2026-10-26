@@ -154,7 +154,8 @@ describe("a hosted page", () => {
     // 1010 KB since a computed value is said as its format (Roadmap f-computed-format, FR-217) and a date emptied in place is cleared (f-clear-date-in-place): the scene face measured 1_033_712 B, 1_605 more than main (1_032_107).
     // 1009 KB since a text block came to say how many lines a card or a row shows of it (FR-218): its `lines` compiled, resolved and drawn on the element: the scene face measured 1_033_062 B, 955 more than main (1_032_107).
     // 1011 KB once both came together in one batch: the scene face measured 1_034_667 B, 2_560 more than main (1_032_107).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1011 * 1024);
+    // 1012 KB since a Notion connection came to land through the acts that fit it: the compile reads the fields a connection maps onto each kind's plan and the checker chooses the act a page is made through: the scene face measured 1_035_948 B, 1_281 more than main (1_034_667).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1012 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -994,6 +994,8 @@ export function withRaises(bases, raises) {
   for (const raise of raises) {
     // A hosted page's raise is `hosted-page.mjs`'s to add up and to judge.
     if (HOSTED_BUDGET_NAMES.includes(raise.budget)) continue;
+    // So is the worker's, `import-cost.mjs`'s.
+    if (raise.budget === "Cloud's worker") continue;
     const where = `scripts/budget-raises/${raise.file ?? "(a raise)"}`;
     const entry = byName.get(raise.budget);
     if (!entry) throw new Error(`${where} raises "${raise.budget}", which is not a budget: name one of ${[...byName.keys()].map((name) => `"${name}"`).join(", ")}`);
