@@ -244,6 +244,13 @@ export function compileMutation<S extends AnySchema>(
      * of the removed record would be taken for the new one's.
      */
     readonly everHeld?: (id: string) => boolean;
+    /**
+     * WHETHER SOME SIGHT MAY KEEP A FIELD OF A KIND FROM SOME ROLE (Roadmap
+     * f-field-sight). An id is served wherever its record is, so a name
+     * handed to `freshId` that is an argument for such a field is not minted
+     * from: the id is minted from the kind's name instead.
+     */
+    readonly keeps?: (kind: string, field: string) => boolean;
     readonly check?: (primitives: readonly Primitive[], definition: { readonly name: string; readonly creates?: readonly string[] | undefined; readonly input: unknown }) => readonly string[];
   } = {},
 ): CompiledMutation {
@@ -422,6 +429,8 @@ export function compileMutation<S extends AnySchema>(
       // A client's own guess at the first id (`hint`): taken when free, else minted as ever — never refused.
       const hint = options.hint;
       if (requested === undefined && !minted.size && validId(hint) && (!prefix || hint.startsWith(`${prefix}:`)) && mayAsk(hint) && !held(hint)) return minted.add(hint), hint;
+      // A name that is the value of a field some sight keeps from a role is not quoted in the id: the kind's name is.
+      if (prefix && options.keeps && Object.entries(args).some(([field, value]) => value === label && options.keeps!(prefix, field))) label = prefix;
       const base = prefix ? `${prefix}:${slug(label)}` : slug(label);
       /*
        * AN ID THAT SAYS NOTHING OF WHAT THE SEAT MAY NOT SEE (FR-55). Stepping

@@ -12,7 +12,7 @@ import { edgeWords, valueWords } from "../schema/value-words.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { actingAs } from "../permissions/policy.js";
-import { FIELD_SIGHT, recordsOf } from "../permissions/sight.js";
+import { FIELD_SIGHT, mayKeepField, recordsOf } from "../permissions/sight.js";
 import { seesEveryRecord } from "../seen.js";
 import { problemsMoved, type PlannedChange, type Store } from "../store.js";
 import { andList, coerceCell, orList, splitCell } from "./coerce.js";
@@ -387,7 +387,9 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
     }
 
     const label = labelFor(definition, kind, fields, row);
-    const id = reasons.length === 0 ? mint(store, seen, by, taken, kind, label) : `import:${row}`;
+    // An id is served wherever its record is: never minted from words of a field some sight keeps from a role (Roadmap f-field-sight).
+    const quotesKept = Object.entries(fields).some(([field, value]) => typeof value === "string" && value.trim() !== "" && label.includes(value.trim()) && mayKeepField(store.policy?.sees, kind, field));
+    const id = reasons.length === 0 ? mint(store, seen, by, taken, kind, quotesKept ? kind : label) : `import:${row}`;
     if (reasons.length === 0) {
       taken.add(id);
       const one: Planned = { id, kind, label, row };

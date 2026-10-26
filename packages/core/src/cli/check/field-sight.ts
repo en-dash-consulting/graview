@@ -101,11 +101,13 @@ export function checkFieldSight<S extends AnySchema>(ctx: CheckContext<S>): void
         }
         for (const [part, read] of quoted) {
           if (!read.has(field)) continue;
+          // A record's id is served wherever the record is: the framework mints it from the kind's name, and an act of the app's own that names it from the field would quote it.
+          const id = part === "label" ? ` A new ${kind}'s id is minted from "${kind}", not from "${field}"; an act of the app's own that hands freshId a name built from "${field}" would quote it in the id the role is served.` : "";
           ctx.add({
             severity: "warning",
             code: "sight-hides-a-labeled-field",
             where: `${kind}.${part}`,
-            message: `${kind}'s ${part} reads "${field}", which the role "${role}" may not see: it is told the ${part} worked out without it.`,
+            message: `${kind}'s ${part} reads "${field}", which the role "${role}" may not see: it is told the ${part} worked out without it.${id}`,
             fix: `Word the ${part} from fields every role sees, or show "${field}" to "${role}".`,
           });
         }
