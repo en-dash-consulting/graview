@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 0,
+  "gzipped": 4,
+  "note": "Raised when Start fresh came to be asked for in its own tab (freshAddress joined @graview/core's main entry): the guest host's minified size is the same, 37_869, but it gzips 4 bytes larger, 16_756 against 16_752, which was its budget to the byte."
+}

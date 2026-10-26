@@ -4,7 +4,10 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
-import { declaredCode, editDeclaration, studioDoorHandler, typecheckWith } from "../../src/dev.js";
+import { declaredCode, doorCookie, editDeclaration, studioDoorHandler, typecheckWith } from "../../src/dev.js";
+
+// The door's key for this file, so no test reaches for the one kept in a home folder; a page let in holds it as a cookie.
+process.env["GRAVIEW_DOOR_KEY"] ??= "the-studio-door-test-key-0123456789";
 
 /**
  * THE STUDIO'S CHANGE, MADE AS AN EDIT — held to "every other character
@@ -190,7 +193,7 @@ describe("the studio door", () => {
   const request = (method: string, body?: string, origin?: string) =>
     ({
       method,
-      headers: { host: "localhost:5173", ...(origin ? { origin } : {}) },
+      headers: { host: "localhost:5173", cookie: doorCookie(), ...(origin ? { origin } : {}) },
       on: (event: string, handler: (chunk?: Buffer) => void) => {
         if (event === "data" && body) handler(Buffer.from(body));
         if (event === "end") handler();

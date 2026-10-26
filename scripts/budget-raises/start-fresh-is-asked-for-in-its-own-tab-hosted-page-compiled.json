@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 286,
+  "gzipped": 117,
+  "changeset": "start-fresh-is-asked-for-in-its-own-tab.md",
+  "note": "Raised when Start fresh came to be asked for in its own tab: the control keeps a one-time value in sessionStorage and goes to the address carrying it (freshAddress in @graview/core), so a ?fresh=1 another site links to discards nothing. Measured at 569_452 / 198_446 against 569_166 / 198_329: 286 / 117 more."
+}

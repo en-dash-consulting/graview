@@ -41,11 +41,14 @@ product is for, and it is four seams, all of which the framework ships.
    ```
 
    Read it with `useLocalIntelligence(path)` from `@graview/react`. The
-   spawned session gets Read and only Read, a turn per photograph plus
-   three, a dollar budget, a closed stdin and an environment with every
-   `CLAUDE*` variable stripped. `apply: "serve"` means a build carries no
-   door: a deployed copy probes, gets nothing, and reads as **closed** —
-   which is a state, not a fault.
+   spawned session gets Read and only Read, beneath its own temporary folder
+   (`Read(./**)`), the prompt after `--`, a turn per photograph plus three, a
+   dollar budget, a closed stdin and only the environment it needs (`PATH`,
+   `HOME`, the locale, proxies, `ANTHROPIC_*`). Every dev door answers only
+   the page opened from the address the dev server prints
+   (`?graview_door=<key>`, the key in `~/.graview/door-key`): open that once.
+   `apply: "serve"` means a build carries no door: a deployed copy probes,
+   gets nothing, and reads as **closed** — which is a state, not a fault.
 3. **A plan** — what came back, as an object rather than a list: ordered by
    the chain, judged against the policy and the provider's `may`, reviewable.
    `planFrom(store, proposals, { app, principal })`.

@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { AI_HOW_TO, aiDevProxy, aiDevProxyHandler } from "../../src/dev.js";
+import { AI_HOW_TO, aiDevProxy, aiDevProxyHandler, doorCookie } from "../../src/dev.js";
+
+// The door's key for this file, so no test reaches for the one kept in a home folder; a page let in holds it as a cookie.
+process.env["GRAVIEW_DOOR_KEY"] ??= "the-door-tests-key-0123456789abcdef";
 
 /**
  * A MODEL FOR THE SEAT IN DEVELOPMENT, with the key on the server side.
@@ -23,7 +26,7 @@ const respond = () => {
 const request = (method: string, body?: string, origin?: string, host = "localhost:5193") =>
   ({
     method,
-    headers: { host, ...(origin ? { origin } : {}) },
+    headers: { host, cookie: doorCookie(), ...(origin ? { origin } : {}) },
     on: (event: string, handler: (chunk?: Buffer) => void) => {
       if (event === "data" && body) handler(Buffer.from(body));
       if (event === "end") handler();
@@ -143,8 +146,9 @@ describe("the model door", () => {
   it("is a dev-server plugin only, so a build never carries it", () => {
     const plugin = aiDevProxy({ env: {} });
     expect(plugin.apply).toBe("serve");
-    const used: string[] = [];
-    plugin.configureServer({ middlewares: { use: (path) => void used.push(path) } });
-    expect(used).toEqual(["/__graview/ai"]);
+    const used: unknown[] = [];
+    plugin.configureServer({ middlewares: { use: (path: unknown) => void used.push(path) } } as never);
+    // The address that trades the door's key for its cookie, and then the door.
+    expect(used).toEqual([expect.any(Function), "/__graview/ai"]);
   });
 });

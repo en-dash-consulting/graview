@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
 import { readSnapshot } from "@graview/core/snapshot";
 import type { GraviewApp, PersistenceAdapter } from "@graview/core";
-import { createFileAdapter } from "./file-adapter.js";
+import { createFileAdapter, scopeDirectory } from "./file-adapter.js";
 import { fileSubscriptions } from "./file-subscriptions.js";
 import { fileFriction } from "./file-friction.js";
 import { fileViews } from "./file-views.js";
@@ -159,30 +159,30 @@ export async function backendFrom(argv: readonly string[], cwd = process.cwd()):
 /** Where `graview serve` and `graview preview --data` keep the connections' cursors and links: beside the store, as the subscriptions are. */
 export function connectionsFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
   const root = (backend.adapter as { root?: string }).root;
-  return root !== undefined ? join(root, scope, "connections.json") : `${backend.where}.connections.json`;
+  return root !== undefined ? join(scopeDirectory(root, scope), "connections.json") : `${backend.where}.connections.json`;
 }
 
 export function subscriptionsFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
   const root = (backend.adapter as { root?: string }).root;
-  return root !== undefined ? join(root, scope, "subscriptions.json") : `${backend.where}.subscriptions.json`;
+  return root !== undefined ? join(scopeDirectory(root, scope), "subscriptions.json") : `${backend.where}.subscriptions.json`;
 }
 
 /** Where `graview serve` keeps the friction log (Roadmap f-friction-log): beside the store, as the subscriptions are. */
 export function frictionFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
   const root = (backend.adapter as { root?: string }).root;
-  return root !== undefined ? join(root, scope, "friction.json") : `${backend.where}.friction.json`;
+  return root !== undefined ? join(scopeDirectory(root, scope), "friction.json") : `${backend.where}.friction.json`;
 }
 
 /** Where the answers to the app's own suggestions about itself are kept (Roadmap f-learned-suggestions): beside the store, with the friction log they are learned from. */
 export function learnedFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
   const root = (backend.adapter as { root?: string }).root;
-  return root !== undefined ? join(root, scope, "learned.json") : `${backend.where}.learned.json`;
+  return root !== undefined ? join(scopeDirectory(root, scope), "learned.json") : `${backend.where}.learned.json`;
 }
 
 /** Where `graview serve` keeps the views a person tidied from the place menu (Roadmap f-place-menu-views): beside the store, as the subscriptions are. */
 export function viewsFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
   const root = (backend.adapter as { root?: string }).root;
-  return root !== undefined ? join(root, scope, "views.json") : `${backend.where}.views.json`;
+  return root !== undefined ? join(scopeDirectory(root, scope), "views.json") : `${backend.where}.views.json`;
 }
 
 /** A seed file in either snapshot format: the line format with its header, or an old `{ nodes, edges }`. */

@@ -250,6 +250,13 @@ export interface FrictionOptions {
   readonly minPeople?: number;
   /** The most groups of each list. 12 unsaid. */
   readonly most?: number;
+  /**
+   * Who the counts are said to. Their own events are left out before
+   * anything is counted, so a group reaches `minPeople` only with that many
+   * people OTHER than the reader: words a reader posts can never confirm
+   * what one other person typed.
+   */
+  readonly reader?: Principal;
 }
 
 /** Words too common to say anything on their own. */
@@ -276,7 +283,8 @@ function grouped<T>(events: readonly FrictionEvent[], keyOf: (event: FrictionEve
 export function frictionOf(events: readonly FrictionEvent[], options: FrictionOptions = {}): FrictionSummary {
   const minPeople = Math.max(1, options.minPeople ?? 2);
   const most = options.most ?? 12;
-  const kept = events.filter((event) => !isVisitorAuthor(event.by));
+  const reader = options.reader ? personOf(options.reader) : undefined;
+  const kept = events.filter((event) => !isVisitorAuthor(event.by) && (reader === undefined || personOf(event.by) !== reader));
   const byType = Object.fromEntries(
     FRICTION_TYPES.map((type) => {
       const of = kept.filter((event) => event.type === type);

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { FileValue } from "@graview/core";
-import { fromThisApp, sendJson, type DevServerPlugin } from "./door.js";
+import { DOOR_LOCKED, fromThisApp, openDoors, sendJson, type DevServerPlugin } from "./door.js";
 
 /*
  * A DEV SERVER'S FILES (FR-163): the door a file field's editor sends to
@@ -88,7 +88,7 @@ export function devFilesHandler(options: DevFilesOptions = {}) {
   const kinds = options.kinds ?? DEV_FILES_KINDS;
   const kept = new Map<string, { readonly type: string; readonly name: string; readonly bytes: Buffer }>();
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    if (!fromThisApp(req)) return sendJson(res, 403, { error: "This door answers this app's own page only." });
+    if (!fromThisApp(req)) return sendJson(res, 403, { error: DOOR_LOCKED });
     // Mounted at `path` (Vite strips it) or handed every request (strip it here).
     const url = (req.url ?? "/").split("?")[0]!;
     const rest = url.startsWith(path) ? url.slice(path.length) : url;
@@ -150,6 +150,7 @@ export function devFiles(options: DevFilesOptions = {}): DevServerPlugin {
     name: "graview:dev-files",
     apply: "serve",
     configureServer(server) {
+      openDoors(server);
       server.middlewares.use(options.path ?? DEV_FILES_PATH, (req, res) => {
         void handler(req, res);
       });

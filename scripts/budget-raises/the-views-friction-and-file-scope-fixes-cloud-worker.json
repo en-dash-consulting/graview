@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 569,
+  "note": "Raised when three fixes from one security review landed together: the views gate judging an agent through actingAs and its declared may (keepsTheApp), the friction counts leaving the reader's own events out (frictionOf's reader), and a file store's scope held to one folder beneath its root (scopeDirectory). Measured at 2_255_099 against 2_254_530: 569 more."
+}

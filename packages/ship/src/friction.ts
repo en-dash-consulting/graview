@@ -9,7 +9,9 @@ import { FRICTION_PATH } from "./remote-friction.js";
  * an act refused, a tool call refused as invalid — its author the
  * session's, as an act's is, never the body's. `GET` answers the asker's
  * own events and the counts across people (`frictionOf`: never who, and
- * words fewer than two people used not said).
+ * words fewer than two people OTHER than the asker used not said — the
+ * asker's own events are left out of the counts, so posting a guess can
+ * never confirm what one other person typed).
  *
  * A visitor is never recorded (202, nothing kept) and reads nothing (403).
  * A post over `FRICTION_MAX_BYTES` is refused `limit` (413); more than
@@ -53,7 +55,7 @@ export function frictionDoor(options: FrictionDoorOptions): (method: string, tex
     if (method === "GET") {
       if (isVisitorAuthor(seat)) return { status: 403, body: { error: "A visitor reads nothing of what people could not do here.", reason: "forbidden" } };
       const all = keptFriction(await options.store.list(), { retentionDays });
-      return { status: 200, body: { mine: ownFriction(all, seat), counts: frictionOf(all, { ...(options.minPeople !== undefined ? { minPeople: options.minPeople } : {}) }) } };
+      return { status: 200, body: { mine: ownFriction(all, seat), counts: frictionOf(all, { reader: seat, ...(options.minPeople !== undefined ? { minPeople: options.minPeople } : {}) }) } };
     }
     if (method !== "POST") return { status: 405, body: { error: `${FRICTION_PATH} is read with GET and added to with POST.`, reason: "invalid" } };
     if (text.length > FRICTION_MAX_BYTES) return { status: 413, body: { error: `One event is at most ${FRICTION_MAX_BYTES} characters.`, reason: "limit" } };

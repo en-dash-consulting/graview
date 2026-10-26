@@ -42,7 +42,7 @@ to it, or kept in step with a Google calendar is `graview-sync`.
 
    const opened = await openStore({
      app, adapter: createBrowserAdapter(), seed,
-     fresh: browserStartsFresh(),   // ?fresh=1 asks; a driven browser gets it unless ?remember=1
+     fresh: browserStartsFresh(),   // Start fresh (freshHref) asks; a driven browser gets it unless ?remember=1
    });
    forgetFreshParam();              // the seed is the FIRST load, not every load
    ```

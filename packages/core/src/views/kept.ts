@@ -185,6 +185,8 @@ export function memoryViews(options: MemoryViewsOptions = {}): KeptViews {
       changed();
     },
     remove(name, about) {
+      // A deleted lens of the declaration is restored, never replaced by a script view of its name.
+      if (removed.some((one) => one.name === name && one.lens)) throw new Error(`"${name}" is a deleted lens of the declaration; only its owner restores it.`);
       hidden = hidden.filter((one) => one !== name);
       removed = [removal(name, about?.title ?? name, about?.kind, false), ...removed.filter((one) => one.name !== name)];
       changed();

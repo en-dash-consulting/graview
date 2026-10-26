@@ -531,8 +531,9 @@ if (!root) throw new Error("no #root");
 /*
  * THE APP REMEMBERS. Persistence is the op log; \`openStore\` is the lifecycle
  * every deployment repeats. Here it is the browser adapter, so an edit
- * survives a reload, attributed and undoable. \`?fresh=1\` returns to empty;
- * a driven browser starts fresh unless it asks to remember (\`?remember=1\`),
+ * survives a reload, attributed and undoable. "Start fresh" returns to empty
+ * (the address it goes to carries a value only this tab knows, so a link to
+ * \`?fresh=1\` from elsewhere discards nothing); a driven browser starts fresh unless it asks to remember (\`?remember=1\`),
  * so a harness specifies the app rather than its own residue.
  */
 const opened = await openStore({

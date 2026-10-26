@@ -24,7 +24,7 @@ The file adapter is deliberately readable: `snapshot.json`, append-only `log.jso
 
 ```ts import { browserStartsFresh, createBrowserAdapter, forgetFreshParam, openStore } from "@graview/ship/browser";
 
-const opened = await openStore({ app, adapter: createBrowserAdapter(), seed, fresh: browserStartsFresh(), // ?fresh=1 asks; a driven browser gets it unless ?remember=1 }); forgetFreshParam(); // the seed is the FIRST load, not every load ```
+const opened = await openStore({ app, adapter: createBrowserAdapter(), seed, fresh: browserStartsFresh(), // Start fresh (freshHref) asks; a driven browser gets it unless ?remember=1 }); forgetFreshParam(); // the seed is the FIRST load, not every load ```
 
 Reopened, the store carries its persisted history: earlier edits are in the activity, attributed, and undoable. Give the person a visible way back — `StartFresh` from `@graview/primitives`, or `remembers: true` on the pages context — because a demo that can be edited into a corner with no exit teaches distrust. The sample apps' `main.tsx` files are the worked examples; `pnpm remember` is the harness that holds them to it.
 
