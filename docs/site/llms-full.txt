@@ -5562,7 +5562,7 @@ A kind declared is drawn already: a card, a row, a page. When that default is wr
 
 In a document the same is the top-level `views.<kind>`, and the edit is `{ "op": "set-view", "kind": "fixture", "slot": "card", "blocks": [...] }` (`null` gives the default back).
 
-`card` is drawn beside the focus and on the pages face's gallery, `row` as the one line a member is among many (a focused group, the list page), and `page` above the default record. Tones are `good`, `warn`, `bad`, `neutral` and `accent`, the theme's own. Nothing in a spec runs: no CSS, no markup, and the only link drawn is an http(s) `url` field's own value, or a listed record. The scaffold's `views()` draws them (`registerViewSpecs`); so does the embed, by itself.
+`card` is drawn beside the focus and on the pages face's gallery, `row` as the one line a member is among many (a focused group, the list page), and `page` above the default record. Tones are `good`, `warn`, `bad`, `neutral` and `accent`, the theme's own. A card shows three lines of a `text` block and a row one; `{ text: "{awards}", lines: 6 }` shows six, `lines: 0` the text whole (`view-lines` refuses past 12). Nothing in a spec runs: no CSS, no markup, and the only link drawn is an http(s) `url` field's own value, or a listed record. The scaffold's `views()` draws them (`registerViewSpecs`); so does the embed, by itself.
 
 A row is a link to its record, so it is always named: one whose blocks show no `title`, no `headline` and no words holding the record's whole name (`{severity} · {status}` alone) is drawn with the name first, and `describe_place` says it so. Lead with `{ "title": "{name}" }` to choose how the name reads.
 
@@ -5594,7 +5594,7 @@ npx graview check --document app.json   # a document
 Report **the actual output**, including warnings. What it catches here:
 
 - `view-field`, `view-name`, `view-tone` — a view spec naming a field the kind lacks, or a tone outside the kit; `view-key` — two blocks under one key; `view-template`, `view-expression` — a template or a condition it cannot read; `view-depth` — lists nested past three
-- `view-whole-text` — a card or row putting a long `text` field whole in a text block (`graview-lists` says how a card shows its start)
+- `view-whole-text` — a card or row putting a long `text` field whole in a text block, unless it says `lines` (`graview-lists` says how a card shows its start)
 - `view-headline-long` — a headline bound to a long `text`, Markdown or long string field whole, which a focus card drew at display size: say it in a `text` block, or head it with `{call|excerpt: 60}` (a headline past about 90 characters is drawn a step smaller and clamped to four lines)
 - `computed-cycle` — values worked out from each other; `computed-clash` — a computed name that is already a field; `computed-cost` — work that grows with the cube of the graph (a warning at the square)
 

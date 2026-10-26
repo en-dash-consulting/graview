@@ -116,7 +116,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
     // A home written as blocks says the app's line under its own headline (`HomeLine`); any other home view, over it.
     const placesItsLine = (HomeView as unknown as Record<symbol, unknown>)[Symbol.for("graview.home-blocks")] === true;
     return (
-      <PageMain context={context} style={wide}>
+      <PageMain context={context} style={wide} bleedTop={bleeds(HomeView)}>
         <div style={{ display: "grid", gap: 12 }} data-testid="home-view">
           {placesItsLine ? null : line}
           <HomeLine.Provider value={placesItsLine ? line : null}>

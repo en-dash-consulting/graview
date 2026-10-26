@@ -51,7 +51,7 @@ type Tone = ViewTone | { readonly expr: Parsed<Expr> };
 export type SpecBlock = UnkeyedSpec & { readonly key: string };
 type UnkeyedSpec =
   | { readonly t: "title"; readonly parts: Parsed<readonly TemplatePart[]> }
-  | { readonly t: "text" | "badge"; readonly parts: Parsed<readonly TemplatePart[]>; readonly tone?: Tone }
+  | { readonly t: "text" | "badge"; readonly parts: Parsed<readonly TemplatePart[]>; readonly tone?: Tone; /** A text's lines on a card or a row (FR-218); 0, whole. */ readonly lines?: number }
   | { readonly t: "field"; readonly field: string; readonly as?: (typeof VIEW_FIELD_FORMATS)[number]; readonly currency?: string; readonly label?: string }
   /** A record's pictures or documents (FR-162): the first, small, or each of them. */
   | { readonly t: "image"; readonly field: string; readonly as: "thumb" | "gallery"; readonly label?: string }
@@ -167,7 +167,10 @@ export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[],
         case "headline":
         case "title":
           return { t, parts: template(block[t]) };
-        case "text":
+        case "text": {
+          const lines = block["lines"];
+          return { t, parts: template(block[t]), ...(tone ? { tone } : {}), ...(typeof lines === "number" && Number.isInteger(lines) && lines >= 0 ? { lines } : {}) };
+        }
         case "badge":
           return { t, parts: template(block[t]), ...(tone ? { tone } : {}) };
         case "field": {
@@ -227,7 +230,7 @@ export type ResolvedBlock = (Unkeyed | ResolvedList) & { readonly key: string };
 type Unkeyed =
   | { readonly t: "title"; readonly text: string; readonly problem?: string }
   /** `markdown`: the text is a Markdown field as written (FR-180), drawn as prose; said by a describer as its words. */
-  | { readonly t: "text"; readonly text: string; readonly tone?: ViewTone; readonly markdown?: true; readonly runs?: readonly MetaRun[]; readonly problem?: string }
+  | { readonly t: "text"; readonly text: string; readonly tone?: ViewTone; /** How many lines a card or a row shows (FR-218); 0, the text whole. */ readonly lines?: number; readonly markdown?: true; readonly runs?: readonly MetaRun[]; readonly problem?: string }
   | { readonly t: "badge"; readonly text: string; readonly tone: ViewTone; readonly problem?: string }
   /** `app`: another app's address (FR-171), drawn as the app the host's `resolveApp` names. */
   | { readonly t: "field"; readonly field: string; readonly label: string; readonly text: string; readonly href?: string; readonly app?: string; readonly linked?: { readonly relation: LinkedRelation; readonly refs: readonly LinkedRecordRef[] }; readonly problem?: string }
@@ -470,7 +473,7 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       const said = say(block.parts, ctx, true);
       const tone = toneWord(block.tone, ctx);
       const runs = ctx.glance && !said.problem ? metaRuns(block.parts, ctx) : undefined;
-      return withProblem({ t: "text", text: said.text, ...(tone ? { tone } : {}), ...(said.markdown ? { markdown: said.markdown } : {}), ...(runs ? { runs } : {}) }, said.problem);
+      return withProblem({ t: "text", text: said.text, ...(tone ? { tone } : {}), ...(block.lines !== undefined ? { lines: block.lines } : {}), ...(said.markdown ? { markdown: said.markdown } : {}), ...(runs ? { runs } : {}) }, said.problem);
     }
     case "badge": {
       const said = say(block.parts, ctx);
