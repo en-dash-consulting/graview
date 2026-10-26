@@ -29,8 +29,8 @@ export interface TypingStore {
 export const TYPING: {
   /** "Type text", for one store: a keystroke carried over the log since the revision it was made at. */
   typeText?: (store: TypingStore) => AnyMutationDefinition<never>;
-  /** Who may type into a field of a record of a kind: the acts any one of which permits it. */
-  via?: (schema: TypingStore["schema"], mutations: readonly AnyMutationDefinition<never>[], kind: string | undefined, field: unknown) => readonly string[];
+  /** Who may type into a field of a record of a kind: the acts any one of which permits it, of those `allows` says could run on it now. */
+  via?: (schema: TypingStore["schema"], mutations: readonly AnyMutationDefinition<never>[], kind: string | undefined, field: unknown, allows?: (mutation: AnyMutationDefinition<never>) => boolean) => readonly string[];
   /** Whether one field of a kind is typed together, by the declaration. */
   collaborative?: (schema: TypingStore["schema"], kind: string | undefined, field: string) => boolean;
   /** These primitives with each whole write over text typed together written as a splice. */

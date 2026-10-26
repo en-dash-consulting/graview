@@ -1,0 +1,7 @@
+---
+"@graview/core": patch
+---
+
+A change to one day of a repeating series takes only what the kind's edit takes, and makes a record only for a seat that may make one. "Change just this one" (`detach-<kind>`) and "Change from here" (`split-<kind>`) ride the kind's edit, and took every field of the kind beside the day: a member who may only rename a chore approved it — a status only a manager's act sets, which `edit-chore` refuses — by changing it from the series' first day, and made chores, which only a manager may, by changing one day alone. They now take the fields `edit-<kind>` takes (those no declared act writes, and those a connection keeps in step) and refuse the rest by the act that sets them ("status is set by approve-chore"), as the edit does; and a call that makes a record — "change just this one", or "change from here" past the series' first day — rides the acts that make the kind as well, so a seat that may not make one is refused `forbidden`, with the roles that could, unless the policy names the act itself. "Skip this one", and a change from the first day, still ride the edit alone. `a-change-to-one-day-takes-only-what-its-edit-takes.test.ts` holds it.
+
+Compatibility: ops and primitives, stored formats, the wire, and the declaration and check finding codes — unchanged. Derived tool names and input schemas — `detach-<kind>` and `split-<kind>` no longer take a field another declared act writes (unless a connection keeps it in step), as `edit-<kind>` does not; their names and their other arguments are unchanged.
