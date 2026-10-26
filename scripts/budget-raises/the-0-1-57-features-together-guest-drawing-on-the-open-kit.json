@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 0,
+  "gzipped": 32,
+  "note": "Raised when the 0.1.57 features landed together: a section named by its own heading and chosen pictures (FR-219, FR-220) beside a computed's format (FR-217) compress a little worse side by side than each measured alone. Measured at 223_951 / 85_258 against 223_951 / 85_256: 2 B more gzipped."
+}
