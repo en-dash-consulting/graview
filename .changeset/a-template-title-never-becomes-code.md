@@ -1,0 +1,7 @@
+---
+"@graview/core": patch
+---
+
+A template's title is written into the project `graview create --template` makes as text, never as code. The title is the project's name unless `--name` is given, and the name went into the generated files with escapes that did not fit where it landed: `escapeTemplate` wrote a backtick and `${` back unescaped, a `*/` closed the comment it sat in (`src/ui/app.tsx`, `src/embed.tsx`, `embed.html`'s stylesheet), a brace in the record page's eyebrow was read as JSX, and `src/domain/brand.ts` put it in a template literal with a double-quote escape. A title such as `Acme */ globalThis.x = 1; /*` added a statement to `src/ui/app.tsx` that ran when the page loaded. Now each place has its own escape — a template literal's with real backslashes, a comment's that cannot close it, JSX text written as a string expression when it holds a brace, an angle bracket or an ampersand — and a name with a line break or a control character in it is refused before any file is written ("a name is one line of text"). `a-template-title-never-becomes-code.test.ts` parses every TypeScript file a project starts with, from a template and without, under seven hostile names, and finds no parse error, no identifier the name planted, and the same statements as a project named "Acme".
+
+Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. `validateScaffoldOptions` refuses a name with a line break or a control character in it.
