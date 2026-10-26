@@ -39,7 +39,7 @@ the view, whose region is painted contained — and `all` takes its keywords
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside`
 and `search` are drawn as `div`, and `output` as `span`, each with what it
 holds. They lose their landmark or status role, and a selector for them in
-your stylesheet still matches. A `section` is never named, so it stays out of the landmarks. `role` takes
+your stylesheet still matches. A `section` is named only by a heading it draws (`aria-labelledby`). `role` takes
 no landmark or notice's role (`navigation`, `status`, `alert`, …) but a
 named `region`.
 

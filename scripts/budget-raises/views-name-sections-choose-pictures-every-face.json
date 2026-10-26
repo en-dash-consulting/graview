@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 1000,
+  "note": "Raised when worker views came to name a section by its own heading (FR-219: aria-labelledby and aria-describedby held until every id they name is drawn, settled as each batch ends in open-render.ts), keep ::-webkit-details-marker (FR-221) and choose the pictures they draw (FR-220: the manifest's kinds or fields, checked by checkManifest with a sentence each, and reckoned the same on every push). Measured at 2_338_244 / 854_076 to 854_117 (the gzipped size drifts by some 40 bytes between runs) against 2_510_898 / 853_148: no more minified than the budget, 928 to 969 more gzipped, raised by 1_000."
+}

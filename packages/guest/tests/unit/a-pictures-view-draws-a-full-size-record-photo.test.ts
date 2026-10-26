@@ -177,6 +177,6 @@ describe("a headless run of a pictures: true view", () => {
   it("says what the page would leave out past the view's budget for pictures together", async () => {
     const result = await runWorkerViewHeadless({ manifest: journey, source, store: store(), principal: ana, run: nodeIsolate(), limits: { picturesBytes: 100_000 } });
     if (!result.ok) throw new Error(`${result.reason}: ${result.detail}`);
-    expect(result.description.problems).toContainEqual({ at: "pictures", says: 'The picture "IMG_4032.jpg" on "Porch repair" is left out: the view "Journey" is handed at most 100,000 bytes of pictures, and the pictures before it took them.' });
+    expect(result.description.problems).toContainEqual({ at: "pictures", says: 'The picture "IMG_4032.jpg" on "Porch repair" is left out: the view "Journey" is handed at most 100,000 bytes of pictures, and the pictures before it, in the order its records are handed, took them. A view that draws only some kinds\' pictures says which ("pictures": ["<kind>"]).' });
   });
 });
