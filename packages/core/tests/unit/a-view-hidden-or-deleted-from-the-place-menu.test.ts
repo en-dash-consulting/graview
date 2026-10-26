@@ -43,4 +43,14 @@ describe("a view hidden or deleted from the place menu", () => {
     expect(restored.map((entry) => entry.title)).toEqual(["By day"]);
     expect(kept.current().removed).toEqual([]);
   });
+
+  it("never lets a script view's removal replace a deleted lens of the same name", async () => {
+    const restored: RemovedView[] = [];
+    const kept = memoryViews({ may: { views: true, lenses: true }, declaration: { change: () => undefined, restore: (entry) => void restored.push(entry) } });
+    await kept.lens?.({ op: "remove-lens", title: "Calendar" });
+    expect(() => kept.remove(removedLensName("Calendar"))).toThrow(/deleted lens of the declaration/);
+    expect(kept.current().removed[0]).toMatchObject({ name: removedLensName("Calendar"), lens: true });
+    await kept.restore(removedLensName("Calendar"));
+    expect(restored.map((entry) => entry.title)).toEqual(["Calendar"]);
+  });
 });

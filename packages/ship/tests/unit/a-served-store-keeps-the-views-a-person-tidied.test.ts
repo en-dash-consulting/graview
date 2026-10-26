@@ -101,6 +101,30 @@ describe("a served store's views a person tidied", () => {
     expect(state.hidden).toEqual(["by-the-keeper", "for-the-keeper"]);
   });
 
+  it("never lets a seat that may not restore a deleted lens replace or clear it under the lens's name", async () => {
+    const restored: string[] = [];
+    let asking: Principal = keeper;
+    served = await serveStore({
+      app,
+      adapter: createMemoryAdapter(),
+      seatOf: () => asking,
+      views: memoryViews({ declaration: { change: () => undefined, restore: (entry) => void restored.push(entry.title) } }),
+      mayTidyViews: (seat) => ({ views: true, lenses: seat.id === "nick" }),
+    });
+    const post = async (seat: Principal, body: unknown) => {
+      asking = seat;
+      return fetch(`${served!.url}${VIEWS_PATH}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    };
+    expect((await post(keeper, { lens: { op: "remove-lens", title: "Calendar" } })).status).toBe(200);
+    expect((await post(reader, { restore: "lens:Calendar" })).status).toBe(403);
+    expect((await post(reader, { remove: "lens:Calendar" })).status).toBe(403);
+    expect((await post(reader, { hide: "lens:Calendar" })).status).toBe(403);
+    expect((await post(reader, { show: "lens:Calendar" })).status).toBe(403);
+    // The owner's restore still reaches the declaration.
+    expect((await post(keeper, { restore: "lens:Calendar" })).status).toBe(200);
+    expect(restored).toEqual(["Calendar"]);
+  });
+
   it("are kept in a file beside the store, read again when it starts", async () => {
     const dir = mkdtempSync(join(tmpdir(), "graview-views-"));
     try {

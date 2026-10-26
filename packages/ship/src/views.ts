@@ -1,4 +1,4 @@
-import { actingAs, type AnySchema, type KeptViews, type KeptViewsMay, type LensTidyEdit, type Principal, type Store } from "@graview/core";
+import { actingAs, removedLensName, type AnySchema, type KeptViews, type KeptViewsMay, type LensTidyEdit, type Principal, type Store } from "@graview/core";
 import { VIEWS_PATH } from "./remote-views.js";
 
 /**
@@ -84,6 +84,10 @@ export async function answerViews(method: string, body: unknown, may: KeptViewsM
     const remove = name("remove");
     if (hide === undefined && show === undefined && remove === undefined) return { status: 400, body: { error: SAY, reason: "invalid" } };
     if (!may.views) return { status: 403, body: { error: "Only the app's owner or an editor hides or deletes a view.", reason: "forbidden" } };
+    // A deleted lens is kept under `lens:<title>`, beside the script views: a seat that may not restore it may not replace or clear it either.
+    const target = (hide ?? show ?? remove)!;
+    const lensNamed = target.startsWith(removedLensName("")) || views.current().removed.some((one) => one.name === target && one.lens);
+    if (lensNamed && !may.lenses) return { status: 403, body: { error: "Only the app's owner changes a lens the app declares.", reason: "forbidden" } };
     if (hide !== undefined) await views.hide(hide);
     else if (show !== undefined) await views.show(show);
     else {
