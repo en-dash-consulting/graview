@@ -14,10 +14,10 @@ import {
   type LocalBridgeAsk,
   type LocalBridgeStatus,
 } from "@graview/core";
-import { fromThisApp, readBody, sendJson, type DevServerPlugin } from "./door.js";
+import { DOOR_LOCKED, fromThisApp, openDoors, readBody, sendJson, type DevServerPlugin } from "./door.js";
 
-export { sameOrigin } from "./door.js";
-export type { DevServerPlugin } from "./door.js";
+export { DOOR_COOKIE, DOOR_KEY_PARAM, DOOR_LOCKED, doorCookie, doorKey, doorKeyFile, doorLogin, fromThisApp, loopbackHost, openDoors, sameOrigin } from "./door.js";
+export type { DevServer, DevServerPlugin } from "./door.js";
 
 /**
  * THE FOURTH DOOR: a process on this machine, and the dev server as the
@@ -336,7 +336,7 @@ export function localIntelligenceHandler(options: LocalIntelligenceOptions = {})
   const probe = probeLocal(options);
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
-      send(res, 403, { error: "The local door answers this app only." });
+      send(res, 403, { error: DOOR_LOCKED });
       return;
     }
     if (req.method === "GET") {
@@ -376,6 +376,7 @@ export function localIntelligence(options: LocalIntelligenceOptions = {}): DevSe
     name: "graview:local-intelligence",
     apply: "serve",
     configureServer(server) {
+      openDoors(server);
       server.middlewares.use(options.path ?? LOCAL_BRIDGE_PATH, (req, res) => {
         void handler(req, res);
       });
@@ -435,7 +436,7 @@ export function decisionBridgeHandler(options: DecisionBridgeOptions = {}) {
   const call = options.fetch ?? (globalThis.fetch as NonNullable<DecisionBridgeOptions["fetch"]>);
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
-      send(res, 403, { error: "The decision door answers this app only." });
+      send(res, 403, { error: DOOR_LOCKED });
       return;
     }
     const key = decisionKey(env);
@@ -491,6 +492,7 @@ export function decisionBridge(options: DecisionBridgeOptions = {}): DevServerPl
     name: "graview:decision-bridge",
     apply: "serve",
     configureServer(server) {
+      openDoors(server);
       server.middlewares.use(options.path ?? DECISION_BRIDGE_PATH, (req, res) => {
         void handler(req, res);
       });
@@ -581,7 +583,7 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
   const modelOf = () => env["GRAVIEW_AI_MODEL"]?.trim() || options.model || AI_DEFAULTS.model;
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
-      sendJson(res, 403, { error: "The model door answers this app only." });
+      sendJson(res, 403, { error: DOOR_LOCKED });
       return;
     }
     const key = keyOf();
@@ -674,6 +676,7 @@ export function aiDevProxy(options: AiDevProxyOptions = {}): DevServerPlugin {
     name: "graview:ai-dev-proxy",
     apply: "serve",
     configureServer(server) {
+      openDoors(server);
       server.middlewares.use(options.path ?? AI_BRIDGE_PATH, (req, res) => {
         void handler(req, res);
       });

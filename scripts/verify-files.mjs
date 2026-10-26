@@ -156,9 +156,11 @@ async function buildHost() {
     logLevel: "silent",
   });
   writeFileSync(join(out, "index.html"), HOST_PAGE);
-  const { devFilesHandler } = await import(pathToFileURL(resolve(repoRoot, "packages/ship/dist/dev.js")).href);
+  const { devFilesHandler, doorKey, doorLogin, DOOR_KEY_PARAM } = await import(pathToFileURL(resolve(repoRoot, "packages/ship/dist/dev.js")).href);
   const door = devFilesHandler({ maxBytes: SERVER_TAKES, kinds: ["image/*", "video/*", "application/pdf"] });
-  const host = createServer((request, response) => {
+  // The door answers only a page let in with its key, as `pnpm dev` does: the harness opens the address the dev server would print.
+  doorAddress = (path, query) => `${path}?${DOOR_KEY_PARAM}=${encodeURIComponent(doorKey())}&${query}`;
+  const host = createServer((request, response) => doorLogin(request, response, () => {
     if ((request.url ?? "").startsWith("/__graview/files")) return void door(request, response);
     const path = decodeURIComponent((request.url ?? "/").split("?")[0]).replace(/^\/+/, "") || "index.html";
     const file = join(out, path);
@@ -171,7 +173,7 @@ async function buildHost() {
     // Every address that is no script is the one page, as a host whose page is the app answers it.
     response.writeHead(200, { "content-type": script ? "text/javascript" : "text/html" });
     response.end(readFileSync(script ? file : join(out, "index.html")));
-  });
+  }));
   await vacant(portFor("files-host"));
   await new Promise((ready) => host.listen(portFor("files-host"), ready));
   return { stop: () => (host.close(), rmSync(out, { recursive: true, force: true })) };
@@ -201,6 +203,8 @@ function pictures() {
     }));
 }
 
+/** The address the page is opened at: the one the dev server prints, its door's key in it (set by `buildHost`). */
+let doorAddress = (path, query) => `${path}?${query}`;
 const host = await buildHost();
 const errors = [];
 const seen = { picked: [], pasted: [], pdf: [], full: [], refused: [], undone: [], rows: [], cards: [], scene: [], none: [], said: [], played: [], videoRows: [] };
@@ -213,7 +217,7 @@ try {
         const context = await browser.newContext({ viewport, colorScheme: scheme });
         const page = await context.newPage();
         page.on("pageerror", (error) => errors.push(`${engine} ${scheme} ${path}?${query}: ${error.message}`));
-        await page.goto(`${at("files-host")}${path}?${query}`, { waitUntil: "load" });
+        await page.goto(`${at("files-host")}${doorAddress(path, query)}`, { waitUntil: "load" });
         await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
         const failed = await page.evaluate(() => window.__failed ?? null);
         if (failed) errors.push(`${engine} ${scheme} ${path}?${query}: the document did not compile: ${failed}`);

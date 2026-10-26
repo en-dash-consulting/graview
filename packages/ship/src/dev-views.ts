@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { memoryViews, type KeptViews, type KeptViewsMay } from "@graview/core";
-import { fromThisApp, readBody, sendJson, type DevServerPlugin } from "./door.js";
+import { DOOR_LOCKED, fromThisApp, openDoors, readBody, sendJson, type DevServerPlugin } from "./door.js";
 import { answerViews } from "./views.js";
 
 /*
@@ -34,7 +34,7 @@ export function devViewsHandler(options: DevViewsOptions = {}) {
   const views = options.views ?? memoryViews();
   const may = options.may ?? { views: true, lenses: false };
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    if (!fromThisApp(req)) return sendJson(res, 403, { error: "This door answers this app's own page only." });
+    if (!fromThisApp(req)) return sendJson(res, 403, { error: DOOR_LOCKED });
     try {
       const body = req.method === "POST" ? (JSON.parse((await readBody(req, 100_000, "views")) || "{}") as unknown) : undefined;
       const answer = await answerViews(req.method ?? "GET", body, may, views);
@@ -52,6 +52,7 @@ export function devViews(options: DevViewsOptions = {}): DevServerPlugin {
     name: "graview:dev-views",
     apply: "serve",
     configureServer(server) {
+      openDoors(server);
       server.middlewares.use(options.path ?? DEV_VIEWS_PATH, (req, res) => {
         void handler(req, res);
       });
