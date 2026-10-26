@@ -161,8 +161,10 @@ export function editVia<S extends AnySchema>(
  * Its input is the subject plus each uncovered field as an optional
  * argument carrying the kind's OWN field schema, so validation is the
  * declaration's; `writes` names those fields, so `editableFields` needs no
- * guess. A kind whose every settable field is already written derives
- * nothing, and an app that declares its own `edit-<kind>` keeps it.
+ * guess. A field another system keeps in step (`keptInStep`) is covered
+ * too, whoever else writes it. A kind whose every settable field is already
+ * written derives nothing, and an app that declares its own `edit-<kind>`
+ * keeps it.
  */
 export function deriveEditMutations<S extends AnySchema>(
   schema: S,
@@ -174,12 +176,19 @@ export function deriveEditMutations<S extends AnySchema>(
     const kind = definition.kind;
     const name = editMutationName(kind);
     if (taken.has(name)) continue;
+    /*
+     * And what another system keeps in step (`keptInStep`), whoever else
+     * writes it: Notion moves a toy's status freely, and its change lands
+     * here, so a named step is not the only way that field changes.
+     */
+    const kept = new Set((definition.keptInStep ?? []).filter((field) => settableFields(definition).includes(field)));
+    const unwritten = unwrittenFields(schema, mutations, kind);
     // Asked in the order the form that made one asks (`askedFieldsOf`): an edit is that form again, filled.
-    const fields = inAskedOrder(unwrittenFields(schema, mutations, kind), askedFieldsOf(definition), (field) => field);
+    const fields = inAskedOrder(settableFields(definition).filter((field) => unwritten.includes(field) || kept.has(field)), askedFieldsOf(definition), (field) => field);
     if (fields.length === 0) continue;
     // The fields it leaves to another act, and which: what a refusal of one names (`writtenBy`).
     const writers = fieldWriters(schema, mutations).get(kind);
-    const writtenBy = Object.fromEntries(settableFields(definition).flatMap((field) => (writers?.get(field)?.length ? [[field, writers.get(field)!]] : [])));
+    const writtenBy = Object.fromEntries(settableFields(definition).flatMap((field) => (!fields.includes(field) && writers?.get(field)?.length ? [[field, writers.get(field)!]] : [])));
     const shape = definition.fields.shape as unknown as Record<string, z.ZodMiniType>;
     const noun = nounOf(definition, kind);
     const said = fields.map((field) => fieldWords(definition, field).toLowerCase());

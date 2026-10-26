@@ -70,6 +70,8 @@ describe("graview check judges a declared connection", () => {
     expect(codes(meetings({ team: calendar({ fields: { summary: "starts", start: "starts", end: "ends" } }) }))).toEqual([
       "connection-field-type connections.team.fields.summary",
       "connection-field connections.team.fields.start",
+      // No field holds the event's title, and a meeting is made with its name.
+      "connection-creates connections.team.kind",
     ]);
     expect(codes(meetings({ team: calendar({ fields: { summary: "name", start: "name", end: "ends" } }) }))).toContain("connection-field-type connections.team.fields.start");
   });
@@ -88,8 +90,12 @@ describe("graview check judges a declared connection", () => {
     const raw = meetings({ team: calendar() });
     delete (raw.acts as Record<string, unknown>)["add-meeting"];
     expect(codes(raw)).toContain("connection-creates connections.team.kind");
+    // A field another act writes is still written by the derived edit, which keeps every field a connection maps.
     const written = meetings({ team: calendar() }, { acts: { "add-meeting": { creates: "meeting" }, "add-offsite": { creates: "offsite" }, reschedule: { on: "meeting", writes: ["starts"] } } });
-    expect(codes(written)).toEqual(["connection-edit connections.team.fields"]);
+    expect(codes(written)).toEqual([]);
+    // The app's own edit-meeting is held to every field the calendar maps.
+    const own = meetings({ team: calendar() }, { acts: { "add-meeting": { creates: "meeting" }, "add-offsite": { creates: "offsite" }, "edit-meeting": { on: "meeting", writes: ["name"] } } });
+    expect(codes(own)).toEqual(["connection-edit connections.team.fields"]);
   });
 
   it("carries the connection on the compiled app, for a host to run", () => {

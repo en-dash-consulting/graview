@@ -3,6 +3,8 @@ import { deriveMutations } from "../mutations/derive-edits.js";
 import { relationActName } from "../mutations/derived-names.js";
 import { withArticle } from "../schema/define-node.js";
 import { CONNECTION_TAG, GOOGLE_COLORS } from "../sync/connection-filter.js";
+import { creatingActFor } from "../sync/creating-act.js";
+import type { AnyMutationDefinition } from "../mutations/types.js";
 import { NOTION_FITS, NOTION_INFERABLE, NOTION_READ_ONLY, NOTION_SECRET, notionFits } from "../sync/notion-types.js";
 import { error, warning, type Finding } from "./findings.js";
 import { ConnectionSpec, type GoogleCalendarConnectionSpec, type NotionConnectionSpec } from "./connection-spec.js";
@@ -126,7 +128,7 @@ function googleConnection(at: string, connection: GoogleCalendarConnectionSpec, 
     if (filter.keep !== undefined && !filter.tag) findings.push(error("connection-filter", `${at}.filter.keep`, "keep says whether a title keeps its tag, and the filter has no tag", "drop keep, or add a tag"));
   }
 
-  if (app) findings.push(...landing(at, connection.kind, mapped.map(([, ours]) => ours).filter((ours) => kind.fields[ours]), { made: "an event made in the calendar", change: "a change in the calendar", deleted: "an event deleted in the calendar" }, app));
+  if (app) findings.push(...landing(at, connection.kind, mapped.map(([, ours]) => ours).filter((ours) => kind.fields[ours]), { made: "an event made in the calendar", fields: "the event's fields", change: "a change in the calendar", deleted: "an event deleted in the calendar" }, app));
   return findings;
 }
 
@@ -189,7 +191,7 @@ function notionConnection(at: string, connection: NotionConnectionSpec, document
     mapped = Object.entries(kind.fields).filter(([, spec]) => NOTION_INFERABLE.has(spec.type)).map(([field]) => field);
     if (mapped.length === 0) findings.push(error("connection-properties", `${at}.kind`, `${connection.kind} has no field a Notion property could be held in`, "give it a string, number, date, enum, list or boolean field"));
   }
-  if (app && mapped.length > 0) findings.push(...landing(at, connection.kind, mapped, { made: "a page made in the database", change: "a change in Notion", deleted: "a page archived in Notion" }, app));
+  if (app && mapped.length > 0) findings.push(...landing(at, connection.kind, mapped, { made: "a page made in the database", fields: "the page's fields", change: "a change in Notion", deleted: "a page archived in Notion" }, app));
   if (app) findings.push(...linking(at, connection.kind, relations, document, app));
   return findings;
 }
@@ -232,27 +234,47 @@ function linking(at: string, kindName: string, relations: readonly string[], doc
   return findings;
 }
 
-/** That the acts an inbound change lands through are there: one that makes the kind, `edit-<kind>` writing every mapped field, `remove-<kind>`. */
-function landing(at: string, kindName: string, fields: readonly string[], said: { readonly made: string; readonly change: string; readonly deleted: string }, app: GraviewApp): Finding[] {
+/** That the acts an inbound change lands through are there: one that makes the kind from the mapped fields alone, `edit-<kind>` writing every mapped field, `remove-<kind>`. */
+function landing(at: string, kindName: string, fields: readonly string[], said: { readonly made: string; readonly fields: string; readonly change: string; readonly deleted: string }, app: GraviewApp): Finding[] {
   const findings: Finding[] = [];
   // The acts the store will hold: the declared ones and those derived from them (`edit-<kind>`, `remove-<kind>`).
   const declared = app.mutations ?? [];
   const acts = new Map([...declared, ...deriveMutations(app.schema, declared)].map((mutation) => [mutation.name, mutation]));
-  const creates = declared.some((mutation) => (mutation.creates ?? []).includes(kindName));
-  if (!creates) {
+  // The act a record is made through takes no subject and asks only for what the connection maps (`creatingActFor`), as the connection chooses it.
+  const making = creatingActFor(declared as readonly AnyMutationDefinition[], kindName, fields);
+  if (!making.creates) {
     findings.push(error("connection-creates", `${at}.kind`, `no act makes ${withArticle(kindName)}, so ${said.made} has nothing to become here`, `declare an act with "creates": "${kindName}"`));
+  } else if (!making.act) {
+    const why = making.unfit.map((act) =>
+      act.on ? `${act.name} acts on ${act.on.length > 0 ? act.on.map(withArticle).join(" or ") : "a record"}` : `${act.name} asks for ${act.asks!.join(", ")}, which the connection does not map`,
+    );
+    findings.push(
+      error(
+        "connection-creates",
+        `${at}.kind`,
+        `${said.made} becomes ${withArticle(kindName)} through an act that makes one from ${said.fields} alone, and ${why.join("; ")}`,
+        `declare an act with "creates": "${kindName}" and no "on", whose required arguments are fields the connection maps (add-${kindName} is the one looked for first)`,
+      ),
+    );
   }
   const edit = acts.get(`edit-${kindName}`);
   const writes = new Set(edit?.writes ?? []);
   const unwritten = fields.filter((field) => !writes.has(field));
   if (unwritten.length > 0) {
     const them = unwritten.length === 1 ? "it" : "them";
+    // The derived edit writes every field a connection maps (`keptInStep`), so what it leaves out is fixed, or the app declares its own edit.
+    const own = edit !== undefined && !edit.derived;
+    const fixed = unwritten.filter((field) => field in (app.schema.tryDefinition(kindName)?.fixed ?? {}));
     findings.push(
       error(
         "connection-edit",
         `${at}.${said.change.includes("calendar") ? "fields" : "properties"}`,
-        `${said.change} lands through edit-${kindName}, which does not write ${unwritten.join(", ")}: another act declares ${them}`,
-        `let edit-${kindName} write ${them} (drop "writes" of ${them} from the other act), or leave ${them} out of the connection`,
+        own
+          ? `${said.change} lands through edit-${kindName}, which does not write ${unwritten.join(", ")}: the app declares its own edit-${kindName}`
+          : `${said.change} lands through edit-${kindName}, which does not write ${unwritten.join(", ")}: ${fixed.length > 0 ? `${fixed.join(", ")} ${fixed.length === 1 ? "is" : "are"} fixed` : `no edit-${kindName} is there`}`,
+        own
+          ? `let edit-${kindName} write ${them}, or take it out so the derived edit, which writes every field a connection maps, is given, or leave ${them} out of the connection`
+          : `leave ${them} out of the connection, or let ${them} change`,
       ),
     );
   }

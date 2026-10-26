@@ -74,6 +74,16 @@ exporting the app itself is `graview-ship`.
    archived there. `scriptedNotion()` is a Notion in memory to test
    against.
 
+   What a change there lands through, credited to the system: a page or
+   event made there becomes a record through `add-<kind>`, or else the
+   first act that creates the kind with no `on` and requires only mapped
+   fields — never one that logs it on another record (`connection-creates`
+   when none fits); a change lands through the derived `edit-<kind>`, which
+   writes every mapped field even where a named step (a status moved
+   along) writes it too, so declare no `edit-<kind>` of your own unless it writes
+   them all (`connection-edit`). One this store refuses (a blank row) is
+   said once, kept as `skipped`, and tried again when it changes there.
+
 6. **Several Notion tables joined by relations: one connection per
    table, relations as edges.** Declare the edge on the kind
    (`"reindeer": { "to": ["reindeer"], "cardinality": "one" }`) and map it

@@ -113,6 +113,8 @@ export interface KindPlan {
   readonly computed?: readonly (readonly [string, Expr])[];
   /** Those of them that work out a length of time, read from their parse as it was compiled (`durations.ts`): a face says them as durations. */
   readonly durations?: readonly string[];
+  /** The fields a declared connection maps (`kept-in-step.ts`): its derived edit writes them whoever else does. */
+  readonly keptInStep?: readonly string[];
 }
 
 export interface ActPlan {
@@ -436,6 +438,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         ? { display: { ...(named ? { labels } : {}), ...(formatted ? { format } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
         : {}),
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
+      // The fields a declared connection maps, which its derived edit writes whoever else does.
+      ...(plan.kinds[kind]?.keptInStep ? { keptInStep: plan.kinds[kind].keptInStep } : {}),
     } as never);
   });
   const schema = createSchema(definitions as never, document.computed);

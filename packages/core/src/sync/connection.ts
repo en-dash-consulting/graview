@@ -7,6 +7,8 @@ import type { ConnectionSpec, GoogleCalendarConnectionSpec, NotionConnectionSpec
 import { GOOGLE_COLORS, MADE_BY_GRAVIEW, inConnectionFilter, tagPattern } from "./connection-filter.js";
 import type { EdgeDeclaration } from "../schema/types.js";
 import { relationActName } from "../mutations/derived-names.js";
+import type { AnyMutationDefinition } from "../mutations/types.js";
+import { creatingActFor } from "./creating-act.js";
 import { SyncEngine, type SharedLinks } from "./engine.js";
 import { googleCalendar, type Fetcher, type GoogleTokenRequest } from "./google-calendar.js";
 import { notion, notionKey } from "./notion.js";
@@ -48,8 +50,9 @@ import type { RemoteSystem, ResourceMapping, SyncMapping, SyncState } from "./ty
  * - READ means the other system owns the kind: an act here that would change
  *   a record of it is refused with a sentence saying so (`SyncEngine.guard`),
  *   rather than accepted and never sent.
- * - Inbound changes land through the app's own acts — the one that creates
- *   the kind, `edit-<kind>` and `remove-<kind>` — authored by the system
+ * - Inbound changes land through the app's own acts — one that creates the
+ *   kind from the fields mapped alone (`creatingAct`), `edit-<kind>` and
+ *   `remove-<kind>` — authored by the system
  *   (`google-calendar`, `notion`), so Activity credits it and undo works.
  */
 
@@ -285,10 +288,15 @@ export function notionConnectionMapping(
   return { mapping: { system: "notion", resources: [resource] }, refs, ...(titleRef ? { titleRef } : {}), quiet };
 }
 
-/** The act that makes a record of the kind: `add-<kind>` when there is one, else the first that creates it. */
-export function creatingAct(app: GraviewApp, kind: string): string | undefined {
-  const creating = (app.mutations ?? []).filter((mutation) => (mutation.creates ?? []).includes(kind));
-  return (creating.find((mutation) => mutation.name === `add-${kind}`) ?? creating[0])?.name;
+/**
+ * The act a record of the kind from another system is made through: one
+ * that creates it, takes no subject and asks for nothing the connection
+ * does not map (`mapped`, our field names) — `add-<kind>` when it fits, else
+ * the first declared act that does (`creatingActFor`). Undefined when none
+ * fits, which `graview check` says at `connections.<name>`.
+ */
+export function creatingAct(app: GraviewApp, kind: string, mapped: readonly string[]): string | undefined {
+  return creatingActFor((app.mutations ?? []) as readonly AnyMutationDefinition[], kind, mapped).act;
 }
 
 /** Our fields from a remote record's, decoded: what a record made from it holds. */
@@ -326,7 +334,7 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
       extendedProperties: { private: { [MADE_BY_GRAVIEW]: app.name } },
     },
   });
-  const creates = creatingAct(app as GraviewApp, declaration.kind);
+  const creates = creatingAct(app as GraviewApp, declaration.kind, Object.keys(resource.fields));
   const decoded = decodedBy(resource);
   let made = 0;
   const engine = new SyncEngine<S>(
@@ -370,7 +378,7 @@ function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
     known: () => Object.values(engine?.snapshot.links ?? {}).map((link) => link.id),
     ...(run.say ? { say: run.say } : {}),
   });
-  const creates = creatingAct(app as GraviewApp, declaration.kind);
+  const creates = creatingAct(app as GraviewApp, declaration.kind, Object.keys(resource.fields));
   const decoded = decodedBy(resource);
   // A relation's link lands through its derived pair, when the app has it (the checker says when it has not).
   const has = (name: string) => {

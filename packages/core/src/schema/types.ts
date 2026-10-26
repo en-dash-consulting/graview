@@ -173,6 +173,16 @@ export interface NodeDefinitionSpec<
    */
   readonly fixed?: Readonly<Record<string, string>>;
   /**
+   * FIELDS ANOTHER SYSTEM KEEPS IN STEP: those a declared connection maps
+   * (a Notion database's properties, a calendar event's parts). The other
+   * system changes them freely, and its changes land through the derived
+   * `edit-<kind>`, so that edit writes them even where another act does too
+   * (a status a named step moves, a count an act adds to). A document's
+   * kind is given this from its `connections`; a field declared `fixed`
+   * stays fixed.
+   */
+  readonly keptInStep?: readonly string[];
+  /**
    * A REQUIRED FIELD'S DEFAULT, declared beside the schema rather than in it.
    *
    * A zod `.default()` makes parsing invent the value, which is right for a

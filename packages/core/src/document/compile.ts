@@ -26,6 +26,7 @@ import { homeOf, validateViews, viewsOf } from "./views.js";
 import { farEnd } from "./far-end.js";
 import { parsedComputed, workedOutAlone } from "./computed.js";
 import { durationsOf } from "./durations.js";
+import { fieldsKeptInStep } from "./kept-in-step.js";
 import { askedOrder, pageFieldFindings } from "./page-fields.js";
 import {
   build,
@@ -508,6 +509,8 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
 
   // ── kinds ────────────────────────────────────────────────────────────────
   const kinds: Record<string, KindPlan> = {};
+  // The fields a declared connection maps, read here where the document is judged, so a page handed a compiled app reads them off its plan.
+  const keptInStep = fieldsKeptInStep(document.connections, document.kinds);
   for (const [kind, spec] of Object.entries(document.kinds)) {
     const labelField = defaultLabelField(spec);
     const labelSource = spec.label ?? (labelField ? `{${labelField}}` : undefined);
@@ -519,6 +522,7 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
       ...(spec.describe ? { describe: saidAsDeclared(parseTemplate(spec.describe), spec.fields) } : {}),
       ...(computed ? { computed: [...computed] } : {}),
       ...(durations.length > 0 ? { durations } : {}),
+      ...(keptInStep.has(kind) ? { keptInStep: keptInStep.get(kind)! } : {}),
     };
   }
 

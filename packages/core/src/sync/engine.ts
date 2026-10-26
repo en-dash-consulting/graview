@@ -681,6 +681,7 @@ export class SyncEngine<S extends AnySchema> {
 
     let links: Record<string, RemoteLink> = { ...this.state.links };
     let cursor = this.state.cursor;
+    const skipped: Record<string, string> = { ...this.state.skipped };
 
     /*
      * A HELD FIELD ONLY THE REMOTE CHANGED is no conflict: ours is back at
@@ -730,9 +731,19 @@ export class SyncEngine<S extends AnySchema> {
         }
 
         if (!localId) {
+          const remoteKey = `${change.resource}:${change.id}`;
           // A deletion of a record we never had is not news: a first full
           // pull lists every canceled event the remote remembers.
-          if (change.deleted) continue;
+          if (change.deleted) {
+            delete skipped[remoteKey];
+            continue;
+          }
+          /*
+           * REFUSED ONCE, AS IT STANDS. A record there this store would not
+           * make (a blank row) is said once, then left until it changes
+           * there: refused on every pass, it was the same line every 30 s.
+           */
+          if (skipped[remoteKey] === change.version) continue;
           const created = this.options.createInbound?.({
             resource: change.resource,
             id: change.id,
@@ -745,7 +756,11 @@ export class SyncEngine<S extends AnySchema> {
           const landed = madeAs
             ? this.landInbound({ localId: madeAs, mapping, values, create: created }, `${this.options.mapping.system}: new ${change.resource}`, { localId: madeAs, resource: change.resource, id: change.id }, refused)?.result
             : this.land(created, `${this.options.mapping.system}: new ${change.resource}`, { localId: "", resource: change.resource, id: change.id }, refused);
-          if (!landed) continue;
+          if (!landed) {
+            skipped[remoteKey] = change.version;
+            continue;
+          }
+          delete skipped[remoteKey];
           const madeId = String(created.args["id"] ?? landed.writes[0] ?? "");
           if (madeId) {
             applied.push(madeId);
@@ -876,9 +891,9 @@ export class SyncEngine<S extends AnySchema> {
     }
 
     // What the inbound pass decided is what the outbound pass sends from.
-    const { conflicts: _before, gone: _gone, ...kept } = this.state;
+    const { conflicts: _before, gone: _gone, skipped: _skipped, ...kept } = this.state;
     const unsynced = [...new Set([...(this.state.gone ?? []), ...gone])].filter((id) => this.options.store.graph.getNode(id));
-    this.state = { ...kept, links, ...this.heldState(held), ...(unsynced.length > 0 ? { gone: unsynced } : {}) };
+    this.state = { ...kept, links, ...this.heldState(held), ...(unsynced.length > 0 ? { gone: unsynced } : {}), ...(Object.keys(skipped).length > 0 ? { skipped } : {}) };
     // What a relation reached that was not linked yet, linked now that this pull may have made it.
     if (!offline) for (const id of this.resolveHeld(refused)) if (!applied.includes(id)) applied.push(id);
 
@@ -943,6 +958,7 @@ export class SyncEngine<S extends AnySchema> {
       ...this.heldState(held),
       ...(this.state.gone ? { gone: this.state.gone } : {}),
       ...(this.state.unresolved ? { unresolved: this.state.unresolved } : {}),
+      ...(this.state.skipped ? { skipped: this.state.skipped } : {}),
     };
 
     return {
