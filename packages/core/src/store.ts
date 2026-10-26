@@ -781,6 +781,8 @@ export class Store<S extends AnySchema> {
         break;
       }
     }
+    // No op in the tail says a set: the one the checkpoint kept stands, since the op that said it was archived with it (FR-12, FR-23).
+    said ??= this.log.horizonEpoch()?.enabledModules;
     const projection =
       held && said === held.said ? held.projection : resolveModules(this.declaredModules, said ?? this.startingModules);
     this.projected = { projection, length: all.length, last, said };
@@ -2370,7 +2372,14 @@ export class Store<S extends AnySchema> {
     const records = recordsOf(this.log);
     const writers = writersBehind(this.log, seq, checkpoint.base.nodes, (value) => namesUnseen(value, (id) => !base.has(id) && records.kindOf(id) === undefined));
     const kept = (map: object | undefined) => map && Object.keys(map).length > 0;
-    return { ...checkpoint, ...(kept(creators) && { creators }), ...(removed && { removed }), ...(kept(writers) && { writers }) };
+    // The modules on at its seq, which the ops before it said and which go to the archive with them: so a module off stays off (FR-12).
+    return {
+      ...checkpoint,
+      ...(kept(creators) && { creators }),
+      ...(removed && { removed }),
+      ...(kept(writers) && { writers }),
+      ...given("enabledModules", ops.slice(0, seq - this.log.horizon).reverse().find((op) => op.enabledModules)?.enabledModules ?? this.log.horizonEpoch()?.enabledModules),
+    };
   }
 
   /**

@@ -1,0 +1,8 @@
+---
+"@graview/core": patch
+"@graview/ship": patch
+---
+
+A module a workspace turned off stays off once a compaction archives the op that turned it off. The enabled set was read only from the last op in the log's tail that said one, and the checkpoint kept none: a compaction past that op (a host's routine `opened.compact()`, with its default days and ops) turned the module back on in the live store and in every reopen that did not pass `enabledModules` again, so every seat was served the module's records and its acts were offered and applied. Now `store.checkpoint` keeps the set that stood at its seq (`Epoch.enabledModules`, carried from the checkpoint before it when nothing in between said another), and `store.modules` reads it when no op in the tail says a set — before the store's starting set. `a-module-off-stays-off-past-a-compaction.test.ts` holds it in a store and one opened on the checkpoint and its tail, and `a-module-off-stays-off-past-a-compaction-and-a-reopen.test.ts` through `openStore`, compacted and reopened with the host's word and without it.
+
+Compatibility: ops and primitives — unchanged; an op folds as it did. Stored formats — additive: a checkpoint may carry `enabledModules`, which a build that predates it ignores (that build turns the module back on, as it did); a checkpoint written before it carries none, and a store opened on one takes its starting set, as it did. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged. What Graview Cloud does: nothing; a host that passes `enabledModules` on every open is answered as before.
