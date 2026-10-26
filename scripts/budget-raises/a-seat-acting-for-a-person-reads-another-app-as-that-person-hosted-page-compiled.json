@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 94,
+  "gzipped": 23,
+  "changeset": "a-seat-acting-for-a-person-reads-another-app-as-that-person.md",
+  "note": "Raised when a seat acting for a person came to read another app's records as that person: the provider's linked reads pass the viewer's `onBehalfOf` to the host. Measured at 569_363 / 198_370 against 569_269 / 198_347 minified and gzipped."
+}

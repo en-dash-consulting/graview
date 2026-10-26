@@ -66,7 +66,7 @@ describe("an import links a found record only as its link act would", () => {
     const { store, blue } = make();
     const done = importRows(store, "job", [{ Name: "Beta", Owner: "Blue" }], { Name: "name", Owner: "owner" } as never, { by: eve, match: "label" });
     expect(done.rows[0]!.action).not.toBe("refuse");
-    const beta = (store.snapshot().nodes as { id: string; name?: string }[]).find((node) => node.name === "Beta")!;
+    const beta = (store.snapshot().nodes as readonly { id: string; name?: unknown }[]).find((node) => node.name === "Beta")!;
     expect(store.graph.out(beta.id, "owner" as never).map((node) => node.id)).toEqual([blue]);
   });
 });
