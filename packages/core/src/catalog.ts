@@ -772,7 +772,7 @@ export function aiContextOf<S extends AnySchema>(given: Store<S>, target: AiTarg
     recent,
     schema: schemaDigestOf(whole, principal),
     ...(purpose ? { purpose } : {}),
-    ...(options.friction ? { friction: frictionDigest(options.friction, schema) } : {}),
+    ...(options.friction ? { friction: frictionDigest(options.friction, schema, { reader: principal }) } : {}),
   };
 }
 
