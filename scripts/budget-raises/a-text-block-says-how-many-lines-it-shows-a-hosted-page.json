@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 409,
+  "gzipped": 169,
+  "changeset": "a-text-block-says-how-many-lines-it-shows.md",
+  "note": "Raised when a text block came to say how many lines a card or a row shows of it (FR-218): the block's `lines` compiled and resolved, and the card drawing it on the element. Measured at 619_308 / 216_106 against main's 618_899 / 215_937."
+}

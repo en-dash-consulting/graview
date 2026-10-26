@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 244,
+  "gzipped": 84,
+  "note": "Raised when a home view that bleeds came to start right under the bar on a phone (FR-216): `PageMain`'s mark and its one phone-only rule giving the top padding back. Measured at 2_337_025 / 853_580 against 2_336_781 / 853_496 with FR-218 alone: 244 / 84 more."
+}

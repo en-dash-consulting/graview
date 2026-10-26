@@ -888,6 +888,16 @@ try {
         await go(`${FITTED_BASE}/`);
         await drawnIn("hero");
         const home = await measure("hero");
+        /* FR-216: where the home's view starts, against the top of the page under the bar, and the page's own top padding. */
+        home.top = await tab.evaluate(() => {
+          const region = document.querySelector('[data-worker-view="hero"]');
+          const main = region?.closest("[data-graview-page-main]");
+          const first = main?.querySelector('[data-testid="home-view"]');
+          const top = main?.getBoundingClientRect().top ?? 0;
+          /* What stands over the view inside the page, if anything: the app's line, said first. */
+          const above = [...(first?.children ?? [])].filter((child) => !child.contains(region) && child.getBoundingClientRect().bottom <= region.getBoundingClientRect().top).map((child) => child.textContent?.trim() ?? "");
+          return region && main && first ? { offset: Math.round(region.getBoundingClientRect().top - top), first: Math.round(first.getBoundingClientRect().top - top), padding: Math.round(parseFloat(getComputedStyle(main).paddingTop)), above } : null;
+        });
         await go(`${FITTED_BASE}/tasks/t1`);
         await drawnIn("brief");
         await tab.waitForSelector('[data-graview-face=pages] [data-testid="record-fields"]', { timeout: 20_000 });
@@ -1505,6 +1515,11 @@ try {
   report.checks.aViewThatBleedsSpansAPhoneLessItsSafeAreasAndTheColumnAtADesk = {
     seen: fittedSeen,
     ok: fittedHold((fitted, name) => spans(fitted.home, name) && spans(fitted.record, name)),
+  };
+  /* FR-216: a home view that bleeds starts right under the bar on a phone, and the page keeps its top spacing at a desk. */
+  report.checks.aHomeViewThatBleedsStartsUnderTheBarOnAPhoneAndKeepsItsSpacingAtADesk = {
+    seen: fittedSeen,
+    ok: fittedHold(({ home }, name) => home.top !== null && home.top !== undefined && (/×844$/.test(name) ? home.top.first === 0 && home.top.padding === 0 && (home.top.offset === 0 || (home.top.above.length > 0 && home.top.above.every((said) => said !== ""))) : home.top.padding >= 32 && home.top.first >= home.top.padding)),
   };
   /* Roadmap feature:page-slot-blocks-on-a-kind-with-a-record-view-…: the view, then the slot's blocks, then the facts; a view that replaces the page draws alone. */
   report.checks.aRecordPagesSlotIsDrawnUnderItsViewAndAboveTheFacts = {

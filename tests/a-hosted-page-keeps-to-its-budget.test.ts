@@ -152,7 +152,9 @@ describe("a hosted page", () => {
     // 1004 KB since what people could not do came to be recorded (Roadmap f-friction-log): the one door a page records through, `openRemote` posting to `/graview/friction` and recording an act the server refused, a search that found nothing and a form's refusal on the routed face: the scene face measured 1_027_242 B, 715 more than before it (1_026_527).
     // 1008 KB since this batch came together: a ground judged on every pair the check holds (Roadmap f-ground-suggestion-passes, f-dark-brand-accent), a date that knows only its year or month (f-partial-dates) and every option said by its label (f-option-labels): the scene face measured 1_032_107 B, 4_379 more than main (1_027_728).
     // 1010 KB since a computed value is said as its format (Roadmap f-computed-format, FR-217) and a date emptied in place is cleared (f-clear-date-in-place): the scene face measured 1_033_712 B, 1_605 more than main (1_032_107).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1010 * 1024);
+    // 1009 KB since a text block came to say how many lines a card or a row shows of it (FR-218): its `lines` compiled, resolved and drawn on the element: the scene face measured 1_033_062 B, 955 more than main (1_032_107).
+    // 1011 KB once both came together in one batch: the scene face measured SCENE_BYTES B.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1011 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 555,
+  "gzipped": 174,
+  "note": "Raised when a text block came to say how many lines a card or a row shows of it (FR-218): the block's `lines` compiled and resolved, and the card drawing it on the element. Measured at 671_866 / 247_013 against main's 671_311 / 246_839: 555 / 174 more."
+}

@@ -186,17 +186,30 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
 export function PageMain<S extends AnySchema>({
   context,
   style,
+  bleedTop,
   children,
   ...rest
-}: { context: PageContext<S>; style?: React.CSSProperties; children?: React.ReactNode } & Record<`data-${string}`, string>) {
+}: { context: PageContext<S>; style?: React.CSSProperties; /** The page opens on a view that bleeds: on a phone it starts right under the bar (`BLEED_TOP_CSS`). */ bleedTop?: boolean; children?: React.ReactNode } & Record<`data-${string}`, string>) {
   // Somebody above owns the landmark: the host page, or the app's own shell.
   const Tag = (context.embedded || context.framed ? "section" : "main") as "main";
   return (
-    <Tag style={{ ...column, ...style }} data-graview-page-main="" {...rest}>
+    <Tag style={{ ...column, ...style }} data-graview-page-main="" {...(bleedTop ? { "data-graview-bleed-top": "" } : {})} {...rest}>
+      {bleedTop ? <style>{BLEED_TOP_CSS}</style> : null}
       {children}
     </Tag>
   );
 }
+
+/*
+ * A HOME THAT OPENS ON A VIEW THAT BLEEDS STARTS UNDER THE BAR (FR-216).
+ * `Bleed` took back the side gutters, and the page's 40 pixels of top
+ * padding stayed: at 390 a hero sat under an empty band between the bar
+ * and its first pixel, and a home view may not say `heading: "own"` to
+ * lose it. On a phone the page gives that padding back too; at a desk the
+ * column keeps its spacing, as a view that bleeds keeps the column's
+ * width. A view that did not draw keeps it, as it keeps the gutter.
+ */
+const BLEED_TOP_CSS = `@media (max-width:680px){[data-graview-bleed-top]:not(:has([data-graview-bleed]>[data-worker-view-fallback])){padding-top:0 !important}}`;
 
 /**
  * A VIEW DRAWN EDGE TO EDGE ON A PHONE (a worker view's `bleed: true`).

@@ -2,7 +2,7 @@ import * as z from "../schema/zod.js";
 import { ConnectionSpec } from "../document/connection-spec.js";
 import { PurposeSpec } from "../document/purpose-spec.js";
 import { DocumentSpec, FieldSpec, KindSpec } from "../document/schema.js";
-import { BLOCK_KEYS, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_SLOTS, VIEW_TONES } from "../document/views.js";
+import { BLOCK_KEYS, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, MAX_TEXT_LINES, VIEW_FIELD_FORMATS, VIEW_SLOTS, VIEW_TONES } from "../document/views.js";
 import { SHIPPED_LENSES, SHIPPED_LENS_NAMES } from "../places.js";
 
 /*
@@ -156,7 +156,7 @@ const BLOCK_OPTIONS: Readonly<Record<string, Readonly<Record<string, Json>>>> = 
     empty: words,
     as: { enum: [...LIST_AS] },
   },
-  text: { tone },
+  text: { tone, lines: { type: "integer", minimum: 0, maximum: MAX_TEXT_LINES, description: "How many lines a card or a row shows before the text is cut short; 0 shows it whole." } },
   badge: { tone },
   field: { as: { enum: [...VIEW_FIELD_FORMATS] }, currency: words, label: words },
   image: { as: { enum: ["thumb", "gallery"] }, label: words },
