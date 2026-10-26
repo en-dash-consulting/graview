@@ -1986,19 +1986,38 @@ export class Store<S extends AnySchema> {
      */
     if (this.policy || this.publisher) {
       for (const target of check.ops) {
-        if (!target.mutation) continue;
+        /*
+         * AN UNDO OF AN UNDO PUTS BACK THE CHANGE IT TOOK BACK, and is judged
+         * as that change — redo is one, and let through unasked it put back
+         * an act its seat was refused. Undoing that again takes the change
+         * back once more, judged as it again: however long the chain, the
+         * change at its root.
+         */
+        const judged = this.rootOf(target);
+        const by = actingAs(judged.author as Principal).id;
+        if (!judged.mutation) {
+          /*
+           * A CHANGE NO ACT MADE — an import, a sync, a connection, a host's
+           * repair (`applyPrimitives`) — has no act to judge it as, and its
+           * author was its authority. It is taken back by the system, by
+           * whoever made it, or by a seat the policy grants every act.
+           */
+          if (this.policy && !isSystem(author as Principal) && by !== actingAs(author as Principal).id && !this.grantsEveryAct(author as Principal)) {
+            this.refuse({ mutation: "undo", wouldNeed: [], message: `Not permitted to undo "${target.intent}": no act made it, so only whoever did may take it back.` }, author.id, true);
+          }
+          continue;
+        }
         /*
          * AND AN ACT DONE AS ITS AUTHOR (`$me`, `ctx.me`) IS THEIRS TO TAKE
          * BACK: it wrote their own record where its call never named it, so
          * the same call by another would have done something else. "Vote for
          * it" is everybody's to run, and undoing Ann's was taking back her vote.
          */
-        const by = actingAs(target.author as Principal).id;
         const names = (value: unknown) => JSON.stringify(value).includes(JSON.stringify(by));
         const verdict =
-          by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(target.mutation.args) && names(target.primitives)
-            ? { ok: false as const, refusal: { mutation: target.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }
-            : this.permits(target.mutation, author as Principal);
+          by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(judged.mutation.args) && names(judged.primitives)
+            ? { ok: false as const, refusal: { mutation: judged.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }
+            : this.permits(judged.mutation, author as Principal);
         if (!verdict.ok) this.refuse({ ...verdict.refusal, message: `Not permitted to undo "${target.intent}": ${verdict.refusal.message}` }, author.id, true);
       }
     }
@@ -2048,6 +2067,19 @@ export class Store<S extends AnySchema> {
       ...this.moved(before, after),
       violationsAfter: after,
     };
+  }
+
+  /** The change an undo of an undo puts back: the op at the root of its chain, or the last undo the log still holds of it. */
+  private rootOf(op: Operation): Operation {
+    let at = op;
+    for (let undone = at.undoes === undefined ? undefined : this.log.get(at.undoes); undone !== undefined; undone = at.undoes === undefined ? undefined : this.log.get(at.undoes)) at = undone;
+    return at;
+  }
+
+  /** Whether the policy grants this principal every act, on every record: what taking back a change no act made asks of anybody but its author. */
+  private grantsEveryAct(principal: Principal): boolean {
+    const acting = actingAs(principal);
+    return (this.policy?.grants ?? []).some((grant) => grantsTo(grant, acting) && grant.mutations === "*" && (grant.kinds === undefined || grant.kinds === "*") && !grant.self && !grant.ownEnd);
   }
 
   /** An author named as Activity names one, for a sentence that refuses them. */
