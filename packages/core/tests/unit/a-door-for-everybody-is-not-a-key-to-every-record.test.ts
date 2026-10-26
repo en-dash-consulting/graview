@@ -90,3 +90,27 @@ describe("a role's own grant to make a kind", () => {
     for (const call of unmaking) expect(kept.permits(call, novice).ok, call.name).toBe(true);
   });
 });
+
+/*
+ * AND A MERGE CHANGES THE RECORD IT FOLDS INTO. Merging one's own member
+ * into the mentor moves every tie of one's own onto the mentor's record:
+ * riding the making of the kind, both are to be the seat's own, as each is
+ * for a connect.
+ */
+describe("a merge riding the making of a kind", () => {
+  it("folds a record the seat made only into another it made", () => {
+    for (const policy of [{ grants: [{ roles: "*" as const, mutations: ["join"] }] }, { grants: [{ roles: ["member"], mutations: ["join"] }] }]) {
+      const kept = store(policy);
+      kept.apply({ name: "join", args: { label: "Novice" } }, { author: novice });
+      kept.apply({ name: "join", args: { label: "Second" } }, { author: novice });
+      const [mine, other] = ["Novice", "Second"].map((label) => kept.graph.nodesOfKind("member").find((one) => one.label === label)!.id);
+      const into = kept.permits({ name: "merge-member", args: { id: mine, into: "member:mentor" } }, novice);
+      expect(into.ok).toBe(false);
+      if (!into.ok) expect(into.refusal.message).toMatch(/only on what you made/);
+      expect(() => kept.apply({ name: "merge-member", args: { id: mine, into: "member:mentor" } }, { author: novice })).toThrow(/only on what you made/);
+      expect(kept.permits({ name: "merge-member", args: { id: mine, into: other } }, novice).ok).toBe(true);
+      // Asked before the other is chosen, the record the seat made is its to merge.
+      expect(kept.permits({ name: "merge-member", args: { id: mine } }, novice).ok).toBe(true);
+    }
+  });
+});

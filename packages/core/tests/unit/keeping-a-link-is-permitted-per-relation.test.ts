@@ -147,3 +147,57 @@ describe("keeping a link of a relation only its derived acts make", () => {
     expect(isProvisional(store, link)).toBe(false);
   });
 });
+
+/*
+ * AND A DOOR FOR EVERYBODY IS NOT A KEY TO EVERY RECORD'S LINKS (W-201).
+ * "Anybody may add a property" lets a seat connect or disconnect only the
+ * properties it made; keeping a link its derived acts make or break was
+ * permitted on anybody's, so a seat with no role turned a link the tidying
+ * actor drew on another's property into one a person accepted.
+ */
+describe("keeping a link of a relation only its derived acts make, riding a grant to everybody", () => {
+  const managed = defineNode("property", { fields: z.object({ label: z.string() }), edges: { managedBy: { to: ["person"], cardinality: "one" } } });
+  const plain = createSchema([lease, managed, person]);
+  const eve = { kind: "human", id: "eve", roles: [] } as never;
+  const make = () => {
+    const store = new Store<AnySchema>({
+      schema: plain,
+      mutations: [linkLease, unlinkLease, introduce, addProperty] as never,
+      policy: { grants: [{ roles: "*", mutations: ["add-property", "link-lease"] }] },
+      snapshot: {
+        nodes: [
+          { id: "property:harbor", kind: "property", label: "12 Harbor Street" },
+          { id: "person:ann", kind: "person", label: "Ann" },
+          { id: "lease:harbor", kind: "lease", label: "Harbor lease" },
+        ] as never,
+        edges: [],
+      },
+    });
+    store.apply({ name: "add-property", args: { label: "eves" } }, { author: eve });
+    const drawn = [
+      { kind: "managedBy", from: "property:harbor", to: "person:ann" },
+      { kind: "managedBy", from: "property:eves", to: "person:ann" },
+      { kind: "about", from: "lease:harbor", to: "property:harbor" },
+    ];
+    store.append([{ primitives: drawn.map((edge) => ({ op: "add-edge" as const, edge })), author: tidying, intent: "Tidy", lineage: { basis: "the listing names her", confidence: 0.6 } }]);
+    return store;
+  };
+
+  it("keeps it only on a record the seat made, as its derived connect reaches", () => {
+    const store = make();
+    const theirs = { kind: "managedBy", from: "property:harbor", to: "person:ann" };
+    const mine = { kind: "managedBy", from: "property:eves", to: "person:ann" };
+    expect(store.permits({ name: "connect-property-managed-by", args: { id: "property:harbor", to: "person:ann" } }, eve).ok).toBe(false);
+    const verdict = store.permits({ name: KEEP_LINK, args: theirs }, eve);
+    expect(verdict.ok).toBe(false);
+    if (!verdict.ok) expect(verdict.refusal.message).toMatch(/only on what you made/);
+    expect(() => store.apply({ name: KEEP_LINK, args: theirs }, { author: eve })).toThrow(PermissionDeniedError);
+    expect(isProvisional(store, theirs)).toBe(true);
+    store.apply({ name: KEEP_LINK, args: mine }, { author: eve });
+    expect(isProvisional(store, mine)).toBe(false);
+  });
+
+  it("leaves a relation a declared act makes to that act's grant, on any record", () => {
+    expect(make().permits({ name: KEEP_LINK, args: { kind: "about", from: "lease:harbor", to: "property:harbor" } }, eve).ok).toBe(true);
+  });
+});

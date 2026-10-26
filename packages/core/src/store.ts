@@ -940,7 +940,14 @@ export class Store<S extends AnySchema> {
     const mutation = this.mutations.get(call.name) ?? (call.name === PUBLISH ? this.publisher : undefined);
     // Publishing is the declaration's `publishers`, not a grant's.
     if (mutation && mutation === this.publisher) return PUBLISHING.verdict!(this, principal) as ReturnType<typeof permits>;
-    const id = mutation?.subject && call.args[mutation.subject.arg];
+    /*
+     * KEEPING A LINK ONLY THE DERIVED ACTS MAKE is judged as they are: on
+     * the record it leaves, so riding everybody's grant it reaches only the
+     * links of records this principal made (W-201). A link a declared act
+     * makes or breaks is that act's, which carries no such rule.
+     */
+    const keeping = mutation !== undefined && mutation === this.keeper && keepLinkVia(this.mutations.values(), call.args["kind"]).length === 0;
+    const id = keeping ? call.args["from"] : mutation?.subject && call.args[mutation.subject.arg];
     /*
      * An own-end grant holds the records the call names at the far end of
      * what it links, and every link the act would make or break: a connect
@@ -967,10 +974,24 @@ export class Store<S extends AnySchema> {
         return far;
       },
       // Who made the record a derived act is about: riding only everybody's grant, it reaches what this principal made (W-201).
-      mutation !== undefined && (mutation.derived !== undefined || mutation === this.typer) ? () => recordsOf(this.log).creatorOf(id as string) : undefined,
+      mutation !== undefined && (mutation.derived !== undefined || mutation === this.typer || keeping) ? () => this.madeBy(mutation, call, id) : undefined,
       // Taking a record out, or folding it away, rides the making of the kind only over what this principal made (W-201).
       mutation?.derived !== undefined && UNMAKING.has(mutation.derived.act),
     );
+  }
+
+  /**
+   * WHO MADE WHAT A DERIVED ACT CHANGES (W-201): its subject — and, for a
+   * merge, the record it folds into too, which takes every tie of the one
+   * folded away. Both are to be one principal's for the merge to be theirs;
+   * asked before that one is chosen, the subject alone.
+   */
+  private madeBy(mutation: AnyMutationDefinition<S>, call: MutationCall, id: unknown): string | undefined {
+    const records = recordsOf(this.log);
+    const by = records.creatorOf(id as string);
+    const into = call.args["into"];
+    if (mutation.derived?.act === "merge" && typeof into === "string" && records.creatorOf(into) !== by) return undefined;
+    return by;
   }
 
   /** The ids a call names in its record arguments: its subject's too, unless `subject` is false (the far ends of what it links). */
