@@ -501,3 +501,5 @@ export type { VisitorFormDeclaration } from "./visitor-form-shape.js";
 export type { AppPurpose, JobDeclaration, JobSort } from "./job-shape.js";
 export { foldPresence, nextExpiry, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
 export type { Participant, Presence, PresenceCaret, PresenceChannel, PresenceRobot } from "./presence.js";
+export { FRESH_KEY, freshAddress } from "./fresh.js";
+export type { FreshStorage } from "./fresh.js";

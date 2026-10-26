@@ -1,5 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
-import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
+import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { AwaySummary, FieldTyping, KeepLensHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
@@ -51,7 +51,7 @@ export interface PageContext<S extends AnySchema> {
   /**
    * Whether this browser remembers the edits (a ship browser adapter behind
    * the store). When it does, the face says so and offers the way back to
-   * the example — the `fresh=1` address `@graview/ship` reads.
+   * the example — the `fresh` address `@graview/ship` reads (`freshAddress`).
    */
   readonly remembers?: boolean;
   /**
@@ -287,9 +287,7 @@ export function StartFreshLink() {
       title="Forget every edit made in this browser and return to the example"
       onClick={(event) => {
         event.preventDefault();
-        const url = new URL(window.location.href);
-        url.searchParams.set("fresh", "1");
-        window.location.assign(url.toString());
+        window.location.assign(freshAddress(window.location.href));
       }}
       /*
        * A TARGET, not just a phrase. Inline text at 12.5px is a 15-pixel

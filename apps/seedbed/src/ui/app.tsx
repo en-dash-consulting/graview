@@ -1,5 +1,5 @@
 import { EMPTY_VIEW, type ViewState } from "@graview/layout";
-import type { Brand, Principal, GraviewApp } from "@graview/core";
+import { freshAddress, type Brand, type Principal, type GraviewApp } from "@graview/core";
 import { GraviewProvider, useGraph, useGraview, type Scheme, type SceneProps } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
@@ -76,7 +76,8 @@ export interface SeedbedAppProps {
 function gardenHref(how: "empty" | "example", href: string = window.location.href): string {
   const url = new URL(href);
   url.searchParams.delete(how === "empty" ? "fresh" : "empty");
-  url.searchParams.set(how === "empty" ? "empty" : "fresh", "1");
+  if (how === "example") return freshAddress(url.toString());
+  url.searchParams.set("empty", "1");
   return url.toString();
 }
 

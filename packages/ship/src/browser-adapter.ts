@@ -1,4 +1,4 @@
-import { assertHead, headOf, type AppendOptions, type Operation, type PersistenceAdapter, type Principal } from "@graview/core";
+import { assertHead, FRESH_KEY, freshAddress, headOf, type AppendOptions, type FreshStorage, type Operation, type PersistenceAdapter, type Principal } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 import type { StoredMeta } from "./meta.js";
 import { indexedEntries, type IDBFactoryLike, type IndexedEntries } from "./indexed-entries.js";
@@ -605,12 +605,16 @@ export function rememberedPrincipal(
  * Whether THIS load should start from the seed rather than from what the
  * browser remembers.
  *
- * `?fresh=1` asks for it outright — the address a "start fresh" control
- * navigates to. Beyond that, a DRIVEN browser starts fresh unless it says
- * `?remember=1`: a harness is a specification of the example, and a
- * harness whose second `goto` inherited its first one's edits would be
- * testing its own residue. A person's browser is never driven, so a
- * person always gets what they left.
+ * A "Start fresh" control asks for it: it keeps a one-time value in this
+ * tab's `sessionStorage` and goes to `?fresh=<that value>` (`freshHref`,
+ * `freshAddress` in `@graview/core`). The address is honored only when it
+ * carries the value this tab kept, which is forgotten as it is read — so a
+ * link from another site to `?fresh=1` discards nothing a person made.
+ * Beyond that, a DRIVEN browser starts fresh unless it says `?remember=1`,
+ * and takes `?fresh=1` as asking: a harness is a specification of the
+ * example, and a harness whose second `goto` inherited its first one's
+ * edits would be testing its own residue. A person's browser is never
+ * driven, so a person always gets what they left.
  */
 export function browserStartsFresh(
   location: { readonly search: string } = (globalThis as unknown as { location: { search: string } })
@@ -618,18 +622,39 @@ export function browserStartsFresh(
   navigator: { readonly webdriver?: boolean } = (
     globalThis as { navigator: { webdriver?: boolean } }
   ).navigator,
+  session: FreshStorage | undefined = sessionStorageIfAny(),
 ): boolean {
   const params = new URLSearchParams(location.search);
-  if (params.get("fresh") === "1") return true;
+  const driven = navigator?.webdriver === true;
+  const asked = params.get("fresh");
+  if (asked !== null) {
+    let kept: string | null = null;
+    try {
+      kept = session?.getItem(FRESH_KEY) ?? null;
+      session?.removeItem(FRESH_KEY);
+    } catch {
+      // A tab that keeps nothing asked for nothing.
+    }
+    if (kept !== null && kept === asked) return true;
+    if (driven && asked === "1") return true;
+  }
   if (params.get("remember") === "1") return false;
-  return navigator?.webdriver === true;
+  return driven;
+}
+
+function sessionStorageIfAny(): FreshStorage | undefined {
+  try {
+    return (globalThis as { sessionStorage?: FreshStorage }).sessionStorage ?? undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
- * Drops `?fresh=1` from the address once it has been honored, so the seed
- * is the FIRST load rather than every load: a reload after starting fresh
- * must keep what was done since, or "start fresh" is really "stop
- * remembering".
+ * Drops `fresh` from the address once it has been read, honored or not, so
+ * the seed is the FIRST load rather than every load: a reload after
+ * starting fresh must keep what was done since, or "start fresh" is really
+ * "stop remembering".
  */
 export function forgetFreshParam(
   win: {
@@ -638,17 +663,16 @@ export function forgetFreshParam(
   } = globalThis as never,
 ): void {
   const url = new URL(win.location.href);
-  if (url.searchParams.get("fresh") !== "1") return;
+  if (!url.searchParams.has("fresh")) return;
   url.searchParams.delete("fresh");
   win.history.replaceState(null, "", url.toString());
 }
 
-/** The address a "start fresh" control goes to: here, from the seed. */
+/** The address a "start fresh" control goes to: here, from the seed, asked for in this tab (`freshAddress`). */
 export function freshHref(
   location: { readonly href: string } = (globalThis as unknown as { location: { href: string } })
     .location,
+  session: FreshStorage | undefined = sessionStorageIfAny(),
 ): string {
-  const url = new URL(location.href);
-  url.searchParams.set("fresh", "1");
-  return url.toString();
+  return freshAddress(location.href, session);
 }

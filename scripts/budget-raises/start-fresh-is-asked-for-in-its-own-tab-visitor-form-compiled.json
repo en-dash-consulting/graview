@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 286,
+  "gzipped": 133,
+  "note": "Raised when Start fresh came to be asked for in its own tab: the control keeps a one-time value in sessionStorage and goes to the address carrying it (freshAddress in @graview/core), so a ?fresh=1 another site links to discards nothing. Measured at 317_018 / 116_530 against 316_732 / 116_397: 286 / 133 more."
+}

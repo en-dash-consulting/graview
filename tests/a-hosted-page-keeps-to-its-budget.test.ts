@@ -157,7 +157,8 @@ describe("a hosted page", () => {
     // 1021 KB since Find's list came to stay still under the pointer and a record's acts to be asked for (the desk's panel, a narrow strip's "⋯", marked words, each kind's "All N" row, the keys said): the scene face measured 1_045_225 B, 10_558 more than main (1_034_667).
     // 1012 KB since a Notion connection came to land through the acts that fit it: the compile reads the fields a connection maps onto each kind's plan and the checker chooses the act a page is made through: the scene face measured 1_035_948 B, 1_281 more than main (1_034_667).
     // 1022 KB once both came together: Find staying still and acts asked for, and a Notion connection landing through the acts that fit it: the scene face measured 1_046_506 B.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1022 * 1024);
+    // 1023 KB since Start fresh came to be asked for in its own tab (a one-time value in sessionStorage, `freshAddress`): the scene face measured 1_046_736 B, 230 more than main (1_046_506).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1023 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
