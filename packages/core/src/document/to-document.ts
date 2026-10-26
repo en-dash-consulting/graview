@@ -31,12 +31,13 @@ export interface ToDocumentResult {
 export { documentOf, rememberDocument } from "./remembered.js";
 
 /** Write an app as a declaration document, naming every surface the document cannot say. */
-/** A declaration's computed fields as a document says them: without `as`, an expression alone as its words. */
-function unsaid(computed: Readonly<Record<string, string | { readonly expr: string; readonly as?: string }>>): Record<string, ComputedSpec> {
+/** A declaration's computed fields as a document says them: a duration as its `format`, without the compile's `amount`, an expression alone as its words. */
+function unsaid(computed: Readonly<Record<string, string | { readonly expr: string; readonly as?: string; readonly format?: string; readonly amount?: object }>>): Record<string, ComputedSpec> {
   return Object.fromEntries(
     Object.entries(computed).map(([name, entry]) => {
       if (typeof entry === "string") return [name, entry];
-      const { as: _, ...rest } = structuredClone(entry);
+      const { as, amount: _, ...rest } = structuredClone(entry);
+      if (as === "duration" && rest.format === undefined) (rest as { format?: string }).format = "duration";
       return [name, Object.keys(rest).length === 1 ? rest.expr : rest];
     }),
   ) as Record<string, ComputedSpec>;

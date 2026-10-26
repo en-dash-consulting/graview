@@ -77,6 +77,8 @@ export function EditableValue<S extends AnySchema>({
    */
   const opener = useRef<HTMLButtonElement | null>(null);
   const comeBack = useRef(false);
+  /* What emptying a field it cannot be without said, beside the value it kept (Roadmap f-clear-date-in-place). */
+  const [refused, setRefused] = useState<string | undefined>(undefined);
   const close = (keepTheKeyboard: boolean) => {
     comeBack.current = keepTheKeyboard;
     setEditing(false);
@@ -117,7 +119,7 @@ export function EditableValue<S extends AnySchema>({
   }
 
   if (!editing) {
-    return (
+    const button = (
       <button
         ref={opener}
         type="button"
@@ -126,7 +128,10 @@ export function EditableValue<S extends AnySchema>({
         // Named only where the name is more than the words it shows: a heading's words are its name already.
         {...(named === value ? {} : { "aria-label": named })}
         title={`${editable.title} — changes the ${words}, and can be undone`}
-        onClick={() => setEditing(true)}
+        onClick={() => {
+          setRefused(undefined);
+          setEditing(true);
+        }}
         style={{
           all: "unset",
           cursor: "text",
@@ -158,12 +163,33 @@ export function EditableValue<S extends AnySchema>({
         {value}
       </button>
     );
+    if (!refused) return button;
+    return (
+      <>
+        {button}
+        <span role="status" data-graview-refused={field} style={{ marginLeft: 6, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
+          {refused}
+        </span>
+      </>
+    );
   }
 
   /** Commit the draft. `left` says the person already moved the keyboard elsewhere. */
   const done = (next: unknown, { left = false } = {}) => {
     close(!left);
-    if (next === stored || next === "" || next === undefined) return;
+    if (next === stored) return;
+    /*
+     * EMPTIED, A FIELD A RECORD MAY BE WITHOUT LOSES ITS VALUE (Roadmap
+     * f-clear-date-in-place): the edit is sent `null`, which clears it, so a
+     * wrong date is taken away rather than kept for want of a right one. A
+     * field it cannot be without keeps its value, and says why.
+     */
+    if (next === "" || next === undefined || next === null) {
+      if (stored === "") return;
+      if (editable.clearable) commit(editable, null);
+      else setRefused(`${fact.charAt(0).toUpperCase()}${fact.slice(1)} can't be empty; it keeps ${value}.`);
+      return;
+    }
     if (editable.shape.type === "date" && typeof next === "string" && withItsEnd(next)) return;
     commit(editable, next);
   };
@@ -341,6 +367,8 @@ export function EditableValue<S extends AnySchema>({
 
 /** The typed value the mutation's input asked for, not the string it was typed as: a length of time as its minutes ("1h 30m" is 90). */
 function coerce(field: EditableField, draft: string): unknown {
+  // An emptied box is no value, never a zero: `Number("")` is 0.
+  if (draft.trim() === "") return "";
   // An amount is read as it was typed — "$1,250.50", "15%" — and nothing that is no number is sent.
   if (field.shape.type === "number" && field.shape.amount) return readAmount(draft, field.shape.amount);
   return field.shape.type === "number" ? (field.shape.duration ? (parseDuration(draft) ?? draft) : Number(draft)) : field.shape.type === "text" && field.shape.holds ? draft.trim() : draft;

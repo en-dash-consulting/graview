@@ -489,6 +489,22 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
         const span = (b - a) / (e.fn === "days" ? 86_400_000 : 3_600_000);
         return e.fn === "days" ? Math.round(span) : span;
       }
+      case "round": {
+        /*
+         * A NUMBER ROUNDED (FR-217): round(x) to a whole number, round(x, 2)
+         * to two places — half away from zero, as people round. Nothing stays
+         * nothing, so a share of no games is not a zero.
+         */
+        arity(1, 2);
+        const x = arg(0);
+        if (x === null) return null;
+        if (typeof x !== "number") throw new ExprEvalError(`round(…) needs a number, and was given ${describe(x)}`, e.at);
+        const places = e.args.length === 2 ? arg(1) : 0;
+        if (typeof places !== "number" || !Number.isInteger(places) || places < 0 || places > 12) throw new ExprEvalError("round(…, places) takes a whole number of places from 0 to 12", e.at);
+        const scale = 10 ** places;
+        const rounded = (Math.sign(x) * Math.round(Math.abs(x) * scale * (1 + Number.EPSILON))) / scale;
+        return Object.is(rounded, -0) ? 0 : rounded;
+      }
       case "if": {
         arity(3);
         return truthy(arg(0), e.at, "the condition in if(…)") ? arg(1) : arg(2);
@@ -525,5 +541,5 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
 /** The names of every function the language knows — the check reports any other. */
 export const FUNCTIONS = [
   "out", "in", "all", "count", "exists", "every", "some", "sum", "min", "max", "present", "len",
-  "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if", "first", "sort", "either", "fact", "archived",
+  "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if", "first", "sort", "either", "fact", "archived", "round",
 ] as const;

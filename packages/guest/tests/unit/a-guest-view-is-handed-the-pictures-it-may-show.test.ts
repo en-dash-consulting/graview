@@ -150,14 +150,15 @@ describe("a view that asks for pictures", () => {
     /*
      * The porch is reckoned at 150 bytes drawn a quarter as wide, so it and
      * the step (300) are fetched; the roof, past 500 with them, never is.
-     * Made, the porch is 240 bytes, and the step no longer fits beside it.
+     * Made, the porch is 240 bytes, and the step still fits beside it: what
+     * fits is reckoned as the records say, the same on every push (FR-220).
      */
     expect(fetched).not.toContain(FILES.roof);
     expect(porch[0]!.src).toMatch(/^data:/);
-    expect(porch[1]!.src).toBeUndefined();
-    expect(porch[1]!.left).toBe('The picture "step.png" on "Porch repair" is left out: the view "Job photos" is handed at most 500 bytes of pictures, and the pictures before it took them.');
-    expect(roof[0]!.left).toMatch(/^The picture "roof.png" on "Roof survey" is left out: the view "Job photos" is handed at most 500 bytes/);
-    expect(said.length).toBeGreaterThanOrEqual(2);
+    expect(porch[1]!.src).toMatch(/^data:/);
+    expect(roof[0]!.src).toBeUndefined();
+    expect(roof[0]!.left).toBe('The picture "roof.png" on "Roof survey" is left out: the view "Job photos" is handed at most 500 bytes of pictures, and the pictures before it, in the order its records are handed, took them. A view that draws only some kinds\' pictures says which ("pictures": ["<kind>"]).');
+    expect(said).toContain(roof[0]!.left);
   });
 
   it("says a picture it could not load could not be loaded, naming the view", async () => {
@@ -245,8 +246,8 @@ describe("the manifest's pictures", () => {
     expect(checkManifest(photos, live)).toEqual([]);
     expect(checkManifest({ ...photos, pictures: true }, live)).toEqual([]);
     expect(checkManifest({ ...photos, pictures: { width: 8 } }, live)).toEqual(["The view's pictures width is a whole number of pixels from 16 to 4096."]);
-    expect(checkManifest({ ...photos, pictures: "yes" as never }, live)[0]).toMatch(/pictures is true, or/);
-    expect(checkManifest({ ...photos, pictures: { width: 400, height: 300 } as never }, live)).toEqual(['The view\'s pictures says "height": only "width" is read.']);
+    expect(checkManifest({ ...photos, pictures: "yes" as never }, live)[0]).toMatch(/pictures is true; the kinds whose pictures it draws/);
+    expect(checkManifest({ ...photos, pictures: { width: 400, height: 300 } as never }, live)).toEqual(['The view\'s pictures says "height": beside "width", it names a kind and the field it draws pictures from, "circuit": "photo", or its fields, "circuit": ["photo", "map"].']);
   });
 
   it("headless, hands each file without the host's path", async () => {

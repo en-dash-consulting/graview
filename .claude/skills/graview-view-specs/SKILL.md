@@ -32,7 +32,9 @@ fields, edges, label, roles — is `graview-node-kind`.
    `card` is drawn beside the focus and on the pages face's gallery, `row`
    as the one line a member is among many (a focused group, the list page),
    and `page` above the default record. Tones are `good`, `warn`, `bad`,
-   `neutral` and `accent`, the theme's own. Nothing in a spec runs: no CSS,
+   `neutral` and `accent`, the theme's own. A card shows three lines of a
+   `text` block and a row one; `{ text: "{awards}", lines: 6 }` shows six,
+   `lines: 0` the text whole (`view-lines` refuses past 12). Nothing in a spec runs: no CSS,
    no markup, and the only link drawn is an http(s) `url` field's own value,
    or a listed record. The scaffold's `views()` draws them
    (`registerViewSpecs`); so does the embed, by itself.
@@ -90,6 +92,10 @@ fields, edges, label, roles — is `graview-node-kind`.
    one worked out from the record alone (no graph is in hand). A document's
    top-level `computed` holds facts of the whole graph, read as
    `fact('name')`; a kind's is changed with `set-computed`.
+   `{ expr, format: "percent" }` (or `"money"`, `"duration"`, a `unit`;
+   `set-format` sets it) says it so on its page, cards and CSV;
+   `round(x, 3)` rounds; `hidden: true` keeps a helper off its page, cards
+   and CSV while lists, lenses, rules and views still sort and read by it.
 
 5. **Say counts and times in words.** Templates say counts in words:
    `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"),
@@ -115,7 +121,7 @@ Report **the actual output**, including warnings. What it catches here:
   key; `view-template`, `view-expression` — a template or a condition it
   cannot read; `view-depth` — lists nested past three
 - `view-whole-text` — a card or row putting a long `text` field whole in a
-  text block (`graview-lists` says how a card shows its start)
+  text block, unless it says `lines` (`graview-lists` says how a card shows its start)
 - `view-headline-long` — a headline bound to a long `text`, Markdown or long
   string field whole, which a focus card drew at display size: say it in a
   `text` block, or head it with `{call|excerpt: 60}` (a headline past about

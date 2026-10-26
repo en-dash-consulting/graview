@@ -1,0 +1,8 @@
+---
+"@graview/core": patch
+"@graview/pages": patch
+---
+
+A home view that bleeds starts right under the bar on a phone (FR-216), Roadmap f-bleed-top-on-phones. At 390 pixels a home whose worker view says `bleed: true` took back its side gutters and kept the page's 40 pixels of top padding, so the view sat under an empty band between the section nav and its first pixel — and a home view may not say `heading: "own"` to lose it. The home's page now gives its top padding back too on a face 680 pixels wide or less, so the view starts flush under the bar; at a desk the column keeps its spacing, as a view that bleeds keeps the column's width there. Where the view did not draw, what stands in its place keeps the padding, as it keeps the gutter. Guest's test opens the home with a view that bleeds and finds the page marked and the phone-only rule, and without `bleed` finds neither; `verify-address` measures the view's top against the page's at 390 and 1440 (`aHomeViewThatBleedsStartsUnderTheBarOnAPhoneAndKeepsItsSpacingAtADesk`). The pages face alone carries 244 bytes more minified (78 gzipped) and every face 244 (84), each under a raise of its budget (`scripts/budget-raises/a-home-view-that-bleeds-starts-under-the-bar-*.json`); a hosted page's first load is unchanged. `capabilities().shipped` gains FR-216.
+
+Compatibility: ops and primitives, stored formats, the declaration and check finding codes, derived tool names and input schemas — unchanged. The wire — additive: `capabilities().shipped` gains FR-216. What Graview Cloud does: nothing; an app whose home view says `bleed: true` starts under the bar on a phone once it runs this build.

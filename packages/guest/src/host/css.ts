@@ -4,6 +4,7 @@ import {
   CSS_FUNCTIONS,
   CSS_KEYWORD_PROPERTIES,
   CSS_PROPERTIES,
+  CSS_PREFIXED_SELECTORS,
   CSS_REFUSED_SELECTORS,
   HTML_DRAWN_AS,
   OPEN_MAX_STYLESHEET,
@@ -701,6 +702,7 @@ const FUNCTIONS = new Set(CSS_FUNCTIONS);
 const FRAGMENTS = new Set(CSS_FRAGMENT_PROPERTIES);
 const AT_RULES = new Set(CSS_AT_RULES);
 const REFUSED_SELECTORS = new Set(CSS_REFUSED_SELECTORS);
+const PREFIXED_SELECTORS = new Set(CSS_PREFIXED_SELECTORS);
 const FRAGMENT = /^#[A-Za-z_][A-Za-z0-9_.:-]*$/;
 const lower = (value: string) => value.replace(/[A-Z]/g, (c) => c.toLowerCase());
 /** A vendor prefix said in another case, or a property spelled with an escape, is the same property (`POSITION`, `po\73 ition`). */
@@ -806,7 +808,7 @@ function judgeSelector(prelude: readonly ComponentValue[], refuse: (refusal: Css
       const colon = index > 0 && values[index - 1]!.type === ":";
       if (colon && (value.type === "ident" || value.type === "func")) {
         const name = lower(value.type === "ident" ? value.value : value.name);
-        if (REFUSED_SELECTORS.has(name) || name.startsWith("-webkit-") || name.startsWith("-moz-")) {
+        if (REFUSED_SELECTORS.has(name) || ((name.startsWith("-webkit-") || name.startsWith("-moz-")) && !PREFIXED_SELECTORS.has(name))) {
           refuse({ reason: "selector", name });
           return false;
         }
