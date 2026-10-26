@@ -1118,7 +1118,7 @@ async function findAndOpen(person, face, target, query, more = null) {
       };
       // A page at a time while the row is more than a page away, then a row at a time (PageDown walks records, as ↓ does).
       for (let i = 0; i < 40 && index - (await position()) > 12; i++) await person.key("PageDown");
-      // A highlighted record opens its acts under it, so the rows grow as the keys move: the bound is the rows there are now.
+      // The rows stay as they are while the keys move (a record's acts stand beside the list, or open under it only when asked): the bound is the rows there are.
       const rowsNow = () => page.locator('[data-testid="find-hit"]').count();
       for (let i = 0; i < (await rowsNow()) + 2 && index > 0 && (await lit()) !== wanted; i++) await person.key((await position()) > index ? "ArrowUp" : "ArrowDown");
       if ((await lit()) !== wanted) throw new DeadEnd(`the keys do not reach "${target.label}" in the Find strip`);
