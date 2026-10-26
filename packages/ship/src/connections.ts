@@ -1,5 +1,5 @@
 import type { AnySchema, GraviewApp, Store } from "@graview/core";
-import { NOTION_AUTH_ENV, connection, type ConnectionDeclaration, type Fetcher, type GoogleTokenRequest, type SyncReport, type SyncState } from "@graview/core/sync";
+import { NOTION_AUTH_ENV, connection, sharedLinks, type ConnectionDeclaration, type Fetcher, type GoogleTokenRequest, type SyncReport, type SyncState } from "@graview/core/sync";
 
 /**
  * THE APP'S DECLARED CONNECTIONS, RUN BESIDE ITS STORE (`connections.<name>`).
@@ -24,6 +24,13 @@ import { NOTION_AUTH_ENV, connection, type ConnectionDeclaration, type Fetcher, 
  * itself (Graview Cloud, per workspace) hands `token` instead — Google's
  * access token, asked again with `{ refresh: true }` when Google refuses
  * one, or Notion's secret.
+ *
+ * Every connection shares one set of links (`sharedLinks()`), so a Notion
+ * relation finds the record another connection keeps (a check's reindeer, in
+ * the fleet's table), and after each pass every engine links what it held
+ * for a page another one has linked since — the order they run in does not
+ * matter. A host gets this by running them here; one that makes its own
+ * engines with `connection()` passes them one `links`.
  */
 
 export interface ConnectionTokenRequest extends GoogleTokenRequest {
@@ -133,6 +140,7 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
   const env = options.env ?? (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
   const kept: ConnectionStates = options.state?.read() ?? {};
   const engines: { name: string; every: number; engine: ReturnType<typeof connection<S>>["engine"] }[] = [];
+  const links = sharedLinks();
 
   for (const [name, declaration] of declared) {
     if (options.paused || declaration.paused) {
@@ -170,6 +178,7 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
         ...(options.fetch ? { fetch: options.fetch } : {}),
         ...(kept[name] ? { state: kept[name] } : {}),
         say: (line) => say(`${name}: ${line}`),
+        links,
       });
       engines.push({ name, every: (declaration.every ?? 30) * 1000, engine: made.engine });
       say(`${name}: ${declaration.direction === "read" ? "reading" : "keeping in step with"} a Notion database into ${declaration.kind}, every ${declaration.every ?? 30} s`);
@@ -224,6 +233,18 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
         kept[name] = engine.snapshot;
       } catch (error) {
         say(`${name}: the pass failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    // A page one connection's relation reached before another connection read it is linked now, with nothing sent.
+    for (const { name, engine } of engines) {
+      try {
+        const linked = engine.resolveHeld();
+        if (linked.length > 0) {
+          say(`${name}: linked ${linked.length} to records another connection read`);
+          kept[name] = engine.snapshot;
+        }
+      } catch (error) {
+        say(`${name}: linking failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
     options.state?.write(kept);

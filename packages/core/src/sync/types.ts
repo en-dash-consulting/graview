@@ -21,6 +21,18 @@ export interface ResourceMapping {
    */
   readonly fields: Readonly<Record<string, string>>;
   /**
+   * OUR RELATIONS kept as the remote's links: our edge's name → theirs. A
+   * relation's value, on both sides, is the remote ids of the records it
+   * reaches, sorted, `null` when it reaches none — so an edge is compared,
+   * held in conflict, echoed and sent exactly as a field is. A record it
+   * reaches is found by its remote id through the engine's `links`, which
+   * may be every engine of the app; one not linked yet is held and linked
+   * when it is (`SyncState.unresolved`). Inbound, a change lands through
+   * `connectInbound` and `disconnectInbound`. `decode` and `encode` apply
+   * by our edge's name too.
+   */
+  readonly edges?: Readonly<Record<string, string>>;
+  /**
    * Narrows which nodes of the kind participate. A household's shifts may
    * belong on a calendar while its naps do not.
    */
@@ -154,6 +166,26 @@ export interface SyncState {
   readonly conflicts?: readonly SyncConflict[];
   /** Records the remote deleted that were kept here: no longer linked, and not sent again as new. */
   readonly gone?: readonly string[];
+  /**
+   * LINKS NOT MADE YET: by our id and edge, the remote ids a relation there
+   * reaches that no engine has linked to a record here yet (their table not
+   * read yet). They count as part of the relation's value, so nothing is
+   * sent to take them away, and each is linked here once its record is.
+   */
+  readonly unresolved?: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>>;
+}
+
+/**
+ * WHERE A RECORD IS, BY EITHER ID, across every engine of an app: what a
+ * relation kept in step resolves through, since the records it reaches may
+ * be another connection's. An engine given none resolves through its own
+ * links alone.
+ */
+export interface LinkResolver {
+  /** The remote's id of our record, if some engine linked it. */
+  remoteId(localId: string): string | undefined;
+  /** Our id of the remote's record, if some engine linked it. */
+  localId(remoteId: string): string | undefined;
 }
 
 export interface RemoteLink {

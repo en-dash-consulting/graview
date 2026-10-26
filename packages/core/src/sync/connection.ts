@@ -5,10 +5,12 @@ import { fieldSpecOf } from "../document/field-spec.js";
 import type { FieldSpec } from "../document/schema.js";
 import type { ConnectionSpec, GoogleCalendarConnectionSpec, NotionConnectionSpec } from "../document/connection-spec.js";
 import { GOOGLE_COLORS, MADE_BY_GRAVIEW, inConnectionFilter, tagPattern } from "./connection-filter.js";
-import { SyncEngine } from "./engine.js";
+import type { EdgeDeclaration } from "../schema/types.js";
+import { relationActName } from "../mutations/derived-names.js";
+import { SyncEngine, type SharedLinks } from "./engine.js";
 import { googleCalendar, type Fetcher, type GoogleTokenRequest } from "./google-calendar.js";
 import { notion, notionKey } from "./notion.js";
-import { NOTION_INFERABLE } from "./notion-types.js";
+import { NOTION_EDGE, NOTION_INFERABLE } from "./notion-types.js";
 import type { RemoteSystem, ResourceMapping, SyncMapping, SyncState } from "./types.js";
 
 /**
@@ -34,6 +36,15 @@ import type { RemoteSystem, ResourceMapping, SyncMapping, SyncState } from "./ty
  *   field being the database's title. A `date` field holds a date property's
  *   day, a `datetime` field its instant; an `enum` field a select or status,
  *   matched to its options ignoring case and punctuation.
+ * - A NOTION RELATION is one of the kind's relations, when `properties`
+ *   maps it (or, matched by name, when a relation property has its name and
+ *   every kind it reaches is kept by a Notion connection of the app): a link
+ *   in Notion is a link here, made and taken away through
+ *   `connect-<kind>-<relation>` and `disconnect-<kind>-<relation>`. The page
+ *   it reaches is found through `links`, shared by every connection of the
+ *   app (`sharedLinks()`), so it may be another connection's record; one
+ *   not linked yet is held until it is. A relation of one takes the first
+ *   page Notion lists, and says the rest once.
  * - READ means the other system owns the kind: an act here that would change
  *   a record of it is refused with a sentence saying so (`SyncEngine.guard`),
  *   rather than accepted and never sent.
@@ -68,6 +79,13 @@ export interface ConnectionRun<S extends AnySchema> {
   readonly state?: SyncState;
   /** A note the transport says once: a property it found no field for, one it leaves alone. */
   say?(line: string): void;
+  /**
+   * THE APP'S LINKS, shared by every connection it runs (`sharedLinks()`):
+   * where a relation finds the record a Notion page is, whichever
+   * connection linked it. This connection's engine is added to it. Absent:
+   * the connection's own links alone.
+   */
+  readonly links?: SharedLinks;
 }
 
 export interface Connection<S extends AnySchema> {
@@ -164,19 +182,38 @@ function nameField(specs: Record<string, FieldSpec>): string | undefined {
   return (words.find(([field]) => field === "name" || field === "title") ?? words.find(([, spec]) => spec.required) ?? words[0])?.[0];
 }
 
-/** What a Notion connection maps: the engine's mapping, the property names the transport resolves with their field types, and the name that is the title. */
+/** A kind's relations as its definition declares them, by name. */
+function edgeSpecs(app: GraviewApp, kind: string): Readonly<Record<string, EdgeDeclaration>> {
+  return ((app.schema.tryDefinition(kind) as { edges?: Record<string, EdgeDeclaration> } | undefined)?.edges ?? {}) as Readonly<Record<string, EdgeDeclaration>>;
+}
+
+/** The kinds a Notion connection of the app keeps. */
+function notionKinds(app: GraviewApp): Set<string> {
+  return new Set(Object.values(app.connections ?? {}).flatMap((declared) => (declared.system === "notion" ? [declared.kind] : [])));
+}
+
+/** What a Notion connection maps: the engine's mapping, the property names the transport resolves with their field types, the name that is the title, and the relations matched by name that need not be there. */
 export function notionConnectionMapping(
   app: GraviewApp,
   declaration: NotionConnectionSpec,
-): { readonly mapping: SyncMapping; readonly refs: Readonly<Record<string, string | undefined>>; readonly titleRef?: string } {
+  say?: (line: string) => void,
+): { readonly mapping: SyncMapping; readonly refs: Readonly<Record<string, string | undefined>>; readonly titleRef?: string; readonly quiet: readonly string[] } {
   const { kind } = declaration;
   const specs = fieldSpecs(app, kind);
+  const relations = edgeSpecs(app, kind);
   const fields: Record<string, string> = {};
+  const edges: Record<string, string> = {};
   const refs: Record<string, string | undefined> = {};
+  const quiet: string[] = [];
   let titleRef: string | undefined;
   if (declaration.properties) {
     for (const [field, property] of Object.entries(declaration.properties)) {
       const ref = typeof property === "string" ? property : property.name;
+      if (!specs[field] && relations[field]) {
+        edges[field] = ref;
+        refs[ref] = NOTION_EDGE;
+        continue;
+      }
       fields[field] = ref;
       refs[ref] = specs[field]?.type;
     }
@@ -187,6 +224,14 @@ export function notionConnectionMapping(
       refs[field] = spec.type;
     }
     titleRef = nameField(specs);
+    // A relation is kept by name only when every kind it reaches is another Notion connection's: a relation property of its name may not be there.
+    const kept = notionKinds(app);
+    for (const [edge, spec] of Object.entries(relations)) {
+      if (spec.to === "*" || spec.to.length === 0 || !spec.to.every((target) => kept.has(target))) continue;
+      edges[edge] = edge;
+      refs[edge] = NOTION_EDGE;
+      quiet.push(edge);
+    }
   }
   const encode: Record<string, (value: unknown) => unknown> = {};
   const decode: Record<string, (value: unknown) => unknown> = {};
@@ -219,15 +264,25 @@ export function notionConnectionMapping(
         break;
     }
   }
+  for (const edge of Object.keys(edges)) {
+    if (relations[edge]?.cardinality !== "one") continue;
+    // A relation of one holds the first page Notion lists; the rest are said once and left there.
+    decode[edge] = (value) => {
+      if (!Array.isArray(value) || value.length <= 1) return value;
+      say?.(`${edge}: each ${kind} links one page, and a page in Notion links ${value.length}, so the first is kept here and the rest are left in Notion`);
+      return [value[0]];
+    };
+  }
   const resource: ResourceMapping = {
     kind,
     resource: "pages",
     fields,
+    ...(Object.keys(edges).length > 0 ? { edges } : {}),
     encode,
     decode,
     ...(declaration.direction === "read" ? { readonly: true, because: `Each ${kind} comes from a Notion database this app only reads: change it there.` } : {}),
   };
-  return { mapping: { system: "notion", resources: [resource] }, refs, ...(titleRef ? { titleRef } : {}) };
+  return { mapping: { system: "notion", resources: [resource] }, refs, ...(titleRef ? { titleRef } : {}), quiet };
 }
 
 /** The act that makes a record of the kind: `add-<kind>` when there is one, else the first that creates it. */
@@ -299,7 +354,7 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
 function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaration: NotionConnectionSpec): Connection<S> {
   const { app, store } = run;
   if (!run.databaseId) throw new Error(`connection ${run.name}: a Notion connection needs its database's id`);
-  const { mapping, refs, titleRef } = notionConnectionMapping(app as GraviewApp, declaration);
+  const { mapping, refs, titleRef, quiet } = notionConnectionMapping(app as GraviewApp, declaration, run.say);
   const resource = mapping.resources[0]!;
   let engine: SyncEngine<S> | undefined;
   const remote = notion({
@@ -310,17 +365,34 @@ function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
     ...(run.fetch ? { fetch: run.fetch } : {}),
     refs,
     ...(titleRef ? { titleRef } : {}),
+    ...(quiet.length > 0 ? { quiet } : {}),
     // The pages linked when the pass began: a whole read that no longer lists one finds out whether it is gone.
     known: () => Object.values(engine?.snapshot.links ?? {}).map((link) => link.id),
     ...(run.say ? { say: run.say } : {}),
   });
   const creates = creatingAct(app as GraviewApp, declaration.kind);
   const decoded = decodedBy(resource);
+  // A relation's link lands through its derived pair, when the app has it (the checker says when it has not).
+  const has = (name: string) => {
+    try {
+      store.mutation(name);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const relationAct = (act: "connect" | "disconnect") => ({ localId, edge, to }: { readonly localId: string; readonly edge: string; readonly to: string }) => {
+    const name = relationActName(act, declaration.kind, edge);
+    return has(name) ? { name, args: { id: localId, to } } : null;
+  };
   engine = new SyncEngine<S>(
     {
       store,
       mapping,
       remote,
+      ...(run.links ? { links: run.links } : {}),
+      connectInbound: relationAct("connect"),
+      disconnectInbound: relationAct("disconnect"),
       conflicts: declaration.conflicts ?? "report",
       applyInbound: ({ localId, fields }) => ({ name: `edit-${declaration.kind}`, args: { id: localId, ...fields } }),
       removeInbound: ({ localId }) => ({ name: `remove-${declaration.kind}`, args: { id: localId } }),
@@ -333,6 +405,7 @@ function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
     },
     run.state,
   );
+  run.links?.add(engine);
   const unguard = declaration.direction === "read" ? engine.guard() : undefined;
   return { engine, mapping, remote, ...(unguard ? { unguard } : {}) };
 }

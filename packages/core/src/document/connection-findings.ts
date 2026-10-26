@@ -1,5 +1,6 @@
 import type { GraviewApp } from "../app.js";
 import { deriveMutations } from "../mutations/derive-edits.js";
+import { relationActName } from "../mutations/derived-names.js";
 import { withArticle } from "../schema/define-node.js";
 import { CONNECTION_TAG, GOOGLE_COLORS } from "../sync/connection-filter.js";
 import { NOTION_FITS, NOTION_INFERABLE, NOTION_READ_ONLY, NOTION_SECRET, notionFits } from "../sync/notion-types.js";
@@ -57,7 +58,7 @@ function secretIn(value: unknown, at: string): string | undefined {
 
 const KEYS: Readonly<Record<string, string>> = {
   "google-calendar": "system, calendar, auth, kind, fields, filter, direction, conflicts, every, paused and description",
-  notion: "system, database, auth, kind, properties, direction, conflicts, every, paused and description",
+  notion: "system, database, source, auth, kind, properties, direction, conflicts, every, paused and description",
 };
 
 /** A shape the connection does not have, at its place: an unknown key, or a value of the wrong kind. */
@@ -134,26 +135,48 @@ function notionConnection(at: string, connection: NotionConnectionSpec, document
   const kind = document.kinds[connection.kind];
   if (!kind) return [noKind(at, document, connection.kind, "the database's pages")];
   let mapped: string[];
+  const relations: string[] = [];
   if (connection.properties) {
     mapped = [];
     const seen = new Map<string, string>();
+    const edges = kind.edges ?? {};
     for (const [field, property] of Object.entries(connection.properties)) {
       const path = `${at}.properties.${field}`;
       const name = typeof property === "string" ? property : property.name;
-      if (!kind.fields[field]) {
-        findings.push(error("connection-field", path, `${connection.kind} has no field called ${field} to hold the property ${name}`, `name one of ${Object.keys(kind.fields).join(", ")}`));
+      const declared = typeof property === "string" ? undefined : property.type;
+      if (!kind.fields[field] && !edges[field]) {
+        const names = [...Object.keys(kind.fields), ...Object.keys(edges)];
+        findings.push(error("connection-field", path, `${connection.kind} has no field or relation called ${field} to hold the property ${name}`, `name one of ${names.join(", ")}`));
         continue;
       }
       const twice = seen.get(name);
-      if (twice) findings.push(error("connection-field", path, `the property ${name} is already held by ${twice}, and one property is held by one field`, "give each property a field of its own"));
+      if (twice) findings.push(error("connection-field", path, `the property ${name} is already held by ${twice}, and one property is held by one field or relation`, "give each property a field or relation of its own"));
       seen.set(name, field);
+      if (!kind.fields[field]) {
+        // One of the kind's relations, held by a relation property: its pages are records another Notion connection keeps.
+        if (declared && declared !== "relation") {
+          findings.push(error("connection-relation", path, `${field} is a relation of ${connection.kind}, and the property ${name} is a ${declared}: a relation is held by a relation property, the pages it links`, `name a relation property, or map a field of ${connection.kind} to ${name}`));
+          continue;
+        }
+        const problem = relationTarget(connection.kind, field, edges[field]!.to, document);
+        if (problem) {
+          findings.push(error("connection-relation-target", path, problem.message, problem.fix));
+          continue;
+        }
+        relations.push(field);
+        continue;
+      }
+      if (declared === "relation") {
+        findings.push(error("connection-relation", path, `the property ${name} is a relation, the pages it links, and ${field} is a field of ${connection.kind}, which holds one value`, `declare a relation of ${connection.kind} to the kind those pages are, and map it to ${name}`));
+        continue;
+      }
       mapped.push(field);
       const type = kind.fields[field]!.type;
       if (typeof property === "string") {
         if (!NOTION_INFERABLE.has(type)) findings.push(error("connection-field-type", path, `${field} is a ${type} field, and no Notion property a connection keeps in step is held in one`, `name a field of another type, or leave ${field} out`));
         continue;
       }
-      if (!notionFits(property.type, type)) {
+      if (!notionFits(property.type!, type)) {
         findings.push(error("connection-field-type", path, `the property ${name} is a ${property.type}, and ${field} is a ${type} field`, `name a ${NOTION_FITS[property.type]!.join(", ")} field`));
       } else if (NOTION_READ_ONLY.has(property.type) && connection.direction === "both") {
         findings.push(warning("connection-read-only", path, `${name} is a people property, which is read from Notion and never written: a change to ${field} here stays here`));
@@ -167,6 +190,45 @@ function notionConnection(at: string, connection: NotionConnectionSpec, document
     if (mapped.length === 0) findings.push(error("connection-properties", `${at}.kind`, `${connection.kind} has no field a Notion property could be held in`, "give it a string, number, date, enum, list or boolean field"));
   }
   if (app && mapped.length > 0) findings.push(...landing(at, connection.kind, mapped, { made: "a page made in the database", change: "a change in Notion", deleted: "a page archived in Notion" }, app));
+  if (app) findings.push(...linking(at, connection.kind, relations, document, app));
+  return findings;
+}
+
+/** Why a relation cannot be kept in step: what it reaches is no kind a Notion connection of this app keeps. */
+function relationTarget(kindName: string, relation: string, to: readonly string[] | "*", document: GraviewDocument): { readonly message: string; readonly fix: string } | undefined {
+  const kept = new Set(
+    Object.values(document.connections ?? {})
+      .map((raw) => raw as { system?: unknown; kind?: unknown })
+      .filter((raw) => raw.system === "notion" && typeof raw.kind === "string")
+      .map((raw) => String(raw.kind)),
+  );
+  const keptBy = kept.size > 0 ? `the Notion connections here keep ${[...kept].join(", ")}` : "no other Notion connection is declared";
+  if (to === "*") return { message: `${kindName}'s ${relation} reaches any kind, and a Notion relation links the pages of one database`, fix: `say the kind it reaches with "to", and keep that kind with a Notion connection of its own` };
+  const outside = to.filter((target) => !kept.has(target));
+  if (outside.length === 0) return undefined;
+  return {
+    message: `${kindName}'s ${relation} reaches ${outside.join(" and ")}, which no Notion connection of this app keeps, so a page it links would have no record here (${keptBy})`,
+    fix: `declare a Notion connection for ${outside.join(" and ")}'s database, or leave ${relation} out of properties`,
+  };
+}
+
+/** That the acts a link made or taken away in Notion lands through are there: `connect-<kind>-<relation>` and `disconnect-<kind>-<relation>`. */
+function linking(at: string, kindName: string, relations: readonly string[], document: GraviewDocument, app: GraviewApp): Finding[] {
+  if (relations.length === 0) return [];
+  const findings: Finding[] = [];
+  const declared = app.mutations ?? [];
+  const acts = new Set([...declared, ...deriveMutations(app.schema, declared)].map((mutation) => mutation.name));
+  for (const relation of relations) {
+    const path = `${at}.properties.${relation}`;
+    const connect = relationActName("connect", kindName, relation);
+    const disconnect = relationActName("disconnect", kindName, relation);
+    if (!acts.has(connect)) {
+      findings.push(error("connection-connect", path, `a link made in Notion lands through ${connect}, and this app has no such act: the relation declares no acts, or an act of its own replaces it`, `let ${kindName}'s ${relation} be given its derived acts, or leave ${relation} out of properties`));
+    } else if (!acts.has(disconnect)) {
+      const appendOnly = document.kinds[kindName]?.edges?.[relation]?.appendOnly === true;
+      findings.push(warning("connection-disconnect", path, `no act takes ${kindName}'s ${relation} away${appendOnly ? " (it is append-only)" : ""}, so a link taken away in Notion stays here`));
+    }
+  }
   return findings;
 }
 

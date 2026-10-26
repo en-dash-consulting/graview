@@ -1,6 +1,6 @@
 import * as z from "../schema/zod.js";
 import { NOTION_FITS, NOTION_ID } from "../sync/notion-types.js";
-import { FIELD_NAME, NAME } from "./schema.js";
+import { EDGE_NAME, FIELD_NAME, NAME } from "./schema.js";
 
 /*
  * A CONNECTION'S SHAPE, apart from the document's: a page that draws an app
@@ -59,8 +59,16 @@ function build() {
    * in step, and the kind's name field is the database's title. A database
    * that holds several data sources (Notion's tables under one name) says
    * which with `source`, its name or id; one of a single source needs none.
+   *
+   * A key of `properties` may name one of the kind's RELATIONS (edges) in
+   * place of a field, held by a Notion relation property: its links are the
+   * pages the property reaches, each a record another Notion connection of
+   * the app keeps (`"reindeer": "Reindeer Fleet"`, or with
+   * `"type": "relation"`). Matched by name, a relation whose name a
+   * relation property has is kept too.
    */
-  const notionTypes = Object.keys(NOTION_FITS) as [string, ...string[]];
+  const notionTypes = [...Object.keys(NOTION_FITS), "relation"] as unknown as [string, ...string[]];
+  const keptName = z.string().check(z.regex(EDGE_NAME, 'a key of properties is one of the kind\'s fields or relations, like "dueDate" or "reindeer"'));
   const notionType = z.enum(notionTypes, `a property's type is one a connection keeps in step: ${notionTypes.join(", ")}`);
   const Notion = z.strictObject({
     system: z.literal("notion"),
@@ -71,8 +79,8 @@ function build() {
     source: z.optional(str(1, 200)),
     auth,
     kind: kindName,
-    /* This kind's field → the database's property, by its name in Notion, or `{ name, type }` with its type. */
-    properties: z.optional(z.record(fieldName, z.union([str(1, 100), z.strictObject({ name: str(1, 100), type: notionType })]))),
+    /* This kind's field or relation → the database's property, by its name in Notion, or `{ name, type }` with its type. */
+    properties: z.optional(z.record(keptName, z.union([str(1, 100), z.strictObject({ name: str(1, 100), type: notionType })]))),
     direction,
     conflicts,
     every,

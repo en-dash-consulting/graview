@@ -10,8 +10,9 @@
  * a conflict held, long words in 2000-character pieces, every page of a query
  * followed, Notion's rate limit waited out, a refused secret and an unshared
  * database said as sentences, a whole read that loses and duplicates
- * nothing, an archive each way, the secret kept nowhere, and everything the
- * run made archived again.
+ * nothing, an archive each way, the secret kept nowhere, two tables joined
+ * by a dual relation kept as links both ways and converging with nothing
+ * sent, and everything the run made archived again.
  *
  * WHAT TO SET UP, ONCE:
  *
@@ -31,8 +32,11 @@
  * The harness makes its own database inside that page each run — "Graview
  * harness <run id>", with a title, rich text, number, select, multi-select,
  * two dates, checkbox, URL, email, phone, people and formula property — so
- * nobody has to build one by hand, and archives it at the end. Every page it
- * makes carries the run id in its title, and only those are touched.
+ * nobody has to build one by hand, and archives it at the end. For the
+ * relations it makes two more, "Graview harness <run id> fleet" and
+ * "… checks", the second's relation dual to the first, and trashes both.
+ * Every page it makes carries the run id in its title, and only those are
+ * touched.
  *
  * It needs credentials, so it is NOT in `pnpm verify` or CI; the file is
  * read through scripts/lib/notion-test-env.mjs, which never prints a value.
@@ -49,7 +53,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Store } from "../packages/core/dist/index.js";
 import { compileDocument } from "../packages/core/dist/check.js";
-import { NOTION_API, NOTION_VERSION, connection, notion, notionProperty, scriptedNotion } from "../packages/core/dist/sync/index.js";
+import { NOTION_API, NOTION_VERSION, connection, notion, notionProperty, scriptedNotion, sharedLinks } from "../packages/core/dist/sync/index.js";
 import { requireNotionEnv } from "./lib/notion-test-env.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -124,6 +128,8 @@ const document = (databaseId) => ({
 });
 
 let databaseId;
+/** The two tables the relation claims make, trashed whatever happens. */
+const linkedTables = [];
 try {
   /* ------------------------------------------------ its own database */
   const made = await api("POST", "/databases", {
@@ -330,6 +336,115 @@ try {
   const read = checksStore.graph.allNodes().map((node) => node.name);
   claim("aDatabaseOfSeveralSourcesIsReadThroughTheOneItNames", !named.offline && read.length === 1 && read[0] === `Comet ${run}`, { read, problem: named.problem ?? null });
 
+  /* ------------------------------ two tables joined by a dual relation */
+  // A fleet and its health checks, each a database of its own under the page; the checks' relation to the fleet is dual, so Notion keeps a twin on the fleet's side.
+  const table = async (suffix, properties) => {
+    const one = await api("POST", "/databases", { parent: { type: "page_id", page_id: parent }, title: [{ type: "text", text: { content: `Graview harness ${run} ${suffix}` } }], initial_data_source: { properties } });
+    linkedTables.push(one.id);
+    return one;
+  };
+  const fleetTable = await table("fleet", { Name: { title: {} } });
+  const fleetSource = fleetTable.data_sources[0].id;
+  const checksTable = await table("checks", { Name: { title: {} }, Reindeer: { relation: { data_source_id: fleetSource, type: "dual_property", dual_property: {} } } });
+  const checksSource = checksTable.data_sources[0].id;
+  // The twin's name is Notion's to give: read it from the fleet's side.
+  const fleetProperties = (await api("GET", `/data_sources/${fleetSource}`)).properties;
+  const twin = Object.values(fleetProperties).find((property) => property.type === "relation")?.name;
+  const relationDeclared = (await api("GET", `/data_sources/${checksSource}`)).properties.Reindeer?.relation?.type;
+  claim("aDualRelationIsMadeBetweenTwoTables", Boolean(twin) && relationDeclared === "dual_property", { twin: twin ?? null, type: relationDeclared ?? null });
+
+  const linkedApp = compileDocument({
+    format: "graview-document",
+    formatVersion: 1,
+    name: `Notion harness relations ${run}`,
+    kinds: {
+      reindeer: { fields: { name: { type: "string", required: true } }, edges: { checks: { to: ["check"] } } },
+      check: { fields: { name: { type: "string", required: true } }, edges: { reindeer: { to: ["reindeer"], cardinality: "one" } } },
+    },
+    acts: { "add-reindeer": { creates: "reindeer" }, "add-check": { creates: "check" } },
+    connections: {
+      checks: { system: "notion", database: checksTable.id, kind: "check", properties: { name: "Name", reindeer: "Reindeer" }, direction: "both" },
+      fleet: { system: "notion", database: fleetTable.id, kind: "reindeer", properties: { name: "Name", checks: twin ?? "Checks" }, direction: "both" },
+    },
+  });
+  if (!linkedApp.ok) throw new Error(`the harness's relation declaration does not check: ${linkedApp.findings.map((finding) => finding.message).join("; ")}`);
+  const herd = new Store({ schema: linkedApp.app.schema, mutations: linkedApp.app.mutations ?? [], snapshot: { nodes: [], edges: [] } });
+  const links = sharedLinks();
+  const linkedSaid = [];
+  const engines = ["checks", "fleet"].map((name) =>
+    connection({ name, declaration: linkedApp.app.connections[name], app: linkedApp.app, store: herd, databaseId: linkedApp.app.connections[name].database, token: () => secret, fetch: fetched, links, say: (line) => linkedSaid.push(`${name}: ${line}`) }).engine,
+  );
+  /** One pass of both, the checks first, then what each held linked, as `graview serve` runs them. */
+  const both = async () => {
+    const reports = [];
+    for (const one of engines) reports.push(await one.run());
+    for (const one of engines) one.resolveHeld();
+    return reports;
+  };
+  const untilBoth = async (check, tries = stubbed ? 2 : 8) => {
+    let last;
+    for (let at = 0; at < tries; at++) {
+      if (at > 0) await settle();
+      last = await both();
+      if (check(last)) return last;
+    }
+    return last;
+  };
+  const inHerd = (kind, name) => herd.graph.allNodes().find((node) => node.kind === kind && node.name === name)?.id;
+  const out = (from, edge) => (from ? herd.graph.out(from, edge).map((node) => node.id) : []);
+  const relationOf = async (pageId, property) => ((await api("GET", `/pages/${pageId}`)).properties[property]?.relation ?? []).map((one) => one.id);
+  const quietly = (reports) => reports.every((one) => !one.offline && one.pushed.length === 0 && one.applied.length === 0 && one.refused.length === 0);
+
+  const comet = await api("POST", "/pages", { parent: { type: "data_source_id", data_source_id: fleetSource }, properties: { Name: notionProperty("title", `Comet ${run}`) } });
+  const hooves = await api("POST", "/pages", { parent: { type: "data_source_id", data_source_id: checksSource }, properties: { Name: notionProperty("title", `Hooves ${run}`), Reindeer: notionProperty("relation", [comet.id]) } });
+  await settle();
+  const arrivedLinks = await untilBoth(() => out(inHerd("check", `Hooves ${run}`), "reindeer").length === 1 && out(inHerd("reindeer", `Comet ${run}`), "checks").length === 1);
+  const hoovesId = inHerd("check", `Hooves ${run}`);
+  const cometId = inHerd("reindeer", `Comet ${run}`);
+  claim(
+    "aLinkMadeInNotionArrivesAsALinkOnBothSides",
+    out(hoovesId, "reindeer").join() === (cometId ?? "-") && out(cometId, "checks").join() === (hoovesId ?? "-") && arrivedLinks.every((one) => one.pushed.length === 0),
+    { checkToReindeer: out(hoovesId, "reindeer").length, reindeerToCheck: out(cometId, "checks").length, pushed: arrivedLinks.map((one) => one.pushed.length), refused: arrivedLinks.flatMap((one) => one.refused.map((refusal) => refusal.error)) },
+  );
+  await settle();
+  const settledLinks = await both();
+  claim("bothSidesOfADualRelationConvergeWithNothingSent", quietly(settledLinks), { pushed: settledLinks.map((one) => one.pushed.length), applied: settledLinks.map((one) => one.applied.length) });
+
+  const herdAs = { author: { kind: "human", id: "harness" }, intent: "by hand" };
+  herd.apply({ name: "add-reindeer", args: { id: "reindeer:dasher", name: `Dasher ${run}` } }, herdAs);
+  if (hoovesId) herd.apply({ name: "connect-check-reindeer", args: { id: hoovesId, to: "reindeer:dasher" } }, herdAs);
+  // The checks run first, so the check's relation names Dasher on the pass after the fleet makes her page.
+  await both();
+  await both();
+  const dasherPage = links.remoteId("reindeer:dasher");
+  const hoovesThere = await relationOf(hooves.id, "Reindeer");
+  claim("aLinkMadeHereIsWrittenToNotion", Boolean(dasherPage) && hoovesThere.length === 1 && hoovesThere[0] === dasherPage, { relation: hoovesThere.length, dasherHasAPage: Boolean(dasherPage) });
+  await settle();
+  const twinArrived = await untilBoth(() => out("reindeer:dasher", "checks").length === 1 && out(cometId, "checks").length === 0);
+  const twinThere = dasherPage && twin ? await relationOf(dasherPage, twin) : [];
+  claim(
+    "notionsTwinOfALinkMadeHereArrivesOnTheOtherSide",
+    out("reindeer:dasher", "checks").join() === (hoovesId ?? "-") && out(cometId, "checks").length === 0 && twinThere.length === 1,
+    { dasherChecks: out("reindeer:dasher", "checks").length, cometChecks: out(cometId, "checks").length, twinInNotion: twinThere.length, pushed: twinArrived.map((one) => one.pushed.length) },
+  );
+  await settle();
+  let converged;
+  for (let tries = 0; tries < (stubbed ? 1 : 4); tries++) {
+    if (tries > 0) await settle();
+    converged = await both();
+    if (quietly(converged)) break;
+  }
+  const once = await both();
+  claim("aLinkMadeHereConvergesWithNothingMoreSent", quietly(converged) && quietly(once), { pushed: [...converged, ...once].map((one) => one.pushed.length), applied: [...converged, ...once].map((one) => one.applied.length) });
+  claim("theSecretIsKeptNowhereByTheLinkedTables", !JSON.stringify([herd.log.all(), engines.map((one) => one.snapshot), linkedSaid]).includes(secret), {});
+
+  const trashed = [];
+  for (const id of linkedTables.splice(0)) {
+    await api("DELETE", `/blocks/${id}`);
+    trashed.push((await api("GET", `/databases/${id}`).then((one) => one.in_trash === true, () => true)));
+  }
+  claim("theLinkedTablesAreTrashed", trashed.length === 2 && trashed.every(Boolean), { trashed: trashed.filter(Boolean).length });
+
   for (const source of [sourceId, second.id]) {
     for (const page of (await api("POST", `/data_sources/${source}/query`, { page_size: 100 })).results) {
       if (textOf(page, "Name").includes(run)) await api("PATCH", `/pages/${page.id}`, { in_trash: true });
@@ -344,6 +459,14 @@ try {
   report.error = (error instanceof Error ? error.message : String(error)).replaceAll(secret, "<secret>");
   report.passed = false;
 } finally {
+  // The relation claims' tables, when a claim stopped before they were trashed.
+  for (const id of linkedTables) {
+    try {
+      await api("DELETE", `/blocks/${id}`);
+    } catch (error) {
+      report.cleanup = (error instanceof Error ? error.message : String(error)).replaceAll(secret, "<secret>");
+    }
+  }
   // Whatever happened, the run's database goes to the trash: it, and every page in it, carried the run id.
   if (databaseId) {
     try {

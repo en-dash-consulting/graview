@@ -69,10 +69,26 @@ exporting the app itself is `graview-ship`.
    share the database with the integration. Title and rich text, number,
    select and status (an `enum`), multi-select (a `list`), date (`date` or
    `datetime`), checkbox, URL, email and phone go both ways; people are
-   read as names; relations, formulas, rollups and files are left alone
-   and said once. A page archived there is gone here, and one removed here
-   is archived there. `scriptedNotion()` is a Notion in memory to test
+   read as names; formulas, rollups and files are left alone and said
+   once. A page archived there is gone here, and one removed here is
+   archived there. `scriptedNotion()` is a Notion in memory to test
    against.
+
+6. **Several Notion tables joined by relations: one connection per
+   table, relations as edges.** Declare the edge on the kind
+   (`"reindeer": { "to": ["reindeer"], "cardinality": "one" }`) and map it
+   to the relation property in `properties` (`"reindeer": "Reindeer
+   Fleet"`, or `{ "name", "type": "relation" }`); the kind it reaches must
+   be another Notion connection's. A link in Notion lands through
+   `connect-<kind>-<edge>` / `disconnect-…`; one made here is written as
+   the whole relation. A page not read yet is held and linked once its
+   table is, whatever order the connections run in (`runConnections`
+   shares one `sharedLinks()`; a host making engines itself passes one
+   `links` to every `connection()`). A relation of one keeps the first
+   page and says the rest once. For a dual relation, declare the edge on
+   the side you need; declaring both sides converges with nothing sent. A
+   read-only connection refuses links made here. An edge both sides
+   changed is a conflict like a field, under `conflicts`.
 
 ## Then find out whether it worked
 
@@ -87,9 +103,11 @@ days or both moments (`connection-when`), a filter it cannot read
 (`connection-filter`, `connection-color`, `connection-tag`), and it warns
 `connection-remove` when no act removes the kind, so an event deleted in
 the calendar would stay here. For Notion it refuses a secret written in
-the declaration (`connection-secret`) and a field that cannot hold the
-property's type, and warns a people property is only read
-(`connection-read-only`). Report what it said; a host's line says why it
+the declaration (`connection-secret`), a field that cannot hold the
+property's type, a relation property mapped to a field or another type
+mapped to an edge (`connection-relation`), and an edge to a kind no Notion
+connection keeps (`connection-relation-target`); it warns a people
+property is only read (`connection-read-only`). Report what it said; a host's line says why it
 could not reach the other side (`report.problem`).
 
 Then run the engine against a scripted remote in a test: the first run

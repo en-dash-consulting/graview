@@ -233,3 +233,39 @@ describe("a served store's declared Notion database", () => {
     expect(said.join("\n")).not.toContain("secret_NotTheOne");
   });
 });
+
+/* ------------------------------ several Notion tables joined by a relation (f-notion-several-tables) */
+
+describe("a served store's Notion tables joined by a relation", () => {
+  it("links a page of one connection to a record another connection reads, in one pass whichever runs first, and sends nothing", async () => {
+    const notion = scriptedNotion();
+    const fleet = notion.database({ title: "Reindeer Fleet", properties: { Name: "title" } });
+    const checks = notion.database({ title: "Reindeer Health Checks", properties: { Name: "title", "Reindeer Fleet": "relation" }, relations: { "Reindeer Fleet": { to: fleet, dual: true } } });
+    const comet = notion.add(fleet, { Name: "Comet" });
+    notion.add(checks, { Name: "Hooves", "Reindeer Fleet": [String(comet["id"])] });
+    // The checks are declared first, so they run before the fleet they reach is read.
+    const opened = open({
+      format: "graview-document",
+      formatVersion: 1,
+      name: "North Pole",
+      kinds: {
+        reindeer: { fields: { name: { type: "string", required: true } } },
+        check: { fields: { name: { type: "string", required: true } }, edges: { reindeer: { to: ["reindeer"], cardinality: "one" } } },
+      },
+      acts: { "add-reindeer": { creates: "reindeer" }, "add-check": { creates: "check" } },
+      connections: {
+        checks: { system: "notion", database: checks, kind: "check", properties: { name: "Name", reindeer: "Reindeer Fleet" }, direction: "both" },
+        fleet: { system: "notion", database: fleet, kind: "reindeer", properties: { name: "Name" }, direction: "both" },
+      },
+    });
+    const said: string[] = [];
+    const running = runConnections({ ...opened, env: { NOTION_TOKEN: notion.secret }, fetch: notion.fetch, say: (line) => said.push(line) });
+    await running.runNow();
+    const named = (kind: string, name: string) => opened.store.graph.allNodes().find((node) => node.kind === kind && (node as unknown as Record<string, unknown>)["name"] === name)!.id;
+    expect(opened.store.graph.out(named("check", "Hooves"), "reindeer").map((node) => node.id)).toEqual([named("reindeer", "Comet")]);
+    expect(said).toContain("checks: linked 1 to records another connection read");
+    const again = await running.runNow();
+    await running.stop();
+    expect(Object.values(again).every((report) => report.pushed.length === 0 && report.applied.length === 0)).toBe(true);
+  });
+});

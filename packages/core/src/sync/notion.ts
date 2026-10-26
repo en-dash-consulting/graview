@@ -1,5 +1,5 @@
 import type { Fetcher } from "./google-calendar.js";
-import { NOTION_FITS, NOTION_LEFT_ALONE, NOTION_READ_ONLY, notionFits } from "./notion-types.js";
+import { NOTION_EDGE, NOTION_FITS, NOTION_LEFT_ALONE, NOTION_READ_ONLY, notionFits } from "./notion-types.js";
 import type { RemoteAck, RemoteChange, RemoteSystem, RemoteWrite } from "./types.js";
 
 /**
@@ -33,6 +33,10 @@ import type { RemoteAck, RemoteChange, RemoteSystem, RemoteWrite } from "./types
  * - A PUSH makes a page in the database, sets the properties of one, or
  *   archives one. Words go as plain text, cut into Notion's 2000-character
  *   pieces.
+ * - A RELATION property is a kind's relation (`refs` naming it with the
+ *   type `NOTION_EDGE`): its value is the ids of the pages it reaches, every
+ *   one of them — Notion lists 25 on a page and the rest through the
+ *   property's own endpoint, which is followed — and it is written whole.
  * - Notion asking us to slow down (429) is waited out as its `Retry-After`
  *   says, within a bound; a refused secret (401) and a database the
  *   integration cannot see (404) are said as sentences that say what to do.
@@ -56,10 +60,13 @@ export interface NotionOptions {
   readonly pageSize?: number;
   /**
    * The names the mapping uses, each with the type of the field it lands
-   * in (absent when any type is welcome). Absent: every property Notion
+   * in (absent when any type is welcome), or `NOTION_EDGE` for a relation
+   * property kept as a kind's relation. Absent: every property Notion
    * keeps in step, by its own name.
    */
   readonly refs?: Readonly<Record<string, string | undefined>>;
+  /** Names of `refs` that may find no property without its being said (a relation matched by name). */
+  readonly quiet?: readonly string[];
   /** A name that, finding no property of its own, is the database's title. */
   readonly titleRef?: string;
   /** The pages this sync has linked, by Notion's id, so a full read can tell which are gone. */
@@ -140,6 +147,10 @@ export function notionValue(property: Json): unknown {
       const names = ((raw as Json[] | undefined) ?? []).map((person) => String(person["name"] ?? person["id"]));
       return names.length > 0 ? names : null;
     }
+    case "relation": {
+      const ids = ((raw as Json[] | undefined) ?? []).map((page) => String(page["id"]));
+      return ids.length > 0 ? ids : null;
+    }
     default:
       return undefined;
   }
@@ -184,6 +195,8 @@ export function notionProperty(type: string, value: unknown): Json {
     case "email":
     case "phone_number":
       return { [type]: empty ? null : String(value) };
+    case "relation":
+      return { relation: empty ? [] : (Array.isArray(value) ? value : [value]).map((id) => ({ id: String(id) })) };
     default:
       throw new Error(`notion: a ${type} property is not written from here`);
   }
@@ -204,7 +217,7 @@ function hashOf(values: Json): string {
 function valuesOf(page: Json): Json {
   const out: Json = {};
   for (const [name, property] of Object.entries((page["properties"] as Record<string, Json> | undefined) ?? {})) {
-    if (!NOTION_FITS[String(property["type"])]) continue;
+    if (!NOTION_FITS[String(property["type"])] && property["type"] !== "relation") continue;
     out[name] = notionValue(property);
   }
   return out;
@@ -331,16 +344,22 @@ export function notion(options: NotionOptions): RemoteSystem {
       const options = ((property[type] as Json | undefined)?.["options"] as Json[] | undefined) ?? [];
       properties.set(name, { name, type, options: options.map((option) => String(option["name"])) });
     }
-    const alone = [...properties.values()].filter((property) => !NOTION_FITS[property.type]);
-    if (alone.length > 0) {
-      note(`left alone in Notion: ${alone.map((property) => `${property.name} (${property.type}${NOTION_LEFT_ALONE[property.type] ? `: ${NOTION_LEFT_ALONE[property.type]}` : ""})`).join(", ")}`);
-    }
     schema = properties;
     return properties;
   };
 
   /** The mapping's names, each to the property it finds: by name, loosely, and the title for `titleRef`. */
   const resolve = (properties: Map<string, Property>): Map<string, Property> => {
+    const found = resolveRefs(properties);
+    // What is kept in step by nothing, said once: a formula, a rollup, a relation no relation here holds.
+    const held = new Set([...found.values()].map((property) => property.name));
+    const alone = [...properties.values()].filter((property) => !NOTION_FITS[property.type] && !held.has(property.name));
+    if (alone.length > 0) {
+      note(`left alone in Notion: ${alone.map((property) => `${property.name} (${property.type}${NOTION_LEFT_ALONE[property.type] ? `: ${NOTION_LEFT_ALONE[property.type]}` : ""})`).join(", ")}`);
+    }
+    return found;
+  };
+  const resolveRefs = (properties: Map<string, Property>): Map<string, Property> => {
     const found = new Map<string, Property>();
     if (!options.refs) {
       for (const property of properties.values()) if (NOTION_FITS[property.type]) found.set(property.name, property);
@@ -352,7 +371,13 @@ export function notion(options: NotionOptions): RemoteSystem {
     for (const [ref, fieldType] of Object.entries(options.refs)) {
       const property = properties.get(ref) ?? byLoose.get(loose(ref)) ?? (ref === options.titleRef ? title : undefined);
       if (!property) {
-        missing.push(ref);
+        if (!options.quiet?.includes(ref)) missing.push(ref);
+        continue;
+      }
+      if (fieldType === NOTION_EDGE || property.type === "relation") {
+        if (fieldType === NOTION_EDGE && property.type === "relation") found.set(ref, property);
+        else if (fieldType === NOTION_EDGE) note(`${ref}: the property ${property.name} is a ${property.type} property, and a relation holds only a relation property, so it is left out`);
+        else note(`${ref}: the property ${property.name} is a relation, which a relation of the kind holds and a field does not, so it is left out`);
         continue;
       }
       if (!NOTION_FITS[property.type]) {
@@ -369,14 +394,34 @@ export function notion(options: NotionOptions): RemoteSystem {
     return found;
   };
 
-  const fieldsOf = (page: Json, resolved: Map<string, Property>): Json => {
+  const fieldsOf = async (page: Json, resolved: Map<string, Property>): Promise<Json> => {
     const properties = (page["properties"] as Record<string, Json> | undefined) ?? {};
     const out: Json = {};
     for (const [ref, property] of resolved) {
       const value = properties[property.name];
-      if (value) out[ref] = notionValue(value);
+      if (!value) continue;
+      // Notion lists a relation's first 25 pages on the page; the rest are read through the property's own endpoint.
+      out[ref] = value["type"] === "relation" && value["has_more"] === true ? await relationOf(String(page["id"]), String(value["id"])) : notionValue(value);
     }
     return out;
+  };
+
+  /** Every page a relation property of a page reaches, following the property item endpoint to the end. */
+  const relationOf = async (pageId: string, propertyId: string): Promise<string[] | null> => {
+    const ids: string[] = [];
+    let start: string | undefined;
+    for (;;) {
+      const answer = await call("GET", `/pages/${encodeURIComponent(pageId)}/properties/${encodeURIComponent(propertyId)}?page_size=100${start ? `&start_cursor=${encodeURIComponent(start)}` : ""}`);
+      for (const item of (answer["results"] as Json[] | undefined) ?? []) {
+        const id = (item["relation"] as Json | undefined)?.["id"];
+        if (typeof id === "string") ids.push(id);
+      }
+      if (answer["has_more"] === true && typeof answer["next_cursor"] === "string") {
+        start = answer["next_cursor"];
+        continue;
+      }
+      return ids.length > 0 ? ids : null;
+    }
   };
 
   /** Every page of one query: edited on or after `since`, oldest first; without it, the whole database. */
@@ -426,7 +471,7 @@ export function notion(options: NotionOptions): RemoteSystem {
         const edited = String(page["last_edited_time"] ?? "");
         if (edited && (!since || edited > since)) since = edited;
         const archived = page["archived"] === true || page["in_trash"] === true;
-        changes.push({ resource: "pages", id: String(page["id"]), version: notionVersion(page), ...(archived ? { deleted: true } : { fields: fieldsOf(page, resolved) }) });
+        changes.push({ resource: "pages", id: String(page["id"]), version: notionVersion(page), ...(archived ? { deleted: true } : { fields: await fieldsOf(page, resolved) }) });
       }
       if (whole && options.known) {
         const listed = new Set(pages.map((page) => notionKey(String(page["id"]))));

@@ -13,6 +13,7 @@ import {
   systemAuthor,
   type ConflictPolicy,
   type DeletedConflict,
+  type LinkResolver,
   type RemoteAck,
   type RemoteLink,
   type RemoteSystem,
@@ -88,6 +89,15 @@ export interface SyncRefusal {
 
 export type { SyncConflict } from "./types.js";
 
+/** Everything a mapping keeps in step, its fields and its relations: ours → theirs. */
+const keptOf = (mapping: ResourceMapping): Readonly<Record<string, string>> => (mapping.edges ? { ...mapping.fields, ...mapping.edges } : mapping.fields);
+
+/** A relation's value as both sides compare it: the remote ids it reaches, once each, sorted; none is `null`. */
+export function edgeValue(ids: unknown): string[] | null {
+  const list = Array.isArray(ids) ? [...new Set(ids.filter((id): id is string => typeof id === "string" && id !== ""))].sort() : typeof ids === "string" && ids !== "" ? [ids] : [];
+  return list.length > 0 ? list : null;
+}
+
 /** Reads a node's mapped values, in OUR field names. */
 function mappedValues(
   node: Record<string, unknown>,
@@ -111,11 +121,12 @@ function ourFields(
   all = false,
 ): Record<string, unknown> {
   const values: Record<string, unknown> = {};
-  for (const [ours, theirs] of Object.entries(mapping.fields)) {
+  for (const [ours, theirs] of Object.entries(keptOf(mapping))) {
     if (!all && mapping.ours?.includes(ours)) continue;
     if (!(theirs in remote)) continue;
     const decode = mapping.decode?.[ours];
-    values[ours] = decode ? decode(remote[theirs]) : remote[theirs];
+    const value = decode ? decode(remote[theirs]) : remote[theirs];
+    values[ours] = mapping.edges && ours in mapping.edges ? edgeValue(value) : value;
   }
   return values;
 }
@@ -126,7 +137,7 @@ function remoteFields(
   node: Record<string, unknown> = values,
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [ours, theirs] of Object.entries(mapping.fields)) {
+  for (const [ours, theirs] of Object.entries(keptOf(mapping))) {
     if (!(ours in values)) continue;
     const encode = mapping.encode?.[ours];
     out[theirs] = encode ? encode(values[ours], node) : values[ours];
@@ -179,6 +190,69 @@ export interface SyncOptions<S extends AnySchema> {
     readonly id: string;
     readonly fields: Readonly<Record<string, unknown>>;
   }): { readonly name: string; readonly args: Record<string, unknown> } | null;
+  /**
+   * WHERE A RECORD A RELATION REACHES IS FOUND, by either id: every engine
+   * of the app when its relations reach records another engine keeps
+   * (`syncLinks`). Absent: this engine's own links.
+   */
+  readonly links?: LinkResolver;
+  /** The act that links a record to another, for a relation the remote linked (`connect-<kind>-<edge>`). Required for a mapping with `edges`. */
+  connectInbound?(call: { readonly localId: string; readonly kind: string; readonly edge: string; readonly to: string }): MutationCall | null;
+  /** The act that unlinks them, for a link the remote took away (`disconnect-<kind>-<edge>`). Absent: the link stays here. */
+  disconnectInbound?(call: { readonly localId: string; readonly kind: string; readonly edge: string; readonly to: string }): MutationCall | null;
+}
+
+/** What one change coming in is, as the acts it lands through: a record made or its fields, and its links. */
+interface Inbound {
+  readonly localId: string;
+  readonly mapping: ResourceMapping;
+  /** Our values, fields and relations, as `ourFields` reads them. */
+  readonly values: Readonly<Record<string, unknown>>;
+  /** The act that makes the record, when it is new here: its fields are in it, and its links are made in the same batch. */
+  readonly create?: MutationCall;
+}
+
+/**
+ * ONE PLACE TO FIND A RECORD BY EITHER ID, over every engine added to it:
+ * what an app's engines share when their relations reach each other's
+ * records (one Notion connection per table, each table's relations to
+ * another's pages). Read live, so a record another engine linked a moment
+ * ago is found; an id is matched as written, then as Notion writes one
+ * (hyphenated, lower case).
+ */
+export interface SharedLinks extends LinkResolver {
+  /** Adds an engine whose links are looked in. */
+  add(engine: { linkOf(localId: string): string | undefined; linkedTo(id: string): string | undefined }): void;
+}
+
+const hyphenated = (id: string): string | undefined => {
+  const hex = id.replace(/-/g, "").toLowerCase();
+  return /^[0-9a-f]{32}$/.test(hex) ? `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}` : undefined;
+};
+
+export function sharedLinks(): SharedLinks {
+  const engines: { linkOf(localId: string): string | undefined; linkedTo(id: string): string | undefined }[] = [];
+  const find = (id: string) => {
+    for (const engine of engines) {
+      const found = engine.linkedTo(id);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  };
+  return {
+    add: (engine) => void (engines.includes(engine) || engines.push(engine)),
+    remoteId(localId) {
+      for (const engine of engines) {
+        const found = engine.linkOf(localId);
+        if (found !== undefined) return found;
+      }
+      return undefined;
+    },
+    localId(id) {
+      const other = hyphenated(id);
+      return find(id) ?? (other && other !== id ? find(other) : undefined);
+    },
+  };
 }
 
 /**
@@ -201,9 +275,12 @@ export interface SyncOptions<S extends AnySchema> {
 export class SyncEngine<S extends AnySchema> {
   private state: SyncState;
   private readonly options: SyncOptions<S>;
+  private readonly resolver: LinkResolver;
+  private reverse?: { readonly links: SyncState["links"]; readonly byId: Map<string, string> };
 
   constructor(options: SyncOptions<S>, state: SyncState = EMPTY_SYNC_STATE) {
     this.options = options;
+    this.resolver = options.links ?? { remoteId: (localId) => this.linkOf(localId), localId: (id) => this.linkedTo(id) };
     // A state a newer build wrote is not run on: its links may say what this build would misread (stability.md §2).
     const format = state.format ?? 1;
     if (!(format <= SYNC_STATE_FORMAT)) throw new NewerFormatError("sync state", format, SYNC_STATE_FORMAT);
@@ -244,6 +321,151 @@ export class SyncEngine<S extends AnySchema> {
   refuses(kind: string): string | undefined {
     const mapping = this.options.mapping.resources.find((resource) => resource.kind === kind);
     return mapping?.readonly ? this.because(mapping) : undefined;
+  }
+
+  /** The remote's id of a record this engine linked. */
+  linkOf(localId: string): string | undefined {
+    return this.state?.links[localId]?.id;
+  }
+
+  /** Our id of the remote's record, if this engine linked it. */
+  linkedTo(id: string): string | undefined {
+    const links = this.state?.links;
+    if (!links) return undefined;
+    if (this.reverse?.links !== links) this.reverse = { links, byId: new Map(Object.entries(links).map(([localId, link]) => [link.id, localId])) };
+    return this.reverse.byId.get(id);
+  }
+
+  /**
+   * A NODE'S VALUES AS THE REMOTE IS COMPARED WITH: its mapped fields, and
+   * each mapped relation as the remote ids of the records it reaches — those
+   * linked, and those held until they are — sorted. A record it reaches that
+   * no engine has linked yet (made here, not sent) is not in it until it is.
+   */
+  private valuesOf(node: Record<string, unknown>, mapping: ResourceMapping): Record<string, unknown> {
+    const values = mappedValues(node, mapping);
+    if (!mapping.edges) return values;
+    const id = node["id"] as string;
+    const held = this.state?.unresolved?.[id];
+    for (const edge of Object.keys(mapping.edges)) {
+      const reached = this.options.store.graph.out(id, edge, { archived: "all" }).map((target) => this.resolver.remoteId(target.id));
+      values[edge] = edgeValue([...reached, ...(held?.[edge] ?? [])]);
+    }
+    return values;
+  }
+
+  /**
+   * THE ACTS ONE CHANGE COMING IN LANDS THROUGH, in one batch: the record
+   * made (`create`) or its fields edited (`applyInbound`), then each of its
+   * relations brought to what the remote says — links it lost taken away
+   * first, so a relation of one is never refused for holding two — and the
+   * remote ids no engine has linked yet, to hold.
+   */
+  private inboundCalls(inbound: Inbound): { readonly calls: MutationCall[]; readonly held: Record<string, string[]> } {
+    const { localId, mapping, values, create } = inbound;
+    const edges = mapping.edges ?? {};
+    const fields = Object.fromEntries(Object.entries(values).filter(([key]) => !(key in edges)));
+    const calls: MutationCall[] = [];
+    if (create) calls.push(create);
+    else if (Object.keys(fields).length > 0) calls.push(this.options.applyInbound({ localId, kind: mapping.kind, fields }));
+    const held: Record<string, string[]> = {};
+    const graph = this.options.store.graph;
+    for (const edge of Object.keys(edges)) {
+      if (!(edge in values)) continue;
+      const wanted = edgeValue(values[edge]) ?? [];
+      const reach: string[] = [];
+      held[edge] = [];
+      for (const id of wanted) {
+        const target = this.resolver.localId(id);
+        if (target === undefined) held[edge].push(id);
+        // Linked, and gone here: its delete is on its way there, and the link with it.
+        else if (graph.getNode(target)) reach.push(target);
+      }
+      const now = create ? [] : graph.out(localId, edge, { archived: "all" }).map((target) => target.id);
+      const about = { localId, kind: mapping.kind, edge };
+      // A link to a record the remote has never seen (made here, not sent yet) is not the remote's to take away.
+      for (const to of now) {
+        if (reach.includes(to) || this.resolver.remoteId(to) === undefined) continue;
+        const call = this.options.disconnectInbound?.({ ...about, to });
+        if (call) calls.push(call);
+      }
+      for (const to of reach) {
+        if (now.includes(to)) continue;
+        const call = this.options.connectInbound?.({ ...about, to });
+        if (call) calls.push(call);
+      }
+    }
+    return { calls, held };
+  }
+
+  /** Keeps what a landed change left to link, by our id and edge. */
+  private hold(localId: string, held: Readonly<Record<string, readonly string[]>>): void {
+    if (Object.keys(held).length === 0) return;
+    const was = this.state.unresolved ?? {};
+    const mine: Record<string, readonly string[]> = { ...was[localId], ...held };
+    for (const edge of Object.keys(mine)) if (mine[edge]!.length === 0) delete mine[edge];
+    const { [localId]: _was, ...rest } = was;
+    const unresolved = Object.keys(mine).length > 0 ? { ...rest, [localId]: mine } : rest;
+    const { unresolved: _before, ...state } = this.state;
+    this.state = { ...state, ...(Object.keys(unresolved).length > 0 ? { unresolved } : {}) };
+  }
+
+  /**
+   * LANDS ONE CHANGE COMING IN through its acts, authored by the remote's
+   * system, and holds the links it could not make yet. Undefined when this
+   * store refused it (said in `refused`, or thrown without it).
+   */
+  private landInbound(inbound: Inbound, intent: string, about: { readonly localId: string; readonly resource: string; readonly id: string }, refused?: SyncRefusal[]): { readonly result?: ReturnType<Store<S>["apply"]> } | undefined {
+    const { calls, held } = this.inboundCalls(inbound);
+    if (calls.length === 0) {
+      this.hold(inbound.localId, held);
+      return {};
+    }
+    const result = this.land(calls, intent, about, refused);
+    if (!result) return undefined;
+    this.hold(inbound.localId, held);
+    return { result };
+  }
+
+  /**
+   * LINKS WHAT WAS HELD, now that its records are linked — by this engine
+   * or another of the app's. Nothing is sent for it: the relation's value
+   * already held those ids. A host running several engines calls this on
+   * each after a pass, so the order they ran in does not matter; `run`
+   * calls it too. Returns the records it linked.
+   */
+  resolveHeld(refused?: SyncRefusal[]): string[] {
+    const unresolved = this.state.unresolved;
+    if (!unresolved) return [];
+    const graph = this.options.store.graph;
+    const linked: string[] = [];
+    for (const [localId, edges] of Object.entries(unresolved)) {
+      const node = graph.getNode(localId) as Record<string, unknown> | undefined;
+      const mapping = node ? this.mappingFor(node["kind"] as string) : undefined;
+      if (!node || !mapping?.edges) {
+        this.hold(localId, Object.fromEntries(Object.keys(edges).map((edge) => [edge, []])));
+        continue;
+      }
+      const calls: MutationCall[] = [];
+      const still: Record<string, string[]> = {};
+      for (const [edge, ids] of Object.entries(edges)) {
+        still[edge] = [];
+        for (const id of ids) {
+          const to = this.resolver.localId(id);
+          if (to === undefined) {
+            still[edge].push(id);
+            continue;
+          }
+          if (!graph.getNode(to) || graph.out(localId, edge, { archived: "all" }).some((target) => target.id === to)) continue;
+          const call = this.options.connectInbound?.({ localId, kind: mapping.kind, edge, to });
+          if (call) calls.push(call);
+        }
+      }
+      if (calls.length > 0 && !this.land(calls, `${this.options.mapping.system}: linked`, { localId, resource: mapping.resource, id: this.linkOf(localId) ?? "" }, refused)) continue;
+      this.hold(localId, still);
+      if (calls.length > 0) linked.push(localId);
+    }
+    return linked;
   }
 
   /** Every node that participates in the sync, by our id. */
@@ -369,7 +591,7 @@ export class SyncEngine<S extends AnySchema> {
          * BACK HERE (the delete taken back): what it holds against what the
          * remote made of it is held field by field, never sent over the edit.
          */
-        const ours = mappedValues(node, mapping);
+        const ours = this.valuesOf(node, mapping);
         for (const [field, theirs] of Object.entries(conflict.theirs)) {
           if (same(ours[field], theirs)) links = { ...links, [conflict.localId]: { ...links[conflict.localId]!, fields: { ...links[conflict.localId]!.fields, [field]: theirs } } };
           else still.set(heldKey(conflict.localId, field), { localId: conflict.localId, field, ours: ours[field], theirs, base: conflict.base[field] });
@@ -377,7 +599,7 @@ export class SyncEngine<S extends AnySchema> {
         changed = true;
         continue;
       }
-      if (!node || conflict.deleted || !same(mappedValues(node, mapping)[conflict.field], conflict.theirs)) {
+      if (!node || conflict.deleted || !same(this.valuesOf(node, mapping)[conflict.field], conflict.theirs)) {
         still.set(keyOf(conflict), conflict);
         continue;
       }
@@ -408,7 +630,7 @@ export class SyncEngine<S extends AnySchema> {
       seen.add(localId);
       if (mapping.readonly || gone.has(localId)) continue;
       const link = this.state.links[localId];
-      const values = mappedValues(node, mapping);
+      const values = this.valuesOf(node, mapping);
       if (!link) {
         writes.push({
           resource: mapping.resource,
@@ -471,14 +693,13 @@ export class SyncEngine<S extends AnySchema> {
       const node = this.options.store.graph.getNode(conflict.localId) as Record<string, unknown> | undefined;
       const link = links[conflict.localId];
       const mapping = link && this.mappingFor(link.resource);
-      if ("deleted" in conflict || !node || !mapping || !same(mappedValues(node, mapping)[conflict.field], conflict.base)) continue;
+      if ("deleted" in conflict || !node || !mapping || !same(this.valuesOf(node, mapping)[conflict.field], conflict.base)) continue;
       landing.set(conflict.localId, { ...landing.get(conflict.localId), [conflict.field]: conflict.theirs });
       held.delete(key);
     }
     for (const [localId, fields] of landing) {
       const link = links[localId]!;
-      const call = this.options.applyInbound({ localId, kind: this.mappingFor(link.resource)!.kind, fields });
-      if (!this.land(call, `${this.options.mapping.system}: ${Object.keys(fields).join(", ")}`, { localId, resource: link.resource, id: link.id }, refused)) continue;
+      if (!this.landInbound({ localId, mapping: this.mappingFor(link.resource)!, values: fields }, `${this.options.mapping.system}: ${Object.keys(fields).join(", ")}`, { localId, resource: link.resource, id: link.id }, refused)) continue;
       links[localId] = { ...link, fields: { ...link.fields, ...fields } };
       applied.push(localId);
     }
@@ -518,16 +739,21 @@ export class SyncEngine<S extends AnySchema> {
             fields: change.fields ?? {},
           });
           if (!created) continue;
-          const result2 = this.land(created, `${this.options.mapping.system}: new ${change.resource}`, { localId: String(created.args["id"] ?? ""), resource: change.resource, id: change.id }, refused);
-          if (!result2) continue;
-          const madeId = String(created.args["id"] ?? result2.writes[0] ?? "");
+          const values = ourFields(change.fields ?? {}, mapping);
+          const madeAs = String(created.args["id"] ?? "");
+          // Its links are made in the same batch, which needs the id it is made with; without one, they wait for the next pass.
+          const landed = madeAs
+            ? this.landInbound({ localId: madeAs, mapping, values, create: created }, `${this.options.mapping.system}: new ${change.resource}`, { localId: madeAs, resource: change.resource, id: change.id }, refused)?.result
+            : this.land(created, `${this.options.mapping.system}: new ${change.resource}`, { localId: "", resource: change.resource, id: change.id }, refused);
+          if (!landed) continue;
+          const madeId = String(created.args["id"] ?? landed.writes[0] ?? "");
           if (madeId) {
             applied.push(madeId);
             links[madeId] = {
               resource: change.resource,
               id: change.id,
               version: change.version,
-              fields: ourFields(change.fields ?? {}, mapping),
+              fields: values,
             };
           }
           continue;
@@ -579,7 +805,7 @@ export class SyncEngine<S extends AnySchema> {
           continue;
         }
         const theirs = ourFields(change.fields ?? {}, mapping);
-        const ours = mappedValues(node, mapping);
+        const ours = this.valuesOf(node, mapping);
 
         /*
          * Field by field: what lands, what both sides now agree on, and what
@@ -622,10 +848,10 @@ export class SyncEngine<S extends AnySchema> {
         }
 
         if (Object.keys(lands).length > 0) {
-          const call = this.options.applyInbound({ localId, kind: mapping.kind, fields: lands });
           // Refused here, the link keeps what was last agreed, so the field is still news on the next change there.
-          if (!this.land(call, `${this.options.mapping.system}: ${Object.keys(lands).join(", ")}`, { localId, resource: change.resource, id: change.id }, refused)) continue;
-          applied.push(localId);
+          const landed = this.landInbound({ localId, mapping, values: lands }, `${this.options.mapping.system}: ${Object.keys(lands).join(", ")}`, { localId, resource: change.resource, id: change.id }, refused);
+          if (!landed) continue;
+          if (landed.result) applied.push(localId);
         }
         links[localId] = {
           ...link,
@@ -653,6 +879,8 @@ export class SyncEngine<S extends AnySchema> {
     const { conflicts: _before, gone: _gone, ...kept } = this.state;
     const unsynced = [...new Set([...(this.state.gone ?? []), ...gone])].filter((id) => this.options.store.graph.getNode(id));
     this.state = { ...kept, links, ...this.heldState(held), ...(unsynced.length > 0 ? { gone: unsynced } : {}) };
+    // What a relation reached that was not linked yet, linked now that this pull may have made it.
+    if (!offline) for (const id of this.resolveHeld(refused)) if (!applied.includes(id)) applied.push(id);
 
     /*
      * A RECORD THE REMOTE OWNS, DELETED HERE, is refused here and said once:
@@ -714,6 +942,7 @@ export class SyncEngine<S extends AnySchema> {
       outbox: queued,
       ...this.heldState(held),
       ...(this.state.gone ? { gone: this.state.gone } : {}),
+      ...(this.state.unresolved ? { unresolved: this.state.unresolved } : {}),
     };
 
     return {
@@ -773,13 +1002,13 @@ export class SyncEngine<S extends AnySchema> {
    * pass goes on.
    */
   private land(
-    call: MutationCall,
+    call: MutationCall | readonly MutationCall[],
     intent: string,
     about: { readonly localId: string; readonly resource: string; readonly id: string },
     refused?: SyncRefusal[],
   ): ReturnType<Store<S>["apply"]> | undefined {
     try {
-      return this.options.store.apply(call, { author: systemAuthor(this.options.mapping.system), intent });
+      return this.options.store.applyAll(Array.isArray(call) ? call : [call as MutationCall], { author: systemAuthor(this.options.mapping.system), intent });
     } catch (error) {
       if (!refused) throw error;
       refused.push({ ...about, error: error instanceof Error ? error.message : String(error) });
@@ -805,7 +1034,10 @@ export class SyncEngine<S extends AnySchema> {
     if (!link || !mapping) return { links: rest };
     const created = this.options.createInbound?.({ resource: link.resource, id: link.id, fields: remoteFields(record, mapping) });
     if (!created) return { links: rest };
-    const result = this.land(created, `${this.options.mapping.system}: restored ${link.resource}`, { localId, resource: link.resource, id: link.id }, refused);
+    const madeAs = String(created.args["id"] ?? "");
+    const about = { localId, resource: link.resource, id: link.id };
+    const intent = `${this.options.mapping.system}: restored ${link.resource}`;
+    const result = madeAs ? this.landInbound({ localId: madeAs, mapping, values: record, create: created }, intent, about, refused)?.result : this.land(created, intent, about, refused);
     if (!result) return { links };
     const id = String(created.args["id"] ?? result.writes[0] ?? "");
     return id ? { links: { ...rest, [id]: { ...link, fields: record } }, id } : { links: rest };
@@ -843,17 +1075,7 @@ export class SyncEngine<S extends AnySchema> {
     }
 
     if (take === "theirs") {
-      this.options.store.apply(
-        this.options.applyInbound({
-          localId: conflict.localId,
-          kind: mapping.kind,
-          fields: { [conflict.field]: conflict.theirs },
-        }),
-        {
-          author: systemAuthor(this.options.mapping.system),
-          intent: `${this.options.mapping.system}: took their "${conflict.field}"`,
-        },
-      );
+      this.landInbound({ localId: conflict.localId, mapping, values: { [conflict.field]: conflict.theirs } }, `${this.options.mapping.system}: took their "${conflict.field}"`, { localId: conflict.localId, resource: link.resource, id: link.id });
     }
     const held = this.held();
     held.delete(heldKey(conflict.localId, conflict.field));
@@ -881,6 +1103,15 @@ export class SyncEngine<S extends AnySchema> {
     for (const op of planned.ops) {
       if (op.author.kind === "system" && op.author.id === this.options.mapping.system) continue;
       for (const primitive of op.primitives) {
+        if (primitive.op === "add-edge" || primitive.op === "remove-edge") {
+          // A link the remote keeps, made or taken away on a record it owns.
+          const from = graph.getNode(primitive.edge.from) as Record<string, unknown> | undefined;
+          const mapping = from ? this.options.mapping.resources.find((resource) => resource.kind === from["kind"]) : undefined;
+          if (!mapping?.readonly || !mapping.edges || !(primitive.edge.kind in mapping.edges) || (mapping.match && !mapping.match(from!))) continue;
+          // A record of ours removed takes its links with it, those the remote keeps too: that is the record's removal, not a change to the link.
+          if (primitive.op === "remove-edge" && op.primitives.some((other) => other.op === "remove-node" && other.node.id === primitive.edge.to)) continue;
+          throw new PermissionDeniedError({ mutation: op.mutation?.name ?? "", kind: mapping.kind, message: this.because(mapping), wouldNeed: [] });
+        }
         const node = (
           primitive.op === "add-node" || primitive.op === "remove-node"
             ? primitive.node

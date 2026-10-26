@@ -79,7 +79,7 @@ describe("graview check judges a declared Notion database", () => {
   it("says each wrong shape at its place", () => {
     expect(codes(tasks({ team: database({ database: "https://www.notion.so/workspace/Tasks" }) }))).toEqual(["shape connections.team.database"]);
     expect(codes(tasks({ team: database({ system: "airtable" }) }))).toEqual(["shape connections.team.system"]);
-    expect(codes(tasks({ team: database({ properties: { owner: { name: "Related", type: "relation" } } }) }))).toEqual(["shape connections.team.properties.owner"]);
+    expect(codes(tasks({ team: database({ properties: { owner: { name: "Related", type: "formula" } } }) }))).toEqual(["shape connections.team.properties.owner"]);
   });
 
   it("says a field the kind lacks, a property held twice, and a field that cannot hold the property's type", () => {
@@ -177,7 +177,7 @@ describe("a Notion database, both ways", () => {
     });
     expect(store.log.all().at(-1)!.author).toEqual({ kind: "system", id: "notion" });
     // A relation and a formula are left alone, and said so once.
-    expect(said.filter((line) => line.startsWith("left alone in Notion"))).toEqual([expect.stringMatching(/Related \(relation: .*one database.*\), Total \(formula/)]);
+    expect(said.filter((line) => line.startsWith("left alone in Notion"))).toEqual([expect.stringMatching(/Related \(relation: .*the kind declares none for it\), Total \(formula/)]);
     await engine.run();
     expect(said.filter((line) => line.startsWith("left alone in Notion"))).toHaveLength(1);
   });

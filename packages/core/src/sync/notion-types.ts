@@ -29,11 +29,18 @@ export const NOTION_INFERABLE: ReadonlySet<string> = new Set(Object.values(NOTIO
 
 /** Why a property type Notion has is left alone, where it is not the plain "not kept in step". */
 export const NOTION_LEFT_ALONE: Readonly<Record<string, string>> = {
-  relation: "a relation links pages of two databases, and a connection keeps one database in step",
+  relation: "a relation is kept as a relation of the kind, to a kind another Notion connection keeps, and the kind declares none for it",
   formula: "Notion works a formula out, so there is nothing to write",
   rollup: "Notion works a rollup out, so there is nothing to write",
   files: "files are not kept in step yet",
 };
+
+/**
+ * What a mapping names a relation property for, in place of a field type:
+ * one of the kind's relations (edges), kept as the pages it reaches. Never a
+ * field type, so no field can be taken for one.
+ */
+export const NOTION_EDGE = "@relation";
 
 /** Whether a field of `fieldType` can hold a Notion property of `propertyType`. */
 export function notionFits(propertyType: string, fieldType: string | undefined): boolean {

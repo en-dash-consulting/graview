@@ -13,7 +13,11 @@ import { notionKey, notionProperty } from "./notion.js";
  * a status option the database lacks is 400, and `limit(n)` answers the
  * next `n` requests 429 with a `Retry-After`. Its clock keeps
  * `last_edited_time` to the minute, as Notion does, and moves only when
- * told (`tick`).
+ * told (`tick`). A RELATION property links the pages of one data source;
+ * a dual one keeps its twin on the other source in step (a link made on
+ * one page is on the other, and both are edited), a page lists 25 of a
+ * relation's pages with `has_more`, and the rest are read through
+ * `GET /pages/{id}/properties/{property id}`, a page of items at a time.
  *
  * The connection's tests run against it, and so does
  * `scripts/verify-notion.mjs --stub`, which proves the harness's claims are
@@ -36,11 +40,25 @@ export interface ScriptedRequest {
   readonly body?: Json;
 }
 
+/** A relation property's other end: the source it links, and its twin there when it is dual. */
+interface Relation {
+  source: string;
+  dual?: string;
+}
+
+interface SourceProperty {
+  id: string;
+  name: string;
+  type: string;
+  options: string[];
+  relation?: Relation;
+}
+
 /** One data source: a table of pages under a database. */
 interface Source {
   id: string;
   title: string;
-  properties: Map<string, { id: string; name: string; type: string; options: string[] }>;
+  properties: Map<string, SourceProperty>;
   database: Container;
 }
 
@@ -57,6 +75,12 @@ interface SourceSpec {
   readonly title?: string;
   readonly properties: Readonly<Record<string, string>>;
   readonly options?: Readonly<Record<string, readonly string[]>>;
+  /**
+   * Each relation property's other end: the data source it links (an id, or
+   * a database's, meaning its first source) and, for a dual relation, the
+   * name its twin is given there (Notion's own "Related to …" when `true`).
+   */
+  readonly relations?: Readonly<Record<string, { readonly to: string; readonly dual?: string | boolean }>>;
 }
 
 export interface ScriptedNotion {
@@ -94,7 +118,10 @@ const uuid = (n: number, salt: string) => {
 };
 
 /** What an empty property of each type holds, where it is not `null`. */
-const EMPTY: Readonly<Record<string, unknown>> = { title: [], rich_text: [], multi_select: [], people: [], checkbox: false };
+const EMPTY: Readonly<Record<string, unknown>> = { title: [], rich_text: [], multi_select: [], people: [], relation: [], checkbox: false };
+
+/** How many of a relation's pages a page lists before `has_more`. */
+const RELATION_SHOWN = 25;
 
 class Refusal extends Error {
   constructor(
@@ -125,7 +152,17 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
   const sourceOfPage = (page: Json) => findSource(String((page["parent"] as Json)["data_source_id"]));
   const inTrash = (page: Json) => page["in_trash"] === true;
   const findPage = (id: string) => pages.get(notionKey(id));
-  const shown = (page: Json) => structuredClone(page);
+  /** A page as Notion answers it: a relation lists its first 25 pages, and says there are more. */
+  const shown = (page: Json) => {
+    const copy = structuredClone(page);
+    for (const property of Object.values((copy["properties"] as Record<string, Json> | undefined) ?? {})) {
+      if (property["type"] !== "relation") continue;
+      const all = property["relation"] as Json[];
+      property["has_more"] = all.length > RELATION_SHOWN;
+      property["relation"] = all.slice(0, RELATION_SHOWN);
+    }
+    return copy;
+  };
 
   /** A property object as the API was handed it, kept as Notion answers it. */
   const kept = (database: Source, name: string, input: Json): Json => {
@@ -161,6 +198,18 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
         return { id: property.id, type, date: value === null ? null : { start: String((value as Json)["start"]), end: null, time_zone: null } };
       case "people":
         return { id: property.id, type, people: ((value as Json[]) ?? []).map((person) => ({ object: "user", id: String(person["id"] ?? person["name"]), ...(person["name"] ? { name: person["name"] } : {}) })) };
+      case "relation": {
+        const ids: string[] = [];
+        for (const one of (value as Json[]) ?? []) {
+          const target = findPage(String(one["id"]));
+          if (!target || (property.relation && notionKey(String((target["parent"] as Json)["data_source_id"])) !== notionKey(property.relation.source))) {
+            throw new Refusal(400, "validation_error", `Relation page ${String(one["id"])} is not in the data source ${name} links.`);
+          }
+          if (!ids.includes(String(target["id"]))) ids.push(String(target["id"]));
+        }
+        if (ids.length > 100) throw new Refusal(400, "validation_error", `body.properties.${name}.relation.length should be ≤ \`100\`.`);
+        return { id: property.id, type, relation: ids.map((id) => ({ id })), has_more: false };
+      }
       default:
         return { id: property.id, type, [type]: value ?? (type === "checkbox" ? false : null) };
     }
@@ -177,7 +226,29 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
 
   const writeProperties = (database: Source, page: Json, input: Json) => {
     const properties = page["properties"] as Json;
-    for (const [name, value] of Object.entries(input)) properties[name] = kept(database, name, value as Json);
+    for (const [name, value] of Object.entries(input)) {
+      const was = properties[name] as Json | undefined;
+      const now = kept(database, name, value as Json);
+      properties[name] = now;
+      const relation = database.properties.get(name)?.relation;
+      if (relation?.dual) twin(page, relation.dual, (was?.["relation"] as Json[] | undefined) ?? [], now["relation"] as Json[]);
+    }
+  };
+
+  /** A dual relation's twin kept in step: each page linked now lists this one, each unlinked lists it no more, and both are edited. */
+  const twin = (page: Json, dual: string, before: readonly Json[], after: readonly Json[]) => {
+    const id = String(page["id"]);
+    const was = new Set(before.map((one) => String(one["id"])));
+    const now = new Set(after.map((one) => String(one["id"])));
+    for (const other of new Set([...was, ...now])) {
+      if (was.has(other) === now.has(other)) continue;
+      const target = findPage(other);
+      const property = target ? ((target["properties"] as Record<string, Json>)[dual] as Json | undefined) : undefined;
+      if (!target || !property) continue;
+      const listed = (property["relation"] as Json[]).filter((one) => String(one["id"]) !== id);
+      property["relation"] = now.has(other) ? [...listed, { id }] : listed;
+      touch(target);
+    }
   };
 
   const plain = (database: Source, values: Readonly<Record<string, unknown>>): Json => {
@@ -186,6 +257,7 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
       const type = database.properties.get(name)?.type;
       if (!type) throw new Error(`scripted notion: ${database.title} has no property ${name}`);
       out[name] = type === "people" ? { people: ((value as string[] | null) ?? []).map((who) => ({ id: `user-${who}`, name: who })) } : notionProperty(type, value);
+
     }
     return out;
   };
@@ -220,6 +292,16 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     data_sources: database.sources.map((source) => ({ id: source.id, name: source.title })),
   });
 
+  /** A relation property's settings as Notion says them: the source it links, and its twin's name and id when it is dual. */
+  const relationShown = (relation: Relation): Json => {
+    const other = findSource(relation.source);
+    const twinProperty = relation.dual ? other?.properties.get(relation.dual) : undefined;
+    return {
+      data_source_id: relation.source,
+      database_id: other?.database.id ?? null,
+      ...(twinProperty ? { type: "dual_property", dual_property: { synced_property_name: twinProperty.name, synced_property_id: twinProperty.id } } : { type: "single_property", single_property: {} }),
+    };
+  };
   const sourceShown = (database: Source): Json => ({
     object: "data_source",
     id: database.id,
@@ -228,7 +310,12 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     properties: Object.fromEntries(
       [...database.properties.values()].map((property) => [
         property.name,
-        { id: property.id, name: property.name, type: property.type, [property.type]: ["select", "multi_select", "status"].includes(property.type) ? { options: property.options.map((name, at) => ({ id: `opt-${at}`, name, color: "default" })) } : {} },
+        {
+          id: property.id,
+          name: property.name,
+          type: property.type,
+          [property.type]: property.relation ? relationShown(property.relation) : ["select", "multi_select", "status"].includes(property.type) ? { options: property.options.map((name, at) => ({ id: `opt-${at}`, name, color: "default" })) } : {},
+        },
       ]),
     ),
   });
@@ -257,6 +344,19 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     }
     database.sources.push(source);
     sources.set(notionKey(source.id), source);
+    for (const [name, relation] of Object.entries(spec.relations ?? {})) {
+      const property = source.properties.get(name);
+      const other = sourceOrFirst(relation.to) ?? (notionKey(relation.to) === notionKey(source.id) ? source : undefined);
+      if (!property || property.type !== "relation" || !other) throw new Refusal(400, "validation_error", `${name} is not a relation to a data source that exists.`);
+      property.relation = { source: other.id };
+      if (!relation.dual) continue;
+      // Notion names the twin after this source and the property, and puts it on every page already there.
+      const dual = typeof relation.dual === "string" ? relation.dual : `Related to ${source.title} (${name})`;
+      const twinId = `p${other.properties.size + 1}r`;
+      other.properties.set(dual, { id: twinId, name: dual, type: "relation", options: [], relation: { source: source.id, dual: name } });
+      property.relation.dual = dual;
+      for (const page of pages.values()) if (sourceOfPage(page) === other) (page["properties"] as Json)[dual] = { id: twinId, type: "relation", relation: [], has_more: false };
+    }
     return source;
   };
 
@@ -272,17 +372,23 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
   const specOf = (body: Json | undefined, title: string): SourceSpec => {
     const properties: Record<string, string> = {};
     const options: Record<string, string[]> = {};
+    const relations: Record<string, { to: string; dual?: boolean }> = {};
     for (const [name, spec] of Object.entries((body?.["properties"] as Record<string, Json>) ?? {})) {
-      const type = Object.keys(spec)[0]!;
+      const type = Object.keys(spec).find((key) => key !== "name" && key !== "description")!;
       properties[name] = type;
       const listed = (spec[type] as Json | undefined)?.["options"] as Json[] | undefined;
       if (listed) options[name] = listed.map((option) => String(option["name"]));
+      if (type === "relation") {
+        const relation = spec[type] as Json;
+        if (typeof relation["data_source_id"] !== "string") throw new Refusal(400, "validation_error", `body.properties.${name}.relation.data_source_id should be defined, instead was \`undefined\`.`);
+        relations[name] = { to: relation["data_source_id"], dual: relation["type"] === "dual_property" || "dual_property" in relation };
+      }
     }
-    return { title, properties, options };
+    return { title, properties, options, relations };
   };
   const words = (parts: unknown) => ((parts as Json[] | undefined) ?? []).map((part) => String((part["text"] as Json)?.["content"] ?? "")).join("");
 
-  const answer = (method: string, path: string, body: Json): Json => {
+  const answer = (method: string, path: string, body: Json, query: URLSearchParams): Json => {
     let match: RegExpExecArray | null;
     if (method === "POST" && path === "/databases") {
       if (body["properties"]) throw new Refusal(400, "validation_error", "body.properties should be not present, instead was `{…}`. A database's properties are its data source's: send initial_data_source.properties.");
@@ -316,6 +422,26 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
         return shown(makePage(database.sources[0]!, (body["properties"] as Json) ?? {}));
       }
       return shown(makePage(visibleSource(String(parent["data_source_id"] ?? "")), (body["properties"] as Json) ?? {}));
+    }
+    if ((match = /^\/pages\/([^/]+)\/properties\/([^/?]+)$/.exec(path)) && method === "GET") {
+      const page = findPage(decodeURIComponent(match[1]!));
+      if (!page || !sourceOfPage(page)?.database.shared) throw new Refusal(404, "object_not_found", `Could not find page with ID: ${match[1]}.`);
+      const propertyId = decodeURIComponent(match[2]!);
+      const property = Object.values(page["properties"] as Record<string, Json>).find((one) => one["id"] === propertyId);
+      if (!property) throw new Refusal(404, "object_not_found", `Could not find property with ID: ${propertyId}.`);
+      if (property["type"] !== "relation") return { object: "property_item", ...structuredClone(property) };
+      const all = property["relation"] as Json[];
+      const size = Math.min(Number(query.get("page_size") ?? 100), 100);
+      const start = Number(query.get("start_cursor") ?? 0);
+      const more = start + size < all.length;
+      return {
+        object: "list",
+        results: all.slice(start, start + size).map((one) => ({ object: "property_item", id: propertyId, type: "relation", relation: { id: one["id"] } })),
+        next_cursor: more ? String(start + size) : null,
+        has_more: more,
+        type: "property_item",
+        property_item: { id: propertyId, next_url: null, type: "relation", relation: {} },
+      };
     }
     if ((match = /^\/pages\/([^/]+)$/.exec(path))) {
       const page = findPage(decodeURIComponent(match[1]!));
@@ -375,7 +501,7 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     if (authorization !== `Bearer ${secret}`) return respond(401, { object: "error", status: 401, code: "unauthorized", message: "API token is invalid." });
     if (!headers["notion-version"] && !headers["Notion-Version"]) return respond(400, { object: "error", status: 400, code: "missing_version", message: "Notion-Version header failed validation." });
     try {
-      return respond(200, answer(method, path, body));
+      return respond(200, answer(method, path, body, at.searchParams));
     } catch (error) {
       if (error instanceof Refusal) return respond(error.status, { object: "error", status: error.status, code: error.code, message: error.message });
       throw error;
