@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 94,
+  "gzipped": 15,
+  "changeset": "a-seat-acting-for-a-person-reads-another-app-as-that-person.md",
+  "note": "Raised when a seat acting for a person came to read another app's records as that person: the provider's linked reads pass the viewer's `onBehalfOf` to the host, so the far app judges a delegated seat as the near one does. Measured at 621_538 / 216_774 against 621_444 / 216_759 minified and gzipped."
+}

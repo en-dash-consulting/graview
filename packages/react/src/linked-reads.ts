@@ -20,6 +20,7 @@ const linksAnotherApp = (schema: AnySchema): boolean => schema.definitions.some(
 export function useLinkedReads<S extends AnySchema>(store: Store<S>, host: LinkedRecords | undefined, viewer: Principal): LinkedReads | undefined {
   const [reads, setReads] = useState<LinkedReads | undefined>(undefined);
   const roles = (viewer.roles ?? []).join("\u0000");
+  const behalf = viewer.onBehalfOf ? JSON.stringify(viewer.onBehalfOf) : "";
   useEffect(() => {
     if (!host || !linksAnotherApp(store.schema)) {
       setReads(undefined);
@@ -37,7 +38,8 @@ export function useLinkedReads<S extends AnySchema>(store: Store<S>, host: Linke
         if (live) store.reread();
       });
     };
-    const made = linkedReads(host, { kind: viewer.kind, ...(viewer.id === undefined ? {} : { id: viewer.id }), ...(viewer.roles ? { roles: viewer.roles } : {}) }, answered);
+    // Who the viewer acts for goes with it, so the far app judges a delegated seat as the person it sits with.
+    const made = linkedReads(host, { kind: viewer.kind, ...(viewer.id === undefined ? {} : { id: viewer.id }), ...(viewer.roles ? { roles: viewer.roles } : {}), ...(viewer.onBehalfOf ? { onBehalfOf: viewer.onBehalfOf } : {}) }, answered);
     readLinkedThrough(graph, made.read);
     setReads(made);
     store.reread();
@@ -45,6 +47,6 @@ export function useLinkedReads<S extends AnySchema>(store: Store<S>, host: Linke
       live = false;
       readLinkedThrough(graph, undefined);
     };
-  }, [store, host, viewer.kind, viewer.id, roles]);
+  }, [store, host, viewer.kind, viewer.id, roles, behalf]);
   return reads;
 }

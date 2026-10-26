@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 103,
+  "gzipped": 19,
+  "changeset": "a-removed-id-is-never-made-again.md",
+  "note": "Raised when an id the log once held came never to be made again: the store hands an act whether the log ever held an id (`everHeld`), so a removed record's id is never minted, asked for or hinted again. Measured at 569_269 / 198_347 against 569_166 / 198_328 minified and gzipped."
+}

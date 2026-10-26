@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 754,
+  "gzipped": 373,
+  "note": "Raised when three security fixes landed together: an id the log once held is never made again (`everHeld`), a seat acting for a person reads another app's records as that person (`onBehalfOf`, in the linked reads and the studio's host), and an id never quotes a field a sight keeps (`mayKeepField`, and the checker the studio carries saying so of a label). 754 / 373 more. Measured at 2_363_657 / 861_864 against 2_362_903 / 861_491."
+}

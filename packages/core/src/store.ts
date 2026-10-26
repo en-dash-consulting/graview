@@ -36,7 +36,7 @@ import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
 import { nounOf } from "./schema/define-node.js";
-import { behind, fieldsJudged, partialSight, recordsOf } from "./permissions/sight.js";
+import { behind, fieldsJudged, mayKeepField, partialSight, recordsOf } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoneInverses, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -1098,7 +1098,11 @@ export class Store<S extends AnySchema> {
    */
   private sighted(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
     // Who `$me` is: the person, for an agent acting for one (Roadmap f-act-as-me).
-    const me = { me: author && actingAs(author).id };
+    const me = {
+      me: author && actingAs(author).id,
+      everHeld: (id: string) => recordsOf(this.log).kindOf(id) !== undefined,
+      keeps: (kind: string, field: string) => mayKeepField(this.policy?.sees, kind, field),
+    };
     if (author === undefined || !hidesFrom(this, author)) return me;
     // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
     const hidden = seesId(this, author);

@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 423,
+  "gzipped": 123,
+  "note": "Raised when three security fixes landed together: an id the log once held is never made again (`everHeld`), a seat acting for a person reads another app's records as that person (`onBehalfOf` in the linked reads), and an id never quotes a field a sight keeps (`mayKeepField`). The store and the linked reads are on every face. 423 / 123 more. Measured at 673_883 / 247_677 against 673_460 / 247_554."
+}

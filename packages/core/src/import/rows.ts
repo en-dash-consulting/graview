@@ -12,7 +12,7 @@ import { edgeWords, valueWords } from "../schema/value-words.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { actingAs } from "../permissions/policy.js";
-import { FIELD_SIGHT } from "../permissions/sight.js";
+import { FIELD_SIGHT, mayKeepField, recordsOf } from "../permissions/sight.js";
 import { seesEveryRecord } from "../seen.js";
 import { problemsMoved, type PlannedChange, type Store } from "../store.js";
 import { andList, coerceCell, orList, splitCell } from "./coerce.js";
@@ -233,8 +233,11 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
         if (edges.some((one) => one.kind === edge.kind && one.from === edge.from && one.to === edge.to)) continue;
         // The record already holds it: nothing to make.
         if (existing && seen.graph.out(edge.from, edge.kind).some((one) => one.id === edge.to)) continue;
-        // Made by the acts that make such a link, as a press on one would be: a grant's kinds, its own end, an agent's `may`.
-        const refusal = mayLink(column.relation, found.id, found.kind);
+        /*
+         * Made by the acts that make such a link, as a press on one would be: a grant's kinds, its own end, an agent's `may`.
+         * A record the row found is the act's subject, named as a press names it, so "only on what you made" holds; one the row makes is the importer's own.
+         */
+        const refusal = mayLink(column.relation, found.id, found.kind, existing && column.direction === "out" ? id : undefined);
         if (refusal) {
           reasons.push(refusal);
           continue;
@@ -384,7 +387,9 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
     }
 
     const label = labelFor(definition, kind, fields, row);
-    const id = reasons.length === 0 ? mint(store, seen, by, taken, kind, label) : `import:${row}`;
+    // An id is served wherever its record is: never minted from words of a field some sight keeps from a role (Roadmap f-field-sight).
+    const quotesKept = Object.entries(fields).some(([field, value]) => typeof value === "string" && value.trim() !== "" && label.includes(value.trim()) && mayKeepField(store.policy?.sees, kind, field));
+    const id = reasons.length === 0 ? mint(store, seen, by, taken, kind, quotesKept ? kind : label) : `import:${row}`;
     if (reasons.length === 0) {
       taken.add(id);
       const one: Planned = { id, kind, label, row };
@@ -666,10 +671,13 @@ function labelFor(definition: AnyNodeDefinition, kind: string, fields: Record<st
  * of, their own (FR-55), so the id says nothing of a record kept from them.
  */
 function mint<S extends AnySchema>(store: Store<S>, seen: Store<S>, by: Principal, taken: ReadonlySet<string>, kind: string, label: string): string {
+  // An id the log ever held, a removed record's included, is never made again: who made a record is the first add of its id.
+  const ever = (id: string) => recordsOf(store.log).kindOf(id) !== undefined;
+  const limited = !seesEveryRecord(store, by)(kind);
   return mintId(`${kind}:${slug(label)}`, {
-    seen: (id) => seen.graph.has(id) || taken.has(id),
-    held: (id) => store.graph.has(id) || taken.has(id),
-    limited: !seesEveryRecord(store, by)(kind),
+    seen: (id) => seen.graph.has(id) || taken.has(id) || (!limited && ever(id)),
+    held: (id) => store.graph.has(id) || taken.has(id) || ever(id),
+    limited,
     me: actingAs(by).id,
   });
 }
@@ -683,10 +691,10 @@ function mint<S extends AnySchema>(store: Store<S>, seen: Store<S>, by: Principa
  * make anything; where one is, a relation no act makes is linked by nobody.
  * Answers the refusal in words, or undefined.
  */
-function linking<S extends AnySchema>(store: Store<S>, by: Principal): (relation: string, far: string, farKind: string) => string | undefined {
+function linking<S extends AnySchema>(store: Store<S>, by: Principal): (relation: string, far: string, farKind: string, near?: string) => string | undefined {
   const asked = new Map<string, string | undefined>();
-  return (relation, far, farKind) => {
-    const key = `${relation}\u0000${far}`;
+  return (relation, far, farKind, near) => {
+    const key = `${relation}\u0000${far}\u0000${near ?? ""}`;
     if (asked.has(key)) return asked.get(key);
     let answer: string | undefined;
     if (store.policy !== undefined || by.kind === "agent") {
@@ -699,7 +707,9 @@ function linking<S extends AnySchema>(store: Store<S>, by: Principal): (relation
           const takes = (kinds: readonly string[]) => kinds.includes("*") || kinds.includes(farKind);
           const refs = nodeRefArgs(linker.input);
           const at = refs.find((ref) => ref.name !== subject && takes(ref.kinds))?.name ?? (subject !== undefined && refs.some((ref) => ref.name === subject && takes(ref.kinds)) ? subject : undefined);
-          const verdict = store.permits({ name: linker.name, args: at === undefined ? {} : { [at]: far } }, by);
+          // The record the link leaves, where it is one already there: the act's subject, as a press on it names it.
+          const args = { ...(near !== undefined && subject !== undefined && subject !== at ? { [subject]: near } : {}), ...(at === undefined ? {} : { [at]: far }) };
+          const verdict = store.permits({ name: linker.name, args }, by);
           if (verdict.ok) {
             answer = undefined;
             break;
