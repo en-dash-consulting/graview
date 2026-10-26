@@ -113,6 +113,16 @@ interface EngineLike {
 const WEBLLM_DEFAULT_MODEL = "Llama-3.2-3B-Instruct-q4f16_1-MLC";
 
 /**
+ * WHERE WEBLLM IS FETCHED FROM, at one exact version. The page imports
+ * this module and runs it with everything the page holds, so an address
+ * without a version would run whatever the registry's latest became that
+ * day. Pinned, a new WebLLM arrives only when the pin is moved — read what
+ * changed before moving it. A host that serves its own copy passes
+ * `webllm`; one that brings its own engine passes `load`.
+ */
+export const WEBLLM_URL = "https://esm.run/@mlc-ai/web-llm@0.2.83";
+
+/**
  * A model in the browser, warmed lazily and NEVER on the critical path.
  *
  * The weights are on the order of a couple of gigabytes, fetched once and
@@ -134,8 +144,10 @@ export function localCompletion(
   options: {
     readonly model?: string;
     readonly onStatus?: (status: LocalStatus) => void;
-    /** Injectable for tests: replaces the whole engine bring-up. */
+    /** Replaces the whole engine bring-up: a host's own engine, or a test's. */
     readonly load?: () => Promise<EngineLike>;
+    /** Where the WebLLM module is imported from: `WEBLLM_URL` unsaid, a pinned version. A host that serves its own copy names it here. */
+    readonly webllm?: string;
   } = {},
 ): {
   complete: Completion;
@@ -183,7 +195,7 @@ export function localCompletion(
     if (!(globalThis.navigator as { gpu?: unknown } | undefined)?.gpu) {
       throw new Error("this browser has no WebGPU, which the local model needs");
     }
-    const url = "https://esm.run/@mlc-ai/web-llm";
+    const url = options.webllm ?? WEBLLM_URL;
     const webllm = (await import(/* @vite-ignore */ url)) as {
       CreateMLCEngine(model: string, options: { initProgressCallback?: (p: { progress: number; text: string }) => void }): Promise<EngineLike>;
     };
@@ -263,7 +275,8 @@ function talkingModel(ai: HostAi, hooks: { readonly onStatus?: (status: LocalSta
   if (complete) return { complete, ready: () => true, warm: () => Promise.resolve(), failed: () => null };
   if (!ai.onDevice) return undefined;
   const model = typeof ai.onDevice === "object" ? ai.onDevice.model : undefined;
-  const local = localCompletion({ ...(model ? { model } : {}), ...(hooks.onStatus ? { onStatus: hooks.onStatus } : {}) });
+  const webllm = typeof ai.onDevice === "object" ? ai.onDevice.webllm : undefined;
+  const local = localCompletion({ ...(model ? { model } : {}), ...(webllm ? { webllm } : {}), ...(hooks.onStatus ? { onStatus: hooks.onStatus } : {}) });
   return {
     complete: async (request) => {
       if (!local.ready()) void local.warm();

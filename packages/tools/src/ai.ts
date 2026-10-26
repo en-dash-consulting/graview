@@ -68,9 +68,10 @@ export interface HostAi {
   /**
    * A model in the reader's browser (Chrome's built-in model, else WebLLM
    * over WebGPU — a download of a gigabyte or two). Off unless the host
-   * turns it on; used only when there is no `complete`.
+   * turns it on; used only when there is no `complete`. WebLLM is fetched
+   * at one pinned version (`WEBLLM_URL`), or from `webllm`, a host's copy.
    */
-  readonly onDevice?: boolean | { readonly model?: string };
+  readonly onDevice?: boolean | { readonly model?: string; readonly webllm?: string };
   /**
    * What the op log records a change it proposed as coming through:
    * `via: "ai:<name>"`. Never shown to a reader. "model" when unsaid.

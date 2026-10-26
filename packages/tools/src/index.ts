@@ -74,7 +74,7 @@ export { graphResponder, llmResponder } from "./conversation.js";
 export type { ChatContext, ChatReply, Responder } from "./conversation.js";
 // Where an ask takes the app (`resolveAsk` is `@graview/tools/go`'s, fetched with the seat that asks).
 export type { AskAbout, AskAnswer, AskContext, SeatMove, SeatOffer } from "./go.js";
-export { completionFor, decideFor, localCompletion, openAiCompatibleCompletion, seatResponder, xaiCompletion } from "./local.js";
+export { completionFor, decideFor, localCompletion, openAiCompatibleCompletion, seatResponder, WEBLLM_URL, xaiCompletion } from "./local.js";
 export type { LocalStatus } from "./local.js";
 // The AI the host gave a seat: decided once, in code, never chosen by a reader.
 export { aiOff, aiTalks, ANSWERED_WITH_AI, fastGiven, HOVER_CHIP_CONFIDENCE, hoverChipsOn, inlineAiOn, NO_AI, NO_AI_SAID, suggestsOnOpen } from "./ai.js";
