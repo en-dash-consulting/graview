@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { Store } from "@graview/core";
+import "@graview/core/field-sight";
 import { describe, expect, it } from "vitest";
 import { erin, lin, offersApp, offersSeed, openOffersApp } from "../../../../scripts/fixtures/offers-app.js";
 import { workerViewProps, type WorkerViewManifest } from "../../src/host/manifest.js";
@@ -326,4 +327,35 @@ describe("sights on: a person's pick carries no word of the view's", () => {
     expect(view.last()).toMatchObject({ ok: true });
     expect((store.seenBy(lin).graph.getNode("package:start") as unknown as { standing: string }).standing).toBe("later");
   });
+});
+
+/*
+ * A SIGHT THAT KEEPS FIELDS IS NO TOTAL SIGHT. Everybody sees every offer,
+ * but not what it costs — `hide`, or a `fields` list without it — and
+ * staff see it whole through a second sight. A view running for Erin is
+ * handed the cost; were the app's sight counted total, its own code could
+ * write it into the summary Lin reads.
+ */
+describe("sights that keep fields: a field hidden from some is not seen by everybody", () => {
+  const kept = (everybody: { hide?: string[]; fields?: string[] }) =>
+    new Store({
+      schema: offersApp.schema,
+      mutations: offersApp.mutations ?? [],
+      policy: { grants: offersApp.policy!.grants, sees: [{ roles: "*", kinds: ["party", "package", "signal"] }, { roles: "*", kinds: ["offer"], ...everybody }, { roles: ["staff"], kinds: ["offer"] }] } as never,
+      snapshot: structuredClone(offersSeed) as never,
+    });
+
+  for (const [said, everybody] of [
+    ["hides the cost", { hide: ["cost"] }],
+    ["lists every field but the cost", { fields: ["label", "list", "units", "stage"] }],
+  ] as const) {
+    it(`is not total where everybody's sight ${said}, and the view's code may not write the cost where Lin reads`, () => {
+      const store = kept(everybody as never);
+      expect(sightIsTotal(store)).toBe(false);
+      const view = region(store as never, () => true);
+      view.session.receive({ type: "act", nonce: "n", id: 1, name: "set-summary", args: { packageId: "package:start", summary: `c=${SECRET}` } });
+      expect(view.answers[0]).toMatchObject({ ok: false, reason: "press-only" });
+      expect(summaryOf(store as never)).not.toContain(SECRET);
+    });
+  }
 });

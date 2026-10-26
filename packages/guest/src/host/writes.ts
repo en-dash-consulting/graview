@@ -38,11 +38,18 @@ import { manifestActs, type ManifestAct, type WorkerViewManifest } from "./manif
  * (press.ts, fetched with the region's drawing), and judges them there.
  */
 
-/** Whether every member of the app sees every record: no sight is declared, or every kind is seen by everybody, whole. */
+/**
+ * Whether every member of the app sees every record and every field of it:
+ * no sight is declared, or every kind is seen by everybody, whole. A sight
+ * that keeps fields (`hide`, or a `fields` list) shows a kind in part, so a
+ * kind only such a sight gives everybody is not seen whole: a view run for
+ * a seat that sees those fields could write them where the others read.
+ */
 export function sightIsTotal<S extends AnySchema>(store: Store<S>): boolean {
   const sees = store.policy?.sees ?? [];
   if (sees.length === 0) return true;
-  return (store.schema.kinds as readonly string[]).every((kind) => sees.some((sight) => sight.roles === "*" && !sight.own && !sight.via && sight.kinds.includes(kind)));
+  const whole = (sight: (typeof sees)[number]) => sight.fields === undefined && (sight.hide?.length ?? 0) === 0;
+  return (store.schema.kinds as readonly string[]).every((kind) => sees.some((sight) => sight.roles === "*" && !sight.own && !sight.via && whole(sight) && sight.kinds.includes(kind)));
 }
 
 /** A field the host read, at the moment of a press. */
