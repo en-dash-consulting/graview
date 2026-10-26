@@ -61,7 +61,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.57
 
-Published October 25, 2026 · the current version
+Published October 25, 2026
 
 A view can be renamed, and a view of many can be its kind's list page; a computed value is said as its format and rounded; a date emptied in place is cleared; a text block says how many lines it shows; worker views name their sections, choose their pictures and style a disclosure's marker.
 

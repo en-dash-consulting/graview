@@ -1,5 +1,18 @@
 # @graview/primitives
 
+## 0.1.58
+
+### Patch Changes
+
+- 942e8c9: Find's list stays still under the pointer, and a record's acts are asked for rather than sprung. A record the pointer passed over unfolded its acts under it, so every row below jumped while the pointer was heading for one of them, and the next record it crossed unfolded too. Now passing over a row only lights it, and only when the pointer itself moved: a list that scrolls or draws again under a still pointer lights nothing. Nothing is put into the list, taken out of it or moved. On a desk the lit row is said whole in a panel beside the list — what it is, its name, why the words found it — with its acts there as buttons, a moment behind a pointer crossing rows on its way to them. In a narrow strip or a phone's sheet a record's acts open under its row only when its "⋯" is pressed. From the keyboard → reaches the acts in both, ← comes back, and Enter on an act opens it in the menu on its record as before. A row is a line of its name (two at most, so a long name still shows the word that found it) and a line of why, each cut short with an ellipsis and said whole when the pointer rests on it; the words that matched are marked in the app's accent; an act says only what it does. Each kind's heading says how many the words found of it, and where several kinds share the strip each shows its best five with a row, "All 170 talks matching “data”", that goes into the kind narrowed by the words, as the district's "N match" does. A desk's strip says its keys under the list: ↑↓ move, ↵ open, → actions, esc close. Primitives' tests hold that lighting a record puts in and moves no row, that a mouse event without movement lights nothing, that → and the "⋯" reach the acts, that Enter on an act opens its menu, that the group cap and its "All" row go in narrowed, and that the matched words are marked; verify-navigation adds `theListStaysStillUnderThePointer`, `actsOpenOnlyWhenAskedFor` and `theStripTeachesItsKeys`. A hosted page carries nothing more up front; the scene before it draws carries 10.3 KB more (10_558 bytes minified, under 1021 KB), and every face 9_935 more (3_017 gzipped), under a raise of its budget (`scripts/budget-raises/find-stays-still-and-acts-are-asked-for-every-face.json`).
+- Updated dependencies [aa50c1d]
+- Updated dependencies [039af05]
+  - @graview/core@0.1.58
+  - @graview/layout@0.1.58
+  - @graview/react@0.1.58
+  - @graview/render@0.1.58
+  - @graview/tools@0.1.58
+
 ## 0.1.57
 
 ### Patch Changes
