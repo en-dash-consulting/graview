@@ -1,0 +1,328 @@
+#!/usr/bin/env node
+/**
+ * THE NOTION CONNECTION, AGAINST NOTION ITSELF.
+ *
+ * `@graview/core/sync` is covered against a scripted Notion; this runs a
+ * declared connection (`connections.<name>` with `system: "notion"`) against
+ * a real workspace and writes what happened to docs/notion.json as named
+ * claims: a page made in Notion arriving with every property type, a record
+ * made here becoming a page, our own write not echoed back, an edit each way,
+ * a conflict held, long words in 2000-character pieces, every page of a query
+ * followed, Notion's rate limit waited out, a refused secret and an unshared
+ * database said as sentences, a whole read that loses and duplicates
+ * nothing, an archive each way, the secret kept nowhere, and everything the
+ * run made archived again.
+ *
+ * WHAT TO SET UP, ONCE:
+ *
+ *   1. An internal integration: notion.so/profile/integrations → New
+ *      integration, type Internal, in the test workspace. Under
+ *      Capabilities tick Read content, Update content and Insert content
+ *      (user information is optional: without it, people are read by id).
+ *      Copy its Internal Integration Secret.
+ *   2. A page for the harness to work in (an empty "Graview harness" page
+ *      is best), shared with the integration: the page's ••• menu →
+ *      Connections → add the integration.
+ *   3. ~/.graview-notion-test.env (or the file GRAVIEW_NOTION_ENV names),
+ *      chmod 600, holding
+ *        NOTION_TOKEN=<the Internal Integration Secret>
+ *        NOTION_PARENT_PAGE_ID=<the page's id: the 32 characters at the end of its link>
+ *
+ * The harness makes its own database inside that page each run — "Graview
+ * harness <run id>", with a title, rich text, number, select, multi-select,
+ * two dates, checkbox, URL, email, phone, people and formula property — so
+ * nobody has to build one by hand, and archives it at the end. Every page it
+ * makes carries the run id in its title, and only those are touched.
+ *
+ * It needs credentials, so it is NOT in `pnpm verify` or CI; the file is
+ * read through scripts/lib/notion-test-env.mjs, which never prints a value.
+ * `--stub` runs every claim against the scripted Notion instead (no
+ * credentials, nothing reached) and writes docs/notion-stub.json, so the
+ * claims are proven wired before a workspace is. Needs `pnpm build`.
+ *
+ *   node scripts/verify-notion.mjs            against Notion
+ *   node scripts/verify-notion.mjs --stub     against the scripted Notion
+ */
+import { randomBytes } from "node:crypto";
+import { writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { Store } from "../packages/core/dist/index.js";
+import { compileDocument } from "../packages/core/dist/check.js";
+import { NOTION_API, NOTION_VERSION, connection, notion, notionProperty, scriptedNotion } from "../packages/core/dist/sync/index.js";
+import { requireNotionEnv } from "./lib/notion-test-env.mjs";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const stubbed = process.argv.includes("--stub");
+const run = `gv-${Date.now().toString(36)}-${randomBytes(3).toString("hex")}`;
+const report = { at: new Date().toISOString(), run, mode: stubbed ? "stub" : "live", checks: {} };
+const claim = (name, ok, said = {}) => {
+  report.checks[name] = { ...said, ok: Boolean(ok) };
+  process.stdout.write(`${ok ? "ok  " : "FAIL"}  ${name}\n`);
+};
+const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+
+/* --------------------------------------------- Notion, or the scripted one */
+const stub = stubbed ? scriptedNotion() : undefined;
+const env = stubbed ? { NOTION_TOKEN: stub.secret, NOTION_PARENT_PAGE_ID: "0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f" } : requireNotionEnv(["NOTION_TOKEN", "NOTION_PARENT_PAGE_ID"]);
+const secret = env.NOTION_TOKEN;
+const parent = (/([0-9a-f]{32})(?:[?#].*)?$/i.exec(env.NOTION_PARENT_PAGE_ID.replace(/-/g, "")) ?? [])[1];
+if (!parent) throw new Error("NOTION_PARENT_PAGE_ID is not a page's id: the 32 characters at the end of the page's link.");
+const fetched = stub ? stub.fetch : (url, init) => fetch(url, init);
+/** Notion's index of a database lags a write by a moment; the stub's does not. */
+const settle = () => (stubbed ? Promise.resolve() : sleep(3000));
+
+/** Notion, as another person in the workspace. Refusals throw, with Notion's own words and never the secret. */
+async function api(method, path, body) {
+  for (;;) {
+    const response = await fetched(`${NOTION_API}${path}`, {
+      method,
+      headers: { authorization: `Bearer ${secret}`, "notion-version": NOTION_VERSION, "content-type": "application/json" },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    if (response.status === 429) {
+      await sleep(Number(response.headers?.get("retry-after") ?? 1) * 1000);
+      continue;
+    }
+    const answer = await response.json();
+    if (!response.ok) throw new Error(`Notion answered ${response.status} to ${method} ${path.replace(/[0-9a-f-]{32,36}/g, "<id>")}: ${answer.code ?? ""} ${answer.message ?? ""}`);
+    return answer;
+  }
+}
+const textOf = (page, name) => {
+  const property = page.properties[name];
+  const value = property[property.type];
+  return Array.isArray(value) ? value.map((part) => part.plain_text ?? part.name ?? "").join("") : value;
+};
+
+/* -------------------------------------------------- the app, declared */
+const PROPERTIES = { name: "Name", notes: "Notes", estimate: "Estimate", stage: "Stage", tags: "Tags", due: "Due", at: "At", finished: "Done", link: "Link", email: "Email", phone: "Phone", owner: "Owner" };
+const document = (databaseId) => ({
+  format: "graview-document",
+  formatVersion: 1,
+  name: `Notion harness ${run}`,
+  kinds: {
+    task: {
+      fields: {
+        name: { type: "string", required: true },
+        notes: { type: "text" },
+        estimate: { type: "number" },
+        stage: { type: "enum", options: ["to-do", "in-progress", "done"] },
+        tags: { type: "list", of: "string" },
+        due: { type: "date" },
+        at: { type: "datetime" },
+        finished: { type: "boolean" },
+        link: { type: "url" },
+        email: { type: "email" },
+        phone: { type: "phone" },
+        owner: { type: "string" },
+      },
+    },
+  },
+  acts: { "add-task": { creates: "task" } },
+  connections: { harness: { system: "notion", database: databaseId, kind: "task", properties: PROPERTIES, direction: "both" } },
+});
+
+let databaseId;
+try {
+  /* ------------------------------------------------ its own database */
+  const made = await api("POST", "/databases", {
+    parent: { type: "page_id", page_id: parent },
+    title: [{ type: "text", text: { content: `Graview harness ${run}` } }],
+    properties: {
+      Name: { title: {} },
+      Notes: { rich_text: {} },
+      Estimate: { number: { format: "number" } },
+      Stage: { select: { options: [{ name: "To do" }, { name: "In progress" }, { name: "Done" }] } },
+      Tags: { multi_select: { options: [] } },
+      Due: { date: {} },
+      At: { date: {} },
+      Done: { checkbox: {} },
+      Link: { url: {} },
+      Email: { email: {} },
+      Phone: { phone_number: {} },
+      Owner: { people: {} },
+      Twice: { formula: { expression: 'prop("Estimate") * 2' } },
+    },
+  });
+  databaseId = made.id;
+
+  const compiled = compileDocument(document(databaseId));
+  if (!compiled.ok) throw new Error(`the harness's own declaration does not check: ${compiled.findings.map((finding) => finding.message).join("; ")}`);
+  const app = compiled.app;
+  const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], snapshot: { nodes: [], edges: [] } });
+  const said = [];
+  const open = (state) =>
+    connection({ name: "harness", declaration: app.connections.harness, app, store, databaseId, token: () => secret, secretName: "NOTION_TOKEN", fetch: fetched, say: (line) => said.push(line), ...(state ? { state } : {}) });
+  let engine = open().engine;
+  const as = { author: { kind: "human", id: "harness" }, intent: "by hand" };
+  const act = (name, args) => store.apply({ name, args }, as);
+  const tasks = () => store.graph.allNodes().filter((node) => node.kind === "task");
+  const task = (id) => store.graph.getNode(id);
+  /** Passes until `check` holds or the tries run out: Notion's query catches up with a write within seconds. */
+  const until = async (check, tries = stubbed ? 1 : 6) => {
+    let last;
+    for (let at = 0; at < tries; at++) {
+      if (at > 0) await settle();
+      last = await engine.run();
+      if (check(last)) return last;
+    }
+    return last;
+  };
+  /** A whole read, as a host that lost its cursor would make: a new engine from what was kept, without the cursor. */
+  const whole = () => {
+    const { cursor: _cursor, ...kept } = engine.snapshot;
+    engine = open(kept).engine;
+  };
+
+  /* --------------------------------------------------------- the claims */
+  const first = await engine.run();
+  claim("theFirstRunReadsTheDatabaseAndSendsNothing", !first.offline && first.applied.length === 0 && first.pushed.length === 0, { offline: first.offline, problem: first.problem ?? null });
+
+  const theirs = await api("POST", "/pages", {
+    parent: { database_id: databaseId },
+    properties: {
+      Name: notionProperty("title", `Paint the fence ${run}`),
+      Notes: notionProperty("rich_text", "Two coats"),
+      Estimate: notionProperty("number", 3.5),
+      Stage: notionProperty("select", "In progress"),
+      Tags: notionProperty("multi_select", ["home", "garden"]),
+      Due: notionProperty("date", "2026-11-02"),
+      At: notionProperty("date", "2026-11-02T10:00:00.000+02:00"),
+      Done: notionProperty("checkbox", true),
+      Link: notionProperty("url", "https://example.com/fence"),
+      Email: notionProperty("email", "pat@example.com"),
+      Phone: notionProperty("phone_number", "+1 555 0100"),
+    },
+  });
+  await settle();
+  const arrived = await until(() => tasks().length === 1);
+  const fence = tasks()[0];
+  const expected = { name: `Paint the fence ${run}`, notes: "Two coats", estimate: 3.5, stage: "in-progress", tags: ["home", "garden"], due: "2026-11-02", at: "2026-11-02T08:00:00Z", finished: true, link: "https://example.com/fence", email: "pat@example.com", phone: "+1 555 0100" };
+  const wrong = fence ? Object.entries(expected).filter(([field, value]) => JSON.stringify(fence[field]) !== JSON.stringify(value)).map(([field]) => field) : Object.keys(expected);
+  claim("aPageMadeInNotionArrivesWithEveryPropertyType", arrived.applied.length === 1 && wrong.length === 0 && store.log.all().at(-1).author.id === "notion", { wrongFields: wrong });
+  claim("aFormulaIsLeftAloneAndSaidOnce", said.filter((line) => line.startsWith("left alone in Notion") && line.includes("Twice (formula")).length === 1, { said: said.filter((line) => line.startsWith("left alone")) });
+
+  act("add-task", { id: "task:mine", name: `Made here ${run}`, stage: "to-do", tags: ["home"], due: "2026-11-03", finished: false });
+  const sent = await engine.run();
+  const mineId = engine.snapshot.links["task:mine"]?.id;
+  const mineThere = mineId ? await api("GET", `/pages/${mineId}`) : undefined;
+  claim("aRecordMadeHereBecomesAPage", sent.pushed.includes("task:mine") && mineThere && textOf(mineThere, "Name") === `Made here ${run}` && mineThere.properties.Stage.select?.name === "To do", { pushed: sent.pushed.length, stage: mineThere?.properties.Stage.select?.name ?? null });
+
+  await settle();
+  const echo = await engine.run();
+  claim("ourOwnWriteIsNotTakenBackAsNews", echo.applied.length === 0 && !echo.offline, { echoes: echo.echoes.length, applied: echo.applied.length });
+
+  await api("PATCH", `/pages/${theirs.id}`, { properties: { Estimate: notionProperty("number", 5), Stage: notionProperty("select", "Done") } });
+  await settle();
+  const fenceId = fence?.id;
+  const edited = await until(() => task(fenceId)?.estimate === 5);
+  claim("anEditInNotionArrives", task(fenceId)?.estimate === 5 && task(fenceId)?.stage === "done", { applied: edited.applied.length });
+
+  act("edit-task", { id: "task:mine", notes: "Edited here", finished: true });
+  await engine.run();
+  const mineAfter = await api("GET", `/pages/${mineId}`);
+  claim("anEditHereIsSent", textOf(mineAfter, "Notes") === "Edited here" && mineAfter.properties.Done.checkbox === true, {});
+
+  await settle();
+  await engine.run();
+  await api("PATCH", `/pages/${mineId}`, { properties: { Notes: notionProperty("rich_text", "Theirs") } });
+  act("edit-task", { id: "task:mine", notes: "Ours" });
+  await settle();
+  const held = await until((one) => one.conflicts.length > 0);
+  const mineHeld = await api("GET", `/pages/${mineId}`);
+  claim("aFieldBothSidesChangedIsHeld", held.conflicts.some((one) => one.localId === "task:mine" && one.field === "notes") && task("task:mine").notes === "Ours" && textOf(mineHeld, "Notes") === "Theirs", { conflicts: held.conflicts.map((one) => one.field) });
+  act("edit-task", { id: "task:mine", notes: "Theirs" });
+  await engine.run();
+
+  const long = `${"a".repeat(1999)}😀${"b".repeat(2500)} ${run}`;
+  act("add-task", { id: "task:long", name: `Long ${run}`, notes: long });
+  const longSent = await engine.run();
+  const longId = engine.snapshot.links["task:long"]?.id;
+  const longThere = longId ? await api("GET", `/pages/${longId}`) : undefined;
+  claim("longWordsGoInPiecesAndComeBackWhole", longSent.refused.length === 0 && longThere && textOf(longThere, "Notes") === long, { pieces: longThere?.properties.Notes.rich_text.map((piece) => piece.plain_text.length) ?? null, refused: longSent.refused.map((one) => one.error) });
+
+  for (let n = 1; n <= 5; n++) await api("POST", "/pages", { parent: { database_id: databaseId }, properties: { Name: notionProperty("title", `Page ${n} ${run}`) } });
+  await settle();
+  const paged = notion({ databaseId, token: () => secret, fetch: fetched, pageSize: 2 });
+  let pulled = await paged.pull(undefined);
+  for (let tries = 1; !stubbed && tries < 6 && pulled.changes.length < 8; tries++) {
+    await settle();
+    pulled = await paged.pull(undefined);
+  }
+  const queries = stub ? stub.requests.filter((request) => request.path.endsWith("/query") && request.body?.page_size === 2).length : undefined;
+  claim("everyPageOfAQueryIsFollowed", pulled.changes.length === 8, { pages: pulled.changes.length, ...(queries !== undefined ? { queries } : {}) });
+  await until(() => tasks().length === 8);
+
+  let limited = 0;
+  const waits = [];
+  const once429 = async (url, init) => {
+    if (limited < 1) {
+      limited += 1;
+      return { ok: false, status: 429, json: async () => ({ object: "error", status: 429, code: "rate_limited" }), headers: { get: (name) => (name.toLowerCase() === "retry-after" ? "1" : null) } };
+    }
+    return fetched(url, init);
+  };
+  const patient = notion({ databaseId, token: () => secret, fetch: once429, sleep: async (ms) => { waits.push(ms); await sleep(ms); } });
+  const afterLimit = await patient.pull(undefined);
+  claim("notionsRateLimitIsWaitedOutAsRetryAfterSays", waits.join() === "1000" && afterLimit.changes.length >= 8, { waits });
+
+  const refused = await notion({ databaseId, token: () => "secret_NotTheOneNotionTakes000000000000", secretName: "NOTION_TOKEN", fetch: fetched }).pull(undefined).then(() => "", (error) => error.message);
+  claim("aSecretNotionRefusesIsSaidByItsName", /Notion refused NOTION_TOKEN \(HTTP 401\)/.test(refused) && !refused.includes(secret), { said: refused });
+
+  const unshared = await notion({ databaseId: "0123456789abcdef0123456789abcdef", token: () => secret, fetch: fetched }).pull(undefined).then(() => "", (error) => error.message);
+  claim("aDatabaseTheIntegrationCannotSeeIsSaidAsOneToShare", /share the database with the integration/.test(unshared), { said: unshared });
+
+  const before = tasks().length;
+  whole();
+  const resynced = await engine.run();
+  claim("aWholeReadLosesAndDuplicatesNothing", resynced.applied.length === 0 && resynced.pushed.length === 0 && resynced.gone.length === 0 && tasks().length === before, { applied: resynced.applied.length, pushed: resynced.pushed.length, gone: resynced.gone.length, records: tasks().length });
+
+  await api("PATCH", `/pages/${theirs.id}`, { archived: true });
+  await settle();
+  let goneThere;
+  for (let tries = 0; tries < (stubbed ? 1 : 6); tries++) {
+    if (tries > 0) await settle();
+    whole();
+    goneThere = await engine.run();
+    if (!task(fenceId)) break;
+  }
+  claim("aPageArchivedInNotionIsGoneHere", !task(fenceId) && goneThere.gone.includes(fenceId), { gone: goneThere.gone.length });
+
+  act("remove-task", { id: "task:long" });
+  const removed = await engine.run();
+  const longAfter = await api("GET", `/pages/${longId}`);
+  claim("aRecordRemovedHereIsArchivedInNotion", removed.pushed.includes("task:long") && longAfter.archived === true, { archived: longAfter.archived });
+
+  const kept = JSON.stringify([store.log.all(), store.graph.allNodes(), engine.snapshot, said]);
+  claim("theSecretIsKeptNowhere", !kept.includes(secret), {});
+
+  /* ---------------------------------------------- everything it made, archived */
+  for (const one of tasks()) act("remove-task", { id: one.id });
+  const removedAll = await engine.run();
+  for (const page of (await api("POST", `/databases/${databaseId}/query`, { page_size: 100 })).results) {
+    if (textOf(page, "Name").includes(run)) await api("PATCH", `/pages/${page.id}`, { archived: true });
+  }
+  await settle();
+  const left = (await api("POST", `/databases/${databaseId}/query`, { page_size: 100 })).results.filter((page) => !page.archived);
+  claim("everythingTheRunMadeIsArchived", removedAll.refused.length === 0 && left.length === 0 && tasks().length === 0, { refused: removedAll.refused.map((one) => one.error), leftInNotion: left.length });
+
+  report.passed = Object.values(report.checks).every((check) => check.ok);
+} catch (error) {
+  report.error = (error instanceof Error ? error.message : String(error)).replaceAll(secret, "<secret>");
+  report.passed = false;
+} finally {
+  // Whatever happened, the run's database goes to the trash: it, and every page in it, carried the run id.
+  if (databaseId) {
+    try {
+      await api("DELETE", `/blocks/${databaseId}`);
+    } catch (error) {
+      report.cleanup = (error instanceof Error ? error.message : String(error)).replaceAll(secret, "<secret>");
+    }
+  }
+}
+
+const out = stubbed ? "docs/notion-stub.json" : "docs/notion.json";
+writeFileSync(resolve(repoRoot, out), `${JSON.stringify(report, null, 2)}\n`);
+process.stdout.write(`\n${report.passed ? "passed" : `failed${report.error ? `: ${report.error}` : ""}`} (run ${run}, ${report.mode}); wrote ${out}\n`);
+process.exit(report.passed ? 0 : 1);

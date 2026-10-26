@@ -90,7 +90,7 @@ export function documentJsonSchema(version: string): Json {
   // A connection is read loosely by the compiler and judged by the checker (`connection-findings.ts`): its whole shape, said here for an editor.
   const { $schema: _connection, ...connection } = z.toJSONSchema(built(ConnectionSpec) as z.ZodMiniType, { io: "input", unrepresentable: "any" }) as Json;
   properties["connections"] = {
-    description: "Other systems this app is kept in step with, by name: today, Google calendars. `graview serve` and `graview preview` run them, with credentials from the environment; none is ever written here.",
+    description: "Other systems this app is kept in step with, by name: a Google calendar (`system: google-calendar`) or a Notion database (`system: notion`). `graview serve` and `graview preview` run them, with credentials from the environment; none is ever written here.",
     type: "object",
     propertyNames: at(properties, "connections", "propertyNames"),
     additionalProperties: connection,

@@ -232,7 +232,7 @@ A third party stands up their own host — a file store or SQLite, `graview serv
 | Default content moving | `seedSteps`, `applySteps`, `graview sync-seed` | when to run it, and for whom |
 | An agent attaching | `graview mcp`, `graview apply`, `--remote-url`, `--header` | issuing the keys those headers carry |
 | Schema moving | `version`, `migrations[]`, `graview check` | fleet upgrades |
-| Another system kept in step | `connections` in the declaration, `runConnections` (`graview serve`, `graview preview`; `--no-sync`) | each workspace's tokens, through `token({ connection, refresh })`, and where the engines' state is kept |
+| Another system kept in step (a Google calendar, a Notion database) | `connections` in the declaration, `runConnections` (`graview serve`, `graview preview`; `--no-sync`), credentials from the environment (`GOOGLE_*`, `NOTION_TOKEN`) | each workspace's tokens and Notion secrets, through `token({ connection, declaration, refresh })`, the calendar or database it keeps (`calendar`, `database`), and where the engines' state is kept |
 
 ### The boundary
 

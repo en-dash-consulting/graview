@@ -1,4 +1,4 @@
-import type { ConnectionSpec } from "../document/connection-spec.js";
+import type { GoogleCalendarConnectionSpec } from "../document/connection-spec.js";
 
 /*
  * What a declared connection's filter means, apart from the engine — so the
@@ -30,7 +30,7 @@ export const MADE_BY_GRAVIEW = "graview";
 export const tagPattern = (tag: string) => new RegExp(`(^|\\s)${tag.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&")}(?=\\s|$)`, "i");
 
 /** Whether a Google event is one this connection keeps: its color, or its title's tag. */
-export function inConnectionFilter(declaration: ConnectionSpec, item: Readonly<Record<string, unknown>>): boolean {
+export function inConnectionFilter(declaration: GoogleCalendarConnectionSpec, item: Readonly<Record<string, unknown>>): boolean {
   const filter = declaration.filter;
   if (filter?.color) return String(item["colorId"] ?? "") === GOOGLE_COLORS[filter.color];
   if (filter?.tag) return tagPattern(filter.tag).test(String(item["summary"] ?? ""));

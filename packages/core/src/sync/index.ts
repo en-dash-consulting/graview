@@ -1,16 +1,23 @@
 /*
  * `@graview/core/sync` — two-way sync on the op log: the engine, its
  * mappings, the conflict invariant, and the transports (Google Calendar, a
+ * Notion database and a scripted one to test against, a
  * tool server over MCP).
  *
  * An entry of its own, not part of `@graview/core`: a hosted page imports the
  * main entry up front and draws without ever syncing, so the engine and its
  * transports are reached only by a host that runs one.
  */
-export { CONNECTION_TAG, GOOGLE_COLORS, MADE_BY_GRAVIEW, connection, connectionMapping, creatingAct, inConnectionFilter, isDayField } from "./connection.js";
+export { CONNECTION_TAG, GOOGLE_COLORS, MADE_BY_GRAVIEW, connection, connectionMapping, creatingAct, inConnectionFilter, isDayField, notionConnectionMapping } from "./connection.js";
 export type { Connection, ConnectionDeclaration, ConnectionRun } from "./connection.js";
+export type { GoogleCalendarConnectionSpec, NotionConnectionSpec } from "../document/connection-spec.js";
 export { googleCalendar, googleCalendarMapping } from "./google-calendar.js";
 export type { Fetcher, GoogleCalendarOptions, GoogleTokenRequest } from "./google-calendar.js";
+export { NOTION_API, NOTION_VERSION, NotionError, notion, notionKey, notionProperty, notionText, notionValue, notionVersion } from "./notion.js";
+export type { NotionOptions } from "./notion.js";
+export { NOTION_AUTH_ENV, NOTION_FITS, NOTION_READ_ONLY, notionFits } from "./notion-types.js";
+export { scriptedNotion } from "./notion-stub.js";
+export type { ScriptedNotion, ScriptedNotionOptions, ScriptedRequest } from "./notion-stub.js";
 export { syncConflictInvariant, SYNC_CONFLICTS } from "./conflict.js";
 export type { SyncConflictOptions } from "./conflict.js";
 export { SyncEngine } from "./engine.js";

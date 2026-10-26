@@ -62,6 +62,12 @@ export interface SyncReport {
   /** Records the remote deleted: removed here through `removeInbound`, or, without one, kept here and no longer synced. */
   readonly gone: readonly string[];
   readonly offline: boolean;
+  /**
+   * What the remote said when it could not be reached, in its transport's
+   * words — a secret it refused, a database not shared — so a host says
+   * why rather than only that. Absent when the run reached it.
+   */
+  readonly problem?: string;
   readonly state: SyncState;
 }
 
@@ -449,6 +455,7 @@ export class SyncEngine<S extends AnySchema> {
     const held = this.held();
     const policy = this.policy;
     let offline = false;
+    let problem: string | undefined;
 
     let links: Record<string, RemoteLink> = { ...this.state.links };
     let cursor = this.state.cursor;
@@ -628,7 +635,7 @@ export class SyncEngine<S extends AnySchema> {
           fields: { ...link.fields, ...agreed },
         };
       }
-    } catch {
+    } catch (error) {
       /*
        * OFFLINE degrades to local-only. Only the remote throws this far: a
        * change this store refused is caught where it lands, and said in
@@ -639,6 +646,7 @@ export class SyncEngine<S extends AnySchema> {
        * asks for the same window again.
        */
       offline = true;
+      problem = error instanceof Error ? error.message : String(error);
     }
 
     // What the inbound pass decided is what the outbound pass sends from.
@@ -694,8 +702,9 @@ export class SyncEngine<S extends AnySchema> {
         // than being assumed delivered.
         const acked = new Set(acks.map((ack) => ack.localId));
         queued = deduped.filter((write) => !acked.has(write.localId));
-      } catch {
+      } catch (error) {
         offline = true;
+        problem = error instanceof Error ? error.message : String(error);
       }
     }
 
@@ -718,6 +727,7 @@ export class SyncEngine<S extends AnySchema> {
       refused,
       gone,
       offline,
+      ...(problem ? { problem } : {}),
       state: this.snapshot,
     };
   }

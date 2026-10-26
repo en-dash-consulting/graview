@@ -94,7 +94,8 @@ describe("graview check judges a declared connection", () => {
 
   it("carries the connection on the compiled app, for a host to run", () => {
     const compiled = compileDocument(meetings({ team: calendar({ filter: { tag: "#graview" } }) }));
-    expect(compiled.ok && compiled.app.connections?.["team"]?.filter).toEqual({ tag: "#graview" });
+    const team = compiled.ok ? compiled.app.connections?.["team"] : undefined;
+    expect(team?.system === "google-calendar" && team.filter).toEqual({ tag: "#graview" });
   });
 });
 
