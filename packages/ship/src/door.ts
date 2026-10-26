@@ -138,6 +138,22 @@ export function fromThisApp(req: IncomingMessage): boolean {
 /** What a door says to a request without the key: where the key is. */
 export const DOOR_LOCKED = "This door answers only a page opened from the address its dev server printed (it carries the door's key): open that address and try again.";
 
+/** What a door's probe tells its own page opened without the key: closed, and how to open it. */
+export const DOOR_CLOSED = "Open the address the dev server printed (it carries the door's key) to use it.";
+
+/**
+ * Whether a request is this server's own page asking whether a door is
+ * open, without the key — a page opened at the plain address. Its probe is
+ * answered "closed" rather than refused, so the page says how to open the
+ * door and its console says nothing; the answer is the same sentence for
+ * everybody and tells them nothing else.
+ */
+export function probeWithoutKey(req: IncomingMessage): boolean {
+  if (req.method !== "GET") return false;
+  const hosts = doorHosts();
+  return loopbackHost(req.headers.host, hosts) && sameOrigin(req.headers, hosts);
+}
+
 /**
  * The address the key is traded at: a request carrying `?graview_door=<the
  * key>` is answered with the cookie and sent on to the same address

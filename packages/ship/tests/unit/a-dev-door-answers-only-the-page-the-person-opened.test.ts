@@ -156,3 +156,32 @@ describe("the door's key", () => {
     expect(info.mock.calls[0]![0]).toContain(`http://localhost:5173/?${DOOR_KEY_PARAM}=${KEY}`);
   });
 });
+
+describe("a door's probe, asked by its own page opened without the key", () => {
+  it("is told the door is closed and how to open it, not refused; anything else without the key still is", async () => {
+    const { aiDevProxyHandler, decisionBridgeHandler, localIntelligenceHandler, DOOR_CLOSED } = await import("../../src/dev.js");
+    const doors = {
+      "/__graview/ai": aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: "sk-test-not-said" } }),
+      "/__graview/decide": decisionBridgeHandler({ env: { TYPESAFE_API_KEY: "ts-test-not-said" } }),
+      "/__graview/local": localIntelligenceHandler(),
+    } as Record<string, (req: never, res: never) => Promise<void>>;
+    const server = createServer((req, res) => void doors[req.url ?? ""]?.(req as never, res as never));
+    await new Promise<void>((ready) => server.listen(0, "127.0.0.1", ready));
+    const port = (server.address() as AddressInfo).port;
+    try {
+      const page = { host: `localhost:${port}`, "sec-fetch-site": "same-origin" };
+      for (const path of Object.keys(doors)) {
+        const probe = await raw(port, "GET", path, page);
+        expect(probe.status).toBe(200);
+        expect(probe.body).toContain(DOOR_CLOSED);
+        expect(probe.body).not.toMatch(/sk-test|ts-test|claude-/);
+        // Another site's page, a network Host, and a POST are refused as before.
+        expect((await raw(port, "GET", path, { host: `localhost:${port}`, origin: "https://elsewhere.example" })).status).toBe(403);
+        expect((await raw(port, "GET", path, { host: `192.168.1.20:${port}` })).status).toBe(403);
+        expect((await raw(port, "POST", path, { ...page, "content-type": "application/json" }, '{"prompt":"hi"}')).status).toBe(403);
+      }
+    } finally {
+      await new Promise<void>((done) => server.close(() => done()));
+    }
+  });
+});

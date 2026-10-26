@@ -14,9 +14,9 @@ import {
   type LocalBridgeAsk,
   type LocalBridgeStatus,
 } from "@graview/core";
-import { DOOR_LOCKED, fromThisApp, openDoors, readBody, sendJson, type DevServerPlugin } from "./door.js";
+import { DOOR_CLOSED, DOOR_LOCKED, fromThisApp, openDoors, probeWithoutKey, readBody, sendJson, type DevServerPlugin } from "./door.js";
 
-export { DOOR_COOKIE, DOOR_KEY_PARAM, DOOR_LOCKED, doorCookie, doorKey, doorKeyFile, doorLogin, fromThisApp, loopbackHost, openDoors, sameOrigin } from "./door.js";
+export { DOOR_CLOSED, DOOR_COOKIE, DOOR_KEY_PARAM, DOOR_LOCKED, doorCookie, doorKey, doorKeyFile, doorLogin, fromThisApp, loopbackHost, openDoors, sameOrigin } from "./door.js";
 export type { DevServer, DevServerPlugin } from "./door.js";
 
 /**
@@ -336,7 +336,8 @@ export function localIntelligenceHandler(options: LocalIntelligenceOptions = {})
   const probe = probeLocal(options);
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
-      send(res, 403, { error: DOOR_LOCKED });
+      if (probeWithoutKey(req)) send(res, 200, { available: false, reason: DOOR_CLOSED });
+      else send(res, 403, { error: DOOR_LOCKED });
       return;
     }
     if (req.method === "GET") {
@@ -436,7 +437,8 @@ export function decisionBridgeHandler(options: DecisionBridgeOptions = {}) {
   const call = options.fetch ?? (globalThis.fetch as NonNullable<DecisionBridgeOptions["fetch"]>);
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
-      send(res, 403, { error: DOOR_LOCKED });
+      if (probeWithoutKey(req)) send(res, 200, { available: false, reason: DOOR_CLOSED });
+      else send(res, 403, { error: DOOR_LOCKED });
       return;
     }
     const key = decisionKey(env);
@@ -583,7 +585,9 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
   const modelOf = () => env["GRAVIEW_AI_MODEL"]?.trim() || options.model || AI_DEFAULTS.model;
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
-      sendJson(res, 403, { error: DOOR_LOCKED });
+      // The page's probe, opened without the key: no model here until it is opened from the printed address.
+      if (probeWithoutKey(req)) sendJson(res, 200, { configured: false, howTo: DOOR_CLOSED });
+      else sendJson(res, 403, { error: DOOR_LOCKED });
       return;
     }
     const key = keyOf();
