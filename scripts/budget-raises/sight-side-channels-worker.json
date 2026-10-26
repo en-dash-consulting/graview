@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 968,
+  "note": "Raised when a lineage came to say which fields its basis read (`lineage.read`, checked in `lineageOf`), a merge of two records of one name to say which is which, a subscription to be judged as its subscriber is now (`subscribersNow`), and the on-device model to fetch WebLLM at one pinned version a host may replace (`WEBLLM_URL`). Measured at 2_255_498 B against main's 2_254_530: 968 more, past the 562 of room the worker had."
+}

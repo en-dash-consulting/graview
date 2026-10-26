@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { AnySchema, GraviewApp, Store } from "@graview/core";
+import type { AnySchema, GraviewApp, Principal, Store } from "@graview/core";
 import { entryArg, isDocument, loadApp } from "@graview/core/cli";
 import { compileDocument } from "@graview/core/check";
 import { documentOf, sayFindings, toDocument } from "@graview/core/document";
@@ -52,21 +52,29 @@ export function readFriction(path: string): readonly FrictionEvent[] {
   }
 }
 
-/** What the app's own actor learned from this store and what was answered before. */
+/**
+ * What the app's own actor learned from this store and what was answered
+ * before. Told to a seat (`seat`, as `graview mcp` tells its agent), it is
+ * learned from what that seat is served — its records and its log, as its
+ * sight serves them — since what was learned names the values people wrote
+ * in a field, and a field or a kind its sight hides is not its to be told.
+ */
 export function learningOf<S extends AnySchema>(
   app: GraviewApp<S>,
   store: Store<S>,
   friction: readonly FrictionEvent[],
   declined: readonly { readonly key: string }[],
-  extra: { readonly opens?: Readonly<Record<string, number>>; readonly minPeople?: number } = {},
+  extra: { readonly opens?: Readonly<Record<string, number>>; readonly minPeople?: number; readonly seat?: Principal } = {},
 ): Learned {
+  const { seat, ...rest } = extra;
+  const seen = seat ? store.seenBy(seat) : store;
   return learningFrom({
     document: documentOf(app) ?? toDocument(app).document,
     friction,
-    log: store.log.all(),
-    records: store.graph.allNodes() as unknown as readonly LearnedRecord[],
+    log: seen.log.all(),
+    records: seen.graph.allNodes() as unknown as readonly LearnedRecord[],
     declined,
-    ...extra,
+    ...rest,
   });
 }
 

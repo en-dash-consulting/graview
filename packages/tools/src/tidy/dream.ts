@@ -4,7 +4,7 @@ import type { HostAi } from "../ai.js";
 import { askAll, type DreamBudget, type DreamCache, type DreamUsage } from "./asking.js";
 import { blocksOf } from "./blocking.js";
 import { asksOf, coverOf, type Judgment } from "./judging.js";
-import { JUDGES, type Candidate, type Judge, type JudgeContext } from "./judges.js";
+import { JUDGES, makerOf, wholeRead, type Candidate, type Judge, type JudgeContext, type Made } from "./judges.js";
 import { routeOf, type Band, type Route, type Severity } from "./policy.js";
 import { nearOf, systemOneOf, type DreamModel } from "./system-one.js";
 
@@ -119,6 +119,19 @@ export interface DreamReport {
   readonly said: string;
 }
 
+/** When each record was made and by whom, from the log: the first op that added it. */
+export function madeIn(store: Pick<Store<AnySchema>, "log">): Map<string, Made> {
+  const made = new Map<string, Made>();
+  for (const op of store.log.all()) {
+    const at = Date.parse(op.at);
+    for (const primitive of op.primitives) {
+      if (primitive.op !== "add-node" || made.has(primitive.node.id)) continue;
+      made.set(primitive.node.id, { at: Number.isNaN(at) ? op.seq : at, by: `${op.author.kind}:${op.author.id}` });
+    }
+  }
+  return made;
+}
+
 /** When each record was last changed, from the log. */
 export function touchedIn(store: Pick<Store<AnySchema>, "log">): Map<string, number> {
   const touched = new Map<string, number>();
@@ -152,6 +165,7 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
     store: whole.seenBy(principal),
     now,
     touched: touchedIn(whole),
+    made: madeIn(whole),
     quietFor: (options.quietHours ?? 24) * 60 * 60 * 1000,
     olderThanDays: options.olderThanDays ?? 30,
   };
@@ -249,9 +263,24 @@ export async function dream<S extends AnySchema>(store: Store<S>, options: Dream
       said(candidate, "dropped", { error: "One of the two was already proposed to merge into another in this run." });
       continue;
     }
-    const lineage = { basis: candidate.basis, confidence: candidate.confidence, run, actor: candidate.judge, ...(candidate.model ? { model: candidate.model } : {}) };
+    /*
+     * WHAT THE BASIS READ, kept on the lineage: a seat whose sight keeps one
+     * of those fields is not told the basis, which may quote it. A basis that
+     * does not say — a model's, which read the records whole — read every
+     * field they hold.
+     */
+    const read = [...new Set(candidate.read ?? candidate.about.flatMap((id) => (context.store.graph.getNode(id) ? wholeRead(context.store.graph.getNode(id) as never) : [])))];
+    const lineage = { basis: candidate.basis, confidence: candidate.confidence, run, actor: candidate.judge, ...(candidate.model ? { model: candidate.model } : {}), ...(read.length > 0 ? { read } : {}) };
+    /*
+     * A MERGE OF TWO PEOPLE'S RECORDS IS A PERSON'S TO ACCEPT. The actor is
+     * a system author no grant narrows; were it to merge on its own a record
+     * one person made into one another made, it would do for them what a
+     * grant may keep each of them from — merging, archiving what they did
+     * not make — on a link count or a name either could set. So it asks.
+     */
+    const across = merge !== undefined && makerOf(context, String(merge.id)) !== makerOf(context, String(merge.into));
     try {
-      if (route === "act" && options.applyAtLeast !== undefined && candidate.confidence >= options.applyAtLeast) {
+      if (route === "act" && !across && options.applyAtLeast !== undefined && candidate.confidence >= options.applyAtLeast) {
         const result = whole.applyAll(candidate.calls, { author: principal, lineage, ...(options.via ? { via: options.via } : {}) });
         said(candidate, "applied", { id: result.batch });
       } else {

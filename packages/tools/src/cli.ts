@@ -224,9 +224,9 @@ export async function mcp(argv: readonly string[]): Promise<number> {
   }
 
   const host = await openHost(app, argv, principal, "mcp");
-  // What the app's own actor learned from use, read at each call from the files beside the store (Roadmap f-learned-suggestions).
+  // What the app's own actor learned from use, read at each call from the files beside the store (Roadmap f-learned-suggestions), from what this seat sees.
   const files = host.files;
-  const learned = files ? () => learningOf(app, host.store, readFriction(flag(argv, "--friction") ?? files.friction), fileLearned(files.learned).list()).suggestions : undefined;
+  const learned = files ? () => learningOf(app, host.store, readFriction(flag(argv, "--friction") ?? files.friction), fileLearned(files.learned).list(), { seat: principal }).suggestions : undefined;
   const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: host.subscriptions, ...(learned ? { learned } : {}) });
   /*
    * A TOOL CALL REFUSED AS INVALID IS WHAT AN AGENT COULD NOT DO (Roadmap

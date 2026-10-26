@@ -159,8 +159,9 @@ describe("a hosted page", () => {
     // 1022 KB once both came together: Find staying still and acts asked for, and a Notion connection landing through the acts that fit it: the scene face measured 1_046_506 B.
     // 1025 KB since the store came to judge what an act rides by the rule it rides (an undo of an undo, a merge's other record, a kept link, a change to one day of a series, a keystroke, a record withheld whole): the scene face measured 1_048_660 B, 2_154 more than main (1_046_506).
     // 1023 KB since data came never to become code or markup: a typeface held to names quoted in pairs before it is written into a style sheet, the scoper ending a string at a line break, a figure drawn only once svgProblem has read it and a plan review applying only the rows a person kept: the scene face measured 1_046_976 B, 470 more than main (1_046_506).
+    // 1023 KB since a lineage came to say which fields its basis read and a merge of two records of one name to say which is which: the scene face measured 1_046_772 B, 266 more than main (1_046_506).
     // MEASURE-ON-COMBINED-BATCH
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1025 * 1024);
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1026 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -38,11 +38,18 @@ import { manifestActs, type ManifestAct, type WorkerViewManifest } from "./manif
  * (press.ts, fetched with the region's drawing), and judges them there.
  */
 
-/** Whether every member of the app sees every record: no sight is declared, or every kind is seen by everybody, whole. */
+/**
+ * Whether every member of the app sees every record and every field of it:
+ * no sight is declared, or every kind is seen by everybody, whole. A sight
+ * that keeps fields (`hide`, or a `fields` list) shows a kind in part, so a
+ * kind only such a sight gives everybody is not seen whole: a view run for
+ * a seat that sees those fields could write them where the others read.
+ */
 export function sightIsTotal<S extends AnySchema>(store: Store<S>): boolean {
   const sees = store.policy?.sees ?? [];
   if (sees.length === 0) return true;
-  return (store.schema.kinds as readonly string[]).every((kind) => sees.some((sight) => sight.roles === "*" && !sight.own && !sight.via && sight.kinds.includes(kind)));
+  const whole = (sight: (typeof sees)[number]) => sight.fields === undefined && (sight.hide?.length ?? 0) === 0;
+  return (store.schema.kinds as readonly string[]).every((kind) => sees.some((sight) => sight.roles === "*" && !sight.own && !sight.via && whole(sight) && sight.kinds.includes(kind)));
 }
 
 /** A field the host read, at the moment of a press. */
@@ -102,7 +109,15 @@ export interface Press {
   readonly fields: readonly PressedField[];
 }
 
-export type Judged = { readonly ok: true; readonly name: string; readonly args: Record<string, unknown> } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
+export type Judged =
+  | {
+      readonly ok: true;
+      readonly name: string;
+      readonly args: Record<string, unknown>;
+      /** The dropped files this act spent under a drop's exception: the host hands none of them to an act again. */
+      readonly spent?: readonly string[];
+    }
+  | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
 
 export const refuse = (reason: GuestRefusal, message: string): Judged => ({ ok: false, reason, message });
 
@@ -120,12 +135,22 @@ export function entryFor(manifest: WorkerViewManifest, asked: string): ManifestA
  * address a view made up.
  *
  * WHERE SIGHT IS NOT TOTAL, an act from a view's code is refused (above) —
- * except one that carries the files of a drop and nothing the view could
- * have read: each argument a file the person dropped, a record the view
- * was shown, a record the same change makes (`{ $made: n }`), or a value
- * the app itself declares for the argument. A drop is the person's own
- * gesture, and its files are theirs; nothing hidden can ride on it.
+ * except one that carries the files of a drop and nothing the view chose:
+ * each argument a file the person dropped, the record the drop was bound
+ * to (its `data-drop-connect`, or the `data-record` it was drawn in), or a
+ * record the same change makes (`{ $made: n }`). A drop is the person's
+ * own gesture, and its files are theirs, so it allows the one change it was
+ * made for: each file goes in one act, once, and is then spent (`spent`,
+ * which the host takes out of what it handed), and no argument is the
+ * view's pick among the records it was shown or the values the app
+ * declares — a pick is a choice, and a run of choices can spell what this
+ * viewer alone may see.
  */
+
+/** What a drop handed a view a file for: the record the drop was bound to, if any. */
+export interface DropGrant {
+  readonly target?: string;
+}
 
 /** What the host handed a view: the records it was shown, and the files it may hand back. */
 export interface CodeActContext {
@@ -133,8 +158,8 @@ export interface CodeActContext {
   readonly shown: ReadonlySet<string>;
   /** The file at `href` as the host keeps it, where it handed this view that file: in a drop, or on a record it was shown. */
   readonly file: (href: string) => FileValue | undefined;
-  /** Whether the host handed this view that file in a drop. */
-  readonly dropped: (href: string) => boolean;
+  /** The drop the host handed this view that file in, if it did and no act has spent it since. */
+  readonly dropped: (href: string) => DropGrant | undefined;
 }
 
 const looksLikeFile = (value: unknown): value is { readonly href: unknown } => typeof value === "object" && value !== null && !Array.isArray(value) && "href" in value;
@@ -145,13 +170,17 @@ export function judgeCodeAct<S extends AnySchema>(store: Store<S>, manifest: Wor
   if (!entry) return refuse("undeclared", `This view may not ask for “${name}”: its manifest does not name it.`);
   /* Each file as the host kept it, or the act is refused. */
   const given: Record<string, unknown> = {};
-  let dropped = 0;
+  const drops = new Map<string, DropGrant>();
   for (const [key, value] of Object.entries(args)) {
     const one = (file: unknown): unknown => {
       if (!looksLikeFile(file)) return file;
       const kept = typeof file.href === "string" ? context?.file(file.href) : undefined;
       if (!kept) throw refuse("malformed", `“${key}” is a file the host did not hand this view: a view hands an act a file the person dropped (event.files), or one a record it was shown holds, as it was handed.`);
-      if (context?.dropped(kept.href)) dropped += 1;
+      const drop = context?.dropped(kept.href);
+      if (drop) {
+        if (drops.has(kept.href)) throw refuse("malformed", `“${key}” hands the act a dropped file it already carries: each file a person dropped goes in one act, once.`);
+        drops.set(kept.href, drop);
+      }
       return kept;
     };
     try {
@@ -161,15 +190,14 @@ export function judgeCodeAct<S extends AnySchema>(store: Store<S>, manifest: Wor
     }
   }
   if (!sightIsTotal(store)) {
-    const mutation = store.allMutations().find((one) => one.name === entry.act);
-    const shape = (mutation?.input as { shape?: Record<string, unknown> } | undefined)?.shape ?? {};
-    const theirs = (key: string, value: unknown): boolean =>
-      (looksLikeFile(value) && typeof value.href === "string" && context?.dropped(value.href) === true) ||
-      isMadeRef(value) ||
-      (typeof value === "string" && context?.shown.has(value) === true) ||
-      (declaredValues(shape[key])?.some((allowed) => allowed === value) ?? false);
-    const ofADrop = dropped > 0 && Object.entries(given).every(([key, value]) => (Array.isArray(value) ? value.every((one) => theirs(key, one)) : theirs(key, value)));
+    /* Every dropped file in the act from drops bound to one record, or every one to none: the change the gesture was made for. */
+    const targets = new Set([...drops.values()].map((drop) => drop.target));
+    const target = targets.size === 1 ? [...targets][0] : undefined;
+    const theirs = (value: unknown): boolean =>
+      (looksLikeFile(value) && typeof value.href === "string" && drops.has(value.href)) || isMadeRef(value) || (target !== undefined && value === target && context?.shown.has(target) === true);
+    const ofADrop = drops.size > 0 && targets.size === 1 && Object.values(given).every((value) => (Array.isArray(value) ? value.every(theirs) : theirs(value)));
     if (!ofADrop) return refuse("press-only", "In this app some members may not see some records, so a view's act applies only when you press it.");
+    return { ok: true, name: entry.act, args: { ...given, ...(entry.constants ?? {}) }, spent: [...drops.keys()] };
   }
   return { ok: true, name: entry.act, args: { ...given, ...(entry.constants ?? {}) } };
 }

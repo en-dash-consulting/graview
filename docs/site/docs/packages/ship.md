@@ -55,10 +55,13 @@ Who is asking is the host's to say: `serveStore({ seatOf })` reads its own crede
 
 A person subscribes once — from the context menu, a record's page, after an act's form, or from a chat (`subscribe`) — to an act running, a record of a kind added, a kind or one record changed, or a record reaching a condition in the app's rule language. The handler keeps them in `subscriptions` (any `SubscriptionStore`: `{ list, add, remove, onChange? }`; in memory when unsaid), serves each seat its own at `/graview/subscriptions`, and judges every commit against them as each subscriber may see it (`matchSubscriptions` from `@graview/core/subscriptions`): `onSubscriptionMatch(match)` is called once per batch per subscription that matched — never for a change to a record the subscriber cannot see, nor, unless they asked, for their own. Delivery (an email, a push) is the host's. `graview serve` keeps them in `subscriptions.json` beside the store (`fileSubscriptions`), which `graview mcp` on the same store writes too, and says each match on its output. A page reaches a served store's with `remoteSubscriptions({ url, principal })` from `@graview/ship/browser`, handed to the provider, or to the embed's `mount`, as `subscriptions`; it is a module of its own, so a page that imports it carries no rule parser.
 
+A subscription keeps its person as they were when they subscribed, roles and all. A host whose people's roles change says who each subscriber is now with `subscriberNow(who)` — their present principal, or undefined for one it no longer knows, who is told nothing — and every commit is judged as that person is now. Unsaid, a subscription is judged with the person as they subscribed: such a host removes a person's subscriptions when it takes a role away.
+
 ```ts
 createStoreHandler({
   app, adapter, seatOf,
   subscriptions: myUsersSubscriptions,           // the host's own storage
+  subscriberNow: (who) => myUsers.principalOf(who.id),
   onSubscriptionMatch: (match) => sendEmail(match.subscription.who, match.said, match.records),
 });
 ```
