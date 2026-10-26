@@ -260,7 +260,8 @@ async function findLinked(seen: Store<AnySchema>, principal: Principal, args: Re
   }
   const { kind, name, relation } = found[0]!;
   if (!host) return { ok: false, error: `This seat cannot read ${relation.address}: its host reads no other app's records. Nothing was changed.` };
-  const viewer = { kind: principal.kind, ...(principal.id === undefined ? {} : { id: principal.id }), ...(principal.roles ? { roles: principal.roles } : {}) };
+  // Who the seat acts for goes with it: the far app judges an agent as the person it sits with, as this one does.
+  const viewer = { kind: principal.kind, ...(principal.id === undefined ? {} : { id: principal.id }), ...(principal.roles ? { roles: principal.roles } : {}), ...(principal.onBehalfOf ? { onBehalfOf: principal.onBehalfOf } : {}) };
   const of = typeof args["of"] === "string" ? args["of"] : undefined;
   if (of !== undefined) {
     const node = seen.graph.getNode(of) as (Record<string, unknown> & { kind: string }) | undefined;

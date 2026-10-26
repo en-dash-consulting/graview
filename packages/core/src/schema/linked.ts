@@ -190,8 +190,13 @@ export interface LinkedRecord {
 /** The host's answer for one far record and one viewer: the record; `{ denied: true }` when they may not open its app; null when there is no such record. */
 export type LinkedRecordAnswer = LinkedRecord | { readonly denied: true } | null;
 
-/** Who is looking, as the host is told: a principal. */
-export type LinkedViewer = { readonly kind: string; readonly id?: string | undefined; readonly roles?: readonly string[] | undefined };
+/**
+ * Who is looking, as the host is told: a principal — and the person it acts
+ * for, where it acts for one (`onBehalfOf`), so the far app judges it as the
+ * near one does: an agent sees what both may, and a system seat acting for
+ * somebody is never the system.
+ */
+export type LinkedViewer = { readonly kind: string; readonly id?: string | undefined; readonly roles?: readonly string[] | undefined; readonly onBehalfOf?: LinkedViewer | undefined };
 
 /** What linking asks the host for: records of these kinds in that app, matching words. */
 export interface LinkedSearch {
