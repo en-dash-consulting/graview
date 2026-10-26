@@ -45,6 +45,8 @@ export interface JudgeContext {
   readonly touched: ReadonlyMap<string, number>;
   /** Records changed more recently than this many milliseconds are left for now. */
   readonly quietFor: number;
+  /** When each record was made and by whom, from the log; a record the log never made (a seed's) is absent, and was made before any that is. */
+  readonly made?: ReadonlyMap<string, Made>;
   /** How old, in days, a finished record is before it is a candidate to set aside. */
   readonly olderThanDays: number;
 }
@@ -100,17 +102,36 @@ export const fieldsOf = (schema: AnySchema, kind: string): string[] => Object.ke
 /** Fields whose value names one thing and only that thing: two records that share one are the same. */
 export const KEY_FIELD = /^(e-?mail|email-?address|code|sku|reference|ref|external-?id|key)$/i;
 
-/** The one of several that stays: the one with the most links and history, else the first made. */
-export function keeperOf(store: Store<AnySchema>, nodes: readonly Node[], touched: ReadonlyMap<string, number>): Node {
-  const weight = (node: Node) => store.graph.out(node.id).length + store.graph.in(node.id).length;
-  return [...nodes].sort((a, b) => weight(b) - weight(a) || (touched.get(a.id) ?? 0) - (touched.get(b.id) ?? 0))[0]!;
+/** When a record was made, and who made it, as the log says. */
+export interface Made {
+  readonly at: number;
+  /** The maker, `<kind>:<id>` of the op's author. */
+  readonly by: string;
 }
+
+/**
+ * THE ONE OF SEVERAL THAT STAYS: the one made first — a record from before
+ * the log (a seed's) before any the log made — and only among records made
+ * at one moment, the one with the most links and history. Not the most
+ * links alone: anybody who may link to a kind can add links, so a
+ * duplicate planted beside somebody else's record could be made to stay,
+ * and theirs merged away into it; nobody can make a record earlier than
+ * one that is already there.
+ */
+export function keeperOf(store: Store<AnySchema>, nodes: readonly Node[], touched: ReadonlyMap<string, number>, made: ReadonlyMap<string, Made> = new Map()): Node {
+  const madeAt = (node: Node) => made.get(node.id)?.at ?? Number.NEGATIVE_INFINITY;
+  const weight = (node: Node) => store.graph.out(node.id).length + store.graph.in(node.id).length;
+  return [...nodes].sort((a, b) => madeAt(a) - madeAt(b) || weight(b) - weight(a) || (touched.get(a.id) ?? 0) - (touched.get(b.id) ?? 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))[0]!;
+}
+
+/** Who made a record, `<kind>:<id>`, or undefined for one from before the log. */
+export const makerOf = (context: Pick<JudgeContext, "made">, id: string): string | undefined => context.made?.get(id)?.by;
 
 /**
  * DUPLICATES → MERGE. Records of one kind that share a name — case,
  * accents and spacing aside, as an import matches a row to its record
  * (`nameKey`) — or a key a record has only one of (an email, a code). The
- * one with the most links stays; each other is merged into it
+ * one made first stays (`keeperOf`); each other is merged into it
  * (`merge-<kind>`). An exact name is surer than one that matches only with
  * its punctuation aside; a shared key is surest.
  */
@@ -146,7 +167,7 @@ export const duplicates: Judge = {
       group((node) => nameKey(named(schema, node)) || undefined, (keeper) => `Same name as “${named(schema, keeper)}” (another ${noun(schema, kind)})`, 0.9);
       group((node) => fold(named(schema, node)).replace(/ /g, "") || undefined, (keeper) => `Nearly the same name as “${named(schema, keeper)}”, punctuation and spacing aside`, 0.75);
       for (const { nodes, basis, confidence, field } of groups) {
-        const keeper = keeperOf(store, nodes, context.touched);
+        const keeper = keeperOf(store, nodes, context.touched, context.made);
         if (!mayTouch(context, keeper)) continue;
         for (const node of nodes) {
           if (node.id === keeper.id || !mayTouch(context, node)) continue;
