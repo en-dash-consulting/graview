@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 433,
+  "gzipped": 223,
+  "changeset": "a-face-is-a-list-of-names-quoted-in-pairs.md",
+  "note": "Raised when a document's typeface came to be held to names quoted in pairs: brandOf asks the checker's own rule (`stackShapeProblem`, 371 bytes of it) before a face is written into a style sheet, and the scoper ends a string at a line break as CSS does. 433 / 223 more than main (621_341 / 216_716): measured at 621_774 / 216_939."
+}

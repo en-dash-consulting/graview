@@ -121,14 +121,15 @@ export const FIGURE_NAMES = Object.keys(FIGURES);
  * and only when it is safe to put in a page. What draws a figure hands the
  * art to innerHTML, and a page may be given a figure nothing judged (a
  * document compiled without the check, a brand's own drawing, a proposal),
- * so this asks again: art that could run or reach outside itself is no
- * figure, and nothing is drawn.
+ * so this asks again, with the reader a logo is drawn by (the closed
+ * vocabulary is the checker's to say): art that could run or reach
+ * outside itself is no figure, and nothing is drawn.
  */
 export function figureSvg(figure: Figure | undefined): string | undefined {
   if (!figure) return undefined;
   const shipped = FIGURES[figure];
   if (shipped) return shipped;
-  return figure.trimStart().startsWith("<svg") && figureDangers(figure).length === 0 ? figure : undefined;
+  return figure.trimStart().startsWith("<svg") && svgProblem(figure) === null ? figure : undefined;
 }
 
 /**
