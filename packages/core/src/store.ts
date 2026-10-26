@@ -20,7 +20,8 @@ import type {
 import { compileMutation } from "./mutations/define-mutation.js";
 import { actSpelledAs, nearestAct } from "./mutations/act-spelling.js";
 import { InvalidArguments } from "./mutations/invalid-arguments.js";
-import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
+import { deriveMutations, derivedVia, removeVia } from "./mutations/derive-edits.js";
+import { repeatingFields, repeatMakes } from "./mutations/derive-repeats.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { namesMade, resolveMade } from "./mutations/made.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
@@ -955,11 +956,12 @@ export class Store<S extends AnySchema> {
      * names. A call that cannot be compiled is refused by `apply`, in its
      * own words.
      */
-    return permits(
+    const kind = this.subjectKindOf(call, principal);
+    const verdict = permits(
       this.policy,
       principal,
       call.name,
-      this.subjectKindOf(call, principal),
+      kind,
       this.viaOf(mutation, call, principal),
       typeof id === "string" ? id : undefined,
       this.words,
@@ -978,6 +980,24 @@ export class Store<S extends AnySchema> {
       // Taking a record out, or folding it away, rides the making of the kind only over what this principal made (W-201).
       mutation?.derived !== undefined && UNMAKING.has(mutation.derived.act),
     );
+    if (!verdict.ok || !mutation?.derived || !this.repeatMakes(mutation, call, id, principal)) return verdict;
+    /*
+     * AND A CHANGE TO ONE DAY THAT MAKES A RECORD ("change just this one",
+     * "change from here" past the first day) rides the kind's edit for the
+     * series, and the making of the kind for the record it makes: who may
+     * retitle a shift has not been trusted with making one.
+     */
+    return permits(this.policy, principal, call.name, kind, removeVia([...this.mutations.values()], mutation.derived.kind), typeof id === "string" ? id : undefined, this.words);
+  }
+
+  /** Whether a call of a repeat act makes a record (`repeatMakes`), read off the series as this principal is served it. */
+  private repeatMakes(mutation: AnyMutationDefinition<S>, call: MutationCall, id: unknown, principal: Principal): boolean {
+    const act = mutation.derived!.act;
+    if (act !== "detach" && act !== "split") return false;
+    const definition = this.schema.tryDefinition(mutation.derived!.kind);
+    if (!definition) return false;
+    const node = typeof id === "string" ? (isSystem(principal) ? this.graph : seenBy(this, principal).graph).getNode(id) : undefined;
+    return repeatMakes(act, call.args, node as Record<string, unknown> | undefined, repeatingFields(definition as never));
   }
 
   /**

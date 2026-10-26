@@ -6,6 +6,7 @@ import type { AnyNodeDefinition } from "../schema/types.js";
 import { isRepeat, isRepeatField, occurrences, repeatedBy, repeatKey, type Repeat } from "../repeat.js";
 import { ActRefusal } from "../refused.js";
 import { refTo } from "./node-ref.js";
+import { fieldWriters, settableFields } from "./derive-edits.js";
 import type { AnyMutationDefinition, MutationContext } from "./types.js";
 
 /*
@@ -25,8 +26,13 @@ import type { AnyMutationDefinition, MutationContext } from "./types.js";
  *
  * Each takes the record (`id`), the day (`on`, `YYYY-MM-DD`) and, where the
  * kind has more than one date that repeats, which (`field`); the two that
- * change take any of the kind's fields beside them, as its edit does. A
- * hosted page loads this up front with the store, so it is kept short.
+ * change take the kind's fields beside them that its edit takes — those no
+ * declared act writes, and those another system keeps in step — and a field
+ * an act of its own sets is refused by that act's name, as the edit refuses
+ * it. Riding the edit, they change only what it changes; and the two that
+ * make a record make it only for a seat that may make one (the store asks,
+ * `repeatMakes`). A hosted page loads this up front with the store, so it
+ * is kept short.
  */
 
 /** Which of a kind's dates repeat: those with their repeat declared beside them. */
@@ -53,7 +59,11 @@ export function deriveRepeatMutations<S extends AnySchema>(schema: S, mutations:
     if (dates.length === 0) continue;
     const kind = definition.kind;
     const shape = definition.fields.shape as Record<string, z.ZodMiniType>;
-    const changes = Object.keys(shape).filter((field) => !(field in (definition.fixed ?? {})));
+    const writers = fieldWriters(schema, mutations).get(kind);
+    const kept = new Set(definition.keptInStep ?? []);
+    const owned = (field: string) => (writers?.get(field)?.length ?? 0) > 0 && !kept.has(field);
+    const changes = settableFields(definition).filter((field) => !owned(field));
+    const writtenBy = Object.fromEntries(settableFields(definition).filter(owned).map((field) => [field, writers!.get(field)!]));
     const named = (node: unknown) => labelOf(definition, node as never);
     for (const [act, title, description, says] of ACTS) {
       const name = `${act}-${kind}`;
@@ -66,7 +76,7 @@ export function deriveRepeatMutations<S extends AnySchema>(schema: S, mutations:
         subject: { kinds: [kind], arg: "id" },
         // What each writes on the series is how it repeats; what the other two set, they set on the record they make.
         writes: dates.map(repeatKey),
-        ...(act === "skip" ? {} : { creates: [kind] }),
+        ...(act === "skip" ? {} : { creates: [kind], ...(Object.keys(writtenBy).length > 0 ? { writtenBy } : {}) }),
         input: z.strictObject({
           id: refTo([kind]),
           on: z.string().check(z.regex(/^\d{4}-\d{2}-\d{2}$/, "a day, like 2026-10-21")),
@@ -112,4 +122,18 @@ export function deriveRepeatMutations<S extends AnySchema>(schema: S, mutations:
     }
   }
   return derived;
+}
+
+/**
+ * WHETHER A CALL OF A REPEAT ACT MAKES A RECORD: "change just this one"
+ * always does, and "change from here" past the series' first day. Riding
+ * the kind's edit, such a call is the seat's to make only where it may make
+ * one of the kind, as the store judges. A record the call cannot read
+ * (absent, or kept from the seat) is judged as one it would make.
+ */
+export function repeatMakes(act: string, args: Record<string, unknown>, node: Record<string, unknown> | undefined, dates: readonly string[]): boolean {
+  if (act === "detach") return true;
+  if (act !== "split" || typeof args["on"] !== "string") return false;
+  const start = node?.[String(args["field"] ?? dates[0])];
+  return typeof start !== "string" || args["on"] > start.slice(0, 10);
 }
