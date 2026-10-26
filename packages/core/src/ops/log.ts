@@ -85,6 +85,16 @@ export interface Epoch {
    * before it existed), the store's starting set stands, as it did.
    */
   readonly enabledModules?: readonly string[];
+  /**
+   * HOW FAR READERS WERE SERVED AT ITS SEQ, on a checkpoint (`horizon`,
+   * Roadmap f-publishing-lifecycle): the `publishedThrough` of the last
+   * publish before it that stands, or the one the checkpoint before it
+   * kept. The publish op goes to the archive with the ops before it, and
+   * without this a store opened on the checkpoint, or one whose latest
+   * publish was undone, would know of no publish at all. Written by
+   * `store.checkpoint` in an app that publishes, once something was.
+   */
+  readonly publishedThrough?: number;
 }
 
 /**

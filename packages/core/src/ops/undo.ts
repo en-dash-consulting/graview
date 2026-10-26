@@ -1,5 +1,6 @@
 import { GraphError } from "../graph/graph.js";
 import type { Primitive } from "../graph/primitives.js";
+import { PUBLISHING } from "../publish.js";
 import { TYPING } from "../text/typing-hook.js";
 import { inverseOf } from "./inverse.js";
 import type { LogReading } from "./log.js";
@@ -140,6 +141,14 @@ export function checkUndo(
       message: "Cannot undo turning a module off or on: it is changed by turning the module the other way.",
     };
   }
+
+  /*
+   * NOT A PUBLISH WHOSE PREDECESSOR IS BEHIND THE UNDO HORIZON (Roadmap
+   * f-publishing-lifecycle, FR-23): said by `@graview/core/publishing`,
+   * loaded wherever a store of an app that publishes is served.
+   */
+  const unpublishable = horizon && ops.some((op) => op.publishedThrough !== undefined) ? PUBLISHING.undo?.(log, ops, horizon) : undefined;
+  if (unpublishable) return { ok: false, ops, blockedBy: [], includeBatches: [], message: unpublishable };
 
   const writes = new Set<string>();
   for (const op of ops) for (const id of op.writes) writes.add(id);

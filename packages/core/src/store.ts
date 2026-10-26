@@ -2351,7 +2351,8 @@ export class Store<S extends AnySchema> {
     }
     // Never past a seq somebody is served at: a reader's past (`pastOf`) folds from the log, so the lowest pin is the furthest it goes.
     // And readers' own (Roadmap f-publishing-lifecycle): what was published — or, before the first publish, where the log begins.
-    const readers = onPublish(this.publishing) ? [this.publishedSeq ?? 0] : [];
+    // The publish before it too, where undoing the latest takes readers back to, so the past they are served then still folds from the log.
+    const readers = onPublish(this.publishing) ? [this.publishedSeq ?? 0, ...(PUBLISHING.previous?.(this) ?? [])] : [];
     const pinned = [...(options.pins ?? []), ...readers].filter((pin) => Number.isInteger(pin));
     if (pinned.length > 0) seq = Math.min(seq, ...pinned);
     seq = Math.min(Math.max(seq, this.log.horizon), this.log.length);
@@ -2372,13 +2373,18 @@ export class Store<S extends AnySchema> {
     const records = recordsOf(this.log);
     const writers = writersBehind(this.log, seq, checkpoint.base.nodes, (value) => namesUnseen(value, (id) => !base.has(id) && records.kindOf(id) === undefined));
     const kept = (map: object | undefined) => map && Object.keys(map).length > 0;
-    // The modules on at its seq, which the ops before it said and which go to the archive with them: so a module off stays off (FR-12).
+    /*
+     * The modules on at its seq and how far readers were served there, which the ops before it said and which go to the
+     * archive with them: so a module off stays off (FR-12) and a store whose publish ops were archived still knows what
+     * stood published (Roadmap f-publishing-lifecycle).
+     */
     return {
       ...checkpoint,
       ...(kept(creators) && { creators }),
       ...(removed && { removed }),
       ...(kept(writers) && { writers }),
       ...given("enabledModules", ops.slice(0, seq - this.log.horizon).reverse().find((op) => op.enabledModules)?.enabledModules ?? this.log.horizonEpoch()?.enabledModules),
+      ...given("publishedThrough", PUBLISHING.seq?.(this, seq)),
     };
   }
 

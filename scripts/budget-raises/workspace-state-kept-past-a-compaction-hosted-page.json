@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 495,
+  "gzipped": 122,
+  "changeset": "a-publish-undone-past-a-compaction-takes-readers-back.md",
+  "note": "Raised when workspace state that only the log's tail carried came to be kept past a compaction: a checkpoint keeps the modules on and what stood published at its seq, the store reads them there when no op in its tail says another, and an undo asks `@graview/core/publishing` whether a publish it takes back would send readers behind the undo horizon. Measured at 621_836 / 216_838 against 621_341 / 216_716 minified and gzipped."
+}

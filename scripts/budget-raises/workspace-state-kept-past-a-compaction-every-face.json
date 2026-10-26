@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 512,
+  "note": "Raised when workspace state that only the log's tail carried came to be kept past a compaction: a checkpoint keeps the modules on and what stood published at its seq, the store reads them there when no op in its tail says another, and an undo asks `@graview/core/publishing` whether a publish it takes back would send readers behind the undo horizon. 1_366 / 512 more, the minified within the budget's room. Measured at 2_364_269 / 862_008 against 2_362_903 / 861_496."
+}
