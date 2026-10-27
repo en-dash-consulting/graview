@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 593,
+  "gzipped": 235,
+  "note": "Raised when a keystroke and an Edit came to ride an act that writes the field only where that act would run on the record: `wouldRun` on `@graview/core` believes an act's `allowedOn` and asks one without it by running its `apply` against a context that writes nothing, the store's `type-text` and `editableFields` both ask it, and a field typed together offers Edit only where the store would take a keystroke. 593 / 235 more. Measured at 247_243 / 90_815 against 246_650 / 90_580."
+}

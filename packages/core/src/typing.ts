@@ -16,7 +16,7 @@
 import type { Primitive } from "./graph/primitives.js";
 import { inverseOf } from "./ops/inverse.js";
 import type { FieldRevision } from "./ops/revisions.js";
-import { typeTextMutation, typeTextVia, wouldRun } from "./mutations/type-text.js";
+import { typeTextMutation, typeTextVia } from "./mutations/type-text.js";
 import type { Operation } from "./ops/types.js";
 import { collaborativeFieldOf } from "./schema/collaborative-of.js";
 import type { MutationCall } from "./mutations/types.js";
@@ -198,7 +198,6 @@ function carriedTyping(rolledBack: readonly Operation[], landed: readonly Operat
 
 TYPING.typeText = typeTextMutation;
 TYPING.via = typeTextVia as never;
-TYPING.wouldRun = wouldRun as never;
 TYPING.collaborative = collaborativeFieldOf;
 TYPING.asSplices = asSplices;
 TYPING.undone = undone;

@@ -46,6 +46,7 @@ import {
   checkViewSpecs,
   checkComputed,
   checkHiddenReads,
+  checkTypingAsks,
   checkFactRules,
   checkClockRules,
   checkFieldSight,
@@ -132,6 +133,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: Check
   checkCodeDescribes(ctx);
   checkComputed(ctx);
   checkHiddenReads(ctx);
+  checkTypingAsks(ctx);
   checkFactRules(ctx);
   checkClockRules(ctx);
   checkJobs(ctx);

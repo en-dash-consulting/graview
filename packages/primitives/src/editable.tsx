@@ -1,11 +1,11 @@
-import { fieldWords, humanizeField as humanize, type AnySchema } from "@graview/core";
+import { fieldWords, humanizeField as humanize, TYPE_TEXT, type AnySchema } from "@graview/core";
 import { valueWords } from "@graview/core/words";
 import { amountBox, amountInBox, endAfterStartMoved, pageSections, parseDuration, readableFields, readAmount, startAndEndOf } from "@graview/core/words";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
-import { afterFirstDraw, useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
+import { afterFirstDraw, TypingContext, useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
 import type { EditableField } from "@graview/tools";
-import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
+import { lazy, Suspense, useContext, useEffect, useRef, useState, type CSSProperties } from "react";
 import { TextBody } from "./text-body.js";
 import { Files } from "./files-door.js";
 import { AppLink } from "./app-link-door.js";
@@ -578,7 +578,16 @@ function ReadProse({ field, label, value, labelStyle, valueStyle, style, markdow
 
 function EditableProse<S extends AnySchema>({ nodeId, field, label, value, labelStyle, valueStyle, style, markdown }: LongValueProps) {
   const { fields, commit } = useEditableFields<S>(nodeId);
-  const editable = fields.find((candidate) => candidate.field === field && candidate.takesValue);
+  const { store, principal } = useGraview<S>();
+  /*
+   * Typed together, it is edited a keystroke at a time: offered only where
+   * the store would take one (`type-text`), asked as the live editor asks,
+   * once typing is loaded. Read only there is for a lock that lands while
+   * it is open.
+   */
+  const live = useContext(TypingContext) !== null && store.collaborative(nodeId, field);
+  const writer = fields.find((candidate) => candidate.field === field && candidate.takesValue);
+  const editable = writer && (!live || store.permits({ name: TYPE_TEXT, args: { node: nodeId, field, at: 0, remove: 0, insert: "" } }, principal).ok) ? writer : undefined;
   const [editing, setEditing] = useState(false);
   const opener = useRef<HTMLButtonElement | null>(null);
   const comeBack = useRef(false);

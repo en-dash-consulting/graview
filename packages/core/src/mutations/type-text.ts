@@ -99,58 +99,6 @@ export function typeTextMutation<S extends AnySchema>(store: TypingStore): AnyMu
 }
 
 /**
- * WHETHER AN ACT WOULD RUN ON A RECORD NOW, where typing into a field it
- * writes rides it. An act that says its rule about the record (`allowedOn`,
- * a document act's `allowedWhen`) is believed. One whose rule lives in its
- * `apply` — a TypeScript act that throws `ActRefusal` for a published note
- * — is asked: run on the record with the field's own value, against a
- * context that writes nothing, so asking changes nothing and costs one
- * `apply` a keystroke.
- *
- * Only the act's own rule keeps typing out: an `ActRefusal` whose reason is
- * not `invalid`. An `invalid` one ("nothing to change") is about what it was
- * handed, which a keystroke never hands it; an argument it needs and the
- * record does not hold is handed as it is (absent), since its rule about the
- * record comes before its use of them; any other error is no answer, and
- * answers nothing against it. An act whose rule does depend on what it is
- * handed says the rule about the record as `allowedOn`.
- */
-export function wouldRun<S extends AnySchema>(mutation: AnyMutationDefinition<S>, schema: S, graph: TypingStore["graph"], node: unknown, field: unknown, me: string | undefined): boolean {
-  if (typeof node !== "string" || typeof field !== "string") return mutation.allowedOn === undefined;
-  if (mutation.allowedOn) return mutation.allowedOn(graph as never, node);
-  const arg = mutation.subject?.arg ?? "id";
-  const shape = (mutation.input as { shape?: Record<string, unknown> }).shape ?? {};
-  const value = (graph.getNode(node) as Record<string, unknown> | undefined)?.[field];
-  const given: Record<string, unknown> = { [arg]: node, ...(field !== arg && field in shape && value !== undefined && value !== null ? { [field]: value } : {}) };
-  const parsed = (mutation.input as { safeParse?(input: unknown): { success: boolean; data?: unknown } }).safeParse?.(given);
-  const args = parsed?.success ? (parsed.data as Record<string, unknown>) : given;
-  const nothing = () => undefined;
-  const context = {
-    graph,
-    schema,
-    me,
-    addNode: nothing,
-    removeNode: nothing,
-    patchNode: nothing,
-    archiveNode: nothing,
-    unarchiveNode: nothing,
-    mergeNode: nothing,
-    addEdge: nothing,
-    removeEdge: nothing,
-    setSingleSource: nothing,
-    freshId: (label: string, prefix?: string) => `${prefix ? `${prefix}:` : ""}${label}`,
-    emit: nothing,
-  };
-  try {
-    mutation.apply(context as never, args as never);
-  } catch (error) {
-    const refusal = error as { readonly name?: unknown; readonly reason?: unknown } | null;
-    return !(refusal?.name === "ActRefusal" && refusal.reason !== "invalid");
-  }
-  return true;
-}
-
-/**
  * Who may type into a field of a record: whoever may run an act that writes
  * THAT field of its kind — a declared act whose `writes` names it, or the
  * kind's own `edit-<kind>` that takes it (and so whoever that rides). Typing
