@@ -132,7 +132,9 @@ export function seqAt(store: Pick<Store<AnySchema>, "log">, when: string | Date)
  * whole log twice. `declaration` is the one the moment was made under,
  * when a host knows it was another (`pastAt` reads it from the host's
  * marks); absent, the store's own. A seq behind the undo horizon (FR-23)
- * is in the archive, not here, and is refused.
+ * is in the archive, not here, and is refused — but for a published seq
+ * the checkpoint kept the app at (`Epoch.published`), which is that
+ * graph, with nothing of the log before it.
  */
 export function pastOf<S extends AnySchema>(store: Store<S>, when: number | string | Date, options: { readonly declaration?: PastDeclaration | undefined } = {}): Store<S> {
   const seat = seatOf(store);
@@ -145,6 +147,12 @@ export function pastOf<S extends AnySchema>(store: Store<S>, when: number | stri
   const log = store.log;
   const first = log.horizon;
   const seq = typeof when === "number" ? when : seqAt(store, when);
+  // Behind the horizon, a published seq the checkpoint kept the app at (Roadmap f-publishing-lifecycle): what readers are served there, folded from nothing.
+  const kept = seq < first ? log.horizonEpoch()?.published?.find((one) => one.seq === seq) : undefined;
+  if (kept) {
+    const graph = graphFrom(store, (options.declaration?.schema ?? store.schema) as S, kept.base);
+    return made(store, options.declaration, { graph, log: [], epochs: [{ ...kept, horizon: true }], seq, at: kept.at, from: seq });
+  }
   if (!Number.isInteger(seq) || seq < first || seq > log.length) {
     throw new RangeError(`No moment at seq ${seq}: this store holds seqs ${first} to ${log.length}${first > 0 ? "; what is before its horizon is in the archive" : ""}`);
   }
