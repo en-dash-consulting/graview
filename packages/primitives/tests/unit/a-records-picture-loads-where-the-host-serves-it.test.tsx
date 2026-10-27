@@ -81,6 +81,7 @@ describe("a record's file under the host's base", () => {
     const pdf = await arrives(() => host.querySelector<HTMLObjectElement>('object[type="application/pdf"]'));
     expect(pdf.getAttribute("data")).toBe("/a/jobs/graview/files/a0c2.pdf");
     const links = [...host.querySelectorAll<HTMLAnchorElement>("a[download]")].map((a) => a.getAttribute("href"));
-    expect(links).toEqual(["/a/jobs/graview/files/a0c2.pdf", "/a/jobs/graview/files/a0c2.pdf", "/a/jobs/graview/files/b1.txt"]);
+    // The PDF has one Download (its Open is a link in a tab, not a download), the text file its name (FR-234).
+    expect(links).toEqual(["/a/jobs/graview/files/a0c2.pdf", "/a/jobs/graview/files/b1.txt"]);
   });
 });
