@@ -10,6 +10,18 @@
  * it, its worker terminated, the plain face of what it was shown drawn in
  * its place, and the reason said — while the page's own timer keeps time.
  * A sixth view, well behaved, is kept.
+ *
+ * THE BUDGET FITS THE DEVICE (Roadmap f-view-budget-fits-device): the page
+ * measures its first worker's start once and gives every view its time
+ * budget times that pace, 1 for a fast start up to 4. The page above
+ * starts fast (pace 1), so a spinner is stopped at the base 1 000 ms. A
+ * second page's views come from a script the server answers slowly, so its
+ * first start takes four times a fast one or more (pace 4): a view that
+ * draws in 300 ms draws, one whose listener takes 1 500 ms — past the fixed
+ * budget — draws, a spinner is stopped at 4 000 ms with the sentence naming
+ * it, and a flood is still a flood. Under GRAVIEW_SLOW=4 every page's main
+ * thread is throttled as the nightly's runner is (Chromium only; the engine
+ * throttles no worker, so the start it measures is the page's own pace).
  */
 import { createServer } from "node:http";
 import { resolve } from "node:path";
@@ -18,9 +30,18 @@ import { graviewSources } from "./graview-sources.mjs";
 const MANIFEST = { title: "The packages", attach: "package", cardinality: "many", reads: { kinds: ["offer"], edges: ["includes"] } };
 const PUSH_MS = 1_000;
 const SILENT_MS = 1_500;
+/* How long the server holds the paced page's scripts: four times a fast start (60 ms) and some, so the page is at the ceiling. */
+const PACED_START_MS = 300;
 
-export async function limitsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript }) {
+export async function limitsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript, engine }) {
+  /* GRAVIEW_SLOW=4: every page as slow as the nightly's runner, as scripts/lib/watch.mjs does it. */
+  const slow = Number(process.env["GRAVIEW_SLOW"] ?? 0);
+  const slowed = async (page) => {
+    if (slow > 1 && engine === "chromium") await page.context().newCDPSession(page).then((cdp) => cdp.send("Emulation.setCPUThrottlingRate", { rate: slow })).catch(() => {});
+  };
   const draw = `graview.render(graview.html\`<p>\${(props.nodes || []).length} records</p>\`);`;
+  /* Busy in its listener for a time, then draws: what a view that draws in that long on a fast page looks like to the host (a hardened worker keeps Date and not performance). */
+  const busy = (ms) => `graview.onProps((props) => { const until = Date.now() + ${ms}; while (Date.now() < until) {} ${draw} });`;
   const views = {
     /* Spins inside its listener for a push: it never says it drew. */
     spin: `graview.onProps((props) => { ${draw} for (;;) {} });`,
@@ -39,6 +60,56 @@ export async function limitsSuite({ repoRoot, build, browser, claim, report, HOS
     good: `graview.onProps((props) => { ${draw} });`,
   };
   const scripts = Object.fromEntries(await Promise.all(Object.entries(views).map(async ([name, code]) => [name, await viewScript(code)])));
+  /* The paced page's views, served slowly: two that draw in time on a slow device, and the spinner and the flood again. */
+  const pacedViews = { steady: busy(300), heavy: busy(1_500), spin: views.spin, flood: views.flood };
+  const pacedScripts = Object.fromEntries(await Promise.all(Object.entries(pacedViews).map(async ([name, code]) => [name, await viewScript(code)])));
+  const pacedJs = (
+    await build({
+      stdin: {
+        contents: `
+import { Store } from "@graview/core";
+import { mountWorkerView } from "@graview/guest/host/worker";
+import { lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/offers-app.ts"))};
+const store = new Store({ schema: offersApp.schema, mutations: offersApp.mutations, policy: offersApp.policy, snapshot: structuredClone(offersSeed) });
+const failures = {};
+const mounted = {};
+const began = performance.now();
+for (const name of ${JSON.stringify(Object.keys(pacedViews))}) {
+  const holder = document.createElement("section");
+  holder.id = name;
+  document.querySelector("main").appendChild(holder);
+  mounted[name] = mountWorkerView(holder, {
+    manifest: { ...${JSON.stringify(MANIFEST)}, name },
+    worker: { url: "/views/paced/" + name + ".js" },
+    store,
+    principal: lin,
+    limits: { pushMs: ${PUSH_MS} },
+    onFailure: (reason, detail) => (failures[name] = { reason, detail, at: performance.now() - began }),
+  });
+}
+window.__host = {
+  failures,
+  pace: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, view.pace ?? null])),
+  running: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, view.worker !== undefined])),
+  faces: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, [...view.shadow.querySelectorAll("[data-graview-fallback] li")].map((item) => item.textContent)])),
+  notes: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, view.shadow.querySelector("[data-graview-fallback] p")?.textContent ?? null])),
+  drawn: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, view.shadow.querySelector("[data-graview-view-root] p")?.textContent ?? null])),
+};
+`,
+        resolveDir: repoRoot,
+        loader: "js",
+      },
+      bundle: true,
+      format: "iife",
+      write: false,
+      platform: "browser",
+      target: "es2022",
+      logLevel: "silent",
+      define: { "process.env.NODE_ENV": '"production"' },
+      plugins: [graviewSources(repoRoot)],
+    })
+  ).outputFiles[0].text;
+  const pacedHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Paced</title></head><body><main></main><script>${pacedJs.replace(/<\/script/gi, "<\\/script")}</script></body></html>`;
 
   const pageJs = (
     await build({
@@ -63,14 +134,15 @@ for (const [name, script] of Object.entries(window.VIEWS)) {
     worker: { script },
     store,
     principal: lin,
-    /* The 100 000 nodes take their builder longer than a push may: given time, so it is the node cap that stops it. */
-    limits: name === "nodes" ? { pushMs: 30000, silentMs: 30000 } : { pushMs: ${PUSH_MS}, silentMs: ${SILENT_MS} },
+    /* The 100 000 nodes take their builder longer than a push may: given time, so it is the node cap that stops it. The spinner blocks its heartbeat too: given the heartbeat's default, so it is the push's time — fitted to the device, up to four times the base — that stops it. */
+    limits: name === "nodes" ? { pushMs: 30000, silentMs: 30000 } : name === "spin" ? { pushMs: ${PUSH_MS} } : { pushMs: ${PUSH_MS}, silentMs: ${SILENT_MS} },
     onFailure: (reason, detail) => (failures[name] = { reason, detail, at: performance.now() - began }),
   });
 }
 window.__host = {
   failures,
   pulse,
+  pace: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, view.pace ?? null])),
   running: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, view.worker !== undefined])),
   faces: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, [...view.shadow.querySelectorAll("[data-graview-fallback] li")].map((item) => item.textContent)])),
   notes: () => Object.fromEntries(Object.entries(mounted).map(([name, view]) => [name, view.shadow.querySelector("[data-graview-fallback] p")?.textContent ?? null])),
@@ -172,6 +244,18 @@ window.__host = {
       response.writeHead(200, { "content-type": "text/javascript" });
       return response.end(styledView);
     }
+    if (request.url === "/paced") {
+      response.writeHead(200, { "content-type": "text/html" });
+      return response.end(pacedHtml);
+    }
+    /* The paced page's scripts, held so the page's first worker starts as a slow device's would. */
+    const paced = /^\/views\/paced\/([a-z]+)\.js$/.exec(request.url ?? "");
+    if (paced && pacedScripts[paced[1]]) {
+      return void setTimeout(() => {
+        response.writeHead(200, { "content-type": "text/javascript" });
+        response.end(pacedScripts[paced[1]]);
+      }, PACED_START_MS);
+    }
     response.writeHead(404);
     response.end();
   }).listen(HOST_PORT, "127.0.0.1");
@@ -179,14 +263,15 @@ window.__host = {
   try {
     const context = await browser.newContext();
     const tab = await context.newPage();
+    await slowed(tab);
     tab.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
     await tab.goto(`${HOST}/`, { waitUntil: "load" });
     await tab.waitForFunction(() => ["spin", "later", "flood", "nodes", "long", "churn"].every((name) => window.__host.failures[name]), null, { timeout: 40_000, polling: 250 }).catch(() => {});
     await tab.waitForTimeout(500);
     /* A page a view has frozen answers nothing: given 15 s, its silence is the finding. */
-    const silent = { failures: {}, running: {}, faces: {}, notes: {}, drawn: {}, pulse: { ticks: 0, longest: Infinity, frozen: true } };
+    const silent = { failures: {}, running: {}, faces: {}, notes: {}, drawn: {}, pace: {}, pulse: { ticks: 0, longest: Infinity, frozen: true } };
     const host = await Promise.race([
-      tab.evaluate(() => ({ failures: window.__host.failures, running: window.__host.running(), faces: window.__host.faces(), notes: window.__host.notes(), drawn: window.__host.drawn(), pulse: window.__host.pulse })),
+      tab.evaluate(() => ({ failures: window.__host.failures, running: window.__host.running(), faces: window.__host.faces(), notes: window.__host.notes(), drawn: window.__host.drawn(), pace: window.__host.pace(), pulse: window.__host.pulse })),
       new Promise((done) => setTimeout(() => done(silent), 15_000)),
     ]);
     report.limits = host;
@@ -195,7 +280,8 @@ window.__host = {
       const ok = failure?.reason === reason && failure.at <= within && host.running[name] === false && host.faces[name]?.includes("A way in") && host.faces[name]?.includes("Team coaching") && typeof failure.detail === "string" && host.notes[name]?.includes(failure.detail);
       return { ok, detail: { failure, running: host.running[name], face: host.faces[name], note: host.notes[name] } };
     };
-    const spin = stopped("spin", "slow", 5_000 + PUSH_MS + 250);
+    /* Within its push's time as fitted to the device: up to four times the base. */
+    const spin = stopped("spin", "slow", 5_000 + PUSH_MS * 4 + 250);
     claim(`a view that spins in its listener is stopped as slow, its plain face drawn and the reason said`, spin.ok, spin.detail);
     const later = stopped("later", "silent", 5_000 + SILENT_MS + SILENT_MS / 4 + 250);
     claim(`a view that spins where no push waits is stopped as silent within silentMs (${SILENT_MS} ms), its plain face drawn and the reason said`, later.ok, later.detail);
@@ -209,6 +295,23 @@ window.__host = {
     claim("a view that sends, in few messages, more to draw than the host may draw in its time is stopped as slow, its plain face drawn and the reason said", churn.ok, { ...churn.detail, pulse: host.pulse });
     claim("a view within its limits is kept, and draws", host.running.good === true && !host.failures.good && host.drawn.good === "6 records", { running: host.running.good, failure: host.failures.good, drawn: host.drawn.good });
     claim("the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks", host.pulse.ticks > 20 && host.pulse.longest < 250, host.pulse);
+    /*
+     * The budget fits the device: the page measured its first worker's start
+     * once, so every view that started (the long one never did) is at the
+     * one pace it kept — 1 on a laptop at rest; more on a busy runner or
+     * under GRAVIEW_SLOW, where the throttled main thread is the device being
+     * slow — and the spinner was held to the base times that pace, its
+     * sentence naming the budget. The pace itself is reported, not fixed:
+     * three harnesses side by side can make a first start slow.
+     */
+    const paces = Object.entries(host.pace).filter(([name]) => name !== "long").map(([, pace]) => pace);
+    const pace = host.pace.good;
+    const fittedBase = typeof pace === "number" ? Math.round(PUSH_MS * pace) : NaN;
+    claim(
+      `a page is at one pace, measured once from its first worker's start — 1 where it started fast — every view on it alike, and a view that spins is stopped as slow at that pace times the base ${PUSH_MS.toLocaleString("en-US")} ms, the sentence naming the budget it was held to`,
+      paces.length >= 6 && paces.every((one) => one === pace) && pace >= 1 && pace <= 4 && host.failures.spin?.reason === "slow" && host.failures.spin.detail === `It took longer than ${fittedBase.toLocaleString("en-US")} ms to draw what it was shown.`,
+      { pace: host.pace, fitted: fittedBase, spin: host.failures.spin, slow },
+    );
     claim("the page throws nothing", report.pageErrors.length === 0, report.pageErrors);
     await context.close();
 
@@ -216,6 +319,7 @@ window.__host = {
     const visit = async (path, done) => {
       const visiting = await browser.newContext();
       const page = await visiting.newPage();
+      await slowed(page);
       page.on("pageerror", (error) => report.pageErrors.push(`${path}: ${String(error).slice(0, 200)}`));
       await page.goto(`${HOST}${path}`, { waitUntil: "load" });
       /* Polled from here: Firefox runs a polled waitForFunction as eval, which the page's own policy refuses. */
@@ -248,6 +352,45 @@ window.__host = {
     report.policy.served = served;
     claim("a page that allows no blob: worker draws both views from a script its host serves from its own origin (worker-src 'self', worker: { url })", Object.values(served.drawn).every((text) => text === "6 records") && Object.values(served.failures).every((list) => list.length === 0), served);
     claim("the policy pages throw nothing", !report.pageErrors.some((error) => error.startsWith("/")), report.pageErrors);
+
+    /*
+     * THE BUDGET FITS THE DEVICE (Roadmap f-view-budget-fits-device): the
+     * paced page's first worker takes four times a fast start or longer, so
+     * every view on it is given four times its time — and no more messages.
+     */
+    const pacing = await browser.newContext();
+    const pacedPage = await pacing.newPage();
+    await slowed(pacedPage);
+    pacedPage.on("pageerror", (error) => report.pageErrors.push(`/paced: ${String(error).slice(0, 200)}`));
+    await pacedPage.goto(`${HOST}/paced`, { waitUntil: "load" });
+    const pacedDone = () => window.__host?.failures.spin && window.__host.failures.flood && window.__host.drawn().steady === "6 records" && window.__host.drawn().heavy === "6 records";
+    for (let tries = 0; tries < 150 && !(await pacedPage.evaluate(pacedDone).catch(() => false)); tries += 1) await pacedPage.waitForTimeout(100);
+    await pacedPage.waitForTimeout(500);
+    const paced = await pacedPage.evaluate(() => ({ failures: window.__host.failures, pace: window.__host.pace(), running: window.__host.running(), drawn: window.__host.drawn(), faces: window.__host.faces(), notes: window.__host.notes() }));
+    await pacing.close();
+    report.paced = paced;
+    const fitted = PUSH_MS * 4;
+    claim(
+      `a page whose first worker took four times a fast start or longer is at pace 4, every view on it alike, and a view that draws in 300 ms draws, not falls back`,
+      Object.values(paced.pace).every((pace) => pace === 4) && paced.drawn.steady === "6 records" && !paced.failures.steady && paced.running.steady === true,
+      { pace: paced.pace, steady: { drawn: paced.drawn.steady, failure: paced.failures.steady, running: paced.running.steady } },
+    );
+    claim(
+      `on that page a view whose listener takes 1 500 ms a push — past the fixed ${PUSH_MS.toLocaleString("en-US")} ms — draws, within the four times it was given`,
+      paced.drawn.heavy === "6 records" && !paced.failures.heavy && paced.running.heavy === true,
+      { drawn: paced.drawn.heavy, failure: paced.failures.heavy, running: paced.running.heavy },
+    );
+    claim(
+      `on that page a view that spins is stopped as slow at ${fitted.toLocaleString("en-US")} ms, not ${PUSH_MS.toLocaleString("en-US")}, the sentence naming the budget it was held to, its plain face drawn`,
+      paced.failures.spin?.reason === "slow" && paced.failures.spin.detail === `It took longer than ${fitted.toLocaleString("en-US")} ms to draw what it was shown.` && paced.failures.spin.at >= fitted && paced.running.spin === false && paced.faces.spin?.includes("A way in") && paced.notes.spin?.includes(paced.failures.spin.detail),
+      { spin: paced.failures.spin, running: paced.running.spin, face: paced.faces.spin, note: paced.notes.spin },
+    );
+    claim(
+      "on that page a flood is still a flood: a view that floods the host is stopped at the same allowance of 120 messages in 1,000 ms",
+      paced.failures.flood?.reason === "flood" && paced.failures.flood.detail === "It sent more than 120 messages in 1,000 ms." && paced.running.flood === false,
+      { flood: paced.failures.flood, running: paced.running.flood },
+    );
+    claim("the paced page throws nothing", !report.pageErrors.some((error) => error.startsWith("/paced")), report.pageErrors);
   } finally {
     server.close();
   }

@@ -713,6 +713,25 @@ record by its label, drawn by the host — is drawn in the region, and
 `manifest`, with a sentence saying it, once. A host draws its own in its place with `fallback`; the React
 registrations draw whatever the registry drew for the kind before.
 
+The time budgets fit the device. `pushMs` and `drawMs` are what a fast
+device is held to: the page measures how long its first view's worker took
+to start — from `new Worker` to its runtime's ready, which is the device
+making a thread and parsing and running the runtime — once, and keeps it.
+Every view on the page is given its base times that pace: 1 for a start of
+60 ms or under (a laptop keeps today's guard), rising to a ceiling of 4 for a
+start of 240 ms or more, so a car's browser that draws a home view in two
+seconds keeps it where it fell back before. A host's own numbers scale the
+same way and never past four times; the counts — `messages`, `maxNodes`,
+`maxSourceBytes` — never scale, so a flood is a flood on any device. The
+sentence a stopped view is given names the budget it was actually held to
+("It took longer than 2,400 ms…"), `pace` on the mounted view says the
+page's pace once its worker is ready, and the page keeps whatever it shows —
+the drawing before, or nothing — until the view draws or that budget runs
+out; nothing is drawn in its place and then swapped. The headless runner's
+`pushMs` is the server's and stays fixed. A start the network slowed —
+`worker: { url }` answered late — reads as a slow device too; a view on a
+slow link gets a slow device's time, and no more of anything else.
+
 What is left: work a view schedules with timers between pushes is not
 timed per push. A view that busies its own worker for just under
 `silentMs`, answers the heartbeat, and does it again can hold a core of the

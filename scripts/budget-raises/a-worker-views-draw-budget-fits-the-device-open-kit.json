@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 408,
+  "gzipped": 154,
+  "note": "Raised when a worker view's draw budget came to fit the device (Roadmap f-view-budget-fits-device): the page keeps its first worker's start and fits every view's pushMs and drawMs to the pace it says (device-pace.ts), the draw budget reads its allowance at each batch, the push timer's interval is set from the fitted budget, and the mounted view says its pace. Fetched only when a worker view first draws; a page's first load is unchanged. Measured at 224_964 / 85_630 against 224_556 / 85_476: 408 / 154 more."
+}

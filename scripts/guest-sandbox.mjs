@@ -968,7 +968,7 @@ try {
   if (TRANSPORT === "frame") await frameSuite();
   else if (TRANSPORT === "plain") await plainSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT });
   else if (TRANSPORT === "client") await clientSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, GUEST, GUEST_PORT });
-  else if (TRANSPORT === "limits") await limitsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
+  else if (TRANSPORT === "limits") await limitsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build), engine: ENGINE });
   else if (TRANSPORT === "writes") await writesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
   else if (TRANSPORT === "pictures") await picturesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT });
   else if (TRANSPORT === "drop") await dropSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, engine: ENGINE });
