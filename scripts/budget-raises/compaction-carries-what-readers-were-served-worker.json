@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 1380,
+  "note": "Raised when a checkpoint came to keep the app as readers were served it at each published seq behind it they may be served again (`Epoch.published`), so a compaction passes old publishes: the store folds those points when it checkpoints, a reader's view and `pastOf` read one behind the horizon, and a seat's view of the log serves no epoch's `published` (nor, now, the horizon epoch unjudged). The worker had 57 bytes of room under 2_267_628. Measured at 2_268_951 B against 2_267_571."
+}

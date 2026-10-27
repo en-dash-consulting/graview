@@ -56,8 +56,8 @@ export interface PublishingServed {
   verdict?: (store: object, principal: Principal) => { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal };
   /** How far a store's readers are served — or were, at a seq before the head (a checkpoint's). */
   seq?: (store: object, at?: number) => number | undefined;
-  /** How far they are served once the latest publish is undone, when that is known and in the log. */
-  previous?: (store: object) => readonly number[];
+  /** The published seqs before `at` that readers are, or may again be served once a publish in the tail is undone. */
+  behind?: (store: object, at: number) => readonly number[];
   /** Why undoing these ops, one a publish, cannot be: readers would go back behind the undo horizon. */
   undo?: (log: Pick<OperationLog, "all" | "undoneIds" | "epochs">, ops: readonly Operation[], horizon: Epoch) => string | undefined;
   /** The marker op a publish writes, appended to the store's log. */

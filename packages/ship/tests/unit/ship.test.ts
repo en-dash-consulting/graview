@@ -319,7 +319,8 @@ describe("stored formats carry their version", () => {
     opened.store.apply({ name: "add-plot", args: { label: "One", beds: 3 } });
     await opened.flush();
     opened.close();
-    expect(adapter.loadMeta("garden")).toEqual({ version: 2, framework: FRAMEWORK_VERSION, formats: { ...FORMATS } });
+    // Snapshot format 2 only for a store compacted past what stood published (`an-older-build-refuses-a-store-compacted-past-its-publish.test.ts`).
+    expect(adapter.loadMeta("garden")).toEqual({ version: 2, framework: FRAMEWORK_VERSION, formats: { ...FORMATS, snapshot: 1 } });
   });
 
   it("a snapshot written in a newer format is reported, not folded", async () => {
@@ -339,7 +340,7 @@ describe("stored formats carry their version", () => {
     const opened = await openStore({ app, adapter: createFileAdapter(scratch()) });
     const bundle = exportBundle(app, opened.store);
     expect(bundle.framework).toBe(FRAMEWORK_VERSION);
-    expect(bundle.formats).toEqual({ ...FORMATS });
+    expect(bundle.formats).toEqual({ ...FORMATS, snapshot: 1 });
     expect(() => assertBundle(app, bundle)).not.toThrow();
     expect(() => assertBundle(app, { ...bundle, formats: { ...FORMATS, op: FORMATS.op + 1 } })).toThrow(NewerFormatError);
     opened.close();

@@ -576,7 +576,8 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
    */
   const servedEpoch = <E extends { readonly seq: number; readonly base: GraphSnapshot; readonly creators?: Readonly<Record<string, string>>; readonly removed?: unknown; readonly writers?: unknown }>(epoch: E): E => {
     // What each record removed behind a checkpoint was, and who wrote what, are the store's own to judge by, never the seat's (FR-199): they name every record.
-    const { removed: _removed, writers: _writers, ...rest } = epoch;
+    // So is the app as readers were served it behind the checkpoint (Roadmap f-publishing-lifecycle): a reader is served it through its own view of that past.
+    const { removed: _removed, writers: _writers, published: _published, ...rest } = epoch as E & { readonly published?: unknown };
     const base = servedGraph(epoch.base, epoch.seq);
     if (!epoch.creators) return { ...rest, base } as unknown as E;
     const kept = new Set(base.nodes.map((node) => node.id));
@@ -654,6 +655,8 @@ export function seatView<T extends Viewed>(store: T, principal: Principal): T {
           return () => target.epochs().map(servedEpoch);
         case "lastEpoch":
           return () => servedIf(target.lastEpoch());
+        case "horizonEpoch":
+          return () => servedIf(target.horizonEpoch());
         case "live":
           return () => {
             const all = ops();

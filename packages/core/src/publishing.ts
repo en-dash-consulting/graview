@@ -168,7 +168,9 @@ function servedBehind<T extends Viewed>(store: T, principal: Principal): T {
   const head = seatView(store, principal);
   let kept: { readonly seq: number; readonly id: string | undefined; readonly view: T } | undefined;
   const now = (): T => {
-    const seq = Math.max(store.publishedSeq ?? store.log.horizon, store.log.horizon);
+    // Behind the horizon only where the checkpoint kept the app as it stood there (`Epoch.published`); else never past it.
+    const wanted = store.publishedSeq ?? store.log.horizon;
+    const seq = wanted < store.log.horizon && !store.log.horizonEpoch()?.published?.some((kept) => kept.seq === wanted) ? store.log.horizon : wanted;
     if (seq >= store.log.length) return head;
     const id = store.log.all()[seq - 1 - store.log.horizon]?.id;
     if (kept?.seq !== seq || kept.id !== id) kept = { seq, id, view: seatView(pastOf(store as never, seq) as unknown as T, principal) };
@@ -220,10 +222,19 @@ PUBLISHING.seq = (held, at) => {
   if (!publishes(publishing)) return undefined;
   return at === undefined ? publishedSeqOf(log) : standingPublishes(log, at, 1)[0];
 };
-PUBLISHING.previous = (held) => {
+/*
+ * THE PUBLISHED SEQS BEFORE `at` READERS MAY BE SERVED: the one standing
+ * there, which undoing every publish in the tail goes back to, and the one
+ * each publish op from `at` on goes through — undone ones too, since an
+ * undo of the undo brings it back. A checkpoint at `at` keeps the app as it
+ * stood at each (`Epoch.published`), so the horizon is never held at one.
+ */
+PUBLISHING.behind = (held, at) => {
   const { publishing, log } = held as Held;
-  // One behind the horizon is not held: an undo that would go back to it is refused instead (`PUBLISHING.undo`).
-  return publishes(publishing) ? standingPublishes(log, Number.POSITIVE_INFINITY, 2).slice(1).filter((seq) => seq >= log.horizon) : [];
+  if (!publishes(publishing)) return [];
+  const seqs = new Set(standingPublishes(log, at, 1));
+  for (const op of log.all()) if (op.seq >= at && op.publishedThrough !== undefined) seqs.add(op.publishedThrough);
+  return [...seqs].filter((seq) => seq < at).sort((a, b) => a - b);
 };
 PUBLISHING.op = publishOp;
 /*
@@ -239,6 +250,7 @@ PUBLISHING.undo = (log, ops, horizon) => {
   const taking = new Set(ops.map((op) => op.id));
   const now = standingPublishes(log, Number.POSITIVE_INFINITY, 1)[0];
   const after = standingPublishes({ all: () => log.all().filter((op) => !taking.has(op.id)), undoneIds: () => log.undoneIds(), epochs: () => log.epochs() }, Number.POSITIVE_INFINITY, 1)[0];
-  if (after === now || (after !== undefined && after >= horizon.seq)) return undefined;
+  // Readers can be served it again where the log folds it, or where the checkpoint kept the app as it stood there.
+  if (after === now || (after !== undefined && (after >= horizon.seq || horizon.published?.some((kept) => kept.seq === after)))) return undefined;
   return `Cannot undo this publish: what was published before it is behind the undo horizon at op ${horizon.seq}, so readers could not be served it again. Publish through an earlier change instead.`;
 };

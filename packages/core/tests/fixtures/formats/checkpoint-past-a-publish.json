@@ -1,0 +1,203 @@
+{
+  "written": "an app that publishes, compacted: as @graview 0.1.59 wrote it (its horizon held at the publish, snapshot format 1), and as this build writes one past the publish (snapshot format 2)",
+  "before": {
+    "framework": "0.1.59",
+    "formats": {
+      "snapshot": 1,
+      "op": 3
+    },
+    "epochs": [
+      {
+        "seq": 2,
+        "base": {
+          "nodes": [
+            {
+              "label": "One",
+              "id": "n:one",
+              "kind": "note"
+            }
+          ],
+          "edges": []
+        },
+        "at": "2026-10-27T09:00:01.000Z",
+        "horizon": true,
+        "creators": {
+          "n:one": "pat"
+        },
+        "removed": {},
+        "publishedThrough": 2
+      }
+    ],
+    "ops": [
+      {
+        "id": "op3",
+        "seq": 2,
+        "batch": "batch:6t5056703r03:3",
+        "author": {
+          "kind": "human",
+          "id": "pat",
+          "name": "Pat",
+          "roles": [
+            "editor"
+          ]
+        },
+        "intent": "add-note(label=\"Two\")",
+        "mutation": {
+          "name": "add-note",
+          "args": {
+            "label": "Two"
+          }
+        },
+        "primitives": [
+          {
+            "op": "add-node",
+            "node": {
+              "id": "n:two",
+              "kind": "note",
+              "label": "Two"
+            }
+          }
+        ],
+        "reads": [
+          "n:two"
+        ],
+        "writes": [
+          "n:two"
+        ],
+        "at": "2026-10-27T09:00:02.000Z"
+      },
+      {
+        "id": "op4",
+        "seq": 3,
+        "batch": "batch:6t5056703r03:4",
+        "author": {
+          "kind": "human",
+          "id": "pat",
+          "name": "Pat",
+          "roles": [
+            "editor"
+          ]
+        },
+        "intent": "add-note(label=\"Three\")",
+        "mutation": {
+          "name": "add-note",
+          "args": {
+            "label": "Three"
+          }
+        },
+        "primitives": [
+          {
+            "op": "add-node",
+            "node": {
+              "id": "n:three",
+              "kind": "note",
+              "label": "Three"
+            }
+          }
+        ],
+        "reads": [
+          "n:three"
+        ],
+        "writes": [
+          "n:three"
+        ],
+        "at": "2026-10-27T09:00:03.000Z"
+      }
+    ]
+  },
+  "past": {
+    "formats": {
+      "snapshot": 2,
+      "op": 3
+    },
+    "epochs": [
+      {
+        "seq": 3,
+        "base": {
+          "nodes": [
+            {
+              "label": "One",
+              "id": "n:one",
+              "kind": "note"
+            },
+            {
+              "label": "Two",
+              "id": "n:two",
+              "kind": "note"
+            }
+          ],
+          "edges": []
+        },
+        "at": "2026-10-27T09:00:02.000Z",
+        "horizon": true,
+        "creators": {
+          "n:one": "pat",
+          "n:two": "pat"
+        },
+        "removed": {},
+        "publishedThrough": 2,
+        "published": [
+          {
+            "seq": 2,
+            "base": {
+              "nodes": [
+                {
+                  "label": "One",
+                  "id": "n:one",
+                  "kind": "note"
+                }
+              ],
+              "edges": []
+            },
+            "at": "2026-10-27T09:00:01.000Z",
+            "horizon": true,
+            "creators": {
+              "n:one": "pat"
+            },
+            "removed": {},
+            "publishedThrough": 2
+          }
+        ]
+      }
+    ],
+    "ops": [
+      {
+        "id": "op4",
+        "seq": 3,
+        "batch": "batch:3d4a09190j27:4",
+        "author": {
+          "kind": "human",
+          "id": "pat",
+          "name": "Pat",
+          "roles": [
+            "editor"
+          ]
+        },
+        "intent": "add-note(label=\"Three\")",
+        "mutation": {
+          "name": "add-note",
+          "args": {
+            "label": "Three"
+          }
+        },
+        "primitives": [
+          {
+            "op": "add-node",
+            "node": {
+              "id": "n:three",
+              "kind": "note",
+              "label": "Three"
+            }
+          }
+        ],
+        "reads": [
+          "n:three"
+        ],
+        "writes": [
+          "n:three"
+        ],
+        "at": "2026-10-27T09:00:03.000Z"
+      }
+    ]
+  }
+}
