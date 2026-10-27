@@ -1304,8 +1304,9 @@ ${/* THE RECORD IN FOCUS KEEPS TO ITS BOX (FR-141). Whatever draws it — the
    that scrolls its own body (a Panel) keeps doing so; the kind tag astride
    the frame's edge is not held. A worker view's card (Roadmap
    f-scene-record-view-card) is held to the box by its own rules — clipped
-   and faded, with Open to the record's page, or expanded in place where
-   there are no pages — and is never a box that scrolls. */ ""}
+   and faded, saying More at its foot (FR-231), with Open to the record's
+   page, or expanded in place where there are no pages — and is never a
+   box that scrolls. */ ""}
 [data-graview-record-focus] > :not(.graview-kind-tag):not([data-graview-preview]) {
   min-height: 0;
   max-height: 100%;

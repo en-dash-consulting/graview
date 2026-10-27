@@ -723,6 +723,28 @@ try {
         one.keptError = String(error?.message ?? error);
       }
       /*
+       * A CUT CARD SAYS MORE AT ITS FOOT (FR-231): the word, its name, where
+       * it goes, and that it stands at the body's foot on the fade's ground —
+       * inside the fade's box, which ends in the card's own panel color.
+       */
+      const FOOT_OF = `(card) => {
+        const foot = card.querySelector("[data-graview-preview-more]");
+        if (!foot) return null;
+        const body = card.querySelector("[data-graview-preview-body]")?.getBoundingClientRect();
+        const fade = card.querySelector("[data-graview-preview-fade]")?.getBoundingClientRect();
+        const at = foot.getBoundingClientRect();
+        return {
+          tag: foot.tagName.toLowerCase(),
+          text: foot.textContent,
+          name: foot.getAttribute("aria-label"),
+          href: foot.getAttribute("href"),
+          visible: at.height > 0 && at.width > 0,
+          atFoot: body ? Math.round(at.bottom) <= Math.round(body.bottom) + 1 && at.top >= body.top : false,
+          onFade: fade ? at.top >= fade.top - 1 && at.bottom <= fade.bottom + 1 : false,
+          focusable: foot.tabIndex >= 0,
+        };
+      }`;
+      /*
        * A TALL VIEW ON THE SCENE IS A CARD (Roadmap f-view-content-height):
        * the log, eighty entries, drawn as its place on the Scene — no taller
        * than the box the Scene gave it, inside the window, faded at its foot
@@ -734,7 +756,8 @@ try {
        */
       try {
         const preview = (name) =>
-          tab.evaluate((name) => {
+          tab.evaluate(([name, footSource]) => {
+            const footOf = new Function(`return ${footSource}`)();
             const card = document.querySelector(`[data-graview-preview="${name}"]`);
             const region = card?.querySelector("[data-worker-view]");
             if (!card || !region) return null;
@@ -749,6 +772,7 @@ try {
             for (const el of card.querySelectorAll("*")) if (scrolls(el)) scrollers.push(el.tagName.toLowerCase());
             return {
               height: Math.round(box.height),
+              foot: footOf(card),
               top: Math.round(box.top),
               bottom: Math.round(box.bottom),
               hostHeight: host ? Math.round(host.height) : null,
@@ -762,7 +786,7 @@ try {
               open: open ? { href: open.getAttribute("href"), name: open.getAttribute("aria-label"), visible: open.getBoundingClientRect().height > 0 } : null,
               scrollers,
             };
-          }, name);
+          }, [name, FOOT_OF]);
         const drawnOnScene = (name) => tab.waitForFunction((name) => Number(document.querySelector(`[data-graview-preview="${name}"] [data-worker-view]`)?.getAttribute("data-graview-content-height") ?? 0) > 0, name, { timeout: 20_000 });
         await go(`${VIEWS_BASE}/places/overview#focus=aggregate%3Atask&in.view=the-log`);
         await drawnOnScene("the-log");
@@ -773,13 +797,21 @@ try {
         await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="the-log"]')?.shadowRoot?.querySelector(".log li")), null, { timeout: 20_000 }).catch(() => null);
         const entries = await tab.evaluate(() => document.querySelector('[data-worker-view="the-log"]')?.shadowRoot?.querySelectorAll(".log li").length ?? 0);
         const logFrame = await placeFrame('[data-worker-view="the-log"]');
+        /* FR-231: More, at the card's foot, lands where Open does. */
+        await go(`${VIEWS_BASE}/places/overview#focus=aggregate%3Atask&in.view=the-log`);
+        await drawnOnScene("the-log");
+        await tab.waitForTimeout(400);
+        await tab.click('[data-graview-preview="the-log"] [data-graview-preview-more]');
+        const byMore = await settled();
+        await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="the-log"]')?.shadowRoot?.querySelector(".log li")), null, { timeout: 20_000 }).catch(() => null);
+        const byMoreEntries = await tab.evaluate(() => document.querySelector('[data-worker-view="the-log"]')?.shadowRoot?.querySelectorAll(".log li").length ?? 0);
         await go(`${VIEWS_BASE}/places/overview#focus=aggregate%3Atask&in.view=the-map`);
         await drawnOnScene("the-map");
         await tab.waitForTimeout(400);
         const map = await preview("the-map");
         await go(`${VIEWS_BASE}/places/the-map`);
         await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="the-map"]')?.shadowRoot?.querySelector(".map")), null, { timeout: 20_000 }).catch(() => null);
-        one.tallView = { log, landed: { ...landed, entries, frame: logFrame }, map, mapFrame: await placeFrame('[data-worker-view="the-map"]') };
+        one.tallView = { log, landed: { ...landed, entries, frame: logFrame }, byMore: { ...byMore, entries: byMoreEntries }, map, mapFrame: await placeFrame('[data-worker-view="the-map"]') };
       } catch (error) {
         one.tallError = String(error?.message ?? error);
       }
@@ -794,7 +826,8 @@ try {
        */
       try {
         const card = (name) =>
-          tab.evaluate((name) => {
+          tab.evaluate(([name, footSource]) => {
+            const footOf = new Function(`return ${footSource}`)();
             const card = document.querySelector(`[data-graview-preview="${name}"]`);
             const region = card?.querySelector("[data-worker-view]");
             if (!card || !region) return null;
@@ -812,6 +845,7 @@ try {
             /* The layout's heights, not the drawn box: the Scene's plane may scale the card. */
             return {
               title: card.getAttribute("aria-label"),
+              foot: footOf(card),
               height: Math.round(box.height),
               top: Math.round(box.top),
               bottom: Math.round(box.bottom),
@@ -829,7 +863,7 @@ try {
               expand: expand ? { said: expand.textContent, pressed: expand.getAttribute("aria-expanded"), name: expand.getAttribute("aria-label") } : null,
               scrollers,
             };
-          }, name);
+          }, [name, FOOT_OF]);
         const drawnOnScene = (name) => tab.waitForFunction((name) => Number(document.querySelector(`[data-graview-preview="${name}"] [data-worker-view]`)?.getAttribute("data-graview-content-height") ?? 0) > 0, name, { timeout: 20_000 });
         await go(`${VIEWS_BASE}/places/overview#focus=t1&sel=t1`);
         await drawnOnScene("t1");
@@ -1480,6 +1514,44 @@ try {
         landed.heading === "Write the brief" &&
         landed.entries === 80,
     ),
+  };
+  /*
+   * FR-231 (Roadmap f-scene-preview-card-scrolls): a card cut at its foot
+   * says so there — a visible, focusable More on the fade's ground, named
+   * for the card — and More lands where Open does: the place, the record's
+   * page; in the Shell, with no pages, it is a press that grows the card,
+   * and gone once the card holds it all.
+   */
+  report.checks.aCutSceneCardSaysMoreAtItsFootAndMoreLandsWhereOpenDoes = {
+    seen: Object.fromEntries(pagesAt.map(([name, one]) => [name, { log: one.tallView?.log?.foot ?? one.tallError ?? null, byMore: one.tallView?.byMore ?? null, record: one.recordCard?.notes?.foot ?? one.recordError ?? null, shell: { before: one.recordCard?.shell?.before?.foot ?? null, grown: one.recordCard?.shell?.grown?.foot ?? null } }])),
+    ok:
+      tallHold(
+        ({ log, byMore }) =>
+          log.foot?.visible === true &&
+          log.foot.text === "More" &&
+          log.foot.name === "More of The log" &&
+          log.foot.tag === "a" &&
+          log.foot.focusable &&
+          log.foot.atFoot &&
+          log.foot.onFade &&
+          log.foot.href === `${VIEWS_BASE}/places/the-log` &&
+          byMore?.path === `${VIEWS_BASE}/places/the-log` &&
+          byMore.face === "pages" &&
+          byMore.heading === "The log" &&
+          byMore.entries === 80,
+      ) &&
+      recordHold(
+        ({ notes, shell: { before, grown } }) =>
+          notes.foot?.visible === true &&
+          notes.foot.name === "More of Write the brief" &&
+          notes.foot.atFoot &&
+          notes.foot.onFade &&
+          notes.foot.href === `${VIEWS_BASE}/tasks/t1` &&
+          before.foot?.tag === "button" &&
+          before.foot.visible === true &&
+          before.foot.name === "More of Write the brief" &&
+          grown.foot === null,
+      ),
   };
   report.checks.withNoPageDoorExpandGrowsTheRecordsCardInPlace = {
     seen: Object.fromEntries(Object.entries(recordSeen).map(([name, seen]) => [name, seen?.shell ?? seen])),

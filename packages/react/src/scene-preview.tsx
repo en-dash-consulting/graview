@@ -1,4 +1,4 @@
-import { useContext, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type SyntheticEvent } from "react";
+import { useContext, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import { PageDoorContext, ViewContentHeight } from "./content-height.js";
 
 interface ScenePreviewProps {
@@ -28,6 +28,14 @@ interface ScenePreviewProps {
  * fading into the card's own ground. Open goes to its page on Pages — the
  * place, or the record's page — where it is drawn whole. Nothing in it
  * scrolls.
+ *
+ * A CARD THAT IS CUT SAYS SO (FR-231, Roadmap f-scene-preview-card-scrolls).
+ * The fade alone did not: a person reading a long race card scrolled, and
+ * nothing moved, and nothing said why. Where there is more, a visible More
+ * stands at the foot on the fade's own ground — where the eye is when the
+ * card runs out — and goes where Open goes: the page, or, with no page,
+ * the card grown in place. It is named for the card and after the view in
+ * the tab order.
  *
  * A host with no Pages (a Shell drawn without the embed's page door) has no
  * page to send a reader to: there the card is expanded in place instead, to
@@ -67,6 +75,15 @@ export function ScenePreview({ title, name, path, maxHeight, children }: ScenePr
   const href = opens && door?.href ? door.href(opens) : undefined;
   /* The card's own presses, not the Scene's: no selection under Open, no drag from it, no Enter taken for the card. */
   const keep = (event: SyntheticEvent) => event.stopPropagation();
+  /* Open, and More where there are pages: the page, in this tab — or a new one, where a person asked for one and the page has an address to give it. */
+  const open = (event: MouseEvent<HTMLElement>) => {
+    keep(event);
+    if (href && (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0)) return;
+    event.preventDefault();
+    if (opens) door?.open(opens);
+  };
+  /* The link's shape where there are pages: the page's address where the host's page has one; where it has none (an embed's memory routing), a link by its role and the keyboard. */
+  const link = href ? { href } : { role: "link", tabIndex: 0 };
   const own = {
     onPointerDown: keep,
     onDoubleClick: keep,
@@ -101,21 +118,7 @@ export function ScenePreview({ title, name, path, maxHeight, children }: ScenePr
       <div style={HEAD}>
         <strong style={TITLE}>{title}</strong>
         {opens ? (
-          <a
-            data-graview-preview-open=""
-            /* The page's address where the host's page has one; where it has none (an embed's memory routing), a link by its role and the keyboard. */
-            {...(href ? { href } : { role: "link", tabIndex: 0 })}
-            aria-label={`Open ${title}`}
-            style={CONTROL}
-            {...own}
-            onClick={(event) => {
-              keep(event);
-              /* A new tab, where a person asked for one and the page has an address to give it. */
-              if (href && (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0)) return;
-              event.preventDefault();
-              door?.open(opens);
-            }}
-          >
+          <a data-graview-preview-open="" {...link} aria-label={`Open ${title}`} style={CONTROL} {...own} onClick={open}>
             Open
           </a>
         ) : more || expanded ? (
@@ -149,8 +152,29 @@ export function ScenePreview({ title, name, path, maxHeight, children }: ScenePr
         <div ref={drawn} data-graview-preview-drawn="" style={DRAWN}>
           <ViewContentHeight.Provider value={setContent}>{children}</ViewContentHeight.Provider>
         </div>
-        {/* There is more than the card holds: the foot fades into the card's ground, and Open — or Expand — is the way to the rest. */}
+        {/* There is more than the card holds: the foot fades into the card's ground, and says so — More goes where Open does, or grows the card where there are no pages. */}
         {more ? <div aria-hidden="true" data-graview-preview-fade="" style={FADE} /> : null}
+        {more ? (
+          opens ? (
+            <a data-graview-preview-more="" {...link} aria-label={`More of ${title}`} style={MORE} {...own} onClick={open}>
+              More
+            </a>
+          ) : (
+            <button
+              type="button"
+              data-graview-preview-more=""
+              aria-label={`More of ${title}`}
+              style={{ ...MORE, ...BUTTON }}
+              {...own}
+              onClick={(event) => {
+                keep(event);
+                setExpanded(true);
+              }}
+            >
+              More
+            </button>
+          )
+        ) : null}
       </div>
     </section>
   );
@@ -206,12 +230,25 @@ const BUTTON: CSSProperties = { font: "inherit", fontSize: "0.8125rem", fontWeig
 const BODY: CSSProperties = { position: "relative", flex: "0 1 auto", minHeight: 0, overflowX: "visible", overflowY: "clip", minWidth: 0 };
 /* What the view drew, at its own height: what the card measures to know whether there is more, and what Expand grows it to. */
 const DRAWN: CSSProperties = { display: "flow-root", minWidth: 0 };
+/* Tall enough to be read as a fade and not a shadow, and the card's own ground for its last third: More stands on it, never on a half-faded line. */
 const FADE: CSSProperties = {
   position: "absolute",
   left: 0,
   right: 0,
   bottom: 0,
-  height: 48,
+  height: 64,
   pointerEvents: "none",
-  background: "linear-gradient(to bottom, transparent, var(--graview-panel, #ffffff))",
+  background: "linear-gradient(to bottom, transparent, var(--graview-panel, #ffffff) 66%)",
+};
+/* More, at the foot on the fade's ground, a word as Open is, and at the card's edge where Open stands. */
+const MORE: CSSProperties = {
+  position: "absolute",
+  right: 0,
+  bottom: 0,
+  lineHeight: 1.5,
+  fontSize: "0.8125rem",
+  fontWeight: 560,
+  color: "var(--graview-accent, #2f6f5e)",
+  textDecoration: "none",
+  textUnderlineOffset: "0.2em",
 };
