@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 6600,
+  "gzipped": 2400,
+  "changeset": "formulas-build-a-date-time-and-an-act-carries-a-change-across-a-link.md",
+  "note": "Raised when formulas came to join text and build a date-time (Roadmap f-formula-text-datetime) and an act to carry a change to the records it is linked to (Roadmap f-acts-update-linked): the evaluator's seven functions and the date arithmetic they share (`expr/when.ts`), the compiled act's `through` effect, and the store judging each far record's own edit before the act runs. Measured at 585_761 / 203_702 against 579_260 / 201_414 minified and gzipped: 6_501 / 2_288 more, rounded up to the hundred."
+}

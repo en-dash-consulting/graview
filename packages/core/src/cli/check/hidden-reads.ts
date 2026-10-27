@@ -148,6 +148,27 @@ function documentActReads(act: Record<string, unknown>, schema: AnySchema): Map<
       }
     }
   }
+  /*
+   * AND THE RECORDS LINKED TO THE SUBJECT (Roadmap f-acts-update-linked): a
+   * value carried across a link is worked out standing on the subject, and
+   * the act reaches the records at the relation's far end to change them.
+   */
+  const linked = act["setsLinked"];
+  if (linked && typeof linked === "object") {
+    for (const [through, set] of Object.entries(linked as Record<string, unknown>)) {
+      const far = farEnd(declared, through, from);
+      for (const kind of far && far.kinds !== "*" ? far.kinds : []) if (!reads.has(kind)) reads.set(kind, "the linked records it changes");
+      if (!set || typeof set !== "object") continue;
+      for (const value of Object.values(set)) {
+        if (!value || typeof value !== "object" || !("expr" in value) || typeof value.expr !== "string") continue;
+        try {
+          kindsRead(parseExpr(value.expr), from, schema, reads, "a value it carries to linked records");
+        } catch {
+          // The compile's to refuse.
+        }
+      }
+    }
+  }
   const replaces = act["replaces"];
   for (const replaced of replaces === true && relation ? [relation] : Array.isArray(replaces) ? (replaces as string[]) : []) {
     const other = farEnd(declared, replaced, from);

@@ -172,7 +172,8 @@ describe("a hosted page", () => {
     // 1031 KB since a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): the list an enum compiles to and the words that say each option by its label, the in-place editor's group of boxes, a list filtered by one of them: the scene face measured 1_054_746 B, 2_989 more than before it (1_051_757).
     // 1037 KB once the 0.1.61 batch's nine branches were merged (each line above measured its own branch against main): the scene face measured 1_061_271 B, 9_514 more than main (1_051_757).
     // 1038 KB since a host's Report this came to the framework's own error toasts (FR-237) and the side accent left every notice (FR-236): the board's framework voice, the scene's where and the frame's hand of `onReport`; the chip and the button ride the notices' door: the scene face measured 1_062_059 B, 788 more than main (1_061_271).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1038 * 1024);
+    // 1045 KB since formulas came to join text and build a date-time and an act to carry a change across a link (Roadmap f-formula-text-datetime, f-acts-update-linked): the evaluator's seven functions and their date arithmetic, the compiled act's `through` effect and the store judging each far record's own edit: the scene face measured 1_068_380 B, 7_109 more than main (1_061_271).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1045 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 5100,
+  "gzipped": 1900,
+  "note": "Raised when formulas came to join text and build a date-time (Roadmap f-formula-text-datetime): the kit's renderer reaches the evaluator, which gained seven functions and the date arithmetic they share (`expr/when.ts`), and the app's own locale beside the reader's. Measured at 229_595 / 87_313 against 224_556 / 85_471: 5_039 / 1_842 more, rounded up to the hundred."
+}

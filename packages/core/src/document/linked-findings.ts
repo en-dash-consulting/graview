@@ -40,7 +40,7 @@ export function linkedFindings(document: GraviewDocument): Finding[] {
       } else if ("connect" in effect || "sever" in effect) {
         const relation = "connect" in effect ? effect.connect : effect.sever;
         if (!local(relation) && linkedAnywhere(relation)) findings.push(error("act-linked", `${where}.${"connect" in effect ? "connect" : "sever"}`, `"${relation}" links a record in another app, which is kept on the record that links it rather than connected`, `let the derived edit change it ("edit-<kind>"), which picks a record there`));
-      } else if ("set" in effect) {
+      } else if ("set" in effect && !("through" in effect)) {
         const target = typeof effect.target === "string" ? effect.target.slice(1) : "subject";
         const kinds = target === "subject" ? subjects : created.has(target) ? [created.get(target)!] : [];
         for (const field of Object.keys(effect.set)) for (const kind of kinds) if (linkedHere(kind, field)) findings.push(written(`${where}.set.${field}`, kind, field));

@@ -5,6 +5,7 @@ import { dateOn } from "../../repeat.js";
 import type { AnyGraphNode, GraphReader } from "../../graph/types.js";
 import type { Expr } from "./parse.js";
 import { linkedReaderOf, linkedRefsOf, type LinkedReader, type LinkedRecord, type LinkedRecordRef, type LinkedRelation } from "../../schema/linked.js";
+import { addMinutesTo, datetimeAt, formatWhen, isWeekday, minutesOfTime, startOfWeekOf, weekdayOfWhen, whenOf, zoneOf, type When } from "./when.js";
 
 /*
  * THE RULE LANGUAGE, JUDGED.
@@ -86,6 +87,15 @@ export interface EvalContext {
   readonly now?: string;
   readonly budget?: number;
   /**
+   * The app's locale and time zone (`brand.locale`, `brand.timeZone`): what
+   * `format(…)` says a moment in and the clock `datetime(…)`, `weekday(…)`
+   * and `startOfWeek(…)` read it on. Unsaid, the app the page draws; else
+   * en-US and UTC — never the reader's, since a value the language builds
+   * may be kept on a record.
+   */
+  readonly locale?: string;
+  readonly timeZone?: string;
+  /**
    * How far records are read (FR-171), as whoever is looking: else the
    * reader registered for the graph (`readLinkedThrough`), else none — and
    * every link reads as unread.
@@ -127,6 +137,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
   };
   const today = ctx.today ?? isoToday();
   const now = ctx.now ?? new Date().toISOString();
+  const zone = zoneOf(ctx.timeZone);
   /*
    * A COMPUTED FIELD IS WORKED OUT ONCE PER EVALUATION, and never while it
    * is being worked out: a cycle the check could not see (across kinds,
@@ -213,6 +224,14 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     const t = Date.parse(s.length === 10 ? `${s}T00:00:00Z` : s);
     if (Number.isNaN(t)) throw new ExprEvalError(`${fn}(…) needs a date, and "${s}" is not one`, at);
     return t;
+  };
+  // A moment on the app's wall (`when.ts`): a day, a wall time or an instant; nothing is nothing.
+  const asWhen = (v: Value, at: number, fn: string): When | null => {
+    if (v === null) return null;
+    if (typeof v !== "string") throw new ExprEvalError(`${fn}(…) needs a date, and was given ${describe(v)}`, at);
+    const when = whenOf(v, zone);
+    if (!when) throw new ExprEvalError(`${fn}(…) needs a date, and "${v}" is not one`, at);
+    return when;
   };
   const equal = (a: Value, b: Value): boolean => {
     if (isNode(a) && isNode(b)) return a.id === b.id;
@@ -469,6 +488,60 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
         const s = asString(arg(0), e.at, "lower");
         return s === null ? null : s.toLowerCase();
       }
+      case "concat": {
+        /*
+         * WORDS JOINED (Roadmap f-formula-text-datetime): concat(name, ' · ',
+         * place). Nothing joins as no words at all, where `+` would make the
+         * whole nothing: a title with an empty middle is still a title.
+         */
+        if (e.args.length < 1) throw new ExprEvalError("concat(…) takes at least one argument", e.at);
+        let s = "";
+        for (let i = 0; i < e.args.length; i++) s += asString(arg(i), e.at, "concat") ?? "";
+        if (s.length > 10_000) throw new ExprEvalError("that makes a word too long", e.at);
+        return s;
+      }
+      case "format": {
+        // A moment said by a pattern — format(start, 'EEE d MMM, h:mm a') — in the app's locale, on its clock.
+        arity(2);
+        const when = asWhen(arg(0), e.at, "format");
+        const pattern = arg(1);
+        if (typeof pattern !== "string") throw new ExprEvalError("format(…) says its pattern in quotes, like format(start, 'EEE h:mm a')", e.at);
+        if (when === null) return null;
+        const said = formatWhen(when, pattern, ctx.locale);
+        if (typeof said !== "string") throw new ExprEvalError(said.problem, e.at);
+        return said;
+      }
+      case "datetime":
+      case "at": {
+        // A day at a time of day on the app's wall, as an instant: datetime(due, '09:30'), at(due, startTime).
+        arity(2);
+        const when = asWhen(arg(0), e.at, e.fn);
+        const time = arg(1);
+        if (time === null || when === null) return null;
+        const minutes = typeof time === "string" ? minutesOfTime(time) : undefined;
+        if (minutes === undefined) throw new ExprEvalError(`${e.fn}(…) needs a time of day written like '09:30', and was given ${typeof time === "string" ? `"${time}"` : describe(time)}`, e.at);
+        return datetimeAt(when, minutes, zone);
+      }
+      case "addMinutes": {
+        arity(2);
+        const when = asWhen(arg(0), e.at, "addMinutes");
+        const count = arg(1);
+        if (when === null || count === null) return null;
+        if (typeof count !== "number" || !Number.isFinite(count)) throw new ExprEvalError(`addMinutes(…) needs a number of minutes, and was given ${describe(count)}`, e.at);
+        return addMinutesTo(when, Math.round(count));
+      }
+      case "weekday": {
+        arity(1);
+        const when = asWhen(arg(0), e.at, "weekday");
+        return when === null ? null : weekdayOfWhen(when);
+      }
+      case "startOfWeek": {
+        arity(1, 2);
+        const when = asWhen(arg(0), e.at, "startOfWeek");
+        const first = e.args.length === 2 ? arg(1) : "mon";
+        if (!isWeekday(first)) throw new ExprEvalError("startOfWeek(…) starts the week on a day said 'mon' to 'sun'", e.at);
+        return when === null ? null : startOfWeekOf(when, first);
+      }
       case "today":
         arity(0);
         return today;
@@ -542,4 +615,5 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
 export const FUNCTIONS = [
   "out", "in", "all", "count", "exists", "every", "some", "sum", "min", "max", "present", "len",
   "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if", "first", "sort", "either", "fact", "archived", "round",
+  "concat", "format", "datetime", "at", "addMinutes", "weekday", "startOfWeek",
 ] as const;

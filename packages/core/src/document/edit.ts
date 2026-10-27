@@ -610,8 +610,8 @@ function proseSwap(from: string, to: string): (text: string) => string {
 const subjectKinds = (act: Doc): Kinds => (act.on ? new Set(asArray(act.on)) : NONE);
 
 /** The kinds each `set` in an act writes to: its subject, a record it made, the other end of what it connects (FR-115), or (for a `$ref` target) any kind. */
-function setTargets(act: Doc, doc?: Doc): { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "setsOther" | "writes" | "effect" | "create"; index?: number }[] {
-  const out: { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "setsOther" | "writes" | "effect" | "create"; index?: number }[] = [];
+function setTargets(act: Doc, doc?: Doc): { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "setsOther" | "setsLinked" | "writes" | "effect" | "create"; index?: number; relation?: string }[] {
+  const out: { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "setsOther" | "setsLinked" | "writes" | "effect" | "create"; index?: number; relation?: string }[] = [];
   const made = new Map<string, string>();
   if (act.creates) made.set("new", act.creates);
   (act.effects ?? []).forEach((e: Doc) => {
@@ -622,6 +622,11 @@ function setTargets(act: Doc, doc?: Doc): { set: Record<string, unknown>; kinds:
     const relation = act.connects ?? act.severs;
     const end = doc && relation ? farEnd(doc.kinds, relation, asArray(act.on)) : undefined;
     out.push({ set: act.setsOther, kinds: end && end.kinds !== "*" ? new Set(end.kinds) : "*", where: "setsOther" });
+  }
+  // What it carries to the records linked to its subject, by relation: the kinds at each relation's far end.
+  for (const [relation, set] of Object.entries(act.setsLinked ?? {}) as [string, Record<string, unknown>][]) {
+    const end = doc ? farEnd(doc.kinds, relation, asArray(act.on)) : undefined;
+    out.push({ set, kinds: end && end.kinds !== "*" ? new Set(end.kinds) : "*", where: "setsLinked", relation });
   }
   (act.effects ?? []).forEach((e: Doc, index: number) => {
     if (e.create) out.push({ set: e.set ?? {}, kinds: new Set([e.create]), where: "create", index });
@@ -2769,6 +2774,11 @@ class Editor {
         if (act.connects === r.from) act.connects = r.to;
         if (act.severs === r.from) act.severs = r.to;
         if (Array.isArray(act.replaces)) act.replaces = act.replaces.map((e: string) => (e === r.from ? r.to : e));
+        if (act.setsLinked?.[r.from] !== undefined) {
+          const carried: Doc = {};
+          for (const [k, v] of Object.entries(act.setsLinked)) carried[k === r.from ? r.to : k] = v;
+          act.setsLinked = carried;
+        }
         for (const e of act.effects ?? []) {
           if (e.connect === r.from) e.connect = r.to;
           if (e.sever === r.from) e.sever = r.to;
@@ -2784,6 +2794,7 @@ class Editor {
           if (t.set[r.from] === `$${r.from}`) args.set(r.from, r.to);
           if (t.where === "sets") act.sets = renamed;
           else if (t.where === "setsOther") act.setsOther = renamed;
+          else if (t.where === "setsLinked") act.setsLinked[t.relation!] = renamed;
           else act.effects[t.index!].set = renamed;
         }
         if (act.writes && (hasKind(on, r.kind) || act.creates === r.kind) && act.writes.includes(r.from)) {
@@ -2986,6 +2997,13 @@ class Editor {
       const on = subjectKinds(act);
       let uses = exprMentions(doc, act.allowedWhen, on, r) || templateMentions(doc, act.refusal, on, r);
       if (r.t === "edge") uses ||= act.connects === r.from || act.severs === r.from || (act.effects ?? []).some((e: Doc) => e.connect === r.from || e.sever === r.from);
+      // A relation it carried values through carries nothing now: the entry goes; an act that did nothing else goes with it.
+      if (r.t === "edge" && !uses && act.setsLinked?.[r.from] !== undefined) {
+        delete act.setsLinked[r.from];
+        if (Object.keys(act.setsLinked).length === 0) delete act.setsLinked;
+        const stillDoes = act.creates || act.writes || act.sets || act.setsLinked || act.connects || act.severs || act.removes || (act.effects ?? []).length > 0;
+        if (!stillDoes) uses = true;
+      }
       // A relation it only replaced goes from the list; one that replaced nothing else goes with it (FR-115).
       if (r.t === "edge" && !uses && Array.isArray(act.replaces) && act.replaces.includes(r.from)) {
         act.replaces = act.replaces.filter((e: string) => e !== r.from);
@@ -3006,7 +3024,10 @@ class Editor {
         if (act.args && Object.keys(act.args).length === 0) delete act.args;
         if (act.sets && Object.keys(act.sets).length === 0) delete act.sets;
         if (act.setsOther && Object.keys(act.setsOther).length === 0) delete act.setsOther;
-        const doesSomething = act.creates || act.writes || act.sets || act.connects || act.severs || act.removes || (act.effects ?? []).some((e: Doc) => e.create || e.connect || e.sever || e.remove || (e.set && Object.keys(e.set).length > 0));
+        // A relation whose carried fields are all gone carries nothing: it goes from `setsLinked`, and an empty `setsLinked` goes with it.
+        for (const [relation, set] of Object.entries(act.setsLinked ?? {}) as [string, Doc][]) if (Object.keys(set).length === 0) delete act.setsLinked[relation];
+        if (act.setsLinked && Object.keys(act.setsLinked).length === 0) delete act.setsLinked;
+        const doesSomething = act.creates || act.writes || act.sets || act.setsLinked || act.connects || act.severs || act.removes || (act.effects ?? []).some((e: Doc) => e.create || e.connect || e.sever || e.remove || (e.set && Object.keys(e.set).length > 0));
         if (!doesSomething) uses = true;
         else if (act.effects) {
           act.effects = act.effects.filter((e: Doc) => !(e.set && !e.create && Object.keys(e.set).length === 0));

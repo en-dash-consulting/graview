@@ -72,6 +72,81 @@ function otherEndFindings(name: string, act: ActSpec, document: GraviewDocument)
   return out;
 }
 
+/** Whether a value written as it is (not a `$ref`, not an expression) is one the field could hold. */
+function literalFits(value: unknown, type: string): boolean {
+  if (value === null || typeof value === "object") return true;
+  if (typeof value === "string" && /^\$[A-Za-z]/.test(value)) return true;
+  switch (type) {
+    case "number":
+    case "integer":
+    case "duration":
+      return typeof value === "number";
+    case "boolean":
+      return typeof value === "boolean";
+    case "string":
+    case "text":
+    case "enum":
+    case "date":
+    case "datetime":
+    case "url":
+    case "email":
+    case "phone":
+      return typeof value === "string";
+    default:
+      return true;
+  }
+}
+
+/**
+ * What an act says of the records linked to its subject (Roadmap
+ * f-acts-update-linked): a `setsLinked` names, for a subject the act is
+ * `on`, a relation that joins its kind to another — declared on it, or
+ * pointing at it — and sets fields each kind at the far end has, with
+ * values they could hold.
+ */
+function linkedFindings(name: string, act: ActSpec, document: GraviewDocument): Finding[] {
+  const out: Finding[] = [];
+  if (!act.setsLinked) return out;
+  const at = `acts.${name}.setsLinked`;
+  const subject = asArray(act.on);
+  if (subject.length === 0) {
+    out.push(error("act-sets-linked-relation", at, `"${name}" sets the records linked to its subject, and is on no kind`, 'say which kind it is "on"; the relations it carries values through are that kind\'s'));
+    return out;
+  }
+  for (const [relation, set] of Object.entries(act.setsLinked)) {
+    const here = `${at}.${relation}`;
+    const declaredOn = subject.filter((kind) => document.kinds[kind]?.edges?.[relation] !== undefined);
+    const pointingAt = Object.entries(document.kinds).filter(([, spec]) => {
+      const to = spec.edges?.[relation]?.to;
+      return to !== undefined && (to === "*" || subject.some((kind) => to.includes(kind)));
+    });
+    if (declaredOn.length === 0 && pointingAt.length === 0) {
+      const own = [...new Set(subject.flatMap((kind) => Object.keys(document.kinds[kind]?.edges ?? {})))];
+      const noun = subject.map((kind) => withArticle(kind)).join(" or ");
+      out.push(
+        error("act-sets-linked-relation", here, `"${relation}" is not a relation that joins ${noun} to anything, so "${name}" has no linked records to set through it`, own.length > 0 ? `name one of ${subject.join(" or ")}'s relations: ${own.join(", ")}` : `declare a relation on ${subject.join(" or ")} first`),
+      );
+      continue;
+    }
+    const end = farEnd(document.kinds, relation, subject);
+    if (!end || end.kinds === "*") continue;
+    for (const [field, value] of Object.entries(set)) {
+      for (const kind of end.kinds) {
+        const spec = document.kinds[kind];
+        if (!spec) continue;
+        const f = spec.fields[field];
+        if (!f) {
+          if (spec.computed?.[field] !== undefined) out.push(error("computed-written", `${here}.${field}`, `${kind}'s ${field} is worked out, not written: no act can set it`, "set the stored fields it is worked out from"));
+          else out.push(error("act-sets-linked-field", `${here}.${field}`, `${kind}, at the far end of "${relation}", has no field "${field}"`, `set one of ${kind}'s fields: ${Object.keys(spec.fields).join(", ")}`));
+          continue;
+        }
+        if (!literalFits(value, f.type)) out.push(error("act-sets-linked-field", `${here}.${field}`, `${kind}'s ${field} holds ${withArticle(f.type)}, and ${JSON.stringify(value)} is not one`, `write ${withArticle(f.type)}, an argument ("$name") or an expression ({ "expr": … })`));
+      }
+    }
+  }
+  return out;
+}
+
 /**
  * What an act's `$me` needs (Roadmap f-act-as-me): a kind that says it is
  * the people, since `$me` is the acting person's own record of it; and,
@@ -104,7 +179,7 @@ function meFindings(name: string, act: ActSpec, document: GraviewDocument): Find
 
 /** Every range, other-end and `$me` finding of a document, in its order: fields, then acts. */
 export function actFindings(document: GraviewDocument): Finding[] {
-  return [...rangeFindings(document), ...neverArchivedFindings(document), ...neverTidiedFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...meFindings(name, act, document)])];
+  return [...rangeFindings(document), ...neverArchivedFindings(document), ...neverTidiedFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...linkedFindings(name, act, document), ...meFindings(name, act, document)])];
 }
 
 /**
