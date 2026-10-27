@@ -39,6 +39,7 @@ import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
 import { formatValue, renderTemplate, type Money, type TemplatePart } from "./template.js";
+import { uncovered, type CoverPlan } from "./covers.js";
 import { rememberDocument } from "./remembered.js";
 import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
@@ -139,7 +140,10 @@ export interface ActPlan {
 
 export interface RulePlan {
   readonly title: string;
-  readonly require: Expr;
+  /** What must hold, parsed — or, for a coverage rule, nothing: `covers` says its walk. */
+  readonly require?: Expr;
+  /** A coverage rule's walk, each step with its direction resolved (Roadmap f-rule-covers-every). */
+  readonly covers?: CoverPlan;
   readonly when?: Expr;
   readonly says?: readonly TemplatePart[];
 }
@@ -659,7 +663,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   // ── rules ────────────────────────────────────────────────────────────────
   const invariants: InvariantDefinition[] = [];
   for (const [name, rule] of Object.entries(document.rules ?? {})) {
-    const { title, require, when, says } = plan.rules[name]!;
+    const { title, require, when, says, covers } = plan.rules[name]!;
     const repairs = rule.repairs ?? [];
     // The store's day when it hands one (pinned, or ticked: FR-176), else the clock.
     const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today(), linked?: LinkedReader): Violation[] => {
@@ -674,9 +678,17 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
        * `could-not-judge`. Both name the rule and its subject, and neither
        * is a hang or a crash that takes the other rules down.
        */
+      /** The records a coverage rule's subject does not reach: one problem each, naming both (Roadmap f-rule-covers-every). */
+      let missing: AnyGraphNode[] = [];
       try {
         if (when && evaluateExpr(when, ctx) !== true) return [];
-        holds = evaluateExpr(require, ctx) === true;
+        if (covers && subject) {
+          // One pass over the subject's links, never through the evaluator: nothing here can run out of budget.
+          missing = uncovered(graph, subject, covers);
+          holds = missing.length === 0;
+        } else {
+          holds = evaluateExpr(require!, ctx) === true;
+        }
         if (!holds && unread.length > 0) throw new ExprEvalError(`it reads ${unreadSaid(unread[0]!)}`, 0);
       } catch (e) {
         if (e instanceof ExprBudgetError) throw new RuleBudgetError(e.sentence);
@@ -704,6 +716,23 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         // Said as the act reads from where the rule stands: from the finding, "Name the work that fixes it".
         return [{ mutation: r.act, label: r.label ?? (far ? act!.fromTheOtherEnd : act?.title) ?? r.act.replace(/-/g, " "), args, ...(missing.length > 0 ? { missing } : {}) }];
       });
+      if (covers && subject) {
+        /*
+         * EACH MISSING PAIR IS ONE PROBLEM naming both records. The sentence
+         * may say either by its kind's name — "{candidate} has no stance on
+         * {issue}" — bound beside the subject's own fields.
+         */
+        return missing.map((far) => ({
+          invariant: name,
+          subjectId: subject.id,
+          label: title,
+          message: says
+            ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, money, bindings: { [subject.kind]: subject, [far.kind]: far } })
+            : `${labelFor(subject)}: ${title} — ${labelFor(far)}`,
+          nodeIds: [subject.id, far.id],
+          repairs: repairList,
+        }));
+      }
       return [
         {
           invariant: name,
@@ -718,8 +747,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const declared = {
       label: title,
       // What its line is said from (`@graview/core/lines`): data, so a page that judges carries no words.
-      shape: { over: rule.over, require, when, says, declared: document.kinds, money, kinds: shapes, today },
-      judgment: { require: rule.require, ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
+      shape: { over: rule.over, require, ...(covers ? { covers } : {}), when, says, declared: document.kinds, money, kinds: shapes, today },
+      judgment: { ...(rule.require ? { require: rule.require } : {}), ...(rule.covers ? { covers: rule.covers } : {}), ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
       ...(rule.description ? { description: rule.description } : {}),
       ...(repairs.length > 0 ? { repairs: repairs.map((r) => r.act) } : {}),
     };

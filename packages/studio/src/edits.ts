@@ -306,12 +306,15 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
   const repairsOf = (read: Read, rule: Node) => [...read.out(rule.id, "repairs").map(label), ...(strings(rule, "derivedRepairs") ?? [])];
   const overOf = (read: Read, rule: Node) => (rule["wholeGraph"] === true ? "graph" : (kindName(read.out(rule.id, "over")[0]) ?? "graph"));
   for (const [id, rule] of rulesBefore) if (!rulesAfter.has(id) && mid.rules?.[label(rule)]) edits.push({ op: "remove-rule", rule: label(rule) });
+  /** A coverage rule's walk as the node holds it (Roadmap f-rule-covers-every), or nothing. */
+  const coversOf = (rule: Node) => (str(rule, "coversEvery") && str(rule, "coversThrough") ? { every: str(rule, "coversEvery")!, through: str(rule, "coversThrough")!, ...(str(rule, "coversVia") ? { via: str(rule, "coversVia")! } : {}) } : undefined);
+  const sameCovers = (a: ReturnType<typeof coversOf>, b: ReturnType<typeof coversOf>) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
   for (const [id, rule] of rulesAfter) {
     const old = rulesBefore.get(id);
     const name = label(rule);
     if (!old) {
-      if (!str(rule, "require")) {
-        findings.push(unsaid(`rules.${name}`, `the rule ${name} says nothing that must hold; a document's rule is judged in words, so give it a "require"`));
+      if (!str(rule, "require") && !coversOf(rule)) {
+        findings.push(unsaid(`rules.${name}`, `the rule ${name} says nothing that must hold; a document's rule is judged in words, so give it a "require" (or what it covers)`));
         continue;
       }
       const repairs = repairsOf(now, rule);
@@ -322,7 +325,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
         ...(str(rule, "description") ? { description: str(rule, "description") } : {}),
         over: overOf(now, rule),
         ...(str(rule, "when") ? { when: str(rule, "when") } : {}),
-        require: str(rule, "require"),
+        ...(str(rule, "require") ? { require: str(rule, "require") } : { covers: coversOf(rule) }),
         ...(str(rule, "says") ? { says: str(rule, "says") } : {}),
         ...(repairs.length > 0 ? { repairs: repairs.map((act) => ({ act })) } : {}),
       });
@@ -348,7 +351,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
      */
     const renamed = renamedRule(old, overOf(was, old));
     const moved = (key: "require" | "when", text: string | undefined) => printed(text) !== printed(renamed[key]) && printed(text) !== printed(kept[key]);
-    const judged = moved("require", wanted.require) || moved("when", wanted.when) || (wanted.says !== renamed.says && wanted.says !== kept.says);
+    const judged = moved("require", wanted.require) || moved("when", wanted.when) || (wanted.says !== renamed.says && wanted.says !== kept.says) || (!sameCovers(coversOf(rule), coversOf(old)) && !sameCovers(coversOf(rule), kept.covers));
     const worded = str(rule, "title") !== str(old, "title") || str(rule, "description") !== str(old, "description");
     const repairs = repairsOf(now, rule);
     const repaired = !same([...repairsOf(was, old)].sort(), [...repairs].sort());
@@ -358,7 +361,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       continue;
     }
     if (!judged && !worded && !repaired) continue;
-    if (!wanted.require) {
+    if (!wanted.require && !coversOf(rule)) {
       findings.push(unsaid(`rules.${name}`, `the rule ${name} no longer says what must hold; a document's rule is judged in words`));
       continue;
     }
@@ -374,7 +377,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     const keptRepairs = written.flatMap((repair, at) => (repairs.includes(repair.act) ? [edited[at] ?? repair] : []));
     const newRepairs = repairs.filter((act) => !written.some((repair) => repair.act === act)).map((act) => ({ act }));
     const allRepairs = [...keptRepairs, ...newRepairs];
-    const { repairs: _repairs, when: _when, says: _says, ...rest } = kept;
+    const { repairs: _repairs, when: _when, says: _says, require: _require, covers: _covers, ...rest } = kept;
     edits.push({
       op: "add-rule",
       rule: name,
@@ -382,7 +385,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       ...rest,
       ...(worded && str(rule, "title") ? { title: str(rule, "title") } : {}),
       ...(worded && str(rule, "description") ? { description: str(rule, "description") } : {}),
-      require: wanted.require,
+      ...(wanted.require ? { require: wanted.require } : { covers: coversOf(rule) }),
       ...(wanted.when ? { when: wanted.when } : {}),
       ...(wanted.says ? { says: wanted.says } : {}),
       ...(allRepairs.length > 0 ? { repairs: allRepairs } : {}),

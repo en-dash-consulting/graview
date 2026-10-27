@@ -47,6 +47,20 @@ A rule in the rule language is drawn as its shape, in the declaration's labels: 
 
 Fields and one-edge hops by name, `out('edge')`, `in('edge')`, `all('kind')` and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`; `sum`/`min`/`max(S, expr)` with an expression per member (`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list key sorts by its first value, then its next), `first(S)` for one record, `either(a, b)` for the first that is something; `if(cond, a, b)`, which works out only the branch it takes; `round(x, places)`; `present`, `len`, dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set and give each record reached once; sets meet with `&`, join with `|` and part with `-` — LifeLogics' coverage is one figure, `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step read from what the seat may see. (Inside a template's braces, a `|` within brackets joins; the last bar outside them is the formatter's.) A kind's `computed` fields read like stored ones, and `fact('name')` reads a fact of the whole graph — a document's top-level `computed`, like `"mapProposed": "every(all('area'), proposed)"` — so a rule over the graph, a block and a face's own screen say it once (`factValues` from `@graview/core/blocks`; `describe_place` on the home lists them). Every evaluation has a step budget: a rule that reads too much is `over-budget`, never a hang.
 
+### A rule that covers every record
+
+"Every candidate has a stance on every issue" can be written in the rule language — count the distinct issues a candidate's stances reach against `all('issue')` — and `graview check` rightly warns `rule-cost` of it: the evaluator would walk every issue for every candidate. Declare it as a coverage rule instead, and there is nothing to warn of:
+
+```json
+"stance-on-every-issue": {
+  "over": "candidate",
+  "covers": { "every": "issue", "through": "stances", "via": "issue" },
+  "says": "{candidate} has no stance on {issue}"
+}
+```
+
+`covers` takes the place of `require`: each record of `over` must reach every live record of `every`, `through` a relation of its own kind (or one that points at it) and `via` one more when the first lands on a kind in between; `through` alone when it reaches the covered kind. The store judges it in one pass over the record's links, never through the evaluator, so it has no budget to run out of; each far record the subject does not reach is one problem naming both, and `says` may name either record by its kind (`{candidate}`, `{issue}`). `graview check` refuses a relation that does not exist or does not lead from the kind to the covered one (`rule-covers-relation`, at `covers.through` or `covers.via`), and a rule saying both or neither of `require` and `covers`. In TypeScript the same rule is `coverageRule` from `@graview/core/document`.
+
 The same language works out what a document's act sets, so a repair can be one declared act that does all of it: org's `assign-ownership` is `on: "component"`, `connects: "owns"` (from the person given, as the relation is declared), `replaces: ["owns", "proposedOwner"]` (the links it supersedes), and `sets: { ownership: { expr: "if(to == 'person-nick', 'nick_owns', 'owned_elsewhere')" } }`; `setsOther` sets the record at the link's other end. Each previews and undoes as one act.
 
 ### The horizon

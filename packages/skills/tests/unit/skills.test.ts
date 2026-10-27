@@ -15,6 +15,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/app-places.ts"), "utf8"),
   // What a kind's field roles are found wanting by: decided in one place, for the check and a document's checked compile alike.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/facts-and-roles.ts"), "utf8"),
+  // What a document's rules, acts and kinds are found wanting by as it compiles (`rule-covers-relation`, Roadmap f-rule-covers-every), which `graview check --document` says too.
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/document/compile.ts"), "utf8"),
   // What a view's blocks are found wanting by: one validator, for the check and a document's compile alike (`warning("view-whole-text", …)`).
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/views.ts"), "utf8"),
   // What a relation to another app's kind is found wanting by (FR-171): said with the checker, never by a page that compiles without it.

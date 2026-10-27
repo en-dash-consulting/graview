@@ -228,7 +228,14 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       ...(rule.readsTheClock ? { readsTheClock: true } : {}),
       wholeGraph: rule.scope === "graph",
       ...(rule.label ? { title: rule.label } : {}),
-      ...(rule.judgment ? { require: rule.judgment.require, ...(rule.judgment.when ? { when: rule.judgment.when } : {}), ...(rule.judgment.says ? { says: rule.judgment.says } : {}) } : {}),
+      ...(rule.judgment
+        ? {
+            ...(rule.judgment.require ? { require: rule.judgment.require } : {}),
+            ...(rule.judgment.covers ? { coversEvery: rule.judgment.covers.every, coversThrough: rule.judgment.covers.through, ...(rule.judgment.covers.via ? { coversVia: rule.judgment.covers.via } : {}) } : {}),
+            ...(rule.judgment.when ? { when: rule.judgment.when } : {}),
+            ...(rule.judgment.says ? { says: rule.judgment.says } : {}),
+          }
+        : {}),
       ...(rule.description ?? rule.label ? { description: rule.description ?? rule.label } : {}),
       ...(derivedRepairs.length > 0 ? { derivedRepairs } : {}),
     });

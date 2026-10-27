@@ -147,8 +147,8 @@ export function sourceChanges(before: Reading, after: Reading, base?: GraviewApp
         const text = (sort === "act" ? actLines(now, node, false) : ruleLines(now, node, false)).join("\n");
         changes.push(sort === "act" ? { what: "add-act", act: name, binding: camel(name), text } : { what: "add-rule", rule: name, binding: camel(name), text });
         // A rule judged in words is whole as written; one without judges nothing until its evaluate says what breaks it.
-        if (sort === "rule" && !node["require"]) rewrite.push({ sort, name, why: "It is new, and judges nothing until its evaluate says what breaks it." });
-      } else if (then.get(name) !== signature(now, node) && sort === "rule" && node["require"]) {
+        if (sort === "rule" && !node["require"] && !node["coversEvery"]) rewrite.push({ sort, name, why: "It is new, and judges nothing until its evaluate says what breaks it." });
+      } else if (then.get(name) !== signature(now, node) && sort === "rule" && (node["require"] || node["coversEvery"])) {
         // A rule judged in words is rewritten by the studio itself: its words are its judgment.
         changes.push({ what: "replace-rule", rule: name, text: ruleLines(now, node, false).join("\n") });
       } else if (then.get(name) !== signature(now, node)) {

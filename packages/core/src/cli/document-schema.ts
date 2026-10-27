@@ -1,7 +1,7 @@
 import * as z from "../schema/zod.js";
 import { ConnectionSpec } from "../document/connection-spec.js";
 import { PurposeSpec } from "../document/purpose-spec.js";
-import { DocumentSpec, FieldSpec, KindSpec } from "../document/schema.js";
+import { DocumentSpec, FieldSpec, KindSpec, RuleSpec } from "../document/schema.js";
 import { BLOCK_KEYS, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, MAX_TEXT_LINES, VIEW_FIELD_FORMATS, VIEW_SLOTS, VIEW_TONES } from "../document/views.js";
 import { SHIPPED_LENSES, SHIPPED_LENS_NAMES } from "../places.js";
 
@@ -47,7 +47,7 @@ const built = (lazy: z.ZodMiniLazy): unknown => lazy._zod.innerType;
 const at = (schema: Json, ...path: string[]): Json => path.reduce<Json>((node, key) => (node[key] ?? {}) as Json, schema);
 
 export function documentJsonSchema(version: string): Json {
-  const [documentSpec, kindSpec, fieldSpec] = [built(DocumentSpec), built(KindSpec), built(FieldSpec)];
+  const [documentSpec, kindSpec, fieldSpec, ruleSpec] = [built(DocumentSpec), built(KindSpec), built(FieldSpec), built(RuleSpec)];
   const schema = z.toJSONSchema(documentSpec as z.ZodMiniType, {
     io: "input",
     unrepresentable: "any",
@@ -63,6 +63,10 @@ export function documentJsonSchema(version: string): Json {
         Object.assign(at(json, "properties", "edges", "propertyNames"), { not: { enum: INHERITED }, description: NAMING });
         Object.assign(at(json, "properties", "edges"), { description: `The kind's relations, by name. ${NAMING}` });
         Object.assign(at(json, "properties", "computed"), { maxProperties: 20 });
+      }
+      if (zodSchema === ruleSpec) {
+        // A rule is judged by what it requires or by what it covers, one or the other (Roadmap f-rule-covers-every); a coverage rule is over a kind.
+        json["oneOf"] = [{ required: ["require"], not: { required: ["covers"] } }, { required: ["covers"], not: { required: ["require"] }, properties: { over: { not: { const: "graph" } } } }];
       }
       if (zodSchema === fieldSpec) {
         json["allOf"] = [

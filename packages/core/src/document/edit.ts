@@ -2213,7 +2213,7 @@ class Editor {
       gone.push("its hue");
     }
     for (const [name, rule] of Object.entries(this.doc.rules ?? {}) as [string, Doc][]) {
-      if (rule.over === kind || exprMentions(this.doc, rule.when, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" }) || exprMentions(this.doc, rule.require, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" })) {
+      if (rule.over === kind || rule.covers?.every === kind || exprMentions(this.doc, rule.when, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" }) || exprMentions(this.doc, rule.require, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" })) {
         delete this.doc.rules[name];
         gone.push(titled("rule", name, rule));
       }
@@ -2835,7 +2835,12 @@ class Editor {
       const before = JSON.stringify(rule);
       const ctx: Kinds = rule.over === "graph" ? NONE : new Set([rule.over]);
       if (rule.when !== undefined) rule.when = exprAt(rule.when, ctx);
-      rule.require = exprAt(rule.require, ctx);
+      if (rule.require !== undefined) rule.require = exprAt(rule.require, ctx);
+      // A coverage rule names its kind and its relations outright: each follows its rename.
+      if (rule.covers) {
+        if (r.t === "kind" && rule.covers.every === r.from) rule.covers.every = r.to;
+        if (r.t === "edge") for (const key of ["through", "via"] as const) if (rule.covers[key] === r.from) rule.covers[key] = r.to;
+      }
       const mentioned = JSON.stringify(rule) !== before;
       if (rule.says !== undefined) rule.says = tmplAt(rule.says, ctx, mentioned ? prose : undefined);
       if (r.t === "kind" && rule.over === r.from) rule.over = r.to;
@@ -3019,7 +3024,9 @@ class Editor {
     }
     for (const [name, rule] of Object.entries(doc.rules ?? {}) as [string, Doc][]) {
       const ctx: Kinds = rule.over === "graph" ? NONE : new Set([rule.over]);
-      if (exprMentions(doc, rule.when, ctx, r) || exprMentions(doc, rule.require, ctx, r) || templateMentions(doc, rule.says, ctx, r)) {
+      // A coverage rule goes with the kind it covers or a relation it walks.
+      const walked = rule.covers !== undefined && ((r.t === "kind" && rule.covers.every === r.from) || (r.t === "edge" && (rule.covers.through === r.from || rule.covers.via === r.from)));
+      if (walked || exprMentions(doc, rule.when, ctx, r) || exprMentions(doc, rule.require, ctx, r) || templateMentions(doc, rule.says, ctx, r)) {
         delete doc.rules[name];
         gone.push(titled("rule", name, rule));
       }

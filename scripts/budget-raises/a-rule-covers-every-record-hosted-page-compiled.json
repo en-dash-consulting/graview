@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 2212,
+  "gzipped": 717,
+  "changeset": "a-rule-covers-every-record-without-a-cost-warning.md",
+  "note": "Raised when a rule came to cover every record without a cost warning (Roadmap f-rule-covers-every), as the hosted page's raise of the same name says: a page handed a compiled app judges the walk the compiler resolved. Measured at 581_472 / 202_131 against main's 579_260 / 201_414: 2_212 more minified, 717 gzipped."
+}
