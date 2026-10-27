@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 1240,
+  "note": "Raised when a keystroke came to ride a TypeScript act only where that act would run on the record: `@graview/core/typing` asks an act with no `allowedOn` by running its `apply` on the record against a context that writes nothing (`wouldRun`), and the store hands it the served graph and the seat. The worker had 39 bytes of room under 2_267_628. Measured at 2_268_829 against 2_267_589: 1_240 more."
+}

@@ -31,6 +31,13 @@ export const TYPING: {
   typeText?: (store: TypingStore) => AnyMutationDefinition<never>;
   /** Who may type into a field of a record of a kind: the acts any one of which permits it, of those `allows` says could run on it now. */
   via?: (schema: TypingStore["schema"], mutations: readonly AnyMutationDefinition<never>[], kind: string | undefined, field: unknown, allows?: (mutation: AnyMutationDefinition<never>) => boolean) => readonly string[];
+  /**
+   * Whether an act would run on a record now, where typing rides it: its
+   * `allowedOn` where it says one, else the act run there with the field's
+   * own value, writing nothing — false only where it refuses by its own
+   * rule (an `ActRefusal` not `invalid`).
+   */
+  wouldRun?: (mutation: AnyMutationDefinition<never>, schema: TypingStore["schema"], graph: TypingStore["graph"], node: unknown, field: unknown, me: string | undefined) => boolean;
   /** Whether one field of a kind is typed together, by the declaration. */
   collaborative?: (schema: TypingStore["schema"], kind: string | undefined, field: string) => boolean;
   /** These primitives with each whole write over text typed together written as a splice. */

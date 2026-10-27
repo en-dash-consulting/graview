@@ -109,6 +109,9 @@ document's `text` and a string past 500 characters are; a short string is
 not, and stays a whole value with a Save: a name or a title is changed
 whole, two people merging letters into one name is a worse name, and
 a whole write keeps its stale-write check (`markCollaborative` overrides).
+A keystroke rides an act that writes the field and would run on the record
+now — its `allowedWhen`, its `allowedOn`, or its `apply` asked — so a record
+the act refuses is read only to typing too.
 
 **On a phone this face is the answer.** `Shell` carries `pagesHref`.
 

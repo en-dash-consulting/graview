@@ -890,10 +890,9 @@ export class Store<S extends AnySchema> {
     }
     // Typing into a field: whoever may run an act that writes that field of that record.
     if (mutation !== undefined && mutation === this.typer) {
-      // Through an act that could run on this record now: its module on, its own rule holding for the record as this principal is served it.
-      const node = call?.args["node"];
+      // Through an act that could run on this record now: its module on, its own rule holding for the record as this principal is served it (`wouldRun`).
       const served = principal === undefined || isSystem(principal) ? this.graph : seenBy(this, principal).graph;
-      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && (writer.allowedOn === undefined || (typeof node === "string" && writer.allowedOn(served as never, node)));
+      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && TYPING.wouldRun!(writer as never, this.schema, served, call?.args["node"], call?.args["field"], principal && actingAs(principal).id);
       return TYPING.via!(this.schema, [...this.mutations.values()] as never, this.subjectKindOf(call!, principal), call?.args["field"], allows as never);
     }
     if (!mutation?.derived) return undefined;
