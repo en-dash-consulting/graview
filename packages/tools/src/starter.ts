@@ -1,5 +1,5 @@
 import type { GraviewDocument } from "@graview/core/document";
-import { TRAITS, TRAIT_WORDS, traitsOf, type TraitName } from "@graview/core/compose";
+import { TRAITS, TRAIT_WORDS, pluralWords, traitsOf, type TraitName } from "@graview/core/compose";
 import type { Answer, Decide } from "./fast.js";
 import type { Question } from "./questions.js";
 import { choiceOf, noulOf, scoreOf } from "./tidy/system-one.js";
@@ -129,7 +129,7 @@ export interface KindaReading {
 const README_EXCERPT = 280;
 const lower = (value: string) => value.toLowerCase();
 const capital = (words: string) => words.charAt(0).toUpperCase() + words.slice(1);
-const pluralOf = (kind: string, spec: GraviewDocument["kinds"][string]) => lower(spec.plural ?? `${spec.noun ?? kind.replace(/-/g, " ")}s`);
+const pluralOf = (kind: string, kinds: GraviewDocument["kinds"]) => lower(pluralWords(kinds, kind));
 type Lens = { readonly name?: unknown; readonly title?: unknown };
 const lensesOf = (document: GraviewDocument): { name: string; title: string }[] =>
   (Array.isArray(document.lenses) ? (document.lenses as Lens[]) : []).flatMap((lens) => (typeof lens.title === "string" ? [{ name: typeof lens.name === "string" ? lens.name : "lens", title: lens.title }] : []));
@@ -142,7 +142,7 @@ function templateState(template: StarterTemplate): Record<string, unknown> {
     title: template.title,
     pitch: template.pitch,
     ...(template.useCases && template.useCases.length > 0 ? { for: template.useCases } : {}),
-    keeps: Object.entries(document.kinds ?? {}).map(([kind, spec]) => pluralOf(kind, spec)),
+    keeps: Object.keys(document.kinds ?? {}).map((kind) => pluralOf(kind, document.kinds ?? {})),
     "made of": traitsOf(document).map((trait) => trait.said),
     ...(template.readme ? { about: template.readme.length > README_EXCERPT ? `${template.readme.slice(0, README_EXCERPT).trimEnd()}…` : template.readme } : {}),
   };
@@ -183,7 +183,7 @@ export function partsOf(template: StarterTemplate): (StarterPart & { readonly wo
   const document = template.document;
   const parts: (StarterPart & { readonly words: string })[] = [];
   for (const [kind, spec] of Object.entries(document.kinds ?? {})) {
-    parts.push({ part: "kind", name: kind, words: `${capital(pluralOf(kind, spec))}${spec.description ? `: ${spec.description}` : ""}` });
+    parts.push({ part: "kind", name: kind, words: `${capital(pluralOf(kind, document.kinds ?? {}))}${spec.description ? `: ${spec.description}` : ""}` });
   }
   for (const [name, rule] of Object.entries(document.rules ?? {})) {
     const title = typeof rule.title === "string" ? rule.title : name.replace(/-/g, " ");

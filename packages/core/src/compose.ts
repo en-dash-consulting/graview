@@ -39,6 +39,8 @@ import type { AnySchema } from "./schema/schema.js";
 import { accentProblem } from "./theme/accent.js";
 
 export type { DocumentEdit } from "./document/edit.js";
+/** A kind said by its noun and its plural, as the declaration spells them — for a host that writes about a document's kinds (the starter), never from the kind's id alone. */
+export { nounWords, pluralWords } from "./document/policy-words.js";
 
 /** The records an inference may count — a snapshot's or a seed's nodes and edges. Without them, nothing is inferred from data. */
 export interface ComposeRecords {
