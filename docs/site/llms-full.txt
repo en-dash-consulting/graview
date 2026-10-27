@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version ()
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.60)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -805,6 +805,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.60`](https://graview.dev/docs/releases.html#v0-1-60)
 - [`0.1.59`](https://graview.dev/docs/releases.html#v0-1-59)
 - [`0.1.58`](https://graview.dev/docs/releases.html#v0-1-58)
 - [`0.1.57`](https://graview.dev/docs/releases.html#v0-1-57)
@@ -861,6 +862,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.60
+
+Published October 27, 2026 · the current version
+
+A loopback serve and preview believe a seat only with the run's key; typing and Edit ride an act only where it would run; compaction moves past old publishes, and an older build refuses what it would misread.
+
+- **A run's key on loopback.** `graview serve`, `graview preview` and `graview shots` mint a key each run and say it only in the addresses they print; without it every route but health answers 401, the live wire too. Open the printed address once and the page holds a cookie; `openRemote`, `graview mcp --remote-url` and `graview apply --remote-url` take the printed address whole. `GRAVIEW_SERVE_KEY` sets the key for a harness.
+- **Typing and Edit ride an act only where it would run.** A keystroke into a field a TypeScript act writes is accepted only where that act would run on the record, and no Edit is offered where it would not; `graview check` warns `typing-act-without-allowed-on` where it cannot ask faithfully.
+- **One rule for ids and sight.** A day of a repeating series split or detached mints its id by the same kept-field rule as every act and import, and a sight names a field as the kind spells it (`startsAt`).
+- **Compaction moves past old publishes.** A checkpoint keeps what readers were served at each publish they may be served again, so an app that publishes rarely compacts as often as any; a store compacted past its standing publish is snapshot format 2, which 0.1.59 refuses rather than misread.
+- **A host reads that 0.1.59 shipped** the import and tidying fixes Graview Cloud's audit asked for, in `capabilities().shipped`.
+
+**Before you upgrade:** Changed: a loopback `graview serve` or `graview preview` answers 401 to a request without the run's key (a host's own `seatOf` is unchanged; `serveStore({ key })` and `servePreview({ key })` turn it on for any host); a keystroke or Edit through a TypeScript act that refuses the record is refused or not offered; a sight's `fields` and `hide` take field names as the kind spells them and refuse names no field has; a store compacted past its standing publish is stamped `snapshot: 2`, which an older build refuses (`pins: [store.publishedSeq]` keeps it readable by one). New: `wouldRun`, `quotesKeptField`, `SERVE_KEY`, `servedAddress`, `formatStamp(checkpoint?)`, the warning `typing-act-without-allowed-on`. Ops and the wire are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.60) · [The full changelog for 0.1.60](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0160)
 
 ## 0.1.59
 
@@ -7471,7 +7488,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 459 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 460 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -7496,7 +7513,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 61 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 62 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made
