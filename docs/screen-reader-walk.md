@@ -137,6 +137,7 @@ A Roadmap, region landmark
   A Roadmap, sectionheader
     Features, heading level 2
     Add a feature, button, collapsed
+    Export CSV, button
     Skip to the 146 features, button
     Skip to arranging them, button
     A capability: considered, planned, being built, or shipped.
@@ -398,9 +399,7 @@ A Roadmap, region landmark
     Notify me when this changes, button
     Seen in:
     Roadmap, link
-    Roadmap, in the scene, link
     Up next, link
-    Up next, in the scene, link
   The facts, heading level 2
   NAME
   Name: Billing across apps, button
@@ -509,6 +508,7 @@ A Roadmap, region landmark
       Filter, button, collapsed
       Find
       Find, search text
+      Export CSV, button
     Roadmap, group
       (no name), status
       A Roadmap · Features by stage, region landmark
@@ -839,6 +839,7 @@ Tasks, heading level 2
   (no name), sectionheader
     Tasks, heading level 2
     Add a task, button, collapsed
+    Export CSV, button
     Skip to the 10 tasks, button
     Skip to arranging them, button
     One thing to do.
