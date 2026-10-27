@@ -50,9 +50,10 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
               display: "grid",
               gap: 10,
               padding: "16px 18px",
-              borderLeft: "3px solid var(--graview-warn)",
+              // One hairline all round and the tinted panel (FR-236): no thick border on one side.
+              border: "1px solid var(--graview-edge)",
               background: "var(--graview-panel-warning)",
-              borderRadius: "0 var(--graview-radius, 12px) var(--graview-radius, 12px) 0",
+              borderRadius: "var(--graview-radius, 12px)",
             }}
           >
             {/* A rule with a shape names its record first, then what it found; a rule that is a function says its sentence first. */}

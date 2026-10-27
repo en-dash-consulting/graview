@@ -66,6 +66,7 @@ async function buildHost() {
     stdin: {
       contents: `
         import { mount } from "@graview/embed";
+        import { capabilities, memoryViews } from "@graview/core";
         import { declined, suggest, suggestions } from "@graview/core/tidying";
         import { todoApp } from ${JSON.stringify(todo)};
         import seed from ${JSON.stringify(seed)};
@@ -84,6 +85,14 @@ async function buildHost() {
           ...(asked.get("away") ? { whileAway: { tidied: 2, waiting: 1 } } : {}),
           // Whether the quick ask is drawn, when the page asks.
           ...(asked.get("quickAsk") ? { quickAsk: asked.get("quickAsk") !== "false" } : {}),
+          // The page the routed face opens on, when the page asks.
+          ...(asked.get("path") ? { path: asked.get("path") } : {}),
+          // A host that refuses every change to the declaration, when the page asks: the framework says so in a toast of its own (FR-237).
+          ...(asked.get("refuse")
+            ? { keptViews: memoryViews({ may: { views: true, lenses: true }, declaration: { change: () => Promise.reject(new Error("The app could not be changed: the host is holding it while a repair is checked.")), restore() {} } }) }
+            : {}),
+          // The host's Report this (FR-237), when the page asks: what it is handed is kept for the claim.
+          ...(asked.get("report") ? { onReport: (report) => { (window.__reports ??= []).push(report); } } : {}),
           /*
            * Somebody else here, when the page asks: Sam, on the whole thing, held as a socket holds a presence — so the bar
            * draws who is here (FR-155) and its list is opened with the rest of the family.
@@ -104,6 +113,8 @@ async function buildHost() {
         window.__handle = mount(document.getElementById("app"), options);
         // What reads the suggestions back, for the claims that ask the store what a person declined.
         window.__tidying = { declined, suggestions };
+        // The framework's version, as a host's Report this is handed it (FR-237).
+        window.__version = capabilities().version;
         /*
          * The app's own actor tidied, when the page asks: two links it is sure of, made with their lineage, and one it is not, suggested.
          * Its run is one row of Activity, and the suggestion waits in the Suggested tray beside it.
@@ -871,6 +882,89 @@ try {
       }
     }
     report.checks.aHostSpeaksInTheAppsOwnNotices = { ...notices, ok: Object.values(notices).every((one) => one.ok) };
+  }
+  /* ---- FR-236: no notice carries a side accent; FR-237: an error toast the framework raised offers the host's Report this */
+  {
+    const accents = {};
+    const reporting = {};
+    /* The framework's own error toast: a tidying the host refused — Hide on the list's place, with a host that refuses every change to the declaration. */
+    const refused = async (page) => {
+      const standing = page.locator('[data-testid="app-places-standing"] [aria-current="page"]');
+      const stands = (await standing.count()) > 0 && (await standing.first().isVisible());
+      await (stands ? standing.first() : page.locator('[data-testid="app-places-open"]').first()).click({ button: "right" });
+      const row = page.locator('[data-testid="context-menu"] [data-menu-item="hide-list"]');
+      const offered = await row.waitFor({ timeout: 10_000 }).then(() => true, () => false);
+      if (offered) await row.click();
+      const toast = page.locator('[data-testid="notices-toasts"] [data-testid="notice"][data-tone="bad"]');
+      const said = await toast.first().waitFor({ timeout: 10_000 }).then(() => true, () => false);
+      return { offered, said };
+    };
+    for (const colorScheme of ["light", "dark"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, colorScheme });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=pages&path=/tasks&refuse=1&report=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForTimeout(600);
+      /* The host's banner and a toast of every tone, beside the framework's own error toast. */
+      await page.evaluate(() => {
+        window.__handle.notify({ kind: "banner", tone: "warn", sentence: "Offline — changes will be sent when you reconnect.", action: { label: "Retry", onSelect: () => {} } });
+        for (const tone of ["info", "good", "warn", "bad"]) window.__handle.notify({ kind: "toast", tone, sentence: `A ${tone} toast from the host.`, timeout: false });
+      });
+      const raised = await refused(page);
+      await page.waitForTimeout(300);
+      /* FR-236: no element in a toast or a banner has a border on its left wider than its other sides. */
+      const sides = await page.evaluate(() => {
+        const cards = [...document.querySelectorAll('[data-testid="notice"]')];
+        const wide = [];
+        for (const card of cards) {
+          for (const element of [card, ...card.querySelectorAll("*")]) {
+            const style = getComputedStyle(element);
+            const [left, right, top, bottom] = [style.borderLeftWidth, style.borderRightWidth, style.borderTopWidth, style.borderBottomWidth].map((one) => parseFloat(one) || 0);
+            if (left > Math.max(right, top, bottom)) wide.push(`${element.tagName.toLowerCase()}${element.getAttribute("data-testid") ? `[${element.getAttribute("data-testid")}]` : ""} ${left}px left, ${right}/${top}/${bottom}`);
+          }
+        }
+        const chips = cards.map((card) => card.querySelector('[data-testid="notice-chip"]')).filter(Boolean);
+        return { cards: cards.length, tones: cards.map((card) => card.getAttribute("data-tone")).sort(), chips: chips.length, chipsHidden: chips.every((chip) => chip.getAttribute("aria-hidden") === "true"), wide };
+      });
+      const readable = await noticeLooks(page, "toast");
+      accents[colorScheme] = { ...raised, ...sides, contrast: readable?.contrast ?? null, ok: raised.offered && raised.said && sides.cards === 6 && sides.chips === 6 && sides.chipsHidden && sides.wide.length === 0 && (readable?.contrast ?? 0) >= 4.5 };
+      if (colorScheme === "light") {
+        /* FR-237: a native button named for the toast, the toast held while it has focus, the report handed to the host, and the toast gone once focus has moved on and its time runs out. */
+        const button = page.locator('[data-testid="notice-report"]');
+        const drawn = await button.first().waitFor({ timeout: 5_000 }).then(() => true, () => false);
+        const named = drawn ? await button.first().evaluate((one) => ({ tag: one.tagName, label: one.getAttribute("aria-label"), text: one.textContent })) : null;
+        if (drawn) await button.first().focus();
+        await page.waitForTimeout(7_500);
+        const held = await page.evaluate(() => document.querySelector('[data-testid="notice-report"]') !== null && document.activeElement?.getAttribute("data-testid") === "notice-report");
+        if (drawn) await page.keyboard.press("Enter");
+        await page.waitForTimeout(200);
+        const handed = await page.evaluate(() => ({ reports: window.__reports ?? [], version: window.__version, stillThere: document.querySelector('[data-testid="notice-report"]') !== null }));
+        await page.evaluate(() => document.querySelector('[data-testid="profile-button"]')?.focus());
+        await page.waitForTimeout(7_500);
+        const gone = await page.evaluate(() => document.querySelector('[data-testid="notice-report"]') === null);
+        const report0 = handed.reports[0] ?? null;
+        reporting.withTheHook = {
+          drawn, named, held, handed: report0, stillThere: handed.stillThere, gone,
+          ok: drawn && named?.tag === "BUTTON" && named.label === "Report this: The app could not be changed: the host is holding it while a repair is checked." && named.text === "Report this" && held && handed.reports.length === 1 && report0.message === "The app could not be changed: the host is holding it while a repair is checked." && report0.place === "tasks" && report0.record === undefined && report0.version === handed.version && handed.stillThere && gone,
+        };
+      }
+      await page.close();
+    }
+    /* Without the hook, the same toast carries no button; and the host's own error toast never does. */
+    {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, colorScheme: "light" });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=pages&path=/tasks&refuse=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForTimeout(600);
+      const raised = await refused(page);
+      await page.waitForTimeout(300);
+      const without = await page.evaluate(() => ({ toasts: document.querySelectorAll('[data-testid="notices-toasts"] [data-testid="notice"]').length, buttons: document.querySelectorAll('[data-testid="notice-report"]').length }));
+      reporting.withoutTheHook = { ...raised, ...without, ok: raised.offered && raised.said && without.toasts >= 1 && without.buttons === 0 };
+      await page.close();
+    }
+    report.checks.noticesCarryNoSideAccent = { ...accents, ok: Object.values(accents).every((one) => one.ok) };
+    report.checks.anErrorToastOffersTheHostsReport = { ...reporting, ok: Object.values(reporting).every((one) => one.ok) };
   }
   /* ---- One bar on the scene, the whole-page Shell's and the embed's: the same parts under the same ids, one row */
   {

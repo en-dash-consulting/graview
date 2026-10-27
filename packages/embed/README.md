@@ -480,6 +480,31 @@ aloud as it arrives, and one whose tone is bad is said as an alert.
 `<Embed>` makes a board with `createNoticeBoard()`, passes it as
 `notices`, and says things on it.
 
+A notice carries its tone as a small tinted chip at its head, not as a
+colored border on one side; the card is one hairline all round, in the
+app's radius.
+
+The toasts the framework raises itself — a tidying the host refused, a
+take-back that failed — can carry the host's own "Report this":
+
+```ts
+mount(root, {
+  app,
+  onReport: ({ message, code, place, record, version }) => openFeedback({ error: message, code, place, record, version }),
+});
+```
+
+Given `onReport`, every warning or error toast the framework raises draws
+a native button, "Report this", named for the toast ("Report this: “Up
+next” could not be hidden."), and hands the hook the toast's words
+(`message`), a refusal's `code` when it had one, the `place` the reader is
+on — a list's or a place's slug, `home`, `overview` on the scene — the
+`record` when a record's page or card is open, and the framework's
+`version`. The toast stays while the button has focus, and stays once
+pressed, so the words are there to read beside the host's dialog. The
+host's own notices, said through `notify`, carry no such button
+(`NoticeReport` is the report's type).
+
 ## What went wrong, and how long it took
 
 ```ts
