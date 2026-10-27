@@ -600,6 +600,125 @@ try {
     await context.close();
   }
 
+  /* ================================================ THE SCENE'S GROUND IS OURS TOO (FR-228) */
+  /*
+   * A right-click on the scene's empty ground opened nothing and left the
+   * browser's own menu: only a card answered the gesture. Now the ground
+   * answers it with the scene's menu about what is chosen, or about nothing,
+   * at the pointer; Shift keeps the browser's, and so does a text field; a
+   * finger resting on the ground or on a card opens it on a phone. At a desk
+   * and at a phone's width.
+   */
+  for (const [width, height, size] of [
+    [1560, 940, "desk"],
+    [390, 844, "phone"],
+  ]) {
+    reach(`sceneRightClickIsAlwaysOurs_${size}`);
+    const context = await browser.newContext({ viewport: { width, height }, hasTouch: size === "phone" });
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`${size} scene: ${error.message}`));
+    await on.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+    await on.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+    await on.waitForTimeout(800);
+    await on.evaluate(() => {
+      window.__ctx = [];
+      window.addEventListener("contextmenu", (event) => window.__ctx.push(event), true);
+    });
+    /** A point on bare ground: inside the scene, over no view and no control. */
+    const ground = await on.evaluate(() => {
+      const root = document.querySelector(".graview-ground");
+      if (!root) return null;
+      const box = root.getBoundingClientRect();
+      for (let y = box.top + 40; y < box.bottom - 20; y += 24)
+        for (let x = box.left + 20; x < box.right - 20; x += 24) {
+          const el = document.elementFromPoint(x, y);
+          if (!el || !root.contains(el)) continue;
+          if (el.closest("[data-graview-view], button, a, input, select, textarea, [data-graview-pick], section[aria-label], aside, [data-graview-app-bar], [data-graview-offstage]")) continue;
+          return { x, y };
+        }
+      return null;
+    });
+    const record = await on.evaluate(() => {
+      const el = document.querySelector('[data-graview-pick="t-deposit"]');
+      if (!el) return null;
+      const box = el.getBoundingClientRect();
+      return { x: box.left + Math.min(20, box.width / 2), y: box.top + Math.min(20, box.height / 2) };
+    });
+    /** Whether the browser's menu was kept (its default not prevented) by the last gesture, and whether ours opened. */
+    const heard = () =>
+      on.evaluate(() => {
+        const events = window.__ctx.splice(0);
+        return { ours: Boolean(document.querySelector('[data-testid="context-menu"]')), events: events.length, kept: events.some((event) => !event.defaultPrevented) };
+      });
+    const rightClick = async (point, modifiers = []) => {
+      // The mouse alone takes no modifiers: Shift is held on the keyboard across the press.
+      for (const key of modifiers) await on.keyboard.down(key);
+      await on.mouse.click(point.x, point.y, { button: "right" });
+      for (const key of modifiers) await on.keyboard.up(key);
+      await on.waitForSelector(MENU, { timeout: 3_000 }).catch(() => undefined);
+      await on.waitForTimeout(250);
+      const said = await heard();
+      await putAway(on);
+      return said;
+    };
+    const plain = ground ? await rightClick(ground) : null;
+    const shifted = ground ? await rightClick(ground, ["Shift"]) : null;
+    const onCard = record ? await rightClick(record) : null;
+    // In the bar's Find box the browser keeps its own menu (paste, spelling).
+    const typing = await on.evaluate(() => {
+      const opener = document.querySelector('[data-testid="app-find-open"]');
+      if (opener) opener.click();
+      const box = document.querySelector('[data-testid="app-find"]');
+      if (!box) return null;
+      const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, clientX: box.getBoundingClientRect().left + 4, clientY: box.getBoundingClientRect().top + 4 });
+      box.dispatchEvent(event);
+      return { kept: !event.defaultPrevented };
+    });
+    await on.keyboard.press("Escape");
+    await putAway(on);
+    /* A finger resting on the ground, and on a card, on a phone: Chromium's touch input, which raises the pointer events a phone does. */
+    let rested = null;
+    if (size === "phone" && ENGINE === "chromium" && ground && record) {
+      rested = {};
+      const cdp = await context.newCDPSession(on);
+      for (const [what, point] of [
+        ["ground", ground],
+        ["record", record],
+      ]) {
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: point.x, y: point.y }] });
+        await on.waitForTimeout(800);
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        await on.waitForTimeout(300);
+        const said = await menuSays(on);
+        rested[what] = { opened: said !== null, inTheWindow: said?.inTheWindow ?? false, ...(what === "record" ? { about: said?.text.includes("Pay the deposit") ?? false } : {}) };
+        await putAway(on);
+      }
+    }
+    report.checks[`sceneRightClickIsAlwaysOurs_${size}`] = {
+      ground: Boolean(ground),
+      plain,
+      shifted,
+      onCard,
+      typing,
+      rested,
+      ok:
+        plain !== null &&
+        plain.ours &&
+        plain.events >= 1 &&
+        !plain.kept &&
+        shifted !== null &&
+        !shifted.ours &&
+        shifted.kept &&
+        onCard !== null &&
+        onCard.ours &&
+        !onCard.kept &&
+        typing !== null &&
+        typing.kept &&
+        (rested === null || (rested.ground.opened && rested.ground.inTheWindow && rested.record.opened && rested.record.about)),
+    };
+    await context.close();
+  }
+
   reach.done();
   report.pageErrors = errors;
   report.passed =
