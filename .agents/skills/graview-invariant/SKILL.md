@@ -119,19 +119,17 @@ and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`;
 key sorts by its first value, then its next), `first(S)` for one record,
 `either(a, b)` for the first that is something; `if(cond, a, b)`, which
 works out only the branch it takes; `round(x, places)`; `present`, `len`, dates.
-Words and moments are built, not only compared: `concat(name, ' · ', place)`
-joins words (nothing joins as no words, where `+` makes the whole nothing);
-`format(start, 'EEE d MMM · h:mm a')` says a moment by a closed pattern —
-`EEE`, `EEEE`, `d`, `MMM`, `MMMM`, `yyyy`, `h:mm a`, `HH:mm`, other words in
-single quotes — in the app's `brand.locale`, on its `brand.timeZone`;
+Words and moments are built too: `concat(name, ' · ', place)` joins words
+(nothing joins as no words, where `+` makes the whole nothing);
+`format(start, 'EEE d MMM · h:mm a')` says a moment by a closed pattern
+(`EEE`, `EEEE`, `d`, `MMM`, `MMMM`, `yyyy`, `h:mm a`, `HH:mm`, other words in
+single quotes) in the app's `brand.locale` on its `brand.timeZone`;
 `datetime(due, '09:30')` (or `at(due, startTime)`) is the instant that day
-reaches at that wall time in the app's zone, kept as a datetime field keeps
-one; `addMinutes(start, 90)` moves a moment; `weekday(due)` is `mon` to
-`sun`; `startOfWeek(due)` (or `startOfWeek(due, 'sun')`) is the day its week
-starts. `graview check` types them from the declaration — `format` of a
-number field, a time piece of a date that has none, a pattern piece outside
-the list, a time not written `HH:MM` — as `expr-type` and `format-pattern`
-at the expression's path. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set
+reaches at that wall time in the app's zone; `addMinutes(start, 90)`;
+`weekday(due)` is `mon` to `sun`; `startOfWeek(due)` (or `…, 'sun'`) is the
+day its week starts. `graview check` types them from the declaration
+(`format` of a number, a time piece of a date, a pattern piece outside the
+list, a time not written `HH:MM`): `expr-type`, `format-pattern`. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set
 and give each record reached once; sets meet with `&`, join with `|` and part
 with `-` — LifeLogics' coverage is one figure,
 `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step
@@ -152,15 +150,14 @@ and `sets: { ownership: { expr: "if(to == 'person-nick', 'nick_owns',
 'owned_elsewhere')" } }`; `setsOther` sets the record at the link's other
 end. An act `on` a kind may also carry a change to the records its subject
 is ALREADY linked to: `"setsLinked": { "event": { "title": { "expr":
-"name" } } }` on `rename-item` retitles every event linked through `event`,
+"name" } } }` on `rename-item` retitles every event linked through `event`
 in the same change, each expression read on the subject with `to` the far
-record (`concat(name, ' for ', to.title)`) and `$to` that record. One undo
-takes all of it back; the store judges each far record's own edit, so the
-act is refused — naming the record — where one of them is not the person's
-to change, and the far kind's own edit still offers the field. `graview
-check` says `act-sets-linked-relation` (no such relation joins the
-subject's kind) and `act-sets-linked-field` (no such field at the far end,
-or a value it could not hold). Each previews and undoes as one act.
+record (`concat(name, ' for ', to.title)`). One undo takes all of it back;
+the store judges each far record's own edit, so the act is refused, naming
+the record, where one is not the person's to change. `graview check` says
+`act-sets-linked-relation` (no such relation joins the subject's kind) and
+`act-sets-linked-field` (no such field at the far end, or a value it could
+not hold). Each previews and undoes as one act.
 
 ## The horizon
 

@@ -25,6 +25,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/design-findings.ts"), "utf8"),
   // What a declared connection is found wanting by (`connection-*`, Roadmap f-notion-connection), said with the checker.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/connection-findings.ts"), "utf8"),
+  // What an act says of the other end of its links and of the records linked to its subject (FR-115, Roadmap f-acts-update-linked), said with the checker.
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/document/act-findings.ts"), "utf8"),
 ].join("\n");
 
 /**
