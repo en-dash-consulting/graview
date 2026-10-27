@@ -170,7 +170,8 @@ describe("a hosted page", () => {
     // 1029 KB since a record's card on the Scene came to say there is more at its foot (FR-231): More on the fade's ground, a link where there are pages and a press that grows the card where there are none: the scene face measured 1_053_156 B, 1_399 more than main (1_051_757).
     // 1031 KB since the scene's ground came to answer a right-click and a resting finger with the menu (FR-228), a suggestion's chips to be the buttons Activity names a record with (FR-225) and Activity's rows to wrap rather than scroll sideways (FR-226): the scene face measured 1_054_901 B, 3_144 more than main (1_051_757). Nothing up front changed.
     // 1031 KB since a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): the list an enum compiles to and the words that say each option by its label, the in-place editor's group of boxes, a list filtered by one of them: the scene face measured 1_054_746 B, 2_989 more than before it (1_051_757).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1040 * 1024);
+    // 1037 KB once the 0.1.61 batch's nine branches were merged (each line above measured its own branch against main): the scene face measured 1_061_271 B, 9_514 more than main (1_051_757).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1037 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

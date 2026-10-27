@@ -58,7 +58,7 @@ export interface StartingDocument {
 }
 
 const DONE = new Set(["done", "complete", "completed", "closed", "shipped", "booked", "paid", "finished", "resolved", "published", "delivered", "approved", "merged", "released", "signed", "won", "returned", "fixed", "filed", "chosen"]);
-const ENDED = new Set(["canceled", "cancelled", "declined", "rejected", "withdrawn", "abandoned", "lost", "dropped", "archived", "wontfix", "won't do", "duplicate", "passed", "dismissed", "scrapped"]);
+const ENDED = new Set(["canceled", "declined", "rejected", "withdrawn", "abandoned", "lost", "dropped", "archived", "wontfix", "won't do", "duplicate", "passed", "dismissed", "scrapped"]);
 const CHOSEN = /^(chosen|picked|selected|winner|won|booked|hired|accepted)$/i;
 const PUBLISHED = /^(published|live|public)$/i;
 const STATUS_FIELD = /status|stage|state|phase|progress/i;
@@ -190,7 +190,8 @@ class Composer {
   stillOpen(kind: string): string | undefined {
     const status = this.status(kind);
     if (!status) return undefined;
-    const ends = status.options.filter((option) => DONE.has(option.toLowerCase()) || ENDED.has(option.toLowerCase()));
+    // An option a template spells with a doubled l is read as its American spelling.
+    const ends = status.options.filter((option) => DONE.has(option.toLowerCase()) || ENDED.has(option.toLowerCase().replace(/ll/g, "l")));
     if (ends.length === 0) return undefined;
     return ends.length === 1 ? `${status.field} != ${quote(ends[0]!)}` : `not (${status.field} in [${ends.map(quote).join(", ")}])`;
   }
