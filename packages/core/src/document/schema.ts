@@ -259,6 +259,17 @@ function build() {
      */
     setsOther: z.optional(z.record(fieldName, ValueSpec)),
     /**
+     * Fields set on every record the subject is ALREADY linked to through a
+     * relation, by relation (Roadmap f-acts-update-linked): `"setsLinked":
+     * { "event": { "title": { "expr": "name" } } }` on an act `on` a plan
+     * item carries its name to each of its events, in the same change. An
+     * expression reads the subject's fields, with `to` the far record; a
+     * `$to` is that record. Each far record's own edit is what the store
+     * judges, so the act is refused, naming the record, where the person
+     * may not change it.
+     */
+    setsLinked: z.optional(z.record(edgeName, z.record(fieldName, ValueSpec))),
+    /**
      * The subject's links severed before it connects (FR-115): `true`, those
      * of the relation it connects; or the relations named, each at the
      * subject's own end. The link being made is kept.

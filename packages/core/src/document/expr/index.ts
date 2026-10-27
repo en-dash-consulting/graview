@@ -5,3 +5,5 @@ export { evaluateExpr, ExprEvalError, ExprBudgetError, NodeSet, DEFAULT_BUDGET, 
 export type { EvalContext, KindShape, Value } from "./evaluate.js";
 export { analyzeExpr, costDegree } from "./analyze.js";
 export type { ExprShape } from "./analyze.js";
+// The typing (`typing.ts`) is the checker's, reached from `expr-type-findings.ts` alone: a page compiles without it.
+export { patternProblem, WEEKDAYS } from "./when.js";

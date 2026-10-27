@@ -29,7 +29,9 @@ to remember.
    A served store sends a seat only what it sees, withholds the rest of the
    log in place, and refuses an act that names a record it may not see
    exactly as one that names nothing — a document's `setsOther` target
-   too. A record whose required reference names a kind its seat may not
+   too; an act's `setsLinked` reaches only the linked records the seat
+   sees, and is refused, naming the record, where one of them is not the
+   seat's to change. A record whose required reference names a kind its seat may not
    see is withheld whole (`sight-hides-required-ref`): let the role see
    the target, or make the field optional.
 

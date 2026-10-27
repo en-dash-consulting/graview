@@ -21,7 +21,7 @@ import { compileMutation } from "./mutations/define-mutation.js";
 import { wouldRun } from "./mutations/would-run.js";
 import { actSpelledAs, nearestAct } from "./mutations/act-spelling.js";
 import { InvalidArguments } from "./mutations/invalid-arguments.js";
-import { deriveMutations, derivedVia, removeVia } from "./mutations/derive-edits.js";
+import { deriveMutations, derivedVia, editMutationName, editVia, removeVia } from "./mutations/derive-edits.js";
 import { repeatingFields, repeatMakes } from "./mutations/derive-repeats.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { namesMade, resolveMade } from "./mutations/made.js";
@@ -990,6 +990,16 @@ export class Store<S extends AnySchema> {
       // Taking a record out, or folding it away, rides the making of the kind only over what this principal made (W-201).
       mutation?.derived !== undefined && UNMAKING.has(mutation.derived.act),
     );
+    /*
+     * A VALUE CARRIED ACROSS A LINK (Roadmap f-acts-update-linked) is each
+     * far record's own edit: the act is refused, naming the record, where
+     * this principal may not change one of the records its subject is
+     * linked to — judged here, before `apply`, as every grant is.
+     */
+    if (verdict.ok && mutation?.writesLinked && typeof id === "string") {
+      const refused = this.refusesLinked(mutation, id, principal);
+      if (refused) return refused;
+    }
     if (!verdict.ok || !mutation?.derived || !this.repeatMakes(mutation, call, id, principal)) return verdict;
     /*
      * AND A CHANGE TO ONE DAY THAT MAKES A RECORD ("change just this one",
@@ -998,6 +1008,43 @@ export class Store<S extends AnySchema> {
      * retitle a shift has not been trusted with making one.
      */
     return permits(this.policy, principal, call.name, kind, removeVia([...this.mutations.values()], mutation.derived.kind), typeof id === "string" ? id : undefined, this.words);
+  }
+
+  /**
+   * The first record linked to the subject that this principal may not
+   * change, as a refusal of the act naming it (Roadmap f-acts-update-linked);
+   * undefined when every record the act would carry a value to is theirs to
+   * edit. Each is judged as its kind's own edit is — the grants, the acts the
+   * edit rides, what the principal made — over the graph as they see it.
+   */
+  private refusesLinked(mutation: AnyMutationDefinition<S>, subjectId: string, principal: Principal): ReturnType<typeof permits> | undefined {
+    const served = isSystem(principal) ? this.graph : seenBy(this, principal).graph;
+    const subject = served.getNode(subjectId);
+    if (!subject) return undefined;
+    const all = [...this.mutations.values()];
+    for (const relation of Object.keys(mutation.writesLinked ?? {})) {
+      const declaredHere = (this.schema.tryDefinition(subject.kind) as { edges?: Record<string, unknown> } | undefined)?.edges?.[relation] !== undefined;
+      const far = declaredHere ? served.out(subject.id, relation) : served.in(subject.id, relation);
+      for (const node of far) {
+        const edit = editMutationName(node.kind);
+        const own = this.mutations.get(edit);
+        const verdict = own ? this.permits({ name: edit, args: { [own.subject?.arg ?? "id"]: node.id } }, principal) : permits(this.policy, principal, edit, node.kind, editVia(this.schema, all, node.kind), node.id, this.words);
+        if (verdict.ok) continue;
+        const title = this.words.act?.(mutation.name) ?? mutation.name;
+        const label = (this.labels ??= new LabelIndex(this.graph)).labelOf(node.id) ?? node.id;
+        const noun = this.words.noun?.(node.kind) ?? node.kind;
+        return {
+          ok: false,
+          refusal: {
+            mutation: mutation.name,
+            kind: subject.kind,
+            wouldNeed: verdict.refusal.wouldNeed,
+            message: `Not permitted: “${title}” would change “${label}”, ${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun} that is not yours to change. ${verdict.refusal.message}`,
+          },
+        } as ReturnType<typeof permits>;
+      }
+    }
+    return undefined;
   }
 
   /** Whether a call of a repeat act makes a record (`repeatMakes`), read off the series as this principal is served it. */

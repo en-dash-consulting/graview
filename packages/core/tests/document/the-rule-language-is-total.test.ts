@@ -80,12 +80,15 @@ describe("null propagates, and every production says what it does with it", () =
     ["archived(first(out('for')))", false],
     // FR-217: nothing rounded is nothing.
     ["round(hours, 2)", null],
+    // Roadmap f-formula-text-datetime: nothing joins as no words; a date function of nothing is nothing.
+    ["concat(due, 'x')", "x"], ["format(due, 'EEE')", null], ["datetime(due, '09:30')", null], ["at(due, '09:30')", null], ["at(today(), due)", null],
+    ["addMinutes(due, 5)", null], ["addMinutes(today(), hours)", null], ["weekday(due)", null], ["startOfWeek(due)", null],
   ])("%s → %j", (source, expected) => {
     expect(on(source)).toEqual(expected);
   });
 
   it("names every function the language knows, and a test above reaches each with nothing", () => {
-    expect([...FUNCTIONS].sort()).toEqual(["all", "archived", "contains", "count", "date", "days", "either", "every", "exists", "fact", "first", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "round", "some", "sort", "startsWith", "sum", "today"]);
+    expect([...FUNCTIONS].sort()).toEqual(["addMinutes", "all", "archived", "at", "concat", "contains", "count", "date", "datetime", "days", "either", "every", "exists", "fact", "first", "format", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "round", "some", "sort", "startOfWeek", "startsWith", "sum", "today", "weekday"]);
   });
 });
 
@@ -109,8 +112,8 @@ function expression(next: () => number, depth: number): string {
     case 4: return `${pick(["count", "exists"])}(${set()})`;
     case 5: return `${pick(["every", "some"])}(${set()}, ${sub()})`;
     case 6: return next() < 0.5 ? `${pick(["sum", "min", "max"])}(${set()}, ${pick(["'hours'", "hours * 2", sub()])})` : next() < 0.5 ? `first(sort(${set()}, ${sub()}, ${pick(["'asc'", "'desc'"])}))` : `either(${sub()}, ${sub()})`;
-    case 7: return `${pick(["present", "len", "lower", "date"])}(${sub()})`;
-    default: return `${pick(["contains", "startsWith", "days", "hours"])}(${sub()}, ${sub()})`;
+    case 7: return `${pick(["present", "len", "lower", "date", "weekday", "startOfWeek"])}(${sub()})`;
+    default: return next() < 0.3 ? `${pick(["format", "datetime", "at", "addMinutes", "concat", "startOfWeek"])}(${sub()}, ${pick(["'EEE h:mm a'", "'09:30'", "'sun'", "5", sub()])})` : `${pick(["contains", "startsWith", "days", "hours"])}(${sub()}, ${sub()})`;
   }
 }
 

@@ -202,6 +202,8 @@ export function effectsOf(act: ActSpec, document: GraviewDocument): readonly Act
   if (act.severs) effects.push(link(act.severs, "sever"));
   // What it sets on the record at the other end (FR-115): that record is its `$to`.
   if (act.setsOther && (act.connects || act.severs)) effects.push({ set: act.setsOther, target: "$to" });
+  // What it sets on every record its subject is already linked to through a relation (Roadmap f-acts-update-linked), each in turn its `$to`.
+  if (act.setsLinked && subject.length > 0) for (const [relation, set] of Object.entries(act.setsLinked)) effects.push({ set, through: relation });
   if (act.removes) effects.push({ remove: "$subject" });
   if (act.effects) effects.push(...act.effects.filter((e) => !(act.creates && "set" in e && !("create" in e) && refName(e.target) === "new")));
   return effects;
@@ -211,7 +213,8 @@ function tryExpr(source: string, path: string, findings: Finding[]): Expr | unde
   try {
     const expr = parseExpr(source);
     const shape = analyzeExpr(expr);
-    for (const fn of shape.unknownFunctions) findings.push(error("unknown-function", path, `"${fn}" is not a function the rule language knows`, "see docs/declaration-document.md#expression-language"));
+    for (const fn of shape.unknownFunctions) findings.push(error("unknown-function", path, `"${fn}" is not a function the rule language knows`, "see the rule language in the graview-invariant skill"));
+    // What the declaration alone shows of its types — a date built from a number — is the checker's to say (`expr-type-findings.ts`).
     return expr;
   } catch (e) {
     if (e instanceof ExprSyntaxError) {
@@ -322,6 +325,8 @@ function validate(document: GraviewDocument): Finding[] {
         // A relation to another app is said by the checker: `act-linked`.
         if (!edges.has(edgeName) && !linkedAnywhere(edgeName)) findings.push(error("act-edge", `${where}.${"connect" in effect ? "connect" : "sever"}`, `"${edgeName}" is not a relation any kind declares`));
         if (refName(effect.from) === "subject" && subjectKinds.length === 0) findings.push(error("act-subject", `${at}.on`, `"${name}" acts on "$subject" but does not say which kinds it is "on"`));
+      } else if ("through" in effect) {
+        // The relation and the far kind's fields are judged with the checker (`act-findings.ts`); its values are read standing on the subject.
       } else if ("set" in effect) {
         const target = refName(effect.target ?? "$subject");
         const targetKinds = target === "subject" ? subjectKinds : created.has(target ?? "") ? [created.get(target!)!] : [];
@@ -338,8 +343,9 @@ function validate(document: GraviewDocument): Finding[] {
         if (refName(effect.remove) === "subject" && subjectKinds.length === 0) findings.push(error("act-subject", `${at}.on`, `"${name}" removes "$subject" but does not say which kinds it is "on"`));
       }
       const values = "set" in effect && effect.set ? Object.values(effect.set) : [];
+      const valuesAt = "through" in effect ? `${at}.setsLinked.${effect.through}` : `${where}.set`;
       values.forEach((v) => {
-        if (v && typeof v === "object" && !Array.isArray(v) && "expr" in v) tryExpr(v.expr, `${where}.set`, findings);
+        if (v && typeof v === "object" && !Array.isArray(v) && "expr" in v) tryExpr(v.expr, valuesAt, findings);
       });
     });
     if (act.allowedWhen) tryExpr(act.allowedWhen, `${at}.allowedWhen`, findings);
@@ -406,7 +412,7 @@ function argsOf(act: ActSpec, effects: readonly ActEffect[], document: GraviewDo
   const named = new Map<string, readonly string[]>();
   const usesSubject =
     subjectKinds.length > 0 ||
-    effects.some((e) => ("remove" in e && refName(e.remove) === "subject") || ("from" in e && (refName(e.from) === "subject" || refName(e.to) === "subject")) || ("set" in e && !("create" in e) && refName(e.target ?? "$subject") === "subject"));
+    effects.some((e) => ("remove" in e && refName(e.remove) === "subject") || ("from" in e && (refName(e.from) === "subject" || refName(e.to) === "subject")) || ("set" in e && !("create" in e) && !("through" in e) && refName(e.target ?? "$subject") === "subject") || "through" in e);
   if (usesSubject) args.set(SUBJECT_ARG, { ref: subjectKinds.length > 0 ? subjectKinds : "*", required: true });
 
   const declared = act.args ?? {};
@@ -449,6 +455,16 @@ function argsOf(act: ActSpec, effects: readonly ActEffect[], document: GraviewDo
         const kinds = end === "to" ? edge?.to ?? "*" : edge?.from ?? "*";
         if (kinds !== "*" && !named.has(arg)) named.set(arg, kinds);
         note(arg, () => ({ ref: kinds, required: true }));
+      }
+    } else if ("through" in effect) {
+      // A value carried to the records at the far end of a relation: `$to` is each of them in turn, never an argument.
+      const far = farEnd(document.kinds, effect.through, subjectKinds);
+      const farKind = far && far.kinds !== "*" ? far.kinds[0] : undefined;
+      for (const [field, value] of Object.entries(effect.set)) {
+        const arg = refName(value);
+        if (!arg || arg === "to") continue;
+        const spec = farKind ? document.kinds[farKind]?.fields[field] : undefined;
+        note(arg, () => (spec ? { field: spec, optional: true, required: false } : { any: true, required: false }), spec);
       }
     } else if ("set" in effect) {
       const target = refName(effect.target ?? "$subject");
@@ -540,7 +556,7 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
     // What it may sever: what it says it severs, and what it replaces (FR-115).
     const severs = [...new Set(effects.flatMap((e) => ("sever" in e ? [e.sever] : "replace" in e ? e.replace : [])))];
     // An act WRITES only what it sets on its subject; setting fields on a record it just made is part of making it.
-    const writes = [...new Set(effects.flatMap((e) => ("set" in e && !("create" in e) && (refName(e.target ?? "$subject") === "subject") ? Object.keys(e.set) : [])))];
+    const writes = [...new Set(effects.flatMap((e) => ("set" in e && !("create" in e) && !("through" in e) && (refName(e.target ?? "$subject") === "subject") ? Object.keys(e.set) : [])))];
     /*
      * And what it sets on the record at an end of a link it makes or breaks
      * (FR-115's `setsOther`), by that end's kinds: not the subject's, but a
@@ -558,14 +574,14 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
     }
     const writesOther: Record<string, string[]> = {};
     for (const e of effects) {
-      if (!("set" in e) || "create" in e) continue;
+      if (!("set" in e) || "create" in e || "through" in e) continue;
       const target = refName(e.target ?? "$subject");
       for (const kind of (target && target !== "subject" && ends.get(target)) || []) writesOther[kind] = [...new Set([...(writesOther[kind] ?? []), ...Object.keys(e.set)])];
     }
     // What it sets on its subject to a fixed value, whatever it is told — a named step (FR-108), resolved as `apply` resolves a literal.
     const sets: Record<string, string | number | boolean> = {};
     for (const e of effects) {
-      if (!("set" in e) || "create" in e || refName(e.target ?? "$subject") !== "subject") continue;
+      if (!("set" in e) || "create" in e || "through" in e || refName(e.target ?? "$subject") !== "subject") continue;
       for (const [field, v] of Object.entries(e.set ?? {})) {
         if ((typeof v === "string" && refName(v) === undefined) || typeof v === "number" || typeof v === "boolean") sets[field] = typeof v === "string" && v.startsWith("$$") ? v.slice(1) : v;
         else delete sets[field];

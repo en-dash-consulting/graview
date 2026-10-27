@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 6600,
+  "gzipped": 2300,
+  "note": "Raised when formulas came to join text and build a date-time (Roadmap f-formula-text-datetime) and an act to carry a change to the records it is linked to (Roadmap f-acts-update-linked): the evaluator's seven functions and the date arithmetic they share (`expr/when.ts`), the compiled act's `through` effect, and the store judging each far record's own edit. Measured at 334_851 / 122_749 against 328_340 / 120_485: 6_511 / 2_264 more, rounded up to the hundred."
+}

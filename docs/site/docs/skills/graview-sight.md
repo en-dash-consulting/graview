@@ -16,7 +16,7 @@ A grant says who may DO an act; a sight says who may SEE a record, and which of 
 
 ```ts sees: [ { roles: "*", kinds: ["car"] }, // the shop window { roles: ["shopper"], kinds: ["test-drive"], own: true }, // theirs, joined to theirs, or made by them { roles: ["participant"], kinds: ["match"], via: "givenBy" }, // only what that relation joins to their own record ] ```
 
-A served store sends a seat only what it sees, withholds the rest of the log in place, and refuses an act that names a record it may not see exactly as one that names nothing — a document's `setsOther` target too. A record whose required reference names a kind its seat may not see is withheld whole (`sight-hides-required-ref`): let the role see the target, or make the field optional.
+A served store sends a seat only what it sees, withholds the rest of the log in place, and refuses an act that names a record it may not see exactly as one that names nothing — a document's `setsOther` target too; an act's `setsLinked` reaches only the linked records the seat sees, and is refused, naming the record, where one of them is not the seat's to change. A record whose required reference names a kind its seat may not see is withheld whole (`sight-hides-required-ref`): let the role see the target, or make the field optional.
 
 1. **Hide a field, not only a kind.** A roster where parents see every player's name and not their phone number:
 

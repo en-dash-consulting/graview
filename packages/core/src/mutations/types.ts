@@ -145,6 +145,15 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    */
   readonly writesOther?: Readonly<Record<string, readonly string[]>>;
   /**
+   * Fields this mutation carries to the records its subject is already
+   * linked to, by relation: a document act's `setsLinked` (Roadmap
+   * f-acts-update-linked). The store judges each far record's own edit
+   * before the act runs, and refuses the act naming the first record the
+   * principal may not change. The far kind's own edit still offers the
+   * field: the act carries a value to it, which is not a named step.
+   */
+  readonly writesLinked?: Readonly<Record<string, readonly string[]>>;
+  /**
    * Fields of its subject this act does not take because another act
    * writes them, by field: the acts that do. A derived edit carries it, so
    * an edit given `whatToDo` is refused with "whatToDo is set by

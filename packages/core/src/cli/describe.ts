@@ -8,7 +8,7 @@ import { capabilitiesOf, describeCapability, type GraviewApp, type IntelligenceP
 import { beginning } from "../beginning.js";
 import { cityMap } from "../city.js";
 import { roadsOf } from "../village.js";
-import { deriveMutations } from "../mutations/derive-edits.js";
+import { deriveMutations, subjectKindsOf } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
 import { crowdedHues, HUE_CROWDING } from "../theme/derive.js";
 import { pluralOf, withArticle } from "../schema/define-node.js";
@@ -385,6 +385,21 @@ export function describeApp<S extends AnySchema>(
     }),
   );
   if (relationLines.length > 0) lines.push("", "## How records are linked", ...relationLines);
+
+  /*
+   * WHAT AN ACT CARRIES ACROSS A LINK (Roadmap f-acts-update-linked): the
+   * fields it also sets on the records its subject is linked to, so a reader
+   * knows that renaming a plan item retitles its events — and that the act
+   * is refused where one of those events is not theirs to change.
+   */
+  const carriedLines = declared.flatMap((act) =>
+    Object.entries(act.writesLinked ?? {}).map(([relation, fields]) => {
+      const kinds = subjectKindsOf(app.schema, act);
+      const nouns = kinds.length > 0 ? list(kinds.map((kind) => pluralOf(app.schema, kind).toLowerCase())) : "its subject";
+      return `  "${act.name}" also sets ${list([...fields])} on every record linked to ${nouns} through ${relation}, in the same change; it is refused, naming the record, where one of them is not the person's to change.`;
+    }),
+  );
+  if (carriedLines.length > 0) lines.push("", "## Carried across links", ...carriedLines);
 
   /*
    * WHAT IT LINKS IN OTHER APPS (FR-171): a relation to another app's kind is

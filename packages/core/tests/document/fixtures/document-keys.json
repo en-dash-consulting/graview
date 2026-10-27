@@ -38,6 +38,8 @@
   "acts.*.replaces",
   "acts.*.sets",
   "acts.*.sets.*.expr",
+  "acts.*.setsLinked",
+  "acts.*.setsLinked.*.*.expr",
   "acts.*.setsOther",
   "acts.*.setsOther.*.expr",
   "acts.*.severs",

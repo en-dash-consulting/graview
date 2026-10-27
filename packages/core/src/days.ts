@@ -132,6 +132,9 @@ export function sayingIn<T>(saying: Saying, run: () => T): T {
 /** The locale a value is said in: the reader's when a host passed one, else the app's (`app`, else the page's), else en-US. */
 export const localeFor = (app?: string): string => readers ?? usable(app) ?? drawn ?? DEFAULT_LOCALE;
 
+/** The app's own locale, never the reader's: `app`, else the page's app's, else en-US. What a value the language builds and a record keeps is said in. */
+export const appLocaleFor = (app?: string): string => usable(app) ?? drawn ?? DEFAULT_LOCALE;
+
 /** The zone an instant is said in, when somebody said one: the person's, else the app's (`app`, else the page's). Undefined is the runtime's clock. */
 export const zoneFor = (app?: string): string | undefined => readersZone ?? usableZone(app) ?? drawnZone;
 
