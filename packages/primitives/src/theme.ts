@@ -40,7 +40,7 @@ import type { Brand, Scheme, ThemeTokens } from "@graview/core";
  * without reaching into the UI package.
  */
 export { DARK, LIGHT, SCHEMES } from "@graview/core";
-import { DISPLAY_TRACKING, SCHEMES, kitVariables, layer, layerVariables, resolveKit, shapeOf, TYPOGRAPHY, typographyOf } from "@graview/core";
+import { DISPLAY_TRACKING, SCHEMES, kitVariables, layer, layerVariables, logoScheme, resolveKit, shapeOf, TYPOGRAPHY, typographyOf } from "@graview/core";
 
 
 /**
@@ -367,10 +367,12 @@ ${/*
  * A LOGO FOR EACH SCHEME: this sheet is written for one, so it hides the
  * other's; and a light logo the brand asked to invert (`darkFallback`) is
  * inverted and screened onto the ground in the dark scheme alone — a JPG on
- * white is no longer a white slab there.
+ * white is no longer a white slab there. A light scheme whose ground is
+ * dark is drawn as a dark page (Roadmap f-dark-brand-accent), so it draws
+ * the dark logo too (`logoScheme`): a dark mark made for paper would vanish on it.
  */ ""}
-${root} [data-graview-scheme-only="${scheme === "dark" ? "light" : "dark"}"] { display: none; }
-${scheme === "dark" ? `${root} [data-graview-logo-fallback="invert"] { filter: invert(1) hue-rotate(180deg); mix-blend-mode: screen; }` : ""}
+${root} [data-graview-scheme-only="${logoScheme(brand, scheme) === "dark" ? "light" : "dark"}"] { display: none; }
+${logoScheme(brand, scheme) === "dark" ? `${root} [data-graview-logo-fallback="invert"] { filter: invert(1) hue-rotate(180deg); mix-blend-mode: screen; }` : ""}
 code, kbd, samp { font-family: var(--graview-font-mono); }
 
 ${/*

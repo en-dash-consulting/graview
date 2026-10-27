@@ -1,6 +1,6 @@
 import { isArchived, type Archived } from "../../graph/archived.js";
 import { withArticle } from "../../schema/define-node.js";
-import { isoToday } from "../../days.js";
+import { daySpanOf, ISO_MOMENT, isoToday, PARTIAL_DAY } from "../../days.js";
 import { dateOn } from "../../repeat.js";
 import type { AnyGraphNode, GraphReader } from "../../graph/types.js";
 import type { Expr } from "./parse.js";
@@ -128,6 +128,15 @@ const distinct = (nodes: readonly AnyGraphNode[]): NodeSet => {
 const describe = (v: Value): string =>
   v === null ? "nothing" : v instanceof NodeSet ? "a set of records" : Array.isArray(v) ? "a list" : isNode(v) ? "a record" : typeof v === "string" ? "a word" : typeof v;
 
+/** The days two values cover, when one is a year or a month alone and the other a day, a moment or such a date too: what they are compared by. Undefined otherwise. */
+function spansOf(a: string, b: string): readonly [{ readonly from: string; readonly to: string }, { readonly from: string; readonly to: string }] | undefined {
+  if (!PARTIAL_DAY.test(a) && !PARTIAL_DAY.test(b)) return undefined;
+  const span = (s: string) => daySpanOf(ISO_MOMENT.test(s) ? s.slice(0, 10) : s);
+  const x = span(a);
+  const y = span(b);
+  return x && y ? [x, y] : undefined;
+}
+
 /** Evaluate an expression. Throws `ExprEvalError` (with a sentence) on a type mistake or an exhausted budget. */
 export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
   let steps = ctx.budget ?? DEFAULT_BUDGET;
@@ -221,7 +230,9 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
   const asDate = (v: Value, at: number, fn: string): number | null => {
     const s = asString(v, at, fn);
     if (s === null) return null;
-    const t = Date.parse(s.length === 10 ? `${s}T00:00:00Z` : s);
+    // A year or a month alone (Roadmap f-partial-dates-arithmetic) is measured from the first day it covers: days('2006', '2016-05') is from Jan 1, 2006 to May 1, 2016.
+    const day = PARTIAL_DAY.test(s) ? daySpanOf(s)!.from : s;
+    const t = Date.parse(day.length === 10 ? `${day}T00:00:00Z` : day);
     if (Number.isNaN(t)) throw new ExprEvalError(`${fn}(…) needs a date, and "${s}" is not one`, at);
     return t;
   };
@@ -318,6 +329,24 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
         if (a === null || b === null) return false;
         const comparable = (typeof a === "number" && typeof b === "number") || (typeof a === "string" && typeof b === "string");
         if (!comparable) throw new ExprEvalError(`cannot compare ${describe(a)} with ${describe(b)}`, e.at);
+        /*
+         * A DATE THAT KNOWS ONLY ITS YEAR OR ITS MONTH IS COMPARED BY THE
+         * SPAN IT COVERS (Roadmap f-partial-dates-arithmetic). `2006` is
+         * the whole of 2006: before a day only when all of it is, after one
+         * only when all of it is, and equal to another date only when the
+         * two cover the same days. A span that overlaps the other date is
+         * none of these, so `firstSeen <= today()` is false of a month the
+         * day is in. As written, "2006" < "2006-03-04" would have been true
+         * by its letters alone.
+         */
+        const spans = typeof a === "string" && typeof b === "string" ? spansOf(a, b) : undefined;
+        if (spans) {
+          const [x, y] = spans;
+          const before = x.to < y.from;
+          const after = x.from > y.to;
+          const same = x.from === y.from && x.to === y.to;
+          return e.op === "<" ? before : e.op === "<=" ? before || same : e.op === ">" ? after : after || same;
+        }
         return e.op === "<" ? a < b : e.op === "<=" ? a <= b : e.op === ">" ? a > b : a >= b;
       }
       default: {

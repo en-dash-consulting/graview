@@ -1,5 +1,6 @@
 import {
   brokenWords,
+  DATE_VALUE,
   dayAsRead,
   pluralOf,
   humanizeField,
@@ -15,7 +16,7 @@ import {
   type Store,
   type Violation,
 } from "@graview/core";
-import { argumentWords, lowerFirst, readableFields, tellApart } from "@graview/core/words";
+import { argumentWords, lowerFirst, readableFields, readPartialDay, tellApart } from "@graview/core/words";
 import { search } from "@graview/core/search";
 import { formFields, type FormField } from "@graview/core/forms";
 import type { HostAi } from "./ai.js";
@@ -592,7 +593,8 @@ export function graphResponder<S extends AnySchema>(
         .map((field) => {
           const raw = (node as Record<string, unknown>)[field.key];
           if (typeof raw === "boolean" && !/\s/.test(field.label)) return raw ? quietly(field.label) : `not ${quietly(field.label)}`;
-          if (typeof raw === "string" && ISO_DAY.test(raw)) return `${quietly(field.label)} ${dayAsRead(raw)}`;
+          // A year or a month alone is said as one too: "first seen May 2016", never "2016-05" (Roadmap f-partial-dates-in-conversation).
+          if (typeof raw === "string" && DATE_VALUE.test(raw)) return `${quietly(field.label)} ${dayAsRead(raw)}`;
           return field.alone.startsWith(field.label) ? quietly(field.label) + field.alone.slice(field.label.length) : `${quietly(field.label)} ${field.alone}`;
         })
         .join(", ");
@@ -745,6 +747,17 @@ function answerFrom(
     case "text":
       return quoted;
     case "date": {
+      /*
+       * A YEAR OR A MONTH AS SAID (Roadmap f-partial-dates-in-conversation).
+       * "Founded in 2006" names a year, "first seen May 2016" a month, and a
+       * date that may know only that much (`partial`) keeps it as said —
+       * `2006`, `2016-05` — rather than the day it is, which would be a
+       * false exact date. A date that must be a day is still the day it is.
+       */
+      if (field.partial) {
+        const said = partialDaySaid(asked);
+        if (said !== undefined) return said;
+      }
       const day = today ?? new Date().toISOString().slice(0, 10);
       // A sentence that names no hour still has to give one when the act asks for a time of day.
       return field.time ? `${day}T09:00` : day;
@@ -803,5 +816,22 @@ export function llmResponder<S extends AnySchema>(options: {
   return async (store, text, context = {}) => (await import("./seat-model.js")).answerWithModel(options, store, text, context);
 }
 
-/** A day alone, as the record holds it: `YYYY-MM-DD`. */
-const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+/** A month as a person writes it in a sentence, whole or by its first three letters ("sept" too). */
+const MONTH_SAID = "(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec)";
+/** A year alone in a sentence: four digits that are not part of a day (`2016-05-04`), a number or an id. */
+const YEAR_SAID = /(?<![\w\-/.])((?:1\d|20)\d{2})(?![\w\-/.:])/;
+/** A month and its year in a sentence: "May 2016", "sept. 2016", "2016-05", "5/2016". */
+const MONTH_SAID_WITH_YEAR = new RegExp(`(?<![\\w\\-/])(${MONTH_SAID}\\.? (?:1\\d|20)\\d{2}|(?:1\\d|20)\\d{2}-(?:0[1-9]|1[0-2])|(?:0?[1-9]|1[0-2])/(?:1\\d|20)\\d{2})(?![\\w\\-/:])`);
+
+/**
+ * The year or the month a sentence names, as a record keeps one — `2006`,
+ * `2016-05` — read by core's own reader of a year or a month alone
+ * (`readPartialDay`); undefined when it names none. A month is looked for
+ * first, so "May 2016" is the month and not the year in it.
+ */
+function partialDaySaid(sentence: string): string | undefined {
+  const month = sentence.match(MONTH_SAID_WITH_YEAR)?.[1];
+  if (month !== undefined) return readPartialDay(month);
+  const year = sentence.match(YEAR_SAID)?.[1];
+  return year !== undefined ? readPartialDay(year) : undefined;
+}

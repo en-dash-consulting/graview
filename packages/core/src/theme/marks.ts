@@ -20,7 +20,8 @@
  * the rules Graview Cloud's `add_image` holds an image to.
  */
 
-import type { BrandLogo, FaviconSpec, Scheme } from "./types.js";
+import { colorsIn, isDarkGround } from "./contrast.js";
+import type { BrandLogo, FaviconSpec, Scheme, ThemeTokens } from "./types.js";
 
 /** The most an inline SVG mark may be, in characters. */
 export const MAX_INLINE_SVG = 64 * 1024;
@@ -279,12 +280,28 @@ export function logoOf(brand: { readonly logo?: string | BrandLogo } | undefined
   return logo && typeof logo.light === "string" && logo.light !== "" ? logo : undefined;
 }
 
-/** The logo a scheme draws, and whether it is the light one inverted (`darkFallback: "invert"`, the dark scheme alone). */
-export function logoFor(brand: { readonly logo?: string | BrandLogo } | undefined, scheme: Scheme): { readonly src: string; readonly invert: boolean } | undefined {
+/**
+ * WHICH SCHEME'S LOGO A SCHEME DRAWS (Roadmap f-logo-on-dark-light-ground).
+ * The dark scheme draws the dark logo. So does the light scheme where its
+ * ground is dark — a black brand is drawn as the dark page it is, in the
+ * dark scheme's inks (`groundSchemes`), and a dark logo made for paper
+ * would vanish on it. What the theme's sheet and the static page hide the
+ * other face by, and what `logoFor` answers.
+ */
+export function logoScheme(brand: { readonly schemes?: Readonly<Record<Scheme, ThemeTokens>> } | undefined, scheme: Scheme): Scheme {
+  if (scheme === "dark") return "dark";
+  const ground = brand?.schemes?.light?.ground;
+  const color = ground ? colorsIn(ground)[0] : undefined;
+  return color && isDarkGround(color) ? "dark" : "light";
+}
+
+/** The logo a scheme draws, and whether it is the light one inverted (`darkFallback: "invert"`, drawn as the dark scheme alone). */
+export function logoFor(brand: { readonly logo?: string | BrandLogo; readonly schemes?: Readonly<Record<Scheme, ThemeTokens>> } | undefined, scheme: Scheme): { readonly src: string; readonly invert: boolean } | undefined {
   const logo = logoOf(brand);
   if (!logo) return undefined;
-  if (scheme === "dark" && logo.dark) return { src: logo.dark, invert: false };
-  return { src: logo.light, invert: scheme === "dark" && logo.darkFallback === "invert" };
+  const drawn = logoScheme(brand, scheme);
+  if (drawn === "dark" && logo.dark) return { src: logo.dark, invert: false };
+  return { src: logo.light, invert: drawn === "dark" && logo.darkFallback === "invert" };
 }
 
 /** The emoji that stands in as the app's mark: the page icon's, when the brand has no logo and it is one standard emoji. */

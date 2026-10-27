@@ -6,7 +6,7 @@ import { useArranging } from "./arranging.js";
 import { useRef, useState, type ReactElement, type ReactNode } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster, useWidth } from "../primitives/index.js";
-import { addDays, addMonths, daysBetween, minutesOf } from "./calendar-dates.js";
+import { addDays, addMonths, daysBetween, knowsOnlyItsYear, minutesOf } from "./calendar-dates.js";
 import { Agenda, Grid, PER_CELL, Step, stepStyle } from "./calendar-drawing.js";
 import { longDay } from "./calendar-dates.js";
 import {
@@ -190,6 +190,17 @@ function CalendarView<S extends AnySchema>({
   const window = brief ? { next: options.today } : { from: span.cells[0]?.from ?? at, to: span.cells[span.cells.length - 1]?.to ?? at };
   const entries = (nodes ?? []).flatMap((node) => placeEachOnCalendar<S>(node, options.bindings, schema, window));
   const hue = options.hueOf ?? ((entry: PlacedEntry) => hueFor(entry.kind));
+  /*
+   * A DATE THAT KNOWS ONLY ITS YEAR is not placed (Roadmap
+   * f-partial-dates-arithmetic): a bar across a whole year says nothing a
+   * grid can place, and a day picked for it would be a false exact date.
+   * A month alone is drawn across its month. The lens says once how many
+   * it left off, rather than losing them without a word.
+   */
+  const yearOnly = (nodes ?? []).filter((node) => {
+    const roles = withNaturalTime(options.bindings[node.kind as string], schema?.tryDefinition(node.kind as string));
+    return roles !== undefined && knowsOnlyItsYear((node as Record<string, unknown>)[roles.start]);
+  }).length;
 
   if (fidelity === "glyph") {
     return <Chip label={`${label ?? "Calendar"} · ${entries.length}`} hue={hueFor("calendar")} />;
@@ -396,6 +407,12 @@ function CalendarView<S extends AnySchema>({
           </div>
           )}
         </div>
+
+        {yearOnly > 0 ? (
+          <p data-testid="calendar-year-only" style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
+            {yearOnly === 1 ? "1 knows only its year, so it is not placed." : `${yearOnly} know only their year, so they are not placed.`}
+          </p>
+        ) : null}
 
         {said ? (
           <p

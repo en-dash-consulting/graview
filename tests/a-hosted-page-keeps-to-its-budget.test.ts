@@ -173,6 +173,7 @@ describe("a hosted page", () => {
     // 1037 KB once the 0.1.61 batch's nine branches were merged (each line above measured its own branch against main): the scene face measured 1_061_271 B, 9_514 more than main (1_051_757).
     // 1038 KB since a host's Report this came to the framework's own error toasts (FR-237) and the side accent left every notice (FR-236): the board's framework voice, the scene's where and the frame's hand of `onReport`; the chip and the button ride the notices' door: the scene face measured 1_062_059 B, 788 more than main (1_061_271).
     // 1045 KB since formulas came to join text and build a date-time and an act to carry a change across a link (Roadmap f-formula-text-datetime, f-acts-update-linked): the evaluator's seven functions and their date arithmetic, the compiled act's `through` effect and the store judging each far record's own edit: the scene face measured 1_068_380 B, 7_109 more than main (1_061_271).
+    // 1038 KB since a year or a month alone came to be kept, compared and drawn (Roadmap f-partial-dates-arithmetic and its three siblings): the span a date covers, a rule comparing by it, which scheme's logo a scheme draws, a blocks home's mark and the calendar's month: the scene face measured 1_062_625 B, 1_354 more than main (1_061_271).
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1045 * 1024);
   });
 

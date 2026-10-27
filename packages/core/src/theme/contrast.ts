@@ -198,3 +198,8 @@ export function checkContrast(tokens: ThemeTokens): readonly ContrastFinding[] {
   }
   return findings;
 }
+
+/** Whether a color is a dark page: light words read on it better than dark ones (Roadmap f-dark-brand-accent). Here beside `contrast`, so a mark that asks (`logoScheme`) does not carry a ground's palette. */
+export function isDarkGround(color: Rgba): boolean {
+  return contrast({ r: 255, g: 255, b: 255, a: 1 }, color) > contrast({ r: 0, g: 0, b: 0, a: 1 }, color);
+}

@@ -20,7 +20,11 @@ describe("a row of records is as wide as its list", () => {
     expect(items.map((li) => li.getAttribute("data-graview-listed"))).toEqual(["f1", "f2", "f3", "f4"]);
     for (const li of items) {
       expect(li.querySelector('[data-graview-primitive="chip"]')).toBeNull();
-      expect(li.querySelector('.graview-spec-row[data-graview-kind="finding"] .graview-spec-title')?.textContent).toBe(li.querySelector("a")?.getAttribute("aria-label"));
+      // Its whole name — and, where a broken rule names the record, the kit's flag after it (Roadmap f-blocks-home-flagged).
+      const title = li.querySelector('.graview-spec-row[data-graview-kind="finding"] .graview-spec-title')?.textContent ?? "";
+      const flagged = li.hasAttribute("data-graview-flagged");
+      expect(title.endsWith(" ⚠")).toBe(flagged);
+      expect(flagged ? title.slice(0, -2) : title).toBe(li.querySelector("a")?.getAttribute("aria-label"));
     }
     expect(items[0]!.textContent).toContain("The headline inside a nested group is drawn at the page title's size");
     await done();
