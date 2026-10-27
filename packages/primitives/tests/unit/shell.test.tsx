@@ -97,6 +97,15 @@ describe("the shell", () => {
     expect(html).not.toContain(">sales-manager<");
   });
 
+  it("draws a host's buttons on the bar before the standing when given, and none otherwise (FR-227)", () => {
+    const html = render({ barActions: [{ label: "Send feedback", icon: "✉", onSelect: () => {} }] });
+    const button = html.indexOf('data-testid="host-bar-action"');
+    expect(button).toBeGreaterThan(-1);
+    expect(button).toBeLessThan(html.indexOf('data-testid="standing"'));
+    expect(html).toContain("Send feedback");
+    expect(render()).not.toContain('data-testid="host-bar-action');
+  });
+
   it("says what the app says when nothing is wrong, and draws no switch when there are no pages", () => {
     const html = render({ standing: "Every rule holds", pagesHref: null, quickAsk: false });
     expect(html).toContain("Every rule holds");

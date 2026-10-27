@@ -1,8 +1,9 @@
-import { allLabel, arrangedEntries, hueFor, kindPath, MOST_STANDING, offeredPlaces, onePerPicture, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, samePicture, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
+import { allLabel, arrangedEntries, hueFor, isInlineSvg, kindPath, MOST_STANDING, offeredPlaces, onePerPicture, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, samePicture, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
 import { useQuickAskDrawn } from "./quick-ask-desk.js";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
+import { useMarkup } from "./markup.js";
 import { barPanes } from "./bar-panes-door.js";
 /* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): fetched with the panes, and the tidying with it, once there is something to list and the list is open. */
 const TidyFoot = barPanes.part((panes, props: { readonly id: string; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }) => <panes.TidyFoot {...props} />, { quiet: true });
@@ -242,6 +243,20 @@ export interface BarFaces {
 /** How the switch is drawn: its words beside its marks where there is room, or its marks alone (the words its names). */
 export type BarSwitch = "words" | "icons";
 
+/**
+ * ONE OF A HOST'S BUTTONS ON THE BAR (FR-227, Roadmap
+ * f-host-buttons-in-the-app-bar): a press, named by its label, with a mark
+ * beside the word where the host gives one — an emoji, a glyph, or an
+ * inline `<svg>`, hidden from a reader who cannot see it. A host's only —
+ * never a declaration's, never a sandboxed view's: it reaches the bar from
+ * `barActions` on an embed, a frame or the Shell, and from nowhere else.
+ */
+export interface BarAction {
+  readonly label: string;
+  readonly icon?: string;
+  readonly onSelect: () => void;
+}
+
 /** One size for every tool on the bar (FR-131). */
 export const TOOL = 30;
 /** The bar's one row, its rule under it included, on a desk and a phone alike (FR-138). */
@@ -372,6 +387,13 @@ const BAR_CSS = `
 .graview-bar-tools>:is(.graview-bar-find,.graview-bar-find-open){margin-left:auto}
 .graview-bar-own{display:flex;align-items:center;flex:0 0 auto}
 .graview-bar-own:empty{display:none}
+.graview-bar-host{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.graview-bar-host-action{display:inline-flex;align-items:center;gap:6px;box-sizing:border-box;min-width:${TOOL}px;height:${TOOL}px;margin:0;padding:0 10px;border-radius:8px;border:1px solid transparent;background:none;box-shadow:none;font:inherit;font-size:.875rem;font-weight:500;letter-spacing:normal;text-transform:none;white-space:nowrap;color:var(--graview-ink-muted);cursor:pointer}
+.graview-bar-host-action:is(:hover,[aria-expanded=true]){border-color:var(--graview-edge);color:var(--graview-ink)}
+.graview-bar-host-action[data-folded]{padding:0}
+.graview-bar-host-mark{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:16px;height:16px;font-size:.9375rem;line-height:1}
+.graview-bar-host-mark svg{width:16px;height:16px}
+.graview-bar-list .graview-bar-host-action{width:100%;justify-content:flex-start;white-space:normal;overflow-wrap:anywhere}
 .graview-bar-find{position:relative;display:flex;min-width:7.5rem;flex:0 600 9rem;--graview-bar-find-end:3.25em}
 .graview-bar-find-slot{display:flex;flex:1;min-width:0}
 .graview-bar-find-keys{position:absolute;right:10px;line-height:30px;pointer-events:none;font-size:.75rem;color:var(--graview-ink-faint)}
@@ -442,6 +464,7 @@ export function AppBar({
   scenePlaces,
   skips,
   named = true,
+  actions,
 }: {
   readonly brand: Brand | undefined;
   readonly name: string;
@@ -482,6 +505,12 @@ export function AppBar({
   readonly scenePlaces?: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo } | undefined;
   /** The ways past the bar (`SkipLinks`), the first stops Tab reaches: the face says where they go. */
   readonly skips?: ReactNode;
+  /**
+   * THE HOST'S BUTTONS (FR-227): presses drawn on the row before the tools,
+   * where the bar has their width over a phone's, and folded into one
+   * control that lists them where it does not. None, and nothing is drawn.
+   */
+  readonly actions?: readonly BarAction[] | undefined;
 }) {
   const bar = useRef<HTMLElement>(null);
   // Anybody else here, by the provider's presence (FR-155); none where no provider is.
@@ -494,6 +523,8 @@ export function AppBar({
   const [roomy, setRoomy] = useState(true);
   // Which places stand on the row, by their place in the list ("0,1,2"); null, the one control (FR-145).
   const [standing, setStanding] = useState<string | null>(null);
+  // Whether the host's buttons stand on the row (FR-227): where the bar has their width over a phone's; folded where it does not.
+  const [hostStands, setHostStands] = useState(true);
   // The places on the face drawn: the routed face's, or the scene's (FR-144) — a scene with no pages to switch to has its places too.
   const onPages = faces ? faces.pages.current : !scenePlaces;
   /*
@@ -524,6 +555,9 @@ export function AppBar({
     const read = () => {
       const width = element.getBoundingClientRect().width;
       setCompact(width < BAR_PHONE);
+      // The host's buttons as they would stand, off their ruler: they stand where the bar has their width over a phone's.
+      const host = element.querySelector<HTMLElement>("[data-graview-bar-host-ruler]");
+      setHostStands(width >= BAR_PHONE + (host?.getBoundingClientRect().width ?? 0));
       // What hangs from the bar as wide as it (a phone's Find sheet) is told the bar's width, not the screen's.
       element.style.setProperty("--graview-bar-width", `${Math.round(width)}px`);
       weigh();
@@ -633,6 +667,19 @@ export function AppBar({
               </span>
             </span>
           ) : null}
+          {/* The host's buttons as they would stand, unseen, for the row to be weighed by (FR-227). */}
+          {actions && actions.length > 0 ? (
+            <span className="graview-bar-ruler" aria-hidden="true" data-graview-bar-host-ruler="">
+              <span className="graview-bar-host">
+                {actions.map((action) => (
+                  <span key={action.label} className="graview-bar-host-action">
+                    {action.icon ? <HostMark icon={action.icon} /> : null}
+                    <span>{action.label}</span>
+                  </span>
+                ))}
+              </span>
+            </span>
+          ) : null}
           {/* The app's name on one line, unseen, for the row to be weighed by as if it stood so (`nameGiven`). */}
           {named ? (
             <span className="graview-bar-ruler" aria-hidden="true">
@@ -689,6 +736,8 @@ export function AppBar({
               </Suspense>
             ) : null}
             <TheirChanges />
+            {/* The host's own buttons (FR-227), before the app's tools: standing, or behind one control on a narrow bar. */}
+            {actions && actions.length > 0 ? <HostButtons actions={actions} folded={compact || !hostStands} /> : null}
             {tools}
           </div>
         </div>
@@ -893,6 +942,70 @@ const GROUPS: readonly { readonly group: BarPlaceGroup; readonly heading?: strin
 
 /** The word the places that do not stand on the row fold under (FR-145). */
 const MORE = "More";
+
+/**
+ * THE HOST'S BUTTONS ON THE ROW (FR-227): each a button named by its label,
+ * its mark hidden from the reader, in the order the host gave; folded, one
+ * control named "More" and what it holds, whose list is the same buttons,
+ * one of the bar's own family of popovers (closed by a press, Escape, or a
+ * press away, the keyboard back on the control).
+ */
+function HostButtons({ actions, folded }: { readonly actions: readonly BarAction[]; readonly folded: boolean }) {
+  const popover = usePopover("host-actions", { popover: folded });
+  const names = actions.map((action) => action.label).join(", ");
+  const buttons = (done: () => void) =>
+    actions.map((action) => (
+      <button
+        key={action.label}
+        type="button"
+        className={folded ? "graview-bar-host-action graview-bar-item" : "graview-bar-host-action"}
+        data-testid="host-bar-action"
+        onClick={() => {
+          done();
+          action.onSelect();
+        }}
+      >
+        {action.icon ? <HostMark icon={action.icon} /> : null}
+        <span>{action.label}</span>
+      </button>
+    ));
+  if (!folded) {
+    return (
+      <div className="graview-bar-host" data-testid="host-bar-actions-standing" role="group" aria-label="From the host">
+        {buttons(() => undefined)}
+      </div>
+    );
+  }
+  return (
+    <div className="graview-bar-host">
+      <button
+        type="button"
+        className="graview-bar-host-action"
+        data-testid="host-bar-actions-open"
+        data-folded=""
+        {...popover.trigger}
+        onClick={popover.toggle}
+        aria-label={`${MORE} — ${names}`}
+        title={names}
+      >
+        <Mark size={16}>
+          <circle cx="3" cy="8" r="1.4" fill="currentColor" />
+          <circle cx="8" cy="8" r="1.4" fill="currentColor" />
+          <circle cx="13" cy="8" r="1.4" fill="currentColor" />
+        </Mark>
+      </button>
+      <div {...popover.pane} data-testid="host-bar-actions" hidden={!popover.open} className="graview-bar-list" style={POPOVER_STYLE} aria-label="From the host">
+        {buttons(() => popover.setOpen(false))}
+      </div>
+    </div>
+  );
+}
+
+/** A host button's mark: an inline `<svg>` drawn as one, anything else as the glyph it is; hidden from a reader who cannot see it, the label says it. */
+function HostMark({ icon }: { readonly icon: string }) {
+  const markup = useMarkup(isInlineSvg(icon) ? icon : undefined);
+  return markup ? <span className="graview-bar-host-mark" aria-hidden="true" dangerouslySetInnerHTML={markup} /> : <span className="graview-bar-host-mark" aria-hidden="true">{icon}</span>;
+}
 
 /**
  * ONE PLACE, AS THE BAR OFFERS IT — in the list, or standing on the row: a

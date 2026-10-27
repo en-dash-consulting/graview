@@ -383,6 +383,27 @@ Each is a stop for the keyboard in the menu, in the order given, drawn in
 the embed's own scheme; a press closes the menu. The whole-page Shell takes
 the same host actions.
 
+A press a reader should see without opening anything — "Send feedback" —
+goes on the bar itself:
+
+```ts
+mount(root, {
+  app,
+  barActions: [
+    { label: "Send feedback", icon: "✉", onSelect: () => openFeedback() },
+  ],
+});
+handle.setBarActions([...]);   // changed live; undefined takes them off
+```
+
+`barActions` draws each as a button on the app bar, on both faces, before
+the standing and the person, named by its label (the `icon` — an emoji, a
+glyph or an inline `<svg>` — is hidden from a reader who cannot see it).
+Where the bar is too narrow for them, on a phone or in a small box, they
+fold into one control, "More", that lists them. They are the host's only:
+no declaration and no sandboxed view can put a button on the bar. The
+whole-page Shell takes the same `barActions`.
+
 ## The quick ask
 
 Where the host gives a model, ⌘K (Ctrl+K) opens a

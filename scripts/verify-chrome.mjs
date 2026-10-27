@@ -95,6 +95,11 @@ async function buildHost() {
             { label: "Your apps", href: "/apps" },
             { label: "Report this app", href: "/report?app=things" },
           ],
+          // A host's buttons on the bar itself (FR-227): Cloud's "Send feedback", one tap from the reader.
+          barActions: [
+            { label: "Send feedback", icon: "✉", onSelect: () => { window.__feedback = (window.__feedback ?? 0) + 1; } },
+            { label: "Share", onSelect: () => {} },
+          ],
         };
         window.__handle = mount(document.getElementById("app"), options);
         // What reads the suggestions back, for the claims that ask the store what a person declined.
@@ -823,7 +828,8 @@ try {
         return {
           // The places stand or fold by the room and by the one you are on; the rest of the bar is the same bar.
           // And the ways past the bar (`skip-*`) are the face's, not the bar's: the Shell's scene says where they go, an embed's host page has its own.
-          ids: ids.filter((id) => !id.startsWith("app-place") && id !== "activity-button" && !id.startsWith("skip-")),
+          // Nor are the host's own buttons (FR-227): this host gives the embed two, and the Shell's todo none.
+          ids: ids.filter((id) => !id.startsWith("app-place") && id !== "activity-button" && !id.startsWith("skip-") && !id.startsWith("host-bar-action")),
           places: [...document.querySelectorAll('[data-testid^="app-place-scene:"]')].map((el) => el.getAttribute("data-place-path")).sort(),
           activity: bar.querySelector('[data-testid="activity-button"]') !== null,
           activityBeforeStanding: (() => {
@@ -858,6 +864,67 @@ try {
       }
     }
     report.checks.theShellAndAnEmbedWearOneBarOnTheScene = { ...bars, ok: Object.values(bars).every((one) => one.ok) };
+  }
+  /*
+   * ---- A host's buttons stand on the bar, or fold into one control (FR-227, Roadmap f-host-buttons-in-the-app-bar): on both faces,
+   * on a desk the host's "Send feedback" and "Share" stand on the bar's one row before the standing and the person, each a button named
+   * by its label; on a phone they are behind one control named for them, which lists them. Either way "Send feedback", reached by the
+   * keyboard, runs the host's onSelect once, and a folded list closes on the press.
+   */
+  {
+    const buttons = {};
+    for (const size of SIZES) {
+      for (const face of ["graview", "pages"]) {
+        const page = await browser.newPage({ viewport: size });
+        page.on("pageerror", (error) => errors.push(error.message));
+        await page.goto(`${at("chrome-host")}/?face=${face}`, { waitUntil: "load" });
+        await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+        await page.waitForTimeout(900);
+        const drawn = await page.evaluate(() => {
+          const bar = document.querySelector('[data-testid="app-bar"]');
+          const row = bar.getBoundingClientRect();
+          const visible = (el) => el !== null && el.getBoundingClientRect().width > 0;
+          const standing = bar.querySelector('[data-testid="host-bar-actions-standing"]');
+          const open = bar.querySelector('[data-testid="host-bar-actions-open"]');
+          const onTheRow = [...bar.querySelectorAll('[data-testid="host-bar-actions-standing"] [data-testid="host-bar-action"], [data-testid="host-bar-actions-open"]')]
+            .filter(visible)
+            .every((el) => { const box = el.getBoundingClientRect(); return box.top >= row.top - 1 && box.bottom <= row.bottom + 1 && box.right <= row.right + 1; });
+          const ids = [...bar.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
+          const first = ids.findIndex((id) => id.startsWith("host-bar-action"));
+          return {
+            standing: visible(standing) ? [...standing.querySelectorAll('[data-testid="host-bar-action"]')].map((el) => el.textContent.trim()) : null,
+            folded: visible(open) ? open.getAttribute("aria-label") : null,
+            onTheRow,
+            beforeTheTools: first >= 0 && first < ids.indexOf("standing"),
+          };
+        });
+        /* "Send feedback" by the keyboard: on the row, or in the list behind the one control. */
+        if (drawn.folded !== null) {
+          await page.locator('[data-testid="host-bar-actions-open"]:visible').first().focus();
+          await page.keyboard.press("Enter");
+          await page.waitForSelector('[data-testid="host-bar-actions"]:not([hidden])', { timeout: 3000 }).catch(() => {});
+        }
+        const button = page.locator('[data-testid="host-bar-action"]:visible', { hasText: "Send feedback" }).first();
+        const reached = (await button.count()) > 0;
+        if (reached) {
+          await button.focus();
+          await page.keyboard.press("Enter");
+          await page.waitForTimeout(150);
+        }
+        const after = await page.evaluate(() => ({
+          ran: window.__feedback ?? 0,
+          listClosed: document.querySelector('[data-testid="host-bar-actions"]')?.hasAttribute("hidden") ?? true,
+          keyboard: document.activeElement === document.body ? "body" : document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
+        }));
+        await page.close();
+        const stands = size.width >= 640;
+        const ok =
+          drawn.onTheRow && drawn.beforeTheTools && reached && after.ran === 1 && after.listClosed && after.keyboard !== "body" &&
+          (stands ? JSON.stringify(drawn.standing) === JSON.stringify(["✉Send feedback", "Share"]) && drawn.folded === null : drawn.standing === null && drawn.folded === "More — Send feedback, Share");
+        buttons[`${face} ${size.width}×${size.height}`] = { ...drawn, reached, after, ok };
+      }
+    }
+    report.checks.aHostsButtonsStandOnTheBarOrFoldIntoOneControl = { ...buttons, ok: Object.values(buttons).every((one) => one.ok) };
   }
   /* ---- A day said as the glance says it, and a choice as it is declared: in the problems, and on a record's page.
      The day is in the page's locale (FR-178): "Aug 28, 2026" in en-US, "28 Aug 2026" in en-GB, never 2026-08-28. */

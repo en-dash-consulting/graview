@@ -32,6 +32,7 @@ export const NOT_EXPORTS = new Map([
   ["setApp", "a method of the embed's handle, not an export (FR-116)"],
   ["setLabel", "a method of the embed's handle, not an export (FR-128)"],
   ["setHostActions", "a method of the embed's handle, not an export (FR-128)"],
+  ["barActions", "an option of the embed's mount, the pages' mount, FrameOptions and the Shell, not an export (FR-227)"],
   ["onDrawn", "an option of the embed's mount and the pages' mount, not an export (FR-188)"],
   ["setDraftView", "a method of the embed's handle and the pages' handle, not an export (FR-187)"],
   ["readyMs", "a limit of mountGuestWorker, mountWorkerView and mountGuestView, not an export"],

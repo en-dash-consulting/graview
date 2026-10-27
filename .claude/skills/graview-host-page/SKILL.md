@@ -47,7 +47,9 @@ decides the frame; the app still decides what is in it.**
 4. **Put the host's own furniture inside the embed, never over it.**
    `hostActions: [{ label, href }]` (or `onSelect` for a press) draws the
    host's links in the person's menu, under who is signed in, reached by
-   the keyboard. Every popover the embed draws stands in the browser's
+   the keyboard; `barActions: [{ label, icon?, onSelect }]` puts a press
+   ("Send feedback") on the bar itself, both faces, folded into "More" on
+   a phone (`setBarActions` changes them live). Every popover the embed draws stands in the browser's
    top layer, so a host needs no `z-index` override. `quickAsk: false`
    draws no quick ask (⌘K) on either face. Say the host's own news through
    `handle.notify({ kind: "toast" | "banner", sentence, tone, action })`,
@@ -67,6 +69,10 @@ decides the frame; the app still decides what is in it.**
    `firstDrawChunks(metafile, face)` from `@graview/embed/first-draw`, as
    `modulepreload` links. `onError` and `onReady` tell the host failures
    (class and module only) and the time to the first face drawn.
+7. **Serve the files you keep.** `files: { upload, maxBytes, kinds }` on
+   `mount`; serve each as its bytes' type, `nosniff`. A page with a CSP
+   allows the files route in `object-src`, or a record's PDF is its one
+   line — name, type, size, Open / Download — and no box.
 
 ## Knowing when a place has drawn
 

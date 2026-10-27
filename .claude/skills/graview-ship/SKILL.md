@@ -110,7 +110,8 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    (dev: `devFiles()`; under a base, `filesAt(base + "/graview/files")`).
    Serve each as its bytes' type, `nosniff`, a `sandbox` CSP on all but a
    PDF (an SVG runs script otherwise), only to a seat that `seesId` a record
-   holding it.
+   holding it. A page with a CSP allows the files route in `object-src`,
+   or a PDF is its one line, Open / Download, and no box.
 
 5. **Serve it, and let an agent in.** `graview serve <entry> --data ./data`
    puts the store behind HTTP with the op log as the wire; `graview mcp

@@ -39,7 +39,7 @@ export { quickAskOf } from "./quick-ask-setting.js";
 export { AppMark, AppTitle, useFavicon } from "./app-title.js";
 export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, FEWEST_STANDING, HOME_KEY, HOME_PATH, PLACE_GAP, placesThatStand, TOOL, toolStyle, useBarFind } from "./app-bar.js";
 export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces } from "./scene-places.js";
-export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
+export type { BarAction, BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 export type { HostAction } from "./profile.js";
 export { createNoticeBoard, fetchNotices, NoticeBoardContext, Notices, TOAST_MS } from "./notices.js";
 export { appKeyOf, readerLenses } from "./reader-lenses.js";
