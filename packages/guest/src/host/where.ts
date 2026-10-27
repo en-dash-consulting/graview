@@ -46,6 +46,8 @@ function bare(schema: unknown): Def | undefined {
 /** The values a choice or a yes-or-no takes; undefined for a field that takes any. */
 function optionsOf(def: Def | undefined): readonly string[] | undefined {
   if (def?.type === "boolean") return ["true", "false"];
+  // A choice that takes several of its options (FR-233) is filtered by one of them.
+  if (def?.type === "array") def = bare((def as { element?: unknown }).element);
   if (def?.type !== "enum") return undefined;
   return (def.entries ? Object.values(def.entries) : (def.values ?? [])).filter((value): value is string => typeof value === "string");
 }

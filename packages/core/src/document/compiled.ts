@@ -247,6 +247,8 @@ export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): 
       break;
     case "enum":
       schema = z.enum(spec.options as [string, ...string[]]);
+      // A choice that takes several of its options (FR-233): a list of them, each at most once.
+      if (spec.multiple) schema = z.array(schema).check(z.maxLength(spec.options!.length));
       break;
     case "list":
       schema = z.array(spec.of === "number" ? z.number() : spec.of === "date" ? z.string().check(z.regex(ISO_DAY)) : spec.of === "image" || spec.of === "video" || spec.of === "file" ? fileSchema(spec.of) : z.string().check(z.maxLength(500))).check(z.maxLength(200));
@@ -405,8 +407,10 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
      * is "State sponsored"), on every face that says a value — a card, a
      * page, a form's picker, a group's heading, a change in Activity.
      */
-    const optionLabeled = Object.entries(spec.fields).filter(([, f]) => f.type === "enum" && f.optionLabels && Object.keys(f.optionLabels).length > 0);
-    const format = Object.fromEntries(optionLabeled.map(([n, f]) => [n, (value: unknown) => (typeof value === "string" && Object.hasOwn(f.optionLabels!, value) ? f.optionLabels![value]! : humanizeField(String(value)))]));
+    const optionLabeled = Object.entries(spec.fields).filter(([, f]) => f.type === "enum" && ((f.optionLabels && Object.keys(f.optionLabels).length > 0) || f.multiple));
+    // A choice that takes several (FR-233) says each option it holds by its label, in one line: "CTO, QA".
+    const optionWords = (f: FieldSpec) => (value: unknown): string => (typeof value === "string" && f.optionLabels && Object.hasOwn(f.optionLabels, value) ? f.optionLabels[value]! : humanizeField(String(value)));
+    const format = Object.fromEntries(optionLabeled.map(([n, f]) => [n, f.multiple ? (value: unknown) => (Array.isArray(value) ? value.map(optionWords(f)).join(", ") : optionWords(f)(value)) : optionWords(f)]));
     const formatted = optionLabeled.length > 0;
     // Defaults stay out of the zod schema (hydration must not invent values) and ride beside it, for a repair to read.
     const defaults = Object.fromEntries(Object.entries(spec.fields).filter(([, f]) => f.default !== undefined).map(([n, f]) => [n, f.default]));

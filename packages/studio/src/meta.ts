@@ -86,6 +86,8 @@ export const fieldNode = defineNode("field", {
     type: z.enum(FIELD_TYPES),
     required: z.boolean(),
     options: z.array(z.string()).optional(),
+    /** An enum that takes several of its options at once (FR-233): a record holds a list of them. */
+    multiple: z.boolean().optional(),
     description: z.string().optional(),
     /** A date that repeats: a record keeps how, beside it (`<field>Repeat`). */
     repeats: z.boolean().optional(),
@@ -481,6 +483,8 @@ export const addField = act("add-field", {
     type: z.enum(FIELD_TYPES),
     required: z.boolean(),
     options: z.array(z.string()).optional(),
+    /** An enum that takes several of its options at once (FR-233). */
+    multiple: z.boolean().optional(),
     description: z.string().optional(),
     markdown: z.boolean().optional(),
   }),
@@ -496,6 +500,8 @@ export const addField = act("add-field", {
       type: args.type,
       required: args.required,
       ...(args.options ? { options: args.options } : {}),
+      // Several at once is an enum's (FR-233).
+      ...(args.multiple && args.type === "enum" ? { multiple: true } : {}),
       ...(args.description ? { description: args.description } : {}),
       // Markdown is a text field's (FR-180).
       ...(args.markdown && args.type === "text" ? { markdown: true } : {}),
@@ -608,8 +614,8 @@ export const retypeField = act("retype-field", {
   title: "Change the field's type",
   description: "Make a field another type. An enum is given its options; a field made anything else lets them go. A text field may be written in Markdown.",
   subject: { kinds: ["field"], arg: "id" },
-  writes: ["type", "options", "markdown", "repeats"],
-  input: z.object({ id: nodeRef(["field"]), type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1)).min(1).optional(), markdown: z.boolean().optional() }),
+  writes: ["type", "options", "multiple", "markdown", "repeats"],
+  input: z.object({ id: nodeRef(["field"]), type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1)).min(1).optional(), multiple: z.boolean().optional(), markdown: z.boolean().optional() }),
   describe: (args, graph) => `Make ${fieldLabel(graph, args.id)} a ${args.type}${args.type === "text" && args.markdown ? " written in Markdown" : ""}`,
   apply(ctx, args) {
     const field = ctx.graph.getNode(args.id) as { options?: readonly string[]; markdown?: boolean; repeats?: boolean } | undefined;
@@ -621,10 +627,12 @@ export const retypeField = act("retype-field", {
     if (args.type === "enum") {
       const options = args.options ?? field?.options;
       if (!options || options.length === 0) throw new Error(`${nameOf(ctx, args.id)} is made an enum, and an enum names its options: give them`);
-      ctx.patchNode(args.id, { type: args.type, options: [...options], ...repeats });
+      // Several at once (FR-233) is said anew by the retype, or kept as it was when unsaid.
+      const multiple = args.multiple ?? (field as { multiple?: boolean } | undefined)?.multiple;
+      ctx.patchNode(args.id, { type: args.type, options: [...options], multiple: multiple ? true : undefined, ...repeats });
       return;
     }
-    ctx.patchNode(args.id, { type: args.type, ...(field?.options !== undefined ? { options: undefined } : {}), ...repeats });
+    ctx.patchNode(args.id, { type: args.type, ...(field?.options !== undefined ? { options: undefined } : {}), ...((field as { multiple?: boolean } | undefined)?.multiple !== undefined ? { multiple: undefined } : {}), ...repeats });
   },
 });
 
@@ -651,6 +659,20 @@ export const setRepeats = act("set-repeats", {
     const type = (ctx.graph.getNode(args.id) as { type?: string } | undefined)?.type;
     if (args.repeats && type !== "date" && type !== "datetime") throw new Error(`${nameOf(ctx, args.id)} is not a date, and only a date can repeat`);
     ctx.patchNode(args.id, { repeats: args.repeats || undefined });
+  },
+});
+
+export const setMultiple = act("set-multiple", {
+  title: "Say whether it takes several",
+  description: "Let a choice take several of its options at once (FR-233), or one again. Only an enum takes several.",
+  subject: { kinds: ["field"], arg: "id" },
+  writes: ["multiple"],
+  input: z.object({ id: nodeRef(["field"]), multiple: z.boolean() }),
+  describe: (args, graph) => `Let ${fieldLabel(graph, args.id)} take ${args.multiple ? "several of its options" : "one of its options"}`,
+  apply(ctx, args) {
+    const type = (ctx.graph.getNode(args.id) as { type?: string } | undefined)?.type;
+    if (args.multiple && type !== "enum") throw new Error(`${nameOf(ctx, args.id)} is not an enum, and only a choice takes several of its options`);
+    ctx.patchNode(args.id, { multiple: args.multiple || undefined });
   },
 });
 
@@ -1089,6 +1111,7 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   retypeField,
   setRequired,
   setRepeats,
+  setMultiple,
   setOptions,
   describeField,
   addEdge,

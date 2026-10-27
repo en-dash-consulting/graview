@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 522,
+  "gzipped": 1,
+  "changeset": "a-choice-takes-several-of-its-options.md",
+  "note": "Raised when a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): up front are `multiple` in the document's shape and its refusal off an enum, the list of options a field compiles to and the words that say each by its label, `fieldSpecOf` reading a list of an enum back, a list filtered by one of its options, and the form field that is one `choice` with `multiple`. The boxes themselves, the in-place editor, imports, connections and the studio are fetched with what asks for them. Measured at 627_748 / 219_056 against 627_226 / 219_334: 522 more minified, 278 fewer gzipped (the gzipped raise is the least a raise may say)."
+}

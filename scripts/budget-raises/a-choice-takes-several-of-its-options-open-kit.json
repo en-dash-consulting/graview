@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 72,
+  "gzipped": 0,
+  "note": "Raised when a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): the option words a view is handed and the host's filter keys read a list of an enum as the enum's. Measured at 224_556 / 85_471 against 224_484 / 85_476: 72 more minified, 5 fewer gzipped."
+}

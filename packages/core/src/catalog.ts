@@ -326,7 +326,8 @@ export function catalogOf<S extends AnySchema>(given: Store<S>, target: AiTarget
     for (const [field, zod] of Object.entries(shape)) {
       if (only !== undefined ? field !== only : hidden.has(field) || node[field] !== undefined) continue;
       const spec = fieldSpecOf(zod);
-      const values: readonly unknown[] = spec?.type === "enum" ? (spec.options ?? []) : spec?.type === "boolean" ? [true, false] : [];
+      // A choice that takes several (FR-233) is not filled one option at a time: a fill sets a field whole.
+      const values: readonly unknown[] = spec?.type === "enum" && !spec.multiple ? (spec.options ?? []) : spec?.type === "boolean" ? [true, false] : [];
       if (values.length === 0) continue;
       const writer = (writers?.get(field) ?? []).map((name) => byName.get(name)).find((mutation) => mutation?.subject !== undefined && runs(whole, { name: mutation.name, args: { [mutation.subject.arg]: node.id, [field]: values.find((value) => value !== node[field]) ?? values[0] } }, principal, true));
       if (!writer?.subject) continue;

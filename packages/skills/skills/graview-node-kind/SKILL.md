@@ -57,7 +57,9 @@ others that they show, is `graview-view-specs`.
    `kinds.fixture`: `{ "label": "{name}", "fields": { "name": { "type":
    "string", "required": true } }, "edges": { "pickedFor": { "to":
    ["player"] } } }`. Kinds are kebab-case (`tool-note`), fields and
-   relations camelCase (`pickedFor`).
+   relations camelCase (`pickedFor`). A choice that takes several of its
+   options at once is `{ "type": "enum", "multiple": true, "options": [...] }`
+   (`z.array(z.enum([...]))`): checkboxes in forms, filtered by one option.
    Every key, lens and block is in
    `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
 

@@ -123,7 +123,9 @@ type Keys<T> = [T] extends [never] ? never : T extends object ? keyof T & string
 type Simplify<T> = { [K in keyof T]: T[K] } & {};
 
 /** What a field of one declared type holds: its options for an enum, a number for a number (and a duration, in minutes), words for the rest. */
-export type ValueOf<F> = F extends { readonly type: "enum"; readonly options: readonly (infer O)[] }
+export type ValueOf<F> = F extends { readonly type: "enum"; readonly multiple: true; readonly options: readonly (infer O)[] }
+  ? readonly O[]
+  : F extends { readonly type: "enum"; readonly options: readonly (infer O)[] }
   ? O
   : F extends { readonly type: "number" | "integer" | "duration" }
     ? number
