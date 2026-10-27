@@ -667,7 +667,7 @@ async function opening<S extends AnySchema>(
     schema: app.schema,
     mutations: app.mutations ?? [],
     invariants: app.invariants ?? [],
-    ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}),
+    ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}), ...(app.tidying ? { tidying: app.tidying } : {}),
     ...(app.modules ? { modules: app.modules } : {}),
     ...(enabledModules ? { enabledModules } : {}),
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),

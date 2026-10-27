@@ -318,7 +318,7 @@ export async function openStore<S extends AnySchema>(
     mutations: app.mutations ?? [],
     invariants: app.invariants ?? [],
     ...(app.modules ? { modules: app.modules } : {}),
-    ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}),
+    ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}), ...(app.tidying ? { tidying: app.tidying } : {}),
     /* The allowlist travels with the declaration, so a deployment enforces
        what the app said an agent was for without being asked to. */
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),

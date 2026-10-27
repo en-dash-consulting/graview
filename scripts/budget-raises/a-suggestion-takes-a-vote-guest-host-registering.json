@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 0,
+  "gzipped": 3,
+  "note": "Raised when a suggestion came to take a vote from someone who may not accept it (Roadmap f-suggestion-votes): nothing of the guest host changed — its minified size is the same byte for byte — but the chunk it shares with the store carries a new content hash in its name, and the gzipped entry came to 3 bytes more, which was the budget's whole room. 0 / 3 more. Measured at 38_185 / 16_863 against 38_185 / 16_860 on a fresh build of main."
+}

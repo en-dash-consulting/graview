@@ -13,12 +13,23 @@
  * before a suggestion is drawn. What a page draws a record with —
  * `isLeftAlone`, `isAutomated` — is the main entry's, and the store holds
  * the actor to what people said whatever path its change takes.
+ *
+ * Someone who may see a suggestion and may not make its change — a
+ * reader, a visitor by link — is not refused (Roadmap f-suggestion-votes):
+ * their Accept and Decline are a vote, for or against (`voteSuggestion`),
+ * one standing vote each, which they may change or withdraw; whoever may
+ * decide (`mayDecide`) sees the tally and accepts or declines as ever, and
+ * an app may say a suggestion is made at so many votes for
+ * (`tidying.autoAcceptAt`), by the actor, with the voters in its lineage.
+ * Loaded, this module teaches the store how a vote's op is made
+ * (`VOTING`), as `@graview/core/publishing` does for a publish.
  */
 import { GraphError } from "./graph/graph.js";
 import type { MutationCall } from "./mutations/types.js";
-import { lineageOf, type Lineage } from "./ops/lineage.js";
-import { expired, suggestionsIn, type Dismissal, type Suggestion } from "./ops/suggestions.js";
-import { declinedIn, meaningKey, type ActMeanings } from "./ops/tidying.js";
+import { VOTE_SUGGESTION, VOTING, type Vote } from "./mutations/vote-suggestion.js";
+import { lineageOf, LINEAGE_VOTERS_LIMIT, type Lineage } from "./ops/lineage.js";
+import { expired, suggestionsIn, votesIn, type Dismissal, type Suggestion } from "./ops/suggestions.js";
+import { declinedIn, isAutomated, meaningKey, type ActMeanings } from "./ops/tidying.js";
 import type { Author, Operation, Via } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -28,8 +39,9 @@ import { EMPTY_DIFF } from "./graph/diff.js";
 
 export { declinedIn, declinesIn, meaningKey, suggestionKey, tidyingOf, tidyingRefusal } from "./ops/tidying.js";
 export type { ActMeanings } from "./ops/tidying.js";
-export { isDismissed, suggestionsIn } from "./ops/suggestions.js";
-export type { Dismissal, DismissalStore, Suggestion, WaitingOptions } from "./ops/suggestions.js";
+export { isDismissed, suggestionsIn, tallyOf, votesIn } from "./ops/suggestions.js";
+export type { Dismissal, DismissalStore, Suggestion, SuggestionTally, WaitingOptions } from "./ops/suggestions.js";
+export type { AppTidying, SuggestionVote, Vote } from "./mutations/vote-suggestion.js";
 export { digestWords, foldDigests, isSuggestionBatch, typedRowWords } from "./ops/digest.js";
 export type { ActivityRow, TypedRow } from "./ops/digest.js";
 export { LEFT_ALONE } from "./graph/archived.js";
@@ -145,7 +157,43 @@ export function suggestions<S extends AnySchema>(store: Store<S>, principal?: Pr
   const who = principal ?? seat?.principal;
   // A seat that sees everything is handed the store itself.
   const ops = (who !== undefined ? whole.seenBy(who) : whole).log.all();
-  return suggestionsIn(ops, (id) => whole.graph.has(id), { now: keptOf(whole).now(), dismissed: options.dismissed });
+  return suggestionsIn(ops, (id) => whole.graph.has(id), { now: keptOf(whole).now(), dismissed: options.dismissed, voter: who });
+}
+
+/**
+ * WHETHER THIS SEAT MAY DECIDE A SUGGESTION (Roadmap f-suggestion-votes):
+ * the store would let them make its change — every call of it permitted
+ * to them, the same answer `applyAll` gives — so their Accept makes it and
+ * their Decline answers it for everyone. One who may not (a reader, a
+ * visitor by link) votes instead, and is shown no tally. A store with no
+ * policy lets everyone decide, as it always has.
+ */
+export function mayDecide<S extends AnySchema>(store: Store<S>, suggestion: Pick<Suggestion, "calls">, principal?: Principal): boolean {
+  const seat = seatOf(store);
+  const whole = seat?.store ?? store;
+  const who = principal ?? seat?.principal ?? (keptOf(whole).by as Principal);
+  return suggestion.calls.every((call) => whole.permits(call, who).ok);
+}
+
+/** What accepting or declining a suggestion answers: the change made, or — from a seat that may not make it — the vote kept instead (`voted`). */
+export type SuggestionAnswer<S extends AnySchema> = ApplyResult<S> & { readonly voted?: Exclude<Vote, null> };
+
+/**
+ * VOTE ON A SUGGESTION (Roadmap f-suggestion-votes): `for` it, `against`
+ * it, or `null` to withdraw the vote — one standing vote per person, the
+ * latest, kept as an op of the built-in `vote-suggestion` act, which
+ * changes nothing of the graph. Anybody who may see the suggestion votes;
+ * whoever may decide it accepts or declines it instead
+ * (`acceptSuggestion`, `declineSuggestion`), which do this on their
+ * behalf when they may not. A suggestion that is no longer waiting, or
+ * that the voter may not see, is refused in a sentence.
+ */
+export function voteSuggestion<S extends AnySchema>(store: Store<S>, id: string, vote: Vote, options: ApplyOptions = {}): SuggestionAnswer<S> {
+  const whole = seatOf(store)?.store ?? store;
+  const author = options.author ?? keptOf(whole).by;
+  waitingFor(whole, id, author);
+  const result = whole.applyAll([{ name: VOTE_SUGGESTION, args: { suggestion: id, vote } }], { ...options, author });
+  return vote === null ? result : { ...result, voted: vote };
 }
 
 /** A suggestion still waiting that this author may see, or a sentence saying it is not. */
@@ -163,10 +211,12 @@ function waitingFor<S extends AnySchema>(store: Store<S>, id: string, author: Au
  * theirs is — carrying the suggestion's lineage, which names it
  * (`lineage.suggestion`), so it waits no longer.
  */
-export function acceptSuggestion<S extends AnySchema>(store: Store<S>, id: string, options: ApplyOptions = {}): ApplyResult<S> {
+export function acceptSuggestion<S extends AnySchema>(store: Store<S>, id: string, options: ApplyOptions = {}): SuggestionAnswer<S> {
   const whole = seatOf(store)?.store ?? store;
   const author = options.author ?? keptOf(whole).by;
   const suggestion = waitingFor(whole, id, author);
+  // From a seat the store would refuse the change, a vote for it (Roadmap f-suggestion-votes).
+  if (!mayDecide(whole, suggestion, author as Principal)) return voteSuggestion(whole, id, "for", { ...options, author });
   return whole.applyAll(suggestion.calls, { ...options, author, lineage: { ...suggestion.lineage!, suggestion: id } });
 }
 
@@ -176,10 +226,12 @@ export function acceptSuggestion<S extends AnySchema>(store: Store<S>, id: strin
  * the same suggestion — or the same change, made on its own — is refused
  * to the app's own actor from now on. Undone, it waits again.
  */
-export function declineSuggestion<S extends AnySchema>(store: Store<S>, id: string, options: ApplyOptions = {}): ApplyResult<S> {
+export function declineSuggestion<S extends AnySchema>(store: Store<S>, id: string, options: ApplyOptions = {}): SuggestionAnswer<S> {
   const whole = seatOf(store)?.store ?? store;
   const author = options.author ?? keptOf(whole).by;
   const suggestion = waitingFor(whole, id, author);
+  // From a seat the store would refuse the change, a vote against it (Roadmap f-suggestion-votes): a decline is whoever may decide's.
+  if (!mayDecide(whole, suggestion, author as Principal)) return voteSuggestion(whole, id, "against", { ...options, author });
   return whole.undo(suggestion.batch, { ...options, author });
 }
 
@@ -209,3 +261,60 @@ export function declined(store: Pick<Store<AnySchema>, "log">, calls: readonly M
   const kept = store as unknown as Partial<Kept<AnySchema>>;
   return declinedIn(store.log.all(), calls, typeof kept.actMeanings === "function" ? kept.actMeanings() : undefined);
 }
+
+/** The app's own actor, when a suggestion's maker is not one: who makes a suggestion that reached `autoAcceptAt`. */
+const TIDYING_ACTOR: Author = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+
+/*
+ * HOW A VOTE'S OP IS MADE, taught to the store (`VOTING`, Roadmap
+ * f-suggestion-votes): judged as the voter sees the suggestion — one not
+ * waiting for them is refused in `waitingFor`'s sentence — its intent the
+ * suggestion's own sentence under the vote, the records the suggestion
+ * names as what the sentence read (`described`), so a seat that may not
+ * see one is served the op withheld, as the suggestion is; no primitives,
+ * and the vote on the op.
+ */
+VOTING.op = (held, made, call, batch, author, options) => {
+  const store = held as Store<AnySchema>;
+  const { suggestion: id, vote } = call.args as { suggestion: string; vote: Vote };
+  const suggestion = waitingFor(store, id, author);
+  const intent = vote === "for" ? `For: ${suggestion.intent}` : vote === "against" ? `Against: ${suggestion.intent}` : `Withdraws a vote on: ${suggestion.intent}`;
+  return {
+    id: made.id,
+    seq: store.log.length,
+    batch,
+    author,
+    intent,
+    mutation: call,
+    primitives: [],
+    reads: [],
+    writes: [],
+    ...(suggestion.about.length > 0 ? { described: suggestion.about } : {}),
+    at: made.at,
+    ...(options.via !== undefined ? { via: options.via as Via } : {}),
+    vote: { suggestion: id, vote },
+  };
+};
+
+/*
+ * WHAT A VOTE HAS THE ACTOR MAKE (`VOTING.accepting`): when the declaration
+ * says `autoAcceptAt` and this vote brought the suggestion's standing votes
+ * for it to that many, the suggestion's calls — as its maker when that is
+ * an automated actor, else as "Graview, tidying" — with its lineage naming
+ * it (`suggestion`) and who voted for it (`voters`, the first 200). The
+ * store queues them in the vote's own gesture, having rehearsed that the
+ * actor would be let.
+ */
+VOTING.accepting = (held, vote) => {
+  const store = held as Store<AnySchema>;
+  const at = store.tidying?.autoAcceptAt;
+  if (at === undefined || vote.vote?.vote !== "for") return undefined;
+  const id = vote.vote.suggestion;
+  const suggestion = suggestions(store).find((one) => one.id === id);
+  if (!suggestion) return undefined;
+  const votes = votesIn(store.log.all()).get(id);
+  const voters = [...(votes ?? [])].filter(([, each]) => each === "for").map(([who]) => who);
+  if (voters.length < at) return undefined;
+  const author = isAutomated(suggestion.author) ? suggestion.author : TIDYING_ACTOR;
+  return { calls: suggestion.calls, author: author as Principal, lineage: { ...suggestion.lineage!, suggestion: id, voters: voters.slice(0, LINEAGE_VOTERS_LIMIT) } };
+};

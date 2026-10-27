@@ -462,7 +462,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
     name: "list_suggestions",
     title: "List what is suggested",
     description:
-      "List the suggestions waiting for a person: changes the app's own actor proposed and did not make, each with its id, what it would do, who suggested it, what it was based on and how sure (0 to 1). Nothing changes until one is accepted (accept_suggestion) or declined (decline_suggestion); a declined one is never suggested again.",
+      "List the suggestions waiting for a person: changes the app's own actor proposed and did not make, each with its id, what it would do, who suggested it, what it was based on and how sure (0 to 1), and the votes on it (tally: for, against, and this seat's own as mine). Nothing changes until one is accepted (accept_suggestion) or declined (decline_suggestion); a declined one is never suggested again.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     mutating: false,
     annotations: read("List what is suggested"),
@@ -470,7 +470,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
   {
     name: "accept_suggestion",
     title: "Accept a suggestion",
-    description: "Make a waiting suggestion's change, as this seat, carrying what it was based on. Returns the batch (undo_batch takes it back).",
+    description: "Make a waiting suggestion's change, as this seat, carrying what it was based on. Returns the batch (undo_batch takes it back). From a seat that may see the suggestion and may not make the change, it records this seat's vote for it instead (voted: \"for\"; a later vote replaces it) and the suggestion still waits for someone who may.",
     inputSchema: { type: "object", properties: { suggestion: { type: "string", description: "The suggestion's id, from list_suggestions." } }, required: ["suggestion"], additionalProperties: false },
     mutating: true,
     annotations: { title: "Accept a suggestion", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -478,7 +478,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
   {
     name: "decline_suggestion",
     title: "Decline a suggestion",
-    description: "Decline a waiting suggestion: nothing changes, the decline is kept in the log, and the same change is never suggested or made by the app's own actor again.",
+    description: "Decline a waiting suggestion: nothing changes, the decline is kept in the log, and the same change is never suggested or made by the app's own actor again. From a seat that may not make the change, it records this seat's vote against it instead (voted: \"against\") and the suggestion still waits.",
     inputSchema: { type: "object", properties: { suggestion: { type: "string", description: "The suggestion's id, from list_suggestions." } }, required: ["suggestion"], additionalProperties: false },
     mutating: true,
     annotations: { title: "Decline a suggestion", readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -1214,6 +1214,8 @@ export function createToolRuntime<S extends AnySchema>(
               by,
               at: one.at,
               about: one.about,
+              // The votes on it (Roadmap f-suggestion-votes): what a seat sorts on, and its own among them.
+              tally: one.tally,
               ...(one.lineage ? { basis: { untrusted: true as const, authoredBy: by, text: one.lineage.basis }, ...(one.lineage.confidence !== undefined ? { confidence: one.lineage.confidence } : {}) } : {}),
             };
           });
@@ -1233,7 +1235,8 @@ export function createToolRuntime<S extends AnySchema>(
           const as = { author: principal, ...viaNow(options.via) };
           const done = definition.name === "accept_suggestion" ? acceptSuggestion(store, id, as) : declineSuggestion(store, id, as);
           const result = answerSeenBy(store, principal, done);
-          return { ok: true, data: { batch: result.batch, intent: result.intent, introduces: result.introduces.map(withoutLine), resolves: result.resolves.map(withoutLine) }, diff: result.diff };
+          // From a seat that may not make the change, a vote was kept instead (Roadmap f-suggestion-votes): said as such, and the suggestion still waits.
+          return { ok: true, data: { batch: result.batch, intent: result.intent, ...(done.voted ? { voted: done.voted } : {}), introduces: result.introduces.map(withoutLine), resolves: result.resolves.map(withoutLine) }, diff: result.diff };
         }
 
         case "undo_batch": {

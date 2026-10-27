@@ -22,5 +22,6 @@ export * from "./field-sight.js";
 export * from "./code-describe.js";
 export * from "./forms.js";
 export * from "./publishing.js";
+export * from "./tidying.js";
 export * from "./jobs.js";
 export * from "./aliases.js";
