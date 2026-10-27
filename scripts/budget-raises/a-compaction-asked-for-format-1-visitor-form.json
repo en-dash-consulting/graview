@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 549,
+  "gzipped": 206,
+  "note": "Raised when a compaction came to be asked for format 1 (`CompactOptions.format`): the store holds the horizon at the earliest seq readers are served behind it until `formatStamp` says the format asked for, so it reads the stamp and the formats this build writes where it checkpoints, and refuses a format it does not write. 549 / 206 more. Measured at 248_180 / 91_157 against 247_631 / 90_951."
+}

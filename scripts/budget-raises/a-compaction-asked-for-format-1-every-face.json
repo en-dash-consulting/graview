@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 321,
+  "note": "Raised when a compaction came to be asked for format 1 (`CompactOptions.format`): the store holds the horizon at the earliest seq readers are served behind it until `formatStamp` says the format asked for, so it reads the stamp and the formats this build writes where it checkpoints, and refuses a format it does not write. 549 / 321 more, the minified within the budget's room. Measured at 2_373_031 / 865_169 against 2_372_482 / 864_848."
+}

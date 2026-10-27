@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 549,
+  "gzipped": 174,
+  "note": "Raised when a compaction came to be asked for format 1 (`CompactOptions.format`): the store holds the horizon at the earliest seq readers are served behind it until `formatStamp` says the format asked for, so it reads the stamp and the formats this build writes where it checkpoints, and refuses a format it does not write. 549 / 174 more. Measured at 678_878 / 249_368 against 678_329 / 249_194."
+}
