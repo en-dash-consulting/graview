@@ -81,6 +81,24 @@ to remember.
    for a world with the hidden record answers `[]`
    (`packages/core/tests/unit/a-subscription-is-told-what-its-subscriber-may-see.test.ts`).
 
+6. **What a seat reads beside a record keeps to its sight too.**
+   - An id is served wherever its record is, so it is never minted from a
+     field some sight keeps from a role: a tip whose title the public may
+     not see is `tip:tip-2`, not `tip:secret-merger-plan` — an act, an
+     import, and a day of a series changed apart alike. An act of your own
+     gets the same from `freshId(name, kind, record?)` when the name quotes
+     an argument for such a field, or a field of the record handed third;
+     a name it builds from anything else is yours to keep clean.
+   - A record withheld whole — its required reference names a kind the
+     seat may not see — is refused as one that is not there, whatever the
+     grant says, exactly as an id that names nothing.
+   - The app's own actor's suggestions say why in words that quote fields;
+     a seat whose sight keeps one the basis read is served the suggestion,
+     and the change it made, withheld.
+   - A sight with `hide` or `fields` shows a kind in part, so even a
+     `roles: "*"` one is not total sight for a worker view: the view's own
+     acts need a press the host saw.
+
 ## Then find out whether it worked
 
 ```sh
