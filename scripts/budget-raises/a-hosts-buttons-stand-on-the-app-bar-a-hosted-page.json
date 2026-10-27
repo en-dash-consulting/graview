@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 3262,
+  "gzipped": 128,
+  "changeset": "a-hosts-buttons-stand-on-the-app-bar.md",
+  "note": "Raised when a host's buttons came to stand on the app bar (FR-227), with a PDF's box sized only once loaded (FR-234) in the same pull request: the bar draws the host's buttons before its tools and the one control they fold into on a narrow bar, whose list is a popover of the family (`host-actions`), and the frame and both handles carry `barActions` up front; the PDF's one line and its box ride the files part behind its door. Measured at 630_488 / 219_462 against 627_226 / 219_334 minified and gzipped."
+}

@@ -165,7 +165,8 @@ describe("a hosted page", () => {
     // 1023 KB since Start fresh came to be asked for in its own tab (a one-time value in sessionStorage, `freshAddress`): the scene face measured 1_046_736 B, 230 more than main (1_046_506).
     // 1027 KB once the security audit's seven fix branches came together (each line above measured its own branch against main): the scene face measured 1_050_625 B, 4_119 more than main (1_046_506).
     // 1028 KB since a keystroke and an Edit came to ride an act only where it would run on the record (`wouldRun`, asked by the store's `type-text` and by `editableFields`): the scene face measured 1_051_757 B, 839 more than main (1_050_918).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1028 * 1024);
+    // 1032 KB since a host's buttons came to stand on the app bar (FR-227) and a PDF's box came to be sized only once loaded (FR-234): the bar's buttons, the control they fold into and its popover, `barActions` on the frame and both handles; the PDF's line and its box ride the files part behind its door: the scene face measured 1_055_953 B, 4_196 more than main (1_051_757).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1032 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 104,
+  "gzipped": 0,
+  "note": "Raised when a host's buttons came to stand on the app bar (FR-227), with a PDF's box sized only once loaded (FR-234) in the same pull request: the visitor's form draws no bar, but the provider's popover registry it carries names the one the host's buttons fold into (`host-actions`), and the two features are said as shipped. 104 more minified, the gzipped within the budget's room. Measured at 326_923 / 120_136 against 326_819 / 120_199."
+}

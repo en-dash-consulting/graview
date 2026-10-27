@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 1,
+  "note": "Raised when a host's buttons came to stand on the app bar (FR-227) and a PDF's box came to be sized only once loaded (FR-234): the worker imports nothing of either but `capabilities()`, whose `shipped` names the two ids. The worker had no room under 2_272_518. Measured at 2_272_519 B against 2_272_518."
+}
