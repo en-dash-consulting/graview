@@ -1,5 +1,39 @@
 # @graview/embed
 
+## 0.1.61
+
+### Patch Changes
+
+- 5ec4dcf: A host's buttons stand on the app bar (FR-227), Roadmap f-host-buttons-in-the-app-bar. Graview Cloud's "Send feedback" could sit only in the person's menu (`hostActions`) or the right-click menu, two taps from a reader, and a host may float nothing over an app (FR-72). An embed, the pages alone and the Shell now take `barActions: [{ label, icon?, onSelect }]`: each is a button on the bar itself, on both faces, before the standing and the person, named by its label with its mark (an emoji, a glyph or an inline `<svg>`) hidden from a reader who cannot see it. Where the bar has their width over a phone's they stand on the row; where it does not — a phone, a small box — they fold into one control, "More", that lists them, one of the bar's own family of popovers. `handle.setBarActions` changes them live, as `setHostActions` does the menu's; `undefined` takes them off, and nothing is drawn when a host gives none. They are the host's only: no declaration and no sandboxed view can put a button on the bar. The primitives' and the embed's tests hold it (`a-hosts-buttons-stand-in-the-bar-or-fold`, `a-hosts-buttons-are-in-the-app-bar-on-both-faces`), and the chrome harness presses "Send feedback" by the keyboard on both faces, standing on a desk and folded on a phone. The host-page skill and the embed's README say it beside `hostActions`. A hosted page carries 3.2 KB more up front (3_262 bytes minified, 128 gzipped; handed a compiled app, 3_260 and 250): the bar's buttons, the control they fold into and its popover, and `barActions` on the frame and both handles — the raises in `scripts/budget-raises/a-hosts-buttons-stand-on-the-app-bar-*.json` say each entry's bytes, the PDF's one line (FR-234, the same pull request) riding the files part behind its door. FR-227 is said as shipped: `capabilities().shipped` gains FR-227.
+  
+  Compatibility: ops and primitives, stored formats, the declaration and check finding codes, and derived tool names and input schemas — unchanged. The wire: unchanged; `capabilities().shipped` lists FR-227. What Graview Cloud does: hand `mount` its "Send feedback" as `barActions`, and keep `hostActions` for the menu.
+- 6d383c3: The 0.1.61 batch holds together: each of its nine branches measured its own growth against main, and merged they come to a few bytes more than the sum of their raises (3 bytes minified and 181 gzipped on a hosted page, 20 and 64 handed a compiled app, a few dozen on the pages face alone and a visitor's form), so the batch files raises of its own for the margin — 0.0 KB more up front (32 bytes minified and 224 gzipped on a hosted page, 32 and 96 on one handed a compiled app) — and the scene face's before-draw line is measured on the batch whole (1_061_271 B, 1037 KB).
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged. The wire — unchanged. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+- Updated dependencies [c9fd45a]
+- Updated dependencies [9ffaf81]
+- Updated dependencies [24926eb]
+- Updated dependencies [fddebfd]
+- Updated dependencies [208702c]
+- Updated dependencies [5ec4dcf]
+- Updated dependencies [ce470d9]
+- Updated dependencies [166cf1d]
+- Updated dependencies [869c28c]
+- Updated dependencies [cab3b1d]
+- Updated dependencies [0cf3524]
+- Updated dependencies [08d4b4c]
+- Updated dependencies [1483a93]
+- Updated dependencies [8d7cecc]
+- Updated dependencies [b80b6de]
+  - @graview/core@0.1.61
+  - @graview/pages@0.1.61
+  - @graview/primitives@0.1.61
+  - @graview/studio@0.1.61
+  - @graview/tools@0.1.61
+  - @graview/guest@0.1.61
+  - @graview/react@0.1.61
+  - @graview/layout@0.1.61
+
 ## 0.1.60
 
 ### Patch Changes
