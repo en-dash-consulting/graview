@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 179,
+  "gzipped": 46,
+  "note": "Raised when a view came to link to the Scene (FR-235, Roadmap f-view-links-to-scene): the routed face's way of going, which a visitor's form carries, knows `home` and `overview`. Measured at 249_256 / 91_414 against 249_077 / 91_368: 179 / 46 more."
+}

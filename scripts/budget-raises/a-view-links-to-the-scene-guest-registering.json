@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 2590,
+  "gzipped": 1015,
+  "note": "Raised when a view came to link to the Scene (FR-235, Roadmap f-view-links-to-scene): the host judges a link and a navigate by the one vocabulary the headless check reads (`placeNamesFrom` on `@graview/core/navigate`, built from what the face holds as `placesFrom` is for the bar), and a registered view hands the host the arrangement for the Scene's title. Measured at 40_775 / 17_875 against 38_185 / 16_860: 2_590 / 1_015 more."
+}

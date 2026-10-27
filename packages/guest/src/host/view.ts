@@ -1,7 +1,7 @@
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import type { AnySchema, FileValue, HostFiles, Principal, Store } from "@graview/core";
+import type { AnySchema, FileValue, HostFiles, PagesArrangement, Principal, Store } from "@graview/core";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
@@ -14,7 +14,7 @@ import { createDrawBudget } from "./draw-budget.js";
 import { fitBudget, keepStart, paceOf } from "./device-pace.js";
 import { checkViewSource } from "./view-source.js";
 import { viewScript } from "./view-script.js";
-import { createLinks, listsOf, type Arrival, type Destination } from "./links.js";
+import { createLinks, listsOf, placeVocabulary, type Arrival, type Destination } from "./links.js";
 import { addressAt, arriveAt } from "./arrive-at.js";
 import type { GoTo } from "@graview/react/provider";
 import type { GuestPictureHand } from "./pictures.js";
@@ -156,8 +156,17 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
   readonly hrefOf?: (to: Arrival) => string | undefined;
   /** The face's own way of going (`useGoTo`), read when the view goes: where `onNavigate` is not given, the arrival is gone to by it, and its `href` is a link's address. */
   readonly goTo?: () => GoTo | undefined;
-  /** The app's named places: what the view is told of, and may link to by slug. None by default. */
+  /**
+   * The app's named places — the registry's pictures, each over a kind —
+   * which the host reads through the one vocabulary (`placeVocabulary`,
+   * FR-235): with the Scene (`overview`), the home and each kind's list
+   * the viewer sees, it is what the view is told of (`props.places`) and
+   * may link to by slug. None handed, the vocabulary still names the
+   * Scene, the home and the lists.
+   */
   readonly places?: () => readonly GuestPlace[];
+  /** The app's arrangement (`views.arrangement()`): what the declaration calls the Scene, for the vocabulary's title of it. */
+  readonly arrangement?: () => PagesArrangement | undefined;
   /**
    * The app's look now. Read off the region by default: the `--graview-*`
    * tokens it inherits, and the scheme of the nearest `data-graview-scheme`
@@ -572,10 +581,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     if (one[0] === "render") refill();
   };
   /* Links stay in the app (FR-93): a record the viewer may see, or a place the app has. */
-  const lists = () => listsOf(options.store.schema, new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]));
+  const kept = () => new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
+  const lists = () => listsOf(options.store.schema, kept());
+  /* The one vocabulary (FR-235): the Scene, the home, each kind's list and each titled place, as the headless check reads them. */
+  const vocabulary = () => placeVocabulary(options.store.schema, options.places?.() ?? [], { kept: kept(), ...(options.arrangement ? { pages: options.arrangement() } : {}) });
   const links = createLinks({
     sees: (id) => options.store.seenBy(options.principal).graph.has(id),
-    places: () => guestPlacesOf(options.places?.() ?? []),
+    places: vocabulary,
     lists,
     schema: options.store.schema,
     ...(options.onNavigate ? { onNavigate: options.onNavigate } : options.goTo ? { onNavigate: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
@@ -870,7 +882,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           given.postMessage(message);
         },
         props: () => {
-          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), ...(options.places ? { places: guestPlacesOf(options.places()) } : {}), ...(computed ? { computed } : {}) });
+          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), ...(computed ? { computed } : {}) });
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
           lastProps = props;
           return props;
@@ -903,7 +915,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         /* Past the message allowance, a view is stopped, not read on (FR-94). */
         onFlood: () => fail("flood"),
         onStyle: (sheets) => draw(["style", sheets]),
-        places: () => [...new Set([...guestPlacesOf(options.places?.() ?? []).map((place) => place.as), ...lists().map((list) => list.slug)])],
+        places: () => [...new Set([...vocabulary().map((place) => place.as), ...lists().map((list) => list.slug)])],
         ...(options.limits ? { limits: options.limits } : {}),
         limiter,
       });

@@ -507,7 +507,12 @@ followed by it on a press or Enter, to a record the viewer may see or a
 place the app has. `graview.navigate("offer:coaching")` and
 `graview.navigate({ place: "the-packages" })` are held to the same. A bare
 string is a record the viewer may see first, then a place by that slug, so
-`graview.navigate("the-packages")` goes to the place. A destination that
+`graview.navigate("the-packages")` goes to the place. The Scene and the
+home are places by name too (FR-235): `data-place="overview"` goes to the
+Scene's overview and `data-place="home"` to the front page, on either
+face; a kind's list by its slug. What a view may name is one vocabulary,
+`placeNamesOf` on `@graview/core/navigate`, read alike by the headless
+check and the page. A destination that
 is neither goes nowhere and says why — in the view's console, and to the
 host's problems (the onProblem option on `mountWorkerView` and on a registered view's
 definition) — naming the places there are. The

@@ -406,10 +406,11 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         const also = { ...(data.where !== undefined ? { where: data.where } : {}), ...(data.section !== undefined ? { section: data.section } : {}) };
         const to: Destination = typeof data.place === "string" ? { place: data.place, ...also } : { record: data.to as string, ...also };
         const arrive = options.onArrive;
-        void linksChunk().then(({ judgeDestination, listsOf }) => {
+        void linksChunk().then(({ judgeDestination, listsOf, placeVocabulary }) => {
           if (disposed) return;
           const kept = new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
-          const judged = judgeDestination(to, { sees: (id) => seen().graph.has(id), places: options.placesShown?.() ?? [], lists: listsOf(options.store.schema, kept), schema: options.store.schema });
+          /* The one vocabulary (FR-235): the Scene, the home, each kind's list and each titled place, as a worker view's host and the headless check read them. */
+          const judged = judgeDestination(to, { sees: (id) => seen().graph.has(id), places: placeVocabulary(options.store.schema, options.placesShown?.() ?? [], { kept }), lists: listsOf(options.store.schema, kept), schema: options.store.schema });
           if (judged.ok) arrive(judged.arrival);
           else {
             stats.dropped += 1;

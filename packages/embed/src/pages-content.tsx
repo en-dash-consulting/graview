@@ -32,8 +32,8 @@ export function PagesContent<S extends AnySchema>({
   readonly brand: Brand | undefined;
   /** The bar above: where the face is, said as it moves, and the bar's presses taken (FR-131). */
   readonly steering?: PagesSteering | undefined;
-  /** The way to the overview from a page, when the embed draws the scene (FR-132). */
-  readonly overview?: ((stop: string) => void) | undefined;
+  /** The way to the overview from a page, when the embed draws the scene (FR-132); handed no stop, from above (FR-235). */
+  readonly overview?: ((stop?: string) => void) | undefined;
   /** The embed's scope, for the views' own sheet (FR-131). */
   readonly scope: string;
   /** The level a page's own title is said at: one below the app's name on the bar (FR-131). */

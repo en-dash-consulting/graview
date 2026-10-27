@@ -87,11 +87,12 @@ export interface PageContext<S extends AnySchema> {
   readonly titleLevel?: 1 | 2 | 3 | 4 | 5 | 6;
   /**
    * THE WAY TO THE OVERVIEW FROM A PAGE (FR-132), when the scene is drawn by
-   * whoever holds this face: handed a stop, it goes there. Without it a
-   * face that owns its page links to `sceneHref`, and an embedded one that
-   * draws no scene offers none.
+   * whoever holds this face: handed a stop, it goes there; handed none, to
+   * the overview from above (a view's `data-place="overview"`, FR-235).
+   * Without it a face that owns its page links to `sceneHref`, and an
+   * embedded one that draws no scene offers none.
    */
-  readonly overview?: (stop: string) => void;
+  readonly overview?: (stop?: string) => void;
   /**
    * THE APP'S PICTURES. The view registry the scene draws from; given, every
    * registered place is a page on this face too — an index at `/places`,

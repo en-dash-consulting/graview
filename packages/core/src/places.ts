@@ -427,6 +427,8 @@ export function primaryOf(
   };
 }
 
+/** The home's address word: what a link or a view's navigate names the app's front page by (FR-235). */
+export const HOME_SLUG = "home";
 /** The scene's address word (FR-132), whatever the declaration calls the scene. */
 export const OVERVIEW_SLUG = "overview";
 /** The scene's address on the routed face (FR-132); its stop rides on it as the fragment. */

@@ -1,11 +1,11 @@
 import { PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
 import { judgeDestination, type Arrival, type GuestList } from "../host/links.js";
-import { placeNamed, unsureOfViews, whereOfWords, type Destination } from "../host/links-words.js";
+import { placeNamed, unsureOfViews, whereOfWords, type Destination, type NamedPlace } from "../host/links-words.js";
 import type { WorkerViewManifest } from "../host/manifest.js";
 import { isEntry, isPress, linkPressed, notPressable, opensOnPress } from "../host/pressable.js";
 import { judgePress, prefillOf } from "../host/press.js";
 import type { Press, PressedField } from "../host/writes.js";
-import type { GuestPlace, GuestRefusal } from "../protocol.js";
+import type { GuestRefusal } from "../protocol.js";
 import type { DrawnTranscript } from "./draw.js";
 import type { HeadlessTranscript } from "./protocol.js";
 import { TreeElement } from "./tree.js";
@@ -61,7 +61,8 @@ export interface HeadlessPressContext<S extends AnySchema> {
   readonly manifest: WorkerViewManifest;
   /** The records the view was shown. */
   readonly shown: ReadonlySet<string>;
-  readonly places: readonly GuestPlace[];
+  /** The names a view may use (`placeVocabulary`, FR-235). */
+  readonly places: readonly NamedPlace[];
   readonly lists: readonly GuestList[];
   /** The host did not hand the run the views it keeps: a link to a name none of `places` is, is said as a doubt. */
   readonly placesUnsure?: boolean;

@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 480,
+  "note": "Raised when a view came to link to the Scene (FR-235, Roadmap f-view-links-to-scene): the one vocabulary a link is judged by on both faces, the routed face's and the Scene's way to the overview and the home. Measured at 2_393_394 / 871_569 and 871_578 on a second run against 2_547_608 / 871_139: 154_214 under minified, 430 to 439 more gzipped, raised 480 for the few bytes gzip moves between runs."
+}

@@ -406,6 +406,7 @@ export {
   orderKinds,
   arrangedEntries,
   viewReference,
+  HOME_SLUG,
   OVERVIEW_PATH,
   OVERVIEW_SLUG,
   pagesTitle,

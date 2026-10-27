@@ -1,6 +1,6 @@
 import type { GraviewApp } from "./app.js";
 import { LENSES_THAT_LIST, listsRecords } from "./lenses-that-list.js";
-import { arrangedEntries, declaredLenses, isShippedLens, MOST_STANDING, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, viewReference, type PlaceFinding, type ShippedLensName } from "./places.js";
+import { arrangedEntries, declaredLenses, HOME_SLUG, isShippedLens, MOST_STANDING, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, viewReference, type PlaceFinding, type ShippedLensName } from "./places.js";
 import type { AnySchema } from "./schema/schema.js";
 import { allLabel, nounOf, pluralLabel, pluralOf } from "./schema/define-node.js";
 import { kindPath, onePerPicture, placePath, placeSlug, samePicture, sharesItsName, type HostView, type PagesArrangement, type Place } from "./views/types.js";
@@ -266,7 +266,7 @@ export function placesFrom(
   const kinds = arranged.flatMap((entry) => (entry.view ? [] : [entry.kind]));
   const ordered = arranged.flatMap((entry) => (entry.view ? [entry.view] : []));
   const out: AppPlace[] = [
-    { slug: "home", title: "Home", kind: null, cardinality: "many", address: "/", stop: "#", ...(opening?.to === "home" || (opening === undefined && options.home) ? { first: true } : {}) },
+    { slug: HOME_SLUG, title: "Home", kind: null, cardinality: "many", address: "/", stop: "#", ...(opening?.to === "home" || (opening === undefined && options.home) ? { first: true } : {}) },
     // The scene, a place like the others (FR-132): its stop rides on its address.
     { slug: OVERVIEW_SLUG, title: sceneTitle(pages), kind: null, cardinality: "many", address: OVERVIEW_PATH, stop: "#" },
   ];

@@ -28,7 +28,7 @@ import type { AnySchema, Principal, Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
 import { checkManifest, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
-import { judgeDestination, listsOf } from "../host/links.js";
+import { judgeDestination, listsOf, placeVocabulary } from "../host/links.js";
 import { guestPlacesOf, placeNamed } from "../host/links-words.js";
 import type { GuestViewInput } from "../host/session.js";
 import type { ViewAudit } from "../audit/rules.js";
@@ -297,11 +297,13 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   /* And each titled view's place — the host's kept views', and this view's own — by the slug the router gives it (`viewPlaceOf`). */
   const { viewPlaceOf } = await import("@graview/core/seat");
   const viewPlaces = [...(options.views ?? []), manifest].flatMap((view) => viewPlaceOf(view) ?? []).map((place) => ({ as: place.as, title: place.title, kind: place.kind }));
-  const places = guestPlacesOf([...(options.places ?? []), ...viewPlaces]);
+  /* Read through the one vocabulary (FR-235) — the Scene, the home, each kind's list the seat sees, each titled place — as the live host reads them, so the check and the page agree. */
+  const kept = new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds]);
+  const places = placeVocabulary(store.schema, [...(options.places ?? []), ...viewPlaces], { kept });
   const placesUnsure = options.views === undefined;
   /* A record's computed values beside its fields, as the page hands them (Roadmap f-computed-in-views). */
   const computed = readsComputed(store, manifest) ? (await import("../host/computed.js")).computedOn(store.schema) : undefined;
-  const shown = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places, ...(computed ? { computed } : {}) });
+  const shown = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places: guestPlacesOf(places), ...(computed ? { computed } : {}) });
   /*
    * A view that asks for pictures (FR-175) is handed each file without the
    * host's path. Headless, no bytes are fetched, so a picture comes with a
