@@ -494,6 +494,8 @@ describe("the Google Calendar transport", () => {
         summary: "School",
         "start.dateTime": "2026-09-01T08:30:00Z",
         "end.dateTime": "2026-09-01T15:00:00Z",
+        // An event with no guests says so: Google leaves the key out, and a mapping that keeps the guests reads an empty list.
+        attendees: [],
       },
     });
     // A canceled event is a DELETION, not a record that stopped appearing.

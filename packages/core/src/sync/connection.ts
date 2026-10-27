@@ -9,15 +9,16 @@ import type { EdgeDeclaration } from "../schema/types.js";
 import { relationActName } from "../mutations/derived-names.js";
 import type { AnyMutationDefinition } from "../mutations/types.js";
 import { creatingActFor } from "./creating-act.js";
-import { SyncEngine, type SharedLinks } from "./engine.js";
+import { SyncEngine, type SharedLinks, type SyncOptions } from "./engine.js";
 import { googleCalendar, type Fetcher, type GoogleTokenRequest } from "./google-calendar.js";
+import { addressesOf, addressesOfAttendees, attendeesOf, guestBook, type GuestGraph } from "./guests.js";
 import { instantIn, timeZoneFor, wallIn } from "../days.js";
 import { isRepeat, isRepeatField, repeatKey, type Weekday } from "../repeat.js";
 import { addDays } from "../wall-time.js";
 import { firstWeekday, hhmm, instantOfMoment, isoInstant, minutesOf, momentOfInstant, recurrenceOf, repeatOf, wallOfMoment, weekdayOf, weekdaysOf, weeklyRule } from "./recurrence.js";
 import { notion, notionKey } from "./notion.js";
 import { NOTION_EDGE, NOTION_INFERABLE, notionFieldType } from "./notion-types.js";
-import type { RemoteSystem, ResourceMapping, SyncMapping, SyncState } from "./types.js";
+import type { LinkResolver, RemoteSystem, ResourceMapping, SyncMapping, SyncState } from "./types.js";
 
 /**
  * A DECLARED CONNECTION, RUN.
@@ -37,6 +38,14 @@ import type { RemoteSystem, ResourceMapping, SyncMapping, SyncState } from "./ty
  *   outside it is not news, and one that leaves it is gone here. An event
  *   made here is given what the filter needs (the color; the tag in its
  *   title) so it stays in it, and a private extended property naming the app.
+ * - AN EVENT'S GUESTS (Roadmap f-calendar-guests-mapping) are `guests`: a
+ *   field of addresses kept as the attendees, or `{ via }`, a relation to
+ *   the people the event is about, kept as an EDGE the engine compares,
+ *   holds and links as it does a Notion relation — a person's remote id
+ *   being their guest key (`guests.ts`), given to the engine as its `links`.
+ *   A person without an address or with Invite me off is no guest either
+ *   way; an attendee matching nobody is held and sent back unchanged. Quiet
+ *   by default: Google mails the guests only with `notify: true`.
  * - A NOTION DATABASE's properties are the fields the declaration maps, or,
  *   when it maps none, every field whose name a property has, the kind's name
  *   field being the database's title. A `date` field holds a date property's
@@ -132,15 +141,16 @@ export function isDayField(app: GraviewApp, kind: string, field: string): boolea
   return fieldSpecs(app, kind)[field]?.type === "date";
 }
 
-/** What a Google mapping is read against: the app's time zone, and the clock a weekly series' first week is read from. */
+/** What a Google mapping is read against: the app's time zone, the clock a weekly series' first week is read from, and the graph the people a `guests: { via }` relation reaches are read from (absent, every attendee keeps its address). */
 export interface GoogleMappingOptions {
   readonly zone?: string;
   now?(): Date;
+  readonly graph?: GuestGraph;
 }
 
 /** The mapping a declaration says. */
 export function connectionMapping(app: GraviewApp, declaration: ConnectionDeclaration, options: GoogleMappingOptions = {}): SyncMapping {
-  return declaration.system === "notion" ? notionConnectionMapping(app, declaration).mapping : googleConnectionMapping(app, declaration, options);
+  return declaration.system === "notion" ? notionConnectionMapping(app, declaration).mapping : googleMapping(app, declaration, options).mapping;
 }
 
 /** The zone a Google mapping says its times in: the app's (`brand.timeZone`), else the runtime's. */
@@ -151,9 +161,12 @@ export const connectionZone = (app: GraviewApp, zone?: string): string => zone ?
  * tag is kept or stripped. A record that recurs (FR-230) is one event with
  * a rule: with `days` mapped, the weekdays and the two times of day are the
  * rule and the first week's instants in the app's zone; a start that
- * repeats carries its repeat as the rule and its exceptions.
+ * repeats carries its repeat as the rule and its exceptions. The guests
+ * (Roadmap f-calendar-guests-mapping) are a field of addresses, or the
+ * relation `via` kept as an edge whose remote ids are guest keys, with the
+ * guest book the engine resolves that edge through.
  */
-function googleConnectionMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpec, options: GoogleMappingOptions = {}): SyncMapping {
+function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpec, options: GoogleMappingOptions = {}): { readonly mapping: SyncMapping; readonly guests?: LinkResolver } {
   const { kind, fields } = declaration;
   const zone = connectionZone(app, options.zone);
   const now = options.now ?? (() => new Date());
@@ -241,6 +254,50 @@ function googleConnectionMapping(app: GraviewApp, declaration: GoogleCalendarCon
     // On the way in, the tag is the connection's, not the record's name, unless it is kept.
     if (!keep) decode[fields.summary] = (value) => (typeof value === "string" ? value.replace(pattern, "$1").replace(/\s{2,}/g, " ").trim() : value);
   }
+  const guestsField: Record<string, string> = {};
+  const normalize: Record<string, (value: unknown) => unknown> = {};
+  let edges: Record<string, string> | undefined;
+  let guests: LinkResolver | undefined;
+  if (typeof fields.guests === "string") {
+    /*
+     * THE GUESTS IN A FIELD: a list of addresses, or one email, kept as the
+     * attendees. Read back as the sorted addresses (the first alone for an
+     * email field), so an address added in the calendar lands in the field
+     * and nothing is dropped.
+     */
+    const field = fields.guests;
+    const single = specs[field]?.type === "email";
+    guestsField[field] = "attendees";
+    encode[field] = (value) => attendeesOf(value);
+    decode[field] = (value) => {
+      const found = addressesOfAttendees(value);
+      return single ? (found[0] ?? null) : found;
+    };
+    // What people type ("Ben@Example.com ") is compared as the calendar keeps it, or the record would be sent on every pass.
+    normalize[field] = (value) => {
+      const found = addressesOf(value);
+      return single ? (found[0] ?? null) : found;
+    };
+  } else if (fields.guests) {
+    /*
+     * THE GUESTS THROUGH A RELATION: the edge's remote ids are guest keys.
+     * Read back, each attendee is the key of the person with Invite me who
+     * holds its address, else the address itself, which the engine holds
+     * as part of the relation's value until a person matches it. Sent, the
+     * keys are split back into addresses, once each.
+     */
+    const { via, emails = "emails", invite = "inviteMe" } = fields.guests;
+    const reaches = edgeSpecs(app, kind)[via]?.to;
+    const book = guestBook({ ...(options.graph ? { graph: options.graph } : {}), kinds: reaches === undefined || reaches === "*" ? [] : reaches, emails, invite });
+    guests = book;
+    edges = { [via]: "attendees" };
+    decode[via] = (value) =>
+      addressesOfAttendees(value).map((one) => {
+        const person = book.localId(one);
+        return (person === undefined ? undefined : book.remoteId(person)) ?? one;
+      });
+    encode[via] = (value) => attendeesOf(value);
+  }
   const resource: ResourceMapping = {
     kind,
     resource: "events",
@@ -251,14 +308,17 @@ function googleConnectionMapping(app: GraviewApp, declaration: GoogleCalendarCon
       ...recurring,
       ...(fields.location ? { [fields.location]: "location" } : {}),
       ...(fields.description ? { [fields.description]: "description" } : {}),
+      ...guestsField,
     },
+    ...(edges ? { edges } : {}),
     encode,
     decode,
+    ...(Object.keys(normalize).length > 0 ? { normalize } : {}),
     ...(declaration.direction === "read"
       ? { readonly: true, because: `Each ${kind} comes from a Google calendar this app only reads: change it there.` }
       : {}),
   };
-  return { system: "google-calendar", resources: [resource] };
+  return { mapping: { system: "google-calendar", resources: [resource] }, ...(guests ? { guests } : {}) };
 }
 
 /** Words compared loosely: "In progress", "in-progress" and "inProgress" are one. */
@@ -386,6 +446,28 @@ export function creatingAct(app: GraviewApp, kind: string, mapped: readonly stri
   return creatingActFor((app.mutations ?? []) as readonly AnyMutationDefinition[], kind, mapped).act;
 }
 
+/**
+ * THE ACTS A RELATION'S LINK LANDS THROUGH, for a link the other system
+ * made or took away: its derived pair, `connect-<kind>-<relation>` and
+ * `disconnect-<kind>-<relation>`, when the app has them (the checker says
+ * when it has not); absent, the link is left as it is.
+ */
+function relationActs<S extends AnySchema>(store: Store<S>, kind: string): Pick<SyncOptions<S>, "connectInbound" | "disconnectInbound"> {
+  const has = (name: string) => {
+    try {
+      store.mutation(name);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const act = (which: "connect" | "disconnect") => ({ localId, edge, to }: { readonly localId: string; readonly edge: string; readonly to: string }) => {
+    const name = relationActName(which, kind, edge);
+    return has(name) ? { name, args: { id: localId, to } } : null;
+  };
+  return { connectInbound: act("connect"), disconnectInbound: act("disconnect") };
+}
+
 /** Our fields from a remote record's, decoded: what a record made from it holds. */
 function decodedBy(resource: ResourceMapping) {
   return (fields: Readonly<Record<string, unknown>>) => {
@@ -409,7 +491,7 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
   const { app, store } = run;
   if (!run.calendarId) throw new Error(`connection ${run.name}: a Google connection needs its calendar's id`);
   const zone = connectionZone(app as GraviewApp, store.timeZone);
-  const mapping = googleConnectionMapping(app as GraviewApp, declaration, { zone, ...(run.now ? { now: run.now } : {}) });
+  const { mapping, guests } = googleMapping(app as GraviewApp, declaration, { zone, graph: store.graph, ...(run.now ? { now: run.now } : {}) });
   const resource = mapping.resources[0]!;
   // A record that recurs is one event with a rule (FR-230): the series alone is kept, never one week's exception, and Google expands a timed rule in a named zone.
   const recurring = Object.values(resource.fields).includes("recurrence");
@@ -426,6 +508,8 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
       ...(recurring && timed ? { start: { timeZone: zone }, end: { timeZone: zone } } : {}),
       extendedProperties: { private: { [MADE_BY_GRAVIEW]: app.name } },
     },
+    // Google mails the guests only when the declaration asks (`guests.notify`); every write says so either way.
+    notify: typeof declaration.fields.guests === "object" && declaration.fields.guests.notify === true,
   });
   const creates = creatingAct(app as GraviewApp, declaration.kind, Object.keys(resource.fields));
   const decoded = decodedBy(resource);
@@ -435,6 +519,8 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
       store,
       mapping,
       remote,
+      // The guests' relation resolves through the guest book: a person's remote id is their guest key.
+      ...(guests ? { links: guests, ...relationActs(store, declaration.kind) } : {}),
       conflicts: declaration.conflicts ?? "report",
       applyInbound: ({ localId, fields }) => ({ name: `edit-${declaration.kind}`, args: { id: localId, ...fields } }),
       removeInbound: ({ localId }) => ({ name: `remove-${declaration.kind}`, args: { id: localId } }),
@@ -446,7 +532,9 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
         const madeAs = `${declaration.kind}:${run.name}-${id.slice(0, 16)}-${made}`;
         // A date's repeat is given to the record once it is there, through its edit: the act that makes one does not take it.
         const { [repeated]: repeat, ...rest } = values;
-        return { name: creates, args: { id: madeAs, ...(repeated in values ? rest : values) }, ...(repeat ? { then: [{ name: `edit-${declaration.kind}`, args: { id: madeAs, [repeated]: repeat } }] } : {}) };
+        // An empty part (no guest in an email field) is no value for a record being made.
+        const given = Object.fromEntries(Object.entries(repeated in values ? rest : values).filter(([, value]) => value !== null && value !== undefined));
+        return { name: creates, args: { id: madeAs, ...given }, ...(repeat ? { then: [{ name: `edit-${declaration.kind}`, args: { id: madeAs, [repeated]: repeat } }] } : {}) };
       },
     },
     run.state,
@@ -476,27 +564,13 @@ function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
   });
   const creates = creatingAct(app as GraviewApp, declaration.kind, Object.keys(resource.fields));
   const decoded = decodedBy(resource);
-  // A relation's link lands through its derived pair, when the app has it (the checker says when it has not).
-  const has = (name: string) => {
-    try {
-      store.mutation(name);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-  const relationAct = (act: "connect" | "disconnect") => ({ localId, edge, to }: { readonly localId: string; readonly edge: string; readonly to: string }) => {
-    const name = relationActName(act, declaration.kind, edge);
-    return has(name) ? { name, args: { id: localId, to } } : null;
-  };
   engine = new SyncEngine<S>(
     {
       store,
       mapping,
       remote,
       ...(run.links ? { links: run.links } : {}),
-      connectInbound: relationAct("connect"),
-      disconnectInbound: relationAct("disconnect"),
+      ...relationActs(store, declaration.kind),
       conflicts: declaration.conflicts ?? "report",
       applyInbound: ({ localId, fields }) => ({ name: `edit-${declaration.kind}`, args: { id: localId, ...fields } }),
       removeInbound: ({ localId }) => ({ name: `remove-${declaration.kind}`, args: { id: localId } }),

@@ -96,6 +96,14 @@ export interface GoogleCalendarOptions {
   readonly keep?: (event: Readonly<Record<string, unknown>>) => boolean;
   /** Google event fields every event made from here carries (a `colorId`, `extendedProperties`), beside the mapped ones. */
   readonly madeHere?: Readonly<Record<string, unknown>>;
+  /**
+   * WHETHER GOOGLE MAILS THE GUESTS (Roadmap f-calendar-guests-mapping):
+   * every insert, patch and delete says `sendUpdates` outright — `all` when
+   * this is true, `none` otherwise. Left unsaid, Google decides, and its
+   * default differs by call: a sync that writes an event every time a
+   * record changes would mail every guest every time. Quiet unless asked.
+   */
+  readonly notify?: boolean;
 }
 
 const BASE = "https://www.googleapis.com/calendar/v3";
@@ -193,6 +201,9 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
     }
   };
 
+  // Every write says whether the guests are mailed (`notify`); Google's own default is not relied on.
+  const writing = (path: string) => `${path}?sendUpdates=${options.notify ? "all" : "none"}`;
+
   return {
     name: "google-calendar",
 
@@ -238,14 +249,14 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
 
   async function one(write: RemoteWrite): Promise<RemoteAck> {
     if (write.deleted && write.id) {
-      await call(`${events}/${encodeURIComponent(write.id)}`, { method: "DELETE" });
+      await call(writing(`${events}/${encodeURIComponent(write.id)}`), { method: "DELETE" });
       return { localId: write.localId, id: write.id, version: "" };
     }
     // Copied whole: `madeHere` may nest (`start.timeZone`), and a path put beneath it must not reach the next write.
     const body: Record<string, unknown> = write.id ? {} : structuredClone(options.madeHere ?? {});
     for (const [path, value] of Object.entries(write.fields ?? {})) put(body, path, value);
 
-    const result = await call(write.id ? `${events}/${encodeURIComponent(write.id)}` : events, {
+    const result = await call(writing(write.id ? `${events}/${encodeURIComponent(write.id)}` : events), {
       method: write.id ? "PATCH" : "POST",
       body: JSON.stringify(body),
     });
@@ -275,5 +286,13 @@ function flatten(item: Record<string, unknown>): Record<string, unknown> {
     const value = at(item, path);
     if (value !== undefined) out[path] = value;
   }
+  /*
+   * THE GUESTS ride along as Google sends them (`attendees`: each `email`,
+   * `responseStatus`, `organizer`, `self`, `resource`), and an event with
+   * none says so as an empty list: Google leaves the key out of such an
+   * event, and the last guest taken away there is news here only if the
+   * event still says who is invited (Roadmap f-calendar-guests-mapping).
+   */
+  out["attendees"] = Array.isArray(item["attendees"]) ? item["attendees"] : [];
   return out;
 }

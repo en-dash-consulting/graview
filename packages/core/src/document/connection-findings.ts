@@ -96,13 +96,22 @@ function googleConnection(at: string, name: string, connection: GoogleCalendarCo
   for (const [theirs, ours] of mapped) {
     const path = `${at}.fields.${theirs}`;
     if (!kind.fields[ours]) {
-      findings.push(error("connection-field", path, `${connection.kind} has no field called ${ours} to hold the event's ${theirs}`, `name one of ${Object.keys(kind.fields).join(", ")}`));
+      findings.push(
+        theirs === "guests"
+          ? error("connection-guests-field", path, `${connection.kind} has no field called ${ours} to hold the event's guests`, `name a list field holding their addresses, or an email field, or add one`, { fixes: [addressesField(connection.kind, ours, `Add ${humanizeField(ours)} to ${connection.kind}`)] })
+          : error("connection-field", path, `${connection.kind} has no field called ${ours} to hold the event's ${theirs}`, `name one of ${Object.keys(kind.fields).join(", ")}`),
+      );
       continue;
     }
     const twice = seen.get(ours);
     if (twice) findings.push(error("connection-field", path, `${ours} already holds the event's ${twice}, and one field holds one part of an event`, "give each part a field of its own"));
     seen.set(ours, theirs);
     const type = typeOf(ours)!;
+    // The guests in a field (Roadmap f-calendar-guests-mapping): a list of addresses, or one email.
+    if (theirs === "guests") {
+      if (!holdsAddresses(kind.fields[ours]!)) findings.push(error("connection-guests-field", path, `the event's guests are addresses, a list of them or one email, and ${ours} is a ${type} field`, "name a list field holding the addresses, or an email field"));
+      continue;
+    }
     if ((theirs === "summary" || theirs === "description") && !TEXT.has(type)) {
       findings.push(error("connection-field-type", path, `the event's ${theirs} is words, and ${ours} is a ${type} field`, "name a string or text field"));
     }
@@ -136,6 +145,7 @@ function googleConnection(at: string, name: string, connection: GoogleCalendarCo
   if (!weekly && start && end && WHEN.has(start) && WHEN.has(end) && start !== end) {
     findings.push(error("connection-when", `${at}.fields.end`, `${connection.fields.start} is a ${start} and ${connection.fields.end} a ${end}, and an event is all-day or timed at both ends`, "make both dates (all-day events) or both datetimes (timed events)"));
   }
+  if (typeof connection.fields.guests === "object") findings.push(...guestsVia(at, name, connection, connection.fields.guests, kind, document, app));
 
   const filter = connection.filter;
   if (filter) {
@@ -229,7 +239,74 @@ function notionConnection(at: string, connection: NotionConnectionSpec, document
   if (app && mapped.length > 0) {
     findings.push(...landing(at, connection.kind, mapped, { made: "a page made in the database", fields: "the page's fields", change: "a change in Notion", deleted: "a page archived in Notion", theirs: "Notion pages", one: "a Notion page", part: "a Notion property", things: "pages" }, app, document));
   }
-  if (app) findings.push(...linking(at, connection.kind, relations, document, app));
+  if (app) findings.push(...linking(connection.kind, relations, document, app, { where: (relation) => `${at}.properties.${relation}`, made: "a link made in Notion", taken: "a link taken away in Notion", leave: (relation) => `leave ${relation} out of properties` }));
+  return findings;
+}
+
+/** Whether a field holds a guest's addresses: a list of them (of strings, or of nothing said), or one email. */
+const holdsAddresses = (spec: FieldSpec): boolean => spec.type === "email" || (spec.type === "list" && (spec.of === undefined || spec.of === "string"));
+
+/** The fix that adds a list of addresses to a kind, as an edit a host applies. */
+const addressesField = (kind: string, field: string, label: string): FindingFix => ({ label, edits: [{ op: "add-field", kind, field, type: "list", of: "string" }] });
+
+/**
+ * THE GUESTS THROUGH A RELATION, JUDGED (Roadmap f-calendar-guests-mapping):
+ * that `via` is one relation of the kind to one kind, that the kind it
+ * reaches has addresses to invite (`emails`) and the toggle that says who
+ * wants to be (`invite`, unless the app has none), that the people kind, if
+ * another, is said once, and that the acts a guest added or taken away in
+ * the calendar lands through are there. A field missing is offered as the
+ * edit that adds it.
+ */
+function guestsVia(at: string, name: string, connection: GoogleCalendarConnectionSpec, guests: Exclude<GoogleCalendarConnectionSpec["fields"]["guests"], string | undefined>, kind: GraviewDocument["kinds"][string], document: GraviewDocument, app?: GraviewApp): Finding[] {
+  const path = `${at}.fields.guests`;
+  const kindName = connection.kind;
+  const edges = kind.edges ?? {};
+  const edge = edges[guests.via];
+  if (!edge) {
+    const named = Object.keys(edges);
+    return [error("connection-guests-via", `${path}.via`, `${kindName} has no relation called ${guests.via} to reach the guests through`, named.length > 0 ? `name one of ${named.join(", ")}` : `declare a relation of ${kindName} to the people its events are about, and name it`)];
+  }
+  if (edge.to === "*" || edge.to.length !== 1) {
+    return [error("connection-guests-via", `${path}.via`, edge.to === "*" ? `${guests.via} reaches any kind, and the guests are the people of one` : `${guests.via} reaches ${listed(edge.to)}, and the guests are the people of one kind`, 'say the one kind it reaches with "to"')];
+  }
+  const reached = edge.to[0]!;
+  const people = document.kinds[reached];
+  // A relation to a kind that is not there is the document's finding, said once where the relation is.
+  if (!people) return [];
+  const findings: Finding[] = [];
+  const emails = guests.emails ?? "emails";
+  const invite = guests.invite ?? "inviteMe";
+  const plural = capitalize(people.plural ?? `${people.noun ?? humanizeField(reached).toLowerCase()}s`);
+  const addresses = people.fields[emails];
+  if (!addresses) {
+    if (guests.emails === undefined) {
+      findings.push(error("connection-guests-via", `${path}.via`, `${guests.via} reaches ${reached}, and ${withArticle(reached)} has no emails to invite`, `give ${reached} a list field of addresses called emails, or name the field that holds them with "emails"`, { fixes: [addressesField(reached, "emails", `Give ${plural} emails`)] }));
+    } else {
+      findings.push(error("connection-guests-field", `${path}.emails`, `${reached} has no field called ${emails} to hold a guest's addresses`, `name one of ${Object.keys(people.fields).join(", ")}, or add it`, { fixes: [addressesField(reached, emails, `Add ${humanizeField(emails)} to ${reached}`)] }));
+    }
+  } else if (!holdsAddresses(addresses)) {
+    findings.push(error("connection-guests-field", `${path}.emails`, `a guest's addresses are a list of them or one email, and ${reached}'s ${emails} is a ${addresses.type} field`, "name a list field holding the addresses, or an email field"));
+  }
+  if (invite !== false) {
+    const toggle = people.fields[invite];
+    if (!toggle) {
+      findings.push(
+        error("connection-guests-field", `${path}.invite`, `${reached} has no field called ${invite} to say who wants to be invited`, `add a yes-or-no field, name one with "invite", or say "invite": false to invite every address`, {
+          fixes: [
+            { label: `Add ${humanizeField(invite)} to ${reached}`, edits: [{ op: "add-field", kind: reached, field: invite, type: "boolean" }] },
+            { label: "Invite every address", edits: [{ op: "set-connection", name, connection: { ...connection, fields: { ...connection.fields, guests: { ...guests, invite: false } } } }] },
+          ],
+        }),
+      );
+    } else if (toggle.type !== "boolean") {
+      findings.push(error("connection-guests-field", `${path}.invite`, `${invite} says whether ${withArticle(reached)} wants to be invited, and ${reached}'s ${invite} is a ${toggle.type} field`, 'name a boolean field, or say "invite": false to invite every address'));
+    }
+  }
+  // The app's people are another kind: not wrong (a household's people need not be its members), but said once.
+  const members = Object.entries(document.kinds).find(([, spec]) => spec.people === true)?.[0];
+  if (members && members !== reached) findings.push(warning("connection-guests-via", `${path}.via`, `${guests.via} reaches ${reached}, and this app's people are ${members}: the guests are its ${plural.toLowerCase()}, never its members`));
+  if (app) findings.push(...linking(kindName, [guests.via], document, app, { where: () => `${path}.via`, made: "a guest added in the calendar", taken: "a guest taken away in the calendar", leave: () => "leave guests out of the connection" }));
   return findings;
 }
 
@@ -251,21 +328,29 @@ function relationTarget(kindName: string, relation: string, to: readonly string[
   };
 }
 
-/** That the acts a link made or taken away in Notion lands through are there: `connect-<kind>-<relation>` and `disconnect-<kind>-<relation>`. */
-function linking(at: string, kindName: string, relations: readonly string[], document: GraviewDocument, app: GraviewApp): Finding[] {
+/** How a relation's link is said of the system that made it: where the finding points, what a link made and one taken away there are called, and how to leave the relation out. */
+interface LinkWords {
+  where(relation: string): string;
+  readonly made: string;
+  readonly taken: string;
+  leave(relation: string): string;
+}
+
+/** That the acts a link made or taken away in the other system lands through are there: `connect-<kind>-<relation>` and `disconnect-<kind>-<relation>`. */
+function linking(kindName: string, relations: readonly string[], document: GraviewDocument, app: GraviewApp, said: LinkWords): Finding[] {
   if (relations.length === 0) return [];
   const findings: Finding[] = [];
   const declared = app.mutations ?? [];
   const acts = new Set([...declared, ...deriveMutations(app.schema, declared)].map((mutation) => mutation.name));
   for (const relation of relations) {
-    const path = `${at}.properties.${relation}`;
+    const path = said.where(relation);
     const connect = relationActName("connect", kindName, relation);
     const disconnect = relationActName("disconnect", kindName, relation);
     if (!acts.has(connect)) {
-      findings.push(error("connection-connect", path, `a link made in Notion lands through ${connect}, and this app has no such act: the relation declares no acts, or an act of its own replaces it`, `let ${kindName}'s ${relation} be given its derived acts, or leave ${relation} out of properties`));
+      findings.push(error("connection-connect", path, `${said.made} lands through ${connect}, and this app has no such act: the relation declares no acts, or an act of its own replaces it`, `let ${kindName}'s ${relation} be given its derived acts, or ${said.leave(relation)}`));
     } else if (!acts.has(disconnect)) {
       const appendOnly = document.kinds[kindName]?.edges?.[relation]?.appendOnly === true;
-      findings.push(warning("connection-disconnect", path, `no act takes ${kindName}'s ${relation} away${appendOnly ? " (it is append-only)" : ""}, so a link taken away in Notion stays here`));
+      findings.push(warning("connection-disconnect", path, `no act takes ${kindName}'s ${relation} away${appendOnly ? " (it is append-only)" : ""}, so ${said.taken} stays here`));
     }
   }
   return findings;

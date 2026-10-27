@@ -59,6 +59,15 @@ export interface ResourceMapping {
   >;
   readonly decode?: Readonly<Record<string, (value: unknown) => unknown>>;
   /**
+   * WHAT PEOPLE TYPE IS LOOSER THAN WHAT BOTH SIDES AGREE ON. A field is
+   * read through this before it is compared, sent or agreed — an address
+   * with its case and its spaces, where the calendar keeps it lowercased —
+   * so what comes back decoded is what went out, and a record nobody
+   * changed is not sent on every pass. Keyed by OUR field name; the node
+   * itself is untouched.
+   */
+  readonly normalize?: Readonly<Record<string, (value: unknown) => unknown>>;
+  /**
    * THE REMOTE OWNS THESE. Inbound changes land; nothing here is ever sent,
    * and a local act that would write a record of the kind is refused with
    * `because` once the engine guards the store (`SyncEngine.guard`), and the
