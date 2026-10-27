@@ -38,6 +38,7 @@ import {
 } from "react";
 import { retryingImport } from "@graview/core/retry";
 import { chooseRenderer, gpuCapturePresent, rendererAsked, type RendererPath } from "@graview/render";
+import { useGroundMenu } from "./scene-ground-menu.js";
 import { useDomBlurWithinBudget, usePlaneBlur } from "./scene-blur.js";
 import type { ActivityMark } from "./activity.js";
 import { lazyModule } from "./lazy-part.js";
@@ -1005,6 +1006,8 @@ export function Scene<S extends AnySchema>({
     shift,
     district,
   });
+  /* The ground answers a right-click and a resting finger with the scene's menu (FR-228). */
+  const groundMenu = useGroundMenu({ swallow, setMenuAt, setSelection });
 
   zoomAbout.current = (factor, clientX, clientY) => {
     if (!view.overview) return;
@@ -1137,10 +1140,29 @@ export function Scene<S extends AnySchema>({
       // Which path draws this page, and whether its receded planes are blurred — for a harness, never shown.
       data-graview-renderer={useDom ? "dom" : "gpu"}
       data-graview-blur={(useDom ? domBlur : blurred) ? "" : undefined}
-      onPointerDown={onGroundDown}
-      onPointerMove={onDragMove}
-      onPointerUp={onDragUp}
-      onPointerCancel={onDragUp}
+      onPointerDown={(event) => {
+        groundMenu.onPointerDown(event);
+        onGroundDown(event);
+      }}
+      onPointerMove={(event) => {
+        groundMenu.onPointerMove(event);
+        onDragMove(event);
+      }}
+      onPointerUp={() => {
+        groundMenu.onPointerUp();
+        onDragUp();
+      }}
+      onPointerCancel={() => {
+        groundMenu.onPointerUp();
+        onDragUp();
+      }}
+      /*
+       * RIGHT-CLICKING EMPTY GROUND opens the scene's menu, never the
+       * browser's (FR-228): a card answers its own and stops the event
+       * before it gets here; the browser keeps its menu with Shift held and
+       * in a text field.
+       */
+      onContextMenu={groundMenu.onContextMenu}
       /*
        * CLICKING EMPTY GROUND puts the selection down — the gesture every
        * canvas tool teaches, and the graceful half of deselection the ×

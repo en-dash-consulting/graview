@@ -6,7 +6,9 @@ import { lazyModule, POPOVER_STYLE, useGoTo, useGraview, useLiveStore, usePlayba
 import { prefetchTimeline } from "../past-bar.js";
 import type { ToolCall } from "@graview/tools";
 import { Suspense, useMemo, useState, type ComponentProps, type ReactNode } from "react";
-import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
+import { VISUALLY_HIDDEN } from "../primitives/index.js";
+import { NamedRecord } from "./named-record.js";
+import { ACTIVITY_CHIPS, ACTIVITY_HEAD, ACTIVITY_ROW, ACTIVITY_WORDS } from "./activity-rows.js";
 import { nameOf } from "./answer-args.js";
 import { NotifiedDoor, useNotifiedCount } from "../notify-door.js";
 import { useInteractions, type ActivityShows } from "./ai-feed.js";
@@ -211,9 +213,9 @@ function DigestRow({ change, goes }: { readonly change: Change; readonly goes: (
   const [open, setOpen] = useState(false);
   const each = change.digest ?? [];
   return (
-    <li data-testid="activity-digest" style={{ display: "grid", gap: 5, lineHeight: 1.45 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-        <span style={{ minWidth: 0 }}>
+    <li data-testid="activity-digest" style={{ ...ACTIVITY_ROW, gap: 5 }}>
+      <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
+        <span data-graview-activity-words="" style={ACTIVITY_WORDS}>
           <Who change={change} /> <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
         </span>
         <button
@@ -229,18 +231,18 @@ function DigestRow({ change, goes }: { readonly change: Change; readonly goes: (
       {open ? (
         <ol data-testid="digest-changes" style={{ margin: 0, padding: "0 0 0 10px", listStyle: "none", display: "grid", gap: 6, borderLeft: "1px solid var(--graview-edge)" }}>
           {each.map((one) => (
-            <li key={one.batch} data-testid="digest-change" style={{ display: "grid", gap: 3 }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                <span style={{ minWidth: 0 }}>
+            <li key={one.batch} data-testid="digest-change" style={ACTIVITY_ROW}>
+              <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
+                <span data-graview-activity-words="" style={ACTIVITY_WORDS}>
                   <span style={{ color: "var(--graview-ink-muted)" }}>{one.intent}</span>
                   {one.basis ? <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}> · {one.basis}</span> : null}
                 </span>
                 {one.withheld ? null : <UndoTurn batch={one.batch} />}
               </div>
               {one.touched.length > 0 ? (
-                <div data-touched={one.touched.join(" ")} style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                <div data-touched={one.touched.join(" ")} style={ACTIVITY_CHIPS}>
                   {one.touched.slice(0, 4).map((id) => (
-                    <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (one.named?.[id] ?? nameOf(store, id))} go={goes(id)} />
+                    <NamedRecord key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (one.named?.[id] ?? nameOf(store, id))} go={goes(id)} testId="activity-record" />
                   ))}
                 </div>
               ) : null}
@@ -437,33 +439,6 @@ export function StartFresh() {
   );
 }
 
-/**
- * A RECORD NAMED IN THE ACTIVITY, AS SOMETHING THAT GOES THERE — or as a
- * label where there is nowhere to go. A chip with a pick target was a pill
- * that only the scene's own pointer handler answered: on Pages, in the
- * popover, and from the keyboard on either face it looked pressable and did
- * nothing. One that names a record still here is a button that goes to it
- * (the face says how, through `useGoTo`) and closes the popover; a record
- * since removed, or an argument that is a word rather than a record, is a
- * plain label with no pointer and no focus.
- */
-function Named({ id, label, go }: { readonly id: string; readonly label: string; readonly go: ((id: string) => void) | null }) {
-  if (!go) return <Chip label={label} />;
-  return (
-    <button
-      type="button"
-      data-testid="activity-record"
-      data-record={id}
-      title={`Go to ${label}`}
-      onClick={() => go(id)}
-      style={{ all: "unset", display: "inline-flex", cursor: "pointer", borderRadius: 7 }}
-      className="graview-activity-record"
-    >
-      <Chip label={label} />
-    </button>
-  );
-}
-
 export function ActivityRail({
   calls,
   seat,
@@ -584,9 +559,11 @@ export function ActivityRail({
           data-graview-offstage=""
           style={{
             ...POPOVER_STYLE,
-            width: 300,
+            // Never wider than the page, and what it holds wraps rather than widening it (FR-226).
+            width: "min(300px, calc(100vw - 16px))",
             maxHeight: "min(52cqh, 460px)",
-            overflow: "auto",
+            overflowX: "hidden",
+            overflowY: "auto",
             display: "flex",
             flexDirection: "column",
             gap: 9,
@@ -629,9 +606,9 @@ export function ActivityRail({
               {calls.slice(0, 6).map((call, index) => (
                 <li
                   key={`${call.at}:${index}`}
-                  style={{ display: "grid", gap: 2, fontSize: "0.8125rem", lineHeight: 1.45 }}
+                  style={{ ...ACTIVITY_ROW, gap: 2, fontSize: "0.8125rem" }}
                 >
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                  <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
                     <span
                       aria-hidden="true"
                       style={{
@@ -656,7 +633,7 @@ export function ActivityRail({
                       * declared mutation (a read tool) is still humanized
                       * rather than printed raw.
                       */}
-                    <span style={{ color: "var(--graview-ink)" }}>
+                    <span data-graview-activity-words="" style={{ ...ACTIVITY_WORDS, color: "var(--graview-ink)" }}>
                       {call.mutating ? "changed" : "read"} ·{" "}
                       {store.allMutations().find((mutation) => mutation.name === call.name)?.title ??
                         humanizeField(call.name)}
@@ -672,7 +649,7 @@ export function ActivityRail({
                     <div data-testid="activity-reads" style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
                       {/* Once each: a neighborhood read lists a node joined to it twice twice. */}
                       {[...new Set(call.reads)].slice(0, 3).map((id) => (
-                        <Named key={id} id={id} label={nameOf(store, id)} go={goes(id)} />
+                        <NamedRecord key={id} id={id} label={nameOf(store, id)} go={goes(id)} testId="activity-record" />
                       ))}
                       {new Set(call.reads).size > 3 ? <span style={{ color: "var(--graview-ink-muted)" }}>+{new Set(call.reads).size - 3}</span> : null}
                     </div>
@@ -687,7 +664,7 @@ export function ActivityRail({
                         .filter((entry): entry is [string, string] => typeof entry[1] === "string")
                         .slice(0, 3)
                         .map(([name, value]) => (
-                          <Named key={name} id={value} label={nameOf(store, value)} go={goes(value)} />
+                          <NamedRecord key={name} id={value} label={nameOf(store, value)} go={goes(value)} testId="activity-record" />
                         ))}
                     </div>
                   ) : null}
@@ -725,15 +702,15 @@ export function ActivityRail({
                   <DigestRow key={`digest:${change.digest[0]?.batch ?? index}`} change={change} goes={goes} />
                 ) : change.withheld ? (
                   /* SOMETHING YOU CANNOT SEE HAPPENED: said, and nothing more — not who, not what, no undo (FR-16). */
-                  <li key={`change:${index}`} data-testid="withheld-change" style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
-                    <span data-touched="" style={{ color: "var(--graview-ink-muted)", fontStyle: "italic" }}>
+                  <li key={`change:${index}`} data-testid="withheld-change" style={ACTIVITY_ROW}>
+                    <span data-touched="" style={{ ...ACTIVITY_WORDS, color: "var(--graview-ink-muted)", fontStyle: "italic" }}>
                       {change.intent}
                     </span>
                   </li>
                 ) : (
-                <li key={`change:${index}`} data-batch={change.batch} style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                    <span style={{ minWidth: 0 }}>
+                <li key={`change:${index}`} data-batch={change.batch} style={ACTIVITY_ROW}>
+                  <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
+                    <span data-graview-activity-words="" style={ACTIVITY_WORDS}>
                       <strong style={{ fontWeight: 600 }}>
                         {/*
                           * WHO, by its own id. "claude" was hardcoded for
@@ -755,12 +732,9 @@ export function ActivityRail({
                     {change.batch ? <ShowAsItWas seq={change.seq} intent={change.intent} /> : null}
                     {change.batch ? <UndoTurn batch={change.batches && change.batches.length > 0 ? (change.batches.length === 1 ? change.batches[0]! : change.batches) : change.batch} /> : null}
                   </div>
-                  <div
-                    data-touched={change.touched.join(" ")}
-                    style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
-                  >
+                  <div data-touched={change.touched.join(" ")} style={ACTIVITY_CHIPS}>
                     {change.touched.slice(0, 4).map((id) => (
-                      <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (change.named?.[id] ?? nameOf(store, id))} go={goes(id)} />
+                      <NamedRecord key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (change.named?.[id] ?? nameOf(store, id))} go={goes(id)} testId="activity-record" />
                     ))}
                   </div>
                 </li>
