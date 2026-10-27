@@ -56,6 +56,10 @@
     "./tidy": {
       "types": "./dist/tidy.d.ts",
       "default": "./dist/tidy.js"
+    },
+    "./starter": {
+      "types": "./dist/starter.d.ts",
+      "default": "./dist/starter.js"
     }
   },
   "scripts": {

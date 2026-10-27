@@ -6,7 +6,7 @@
 pnpm add @graview/tools
 ```
 
-Entry points: `@graview/tools`, `@graview/tools/cli`, `@graview/tools/frame`, `@graview/tools/edit`, `@graview/tools/suggest`, `@graview/tools/derive`, `@graview/tools/go`, `@graview/tools/draft`, `@graview/tools/keep`, `@graview/tools/turn`, `@graview/tools/several`, `@graview/tools/inline-ai`, `@graview/tools/tidy`
+Entry points: `@graview/tools`, `@graview/tools/cli`, `@graview/tools/frame`, `@graview/tools/edit`, `@graview/tools/suggest`, `@graview/tools/derive`, `@graview/tools/go`, `@graview/tools/draft`, `@graview/tools/keep`, `@graview/tools/turn`, `@graview/tools/several`, `@graview/tools/inline-ai`, `@graview/tools/tidy`, `@graview/tools/starter`
 
 ## What it is
 
@@ -75,6 +75,10 @@ TYPESAFE_API_KEY=… graview dream ./dist/domain/app.js --data ./data --model je
 ```
 
 A host that judges elsewhere reaches the store as the actor through the `suggest_changes` tool, offered only to a seat that says it is automated.
+
+### A new app from a sentence: `@graview/tools/starter`
+
+A person types what they want to keep track of; a host's box answers with the templates that fit, and on "kinda" asks which parts of one to keep and which traits to add. Code owns the catalog, the parts and the composing (`traitsOf` and the starting document composed from parts, on `@graview/core/compose`); a System One model supplies the common sense of matching words to structure. So the starter's questions are data of the Fast slot's shape, answered in one request by whatever `decide` the host passes — Jev, as `dream` takes one; a stub in a test — and read back by code with thresholds a host may move without asking again. `starterQuestions(said, catalog)` asks a Score per template (`fit:<id>`, five levels from "a different job" to "exactly this"), a Noul per trait of `TRAITS` (`need:<trait>`), a Choice for who will use it (`audience`: just me, a household, a team, the public) and one for whether it ends (`horizon`: a one-off, or kept going), over what they said and the catalog in words — each template's id, title, pitch, what it is for, what it keeps and what it is made of, the last read off its declaration. `kindaQuestions(said, template, reply)` asks keep? per kind, rule and lens of the template (`keep:<part>:<name>`) and add? per trait it lacks (`add:<trait>`), given the line they typed. `readStarter(answers, thresholds)` reads either turn by its keys: `{ ranked, top, traits, audience, horizon }` for the first (every template ranked, best first, so "No" shows the next without asking again; the traits needed at 0.7 or above) or `{ keep, drop, add }` for the second (a part kept at 0.5, a trait added at 0.7), with every raw answer kept beside the reading. `askStarter` and `askKinda` run a turn through the host's `decide`; `stillUnmet` says what a refused template leaves wanting. On no page: a server or a terminal asks it.
 
 ### Drawing a view on the fly, and keeping it as a lens
 
