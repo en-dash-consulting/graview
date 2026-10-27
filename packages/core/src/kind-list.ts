@@ -15,11 +15,12 @@ import type { KindList, KindListGroup } from "./views/types.js";
  */
 
 /** A document's kind's fields, as `ListFields` says them: what the edit judges before anything is compiled. */
-export function documentListFields(spec: { readonly fields?: Readonly<Record<string, { readonly type?: string; readonly options?: readonly string[] }>>; readonly computed?: Readonly<Record<string, unknown>> } | undefined): ListFields {
+export function documentListFields(spec: { readonly fields?: Readonly<Record<string, { readonly type?: string; readonly options?: readonly string[]; readonly multiple?: boolean }>>; readonly computed?: Readonly<Record<string, unknown>> } | undefined): ListFields {
   const fields: Record<string, ListFields["fields"][string]> = {};
   for (const [name, field] of Object.entries(spec?.fields ?? {})) {
+    // A choice that takes several (FR-233) is filtered by, and neither sorted nor grouped by: a record would be in several groups.
     fields[name] =
-      field.type === "enum"
+      field.type === "enum" && !field.multiple
         ? { type: "choice", options: field.options ?? [] }
         : field.type === "boolean"
           ? { type: "boolean" }

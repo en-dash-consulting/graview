@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 161,
+  "gzipped": 1,
+  "changeset": "a-choice-takes-several-of-its-options.md",
+  "note": "Raised when a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): the list of options a field compiles to and the words that say each by its label, `fieldSpecOf` reading a list of an enum back, a list filtered by one of its options, and the form field that is one `choice` with `multiple`; a page handed a compiled app carries none of the document's shape. Measured at 575_225 / 200_524 against 575_064 / 200_795: 161 more minified, 271 fewer gzipped (the gzipped raise is the least a raise may say)."
+}

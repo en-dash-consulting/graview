@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 1480,
+  "note": "Raised when a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): the boxes on both faces, the words that say each option by its label, a list filtered by one of them, the import of a cell that lists them and the studio's `set-multiple`. Measured at 2_378_108 / 866_465 against 2_538_208 / 864_985: 160_100 under minified, 1_480 more gzipped."
+}

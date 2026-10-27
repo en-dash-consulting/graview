@@ -226,10 +226,12 @@ describe("generated agent docs", () => {
     expect(text).toContain('"toPersonId"');
   });
 
-  it("tells an agent the three rules and the mutations it may use", () => {
+  it("tells an agent the four rules and the mutations it may use", () => {
     const text = generateAgentsMd(app);
+    expect(text).toContain("Four rules follow from that");
     expect(text).toContain("**Only these mutations exist:** reassign");
     expect(text).toContain("Preview before you apply");
+    expect(text).toContain("What the face shows is in the graph");
     expect(text).toContain("graview check");
   });
 });

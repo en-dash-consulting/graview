@@ -133,7 +133,10 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
         findings.push(unsaid(`kinds.${at.kind}.fields.${at.field}`, `${at.kind}'s ${at.field} is ${kept}, which the studio does not edit, so it cannot say what making it a ${type} does to that; retype it in the document, where that is decided with it`));
         continue;
       }
-      edits.push({ op: "retype-field", ...at, type, ...(type === "enum" && options ? { options } : {}), ...(type === "text" && field["markdown"] === true ? { format: "markdown" } : {}) });
+      edits.push({ op: "retype-field", ...at, type, ...(type === "enum" && options ? { options } : {}), ...(type === "enum" && field["multiple"] === true ? { multiple: true } : {}), ...(type === "text" && field["markdown"] === true ? { format: "markdown" } : {}) });
+    } else if (type === "enum" && (field["multiple"] === true) !== (old["multiple"] === true)) {
+      // A choice that comes to take several of its options, or one again (FR-233): the same type, said again with `multiple`; its options go with it.
+      edits.push({ op: "retype-field", ...at, type, ...(options ? { options } : {}), ...(field["multiple"] === true ? { multiple: true } : {}) });
     } else if (type === "text" && (field["markdown"] === true) !== (old["markdown"] === true)) {
       // Written in Markdown, or no longer (FR-180): the same type, said again with its format.
       edits.push({ op: "retype-field", ...at, type, ...(field["markdown"] === true ? { format: "markdown" } : {}) });
@@ -160,6 +163,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       type,
       ...(field["required"] === true ? { required: true } : {}),
       ...(type === "enum" && options ? { options } : {}),
+      ...(type === "enum" && field["multiple"] === true ? { multiple: true } : {}),
       ...(field["repeats"] === true ? { repeats: true } : {}),
       ...(str(field, "description") ? { label: str(field, "description") } : {}),
       ...(type === "text" && field["markdown"] === true ? { format: "markdown" } : {}),

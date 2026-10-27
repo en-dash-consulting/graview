@@ -88,7 +88,12 @@ export class Read {
   }
 }
 
-export function zodSource(type: FieldType, required: boolean, options?: readonly string[], uses?: ZodUses, markdown?: boolean): string {
+export function zodSource(type: FieldType, required: boolean, options?: readonly string[], uses?: ZodUses, markdown?: boolean, multiple?: boolean): string {
+  // A choice that takes several of its options (FR-233): a list of them.
+  if (type === "enum" && multiple && options && options.length > 0) {
+    const several = `z.array(z.enum([${options.map(q).join(", ")}]))`;
+    return required ? several : `${several}.optional()`;
+  }
   // Prose written in Markdown (FR-180): the framework's own field, imported beside `z`.
   if (type === "text" && markdown) {
     if (uses) uses.markdownField = true;
@@ -124,8 +129,8 @@ export function zodSource(type: FieldType, required: boolean, options?: readonly
   return required ? base : `${base}.optional()`;
 }
 
-const defaultSource = (type: FieldType, options?: readonly string[]): string =>
-  type === "number" || type === "integer" || type === "duration" ? "0" : type === "datetime" ? "new Date().toISOString()" : type === "boolean" ? "false" : type === "enum" ? q(options?.[0] ?? "") : type === "list" ? "[]" : type === "date" ? "new Date().toISOString().slice(0, 10)" : '""';
+const defaultSource = (type: FieldType, options?: readonly string[], multiple?: boolean): string =>
+  type === "number" || type === "integer" || type === "duration" ? "0" : type === "datetime" ? "new Date().toISOString()" : type === "boolean" ? "false" : type === "enum" ? (multiple ? "[]" : q(options?.[0] ?? "")) : type === "list" ? "[]" : type === "date" ? "new Date().toISOString().slice(0, 10)" : '""';
 
 /**
  * The lines of a `defineNode` the studio carries from the checkout rather
@@ -193,12 +198,14 @@ function carried(
 }
 
 /** A kind's fields, as the graph holds them. */
-export function fieldsOf(read: Read, kind: Node): { name: string; type: FieldType; required: boolean; options: string[] | undefined; markdown: boolean; repeats: boolean }[] {
+export function fieldsOf(read: Read, kind: Node): { name: string; type: FieldType; required: boolean; options: string[] | undefined; multiple: boolean; markdown: boolean; repeats: boolean }[] {
   return read.in(kind.id, "of").map((field) => ({
     name: label(field),
     type: (str(field, "type") ?? "string") as FieldType,
     required: bool(field, "required"),
     options: list(field, "options"),
+    // Several of its options at once (FR-233): an enum's.
+    multiple: str(field, "type") === "enum" && bool(field, "multiple"),
     repeats: bool(field, "repeats"),
     // Written in Markdown (FR-180).
     markdown: str(field, "type") === "text" && bool(field, "markdown"),
@@ -235,11 +242,12 @@ export function kindLines(
         was.type === field.type &&
         was.required === field.required &&
         (was.options ?? []).join("|") === (field.options ?? []).join("|") &&
+        (was.multiple === true) === field.multiple &&
         isMarkdownField(own) === field.markdown;
       const printed = same ? printZod(own, uses) : null;
       if (printed !== null) return printed;
     }
-    return zodSource(field.type, field.required, field.options, uses, field.markdown);
+    return zodSource(field.type, field.required, field.options, uses, field.markdown, field.multiple);
   };
   // A relation to another app's kind (FR-171) is kept on the record that links: a field, written as a declaration writes one.
   const far = read.in(kind.id, "from-kind").filter((edge) => (list(edge, "toAnotherApp") ?? []).length > 0);
@@ -363,13 +371,13 @@ export function actLines(
     const kindNode = read.ofKind("kind").find((node) => label(node) === kind);
     const fields = kindNode ? fieldsOf(read, kindNode).filter((field) => field.name !== "label") : [];
     const asked = fields.filter((field) => field.required && field.type !== "list");
-    lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${key(field.name)}: ${zodSource(field.type, false, field.options, uses)}`).join("")} }),`);
+    lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${key(field.name)}: ${zodSource(field.type, false, field.options, uses, undefined, field.multiple)}`).join("")} }),`);
     lines.push(`  describe: (args) => \`${said}: \${args.label}\`,`);
     body.push(`    ctx.addNode({`);
     body.push(`      id: ctx.freshId(args.label, ${q(kind)}),`);
     body.push(`      kind: ${q(kind)},`);
     body.push(`      label: args.label,`);
-    for (const field of fields) if (field.required) body.push(`      ${key(field.name)}: args${member(field.name)} ?? ${defaultSource(field.type, field.options)},`);
+    for (const field of fields) if (field.required) body.push(`      ${key(field.name)}: args${member(field.name)} ?? ${defaultSource(field.type, field.options, field.multiple)},`);
     body.push(`    });`);
   } else if (connects[0] ?? severs[0]) {
     const edge = (connects[0] ?? severs[0])!;
@@ -379,9 +387,9 @@ export function actLines(
     lines.push(`  describe: (args, graph) => \`${said}: \${nameOf(graph as Reader, args${member(arg)})} ${making ? "→" : "⇸"} \${nameOf(graph as Reader, args${member(far)})}\`,`);
     body.push(`    ctx.${making ? "addEdge" : "removeEdge"}({ kind: ${q(label(edge))}, from: args${member(arg)}, to: args${member(far)} });`);
   } else {
-    const declared = new Map<string, { type: FieldType; options: string[] | undefined }>();
-    for (const kindNode of read.ofKind("kind")) if (on.includes(label(kindNode))) for (const field of fieldsOf(read, kindNode)) declared.set(field.name, { type: field.type, options: field.options });
-    lines.push(`  input: z.object({ ${key(arg)}: nodeRef(${subjectKinds})${writes.map((field) => `, ${key(field)}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options, uses) : "z.string().optional()"}`).join("")} }),`);
+    const declared = new Map<string, { type: FieldType; options: string[] | undefined; multiple: boolean }>();
+    for (const kindNode of read.ofKind("kind")) if (on.includes(label(kindNode))) for (const field of fieldsOf(read, kindNode)) declared.set(field.name, { type: field.type, options: field.options, multiple: field.multiple });
+    lines.push(`  input: z.object({ ${key(arg)}: nodeRef(${subjectKinds})${writes.map((field) => `, ${key(field)}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options, uses, undefined, declared.get(field)!.multiple) : "z.string().optional()"}`).join("")} }),`);
     lines.push(`  describe: (args, graph) => \`${said}: \${nameOf(graph as Reader, args${member(arg)})}\`,`);
     if (writes.length > 0) {
       body.push(`    const patch: Record<string, unknown> = {};`);

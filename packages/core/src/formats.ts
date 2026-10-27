@@ -30,15 +30,21 @@ import { assertKnownPrimitives, FORMATS, NewerFormatError, type FormatName } fro
  * phase 1). A format-2 op reads as it was written; a build before it
  * meeting a store stamped `op: 3`, or a splice, refuses it.
  *
- * SNAPSHOT FORMAT 2 is a stored state whose checkpoint lies past what
- * stood published (`Epoch.published` keeps the app as readers are served
- * it there, Roadmap f-publishing-lifecycle). A build before it would serve
- * those readers the horizon — changes never published — so such a store
- * and its bundles are stamped `snapshot: 2`, and that build refuses them
- * with `NewerFormatError`. Every other store is stamped 1, as before: a
- * host that must stay readable by an older build passes
- * `pins: [store.publishedSeq]` to the compaction, and its checkpoint
- * never passes the publish. A format-1 snapshot reads as written.
+ * SNAPSHOT FORMAT 2 is a stored state whose checkpoint keeps the app as
+ * readers are, or may again be, served at a seq behind it
+ * (`Epoch.published`, Roadmap f-publishing-lifecycle): one past the
+ * publish standing at its seq, or past a seq a later publish took readers
+ * back to. A build before it would serve those readers the horizon —
+ * changes never published — so such a store and its bundles are stamped
+ * `snapshot: 2`, and that build refuses them with `NewerFormatError`.
+ * Every other store is stamped 1, as before: a host that must stay
+ * readable by an older build asks the compaction for `format: 1`
+ * (`CompactOptions.format`), which holds the horizon at the earliest such
+ * seq, wherever the days, the ops and the pins would have put it, and says
+ * where it stopped. A pin at `store.publishedSeq` alone holds only the
+ * latest publish: a horizon that lands between two publishes keeps the
+ * earlier one and is format 2 with it. A format-1 snapshot reads as
+ * written.
  *
  * FAIL CLOSED (1.0). A new primitive raises `FORMATS.op` and travels only
  * to a reader that said it reads it (`opFormat`); a reader that meets a
@@ -61,12 +67,14 @@ export interface FormatStamp {
 
 /**
  * The stamp this build writes for what begins at `checkpoint` (a store's
- * horizon epoch, a bundle's checkpoint): snapshot format 2 when it lies
- * past what stood published at its seq and keeps the app as readers were
- * served there — what a build before format 2 would misread — else 1.
+ * horizon epoch, a bundle's checkpoint): snapshot format 2 when it keeps
+ * the app as readers are or may again be served at a seq behind it
+ * (`published`: the publish standing at its seq, or one in the tail that
+ * took readers back to an earlier seq) — what a build before format 2
+ * would misread, serving those readers the horizon — else 1.
  */
-export function formatStamp(checkpoint?: Pick<Epoch, "published" | "publishedThrough">): FormatStamp {
-  const past = checkpoint?.published?.some((kept) => kept.seq === checkpoint.publishedThrough) === true;
+export function formatStamp(checkpoint?: Pick<Epoch, "published">): FormatStamp {
+  const past = (checkpoint?.published?.length ?? 0) > 0;
   return { framework: FRAMEWORK_VERSION, formats: { ...FORMATS, snapshot: past ? 2 : 1 } };
 }
 

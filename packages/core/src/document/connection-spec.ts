@@ -39,8 +39,14 @@ function build() {
     calendar: z.union([str(1, 300), z.strictObject({ env: envName })]),
     auth,
     kind: kindName,
-    /* Google's side → this kind's field. A date field is an all-day event's day; a datetime field, a timed event's instant. */
-    fields: z.strictObject({ summary: fieldName, start: fieldName, end: fieldName, location: z.optional(fieldName), description: z.optional(fieldName) }),
+    /*
+     * Google's side → this kind's field. A date field is an all-day event's
+     * day; a datetime field, a timed event's instant; one that repeats, a
+     * recurring event with its rule (FR-230). With `days` — a weekday, or a
+     * list of them — the record is weekly, and `start` and `end` are its
+     * times of day ("09:00"), in the app's time zone.
+     */
+    fields: z.strictObject({ summary: fieldName, start: fieldName, end: fieldName, days: z.optional(fieldName), location: z.optional(fieldName), description: z.optional(fieldName) }),
     /* Absent: the whole calendar. `{ color }`: the events of one of Google's colors, by name. `{ tag }`: those whose title carries a word like "#graview", kept in the title here or not (`keep`). */
     filter: z.optional(z.strictObject({ color: z.optional(str(1, 40)), tag: z.optional(str(1, 40)), keep: z.optional(z.boolean()) })),
     direction,

@@ -39,6 +39,8 @@ import type { AnySchema } from "./schema/schema.js";
 import { accentProblem } from "./theme/accent.js";
 
 export type { DocumentEdit } from "./document/edit.js";
+/** A kind said by its noun and its plural, as the declaration spells them — for a host that writes about a document's kinds (the starter), never from the kind's id alone. */
+export { nounWords, pluralWords } from "./document/policy-words.js";
 
 /** The records an inference may count — a snapshot's or a seed's nodes and edges. Without them, nothing is inferred from data. */
 export interface ComposeRecords {
@@ -90,7 +92,8 @@ const actsOn = (document: GraviewDocument, kind: string): [string, Acts[string]]
 
 /** A choice field that ends: some values a record is done at, some it is still on the way. */
 function endingChoice(spec: KindSpec): { field: string; options: readonly string[]; done: readonly string[]; ended: readonly string[] } | undefined {
-  const choices = Object.entries(spec.fields).filter(([, field]) => field.type === "enum" && Array.isArray(field.options) && field.options.length >= 2);
+  // A choice that takes several (FR-233) is no status: a record is not in two stages at once.
+  const choices = Object.entries(spec.fields).filter(([, field]) => field.type === "enum" && !field.multiple && Array.isArray(field.options) && field.options.length >= 2);
   // A field called a status, stage or state first; then any choice whose values end.
   const ranked = [...choices].sort(([a], [b]) => Number(/status|stage|state|phase/i.test(b)) - Number(/status|stage|state|phase/i.test(a)));
   for (const [field, choice] of ranked) {
@@ -299,3 +302,8 @@ export function composeDesign(source: GraviewDocument | GraviewApp<AnySchema>, o
 
   return { edits, said: reasons };
 }
+
+export { TRAITS, TRAIT_WORDS, traitsOf, hasTrait, traitWords } from "./traits.js";
+export type { Trait, TraitName } from "./traits.js";
+export { startingDocument } from "./starting-document.js";
+export type { Part, PartKind, StartingDocument, StartingOptions } from "./starting-document.js";

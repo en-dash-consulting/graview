@@ -209,10 +209,21 @@ export function coerceCell(spec: FieldSpec, input: unknown, said: string, option
     }
     case "enum": {
       const choices = spec.options ?? [];
-      const value = readOption(input, choices, options.optionWords);
-      if (value !== undefined) return { ok: true, value };
       const listed = choices.map((option) => options.optionWords?.(option) ?? option);
-      return { ok: false, why: `${quoted} under ${said} is none of ${listed.length <= 8 ? orList(listed) : `its ${listed.length} choices`}` };
+      const none = (one: unknown) => ({ ok: false as const, why: `“${String(one).trim()}” under ${said} is none of ${listed.length <= 8 ? orList(listed) : `its ${listed.length} choices`}` });
+      // A choice that takes several (FR-233): a cell lists them, "CTO; QA", each one of its options.
+      if (spec.multiple) {
+        const items = Array.isArray(input) ? input : splitCell(String(input));
+        const out: string[] = [];
+        for (const item of items) {
+          const value = readOption(item, choices, options.optionWords);
+          if (value === undefined) return none(item);
+          if (!out.includes(value)) out.push(value);
+        }
+        return { ok: true, value: out };
+      }
+      const value = readOption(input, choices, options.optionWords);
+      return value !== undefined ? { ok: true, value } : none(input);
     }
     case "list": {
       const items = Array.isArray(input) ? input : splitCell(String(input));

@@ -115,7 +115,13 @@ In a framework checkout, `pnpm graview:link` puts `graview` on PATH.
    anything. Write a custom view for a kind when the generic one is genuinely
    wrong, not on principle.
 
-7. **Add the check to your build.** `"check": "graview check
+7. **Keep content in the graph.** What a page shows — a pitch's sections, a
+   chart's tags — is records of a kind, seeded, never a JSON file a view
+   imports: `graview check` names a face module that reads one
+   (`face-reads-content-beside-the-graph`). A declaration change that loses
+   nothing is made without asking; git keeps the way back.
+
+8. **Add the check to your build.** `"check": "graview check
    ./dist/domain/app.js"`, and a `verify` that runs typecheck, test, build
    and check in that order. The scaffold writes both.
 
@@ -172,13 +178,11 @@ packaging steps you do not need. What earns its place:
 
 ## Supported browsers
 
-Build for the DOM path: Chromium, WebKit and Firefox, all verified
-(`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+,
-Firefox 101+, Chromium 99+). The altitude morph rides `@property` and cuts
-cleanly where it is missing — write no fallback. A host's `ai.onDevice` needs
-WebGPU or Chrome's Prompt API; without either the seat says AI isn't
-available. The scene draws on the GPU where it can and on the DOM path
-elsewhere, with one accessibility tree — never a requirement.
+Chromium, WebKit and Firefox, all verified (`pnpm engines`); the floor is
+`document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+).
+The altitude morph rides `@property` and cuts cleanly where it is missing —
+write no fallback. `ai.onDevice` needs WebGPU or Chrome's Prompt API, else
+the seat says AI isn't available. The GPU is never a requirement.
 
 ## Then find out whether it worked
 
@@ -203,9 +207,7 @@ reads the interface or an agent reads a tool schema.
 - Whether your mutations are the acts a person would name. They are the labels
   in the strip and the instructions in an agent's tool schema, so an opaque one
   costs twice.
-- Whether the interface is any good. Run it. Run it at the size it will have: seed a
-  real catalog, not a dozen rows. The scene draws what a person can read — a
-  relation too long for its band is grouped by its best arrangement or closes
-  on "+N more", and a district says its places by name — so a
-  thousand records are a picture, not a smear. What that hides is yours to
-  judge: whether the groups are the ones a person would ask for.
+- Whether the interface is any good. Run it at the size it will have: seed a
+  real catalog, not a dozen rows. The scene groups a relation too long for
+  its band or closes it on "+N more", so a thousand records are a picture;
+  whether the groups are the ones a person would ask for is yours to judge.

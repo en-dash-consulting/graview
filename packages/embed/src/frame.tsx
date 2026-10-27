@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
 import { faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarAction, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
@@ -275,6 +275,15 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * scene.
    */
   readonly hostActions?: readonly HostAction[];
+  /**
+   * THE HOST'S BUTTONS ON THE BAR (FR-227): "Send feedback", say — presses
+   * drawn on the app bar itself, on both faces, before the standing and
+   * the person; on a bar too narrow for them, folded into one control that
+   * lists them. Each is named by its label and reached by the keyboard.
+   * Set again with `setBarActions`. A host's only: no declaration and no
+   * sandboxed view can put a button here.
+   */
+  readonly barActions?: readonly BarAction[];
   /**
    * THE BOARD THE HOST NOTICES ARE SAID ON (FR-75). `mount` makes one and
    * hands its `notify` back on the handle; a React host drawing `<Embed>`
@@ -710,6 +719,7 @@ export function FrameBar({
   reach,
   standing,
   hostActions,
+  barActions,
   keeping,
   onFind,
   switch: switchForm,
@@ -730,6 +740,8 @@ export function FrameBar({
   readonly standing: string;
   /** The host's own actions, in the person's menu (FR-72). */
   readonly hostActions?: readonly HostAction[] | undefined;
+  /** The host's buttons on the bar (FR-227). */
+  readonly barActions?: readonly BarAction[] | undefined;
   /** The ways into the app, for the seat that keeps it. */
   readonly keeping?: ReactNode;
   readonly onFind: (find: BarFind | null) => void;
@@ -757,6 +769,7 @@ export function FrameBar({
       onFind={onFind}
       {...(switchForm ? { switch: switchForm } : {})}
       {...(faces || at === null ? { scenePlaces: scene } : {})}
+      {...(barActions ? { actions: barActions } : {})}
       tools={
         <>
           <Standing clean={standing} />

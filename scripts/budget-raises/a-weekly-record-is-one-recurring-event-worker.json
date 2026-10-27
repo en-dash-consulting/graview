@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 11800,
+  "note": "Raised when a weekly record came to be one recurring event (Roadmap f-connection-weekly-records-recur, FR-230): the recurrence arithmetic (`sync/recurrence.ts`: the rule written and read, a time of day and a wall time turned into Google's instant and back), the two recurring shapes in the calendar mapping, a record made then given its repeat in one batch, and the checker's judgment of `days` and the times beside it; the worker runs connections and checks documents, so it carries all of it. Measured at 2_292_991 B against 2_281_256 with FR-229 in place: 11_735 more."
+}

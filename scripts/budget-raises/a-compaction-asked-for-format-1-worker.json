@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 1416,
+  "note": "Raised when a compaction came to be asked for format 1 (`CompactOptions.format`): the store holds the horizon at the earliest seq readers are served behind it until `formatStamp` says the format asked for, so it reads the stamp and the formats this build writes where it checkpoints, and refuses a format it does not write. The worker had 19 bytes of room under 2_272_518. Measured at 2_273_915 B against 2_272_499."
+}

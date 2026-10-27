@@ -4,6 +4,7 @@ import { useGraview } from "@graview/react/provider";
 import { inlineAiOn } from "@graview/tools/frame";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import type { ActivityShows } from "./ai-feed.js";
+import { ACTIVITY_HEAD, ACTIVITY_ROW, ACTIVITY_WORDS } from "./activity-rows.js";
 import { useInlineEnv } from "../inline-ai-env.js";
 import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -90,9 +91,9 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
     void import("../inline-ai-menu.js").then(work).finally(() => setBusy(false));
   };
   return (
-    <li data-testid="activity-interaction" data-interaction={entry.id} data-outcome={entry.outcome} style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-        <span style={{ minWidth: 0 }}>
+    <li data-testid="activity-interaction" data-interaction={entry.id} data-outcome={entry.outcome} style={ACTIVITY_ROW}>
+      <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
+        <span data-graview-activity-words="" style={ACTIVITY_WORDS}>
           <strong style={{ fontWeight: 600 }}>{who}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>asked AI to {askWords(entry)}</span>
           <span style={{ color: "var(--graview-ink-faint)" }}> · {entry.targetLabel}</span>
         </span>

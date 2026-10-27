@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 863,
+  "gzipped": 102,
+  "note": "Raised when a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): the form's box per option, sent as the list of those ticked, the form field that is one `choice` with `multiple`, and the list of options a compiled field is built as. Measured at 327_682 / 120_301 against 326_819 / 120_199: 863 / 102 more."
+}

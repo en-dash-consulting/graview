@@ -274,8 +274,9 @@ function readApp(schema: AnySchema): Reading {
     const fields = Object.entries(definition.fields?.shape ?? {})
       .filter(([name]) => name !== "id" && name !== "kind")
       .map(([name, field]) => {
-        const spec = fieldSpecOf(field) as { type?: FieldType; options?: readonly string[] } | undefined;
-        return { name, type: spec?.type, ...(spec?.options ? { options: spec.options } : {}), words: (labels[name] ?? wordsOf(name)).toLowerCase() };
+        const spec = fieldSpecOf(field) as { type?: FieldType; options?: readonly string[]; multiple?: boolean } | undefined;
+        // A choice that takes several of its options (FR-233) has no columns and makes no groups: to a draft it is a list.
+        return { name, type: spec?.type === "enum" && spec.multiple ? "list" : spec?.type, ...(spec?.options ? { options: spec.options } : {}), words: (labels[name] ?? wordsOf(name)).toLowerCase() };
       });
     const edges = Object.entries(definition.edges ?? {}).map(([name, edge]) => ({
       name,

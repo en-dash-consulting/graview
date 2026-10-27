@@ -14,6 +14,8 @@ import { sayFindings } from "../document/findings.js";
 import { isGraviewTemplate } from "../document/graview-template.js";
 import { create, CREATE_USAGE } from "./create.js";
 import { doctor, DOCTOR_USAGE } from "./doctor.js";
+import { auditFace, projectRootOf, withFaceFindings } from "./check/face.js";
+export { auditFace, FACE_READS_CONTENT, projectRootOf, withFaceFindings } from "./check/face.js";
 export { diagnose, doctor, DOCTOR_USAGE } from "./doctor.js";
 export type { DoctorFinding, DoctorLevel } from "./doctor.js";
 import { describeApp } from "./describe.js";
@@ -29,9 +31,14 @@ export const USAGE = `graview — start a product, check its declaration, write 
 
 ${CREATE_USAGE}
 
-  graview check <entry> [--views <module>] [--json]
+  graview check <entry> [--views <module>] [--face <dir>] [--json]
       Loads <entry> (a module whose default export, or \`app\` export, is a
-      GraviewApp) and reports schema problems. Exits 1 on any error.
+      GraviewApp) and reports schema problems. Exits 1 on any error. Reads
+      the face too — the project's src/ (the nearest package.json up from
+      <entry>), or the directory --face names — and warns of a module that
+      imports, loads or fetches a JSON file of the project's for content
+      (face-reads-content-beside-the-graph): what it shows from there is on
+      no record. The declaration, a seed and a template are read where they are.
 
   --document <file>
       Any command that takes an <entry> takes a declaration document instead
@@ -281,7 +288,11 @@ export async function main(argv: string[]): Promise<number> {
         return compiled.ok ? 0 : 1;
       }
       const app = await loadViews(await loadApp(entry), flag(argv, "--views"));
-      const result = checkApp(app);
+      // The face, beside the declaration (FR-232): the project the entry is in, or the directory named.
+      const root = projectRootOf(resolve(process.cwd(), entry));
+      const face = flag(argv, "--face");
+      const faceFindings = face ? auditFace(root ?? process.cwd(), resolve(process.cwd(), face)) : root ? auditFace(root) : [];
+      const result = withFaceFindings(checkApp(app), faceFindings);
       if (argv.includes("--json")) {
         process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
       } else {

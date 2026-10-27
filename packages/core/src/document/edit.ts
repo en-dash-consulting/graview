@@ -20,6 +20,7 @@ import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
 import { JobSpec } from "./purpose-spec.js";
 import { aliasWord, documentAliasFindings } from "../alias-findings.js";
 import { humanizeField, withArticle } from "../schema/define-node.js";
+import { ConnectionSpec } from "./connection-spec.js";
 import { linkedRelationFindings } from "./linked-relation-findings.js";
 import { linkedRelationOfSpec, reachesAnotherApp, type LinkedRelation } from "../schema/linked.js";
 import {
@@ -160,6 +161,7 @@ export const EDIT_OPS = [
   "remove-job",
   "add-alias",
   "set-aliases",
+  "set-connection",
 ] as const;
 export type EditOp = (typeof EDIT_OPS)[number];
 
@@ -197,7 +199,7 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "remove-kind": z.object({ op: z.literal("remove-kind"), kind: kindName }).strict(),
     "add-field": z.object({ op: z.literal("add-field"), kind: kindName, field: fieldName, fill: z.unknown().optional(), spec: z.record(z.string(), z.unknown()).optional() }).passthrough(),
     "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
-    "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date", "image", "video", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
+    "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), multiple: z.boolean().optional(), of: z.enum(["string", "number", "date", "image", "video", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
     "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional(), labels: z.record(z.string().min(1).max(80), z.union([z.string().min(1).max(80), z.null()])).optional() }).strict(),
     "set-format": z.object({ op: z.literal("set-format"), kind: kindName, field: fieldName, format: z.union([z.enum(["money", "percent", "duration", "markdown"]), z.null()]).optional(), unit: z.union([z.string().min(1).max(12), z.null()]).optional() }).strict(),
     "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
@@ -344,6 +346,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "add-alias": z.object({ op: z.literal("add-alias"), kind: kindName, field: fieldName.optional(), alias: z.string().min(1).max(40) }).strict(),
     // All of a kind's or a field's other words at once; null or [] takes them away.
     "set-aliases": z.object({ op: z.literal("set-aliases"), kind: kindName, field: fieldName.optional(), aliases: z.union([z.array(z.string().min(1).max(40)).max(MOST_ALIASES), z.null()]) }).strict(),
+    // A connection declared whole, by its name: set where there was none, or replaced (FR-229); null takes it away.
+    "set-connection": z.object({ op: z.literal("set-connection"), name: kindName, connection: z.union([z.record(z.string(), z.unknown()), z.null()]) }).strict(),
   };
 }
 let shapes: Record<EditOp, z.ZodType> | undefined;
@@ -358,6 +362,13 @@ const NONE: Kinds = new Set<string>();
 
 const clone = <T>(v: T): T => structuredClone(v);
 const asArray = (v: unknown): string[] => [v ?? []].flat() as string[];
+
+/** The first of a choice's default that is none of its options — a list of them where the choice takes several (FR-233) — or undefined when every one is. */
+function defaultOutsideOptions(f: { readonly options?: readonly string[]; readonly multiple?: boolean }, given: unknown): unknown {
+  const options = f.options ?? [];
+  if (!f.multiple) return Array.isArray(given) || !options.includes(String(given)) ? given : undefined;
+  return (Array.isArray(given) ? given : [given]).find((one) => !options.includes(String(one)));
+}
 const kebab = (camel: string) => camel.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 const words = (name: string) => kebab(name).replace(/-/g, " ");
 /** Another app's kinds as people say them: "one house in the app @nick/house", "houses or flats in the app @nick/house". Their plural is that app's to say; this one says the plain one. */
@@ -896,7 +907,7 @@ class Editor {
           delete f.default;
           this.said.push(`${e.kind}'s ${e.field} has no default now.`);
         } else {
-          if (f.type === "enum" && !(f.options ?? []).includes(e.default)) return this.fail(i, "default", `"${String(e.default)}" is not one of ${e.field}'s options (${(f.options ?? []).join(", ")})`);
+          if (f.type === "enum" && defaultOutsideOptions(f, e.default) !== undefined) return this.fail(i, "default", `"${String(defaultOutsideOptions(f, e.default))}" is not one of ${e.field}'s options (${(f.options ?? []).join(", ")})`);
           const outside = outsideRange(e.default, f, e.field);
           if (outside) return this.fail(i, "default", outside);
           f.default = e.default;
@@ -1044,7 +1055,36 @@ class Editor {
         return this.setAliases(i, e.kind, e.field, [...this.aliasesOf(e.kind, e.field), e.alias], e.alias);
       case "set-aliases":
         return this.setAliases(i, e.kind, e.field, e.aliases ?? []);
+      case "set-connection":
+        return this.setConnection(i, e.name, e.connection);
     }
+  }
+
+  // ── a connection, declared whole (FR-229) ──
+
+  /**
+   * A CONNECTION SET BY NAME: its shape is judged here, as the document's
+   * is; what it says of the kind and the fields it maps, and the acts an
+   * inbound change lands through, the checker judges of the document it
+   * leaves (`connection-findings.ts`). Null takes the connection away.
+   */
+  private setConnection(i: number, name: string, connection: Record<string, unknown> | null) {
+    if (connection === null) {
+      if (!this.doc.connections?.[name]) return this.fail(i, "name", `there is no connection called "${name}"${this.doc.connections ? `; there ${Object.keys(this.doc.connections).length === 1 ? "is" : "are"} ${Object.keys(this.doc.connections).join(", ")}` : ""}`);
+      delete this.doc.connections[name];
+      if (Object.keys(this.doc.connections).length === 0) delete this.doc.connections;
+      this.said.push(`The connection ${name} is gone: nothing keeps its records in step now.`);
+      return;
+    }
+    const parsed = ConnectionSpec.safeParse(connection);
+    if (!parsed.success) {
+      this.refuse(i, parsed.error.issues.map((issue) => ({ ...issue, path: ["connection", ...issue.path] })), "a connection");
+      return;
+    }
+    const was = this.doc.connections?.[name] !== undefined;
+    (this.doc.connections ??= {})[name] = parsed.data;
+    const system = parsed.data.system === "notion" ? "a Notion database" : "a Google calendar";
+    this.said.push(`The connection ${name} ${was ? "now keeps" : "keeps"} ${pluralOf(this.doc.kinds, parsed.data.kind)} in step with ${system}${parsed.data.direction === "read" ? ", which owns them" : ", both ways"}.`);
   }
 
   // ── other words for a kind or a field (Roadmap f-learned-suggestions) ──
@@ -1334,9 +1374,10 @@ class Editor {
       const fields = this.doc.kinds[kind].fields as Record<string, Doc>;
       if (typeof field !== "string") return (this.fail(i, `bindings.${kind}.column`, `the board does not say which field of ${kind} its columns are`, example), false);
       if (!(field in fields)) return (this.fail(i, `bindings.${kind}.column`, `${kind} has no field "${field}"; it has ${Object.keys(fields).join(", ")}`), false);
-      if (fields[field]["type"] !== "enum") {
-        const choices = Object.keys(fields).filter((one) => fields[one]["type"] === "enum");
-        return (this.fail(i, `bindings.${kind}.column`, `${kind}'s ${field} is not a choice, so it has no columns`, choices.length > 0 ? `bind one of ${choices.join(", ")}` : `give ${kind} a choice field first: add-field with "type": "enum" and its "options", in the order the columns go`), false);
+      // A choice that takes several of its options (FR-233) has no columns: a record would stand in several.
+      if (fields[field]["type"] !== "enum" || fields[field]["multiple"] === true) {
+        const choices = Object.keys(fields).filter((one) => fields[one]["type"] === "enum" && fields[one]["multiple"] !== true);
+        return (this.fail(i, `bindings.${kind}.column`, `${kind}'s ${field} is ${fields[field]["multiple"] === true ? "a choice of several, so a record would stand in more than one column" : "not a choice, so it has no columns"}`, choices.length > 0 ? `bind one of ${choices.join(", ")}` : `give ${kind} a choice field first: add-field with "type": "enum" and its "options", in the order the columns go`), false);
       }
       const others = Object.keys(roles as Doc).filter((role) => role !== "column");
       if (others.length > 0) return (this.fail(i, `bindings.${kind}.${others[0]}`, `a board binds only "column"`), false);
@@ -2086,6 +2127,12 @@ class Editor {
     const pluralWas: string = spec.plural ?? `${words(from)}s`;
     if (e.plural) spec.plural = e.plural;
     else if (spec.plural && (spec.plural === `${words(from)}s` || spec.plural === `${from}s`)) spec.plural = `${words(to)}s`;
+    // Its hue follows it.
+    if (isObject(this.doc.brand?.accents) && from in this.doc.brand.accents && !(to in this.doc.brand.accents)) {
+      this.doc.brand.accents[to] = this.doc.brand.accents[from];
+      delete this.doc.brand.accents[from];
+      touched.push("its hue");
+    }
     // Its list's filters, order and grouping follow it.
     const lists = this.doc.pages?.lists;
     if (lists?.[from] !== undefined && lists[to] === undefined) {
@@ -2133,6 +2180,7 @@ class Editor {
       for (const what of went) if (!gone.includes(what)) gone.push(what);
     }
     const removedPlural: string = this.doc.kinds[kind].plural ?? `${words(kind)}s`;
+    const people = this.doc.kinds[kind].people === true;
     // Its own relations' connect and disconnect go with it.
     const ownRelationActs = relationActsOf(documentRelations({ [kind]: this.doc.kinds[kind] }));
     delete this.doc.kinds[kind];
@@ -2149,12 +2197,20 @@ class Editor {
         }
       }
     }
+    // With the people kind gone, an act on the acting person's own record (`$me`) has no record to reach: it goes too.
     for (const [name, act] of Object.entries(this.doc.acts ?? {}) as [string, Doc][]) {
       const on = asArray(act.on);
-      if (act.creates === kind || (act.effects ?? []).some((x: Doc) => x.create === kind) || (on.includes(kind) && on.length === 1)) {
+      if (act.creates === kind || (act.effects ?? []).some((x: Doc) => x.create === kind) || (on.includes(kind) && on.length === 1) || (people && JSON.stringify(act).includes('"$me"'))) {
         gone.push(titled("act", name, act));
         this.removeActQuietly(name);
       } else if (on.includes(kind)) act.on = on.filter((k) => k !== kind);
+    }
+    // Its hue goes with it: an accent for a kind nobody declares is refused by the checker.
+    if (isObject(this.doc.brand?.accents) && kind in this.doc.brand.accents) {
+      delete this.doc.brand.accents[kind];
+      if (Object.keys(this.doc.brand.accents).length === 0) delete this.doc.brand.accents;
+      if (Object.keys(this.doc.brand).length === 0) delete this.doc.brand;
+      gone.push("its hue");
     }
     for (const [name, rule] of Object.entries(this.doc.rules ?? {}) as [string, Doc][]) {
       if (rule.over === kind || exprMentions(this.doc, rule.when, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" }) || exprMentions(this.doc, rule.require, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" })) {
@@ -2181,7 +2237,11 @@ class Editor {
       });
     }
     if (this.doc.policy?.sees) {
-      this.doc.policy.sees = this.doc.policy.sees.map((s: Doc) => ({ ...s, kinds: s.kinds.filter((k: string) => k !== kind) })).filter((s: Doc) => s.kinds.length > 0);
+      // A sight of other kinds through a relation that went with the kind would show nothing: it goes too.
+      const declared = new Set(Object.values(this.doc.kinds).flatMap((spec: Doc) => Object.keys(spec.edges ?? {})));
+      const through = this.doc.policy.sees.filter((s: Doc) => typeof s.via === "string" && !declared.has(s.via) && s.kinds.some((k: string) => k !== kind));
+      if (through.length > 0) gone.push(`${through.length === 1 ? "the sight" : "the sights"} through ${listOf([...new Set<string>(through.map((s: Doc) => `"${String(s.via)}"`))])}`);
+      this.doc.policy.sees = this.doc.policy.sees.filter((s: Doc) => !through.includes(s)).map((s: Doc) => ({ ...s, kinds: s.kinds.filter((k: string) => k !== kind) })).filter((s: Doc) => s.kinds.length > 0);
       if (this.doc.policy.sees.length === 0) delete this.doc.policy.sees;
     }
     /*
@@ -2229,7 +2289,7 @@ class Editor {
     }
     const f = { ...parsed.data } as Doc;
     delete f.renamedFrom;
-    if (f.type === "enum" && f.default !== undefined && !f.options.includes(f.default)) return this.fail(i, "default", `"${String(f.default)}" is not one of the options`);
+    if (f.type === "enum" && f.default !== undefined && defaultOutsideOptions(f, f.default) !== undefined) return this.fail(i, "default", `"${String(defaultOutsideOptions(f, f.default))}" is not one of the options`);
     if (f.format && !formatFits(f.format, f.type)) return this.fail(i, "format", refusedFormat(f.format, f.type));
     spec.fields[field] = f;
     this.fieldOrigin.set(`${kind}.${field}`, undefined);
@@ -2304,9 +2364,14 @@ class Editor {
     // A format goes where it says something (FR-180): money, a percent and a duration on a number, Markdown on a text field.
     if (e.format && !formatFits(e.format, e.type)) return this.fail(i, "format", refusedFormat(e.format, e.type));
     const was = f.type;
+    const wasSeveral = f.multiple === true;
     f.type = e.type;
     if (e.type === "enum") f.options = e.options ?? f.options;
     else delete f.options;
+    // A choice that takes several of its options (FR-233), or one again: only an enum says it, and a retype says it anew.
+    if (e.type === "enum" && e.multiple) f.multiple = true;
+    else delete f.multiple;
+    const several = f.multiple === true;
     // An option's label goes with the option.
     if (f.optionLabels) {
       f.optionLabels = Object.fromEntries(Object.entries(f.optionLabels).filter(([o]) => (f.options ?? []).includes(o)));
@@ -2325,8 +2390,9 @@ class Editor {
     const said = f.format && f.format !== "markdown" ? formatWords(f, this.doc.brand) : undefined;
     // A list grouped by a choice that is no longer one opens ungrouped, and says so.
     const held = this.listsHold(e.kind);
-    if (held.length > 0) this.said.push(`${capitalize(listOf(held))} ${held.length === 1 ? "goes" : "go"} back to the list's own, since ${e.field} is no longer ${was === "enum" ? "a choice" : `a ${was}`}.`);
+    if (held.length > 0) this.said.push(`${capitalize(listOf(held))} ${held.length === 1 ? "goes" : "go"} back to the list's own, since ${e.field} is no longer ${was === "enum" ? (several ? "a choice of one" : "a choice") : `a ${was}`}.`);
     if (was === e.type && e.type === "text") this.said.push(`${e.kind}'s ${e.field} ${e.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is drawn as written, not as Markdown"}; its values are kept.`);
+    else if (was === e.type && e.type === "enum" && wasSeveral !== several) this.said.push(several ? `${e.kind}'s ${e.field} now takes several of its options at once; the one each record held is kept as a list of one.` : `${e.kind}'s ${e.field} takes one of its options again; the first each record held is kept.`);
     else this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}${said ? `, said as ${said}` : ""}; values that convert are kept.`);
   }
 

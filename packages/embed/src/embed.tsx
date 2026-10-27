@@ -652,6 +652,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
               reach={{ ...(hrefOf ? { href: hrefOf } : {}), go: (place) => toPage(place.path) }}
               standing={standing}
               hostActions={props.hostActions}
+              barActions={props.barActions}
               keeping={onPages ? undefined : <Keeping app={app} studio={props.studio} report={report} />}
               onFind={setBarFind}
               switch={props.switch}
@@ -860,6 +861,8 @@ export interface EmbedHandle {
   setLabel(label: string): void;
   /** The host's own actions in the profile menu (FR-72), now. */
   setHostActions(actions: EmbedOptions["hostActions"]): void;
+  /** The host's buttons on the bar (FR-227), now: given, they are drawn from the next render; `undefined` takes them off. */
+  setBarActions(actions: EmbedOptions["barActions"]): void;
   setFace(face: EmbedFace): void;
   setStop(stop: string): void;
   /**
@@ -929,6 +932,7 @@ interface Setters {
   whileAway(away: AwaySummary | undefined): void;
   label(label: string | undefined): void;
   hostActions(actions: EmbedOptions["hostActions"]): void;
+  barActions(actions: EmbedOptions["barActions"]): void;
   draft(draft: EmbedDraftView | null): void;
 }
 
@@ -989,6 +993,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     const [whileAway, setWhileAway] = useState<AwaySummary | undefined>(options.whileAway);
     const [called, setCalled] = useState<string | undefined>(options.label);
     const [hostActions, setHostActions] = useState<EmbedOptions["hostActions"]>(options.hostActions);
+    const [barActions, setBarActions] = useState<EmbedOptions["barActions"]>(options.barActions);
     const [swap, setSwap] = useState<Swap | undefined>(undefined);
     const [draft, setDraft] = useState<EmbedDraftView | null | undefined>(options.draftView);
     setters = {
@@ -997,7 +1002,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         setPath(undefined);
         setStop(undefined);
       },
-      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, quickAsk: setQuickAsk, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setCalled, hostActions: setHostActions, draft: setDraft };
+      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, quickAsk: setQuickAsk, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setCalled, hostActions: setHostActions, barActions: setBarActions, draft: setDraft };
     return (
       <Whereabouts.Provider value={here}>
       <Embed<S>
@@ -1020,6 +1025,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         whileAway={whileAway}
         label={called}
         hostActions={hostActions}
+        barActions={barActions}
         draftView={draft}
         scheme={scheme}
         onFace={(next) => {
@@ -1098,6 +1104,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
       flushSync(() => setters?.label(given));
     },
     setHostActions: (actions) => flushSync(() => setters?.hostActions(actions)),
+    setBarActions: (actions) => flushSync(() => setters?.barActions(actions)),
     /* Drawn is the face asked for — below `pagesBelow`, drawn as the pages that stand in for it. */
     drawn: () => swapping.then(() => (drawnFace === asked ? undefined : new Promise<void>((resolve) => waiting.push(resolve)))),
     notify: (notice) => {

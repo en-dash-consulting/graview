@@ -94,6 +94,12 @@ function build() {
       aliases: z.optional(some(alias, 1, MOST_ALIASES)),
       options: z.optional(some(str(1, 80), 1, 100)),
       /**
+       * An enum that takes several of its options at once (Roadmap
+       * f-multi-select-enum, FR-233): a record holds a list of them, drawn
+       * as checkboxes and said by each option's label. Only an enum says it.
+       */
+      multiple: z.optional(z.boolean()),
+      /**
        * What an enum field's options are called on screen, by option
        * (Roadmap f-option-labels): `{ "state-sponsored": "State-sponsored" }`.
        * An option without one is said as its id spoken ("State sponsored").
@@ -128,6 +134,7 @@ function build() {
       z.superRefine((f, ctx) => {
         if (f.type === "enum" && !f.options) ctx.addIssue({ code: "custom", message: 'an enum field lists its "options"', path: ["options"] });
         if (f.type !== "enum" && f.options) ctx.addIssue({ code: "custom", message: '"options" belongs only on an enum field', path: ["options"] });
+        if (f.type !== "enum" && f.multiple !== undefined) ctx.addIssue({ code: "custom", message: '"multiple" belongs only on an enum field: a choice that takes several of its options', path: ["multiple"] });
         for (const option of Object.keys(f.optionLabels ?? {})) {
           if (!f.options?.includes(option)) ctx.addIssue({ code: "custom", message: `"${option}" is labeled, and is none of the field's options`, path: ["optionLabels", option] });
         }

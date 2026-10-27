@@ -179,8 +179,10 @@ const actShape = (app: GraviewApp<AnySchema>) =>
   });
 const kindShape = (app: GraviewApp<AnySchema>) =>
   app.schema.kinds.map((kind) => {
-    const { fields, label: _label, describe: _describe, ...declared } = app.schema.definition(kind) as unknown as Record<string, unknown>;
-    return { ...declared, form: formFields(fields) };
+    const { fields, label: _label, describe: _describe, display, ...declared } = app.schema.definition(kind) as unknown as Record<string, unknown>;
+    // A field's words (`display.format`) are functions the compile makes: a choice that takes several (FR-233) has them on every build, so they are compared by which fields have them.
+    const { format, ...shown } = (display ?? {}) as Record<string, unknown>;
+    return { ...declared, display: { ...shown, ...(format ? { format: Object.keys(format as object).sort() } : {}) }, form: formFields(fields) };
   });
 
 describe("a page handed a compiled app rebuilds the app the server compiled", () => {

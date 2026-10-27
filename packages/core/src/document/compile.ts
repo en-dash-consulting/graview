@@ -277,8 +277,11 @@ function validate(document: GraviewDocument): Finding[] {
       }
     }
     for (const [field, f] of Object.entries(spec.fields)) {
-      if (f.default !== undefined && f.type === "enum" && !f.options?.includes(String(f.default))) {
-        findings.push(error("default-option", `${at}.fields.${field}.default`, `"${String(f.default)}" is not one of ${field}'s options`));
+      if (f.default !== undefined && f.type === "enum") {
+        // A choice that takes several (FR-233) starts as a list of its options; one that takes one, as one of them.
+        const given = f.multiple ? (Array.isArray(f.default) ? f.default : [f.default]) : [f.default];
+        const outside = given.find((one) => !f.options?.includes(String(one)));
+        if (outside !== undefined || (!f.multiple && Array.isArray(f.default))) findings.push(error("default-option", `${at}.fields.${field}.default`, `"${String(outside ?? f.default)}" is not one of ${field}'s options`));
       }
       // How a date repeats is kept beside it, as `<field>Repeat`: nothing else of the kind may have that name.
       const kept = `${field}Repeat`;

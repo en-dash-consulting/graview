@@ -126,10 +126,16 @@ export function coerce(value: unknown, from: FieldType, to: FieldSpec): unknown 
       return Number.isNaN(ms) ? undefined : new Date(ms).toISOString();
     }
     case "enum": {
-      const t = asText(value);
-      if (t === undefined) return undefined;
       const options = to.options ?? [];
-      return options.find((o) => o === t) ?? options.find((o) => o.toLowerCase() === t.toLowerCase());
+      const option = (one: unknown) => {
+        const t = asText(one);
+        return t === undefined ? undefined : (options.find((o) => o === t) ?? options.find((o) => o.toLowerCase() === t.trim().toLowerCase()));
+      };
+      // A choice that takes several (FR-233) keeps each value that is an option: a list's, or the words of one written "cto, qa"; one that takes one keeps the first that fits.
+      const given = Array.isArray(value) ? value : typeof value === "string" && to.multiple ? value.split(/[,;\n]/) : [value];
+      const kept = given.map(option).filter((o): o is string => o !== undefined);
+      if (to.multiple) return kept.length > 0 || Array.isArray(value) ? [...new Set(kept)] : undefined;
+      return kept[0];
     }
     case "list": {
       const items = Array.isArray(value) ? value : [value];

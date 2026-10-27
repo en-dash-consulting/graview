@@ -76,6 +76,7 @@ export default defineConfig({
       "@graview/tools/inline-ai": fileURLToPath(new URL("./packages/tools/src/inline-ai.ts", import.meta.url)),
       "@graview/tools/turn": fileURLToPath(new URL("./packages/tools/src/turn.ts", import.meta.url)),
       "@graview/tools/several": fileURLToPath(new URL("./packages/tools/src/several.ts", import.meta.url)),
+      "@graview/tools/starter": fileURLToPath(new URL("./packages/tools/src/starter.ts", import.meta.url)),
       "@graview/tools": src("tools"),
       // The subpath first, or the bare-name alias swallows it.
       "@graview/render/gpu": fileURLToPath(

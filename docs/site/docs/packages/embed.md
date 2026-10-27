@@ -184,6 +184,20 @@ mount(root, {
 
 Each is a stop for the keyboard in the menu, in the order given, drawn in the embed's own scheme; a press closes the menu. The whole-page Shell takes the same host actions.
 
+A press a reader should see without opening anything — "Send feedback" — goes on the bar itself:
+
+```ts
+mount(root, {
+  app,
+  barActions: [
+    { label: "Send feedback", icon: "✉", onSelect: () => openFeedback() },
+  ],
+});
+handle.setBarActions([...]);   // changed live; undefined takes them off
+```
+
+`barActions` draws each as a button on the app bar, on both faces, before the standing and the person, named by its label (the `icon` — an emoji, a glyph or an inline `<svg>` — is hidden from a reader who cannot see it). Where the bar is too narrow for them, on a phone or in a small box, they fold into one control, "More", that lists them. They are the host's only: no declaration and no sandboxed view can put a button on the bar. The whole-page Shell takes the same `barActions`.
+
 ### The quick ask
 
 Where the host gives a model, ⌘K (Ctrl+K) opens a command bar beside what the reader is on — the selected card on the scene, the record or list on a page — that completes the acts on it, "Show …" for a panel the app can draw of it, its places and its records. Words that complete nothing are asked, and the answer is a card beside the record or the list: a few sentences, what acts on it (a place, a record, a panel), and the changes it proposes waiting as a ghost to be accepted, in part or whole, as one batch with one undo. A follow-up is asked on the card and replaces its answer; it is not a thread. The context menu's "Ask about this…" and Find's last row, "Ask: ‘…’", open the same card. Escape closes it and puts the keyboard back. The host can leave it out:

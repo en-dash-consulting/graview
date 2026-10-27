@@ -2,6 +2,7 @@ import type { HostView } from "../../views/types.js";
 import type { GraviewApp } from "../../app.js";
 import type { AnySchema } from "../../schema/schema.js";
 import type { AnyMutationDefinition } from "../../mutations/types.js";
+import type { FindingFix } from "../../document/findings.js";
 
 /**
  * `note` is a QUESTION ASKED OUT LOUD, not a problem.
@@ -27,6 +28,10 @@ export interface Finding {
   readonly fix: string;
   /** The same, as the document edits a host applies (`editDocument`'s words), where they can be written down. */
   readonly edits?: readonly Record<string, unknown>[];
+  /** The framework's own sentence, for an agent, where `message` is the person's (FR-229). */
+  readonly details?: string;
+  /** The ways out a host offers as buttons, each with its edits where they can be written (FR-229). */
+  readonly fixes?: readonly FindingFix[];
 }
 
 /**

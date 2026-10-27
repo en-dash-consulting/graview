@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 709,
+  "gzipped": 126,
+  "note": "Raised when a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): the form's box per option, sent as the list of those ticked, and the form field that is one `choice` with `multiple`. Measured at 248_363 / 91_093 against 247_654 / 90_967: 709 / 126 more."
+}

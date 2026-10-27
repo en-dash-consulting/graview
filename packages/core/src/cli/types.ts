@@ -27,7 +27,8 @@ const union = (names: readonly string[]) => (names.length === 0 ? "never" : name
 export function fieldType(spec: FieldSpec): string {
   switch (spec.type) {
     case "enum":
-      return union(spec.options ?? []);
+      // A choice that takes several of its options (FR-233) is a list of them.
+      return spec.multiple ? `(${union(spec.options ?? [])})[]` : union(spec.options ?? []);
     case "number":
     case "integer":
     case "duration":

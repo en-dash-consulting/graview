@@ -22,6 +22,8 @@ The hard part of a port is not the code. It is deciding what your existing schem
 
 1. **What is a LENS?** Your primary screen, described without your nouns. A calendar is intervals in columns. A checklist grid is a bipartite mapping. A formation is positions with domain-given coordinates. If one of the three shipped lenses fits, bind roles to your fields and write no picture at all.
 
+1. **What is CONTENT?** Everything a page shows — a pitch's sections, a chart's tags, the words of a section — is records of a kind, seeded, never a JSON file a view imports beside the graph: the scene, Find, the record pages and Ask see records and nothing else. `graview check` names a face module that reads one (`face-reads-content-beside-the-graph`).
+
 ### Do this
 
 1. Build the domain tier first, with no UI. Get `graview check` clean before anything renders.

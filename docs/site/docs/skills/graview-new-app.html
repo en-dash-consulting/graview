@@ -1850,6 +1850,9 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 <li><strong>Register default views first, override later.</strong> <code>registerDefaultViews</code> means a new kind renders sensibly at all three fidelities before you write anything. Write a custom view for a kind when the generic one is genuinely wrong, not on principle.</li>
 </ol>
 <ol>
+<li><strong>Keep content in the graph.</strong> What a page shows — a pitch's sections, a chart's tags — is records of a kind, seeded, never a JSON file a view imports: <code>graview check</code> names a face module that reads one (<code>face-reads-content-beside-the-graph</code>). A declaration change that loses nothing is made without asking; git keeps the way back.</li>
+</ol>
+<ol>
 <li><strong>Add the check to your build.</strong> `"check": "graview check ./dist/domain/app.js"<code>, and a </code>verify` that runs typecheck, test, build and check in that order. The scaffold writes both.</li>
 </ol>
 <h3>What to make yours next</h3>
@@ -1872,7 +1875,7 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 <li><strong>An accessibility run, in BOTH schemes.</strong> Copy <code>apps/todo/scripts/run-a11y.mjs</code>: the real accessibility tree through CDP, plus axe-core. A light palette that clears AA in the dark is what it catches.</li>
 </ul>
 <h3>Supported browsers</h3>
-<p>Build for the DOM path: Chromium, WebKit and Firefox, all verified (<code>pnpm engines</code>). The floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and cuts cleanly where it is missing — write no fallback. A host's <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API; without either the seat says AI isn't available. The scene draws on the GPU where it can and on the DOM path elsewhere, with one accessibility tree — never a requirement.</p>
+<p>Chromium, WebKit and Firefox, all verified (<code>pnpm engines</code>); the floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and cuts cleanly where it is missing — write no fallback. <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API, else the seat says AI isn't available. The GPU is never a requirement.</p>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm verify        # typecheck, tests, build, graview check
 graview doctor     # one Graview release everywhere; React's pair; PATH from a checkout</code></pre></div>
@@ -1882,7 +1885,7 @@ graview doctor     # one Graview release everywhere; React's pair; PATH from a c
 <ul>
 <li>Whether your kinds are the right kinds. The test for each: does anything point AT it, and does it have a life of its own? A color is a field. A fixture is a kind.</li>
 <li>Whether your mutations are the acts a person would name. They are the labels in the strip and the instructions in an agent's tool schema, so an opaque one costs twice.</li>
-<li>Whether the interface is any good. Run it. Run it at the size it will have: seed a real catalog, not a dozen rows. The scene draws what a person can read — a relation too long for its band is grouped by its best arrangement or closes on "+N more", and a district says its places by name — so a thousand records are a picture, not a smear. What that hides is yours to judge: whether the groups are the ones a person would ask for.</li>
+<li>Whether the interface is any good. Run it at the size it will have: seed a real catalog, not a dozen rows. The scene groups a relation too long for its band or closes it on "+N more", so a thousand records are a picture; whether the groups are the ones a person would ask for is yours to judge.</li>
 </ul>
     </section>
 

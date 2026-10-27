@@ -425,7 +425,8 @@ function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof V
   if (typed !== undefined) return typed;
   if (spec?.type === "date") return formatValue(value as Value, "date", ctx.today, [], ctx.money);
   if (spec?.type === "datetime" && typeof value === "string") return momentAsRead(value, ctx.money?.locale, ctx.money?.timeZone);
-  if (spec?.type === "enum" && typeof value === "string") return valueWords(ctx.definition, key, value);
+  // A choice by its option's label; one that takes several (FR-233) by each option's, in one line.
+  if (spec?.type === "enum" && (typeof value === "string" || Array.isArray(value))) return valueWords(ctx.definition, key, value);
   // A number said as its field declares it: money in the app's currency, a fraction as a percent.
   const amount = typeof value === "number" ? amountAt(ctx, key) : undefined;
   if (amount) return sayAmount(value as number, amount);

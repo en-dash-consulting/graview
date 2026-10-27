@@ -66,6 +66,8 @@ export interface ScalarField {
   readonly partial?: true;
   /** Prose (FR-147): asked for in a text area that keeps its line breaks. */
   readonly long?: true;
+  /** A choice that takes several of its options at once (FR-233): asked for as checkboxes, sent as a list of options. */
+  readonly multiple?: true;
   /** Another app's address (FR-171): asked for as one — `@owner/app`, its id, or its https:// address. */
   readonly app?: true;
   /** Prose written in Markdown (FR-180): asked for in a text area, and said to be Markdown. */
@@ -175,9 +177,10 @@ export function formField(name: string, schema: unknown): FormField {
 
   if (type === "array") {
     const element = defOf(field)?.element;
-    if (element !== undefined) {
-      return { control: "list", name, optional, item: formField(name, element) };
-    }
+    // A choice that takes several of its options (FR-233) is one control, checkboxes, not a list of pickers.
+    const item = element === undefined ? undefined : formField(name, element);
+    if (item?.control === "choice") return { ...item, optional, multiple: true };
+    if (item !== undefined) return { control: "list", name, optional, item };
     return { control: "opaque", name, optional };
   }
 

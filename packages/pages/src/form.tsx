@@ -351,6 +351,33 @@ function Control<S extends AnySchema>({
         </label>
       );
     case "choice":
+      // A choice that takes several of its options (FR-233): one box per option, sent as the list of those ticked.
+      if (spec.multiple) {
+        const chosen = Array.isArray(value) ? (value as unknown[]).map(String) : [];
+        return (
+          <fieldset data-graview-part="group" data-graview-field="choices" data-graview-choices={spec.name}>
+            <legend data-graview-part="label">{title}</legend>
+            {(spec.options ?? []).map((option) => (
+              <label key={option} data-graview-part="field" data-graview-field="boolean">
+                <input
+                  type="checkbox"
+                  name={spec.name}
+                  value={option}
+                  checked={chosen.includes(option)}
+                  onChange={(event) => {
+                    const next = event.target.checked ? [...chosen.filter((one) => one !== option), option] : chosen.filter((one) => one !== option);
+                    // In the options' declared order, and nothing at all when none is ticked.
+                    const ordered = (spec.options ?? []).filter((one) => next.includes(one));
+                    onChange(ordered.length > 0 ? ordered : undefined);
+                  }}
+                  data-graview-part="control"
+                />
+                <span data-graview-part="label">{words(spec.name).option(option)}</span>
+              </label>
+            ))}
+          </fieldset>
+        );
+      }
       return (
         <label data-graview-part="field" data-graview-field={spec.control}>
           <span data-graview-part="label">{title}</span>

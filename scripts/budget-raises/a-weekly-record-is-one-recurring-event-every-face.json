@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 1100,
+  "gzipped": 400,
+  "note": "Raised when a weekly record came to be one recurring event (Roadmap f-connection-weekly-records-recur, FR-230): the checker judges a calendar connection's `days` and the times beside it, and the studio's editor, judging a connection's shape, carries the key; the recurrence arithmetic itself is the connection's, run by a host, on no page. Measured at 2_377_661 / 866_585 against 2_376_601 / 866_254 with FR-229 in place: 1_060 more minified, 331 gzipped."
+}

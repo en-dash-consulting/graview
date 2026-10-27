@@ -1798,7 +1798,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
     </section>
     <section id="cli-check" aria-labelledby="h-cli-check">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-check">graview check</h2></div>
-      <div class="code" data-scroller aria-label="graview check, usage"><pre><code class="language-text">graview check &lt;entry&gt; [--views &lt;module&gt;] [--json]
+      <div class="code" data-scroller aria-label="graview check, usage"><pre><code class="language-text">graview check &lt;entry&gt; [--views &lt;module&gt;] [--face &lt;dir&gt;] [--json]
 
 --document &lt;file&gt;
     Any command that takes an &lt;entry&gt; takes a declaration document instead
@@ -1807,7 +1807,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
     --previous &lt;file&gt;, check holds every renamedFrom to the version before.
     A template (a graview-template .json) is read as the document inside it.
 </code></pre></div>
-      <p>Loads &lt;entry&gt; (a module whose default export, or <code>app</code> export, is a GraviewApp) and reports schema problems. Exits 1 on any error.</p>
+      <p>Loads &lt;entry&gt; (a module whose default export, or <code>app</code> export, is a GraviewApp) and reports schema problems. Exits 1 on any error. Reads the face too — the project's src/ (the nearest package.json up from &lt;entry&gt;), or the directory --face names — and warns of a module that imports, loads or fetches a JSON file of the project's for content (face-reads-content-beside-the-graph): what it shows from there is on no record. The declaration, a seed and a template are read where they are.</p>
     </section>
     <section id="cli-create" aria-labelledby="h-cli-create">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-create">graview create</h2></div>

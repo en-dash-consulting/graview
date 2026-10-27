@@ -110,8 +110,12 @@ export function computedFor(graph: { in(to: string, kind: string): readonly ({ r
 }
 
 /** The zod type a studio field declares. */
-export function zodFor(type: FieldType, required: boolean, options?: readonly string[], markdown?: boolean): z.ZodType {
+export function zodFor(type: FieldType, required: boolean, options?: readonly string[], markdown?: boolean, multiple?: boolean): z.ZodType {
   const base: z.ZodType =
+    // A choice that takes several of its options (FR-233): a list of them.
+    type === "enum" && multiple && options && options.length > 0
+      ? z.array(z.enum(options as [string, ...string[]]))
+      :
     // Prose written in Markdown (FR-180).
     type === "text" && markdown
       ? markdownField()
@@ -281,6 +285,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       type: (str(field, "type") ?? "string") as FieldType,
       required: bool(field, "required"),
       options: list(field, "options"),
+      multiple: bool(field, "multiple"),
       repeats: bool(field, "repeats"),
       markdown: bool(field, "markdown"),
     }));
@@ -303,8 +308,9 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
         was.type === field.type &&
         was.required === field.required &&
         (was.options ?? []).join("|") === (field.options ?? []).join("|") &&
+        (was.multiple === true) === field.multiple &&
         isMarkdownField(own) === field.markdown;
-      shape[field.name] = same ? own! : zodFor(field.type, field.required, field.options, field.markdown);
+      shape[field.name] = same ? own! : zodFor(field.type, field.required, field.options, field.markdown, field.multiple);
       // A date that repeats keeps how beside it, as the framework's own field.
       if (field.repeats && (field.type === "date" || field.type === "datetime")) shape[repeatKey(field.name)] = repeatField();
     }
@@ -585,7 +591,7 @@ interface BodyContext {
   readonly on: readonly string[];
   readonly read: Read;
   readonly kindName: Map<string, string>;
-  readonly fieldsOf: (kind: Node) => readonly { name: string; type: FieldType; required: boolean; options: string[] | undefined }[];
+  readonly fieldsOf: (kind: Node) => readonly { name: string; type: FieldType; required: boolean; options: string[] | undefined; multiple?: boolean }[];
 }
 
 /**
@@ -604,7 +610,7 @@ function writtenBody(said: Partial<AnyMutationDefinition> & { name: string }, ct
     const kindNode = ctx.read.ofKind("kind").find((node) => (ctx.kindName.get(node.id) ?? "") === kind);
     const fields = kindNode ? ctx.fieldsOf(kindNode) : [];
     const shape: Record<string, z.ZodType> = { label: z.string().min(1) };
-    for (const field of fields) if (field.name !== "label" && field.required && field.type !== "list") shape[field.name] = zodFor(field.type, false, field.options);
+    for (const field of fields) if (field.name !== "label" && field.required && field.type !== "list") shape[field.name] = zodFor(field.type, false, field.options, undefined, field.multiple);
     return {
       ...said,
       input: z.object(shape),
@@ -638,14 +644,14 @@ function writtenBody(said: Partial<AnyMutationDefinition> & { name: string }, ct
   }
   const shape: Record<string, z.ZodType> = { [arg]: nodeRef(subjectKinds === "*" ? "*" : subjectKinds) };
   // A written field is asked for in its own type: the kind's declaration says what a size is.
-  const declared = new Map<string, { type: FieldType; options: string[] | undefined }>();
+  const declared = new Map<string, { type: FieldType; options: string[] | undefined; multiple?: boolean }>();
   for (const kindNode of ctx.read.ofKind("kind")) {
     if (!ctx.on.includes(ctx.kindName.get(kindNode.id) ?? "")) continue;
-    for (const field of ctx.fieldsOf(kindNode)) declared.set(field.name, { type: field.type, options: field.options });
+    for (const field of ctx.fieldsOf(kindNode)) declared.set(field.name, { type: field.type, options: field.options, ...(field.multiple ? { multiple: true } : {}) });
   }
   for (const field of ctx.writes) {
     const known = declared.get(field);
-    shape[field] = known ? zodFor(known.type, false, known.options) : z.string().optional();
+    shape[field] = known ? zodFor(known.type, false, known.options, undefined, known.multiple) : z.string().optional();
   }
   return {
     ...said,

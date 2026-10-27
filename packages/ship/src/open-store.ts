@@ -153,7 +153,10 @@ export interface OpenedStore<S extends AnySchema> {
    * still carries everything. Settles after every write accepted before
    * it. Refused by an adapter that keeps no archive. `pins` are the seqs
    * the host serves somebody at (a published seq): the horizon stops at
-   * the lowest, so the reader's past still folds from the log.
+   * the lowest, so the reader's past still folds from the log. `format: 1`
+   * keeps the store readable by a build before snapshot format 2 (FR-31):
+   * the horizon is held at the earliest seq readers are served behind it,
+   * and `horizon` says where it stopped.
    */
   compact(options?: CompactOptions): Promise<Compaction>;
 }
