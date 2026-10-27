@@ -297,7 +297,8 @@ function build() {
    * by nobody but the system (a host that gives its owners everything serves
    * them as the system, or names them in a sight).
    */
-  const fieldNames = z.optional(some(name("field"), 1));
+  // Named as a kind spells its fields (`startsAt`), never as a kind is named.
+  const fieldNames = z.optional(some(fieldName, 1));
   const SightSpec = z.strictObject({
     roles: z.union([some(name("role"), 1), z.literal("*")]),
     kinds: some(name("kind"), 1),

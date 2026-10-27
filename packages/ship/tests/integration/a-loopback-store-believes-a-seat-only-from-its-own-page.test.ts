@@ -3,7 +3,7 @@ import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, n
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { seatTrust } from "../../src/cli.js";
-import { SEAT_HEADERS, serveStore, type ServedStore } from "../../src/index.js";
+import { SEAT_HEADERS, SERVE_KEY, serveStore, type ServedStore } from "../../src/index.js";
 
 /**
  * A LOOPBACK STORE BELIEVES A SEAT ONLY FROM ITS OWN PAGE (FR-06).
@@ -40,6 +40,8 @@ const app = defineApp({
 });
 const seed = { nodes: [{ id: "m1", kind: "memo", label: "Private", done: false }], edges: [] };
 const ALLOWED = "http://localhost:5195";
+/** This run's key, which every request below carries: what it may claim is the question here, not whether it holds the key. */
+const KEY = "a-key-for-this-run-and-no-other-0123456789";
 
 let served: ServedStore<typeof schema> | undefined;
 afterEach(async () => {
@@ -61,6 +63,7 @@ async function asServeOnLoopback(trustFlag = false) {
     trustSystemSeat: trust.system,
     ownOrigin: trust.ownOrigin,
     allowOrigins: [ALLOWED],
+    ...(trust.keyed ? { key: KEY } : {}),
   });
   return served;
 }
@@ -73,7 +76,7 @@ interface Answer {
 
 function ask(path: string, headers: Record<string, string>, body?: string): Promise<Answer> {
   return new Promise((done) => {
-    const asked = send({ host: "127.0.0.1", port: served!.port, path, method: body === undefined ? "GET" : "POST", headers: { ...(body !== undefined ? { "content-type": "application/json" } : {}), ...headers } }, (answer) => {
+    const asked = send({ host: "127.0.0.1", port: served!.port, path, method: body === undefined ? "GET" : "POST", headers: { [SERVE_KEY.header]: KEY, ...(body !== undefined ? { "content-type": "application/json" } : {}), ...headers } }, (answer) => {
       let text = "";
       answer.on("data", (chunk) => (text += String(chunk)));
       answer.on("end", () => done({ status: answer.statusCode ?? 0, headers: answer.headers, body: text }));
@@ -90,7 +93,7 @@ function upgrade(headers: Record<string, string>, query = ""): Promise<number> {
       host: "127.0.0.1",
       port: served!.port,
       path: `/graview/live${query}`,
-      headers: { connection: "Upgrade", upgrade: "websocket", "sec-websocket-version": "13", "sec-websocket-key": "dGhlIHNhbXBsZSBub25jZQ==", ...headers },
+      headers: { connection: "Upgrade", upgrade: "websocket", "sec-websocket-version": "13", "sec-websocket-key": "dGhlIHNhbXBsZSBub25jZQ==", [SERVE_KEY.header]: KEY, ...headers },
     });
     asked.on("upgrade", (_answer, socket) => {
       socket.destroy();

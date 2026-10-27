@@ -3,7 +3,7 @@ import "../../src/field-sight.js";
 import { checkApp, compileDocument } from "../../src/check.js";
 import type { GraviewDocument } from "../../src/document/index.js";
 import { importRows } from "../../src/import/index.js";
-import { bindSchema, createSchema, defineNode, Store, z, type AnySchema, type GraviewApp, type Policy, type Principal } from "../../src/index.js";
+import { bindSchema, compileMutation, createSchema, defineNode, Graph, Store, z, type AnySchema, type GraviewApp, type Policy, type Principal } from "../../src/index.js";
 
 /**
  * AN ID NEVER QUOTES A FIELD A SIGHT KEEPS (Roadmap f-field-sight, FR-55). A
@@ -91,6 +91,36 @@ describe("an id never quotes a field a sight keeps", () => {
     const store = new Store({ schema, mutations: [jot], policy });
     store.apply({ name: "jot", args: { label: "Layoffs Friday" } }, { author: staff });
     expect(JSON.stringify(store.seenBy(pub).snapshot()).toLowerCase()).not.toContain("layoffs");
+  });
+
+  /** Tips whose title every role sees and whose client the public does not: a title that names the client quotes it. */
+  const clients = (): GraviewDocument => {
+    const document = tips({ hide: ["client"] }) as unknown as { kinds: Record<string, { fields: Record<string, unknown> }> };
+    document.kinds["tip"]!.fields["client"] = { type: "string" };
+    return document as unknown as GraviewDocument;
+  };
+
+  it("mints a document act's id from its kind where the name quotes a kept field among other words", () => {
+    const store = open(clients());
+    store.apply({ name: "add-tip", args: { title: "Acme renewal at risk", client: "Acme" } }, { author: staff });
+    const ids = store.snapshot().nodes.filter((node: { kind: string }) => node.kind === "tip").map((node: { id: string }) => node.id);
+    // The title is the public's to read; the id says no more of the client than it does.
+    expect(ids).toEqual(["tip:tip"]);
+  });
+
+  it("mints a document act's id from its kind outside a store too, judged by the document's own policy", () => {
+    for (const [document, args] of [
+      [tips({ hide: ["title"] }), { title: "Secret Merger Plan" }],
+      [clients(), { title: "Acme renewal at risk", client: "Acme" }],
+    ] as const) {
+      const compiled = compileDocument(document);
+      if (!compiled.ok) throw new Error("the tips document does not compile");
+      const app = compiled.app as GraviewApp<AnySchema>;
+      const act = (app.mutations ?? []).find((mutation) => mutation.name === "add-tip")!;
+      const made = compileMutation(new Graph(app.schema), act, args);
+      const ids = made.primitives.flatMap((primitive) => ("node" in primitive && primitive.node ? [String((primitive.node as { id: string }).id)] : []));
+      expect(ids).toEqual(["tip:tip"]);
+    }
   });
 
   it("says, of a label that reads a kept field, that no id is minted from it", () => {

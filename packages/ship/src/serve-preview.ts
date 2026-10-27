@@ -11,6 +11,7 @@ import { readEnvFile } from "./connections-file.js";
 import { seatHeaders } from "./remote.js";
 import { VIEWS_PATH } from "./remote-views.js";
 import { serveStore, type ServedStore } from "./serve.js";
+import { SERVE_KEY } from "./seat-headers.js";
 
 /** Where the store answers a seat its state. */
 const STATE_PATH = "/graview/state";
@@ -73,12 +74,24 @@ export interface PreviewOptions {
   readonly draftView?: { readonly manifest: unknown; readonly source: string };
   /** What an open carries of the log: at most this many of the latest ops (`serveStore`'s `openTail`). The whole log by default. */
   readonly openTail?: number;
+  /**
+   * THIS RUN'S KEY (`serveStore`'s `key`): no request but health is
+   * answered without it, so another account on this machine, or a program
+   * that sends no `Origin`, cannot sit in the page's seat. `graview preview`
+   * and `graview shots` hand one per run; `address` carries it, and the page
+   * opened there trades it for a cookie.
+   */
+  readonly key?: string;
 }
 
 export interface Preview {
   readonly app: GraviewApp<AnySchema>;
   readonly served: ServedStore<AnySchema>;
   readonly url: string;
+  /** The address to open: `url`, carrying the run's key when there is one. */
+  readonly address: string;
+  /** This run's key, when it was handed one. */
+  readonly key?: string;
   readonly principal: Principal;
   /** The connections running beside the store; none when the document declares none or they were turned off. */
   readonly connections: RunningConnections;
@@ -112,6 +125,14 @@ export function previewPrincipal(document: unknown, asked: { readonly as?: strin
 
 /** Whether what a preview was handed is an app (in code) rather than a document. */
 const isApp = (said: unknown): said is GraviewApp<AnySchema> => typeof said === "object" && said !== null && "schema" in said && typeof (said as { schema?: { kinds?: unknown } }).schema?.kinds !== "undefined";
+
+/** An address on a keyed server with the run's key in its query (before any `#`), or as it was with no key. */
+export function keyedAddress(address: string, key: string | undefined): string {
+  if (key === undefined) return address;
+  const hash = address.indexOf("#");
+  const [before, after] = hash < 0 ? [address, ""] : [address.slice(0, hash), address.slice(hash)];
+  return `${before}${before.includes("?") ? "&" : "?"}${SERVE_KEY.param}=${encodeURIComponent(key)}${after}`;
+}
 
 /** Where the page imports an app in code from. */
 export const PREVIEW_APP_PATH = "/graview/app.js";
@@ -259,6 +280,7 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     views: code ? memoryViews({ may: { views: true, lenses: false } }) : memoryViews({ may: { views: true, lenses: true }, declaration }),
     mayTidyViews: () => ({ views: true, lenses: !code }),
     answer,
+    ...(options.key !== undefined ? { key: options.key } : {}),
   });
   opened = served as unknown as ServedStore<AnySchema>;
   const url = `http://${host === "::1" ? "[::1]" : host === "0.0.0.0" ? "localhost" : host}:${served.port}`;
@@ -267,6 +289,8 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     app,
     served: served as unknown as ServedStore<AnySchema>,
     url,
+    address: keyedAddress(`${url}/`, options.key),
+    ...(options.key !== undefined ? { key: options.key } : {}),
     principal,
     connections,
     close: async () => {

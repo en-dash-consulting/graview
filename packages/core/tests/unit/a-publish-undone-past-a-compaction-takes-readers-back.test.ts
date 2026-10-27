@@ -68,7 +68,7 @@ describe("a publish undone past a compaction takes readers back", () => {
     note_(store, "Two");
     note_(store, "Three");
     const first = store.checkpoint({ keepOps: 1, keepDays: 0 })!;
-    expect(first.seq).toBe(2);
+    expect(first.seq).toBe(3);
     expect(first.publishedThrough).toBe(2);
     store.compact(first);
     expect(store.log.all().some((op) => op.publishedThrough !== undefined)).toBe(false);
@@ -78,14 +78,11 @@ describe("a publish undone past a compaction takes readers back", () => {
     expect(opened.publishedSeq).toBe(2);
     expect(readerSees(opened)).toEqual(["One"]);
 
-    // The publish an undo would go back to holds the horizon until the next one moves it.
+    // The publish an undo would go back to no longer holds the horizon: the checkpoint keeps the app as it stood there (`published`).
     publish(store);
     note_(store, "Four");
-    expect(store.checkpoint({ keepOps: 1, keepDays: 0 })).toBeUndefined();
-    publish(store);
-    note_(store, "Five");
     const second = store.checkpoint({ keepOps: 1, keepDays: 0 });
-    expect(second?.seq).toBeGreaterThan(2);
+    expect(second?.seq).toBe(store.log.length - 1);
     expect(second?.publishedThrough).toBe(second?.seq);
   });
 
@@ -127,8 +124,9 @@ describe("a publish undone past a compaction takes readers back", () => {
     publish(store);
     note_(store, "Two");
     note_(store, "Three");
-    store.compact(store.checkpoint({ keepOps: 1, keepDays: 0 })!);
-    const { publishedThrough: _kept, ...older } = store.log.epochs()[0]!;
+    // Where an older build stopped: at what stood published.
+    store.compact(store.checkpoint({ seq: 2 })!);
+    const { publishedThrough: _kept, published: _published, ...older } = store.log.epochs()[0]!;
     const opened = new Store({ schema, mutations: [add], policy, publishing, log: store.log.all(), epochs: [older] });
     expect(opened.publishedSeq).toBeUndefined();
     expect(readerSees(opened)).toEqual(["One"]);

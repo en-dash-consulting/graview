@@ -6,6 +6,7 @@
  * every page imports before anything is drawn.
  */
 import {
+  actingAs,
   FIELD_SIGHT,
   fieldsWrittenBy,
   nodeRefArgs,
@@ -14,6 +15,7 @@ import {
   type Principal,
   type Store,
   defOf,
+  wouldRun,
 } from "@graview/core";
 import { argShape } from "@graview/core/words";
 import type { OpenParameter } from "./types.js";
@@ -112,6 +114,8 @@ export function editableFields<S extends AnySchema>(
     const shape = (mutation.input as { shape?: Record<string, unknown> }).shape ?? {};
     for (const name of fieldsWrittenBy(mutation, definition)) {
       if (kept?.(name)) continue;
+      // Never through an act that would refuse this record now (a published note): the store would refuse the edit, and the keystrokes (`wouldRun`).
+      if (!wouldRun(mutation, store.schema, store.graph, nodeId, name, seat && actingAs(seat).id)) continue;
       const takesValue = name in shape;
       const open: OpenParameter[] = [];
       for (const other of Object.keys(shape)) {

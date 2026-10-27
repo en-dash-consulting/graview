@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 847,
+  "gzipped": 368,
+  "note": "Raised when a keystroke and an Edit came to ride an act that writes the field only where that act would run on the record: `wouldRun` on `@graview/core` believes an act's `allowedOn` and asks one without it by running its `apply` against a context that writes nothing, the store's `type-text` and `editableFields` both ask it, and a field typed together offers Edit only where the store would take a keystroke. 847 / 368 more. Measured at 677_941 / 249_082 against 677_094 / 248_714."
+}

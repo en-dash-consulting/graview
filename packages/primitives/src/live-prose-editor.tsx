@@ -1,4 +1,4 @@
-import { presenceName, type AnySchema, type Presence } from "@graview/core";
+import { presenceName, TYPE_TEXT, type AnySchema, type Presence } from "@graview/core";
 import { useGraview, useNode, type FieldTyping, type LiveTyping } from "@graview/react/provider";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { caretHere, carriedOver, carrySelection, diffText, inputSplice, runToPutBack, runToTakeBack } from "./live-text.js";
@@ -77,6 +77,13 @@ function LiveEditor({
   const said = useRef(live);
   said.current = live;
   const textNow = () => textOf((store.graph.getNode(nodeId) as Record<string, unknown> | undefined)?.[field]);
+  /*
+   * WHETHER THIS SEAT MAY TYPE HERE NOW, asked as the store judges a
+   * keystroke: through an act that writes the field and would run on the
+   * record now. Where none would (a published note), the text area is read
+   * only and says so, rather than taking keystrokes the store refuses.
+   */
+  const mayType = !typing || store.permits({ name: TYPE_TEXT, args: { node: nodeId, field, at: 0, remove: 0, insert: "" } }, principal).ok;
 
   useEffect(() => area.current?.focus(), [preview, typing]);
 
@@ -121,7 +128,7 @@ function LiveEditor({
   /** A keystroke: what it changed in the text the area showed, carried over whatever landed since, sent. */
   const typed = () => {
     const element = area.current;
-    if (!element || !typing || composing.current) return;
+    if (!element || !typing || !mayType || composing.current) return;
     const before = shown.current;
     const now = textNow();
     const mine = inputSplice(before, element.value, element.selectionEnd);
@@ -226,7 +233,7 @@ function LiveEditor({
             aria-label={label}
             data-graview-field={field}
             defaultValue={value}
-            readOnly={!typing}
+            readOnly={!typing || !mayType}
             rows={3}
             onInput={typed}
             onCompositionStart={() => {
@@ -282,7 +289,9 @@ function LiveEditor({
             {preview ? "Write" : "Preview"}
           </button>
         ) : null}
-        <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>Saved as you type · Ctrl or ⌘ Z takes back your typing</span>
+        <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }} {...(mayType ? {} : { "data-graview-readonly": "" })}>
+          {mayType ? "Saved as you type · Ctrl or ⌘ Z takes back your typing" : `Read only: the ${label.toLowerCase()} can't be changed here now`}
+        </span>
       </div>
     </div>
   );

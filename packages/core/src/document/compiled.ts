@@ -25,7 +25,7 @@ import {
   type Violation,
 } from "../index.js";
 import { refTo } from "../mutations/node-ref.js";
-import { mayKeepField } from "../permissions/sight.js";
+import { mayKeepField, quotesKeptField } from "../permissions/sight.js";
 import { ActRefusal } from "../refused.js";
 import * as z from "../schema/zod.js";
 import { fileSchema } from "../schema/files.js";
@@ -603,8 +603,10 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               }
               const labelField = defaultLabelField(kind);
               // An id is served wherever its record is: never minted from a name some sight keeps from a role (Roadmap f-field-sight).
-              const kept = labelField !== undefined && mayKeepField(document.policy?.sees, effect.create, labelField);
-              const id = context.freshId(kept ? effect.create : String((labelField && node[labelField]) ?? effect.create), effect.create);
+              // Asked of the document's own policy, so it holds for an act compiled outside a store too.
+              const named = String((labelField && node[labelField]) ?? effect.create);
+              const kept = quotesKeptField(named, effect.create, node, (one, field) => mayKeepField(document.policy?.sees, one, field));
+              const id = context.freshId(kept ? effect.create : named, effect.create, node);
               context.addNode({ ...node, id } as never);
               if (effect.as) made.set(effect.as, id);
             } else if ("connect" in effect || "sever" in effect) {

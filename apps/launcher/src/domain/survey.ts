@@ -90,6 +90,8 @@ export interface Capability {
    */
   readonly shownIn?: string;
   readonly stop?: string;
+  /** What a person needs to know before the stop opens it, in a sentence — shown beside the way there. */
+  readonly note?: string;
 }
 
 const kinds = (app: GraviewApp) => app.schema.kinds as readonly string[];
@@ -334,6 +336,8 @@ export const CAPABILITIES: readonly Capability[] = [
     holds: (app) => app.version !== undefined && (app.migrations ?? []).length > 0,
     shownIn: "rota",
     stop: `?server=${addressOf({ port: portOf("served", 5196) })}#overview=1`,
+    // The desk never starts the server, and never knows its key: the person who did holds the address it printed.
+    note: "Start the store with pnpm serve:rota; Rota then asks for the address it printed, which carries that run's key.",
   },
 
   /* --------------------------------------- 8 · the agent, and the studio */
@@ -417,6 +421,7 @@ export function surveySnapshot(showing?: string): {
       at,
       ...(item.shownIn ? { shownIn: item.shownIn } : {}),
       ...(item.stop ? { stop: item.stop } : {}),
+      ...(item.note ? { note: item.note } : {}),
     })),
     ...RULES,
   ];

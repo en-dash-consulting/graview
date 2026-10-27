@@ -5,6 +5,7 @@ import type { Graph } from "../graph/graph.js";
 import { GraphError, MissingRecordError } from "../graph/graph.js";
 import { writesOf, type Primitive } from "../graph/primitives.js";
 import { TrackedReader } from "../graph/tracked.js";
+import { quotesKeptField } from "../permissions/sight.js";
 import { edgeId, type GraphEdge, type GraphReader } from "../graph/types.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import type {
@@ -397,7 +398,7 @@ export function compileMutation<S extends AnySchema>(
         primitives.push({ op: "remove-edge", edge });
       }
     },
-    freshId(label, prefix) {
+    freshId(label, prefix, from) {
       if (requested !== undefined && !minted.has(requested)) {
         /*
          * AN ID ASKED FOR SAYS ITS KIND, as every minted one does (Roadmap
@@ -429,8 +430,8 @@ export function compileMutation<S extends AnySchema>(
       // A client's own guess at the first id (`hint`): taken when free, else minted as ever — never refused.
       const hint = options.hint;
       if (requested === undefined && !minted.size && validId(hint) && (!prefix || hint.startsWith(`${prefix}:`)) && mayAsk(hint) && !held(hint)) return minted.add(hint), hint;
-      // A name that is the value of a field some sight keeps from a role is not quoted in the id: the kind's name is.
-      if (prefix && options.keeps && Object.entries(args).some(([field, value]) => value === label && options.keeps!(prefix, field))) label = prefix;
+      // A name that quotes a field some sight keeps from a role — an argument, or the record it was worked out from — is not quoted in the id: the kind's name is.
+      if (prefix && options.keeps && [args, from ?? {}].some((fields) => quotesKeptField(label, prefix, fields, options.keeps!))) label = prefix;
       const base = prefix ? `${prefix}:${slug(label)}` : slug(label);
       /*
        * AN ID THAT SAYS NOTHING OF WHAT THE SEAT MAY NOT SEE (FR-55). Stepping

@@ -79,13 +79,16 @@ export function doorCookie(key: string = doorKey()): string {
   return `${DOOR_COOKIE}=${key}`;
 }
 
-const same = (given: string, key: string): boolean => {
+/** Whether a key given is the key, compared in constant time: the door's, and `graview serve`'s run key. */
+export const sameKey = (given: string, key: string): boolean => {
   const a = createHash("sha256").update(given).digest();
   const b = createHash("sha256").update(key).digest();
   return timingSafeEqual(a, b) && given.length === key.length;
 };
+const same = sameKey;
 
-function cookieOf(req: IncomingMessage, name: string): string | undefined {
+/** A cookie a request carries, by name. */
+export function cookieOf(req: IncomingMessage, name: string): string | undefined {
   const header = req.headers.cookie;
   if (typeof header !== "string") return undefined;
   for (const part of header.split(";")) {
@@ -160,25 +163,42 @@ export function probeWithoutKey(req: IncomingMessage): boolean {
  * without it. Anything else passes.
  */
 export function doorLogin(req: IncomingMessage, res: ServerResponse, next: () => void): void {
+  if (!tradeKey(req, res, { param: DOOR_KEY_PARAM, cookie: DOOR_COOKIE, key: doorKey(), value: doorKey(), maxAge: 31536000 })) next();
+}
+
+/**
+ * THE TRADE, for any key an address carries: a request whose address has
+ * `?<param>=<key>` is answered 303 back to the same address without it,
+ * and with `<cookie>=<value>` (`HttpOnly`, `SameSite=Strict`) when the key
+ * was right. Says whether it answered; anything else passes untouched.
+ * `graview serve`'s run key trades the same way, its cookie a value made
+ * from the key and a session's (no `maxAge`), since the key dies with the run.
+ */
+export function tradeKey(
+  req: IncomingMessage,
+  res: ServerResponse,
+  trade: { readonly param: string; readonly cookie: string; readonly key: string; readonly value: string; readonly maxAge?: number },
+): boolean {
   const raw = req.url ?? "/";
-  if (!raw.includes(`${DOOR_KEY_PARAM}=`)) return next();
+  if (!raw.includes(`${trade.param}=`)) return false;
   let url: URL;
   try {
     url = new URL(raw, "http://door.invalid");
   } catch {
-    return next();
+    return false;
   }
-  const given = url.searchParams.get(DOOR_KEY_PARAM);
-  if (given === null) return next();
-  url.searchParams.delete(DOOR_KEY_PARAM);
+  const given = url.searchParams.get(trade.param);
+  if (given === null) return false;
+  url.searchParams.delete(trade.param);
   // Only ever back to a path on this server: "//elsewhere" is not one.
   const back = `/${url.pathname.replace(/^\/+/, "")}${url.search}`;
   res.statusCode = 303;
   res.setHeader("cache-control", "no-store");
   res.setHeader("referrer-policy", "no-referrer");
-  if (same(given, doorKey())) res.setHeader("set-cookie", `${DOOR_COOKIE}=${doorKey()}; Path=/; HttpOnly; SameSite=Strict; Max-Age=31536000`);
+  if (same(given, trade.key)) res.setHeader("set-cookie", `${trade.cookie}=${trade.value}; Path=/; HttpOnly; SameSite=Strict${trade.maxAge !== undefined ? `; Max-Age=${trade.maxAge}` : ""}`);
   res.setHeader("location", back);
   res.end();
+  return true;
 }
 
 const opened = new WeakSet<object>();

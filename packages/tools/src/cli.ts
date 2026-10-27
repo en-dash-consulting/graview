@@ -4,7 +4,7 @@ import { entryArg, loadApp } from "@graview/core/cli";
 import { instantiateTemplate } from "@graview/core/check";
 import { sayFindings, templateSeedPrimitives } from "@graview/core/document";
 import { memorySubscriptions, Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal, type SubscriptionStore } from "@graview/core";
-import { backendFrom, fileFriction, fileLearned, fileSubscriptions, frictionFileOf, holdStore, learnedFileOf, openRemote, openStore, remoteFriction, remoteSubscriptions, sayHeld, seatHeaders, subscriptionsFileOf, type RemoteRefusal, type RemoteStore } from "@graview/ship";
+import { backendFrom, fileFriction, fileLearned, fileSubscriptions, frictionFileOf, holdStore, learnedFileOf, openRemote, openStore, remoteFriction, remoteSubscriptions, sayHeld, seatHeaders, servedAddress, subscriptionsFileOf, type RemoteRefusal, type RemoteStore } from "@graview/ship";
 import { frictionSinkTo, toolMistakes, type FrictionDraft } from "@graview/core/friction";
 import { learningOf, readFriction } from "./learn-cli.js";
 
@@ -34,7 +34,8 @@ export const MCP_USAGE = `  graview mcp <entry> [--data <dir> | --sqlite <file> 
       Speaks MCP over stdio for the app's store, so an agent with only a
       shell attaches to the same tools the in-app seat has: the reads, the
       previews, undo, and every act the seat's principal may run. Against a
-      folder (default ./data), a SQLite file, or a running graview serve.
+      folder (default ./data), a SQLite file, or a running graview serve
+      (--remote-url takes the address it printed, which carries its key).
       --list prints the seat's tools as tools/list JSON and exits — the
       catalog a host registers without hand-writing a schema. A tool call
       refused as invalid is kept beside the store with the form of the next
@@ -127,7 +128,8 @@ export async function openHost<S extends AnySchema>(
     remote.onRefusal((_sentence, refusal) => heard.push(refusal));
     return {
       store: remote.store,
-      where: url,
+      // Where it is, and never its key: this is said to a model.
+      where: servedAddress(url).url,
       subscriptions: remoteSubscriptions({ url, principal, headers: headersFrom(argv) }),
       friction: (draft) => frictionDoor.sink(draft, principal),
       settled: () => remote.settled(),

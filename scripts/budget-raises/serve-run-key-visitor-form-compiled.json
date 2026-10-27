@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 489,
+  "gzipped": 193,
+  "note": "Raised when a loopback graview serve came to believe a seat only from a request carrying its run's key: `openRemote` takes the printed address apart (`servedAddress`), sends its key as `x-graview-key`, and carries it in a page's WebSocket query and its leave beacon. 489 / 193 more. Measured at 325_786 / 119_792 against 325_297 / 119_599."
+}

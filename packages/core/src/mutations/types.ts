@@ -38,8 +38,14 @@ export interface MutationContext<S extends AnySchema> {
   removeEdge(edge: GraphEdge): void;
   /** Replaces every `kind` edge arriving at `to` with one from `from`. */
   setSingleSource(kind: string, to: string, from: string): void;
-  /** A deterministic, collision-free id derived from a label. */
-  freshId(label: string, prefix?: string): string;
+  /**
+   * A deterministic, collision-free id derived from a label. `from` is the
+   * record the label was worked out from, where it was not an argument: a
+   * label that quotes one of its fields some sight keeps from a role is not
+   * minted from, as one that quotes such an argument is not (Roadmap
+   * f-field-sight) — the id is minted from `prefix`, the kind's name.
+   */
+  freshId(label: string, prefix?: string, from?: Readonly<Record<string, unknown>>): string;
   /** Raw escape hatch — prefer the helpers above. */
   emit(primitive: Primitive): void;
 }
@@ -186,8 +192,11 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    * rule cannot be judged without them). Read where the act lends its
    * permission to something that never runs it — typing into a field it
    * writes (`type-text`) — so a field the act has locked ("only while the
-   * ticket is open") is locked to typing too. Absent, nothing is known
-   * against it: a TypeScript act that refuses by its own rule says it here.
+   * ticket is open") is locked to typing too. Absent, the act is asked by
+   * running it on the record with the field's own value, writing nothing:
+   * an `ActRefusal` not `invalid` locks typing. Say it here where the rule
+   * in `apply` reads an argument a keystroke does not hand it, and the act
+   * is believed rather than run.
    */
   allowedOn?(graph: GraphReader<NodeOfSchema<S>>, subject: string): boolean;
   /** One-line description of a concrete application, for previews and logs. */

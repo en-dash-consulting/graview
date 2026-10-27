@@ -66,7 +66,7 @@ for the agent, stop: that path is the one that will drift.
 
    ```sh
    graview mcp ./dist/domain/app.js --data ./data --as cursor --roles keeper
-   graview mcp ./dist/domain/app.js --remote-url http://localhost:5196 --roles keeper
+   graview mcp ./dist/domain/app.js --remote-url "http://localhost:5196/?graview_key=…" --roles keeper  # the address serve printed
    graview apply ./dist/domain/app.js --data ./data --roles keeper \
      --call add-task --args '{"listId":"today","label":"Book the van","id":"t-van"}'
    ```

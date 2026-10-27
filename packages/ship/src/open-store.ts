@@ -374,7 +374,8 @@ export async function openStore<S extends AnySchema>(
    */
   try {
     if (stored === null || migrated.length > 0 || rebuilt || replayed?.folded) await adapter.save(scope, store.snapshot());
-    await adapter.saveMeta?.(scope, { version: target, ...formatStamp() });
+    // Stamped for the checkpoint it begins at: snapshot format 2 when that lies past what stood published, which a build before it would misread.
+    await adapter.saveMeta?.(scope, { version: target, ...formatStamp(store.log.horizonEpoch()) });
   } catch (error) {
     report(error);
   }
@@ -448,7 +449,16 @@ export async function openStore<S extends AnySchema>(
         }
         const made = store.checkpoint(compactOptions);
         if (!made) return { horizon: store.log.horizon, archived: 0 };
+        /*
+         * STAMPED SO AN OLDER BUILD REFUSES WHAT IT WOULD MISREAD (FR-31): a checkpoint past what stood published is
+         * snapshot format 2, whose meta is written before the checkpoint lands, and one that is not, after — so a write
+         * that fails between them leaves a store at most stamped newer than it is, never older.
+         */
+        const stamp = { version: target, ...formatStamp(made) };
+        const newer = stamp.formats.snapshot > 1;
+        if (newer) await adapter.saveMeta?.(scope, stamp);
         await adapter.compact(scope, made);
+        if (!newer) await adapter.saveMeta?.(scope, stamp);
         const archived = store.compact(made);
         return { horizon: store.log.horizon, archived: archived.ops.length, checkpoint: made };
       });

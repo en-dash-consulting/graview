@@ -42,6 +42,8 @@ import { existsSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+// The preview this starts answers only with the run's key: sent from here, and traded for each browser's cookie.
+import { admit, KEY, keyedFetch as fetch } from "./lib/serve-key.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
 import { LIVE_PATH, LIVE_SUBPROTOCOL, seatHeaders } from "../packages/ship/dist/index.js";
@@ -83,6 +85,7 @@ for (;;) {
   }
   await new Promise((ready) => setTimeout(ready, 200));
 }
+await admit(base);
 
 const errors = [];
 const browsers = [];
@@ -145,6 +148,8 @@ try {
     const url = new URL(`${base.replace(/^http/, "ws")}${LIVE_PATH}`);
     // A socket carries no headers: a server that believes seat headers reads them from the query.
     for (const [name, value] of Object.entries(seatHeaders(principal))) url.searchParams.set(name, value);
+    // And the run's key, which a socket carries the same way.
+    url.searchParams.set("graview_key", KEY);
     const socket = new WebSocket(url, [LIVE_SUBPROTOCOL]);
     const heard = [];
     socket.onopen = () => socket.send(JSON.stringify({ t: "hello", protocol: 1, opFormat }));

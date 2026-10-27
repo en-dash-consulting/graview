@@ -69,7 +69,8 @@ told afterwards.
    `VisitorFormPage` from `@graview/pages/visitor-form`.
 
 5. **Try it locally.** `graview preview <document>` serves each form at
-   `/forms/<name>`, a visitor minted per page.
+   `/forms/<name>`, a visitor minted per page: open the form's address as
+   it prints it, which carries the run's key.
 
 ## Worked examples
 

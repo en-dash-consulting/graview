@@ -95,6 +95,21 @@ export interface Epoch {
    * `store.checkpoint` in an app that publishes, once something was.
    */
   readonly publishedThrough?: number;
+  /**
+   * THE APP AS READERS WERE SERVED IT BEHIND IT, on a checkpoint
+   * (`horizon`, Roadmap f-publishing-lifecycle): a checkpoint at each
+   * published seq before its seq that readers are, or may again be,
+   * served — the one standing there (`publishedThrough`) and the one each
+   * publish in the tail goes through — oldest first, each without one of
+   * its own. Readers are served the app as it stood at the last publish,
+   * and undoing a publish takes them back to the one before; that past
+   * folded from the log, and without this a compaction could never pass
+   * the publish an undo goes back to. Written by `store.checkpoint` in an
+   * app that publishes, carried by every adapter as part of the epoch,
+   * never served to a seat. Absent (nothing behind it, or written before
+   * it existed), readers are served what the log folds.
+   */
+  readonly published?: readonly Epoch[];
 }
 
 /**

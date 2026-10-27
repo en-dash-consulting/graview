@@ -48,10 +48,14 @@ function startServer() {
   );
   return new Promise((ready, fail) => {
     const timer = setTimeout(() => fail(new Error("the store server did not start")), 30_000);
+    let said = "";
     child.stdout.on("data", (chunk) => {
-      if (String(chunk).includes(SERVER)) {
+      said += String(chunk);
+      // The address it prints carries this run's key: what a person copies, so what this script uses.
+      const key = /[?&]graview_key=([\w-]+)/.exec(said)?.[1];
+      if (said.includes(SERVER) && key) {
         clearTimeout(timer);
-        ready(child);
+        ready({ child, key });
       }
     });
     child.on("exit", (code) => {
@@ -60,7 +64,7 @@ function startServer() {
     });
   });
 }
-const stopServer = (child) => {
+const stopServer = ({ child }) => {
   try {
     process.kill(-child.pid, "SIGTERM");
   } catch {
@@ -82,8 +86,10 @@ let browser;
 
 try {
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
+  /** The address `graview serve` printed, as the rota page is handed it. */
+  const printed = () => encodeURIComponent(`${SERVER}/?graview_key=${server.key}`);
   const open = async (page, as) => {
-    await page.goto(`${at("rota")}/?today=2026-09-14&server=${SERVER}&as=${as}`, { waitUntil: "load" });
+    await page.goto(`${at("rota")}/?today=2026-09-14&server=${printed()}&as=${as}`, { waitUntil: "load" });
     await page.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(1000);
   };
@@ -116,7 +122,7 @@ try {
         : (document.querySelector('[data-graview-view="s-fri-repair"]')?.textContent ?? ""),
     );
   // Through the interface: select the uncovered shift and take its repair.
-  await one.goto(`${at("rota")}/pages/shifts/s-fri-repair?today=2026-09-14&server=${SERVER}&as=user-jo`, {
+  await one.goto(`${at("rota")}/pages/shifts/s-fri-repair?today=2026-09-14&server=${printed()}&as=user-jo`, {
     waitUntil: "networkidle",
   });
   await one.waitForSelector('[data-testid="record-violations"] [data-graview-repair]', { timeout: 20_000 });
@@ -155,7 +161,7 @@ try {
   stopServer(server);
   await new Promise((settle) => setTimeout(settle, 800));
   server = await startServer();
-  const after = await (await fetch(`${SERVER}/graview/state`)).json();
+  const after = await (await fetch(`${SERVER}/graview/state`, { headers: { "x-graview-key": server.key } })).json();
   report.checks.stopItStartItAndItIsAllThere = {
     nodes: after.snapshot.nodes.length,
     edges: after.snapshot.edges.length,
@@ -167,7 +173,7 @@ try {
   /* ------------------------------ the policy judges there too, in its words */
   const refused = await fetch(`${SERVER}/graview/ops`, {
     method: "POST",
-    headers: { "content-type": "application/json", "x-graview-seat": "user-sam", "x-graview-roles": "viewer" },
+    headers: { "content-type": "application/json", "x-graview-seat": "user-sam", "x-graview-roles": "viewer", "x-graview-key": server.key },
     body: JSON.stringify({ calls: [{ name: "cover", args: { shiftId: "s-sun-clean", volunteerId: "v-ada" } }] }),
   });
   const said = await refused.json();
@@ -175,6 +181,19 @@ try {
     status: refused.status,
     said: said.error,
     ok: refused.status === 409 && String(said.error).includes("coordinator"),
+  };
+
+  /* ------------- a program on this machine without the run's key is not believed */
+  const claimed = await fetch(`${SERVER}/graview/ops`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-graview-seat": "user-jo", "x-graview-roles": "coordinator" },
+    body: JSON.stringify({ calls: [{ name: "cover", args: { shiftId: "s-sun-clean", volunteerId: "v-ada" } }] }),
+  });
+  const stale = await fetch(`${SERVER}/graview/state`, { headers: { "x-graview-seat": "user-jo", "x-graview-key": "the-last-runs-key-is-no-key" } });
+  report.checks.aSeatIsBelievedOnlyWithTheRunsKey = {
+    noKey: claimed.status,
+    wrongKey: stale.status,
+    ok: claimed.status === 401 && stale.status === 401 && logLines().length === 1,
   };
 
   /* --------------------------------------- and it says where it keeps it */

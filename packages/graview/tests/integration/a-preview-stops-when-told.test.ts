@@ -49,9 +49,13 @@ afterEach(() => {
   folder = undefined;
 });
 
+/** The run's key the preview is handed: a loopback preview answers nothing but health without it. */
+const KEY = "a-key-for-the-preview-that-stops-0123456789";
+
 /** Starts the preview on `port` and resolves once it says where it listens. */
 function startPreview(port: number, data: string): Promise<{ url: string; output: () => string }> {
-  const started = spawn(process.execPath, [CLI, "preview", ORG, "--seed", ORG_SEED, "--data", data, "--port", String(port)], { stdio: ["ignore", "pipe", "pipe"] });
+  // This run's key, named here as a harness names it, so the requests below carry it.
+  const started = spawn(process.execPath, [CLI, "preview", ORG, "--seed", ORG_SEED, "--data", data, "--port", String(port)], { stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, GRAVIEW_SERVE_KEY: KEY } });
   child = started;
   let said = "";
   started.stdout!.on("data", (chunk) => (said += String(chunk)));
@@ -78,7 +82,7 @@ function openLiveSocket(port: number): Promise<Socket> {
     socket.on("error", () => {});
     socket.once("connect", () =>
       socket.write(
-        "GET /graview/live HTTP/1.1\r\nHost: 127.0.0.1\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n" +
+        `GET /graview/live HTTP/1.1\r\nHost: 127.0.0.1\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nX-Graview-Key: ${KEY}\r\n` +
           "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n",
       ),
     );
@@ -98,7 +102,7 @@ function openLiveSocket(port: number): Promise<Socket> {
 async function holdKeepAlive(url: string): Promise<Agent> {
   const agent = new Agent({ keepAlive: true, keepAliveMsecs: 60_000 });
   await new Promise<void>((resolve, reject) => {
-    get(`${url}/graview/document`, { agent }, (response) => {
+    get(`${url}/graview/document`, { agent, headers: { "x-graview-key": KEY } }, (response) => {
       response.resume();
       response.on("end", () => resolve());
     }).on("error", reject);

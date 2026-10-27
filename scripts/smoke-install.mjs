@@ -340,21 +340,27 @@ process.stdout.write(JSON.stringify(result));
       const timer = setTimeout(() => failed(new Error(`graview preview did not start:\n${said}`)), 30_000);
       const hear = (chunk) => {
         said += chunk;
-        const at = /on (http:\/\/\S+)/.exec(said)?.[1];
+        // The address to open, which carries the run's key.
+        const at = /Pages: (http:\/\/\S+)/.exec(said)?.[1];
         if (at) (clearTimeout(timer), found(at));
       };
       previewing.stdout.on("data", hear);
       previewing.stderr.on("data", hear);
       previewing.on("exit", () => failed(new Error(`graview preview exited:\n${said}`)));
     });
-    const page = await (await fetch(`${url}/places/overview`)).text();
-    const script = await fetch(`${url}/page.js`);
-    const handed = await (await fetch(`${url}/graview/document`)).json();
-    report.preview = { page: page.includes('id="graview-app"'), script: script.ok && (script.headers.get("content-type") ?? "").includes("javascript"), compiled: handed.compiled !== undefined };
+    // The address it printed carries the run's key: a program sends it as x-graview-key, as a page sends its cookie.
+    const printed = new URL(url);
+    const base = printed.origin;
+    const headers = { "x-graview-key": printed.searchParams.get("graview_key") ?? "" };
+    const refused = await fetch(`${base}/graview/document`);
+    const page = await (await fetch(`${base}/places/overview`, { headers })).text();
+    const script = await fetch(`${base}/page.js`, { headers });
+    const handed = await (await fetch(`${base}/graview/document`, { headers })).json();
+    report.preview = { keyed: refused.status === 401, page: page.includes('id="graview-app"'), script: script.ok && (script.headers.get("content-type") ?? "").includes("javascript"), compiled: handed.compiled !== undefined };
   } finally {
     previewing.kill();
   }
-  report.steps.previewed = report.preview.page && report.preview.script && report.preview.compiled;
+  report.steps.previewed = report.preview.keyed && report.preview.page && report.preview.script && report.preview.compiled;
   const doctor = spawnSync(bin, ["doctor", "--json"], { cwd: app, encoding: "utf8" });
   report.doctor = { status: doctor.status, findings: JSON.parse(doctor.stdout || "{}").findings };
   report.steps.doctored = doctor.status === 0;

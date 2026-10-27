@@ -18,6 +18,7 @@ import type {
   Violation,
 } from "./invariants/types.js";
 import { compileMutation } from "./mutations/define-mutation.js";
+import { wouldRun } from "./mutations/would-run.js";
 import { actSpelledAs, nearestAct } from "./mutations/act-spelling.js";
 import { InvalidArguments } from "./mutations/invalid-arguments.js";
 import { deriveMutations, derivedVia, removeVia } from "./mutations/derive-edits.js";
@@ -890,10 +891,9 @@ export class Store<S extends AnySchema> {
     }
     // Typing into a field: whoever may run an act that writes that field of that record.
     if (mutation !== undefined && mutation === this.typer) {
-      // Through an act that could run on this record now: its module on, its own rule holding for the record as this principal is served it.
-      const node = call?.args["node"];
+      // Through an act that could run on this record now: its module on, its own rule holding for the record as this principal is served it (`wouldRun`).
       const served = principal === undefined || isSystem(principal) ? this.graph : seenBy(this, principal).graph;
-      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && (writer.allowedOn === undefined || (typeof node === "string" && writer.allowedOn(served as never, node)));
+      const allows = (writer: AnyMutationDefinition<S>) => !this.mutationDisabled(writer) && wouldRun(writer, this.schema, served, call?.args["node"], call?.args["field"], principal && actingAs(principal).id);
       return TYPING.via!(this.schema, [...this.mutations.values()] as never, this.subjectKindOf(call!, principal), call?.args["field"], allows as never);
     }
     if (!mutation?.derived) return undefined;
@@ -2462,9 +2462,9 @@ export class Store<S extends AnySchema> {
       seq = Math.min(byOps, byDays);
     }
     // Never past a seq somebody is served at: a reader's past (`pastOf`) folds from the log, so the lowest pin is the furthest it goes.
-    // And readers' own (Roadmap f-publishing-lifecycle): what was published — or, before the first publish, where the log begins.
-    // The publish before it too, where undoing the latest takes readers back to, so the past they are served then still folds from the log.
-    const readers = onPublish(this.publishing) ? [this.publishedSeq ?? 0, ...(PUBLISHING.previous?.(this) ?? [])] : [];
+    // Readers of an app that publishes are served the app as each publish behind it left it, which it keeps (`published`, Roadmap
+    // f-publishing-lifecycle); before the first publish — or with nothing loaded to say one — they are served where the log begins.
+    const readers = onPublish(this.publishing) && this.publishedSeq === undefined ? [0] : [];
     const pinned = [...(options.pins ?? []), ...readers].filter((pin) => Number.isInteger(pin));
     if (pinned.length > 0) seq = Math.min(seq, ...pinned);
     seq = Math.min(Math.max(seq, this.log.horizon), this.log.length);
@@ -2473,8 +2473,20 @@ export class Store<S extends AnySchema> {
     if (seq <= this.log.horizon) return undefined;
     const verified = this.verify();
     if (!verified.ok) throw new GraphError(`Cannot compact a store that does not verify: ${verified.reason}`);
+    /*
+     * And the app as readers were served it at each published seq behind it they may be served again: folded here where the
+     * log still holds it, carried from the checkpoint before where it does not, so a horizon past old publishes loses none.
+     */
+    const carried = this.log.horizonEpoch()?.published ?? [];
+    const published = (PUBLISHING.behind?.(this, seq) ?? []).flatMap((at) => (at >= this.log.horizon ? [this.epochAt(at)] : carried.filter((one) => one.seq === at)));
+    return { ...this.epochAt(seq), ...(published.length > 0 && { published }) };
+  }
+
+  /** The checkpoint at `seq`, which the log holds, and what it keeps of the ops behind it — but for the published seqs behind it. */
+  private epochAt(seq: number): Epoch {
+    const ops = this.log.all();
     // What the store keeps of who made what and what was removed is written here, from the log, never carried over from an epoch.
-    const { creators: _creators, removed: _removed, writers: _writers, ...checkpoint } = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+    const { creators: _creators, removed: _removed, writers: _writers, published: _published, ...checkpoint } = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
     /*
      * Who made each record behind it, so a store opened on it still knows (an `own` sight reads the log for it);
      * what each record removed behind it was, so a field naming one is still judged as naming it; and who wrote

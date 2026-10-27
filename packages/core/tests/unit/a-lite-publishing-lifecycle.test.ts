@@ -174,8 +174,10 @@ describe("an app that publishes", () => {
     for (let n = 0; n < 6; n++) store.apply({ name: "add-task", args: { label: `T${n}` } }, { author: editor });
     store.apply({ name: PUBLISH, args: { through: 3 } }, { author: editor });
     for (let n = 6; n < 9; n++) store.apply({ name: "add-task", args: { label: `T${n}` } }, { author: editor });
+    // Past what was published: the checkpoint keeps the app as readers are served it there.
     const checkpoint = store.checkpoint({ seq: 9 });
-    expect(checkpoint?.seq).toBe(3);
+    expect(checkpoint?.seq).toBe(9);
+    expect(checkpoint?.published?.map((kept) => kept.seq)).toEqual([3]);
     store.compact(checkpoint!);
     expect(labels(store.seenBy(visitor))).toEqual(["Seeded", "T0", "T1", "T2"]);
   });

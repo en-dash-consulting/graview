@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 593,
+  "gzipped": 227,
+  "changeset": "typing-rides-a-typescript-act-only-where-it-would-run.md",
+  "note": "Raised when a keystroke and an Edit came to ride an act that writes the field only where that act would run on the record: `wouldRun` on `@graview/core` believes an act's `allowedOn` and asks one without it by running its `apply` against a context that writes nothing, the store's `type-text` and `editableFields` both ask it, and a field typed together offers Edit only where the store would take a keystroke. Measured at 626_292 / 218_522 against 625_699 / 218_295 minified and gzipped."
+}

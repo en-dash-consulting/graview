@@ -99,7 +99,8 @@ export function deriveRepeatMutations<S extends AnySchema>(schema: S, mutations:
           /** A record of its own, made from the series: its fields and what was changed, and the links it makes. */
           const copy = (fields: Record<string, unknown>) => {
             const made = Object.fromEntries(Object.entries({ ...node, ...fields, ...given }).filter(([one, value]) => value != null && one !== "id"));
-            const fresh = ctx.freshId(named(made));
+            // Minted as every id is: saying its kind, and never from words of a field some sight keeps from a role.
+            const fresh = ctx.freshId(named(made), kind, made);
             ctx.addNode({ ...made, id: fresh, kind } as never);
             for (const edge of Object.keys(definition.edges ?? {})) for (const to of ctx.graph.out(id, edge)) ctx.addEdge({ kind: edge, from: fresh, to: to.id });
           };

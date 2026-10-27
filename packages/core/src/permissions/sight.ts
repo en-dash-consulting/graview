@@ -62,6 +62,16 @@ export const mayKeepField = (sees: readonly Pick<Sight, "kinds" | "fields" | "hi
   (sees ?? []).some((sight) => sight.kinds.includes(kind) && (sight.hide?.includes(field) === true || (sight.fields !== undefined && !sight.fields.includes(field))));
 
 /**
+ * WHETHER A NAME AN ID WOULD BE MINTED FROM QUOTES A KEPT FIELD: it holds
+ * the words of a field of the kind, among those given, that `keeps` says
+ * some sight may keep from a role. The one rule every minted id goes by —
+ * an act's own `freshId`, a day of a series changed apart, an imported row:
+ * where it does, the id is minted from the kind's name instead.
+ */
+export const quotesKeptField = (name: string, kind: string, fields: Readonly<Record<string, unknown>>, keeps: (kind: string, field: string) => boolean): boolean =>
+  Object.entries(fields).some(([field, value]) => typeof value === "string" && value.trim() !== "" && name.includes(value.trim()) && keeps(kind, field));
+
+/**
  * WHETHER A STORE MAY SHOW A SIGHT THAT SHOWS ONLY SOME FIELDS: field sight
  * is loaded and keeps them, or the store is a mirror of what its host
  * served (`FIELD_SIGHT.served`). Otherwise such a sight shows nothing.

@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 2197,
+  "gzipped": 903,
+  "note": "Raised when a keystroke and an Edit came to ride an act that writes the field only where that act would run on the record: `wouldRun` on `@graview/core` believes an act's `allowedOn` and asks one without it by running its `apply` against a context that writes nothing, the store's `type-text` and `editableFields` both ask it, and a field typed together offers Edit only where the store would take a keystroke; `graview check` warns `typing-act-without-allowed-on`. 2_197 / 903 more. Measured at 2_371_660 / 864_553 against 2_369_463 / 863_650."
+}
