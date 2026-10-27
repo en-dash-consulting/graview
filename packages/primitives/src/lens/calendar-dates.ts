@@ -1,6 +1,6 @@
 
 
-import { minutesAsRead, weekdayAsRead, weekdayName } from "@graview/core";
+import { daySpanOf, minutesAsRead, PARTIAL_DAY, weekdayAsRead, weekdayName } from "@graview/core";
 import { namesInstant, wallOfStored } from "@graview/core/words";
 
 /*
@@ -29,6 +29,23 @@ export function dayOf(value: unknown): string | null {
   const match = /^(\d{4}-\d{2}-\d{2})/.exec(value);
   return match ? match[1]! : null;
 }
+
+/**
+ * THE DAYS A VALUE COVERS on the calendar (Roadmap f-partial-dates-arithmetic):
+ * a day or an instant is its one day, and a month alone (`2016-05`) is drawn
+ * across its month, first day to last. A year alone (`2006`) is left off —
+ * a bar across a whole year says nothing a grid can place — and the lens
+ * says how many it left off (`knowsOnlyItsYear`). Null for anything that
+ * names no date.
+ */
+export function daysCovered(value: unknown): { readonly from: string; readonly to: string } | null {
+  if (typeof value === "string" && PARTIAL_DAY.test(value)) return value.length === 4 ? null : (daySpanOf(value) ?? null);
+  const day = dayOf(value);
+  return day === null ? null : { from: day, to: day };
+}
+
+/** Whether a value is a year alone: a date the calendar cannot place, and says so. */
+export const knowsOnlyItsYear = (value: unknown): boolean => typeof value === "string" && /^\d{4}$/.test(value);
 
 /** Minutes from midnight where a value names a time, else null. */
 export function minutesOf(value: unknown): number | null {

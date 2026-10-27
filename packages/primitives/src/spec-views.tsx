@@ -1,8 +1,8 @@
-import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
+import { labelOf, resolveKit, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
 import { blockContextFor, blocksName, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
 import type { ViewSlot, ViewSpecsByKind } from "@graview/core/document";
 import { isDefaultView, useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { createContext, Fragment, Suspense, useContext, useRef, useState, type ComponentType, type CSSProperties, type MouseEvent, type ReactNode } from "react";
+import { createContext, Fragment, Suspense, useContext, useMemo, useRef, useState, type ComponentType, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { useEndsAboveItsList } from "./stretched-link.js";
 import { DefaultView, useDefaultElsewhere } from "./default-view.js";
 import { RecordHeadContext } from "./record-head.js";
@@ -381,10 +381,31 @@ export const HomeLine = createContext<ReactNode>(null);
  */
 export const PlacePageHead = createContext<{ readonly lede: boolean } | null>(null);
 
+/**
+ * THE RECORDS A BROKEN RULE NAMES, for a blocks place to mark (Roadmap
+ * f-blocks-home-flagged). A home of its own is handed `flagged` as every
+ * view is, and a home written as blocks ignored it: a broken record on it
+ * wore no mark. The home's blocks place holds them here, and every record
+ * a list draws that is among them is marked as the derived home marks one
+ * — the kit's flag beside its name, said as implicated in a problem, its
+ * card in the warning tone — and says so in the DOM (`data-graview-flagged`).
+ */
+const Flagged = createContext<ReadonlySet<string> | null>(null);
+
+/** The kit's mark a broken rule leaves (`⚠` unless the brand says), from the brand this page draws. */
+function useFlagMark(): string {
+  const { brand } = useGraview();
+  return resolveKit(brand?.kit).marks.flag;
+}
+
 function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode; readonly as: "card" | "row"; readonly depth: number; readonly said?: AlreadySaid | null }) {
   const { store, views } = useGraview();
   const label = labelOf(store.schema.tryDefinition(node.kind), node);
   const View = views.lookup(node.kind as never, { cardinality: "one", fidelity: as === "card" ? "summary" : "glyph" }) as ViewComponent<AnySchema> | undefined;
+  // Marked where a broken rule names it, as the derived home marks one (Roadmap f-blocks-home-flagged).
+  const broken = useContext(Flagged)?.has(node.id) === true;
+  const flag = useFlagMark();
+  const marked = broken ? { "data-graview-flagged": "", title: `${label} — implicated in a problem` } : {};
   /*
    * A ROW IS A LINE OF THE LIST, AS WIDE AS THE LIST. A kind with no row of
    * its own drew the framework's glyph — the scene's chip, capped at 28
@@ -394,32 +415,32 @@ function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode;
    */
   if (as === "row" && depth <= MAX_LIST_DEPTH && (!View || isDefaultView(View))) {
     return (
-      <li className="graview-spec-item" data-graview-listed={node.id} data-as={as}>
+      <li className="graview-spec-item" data-graview-listed={node.id} data-as={as} {...marked}>
         <ListedLink node={node} label={label} />
         <div className="graview-spec graview-spec-row" data-graview-spec="row" data-graview-kind={node.kind} aria-hidden="true">
-          <strong className="graview-spec-title">{label}</strong>
+          <strong className="graview-spec-title">{broken ? `${label} ${flag}` : label}</strong>
         </div>
       </li>
     );
   }
   return (
-    <li className="graview-spec-item" data-graview-listed={node.id} data-as={as}>
+    <li className="graview-spec-item" data-graview-listed={node.id} data-as={as} {...marked}>
       {/* The link first: a reader hears the record's name, then what its card says of it. */}
       <ListedLink node={node} label={label} />
       {depth <= MAX_LIST_DEPTH && View ? (
-        // A listed card is a card on a page as in the scene: drawn as the scene draws it.
+        // A listed card is a card on a page as in the scene: drawn as the scene draws it, and flagged as the scene flags it.
         <ViewModeProvider mode="scene">
           <ListDepth.Provider value={depth}>
             <SaidAround.Provider value={said}>
               <NamedByItsLink.Provider value={label}>
-                <View node={node as never} cardinality="one" fidelity={as === "card" ? "summary" : "glyph"} mode="scene" selected={false} />
+                <View node={node as never} cardinality="one" fidelity={as === "card" ? "summary" : "glyph"} mode="scene" selected={false} {...(broken ? { flagged: [node.id] } : {})} />
               </NamedByItsLink.Provider>
             </SaidAround.Provider>
           </ListDepth.Provider>
         </ViewModeProvider>
       ) : (
         <span className="graview-spec-item-name" aria-hidden="true">
-          {label}
+          {broken ? `${label} ${flag}` : label}
         </span>
       )}
     </li>
@@ -557,9 +578,10 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
 }
 
 /** Blocks about no one record — the home's body, a blocks lens — drawn under the provider, from the graph its seat may see, as `view`: `"home"`, or a blocks lens's own address. */
-export function SpecPlace({ blocks, heading = 2, firstHeading, slot, view = slot }: { readonly blocks: readonly SpecBlock[]; readonly heading?: number; readonly firstHeading?: number; readonly slot: "home" | "place"; readonly view?: string }) {
+export function SpecPlace({ blocks, heading = 2, firstHeading, slot, view = slot, flagged }: { readonly blocks: readonly SpecBlock[]; readonly heading?: number; readonly firstHeading?: number; readonly slot: "home" | "place"; readonly view?: string; /** The records a broken rule names, marked where a list draws them (Roadmap f-blocks-home-flagged). */ readonly flagged?: readonly string[] }) {
   const { store, brand } = useGraview();
   useGraph();
+  const broken = useMemo(() => (flagged && flagged.length > 0 ? new Set(flagged) : null), [flagged]);
   // As `resolveFor` reads them: the store's own day, the brand's money (FR-100), a page's budget — blocks about no record sweep whole kinds.
   const ctx: SpecContext = blockContextFor(store, null, null, { heading, firstHeading, money: brand });
   // The app's line goes under the home's headline when it has one (`HomeLine`), else first.
@@ -572,7 +594,9 @@ export function SpecPlace({ blocks, heading = 2, firstHeading, slot, view = slot
     <div className={`graview-spec graview-spec-${slot}`} data-graview-spec={slot}>
       {line !== null && !headed ? line : null}
       <HomeLine.Provider value={headed ? line : null}>
-        <SpecBlocks blocks={drawn} ctx={ctx} view={view} />
+        <Flagged.Provider value={broken}>
+          <SpecBlocks blocks={drawn} ctx={ctx} view={view} />
+        </Flagged.Provider>
       </HomeLine.Provider>
     </div>
   );

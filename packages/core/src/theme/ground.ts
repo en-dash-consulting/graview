@@ -1,4 +1,5 @@
-import { colorsIn, composite, contrast, hsl, rgbToHsl, type Rgba } from "./contrast.js";
+import { colorsIn, composite, contrast, hsl, isDarkGround, rgbToHsl, type Rgba } from "./contrast.js";
+export { isDarkGround } from "./contrast.js";
 import { visibleAlpha } from "./derive.js";
 import { SCHEMES } from "./palettes.js";
 import type { Scheme, ThemeTokens } from "./types.js";
@@ -41,11 +42,6 @@ export function darkGroundFor(light: string): string | undefined {
   if (!color) return undefined;
   const { h, s } = rgbToHsl(color);
   return hex(hsl(h, Math.min(s, 0.45), 0.08));
-}
-
-/** Whether a color is a dark page: light words read on it better than dark ones (Roadmap f-dark-brand-accent). */
-export function isDarkGround(color: Rgba): boolean {
-  return contrast(WHITE, color) > contrast(BLACK, color);
 }
 
 /** The scheme's lit edge, its alpha raised until it clears 3:1 on the card it outlines: an outline nobody can see is a card with no edge. */

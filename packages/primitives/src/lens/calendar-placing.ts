@@ -1,5 +1,5 @@
 import { fieldWriters, isRepeat, labelOf, nextOccurrence, occurrences, repeatKey, type AnySchema, type NodeOfSchema, type Store } from "@graview/core";
-import { addDays, dayOf, daysBetween, minutesOf } from "./calendar-dates.js";
+import { addDays, daysBetween, daysCovered, minutesOf } from "./calendar-dates.js";
 import { withNaturalTime } from "./natural-time.js";
 import { CALENDAR_REQUIRED_ROLES, type CalendarBindings, type PlacedEntry, holds } from "./calendar-options.js";
 
@@ -41,9 +41,11 @@ export function placeOnCalendar<S extends AnySchema>(
   });
   if (missing.length > 0) throw new CalendarBindingError(node.kind, missing);
 
-  const from = dayOf(record[roles.start]);
-  if (from === null) return null;
-  const to = (roles.end ? dayOf(record[roles.end]) : null) ?? from;
+  // A month alone covers its whole month; a year alone is not placed (`daysCovered`).
+  const covered = daysCovered(record[roles.start]);
+  if (covered === null) return null;
+  const from = covered.from;
+  const to = (roles.end ? daysCovered(record[roles.end])?.to : null) ?? covered.to;
   const at = minutesOf(record[roles.start]);
   const named = roles.label ? record[roles.label] : undefined;
   return {
