@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.59`](https://graview.dev/docs/releases.html#v0-1-59)
 - [`0.1.58`](https://graview.dev/docs/releases.html#v0-1-58)
 - [`0.1.57`](https://graview.dev/docs/releases.html#v0-1-57)
 - [`0.1.56`](https://graview.dev/docs/releases.html#v0-1-56)
@@ -59,6 +60,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.59
+
+Published October 26, 2026 · the current version
+
+A security release: a served store and a dev server answer only their own page, the store judges every undo, merge and keystroke as the act it is, and nothing a seat may not see reaches it sideways.
+
+- **A served store on loopback believes only its own page.** `graview serve` keeps to its own origin and host, answers no wildcard CORS while it trusts seat headers (`--allow-origin` names an origin that may), reads `x-graview-kind: system` as a person unless `--trust-seat-headers` is given, holds a body to 16 MiB before routing, and caps a live socket's fragments.
+- **A dev server's doors ask for a key.** The studio, local, model, decision, files and views doors answer only a page opened from the address the dev server prints, which trades a key kept in `~/.graview/door-key` for a cookie only its own pages send; a page opened at the plain address is told its doors are closed. The local `claude` bridge reads only its own folder.
+- **The store judges what a change is.** An undo of an undo is judged as the act it puts back, and a change no act made is taken back only by its maker, the system or a seat granted every act; what a page offers to take back is what the store would take back. A merge and a kept link ride the making of a kind only over what the seat made; a keystroke rides an act only while that act could run; a split takes only what the kind's edit takes.
+- **Nothing hidden leaks sideways.** A record withheld whole refuses like an absent one, ids are never minted from a kept field or reused from the log, the app's own actor's suggestions say nothing a seat's sight keeps and a planted duplicate steers no merge, and a seat acting for a person reads another app as that person.
+- **Data never becomes code.** A template's title and the studio's write-back are written as text, a kind's figure is judged where it is drawn, and a typeface or scoped theme stays in its box.
+
+**Before you upgrade:** Changed: a dev server's doors refuse a page not opened from the printed address (`GRAVIEW_DOOR_KEY` sets the key, `GRAVIEW_DOOR_HOSTS` names a network host); `graview serve` on loopback no longer answers `*` CORS and reads no `system` seat from headers without `--trust-seat-headers`; `serveStore` takes `maxBodyBytes`, `ownOrigin`, `allowOrigins` and `trustSystemSeat`; an undo, a merge, a typed edit and a split may now be refused where they were let through; `Store.mayUndo` is new. Ops, stored formats, the wire, the declaration and derived tool names are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.59) · [The full changelog for 0.1.59](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0159)
 
 ## 0.1.58
 
