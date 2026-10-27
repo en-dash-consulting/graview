@@ -67,7 +67,7 @@ describe("suggest_changes", () => {
  */
 describe("accept_suggestion and decline_suggestion from a seat that may not make the change", () => {
   const policy: Policy = { roles: ["keeper", "reader"], grants: [{ roles: ["keeper"], mutations: "*" }] };
-  const ria: Author = { kind: "agent", id: "claude", name: "Claude", onBehalfOf: { kind: "human", id: "ria", name: "Ria", roles: ["reader"] } };
+  const ria: Principal = { kind: "agent", id: "claude", name: "Claude", onBehalfOf: { kind: "human", id: "ria", name: "Ria", roles: ["reader"] } };
 
   it("answer with the seat's vote, which list_suggestions counts, and the suggestion still waits", async () => {
     const store = new Store<AnySchema>({ schema, policy, snapshot: storeOf().graph.snapshot() });
