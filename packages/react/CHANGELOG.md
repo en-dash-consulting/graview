@@ -1,5 +1,38 @@
 # @graview/react
 
+## 0.1.61
+
+### Patch Changes
+
+- fddebfd: A record's card on the Scene says there is more where it is cut (FR-231), Roadmap f-scene-preview-card-scrolls. A worker view's card is held to its box and never scrolls — a page inside a picture was what FR-141 and f-scene-record-view-card took away — and said so only by fading its foot, with Open at its head: a person reading a long race card scrolled, nothing moved, and nothing said why. Of the three shapes the ask allowed, the card keeps its own: it still neither scrolls nor grows, and now says so where the eye is. Where there is more than the card holds, the fade is taller and ends in the card's own panel color, and on that ground at the foot stands a visible More, named for the card ("More of Write the brief"), after the view in the tab order and pressed without choosing the card: a link to the record's page or the place where there are pages — the page's address where the host's page has one, a link by its role and Enter where it has none — and, in a Shell with no pages, a press that grows the card in place as Expand does. A card that holds all it draws says nothing, and an expanded one says nothing until Collapse. Nothing of the camera changes: a wheel over the card is the browser's, as before, and no card scrolls. `react`'s tests hold it (`a-cut-scene-card-says-there-is-more.test.tsx`), and `verify-address` presses More on the Scene at 1440 and 390 and finds it at the foot on the fade, named, landing on the place and on the record's page, and a button in the Shell that is gone once the card is grown (aCutSceneCardSaysMoreAtItsFootAndMoreLandsWhereOpenDoes). `graview-worker-view` says the card is faded with More at its foot. FR-231 is said as shipped: `capabilities().shipped` gains FR-231.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. What Graview Cloud does: nothing; a host that drew a Scroll hint of its own over the card can take it away.
+- 5ec4dcf: A host's buttons stand on the app bar (FR-227), Roadmap f-host-buttons-in-the-app-bar. Graview Cloud's "Send feedback" could sit only in the person's menu (`hostActions`) or the right-click menu, two taps from a reader, and a host may float nothing over an app (FR-72). An embed, the pages alone and the Shell now take `barActions: [{ label, icon?, onSelect }]`: each is a button on the bar itself, on both faces, before the standing and the person, named by its label with its mark (an emoji, a glyph or an inline `<svg>`) hidden from a reader who cannot see it. Where the bar has their width over a phone's they stand on the row; where it does not — a phone, a small box — they fold into one control, "More", that lists them, one of the bar's own family of popovers. `handle.setBarActions` changes them live, as `setHostActions` does the menu's; `undefined` takes them off, and nothing is drawn when a host gives none. They are the host's only: no declaration and no sandboxed view can put a button on the bar. The primitives' and the embed's tests hold it (`a-hosts-buttons-stand-in-the-bar-or-fold`, `a-hosts-buttons-are-in-the-app-bar-on-both-faces`), and the chrome harness presses "Send feedback" by the keyboard on both faces, standing on a desk and folded on a phone. The host-page skill and the embed's README say it beside `hostActions`. A hosted page carries 3.2 KB more up front (3_262 bytes minified, 128 gzipped; handed a compiled app, 3_260 and 250): the bar's buttons, the control they fold into and its popover, and `barActions` on the frame and both handles — the raises in `scripts/budget-raises/a-hosts-buttons-stand-on-the-app-bar-*.json` say each entry's bytes, the PDF's one line (FR-234, the same pull request) riding the files part behind its door. FR-227 is said as shipped: `capabilities().shipped` gains FR-227.
+  
+  Compatibility: ops and primitives, stored formats, the declaration and check finding codes, and derived tool names and input schemas — unchanged. The wire: unchanged; `capabilities().shipped` lists FR-227. What Graview Cloud does: hand `mount` its "Send feedback" as `barActions`, and keep `hostActions` for the menu.
+- 1483a93: A right-click anywhere on the scene opens Graview's menu, never the browser's (FR-228), Roadmap f-scene-right-click-always-ours. Only a card answered the gesture: on empty ground nothing opened and the browser's own menu did, on a desk and on a phone, which is what Graview Public saw. The lead — `PointerRouter.route` returning before `preventDefault()` — was not it: the router serves the capture path alone, and the DOM path's ground simply had no handler. The ground now opens the scene's menu at the pointer, about what is chosen or about nothing, as the routed face's ground does; the browser keeps its own menu where it means something — Shift held, a text field, text somebody selected — and a card keeps its own answer. A finger resting half a second on the ground or on a card opens the same menu on a phone, where there is no right button, and the press that opened it chooses nothing. `pnpm verify menu` holds it at a desk and at a phone's width (`sceneRightClickIsAlwaysOurs_desk`, `_phone`): the ground's and a card's right-click open ours with the browser's prevented, Shift and the Find box keep the browser's, and a resting finger opens it on the ground and about the card. The ground's menu hook rides with the scene, not up front: the scene face before it draws measured 1_054_901 B with this wave's three primitives and react changes, 3_144 more than main, and the "every face" bundle's gzipped limit is raised by 1_800 B for the wave together (`scripts/budget-raises/the-scenes-ground-answers-a-right-click-every-face.json`); nothing a hosted page loads up front changed. FR-228 is said as shipped.
+  
+  Compatibility: ops and primitives, stored formats, the declaration and check finding codes, and derived tool names and input schemas — unchanged. The wire: `capabilities().shipped` gains FR-228. What Graview Cloud does: nothing.
+- Updated dependencies [c9fd45a]
+- Updated dependencies [9ffaf81]
+- Updated dependencies [24926eb]
+- Updated dependencies [fddebfd]
+- Updated dependencies [208702c]
+- Updated dependencies [5ec4dcf]
+- Updated dependencies [ce470d9]
+- Updated dependencies [166cf1d]
+- Updated dependencies [869c28c]
+- Updated dependencies [cab3b1d]
+- Updated dependencies [0cf3524]
+- Updated dependencies [08d4b4c]
+- Updated dependencies [1483a93]
+- Updated dependencies [8d7cecc]
+- Updated dependencies [b80b6de]
+  - @graview/core@0.1.61
+  - @graview/tools@0.1.61
+  - @graview/layout@0.1.61
+  - @graview/render@0.1.61
+
 ## 0.1.60
 
 ### Patch Changes
