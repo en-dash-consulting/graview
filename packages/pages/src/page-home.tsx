@@ -1,4 +1,4 @@
-import { counted as countOf, isCurrent, numberAsRead, type AnySchema, type Violation } from "@graview/core";
+import { counted as countOf, isCurrent, isWithheld, numberAsRead, type AnySchema, type Operation, type Violation } from "@graview/core";
 import { bleeds, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
@@ -45,6 +45,29 @@ function ProblemsHere({ violations }: { readonly violations: readonly Violation[
 }
 
 /**
+ * RECENTLY SAYS ONLY WHAT THE READER MAY SEE (Roadmap f-recently-hides-unseen).
+ * The log is served to a seat with the ops it may not see withheld in place
+ * (FR-16), each saying only "A change you cannot see — Someone"; a stranger
+ * on a Secret Santa's public page, from whom every match is kept, read five
+ * such lines — a list that looked broken and said activity existed that was
+ * never theirs to know of. The rows are the last five ops the reader can
+ * see; what was withheld across the span those rows cover (the whole log,
+ * when fewer than five are visible) is counted and said once at the foot,
+ * never a row per op.
+ */
+export function recently(log: readonly Operation[], rows = 5): { readonly recent: readonly Operation[]; readonly kept: number } {
+  const recent: Operation[] = [];
+  let kept = 0;
+  for (let at = log.length - 1; at >= 0; at--) {
+    const op = log[at]!;
+    if (isWithheld(op)) kept++;
+    else if (recent.length < rows) recent.push(op);
+    else break;
+  }
+  return { recent, kept };
+}
+
+/**
  * THE FRONT PAGE IS THE GALLERY.
  *
  * It opens with the standing as its headline — what this installation holds,
@@ -62,7 +85,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   const { store, brand, invariantContext } = context;
   useStoreTick(store);
   const violations = store.violations(invariantContext);
-  const recent = [...store.log.all()].slice(-5).reverse();
+  const { recent, kept } = recently(store.log.all());
   // In the declaration's order, less what it leaves off the home (FR-80).
   const kinds = homeKinds(context);
   const counted = kinds.map((kind) => ({
@@ -226,16 +249,25 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         </ul>
       </section>
 
-      {recent.length > 0 ? (
-        <section style={{ ...rule, display: "grid", gap: 10 }}>
+      {recent.length > 0 || kept > 0 ? (
+        <section style={{ ...rule, display: "grid", gap: 10 }} data-testid="recently">
           <h2 style={h2}>Recently</h2>
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
-            {recent.map((op) => (
-              <li key={op.id} style={quiet}>
-                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}), ...(context.people ? { people: context.people } : {}) })}
-              </li>
-            ))}
-          </ul>
+          {recent.length > 0 ? (
+            <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
+              {recent.map((op) => (
+                <li key={op.id} style={quiet} data-testid="recently-row">
+                  <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}), ...(context.people ? { people: context.people } : {}) })}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {/* WHAT WAS KEPT FROM THE READER, ONCE (Roadmap f-recently-hides-unseen): plain words, no author, no time, never a row per op. */}
+          {kept > 0 ? (
+            <p style={{ ...quiet, margin: 0 }} data-testid="recently-kept">
+              {recent.length > 0 ? "and " : ""}
+              {kept === 1 ? "1 change" : `${numberAsRead(kept)} changes`} kept from you
+            </p>
+          ) : null}
         </section>
       ) : null}
     </PageMain>
