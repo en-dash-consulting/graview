@@ -788,6 +788,64 @@ try {
     }
     report.checks.theSuggestedTrayNeverScrollsSideways = { ...crowded, ok: Object.values(crowded).every((one) => one.ok) };
   }
+  /*
+   * ---- Activity never scrolls sideways (FR-226, f-activity-panel-no-sideways-scroll), on both faces at 320 px: the same crowded
+   * page's rename of a task to 120 characters with no space is a row whose sentence wraps, whose "as it was" and undo stay inside
+   * the panel, and whose chip is cut with its whole name in its title — the panel and every row no wider than they are drawn, and
+   * the panel inside the page.
+   */
+  {
+    const crowded = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 320, height: 720 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&crowd=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="activity-button"]', { timeout: 30_000 }).catch(() => {});
+      const said = await page.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="activity-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="diff-log"] > li'); turn++) await new Promise((done) => setTimeout(done, 50));
+        await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+        const panel = document.querySelector('[data-testid="activity"]');
+        if (!panel) return null;
+        const wide = (one) => one.scrollWidth > one.clientWidth;
+        const rows = [...panel.querySelectorAll('[data-testid="diff-log"] > li')];
+        const box = panel.getBoundingClientRect();
+        const inside = (one) => {
+          const at = one.getBoundingClientRect();
+          return at.left >= box.left - 1 && at.right <= box.right + 1;
+        };
+        const long = rows.find((row) => (row.textContent ?? "").includes("@tanstack/"));
+        const chip = long ? [...long.querySelectorAll('[data-graview-primitive="chip"]')].find((one) => (one.textContent ?? "").startsWith("@tanstack/")) : null;
+        return {
+          rows: rows.length,
+          panel: { scrollWidth: panel.scrollWidth, clientWidth: panel.clientWidth, left: Math.round(box.left), right: Math.round(box.right), page: innerWidth },
+          wideRows: rows.filter(wide).map((row) => ({ scrollWidth: row.scrollWidth, clientWidth: row.clientWidth })),
+          // The long row's buttons, each inside the panel: "as it was" and undo.
+          buttons: long ? [...long.querySelectorAll("button")].map((one) => ({ name: one.getAttribute("data-testid") ?? one.textContent, inside: inside(one) })) : [],
+          chip: chip ? { title: chip.getAttribute("title"), width: Math.round(chip.getBoundingClientRect().width), inside: inside(chip) } : null,
+        };
+      });
+      await page.close();
+      const ok =
+        said !== null &&
+        said.rows >= 1 &&
+        said.panel.scrollWidth <= said.panel.clientWidth &&
+        said.wideRows.length === 0 &&
+        said.panel.left >= 0 &&
+        said.panel.right <= said.panel.page &&
+        said.buttons.length >= 2 &&
+        said.buttons.every((one) => one.inside) &&
+        said.chip !== null &&
+        said.chip.title?.length === 120 &&
+        said.chip.inside &&
+        said.chip.width <= said.panel.clientWidth;
+      crowded[face] = { said, ok };
+    }
+    report.checks.activityNeverScrollsSideways = { ...crowded, ok: Object.values(crowded).every((one) => one.ok) };
+  }
   /* ---- FR-75: a host speaks in the app's own notices */
   {
     const notices = {};

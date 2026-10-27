@@ -1,0 +1,8 @@
+---
+"@graview/primitives": patch
+"@graview/core": patch
+---
+
+Activity never scrolls sideways (Roadmap f-activity-panel-no-sideways-scroll, FR-226). A change to a record named in 120 characters with no space ran its sentence past the panel's right edge, and the row's "as it was" and undo buttons sat past it, reached only by scrolling sideways — the same fault the Suggested tray had in 0.1.60. The panel is now no wider than the page (`min(300px, 100vw − 16px)`) and hides what would run sideways; every row — a person's change, the agent's calls, the actor's digest and each change in it, a withheld change and the AI's entries — is one column that may shrink (`min-width: 0`, `minmax(0, 1fr)`), its header wraps, its sentence takes the line and breaks anywhere (`overflow-wrap: anywhere`), so the buttons beside it stay beside it, its chip row wraps, and a record's chip is never wider than its row, its whole name in its title. Primitives' test holds what the panel is drawn with (`activity-never-scrolls-sideways.test.tsx`), and `pnpm verify chrome` measures it at 320 px on both faces (`activityNeverScrollsSideways`): the panel, every row, the long row's buttons and its chip inside the panel, and the panel inside the page. FR-226 is said as shipped.
+
+Compatibility: ops and primitives, stored formats, the declaration and check finding codes, and derived tool names and input schemas — unchanged. The wire: `capabilities().shipped` lists FR-226. The look: Activity's rows carry `data-graview-activity-head` on their header and `data-graview-activity-words` on their sentence. What Graview Cloud does: nothing.
