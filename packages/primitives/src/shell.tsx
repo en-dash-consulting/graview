@@ -11,7 +11,7 @@ import { createNoticeBoard, NoticeBoardContext, Notices, type NoticeBoard } from
 import { DraftDoor } from "./draft-door.js";
 import { appKeyOf } from "./reader-lenses.js";
 import { registerReaderLenses } from "./declared-lens-doors.js";
-import { AppBar, type BarFind } from "./app-bar.js";
+import { AppBar, type BarAction, type BarFind } from "./app-bar.js";
 import { SceneSkips } from "./scene-skips.js";
 import { useScenePlaces } from "./scene-places.js";
 import { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
@@ -87,6 +87,12 @@ export interface ShellProps {
    * menu under who is signed in — a hosting service's "Your apps", say.
    */
   readonly hostActions?: readonly HostAction[];
+  /**
+   * THE HOST'S BUTTONS ON THE BAR (FR-227): presses — "Send feedback", say
+   * — drawn on the app bar itself, before the standing and the person,
+   * folded into one control on a narrow bar. A host's, never the app's.
+   */
+  readonly barActions?: readonly BarAction[];
   /**
    * A GRAVIEW SIGNATURE: a quiet "Built with Graview" at the foot of the
    * person's menu, linking to graview.dev. Off by default — an app leads
@@ -165,6 +171,7 @@ function ShellFace<S extends AnySchema>({
   profileHref,
   studio,
   hostActions,
+  barActions,
   signature = false,
   quickAsk = true,
   notices,
@@ -238,6 +245,7 @@ function ShellFace<S extends AnySchema>({
         scenePlaces={scenePlaces}
         onFind={setBarFind}
         skips={<SceneSkips />}
+        {...(barActions ? { actions: barActions } : {})}
         tools={
           <>
             <Standing clean={standing} />

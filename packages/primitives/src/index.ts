@@ -127,7 +127,7 @@ export { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
 export { SceneWayBack } from "./scene-way-back.js";
 export { freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, takeBackWords, WAY_BACK_MS } from "./way-back.js";
 export type { LastChange } from "./way-back.js";
-export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
+export type { BarAction, BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 // The ways past what stands before the work (WCAG 2.4.1), and the groups that are one Tab stop.
 export { focusInto, SkipLinks } from "./skip-links.js";
 export type { SkipTo } from "./skip-links.js";

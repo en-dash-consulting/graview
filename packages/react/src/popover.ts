@@ -22,6 +22,8 @@ export const POPOVERS = {
   here: { trigger: "here-open", pane: "here-list", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
   /** What tidying suggests and has not made, from the bar beside Activity, when anything waits. */
   suggested: { trigger: "suggested-button", pane: "suggested", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
+  /** The host's own buttons, from the one control they fold into on a narrow bar (FR-227). */
+  "host-actions": { trigger: "host-bar-actions-open", pane: "host-bar-actions", opens: "press", focus: "into", drawn: ["shell", "embed"] },
   /** What has happened, from the bar. */
   activity: { trigger: "activity-button", pane: "activity", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
   /** What the words find, under the Find box. */

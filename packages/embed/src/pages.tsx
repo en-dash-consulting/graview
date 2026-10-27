@@ -115,6 +115,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
                   reach={{ ...(props.hrefOf ? { href: props.hrefOf } : address ? { href: (path: string) => addressOf(path, base) } : {}), go: (place) => steer(place.path) }}
                   standing={standing}
                   hostActions={props.hostActions}
+                  barActions={props.barActions}
                   onFind={setBarFind}
                 />
               </FaceBoundary>
@@ -154,6 +155,8 @@ export interface PagesEmbedHandle {
   setLabel(label: string): void;
   /** The host's own actions in the profile menu (FR-72), now. */
   setHostActions(actions: PagesEmbedOptions["hostActions"]): void;
+  /** The host's buttons on the bar (FR-227), now; `undefined` takes them off. */
+  setBarActions(actions: PagesEmbedOptions["barActions"]): void;
   /** Another view proposed and not kept, or none (FR-187), swapped in place: `data-graview-drawn` comes off and returns once it has drawn. */
   setDraftView(draft: EmbedDraftView | null): void;
   /** Says something in the app's own notices (FR-75): a toast, or a banner that stays until it is cleared. */
@@ -180,6 +183,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     path(path: string): void;
     label(label: string): void;
     hostActions(actions: PagesEmbedOptions["hostActions"]): void;
+    barActions(actions: PagesEmbedOptions["barActions"]): void;
     draft(draft: EmbedDraftView | null): void;
   } | null = null;
   function Host() {
@@ -193,8 +197,9 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     const [whileAway, setWhileAway] = useState<AwaySummary | undefined>(options.whileAway);
     const [label, setLabel] = useState<string | undefined>(options.label);
     const [hostActions, setHostActions] = useState<PagesEmbedOptions["hostActions"]>(options.hostActions);
+    const [barActions, setBarActions] = useState<PagesEmbedOptions["barActions"]>(options.barActions);
     const [draft, setDraft] = useState<EmbedDraftView | null | undefined>(options.draftView);
-    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setLabel, hostActions: setHostActions, draft: setDraft };
+    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, whileAway: setWhileAway, label: setLabel, hostActions: setHostActions, barActions: setBarActions, draft: setDraft };
     return (
       <PagesEmbed<S>
         {...options}
@@ -209,6 +214,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
         whileAway={whileAway}
         label={label}
         hostActions={hostActions}
+        barActions={barActions}
         draftView={draft}
         scheme={scheme}
         onSeat={setSeat}
@@ -229,6 +235,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     setWhileAway: (away) => flushSync(() => set?.whileAway(away)),
     setLabel: (label) => flushSync(() => set?.label(label)),
     setHostActions: (actions) => flushSync(() => set?.hostActions(actions)),
+    setBarActions: (actions) => flushSync(() => set?.barActions(actions)),
     setDraftView: (draft) => flushSync(() => set?.draft(draft)),
     notify: (notice) => {
       let said: NoticeHandle | undefined;
