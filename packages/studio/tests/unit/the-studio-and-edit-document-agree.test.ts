@@ -35,7 +35,8 @@ function said(document: GraviewDocument): Said {
     };
   }
   // A judgment compared as what it means, printed one way: "||" and "or" are the same rule.
-  out.rules = Object.fromEntries(Object.entries(document.rules ?? {}).map(([name, rule]) => [name, printExpr(parseExpr(rule.require))]));
+  // A coverage rule has no expression: its walk is compared as declared.
+  out.rules = Object.fromEntries(Object.entries(document.rules ?? {}).map(([name, rule]) => [name, rule.require ? printExpr(parseExpr(rule.require)) : JSON.stringify(rule.covers)]));
   return out;
 }
 

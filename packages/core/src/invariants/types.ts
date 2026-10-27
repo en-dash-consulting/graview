@@ -2,6 +2,7 @@ import type { GraphReader } from "../graph/types.js";
 import type { AnySchema, KindOfSchema, NodeOfKind, NodeOfSchema } from "../schema/schema.js";
 import type { RuleLine } from "./line.js";
 import type { Expr } from "../document/expr/parse.js";
+import type { CoverPlan, CoverSpec } from "../document/covers.js";
 import type { KindShape } from "../document/expr/evaluate.js";
 import type { TemplatePart } from "../document/template.js";
 
@@ -15,7 +16,10 @@ export interface FieldFormat {
 export interface RuleShapeSource {
   /** The kind it judges, or `"graph"`. */
   readonly over: string;
-  readonly require: Expr;
+  /** What must hold, parsed; absent on a coverage rule, whose `covers` says its walk. */
+  readonly require?: Expr | undefined;
+  /** A coverage rule's walk (Roadmap f-rule-covers-every): each record of `over` reaches every record of a kind through its links. */
+  readonly covers?: CoverPlan | undefined;
   readonly when?: Expr | undefined;
   /** The rule's own sentence, parsed: the formats it gives its names (`{margin|percent}`) are its values' formats too. */
   readonly says?: readonly TemplatePart[] | undefined;
@@ -104,7 +108,7 @@ export interface InvariantDefinition<S extends AnySchema = AnySchema> {
    * (`expressionRule`) rather than as a function — so the studio can show
    * it, edit it and write it back instead of a stub (FR-07).
    */
-  readonly judgment?: { readonly require: string; readonly when?: string; readonly says?: string };
+  readonly judgment?: { readonly require?: string; readonly covers?: CoverSpec; readonly when?: string; readonly says?: string };
   /**
    * What the rule's line is said from, on a rule written in the rule
    * language: its parsed judgment and how its values are written. Data, so

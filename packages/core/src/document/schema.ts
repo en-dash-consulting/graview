@@ -289,15 +289,37 @@ function build() {
     args: z.optional(z.record(z.string(), ValueSpec)),
   });
 
-  const RuleSpec = z.strictObject({
-    title: z.optional(str(1, 120)),
-    description: z.optional(sentence),
-    over: z.union([z.literal("graph"), name("kind")]),
-    when: z.optional(expression),
-    require: expression,
-    says: z.optional(template),
-    repairs: z.optional(some(RepairSpec, undefined, 10)),
+  /**
+   * A COVERAGE RULE (Roadmap f-rule-covers-every): each record of the kind
+   * is linked, `through` a relation — and `via` one more when the first
+   * reaches an intermediate kind — to `every` record of another kind. The
+   * store judges it in one pass over the links, never through the
+   * expression evaluator, so the checker has no cost to warn of.
+   */
+  const CoverSpec = z.strictObject({
+    every: name("kind"),
+    through: edgeName,
+    via: z.optional(edgeName),
   });
+
+  const RuleSpec = z
+    .strictObject({
+      title: z.optional(str(1, 120)),
+      description: z.optional(sentence),
+      over: z.union([z.literal("graph"), name("kind")]),
+      when: z.optional(expression),
+      require: z.optional(expression),
+      covers: z.optional(CoverSpec),
+      says: z.optional(template),
+      repairs: z.optional(some(RepairSpec, undefined, 10)),
+    })
+    .check(
+      z.superRefine((r, ctx) => {
+        if (!r.require && !r.covers) ctx.addIssue({ code: "custom", message: 'a rule says what must hold in "require", or what each record must be linked to in "covers"', path: ["require"] });
+        if (r.require && r.covers) ctx.addIssue({ code: "custom", message: 'a rule is judged by "require" or by "covers", not both', path: ["covers"] });
+        if (r.covers && r.over === "graph") ctx.addIssue({ code: "custom", message: 'a coverage rule is over a kind, whose records it follows through their links; name the kind in "over"', path: ["over"] });
+      }),
+    );
 
   const GrantSpec = z.strictObject({
     roles: z.union([some(name("role"), 1), z.literal("*")]),
@@ -565,7 +587,7 @@ function build() {
       }),
     ),
   });
-  return { FieldSpec, EdgeSpec, ComputedSpec, KindSpec, ValueSpec, EffectSpec, ActSpec, RepairSpec, RuleSpec, GrantSpec, SightSpec, PolicySpec, BrandSpec, PagesSpec, DocumentSpec };
+  return { FieldSpec, EdgeSpec, ComputedSpec, KindSpec, ValueSpec, EffectSpec, ActSpec, RepairSpec, CoverSpec, RuleSpec, GrantSpec, SightSpec, PolicySpec, BrandSpec, PagesSpec, DocumentSpec };
 }
 
 let built: ReturnType<typeof build> | undefined;
@@ -580,6 +602,7 @@ export const ValueSpec = z.lazy(() => shapes().ValueSpec);
 export const EffectSpec = z.lazy(() => shapes().EffectSpec);
 export const ActSpec = z.lazy(() => shapes().ActSpec);
 export const RepairSpec = z.lazy(() => shapes().RepairSpec);
+export const CoverSpec = z.lazy(() => shapes().CoverSpec);
 export const RuleSpec = z.lazy(() => shapes().RuleSpec);
 export const GrantSpec = z.lazy(() => shapes().GrantSpec);
 export const SightSpec = z.lazy(() => shapes().SightSpec);
@@ -596,6 +619,7 @@ export type ValueSpec = z.infer<typeof ValueSpec>;
 export type EffectSpec = z.infer<typeof EffectSpec>;
 export type ActSpec = z.infer<typeof ActSpec>;
 export type RuleSpec = z.infer<typeof RuleSpec>;
+export type CoverSpec = z.infer<typeof CoverSpec>;
 export type SightSpec = z.infer<typeof SightSpec>;
 export type PolicySpec = z.infer<typeof PolicySpec>;
 export type BrandSpec = z.infer<typeof BrandSpec>;

@@ -230,13 +230,23 @@ export const ruleNode = defineNode("rule", {
     when: z.string().optional(),
     /** What a violation says, as a template over the record: "{name} has no quote". */
     says: z.string().optional(),
+    /**
+     * A COVERAGE RULE (Roadmap f-rule-covers-every), in place of `require`:
+     * each record of the kind reaches every record of `coversEvery`,
+     * `coversThrough` a relation of its own and `coversVia` one more where
+     * the first lands on a kind in between. Judged in one pass over the
+     * links, so the checker has no cost to warn of.
+     */
+    coversEvery: z.string().optional(),
+    coversThrough: z.string().optional(),
+    coversVia: z.string().optional(),
   }),
   edges: {
     over: { to: ["kind"], description: "the kind it judges", inverse: "the rules over it", acts: "none" },
     repairs: { to: ["act"], description: "the acts that put it right", inverse: "the rules it repairs" },
   },
   label: (node) => node.label,
-  display: { labels: { label: "name", judgesPast: "judges the past", readsTheClock: "reads the clock", wholeGraph: "over the whole graph" } },
+  display: { labels: { label: "name", judgesPast: "judges the past", readsTheClock: "reads the clock", wholeGraph: "over the whole graph", coversEvery: "covers every", coversThrough: "through", coversVia: "via" } },
 });
 
 export const roleNode = defineNode("role", {
@@ -439,6 +449,8 @@ export const renameKind = act("rename-kind", {
     ctx.patchNode(args.id, { label: to });
     // A computed field that sweeps the kind by name (`all('party')`) follows it, by the rule language's own walk.
     if (from !== to) renameComputed(ctx, kinds, { what: "kind", from, to });
+    // A coverage rule names the kind it covers outright (Roadmap f-rule-covers-every): it follows too.
+    if (from !== to) for (const rule of ctx.graph.nodesOfKind("rule") as readonly { id: string; coversEvery?: unknown }[]) if (rule.coversEvery === from) ctx.patchNode(rule.id, { coversEvery: to } as never);
   },
 });
 

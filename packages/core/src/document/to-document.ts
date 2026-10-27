@@ -150,7 +150,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     }
     rules[rule.name] = {
       over: rule.scope === "graph" ? "graph" : rule.scope.kind,
-      require: rule.judgment.require,
+      ...(rule.judgment.require ? { require: rule.judgment.require } : {}),
+      ...(rule.judgment.covers ? { covers: rule.judgment.covers } : {}),
       ...(rule.judgment.when ? { when: rule.judgment.when } : {}),
       ...(rule.judgment.says ? { says: rule.judgment.says } : {}),
       ...(rule.label ? { title: rule.label } : {}),

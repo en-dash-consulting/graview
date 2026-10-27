@@ -139,7 +139,7 @@ function coveragesOver(document: GraviewDocument, kind: string, side: "rows" | "
 function rulesSaying(document: GraviewDocument, names: readonly string[], over?: readonly string[]): string[] {
   const wanted = new Set(names);
   return Object.entries(document.rules ?? {})
-    .filter(([, rule]) => (over === undefined || rule.over === "graph" || over.includes(rule.over)) && [...tokens(`${rule.when ?? ""} ${rule.require} ${rule.says ?? ""}`)].some((token) => wanted.has(token)))
+    .filter(([, rule]) => (over === undefined || rule.over === "graph" || over.includes(rule.over)) && [...tokens(`${rule.when ?? ""} ${rule.require ?? ""} ${rule.says ?? ""}`)].some((token) => wanted.has(token)))
     .map(([name]) => name);
 }
 
@@ -253,7 +253,7 @@ const READINGS: Readonly<Record<TraitName, (document: GraviewDocument, found: Fo
       found.add("acts", ...actsOn(document, one.kind).filter(([, act]) => (act.writes ?? []).includes(one.name) || act.sets?.[one.name] !== undefined).map(([act]) => act));
     }
     // The rules that hold a sum to a budget: those whose requirement says a budget field's name.
-    found.add("rules", ...rulesSaying(document, names).filter((rule) => budgets.some((budget) => tokens(document.rules![rule]!.require).has(budget.name))));
+    found.add("rules", ...rulesSaying(document, names).filter((rule) => budgets.some((budget) => tokens(document.rules![rule]!.require ?? "").has(budget.name))));
     const sum = sums[0]!;
     const budget = budgets.find((one) => one.kind === sum.kind) ?? budgets[0]!;
     found.say(`${Plural(document, sum.kind)}' ${lower(humanizeField(sum.name))} against ${budget.kind === sum.kind ? "each one's" : `each ${nounOf(document, budget.kind)}'s`} ${lower(humanizeField(budget.name))}.`);
@@ -378,7 +378,7 @@ const READINGS: Readonly<Record<TraitName, (document: GraviewDocument, found: Fo
         found.add("kinds", kind);
         found.add("fields", `${kind}.${name}`, ...words.map((word) => `${kind}.${word}`));
         found.add("acts", ...actsOn(document, kind).filter(([, act]) => act.sets?.[name] === published).map(([act]) => act));
-        found.add("rules", ...rulesSaying(document, [name, ...words], [kind]).filter((rule) => tokens(`${document.rules![rule]!.when ?? ""} ${document.rules![rule]!.require}`).has(published) || words.some((word) => tokens(document.rules![rule]!.require).has(word))));
+        found.add("rules", ...rulesSaying(document, [name, ...words], [kind]).filter((rule) => tokens(`${document.rules![rule]!.when ?? ""} ${document.rules![rule]!.require ?? ""}`).has(published) || words.some((word) => tokens(document.rules![rule]!.require ?? "").has(word))));
         found.say(`${Plural(document, kind)} go from ${lower(field.options![0]!)} to ${lower(published)}, with their words.`);
       }
     }
@@ -411,7 +411,7 @@ const READINGS: Readonly<Record<TraitName, (document: GraviewDocument, found: Fo
   },
   comparison(document, found) {
     for (const [name, rule] of Object.entries(document.rules ?? {})) {
-      if (!ONE_PER_GROUP.test(rule.require)) continue;
+      if (!rule.require || !ONE_PER_GROUP.test(rule.require)) continue;
       // The kind compared: the one whose relation the count walks in from the group, or the one swept over the whole graph.
       const group = rule.over === "graph" ? undefined : rule.over;
       const walked = /in\('([^']+)'\)/.exec(rule.require)?.[1];

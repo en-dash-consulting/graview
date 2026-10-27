@@ -24,6 +24,7 @@ import { parseTemplate, TemplateError } from "./template-parse.js";
 import { upgradeDocument } from "./upgrade.js";
 import { homeOf, validateViews, viewsOf } from "./views.js";
 import { farEnd } from "./far-end.js";
+import { resolveCovers } from "./covers.js";
 import { parsedComputed, workedOutAlone } from "./computed.js";
 import { durationsOf } from "./durations.js";
 import { fieldsKeptInStep } from "./kept-in-step.js";
@@ -356,6 +357,21 @@ function validate(document: GraviewDocument): Finding[] {
     const at = `rules.${name}`;
     if (rule.over !== "graph" && !kinds.has(rule.over)) findings.push(error("rule-kind", `${at}.over`, `"${rule.over}" is not a kind this document declares`));
     const spec = rule.over === "graph" ? undefined : document.kinds[rule.over];
+    /*
+     * A COVERAGE RULE names its walk rather than an expression (Roadmap
+     * f-rule-covers-every): the relations must exist and lead from the
+     * rule's kind to the covered one, said in the person's voice at the
+     * key that is wrong. It is judged over links alone, so no cost is
+     * warned of.
+     */
+    if (rule.covers && spec) {
+      const resolved = resolveCovers(rule.over, rule.covers, (relation) => edges.get(relation), (kind) => kinds.has(kind));
+      if ("problem" in resolved) {
+        const { key, message, fix } = resolved.problem;
+        if (key === "every") findings.push(error("rule-kind", `${at}.covers.every`, message, fix));
+        else findings.push(error("rule-covers-relation", `${at}.covers.${key}`, message, fix));
+      }
+    }
     for (const key of ["when", "require"] as const) {
       const source = rule[key];
       if (!source) continue;
@@ -620,9 +636,11 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
   // ── rules ────────────────────────────────────────────────────────────────
   const rules: Record<string, RulePlan> = {};
   for (const [name, rule] of Object.entries(document.rules ?? {})) {
+    const covers = rule.covers && rule.over !== "graph" ? resolveCovers(rule.over, rule.covers, (relation) => edges.get(relation), (kind) => kind in document.kinds) : undefined;
     rules[name] = {
       title: rule.title ?? name.replace(/-/g, " "),
-      require: parseExpr(rule.require),
+      ...(rule.require ? { require: parseExpr(rule.require) } : {}),
+      ...(covers && "plan" in covers ? { covers: covers.plan } : {}),
       ...(rule.when ? { when: parseExpr(rule.when) } : {}),
       ...(rule.says ? { says: saidAsDeclared(parseTemplate(rule.says), document.kinds[rule.over]?.fields) } : {}),
     };
