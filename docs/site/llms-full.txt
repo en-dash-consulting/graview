@@ -857,7 +857,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.59
 
-Published October 26, 2026 · the current version
+Published October 27, 2026 · the current version
 
 A security release: a served store and a dev server answer only their own page, the store judges every undo, merge and keystroke as the act it is, and nothing a seat may not see reaches it sideways.
 
