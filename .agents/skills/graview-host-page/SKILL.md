@@ -69,6 +69,10 @@ decides the frame; the app still decides what is in it.**
    `firstDrawChunks(metafile, face)` from `@graview/embed/first-draw`, as
    `modulepreload` links. `onError` and `onReady` tell the host failures
    (class and module only) and the time to the first face drawn.
+7. **Serve the files you keep.** `files: { upload, maxBytes, kinds }` on
+   `mount`; serve each as its bytes' type, `nosniff`. A page with a CSP
+   allows the files route in `object-src`, or a record's PDF is its one
+   line — name, type, size, Open / Download — and no box.
 
 ## Knowing when a place has drawn
 

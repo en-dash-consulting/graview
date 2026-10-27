@@ -353,6 +353,29 @@ function GalleryPicture({ file, onOpen }: { readonly file: FileValue; readonly o
 }
 
 /**
+ * A PDF'S BOX (FR-234): an `<object>` the browser draws the PDF into, sized
+ * only once it has loaded it — 420 px with a frame — and nothing until then.
+ * It used to stand 420 px tall from the first draw, its fallback sentence
+ * inside it, so where a browser draws no PDF inline (an iPhone; a host whose
+ * page says `object-src 'none'`, which lets no `load` happen) the reader got
+ * a tall empty box. The file's own line stands outside it (`FilesShown`),
+ * so nothing is lost when the box stays empty.
+ */
+function PdfBox({ src, file }: { readonly src: string; readonly file: FileValue }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <object
+      data={src}
+      type="application/pdf"
+      aria-label={fileWords(file)}
+      data-graview-pdf={loaded ? "shown" : "waiting"}
+      onLoad={() => setLoaded(true)}
+      style={loaded ? { width: "100%", height: 420, border: "1px solid var(--graview-edge)", borderRadius: ROUND } : { width: "100%", height: 0, display: "block" }}
+    />
+  );
+}
+
+/**
  * A RECORD'S FILES, AS ITS PAGE SHOWS THEM: its pictures in a gallery, each
  * opening full size in a dialog that gives the keyboard back to it; its
  * documents by name, type and size — a PDF inline, the rest a download.
@@ -403,21 +426,37 @@ function FilesShown({ files, label }: { readonly files: readonly FileValue[]; re
         <ul data-graview-documents="" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
           {documents.map((file) => (
             <li key={file.href} data-graview-document={file.type} style={{ display: "grid", gap: 6, minWidth: 0 }}>
+              {file.type === "application/pdf" ? <PdfBox src={at(file)} file={file} /> : null}
               {file.type === "application/pdf" ? (
-                <object data={at(file)} type="application/pdf" aria-label={fileWords(file)} style={{ width: "100%", height: 420, border: "1px solid var(--graview-edge)", borderRadius: ROUND }}>
-                  <p style={{ margin: 0, padding: 12 }}>
-                    This browser shows no PDF here: <a href={at(file)} download={file.name}>download {file.name}</a>.
-                  </p>
-                </object>
-              ) : null}
-              <span style={{ display: "flex", flexWrap: "wrap", gap: "2px 10px", alignItems: "baseline", minWidth: 0, overflowWrap: "anywhere" }}>
-                <a href={at(file)} download={file.name} {...(file.type === "application/pdf" ? { target: "_blank", rel: "noopener" } : {})}>
-                  {file.name}
-                </a>
-                <span style={QUIET}>
-                  {typeWords(file)} · {sizeWords(file.bytes)}
+                /*
+                 * THE PDF'S ONE LINE (FR-234), outside the box: its name, its
+                 * type and its size, then Open (in a tab) and Download. Where
+                 * the browser draws no PDF inline — an iPhone, a host whose
+                 * page says `object-src 'none'` — this line is all there is,
+                 * and it is enough.
+                 */
+                <span data-graview-file-line="" style={{ minWidth: 0, overflowWrap: "anywhere", lineHeight: 1.5 }}>
+                  {file.name} <span style={QUIET}>· {typeWords(file)} · {sizeWords(file.bytes)} —</span>{" "}
+                  <a href={at(file)} target="_blank" rel="noopener">
+                    Open
+                  </a>{" "}
+                  <span style={QUIET} aria-hidden="true">
+                    /
+                  </span>{" "}
+                  <a href={at(file)} download={file.name}>
+                    Download
+                  </a>
                 </span>
-              </span>
+              ) : (
+                <span style={{ display: "flex", flexWrap: "wrap", gap: "2px 10px", alignItems: "baseline", minWidth: 0, overflowWrap: "anywhere" }}>
+                  <a href={at(file)} download={file.name}>
+                    {file.name}
+                  </a>
+                  <span style={QUIET}>
+                    {typeWords(file)} · {sizeWords(file.bytes)}
+                  </span>
+                </span>
+              )}
               {file.caption ? <span style={QUIET}>{file.caption}</span> : null}
             </li>
           ))}

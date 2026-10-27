@@ -305,7 +305,13 @@ try {
             await until(page, async () => (await held(page, "roof", "photos")).length === 2);
             seen.pasted.push({ ...where, kept: await held(page, "roof", "photos"), drawn: await page.locator(`${photos} [data-graview-gallery] img`).count() });
 
-            /* A PDF: shown inline, with its download beside it. */
+            /*
+             * A PDF: shown inline, with its one line outside the box — its name, its type, its size, Open and Download (FR-234). The box
+             * takes its height only once the browser has loaded the PDF into it. A browser with a PDF viewer (Chrome, headed Chromium)
+             * fires `load` on the object and the box is sized; the headless engines here draw none and fire nothing, as an iPhone or a
+             * page whose CSP says `object-src 'none'` would, and the box stays at nothing with the line all there is. Either way the
+             * box is as its state says.
+             */
             await page.locator('[data-graview-files="papers"] input[data-graview-file-input]').first().setInputFiles(QUOTE);
             await until(page, async () => (await held(page, "roof", "papers")).length === 1);
             const pdf = await until(page, () => page.evaluate(() => {
@@ -313,7 +319,20 @@ try {
               const link = document.querySelector('[data-graview-files="papers"] a[download="quote.pdf"]');
               return Boolean(object?.getAttribute("data")?.startsWith("/__graview/files/") && link);
             }));
-            seen.pdf.push({ ...where, kept: await held(page, "roof", "papers"), inline: pdf });
+            const sized = await until(page, () => page.evaluate(() => document.querySelector('[data-graview-files="papers"] object[data-graview-pdf="shown"]') !== null), 2000);
+            const line = await page.evaluate(() => {
+              const row = document.querySelector('[data-graview-files="papers"] [data-graview-document="application/pdf"]');
+              const line = row?.querySelector("[data-graview-file-line]");
+              const object = row?.querySelector("object");
+              return {
+                said: (line?.textContent ?? "").replace(/\s+/g, " ").trim(),
+                outsideTheBox: Boolean(line) && !object?.contains(line),
+                boxSaysNothing: (object?.textContent ?? "").trim() === "",
+                state: object?.getAttribute("data-graview-pdf") ?? null,
+                height: Math.round(object?.getBoundingClientRect().height ?? -1),
+              };
+            });
+            seen.pdf.push({ ...where, kept: await held(page, "roof", "papers"), inline: pdf, sized, line });
             await shot(page, "pdf");
 
             /* Refused by the host: more than it takes. Said in words; nothing kept. */
@@ -457,6 +476,11 @@ report.checks.theGalleryOpensAPhotoFullSizeAndGivesTheKeyboardBack = {
 report.checks.aPdfIsShownInlineWithItsDownload = {
   seen: seen.pdf,
   ok: all(seen.pdf, pagesScreens, (one) => same(one.kept, ["quote.pdf"]) && one.inline),
+};
+/* FR-234: the PDF's line stands outside its box and says it all; the box is sized only once the browser has loaded the PDF (Chromium does). */
+report.checks.aPdfIsOneLineOutsideABoxSizedOnlyOnceLoaded = {
+  seen: seen.pdf.map((one) => ({ engine: one.engine, scheme: one.scheme, sized: one.sized, ...one.line })),
+  ok: all(seen.pdf, pagesScreens, (one) => /^quote\.pdf · PDF · \d+ bytes — Open \/ Download$/.test(one.line.said) && one.line.outsideTheBox && one.line.boxSaysNothing && (one.sized ? one.line.state === "shown" && one.line.height > 100 : one.line.state === "waiting" && one.line.height === 0)),
 };
 report.checks.aFileTheHostRefusesIsSaidInWordsAndNothingIsKept = {
   seen: seen.refused,
