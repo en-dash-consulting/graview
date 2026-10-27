@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 555,
+  "gzipped": 203,
+  "changeset": "a-compaction-asked-for-format-1-stays-readable-by-an-older-build.md",
+  "note": "Raised when a compaction came to be asked for format 1 (`CompactOptions.format`): the store holds the horizon at the earliest seq readers are served behind it until `formatStamp` says the format asked for, so it reads the stamp and the formats this build writes where it checkpoints, and refuses a format it does not write. Measured at 575_593 / 200_655 against 575_038 / 200_452 minified and gzipped."
+}
