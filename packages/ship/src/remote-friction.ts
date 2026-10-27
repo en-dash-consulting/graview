@@ -1,4 +1,5 @@
 import type { FrictionEvent, FrictionSink, FrictionSummary } from "@graview/core/friction";
+import { servedAddress } from "./seat-headers.js";
 
 /**
  * THE CLIENT HALF OF THE FRICTION LOG ON THE WIRE (Roadmap f-friction-log),
@@ -29,8 +30,10 @@ export interface RemoteFriction {
 
 export function remoteFriction(options: RemoteFrictionOptions): RemoteFriction {
   const doFetch = options.fetch ?? fetch;
-  const at = `${options.url.replace(/\/$/, "")}${FRICTION_PATH}`;
-  const headers = { "content-type": "application/json", ...(options.headers ?? {}) };
+  // The address `graview serve` printed carries its run's key: sent as a header.
+  const keyed = servedAddress(options.url, options.headers);
+  const at = `${keyed.url}${FRICTION_PATH}`;
+  const headers = { "content-type": "application/json", ...keyed.headers };
   let closed = false;
   let pending: Promise<void> = Promise.resolve();
   return {

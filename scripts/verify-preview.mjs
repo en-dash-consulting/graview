@@ -40,6 +40,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+// The previews this starts answer only with the run's key: sent from here, and traded for each browser's cookie.
+import { admit, keyedFetch as fetch, scrub } from "./lib/serve-key.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
 import { seatHeaders } from "../packages/ship/dist/index.js";
@@ -82,7 +84,8 @@ for (;;) {
   }
   await new Promise((ready) => setTimeout(ready, 200));
 }
-report.said = said.trim().split("\n");
+await admit(base);
+report.said = scrub(said).trim().split("\n");
 
 let browser;
 const errors = [];
@@ -303,6 +306,7 @@ try {
         if (Date.now() - began > 30_000 || formServer.exitCode !== null) throw new Error(`graview preview of the RSVP did not start:\n${formSaid}`);
         await new Promise((ready) => setTimeout(ready, 200));
       }
+      await admit(formBase);
       // What the visitor must never be shown or sent: every record already there, by what it says.
       const others = ["Grace Hopper", "grace@example.com", "Arriving late", "Rose table", "guest-grace", "table-rose"];
       const { principal: host } = await (await fetch(`${formBase}/graview/document`)).json();
@@ -410,6 +414,7 @@ try {
         if (Date.now() - began > 30_000 || publishingServer.exitCode !== null) throw new Error(`graview preview of the RSVP that publishes did not start:\n${publishingSaid}`);
         await new Promise((ready) => setTimeout(ready, 200));
       }
+      await admit(publishingBase);
       const { principal: host } = await (await fetch(`${publishingBase}/graview/document`)).json();
       const reader = { kind: "human", id: "reader", name: "A reader", roles: [] };
       const stateOf = async (seat) => (await fetch(`${publishingBase}/graview/state`, { headers: seatHeaders(seat) })).json();

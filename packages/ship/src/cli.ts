@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
@@ -10,9 +11,10 @@ import { fileViews } from "./file-views.js";
 import { LIVE_PATH } from "./live.js";
 import { openStore } from "./open-store.js";
 import { serveStore } from "./serve.js";
+import { SERVE_KEY } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
 import { sayStep } from "./steps.js";
-import { LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
+import { keyedAddress, LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
 import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
 import { bundleAppForPage } from "./preview-app.js";
 import { applySteps, sayRefusals, seedRefusals, seedSteps } from "./sync-seed.js";
@@ -43,7 +45,11 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       machine can reach it — from a program, or from a page on its own
       origin; a page on another origin is refused unless --allow-origin
       names it (say it once per origin, as http://localhost:5195), and
-      no header names the system's seat. On any other --host it will not
+      no header names the system's seat. Each run mints a key and prints
+      it in the address it says: only a request carrying it is believed
+      (a page opens that address, a program passes it whole as
+      --remote-url), because another account on this machine reaches
+      loopback too. Health answers without it. On any other --host it will not
       start unless --trust-seat-headers says the network in front of it can
       be trusted, and then it believes every seat header, the system's too.
       The app's declared connections (a Google calendar, a Notion database) run beside it, with
@@ -77,7 +83,10 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       serve's do, unless --no-sync. --view and --manifest draw a worker view
       proposed and not kept where it attaches, marked as a draft. Each of
       the app's forms for visitors is at /forms/<name>, drawn alone and
-      answered as a visitor minted for that page.
+      answered as a visitor minted for that page. On 127.0.0.1 each run
+      mints a key, carried by every address it prints: open one of those
+      (the key is traded for a cookie), since nothing but health answers
+      without it.
 
   graview shots <document.json | app module> [--seed <file>] [--places a,b] [--out <dir>]
                 [--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene]
@@ -215,20 +224,49 @@ async function entryOf(argv: readonly string[], command: string, usage: string):
 export function seatTrust(
   host: string,
   trustFlag: boolean,
-): { readonly trust: boolean; readonly says: string; readonly ownOrigin: boolean; readonly system: boolean } | { readonly refuse: string } {
+): { readonly trust: boolean; readonly says: string; readonly ownOrigin: boolean; readonly system: boolean; readonly keyed: boolean } | { readonly refuse: string } {
   /*
    * Said, the network in front is the operator's word, the system's seat among the headers it carries.
    * Unsaid, on loopback, "only this machine" is held to: a page on another
    * origin in this machine's browser — or one rebinding its name here — is
-   * refused (`ownOrigin`), and no header names the system's seat.
+   * refused (`ownOrigin`), and no header names the system's seat. And
+   * this machine is not one person: another account on it, or a program
+   * that sends no `Origin`, reaches loopback too, so a seat is believed
+   * only from a request carrying the key this run mints (`keyed`).
    */
-  if (trustFlag) return { trust: true, ownOrigin: false, system: true, says: `believes seat headers on ${host}, because --trust-seat-headers says the network in front of it is trusted` };
-  if (LOOPBACK.has(host)) return { trust: true, ownOrigin: true, system: false, says: `believes seat headers: listening on ${host}, which only this machine reaches, and only from its own origin or one --allow-origin names` };
+  if (trustFlag) return { trust: true, ownOrigin: false, system: true, keyed: false, says: `believes seat headers on ${host}, because --trust-seat-headers says the network in front of it is trusted` };
+  if (LOOPBACK.has(host))
+    return {
+      trust: true,
+      ownOrigin: true,
+      system: false,
+      keyed: true,
+      says: `believes seat headers: listening on ${host}, which only this machine reaches, only from its own origin or one --allow-origin names, and only with this run's key`,
+    };
   return {
     refuse:
       `graview serve: refusing to listen on ${host} while believing seat headers — anyone who can reach it could claim any seat.\n` +
       `  Serve on 127.0.0.1 (the default), put a host that authenticates in front with its own seatOf, or say --trust-seat-headers.\n`,
   };
+}
+
+/**
+ * A KEY FOR ONE RUN of `graview serve`: 32 random bytes, said only in the
+ * terminal it runs in, as the address to open (`?graview_key=<key>`). A
+ * new run is a new key, so an address printed yesterday opens nothing.
+ */
+export function mintServeKey(): string {
+  return randomBytes(32).toString("base64url");
+}
+
+/**
+ * This run's key: `GRAVIEW_SERVE_KEY` when it is set and at least 16
+ * characters (a harness that starts its own server and opens it), else one
+ * minted for the run.
+ */
+export function serveKey(): string {
+  const said = process.env["GRAVIEW_SERVE_KEY"];
+  return said !== undefined && said.length >= 16 ? said : mintServeKey();
 }
 
 export async function serve(argv: readonly string[]): Promise<number> {
@@ -244,6 +282,7 @@ export async function serve(argv: readonly string[]): Promise<number> {
   const backend = await backendFrom(argv);
   const hold = holdBackend(backend, "serve", "Serving it a second time");
   if (!hold) return 1;
+  const key = trust.keyed ? serveKey() : undefined;
   const served = await serveStore({
     app: app as never,
     adapter: backend.adapter,
@@ -253,6 +292,7 @@ export async function serve(argv: readonly string[]): Promise<number> {
     trustSeatHeaders: trust.trust,
     trustSystemSeat: trust.system,
     ownOrigin: trust.ownOrigin,
+    ...(key !== undefined ? { key } : {}),
     allowOrigins: flags(argv, "--allow-origin"),
     where: backend.where,
     // Notify me: kept beside the store, and each match said here, where a host would deliver it.
@@ -283,6 +323,8 @@ export async function serve(argv: readonly string[]): Promise<number> {
   }, hold);
   process.stdout.write(
     `graview serve: ${app.name} on ${served.url}\n` +
+      // The address carries this run's key: a page opens it, a program passes it whole as --remote-url.
+      (key !== undefined ? `  address: ${served.url}/?${SERVE_KEY.param}=${key}  (this run's key: a page opens it, a program passes it whole as --remote-url or sends the key as ${SERVE_KEY.header})\n` : "") +
       `  live: ${served.url.replace(/^http/, "ws")}${LIVE_PATH}\n` +
       `  data: ${backend.where}  (${backend.adapter.name})\n` +
       `  ${trust.says}\n` +
@@ -525,6 +567,8 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
       port: Number(flag(argv, "--port") ?? 0),
       host,
       trustSeatHeaders: trust.trust,
+      // On loopback, this run's key: another account on this machine reaches loopback too.
+      ...(trust.keyed ? { key: serveKey() } : {}),
       principal: previewPrincipal(input.code?.app ?? input.document, { ...(as ? { as } : {}), ...(roles !== undefined ? { roles: listOf(roles) } : {}) }),
       // The document's connections: credentials from the environment, cursors beside the data when it is kept, else in memory.
       connections: {
@@ -540,13 +584,15 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
   }
   const { app, served, url, principal } = opened;
   hold?.serving(url);
+  // Each address said carries this run's key, which a browser trades for a cookie on the first one it opens.
+  const at = (path: string) => keyedAddress(`${url}${path}`, opened.key);
   // Listening for a stop before saying where it listens: whoever reads the address may send one at once.
   stopOnSignal("preview", () => opened.close(), hold);
   process.stdout.write(
     `graview preview: ${app.name} on ${url}\n` +
-      `  Pages: ${url}/   the scene: ${url}/places/overview\n` +
+      `  Pages: ${at("/")}   the scene: ${at("/places/overview")}\n` +
       // Each form for a visitor at its own address, answered as a visitor minted per page (Roadmap f-public-forms).
-      (app.forms && Object.keys(app.forms).length > 0 ? `  forms: ${Object.keys(app.forms).map((name) => `${url}/forms/${name}`).join("   ")}\n` : "") +
+      (app.forms && Object.keys(app.forms).length > 0 ? `  forms: ${Object.keys(app.forms).map((name) => at(`/forms/${name}`)).join("   ")}\n` : "") +
       `  data: ${keeps ? `${backend.where}  (${backend.adapter.name}), held by this preview: other writers are refused until it stops` : "in memory, gone when the preview stops"}\n` +
       `  sits as ${principal.name ?? principal.id}${principal.roles?.length ? `, holding ${principal.roles.join(", ")}` : ""}\n` +
       `  ${served.store.graph.allNodes().length} nodes. Ctrl-C stops it.\n`,
@@ -587,7 +633,8 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
   if (backend === undefined) return 1;
   let opened;
   try {
-    opened = await servePreview({ ...previewed(input), page, ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0) });
+    // On loopback, as every shots run is, with this run's key: the pages it opens trade it for a cookie.
+    opened = await servePreview({ ...previewed(input), page, ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0), key: serveKey() });
   } catch (error) {
     process.stderr.write(`graview shots: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
@@ -605,6 +652,7 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
     try {
       const files = await shoot({
         url: opened.url,
+        ...(opened.key !== undefined ? { key: opened.key } : {}),
         shots: taken,
         out,
         schemes: scheme === "both" ? ["light", "dark"] : [scheme as "light" | "dark"],

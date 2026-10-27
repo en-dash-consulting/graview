@@ -21,6 +21,7 @@
 import { existsSync } from "node:fs";
 import { chromium, firefox, webkit } from "playwright";
 import { watched } from "./watch.mjs";
+import { withServeKeys } from "./serve-key.mjs";
 
 /** The one place the Canary path is written. GRAVIEW_BROWSER overrides it. */
 const CANARY =
@@ -48,7 +49,8 @@ export function engineName(argv = process.argv) {
  */
 export async function launchEngine(name, options = {}) {
   // Every page every harness opens is held to the rules that hold everywhere (watch.mjs).
-  return watched(forcedRenderer(await launch(name, options)), name);
+  // And let into every served store and preview the harness admitted (serve-key.mjs).
+  return watched(forcedRenderer(withServeKeys(await launch(name, options))), name);
 }
 
 /**

@@ -34,6 +34,8 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, symli
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+// The preview answers only with its run's key: sent from here, and handed to the face's dev server as the address it printed.
+import { keyed, keyedFetch as fetch } from "./lib/serve-key.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
 import { seatHeaders } from "../packages/ship/dist/index.js";
@@ -114,7 +116,7 @@ const errors = [];
 try {
   const preview = start(process.execPath, [CLI, "preview", `${RECIPE}/app.json`, "--seed", `${RECIPE}/seed.json`, "--port", String(portFor("face-recipe-preview"))], { cwd: repoRoot });
   await until(`${PREVIEW}/graview/health`, "graview preview", preview);
-  const face = start(process.execPath, [join(scratch, "node_modules/vite/bin/vite.js")], { cwd: scratch, env: { ...process.env, PORT: String(portFor("face-recipe")), GRAVIEW_PREVIEW: PREVIEW } });
+  const face = start(process.execPath, [join(scratch, "node_modules/vite/bin/vite.js")], { cwd: scratch, env: { ...process.env, PORT: String(portFor("face-recipe")), GRAVIEW_PREVIEW: keyed(`${PREVIEW}/`) } });
   await until(`${FACE}/`, "the face's dev server", face);
 
   /* THE DOORS: the preview answers its own page, not another one, and the proxy says the face's request is its own. */

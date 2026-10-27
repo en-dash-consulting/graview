@@ -52,7 +52,7 @@ import {
   type WireAnswer,
 } from "./live-protocol.js";
 import { openStore, type Compaction, type OpenedStore } from "./open-store.js";
-import { SEAT_HEADERS } from "./seat-headers.js";
+import { SEAT_HEADERS, SERVE_KEY } from "./seat-headers.js";
 import { answerSubscriptions } from "./subscriptions.js";
 import { frictionDoor } from "./friction.js";
 import { FRICTION_PATH } from "./remote-friction.js";
@@ -474,7 +474,7 @@ export function seatFromHeaders(request: Request, { system = false }: { readonly
 /** A browser on another origin is the ordinary case for an embed. */
 const CORS: Readonly<Record<string, string>> = {
   "access-control-allow-origin": "*",
-  "access-control-allow-headers": ["content-type", "authorization", ...Object.values(SEAT_HEADERS)].join(", "),
+  "access-control-allow-headers": ["content-type", "authorization", ...Object.values(SEAT_HEADERS), SERVE_KEY.header].join(", "),
   "access-control-allow-methods": "GET, POST, OPTIONS",
 };
 

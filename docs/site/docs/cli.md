@@ -108,13 +108,19 @@ Writes a lens that compiles: the role check that fails loudly, the createXLens f
 graview preview <document.json | app module> [--seed <file>] [--port <n>] [--host <address>]
 ```
 
-[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync] [--view <view.js> --manifest <manifest.json>] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. An app declared in code is taken as graview check takes it (./dist/domain/app.js), its module bundled for the page with the project's esbuild. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the app declares, unless --as or --roles say who. Its connections run as serve's do, unless --no-sync. --view and --manifest draw a worker view proposed and not kept where it attaches, marked as a draft. Each of the app's forms for visitors is at /forms/<name>, drawn alone and answered as a visitor minted for that page.
+[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync] [--view <view.js> --manifest <manifest.json>] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. An app declared in code is taken as graview check takes it (./dist/domain/app.js), its module bundled for the page with the project's esbuild. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the app declares, unless --as or --roles say who. Its connections run as serve's do, unless --no-sync. --view and --manifest draw a worker view proposed and not kept where it attaches, marked as a draft. Each of the app's forms for visitors is at /forms/<name>, drawn alone and answered as a visitor minted for that page. On 127.0.0.1 each run mints a key, carried by every address it prints: open one of those (the key is traded for a cookie), since nothing but health answers without it.
 
 ## graview serve
 
 ```text
 graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <file>]
 
+    --remote-url), because another account on this machine reaches
+    loopback too. Health answers without it. On any other --host it will not
+    start unless --trust-seat-headers says the network in front of it can
+    be trusted, and then it believes every seat header, the system's too.
+    The app's declared connections (a Google calendar, a Notion database) run beside it, with
+    credentials from the environment and their cursors beside the data;
     --no-sync leaves them off. What people looked for and could not do
     (a search that found nothing, an act refused) is kept for 90 days in
     friction.json beside the data, each person reading only their own and
@@ -122,7 +128,7 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
 
 ```
 
-[--host <address>] [--trust-seat-headers] [--allow-origin <origin>] [--no-sync] [--no-friction] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it — from a program, or from a page on its own origin; a page on another origin is refused unless --allow-origin names it (say it once per origin, as http://localhost:5195), and no header names the system's seat. On any other --host it will not start unless --trust-seat-headers says the network in front of it can be trusted, and then it believes every seat header, the system's too. The app's declared connections (a Google calendar, a Notion database) run beside it, with credentials from the environment and their cursors beside the data;
+[--host <address>] [--trust-seat-headers] [--allow-origin <origin>] [--no-sync] [--no-friction] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it — from a program, or from a page on its own origin; a page on another origin is refused unless --allow-origin names it (say it once per origin, as http://localhost:5195), and no header names the system's seat. Each run mints a key and prints it in the address it says: only a request carrying it is believed (a page opens that address, a program passes it whole as
 
 ## graview shots
 

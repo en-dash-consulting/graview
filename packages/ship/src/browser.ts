@@ -40,7 +40,7 @@ export { remoteViews, VIEWS_PATH } from "./remote-views.js";
 export type { RemoteViewsOptions, ViewsPost } from "./remote-views.js";
 // The host's files at an address, for a page's `files` (FR-163): what the dev door answers.
 export { filesAt } from "./files-at.js";
-export { SEAT_HEADERS } from "./seat-headers.js";
+export { SEAT_HEADERS, SERVE_KEY, servedAddress } from "./seat-headers.js";
 export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
 export type { LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, RemoteOptions, RemoteRefusal, RemoteState, RemoteStatus, RemoteStore } from "./remote.js";

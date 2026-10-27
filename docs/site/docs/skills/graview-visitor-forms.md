@@ -32,7 +32,7 @@ A policy with `sees` keeps every kind it does not name from every role it does n
 
 `remote` is `openRemote` opened as the same visitor. No bar, no lists, no seat; `onSubmitted` is told once it is received. A React host draws `VisitorFormPage` from `@graview/pages/visitor-form`.
 
-1. **Try it locally.** `graview preview <document>` serves each form at `/forms/<name>`, a visitor minted per page.
+1. **Try it locally.** `graview preview <document>` serves each form at `/forms/<name>`, a visitor minted per page: open the form's address as it prints it, which carries the run's key.
 
 ### Worked examples
 

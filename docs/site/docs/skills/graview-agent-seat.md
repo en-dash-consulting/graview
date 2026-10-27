@@ -32,7 +32,7 @@ The author is a `Principal` — an author with roles — so what the log blames 
 
 1. **Host the seat where the data is, for an agent outside the page.** An editor's assistant or a scheduled worker does not need glue of its own:
 
-```sh graview mcp ./dist/domain/app.js --data ./data --as cursor --roles keeper graview mcp ./dist/domain/app.js --remote-url http://localhost:5196 --roles keeper graview apply ./dist/domain/app.js --data ./data --roles keeper \ --call add-task --args '{"listId":"today","label":"Book the van","id":"t-van"}' ```
+```sh graview mcp ./dist/domain/app.js --data ./data --as cursor --roles keeper graview mcp ./dist/domain/app.js --remote-url "http://localhost:5196/?graview_key=…" --roles keeper # the address serve printed graview apply ./dist/domain/app.js --data ./data --roles keeper \ --call add-task --args '{"listId":"today","label":"Book the van","id":"t-van"}' ```
 
 `mcp` is MCP over stdio around this same runtime; `apply` is one act, a plan of many as one batch, or an undo, from a shell. Both open the store `graview serve` opens — a folder, SQLite, or a running server — and act under the seat you name, so the policy refuses there what it refuses here. Put `serve` and `mcp` in the app's scripts so the door is always there, and tell the agent the seed is a first-install snapshot: it changes the live graph through these, never by editing `example.json` and wiping. `graview mcp <entry> --list --roles …` prints the seat's tools as `tools/list` JSON — the catalog a host registers without writing one.
 

@@ -142,7 +142,8 @@ The place menu's Hide on a kind's list reaches `keptViews.lens` as
 ## Pictures of places, with no product
 
 `graview preview <document.json>` serves the store and Graview's own faces
-over a document; `graview shots <document.json> --places a,b --scheme both
+over a document, at the address it prints (it carries the run's key, which
+the page trades for a cookie; nothing but health answers without it); `graview shots <document.json> --places a,b --scheme both
 --width 390,1280` photographs places to PNGs, waiting for
 `data-graview-drawn` before each. Both take an app declared in code as
 `graview check` does (`./dist/domain/app.js`): the store runs it, and the

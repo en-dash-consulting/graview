@@ -1,5 +1,6 @@
 import type { Principal, Subscription, SubscriptionStore } from "@graview/core";
 import { seatHeaders } from "./remote.js";
+import { servedAddress } from "./seat-headers.js";
 
 /**
  * THE CLIENT HALF OF SUBSCRIPTIONS ON THE WIRE (Roadmap f-notify-subscriptions),
@@ -27,8 +28,10 @@ export interface RemoteSubscriptionsOptions {
  */
 export function remoteSubscriptions(options: RemoteSubscriptionsOptions): SubscriptionStore {
   const doFetch = options.fetch ?? fetch;
-  const base = options.url.replace(/\/$/, "");
-  const headers = { "content-type": "application/json", ...(options.principal ? seatHeaders(options.principal) : {}), ...(options.headers ?? {}) };
+  // The address `graview serve` printed carries its run's key: sent as a header.
+  const keyed = servedAddress(options.url, options.headers);
+  const base = keyed.url;
+  const headers = { "content-type": "application/json", ...(options.principal ? seatHeaders(options.principal) : {}), ...keyed.headers };
   const listeners = new Set<() => void>();
   const changed = () => {
     for (const listener of listeners) listener();

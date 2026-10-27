@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { gzipSync } from "node:zlib";
 import type { Duplex } from "node:stream";
@@ -7,6 +8,8 @@ import { createStoreHandler, SEAT_HEADERS, seatFromHeaders, WIRE, type AdapterSt
 import type { Compaction, OpenedStore } from "./open-store.js";
 import { LIVE_PATH, LIVE_SUBPROTOCOL } from "./live.js";
 import { acceptSocket, type ServerSocket } from "./websocket.js";
+import { cookieOf, sameKey, tradeKey } from "./door.js";
+import { SERVE_KEY } from "./seat-headers.js";
 
 /**
  * THE STORE, BEHIND NODE'S HTTP — a thin wrapper and nothing more (FR-09).
@@ -51,6 +54,18 @@ export interface ServeOptions<S extends AnySchema> extends AdapterStoreHandlerOp
    */
   readonly allowOrigins?: readonly string[];
   /**
+   * THIS RUN'S KEY (`SERVE_KEY`): when said, no request but health (and a
+   * browser's preflight) is answered unless it carries it — in
+   * `x-graview-key`, in the `graview_key` query parameter, or in the
+   * cookie the address `?graview_key=<key>` is traded for (303 back to
+   * the same address without it; `HttpOnly`, `SameSite=Strict`, a value
+   * made from the key rather than the key). How `graview serve` on
+   * loopback keeps another account on this machine, or any program that
+   * sends no `Origin`, out of the seats it believes from headers. The key
+   * is never written into an answer. Compared in constant time.
+   */
+  readonly key?: string;
+  /**
    * The most bytes a request's body may carry: one that says more, or sends
    * more as it streams (chunked too), is answered 413 before any route or
    * `seatOf` is asked — read in memory before either, a body is the cost
@@ -81,13 +96,40 @@ export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, 
   close(options?: { readonly grace?: number }): Promise<void>;
 }
 
+/** What a request without this run's key is told: where the key is, and nothing else. */
+export const KEY_MISSING = "This store answers only a page or a program given the address graview serve printed (it carries this run's key): open that address, pass it as --remote-url, or send its key as x-graview-key.";
+
 /** How long a live socket is given to go once it has been told the store is closing. */
 const CLOSE_GRACE_MS = 1500;
 
 export async function serveStore<S extends AnySchema>(options: ServeOptions<S>): Promise<ServedStore<S>> {
-  const { port: wanted, host, answer, ownOrigin = false, allowOrigins = [], maxBodyBytes = MAX_BODY_BYTES, ...rest } = options;
+  const { port: wanted, host, answer, ownOrigin = false, allowOrigins = [], key, maxBodyBytes = MAX_BODY_BYTES, ...rest } = options;
   const handler = await createStoreHandler(rest);
   const NOT_OURS = JSON.stringify({ error: "Refused: not from this server's own page.", reason: "forbidden" });
+  const NO_KEY = JSON.stringify({ error: KEY_MISSING, reason: "forbidden" });
+  // What the cookie holds: made from the key, so not even the trade's own answer writes the key.
+  const cookieValue = key === undefined ? undefined : createHash("sha256").update(`graview-serve-cookie:${key}`).digest("base64url");
+  /*
+   * The cookie is named for the port this server listens on: a browser sends
+   * a cookie to every port of a host, so two stores open in one browser would
+   * otherwise each overwrite the other's.
+   */
+  let listening = 0;
+  const cookieName = () => `${SERVE_KEY.cookie}_${listening}`;
+  /** Whether a request carries this run's key — always, when the store keeps none. */
+  const keyed = (incoming: IncomingMessage): boolean => {
+    if (key === undefined || cookieValue === undefined) return true;
+    const header = incoming.headers[SERVE_KEY.header];
+    if (typeof header === "string" && sameKey(header, key)) return true;
+    const cookie = cookieOf(incoming, cookieName());
+    if (cookie !== undefined && sameKey(cookie, cookieValue)) return true;
+    const raw = incoming.url ?? "/";
+    if (!raw.includes(`${SERVE_KEY.param}=`)) return false;
+    const given = addressOf(incoming)?.searchParams.get(SERVE_KEY.param) ?? null;
+    return given !== null && sameKey(given, key);
+  };
+  /** Health says whether the store is well to anybody, and a preflight carries no header a page would send: neither needs the key. */
+  const open = (incoming: IncomingMessage): boolean => incoming.method === "OPTIONS" || addressOf(incoming)?.pathname === "/graview/health";
   const allowed = new Set(allowOrigins.map(originOf).filter((origin): origin is string => origin !== undefined));
   /** The origin a request's page is on, when it is one this server lets in besides its own (and at a host that is this machine). */
   const allowedOrigin = (incoming: IncomingMessage): string | undefined => {
@@ -119,6 +161,19 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
       outgoing.end(NOT_OURS);
       return;
     }
+    if (key !== undefined && cookieValue !== undefined) {
+      // The printed address, opened in a browser: the key traded for the cookie, and the address tidied.
+      const method = incoming.method ?? "GET";
+      const path = addressOf(incoming)?.pathname ?? "/";
+      if ((method === "GET" || method === "HEAD") && !path.startsWith("/graview/") && tradeKey(incoming, outgoing, { param: SERVE_KEY.param, cookie: cookieName(), key, value: cookieValue })) return;
+      if (!open(incoming) && !keyed(incoming)) {
+        const headers: Record<string, string> = { "content-type": "application/json", "content-length": String(Buffer.byteLength(NO_KEY)), "cache-control": "no-store" };
+        corsOf(incoming)?.(headers);
+        outgoing.writeHead(401, headers);
+        outgoing.end(NO_KEY);
+        return;
+      }
+    }
     void requestOf(incoming, maxBodyBytes)
       .then(async (request) => (answer ? await answer(request) : undefined) ?? handler.handle(request))
       .then((response) => write(outgoing, response, takesGzip(incoming), corsOf(incoming)))
@@ -148,10 +203,15 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     stream.on("error", () => {});
     upgraded.add(stream);
     stream.once("close", () => upgraded.delete(stream));
-    const path = new URL(incoming.url ?? "/", "http://localhost").pathname;
+    const path = addressOf(incoming)?.pathname;
     const key = incoming.headers["sec-websocket-key"];
     if (refused(incoming)) {
       stream.end(`HTTP/1.1 403 Forbidden\r\nContent-Type: application/json\r\nContent-Length: ${Buffer.byteLength(NOT_OURS)}\r\nConnection: close\r\n\r\n${NOT_OURS}`);
+      return;
+    }
+    // A page's socket cannot set a header: its key rides in the query, or in the cookie its page was given.
+    if (!keyed(incoming)) {
+      stream.end(`HTTP/1.1 401 Unauthorized\r\nContent-Type: application/json\r\nContent-Length: ${Buffer.byteLength(NO_KEY)}\r\nConnection: close\r\n\r\n${NO_KEY}`);
       return;
     }
     if (path !== LIVE_PATH || typeof key !== "string" || String(incoming.headers.upgrade).toLowerCase() !== "websocket") {
@@ -175,6 +235,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
   });
 
   const port = await listen(server, wanted ?? 0, host);
+  listening = port;
   return {
     // Read through: the declaration changing replaces them (FR-43).
     get store() {
@@ -225,6 +286,15 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
   };
 }
 
+/** Where a request asks, or nothing for an address no URL parses (`//[`): asked before any promise, a throw there would end the process. */
+function addressOf(incoming: IncomingMessage): URL | undefined {
+  try {
+    return new URL(incoming.url ?? "/", "http://localhost");
+  } catch {
+    return undefined;
+  }
+}
+
 /** A body over the limit: answered 413. */
 class TooLarge extends Error {}
 
@@ -237,7 +307,11 @@ async function requestOf(incoming: IncomingMessage, limit = MAX_BODY_BYTES): Pro
   }
   const method = incoming.method ?? "GET";
   const body = method !== "GET" && method !== "HEAD" ? await bodyOf(incoming, limit) : undefined;
-  return new Request(new URL(incoming.url ?? "/", "http://localhost"), {
+  // The run's key was asked for at the door: nothing past it — a route, a host's `answer` — is handed it.
+  headers.delete(SERVE_KEY.header);
+  const url = new URL(incoming.url ?? "/", "http://localhost");
+  if (url.searchParams.has(SERVE_KEY.param)) url.searchParams.delete(SERVE_KEY.param);
+  return new Request(url, {
     method,
     headers,
     ...(body && body.length > 0 ? { body } : {}),

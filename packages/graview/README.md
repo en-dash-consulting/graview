@@ -22,7 +22,8 @@ graview doctor                        # one Graview release in package.json, the
 graview skills install .              # the authoring skills, for Claude Code and Codex
 ```
 
-`preview` is `serve` with Graview's own faces over the store: a JSON
+`preview` is `serve` with Graview's own faces over the store, at the
+address it prints (which carries that run's key, as `serve`'s does): a JSON
 document and a snapshot, looked at with nothing built and nothing else
 installed — the page ships in this package. `shots` photographs the same
 page headless; it needs Playwright, which you install beside the project
@@ -30,7 +31,8 @@ page headless; it needs Playwright, which you install beside the project
 
 `serve`, `mcp`, `apply` and `sync-seed` share one store: `--data <dir>` (a
 folder of readable JSON, the default), `--sqlite <file>`, or — for `mcp` and
-`apply` — `--remote-url <url>` against a running `graview serve`. `--as` and
+`apply` — `--remote-url <url>` against a running `graview serve`, given the
+address it printed (it carries that run's key). `--as` and
 `--roles` say who is acting; the policy judges on the host exactly as it
 judges in a browser.
 

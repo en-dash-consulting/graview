@@ -128,6 +128,10 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    it answers 401. On 127.0.0.1 it answers only its own origin, and a page
    on another one `--allow-origin` names (a dev server's app that opens
    the store with `openRemote`), and no header there names the system's seat.
+   Each run there mints a key and believes only a request carrying it, so
+   another account on the machine cannot claim a seat: hand `openRemote`,
+   `--remote-url` and a page's own server parameter the address it printed, whole
+   (`?graview_key=…`); health answers without it.
 
 6. **A host serving document apps compiles once, on the server.** Send
    `serializeCompiled(compileDocument(document))` beside the document, and
@@ -145,7 +149,9 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    (Ctrl-C or `kill` stops it within seconds, open pages or not; a hold
    whose process died is taken over, and says so) — and
    `graview shots … --places home,overview --out shots` photographs named
-   places headless (Playwright is yours to install). Prove a change to an
+   places headless (Playwright is yours to install). Like `serve`, each
+   preview run mints a key and every address it prints carries it: open one
+   of those, since nothing but health answers without it. Prove a change to an
    emitted document with these, not hand-written screenshots. In a test,
    `compileDocumentFiles(path, { seed })` from `@graview/core/testing`
    reads the document where it lives — no fixture copy to drift.
