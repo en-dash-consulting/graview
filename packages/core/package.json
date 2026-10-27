@@ -93,6 +93,10 @@
       "types": "./dist/friction.d.ts",
       "default": "./dist/friction.js"
     },
+    "./css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/css.js"
+    },
     "./learn": {
       "types": "./dist/learn.d.ts",
       "default": "./dist/learn.js"

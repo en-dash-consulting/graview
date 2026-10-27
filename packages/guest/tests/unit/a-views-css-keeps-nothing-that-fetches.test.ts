@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { sanitizeDeclarations, sanitizeStylesheet, sanitizeValue, tokenize } from "../../src/host/css.js";
-import { CSS_FUNCTIONS, CSS_PROPERTIES } from "../../src/open-kit.js";
+import { CSS_FUNCTIONS, CSS_PROPERTIES } from "@graview/core/css";
 
 /**
  * A VIEW'S CSS KEEPS NOTHING THAT FETCHES OR ESCAPES (FR-90). Every case is

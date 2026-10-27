@@ -25,6 +25,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/design-findings.ts"), "utf8"),
   // What a declared connection is found wanting by (`connection-*`, Roadmap f-notion-connection), said with the checker.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/connection-findings.ts"), "utf8"),
+  // What a document's brand is found wanting by (`brand-*`), decided in one place for the check and a `set-brand` edit alike.
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/document/brand-check.ts"), "utf8"),
 ].join("\n");
 
 /**

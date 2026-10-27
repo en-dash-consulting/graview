@@ -441,9 +441,21 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    */
   const logo = createGuestLogo(window, () => looked(), "blob");
   const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(region), options.brand, logo);
+  /*
+   * ONE THEME FOR EVERY VIEW (Roadmap f-app-wide-view-theme): the brand's
+   * stylesheet for its views and its fade between records, drawn by the
+   * host in the region — never handed to the view — and dressed again on
+   * every push, which is how a brand the host changes reaches it.
+   */
+  const dress = () => {
+    const views = options.brand?.()?.views;
+    drawing?.theme(views?.css);
+    drawing?.motion(views?.motion ?? "none");
+  };
   let pushed = "";
   const push = () => {
     pushed = JSON.stringify(theme());
+    dress();
     session?.push();
   };
   const looked = () => {
@@ -799,6 +811,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         return { pressed };
       },
     });
+    dress();
     for (const one of waiting.splice(0)) draw(one);
     watchHeight();
     mark();
@@ -834,7 +847,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         },
         props: () => {
           const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), ...(options.places ? { places: guestPlacesOf(options.places()) } : {}), ...(computed ? { computed } : {}) });
+          const was = shown;
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
+          /* The record it shows changed (Roadmap f-app-wide-view-theme): under the brand's "fade", what is drawn goes before the new one comes. */
+          if (lastProps && (was.size !== shown.size || [...shown].some((id) => !was.has(id)))) drawing?.fade();
           lastProps = props;
           return props;
         },

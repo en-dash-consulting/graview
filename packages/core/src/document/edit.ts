@@ -48,7 +48,7 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
-import { brandFindings, emojiIconSentence, groundWords, subtitleSentence } from "./brand-check.js";
+import { brandFindings, emojiIconSentence, groundWords, subtitleSentence, viewsCssSentence, viewsMotionSentence } from "./brand-check.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
 import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
@@ -242,6 +242,13 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         scheme: z.union([z.enum(["light", "dark", "auto"]), z.null()]).optional(),
         // Whether the home draws the description as the line under the name (Roadmap f-home-subtitle-separate): false keeps it off, true or null draws it again.
         subtitle: z.union([z.boolean(), z.null()]).optional(),
+        // What every worker view inherits (Roadmap f-app-wide-view-theme): a stylesheet drawn before each view's own (its length the sanitizer's to refuse, in `brandFindings`), and a fade between records; null clears either, or all of it.
+        views: z
+          .union([
+            z.object({ css: z.union([z.string().min(1), z.null()]).optional(), motion: z.union([z.enum(["none", "fade"]), z.null()]).optional() }).strict(),
+            z.null(),
+          ])
+          .optional(),
       })
       .strict(),
     "set-name": z.object({ op: z.literal("set-name"), name: z.string().min(1).max(80) }).strict(),
@@ -676,10 +683,17 @@ class Editor {
     // An edit that names nothing to change is refused, never applied with nothing said.
     const named = Object.keys(e).filter((key) => key !== "op" && e[key] !== undefined);
     if (named.length === 0) return this.fail(i, "", "a set-brand edit names at least one key of the brand to set, or null to clear one", '{"op": "set-brand", "accent": "#0f6e5c"}');
-    const emptyPart = (["typography", "shape", "accents"] as const).find((key) => isObject(e[key]) && Object.keys(e[key]).length === 0);
+    const emptyPart = (["typography", "shape", "accents", "views"] as const).find((key) => isObject(e[key]) && Object.keys(e[key]).length === 0);
     if (emptyPart) return this.fail(i, emptyPart, `${emptyPart} names no part to set; name one, or give null to clear all of it`);
     const judged = brandFindings(
-      { ...(typeof e.timeZone === "string" ? { timeZone: e.timeZone } : {}), ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
+      {
+        ...(typeof e.timeZone === "string" ? { timeZone: e.timeZone } : {}),
+        ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}),
+        ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}),
+        ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}),
+        // The stylesheet every view gets is judged as a page draws it (Roadmap f-app-wide-view-theme): an edit that would leave part of it undrawn is refused, saying which part.
+        ...(isObject(e.views) && typeof e.views["css"] === "string" ? { views: { css: e.views["css"] } } : {}),
+      },
       { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}) },
     );
     if (judged.length > 0) return void this.findings.push(...judged);
@@ -820,6 +834,27 @@ class Editor {
       if (e.subtitle === false) brand["subtitle"] = false;
       else delete brand["subtitle"];
       this.said.push(subtitleSentence(e.subtitle !== false));
+    }
+    /* What every view inherits (Roadmap f-app-wide-view-theme): the stylesheet and the fade, each set or cleared on its own, null clearing both. */
+    if (e.views === null) {
+      const had: Record<string, unknown> = brand["views"] ?? {};
+      if (had["css"] !== undefined || had["motion"] === undefined) this.said.push(viewsCssSentence(false));
+      if (had["motion"] === "fade") this.said.push(viewsMotionSentence(undefined));
+      delete brand["views"];
+    } else if (isObject(e.views)) {
+      const into: Record<string, unknown> = { ...(brand["views"] ?? {}) };
+      if (e.views["css"] !== undefined) {
+        if (e.views["css"] === null) delete into["css"];
+        else into["css"] = e.views["css"];
+        this.said.push(viewsCssSentence(e.views["css"] !== null));
+      }
+      if (e.views["motion"] !== undefined) {
+        if (e.views["motion"] === "fade") into["motion"] = "fade";
+        else delete into["motion"];
+        this.said.push(viewsMotionSentence(e.views["motion"] === "fade" ? "fade" : undefined));
+      }
+      if (Object.keys(into).length === 0) delete brand["views"];
+      else brand["views"] = into;
     }
     if (Object.keys(brand).length === 0) delete this.doc.brand;
     else this.doc.brand = brand;

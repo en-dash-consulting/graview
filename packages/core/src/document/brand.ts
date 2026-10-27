@@ -54,6 +54,8 @@ export function brandOf(document: GraviewDocument, findings: Finding[]): Brand {
     ...(spec.shape ? { shape: spec.shape } : {}),
     ...(spec.accents ? { accents: spec.accents } : {}),
     ...(spec.scheme ? { scheme: spec.scheme } : {}),
+    // What every worker view inherits (Roadmap f-app-wide-view-theme): the host draws the stylesheet through the one sanitizer, so what the checker warned of is left out there too.
+    ...(spec.views && (spec.views.css || spec.views.motion) ? { views: { ...(spec.views.css ? { css: spec.views.css } : {}), ...(spec.views.motion ? { motion: spec.views.motion } : {}) } } : {}),
   };
 }
 

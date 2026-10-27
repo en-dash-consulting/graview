@@ -1842,8 +1842,12 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   "favicon": "/graview/assets/&lt;sha256&gt;.svg",
   "typography": { "display": "system-serif", "body": "system-sans" },
   "shape": { "radius": 6, "density": 0.9 },
-  "accents": { "workshop": 168 }, "scheme": "dark"
+  "accents": { "workshop": 168 }, "scheme": "dark",
+  "views": { "css": ".card { padding: 12px }", "motion": "fade" }
 }</code></pre></div>
+<ul>
+<li><strong>One theme for every view</strong> is <code>views</code>: <code>css</code>, a stylesheet every worker view is drawn with before its own (the view's rule wins where both say one), held to what a view's own may be — nothing that fetches, no <code>@import</code>, no <code>:host</code>; <code>graview check</code> says what of it the open kit leaves out (<code>brand-views-css</code>), and <code>set-brand</code> refuses it until clean. <code>motion: "fade"</code> fades a view out and in when the record it shows changes; a shared-element transition is not on offer.</li>
+</ul>
 <ul>
 <li><strong>A mark</strong> — the logo, one for each scheme, and the page icon, an emoji among them — is <code>graview-logo</code>: inline SVG or a path on the app's own host, drawn as given, and one that could act refused (<code>brand-mark</code>).</li>
 <li><strong>A face</strong> is <code>system-serif</code>, <code>system-sans</code>, <code>system-mono</code>, a face every system has (Georgia, Menlo), or a web font on <code>DOCUMENT_FONTS</code>; one named by its address is refused (<code>brand-font</code>). The host decides where web fonts load from.</li>

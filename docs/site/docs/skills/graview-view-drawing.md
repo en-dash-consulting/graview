@@ -22,7 +22,7 @@ A control of your own keeps its role and state, and every `aria-*`: `<span role=
 
 ### The app's look
 
-**Draw with the app's tokens**, so light and dark follow the app's own toggle: `var(--graview-panel)`, `--graview-ground`, `--graview-ink`, `--graview-ink-muted`, `--graview-edge`, `--graview-accent`, `--graview-font-body`, `--graview-font-display` (headings, as the app's), `--graview-font-mono`, `--graview-radius`. Presentation attributes do not take `var()`; put paints in the stylesheet (`.bar { fill: var(--graview-accent) }`). For what the view computes, `props.theme` says the same tokens as values, with `scheme`, the app's `name` and its `logo`. A brand change or the app's toggle pushes `theme` again.
+**Draw with the app's tokens**, so light and dark follow the app's own toggle: `var(--graview-panel)`, `--graview-ground`, `--graview-ink`, `--graview-ink-muted`, `--graview-edge`, `--graview-accent`, `--graview-font-body`, `--graview-font-display` (headings), `--graview-font-mono`, `--graview-radius`. Presentation attributes do not take `var()`; put paints in the stylesheet. `props.theme` says the same tokens as values, with `scheme`, `name` and `logo`, pushed again when the brand or the toggle changes. Shared rules go in `brand.views.css` (`graview-brand`), drawn before each view's own; the view's rule wins.
 
 ### Its box, and the gutter
 

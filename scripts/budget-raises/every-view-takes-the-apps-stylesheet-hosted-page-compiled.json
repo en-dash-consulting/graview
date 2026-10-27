@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 136,
+  "gzipped": 44,
+  "changeset": "every-view-takes-the-apps-stylesheet.md",
+  "note": "Raised when a document's brand came to name what every worker view inherits (Roadmap f-app-wide-view-theme): a compiled app's brand carries `views`, and the host dresses each view from it. Measured at 579_396 / 201_458 against 579_260 / 201_414 minified and gzipped."
+}

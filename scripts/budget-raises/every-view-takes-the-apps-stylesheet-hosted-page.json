@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 192,
+  "gzipped": 62,
+  "changeset": "every-view-takes-the-apps-stylesheet.md",
+  "note": "Raised when a document's brand came to name what every worker view inherits (Roadmap f-app-wide-view-theme): the shape reads `brand.views` and `brandOf` carries it to the Brand a page draws from; the sanitizer that judges it is `@graview/core/css`'s, fetched only as a view first draws or an edit is judged, and shares no module with what the page reads up front. Measured at 631_742 / 219_907 against 631_550 / 219_845 minified and gzipped."
+}

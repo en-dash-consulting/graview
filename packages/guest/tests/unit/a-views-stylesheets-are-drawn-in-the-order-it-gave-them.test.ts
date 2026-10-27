@@ -8,7 +8,7 @@ import { drawTranscript, runWorkerViewHeadless } from "../../src/headless/index.
 import { nodeIsolate } from "../../src/headless/node.js";
 import { sanitizeStylesheets } from "../../src/host/css.js";
 import { createOpenDrawing } from "../../src/host/open-draw.js";
-import { OPEN_MAX_STYLESHEET } from "../../src/open-kit.js";
+import { OPEN_MAX_STYLESHEET } from "@graview/core/css";
 import { createViewRuntime } from "../../src/worker/view-global.js";
 
 /*

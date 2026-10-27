@@ -104,9 +104,18 @@ and the description stays in listings and on the name's hover):
   "favicon": "/graview/assets/<sha256>.svg",
   "typography": { "display": "system-serif", "body": "system-sans" },
   "shape": { "radius": 6, "density": 0.9 },
-  "accents": { "workshop": 168 }, "scheme": "dark"
+  "accents": { "workshop": 168 }, "scheme": "dark",
+  "views": { "css": ".card { padding: 12px }", "motion": "fade" }
 }
 ```
+
+- **One theme for every view** is `views`: `css`, a stylesheet every worker
+  view is drawn with before its own (the view's rule wins where both say
+  one), held to what a view's own may be — nothing that fetches, no
+  `@import`, no `:host`; `graview check` says what of it the open kit
+  leaves out (`brand-views-css`), and `set-brand` refuses it until clean.
+  `motion: "fade"` fades a view out and in when the record it shows
+  changes; a shared-element transition is not on offer.
 
 - **A mark** — the logo, one for each scheme, and the page icon, an emoji
   among them — is `graview-logo`: inline SVG or a path on the app's own

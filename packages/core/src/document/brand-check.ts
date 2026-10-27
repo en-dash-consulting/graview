@@ -7,6 +7,8 @@ import { emojiProblem, markProblem } from "../theme/marks.js";
 import { error, warning, type Finding } from "./findings.js";
 import type { BrandSpec } from "./schema.js";
 import { logoParts } from "./logo.js";
+import { OPEN_MAX_STYLESHEET } from "../css/tables.js";
+import { sanitizeStylesheet, type CssRefusal } from "../css/sanitize.js";
 
 /*
  * WHAT A DOCUMENT'S BRAND MAY HOLD (FR-124, FR-126), judged where a host
@@ -46,6 +48,43 @@ export function groundWords(ground: Ground): string {
 }
 export const EMOJI_FIX = 'say { "favicon": { "emoji": "🏡" } } with one standard emoji; a skin tone, a flag or a joined emoji like 👩🏽‍🌾 counts as one';
 
+/** Whether every view is drawn with the app's own stylesheet first (Roadmap f-app-wide-view-theme), said the same by an edit and by the preview of a change. */
+export function viewsCssSentence(given: boolean): string {
+  return given ? "Every view is drawn with the app's own stylesheet before its own." : "Every view is drawn with its own stylesheet alone.";
+}
+/** Whether a view fades between records, said the same by an edit and by the preview of a change. */
+export function viewsMotionSentence(motion: "none" | "fade" | undefined): string {
+  return motion === "fade" ? "A view fades when the record it shows changes." : "A view changes records with no fade.";
+}
+/** What the open kit left out of a stylesheet, as its author wrote it: "url() in background", "@import", "position: fixed", "the selector :host". */
+export function cssRefusalWords(refusal: CssRefusal): string {
+  switch (refusal.reason) {
+    case "url":
+      return refusal.name ? `url() in ${refusal.name}` : "url()";
+    case "function":
+      return `${refusal.name}()`;
+    case "property":
+      return `the property ${refusal.name}`;
+    case "at-rule":
+      return refusal.name ?? "an at-rule";
+    case "value":
+      return `a value of ${refusal.name}`;
+    case "selector":
+      return refusal.name ? `the selector :${refusal.name}` : "a selector";
+    case "unreadable":
+      return refusal.name ? `${refusal.name} it cannot read` : "CSS it cannot read";
+    case "size":
+      return "its length";
+  }
+}
+/** The refusals of one stylesheet, each said once, the first few. */
+export function cssRefusalsSaid(refused: readonly CssRefusal[]): string {
+  const said = [...new Set(refused.map(cssRefusalWords))];
+  const shown = said.slice(0, 4);
+  return said.length > shown.length ? `${shown.join(", ")} and ${said.length - shown.length} more` : shown.join(", ");
+}
+export const VIEWS_CSS_FIX = "a view's stylesheet loads nothing and stays in its own tree: no url() but url(#id) on a paint, no @import or @font-face, no :host; the app's own tokens (var(--graview-accent), --graview-panel, --graview-font-display, …) are there to draw with";
+
 export function brandFindings(brand: Partial<BrandSpec> | undefined, options: BrandCheckOptions = {}): Finding[] {
   const out: Finding[] = [];
   if (!brand) return out;
@@ -68,6 +107,18 @@ export function brandFindings(brand: Partial<BrandSpec> | undefined, options: Br
   for (const [role, value] of Object.entries(brand.typography ?? {})) {
     const problem = typeof value === "string" ? fontProblem(value, options.fonts) : null;
     if (problem) out.push(error("brand-font", `${at}.typography.${role}`, `the ${role} face cannot be used: ${problem}`, 'say "system-serif", "system-sans" or "system-mono", or a face on the list'));
+  }
+  /*
+   * THE STYLESHEET EVERY VIEW GETS (Roadmap f-app-wide-view-theme), held to
+   * the one sanitizer a page draws it through: what the open kit leaves out
+   * is said here by name, and left out there too — a warning, since the
+   * rest of the sheet is drawn, as a view's own is. One too long for a
+   * stylesheet draws nothing, and that is an error.
+   */
+  if (typeof brand.views?.css === "string") {
+    const judged = sanitizeStylesheet(brand.views.css);
+    if (judged.refused.some((one) => one.reason === "size")) out.push(error("brand-views-css", `${at}.views.css`, `the stylesheet every view gets is longer than the ${OPEN_MAX_STYLESHEET.toLocaleString("en-US")} characters a stylesheet may be, so no view is drawn with it`, "keep to what every view shares, and leave a view's own rules to the view"));
+    else if (judged.refused.length > 0) out.push(warning("brand-views-css", `${at}.views.css`, `the stylesheet every view gets has CSS the open kit leaves out (${cssRefusalsSaid(judged.refused)}), so every view is drawn without ${judged.refused.length === 1 ? "it" : "those parts"}`, VIEWS_CSS_FIX));
   }
   // A zone its times could not be said on (Roadmap f-app-time-zone), refused by name.
   const unzoned = typeof brand.timeZone === "string" ? timeZoneProblem(brand.timeZone) : undefined;
