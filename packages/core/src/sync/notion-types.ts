@@ -4,6 +4,12 @@
  * map, and the transport can judge the database it finds, by one table.
  */
 
+/** The word for an enum that takes several of its options (FR-233) in the table below: a multi-select, never a select. */
+export const SEVERAL_CHOICES = "several choices";
+
+/** A field's type as the table below names it: an enum that is `multiple` is `several choices`; every other field is its own type. */
+export const notionFieldType = (spec: { readonly type: string; readonly multiple?: boolean | undefined }): string => (spec.type === "enum" && spec.multiple ? SEVERAL_CHOICES : spec.type);
+
 /** The property types a Notion connection keeps in step, and the field types each one may be held in. */
 export const NOTION_FITS: Readonly<Record<string, readonly string[]>> = {
   title: ["string", "text"],
@@ -11,7 +17,8 @@ export const NOTION_FITS: Readonly<Record<string, readonly string[]>> = {
   number: ["number", "integer"],
   select: ["enum", "string"],
   status: ["enum", "string"],
-  multi_select: ["list"],
+  // A choice that takes several of its options (FR-233) is a multi-select, named `several choices` here (`notionFieldType`).
+  multi_select: ["list", SEVERAL_CHOICES],
   date: ["date", "datetime"],
   checkbox: ["boolean"],
   url: ["url", "string"],

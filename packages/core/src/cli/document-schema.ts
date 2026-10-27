@@ -68,6 +68,8 @@ export function documentJsonSchema(version: string): Json {
         json["allOf"] = [
           // An enum lists its options, and only an enum has them.
           { if: { properties: { type: { const: "enum" } } }, then: { required: ["options"] }, else: { not: { required: ["options"] } } },
+          // Only an enum takes several of its options (FR-233).
+          { if: { properties: { type: { const: "enum" } } }, else: { not: { required: ["multiple"] } } },
           // Only a list says what it is a list `of`.
           { if: { properties: { type: { const: "list" } } }, else: { not: { required: ["of"] } } },
         ];

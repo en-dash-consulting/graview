@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 4641,
+  "note": "Raised when a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): `multiple` in the document's shape and its refusal off an enum, the list of options a field compiles to and the words that say each by its label, a default judged as a list, a retype between one and several with the migration that keeps the options that fit, a cell that lists them read by an import, a Notion multi-select held in such a field, and a list filtered by one of its options. Measured at 2_277_159 B against 2_272_518: 4_641 more."
+}

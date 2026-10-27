@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 2246,
+  "gzipped": 565,
+  "note": "Raised when a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): the form's box per option, the in-place editor's group of boxes, a list filtered by one of its options and the words that say each by its label. Measured at 680_598 / 249_811 against 678_352 / 249_246: 2_246 / 565 more."
+}

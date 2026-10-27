@@ -16,7 +16,7 @@ import { isRepeat, isRepeatField, repeatKey, type Weekday } from "../repeat.js";
 import { addDays } from "../wall-time.js";
 import { firstWeekday, hhmm, instantOfMoment, isoInstant, minutesOf, momentOfInstant, recurrenceOf, repeatOf, wallOfMoment, weekdayOf, weekdaysOf, weeklyRule } from "./recurrence.js";
 import { notion, notionKey } from "./notion.js";
-import { NOTION_EDGE, NOTION_INFERABLE } from "./notion-types.js";
+import { NOTION_EDGE, NOTION_INFERABLE, notionFieldType } from "./notion-types.js";
 import type { RemoteSystem, ResourceMapping, SyncMapping, SyncState } from "./types.js";
 
 /**
@@ -303,13 +303,13 @@ export function notionConnectionMapping(
         continue;
       }
       fields[field] = ref;
-      refs[ref] = specs[field]?.type;
+      refs[ref] = specs[field] ? notionFieldType(specs[field]) : undefined;
     }
   } else {
     for (const [field, spec] of Object.entries(specs)) {
-      if (!NOTION_INFERABLE.has(spec.type)) continue;
+      if (!NOTION_INFERABLE.has(notionFieldType(spec))) continue;
       fields[field] = field;
-      refs[field] = spec.type;
+      refs[field] = notionFieldType(spec);
     }
     titleRef = nameField(specs);
     // A relation is kept by name only when every kind it reaches is another Notion connection's: a relation property of its name may not be there.
@@ -336,7 +336,9 @@ export function notionConnectionMapping(
         break;
       case "enum": {
         const options = spec.options ?? [];
-        decode[field] = (value) => (typeof value === "string" ? (options.find((option) => option === value) ?? options.find((option) => loose(option) === loose(value)) ?? value) : value);
+        const option = (value: unknown) => (typeof value === "string" ? (options.find((one) => one === value) ?? options.find((one) => loose(one) === loose(value)) ?? value) : value);
+        // A choice that takes several (FR-233) arrives as a multi-select's names, each read as the option it is.
+        decode[field] = spec.multiple ? (value) => (Array.isArray(value) ? value.map(option) : value === undefined || value === null ? value : [option(value)]) : option;
         break;
       }
       case "list":

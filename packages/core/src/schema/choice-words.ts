@@ -25,6 +25,8 @@ export function choiceWords(
     for (const [field, value] of Object.entries(shape)) {
       let def = defOf(value);
       for (let depth = 0; depth < 6 && def?.innerType !== undefined && def.type !== "enum"; depth++) def = defOf(def.innerType);
+      // A choice that takes several (FR-233) is a list of its options, whose labels are the options'.
+      if (def?.type === "array") def = defOf((def as { element?: unknown }).element);
       if (def?.type !== "enum" || !def.entries) continue;
       const format = definition?.display?.format?.[field];
       (out[kind] ??= {})[field] = Object.fromEntries(Object.values(def.entries).map((option) => [String(option), format ? format(option) : humanizeField(String(option))]));

@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 36,
+  "gzipped": 12,
+  "note": "Raised when a choice came to take several of its options at once (Roadmap f-multi-select-enum, FR-233): a view's `where` filters by one of them, so the host's filter keys read the options of a list of an enum. Measured at 38_185 / 16_860 against 38_149 / 16_848: 36 / 12 more."
+}

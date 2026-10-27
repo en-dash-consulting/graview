@@ -199,7 +199,7 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "remove-kind": z.object({ op: z.literal("remove-kind"), kind: kindName }).strict(),
     "add-field": z.object({ op: z.literal("add-field"), kind: kindName, field: fieldName, fill: z.unknown().optional(), spec: z.record(z.string(), z.unknown()).optional() }).passthrough(),
     "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
-    "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date", "image", "video", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
+    "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), multiple: z.boolean().optional(), of: z.enum(["string", "number", "date", "image", "video", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
     "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional(), labels: z.record(z.string().min(1).max(80), z.union([z.string().min(1).max(80), z.null()])).optional() }).strict(),
     "set-format": z.object({ op: z.literal("set-format"), kind: kindName, field: fieldName, format: z.union([z.enum(["money", "percent", "duration", "markdown"]), z.null()]).optional(), unit: z.union([z.string().min(1).max(12), z.null()]).optional() }).strict(),
     "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
@@ -362,6 +362,13 @@ const NONE: Kinds = new Set<string>();
 
 const clone = <T>(v: T): T => structuredClone(v);
 const asArray = (v: unknown): string[] => [v ?? []].flat() as string[];
+
+/** The first of a choice's default that is none of its options — a list of them where the choice takes several (FR-233) — or undefined when every one is. */
+function defaultOutsideOptions(f: { readonly options?: readonly string[]; readonly multiple?: boolean }, given: unknown): unknown {
+  const options = f.options ?? [];
+  if (!f.multiple) return Array.isArray(given) || !options.includes(String(given)) ? given : undefined;
+  return (Array.isArray(given) ? given : [given]).find((one) => !options.includes(String(one)));
+}
 const kebab = (camel: string) => camel.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 const words = (name: string) => kebab(name).replace(/-/g, " ");
 /** Another app's kinds as people say them: "one house in the app @nick/house", "houses or flats in the app @nick/house". Their plural is that app's to say; this one says the plain one. */
@@ -900,7 +907,7 @@ class Editor {
           delete f.default;
           this.said.push(`${e.kind}'s ${e.field} has no default now.`);
         } else {
-          if (f.type === "enum" && !(f.options ?? []).includes(e.default)) return this.fail(i, "default", `"${String(e.default)}" is not one of ${e.field}'s options (${(f.options ?? []).join(", ")})`);
+          if (f.type === "enum" && defaultOutsideOptions(f, e.default) !== undefined) return this.fail(i, "default", `"${String(defaultOutsideOptions(f, e.default))}" is not one of ${e.field}'s options (${(f.options ?? []).join(", ")})`);
           const outside = outsideRange(e.default, f, e.field);
           if (outside) return this.fail(i, "default", outside);
           f.default = e.default;
@@ -1367,9 +1374,10 @@ class Editor {
       const fields = this.doc.kinds[kind].fields as Record<string, Doc>;
       if (typeof field !== "string") return (this.fail(i, `bindings.${kind}.column`, `the board does not say which field of ${kind} its columns are`, example), false);
       if (!(field in fields)) return (this.fail(i, `bindings.${kind}.column`, `${kind} has no field "${field}"; it has ${Object.keys(fields).join(", ")}`), false);
-      if (fields[field]["type"] !== "enum") {
-        const choices = Object.keys(fields).filter((one) => fields[one]["type"] === "enum");
-        return (this.fail(i, `bindings.${kind}.column`, `${kind}'s ${field} is not a choice, so it has no columns`, choices.length > 0 ? `bind one of ${choices.join(", ")}` : `give ${kind} a choice field first: add-field with "type": "enum" and its "options", in the order the columns go`), false);
+      // A choice that takes several of its options (FR-233) has no columns: a record would stand in several.
+      if (fields[field]["type"] !== "enum" || fields[field]["multiple"] === true) {
+        const choices = Object.keys(fields).filter((one) => fields[one]["type"] === "enum" && fields[one]["multiple"] !== true);
+        return (this.fail(i, `bindings.${kind}.column`, `${kind}'s ${field} is ${fields[field]["multiple"] === true ? "a choice of several, so a record would stand in more than one column" : "not a choice, so it has no columns"}`, choices.length > 0 ? `bind one of ${choices.join(", ")}` : `give ${kind} a choice field first: add-field with "type": "enum" and its "options", in the order the columns go`), false);
       }
       const others = Object.keys(roles as Doc).filter((role) => role !== "column");
       if (others.length > 0) return (this.fail(i, `bindings.${kind}.${others[0]}`, `a board binds only "column"`), false);
@@ -2262,7 +2270,7 @@ class Editor {
     }
     const f = { ...parsed.data } as Doc;
     delete f.renamedFrom;
-    if (f.type === "enum" && f.default !== undefined && !f.options.includes(f.default)) return this.fail(i, "default", `"${String(f.default)}" is not one of the options`);
+    if (f.type === "enum" && f.default !== undefined && defaultOutsideOptions(f, f.default) !== undefined) return this.fail(i, "default", `"${String(defaultOutsideOptions(f, f.default))}" is not one of the options`);
     if (f.format && !formatFits(f.format, f.type)) return this.fail(i, "format", refusedFormat(f.format, f.type));
     spec.fields[field] = f;
     this.fieldOrigin.set(`${kind}.${field}`, undefined);
@@ -2337,9 +2345,14 @@ class Editor {
     // A format goes where it says something (FR-180): money, a percent and a duration on a number, Markdown on a text field.
     if (e.format && !formatFits(e.format, e.type)) return this.fail(i, "format", refusedFormat(e.format, e.type));
     const was = f.type;
+    const wasSeveral = f.multiple === true;
     f.type = e.type;
     if (e.type === "enum") f.options = e.options ?? f.options;
     else delete f.options;
+    // A choice that takes several of its options (FR-233), or one again: only an enum says it, and a retype says it anew.
+    if (e.type === "enum" && e.multiple) f.multiple = true;
+    else delete f.multiple;
+    const several = f.multiple === true;
     // An option's label goes with the option.
     if (f.optionLabels) {
       f.optionLabels = Object.fromEntries(Object.entries(f.optionLabels).filter(([o]) => (f.options ?? []).includes(o)));
@@ -2358,8 +2371,9 @@ class Editor {
     const said = f.format && f.format !== "markdown" ? formatWords(f, this.doc.brand) : undefined;
     // A list grouped by a choice that is no longer one opens ungrouped, and says so.
     const held = this.listsHold(e.kind);
-    if (held.length > 0) this.said.push(`${capitalize(listOf(held))} ${held.length === 1 ? "goes" : "go"} back to the list's own, since ${e.field} is no longer ${was === "enum" ? "a choice" : `a ${was}`}.`);
+    if (held.length > 0) this.said.push(`${capitalize(listOf(held))} ${held.length === 1 ? "goes" : "go"} back to the list's own, since ${e.field} is no longer ${was === "enum" ? (several ? "a choice of one" : "a choice") : `a ${was}`}.`);
     if (was === e.type && e.type === "text") this.said.push(`${e.kind}'s ${e.field} ${e.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is drawn as written, not as Markdown"}; its values are kept.`);
+    else if (was === e.type && e.type === "enum" && wasSeveral !== several) this.said.push(several ? `${e.kind}'s ${e.field} now takes several of its options at once; the one each record held is kept as a list of one.` : `${e.kind}'s ${e.field} takes one of its options again; the first each record held is kept.`);
     else this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}${said ? `, said as ${said}` : ""}; values that convert are kept.`);
   }
 

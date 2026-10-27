@@ -262,6 +262,54 @@ export function EditableValue<S extends AnySchema>({
     );
   }
 
+  /*
+   * A CHOICE THAT TAKES SEVERAL OF ITS OPTIONS (FR-233) is changed as a group
+   * of checkboxes, one per option, each said by its label; a box ticked or
+   * cleared is the change, sent whole as the list now ticked, and leaving
+   * the group closes it. Nothing ticked clears a field a record may be
+   * without, as an emptied date does.
+   */
+  if (editable.shape.type === "several" && editable.shape.of.type === "choice") {
+    const options = editable.shape.of.options;
+    const held = store.graph.getNode(nodeId) as Record<string, unknown> | undefined;
+    const chosen = Array.isArray(held?.[field]) ? (held![field] as unknown[]).map(String) : [];
+    const sendChosen = (next: readonly string[]) => {
+      const ordered = options.filter((option) => next.includes(option));
+      if (ordered.length > 0) return commit(editable, ordered);
+      if (editable.clearable) commit(editable, null);
+      else setRefused(`${fact.charAt(0).toUpperCase()}${fact.slice(1)} can't be empty; it keeps ${value}.`);
+    };
+    return (
+      <fieldset
+        data-graview-field={field}
+        data-graview-choices={field}
+        style={{ display: "inline-flex", flexWrap: "wrap", gap: "4px 12px", margin: 0, padding: "2px 6px", border: "1px solid var(--graview-edge-bright)", borderRadius: 6, maxWidth: "100%" }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") close(true);
+        }}
+        onBlur={(event) => {
+          // Leaving the group, not moving within it, closes it.
+          const next = event.relatedTarget as Node | null;
+          if (!next || !event.currentTarget.contains(next)) close(false);
+        }}
+      >
+        <legend style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{humanize(field)}</legend>
+        {options.map((option, index) => (
+          <label key={option} style={{ display: "inline-flex", alignItems: "center", gap: 4, minHeight: 24, cursor: "pointer" }}>
+            <input
+              ref={index === 0 ? (input as { current: HTMLInputElement | null }) : undefined}
+              type="checkbox"
+              value={option}
+              checked={chosen.includes(option)}
+              onChange={(event) => sendChosen(event.target.checked ? [...chosen, option] : chosen.filter((one) => one !== option))}
+            />
+            {valueWords(definition, field, option)}
+          </label>
+        ))}
+      </fieldset>
+    );
+  }
+
   return (
     <form
       style={{ display: "inline-flex", flexWrap: "wrap", gap: 4, maxWidth: "100%" }}

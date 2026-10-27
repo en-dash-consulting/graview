@@ -44,7 +44,7 @@ const READ_FROM_ZOD: ReadonlySet<string> = new Set(["string", "text", "number", 
 const isFieldType = (type: string): type is FieldType => (FIELD_TYPES as readonly string[]).includes(type);
 
 /** A zod field's type, as the studio names types. */
-export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly required: boolean; readonly options?: readonly string[] } {
+export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly required: boolean; readonly options?: readonly string[]; readonly multiple?: true } {
   let def = defOf(type);
   let required = true;
   while (def.type === "optional" || def.type === "nullable" || def.type === "default") {
@@ -65,8 +65,12 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
       const options = Object.values(def.entries ?? {}).map(String);
       return { type: "enum", required, options };
     }
-    case "array":
+    case "array": {
+      // A choice that takes several of its options (FR-233): an enum that is `multiple`, not a list.
+      const element = defOf((def as { element?: unknown }).element);
+      if (element.type === "enum") return { type: "enum", required, options: Object.values(element.entries ?? {}).map(String), multiple: true };
       return { type: "list", required };
+    }
     case "string": {
       // A link, an address or a date and time is a string zod checks; the document's reading says which.
       const said = fieldSpecOf(type)?.type;
@@ -137,6 +141,8 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
         type: typed.type,
         required: typed.required,
         ...(typed.options ? { options: [...typed.options] } : {}),
+        // Several at once (FR-233): the declaration's list of an enum, or the document's `multiple`.
+        ...(typed.multiple || document?.kinds[def.kind]?.fields[name]?.multiple ? { multiple: true } : {}),
         ...(isRepeatField(fields[repeatKey(name)]) ? { repeats: true } : {}),
         ...(def.display?.labels?.[name] ? { description: def.display.labels[name] } : {}),
         // Written in Markdown (FR-180): the declaration's mark, or the document's format.

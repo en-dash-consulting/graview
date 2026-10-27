@@ -56,8 +56,11 @@ export function migrationSteps(before: Reading, after: Reading): MigrationStep[]
     const now = (later["type"] as FieldType) ?? "string";
     const options = Array.isArray(later["options"]) ? (later["options"] as unknown[]).map(String) : undefined;
     const optionsChanged = JSON.stringify(node["options"] ?? null) !== JSON.stringify(later["options"] ?? null);
-    if (was !== now || (now === "enum" && optionsChanged)) {
-      steps.push({ what: "coerce-field", kind: label(kindNode), field: label(later), from: was, to: { type: now, ...(options ? { options } : {}) } });
+    // A choice that comes to take several of its options, or one again (FR-233), is coerced like a retype: a value becomes a list of one, a list its first.
+    const several = later["multiple"] === true;
+    const multipleChanged = several !== (node["multiple"] === true);
+    if (was !== now || (now === "enum" && (optionsChanged || multipleChanged))) {
+      steps.push({ what: "coerce-field", kind: label(kindNode), field: label(later), from: was, to: { type: now, ...(options ? { options } : {}), ...(several ? { multiple: true } : {}) } });
     }
   }
   const beforeFields = new Map(ofKind(before, "field").filter((node) => !continued.has(node.id)).map((node) => [fieldKey(before, node), node]));

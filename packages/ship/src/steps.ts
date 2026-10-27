@@ -37,7 +37,7 @@ export type MigrationStep =
    * names, a value→a list of one, and back where nothing is lost — and
    * cleared, counted, where it does not.
    */
-  | { readonly what: "coerce-field"; readonly kind: string; readonly field: string; readonly from: FieldType; readonly to: Pick<FieldSpec, "type" | "options" | "of"> }
+  | { readonly what: "coerce-field"; readonly kind: string; readonly field: string; readonly from: FieldType; readonly to: Pick<FieldSpec, "type" | "options" | "of" | "multiple"> }
   /*
    * CONTENT STEPS. The ones above move a stored graph when the DECLARATION
    * moves; these move it when the DEFAULT CONTENT does — a new question in

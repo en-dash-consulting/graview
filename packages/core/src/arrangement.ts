@@ -197,6 +197,12 @@ export function arrangeable(schema: AnySchema, kind: string): Arrangeable {
 
   for (const [field, fieldSchema] of Object.entries(shape)) {
     if (field === "id" || field === "kind" || field === "label" || hidden.has(field)) continue;
+    // A choice that takes several of its options (FR-233) is filtered by one of them, and neither sorted nor grouped by: a record would stand in several groups.
+    const several = severalChoices(fieldSchema);
+    if (several) {
+      filters.push({ key: field, label: readingOf(definition, field), about: "field", type: "choice", options: several });
+      continue;
+    }
     const type = fieldType(fieldSchema);
     if (!type) continue;
     const label = readingOf(definition, field);
@@ -308,6 +314,12 @@ export function describeArgOptions(schema: unknown): readonly string[] {
   return shape.type === "choice" ? shape.options : [];
 }
 
+/** The options of a choice that takes several of them (FR-233); undefined for any other field. */
+export function severalChoices(schema: unknown): readonly string[] | undefined {
+  const shape = describeArg(schema);
+  return shape.type === "several" && shape.of.type === "choice" ? shape.of.options : undefined;
+}
+
 /** The words an address carries an arrangement in; `parseArrangement` (`./arrangement-words.ts`) reads them. */
 export interface ArrangementWords {
   readonly sort?: string;
@@ -414,6 +426,8 @@ export function conditionHolds(ctx: ArrangeContext, node: ArrangeNode, condition
       return op === "before" ? day < date : op === "after" ? day > date : day === date;
     }
     if (type === "boolean") return String(value) === condition.value;
+    // A choice that takes several (FR-233) holds the value when one of its options is it.
+    if (Array.isArray(value)) return value.some((one) => String(one) === condition.value);
     if (type === "number") {
       const at = condition.value.lastIndexOf(":");
       const op = at > 0 ? condition.value.slice(0, at) : "";

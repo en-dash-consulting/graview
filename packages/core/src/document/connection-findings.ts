@@ -6,7 +6,7 @@ import { CONNECTION_TAG, GOOGLE_COLORS } from "../sync/connection-filter.js";
 import { creatingActFor, type UnfitCreatingAct } from "../sync/creating-act.js";
 import type { AnyMutationDefinition } from "../mutations/types.js";
 import { humanizeField } from "../schema/humanize.js";
-import { NOTION_FITS, NOTION_INFERABLE, NOTION_READ_ONLY, NOTION_SECRET, notionFits } from "../sync/notion-types.js";
+import { NOTION_FITS, NOTION_INFERABLE, NOTION_READ_ONLY, NOTION_SECRET, notionFieldType, notionFits } from "../sync/notion-types.js";
 import { startAndEndOf } from "../wall-time.js";
 import { weekdayOf } from "../sync/recurrence.js";
 import { error, warning, type Finding, type FindingFix } from "./findings.js";
@@ -207,7 +207,8 @@ function notionConnection(at: string, connection: NotionConnectionSpec, document
         continue;
       }
       mapped.push(field);
-      const type = kind.fields[field]!.type;
+      // An enum that takes several of its options (FR-233) is `several choices`: a multi-select's, never a select's.
+      const type = notionFieldType(kind.fields[field]!);
       if (typeof property === "string") {
         if (!NOTION_INFERABLE.has(type)) findings.push(error("connection-field-type", path, `${field} is a ${type} field, and no Notion property a connection keeps in step is held in one`, `name a field of another type, or leave ${field} out`));
         continue;

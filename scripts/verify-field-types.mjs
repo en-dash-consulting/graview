@@ -25,7 +25,10 @@
  *   the form that adds a rehearsal asks for the phone in a tel box and the
  *   duration in words, and sends the minutes;
  *   the place's cards link the phone and the place, and say the duration;
- *   the scene's record panel links them as the page does.
+ *   the scene's record panel links them as the page does;
+ *   a rehearsal's sections — a choice that takes several of its options
+ *   (FR-233) — are said by their labels, opened in place as a box per
+ *   option, and asked for by the form as boxes whose ticked ones are sent.
  *
  *   node scripts/verify-field-types.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>]
  */
@@ -193,7 +196,13 @@ try {
         await until(page, () => page.evaluate((facts) => document.querySelectorAll(`${facts} a[data-graview-link]`).length >= 2, facts));
         const said = await textOf(page, facts);
         await shot(page, "record");
-        return { links: await page.evaluate(linksIn, facts), saysGrouped: said.includes("(555) 123-4567"), saysDuration: said.includes("1 h 30 min"), saysMinutes: /\b90\b/.test(said) };
+        // A choice that takes several of its options (FR-233) is said by each option's label, and opens in place as a box per option.
+        const sections = await page.evaluate((facts) => [...document.querySelectorAll(`${facts} dt`)].find((dt) => dt.textContent === "Sections")?.nextElementSibling?.textContent ?? "", facts);
+        await page.locator(`${facts} button[data-graview-editable][data-graview-field="sections"]`).click();
+        const readBoxes = () => page.evaluate(() => [...document.querySelectorAll('[data-graview-choices="sections"] input[type="checkbox"]')].map((box) => `${box.value}:${box.checked ? 1 : 0}`));
+        await until(page, () => readBoxes().then((boxes) => boxes.length === 4), 5_000);
+        const boxes = await readBoxes();
+        return { links: await page.evaluate(linksIn, facts), saysGrouped: said.includes("(555) 123-4567"), saysDuration: said.includes("1 h 30 min"), saysMinutes: /\b90\b/.test(said), sections, boxes };
       });
 
       /* A SEASON: its rehearsals' durations added up, and what is left of the time it planned. */
@@ -230,10 +239,17 @@ try {
         await form.locator('input[name="contact"]').fill("(555) 987-6543");
         await form.locator('input[name="venue"]').fill("Riverside Church");
         await form.locator('input[name="length"]').fill("1:15");
+        // A choice that takes several of its options (FR-233): a box per option, the ticked ones sent as a list in the options' order.
+        const sectionBoxes = form.locator('fieldset[data-graview-choices="sections"] input[type="checkbox"]');
+        const boxCount = await sectionBoxes.count();
+        const boxWords = await form.locator('fieldset[data-graview-choices="sections"] label').allTextContents();
+        await sectionBoxes.nth(2).click();
+        await sectionBoxes.nth(0).click();
         await shot(page, "form");
         await form.locator('button[type="submit"]').click();
         const made = await until(page, () => page.evaluate(() => window.__handle.store.graph.allNodes().some((node) => node.name === "Concert warm-up" && node.length === 75 && node.contact === "(555) 987-6543")));
-        return { phoneType, durationType, made };
+        const sections = await page.evaluate(() => window.__handle.store.graph.allNodes().find((node) => node.name === "Concert warm-up")?.sections ?? null);
+        return { phoneType, durationType, made, boxCount, boxWords: boxWords.map((words) => words.trim()), sections };
       });
 
       /* THE PLACE'S CARDS: each phone a call, each place a map, each duration said. */
@@ -289,6 +305,14 @@ report.checks.aDurationChangedInPlaceIsTypedAsWordsAndKeptAsMinutes = {
 report.checks.theFormAsksForAPhoneAndADurationAsThemselves = {
   seen: seen.form,
   ok: all(seen.form, (one) => one.phoneType === "tel" && one.durationType === "text" && one.made),
+};
+report.checks.aChoiceOfSeveralIsSaidByItsLabelsAndChangedInPlaceAsBoxes = {
+  seen: seen.record,
+  ok: all(seen.record, (one) => one.sections === "Sopranos, Altos, Tenors, Basses" && JSON.stringify(one.boxes) === JSON.stringify(["soprano:1", "alto:1", "tenor:1", "bass:1"])),
+};
+report.checks.theFormAsksForAChoiceOfSeveralAsBoxesAndSendsTheTickedOnes = {
+  seen: seen.form,
+  ok: all(seen.form, (one) => one.boxCount === 4 && JSON.stringify(one.boxWords) === JSON.stringify(["Sopranos", "Altos", "Tenors", "Basses"]) && JSON.stringify(one.sections) === JSON.stringify(["soprano", "tenor"])),
 };
 report.checks.thePlacesCardsCallMapAndSayADuration = {
   seen: seen.cards,

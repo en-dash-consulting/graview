@@ -83,6 +83,11 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
     }
     case "array": {
       const element = defOf(def["element"]);
+      // A choice that takes several of its options (FR-233): an enum that is `multiple`, not a list.
+      if (element?.["type"] === "enum") {
+        const options = Object.keys((element["entries"] as Record<string, unknown> | undefined) ?? {});
+        return options.length > 0 ? { spec: { type: "enum", multiple: true, options, ...base } } : { why: "it is a list of an enum with no options" };
+      }
       const of = fileKindOf(def["element"]) ?? (element?.["type"] === "number" ? "number" : element?.["type"] === "string" ? "string" : undefined);
       return of ? { spec: { type: "list", of, ...base } } : { why: `it is a list of ${String(element?.["type"] ?? "something")}, and a document lists words, numbers, dates, images, videos or files` };
     }

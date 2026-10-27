@@ -90,7 +90,8 @@ const actsOn = (document: GraviewDocument, kind: string): [string, Acts[string]]
 
 /** A choice field that ends: some values a record is done at, some it is still on the way. */
 function endingChoice(spec: KindSpec): { field: string; options: readonly string[]; done: readonly string[]; ended: readonly string[] } | undefined {
-  const choices = Object.entries(spec.fields).filter(([, field]) => field.type === "enum" && Array.isArray(field.options) && field.options.length >= 2);
+  // A choice that takes several (FR-233) is no status: a record is not in two stages at once.
+  const choices = Object.entries(spec.fields).filter(([, field]) => field.type === "enum" && !field.multiple && Array.isArray(field.options) && field.options.length >= 2);
   // A field called a status, stage or state first; then any choice whose values end.
   const ranked = [...choices].sort(([a], [b]) => Number(/status|stage|state|phase/i.test(b)) - Number(/status|stage|state|phase/i.test(a)));
   for (const [field, choice] of ranked) {
