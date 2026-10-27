@@ -6,7 +6,7 @@ import { FRAMEWORK_VERSION } from "./version.js";
  * the primitives and every fold can refuse what they do not know without
  * reaching the upgrade steps (`formats.ts`), which import the ops.
  */
-export const FORMATS = { snapshot: 1, op: 3 } as const;
+export const FORMATS = { snapshot: 2, op: 3 } as const;
 export type FormatName = keyof typeof FORMATS;
 
 /**

@@ -1,6 +1,7 @@
 import { bareOp } from "./ops/inverse.js";
 import type { Operation } from "./ops/types.js";
 import type { GraphSnapshot } from "./graph/types.js";
+import type { Epoch } from "./ops/log.js";
 import { FRAMEWORK_VERSION } from "./version.js";
 import { assertKnownPrimitives, FORMATS, NewerFormatError, type FormatName } from "./format-error.js";
 
@@ -29,6 +30,16 @@ import { assertKnownPrimitives, FORMATS, NewerFormatError, type FormatName } fro
  * phase 1). A format-2 op reads as it was written; a build before it
  * meeting a store stamped `op: 3`, or a splice, refuses it.
  *
+ * SNAPSHOT FORMAT 2 is a stored state whose checkpoint lies past what
+ * stood published (`Epoch.published` keeps the app as readers are served
+ * it there, Roadmap f-publishing-lifecycle). A build before it would serve
+ * those readers the horizon — changes never published — so such a store
+ * and its bundles are stamped `snapshot: 2`, and that build refuses them
+ * with `NewerFormatError`. Every other store is stamped 1, as before: a
+ * host that must stay readable by an older build passes
+ * `pins: [store.publishedSeq]` to the compaction, and its checkpoint
+ * never passes the publish. A format-1 snapshot reads as written.
+ *
  * FAIL CLOSED (1.0). A new primitive raises `FORMATS.op` and travels only
  * to a reader that said it reads it (`opFormat`); a reader that meets a
  * primitive it does not know — a log a newer build wrote, an op handed
@@ -48,16 +59,25 @@ export interface FormatStamp {
   readonly formats: { readonly [K in FormatName]: number };
 }
 
-/** The stamp this build writes. */
-export function formatStamp(): FormatStamp {
-  return { framework: FRAMEWORK_VERSION, formats: { ...FORMATS } };
+/**
+ * The stamp this build writes for what begins at `checkpoint` (a store's
+ * horizon epoch, a bundle's checkpoint): snapshot format 2 when it lies
+ * past what stood published at its seq and keeps the app as readers were
+ * served there — what a build before format 2 would misread — else 1.
+ */
+export function formatStamp(checkpoint?: Pick<Epoch, "published" | "publishedThrough">): FormatStamp {
+  const past = checkpoint?.published?.some((kept) => kept.seq === checkpoint.publishedThrough) === true;
+  return { framework: FRAMEWORK_VERSION, formats: { ...FORMATS, snapshot: past ? 2 : 1 } };
 }
 
-/** Throws `NewerFormatError` when a stamp says a format this build cannot read; absent formats are format 1. */
-export function assertReadable(stamp: { readonly framework?: string; readonly formats?: Partial<Record<FormatName, number>> } | null | undefined): void {
-  for (const what of Object.keys(FORMATS) as FormatName[]) {
+/** Throws `NewerFormatError` when a stamp says a format this build (or `reads`, the formats another reads) cannot read; absent formats are format 1. */
+export function assertReadable(
+  stamp: { readonly framework?: string; readonly formats?: Partial<Record<FormatName, number>> } | null | undefined,
+  reads: { readonly [K in FormatName]: number } = FORMATS,
+): void {
+  for (const what of Object.keys(reads) as FormatName[]) {
     const found = stamp?.formats?.[what] ?? 1;
-    if (found > FORMATS[what]) throw new NewerFormatError(what, found, FORMATS[what], stamp?.framework);
+    if (found > reads[what]) throw new NewerFormatError(what, found, reads[what], stamp?.framework);
   }
 }
 
@@ -66,7 +86,10 @@ type Step<T> = (from: T) => T;
  * One step per format change, keyed by the format it upgrades FROM, each
  * with a fixture of the format before it under tests/fixtures/formats.
  */
-const SNAPSHOT_STEPS: Readonly<Record<number, Step<GraphSnapshot>>> = {};
+const SNAPSHOT_STEPS: Readonly<Record<number, Step<GraphSnapshot>>> = {
+  // Format 2 is a checkpoint past what stood published; a format-1 snapshot is a format-2 one as written.
+  1: (snapshot) => snapshot,
+};
 const OP_STEPS: Readonly<Record<number, Step<Operation>>> = {
   // Format 1 wrote the inverse beside the primitives; format 2 derives it.
   1: bareOp,

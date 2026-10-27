@@ -99,7 +99,8 @@ export function exportBundle<S extends AnySchema>(
     app: app.name,
     version: app.version ?? 1,
     exportedAt: (options.now ?? (() => new Date().toISOString()))(),
-    ...formatStamp(),
+    // Snapshot format 2 when the checkpoint it begins at lies past what stood published (FR-31).
+    ...formatStamp(horizon > 0 && checkpoint?.seq === horizon ? checkpoint : undefined),
     snapshot: store.snapshot() as GraphSnapshot,
     // Stamped op format 2, and so written: a persisted or archived op from format 1 goes without an inverse its primitives already say.
     log: log.map(bareOp),
