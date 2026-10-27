@@ -1,4 +1,4 @@
-import type { DescribedPart, DescribedProblem } from "@graview/core/describe";
+import type { DescribedPart, DescribedProblem, DescribedVideo } from "@graview/core/describe";
 import { placeNamed, placesSaid, quoted, unsureOfViews } from "../host/links-words.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { handedLinks, judgeLink, linkRefusedWords } from "../host/external-links.js";
@@ -18,7 +18,7 @@ import type { HeadlessFailureReason, HeadlessInput, HeadlessTranscript } from ".
 
 export type Judged =
   /** `drawn`: the drawing itself, for the host to read a press against (0.1.45). */
-  | { readonly ok: true; readonly parts: readonly DescribedPart[]; readonly problems: readonly DescribedProblem[]; readonly drawn: DrawnTranscript }
+  | { readonly ok: true; readonly parts: readonly DescribedPart[]; readonly problems: readonly DescribedProblem[]; readonly drawn: DrawnTranscript; readonly videos: readonly DescribedVideo[] }
   | { readonly ok: false; readonly reason: HeadlessFailureReason; readonly detail: string };
 
 /* SMIL sets an attribute after the host judged it, and moves past a person's wish for less motion. */
@@ -98,5 +98,5 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
     if ("place" in went && !placeNamed(goes, went.place))
       problems.push({ at: "navigate", says: unsure ? `It goes to the place ${quoted(went.place)}, which is none of the places this run was told of.${placesSaid(goes)}${unsureOfViews}` : `It goes to the place ${quoted(went.place)}, which this app does not have.${placesSaid(goes)}` });
   }
-  return { ok: true, parts: said.parts, problems, drawn };
+  return { ok: true, parts: said.parts, problems, drawn, videos: said.videos };
 }

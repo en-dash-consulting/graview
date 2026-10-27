@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 3446,
+  "note": "Raised when a video came to play as a hero background (Roadmap f-video-hero): the headless describer listing each video a view places with its source and whether it plays, carried through the judge into a place's description, and the line that says each in a place's words (`videoLine`). Measured at 2_303_862 B against 2_300_416 on a fresh build of main: 3_446 more."
+}

@@ -555,9 +555,32 @@ code cannot open it. A record the view was not shown, a field that holds
 no such file, or a view without `pictures` draws nothing and says why, in
 the view's console and to the host's problems. A video is handed to the
 view as its facts (`name`, `type`, `bytes`, `width`, `height`, `caption`,
-`duration`), never an address; a headless run says a placed video as "The
-waves at dusk, a 45-second video". A frame guest places none: its frame is
-another origin.
+`duration`, and `poster: true` where it has one), never an address; a
+headless run says a placed video as "The waves at dusk, a 45-second
+video". A frame guest places none: its frame is another origin.
+
+A video plays as a hero background (Roadmap f-video-hero) where the view
+asks for one:
+
+```html
+<graview-video autoplay cover data-record="moment:dusk" data-field="clip"></graview-video>
+```
+
+`autoplay` is muted, looping, inline and without controls — autoplay
+without muted never plays, so the one word means all of it — and `cover`
+fills the box the view sized (`object-fit: cover`; the view's stylesheet
+rounds and clips the box). Where the person asked for less motion
+(`prefers-reduced-motion: reduce`) the background stands still at its
+poster, fetching only its metadata, and is let go when they stop asking.
+The source, the poster and the controls stay the host's: `src`, `poster`,
+`controls`, `loop` and `muted` on a `<graview-video>` are refused. A
+headless run's description carries `videos`, one per placed
+`<graview-video>` — the record and field, what it shows, its `source`
+(the media type), its `duration`, whether it has a `poster`, `autoplay`
+and `cover`, and `playable`: a source every browser plays (MP4, WebM or
+Ogg, what a host's upload transcodes to) with a poster to stand at, with
+`why` when it is not — so an agent confirms a hero plays without opening
+a browser; `placeText` says each in one line under "Videos:".
 
 ### Files a person drops on it
 

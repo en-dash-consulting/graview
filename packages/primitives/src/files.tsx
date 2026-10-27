@@ -299,38 +299,85 @@ function VideoThumb({ file, size, style, onError }: { readonly file: FileValue; 
   );
 }
 
+/** HOW A VIDEO IS PLAYED (Roadmap f-video-hero): as a background — muted, looping, inline, no controls — and filling its box. */
+export interface VideoWay {
+  /** A background: `autoplay` means muted, looping, inline and without controls — autoplay without muted never plays, so the one word means all of it. */
+  readonly autoplay?: boolean;
+  /** It fills the box it is given (`object-fit: cover`), cut at the edges, rather than standing at its own ratio. */
+  readonly cover?: boolean;
+}
+
+/** Whether the person asked for less motion (`prefers-reduced-motion: reduce`), followed as the setting changes. */
+function useLessMotion(): boolean {
+  const query = () => (typeof window !== "undefined" && typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : undefined);
+  const [less, setLess] = useState(() => query()?.matches === true);
+  useEffect(() => {
+    const media = query();
+    if (!media) return;
+    const onChange = () => setLess(media.matches);
+    onChange();
+    media.addEventListener?.("change", onChange);
+    return () => media.removeEventListener?.("change", onChange);
+  }, []);
+  return less;
+}
+
 /**
  * A VIDEO, PLAYED: its poster first, the browser's own controls — the
  * keyboard reaches them, and they open it full screen — the little it needs
  * fetched before it is played, its captions where the value carries them,
- * and sized from the value so the page does not jump when it loads.
+ * and sized from the value so the page does not jump when it loads. As a
+ * background (`autoplay`, f-video-hero) it is muted, loops, plays inline
+ * with no controls, and stands still at its poster where the person asked
+ * for less motion; `cover` fills its box.
  */
-function VideoPlayer({ file }: { readonly file: FileValue }) {
+function VideoPlayer({ file, autoplay = false, cover = false }: { readonly file: FileValue } & VideoWay) {
   const host = useHostFiles();
   const [gone, failed] = useRemovedLater(file);
   const [facts, onLoadedMetadata] = useVideoFacts(file);
+  const lessMotion = useLessMotion();
+  const still = autoplay && lessMotion;
+  const player = useRef<HTMLVideoElement | null>(null);
+  const wasStill = useRef(still);
+  /* A background is held at its poster while the person asks for less motion, and let go when they stop: an attribute changed moves nothing already drawn. */
+  useEffect(() => {
+    const video = player.current;
+    if (!video || !autoplay) return;
+    if (still) video.pause();
+    else if (wasStill.current) void video.play?.()?.catch?.(() => undefined);
+    wasStill.current = still;
+  }, [autoplay, still]);
   if (gone) return <RemovedLater file={file} style={{ width: "100%", aspectRatio: "16 / 9" }} />;
   const sized = facts.width !== undefined && facts.height !== undefined;
+  const box: CSSProperties = cover
+    ? { display: "block", width: "100%", height: "100%", objectFit: "cover", background: "#000" }
+    : { display: "block", width: "100%", maxWidth: sized ? Math.max(facts.width!, MIN_PLAYER) : "100%", height: "auto", maxHeight: "80vh", aspectRatio: sized ? `${facts.width} / ${facts.height}` : "16 / 9", borderRadius: ROUND, background: "#000" };
   return (
-    <figure data-graview-video-figure={file.href} style={{ margin: 0, display: "grid", gap: 4, minWidth: 0 }}>
+    <figure data-graview-video-figure={file.href} style={{ margin: 0, display: "grid", gap: 4, minWidth: 0, ...(cover ? { height: "100%" } : {}) }}>
       <video
+        ref={player}
         data-graview-video={file.href}
+        {...(autoplay ? { "data-graview-video-autoplay": "" } : {})}
+        {...(cover ? { "data-graview-video-cover": "" } : {})}
+        {...(still ? { "data-graview-video-still": "" } : {})}
         src={fileSrc(host, file.href)}
         {...(file.poster ? { poster: fileSrc(host, file.poster) } : {})}
-        controls
-        preload="metadata"
+        {...(autoplay ? { muted: true, loop: true, ...(still ? {} : { autoPlay: true }) } : { controls: true })}
+        preload={autoplay && !still ? "auto" : "metadata"}
         playsInline
         {...(sized ? { width: facts.width, height: facts.height } : {})}
         aria-label={videoLabel(file, facts.duration)}
         onLoadedMetadata={onLoadedMetadata}
         onError={failed}
-        style={{ display: "block", width: "100%", maxWidth: sized ? Math.max(facts.width!, MIN_PLAYER) : "100%", height: "auto", maxHeight: "80vh", aspectRatio: sized ? `${facts.width} / ${facts.height}` : "16 / 9", borderRadius: ROUND, background: "#000" }}
+        style={box}
       >
         {file.captions ? <track kind="captions" src={fileSrc(host, file.captions)} srcLang="en" label="Captions" default /> : null}
       </video>
-      <figcaption data-graview-video-said="" style={QUIET}>
-        {[file.caption ?? file.name, ...(facts.duration !== undefined ? [videoClock(facts.duration)] : [])].join(" · ")}
-      </figcaption>
+      {autoplay ? null : (
+        <figcaption data-graview-video-said="" style={QUIET}>
+          {[file.caption ?? file.name, ...(facts.duration !== undefined ? [videoClock(facts.duration)] : [])].join(" · ")}
+        </figcaption>
+      )}
     </figure>
   );
 }
@@ -380,7 +427,7 @@ function PdfBox({ src, file }: { readonly src: string; readonly file: FileValue 
  * opening full size in a dialog that gives the keyboard back to it; its
  * documents by name, type and size — a PDF inline, the rest a download.
  */
-function FilesShown({ files, label }: { readonly files: readonly FileValue[]; readonly label: string }) {
+function FilesShown({ files, label, autoplay, cover }: { readonly files: readonly FileValue[]; readonly label: string } & VideoWay) {
   /* Each file drawn, linked and downloaded where the host serves it (`HostFiles.src`, 0.1.36); said and keyed by the href the record keeps. */
   const host = useHostFiles();
   const at = (file: FileValue) => fileSrc(host, file.href);
@@ -417,7 +464,7 @@ function FilesShown({ files, label }: { readonly files: readonly FileValue[]; re
         <ul data-graview-videos="" aria-label={label} style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 12 }}>
           {videos.map((file) => (
             <li key={file.href} style={{ minWidth: 0 }}>
-              <VideoPlayer file={file} />
+              <VideoPlayer file={file} {...(autoplay ? { autoplay } : {})} {...(cover ? { cover } : {})} />
             </li>
           ))}
         </ul>
@@ -819,16 +866,19 @@ function FileField(props: FileRowProps): ReactNode {
  * `bare`). One door, so a face that draws files carries one small part.
  */
 export type FilesProps =
-  | ({ readonly as: "field"; readonly read?: boolean } & FileRowProps)
+  | ({ readonly as: "field"; readonly read?: boolean } & FileRowProps & VideoWay)
   | { readonly as: "unfilled"; readonly nodeId: string; readonly skip: readonly string[]; readonly labels?: Readonly<Record<string, string>>; readonly labelStyle?: CSSProperties; readonly style?: CSSProperties }
   | { readonly as: "thumb"; readonly file: FileValue; readonly size?: number; readonly style?: CSSProperties }
-  | { readonly as: "block"; readonly field: string; readonly files: readonly FileValue[]; readonly label: string; readonly view: "thumb" | "gallery" }
+  | ({ readonly as: "block"; readonly field: string; readonly files: readonly FileValue[]; readonly label: string; readonly view: "thumb" | "gallery" } & VideoWay)
   | { readonly as: "control"; readonly value: unknown; readonly onChange: (next: unknown) => void; readonly several: boolean; readonly image: boolean; readonly video?: boolean; readonly label: string; readonly title?: string };
 
 export function drawFiles(props: FilesProps): ReactNode {
   switch (props.as) {
-    case "field":
-      return props.read ? (props.files.length > 0 ? <Row {...props}><FilesShown files={props.files} label={props.label} /></Row> : null) : <FileField {...props} />;
+    case "field": {
+      if (!props.read) return <FileField {...props} />;
+      const { autoplay, cover, ...row } = props;
+      return props.files.length > 0 ? <Row {...row}><FilesShown files={props.files} label={props.label} {...(autoplay ? { autoplay } : {})} {...(cover ? { cover } : {})} /></Row> : null;
+    }
     case "unfilled":
       return <Unfilled {...props} />;
     case "thumb":
@@ -837,7 +887,7 @@ export function drawFiles(props: FilesProps): ReactNode {
       // A gallery's pictures are pressed, so they stand above the card's own link.
       return props.files.length > 0 ? (
         <span className="graview-spec-image" data-graview-field={props.field} data-graview-image={props.view} style={{ display: "block", minWidth: 0, ...(props.view === "gallery" ? { position: "relative", zIndex: LOCAL_LAYERS.raised } : {}) }}>
-          {props.view === "thumb" ? <FileThumb file={props.files[0]!} size={72} /> : <FilesShown files={props.files} label={props.label} />}
+          {props.view === "thumb" ? <FileThumb file={props.files[0]!} size={72} /> : <FilesShown files={props.files} label={props.label} {...(props.autoplay ? { autoplay: true } : {})} {...(props.cover ? { cover: true } : {})} />}
         </span>
       ) : null;
     case "control": {

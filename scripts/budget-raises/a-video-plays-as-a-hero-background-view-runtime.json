@@ -1,0 +1,6 @@
+{
+  "budget": "a worker view's runtime",
+  "minified": 56,
+  "gzipped": 15,
+  "note": "Raised when a video came to play as a hero background (Roadmap f-video-hero): the open kit's table naming `autoplay` and `cover` on `<graview-video>`, which the runtime carries to judge what a view draws. Measured at 63_604 / 21_963 against 63_548 / 21_948 on a fresh build of main: 56 / 15 more."
+}

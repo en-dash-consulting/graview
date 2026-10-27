@@ -196,6 +196,8 @@ export interface GuestFile {
    * view places `<graview-video data-record data-field>`.
    */
   readonly duration?: number;
+  /** Whether a video has a poster — the picture that stands before it plays, and where a person asked for less motion (f-video-hero). The poster itself stays the host's. */
+  readonly poster?: true;
   /** A picture's address for `<img src>`, made by the host from the bytes. Smaller than the file where the view needs no more. */
   readonly src?: string;
   /** Why a picture was left out, in a sentence that names the view. */

@@ -22,7 +22,7 @@ import { isInlineSvg, logoOf, markHref } from "../theme/marks.js";
 import { markdownWords } from "../excerpt-of.js";
 import { visitorForm, type VisitorForm } from "../mutations/visitor-form.js";
 import { creatingActs, describeActForm, describeVisitorForm, formLines } from "./describe-forms.js";
-import type { DescribedForm } from "./described.js";
+import type { DescribedForm, DescribedVideo } from "./described.js";
 
 /*
  * WHAT A PLACE SHOWS, WITHOUT A BROWSER (FR-89).
@@ -438,11 +438,22 @@ export function placeText(description: Omit<PlaceDescription, "text">): string {
     lines.push("Facts of the whole graph (what fact('<name>') reads):");
     for (const fact of description.facts) lines.push(`- ${fact.label} (${fact.name}): ${fact.value ?? `not worked out — ${fact.refused}`}`);
   }
+  /* Each video a view places, and whether it plays: what an agent reads to confirm a hero (f-video-hero). */
+  if (description.videos && description.videos.length > 0) {
+    lines.push("Videos:");
+    for (const video of description.videos) lines.push(`- ${videoLine(video)}`);
+  }
   if (description.problems.length > 0) {
     lines.push("Problems:");
     for (const problem of description.problems) lines.push(`- ${problem.at}: ${problem.says}`);
   }
   return lines.join("\n");
+}
+
+/** A placed video in one line: what it shows, where it is, what the browser is handed, how it plays, and whether it will. */
+export function videoLine(video: DescribedVideo): string {
+  const how = video.autoplay ? "plays as a background, muted and looping, with no controls" : "plays with the browser's controls";
+  return `${video.text} (${video.field} of ${video.record}): ${video.source}${video.duration !== undefined ? `, ${Math.round(video.duration)} s` : ""}, ${video.poster ? "with a poster" : "no poster"}; ${how}${video.cover ? ", filling its box" : ""}; ${video.playable ? "playable" : `not playable: ${video.why ?? "it is not a video a browser plays"}`}.`;
 }
 
 /** A line of facts as its face draws it: a chip a space from what is beside it, two runs of words a dot apart. */
