@@ -1,5 +1,56 @@
 # @graview/studio
 
+## 0.1.59
+
+### Patch Changes
+
+- 350fc01: A kind's figure is judged as the page reads it, and judged again where it is drawn. `figureFaults` found attributes by looking for a space or a quote before each name, but the HTML parser also takes a `/` as the gap between two attributes, so `<path d="…"/onclick="…"/>` passed `graview check`, the checked `compileDocument` and a model's `drawFigure` as a plain path, and `KindFigure` drew it with a live click handler (a smuggled `style` could stretch it over the page). Now `figureFaults` first reads the art with `svgProblem`, the reader a logo is judged by, which walks tags as the parser does and refuses a handler, a style sheet or anything that reaches outside the picture ("it cannot be drawn as it is: it has an event handler (an on… attribute)"), and its own scan of attribute names counts a `/` as a gap. `figureSvg` hands back inline art only when `svgProblem` finds nothing in it that could run or reach outside it, so `KindFigure` and the studio's proposed drawing draw nothing that could run even from a figure nothing checked — a brand's own drawing, a document compiled without the check. A figure that only breaks the house style (a literal color) still draws. Every shipped figure passes. `a-figure-is-judged-as-the-page-reads-it.test.ts` holds three slashed payloads faulted, undrawn and refused by `compileDocument`; `a-figure-that-could-act-is-not-drawn.test.tsx` holds that `KindFigure` draws no handler from a kind's figure or a brand's. A visitor's form draws figures and did not carry `svgProblem`, so it grows about 4.3 KB; with the other fixes of this batch (a typeface quoted in pairs, a plan review applying only the rows kept) a visitor's form carries 4_368 / 1_818 bytes more (4_739 / 1_970 handed a compiled app), the pages face 104 / 28, every face 948 / 455, Cloud's worker 835 and the scene before it draws 470, each under a raise of its own (`scripts/budget-raises/data-is-never-code-*.json`).
+  
+  Compatibility: ops and primitives, stored formats, the wire, derived tool names and input schemas — unchanged. The declaration and check finding codes — no new code: `figure` is said of art with an attribute written after a `/`, which compiled before and is refused now.
+- d0edd75: The studio writes what a declaration says back into TypeScript as text, never as code. A new act's title went raw into the template literal of its history sentence, so a title with `${…}` in it ran when the act was described, and the app's name went raw into the comment at the head of `schema.ts`, `mutations.ts`, `invariants.ts` and `policy.ts`, so a document named `Vendors */ globalThis.x = 1; /*` added a statement that ran when the checkout imported the file. Both reach the files the studio door writes into `src/domain` and the ones `studio.files()` hands back. Now the title is written as the template literal's text (a backtick, `${` and a backslash escaped), the name as one line no `*/` in it can close, an act's argument or written field that is not a word as a quoted key (`args["…"]`), and a quoted string with U+2028 and U+2029 escaped, so none can end the `//` comment it is said in. `declaration-text-is-written-back-as-text.test.ts` writes a document named with `*/` and a new act titled with `${…}`, a backtick and a backslash, imports every file, finds nothing ran, and reads the act's sentence back word for word; an act writing a field named like code is written with its name quoted.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. The files the studio writes read the same for a title, a name and arguments that are plain words.
+- Updated dependencies [26a8127]
+- Updated dependencies [83fe4cb]
+- Updated dependencies [c33c732]
+- Updated dependencies [85f0794]
+- Updated dependencies [5bf24ba]
+- Updated dependencies [350fc01]
+- Updated dependencies [f65e007]
+- Updated dependencies [d7d58b8]
+- Updated dependencies [d4360ef]
+- Updated dependencies [6b5d16f]
+- Updated dependencies [cf757d1]
+- Updated dependencies [fd6c21a]
+- Updated dependencies [85f9fc3]
+- Updated dependencies [bd67c9b]
+- Updated dependencies [ee5a7c0]
+- Updated dependencies [6d09126]
+- Updated dependencies [0dba129]
+- Updated dependencies [1c210c5]
+- Updated dependencies [f14058b]
+- Updated dependencies [419b8e8]
+- Updated dependencies [d14a1f9]
+- Updated dependencies [4a8ecdf]
+- Updated dependencies [aba4773]
+- Updated dependencies [2471cc2]
+- Updated dependencies [e3566ea]
+- Updated dependencies [5301cbe]
+- Updated dependencies [58da61a]
+- Updated dependencies [d1d4e11]
+- Updated dependencies [359b324]
+- Updated dependencies [b8624ae]
+- Updated dependencies [6bc7bb0]
+- Updated dependencies [71d262d]
+- Updated dependencies [b336f0e]
+  - @graview/ship@0.1.59
+  - @graview/core@0.1.59
+  - @graview/primitives@0.1.59
+  - @graview/tools@0.1.59
+  - @graview/react@0.1.59
+  - @graview/pages@0.1.59
+  - @graview/layout@0.1.59
+
 ## 0.1.58
 
 ### Patch Changes

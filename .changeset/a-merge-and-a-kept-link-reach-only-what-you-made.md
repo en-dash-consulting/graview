@@ -1,7 +1,0 @@
----
-"@graview/core": patch
----
-
-A merge, and keeping a link, ride the making of a kind only over what the seat made (W-201). Merging judged only the record folded away: a seat whose only grant was "anybody may write a note" was refused connecting anything to Ben's note, yet could merge a note of its own into Ben's, which moved every tie of its own onto his — a reader it chose among them, who then saw Ben's note. A derived merge now reaches the record it folds into as well, so riding the acts that make the kind both are to be the seat's own; asked before the other is chosen, the record folded away alone. And keeping a link of a relation only the derived connect and disconnect make was permitted on anybody's record, so a seat with no role under "anybody may add a property" accepted a link the tidying actor drew on another's property, where its derived connect and disconnect were refused "only on what you made". Keeping such a link is now judged as those are, on the record it leaves; a link a declared act makes or breaks is still kept by whoever that act's grant names, on any record. `a-door-for-everybody-is-not-a-key-to-every-record.test.ts` and `keeping-a-link-is-permitted-per-relation.test.ts` hold both.
-
-Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. A merge or a kept link that rode an everybody grant over another's record is refused `forbidden`, "only on what you made".

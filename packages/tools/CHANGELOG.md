@@ -1,5 +1,60 @@
 # @graview/tools
 
+## 0.1.59
+
+### Patch Changes
+
+- cf757d1: A duplicate somebody plants beside another person's record no longer steers the app's own actor into merging theirs away. The duplicates judge kept the record with the most links and merged the other into it, so a member who may add vendors and tasks, and may not merge or archive the owner's vendor, could add a vendor of the same name, link two tasks of their own to it, and have the actor — a system author no grant narrows — propose merging the owner's vendor into theirs at 0.9; with `applyAtLeast` at 0.9 it applied it, archiving the owner's vendor and moving the owner's task to the member's. Now the record that stays is the one made first, as the log says (a record from before the log, a seed's, before any it made), and only among records made at one moment the one with the most links: nobody can make a record earlier than one already there. A merge of two records different people made is suggested for a person to accept, never applied on its own, whatever `applyAtLeast` says; two records one person made merge on their own as before. And where the two have one name, the merge's sentence says which is which by id — "Merge Northwind Parts (vendor:northwind-parts) into Northwind Parts (vendor:owner)" — where it read the same both ways. `a-planted-duplicate-steers-no-merge` holds it: the planted vendor is the one proposed to merge away, nothing is applied with `applyAtLeast` 0.9 and the owner's task keeps its vendor, the sentence names the direction, and two vendors one person made are merged on their own. The merge's sentence costs a hosted page 0.1 KB more up front (76 bytes minified, 68 gzipped; 76 / 48 for a page handed a compiled app), under raises naming this changeset.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged; the derived `merge-<kind>`'s sentence names each record's id beside its name when the two names are the same. `JudgeContext` may carry `made` (when and by whom each record was made, from the log), and `keeperOf` takes it. What Graview Cloud does: nothing; a merge the actor used to apply across two people's records now waits in the tray.
+- ee5a7c0: A seat acting for a person reads another app's records as that person. In its own app an agent acting for somebody sees what both may, and a system seat acting for somebody is not the system. Reading another app dropped who it acted for: `LinkedViewer` had no room to say it, `linkedRecordsOver` rebuilt the viewer without it, and `find_linked` and the page's linked reads never passed it. So the far app judged an agent by its own roles and a delegated system seat as the system, and an agent declared with finance's role, sitting with somebody in sales, read a deal only finance may see, label, card and fields. Now `LinkedViewer` carries `onBehalfOf`, `linkedRecordsOver` keeps it when it asks the far store, and `find_linked` and the provider's linked reads pass it, so the far app judges the seat as the near one does. An agent acting for nobody, and a person, are read as before. Tools' tests hold it (`a-seat-acting-for-a-person-reads-another-app-as-that-person.test.ts`). The provider's linked reads are on every page, so a hosted page carries 0.1 KB more up front (94 bytes minified, 15 gzipped; 94 / 23 handed a compiled app), under raises naming this changeset.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. `LinkedViewer` gains an optional `onBehalfOf`. What Graview Cloud does: a host that implements `LinkedRecords` itself judges a viewer with `onBehalfOf` as the person it acts for (`actingAs`), and never as the system when its kind is `system`.
+- 6d09126: `graview mcp` tells its seat what the app's own actor learned only from what that seat sees. What was learned from use names the values people keep writing in a field — "Make vendor's tier a choice of Gold and Silver", with the values in its edits — and `list_app_suggestions` handed a seat the list learned over the whole store, so an agent seated as a member, whose sight hides a vendor's tier and every contract, read the tiers and the contracts' statuses that `get_node` and `seenBy` kept from it. Now `learningOf` takes the `seat` it is told to, and learns from that seat's records and log as its sight serves them; `graview mcp` passes its principal, so a field or a kind the seat's sight hides says nothing, and a seat that sees everything is told what it was before. `a-seat-is-told-what-was-learned-only-from-what-it-sees` holds it: an owner is told the tiers and the statuses, a member's agent neither, and two stores that differ only in what the member may not see tell it the same.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. What Graview Cloud does: a host that hands a runtime `learned` learns it for the seat it serves, with `learningOf(…, { seat })` or from `store.seenBy(seat)`.
+- 5301cbe: A plan's review applies only the rows a person kept, and a plan's name means only what the plan made. `PlanReview` filed a call on a standing record under a row the plan was making whenever the plan gave the new thing that record's id as its name (`as: "b_herbs"`), so the review read "New Tomatoes" while the calls under it renamed and dug up Herb Bed; declining the row drew it struck through and still ran them, and Apply stayed pressable under "0 of 1 to run". A call waiting on one the seat may not make stayed ready, and `applyPlan` handed a `{ $plan }` name that made nothing on as the literal id, so it acted on whatever record had it. Now a plan's names are its own — `planFrom` refuses a name that is already a record's id, and refuses a call that waits for one it cannot make ("Waits for "seedlings", which this plan cannot make.") — and `applyPlan` stops and takes back what ran when a name it needs made nothing ("Refers to "fresh", which nothing earlier in this plan made."). In the review, a call on a standing record is its own row, named by that record; the press runs only the calls of rows drawn live, planned again so nothing runs without what it waits for, and is not offered when no row is live. `a-plan-name-means-only-what-the-plan-made.test.ts` holds the name refused, the dependent refused, the stop and the undo; `apply-runs-only-the-rows-a-person-kept.test.tsx` holds the standing record named in its own row, a declined row and a refused one running nothing, and a kept row beside a declined one running alone.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. A plan whose name is a record's id, or whose call waits on a refused one, is refused where it ran before.
+- 359b324: The app's own actor no longer tells a seat, in the words of a suggestion's basis, a field that seat's sight keeps. The actor judges as a system seat that sees every field, and says why in words that quote them — "Both have the code dummy-code-7731", "Its notes names “Harbor Catering”" — and the op kept that basis on its lineage, where field sight never looked: an op is withheld from a seat whose sight keeps a field only when the act's own sentence read that field (`described`). So a viewer whose sight hides a client's code read it, case-folded, in their Suggested tray and in the log they were served, while the client itself was served to them without it, and two apps that differed only in the hidden code gave that viewer different trays. Now a lineage says which fields its basis read (`lineage.read`, `<id>#<field>`, at most 200), and a seat whose sight keeps one of them is served the op withheld — the suggestion, the change the actor applied on its own, the change a person made by accepting it, and the undo that declined it, which carries its lineage. The judges say what each basis read: a shared key, both records' key; a shared name, the fields each name reads; a record whose text names another, that field and both names; a finished record, the field that says so and the date it was read by. A basis that says nothing of it — a model's, which was shown the records whole — is taken to have read every field they hold. A seat that sees those fields reads the suggestion as before. `the-apps-own-actors-basis-tells-a-seat-no-field-it-keeps` holds it: an admin's tray has the code and the notes, a viewer's tray and served log have neither, the viewer's tray is the same whatever the code holds, and nor does the code reach the viewer through a change applied on its own, accepted or declined. Checking and reading `read` costs a hosted page 0.2 KB more up front (190 bytes minified, 99 gzipped; 190 / 59 for a page handed a compiled app), under raises naming this changeset, and the pages face, a visitor's form handed a compiled app and every face carry it under raises of their own (`scripts/budget-raises/sight-side-channels-*.json`).
+  
+  Compatibility: ops and primitives — additive: a lineage may carry `read`, which a build that predates it keeps as a later build's key and does not judge, serving such an op whole as before. Stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged. What Graview Cloud does: nothing; a host that writes its own lineage may say `read` for a basis that quotes a field.
+- b336f0e: The on-device model fetches WebLLM at one pinned version. A page whose host turned `onDevice` on imported `https://esm.run/@mlc-ai/web-llm` with no version, so it ran whatever the registry's latest was that day, with everything the page holds. Now it imports `@mlc-ai/web-llm@0.2.83` (`WEBLLM_URL`, exported from `@graview/tools`), and a host that serves its own copy names it — `onDevice: { webllm }`, or `localCompletion({ webllm })` — beside `load`, which still replaces the whole bring-up with a host's own engine. Moving the pin is a change of its own: whoever bumps it reads what that WebLLM release changed first. `local.test.ts` holds the pinned address and that a host's own copy is the one imported.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, derived tool names and input schemas — unchanged.
+- Updated dependencies [26a8127]
+- Updated dependencies [83fe4cb]
+- Updated dependencies [c33c732]
+- Updated dependencies [85f0794]
+- Updated dependencies [5bf24ba]
+- Updated dependencies [350fc01]
+- Updated dependencies [f65e007]
+- Updated dependencies [d7d58b8]
+- Updated dependencies [d4360ef]
+- Updated dependencies [6b5d16f]
+- Updated dependencies [cf757d1]
+- Updated dependencies [fd6c21a]
+- Updated dependencies [85f9fc3]
+- Updated dependencies [bd67c9b]
+- Updated dependencies [ee5a7c0]
+- Updated dependencies [0dba129]
+- Updated dependencies [1c210c5]
+- Updated dependencies [f14058b]
+- Updated dependencies [419b8e8]
+- Updated dependencies [d14a1f9]
+- Updated dependencies [4a8ecdf]
+- Updated dependencies [aba4773]
+- Updated dependencies [2471cc2]
+- Updated dependencies [e3566ea]
+- Updated dependencies [58da61a]
+- Updated dependencies [d1d4e11]
+- Updated dependencies [359b324]
+- Updated dependencies [b8624ae]
+- Updated dependencies [6bc7bb0]
+- Updated dependencies [71d262d]
+  - @graview/ship@0.1.59
+  - @graview/core@0.1.59
+
 ## 0.1.58
 
 ### Patch Changes
