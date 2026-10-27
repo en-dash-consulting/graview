@@ -21,7 +21,7 @@ const meetings = (sight: Record<string, unknown>): GraviewDocument =>
     kinds: {
       meeting: {
         label: "{title}",
-        fields: { title: { type: "string" }, day: { type: "date", required: true, repeats: true }, room: { type: "string" } },
+        fields: { title: { type: "string" }, startsAt: { type: "datetime", required: true, repeats: true }, room: { type: "string" } },
       },
     },
     roles: ["staff", "public"],
@@ -40,8 +40,8 @@ const open = (document: GraviewDocument) => {
     schema: app.schema,
     mutations: app.mutations ?? [],
     ...(app.policy ? { policy: app.policy } : {}),
-    // 2026-10-20 is a Tuesday: the call is every Tuesday.
-    snapshot: { nodes: [{ id: "meeting:weekly", kind: "meeting", title: "Board call re layoffs", day: "2026-10-20", dayRepeat: { every: "week", on: ["tue"] } }], edges: [] } as never,
+    // 2026-10-20 is a Tuesday: the call is every Tuesday at nine.
+    snapshot: { nodes: [{ id: "meeting:weekly", kind: "meeting", title: "Board call re layoffs", startsAt: "2026-10-20T09:00", startsAtRepeat: { every: "week", on: ["tue"] } }], edges: [] } as never,
   });
 };
 
@@ -56,7 +56,7 @@ describe("a day changed apart mints no id from a field a sight keeps", () => {
   for (const [act, args] of ACTS) {
     for (const [said, sight] of [
       ["hide", { hide: ["title"] }],
-      ["fields", { fields: ["day", "room"] }],
+      ["fields", { fields: ["startsAt", "room"] }],
     ] as const) {
       it(`${act} mints the new meeting's id from its kind, not its title, where a sight's ${said} keeps the title from a role`, () => {
         const store = open(meetings(sight));
