@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 2489,
+  "gzipped": 961,
+  "note": "Raised when a view came to link to the Scene (FR-235, Roadmap f-view-links-to-scene): the host judges a link and a navigate by the one vocabulary the headless check reads — `placeNamesFrom` on `@graview/core/navigate`, which builds the app's places from what the face holds (the home, the Scene, each kind's list, each titled place) as `placesFrom` does for the bar — so the host's links carry that builder. Measured at 31_348 / 14_382 against 28_859 / 13_421: 2_489 / 961 more."
+}

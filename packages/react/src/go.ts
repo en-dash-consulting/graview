@@ -1,7 +1,8 @@
-import type { AnySchema } from "@graview/core";
+import { HOME_SLUG, OVERVIEW_SLUG, type AnySchema } from "@graview/core";
 import { aggregateId, withFocus, withOverview, withWithin } from "@graview/layout/view";
 import { createContext, useContext, useMemo } from "react";
 import { useGraviewIfAny } from "./context.js";
+import { PageDoorContext } from "./content-height.js";
 
 /**
  * WHERE A VIEW SENDS THE READER, ON WHICHEVER FACE IT IS DRAWN.
@@ -63,6 +64,8 @@ export const GoToContext = createContext<GoTo | null>(null);
 export function useGoTo<S extends AnySchema>(): GoTo {
   const given = useContext(GoToContext);
   const graview = useGraviewIfAny<S>();
+  /* The routed face's own way to a page, where a host draws both faces (`@graview/embed`): the home is a page there. */
+  const door = useContext(PageDoorContext);
   /*
    * A KIND'S DISTRICT, with a picture of it or its own stop, narrowed as
    * asked (`in.filter`, which the stop's arranging line reads) — or not at
@@ -70,6 +73,8 @@ export function useGoTo<S extends AnySchema>(): GoTo {
    */
   const stop = (kind: string, as: string | null, also?: GoToAlso) =>
     graview?.setView((view) => withWithin(withWithin(withOverview(withFocus(view, aggregateId(kind)), false), "view", as), "filter", also?.filter ?? null));
+  /* THE SCENE'S OVERVIEW (FR-235): the whole thing, as the bar's first place and Up rise to it — from above, no picture in view. */
+  const overview = () => graview?.setView((view) => withWithin(withOverview(view, true), "view", null));
   return useMemo<GoTo>(
     () =>
       given ?? {
@@ -79,12 +84,15 @@ export function useGoTo<S extends AnySchema>(): GoTo {
           graview.setSelection([id]);
         },
         place: (as, also) => {
+          /* A view may name the Scene and the home (FR-235): the overview here; the home a page where there are pages, else the overview too. */
+          if (as === OVERVIEW_SLUG) return overview();
+          if (as === HOME_SLUG) return door ? door.open("/") : overview();
           const place = graview?.views.places().find((candidate) => candidate.as === as);
           if (place) stop(place.kind, place.as, also);
         },
         list: (kind, also) => stop(kind, null, also),
       },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [given, graview],
+    [given, graview, door],
   );
 }

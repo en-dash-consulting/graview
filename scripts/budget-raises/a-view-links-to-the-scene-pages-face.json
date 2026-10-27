@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 3060,
+  "gzipped": 1450,
+  "note": "Raised when a view came to link to the Scene (FR-235, Roadmap f-view-links-to-scene): the routed face's way of going knows `home` and `overview`, and the worker view's host it carries judges a link by the one vocabulary (`placeNamesFrom` on `@graview/core/navigate`, which builds the app's places from what the face holds, as `placesFrom` does for the bar). Measured at 687_324 / 251_996, and 251_997 on a second run, against 684_264 / 250_594: 3_060 / 1_402 more, raised 1_450 for the few bytes gzip moves between runs."
+}

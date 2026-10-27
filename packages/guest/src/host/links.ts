@@ -1,8 +1,7 @@
-import { kindPath, type AnySchema } from "@graview/core";
-import { sectionSlug } from "@graview/core/navigate";
+import { kindPath, OVERVIEW_SLUG, type AnySchema, type PagesArrangement, type Place } from "@graview/core";
+import { placeNamesFrom, sectionSlug, type PlaceName } from "@graview/core/navigate";
 import { filterOfWhere } from "./where.js";
-import type { GuestPlace } from "../protocol.js";
-import { nowhere, placeNamed, quoted, whereOfWords } from "./links-words.js";
+import { nowhere, placeNamed, quoted, whereOfWords, type NamedPlace } from "./links-words.js";
 import { carriesItsLink, isEntry, linkPressed, opensOnPress, takesRole } from "./pressable.js";
 
 export { nowhere, placesSaid, quoted, whereOfWords } from "./links-words.js";
@@ -51,6 +50,17 @@ export { nowhere, placesSaid, quoted, whereOfWords } from "./links-words.js";
  * is neither goes nowhere, and says why — in the view's console and to the
  * host — naming the places there are, rather than doing nothing.
  *
+ * ONE VOCABULARY (FR-235, Roadmap f-view-links-to-scene). What a view may
+ * name is `@graview/core/navigate`'s `placeNamesFrom`: `overview` (the
+ * Scene), `home`, each kind's list by its slug, and each titled place — a
+ * declared lens, a view the host keeps — by its slug; built here from what
+ * the face holds (`placeVocabulary`) and in the headless check the same
+ * way, so the check and the page agree on which names exist. The Scene's
+ * word used to pass the check (Graview Cloud hands it the app's places,
+ * the Scene among them) and go nowhere on the page, which judged a link by
+ * the registry's pictures alone and told the owner "overview" was no place
+ * of this app.
+ *
  * NARROWED, AND TO A SECTION. A list or a place may be gone to narrowed —
  * `{ place: "features", where: { stage: "building" } }`, `data-filter=
  * "stage:building"` on a link — held to what the kind can be filtered by
@@ -79,11 +89,44 @@ export function listsOf(schema: AnySchema, kept: ReadonlySet<string> = new Set()
   return (schema.kinds as readonly string[]).filter((kind) => !kept.has(kind)).map((kind) => ({ slug: kindPath(schema, kind).slice(1), kind }));
 }
 
+/**
+ * THE NAMES A VIEW MAY USE, FROM WHAT THE HOST HOLDS (FR-235): the places
+ * it was handed — a registry's (`as`) or an app's as `placesOf` lists them
+ * (`slug`), each over a kind — read through `placeNamesFrom`, which adds
+ * the Scene, the home and each kind's list and leaves out what the viewer
+ * is kept from. The Scene's title is the arrangement's word for it, or the
+ * one a handed `overview` carries, else "Scene".
+ */
+export function placeVocabulary(schema: AnySchema, handed: readonly unknown[], options: { readonly kept?: ReadonlySet<string>; readonly pages?: PagesArrangement } = {}): readonly PlaceName[] {
+  const places: Place[] = [];
+  let sceneTitle: string | undefined;
+  for (const one of handed) {
+    if (typeof one !== "object" || one === null) continue;
+    const { as, slug, title, kind, over, hidden, name } = one as { as?: unknown; slug?: unknown; title?: unknown; kind?: unknown; over?: unknown; hidden?: unknown; name?: unknown };
+    const word = typeof as === "string" && as.length > 0 ? as : typeof slug === "string" && slug.length > 0 ? slug : undefined;
+    if (!word) continue;
+    if (typeof kind !== "string" || kind.length === 0) {
+      if (word === OVERVIEW_SLUG && typeof title === "string" && title.length > 0) sceneTitle = title;
+      continue;
+    }
+    places.push({
+      kind,
+      title: typeof title === "string" && title.length > 0 ? title : word,
+      as: word,
+      ...(Array.isArray(over) && over.every((each) => typeof each === "string") ? { over: over as string[] } : {}),
+      ...(hidden === true ? { hidden: true } : {}),
+      ...(typeof name === "string" ? { name } : {}),
+    });
+  }
+  const pages = options.pages ?? (sceneTitle !== undefined ? { scene: sceneTitle } : undefined);
+  return placeNamesFrom(schema, places, { ...(pages ? { pages } : {}), ...(options.kept ? { kept: options.kept } : {}) });
+}
+
 export interface LinksOptions {
   /** Whether the viewer may see a record. */
   readonly sees: (id: string) => boolean;
-  /** The app's named places. */
-  readonly places: () => readonly GuestPlace[];
+  /** The app's named places: the vocabulary (`placeVocabulary`), or a host's own list of titled places. */
+  readonly places: () => readonly NamedPlace[];
   /** The kinds' lists the viewer may go to; none unless given. */
   readonly lists?: () => readonly GuestList[];
   /** The schema a filter is held to; no filter is followed without it. */
@@ -115,18 +158,25 @@ export interface Links {
 
 export interface JudgeDestinationInput {
   readonly sees: (id: string) => boolean;
-  readonly places: readonly GuestPlace[];
+  /** The names a view may use (`placeVocabulary`), or a host's own titled places. */
+  readonly places: readonly NamedPlace[];
+  /** The kinds' lists by slug and name, where `places` does not already name them. */
   readonly lists: readonly GuestList[];
   readonly schema?: AnySchema;
 }
+
+/** Whether a name is a kind's list, by its slug or its kind, among the vocabulary. */
+const listNamed = (places: readonly NamedPlace[], asked: string): NamedPlace | undefined => places.find((place) => place.is === "list" && (place.as === asked || place.kind === asked));
 
 /**
  * WHERE A VIEW ASKED TO GO, JUDGED — by the live host and by a headless run
  * alike: the arrival, or the sentence saying why it goes nowhere.
  */
 export function judgeDestination(to: Destination, input: JudgeDestinationInput): { readonly ok: true; readonly arrival: Arrival } | { readonly ok: false; readonly says: string } {
+  /* Said apart: the places — the Scene, the home, each titled place — and the kinds' lists. */
+  const placesSaid = input.places.filter((place, at, all) => place.is !== "list" && all.findIndex((other) => other.as === place.as) === at);
   const placeSlugs = [...new Set(input.places.map((place) => place.as))];
-  const listSlugs = input.lists.map((list) => list.slug).filter((slug) => !placeSlugs.includes(slug));
+  const listSlugs = [...new Set([...input.places.filter((place) => place.is === "list").map((place) => place.as), ...input.lists.map((list) => list.slug).filter((slug) => !placeSlugs.includes(slug))])];
   /* A section is a heading's words or an element's id: some letters or digits, and not a paragraph. */
   let section: string | undefined;
   if (to.section !== undefined && to.section !== null) {
@@ -142,19 +192,24 @@ export function judgeDestination(to: Destination, input: JudgeDestinationInput):
     return { ok: true, arrival: { record: to.record, ...also } };
   }
   const asked = "place" in to ? to.place : to.record;
-  const place = placeNamed(input.places, asked);
-  const list = place ? undefined : input.lists.find((one) => one.slug === asked || one.kind === asked);
-  if (!place && !list) return { ok: false, says: `${nowhere(to, input.places.filter((one, at, all) => all.findIndex((other) => other.as === one.as) === at))}${listsSaid(listSlugs)}` };
-  const kinds = place ? [place.kind] : [list!.kind];
+  /* A titled place, the Scene or the home first; then a kind's list, by its slug or its name — in the vocabulary, or the lists handed beside it. */
+  const named = placeNamed(input.places, asked);
+  const place = named?.is === "list" ? undefined : named;
+  const listed = place ? undefined : named?.is === "list" ? named : listNamed(input.places, asked);
+  const list = place || listed ? undefined : input.lists.find((one) => one.slug === asked || one.kind === asked);
+  const listKind = listed ? listed.kind ?? undefined : list?.kind;
+  if (!place && listKind === undefined) return { ok: false, says: `${nowhere(to, placesSaid)}${listsSaid(listSlugs)}` };
+  /* The Scene and the home are over no kind: there is nothing to narrow them by. */
+  const kinds = place ? (place.kind ? [place.kind] : []) : [listKind!];
   let filter: string | undefined;
   if (to.where !== undefined && to.where !== null) {
-    if (!input.schema) return { ok: false, says: `The place ${quoted(asked)} cannot be narrowed here: it goes nowhere.` };
-    const judged = filterOfWhere(input.schema, kinds, to.where, { through: list !== undefined });
+    if (!input.schema || kinds.length === 0) return { ok: false, says: `The place ${quoted(asked)} cannot be narrowed here: it goes nowhere.` };
+    const judged = filterOfWhere(input.schema, kinds, to.where, { through: listKind !== undefined });
     if (!judged.ok) return { ok: false, says: `The filter on ${quoted(asked)} goes nowhere: ${judged.says}` };
     filter = judged.filter;
   }
   const narrowed = filter ? { filter } : {};
-  return { ok: true, arrival: place ? { place: place.as, ...narrowed, ...also } : { list: list!.kind, ...narrowed, ...also } };
+  return { ok: true, arrival: place ? { place: place.as, ...narrowed, ...also } : { list: listKind!, ...narrowed, ...also } };
 }
 
 /** The kinds' lists, as a sentence ends with them: the first eight, and how many more. */

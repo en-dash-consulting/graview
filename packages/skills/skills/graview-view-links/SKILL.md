@@ -37,7 +37,15 @@ is a record's id, else a place by its slug or its title
 list (`features` or `feature`); any other says why, naming the places.
 A titled view of many is a place too, at `/places/<its title as a slug>`:
 `data-place="live-threats"` reaches the view "Live threats", and the check
-knows it when its host hands the views it keeps. From code, `graview.navigate("offer:7")` goes by the same rules.
+knows it when its host hands the views it keeps. The Scene and the home
+are places by name as well: `data-place="overview"` (or the Scene's own
+title, "The map") goes to the Scene's overview — on the pages its own
+address, on the Scene the whole thing from above — and `data-place="home"`
+to the front page; a lens goes by its slug, `data-place="the-board"`. The
+check and the page read one vocabulary (`placeNamesOf` on
+`@graview/core/navigate`), so a name the check passes the page follows.
+From code, `graview.navigate("offer:7")` and `graview.navigate("overview")`
+go by the same rules.
 
 In SVG the same `<a data-record>` is a link — a timeline's dot, a map's
 pin — with its address, the keyboard and Enter: `<svg role="group"

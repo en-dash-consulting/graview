@@ -48,7 +48,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-view-export-csv: a place's list written as a spreadsheet, fetched when somebody presses "Export CSV".
   "@graview/core/csv": { from: csv, names: ["CSV_BOM", "csvCell", "csvFileName", "csvSafe", "listCsv", "listCsvRows", "saveShownList", "switchExport", "toCsv"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
-  "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug"] },
+  "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug", "placeNamesFrom", "placeNamesOf"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
   "@graview/core/history": { from: history, names: ["declarationSentence", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.
