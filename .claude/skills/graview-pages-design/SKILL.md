@@ -93,6 +93,11 @@ it (Find in a bar above, the way back docked at the corner), and
 - **Read the graph through one model.** `readGarden(store)` turns nodes,
   edges and violations into the design's words; every page reads it and none
   reaches for `store.graph`. The scene's lens reads the same model.
+- **Show nothing the graph does not hold.** Copy that changes with the app —
+  a pitch, a chart's tags, a section's words — is records of a kind, seeded,
+  never a JSON file the design imports: `graview check` names a page that
+  reads one (`face-reads-content-beside-the-graph`), and Find, Ask and the
+  scene see records alone.
 - **Take the act list from the derivation.** `recordFacts(store, id, {
   principal }).actions` and `kindFacts(store, kind, …).actions`, never a
   scan of `store.allMutations()`; `withheld` are struck through with the

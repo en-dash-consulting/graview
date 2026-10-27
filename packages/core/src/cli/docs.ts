@@ -5,7 +5,7 @@ import { deriveMutations } from "../mutations/derive-edits.js";
 import { mutationToolSchema } from "../schema/json-schema.js";
 import { askedArguments } from "../mutations/asked-order.js";
 import type { AnySchema } from "../schema/schema.js";
-import { agentRules } from "../scaffold/agents.js";
+import { agentDefaults, agentRules } from "../scaffold/agents.js";
 
 /**
  * Generates the file an agent reads before touching this app: what kinds
@@ -18,7 +18,8 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
   lines.push(
     "A Graview context graph. The graph is the interface: every change is a",
     "typed mutation, every mutation previews as a diff, and the invariants",
-    "below are checked before anything applies.",
+    "below are checked before anything applies. Everything the face shows is a",
+    "record of a kind below: content lives in the graph, never in a file beside it.",
     "",
   );
 
@@ -194,13 +195,15 @@ export function generateAgentsMd<S extends AnySchema>(app: GraviewApp<S>): strin
   return [
     `# ${app.name} — working notes for agents`,
     "",
-    "This app is built on Graview. Three rules follow from that, and they are",
+    "This app is built on Graview. Four rules follow from that, and they are",
     "the whole contract:",
     "",
     ...agentRules(mutationNames.join(", ") || "(none registered)"),
     "",
     "Run `graview check` after editing any declaration. It reports schema",
     "problems in terms of the declaration to change.",
+    "",
+    ...agentDefaults(),
     "",
     "## Evolving a live store",
     "",
