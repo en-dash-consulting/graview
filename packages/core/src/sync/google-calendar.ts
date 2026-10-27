@@ -241,7 +241,8 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
       await call(`${events}/${encodeURIComponent(write.id)}`, { method: "DELETE" });
       return { localId: write.localId, id: write.id, version: "" };
     }
-    const body: Record<string, unknown> = write.id ? {} : { ...options.madeHere };
+    // Copied whole: `madeHere` may nest (`start.timeZone`), and a path put beneath it must not reach the next write.
+    const body: Record<string, unknown> = write.id ? {} : structuredClone(options.madeHere ?? {});
     for (const [path, value] of Object.entries(write.fields ?? {})) put(body, path, value);
 
     const result = await call(write.id ? `${events}/${encodeURIComponent(write.id)}` : events, {
@@ -269,7 +270,8 @@ function flatten(item: Record<string, unknown>): Record<string, unknown> {
   // An all-day event has a `date` and no `dateTime`: it arrives as its day, and
   // no time is made up for it. A mapping that names only the timed paths sees
   // no start, and `createInbound` decides whether such a record is one of its.
-  for (const path of ["summary", "location", "description", "start.dateTime", "end.dateTime", "start.date", "end.date"]) {
+  // A recurring event's rule rides along whole (`recurrence`, FR-230): a mapping that keeps a record's repeat reads it.
+  for (const path of ["summary", "location", "description", "start.dateTime", "end.dateTime", "start.date", "end.date", "recurrence"]) {
     const value = at(item, path);
     if (value !== undefined) out[path] = value;
   }

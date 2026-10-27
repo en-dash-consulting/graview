@@ -50,7 +50,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   const check = checkApp(app, { ...(options.views ? { views: options.views } : {}), design: false });
   for (const f of check.findings) {
     // Located and said in the document's own words: `acts.finish.on`, never `defineMutation("finish")`.
-    const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: inDocumentText(f.message, document), ...(f.fix ? { fix: inDocumentText(f.fix, document) } : {}), ...(f.edits ? { edits: f.edits } : {}) } as const;
+    const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: inDocumentText(f.message, document), ...(f.fix ? { fix: inDocumentText(f.fix, document) } : {}), ...(f.edits ? { edits: f.edits } : {}), ...(f.details ? { details: inDocumentText(f.details, document) } : {}), ...(f.fixes ? { fixes: f.fixes } : {}) } as const;
     // The document already said it, at the same path (a blocks lens's words are held by both): once is enough.
     if (compiled.findings.some((said) => said.code === f.code && said.path === finding.path)) continue;
     findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);

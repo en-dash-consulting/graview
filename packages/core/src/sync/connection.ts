@@ -11,6 +11,10 @@ import type { AnyMutationDefinition } from "../mutations/types.js";
 import { creatingActFor } from "./creating-act.js";
 import { SyncEngine, type SharedLinks } from "./engine.js";
 import { googleCalendar, type Fetcher, type GoogleTokenRequest } from "./google-calendar.js";
+import { instantIn, timeZoneFor, wallIn } from "../days.js";
+import { isRepeat, isRepeatField, repeatKey, type Weekday } from "../repeat.js";
+import { addDays } from "../wall-time.js";
+import { firstWeekday, hhmm, instantOfMoment, isoInstant, minutesOf, momentOfInstant, recurrenceOf, repeatOf, wallOfMoment, weekdayOf, weekdaysOf, weeklyRule } from "./recurrence.js";
 import { notion, notionKey } from "./notion.js";
 import { NOTION_EDGE, NOTION_INFERABLE } from "./notion-types.js";
 import type { RemoteSystem, ResourceMapping, SyncMapping, SyncState } from "./types.js";
@@ -89,6 +93,8 @@ export interface ConnectionRun<S extends AnySchema> {
    * the connection's own links alone.
    */
   readonly links?: SharedLinks;
+  /** The clock a weekly series' first week is read from (FR-230); the runtime's when absent. A test passes one. */
+  now?(): Date;
 }
 
 export interface Connection<S extends AnySchema> {
@@ -126,21 +132,99 @@ export function isDayField(app: GraviewApp, kind: string, field: string): boolea
   return fieldSpecs(app, kind)[field]?.type === "date";
 }
 
-/** The mapping a declaration says. */
-export function connectionMapping(app: GraviewApp, declaration: ConnectionDeclaration): SyncMapping {
-  return declaration.system === "notion" ? notionConnectionMapping(app, declaration).mapping : googleConnectionMapping(app, declaration);
+/** What a Google mapping is read against: the app's time zone, and the clock a weekly series' first week is read from. */
+export interface GoogleMappingOptions {
+  readonly zone?: string;
+  now?(): Date;
 }
 
-/** A Google connection's mapping: field types decide the paths, the filter's tag is kept or stripped. */
-function googleConnectionMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpec): SyncMapping {
+/** The mapping a declaration says. */
+export function connectionMapping(app: GraviewApp, declaration: ConnectionDeclaration, options: GoogleMappingOptions = {}): SyncMapping {
+  return declaration.system === "notion" ? notionConnectionMapping(app, declaration).mapping : googleConnectionMapping(app, declaration, options);
+}
+
+/** The zone a Google mapping says its times in: the app's (`brand.timeZone`), else the runtime's. */
+export const connectionZone = (app: GraviewApp, zone?: string): string => zone ?? app.brand?.timeZone ?? timeZoneFor(app.name);
+
+/**
+ * A Google connection's mapping: field types decide the paths, the filter's
+ * tag is kept or stripped. A record that recurs (FR-230) is one event with
+ * a rule: with `days` mapped, the weekdays and the two times of day are the
+ * rule and the first week's instants in the app's zone; a start that
+ * repeats carries its repeat as the rule and its exceptions.
+ */
+function googleConnectionMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpec, options: GoogleMappingOptions = {}): SyncMapping {
   const { kind, fields } = declaration;
+  const zone = connectionZone(app, options.zone);
+  const now = options.now ?? (() => new Date());
+  const specs = fieldSpecs(app, kind);
+  const shape = ((app.schema.tryDefinition(kind) as { fields?: { shape?: Record<string, unknown> } } | undefined)?.fields?.shape ?? {}) as Record<string, unknown>;
   const day = isDayField(app, kind, fields.start);
   const when = day ? "date" : "dateTime";
   const tag = declaration.filter?.tag;
   const keep = declaration.filter?.keep === true;
   const encode: Record<string, (value: unknown, node: Record<string, unknown>) => unknown> = {};
   const decode: Record<string, (value: unknown) => unknown> = {};
-  if (day) {
+  const recurring: Record<string, string> = {};
+  const repeated = repeatKey(fields.start);
+  if (fields.days) {
+    /*
+     * WEEKDAYS AND TIMES OF DAY. The first occurrence is the first of the
+     * record's weekdays from the week the event is sent in, at its time on
+     * the app's wall; the end the same day (the next, past midnight). Both
+     * are encoded from the record whole, so they always agree. Read back,
+     * the rule is the weekdays — an enum's option, a list's codes — and the
+     * instants are times of day there.
+     */
+    const days = fields.days;
+    const options = specs[days]?.type === "enum" ? (specs[days]?.options ?? []) : undefined;
+    const anchor = (node: Record<string, unknown>) => firstWeekday(wallIn(now().getTime(), zone).day, weekdaysOf(node[days]));
+    const at = (node: Record<string, unknown>, value: unknown, after?: number) => {
+      const first = anchor(node);
+      const minutes = minutesOf(value);
+      if (!first || minutes === undefined) return undefined;
+      return isoInstant(instantIn(after !== undefined && minutes <= after ? addDays(first, 1) : first, minutes, zone));
+    };
+    recurring[days] = "recurrence";
+    encode[days] = (value) => {
+      const named = weekdaysOf(value);
+      return named.length > 0 ? [weeklyRule(named)] : undefined;
+    };
+    encode[fields.start] = (value, node) => at(node, value);
+    encode[fields.end] = (value, node) => at(node, value, minutesOf(node[fields.start]));
+    decode[days] = (value) => {
+      const rule = repeatOf(value, zone);
+      const named = rule?.every === "week" && rule.on ? (rule.on as Weekday[]) : [];
+      if (named.length === 0) return null;
+      return options ? (options.find((option) => weekdayOf(option) === named[0]) ?? null) : named;
+    };
+    const timeOfDay = (value: unknown) => (typeof value === "string" ? hhmm(wallIn(Date.parse(value), zone).minutes) : value);
+    decode[fields.start] = timeOfDay;
+    decode[fields.end] = timeOfDay;
+  } else if (isRepeatField(shape[repeated])) {
+    /*
+     * A DATE THAT REPEATS. The first occurrence is the event's start — a
+     * wall time in the app's zone, as a repeating moment is kept — and the
+     * repeat beside it is the rule, each day set apart an EXDATE at the
+     * series' time; a series that no longer repeats sends no rule.
+     */
+    recurring[repeated] = "recurrence";
+    encode[repeated] = (value, node) => {
+      const start = wallOfMoment(node[fields.start], zone);
+      return isRepeat(value) && start ? recurrenceOf(value, start, zone) : undefined;
+    };
+    decode[repeated] = (value) => repeatOf(value, zone) ?? null;
+    if (day) {
+      encode[fields.start] = (value) => value;
+      encode[fields.end] = (value) => shiftDay(value, 1);
+      decode[fields.end] = (value) => shiftDay(value, -1);
+    } else {
+      encode[fields.start] = (value) => instantOfMoment(value, zone);
+      encode[fields.end] = (value) => instantOfMoment(value, zone);
+      decode[fields.start] = (value) => momentOfInstant(value, zone);
+      decode[fields.end] = (value) => momentOfInstant(value, zone);
+    }
+  } else if (day) {
     encode[fields.start] = (value) => value;
     encode[fields.end] = (value) => shiftDay(value, 1);
     decode[fields.end] = (value) => shiftDay(value, -1);
@@ -162,8 +246,9 @@ function googleConnectionMapping(app: GraviewApp, declaration: GoogleCalendarCon
     resource: "events",
     fields: {
       [fields.summary]: "summary",
-      [fields.start]: `start.${when}`,
-      [fields.end]: `end.${when}`,
+      [fields.start]: `start.${fields.days ? "dateTime" : when}`,
+      [fields.end]: `end.${fields.days ? "dateTime" : when}`,
+      ...recurring,
       ...(fields.location ? { [fields.location]: "location" } : {}),
       ...(fields.description ? { [fields.description]: "description" } : {}),
     },
@@ -321,16 +406,22 @@ export function connection<S extends AnySchema>(run: ConnectionRun<S>): Connecti
 function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaration: GoogleCalendarConnectionSpec): Connection<S> {
   const { app, store } = run;
   if (!run.calendarId) throw new Error(`connection ${run.name}: a Google connection needs its calendar's id`);
-  const mapping = googleConnectionMapping(app as GraviewApp, declaration);
+  const zone = connectionZone(app as GraviewApp, store.timeZone);
+  const mapping = googleConnectionMapping(app as GraviewApp, declaration, { zone, ...(run.now ? { now: run.now } : {}) });
   const resource = mapping.resources[0]!;
+  // A record that recurs is one event with a rule (FR-230): the series alone is kept, never one week's exception, and Google expands a timed rule in a named zone.
+  const recurring = Object.values(resource.fields).includes("recurrence");
+  const repeated = repeatKey(declaration.fields.start);
+  const timed = resource.fields[declaration.fields.start] === "start.dateTime";
   const color = declaration.filter?.color ? GOOGLE_COLORS[declaration.filter.color] : undefined;
   const remote = googleCalendar({
     calendarId: run.calendarId,
     token: run.token,
     ...(run.fetch ? { fetch: run.fetch } : {}),
-    keep: (item) => inConnectionFilter(declaration, item),
+    keep: (item) => inConnectionFilter(declaration, item) && !(recurring && item["recurringEventId"] !== undefined),
     madeHere: {
       ...(color ? { colorId: color } : {}),
+      ...(recurring && timed ? { start: { timeZone: zone }, end: { timeZone: zone } } : {}),
       extendedProperties: { private: { [MADE_BY_GRAVIEW]: app.name } },
     },
   });
@@ -347,10 +438,13 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
       removeInbound: ({ localId }) => ({ name: `remove-${declaration.kind}`, args: { id: localId } }),
       createInbound: ({ id, fields }) => {
         const values = decoded(fields);
-        // An event of the other sort (all-day for a timed kind, or timed for a day) has no value here to keep.
-        if (!creates || values[declaration.fields.start] === undefined) return null;
+        // An event of the other sort (all-day for a timed kind, or timed for a day) has no value here to keep; nor has a one-off in a weekly kind, which keeps no date.
+        if (!creates || values[declaration.fields.start] === undefined || (declaration.fields.days && !values[declaration.fields.days])) return null;
         made += 1;
-        return { name: creates, args: { id: `${declaration.kind}:${run.name}-${id.slice(0, 16)}-${made}`, ...values } };
+        const madeAs = `${declaration.kind}:${run.name}-${id.slice(0, 16)}-${made}`;
+        // A date's repeat is given to the record once it is there, through its edit: the act that makes one does not take it.
+        const { [repeated]: repeat, ...rest } = values;
+        return { name: creates, args: { id: madeAs, ...(repeated in values ? rest : values) }, ...(repeat ? { then: [{ name: `edit-${declaration.kind}`, args: { id: madeAs, [repeated]: repeat } }] } : {}) };
       },
     },
     run.state,

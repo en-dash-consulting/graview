@@ -20,6 +20,7 @@ import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
 import { JobSpec } from "./purpose-spec.js";
 import { aliasWord, documentAliasFindings } from "../alias-findings.js";
 import { humanizeField, withArticle } from "../schema/define-node.js";
+import { ConnectionSpec } from "./connection-spec.js";
 import { linkedRelationFindings } from "./linked-relation-findings.js";
 import { linkedRelationOfSpec, reachesAnotherApp, type LinkedRelation } from "../schema/linked.js";
 import {
@@ -160,6 +161,7 @@ export const EDIT_OPS = [
   "remove-job",
   "add-alias",
   "set-aliases",
+  "set-connection",
 ] as const;
 export type EditOp = (typeof EDIT_OPS)[number];
 
@@ -344,6 +346,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "add-alias": z.object({ op: z.literal("add-alias"), kind: kindName, field: fieldName.optional(), alias: z.string().min(1).max(40) }).strict(),
     // All of a kind's or a field's other words at once; null or [] takes them away.
     "set-aliases": z.object({ op: z.literal("set-aliases"), kind: kindName, field: fieldName.optional(), aliases: z.union([z.array(z.string().min(1).max(40)).max(MOST_ALIASES), z.null()]) }).strict(),
+    // A connection declared whole, by its name: set where there was none, or replaced (FR-229); null takes it away.
+    "set-connection": z.object({ op: z.literal("set-connection"), name: kindName, connection: z.union([z.record(z.string(), z.unknown()), z.null()]) }).strict(),
   };
 }
 let shapes: Record<EditOp, z.ZodType> | undefined;
@@ -1044,7 +1048,36 @@ class Editor {
         return this.setAliases(i, e.kind, e.field, [...this.aliasesOf(e.kind, e.field), e.alias], e.alias);
       case "set-aliases":
         return this.setAliases(i, e.kind, e.field, e.aliases ?? []);
+      case "set-connection":
+        return this.setConnection(i, e.name, e.connection);
     }
+  }
+
+  // ── a connection, declared whole (FR-229) ──
+
+  /**
+   * A CONNECTION SET BY NAME: its shape is judged here, as the document's
+   * is; what it says of the kind and the fields it maps, and the acts an
+   * inbound change lands through, the checker judges of the document it
+   * leaves (`connection-findings.ts`). Null takes the connection away.
+   */
+  private setConnection(i: number, name: string, connection: Record<string, unknown> | null) {
+    if (connection === null) {
+      if (!this.doc.connections?.[name]) return this.fail(i, "name", `there is no connection called "${name}"${this.doc.connections ? `; there ${Object.keys(this.doc.connections).length === 1 ? "is" : "are"} ${Object.keys(this.doc.connections).join(", ")}` : ""}`);
+      delete this.doc.connections[name];
+      if (Object.keys(this.doc.connections).length === 0) delete this.doc.connections;
+      this.said.push(`The connection ${name} is gone: nothing keeps its records in step now.`);
+      return;
+    }
+    const parsed = ConnectionSpec.safeParse(connection);
+    if (!parsed.success) {
+      this.refuse(i, parsed.error.issues.map((issue) => ({ ...issue, path: ["connection", ...issue.path] })), "a connection");
+      return;
+    }
+    const was = this.doc.connections?.[name] !== undefined;
+    (this.doc.connections ??= {})[name] = parsed.data;
+    const system = parsed.data.system === "notion" ? "a Notion database" : "a Google calendar";
+    this.said.push(`The connection ${name} ${was ? "now keeps" : "keeps"} ${pluralOf(this.doc.kinds, parsed.data.kind)} in step with ${system}${parsed.data.direction === "read" ? ", which owns them" : ", both ways"}.`);
   }
 
   // ── other words for a kind or a field (Roadmap f-learned-suggestions) ──
