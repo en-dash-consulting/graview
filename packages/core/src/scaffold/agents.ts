@@ -69,7 +69,7 @@ The same declaration can be one JSON file: \`app.json\`, a graview-document
 \`\`\`sh
 npx graview check --document app.json      # each finding at its JSON path, e.g. rules.<rule>.repairs.0
 npx graview describe --document app.json   # what a blank installation meets
-npx graview preview app.json --seed seed.json   # the scene and Pages over a snapshot
+npx graview preview app.json --seed seed.json   # the scene and Pages over a snapshot: open the Pages address it prints (it carries the run's key)
 \`\`\`
 
 ## The rules
