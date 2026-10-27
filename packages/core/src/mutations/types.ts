@@ -38,8 +38,14 @@ export interface MutationContext<S extends AnySchema> {
   removeEdge(edge: GraphEdge): void;
   /** Replaces every `kind` edge arriving at `to` with one from `from`. */
   setSingleSource(kind: string, to: string, from: string): void;
-  /** A deterministic, collision-free id derived from a label. */
-  freshId(label: string, prefix?: string): string;
+  /**
+   * A deterministic, collision-free id derived from a label. `from` is the
+   * record the label was worked out from, where it was not an argument: a
+   * label that quotes one of its fields some sight keeps from a role is not
+   * minted from, as one that quotes such an argument is not (Roadmap
+   * f-field-sight) — the id is minted from `prefix`, the kind's name.
+   */
+  freshId(label: string, prefix?: string, from?: Readonly<Record<string, unknown>>): string;
   /** Raw escape hatch — prefer the helpers above. */
   emit(primitive: Primitive): void;
 }
