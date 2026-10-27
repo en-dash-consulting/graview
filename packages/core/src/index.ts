@@ -167,6 +167,7 @@ export type {
 
 // Mutations — the only writes.
 export { argumentsTaken, compileMutation, defineMutation, numbersSpelled, seatMark, takesAnId } from "./mutations/define-mutation.js";
+export { wouldRun } from "./mutations/would-run.js";
 export type { CompiledMutation } from "./mutations/define-mutation.js";
 export {
   deriveArchiveMutations,

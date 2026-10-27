@@ -106,7 +106,7 @@ export function typeTextMutation<S extends AnySchema>(store: TypingStore): AnyMu
  *
  * And only an act that could run on THIS record now (`allows`, the store's
  * to say): one whose module is on and whose own rule holds for the record
- * (`allowedOn`). An act that may amend a ticket's notes only while it is
+ * (`allowedOn`, or the act itself asked: `wouldRun`). An act that may amend a ticket's notes only while it is
  * open lent its grant to typing over them once it was closed.
  */
 export function typeTextVia<S extends AnySchema>(schema: S, mutations: readonly AnyMutationDefinition<S>[], kind: string | undefined, field: unknown, allows: (mutation: AnyMutationDefinition<S>) => boolean = () => true): readonly string[] {
