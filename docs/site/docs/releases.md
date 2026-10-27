@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.61`](https://graview.dev/docs/releases.html#v0-1-61)
 - [`0.1.60`](https://graview.dev/docs/releases.html#v0-1-60)
 - [`0.1.59`](https://graview.dev/docs/releases.html#v0-1-59)
 - [`0.1.58`](https://graview.dev/docs/releases.html#v0-1-58)
@@ -62,9 +63,26 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.60
+## 0.1.61
 
 Published October 27, 2026 · the current version
+
+A host's buttons stand on the app bar, a choice takes several of its options, a weekly record is one recurring event, a connection refused says its ways out, and a compaction can be asked to stay readable by an older build.
+
+- **A compaction asked for format 1.** 0.1.60's `pins: [store.publishedSeq]` held a store at snapshot format 1 only when the horizon landed on that one publish; `compact({ format: 1 })` now holds it there through every publish while a rollback is possible, and `formatStamp` stamps 2 for any checkpoint carrying a publish.
+- **A host's buttons on the app bar.** `barActions` on `mount`, the frame, the pages embed and the Shell, drawn on the bar or folded into one control on a phone; `setBarActions` changes them live.
+- **A choice takes several of its options.** `{ "type": "enum", "multiple": true }`: boxes in forms, labels on cards and sheets, a filter in lists, Notion's multi-select, an array in every schema, `set-multiple` in the studio.
+- **Connections.** A calendar connection refused says why in a person's words and carries `fixes` with edits a host can apply (`set-connection`); a kind with `days` and times of day is one recurring Google event, and a repeating date maps to its RRULE.
+- **The Scene and the panels.** The ground answers a right-click and a resting finger with Graview's menu; a cut card says More at its foot; Activity never scrolls sideways; a suggestion's record chips open their record; a link is offered on evidence, not one common word; a PDF that cannot be shown is one line.
+- **Agents and the starter.** `graview check` warns when a face reads content beside the graph; `traitsOf`, `startingDocument`, `nounWords` and `pluralWords` on `/compose`, and `@graview/tools/starter` asks the starter's questions with the host's model.
+
+**Before you upgrade:** New: `CompactOptions.format`; `barActions` and `setBarActions`; `multiple` on an enum field (refused on any other type as `shape`), `retype-field` takes it, `set-multiple`; a finding's `details` and `fixes`, the edit `set-connection`; a calendar connection's `fields.days` and `createInbound`'s `then`; the warning `face-reads-content-beside-the-graph`; `traitsOf`, `hasTrait`, `TRAITS`, `startingDocument`, `nounWords`, `pluralWords` on `@graview/core/compose`; `@graview/tools/starter`. Changed: `formatStamp` stamps `snapshot: 2` for a checkpoint carrying any `published` (0.1.60 stamped 1 for one a later publish took readers back to), so such a store is stamped 2 at its next open; `remove-kind` takes a kind's hue, the sights through its relations and the people kind's `$me` acts with it. Ops, stored formats and the wire are otherwise unchanged; `capabilities().shipped` names the eleven ids these changesets announce.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.61) · [The full changelog for 0.1.61](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0161)
+
+## 0.1.60
+
+Published October 27, 2026
 
 A loopback serve and preview believe a seat only with the run's key; typing and Edit ride an act only where it would run; compaction moves past old publishes, and an older build refuses what it would misread.
 
