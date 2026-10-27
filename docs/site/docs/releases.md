@@ -64,7 +64,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.60
 
-Published October 27, 2026 · the current version
+Published October 27, 2026
 
 A loopback serve and preview believe a seat only with the run's key; typing and Edit ride an act only where it would run; compaction moves past old publishes, and an older build refuses what it would misread.
 
