@@ -8,6 +8,6 @@ export type { EmbedBar, EmbedError, EmbedErrorWhere, EmbedFace, EmbedHostContext
 export type { BarAction, BarSwitch, HostAction } from "@graview/primitives/frame";
 export { createNoticeBoard, FIRST_LOOK_ANCHORS, quickAskOf } from "@graview/primitives/frame";
 export type { FirstLook, FirstLookAnchor, FirstLookEnd, FirstLookOptions, FirstLookStep } from "@graview/primitives/frame";
-export type { Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "@graview/primitives/frame";
+export type { Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeReport, NoticeTone } from "@graview/primitives/frame";
 export type { StudioApplied, StudioHostVerdict, StudioOffered, StudioOnApply } from "@graview/studio";
 export { fontsLink, familiesOf } from "./fonts.js";

@@ -40,7 +40,10 @@ async function tidy(board: NoticeBoard | null, run: () => void | Promise<void>, 
     await run();
     return true;
   } catch (error) {
-    board?.notify({ kind: "toast", tone: "bad", sentence: error instanceof Error && error.message ? error.message : failed });
+    // Its code rides along, for a host's Report this (FR-237).
+    const said = (error as { code?: unknown } | null)?.code;
+    const code = typeof said === "string" ? said : undefined;
+    board?.notify({ kind: "toast", tone: "bad", sentence: error instanceof Error && error.message ? error.message : failed, ...(code ? { code } : {}) });
     return false;
   }
 }

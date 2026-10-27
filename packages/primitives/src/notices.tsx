@@ -50,6 +50,38 @@ export interface Notice {
   readonly id?: string;
   /** How long a toast stays, in milliseconds; `false` keeps it until it is cleared. Default 6000, or `false` with an act. */
   readonly timeout?: number | false;
+  /** A refusal's code, when the sentence has one: handed on with a host's "Report this" (FR-237). */
+  readonly code?: string;
+  /**
+   * Who said it. The app's own surfaces speak on the board `frameworkVoice`
+   * hands them, which says `"framework"` here; a host's own notices, said
+   * through the handle or on its own board, say nothing. A host's "Report
+   * this" answers only what the framework said (FR-237).
+   */
+  readonly from?: "framework";
+}
+
+/**
+ * WHAT A HOST'S "REPORT THIS" IS HANDED (FR-237): the toast's words, a
+ * refusal's code when it had one, the place the reader is on and the record
+ * when there is one, and the framework's version.
+ */
+export interface NoticeReport {
+  readonly message: string;
+  readonly code?: string;
+  readonly place?: string;
+  readonly record?: string;
+  readonly version: string;
+}
+
+/**
+ * A HOST'S "REPORT THIS" (FR-237), as the notices draw it: `tell` is the
+ * host's hook, and `where` says the place and the record the reader is on
+ * when a report is pressed.
+ */
+export interface NoticeReporting {
+  readonly tell: (report: NoticeReport) => void;
+  readonly where: () => Pick<NoticeReport, "place" | "record">;
 }
 
 export interface NoticeHandle {
@@ -82,6 +114,22 @@ export interface NoticeBoard {
 
 /** The time a toast with nothing to answer stays. */
 export const TOAST_MS = 6000;
+
+/**
+ * THE BOARD AS THE APP'S OWN SURFACES SPEAK ON IT: what they say is the
+ * framework's, so a host's "Report this" can answer it (FR-237) and leave
+ * the host's own notices alone. The Shell and the embeds hand this to the
+ * context; the host's handle speaks on the board itself.
+ */
+export function frameworkVoice(board: NoticeBoard): NoticeBoard {
+  return { ...board, notify: (notice) => board.notify({ ...notice, from: "framework" }) };
+}
+
+/** Where a report says the scene's reader is: the overview, and the record the scene is focused on — a district (`aggregate:`, `kind:`) is no record. */
+export const sceneReportWhere = (focusId: string | null | undefined): Pick<NoticeReport, "place" | "record"> => ({
+  place: "overview",
+  ...(focusId && !/^(aggregate|kind):/.test(focusId) ? { record: focusId } : {}),
+});
 
 /** One board of notices: what `notify` writes and `Notices` draws. */
 export function createNoticeBoard(): NoticeBoard {
@@ -181,7 +229,7 @@ export const NoticeBoardContext = createContext<NoticeBoard | null>(null);
  * The notices on a board, drawn over the picture `anchor` returns (the
  * embed's face, the Shell's scene): banners at its top, toasts at its foot.
  */
-export function Notices({ board, anchor }: { readonly board: NoticeBoard; readonly anchor: () => HTMLElement | null }) {
+export function Notices({ board, anchor, report }: { readonly board: NoticeBoard; readonly anchor: () => HTMLElement | null; readonly report?: NoticeReporting | undefined }) {
   const notices = useSyncExternalStore(board.subscribe, board.list, board.list);
   // Fetched once the page is idle, so the first notice is drawn as it is said.
   useEffect(() => whenIdle(stacks.prefetch), []);
@@ -190,7 +238,7 @@ export function Notices({ board, anchor }: { readonly board: NoticeBoard; readon
       {/* Its own boundary: a notice still arriving holds back nothing else on the page. */}
       {notices.length > 0 ? (
         <Suspense fallback={null}>
-          <Stacks notices={notices} anchor={anchor} board={board} />
+          <Stacks notices={notices} anchor={anchor} board={board} {...(report ? { report } : {})} />
         </Suspense>
       ) : null}
       <Spoken notices={notices} />

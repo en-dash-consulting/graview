@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
 import { faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarAction, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarAction, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
 import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
@@ -284,6 +284,18 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * sandboxed view can put a button here.
    */
   readonly barActions?: readonly BarAction[];
+  /**
+   * THE HOST'S "REPORT THIS" (FR-237). Given, every warning or error toast
+   * the framework raises itself — a tidying the host refused, a take-back
+   * that failed — carries a native button, "Report this", named for the
+   * toast, that hands the host the toast's words, a refusal's code when it
+   * had one, the place the reader is on (a list's or a place's slug, a
+   * record's page as its slug and the record's id, the scene as
+   * `overview` with the record it is focused on) and the framework's
+   * version. The toast stays while the button has focus. The host's own
+   * notices, said through `notify`, carry none.
+   */
+  readonly onReport?: (report: NoticeReport) => void;
   /**
    * THE BOARD THE HOST NOTICES ARE SAID ON (FR-75). `mount` makes one and
    * hands its `notify` back on the handle; a React host drawing `<Embed>`
@@ -660,9 +672,32 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
  * board to the faces under it, so what a face says (the way back after an
  * act, FR-153) is drawn here.
  */
-export function FrameNotices({ rootRef, board }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly board: NoticeBoard }) {
+export function FrameNotices({ rootRef, board, onReport, where }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly board: NoticeBoard; readonly onReport?: FrameOptions["onReport"]; readonly where: () => Pick<NoticeReport, "place" | "record"> }) {
   const anchor = useCallback(() => rootRef.current?.querySelector<HTMLElement>("[data-embed-content]") ?? rootRef.current, [rootRef]);
-  return <Notices board={board} anchor={anchor} />;
+  // The host's Report this (FR-237), asking where the reader is when it is pressed.
+  const spot = useRef(where);
+  spot.current = where;
+  const report = useMemo<NoticeReporting | undefined>(() => (onReport ? { tell: onReport, where: () => spot.current() } : undefined), [onReport]);
+  return <Notices board={board} anchor={anchor} report={report} />;
+}
+
+/**
+ * WHERE A REPORT SAYS THE ROUTED FACE'S READER IS (FR-237): the place a
+ * path names — `/places/<as>` as its slug, `/<kind's slug>/<id>` as the
+ * slug and the record, `/problems` and the rest as their first word, `/`
+ * as `home` — with its search and fragment left off.
+ */
+export function placeOfPath(path: string): Pick<NoticeReport, "place" | "record"> {
+  const parts = path.split(/[?#]/)[0]!.split("/").filter(Boolean).map((part) => {
+    try {
+      return decodeURIComponent(part);
+    } catch {
+      return part;
+    }
+  });
+  if (parts.length === 0) return { place: "home" };
+  if (parts[0] === "places") return { place: parts[1] ?? "places" };
+  return { place: parts[0]!, ...(parts[1] !== undefined ? { record: parts[1] } : {}) };
 }
 
 /** What the provider under every face is handed from the options, beside the store and the views. */

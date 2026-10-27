@@ -1,6 +1,6 @@
 import type { AnySchema, Brand, Person, Principal, Store } from "@graview/core";
 import { createPartsWatch, ErrorReportContext, GraviewProvider, PartsWatchContext, type AwaySummary, type Scheme } from "@graview/react/provider";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDrawnSignal } from "./drawn.js";
 import { draftWaits, fetchDraftHost, Settling, useDraft, type EmbedDraftView } from "./draft.js";
 import type { EmbedWhere } from "./where.js";
@@ -13,8 +13,8 @@ import { createViews, type ReactViewRegistry } from "@graview/react/provider";
 const pagesViews = <S extends AnySchema>(schema: S, specs: Parameters<typeof registerViewSpecs>[2]): ReactViewRegistry<S> =>
   registerViewSpecs(registerDefaultViews(schema, createViews(schema)), schema, specs) as unknown as ReactViewRegistry<S>;
 import { flushSync } from "react-dom";
-import { createNoticeBoard, NoticeBoardContext, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { barLeaves, FaceBoundary, FrameBar, FrameFirstLook, FrameNotices, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import { createNoticeBoard, frameworkVoice, NoticeBoardContext, type Notice, type NoticeHandle } from "@graview/primitives/frame";
+import { barLeaves, FaceBoundary, FrameBar, FrameFirstLook, FrameNotices, placeOfPath, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
 import { addressOf, pathWithin } from "@graview/core";
 import { appKeyOf, BarFindContext, type BarFind } from "@graview/primitives/frame";
 
@@ -86,6 +86,8 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
   // The board the app speaks on, the host's or the frame's own: the one drawn is the one the face says things on.
   const [ownBoard] = useState(createNoticeBoard);
   const notices = props.notices ?? ownBoard;
+  // What the pages say on it is the framework's, which a host's Report this may answer (FR-237).
+  const voice = useMemo(() => frameworkVoice(notices), [notices]);
   return (
     <section
       ref={rootRef}
@@ -98,7 +100,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
-        <FrameNotices rootRef={rootRef} board={notices} />
+        <FrameNotices rootRef={rootRef} board={notices} onReport={props.onReport} where={() => placeOfPath(at)} />
         <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} />
         <FaceBoundary module="@graview/react" report={report} content>
           <PartsWatchContext.Provider value={parts}>
@@ -121,7 +123,7 @@ function PagesDrawing<S extends AnySchema>(props: PagesEmbedProps<S>) {
               </FaceBoundary>
             ) : null}
             <BarFindContext.Provider value={barFind}>
-              <NoticeBoardContext.Provider value={notices}>
+              <NoticeBoardContext.Provider value={voice}>
               <FaceBoundary module="@graview/pages" report={report} content>
                 <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} steering={steering} scope={scope} titleLevel={titleBelow(props.heading ?? 2)} props={props} />
               </FaceBoundary>
@@ -255,4 +257,4 @@ export type { EmbedWhere } from "./where.js";
 export type { EmbedBar, EmbedError, EmbedErrorWhere, EmbedHostContext, EmbedReady, EmbedRemote } from "./frame.js";
 export type { HostAction } from "@graview/primitives/frame";
 export { createNoticeBoard } from "@graview/primitives/frame";
-export type { Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "@graview/primitives/frame";
+export type { Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeReport, NoticeTone } from "@graview/primitives/frame";

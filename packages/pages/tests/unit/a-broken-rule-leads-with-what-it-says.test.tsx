@@ -29,4 +29,16 @@ describe("a broken rule leads with what it says", () => {
     expect(judged?.querySelector("[data-graview-rule-line]")).not.toBeNull();
     await done();
   });
+
+  it("stands in a box with one hairline all round and the warning tint, never a thick border on one side (FR-236)", async () => {
+    const { host, done } = await rendered("/findings/f1");
+    await act(async () => new Promise((ready) => setTimeout(ready, 200)));
+    const box = host.querySelector<HTMLElement>('[data-testid="record-violations"]')!;
+    const style = box.getAttribute("style") ?? "";
+    expect(style).toMatch(/(^|; )border: 1px solid var\(--graview-edge\);/);
+    expect(style).not.toMatch(/border-(left|right|top|bottom)/);
+    expect(box.style.background).toBe("var(--graview-panel-warning)");
+    expect(box.style.borderRadius).toBe("var(--graview-radius, 12px)");
+    await done();
+  });
 });

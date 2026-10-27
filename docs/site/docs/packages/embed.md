@@ -245,6 +245,19 @@ handle.notify({ id: "newer", kind: "banner", sentence: "A newer version is avail
 
 A toast goes by itself after six seconds (`timeout` says otherwise, `false` keeps it), unless it carries an action, when it waits for one; a banner stays until it is dismissed. A notice said again under the same `id` takes the place of the one before. An action is a press (onSelect) or a link (`href`), and either closes the notice; every notice also has a dismiss control. Banners are drawn at the top of the picture and toasts at its foot, in the framework's floating panel and the embed's scheme, in the top layer and kept over any popover that opens after them; each is said aloud as it arrives, and one whose tone is bad is said as an alert. `@graview/embed/pages` has the same `notify`; a React host drawing `<Embed>` makes a board with `createNoticeBoard()`, passes it as `notices`, and says things on it.
 
+A notice carries its tone as a small tinted chip at its head, not as a colored border on one side; the card is one hairline all round, in the app's radius.
+
+The toasts the framework raises itself — a tidying the host refused, a take-back that failed — can carry the host's own "Report this":
+
+```ts
+mount(root, {
+  app,
+  onReport: ({ message, code, place, record, version }) => openFeedback({ error: message, code, place, record, version }),
+});
+```
+
+Given `onReport`, every warning or error toast the framework raises draws a native button, "Report this", named for the toast ("Report this: “Up next” could not be hidden."), and hands the hook the toast's words (`message`), a refusal's `code` when it had one, the `place` the reader is on — a list's or a place's slug, `home`, `overview` on the scene — the `record` when a record's page or card is open, and the framework's `version`. The toast stays while the button has focus, and stays once pressed, so the words are there to read beside the host's dialog. The host's own notices, said through `notify`, carry no such button (`NoticeReport` is the report's type).
+
 ### What went wrong, and how long it took
 
 ```ts

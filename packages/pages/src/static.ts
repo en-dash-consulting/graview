@@ -581,7 +581,7 @@ a { color: var(--graview-accent); text-decoration-thickness: 1px; text-underline
 .gv-text[data-tone="warn"], .gv-text[data-tone="bad"] { color: var(--graview-bad); }
 .gv-text[data-tone="good"] { color: var(--graview-good); }
 .gv-section, .gv-part { border-top: 1px solid var(--graview-edge); padding-top: 12px; margin-top: 20px; }
-.gv-problems { border-left: 3px solid var(--graview-warn); background: var(--graview-panel-warning); padding: 10px 16px; border-radius: 0 var(--graview-radius) var(--graview-radius) 0; }
+.gv-problems { border: 1px solid var(--graview-edge); background: var(--graview-panel-warning); padding: 10px 16px; border-radius: var(--graview-radius); }
 .gv-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 24px; margin: 8px 0; }
 .gv-fields div { break-inside: avoid; }
 .gv-fields dt { font-size: 0.833rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graview-ink-muted); }
