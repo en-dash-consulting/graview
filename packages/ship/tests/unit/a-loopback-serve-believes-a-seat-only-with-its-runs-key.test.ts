@@ -160,7 +160,8 @@ describe("a loopback serve believes a seat only with its run's key", () => {
     expect(traded.status).toBe(303);
     expect(traded.headers.location).toBe("/?today=2026-09-14");
     const cookie = String(traded.headers["set-cookie"]);
-    expect(cookie).toMatch(new RegExp(`^${SERVE_KEY.cookie}=`));
+    // Named for its port: cookies are not, so two stores in one browser would otherwise take each other's.
+    expect(cookie).toMatch(new RegExp(`^${SERVE_KEY.cookie}_${served!.port}=`));
     expect(cookie).toMatch(/HttpOnly/);
     expect(cookie).toMatch(/SameSite=Strict/);
     const held = cookie.split(";")[0]!;

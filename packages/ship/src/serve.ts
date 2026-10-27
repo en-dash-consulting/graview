@@ -109,12 +109,19 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
   const NO_KEY = JSON.stringify({ error: KEY_MISSING, reason: "forbidden" });
   // What the cookie holds: made from the key, so not even the trade's own answer writes the key.
   const cookieValue = key === undefined ? undefined : createHash("sha256").update(`graview-serve-cookie:${key}`).digest("base64url");
+  /*
+   * The cookie is named for the port this server listens on: a browser sends
+   * a cookie to every port of a host, so two stores open in one browser would
+   * otherwise each overwrite the other's.
+   */
+  let listening = 0;
+  const cookieName = () => `${SERVE_KEY.cookie}_${listening}`;
   /** Whether a request carries this run's key — always, when the store keeps none. */
   const keyed = (incoming: IncomingMessage): boolean => {
     if (key === undefined || cookieValue === undefined) return true;
     const header = incoming.headers[SERVE_KEY.header];
     if (typeof header === "string" && sameKey(header, key)) return true;
-    const cookie = cookieOf(incoming, SERVE_KEY.cookie);
+    const cookie = cookieOf(incoming, cookieName());
     if (cookie !== undefined && sameKey(cookie, cookieValue)) return true;
     const raw = incoming.url ?? "/";
     if (!raw.includes(`${SERVE_KEY.param}=`)) return false;
@@ -158,7 +165,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
       // The printed address, opened in a browser: the key traded for the cookie, and the address tidied.
       const method = incoming.method ?? "GET";
       const path = addressOf(incoming)?.pathname ?? "/";
-      if ((method === "GET" || method === "HEAD") && !path.startsWith("/graview/") && tradeKey(incoming, outgoing, { param: SERVE_KEY.param, cookie: SERVE_KEY.cookie, key, value: cookieValue })) return;
+      if ((method === "GET" || method === "HEAD") && !path.startsWith("/graview/") && tradeKey(incoming, outgoing, { param: SERVE_KEY.param, cookie: cookieName(), key, value: cookieValue })) return;
       if (!open(incoming) && !keyed(incoming)) {
         const headers: Record<string, string> = { "content-type": "application/json", "content-length": String(Buffer.byteLength(NO_KEY)), "cache-control": "no-store" };
         corsOf(incoming)?.(headers);
@@ -228,6 +235,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
   });
 
   const port = await listen(server, wanted ?? 0, host);
+  listening = port;
   return {
     // Read through: the declaration changing replaces them (FR-43).
     get store() {

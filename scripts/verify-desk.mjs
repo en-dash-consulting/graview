@@ -176,6 +176,32 @@ try {
     }
   }
   const broken = Object.entries(walked).filter(([, seen]) => !seen.drew);
+
+  /*
+   * THE STOP AS A PERSON PRESSES IT: the desk names the store server and
+   * not its key, which only the terminal that started it holds. Rota says
+   * so and asks for the printed address, and opens the roster from it.
+   */
+  const served = CAPABILITIES.find((one) => one.id === "cap-server-persistence");
+  const asked = {};
+  try {
+    await page.goto(`${at("rota")}${movedIn(served.stop)}`, { waitUntil: "load" });
+    await page.waitForSelector('[data-testid="server-address"] input', { timeout: 30_000 });
+    asked.said = (await page.textContent('[role="alert"]'))?.slice(0, 160) ?? null;
+    asked.focused = await page.evaluate(() => document.activeElement?.id ?? null);
+    asked.keyShown = (await page.content()).includes(storeKey);
+    await page.fill('[data-testid="server-address"] input', `${at("served")}/?graview_key=${storeKey}`);
+    await page.click('[data-testid="server-address"] button');
+    await page.waitForFunction(() => "__rotaReady" in window, null, { timeout: 40_000 });
+    asked.opened = true;
+  } catch (error) {
+    asked.why = String(error).slice(0, 200);
+  }
+  report.checks.theServedStopAsksForTheAddressServePrinted = {
+    ...asked,
+    note: served.note,
+    ok: asked.opened === true && /printed/.test(asked.said ?? "") && asked.focused === "server-address" && asked.keyShown === false && /pnpm serve:rota/.test(served.note ?? ""),
+  };
   report.checks.pressingACapabilityOpensTheDemoThere = {
     walked: Object.keys(walked).length,
     broken: broken.map(([id, seen]) => `${id}: ${seen.why ?? "drew nothing"}`),

@@ -31,7 +31,8 @@ export const SEAT_HEADERS = {
  * serve` mints a secret each time it starts and believes a seat only from a
  * request that carries it — in `x-graview-key`, in the `graview_key` query
  * parameter (a page's WebSocket, which cannot set a header), or in the
- * `graview_key` cookie a page is given for opening the printed address.
+ * `graview_key_<port>` cookie a page is given for opening the printed address
+ * (named for the port: a browser sends a cookie to every port of a host).
  */
 export const SERVE_KEY = {
   header: "x-graview-key",

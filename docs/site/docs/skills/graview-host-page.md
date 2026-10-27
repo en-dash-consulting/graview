@@ -45,7 +45,7 @@ The declaration names a kept view as `view:<its manifest name>` in `pages.order`
 
 ### Pictures of places, with no product
 
-`graview preview <document.json>` serves the store and Graview's own faces over a document; `graview shots <document.json> --places a,b --scheme both
+`graview preview <document.json>` serves the store and Graview's own faces over a document, at the address it prints (it carries the run's key, which the page trades for a cookie; nothing but health answers without it); `graview shots <document.json> --places a,b --scheme both
 
 --width 390,1280` photographs places to PNGs, waiting for `data-graview-drawn` before each. Both take an app declared in code as `graview check` does (`./dist/domain/app.js`): the store runs it, and the page is handed its module bundled with the project's esbuild. Both take a proposed view as `--view <view.js> --manifest <manifest.json>`, drawn as a draft where it attaches; `shots` takes its place by its title, as a kept view's (`--places "The week"`), and lists it among the places.
 

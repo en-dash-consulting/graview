@@ -408,7 +408,7 @@ Writes a lens that compiles: the role check that fails loudly, the createXLens f
 graview preview <document.json | app module> [--seed <file>] [--port <n>] [--host <address>]
 ```
 
-[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync] [--view <view.js> --manifest <manifest.json>] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. An app declared in code is taken as graview check takes it (./dist/domain/app.js), its module bundled for the page with the project's esbuild. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the app declares, unless --as or --roles say who. Its connections run as serve's do, unless --no-sync. --view and --manifest draw a worker view proposed and not kept where it attaches, marked as a draft. Each of the app's forms for visitors is at /forms/<name>, drawn alone and answered as a visitor minted for that page.
+[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync] [--view <view.js> --manifest <manifest.json>] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. An app declared in code is taken as graview check takes it (./dist/domain/app.js), its module bundled for the page with the project's esbuild. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the app declares, unless --as or --roles say who. Its connections run as serve's do, unless --no-sync. --view and --manifest draw a worker view proposed and not kept where it attaches, marked as a draft. Each of the app's forms for visitors is at /forms/<name>, drawn alone and answered as a visitor minted for that page. On 127.0.0.1 each run mints a key, carried by every address it prints: open one of those (the key is traded for a cookie), since nothing but health answers without it.
 
 ## graview serve
 
@@ -2206,7 +2206,7 @@ graview doctor                        # one Graview release in package.json, the
 graview skills install .              # the authoring skills, for Claude Code and Codex
 ```
 
-`preview` is `serve` with Graview's own faces over the store: a JSON document and a snapshot, looked at with nothing built and nothing else installed — the page ships in this package. `shots` photographs the same page headless; it needs Playwright, which you install beside the project (`npm i -D playwright && npx playwright install chromium`).
+`preview` is `serve` with Graview's own faces over the store, at the address it prints (which carries that run's key, as `serve`'s does): a JSON document and a snapshot, looked at with nothing built and nothing else installed — the page ships in this package. `shots` photographs the same page headless; it needs Playwright, which you install beside the project (`npm i -D playwright && npx playwright install chromium`).
 
 `serve`, `mcp`, `apply` and `sync-seed` share one store: `--data <dir>` (a folder of readable JSON, the default), `--sqlite <file>`, or — for `mcp` and `apply` — `--remote-url <url>` against a running `graview serve`, given the address it printed (it carries that run's key). `--as` and `--roles` say who is acting; the policy judges on the host exactly as it judges in a browser.
 
@@ -2909,7 +2909,7 @@ Every route `serveStore` answers is `WIRE`, exported from the package and pinned
 
 Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential from the `Request` and returns the principal every call is judged under, or a promise of it. The framework's clients also send the seat as headers (`SEAT_HEADERS`: who, as what, by what name, and for whom), and a store believes them only when told to — `serveStore({ trustSeatHeaders: true })`, which `graview serve` sets for a server on 127.0.0.1 and says so. There it keeps to its own origin and host (`serveStore({ ownOrigin })`) and the origins `--allow-origin` names (`serveStore({ allowOrigins })`, each echoed in its CORS answer in place of `*`), and reads no `x-graview-kind: system` as the system's seat (`serveStore({ trustSystemSeat })`, which `--trust-seat-headers` turns on). And since another account on the same machine, or any program that says no origin, reaches 127.0.0.1 too, each run of `graview serve` mints a key and believes a request only when it carries it (`serveStore({ key })`): the address it prints carries it as `?graview_key=…` (`SERVE_KEY`), a page opening that address is handed a cookie for it (HttpOnly, SameSite=Strict) and sent on without it, a program sends it as `x-graview-key`, and a page's WebSocket carries it in its query. `openRemote`, `graview mcp
 
---remote-url` and `graview apply --remote-url` take the printed address whole and do the rest (`servedAddress` takes one apart). Without the key every route but health answers 401; the key is never written into an answer, and a new run is a new key. A store with neither `seatOf` nor trusted seat headers answers 401 on every route but health. Whatever a host asks for rides along: `openRemote({ headers })` sends them with every request, and the framework never reads them. What a call came through (`via`: `web`, `api`, `mcp:Claude`), recorded on the op, is the host's word too: `viaOf(request, seat)` says it, or `SEAT_HEADERS.via` where the seat headers are trusted (`openRemote({ via })` sends it, `mcp` and `cli` from the commands). A `via` in a call's body or message is a claim, never read on its own: `openRemote` sends the one a call was applied with (a guest view applies with `view:<name>`), and `liveProtocol({ viaOf: (peer, claimed) => … })` lets a host judge it — asked of every change, it answers the via to record, and nothing keeps the host's own. Without any of these, a socket's calls are `web` and an HTTP call's `api`. `openRemote(...).settled()` resolves once every call sent so far has been answered — a browser never waits for it; a host that must report the server's verdict before it exits does.
+--remote-url` and `graview apply --remote-url` take the printed address whole and do the rest (`servedAddress` takes one apart). Without the key every route but health answers 401; the key is never written into an answer, and a new run is a new key. `graview preview` and `graview shots` hand theirs to `servePreview({ key })`, whose `address` carries it; the cookie is named for the server's port, so two stores open in one browser keep their own. A store with neither `seatOf` nor trusted seat headers answers 401 on every route but health. Whatever a host asks for rides along: `openRemote({ headers })` sends them with every request, and the framework never reads them. What a call came through (`via`: `web`, `api`, `mcp:Claude`), recorded on the op, is the host's word too: `viaOf(request, seat)` says it, or `SEAT_HEADERS.via` where the seat headers are trusted (`openRemote({ via })` sends it, `mcp` and `cli` from the commands). A `via` in a call's body or message is a claim, never read on its own: `openRemote` sends the one a call was applied with (a guest view applies with `view:<name>`), and `liveProtocol({ viaOf: (peer, claimed) => … })` lets a host judge it — asked of every change, it answers the via to record, and nothing keeps the host's own. Without any of these, a socket's calls are `web` and an HTTP call's `api`. `openRemote(...).settled()` resolves once every call sent so far has been answered — a browser never waits for it; a host that must report the server's verdict before it exits does.
 
 ### Notify me
 
@@ -3831,7 +3831,7 @@ The declaration names a kept view as `view:<its manifest name>` in `pages.order`
 
 ### Pictures of places, with no product
 
-`graview preview <document.json>` serves the store and Graview's own faces over a document; `graview shots <document.json> --places a,b --scheme both
+`graview preview <document.json>` serves the store and Graview's own faces over a document, at the address it prints (it carries the run's key, which the page trades for a cookie; nothing but health answers without it); `graview shots <document.json> --places a,b --scheme both
 
 --width 390,1280` photographs places to PNGs, waiting for `data-graview-drawn` before each. Both take an app declared in code as `graview check` does (`./dist/domain/app.js`): the store runs it, and the page is handed its module bundled with the project's esbuild. Both take a proposed view as `--view <view.js> --manifest <manifest.json>`, drawn as a draft where it attaches; `shots` takes its place by its title, as a kept view's (`--places "The week"`), and lists it among the places.
 
@@ -5002,7 +5002,7 @@ A migration answers in the op log's own five words, so running one appends ordin
 
 1. **A host serving document apps compiles once, on the server.** Send `serializeCompiled(compileDocument(document))` beside the document, and build the app in the page with `appFromOrCompile({ compiled, document })` from `@graview/core/compiled` — never `@graview/core/document`, which brings the compiler back into the first chunk. A compiled app of another format (`graview-compiled@1` today), or made from another document than the one beside it, is not built and the document is compiled instead; `pnpm verify hosted` says what the page carries.
 
-1. **Look at a document with no product.** `graview preview <document.json> --seed <snapshot.json>` is `serve` with Graview's own faces over the store — the scene and Pages, in memory unless `--data` says where, which it then holds: `sync-seed --apply` and `apply` refuse until it stops (Ctrl-C or `kill` stops it within seconds, open pages or not; a hold whose process died is taken over, and says so) — and `graview shots … --places home,overview --out shots` photographs named places headless (Playwright is yours to install). Prove a change to an emitted document with these, not hand-written screenshots. In a test, `compileDocumentFiles(path, { seed })` from `@graview/core/testing` reads the document where it lives — no fixture copy to drift.
+1. **Look at a document with no product.** `graview preview <document.json> --seed <snapshot.json>` is `serve` with Graview's own faces over the store — the scene and Pages, in memory unless `--data` says where, which it then holds: `sync-seed --apply` and `apply` refuse until it stops (Ctrl-C or `kill` stops it within seconds, open pages or not; a hold whose process died is taken over, and says so) — and `graview shots … --places home,overview --out shots` photographs named places headless (Playwright is yours to install). Like `serve`, each preview run mints a key and every address it prints carries it: open one of those, since nothing but health answers without it. Prove a change to an emitted document with these, not hand-written screenshots. In a test, `compileDocumentFiles(path, { seed })` from `@graview/core/testing` reads the document where it lives — no fixture copy to drift.
 
 1. **Edits reach readers when published, if you say so.** `publishing: { mode: "on-publish", working: ["editor"] }` on the declaration (absent, `"live"`: as they are made). The working roles, and an agent acting for one, edit the head live; every other seat — a visitor, an embed, a static page, a linked read — is served the last publish. A publisher (`publishers`, else `working`) runs the built-in `publish` act; undoing it takes readers back. Writes always land on the head: a visitor's answer reaches readers with the next publish. `?as=published` shows a collaborator what readers see, and `unpublished(store)` from `@graview/core/history` says what is waiting. A server loads `@graview/core/publishing` (ship does). Hand `app.publishing` to any store you make yourself — `openStore` and the embed do — and prove it by opening the app as a visitor.
 
@@ -5716,7 +5716,7 @@ A policy with `sees` keeps every kind it does not name from every role it does n
 
 `remote` is `openRemote` opened as the same visitor. No bar, no lists, no seat; `onSubmitted` is told once it is received. A React host draws `VisitorFormPage` from `@graview/pages/visitor-form`.
 
-1. **Try it locally.** `graview preview <document>` serves each form at `/forms/<name>`, a visitor minted per page.
+1. **Try it locally.** `graview preview <document>` serves each form at `/forms/<name>`, a visitor minted per page: open the form's address as it prints it, which carries the run's key.
 
 ### Worked examples
 
@@ -5930,10 +5930,10 @@ npx graview check --document app.json
 An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where `graview preview` runs it, and draws Graview's routed face over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once. If it mounts the scene too, give the embed `bar: { faces: false, name: false }` so the face's own shell is the one bar.
 
 ```sh
-# the store and its own page, on 4800
+# the store and its own page, on 4800: it prints the address to open, which carries its key
 npx graview preview app.json --seed seed.json --port 4800
-# the face, over it, on 5173
-cd face && npm install && npm run dev
+# the face, over it, on 5173, handed that address
+cd face && npm install && GRAVIEW_PREVIEW="http://localhost:4800/?graview_key=…" npm run dev
 ```
 
 CI runs these files as they are: `pnpm verify face-recipe` installs them over the built packages, starts the preview and the face’s own dev server, and checks that they typecheck, that the preview refuses the face’s page without the proxy and answers it through it, that the face draws its own shell, home and zone page, and that a change on either side reaches the other live.
@@ -5983,15 +5983,22 @@ import { defineConfig } from "vite";
  * THE STORE IS THE PREVIEW'S; THE PAGE IS YOURS.
  *
  * `graview preview ../app.json --seed ../seed.json --port 4800` serves the
- * store at /graview/ beside its own page. This dev server serves your face,
- * and hands every /graview/ request — the socket too — to the preview.
+ * store at /graview/ beside its own page, and prints the address to open:
+ * `http://localhost:4800/?graview_key=…`, which carries that run's key. Hand
+ * this dev server that address (`GRAVIEW_PREVIEW="…" npm run dev`): it
+ * serves your face, and hands every /graview/ request — the socket too —
+ * to the preview, with the key.
  *
  * The preview answers only its own page: a request whose Origin is another
- * site is refused, so a page on another port cannot sit in its seat. Here
- * the page is yours on purpose, so the proxy says the request comes from
- * the preview's own origin, on the HTTP calls and on the socket's upgrade.
+ * site is refused, so a page on another port cannot sit in its seat, and
+ * nothing without the key is answered at all. Here the page is yours on
+ * purpose, so the proxy says the request comes from the preview's own
+ * origin, and carries the key, on the HTTP calls and on the socket's
+ * upgrade. The key stays here: the page is handed only where the preview is.
  */
-const PREVIEW = process.env["GRAVIEW_PREVIEW"] ?? "http://localhost:4800";
+const printed = new URL(process.env["GRAVIEW_PREVIEW"] ?? "http://localhost:4800");
+const KEY = printed.searchParams.get("graview_key") ?? "";
+const PREVIEW = printed.origin;
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
@@ -6009,8 +6016,14 @@ export default defineConfig({
         ws: true,
         changeOrigin: true,
         configure(proxy) {
-          proxy.on("proxyReq", (request) => request.setHeader("origin", PREVIEW));
-          proxy.on("proxyReqWs", (request) => request.setHeader("origin", PREVIEW));
+          proxy.on("proxyReq", (request) => {
+            request.setHeader("origin", PREVIEW);
+            if (KEY) request.setHeader("x-graview-key", KEY);
+          });
+          proxy.on("proxyReqWs", (request) => {
+            request.setHeader("origin", PREVIEW);
+            if (KEY) request.setHeader("x-graview-key", KEY);
+          });
         },
       },
     },

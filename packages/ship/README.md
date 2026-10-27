@@ -108,7 +108,9 @@ cookie for it (HttpOnly, SameSite=Strict) and sent on without it, a program send
 `x-graview-key`, and a page's WebSocket carries it in its query. `openRemote`, `graview mcp
 --remote-url` and `graview apply --remote-url` take the printed address whole and do the
 rest (`servedAddress` takes one apart). Without the key every route but health answers 401;
-the key is never written into an answer, and a new run is a new key. A store with neither
+the key is never written into an answer, and a new run is a new key. `graview preview` and
+`graview shots` hand theirs to `servePreview({ key })`, whose `address` carries it; the cookie
+is named for the server's port, so two stores open in one browser keep their own. A store with neither
 `seatOf` nor trusted seat headers answers 401 on every route but health. Whatever a host asks for rides along: `openRemote({ headers })` sends them with
 every request, and the framework never reads them. What a call came through (`via`: `web`,
 `api`, `mcp:Claude`), recorded on the op, is the host's word too: `viaOf(request, seat)` says

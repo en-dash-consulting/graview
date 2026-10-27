@@ -149,7 +149,9 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    (Ctrl-C or `kill` stops it within seconds, open pages or not; a hold
    whose process died is taken over, and says so) — and
    `graview shots … --places home,overview --out shots` photographs named
-   places headless (Playwright is yours to install). Prove a change to an
+   places headless (Playwright is yours to install). Like `serve`, each
+   preview run mints a key and every address it prints carries it: open one
+   of those, since nothing but health answers without it. Prove a change to an
    emitted document with these, not hand-written screenshots. In a test,
    `compileDocumentFiles(path, { seed })` from `@graview/core/testing`
    reads the document where it lives — no fixture copy to drift.

@@ -14,7 +14,7 @@ import { serveStore } from "./serve.js";
 import { SERVE_KEY } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
 import { sayStep } from "./steps.js";
-import { LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
+import { keyedAddress, LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
 import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
 import { bundleAppForPage } from "./preview-app.js";
 import { applySteps, sayRefusals, seedRefusals, seedSteps } from "./sync-seed.js";
@@ -83,7 +83,10 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       serve's do, unless --no-sync. --view and --manifest draw a worker view
       proposed and not kept where it attaches, marked as a draft. Each of
       the app's forms for visitors is at /forms/<name>, drawn alone and
-      answered as a visitor minted for that page.
+      answered as a visitor minted for that page. On 127.0.0.1 each run
+      mints a key, carried by every address it prints: open one of those
+      (the key is traded for a cookie), since nothing but health answers
+      without it.
 
   graview shots <document.json | app module> [--seed <file>] [--places a,b] [--out <dir>]
                 [--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene]
@@ -256,6 +259,16 @@ export function mintServeKey(): string {
   return randomBytes(32).toString("base64url");
 }
 
+/**
+ * This run's key: `GRAVIEW_SERVE_KEY` when it is set and at least 16
+ * characters (a harness that starts its own server and opens it), else one
+ * minted for the run.
+ */
+export function serveKey(): string {
+  const said = process.env["GRAVIEW_SERVE_KEY"];
+  return said !== undefined && said.length >= 16 ? said : mintServeKey();
+}
+
 export async function serve(argv: readonly string[]): Promise<number> {
   const app = await entryOf(argv, "serve", SERVE_USAGE);
   if (typeof app === "number") return app;
@@ -269,7 +282,7 @@ export async function serve(argv: readonly string[]): Promise<number> {
   const backend = await backendFrom(argv);
   const hold = holdBackend(backend, "serve", "Serving it a second time");
   if (!hold) return 1;
-  const key = trust.keyed ? mintServeKey() : undefined;
+  const key = trust.keyed ? serveKey() : undefined;
   const served = await serveStore({
     app: app as never,
     adapter: backend.adapter,
@@ -554,6 +567,8 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
       port: Number(flag(argv, "--port") ?? 0),
       host,
       trustSeatHeaders: trust.trust,
+      // On loopback, this run's key: another account on this machine reaches loopback too.
+      ...(trust.keyed ? { key: serveKey() } : {}),
       principal: previewPrincipal(input.code?.app ?? input.document, { ...(as ? { as } : {}), ...(roles !== undefined ? { roles: listOf(roles) } : {}) }),
       // The document's connections: credentials from the environment, cursors beside the data when it is kept, else in memory.
       connections: {
@@ -569,13 +584,15 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
   }
   const { app, served, url, principal } = opened;
   hold?.serving(url);
+  // Each address said carries this run's key, which a browser trades for a cookie on the first one it opens.
+  const at = (path: string) => keyedAddress(`${url}${path}`, opened.key);
   // Listening for a stop before saying where it listens: whoever reads the address may send one at once.
   stopOnSignal("preview", () => opened.close(), hold);
   process.stdout.write(
     `graview preview: ${app.name} on ${url}\n` +
-      `  Pages: ${url}/   the scene: ${url}/places/overview\n` +
+      `  Pages: ${at("/")}   the scene: ${at("/places/overview")}\n` +
       // Each form for a visitor at its own address, answered as a visitor minted per page (Roadmap f-public-forms).
-      (app.forms && Object.keys(app.forms).length > 0 ? `  forms: ${Object.keys(app.forms).map((name) => `${url}/forms/${name}`).join("   ")}\n` : "") +
+      (app.forms && Object.keys(app.forms).length > 0 ? `  forms: ${Object.keys(app.forms).map((name) => at(`/forms/${name}`)).join("   ")}\n` : "") +
       `  data: ${keeps ? `${backend.where}  (${backend.adapter.name}), held by this preview: other writers are refused until it stops` : "in memory, gone when the preview stops"}\n` +
       `  sits as ${principal.name ?? principal.id}${principal.roles?.length ? `, holding ${principal.roles.join(", ")}` : ""}\n` +
       `  ${served.store.graph.allNodes().length} nodes. Ctrl-C stops it.\n`,
@@ -616,7 +633,8 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
   if (backend === undefined) return 1;
   let opened;
   try {
-    opened = await servePreview({ ...previewed(input), page, ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0) });
+    // On loopback, as every shots run is, with this run's key: the pages it opens trade it for a cookie.
+    opened = await servePreview({ ...previewed(input), page, ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0), key: serveKey() });
   } catch (error) {
     process.stderr.write(`graview shots: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
@@ -634,6 +652,7 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
     try {
       const files = await shoot({
         url: opened.url,
+        ...(opened.key !== undefined ? { key: opened.key } : {}),
         shots: taken,
         out,
         schemes: scheme === "both" ? ["light", "dark"] : [scheme as "light" | "dark"],

@@ -48,14 +48,50 @@ applyScheme(scheme);
  * answer per address rather than one per entry point.
  */
 const opened = await open().catch((error: unknown): Promise<never> => {
-  // A server that would not open the roster — `graview serve` without the key its printed address carries — is said, not a blank page.
-  const said = document.createElement("p");
-  said.setAttribute("role", "alert");
-  said.style.cssText = "font: 16px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 40rem";
-  said.textContent = `Rota could not open the roster: ${error instanceof Error ? error.message : String(error)}`;
-  document.body.replaceChildren(said);
+  cannotOpen(error);
   return new Promise<never>(() => {});
 });
+
+/*
+ * A SERVER THAT WOULD NOT OPEN THE ROSTER is said, and the way on is asked
+ * for. `graview serve` answers only a page handed the address it printed,
+ * which carries its run's key; a link from somewhere that never saw the
+ * terminal (the desk's) names the server without it. So the page says
+ * what the server said and asks for that address, and opens again with it.
+ */
+function cannotOpen(error: unknown): void {
+  const box = document.createElement("main");
+  box.style.cssText = "font: 16px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 40rem; display: grid; gap: 0.75rem";
+  const said = document.createElement("p");
+  said.setAttribute("role", "alert");
+  said.textContent = `Rota could not open the roster: ${error instanceof Error ? error.message : String(error)}`;
+  const form = document.createElement("form");
+  form.dataset["testid"] = "server-address";
+  form.style.cssText = "display: grid; gap: 0.5rem";
+  const label = document.createElement("label");
+  label.htmlFor = "server-address";
+  label.textContent = "The address graview serve printed (start it with pnpm serve:rota)";
+  const input = document.createElement("input");
+  input.id = "server-address";
+  input.type = "url";
+  input.required = true;
+  input.placeholder = "http://localhost:5196/?graview_key=…";
+  input.autocomplete = "off";
+  const button = document.createElement("button");
+  button.type = "submit";
+  button.textContent = "Open the roster there";
+  button.style.justifySelf = "start";
+  form.append(label, input, button);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const next = new URL(window.location.href);
+    next.searchParams.set("server", input.value.trim());
+    window.location.assign(next.toString());
+  });
+  box.append(said, form);
+  document.body.replaceChildren(box);
+  input.focus();
+}
 const { store, principal, remembers } = opened;
 
 applySettings(rotaApp.settings ?? []);

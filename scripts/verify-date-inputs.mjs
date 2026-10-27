@@ -28,6 +28,8 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+// The preview this starts answers only with the run's key: sent from here, and traded for each browser's cookie.
+import { admit, keyedFetch as fetch } from "./lib/serve-key.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
 
@@ -62,6 +64,7 @@ for (;;) {
   }
   await new Promise((ready) => setTimeout(ready, 200));
 }
+await admit(base);
 
 /** The meetings the served store holds, by name: what was kept, not what was drawn. */
 async function meetings() {

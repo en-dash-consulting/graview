@@ -43,10 +43,10 @@ npx graview check --document app.json
 An app worth keeping wants a look and feel of its own before it wants a server. This one keeps the store where `graview preview` runs it, and draws Graview's routed face over it with a shell, a home, a route and a record page in the team's own words: a change made on either page is the other's at once. If it mounts the scene too, give the embed `bar: { faces: false, name: false }` so the face's own shell is the one bar.
 
 ```sh
-# the store and its own page, on 4800
+# the store and its own page, on 4800: it prints the address to open, which carries its key
 npx graview preview app.json --seed seed.json --port 4800
-# the face, over it, on 5173
-cd face && npm install && npm run dev
+# the face, over it, on 5173, handed that address
+cd face && npm install && GRAVIEW_PREVIEW="http://localhost:4800/?graview_key=…" npm run dev
 ```
 
 CI runs these files as they are: `pnpm verify face-recipe` installs them over the built packages, starts the preview and the face’s own dev server, and checks that they typecheck, that the preview refuses the face’s page without the proxy and answers it through it, that the face draws its own shell, home and zone page, and that a change on either side reaches the other live.
@@ -96,15 +96,22 @@ import { defineConfig } from "vite";
  * THE STORE IS THE PREVIEW'S; THE PAGE IS YOURS.
  *
  * `graview preview ../app.json --seed ../seed.json --port 4800` serves the
- * store at /graview/ beside its own page. This dev server serves your face,
- * and hands every /graview/ request — the socket too — to the preview.
+ * store at /graview/ beside its own page, and prints the address to open:
+ * `http://localhost:4800/?graview_key=…`, which carries that run's key. Hand
+ * this dev server that address (`GRAVIEW_PREVIEW="…" npm run dev`): it
+ * serves your face, and hands every /graview/ request — the socket too —
+ * to the preview, with the key.
  *
  * The preview answers only its own page: a request whose Origin is another
- * site is refused, so a page on another port cannot sit in its seat. Here
- * the page is yours on purpose, so the proxy says the request comes from
- * the preview's own origin, on the HTTP calls and on the socket's upgrade.
+ * site is refused, so a page on another port cannot sit in its seat, and
+ * nothing without the key is answered at all. Here the page is yours on
+ * purpose, so the proxy says the request comes from the preview's own
+ * origin, and carries the key, on the HTTP calls and on the socket's
+ * upgrade. The key stays here: the page is handed only where the preview is.
  */
-const PREVIEW = process.env["GRAVIEW_PREVIEW"] ?? "http://localhost:4800";
+const printed = new URL(process.env["GRAVIEW_PREVIEW"] ?? "http://localhost:4800");
+const KEY = printed.searchParams.get("graview_key") ?? "";
+const PREVIEW = printed.origin;
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
@@ -122,8 +129,14 @@ export default defineConfig({
         ws: true,
         changeOrigin: true,
         configure(proxy) {
-          proxy.on("proxyReq", (request) => request.setHeader("origin", PREVIEW));
-          proxy.on("proxyReqWs", (request) => request.setHeader("origin", PREVIEW));
+          proxy.on("proxyReq", (request) => {
+            request.setHeader("origin", PREVIEW);
+            if (KEY) request.setHeader("x-graview-key", KEY);
+          });
+          proxy.on("proxyReqWs", (request) => {
+            request.setHeader("origin", PREVIEW);
+            if (KEY) request.setHeader("x-graview-key", KEY);
+          });
         },
       },
     },

@@ -56,6 +56,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { launchEngine } from "./lib/engine.mjs";
+// The preview this starts answers only with the run's key: sent from here, and traded for each browser's cookie.
+import { admit, keyedFetch as fetch } from "./lib/serve-key.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { vacant } from "./lib/serve.mjs";
 import { writeFieldSurvey } from "./fixtures/large-scene/field-survey.mjs";
@@ -116,6 +118,7 @@ for (;;) {
   }
   await new Promise((ready) => setTimeout(ready, 200));
 }
+await admit(base);
 
 /*
  * WHAT REACT DID, without React's devtools: the hook React looks for when it

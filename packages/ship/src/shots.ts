@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { placePath, placeSlug, type AnySchema, type AppPlace, type GraviewApp } from "@graview/core";
 import { placesOf } from "@graview/core/seat";
+import { keyedAddress } from "./serve-preview.js";
 
 /**
  * THE PLACES A `graview shots` RUN PHOTOGRAPHS, by what was asked.
@@ -110,6 +111,8 @@ export const NO_PLAYWRIGHT =
 
 export interface ShootOptions {
   readonly url: string;
+  /** The preview's run key, when it keeps one: every page opens its address with it. */
+  readonly key?: string;
   readonly shots: readonly Shot[];
   readonly out: string;
   readonly schemes: readonly ("light" | "dark")[];
@@ -173,7 +176,8 @@ export async function shoot(options: ShootOptions): Promise<string[]> {
           const height = width < 600 ? 844 : 900;
           const page = await browser.newPage({ viewport: { width, height }, colorScheme: scheme, deviceScaleFactor: 1 });
           try {
-            await page.goto(`${options.url}${shot.address}`, { waitUntil: "load" });
+            // Each page is a browser of its own: it opens the address with the run's key, which is traded for its cookie.
+          await page.goto(keyedAddress(`${options.url}${shot.address}`, options.key), { waitUntil: "load" });
             // The place drawn and settled, as the page says it (FR-188): its parts, fonts, images and views here, the scene's camera still.
             await page.waitForFunction("document.querySelector('[data-graview-drawn]') !== null || typeof window.__graviewFailed === 'string'", undefined, { timeout: 60_000 });
             const failed = await page.evaluate<string | undefined>("window.__graviewFailed");
