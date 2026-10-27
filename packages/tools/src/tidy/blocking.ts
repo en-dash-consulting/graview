@@ -90,6 +90,32 @@ const STOP = new Set(
   "the and for with from into onto about this that these those your our their its are was were has have had not but all any can will per via inc incorporated corp corporation company llc ltd limited group plc gmbh".split(" "),
 );
 
+/*
+ * WORDS THAT NAME NOTHING IN PARTICULAR, so one of them in a record's text
+ * is no evidence that the text means a record whose name holds it: a goal
+ * named "Just ship it, today" was put forward for every note that said
+ * "just", and a model judged each pair, and was paid for it (FR-224).
+ */
+const COMMON = new Set(
+  (
+    "just only also even still then than them they been being does done make made making take took like over other each every much many such upon want need needs should would could might must " +
+    "what when where which there here some more most very well good great first last next thing things something anything everything nothing someone anyone everyone people person " +
+    "time times today tomorrow yesterday week weeks month months year years day days hour hours work working note notes list item items task tasks goal goals plan plans idea ideas " +
+    "doing going come comes came keep keeps kept know knows think thinks thought find found look looks give gives gave help helps start starts stop stops open close " +
+    "about after before again against because between through under until while whom whose yours ours mine both either neither same self another"
+  ).split(" "),
+);
+
+/** Whether a word of a far record's name could tell which record a text means: four letters or more, no stop word, no common one. */
+const tellingWord = (word: string): boolean => word.length >= 4 && !STOP.has(word) && !COMMON.has(word);
+
+/** How many names of a pool hold each of its words — a word most of a kind's names hold tells nothing of which one is meant. */
+function namesHolding(schema: AnySchema, pool: readonly Node[]): (word: string) => number {
+  const counts = new Map<string, number>();
+  for (const far of pool) for (const word of new Set(wordsOf(named(schema, far)))) counts.set(word, (counts.get(word) ?? 0) + 1);
+  return (word) => counts.get(word) ?? 0;
+}
+
 /** A text's telling words: folded, three letters or more, the stop words out. */
 export function wordsOf(text: string): string[] {
   return fold(text)
@@ -207,13 +233,21 @@ async function pairsOf(context: JudgeContext, options: BlockingOptions): Promise
   return found.sort((a, b) => b.strength - a.strength).slice(0, options.maxPairs ?? 40);
 }
 
-/** The far records a record might link to through one relation, likeliest first. */
-async function targetsOf(context: JudgeContext, node: Node, targets: readonly Node[], missing: boolean, options: BlockingOptions): Promise<TargetBlock[]> {
+/** The far records a record might link to through one relation, likeliest first. `holding` says how many of the kind's names hold a word. */
+async function targetsOf(context: JudgeContext, node: Node, targets: readonly Node[], missing: boolean, options: BlockingOptions, holding: (word: string) => number): Promise<TargetBlock[]> {
   const schema = context.store.schema;
   const texts = textsOf(schema, node);
   const own = fold(named(schema, node));
   const said = texts.map(({ field, text }) => ({ field, text: fold(text) }));
   const ownWords = new Set(wordsOf(texts.map(({ text }) => text).join(" ")));
+  /*
+   * A WORD IS EVIDENCE ONLY WHEN IT IS TELLING: not a stop word or a common
+   * one, and held by few of the kind's names — three at most, fewer in a
+   * small kind — so "weekly" in five goals' names picks none of them, and
+   * "standup" in one picks it.
+   */
+  const few = Math.max(1, Math.min(3, Math.floor(targets.length / 2)));
+  const telling = (word: string) => tellingWord(word) && holding(word) <= few;
   const out = new Map<string, TargetBlock & { readonly weight: number }>();
   const put = (far: Node, evidence: string, weight: number, mentioned: boolean) => {
     const was = out.get(far.id);
@@ -228,17 +262,27 @@ async function targetsOf(context: JudgeContext, node: Node, targets: readonly No
       put(far, `its ${humanizeField(whole.field).toLowerCase()} says “${named(schema, far)}”`, 3, true);
       continue;
     }
-    // One of its telling words, or one of its key values, in the record's text.
-    const aliases = [...wordsOf(named(schema, far)).filter((word) => word.length >= 4), ...fieldsOf(schema, far.kind).filter((field) => KEY_FIELD.test(field) && typeof far[field] === "string").map((field) => fold(String(far[field])))];
-    const alias = aliases.find((word) => said.some(({ text }) => holds(text, word)));
-    if (alias) {
-      put(far, `its text says “${alias}”`, 2, true);
+    // One of its key values, whole, in the record's text: an email, a code.
+    const keys = fieldsOf(schema, far.kind)
+      .filter((field) => KEY_FIELD.test(field) && typeof far[field] === "string")
+      .map((field) => fold(String(far[field])))
+      .filter((value) => value.replace(/ /g, "").length >= 3);
+    const key = keys.find((value) => said.some(({ text }) => holds(text, value)));
+    if (key) {
+      put(far, `its text says “${key}”`, 2, true);
+      continue;
+    }
+    // Its telling words in the record's text: one for a short name, two for a name of three words or more.
+    const words = [...new Set(wordsOf(named(schema, far)))].filter(telling).filter((word) => said.some(({ text }) => holds(text, word)));
+    const needed = name.split(" ").length >= 3 ? 2 : 1;
+    if (words.length >= needed) {
+      put(far, `its text says ${words.slice(0, 2).map((word) => `“${word}”`).join(" and ")}`, 2, true);
       continue;
     }
     if (!missing) continue;
-    // For an empty one-link relation, a word or a value the two share is enough to ask.
+    // For an empty one-link relation, a telling word or a value the two share is enough to ask.
     const farWords = wordsOf([named(schema, far), ...textsOf(schema, far).map(({ text }) => text)].join(" "));
-    const shared = farWords.find((word) => ownWords.has(word));
+    const shared = farWords.find((word) => ownWords.has(word) && telling(word));
     if (shared) put(far, `they share the word “${shared}”`, 1, false);
   }
   if (missing && options.near && out.size < (options.maxTargets ?? 8)) {
@@ -281,7 +325,9 @@ async function recordsOf(context: JudgeContext, options: BlockingOptions): Promi
       if (edge.acts === "none" || tidyingOf(schema, kind) === "no-links" || tidyingOf(schema, kind, relation) === "never") return [];
       const kinds = (edge.to === "*" ? schema.definitions.map((one) => one.kind) : edge.to).filter((target) => tidyingOf(schema, target) !== "never" && tidyingOf(schema, target) !== "no-links");
       const act = connectOf(store, kind, relation, kinds);
-      return act ? [{ relation, edge, kinds, act }] : [];
+      if (!act) return [];
+      const holding = namesHolding(schema, kinds.flatMap((target) => store.graph.nodesOfKind(target as never) as unknown as Node[]));
+      return [{ relation, edge, kinds, act, holding }];
     });
     for (const node of store.graph.nodesOfKind(kind as never) as unknown as Node[]) {
       if (!mayTouch(context, node)) continue;
@@ -299,13 +345,13 @@ async function recordsOf(context: JudgeContext, options: BlockingOptions): Promi
         return { field, options: values, writes, ...(description ? { description } : {}) };
       });
       const links: LinkBlock[] = [];
-      for (const { relation, edge, kinds, act } of relations) {
+      for (const { relation, edge, kinds, act, holding } of relations) {
         const linked = new Set(store.graph.out(node.id, relation).map((one) => one.id));
         const missing = edge.cardinality === "one";
         if (missing && linked.size > 0) continue;
         if (!wants(missing ? "missing-links" : "links")) continue;
         const pool = kinds.flatMap((target) => store.graph.nodesOfKind(target as never) as unknown as Node[]).filter((far) => far.id !== node.id && !linked.has(far.id) && mayTouch(context, far));
-        const targets = await targetsOf(context, node, pool, missing, options);
+        const targets = await targetsOf(context, node, pool, missing, options, holding);
         if (targets.length > 0) links.push({ relation, ...(edge.description ? { description: edge.description } : {}), missing, act, targets });
       }
       if (!archive && fills.length === 0 && links.length === 0) continue;
