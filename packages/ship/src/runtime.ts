@@ -11,6 +11,7 @@
 // A server merges text typed together (Roadmap f-collab-text): the `type-text` act, a whole write as a splice, an undo per person.
 import "@graview/core/typing";
 export { createStoreHandler, presenceSeenBy, SEAT_HEADERS, seatFromHeaders, WIRE } from "./handler.js";
+export { SERVE_KEY, servedAddress } from "./seat-headers.js";
 export type { AdapterStoreHandlerOptions, DeclarationChange, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
 // Notify me (Roadmap f-notify-subscriptions): the wire's route, and its client.
 export { answerSubscriptions } from "./subscriptions.js";

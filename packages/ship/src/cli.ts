@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
@@ -10,6 +11,7 @@ import { fileViews } from "./file-views.js";
 import { LIVE_PATH } from "./live.js";
 import { openStore } from "./open-store.js";
 import { serveStore } from "./serve.js";
+import { SERVE_KEY } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
 import { sayStep } from "./steps.js";
 import { LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
@@ -43,7 +45,11 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       machine can reach it — from a program, or from a page on its own
       origin; a page on another origin is refused unless --allow-origin
       names it (say it once per origin, as http://localhost:5195), and
-      no header names the system's seat. On any other --host it will not
+      no header names the system's seat. Each run mints a key and prints
+      it in the address it says: only a request carrying it is believed
+      (a page opens that address, a program passes it whole as
+      --remote-url), because another account on this machine reaches
+      loopback too. Health answers without it. On any other --host it will not
       start unless --trust-seat-headers says the network in front of it can
       be trusted, and then it believes every seat header, the system's too.
       The app's declared connections (a Google calendar, a Notion database) run beside it, with
@@ -215,20 +221,39 @@ async function entryOf(argv: readonly string[], command: string, usage: string):
 export function seatTrust(
   host: string,
   trustFlag: boolean,
-): { readonly trust: boolean; readonly says: string; readonly ownOrigin: boolean; readonly system: boolean } | { readonly refuse: string } {
+): { readonly trust: boolean; readonly says: string; readonly ownOrigin: boolean; readonly system: boolean; readonly keyed: boolean } | { readonly refuse: string } {
   /*
    * Said, the network in front is the operator's word, the system's seat among the headers it carries.
    * Unsaid, on loopback, "only this machine" is held to: a page on another
    * origin in this machine's browser — or one rebinding its name here — is
-   * refused (`ownOrigin`), and no header names the system's seat.
+   * refused (`ownOrigin`), and no header names the system's seat. And
+   * this machine is not one person: another account on it, or a program
+   * that sends no `Origin`, reaches loopback too, so a seat is believed
+   * only from a request carrying the key this run mints (`keyed`).
    */
-  if (trustFlag) return { trust: true, ownOrigin: false, system: true, says: `believes seat headers on ${host}, because --trust-seat-headers says the network in front of it is trusted` };
-  if (LOOPBACK.has(host)) return { trust: true, ownOrigin: true, system: false, says: `believes seat headers: listening on ${host}, which only this machine reaches, and only from its own origin or one --allow-origin names` };
+  if (trustFlag) return { trust: true, ownOrigin: false, system: true, keyed: false, says: `believes seat headers on ${host}, because --trust-seat-headers says the network in front of it is trusted` };
+  if (LOOPBACK.has(host))
+    return {
+      trust: true,
+      ownOrigin: true,
+      system: false,
+      keyed: true,
+      says: `believes seat headers: listening on ${host}, which only this machine reaches, only from its own origin or one --allow-origin names, and only with this run's key`,
+    };
   return {
     refuse:
       `graview serve: refusing to listen on ${host} while believing seat headers — anyone who can reach it could claim any seat.\n` +
       `  Serve on 127.0.0.1 (the default), put a host that authenticates in front with its own seatOf, or say --trust-seat-headers.\n`,
   };
+}
+
+/**
+ * A KEY FOR ONE RUN of `graview serve`: 32 random bytes, said only in the
+ * terminal it runs in, as the address to open (`?graview_key=<key>`). A
+ * new run is a new key, so an address printed yesterday opens nothing.
+ */
+export function mintServeKey(): string {
+  return randomBytes(32).toString("base64url");
 }
 
 export async function serve(argv: readonly string[]): Promise<number> {
@@ -244,6 +269,7 @@ export async function serve(argv: readonly string[]): Promise<number> {
   const backend = await backendFrom(argv);
   const hold = holdBackend(backend, "serve", "Serving it a second time");
   if (!hold) return 1;
+  const key = trust.keyed ? mintServeKey() : undefined;
   const served = await serveStore({
     app: app as never,
     adapter: backend.adapter,
@@ -253,6 +279,7 @@ export async function serve(argv: readonly string[]): Promise<number> {
     trustSeatHeaders: trust.trust,
     trustSystemSeat: trust.system,
     ownOrigin: trust.ownOrigin,
+    ...(key !== undefined ? { key } : {}),
     allowOrigins: flags(argv, "--allow-origin"),
     where: backend.where,
     // Notify me: kept beside the store, and each match said here, where a host would deliver it.
@@ -283,6 +310,8 @@ export async function serve(argv: readonly string[]): Promise<number> {
   }, hold);
   process.stdout.write(
     `graview serve: ${app.name} on ${served.url}\n` +
+      // The address carries this run's key: a page opens it, a program passes it whole as --remote-url.
+      (key !== undefined ? `  address: ${served.url}/?${SERVE_KEY.param}=${key}  (this run's key: a page opens it, a program passes it whole as --remote-url or sends the key as ${SERVE_KEY.header})\n` : "") +
       `  live: ${served.url.replace(/^http/, "ws")}${LIVE_PATH}\n` +
       `  data: ${backend.where}  (${backend.adapter.name})\n` +
       `  ${trust.says}\n` +

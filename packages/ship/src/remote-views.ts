@@ -1,5 +1,6 @@
 import { NO_KEPT_VIEWS, type KeptViews, type KeptViewsState, type LensTidyEdit, type Principal } from "@graview/core";
 import { seatHeaders } from "./remote.js";
+import { servedAddress } from "./seat-headers.js";
 
 /**
  * THE CLIENT HALF OF THE VIEWS A PERSON TIDIES (Roadmap f-place-menu-views):
@@ -48,8 +49,10 @@ export interface RemoteViewsOptions {
 /** The asking seat's view of the views it may tidy, on a served store; `ready` resolves once the first answer is in. */
 export function remoteViews(options: RemoteViewsOptions): KeptViews & { lens: NonNullable<KeptViews["lens"]>; readonly ready: Promise<void>; refresh(): Promise<void>; close(): void } {
   const doFetch = options.fetch ?? fetch;
-  const base = options.url.replace(/\/$/, "");
-  const headers = { "content-type": "application/json", ...(options.principal ? seatHeaders(options.principal) : {}), ...(options.headers ?? {}) };
+  // The address `graview serve` printed carries its run's key: sent as a header.
+  const keyed = servedAddress(options.url, options.headers);
+  const base = keyed.url;
+  const headers = { "content-type": "application/json", ...(options.principal ? seatHeaders(options.principal) : {}), ...keyed.headers };
   let state: KeptViewsState = options.state ? { hidden: options.state.hidden ?? [], removed: options.state.removed ?? [], may: options.state.may ?? NO_KEPT_VIEWS.may } : NO_KEPT_VIEWS;
   const listeners = new Set<() => void>();
   const take = (next: KeptViewsState) => {

@@ -32,7 +32,7 @@ import { cursorAt } from "./cursor.js";
 import { FRICTION_PATH } from "./remote-friction.js";
 import { LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 import type { RemoteTyping, TypingInsides } from "./remote-typing.js";
-import { SEAT_HEADERS } from "./seat-headers.js";
+import { SEAT_HEADERS, SERVE_KEY, servedAddress } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -552,11 +552,14 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
  * when the new store's own listeners are not there (FR-43).
  */
 async function opening<S extends AnySchema>(
-  options: RemoteOptions<S>,
+  given: RemoteOptions<S>,
   offered: readonly Carried[],
   lostSaid: string,
   wiring: Wiring,
 ): Promise<{ remote: RemoteStore<S>; unheard(): RemoteRefusal[] }> {
+  // The address `graview serve` printed carries its run's key: the key goes in a header, and the address is where the store is.
+  const { key, ...at } = servedAddress(given.url, given.headers);
+  const options: RemoteOptions<S> = { ...given, ...at };
   const call = options.fetch ?? fetch;
   const headers: Record<string, string> = { "content-type": "application/json", ...(options.headers ?? {}) };
   // Who, and through what: a claim only a server that trusts the seat headers believes (FR-06, FR-52).
@@ -1723,7 +1726,8 @@ async function opening<S extends AnySchema>(
       if (say({ t: "bye" })) return;
       // A page on its way out gets one shot; a beacon is what survives it.
       const beacon = (globalThis as { navigator?: { sendBeacon?: (url: string, body: string) => boolean } }).navigator?.sendBeacon;
-      if (beacon) beacon.call((globalThis as { navigator?: unknown }).navigator, `${options.url}/graview/leave`, body);
+      // A beacon sends no header: the key rides in its query, as a page's socket's does.
+      if (beacon) beacon.call((globalThis as { navigator?: unknown }).navigator, `${options.url}/graview/leave${key !== undefined ? `?${SERVE_KEY.param}=${encodeURIComponent(key)}` : ""}`, body);
       else void call(`${options.url}/graview/leave`, { method: "POST", headers, body }).catch(() => {});
     },
   };
@@ -1899,6 +1903,7 @@ async function opening<S extends AnySchema>(
     }
     const withSeat = new URL(url);
     for (const [name, value] of Object.entries(seat)) withSeat.searchParams.set(name, value);
+    if (key !== undefined) withSeat.searchParams.set(SERVE_KEY.param, key);
     return protocols.length > 0 ? new Socket(withSeat.toString(), protocols) : new Socket(withSeat.toString());
   }
 }

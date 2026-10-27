@@ -128,6 +128,10 @@ to it, or kept in step with a Google calendar is `graview-sync`.
    it answers 401. On 127.0.0.1 it answers only its own origin, and a page
    on another one `--allow-origin` names (a dev server's app that opens
    the store with `openRemote`), and no header there names the system's seat.
+   Each run there mints a key and believes only a request carrying it, so
+   another account on the machine cannot claim a seat: hand `openRemote`,
+   `--remote-url` and a page's own server parameter the address it printed, whole
+   (`?graview_key=…`); health answers without it.
 
 6. **A host serving document apps compiles once, on the server.** Send
    `serializeCompiled(compileDocument(document))` beside the document, and

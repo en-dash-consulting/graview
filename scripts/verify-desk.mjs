@@ -60,12 +60,20 @@ const store = spawn(
   ],
   { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"], detached: true },
 );
-await new Promise((ready, fail) => {
+/*
+ * The run's key, from the address the store server printed. The desk's own
+ * stop names the server and not the key, which only the terminal knows: a
+ * person hands the rota page the printed address, and so does this walk.
+ */
+const storeKey = await new Promise((ready, fail) => {
   const timer = setTimeout(() => fail(new Error("the store server did not start")), 30_000);
+  let said = "";
   store.stdout.on("data", (chunk) => {
-    if (String(chunk).includes(at("served"))) {
+    said += String(chunk);
+    const key = /[?&]graview_key=([\w-]+)/.exec(said)?.[1];
+    if (said.includes(at("served")) && key) {
       clearTimeout(timer);
-      ready(undefined);
+      ready(key);
     }
   });
   store.on("exit", (code) => {
@@ -146,7 +154,10 @@ try {
     const stop = capability.stop.startsWith("/") || capability.stop.startsWith("?")
       ? capability.stop
       : `/${capability.stop}`;
-    const url = `${at(entry.id)}${movedIn(stop)}`;
+    const url = `${at(entry.id)}${movedIn(stop)}`.replace(
+      `server=${at("served")}`,
+      `server=${encodeURIComponent(`${at("served")}/?graview_key=${storeKey}`)}`,
+    );
     try {
       await page.goto(url, { waitUntil: "load" });
       if (!stop.startsWith("/pages") && !stop.startsWith("/embed")) {

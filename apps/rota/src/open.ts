@@ -4,6 +4,7 @@ import {
   forgetFreshParam,
   openRemote,
   openStore,
+  servedAddress,
 } from "@graview/ship/browser";
 import type { Principal, Store } from "@graview/core";
 import example from "./data/example.json";
@@ -17,7 +18,8 @@ import { openingSeat, today } from "./ui/app.js";
  * launcher, or against a server.
  *
  * Three places, one function. `?server=…` opens the store from a running
- * `graview serve` instead of from this browser; `?stored=1` puts a
+ * `graview serve` instead of from this browser — the address it printed,
+ * whole, since that carries the run's key; `?stored=1` puts a
  * version-1 roster in this browser first, so the migration is something a
  * reader can watch rather than a claim in a changelog.
  */
@@ -49,7 +51,8 @@ export async function open(): Promise<OpenedApp> {
       // The server remembers; this browser is a window onto it.
       remembers: false,
       migrated: remote.migrated,
-      where: server,
+      // Where it is, never the key the printed address carries.
+      where: servedAddress(server).url,
       onRefusal: remote.onRefusal,
       intents: () => remote.store.log.all().map((operation) => operation.intent),
     };

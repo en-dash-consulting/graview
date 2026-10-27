@@ -30,7 +30,8 @@ page headless; it needs Playwright, which you install beside the project
 
 `serve`, `mcp`, `apply` and `sync-seed` share one store: `--data <dir>` (a
 folder of readable JSON, the default), `--sqlite <file>`, or — for `mcp` and
-`apply` — `--remote-url <url>` against a running `graview serve`. `--as` and
+`apply` — `--remote-url <url>` against a running `graview serve`, given the
+address it printed (it carries that run's key). `--as` and
 `--roles` say who is acting; the policy judges on the host exactly as it
 judges in a browser.
 

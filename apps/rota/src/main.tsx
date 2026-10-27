@@ -47,7 +47,15 @@ applyScheme(scheme);
  * running `graview serve`. One function, so "where is my data" has one
  * answer per address rather than one per entry point.
  */
-const opened = await open();
+const opened = await open().catch((error: unknown): Promise<never> => {
+  // A server that would not open the roster — `graview serve` without the key its printed address carries — is said, not a blank page.
+  const said = document.createElement("p");
+  said.setAttribute("role", "alert");
+  said.style.cssText = "font: 16px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 40rem";
+  said.textContent = `Rota could not open the roster: ${error instanceof Error ? error.message : String(error)}`;
+  document.body.replaceChildren(said);
+  return new Promise<never>(() => {});
+});
 const { store, principal, remembers } = opened;
 
 applySettings(rotaApp.settings ?? []);

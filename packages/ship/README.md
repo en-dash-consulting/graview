@@ -100,8 +100,16 @@ sets for a server on 127.0.0.1 and says so. There it keeps to its own origin and
 (`serveStore({ ownOrigin })`) and the origins `--allow-origin` names
 (`serveStore({ allowOrigins })`, each echoed in its CORS answer in place of `*`), and reads
 no `x-graview-kind: system` as the system's seat (`serveStore({ trustSystemSeat })`, which
-`--trust-seat-headers` turns on). A store with neither answers 401 on every route
-but health. Whatever a host asks for rides along: `openRemote({ headers })` sends them with
+`--trust-seat-headers` turns on). And since another account on the same machine, or any
+program that says no origin, reaches 127.0.0.1 too, each run of `graview serve` mints a
+key and believes a request only when it carries it (`serveStore({ key })`): the address it
+prints carries it as `?graview_key=…` (`SERVE_KEY`), a page opening that address is handed a
+cookie for it (HttpOnly, SameSite=Strict) and sent on without it, a program sends it as
+`x-graview-key`, and a page's WebSocket carries it in its query. `openRemote`, `graview mcp
+--remote-url` and `graview apply --remote-url` take the printed address whole and do the
+rest (`servedAddress` takes one apart). Without the key every route but health answers 401;
+the key is never written into an answer, and a new run is a new key. A store with neither
+`seatOf` nor trusted seat headers answers 401 on every route but health. Whatever a host asks for rides along: `openRemote({ headers })` sends them with
 every request, and the framework never reads them. What a call came through (`via`: `web`,
 `api`, `mcp:Claude`), recorded on the op, is the host's word too: `viaOf(request, seat)` says
 it, or `SEAT_HEADERS.via` where the seat headers are trusted (`openRemote({ via })` sends it,

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 498,
+  "gzipped": 178,
+  "changeset": "a-loopback-serve-believes-a-seat-only-with-its-runs-key.md",
+  "note": "Raised when a loopback graview serve came to believe a seat only from a request carrying its run's key: `openRemote` takes the printed address apart (`servedAddress`), sends its key as `x-graview-key`, and carries it in a page's WebSocket query and its leave beacon. Measured at 626_197 / 218_473 against 625_699 / 218_295 minified and gzipped."
+}
