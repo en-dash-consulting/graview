@@ -48,6 +48,8 @@ import { dayOf, type Tick } from "./clock.js";
 import { pluralOf } from "./schema/define-node.js";
 import { linkedReaderOf } from "./schema/linked.js";
 import { onPublish, PUBLISH, PUBLISHING, type Publishing } from "./publish.js";
+import { FORMATS } from "./format-error.js";
+import { formatStamp } from "./formats.js";
 
 export interface StoreOptions<S extends AnySchema> {
   readonly schema: S;
@@ -2467,16 +2469,41 @@ export class Store<S extends AnySchema> {
     const readers = onPublish(this.publishing) && this.publishedSeq === undefined ? [0] : [];
     const pinned = [...(options.pins ?? []), ...readers].filter((pin) => Number.isInteger(pin));
     if (pinned.length > 0) seq = Math.min(seq, ...pinned);
-    seq = Math.min(Math.max(seq, this.log.horizon), this.log.length);
-    // Never inside a gesture: back to where the batch it would split began.
-    while (seq > this.log.horizon && seq < this.log.length && ops[seq - this.log.horizon]!.batch === ops[seq - 1 - this.log.horizon]!.batch) seq--;
+    const format = options.format ?? FORMATS.snapshot;
+    if (!Number.isInteger(format) || format < 1 || format > FORMATS.snapshot) {
+      throw new RangeError(`Cannot write a checkpoint in snapshot format ${String(format)}: this build writes formats 1 to ${FORMATS.snapshot}.`);
+    }
+    // Never past the head or behind the horizon, and never inside a gesture: back to where the batch it would split began.
+    const settled = (asked: number): number => {
+      let at = Math.min(Math.max(asked, this.log.horizon), this.log.length);
+      while (at > this.log.horizon && at < this.log.length && ops[at - this.log.horizon]!.batch === ops[at - 1 - this.log.horizon]!.batch) at--;
+      return at;
+    };
+    seq = settled(seq);
     if (seq <= this.log.horizon) return undefined;
     const verified = this.verify();
     if (!verified.ok) throw new GraphError(`Cannot compact a store that does not verify: ${verified.reason}`);
+    let checkpoint = this.checkpointWithPublished(seq);
     /*
-     * And the app as readers were served it at each published seq behind it they may be served again: folded here where the
-     * log still holds it, carried from the checkpoint before where it does not, so a horizon past old publishes loses none.
+     * READABLE AS THE FORMAT ASKED FOR (FR-31): a checkpoint keeping the app as readers are served at a seq behind it
+     * (`published`) is snapshot format 2, which a build before it would misread (`formatStamp`). Asked for format 1,
+     * the horizon is held at the earliest such seq instead — and again where that lands past another — until the stamp
+     * says 1; the checkpoint's seq says where it stopped, and none is made when that is the horizon already.
      */
+    while (formatStamp(checkpoint).formats.snapshot > format) {
+      seq = settled(Math.min(...checkpoint.published!.map((kept) => kept.seq)));
+      if (seq <= this.log.horizon) return undefined;
+      checkpoint = this.checkpointWithPublished(seq);
+    }
+    return checkpoint;
+  }
+
+  /**
+   * The checkpoint at `seq`, and the app as readers were served it at each published seq behind it they may be served
+   * again: folded here where the log still holds it, carried from the checkpoint before where it does not, so a horizon
+   * past old publishes loses none.
+   */
+  private checkpointWithPublished(seq: number): Epoch {
     const carried = this.log.horizonEpoch()?.published ?? [];
     const published = (PUBLISHING.behind?.(this, seq) ?? []).flatMap((at) => (at >= this.log.horizon ? [this.epochAt(at)] : carried.filter((one) => one.seq === at)));
     return { ...this.epochAt(seq), ...(published.length > 0 && { published }) };
@@ -2544,5 +2571,20 @@ export interface CompactOptions {
    * compact; one past the head holds nothing back.
    */
   readonly pins?: readonly number[];
+  /**
+   * THE SNAPSHOT FORMAT THE STORE MUST STAY READABLE AS (FR-31): the one
+   * this build writes (`FORMATS.snapshot`) unless said. A checkpoint that
+   * keeps the app as readers are served at a seq behind it — past the
+   * publish standing at its seq, or past a seq a later publish took
+   * readers back to (`Epoch.published`) — is snapshot format 2, which a
+   * build before it refuses; `format: 1` holds the horizon at the earliest
+   * such seq instead — wherever the days, the ops and the pins would have
+   * put it — and the checkpoint's `seq` says where it stopped.
+   * A host that may roll back to such a build asks for it by name; a pin
+   * at `store.publishedSeq` alone holds only the latest publish, and a
+   * horizon that lands between two publishes is format 2 with it. A
+   * format this build does not write is refused (`RangeError`).
+   */
+  readonly format?: number;
 }
 
