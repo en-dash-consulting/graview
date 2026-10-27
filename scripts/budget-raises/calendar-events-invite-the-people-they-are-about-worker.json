@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 10332,
+  "note": "Raised when calendar events came to invite the people they are about (Roadmap f-calendar-guests-mapping): the worker, which runs connections and checks documents, carries the guest book a `guests: { via }` relation resolves through (`sync/guests.ts`), the mapping of a field of addresses or a relation to the attendees, `sendUpdates` said on every write, and the checker's judgment of `guests` with the `add-field` that fixes a missing field. The worker had 592 bytes of room under 2_301_008. Measured at 2_310_748 B against 2_300_416."
+}

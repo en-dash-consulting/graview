@@ -158,7 +158,7 @@ describe("an all-day event", () => {
     ]);
     const remote = googleCalendar({ calendarId: "c", token: () => "t", fetch });
     const { changes } = await remote.pull();
-    expect(changes[0]!.fields).toEqual({ summary: "Offsite", "start.date": "2026-10-21", "end.date": "2026-10-22" });
+    expect(changes[0]!.fields).toEqual({ summary: "Offsite", "start.date": "2026-10-21", "end.date": "2026-10-22", attendees: [] });
   });
 });
 

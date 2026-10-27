@@ -15,6 +15,7 @@ function build() {
   const sentence = str(1, 500);
   const kindName = z.string().check(z.regex(NAME, 'kind names are kebab-case, lower-case words joined by hyphens like "tool-note"'));
   const fieldName = z.string().check(z.regex(FIELD_NAME, 'field names are one word or camelCase, like "dueDate"'));
+  const edgeName = z.string().check(z.regex(EDGE_NAME, 'a relation\'s name is one word or camelCase, like "who"'));
   const envName = z.string().check(z.regex(/^[A-Z][A-Z0-9_]*$/, 'an environment variable is upper-case words joined by underscores, like "GOOGLE"'));
   /* Where the credentials are read from: environment variables under `env`, failing that the KEY=value file `file` names. */
   const auth = z.optional(z.strictObject({ env: envName, file: z.optional(str(1, 500)) }));
@@ -45,8 +46,30 @@ function build() {
      * recurring event with its rule (FR-230). With `days` — a weekday, or a
      * list of them — the record is weekly, and `start` and `end` are its
      * times of day ("09:00"), in the app's time zone.
+     *
+     * THE EVENT'S GUESTS (Roadmap f-calendar-guests-mapping) are `guests`:
+     * a field of the kind holding their addresses (a list, or one email),
+     * or `{ via }`, a relation of the kind to the people it is about —
+     * each reached person's `emails` (a list of them, or one email field)
+     * is invited while their `invite` toggle is on (`inviteMe`; `false`
+     * says the app has no toggle and every address is invited). Google's
+     * invitation emails go out only with `notify: true`; the default is
+     * quiet.
      */
-    fields: z.strictObject({ summary: fieldName, start: fieldName, end: fieldName, days: z.optional(fieldName), location: z.optional(fieldName), description: z.optional(fieldName) }),
+    fields: z.strictObject({
+      summary: fieldName,
+      start: fieldName,
+      end: fieldName,
+      days: z.optional(fieldName),
+      location: z.optional(fieldName),
+      description: z.optional(fieldName),
+      guests: z.optional(
+        z.union(
+          [fieldName, z.strictObject({ via: edgeName, emails: z.optional(fieldName), invite: z.optional(z.union([fieldName, z.literal(false)])), notify: z.optional(z.boolean()) })],
+          'guests names a field holding the addresses, or { "via": "<relation>", "emails"?, "invite"?, "notify"? } to invite the people a relation reaches',
+        ),
+      ),
+    }),
     /* Absent: the whole calendar. `{ color }`: the events of one of Google's colors, by name. `{ tag }`: those whose title carries a word like "#graview", kept in the title here or not (`keep`). */
     filter: z.optional(z.strictObject({ color: z.optional(str(1, 40)), tag: z.optional(str(1, 40)), keep: z.optional(z.boolean()) })),
     direction,

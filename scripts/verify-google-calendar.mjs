@@ -10,8 +10,11 @@
  * rejects (a full resync that loses and duplicates nothing), events made in
  * Berlin and Tokyo read and moved with the instant kept, an all-day event
  * left as a day, every page of a pull followed, a DECLARED connection
- * (`connections.<name>`) filtered to one color and to a title tag, and
- * everything the run made removed again.
+ * (`connections.<name>`) filtered to one color and to a title tag, the
+ * people an event reaches invited as its guests (two emails, two
+ * attendees; taken off when unlinked; an attendee added there linking the
+ * person who holds it; a stranger kept through a round trip; nobody
+ * mailed), and everything the run made removed again.
  *
  * It needs credentials, so it is NOT in `pnpm verify` or CI. They are read
  * from ~/.graview-google-test.env (or GRAVIEW_GOOGLE_ENV) through
@@ -423,16 +426,117 @@ try {
     },
   );
 
+  /* ------------------------------------ the guests: the people an event is about */
+  /**
+   * A declaration whose meetings reach people through `who`, with
+   * `guests: { via: "who" }` (Roadmap f-calendar-guests-mapping): a person's
+   * emails are the event's attendees while their Invite me is on. Nobody is
+   * mailed: the addresses are example.com's, and `notify` is left off, so
+   * every write says `sendUpdates=none`.
+   */
+  const guestsTag = `#${run}-guests`;
+  const guestsCompiled = compileDocument({
+    format: "graview-document",
+    formatVersion: 1,
+    name: `Guests ${run}`,
+    kinds: {
+      person: { fields: { name: { type: "string", required: true }, emails: { type: "list", of: "string" }, inviteMe: { type: "boolean" } } },
+      meeting: { fields: { name: { type: "string", required: true }, starts: { type: "datetime" }, ends: { type: "datetime" } }, edges: { who: { to: ["person"] } } },
+    },
+    acts: { "add-person": { creates: "person" }, "add-meeting": { creates: "meeting" } },
+    connections: { team: { system: "google-calendar", calendar: "unused", kind: "meeting", fields: { summary: "name", start: "starts", end: "ends", guests: { via: "who" } }, direction: "both", conflicts: "theirs", filter: { tag: guestsTag } } },
+  });
+  if (!guestsCompiled.ok) throw new Error(`the guests declaration does not compile: ${JSON.stringify(guestsCompiled.findings)}`);
+  const guestsApp = guestsCompiled.app;
+  const guestsStore = new Store({ schema: guestsApp.schema, mutations: guestsApp.mutations, snapshot: { nodes: [], edges: [] } });
+  const sendUpdates = [];
+  const guestsConnection = connection({
+    name: "team",
+    declaration: guestsApp.connections.team,
+    app: guestsApp,
+    store: guestsStore,
+    calendarId: env.GOOGLE_TEST_CALENDAR_ID,
+    token,
+    fetch: (url, init) => {
+      if ((init?.method ?? "GET") !== "GET") sendUpdates.push(new URL(url).searchParams.get("sendUpdates") ?? "(unsaid)");
+      return fetch(url, init);
+    },
+  });
+  const byGuests = {
+    store: guestsStore,
+    engine: guestsConnection.engine,
+    as: { author: { kind: "human", id: "verify" }, intent: "by hand" },
+    pass: async () => {
+      const result = await guestsConnection.engine.run();
+      if (result.offline) throw new Error("the guests connection could not reach Google");
+      return result;
+    },
+    act: (name, args) => guestsStore.apply({ name, args }, { author: { kind: "human", id: "verify" }, intent: name }),
+    who: (id) => guestsStore.graph.out(id, "who").map((one) => one.id).sort(),
+  };
+  const guestOne = `guest-one-${run}@example.com`;
+  const guestTwo = `guest-two-${run}@example.com`;
+  const guestThree = `guest-three-${run}@example.com`;
+  const stranger = `stranger-${run}@example.com`;
+  const invitedThere = async (id) => ((await google("GET", `/${id}`)).attendees ?? []).map((one) => one.email.toLowerCase()).sort();
+  await byGuests.pass();
+  byGuests.act("add-person", { id: "person:ana", name: "Ana", emails: [guestOne, guestTwo], inviteMe: true });
+  byGuests.act("add-person", { id: "person:ben", name: "Ben", emails: [guestThree], inviteMe: true });
+  byGuests.act("add-meeting", { id: "meeting:dinner", name: "Dinner", starts: "2026-11-08T18:00:00Z", ends: "2026-11-08T20:00:00Z" });
+  byGuests.act("connect-meeting-who", { id: "meeting:dinner", to: "person:ana" });
+  const guestsSent = await byGuests.pass();
+  const dinnerId = byGuests.engine.snapshot.links["meeting:dinner"]?.id;
+  const dinnerInvited = dinnerId ? await invitedThere(dinnerId) : [];
+  claim("aPersonWithTwoEmailsAndInviteMeIsTwoAttendeesOnTheirEvent", guestsSent.pushed.includes("meeting:dinner") && dinnerInvited.includes(guestOne) && dinnerInvited.includes(guestTwo), {
+    pushed: guestsSent.pushed,
+    refused: guestsSent.refused,
+    invited: dinnerInvited.map((one) => one.replace(run, "<run id>")),
+  });
+  // Google adds the calendar's owner as an attendee of an event with guests: our own write comes back as an echo, and nothing is sent again.
+  const guestsQuiet = await byGuests.pass();
+  claim("anEventWithGuestsIsNotEchoedBackAndGoogleAddingItsOrganizerSendsNothing", guestsQuiet.applied.length === 0 && guestsQuiet.pushed.length === 0 && guestsQuiet.refused.length === 0, {
+    applied: guestsQuiet.applied,
+    echoes: guestsQuiet.echoes,
+    pushed: guestsQuiet.pushed,
+  });
+  byGuests.act("disconnect-meeting-who", { id: "meeting:dinner", to: "person:ana" });
+  const guestsUnlinked = await byGuests.pass();
+  const dinnerAfter = dinnerId ? await invitedThere(dinnerId) : [];
+  claim("unlinkingThePersonTakesTheirAttendeesOff", guestsUnlinked.pushed.includes("meeting:dinner") && !dinnerAfter.includes(guestOne) && !dinnerAfter.includes(guestTwo), {
+    pushed: guestsUnlinked.pushed,
+    invited: dinnerAfter.map((one) => one.replace(run, "<run id>")),
+  });
+  // Somebody adds Ben's address and a stranger's in Google: Ben is linked, the stranger held as an address.
+  await google("PATCH", `/${dinnerId}`, { attendees: [...dinnerAfter.map((email) => ({ email })), { email: guestThree }, { email: stranger }] });
+  const guestsTook = await byGuests.pass();
+  claim("anAttendeeAddedInGoogleLinksThePersonWhoHoldsIt", guestsTook.applied.includes("meeting:dinner") && byGuests.who("meeting:dinner").join() === "person:ben" && (byGuests.engine.snapshot.unresolved?.["meeting:dinner"]?.who ?? []).includes(stranger), {
+    applied: guestsTook.applied,
+    who: byGuests.who("meeting:dinner"),
+    held: (byGuests.engine.snapshot.unresolved?.["meeting:dinner"]?.who ?? []).map((one) => one.replace(run, "<run id>")),
+  });
+  // A change made here carries the stranger back as it was, and the next pass is quiet.
+  const guestsSettled = await byGuests.pass();
+  byGuests.act("edit-meeting", { id: "meeting:dinner", name: "Dinner, moved" });
+  await byGuests.pass();
+  const dinnerFinal = dinnerId ? await invitedThere(dinnerId) : [];
+  const guestsAfterwards = await byGuests.pass();
+  claim("anUnknownAttendeeSurvivesARoundTripUnchanged", guestsSettled.pushed.length === 0 && dinnerFinal.includes(stranger) && dinnerFinal.includes(guestThree) && guestsAfterwards.pushed.length === 0 && guestsAfterwards.applied.length === 0 && sendUpdates.length > 0 && sendUpdates.every((one) => one === "none"), {
+    settledBeforeTheEdit: { pushed: guestsSettled.pushed, applied: guestsSettled.applied },
+    invited: dinnerFinal.map((one) => one.replace(run, "<run id>")),
+    afterwards: { pushed: guestsAfterwards.pushed, applied: guestsAfterwards.applied },
+    sendUpdates: [...new Set(sendUpdates)],
+  });
+
   /* ---------------------------------------- everything it made, removed */
   // What each app made here goes by its own deletes; what was made in Google as somebody else, by Google's.
   for (const one of meetings()) act("remove-meeting", { id: one.id });
   const removed = await pass();
-  for (const filtered of [byColor, byTag]) {
+  for (const filtered of [byColor, byTag, byGuests]) {
     for (const one of filtered.store.graph.allNodes().filter((node) => node.kind === "meeting")) {
       filtered.store.apply({ name: "remove-meeting", args: { id: one.id } }, filtered.as);
     }
   }
-  const removedFiltered = [await byColor.pass(), await byTag.pass()];
+  const removedFiltered = [await byColor.pass(), await byTag.pass(), await byGuests.pass()];
   const refused = [...removed.refused, ...removedFiltered.flatMap((one) => one.refused)];
   for (const event of await ours()) {
     if (!event.extendedProperties?.private?.graview) await google("DELETE", `/${event.id}`);

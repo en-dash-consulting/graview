@@ -66,6 +66,29 @@ exporting the app itself is `graview-ship`.
    `--no-sync` leaves it off. A host calls `runConnections({ app, store,
    state, token })`.
 
+   **"Invite my email on events I'm on."** `fields.guests` is a field of
+   addresses (a `list`, or one `email`), or `{ "via": "who" }`, the
+   relation to the people: each person's `emails` is invited while their
+   `inviteMe` is on (`emails` and `invite` name other fields; `invite:
+   false` says the app has no toggle). The recipe:
+
+   1. Ask for the addresses; never guess them.
+   2. Set `emails` and `inviteMe` on that person's record (`add-field` a
+      list of strings and a boolean on the people kind first if it lacks
+      them).
+   3. Make sure the synced kind has a relation to the people (`add-relation`
+      if not) and link the records already there (a run's driver → its
+      event's who).
+   4. Put `guests: { via: "<relation>" }` on the connection
+      (`set-connection`).
+   5. Say the default is quiet — no email is sent (`sendUpdates=none` on
+      every write); `notify: true` on `guests` switches on Google's
+      invitations.
+   6. Never invite kids or anyone without Invite me; the framework refuses
+      to: a person without the toggle is no guest either way, an attendee
+      matching them is held as an address and never linked, and one
+      matching nobody is kept and sent back as it was.
+
 5. **Keep it in step with a Notion database by declaring it.**
    `system: "notion"`, `database` (its 32-character id, or `{ env }`),
    `source` when the database holds several data sources (one's name or
@@ -123,7 +146,10 @@ npx graview check --document app.json
 field it does not have (`connection-kind`, `connection-field`), a field of
 the wrong type for the event's part, a start and an end that are not both
 days or both moments (`connection-when`), a filter it cannot read
-(`connection-filter`, `connection-color`, `connection-tag`), and it warns
+(`connection-filter`, `connection-color`, `connection-tag`), guests in a
+field that holds no addresses or through a relation that reaches no people
+(`connection-guests-field`, `connection-guests-via`, each offering the
+`add-field` that fixes it), and it warns
 `connection-remove` when no act removes the kind, so an event deleted in
 the calendar would stay here. For Notion it refuses a secret written in
 the declaration (`connection-secret`), a field that cannot hold the
@@ -139,7 +165,8 @@ report and sent by neither until `resolve`; an act on a read-only kind is
 not offered and is refused with its `because`. Against Google itself,
 `node scripts/verify-google-calendar.mjs` (credentials of your own, never in
 CI) writes its claims to `docs/google-calendar.json` — a round trip both
-ways, an all-day event kept a day, a declared filter honored — and
+ways, an all-day event kept a day, a declared filter honored, a person's
+emails invited and taken off, an unknown attendee kept — and
 `node scripts/verify-notion.mjs` does the same against a Notion workspace
 (`docs/notion.json`; `--stub` against the scripted one).
 
