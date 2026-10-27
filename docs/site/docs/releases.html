@@ -1809,7 +1809,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
     </section>
     <section id="v0-1-59" aria-labelledby="h-v0-1-59">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-v0-1-59">0.1.59</h2></div>
-      <p class="release-when sm dim">Published October 27, 2026 · the current version</p>
+      <p class="release-when sm dim">Published October 27, 2026</p>
       <p class="release-headline">A security release: a served store and a dev server answer only their own page, the store judges every undo, merge and keystroke as the act it is, and nothing a seat may not see reaches it sideways.</p>
       <ul>
 <li><strong>A served store on loopback believes only its own page.</strong> <code>graview serve</code> keeps to its own origin and host, answers no wildcard CORS while it trusts seat headers (<code>--allow-origin</code> names an origin that may), reads <code>x-graview-kind: system</code> as a person unless <code>--trust-seat-headers</code> is given, holds a body to 16 MiB before routing, and caps a live socket's fragments.</li>
