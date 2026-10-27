@@ -52,8 +52,9 @@ describe("the open kit", () => {
   it("draws <graview-video>, which names a file and holds nothing, and still never <video>", () => {
     expect(judgeElement("graview-video", "html")).toEqual({ namespace: "html", name: "graview-video" });
     expect(isEmptyElement("html", "graview-video")).toBe(true);
-    for (const name of ["data-record", "data-field", "data-index", "class", "aria-label"]) expect(judgeAttribute("html", "graview-video", name, "x", { origin: "https://app.example" })).not.toHaveProperty("refused");
-    for (const name of ["src", "poster", "controls", "autoplay"]) expect(judgeAttribute("html", "graview-video", name, "x", { origin: "https://app.example" })).toHaveProperty("refused");
+    for (const name of ["data-record", "data-field", "data-index", "class", "aria-label", "autoplay", "cover"]) expect(judgeAttribute("html", "graview-video", name, "x", { origin: "https://app.example" })).not.toHaveProperty("refused");
+    /* `autoplay` and `cover` are the view's two words for a hero background (f-video-hero); the source, the poster and the controls stay the host's. */
+    for (const name of ["src", "poster", "controls", "loop", "muted"]) expect(judgeAttribute("html", "graview-video", name, "x", { origin: "https://app.example" })).toHaveProperty("refused");
     expect(judgeElement("video", "html")).toHaveProperty("refused");
     expect(NEVER_DRAWN.html).toContain("video");
   });
@@ -107,7 +108,8 @@ describe("a <graview-video> the view places", () => {
   });
 
   it("is handed to the view as its facts, never an address", () => {
-    expect(guestFileOf(beach)).toEqual({ name: "beach.mov", type: "video/mp4", bytes: 18_400_000, width: 1920, height: 1080, caption: "The waves at dusk", duration: 45 });
+    expect(guestFileOf(beach)).toEqual({ name: "beach.mov", type: "video/mp4", bytes: 18_400_000, width: 1920, height: 1080, caption: "The waves at dusk", duration: 45, poster: true });
+    expect(guestFileOf({ ...beach, poster: undefined })).not.toHaveProperty("poster");
   });
 });
 

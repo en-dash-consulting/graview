@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 1226,
+  "gzipped": 377,
+  "note": "Raised when a video came to play as a hero background (Roadmap f-video-hero): `autoplay` and `cover` in the open kit's table for `<graview-video>`, and the host's player drawing a background — muted, looping, inline, no controls, filling its box — held still at its poster under prefers-reduced-motion and let go as the setting changes (`media.ts`, fetched with the first view that places one). Measured at 225_782 / 85_848 against 224_556 / 85_471 on a fresh build of main: 1_226 / 377 more."
+}

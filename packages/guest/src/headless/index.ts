@@ -394,6 +394,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     variant: (options.width ?? 1440) < 640 ? "phone" : "wide",
     drawnBy: `view:${manifest.name}`,
     parts: judged.parts,
+    ...(judged.videos.length > 0 ? { videos: judged.videos } : {}),
     problems,
   };
   const { placeText } = await import("@graview/core/describe");

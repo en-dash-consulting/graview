@@ -1,4 +1,4 @@
-import type { DescribedItem, DescribedPart, DescribedProblem } from "@graview/core/describe";
+import type { DescribedItem, DescribedPart, DescribedProblem, DescribedVideo } from "@graview/core/describe";
 import type { GuestNode, GuestProps } from "../protocol.js";
 import { placeNamed, placesSaid, unsureOfViews, type NamedPlace } from "../host/links-words.js";
 import { notPressable } from "../host/pressable.js";
@@ -40,6 +40,32 @@ export interface DescribedDrawing {
   readonly acts: readonly string[];
   /** The records it binds or links to (`data-record`), each once. */
   readonly records: readonly string[];
+  /** Each video it places (`<graview-video>`) that the host would play, with whether it plays (f-video-hero). */
+  readonly videos: readonly DescribedVideo[];
+}
+
+/** The sources a browser plays (what a host's upload transcodes to): a QuickTime HEVC `.mov` is not one. */
+const PLAYED = new Set(["video/mp4", "video/webm", "video/ogg"]);
+
+/** A placed video as an agent confirms it: playable when its source is one every browser plays and it has a poster to stand at. */
+export function describeVideo(file: { readonly name: string; readonly type: string; readonly caption?: unknown; readonly duration?: unknown; readonly poster?: unknown }, on: { readonly record: string; readonly field: string; readonly autoplay: boolean; readonly cover: boolean }): DescribedVideo {
+  /* The host's path on the record itself, or the fact alone as a view is handed it (`guestFileOf`). */
+  const poster = file.poster === true || (typeof file.poster === "string" && file.poster.length > 0);
+  const plays = PLAYED.has(file.type.toLowerCase());
+  const why = !plays && !poster ? `its source is ${file.type}, which not every browser plays, and it has no poster` : !plays ? `its source is ${file.type}, which not every browser plays` : !poster ? "it has no poster, so nothing stands before it plays or where a person asked for less motion" : undefined;
+  return {
+    record: on.record,
+    field: on.field,
+    text: typeof file.caption === "string" && file.caption.trim() ? file.caption.trim() : file.name,
+    name: file.name,
+    source: file.type,
+    ...(typeof file.duration === "number" ? { duration: file.duration } : {}),
+    poster,
+    autoplay: on.autoplay,
+    cover: on.cover,
+    playable: plays && poster,
+    ...(why ? { why } : {}),
+  };
 }
 
 const HEADINGS: Readonly<Record<string, number>> = { h1: 1, h2: 2, h3: 3, h4: 4, h5: 5, h6: 6 };
@@ -136,6 +162,7 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
   const problems: DescribedProblem[] = [];
   const acts = new Set<string>();
   const records = new Set<string>();
+  const videos: DescribedVideo[] = [];
   const shown = new Map<string, GuestNode>();
   for (const node of [...(context.props.node ? [context.props.node] : []), ...(context.props.nodes ?? [])]) shown.set(node.id, node);
   const known = (name: string) => placeNamed(context.places, name) !== undefined;
@@ -343,15 +370,19 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
       /* A record's video the host plays (0.1.37): said by what it shows and how long it is, from the record the view was shown. */
       case "graview-video": {
         const field = element.getAttribute("data-field") ?? "";
-        const node = shown.get(element.getAttribute("data-record") ?? "") as Record<string, unknown> | undefined;
+        const record = element.getAttribute("data-record") ?? "";
+        const node = shown.get(record) as Record<string, unknown> | undefined;
         const held = node && field && Object.hasOwn(node, field) ? node[field] : undefined;
-        const file = (Array.isArray(held) ? held : [held])[Number(element.getAttribute("data-index") ?? "0")] as { readonly name?: unknown; readonly type?: unknown; readonly caption?: unknown; readonly duration?: unknown } | undefined;
+        const file = (Array.isArray(held) ? held : [held])[Number(element.getAttribute("data-index") ?? "0")] as { readonly name?: unknown; readonly type?: unknown; readonly caption?: unknown; readonly duration?: unknown; readonly poster?: unknown } | undefined;
         if (!file || typeof file.name !== "string" || typeof file.type !== "string" || !file.type.startsWith("video/")) {
           problems.push({ at: `drawing <graview-video data-field="${field}">`, says: `It names no video on a record this seat was shown: the host draws no player there. A <graview-video> names a record the view was shown (data-record) and its video field (data-field).` });
           return [];
         }
-        const words = typeof file.caption === "string" && file.caption.trim() ? file.caption.trim() : file.name;
-        return [{ t: "text", text: `${words}, ${videoWords(typeof file.duration === "number" ? { duration: file.duration } : {})}`, tone: "picture" }];
+        /* A background (f-video-hero) is said as one, and listed with whether it will play, for an agent to confirm. */
+        const video = describeVideo(file as { readonly name: string; readonly type: string; readonly caption?: unknown; readonly duration?: unknown; readonly poster?: unknown }, { record, field, autoplay: element.getAttribute("autoplay") !== null, cover: element.getAttribute("cover") !== null });
+        videos.push(video);
+        const how = video.autoplay ? `, playing as a background, muted and looping${video.cover ? ", filling its box" : ""}` : "";
+        return [{ t: "text", text: `${video.text}, ${videoWords(video.duration !== undefined ? { duration: video.duration } : {})}${how}`, tone: "picture" }];
       }
       case "button": {
         const text = squash(textOf(element));
@@ -371,5 +402,7 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
     }
   }
 
-  return { parts: blocks(root), problems, acts: [...acts], records: [...records] };
+  /* `blocks` walks the tree and fills `videos` as it meets each player: drawn first, listed after. */
+  const parts = blocks(root);
+  return { parts, problems, acts: [...acts], records: [...records], videos };
 }

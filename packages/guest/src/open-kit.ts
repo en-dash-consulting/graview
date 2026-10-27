@@ -158,9 +158,13 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
    * list). It names a file and holds nothing; the host draws the player in
    * it, from the record the view was shown, for a view whose manifest asks
    * for pictures (host/media.ts). The view never holds a `<video>` or the
-   * host's path to one.
+   * host's path to one. `autoplay` (Roadmap f-video-hero) is a background:
+   * muted, looping, inline, with no controls — autoplay without muted never
+   * plays, so the one word means all of it — held still at its poster under
+   * `prefers-reduced-motion`; `cover` fills the box the view sized. The
+   * poster is the value's: a view names no address.
    */
-  "graview-video": empty,
+  "graview-video": { empty: true, attributes: { autoplay: "boolean", cover: "boolean" } },
 };
 
 /** SVG's presentation attributes: CSS properties, sanitized as a stylesheet's are. */
