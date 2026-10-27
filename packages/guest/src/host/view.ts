@@ -11,6 +11,7 @@ import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, 
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
 import { judgeCodeAct, type DropGrant } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
+import { fitBudget, keepStart, paceOf } from "./device-pace.js";
 import { checkViewSource } from "./view-source.js";
 import { viewScript } from "./view-script.js";
 import { createLinks, listsOf, type Arrival, type Destination } from "./links.js";
@@ -63,7 +64,7 @@ export type WorkerViewFailure =
   | "nodes"
   /** It sent more than `messages` messages in `messageWindowMs`. */
   | "flood"
-  /** It took longer than `pushMs` to draw what it was shown. */
+  /** It took longer than `pushMs`, fitted to the device, to draw what it was shown. */
   | "slow";
 
 export interface WorkerViewLimits extends GuestLimits {
@@ -78,14 +79,21 @@ export interface WorkerViewLimits extends GuestLimits {
   /**
    * How long the view may take over one push of what it is shown — its
    * listeners' own time, as its runtime measures it, and the time until the
-   * runtime says it has drawn, as the host measures it — in milliseconds.
-   * 1 000 by default. Time the host's own page was held up is not counted.
+   * runtime says it has drawn, as the host measures it — in milliseconds,
+   * on a fast device. 1 000 by default. Time the host's own page was held
+   * up is not counted. FITTED TO THE DEVICE (Roadmap
+   * f-view-budget-fits-device): the page measures how long its first view's
+   * worker took to start, once, and every view's `pushMs` and `drawMs` are
+   * this base times that pace — 1 for a start of 60 ms or under, up to 4.
+   * The sentence a stopped view is given names the budget it was held to.
    */
   readonly pushMs?: number;
   /**
    * The most of any one second the host's page may spend drawing what the
-   * view sent, in milliseconds: past it the batch is left undrawn and the
-   * view is stopped as slow. 100 by default.
+   * view sent, in milliseconds, on a fast device: past it the batch is left
+   * undrawn and the view is stopped as slow. 100 by default; fitted to the
+   * device as `pushMs` is. `messages`, `maxNodes` and the byte limits are
+   * never fitted: a flood is a flood on any device.
    */
   readonly drawMs?: number;
 }
@@ -249,6 +257,13 @@ export interface WorkerView {
   readonly refused: readonly ViewRefusal[];
   /** How tall what it drew is, in CSS pixels, as the host last measured it (`onContentHeight`); `undefined` before it draws. */
   readonly contentHeight: number | undefined;
+  /**
+   * How many times a fast device's time this page's views are given
+   * (Roadmap f-view-budget-fits-device): 1 on a fast page, up to 4; what
+   * the page measured once from its first worker's start, and `undefined`
+   * until this view's worker has said ready.
+   */
+  readonly pace: number | undefined;
   dispose(): void;
 }
 
@@ -293,6 +308,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
 
   const stats: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   const limiter = createGuestLimiter(options.limits);
+  /*
+   * THE LIMITS, AS GIVEN: `pushMs` and `drawMs` are the host's base — its
+   * own numbers, else the defaults — and are fitted to the device once the
+   * worker has said ready (device-pace.ts), so `limits` names the budget the
+   * view is actually held to, in its sentence as in its timers. The counts
+   * and the bytes stay as given.
+   */
   const limits = {
     maxSourceBytes: options.limits?.maxSourceBytes ?? 256_000,
     maxNodes: options.limits?.maxNodes ?? 5_000,
@@ -302,6 +324,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     silentMs: options.limits?.silentMs ?? 5_000,
     drawMs: options.limits?.drawMs ?? 100,
   };
+  const base = { pushMs: limits.pushMs, drawMs: limits.drawMs };
+  /* The page's pace, once this view's worker has started: what its time budgets were fitted by. */
+  let pace: number | undefined;
   /* What the view was last shown: the plain face drawn in its place, if it fails. */
   let lastProps: GuestProps | undefined;
   /* What works out its records' computed values, once fetched (below). */
@@ -518,9 +543,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const clock = window.performance;
   const pending = new Map<number, number>();
   let ticked = clock.now();
-  const every = Math.max(10, Math.min(250, Math.floor(limits.pushMs / 4)));
   const startTiming = () => {
     if (timing) return;
+    /* A quarter of the budget as it was fitted, between 10 and 250 ms. */
+    const every = Math.max(10, Math.min(250, Math.floor(limits.pushMs / 4)));
     ticked = clock.now();
     timing = window.setInterval(() => {
       const at = clock.now();
@@ -533,8 +559,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       }
     }, every);
   };
-  /* The host's own time drawing the view, at most `drawMs` of any second (draw-budget.ts): past it, the view is slow. */
-  const budget = createDrawBudget(limits.drawMs, () => clock.now());
+  /* The host's own time drawing the view, at most `drawMs` of any second (draw-budget.ts), as fitted to the device: past it, the view is slow. */
+  const budget = createDrawBudget(() => limits.drawMs, () => clock.now());
   /* The fields the view marked `data-prefill`, filled by the host from the record after each batch it draws (FR-150, press.ts). */
   let refill = () => {};
   const draw = (one: ["render", unknown] | ["style", readonly string[]]) => {
@@ -817,8 +843,19 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     onError: (detail) => {
       if (!drew) fail("error", detail);
     },
-    onReady: (nonce, given) => {
+    onReady: (nonce, given, startMs) => {
       port = given;
+      /*
+       * THE BUDGET FITS THE DEVICE (Roadmap f-view-budget-fits-device): the
+       * page keeps its first worker's start, and the host's base — its own
+       * numbers, else the defaults — is given that many times over, up to
+       * four, before the first push is timed. A fast page keeps today's
+       * guard; the counts never move. The page keeps whatever it shows — the
+       * drawing before this one, or nothing — until the view draws or this
+       * budget runs out: nothing is drawn in its place and then swapped.
+       */
+      pace = paceOf(keepStart(window, startMs));
+      Object.assign(limits, fitBudget(base, pace));
       startTiming();
       const live = createGuestHost({
         store: options.store,
@@ -949,6 +986,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
       get contentHeight() {
         return contentHeight;
+      },
+      get pace() {
+        return pace;
       },
       dispose() {
         failed = true;

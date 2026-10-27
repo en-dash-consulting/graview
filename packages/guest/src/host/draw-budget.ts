@@ -20,7 +20,8 @@ export interface DrawBudget {
   draw(run: (spent: () => boolean) => boolean): boolean;
 }
 
-export function createDrawBudget(drawMs: number, now: () => number): DrawBudget {
+/** `drawMs` is read at each batch: a view's budget is fitted to the device once its worker has started (device-pace.ts). */
+export function createDrawBudget(drawMs: () => number, now: () => number): DrawBudget {
   let since = now();
   let spent = 0;
   return {
@@ -30,9 +31,10 @@ export function createDrawBudget(drawMs: number, now: () => number): DrawBudget 
         since = began;
         spent = 0;
       }
-      const whole = run(() => spent + (now() - began) >= drawMs);
+      const allowed = drawMs();
+      const whole = run(() => spent + (now() - began) >= allowed);
       spent += now() - began;
-      return whole && spent < drawMs;
+      return whole && spent < allowed;
     },
   };
 }

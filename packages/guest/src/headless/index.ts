@@ -278,6 +278,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     throw new TypeError("runWorkerViewHeadless runs a view only in an isolate the host supplies (`run`); it never runs one in the host's own context.");
   }
   const { manifest, source, store, principal } = options;
+  /* The server's own budget: fixed, never fitted to a device as the page's is (host/device-pace.ts) — a headless run has no device but the host's. */
   const limits = {
     maxSourceBytes: options.limits?.maxSourceBytes ?? 256_000,
     maxNodes: options.limits?.maxNodes ?? 5_000,

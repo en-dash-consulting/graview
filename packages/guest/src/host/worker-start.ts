@@ -37,8 +37,13 @@ export interface StartWorkerOptions {
   readonly silentMs: number;
   /** A message to the worker's owner that was not one ready: dropped, and counted. */
   readonly onDropped: () => void;
-  /** It said ready: here is its nonce and the host's end of its port, the hello already sent. */
-  readonly onReady: (nonce: string, port: MessagePort) => void;
+  /**
+   * It said ready: here is its nonce and the host's end of its port, the
+   * hello already sent, and how long it took to start — from `new Worker`
+   * to its ready, in milliseconds by the page's clock — which is the
+   * device's pace (device-pace.ts).
+   */
+  readonly onReady: (nonce: string, port: MessagePort, startMs: number) => void;
   /**
    * It never started (`start`), or stopped answering (`silent`): it has
    * been stopped, and this is said once. `detail` says why it did not
@@ -175,9 +180,11 @@ export function startWorker(window: Window & typeof globalThis, options: StartWo
     }, every);
     const hello: HostHello = { graview: "host-hello", protocol: GUEST_PROTOCOL, nonce, view: options.name };
     worker!.postMessage(hello, [channel.port2]);
-    options.onReady(nonce, channel.port1);
+    options.onReady(nonce, channel.port1, clock.now() - askedAt);
   };
 
+  /* When the worker was asked for: its start is measured from here to its ready, and that is the device's pace (device-pace.ts). */
+  const askedAt = clock.now();
   try {
     /* Classic, on purpose: a module worker from a blob: URL is refused in an opaque origin (Chromium), which is where a chat's widget runs. */
     worker = new window.Worker(url, { name: options.name });

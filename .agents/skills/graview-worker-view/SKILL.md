@@ -122,12 +122,12 @@ saves. How those are written and heard is `graview-view-forms`.
 
 ## Limits
 
-About 256 kB of source, 5 000 drawn nodes, 120 messages a second,
-1 000 ms per push, and 100 ms a second of the page's time drawing it.
-Past any, the view is stopped and its records' plain face drawn instead,
-with why. Draw summaries, not every row of a huge set.
-Timers between pushes are not timed per push, and a worker kept busy
-under the heartbeat's 5 s spends the person's CPU: never spin.
+256 kB of source, 5 000 nodes, 120 messages a second, 1 000 ms a push
+and 100 ms a second of the page's time drawing it; the two times grow
+up to fourfold on a slow device, the counts never. Past any, the view
+is stopped and its records' plain face drawn, with why. Draw summaries,
+not every row. Timers go untimed; a worker busy under the heartbeat's
+5 s spends the person's CPU: never spin.
 
 ## Worked examples
 
