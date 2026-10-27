@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 200,
+  "gzipped": 100,
+  "changeset": "a-connection-refused-says-why-in-plain-words.md",
+  "note": "Raised when a finding came to carry its details and its ways out (Roadmap f-connection-refusal-in-plain-words, FR-229): a page handed a compiled app says its findings, so it carries the lines `sayFindings` prints beneath a sentence — the details, and each way out with its edits; the finding's two new keys cost nothing, `error` and `warning` sharing one builder now. Measured at 575_232 / 200_543 against 575_038 / 200_452 before it: 194 more minified, 91 gzipped."
+}

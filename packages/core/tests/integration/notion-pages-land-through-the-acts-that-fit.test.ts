@@ -51,7 +51,7 @@ const CHECKED = { "health-check": { fields: { name: { type: "string", required: 
 const findings = (raw: unknown, severity = "error") =>
   compileDocument(raw)
     .findings.filter((finding) => finding.severity === severity)
-    .map((finding) => ({ code: finding.code, path: finding.path, message: finding.message, fix: finding.fix }));
+    .map((finding) => ({ code: finding.code, path: finding.path, message: finding.message, fix: finding.fix, ...(finding.details ? { details: finding.details } : {}) }));
 
 function opened(raw: unknown, name: string, properties: Record<string, string>) {
   const compiled = compileDocument(raw);
@@ -89,17 +89,19 @@ describe("a page made in Notion becomes a record through an act that fits it", (
 
   it("is refused by graview check when every act that makes the kind takes a subject, or asks for what the connection does not map", () => {
     const raw = northPole({ "log-health-check": LOG_A_CHECK }, checksConnection(), CHECKED);
+    // Said to the person in plain words (FR-229); the framework's sentence is its details.
     expect(findings(raw)).toEqual([
-      {
+      expect.objectContaining({
         code: "connection-creates",
         path: "connections.checks.kind",
-        message: expect.stringMatching(/^a page made in the database becomes a health check through an act that makes one from the page's fields alone, and log-health-check acts on a reindeer$/),
-        fix: expect.stringMatching(/declare an act with "creates": "health-check" and no "on"/),
-      },
+        message: "A health check is only ever made on a reindeer (log-health-check), and a Notion page is made on nothing.",
+        fix: "Add an act that makes a health check on its own, or sync to a kind made for pages.",
+        details: expect.stringMatching(/^a page made in the database becomes a health check through an act that makes one from the page's fields alone, and log-health-check acts on a reindeer — declare an act with "creates": "health-check" and no "on"/),
+      }),
     ]);
     // A required field the connection leaves out is one no page could fill.
     const unmapped = northPole({ "add-health-check": { creates: "health-check" } }, checksConnection({ name: "Name", weight: "Weight" }));
-    expect(findings(unmapped)).toEqual([expect.objectContaining({ code: "connection-creates", message: expect.stringMatching(/add-health-check asks for checkedOn, which the connection does not map/) })]);
+    expect(findings(unmapped)).toEqual([expect.objectContaining({ code: "connection-creates", message: "Health checks need a Checked on, and Notion pages don't have one.", details: expect.stringMatching(/add-health-check asks for checkedOn, which the connection does not map/) })]);
   });
 });
 

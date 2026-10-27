@@ -79,8 +79,13 @@ exporting the app itself is `graview-ship`.
    What a change there lands through, credited to the system: a page or
    event made there becomes a record through `add-<kind>`, or else the
    first act that creates the kind with no `on` and requires only mapped
-   fields — never one that logs it on another record (`connection-creates`
-   when none fits); a change lands through the derived `edit-<kind>`, which
+   fields — never one that logs it on another record. When none fits,
+   `connection-creates` says so in the person's words ("Blocks need a
+   Type, and Google events don't have one.") with `fixes` a host offers as
+   buttons — a default, the field left blank, an event part mapped, another
+   kind, a kind made for events — each with its edits (`set-default`,
+   `set-required`, `set-connection`, `add-kind`) where one can be written,
+   and the framework's own sentence as `details`; a change lands through the derived `edit-<kind>`, which
    writes every mapped field even where a named step (a status moved
    along) writes it too, so declare no `edit-<kind>` of your own unless it writes
    them all (`connection-edit`). One this store refuses (a blank row) is

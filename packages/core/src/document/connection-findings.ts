@@ -3,12 +3,14 @@ import { deriveMutations } from "../mutations/derive-edits.js";
 import { relationActName } from "../mutations/derived-names.js";
 import { withArticle } from "../schema/define-node.js";
 import { CONNECTION_TAG, GOOGLE_COLORS } from "../sync/connection-filter.js";
-import { creatingActFor } from "../sync/creating-act.js";
+import { creatingActFor, type UnfitCreatingAct } from "../sync/creating-act.js";
 import type { AnyMutationDefinition } from "../mutations/types.js";
+import { humanizeField } from "../schema/humanize.js";
 import { NOTION_FITS, NOTION_INFERABLE, NOTION_READ_ONLY, NOTION_SECRET, notionFits } from "../sync/notion-types.js";
-import { error, warning, type Finding } from "./findings.js";
+import { startAndEndOf } from "../wall-time.js";
+import { error, warning, type Finding, type FindingFix } from "./findings.js";
 import { ConnectionSpec, type GoogleCalendarConnectionSpec, type NotionConnectionSpec } from "./connection-spec.js";
-import type { GraviewDocument } from "./schema.js";
+import type { FieldSpec, GraviewDocument } from "./schema.js";
 
 /*
  * A DECLARED CONNECTION, JUDGED (`connections.<name>`): what its shape
@@ -41,7 +43,7 @@ export function connectionFindings(document: GraviewDocument, app?: GraviewApp):
       continue;
     }
     const connection = parsed.data;
-    findings.push(...(connection.system === "notion" ? notionConnection(at, connection, document, app) : googleConnection(at, connection, document, app)));
+    findings.push(...(connection.system === "notion" ? notionConnection(at, connection, document, app) : googleConnection(at, name, connection, document, app)));
   }
   return findings;
 }
@@ -82,7 +84,7 @@ function noKind(at: string, document: GraviewDocument, kind: string, what: strin
   return error("connection-kind", `${at}.kind`, `there is no kind called ${kind} for ${what} to be`, `name one of ${Object.keys(document.kinds).join(", ")}`);
 }
 
-function googleConnection(at: string, connection: GoogleCalendarConnectionSpec, document: GraviewDocument, app?: GraviewApp): Finding[] {
+function googleConnection(at: string, name: string, connection: GoogleCalendarConnectionSpec, document: GraviewDocument, app?: GraviewApp): Finding[] {
   const findings: Finding[] = [];
   const kind = document.kinds[connection.kind];
   if (!kind) return [noKind(at, document, connection.kind, "the calendar's events")];
@@ -128,7 +130,19 @@ function googleConnection(at: string, connection: GoogleCalendarConnectionSpec, 
     if (filter.keep !== undefined && !filter.tag) findings.push(error("connection-filter", `${at}.filter.keep`, "keep says whether a title keeps its tag, and the filter has no tag", "drop keep, or add a tag"));
   }
 
-  if (app) findings.push(...landing(at, connection.kind, mapped.map(([, ours]) => ours).filter((ours) => kind.fields[ours]), { made: "an event made in the calendar", fields: "the event's fields", change: "a change in the calendar", deleted: "an event deleted in the calendar" }, app));
+  if (app) {
+    findings.push(
+      ...landing(
+        at,
+        connection.kind,
+        mapped.map(([, ours]) => ours).filter((ours) => kind.fields[ours]),
+        { made: "an event made in the calendar", fields: "the event's fields", change: "a change in the calendar", deleted: "an event deleted in the calendar", theirs: "Google events", one: "a Google event", part: "a calendar field", things: "events" },
+        app,
+        document,
+        { name, connection },
+      ),
+    );
+  }
   return findings;
 }
 
@@ -191,7 +205,9 @@ function notionConnection(at: string, connection: NotionConnectionSpec, document
     mapped = Object.entries(kind.fields).filter(([, spec]) => NOTION_INFERABLE.has(spec.type)).map(([field]) => field);
     if (mapped.length === 0) findings.push(error("connection-properties", `${at}.kind`, `${connection.kind} has no field a Notion property could be held in`, "give it a string, number, date, enum, list or boolean field"));
   }
-  if (app && mapped.length > 0) findings.push(...landing(at, connection.kind, mapped, { made: "a page made in the database", fields: "the page's fields", change: "a change in Notion", deleted: "a page archived in Notion" }, app));
+  if (app && mapped.length > 0) {
+    findings.push(...landing(at, connection.kind, mapped, { made: "a page made in the database", fields: "the page's fields", change: "a change in Notion", deleted: "a page archived in Notion", theirs: "Notion pages", one: "a Notion page", part: "a Notion property", things: "pages" }, app, document));
+  }
   if (app) findings.push(...linking(at, connection.kind, relations, document, app));
   return findings;
 }
@@ -234,8 +250,30 @@ function linking(at: string, kindName: string, relations: readonly string[], doc
   return findings;
 }
 
+/** How a refusal says the other system's things: what it holds, one of them, one of its parts, and the things a kind would be made for. */
+interface TheirWords {
+  readonly made: string;
+  readonly fields: string;
+  readonly change: string;
+  readonly deleted: string;
+  readonly theirs: string;
+  readonly one: string;
+  readonly part: string;
+  readonly things: string;
+}
+
+/** A Google connection's declaration, for the fix that rewrites it (`set-connection`). */
+interface GoogleDeclared {
+  readonly name: string;
+  readonly connection: GoogleCalendarConnectionSpec;
+}
+
+const capitalize = (words: string) => words.charAt(0).toUpperCase() + words.slice(1);
+/** "a Type", "a Driver and a Van", "a Type, a Driver and a Van". */
+const listed = (words: readonly string[]) => (words.length <= 1 ? (words[0] ?? "") : `${words.slice(0, -1).join(", ")} and ${words.at(-1)}`);
+
 /** That the acts an inbound change lands through are there: one that makes the kind from the mapped fields alone, `edit-<kind>` writing every mapped field, `remove-<kind>`. */
-function landing(at: string, kindName: string, fields: readonly string[], said: { readonly made: string; readonly fields: string; readonly change: string; readonly deleted: string }, app: GraviewApp): Finding[] {
+function landing(at: string, kindName: string, fields: readonly string[], said: TheirWords, app: GraviewApp, document: GraviewDocument, google?: GoogleDeclared): Finding[] {
   const findings: Finding[] = [];
   // The acts the store will hold: the declared ones and those derived from them (`edit-<kind>`, `remove-<kind>`).
   const declared = app.mutations ?? [];
@@ -245,17 +283,19 @@ function landing(at: string, kindName: string, fields: readonly string[], said: 
   if (!making.creates) {
     findings.push(error("connection-creates", `${at}.kind`, `no act makes ${withArticle(kindName)}, so ${said.made} has nothing to become here`, `declare an act with "creates": "${kindName}"`));
   } else if (!making.act) {
+    /*
+     * SAID TO THE PERSON FILLING THE FORM (FR-229): what the kind needs
+     * that the other system's things do not have, and the ways out — a
+     * default, the field left blank, a part of theirs mapped to it, another
+     * kind, a kind made for them — each with the edits that do it where
+     * they can be written. The framework's own sentence stays as `details`.
+     */
     const why = making.unfit.map((act) =>
       act.on ? `${act.name} acts on ${act.on.length > 0 ? act.on.map(withArticle).join(" or ") : "a record"}` : `${act.name} asks for ${act.asks!.join(", ")}, which the connection does not map`,
     );
-    findings.push(
-      error(
-        "connection-creates",
-        `${at}.kind`,
-        `${said.made} becomes ${withArticle(kindName)} through an act that makes one from ${said.fields} alone, and ${why.join("; ")}`,
-        `declare an act with "creates": "${kindName}" and no "on", whose required arguments are fields the connection maps (add-${kindName} is the one looked for first)`,
-      ),
-    );
+    const details = `${said.made} becomes ${withArticle(kindName)} through an act that makes one from ${said.fields} alone, and ${why.join("; ")} — declare an act with "creates": "${kindName}" and no "on", whose required arguments are fields the connection maps (add-${kindName} is the one looked for first)`;
+    const plain = plainRefusal(kindName, making.unfit, said, app, document, google);
+    findings.push(error("connection-creates", `${at}.kind`, plain.message, plain.fix, { details, ...(plain.fixes.length > 0 ? { fixes: plain.fixes } : {}) }));
   }
   const edit = acts.get(`edit-${kindName}`);
   const writes = new Set(edit?.writes ?? []);
@@ -282,4 +322,99 @@ function landing(at: string, kindName: string, fields: readonly string[], said: 
     findings.push(warning("connection-remove", `${at}.kind`, `no act removes ${withArticle(kindName)}, so ${said.deleted} stays here, no longer kept in step`));
   }
   return findings;
+}
+
+/** What a refusal says to a person, and the ways out of it a host offers. */
+interface PlainRefusal {
+  readonly message: string;
+  readonly fix: string;
+  readonly fixes: readonly FindingFix[];
+}
+
+/** "a Type"; "Notes" — words that are many take no article. */
+function fieldSaid(spec: FieldSpec | undefined, field: string): string {
+  const label = spec?.label ?? humanizeField(field);
+  return spec?.type === "text" || spec?.type === "list" ? label : `${/^[aeiou]/i.test(label) ? "an" : "a"} ${label}`;
+}
+
+/**
+ * The refusal in the person's words. The fields every fitting act would
+ * ask for and the connection does not give are what the kind "needs"; a
+ * kind no act makes on its own is said as such.
+ */
+function plainRefusal(kindName: string, unfit: readonly UnfitCreatingAct[], said: TheirWords, app: GraviewApp, document: GraviewDocument, google?: GoogleDeclared): PlainRefusal {
+  const spec = document.kinds[kindName];
+  const noun = spec?.noun ?? humanizeField(kindName).toLowerCase();
+  const plural = capitalize(spec?.plural ?? `${noun}s`);
+  const fixes: FindingFix[] = [];
+  // The fields asked for, in the order the acts ask them, `add-<kind>` first.
+  const asking = [...unfit].sort((a, b) => Number(b.name === `add-${kindName}`) - Number(a.name === `add-${kindName}`)).filter((act) => act.asks);
+  const asks = [...new Set(asking.flatMap((act) => act.asks ?? []))];
+  const elsewhere = otherKinds(kindName, said, app, document, google);
+  if (asks.length === 0) {
+    const on = unfit.filter((act) => act.on).map((act) => `${act.on!.length > 0 ? act.on!.map((kind) => withArticle(document.kinds[kind]?.noun ?? humanizeField(kind).toLowerCase())).join(" or ") : "a record"} (${act.name})`);
+    return {
+      message: `${capitalize(withArticle(noun))} is only ever made on ${listed(on)}, and ${said.one} is made on nothing.`,
+      fix: `Add an act that makes ${withArticle(noun)} on its own, or sync to a kind made for ${said.things}.`,
+      fixes: elsewhere,
+    };
+  }
+  const labels = asks.map((field) => spec?.fields[field]?.label ?? humanizeField(field));
+  const one = asks.length === 1;
+  for (const field of asks) {
+    const f = spec?.fields[field];
+    const label = f?.label ?? humanizeField(field);
+    const starts = f?.type === "enum" ? f.options?.[0] : f?.type === "boolean" ? false : undefined;
+    fixes.push({ label: `Give ${label} a default`, ...(starts !== undefined ? { edits: [{ op: "set-default", kind: kindName, field, default: starts }] } : {}) });
+    if (f?.required) fixes.push({ label: `Let ${label} be left blank`, edits: [{ op: "set-required", kind: kindName, field, required: false }] });
+    fixes.push({ label: `Map ${said.part} to ${label}`, ...mappedPart(field, f, google) });
+  }
+  return {
+    message: `${plural} need ${listed(asks.map((field) => fieldSaid(spec?.fields[field], field)))}, and ${said.theirs} don't have ${one ? "one" : "them"}.`,
+    fix: `Map ${said.part} to ${listed(labels)}, give ${one ? labels[0] : "them"} ${one ? "a default" : "defaults"}, or sync to a kind made for ${said.things}.`,
+    fixes: [...fixes, ...elsewhere],
+  };
+}
+
+/** The event's part a words field could hold, written into the connection: its description, else its location, where the connection maps neither. */
+function mappedPart(field: string, spec: FieldSpec | undefined, google?: GoogleDeclared): { readonly edits?: readonly Record<string, unknown>[] } {
+  if (!google || !spec || !TEXT.has(spec.type)) return {};
+  const part = (["description", "location"] as const).find((theirs) => google.connection.fields[theirs] === undefined);
+  if (!part) return {};
+  return { edits: [{ op: "set-connection", name: google.name, connection: { ...google.connection, fields: { ...google.connection.fields, [part]: field } } }] };
+}
+
+/**
+ * The kinds the connection could keep instead: each kind already here with
+ * a title and two dates of one sort that an act makes from them alone, and
+ * a kind made for events, added. Said only of a Google calendar, whose
+ * events say what a kind for them holds.
+ */
+function otherKinds(kindName: string, said: TheirWords, app: GraviewApp, document: GraviewDocument, google?: GoogleDeclared): FindingFix[] {
+  if (!google) return [];
+  const declared = (app.mutations ?? []) as readonly AnyMutationDefinition[];
+  const fixes: FindingFix[] = [];
+  const rewired = (kind: string, fields: GoogleCalendarConnectionSpec["fields"]): Record<string, unknown> => ({ op: "set-connection", name: google.name, connection: { ...google.connection, kind, fields } });
+  for (const [kind, spec] of Object.entries(document.kinds)) {
+    if (kind === kindName) continue;
+    const words = Object.entries(spec.fields).filter(([, f]) => TEXT.has(f.type));
+    const title = words.find(([field]) => field === "name" || field === "title") ?? words.find(([, f]) => f.required) ?? words[0];
+    const dates = Object.keys(spec.fields).filter((field) => WHEN.has(spec.fields[field]!.type));
+    const ends = startAndEndOf(dates) ?? (dates.length >= 2 ? { start: dates[0]!, end: dates[1]! } : undefined);
+    if (!title || !ends || spec.fields[ends.start]!.type !== spec.fields[ends.end]!.type) continue;
+    if (!creatingActFor(declared, kind, [title[0], ends.start, ends.end]).act) continue;
+    fixes.push({ label: `Sync to ${kind} instead`, edits: [rewired(kind, { summary: title[0], start: ends.start, end: ends.end })] });
+  }
+  // A kind made for events: a title, a start and an end of the sort the connection maps now, and where it happens.
+  const sort = document.kinds[kindName]?.fields[google.connection.fields.start]?.type === "date" ? "date" : "datetime";
+  let fresh = "event";
+  for (let n = 2; document.kinds[fresh]; n += 1) fresh = n === 2 ? "calendar-event" : `calendar-event-${n}`;
+  fixes.push({
+    label: `Add a kind made for ${said.things}`,
+    edits: [
+      { op: "add-kind", kind: fresh, fields: { title: { type: "string", required: true }, starts: { type: sort }, ends: { type: sort }, where: { type: "string" } } },
+      rewired(fresh, { summary: "title", start: "starts", end: "ends", location: "where" }),
+    ],
+  });
+  return fixes;
 }

@@ -5,6 +5,7 @@ import { deriveRepeatMutations } from "../mutations/derive-repeats.js";
 import { deriveRelationMutations } from "../mutations/derive-relations.js";
 import type { AnySchema } from "../schema/schema.js";
 import { designFindings } from "../document/design-findings.js";
+import { moreLines } from "../document/findings.js";
 import { toDocument } from "../document/to-document.js";
 
 /**
@@ -165,12 +166,7 @@ export function formatFindings(result: CheckResult): string {
     return `graview check: ${result.app} — no problems found.`;
   }
   const said = { error: "ERROR", warning: "warn ", note: "note " } as const;
-  const lines = result.findings.map(
-    (f) =>
-      `${said[f.severity]} [${f.code}] ${f.where}\n` +
-      `        ${f.message}\n        fix: ${f.fix}` +
-      (f.edits ?? []).map((edit) => `\n        edit: ${JSON.stringify(edit)}`).join(""),
-  );
+  const lines = result.findings.map((f) => `${said[f.severity]} [${f.code}] ${f.where}\n` + `        ${f.message}\n        fix: ${f.fix}` + moreLines(f, "        "));
   return [
     `graview check: ${result.app}`,
     ...lines,
