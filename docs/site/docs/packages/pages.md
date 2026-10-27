@@ -6,7 +6,7 @@
 pnpm add @graview/pages
 ```
 
-Entry points: `@graview/pages`, `@graview/pages/static`, `@graview/pages/visitor-form`
+Entry points: `@graview/pages`, `@graview/pages/static`, `@graview/pages/visitor-form`, `@graview/pages/splash`
 
 ## What it is
 
@@ -27,6 +27,8 @@ The traditional face: a routed webapp derived from the same declaration that dri
 - **A form for a visitor.** `@graview/pages/visitor-form`'s `VisitorFormPage` draws one act's form alone — the declaration's `forms.<name>`, its title, intro and the fields it names — over the store as the visitor is served it, runs the act as them, and says it was received in the declaration's own words. `@graview/embed/form` mounts it.
 
 - **A page is also a string (FR-174).** `@graview/pages/static` renders a place without a browser: `renderPlace(store, declaration, place, { viewer, look })` answers `{ html, css, title, found }` — a list, a record, a declared place or the home as one self-contained document in the app's look, with no script, under the viewer's sight, printable (each section of a place a page of its own). It imports no React, so a Worker re-renders a fixed link — a schedule as a PDF — on each change. `staticCss` is its sheet alone. See `docs/static-pages.md`.
+
+- **An opening screen, from the document.** `@graview/pages/splash`'s `splashHtml(brand, { scheme?, name? })` draws a document's `brand.splash` — `plain`, `editorial`, `shader` (one of a few shaders shipped here, named by `shader`, never written in a document) or `ascii`, with an image as the logo takes one, a title and a kicker — as `{ html, css, script }`: a host inlines the three in its first HTML before the app's root, and the script takes the screen away once a place says `data-graview-drawn` (or the page fails, or fifteen seconds pass), still under reduced motion. It imports nothing — not React, not the framework — so a page's first paint never waits on the bundle the screen covers for. `graview preview` inlines it; a brand with no `splash` answers empty strings.
 
 The host applies `themeCss` from `@graview/primitives` (or supplies its own `--graview-*` tokens); the default pages render entirely from those tokens.
 

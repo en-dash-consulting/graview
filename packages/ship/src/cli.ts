@@ -14,7 +14,7 @@ import { serveStore } from "./serve.js";
 import { SERVE_KEY } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
 import { sayStep } from "./steps.js";
-import { keyedAddress, LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
+import { keyedAddress, LOOPBACK, previewPrincipal, servePreview, type SplashRenderer } from "./serve-preview.js";
 import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
 import { bundleAppForPage } from "./preview-app.js";
 import { applySteps, sayRefusals, seedRefusals, seedSteps } from "./sync-seed.js";
@@ -466,6 +466,8 @@ export async function syncSeed(argv: readonly string[]): Promise<number> {
 /** Where the page `graview preview` serves lives: the `graview` package hands it in, since the page ships there. */
 export interface PreviewPage {
   readonly page: string;
+  /** The opening screen's renderer (`@graview/pages/splash`), which the tool carries beside the page (Roadmap f-splash-in-document). */
+  readonly splash?: SplashRenderer;
 }
 
 /**
@@ -536,7 +538,7 @@ async function said<T>(command: string, step: () => Promise<T>): Promise<T | und
  * `graview preview` — the store and Graview's own faces over a document,
  * for somebody with no product (`./serve-preview.ts`).
  */
-export async function preview(argv: readonly string[], { page }: PreviewPage): Promise<number> {
+export async function preview(argv: readonly string[], { page, splash }: PreviewPage): Promise<number> {
   const input = await previewInput(argv, "preview");
   if (typeof input === "number") return input;
   const draft = draftOf(argv, "preview");
@@ -560,6 +562,7 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
     opened = await servePreview({
       ...previewed(input),
       page,
+      ...(splash ? { splash } : {}),
       ...draft,
       ...(backend.seed ? { seed: backend.seed } : {}),
       ...(keeps ? { adapter: backend.adapter, where: backend.where } : {}),

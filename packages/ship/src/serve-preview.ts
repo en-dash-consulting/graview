@@ -82,7 +82,19 @@ export interface PreviewOptions {
    * opened there trades it for a cookie.
    */
   readonly key?: string;
+  /**
+   * THE APP'S OPENING SCREEN (Roadmap f-splash-in-document): a document's
+   * `brand.splash`, drawn by `@graview/pages/splash`'s `splashHtml`, which
+   * the `graview` tool hands in (it carries the renderer beside the page,
+   * so this package depends on no face). Inlined in the page before the
+   * app's root, and taken away by its own script once a place has drawn.
+   * Absent, or for an app in code, the page opens as it did.
+   */
+  readonly splash?: SplashRenderer;
 }
+
+/** `splashHtml` of `@graview/pages/splash`, as the tool hands it to a preview. */
+export type SplashRenderer = (brand: Record<string, unknown>, options?: { readonly name?: string }) => { readonly html: string; readonly css: string; readonly script: string };
 
 export interface Preview {
   readonly app: GraviewApp<AnySchema>;
@@ -190,6 +202,23 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     },
   };
   const root = resolve(options.page);
+  /*
+   * THE PAGE WITH THE OPENING SCREEN IN IT: the index as built, the screen's
+   * style, markup and script put before the app's root, so the first paint
+   * is the screen and not a blank page. Read once per document, since the
+   * document this preview holds may be written (a lens tidied).
+   */
+  let paged: { readonly of: unknown; readonly html: string } | undefined;
+  const pageHtml = (): string => {
+    const built = readFileSync(index, "utf8");
+    const brand = typeof document === "object" && document !== null ? (document as { brand?: Record<string, unknown> }).brand : undefined;
+    if (!options.splash || !brand || typeof brand["splash"] !== "object" || brand["splash"] === null) return built;
+    if (paged && paged.of === document) return paged.html;
+    const drawn = options.splash(brand, { name: (document as { name?: string }).name ?? app.name });
+    const html = drawn.html === "" ? built : built.replace('<div id="graview-app">', `<style>${drawn.css}</style>${drawn.html}<script>${drawn.script}</script><div id="graview-app">`);
+    paged = { of: document, html };
+    return html;
+  };
 
   /*
    * THE STORE'S STATE, HANDED WITH THE DOCUMENT. The page asked for the
@@ -259,7 +288,7 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
       const page = readFileSync(index, "utf8").replace(/<link rel="preload" href="\/graview\/document"[^>]*>\n?/g, "");
       return new Response(page, { headers: { "content-type": TYPES[".html"]!, "cache-control": "no-store" } });
     }
-    return new Response(readFileSync(served), {
+    return new Response(served === index ? pageHtml() : readFileSync(served), {
       headers: { "content-type": TYPES[extname(served)] ?? "application/octet-stream", "cache-control": served === index ? "no-store" : "max-age=31536000, immutable" },
     });
   };

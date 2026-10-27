@@ -104,7 +104,8 @@ and the description stays in listings and on the name's hover):
   "favicon": "/graview/assets/<sha256>.svg",
   "typography": { "display": "system-serif", "body": "system-sans" },
   "shape": { "radius": 6, "density": 0.9 },
-  "accents": { "workshop": 168 }, "scheme": "dark"
+  "accents": { "workshop": 168 }, "scheme": "dark",
+  "splash": { "style": "editorial" }
 }
 ```
 
@@ -132,6 +133,14 @@ and the description stays in listings and on the name's hover):
   "Muted ink #586174 on the ground #9a9a94 is 2.1:1; 4.5:1 is needed —
   #dcdcda would pass." In TypeScript, `brandFromAccent({ accent, base:
   groundSchemes("#eef3f8") })`.
+
+- **An opening screen** (`splash`) shows while the app's code loads, gone
+  once a place has drawn: a `style` — `plain`, `editorial`, `shader` (one
+  the framework ships: `"shader": "drift"`, `"ripple"` or `"veil"`, never
+  code) or `ascii` — an `image` (as the logo), a `title` and a `kicker`. `set-brand` sets it whole, `null` clears it; a
+  shader it does not ship is refused by name (`brand-splash-shader`). It
+  travels with the document; `graview preview` draws it; a host inlines
+  `splashHtml` from `@graview/pages/splash` in its first HTML.
 
 ## Styling by conversation
 

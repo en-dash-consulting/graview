@@ -32,7 +32,10 @@ export async function main(given: readonly string[]): Promise<number> {
     // The page they serve is built into this package (`dist/preview/`, by scripts/build-preview-page.mjs): it is the tool's to carry, not a product's dependency's.
     const { preview, shots } = await import("@graview/ship/cli");
     const page = fileURLToPath(new URL("./preview/", import.meta.url));
-    return command === "preview" ? preview(rest, { page }) : shots(rest, { page });
+    if (command === "shots") return shots(rest, { page });
+    // The opening screen's renderer rides beside the page (`@graview/pages/splash`, bundled there), so the tool depends on no face to draw it.
+    const { splashHtml } = (await import(new URL("./preview/splash.js", import.meta.url).href)) as { splashHtml: NonNullable<Parameters<typeof preview>[1]["splash"]> };
+    return preview(rest, { page, splash: splashHtml });
   }
   if (command === "sync-seed") {
     const { syncSeed } = await import("@graview/ship/cli");

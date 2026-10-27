@@ -28,7 +28,10 @@
  *   "a visitor via the RSVP form", a visitor minted per page, and nothing
  *   of the records already there is drawn or sent to the page;
  *   and the same RSVP declared on-publish: a visitor's answer lands, and a
- *   table the hosts add reaches a reader only once they publish.
+ *   table the hosts add reaches a reader only once they publish;
+ *   and the org given an opening screen (`brand.splash`, Roadmap
+ *   f-splash-in-document) opens on it — in the first HTML, on the page
+ *   before the app's code ran, gone once the place has drawn.
  *
  *   node scripts/verify-preview.mjs [--engine=chromium|webkit|firefox]
  *
@@ -64,7 +67,7 @@ if (!existsSync(resolve(repoRoot, "packages/graview/dist/preview/index.html"))) 
   process.exit(1);
 }
 
-await vacant(portFor("preview"), portFor("preview-shots"), portFor("preview-form"), portFor("preview-publishing"));
+await vacant(portFor("preview"), portFor("preview-shots"), portFor("preview-form"), portFor("preview-publishing"), portFor("preview-splash"));
 const server = spawn(process.execPath, [CLI, "preview", DOCUMENT, "--seed", SEED, "--port", String(portFor("preview"))], { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"] });
 let said = "";
 server.stdout.on("data", (chunk) => (said += chunk));
@@ -456,6 +459,72 @@ try {
       publishingServer.kill();
       rmSync(dir, { recursive: true, force: true });
     }
+  }
+
+  /*
+   * ---- an app's opening screen (Roadmap f-splash-in-document): the org document given `brand.splash`, served by the
+   * same command. The page's first HTML carries the screen before the app's root, it is on the page when the document
+   * has parsed (before any of the app's code ran), and it is gone once the place says data-graview-drawn — for the
+   * shader screen (its WebGL canvas, or the editorial look where the browser has none) and the ascii one alike.
+   */
+  {
+    const dir = mkdtempSync(join(tmpdir(), "graview-splash-"));
+    const SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 9"><rect width="16" height="9" fill="#0f6e5c"/><circle cx="12" cy="3" r="2" fill="#f7f7f2"/></svg>';
+    const styles = {};
+    for (const style of ["shader", "ascii"]) {
+      const declared = JSON.parse(readFileSync(resolve(repoRoot, DOCUMENT), "utf8"));
+      declared.brand = { ...(declared.brand ?? {}), splash: { style, image: SVG, kicker: "Who does what" } };
+      const file = join(dir, `org-${style}.gdd.json`);
+      writeFileSync(file, JSON.stringify(declared));
+      await vacant(portFor("preview-splash"));
+      const splashServer = spawn(process.execPath, [CLI, "preview", file, "--seed", SEED, "--port", String(portFor("preview-splash"))], { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"] });
+      let splashSaid = "";
+      splashServer.stdout.on("data", (chunk) => (splashSaid += chunk));
+      splashServer.stderr.on("data", (chunk) => (splashSaid += chunk));
+      const splashBase = at("preview-splash");
+      const stopped = new Promise((done) => splashServer.on("exit", done));
+      try {
+        const began = Date.now();
+        for (;;) {
+          try {
+            if ((await fetch(`${splashBase}/graview/health`)).ok) break;
+          } catch {
+            // not listening yet
+          }
+          if (Date.now() - began > 30_000 || splashServer.exitCode !== null) throw new Error(`graview preview of the org with a ${style} screen did not start:\n${splashSaid}`);
+          await new Promise((ready) => setTimeout(ready, 200));
+        }
+        await admit(splashBase);
+        const served = await (await fetch(`${splashBase}/`)).text();
+        const inFirstHtml = served.indexOf('id="graview-splash"') > -1 && served.indexOf('id="graview-splash"') < served.indexOf('id="graview-app"') && served.includes(`data-style="${style}"`);
+        const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: "light" });
+        page.on("pageerror", (error) => errors.push(`/ with a ${style} screen: ${error.message}`));
+        // Whether the screen stood on the page the moment the document had parsed, before the app's module ran.
+        await page.addInitScript(() => {
+          document.addEventListener("DOMContentLoaded", () => {
+            const screen = document.getElementById("graview-splash");
+            window.__splashAtStart = screen !== null && getComputedStyle(screen).display !== "none" && screen.matches(":popover-open");
+          });
+        });
+        await page.goto(`${splashBase}/`, { waitUntil: "load" });
+        await page.waitForFunction(() => window.__graviewReady === true || typeof window.__graviewFailed === "string", null, { timeout: 60_000 });
+        await page.waitForSelector("[data-graview-drawn]", { state: "attached", timeout: 60_000 });
+        const gone = await page
+          .waitForFunction(() => document.getElementById("graview-splash") === null, null, { timeout: 5_000 })
+          .then(() => true)
+          .catch(() => false);
+        const seen = await page.evaluate(() => ({ atStart: window.__splashAtStart === true, failed: window.__graviewFailed ?? null, title: document.title }));
+        await page.close();
+        styles[style] = { inFirstHtml, ...seen, gone, ok: inFirstHtml && seen.atStart && gone && !seen.failed };
+      } catch (error) {
+        styles[style] = { error: String(error?.stack ?? error), ok: false };
+      } finally {
+        splashServer.kill();
+        await stopped;
+      }
+    }
+    rmSync(dir, { recursive: true, force: true });
+    report.checks.anOpeningScreenCoversThePageUntilItsPlaceHasDrawn = { styles, ok: Object.values(styles).every((one) => one.ok) };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

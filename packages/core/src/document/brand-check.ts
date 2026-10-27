@@ -5,7 +5,7 @@ import type { Ground } from "../theme/ground.js";
 import { fontProblem } from "../theme/fonts.js";
 import { emojiProblem, markProblem } from "../theme/marks.js";
 import { error, warning, type Finding } from "./findings.js";
-import type { BrandSpec } from "./schema.js";
+import { SPLASH_SHADERS, SPLASH_STYLES, type BrandSpec } from "./schema.js";
 import { logoParts } from "./logo.js";
 
 /*
@@ -44,6 +44,16 @@ export function groundWords(ground: Ground): string {
   if (given.light && given.dark) return `The app's page background becomes ${given.light}, and ${given.dark} in the dark.`;
   return given.light ? `The app's page background becomes ${given.light}.` : `The app's page background in the dark becomes ${given.dark}.`;
 }
+/** What the opening screen is now, said the same by an edit and by the preview of a change (Roadmap f-splash-in-document). */
+export function splashSentence(splash: unknown): string {
+  if (!splash || typeof splash !== "object") return "The app opens on Graview's own screen.";
+  const { style, shader } = splash as { style?: unknown; shader?: unknown };
+  const how = style === "editorial" ? "an editorial screen" : style === "shader" ? `a shader screen${typeof shader === "string" ? ` (${shader})` : ""}` : style === "ascii" ? "an ASCII screen" : "a plain screen";
+  return `The app opens on ${how} while it loads.`;
+}
+/** How a splash's shader is refused, wherever it is judged. */
+export const SPLASH_SHADER_FIX = `say "shader": one of ${SPLASH_SHADERS.map((name) => `"${name}"`).join(", ")}, or leave it out for "${SPLASH_SHADERS[0]}"`;
+
 export const EMOJI_FIX = 'say { "favicon": { "emoji": "🏡" } } with one standard emoji; a skin tone, a flag or a joined emoji like 👩🏽‍🌾 counts as one';
 
 export function brandFindings(brand: Partial<BrandSpec> | undefined, options: BrandCheckOptions = {}): Finding[] {
@@ -68,6 +78,19 @@ export function brandFindings(brand: Partial<BrandSpec> | undefined, options: Br
   for (const [role, value] of Object.entries(brand.typography ?? {})) {
     const problem = typeof value === "string" ? fontProblem(value, options.fonts) : null;
     if (problem) out.push(error("brand-font", `${at}.typography.${role}`, `the ${role} face cannot be used: ${problem}`, 'say "system-serif", "system-sans" or "system-mono", or a face on the list'));
+  }
+  /*
+   * THE OPENING SCREEN (Roadmap f-splash-in-document): its image is a mark
+   * as the logo is, its shader one the renderer ships by name — never code
+   * — and a shader named on a style that draws none is said, not kept quiet.
+   */
+  const splash = brand.splash;
+  if (splash && typeof splash === "object") {
+    const picture = typeof splash.image === "string" ? markProblem(splash.image) : null;
+    if (picture) out.push(error("brand-splash-image", `${at}.splash.image`, `the opening screen's image cannot be drawn as given, because ${picture}`, "Graview draws an image exactly as it is given, never rewritten: remove that and give it again, or give the path Graview Cloud's add_image answers with"));
+    if (!(SPLASH_STYLES as readonly string[]).includes(splash.style)) out.push(error("brand-splash-style", `${at}.splash.style`, `${JSON.stringify(splash.style)} is not a way an opening screen draws`, `say "style": one of ${SPLASH_STYLES.map((name) => `"${name}"`).join(", ")}`));
+    if (typeof splash.shader === "string" && !(SPLASH_SHADERS as readonly string[]).includes(splash.shader)) out.push(error("brand-splash-shader", `${at}.splash.shader`, `"${splash.shader}" is not a shader the opening screen ships; a document names one, it never carries one`, SPLASH_SHADER_FIX));
+    else if (typeof splash.shader === "string" && splash.style !== "shader") out.push(warning("brand-splash-shader", `${at}.splash.shader`, `the shader "${splash.shader}" is never drawn, because the opening screen's style is "${splash.style}"`, 'say "style": "shader", or remove "shader"'));
   }
   // A zone its times could not be said on (Roadmap f-app-time-zone), refused by name.
   const unzoned = typeof brand.timeZone === "string" ? timeZoneProblem(brand.timeZone) : undefined;

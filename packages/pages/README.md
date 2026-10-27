@@ -84,5 +84,15 @@ this package serves lists, records, forms, problems and history as ordinary link
   link — a schedule as a PDF — on each change. `staticCss` is its sheet alone. See
   `docs/static-pages.md`.
 
+- **An opening screen, from the document.** `@graview/pages/splash`'s `splashHtml(brand,
+  { scheme?, name? })` draws a document's `brand.splash` — `plain`, `editorial`, `shader`
+  (one of a few shaders shipped here, named by `shader`, never written in a document) or
+  `ascii`, with an image as the logo takes one, a title and a kicker — as `{ html, css,
+  script }`: a host inlines the three in its first HTML before the app's root, and the
+  script takes the screen away once a place says `data-graview-drawn` (or the page fails,
+  or fifteen seconds pass), still under reduced motion. It imports nothing — not React, not
+  the framework — so a page's first paint never waits on the bundle the screen covers for.
+  `graview preview` inlines it; a brand with no `splash` answers empty strings.
+
 The host applies `themeCss` from `@graview/primitives` (or supplies its own `--graview-*`
 tokens); the default pages render entirely from those tokens.
