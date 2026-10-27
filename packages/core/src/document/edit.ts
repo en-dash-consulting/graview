@@ -2127,6 +2127,12 @@ class Editor {
     const pluralWas: string = spec.plural ?? `${words(from)}s`;
     if (e.plural) spec.plural = e.plural;
     else if (spec.plural && (spec.plural === `${words(from)}s` || spec.plural === `${from}s`)) spec.plural = `${words(to)}s`;
+    // Its hue follows it.
+    if (isObject(this.doc.brand?.accents) && from in this.doc.brand.accents && !(to in this.doc.brand.accents)) {
+      this.doc.brand.accents[to] = this.doc.brand.accents[from];
+      delete this.doc.brand.accents[from];
+      touched.push("its hue");
+    }
     // Its list's filters, order and grouping follow it.
     const lists = this.doc.pages?.lists;
     if (lists?.[from] !== undefined && lists[to] === undefined) {
@@ -2174,6 +2180,7 @@ class Editor {
       for (const what of went) if (!gone.includes(what)) gone.push(what);
     }
     const removedPlural: string = this.doc.kinds[kind].plural ?? `${words(kind)}s`;
+    const people = this.doc.kinds[kind].people === true;
     // Its own relations' connect and disconnect go with it.
     const ownRelationActs = relationActsOf(documentRelations({ [kind]: this.doc.kinds[kind] }));
     delete this.doc.kinds[kind];
@@ -2190,12 +2197,20 @@ class Editor {
         }
       }
     }
+    // With the people kind gone, an act on the acting person's own record (`$me`) has no record to reach: it goes too.
     for (const [name, act] of Object.entries(this.doc.acts ?? {}) as [string, Doc][]) {
       const on = asArray(act.on);
-      if (act.creates === kind || (act.effects ?? []).some((x: Doc) => x.create === kind) || (on.includes(kind) && on.length === 1)) {
+      if (act.creates === kind || (act.effects ?? []).some((x: Doc) => x.create === kind) || (on.includes(kind) && on.length === 1) || (people && JSON.stringify(act).includes('"$me"'))) {
         gone.push(titled("act", name, act));
         this.removeActQuietly(name);
       } else if (on.includes(kind)) act.on = on.filter((k) => k !== kind);
+    }
+    // Its hue goes with it: an accent for a kind nobody declares is refused by the checker.
+    if (isObject(this.doc.brand?.accents) && kind in this.doc.brand.accents) {
+      delete this.doc.brand.accents[kind];
+      if (Object.keys(this.doc.brand.accents).length === 0) delete this.doc.brand.accents;
+      if (Object.keys(this.doc.brand).length === 0) delete this.doc.brand;
+      gone.push("its hue");
     }
     for (const [name, rule] of Object.entries(this.doc.rules ?? {}) as [string, Doc][]) {
       if (rule.over === kind || exprMentions(this.doc, rule.when, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" }) || exprMentions(this.doc, rule.require, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" })) {
@@ -2222,7 +2237,11 @@ class Editor {
       });
     }
     if (this.doc.policy?.sees) {
-      this.doc.policy.sees = this.doc.policy.sees.map((s: Doc) => ({ ...s, kinds: s.kinds.filter((k: string) => k !== kind) })).filter((s: Doc) => s.kinds.length > 0);
+      // A sight of other kinds through a relation that went with the kind would show nothing: it goes too.
+      const declared = new Set(Object.values(this.doc.kinds).flatMap((spec: Doc) => Object.keys(spec.edges ?? {})));
+      const through = this.doc.policy.sees.filter((s: Doc) => typeof s.via === "string" && !declared.has(s.via) && s.kinds.some((k: string) => k !== kind));
+      if (through.length > 0) gone.push(`${through.length === 1 ? "the sight" : "the sights"} through ${listOf([...new Set<string>(through.map((s: Doc) => `"${String(s.via)}"`))])}`);
+      this.doc.policy.sees = this.doc.policy.sees.filter((s: Doc) => !through.includes(s)).map((s: Doc) => ({ ...s, kinds: s.kinds.filter((k: string) => k !== kind) })).filter((s: Doc) => s.kinds.length > 0);
       if (this.doc.policy.sees.length === 0) delete this.doc.policy.sees;
     }
     /*
