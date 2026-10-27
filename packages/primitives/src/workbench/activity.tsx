@@ -6,7 +6,8 @@ import { lazyModule, POPOVER_STYLE, useGoTo, useGraview, useLiveStore, usePlayba
 import { prefetchTimeline } from "../past-bar.js";
 import type { ToolCall } from "@graview/tools";
 import { Suspense, useMemo, useState, type ComponentProps, type ReactNode } from "react";
-import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
+import { VISUALLY_HIDDEN } from "../primitives/index.js";
+import { NamedRecord } from "./named-record.js";
 import { nameOf } from "./answer-args.js";
 import { NotifiedDoor, useNotifiedCount } from "../notify-door.js";
 import { useInteractions, type ActivityShows } from "./ai-feed.js";
@@ -240,7 +241,7 @@ function DigestRow({ change, goes }: { readonly change: Change; readonly goes: (
               {one.touched.length > 0 ? (
                 <div data-touched={one.touched.join(" ")} style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                   {one.touched.slice(0, 4).map((id) => (
-                    <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (one.named?.[id] ?? nameOf(store, id))} go={goes(id)} />
+                    <NamedRecord key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (one.named?.[id] ?? nameOf(store, id))} go={goes(id)} testId="activity-record" />
                   ))}
                 </div>
               ) : null}
@@ -434,33 +435,6 @@ export function StartFresh() {
     >
       Start fresh
     </a>
-  );
-}
-
-/**
- * A RECORD NAMED IN THE ACTIVITY, AS SOMETHING THAT GOES THERE — or as a
- * label where there is nowhere to go. A chip with a pick target was a pill
- * that only the scene's own pointer handler answered: on Pages, in the
- * popover, and from the keyboard on either face it looked pressable and did
- * nothing. One that names a record still here is a button that goes to it
- * (the face says how, through `useGoTo`) and closes the popover; a record
- * since removed, or an argument that is a word rather than a record, is a
- * plain label with no pointer and no focus.
- */
-function Named({ id, label, go }: { readonly id: string; readonly label: string; readonly go: ((id: string) => void) | null }) {
-  if (!go) return <Chip label={label} />;
-  return (
-    <button
-      type="button"
-      data-testid="activity-record"
-      data-record={id}
-      title={`Go to ${label}`}
-      onClick={() => go(id)}
-      style={{ all: "unset", display: "inline-flex", cursor: "pointer", borderRadius: 7 }}
-      className="graview-activity-record"
-    >
-      <Chip label={label} />
-    </button>
   );
 }
 
@@ -672,7 +646,7 @@ export function ActivityRail({
                     <div data-testid="activity-reads" style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
                       {/* Once each: a neighborhood read lists a node joined to it twice twice. */}
                       {[...new Set(call.reads)].slice(0, 3).map((id) => (
-                        <Named key={id} id={id} label={nameOf(store, id)} go={goes(id)} />
+                        <NamedRecord key={id} id={id} label={nameOf(store, id)} go={goes(id)} testId="activity-record" />
                       ))}
                       {new Set(call.reads).size > 3 ? <span style={{ color: "var(--graview-ink-muted)" }}>+{new Set(call.reads).size - 3}</span> : null}
                     </div>
@@ -687,7 +661,7 @@ export function ActivityRail({
                         .filter((entry): entry is [string, string] => typeof entry[1] === "string")
                         .slice(0, 3)
                         .map(([name, value]) => (
-                          <Named key={name} id={value} label={nameOf(store, value)} go={goes(value)} />
+                          <NamedRecord key={name} id={value} label={nameOf(store, value)} go={goes(value)} testId="activity-record" />
                         ))}
                     </div>
                   ) : null}
@@ -760,7 +734,7 @@ export function ActivityRail({
                     style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
                   >
                     {change.touched.slice(0, 4).map((id) => (
-                      <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (change.named?.[id] ?? nameOf(store, id))} go={goes(id)} />
+                      <NamedRecord key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (change.named?.[id] ?? nameOf(store, id))} go={goes(id)} testId="activity-record" />
                     ))}
                   </div>
                 </li>

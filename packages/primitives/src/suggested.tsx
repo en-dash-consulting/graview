@@ -1,11 +1,12 @@
 import { nameOfAuthor, type AnySchema, type DismissalStore, type Suggestion } from "@graview/core";
 import { lineageWords } from "@graview/core/provenance";
 import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/tidying";
-import { POPOVER_STYLE, useGraph, useGraview, usePopover } from "@graview/react/provider";
+import { POPOVER_STYLE, useGoTo, useGraph, useGraview, usePopover } from "@graview/react/provider";
 import { useEffect, useId, useMemo, useReducer, useState } from "react";
 import { dismissalsOf, tomorrow } from "./dismissals.js";
-import { Chip, VISUALLY_HIDDEN } from "./primitives/index.js";
+import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { nameOf } from "./workbench/answer-args.js";
+import { NamedRecord } from "./workbench/named-record.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -41,6 +42,15 @@ export function SuggestedTray() {
   const waiting = useMemo(() => suggestions(store, principal, { dismissed: notNow.list() }), [store, principal, nodes, notNow, said]);
   const [heard, hear] = useState("");
   const popover = usePopover("suggested");
+  const goTo = useGoTo();
+  /* A record a suggestion names goes somewhere while it is still here: the tray closes behind the reader as they go (FR-225). */
+  const goes = (id: string) =>
+    store.graph.has(id)
+      ? (to: string) => {
+          popover.setOpen(false);
+          goTo.record(to);
+        }
+      : null;
   const tidied = whileAway?.tidied ?? 0;
   const away = whileAway ? awayWords(waiting.length, tidied) : undefined;
   if (waiting.length === 0 && tidied === 0) return null;
@@ -128,7 +138,7 @@ export function SuggestedTray() {
           <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-faint)" }}>{waiting.length > 0 ? "Not made yet: each waits for you." : "What it did is in Activity."}</p>
           <ol data-testid="suggestions" style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, fontSize: "0.8125rem", minWidth: 0 }}>
             {waiting.map((one) => (
-              <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} />
+              <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} goes={goes} />
             ))}
           </ol>
           {/* What the last press did, said to a screen reader: the row it was on is gone. */}
@@ -148,7 +158,7 @@ const WRAPS = { minWidth: 0, overflowWrap: "anywhere" } as const;
 const HEARD = { accept: "Accepted.", decline: "Declined: it will not be suggested again.", later: "Hidden from you until tomorrow." } as const;
 
 /** One suggestion: what it would do and why, its records, and Accept, Decline and Not now, each a sentence when refused. */
-function SuggestionRow({ suggestion, notNow, settled }: { readonly suggestion: Suggestion; readonly notNow: DismissalStore; readonly settled: (heard: string) => void }) {
+function SuggestionRow({ suggestion, notNow, settled, goes }: { readonly suggestion: Suggestion; readonly notNow: DismissalStore; readonly settled: (heard: string) => void; readonly goes: (id: string) => ((id: string) => void) | null }) {
   const { store, principal, seats, people } = useGraview<AnySchema>();
   const [refused, setRefused] = useState<string | null>(null);
   const hint = useId();
@@ -177,9 +187,9 @@ function SuggestionRow({ suggestion, notNow, settled }: { readonly suggestion: S
       ) : null}
       {suggestion.about.length > 0 ? (
         <div data-graview-suggestion-records="" style={{ display: "flex", flexWrap: "wrap", gap: 4, minWidth: 0 }}>
-          {/* A chip still too wide for the row is cut with an ellipsis, its whole name in its title (Chip). */}
+          {/* Each a button that goes to the record (FR-225); one still too wide for the row is cut with an ellipsis, its whole name in its title (Chip). */}
           {suggestion.about.slice(0, 4).map((id) => (
-            <Chip key={id} label={nameOf(store, id)} pickId={id} />
+            <NamedRecord key={id} id={id} label={nameOf(store, id)} go={goes(id)} testId="suggestion-record" />
           ))}
         </div>
       ) : null}
