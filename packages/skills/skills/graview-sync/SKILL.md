@@ -51,7 +51,13 @@ exporting the app itself is `graview-ship`.
 4. **Keep it in step with a Google calendar by declaring it.** A
    document's `connections.<name>`: `system: "google-calendar"`,
    `calendar` (or `{ env }`), `kind`, `fields` (`summary`, `start`, `end`,
-   `location`, `description`; a `date` field is an all-day day), `filter`
+   `location`, `description`; a `date` field is an all-day day; one with
+   `repeats: true` is a recurring event, its repeat the RRULE and each day
+   set apart an EXDATE, kept as a wall time in `brand.timeZone`; with
+   `days` — an enum of weekdays or a list holding `mon`…`sun` — the record
+   is weekly and `start`/`end` are `"HH:MM"` strings there, one event with
+   a weekly rule from the week it is first sent; a one-off or one week's
+   exception in Google is not a record here), `filter`
    (`{ color: "Basil" }` or `{ tag: "#graview", keep? }`, absent for all),
    `direction` (`"read"` refuses acts on the kind; `"both"`), `conflicts`,
    `every`, `paused`. `serve` and `preview` run it with

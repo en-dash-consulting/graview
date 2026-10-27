@@ -8,6 +8,7 @@ import type { AnyMutationDefinition } from "../mutations/types.js";
 import { humanizeField } from "../schema/humanize.js";
 import { NOTION_FITS, NOTION_INFERABLE, NOTION_READ_ONLY, NOTION_SECRET, notionFits } from "../sync/notion-types.js";
 import { startAndEndOf } from "../wall-time.js";
+import { weekdayOf } from "../sync/recurrence.js";
 import { error, warning, type Finding, type FindingFix } from "./findings.js";
 import { ConnectionSpec, type GoogleCalendarConnectionSpec, type NotionConnectionSpec } from "./connection-spec.js";
 import type { FieldSpec, GraviewDocument } from "./schema.js";
@@ -89,6 +90,7 @@ function googleConnection(at: string, name: string, connection: GoogleCalendarCo
   const kind = document.kinds[connection.kind];
   if (!kind) return [noKind(at, document, connection.kind, "the calendar's events")];
   const typeOf = (field: string) => kind.fields[field]?.type;
+  const weekly = connection.fields.days !== undefined;
   const mapped = Object.entries(connection.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string");
   const seen = new Map<string, string>();
   for (const [theirs, ours] of mapped) {
@@ -107,13 +109,31 @@ function googleConnection(at: string, name: string, connection: GoogleCalendarCo
     if (theirs === "location" && !TEXT.has(type) && type !== "place") {
       findings.push(error("connection-field-type", path, `the event's location is a place in words, and ${ours} is a ${type} field`, "name a string, text or place field"));
     }
-    if ((theirs === "start" || theirs === "end") && !WHEN.has(type)) {
+    // A weekly record (FR-230): its weekdays are a choice of weekday or a list of them, and its start and end are times of day.
+    if (theirs === "days") {
+      const choices = kind.fields[ours]!.options ?? [];
+      if (!(type === "list" || (type === "enum" && choices.length > 0 && choices.every((choice) => weekdayOf(choice) !== undefined)))) {
+        findings.push(
+          error(
+            "connection-field-type",
+            path,
+            type === "enum" ? `the weekdays ${withArticle(connection.kind)} falls on are a choice of weekday, or a list of them, and ${ours}'s choices (${choices.join(", ")}) are not weekdays` : `the weekdays ${withArticle(connection.kind)} falls on are a choice of weekday, or a list of them, and ${ours} is a ${type} field`,
+            'name an enum whose options are weekdays ("mon" to "sun", or their names), or a list field holding them',
+          ),
+        );
+      }
+      continue;
+    }
+    if ((theirs === "start" || theirs === "end") && weekly && !TEXT.has(type)) {
+      findings.push(error("connection-field-type", path, `with days mapped, the event's ${theirs} is a time of day like "09:00", and ${ours} is a ${type} field`, 'name a string field holding the time as "HH:MM"'));
+    }
+    if ((theirs === "start" || theirs === "end") && !weekly && !WHEN.has(type)) {
       findings.push(error("connection-field-type", path, `the event's ${theirs} is a moment or a day, and ${ours} is a ${type} field`, "name a datetime field for a timed event, or a date field for an all-day one"));
     }
   }
   const start = typeOf(connection.fields.start);
   const end = typeOf(connection.fields.end);
-  if (start && end && WHEN.has(start) && WHEN.has(end) && start !== end) {
+  if (!weekly && start && end && WHEN.has(start) && WHEN.has(end) && start !== end) {
     findings.push(error("connection-when", `${at}.fields.end`, `${connection.fields.start} is a ${start} and ${connection.fields.end} a ${end}, and an event is all-day or timed at both ends`, "make both dates (all-day events) or both datetimes (timed events)"));
   }
 

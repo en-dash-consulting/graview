@@ -189,7 +189,7 @@ export interface SyncOptions<S extends AnySchema> {
     readonly resource: string;
     readonly id: string;
     readonly fields: Readonly<Record<string, unknown>>;
-  }): { readonly name: string; readonly args: Record<string, unknown> } | null;
+  }): Made | null;
   /**
    * WHERE A RECORD A RELATION REACHES IS FOUND, by either id: every engine
    * of the app when its relations reach records another engine keeps
@@ -203,13 +203,28 @@ export interface SyncOptions<S extends AnySchema> {
 }
 
 /** What one change coming in is, as the acts it lands through: a record made or its fields, and its links. */
+/**
+ * A RECORD MADE FROM THE REMOTE'S: the act that makes it, with its id among
+ * the arguments where the connection minted one, and the acts that follow
+ * it in the same batch (`then`) — what the making act does not take, as a
+ * date's repeat, given to the record once it is there (FR-230).
+ */
+export interface Made {
+  readonly name: string;
+  readonly args: Record<string, unknown>;
+  readonly then?: readonly MutationCall[];
+}
+
+/** The calls a record is made with: the making act, then what follows it. */
+const madeCalls = (made: Made): MutationCall[] => [{ name: made.name, args: made.args }, ...(made.then ?? [])];
+
 interface Inbound {
   readonly localId: string;
   readonly mapping: ResourceMapping;
   /** Our values, fields and relations, as `ourFields` reads them. */
   readonly values: Readonly<Record<string, unknown>>;
-  /** The act that makes the record, when it is new here: its fields are in it, and its links are made in the same batch. */
-  readonly create?: MutationCall;
+  /** The act that makes the record, when it is new here: its fields are in it, what follows it comes next, and its links are made in the same batch. */
+  readonly create?: Made;
 }
 
 /**
@@ -366,7 +381,7 @@ export class SyncEngine<S extends AnySchema> {
     const edges = mapping.edges ?? {};
     const fields = Object.fromEntries(Object.entries(values).filter(([key]) => !(key in edges)));
     const calls: MutationCall[] = [];
-    if (create) calls.push(create);
+    if (create) calls.push(...madeCalls(create));
     else if (Object.keys(fields).length > 0) calls.push(this.options.applyInbound({ localId, kind: mapping.kind, fields }));
     const held: Record<string, string[]> = {};
     const graph = this.options.store.graph;
@@ -755,7 +770,7 @@ export class SyncEngine<S extends AnySchema> {
           // Its links are made in the same batch, which needs the id it is made with; without one, they wait for the next pass.
           const landed = madeAs
             ? this.landInbound({ localId: madeAs, mapping, values, create: created }, `${this.options.mapping.system}: new ${change.resource}`, { localId: madeAs, resource: change.resource, id: change.id }, refused)?.result
-            : this.land(created, `${this.options.mapping.system}: new ${change.resource}`, { localId: "", resource: change.resource, id: change.id }, refused);
+            : this.land(madeCalls(created), `${this.options.mapping.system}: new ${change.resource}`, { localId: "", resource: change.resource, id: change.id }, refused);
           if (!landed) {
             skipped[remoteKey] = change.version;
             continue;
@@ -1053,7 +1068,7 @@ export class SyncEngine<S extends AnySchema> {
     const madeAs = String(created.args["id"] ?? "");
     const about = { localId, resource: link.resource, id: link.id };
     const intent = `${this.options.mapping.system}: restored ${link.resource}`;
-    const result = madeAs ? this.landInbound({ localId: madeAs, mapping, values: record, create: created }, intent, about, refused)?.result : this.land(created, intent, about, refused);
+    const result = madeAs ? this.landInbound({ localId: madeAs, mapping, values: record, create: created }, intent, about, refused)?.result : this.land(madeCalls(created), intent, about, refused);
     if (!result) return { links };
     const id = String(created.args["id"] ?? result.writes[0] ?? "");
     return id ? { links: { ...rest, [id]: { ...link, fields: record } }, id } : { links: rest };

@@ -60,7 +60,7 @@ describe("a connection to a kind the event cannot make is refused in plain words
     expect(written[0]!.edits).toEqual([{ op: "set-default", kind: "block", field: "type", default: "drive" }]);
     for (const fix of written) {
       const edited = editDocument(raw as never, fix.edits as never);
-      expect(edited.ok, `${fix.label}: ${JSON.stringify(edited.findings)}`).toBe(true);
+      expect(edited.ok, `${fix.label}: ${edited.ok ? "" : JSON.stringify(edited.findings)}`).toBe(true);
       const again = compileDocument(edited.ok ? edited.document : raw);
       expect(again.findings.filter((f) => f.code === "connection-creates"), fix.label).toEqual([]);
     }
