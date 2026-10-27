@@ -311,7 +311,7 @@ Or not at all: a project made by `graview create` has it as a devDependency, so 
 ## graview check
 
 ```text
-graview check <entry> [--views <module>] [--json]
+graview check <entry> [--views <module>] [--face <dir>] [--json]
 
 --document <file>
     Any command that takes an <entry> takes a declaration document instead
@@ -322,7 +322,7 @@ graview check <entry> [--views <module>] [--json]
 
 ```
 
-Loads <entry> (a module whose default export, or `app` export, is a GraviewApp) and reports schema problems. Exits 1 on any error.
+Loads <entry> (a module whose default export, or `app` export, is a GraviewApp) and reports schema problems. Exits 1 on any error. Reads the face too — the project's src/ (the nearest package.json up from <entry>), or the directory --face names — and warns of a module that imports, loads or fetches a JSON file of the project's for content (face-reads-content-beside-the-graph): what it shows from there is on no record. The declaration, a seed and a template are read where they are.
 
 ## graview create
 
@@ -476,15 +476,15 @@ Source: https://graview.dev/docs/checks.html
 
 # What `graview check` says
 
-`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 125 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
+`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 126 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
 
 ## 85 errors
 
 `brand-accent-not-a-hue`, `brand-accent-unknown-kind`, `brand-currency`, `brand-emoji`, `brand-locale`, `brand-logo`, `brand-mark`, `brand-time-zone`, `creates-unknown-kind`, `edge-claim-unknown-kind`, `edge-target-undeclared`, `field-role-ill-typed`, `field-role-missing-field`, `figure-undrawable`, `figure-unknown-kind`, `fixed-unknown-field`, `form-act-not-granted`, `form-act-on-a-record`, `form-field-unfillable`, `form-field-unknown`, `form-omits-required`, `form-unknown-act`, `form-visitor-may-more`, `form-without-sight`, `glance-unknown-field`, `grant-own-end-without-link`, `grant-unknown-kind`, `grant-unknown-mutation`, `intelligence-decision-cannot-call`, `intelligence-reach-unknown`, `intelligence-unknown-mutation`, `invariant-scope-undeclared`, `kit-contrast-below-aa`, `lens-binding-empty`, `lens-binding-empty-path`, `lens-binding-fieldless-owner`, `lens-binding-missing-field`, `lens-binding-not-a-field`, `lens-binding-path-misses`, `lens-binding-undeclared-edge`, `lens-binding-undeclared-kind`, `lens-option`, `lens-role-unbound`, `lifecycle-missing-field`, `lifecycle-never-retires`, `migration-gap`, `migration-not-single-step`, `migration-without-version`, `module-unknown-invariant`, `module-unknown-kind`, `module-unknown-mutation`, `module-unknown-requirement`, `mutation-subject-arg-missing`, `mutation-subject-undeclared`, `mutation-unreachable-by-any-role`, `mutation-untitled`, `node-ref-undeclared`, `page-too-large`, `pages-kind-unknown`, `pages-list-arrangement`, `pages-list-export-not-a-boolean`, `people-ambiguous`, `people-unsaid`, `plot-overlap`, `plural-slug-collision`, `publishing-act-taken`, `publishing-nobody-working`, `publishing-publisher-not-working`, `publishing-unknown-role`, `repair-unknown-mutation`, `repair-wrong-kind`, `setting-name-taken`, `setting-name-unusable`, `setting-not-a-length`, `setting-not-honorable`, `setting-starts-nowhere`, `setting-without-a-choice`, `sight-hides-a-required-field`, `sight-names-an-unknown-field`, `sight-unknown-kind`, `sight-via-misses-people`, `sight-via-unknown-edge`, `theme-contrast-below-aa`, `view-for-undeclared-kind`, `writes-unknown-field`
 
-## 30 warnings
+## 31 warnings
 
-`act-reads-hidden-kind`, `act-without-far-end-reading`, `brand-unnamed`, `describe-template-in-code`, `edge-without-inverse`, `field-without-writer`, `fixed-but-written`, `form-visitor-sees`, `intelligence-decision-prose-door`, `intelligence-key-without-storage`, `intelligence-local-without-bridge`, `intelligence-reach-on-graph`, `kind-without-view`, `kit-color-unreadable`, `lens-column-written-unsaid`, `lens-title-repeated`, `module-edge-leak`, `mutation-title-ambiguous`, `mutation-title-is-an-identifier`, `mutation-undescribed`, `order-role-unknown`, `pages-filter-unknown`, `required-invariant-unregistered`, `role-may-do-nothing`, `rule-says-hidden-fact`, `sight-hides-a-labeled-field`, `sight-hides-required-ref`, `sight-unnamed-kind`, `theme-token-unreadable`, `typing-act-without-allowed-on`
+`act-reads-hidden-kind`, `act-without-far-end-reading`, `brand-unnamed`, `describe-template-in-code`, `edge-without-inverse`, `face-reads-content-beside-the-graph`, `field-without-writer`, `fixed-but-written`, `form-visitor-sees`, `intelligence-decision-prose-door`, `intelligence-key-without-storage`, `intelligence-local-without-bridge`, `intelligence-reach-on-graph`, `kind-without-view`, `kit-color-unreadable`, `lens-column-written-unsaid`, `lens-title-repeated`, `module-edge-leak`, `mutation-title-ambiguous`, `mutation-title-is-an-identifier`, `mutation-undescribed`, `order-role-unknown`, `pages-filter-unknown`, `required-invariant-unregistered`, `role-may-do-nothing`, `rule-says-hidden-fact`, `sight-hides-a-labeled-field`, `sight-hides-required-ref`, `sight-unnamed-kind`, `theme-token-unreadable`, `typing-act-without-allowed-on`
 
 ## 10 notes
 
@@ -492,7 +492,7 @@ Source: https://graview.dev/docs/checks.html
 
 ---
 
-Every one of the 125 things graview check can tell you, and how loudly.
+Every one of the 126 things graview check can tell you, and how loudly.
 
 The page: https://graview.dev/docs/checks.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -654,7 +654,7 @@ A declaration that compiled and checked clean on one version compiles on the nex
 - The rest of the brand arrived the same way (FR-124): `brand.logo` (inline SVG, or a path under `/graview/assets/` or relative to the page; a string, or `{ "src", "alt" }`), `brand.favicon` (the same forms), `brand.typography` (`display`, `body`, `mono`: `system-serif`, `system-sans`, `system-mono`, or a stack of faces every system has and the web fonts on `DOCUMENT_FONTS`), `brand.shape` (`radius` 0–32, `density` 0.75–1.5), `brand.accents` (a hue per kind) and `brand.scheme` (`light`, `dark` or `auto`), each optional and each mapped onto the TypeScript `Brand` (which gains `logoAlt`, `favicon`, `subtitle` and `scheme`). A document's `description` is now said on both faces — the app name's hover on the app bar and the line on the routed face's home (FR-131) — and every document compiles to a brand, so a document without one is called by its own `name` where it was called Graview. The checker judges the new keys (`brand-mark`, `brand-font` errors; `brand-accent` a warning about an accent that does not read as given, FR-126). The edit vocabulary gained `set-name` and `set-description`, and `set-brand` takes every key, `null` clearing one; `DocumentDiff`'s sentences for the name and the description changed words ("The app is now called…"). A build that predates them refuses the keys by path, so a host reads `capabilities().shipped` for FR-124 and FR-125 before it writes them. A compiled app carries the new keys in its `brand` within `graview-compiled@1`: a page that predates them draws the brand it knows.
 - A logo for each scheme arrived the same way, in 0.1.42, and was named FR-197 in 0.1.44: `brand.logo` as `{ "light", "dark"?, "alt"?, "darkFallback"?: "invert" }` beside the string and `{ "src", "alt" }`, which mean what they meant. A build before 0.1.42 refuses the object by path (`brand.logo`), so a host stores a document whose logo has `light` only on a build whose `capabilities().shipped` names FR-197 — a build of 0.1.42 or 0.1.43 holds the form but does not say so. `logoOfDocument` on `@graview/core/document` reads any of the three forms into `{ light, dark?, alt?, darkFallback? }`.
 - A compiled app (FR-123) is versioned like a stored format. It is what a host hands its page so the page need not compile: `serializeCompiled(compileDocument(document))`, plain JSON with every template and expression already parsed, which `appFrom` (from `@graview/core/compiled`) builds into the same app `compileDocument` made. It says `"format": "graview-compiled@1"`. `appFrom` refuses another format as `compiled-format`, by name, and parts that do not match their document as `compiled-shape`, and never misreads either; `appFromOrCompile` then compiles the document in the page, so a compiled app cached from another build costs one request, not a broken page. It does the same for one torn on its way (refused `compiled-shape`, never thrown) and for one compiled from another document than the one handed beside it — two documents are the same when their canonical text is (`canonicalize`), so a host hands the document the compiled app was made from, in the current document format. Within a version the format is additive: a key an older page ignores, and a page that lacks it can do without, may be added. Anything a page would need to build the same app moves the version: a new effect, a new kind of argument, a change to what a parsed expression or template part holds. So the rule language's tree (`Expr`) and `TemplatePart` are part of this format, and a parser change that alters them is a format change. A compiled app is a cache of its document, never its source. A host keeps the document, compiles it at its own build, and may drop a compiled app at any time. It is the host's own data, checked for its format and shape and not judged again.
-- A check finding code added this way (FR-99's `view-braces`, FR-100's `brand-currency` and `brand-locale`, FR-105's `act-reads-hidden-kind`, FR-108's `lens-column-unreached`, FR-114's `default-range` and `field-range`, FR-115's `act-sets-other` and `act-replaces`, FR-124's `brand-mark` and `brand-font`, FR-126's `brand-accent`, FR-132's `pages-overview-taken`, FR-137's `pages-faces-alike`, FR-148's `page-field`, `page-field-twice`, `page-group-twice`, `page-unknown-field` and `page-too-large`, 0.1.24's `rule-says-hidden-fact`, and 0.1.60's `typing-act-without-allowed-on`) is a warning, a note or an error only about what is new: `act-reads-hidden-kind`, `rule-says-hidden-fact`, `typing-act-without-allowed-on` and `view-braces` are warnings, `lens-column-unreached` is a note, and the brand, range, other-end and page codes judge keys a declaration could not hold before.
+- A check finding code added this way (FR-99's `view-braces`, FR-100's `brand-currency` and `brand-locale`, FR-105's `act-reads-hidden-kind`, FR-108's `lens-column-unreached`, FR-114's `default-range` and `field-range`, FR-115's `act-sets-other` and `act-replaces`, FR-124's `brand-mark` and `brand-font`, FR-126's `brand-accent`, FR-132's `pages-overview-taken`, FR-137's `pages-faces-alike`, FR-148's `page-field`, `page-field-twice`, `page-group-twice`, `page-unknown-field` and `page-too-large`, 0.1.24's `rule-says-hidden-fact`, 0.1.60's `typing-act-without-allowed-on`, and FR-232's `face-reads-content-beside-the-graph`, which `graview check` says of a project's face modules and no declaration or document ever meets) is a warning, a note or an error only about what is new: `act-reads-hidden-kind`, `rule-says-hidden-fact`, `typing-act-without-allowed-on`, `face-reads-content-beside-the-graph` and `view-braces` are warnings, `lens-column-unreached` is a note, and the brand, range, other-end and page codes judge keys a declaration could not hold before.
 - The scene's name arrived the same way (FR-132), and its key was respelled when the scene left the places for the bar's switch (FR-137): `pages.scene` and `pages.pages` (at most 40 characters each, as `pages.overview` was) are what the switch calls the two faces, "Scene" and "Pages" when unsaid, and `arrange-pages` takes `scene` and `pages`. The scene keeps the address `/places/overview` whatever it is called. `pages.overview`, which named the scene's tab in 0.1.15 and 0.1.16, is read as `pages.scene` (a line in `RESPELLED`), so a stored document keeps its word, and `arrange-pages` still reads `overview` as `scene`, so a chat or a tool written before 0.1.17 still renames the scene. `pages-faces-alike` is a warning about a declaration whose two words are the same. `pages-overview-taken` is a warning about a declared place whose address is the scene's; that place keeps its page on the routed face, and the place list does not offer it. A build that predates the keys passes them over.
 - Where a declaration opens changed without its text (FR-136): an app with a home view (the document's `views.home`, or a worker view attached to `"home"`) and no other `pages.first` opens on Pages at its home when the host names no face, where it opened on the scene, and `placesOf` marks the home `first`. Under address routing the bare address, naming no face, is the home's whatever face the host names, and the host is told the pages (`onFace`). A host that wants the scene there links to `/places/overview`, or hands a stop. An app without a home view opens as before. That address alone is the overview at altitude (FR-154): a fragment never reaches a server, so the framework writes the overview at altitude without one, and reads `/places/overview` with no fragment, or one that says nothing, as at altitude; a fragment that says where it stands (`#focus=t1`, `#overview=1&focus=…`) is read as it says, and `#overview=1`, written before, still opens it.
 - A kind's page arrived the same way (FR-148): `kinds.<kind>.page`, `{ "fields": [...], "groups": [{ "title", "fields" }] }`, each part optional, says which facts a record's page shows first and under which headings; the rest follow in the kind's declared order, under "Details" when there are groups. The declaration's `display.page` is the same choice. The edit vocabulary gained `set-page-fields` (`{ kind, fields, groups? }`; an empty `fields` and no `groups` take the choice away), and the compile and `graview check` refuse a name the kind does not have or one named twice (`page-field`, `page-field-twice`, `page-group-twice` in a document; `page-unknown-field` and `page-field-twice` in TypeScript). A build that predates the key refuses it as `unknown-key`. One reading changed without a key: a record's facts are read in the kind's declared order on every face, in `describePlace` and in `readableFields`, where they were read in the order the record's own keys were written.
@@ -1720,7 +1720,7 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [Packages (14)](https://graview.dev/docs/packages.html): What each ships and what each exports.
 - [Skills (30)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.html): create, check, types, docs, describe, lens, figure, serve, skills.
-- [What check says (125)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
+- [What check says (126)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
 - [Releases](https://graview.dev/docs/releases.html): What came in each version, and what to know before upgrading.
 - [The garden, grown](https://graview.dev/progression.html): Sixteen live chapters, from one kind to a product.
@@ -4390,6 +4390,8 @@ The routed face is one branch in `main.tsx`: when the path starts with `/pages`,
 
 1. **Register default views first, override later.** `registerDefaultViews` means a new kind renders sensibly at all three fidelities before you write anything. Write a custom view for a kind when the generic one is genuinely wrong, not on principle.
 
+1. **Keep content in the graph.** What a page shows — a pitch's sections, a chart's tags — is records of a kind, seeded, never a JSON file a view imports: `graview check` names a face module that reads one (`face-reads-content-beside-the-graph`). A declaration change that loses nothing is made without asking; git keeps the way back.
+
 1. **Add the check to your build.** `"check": "graview check ./dist/domain/app.js"`, and a `verify` that runs typecheck, test, build and check in that order. The scaffold writes both.
 
 ### What to make yours next
@@ -4416,7 +4418,7 @@ Copy the shape from the framework's own `.github/workflows/ci.yml`, minus the pa
 
 ### Supported browsers
 
-Build for the DOM path: Chromium, WebKit and Firefox, all verified (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and cuts cleanly where it is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the seat says AI isn't available. The scene draws on the GPU where it can and on the DOM path elsewhere, with one accessibility tree — never a requirement.
+Chromium, WebKit and Firefox, all verified (`pnpm engines`); the floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and cuts cleanly where it is missing — write no fallback. `ai.onDevice` needs WebGPU or Chrome's Prompt API, else the seat says AI isn't available. The GPU is never a requirement.
 
 ### Then find out whether it worked
 
@@ -4433,7 +4435,7 @@ Report the real output. On a new app the useful early findings are `mutation-unt
 
 - Whether your kinds are the right kinds. The test for each: does anything point AT it, and does it have a life of its own? A color is a field. A fixture is a kind.
 - Whether your mutations are the acts a person would name. They are the labels in the strip and the instructions in an agent's tool schema, so an opaque one costs twice.
-- Whether the interface is any good. Run it. Run it at the size it will have: seed a real catalog, not a dozen rows. The scene draws what a person can read — a relation too long for its band is grouped by its best arrangement or closes on "+N more", and a district says its places by name — so a thousand records are a picture, not a smear. What that hides is yours to judge: whether the groups are the ones a person would ask for.
+- Whether the interface is any good. Run it at the size it will have: seed a real catalog, not a dozen rows. The scene groups a relation too long for its band or closes it on "+N more", so a thousand records are a picture; whether the groups are the ones a person would ask for is yours to judge.
 
 ---
 
@@ -4578,6 +4580,7 @@ Both are the face's, whichever shell draws it: a shell that places `<PageFind>` 
 ### What every design must keep doing
 
 - **Read the graph through one model.** `readGarden(store)` turns nodes, edges and violations into the design's words; every page reads it and none reaches for `store.graph`. The scene's lens reads the same model.
+- **Show nothing the graph does not hold.** Copy that changes with the app — a pitch, a chart's tags, a section's words — is records of a kind, seeded, never a JSON file the design imports: `graview check` names a page that reads one (`face-reads-content-beside-the-graph`), and Find, Ask and the scene see records alone.
 - **Take the act list from the derivation.** `recordFacts(store, id, { principal }).actions` and `kindFacts(store, kind, …).actions`, never a scan of `store.allMutations()`; `withheld` are struck through with the policy's sentence (`store.permits` says the same at the press), not dropped.
 - **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`, `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with `color-mix` for the design's own paper. Never a color that works in one scheme only — nor a logo: `<AppMark brand={context.brand} />` draws the brand's, the dark one in the dark (`graview-logo`).
 - **Keep landmarks and targets honest.** One `main` — a `section` when `context.embedded`, and UNNAMED, or a page holding two embeds has two regions with one name. Controls at least 24px, AA contrast. Every size in `rem`: at 200% text a flex or grid item's automatic minimum is its CONTENT's, so one un-wrappable row pushes the whole column off the screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on the row. Measure rather than trust: `-ink-faint` fails AA on an 11px label, and the accent fails on the warning ground. `node scripts/verify-pages.mjs` runs axe over every route, both widths, both schemes.
@@ -4852,6 +4855,8 @@ The hard part of a port is not the code. It is deciding what your existing schem
 1. **What is an INVARIANT?** Everything your current code validates, plus everything it was supposed to. Give each one repairs — see `graview-invariant`. Rules that name their repairs are where the interface stops needing you to design it.
 
 1. **What is a LENS?** Your primary screen, described without your nouns. A calendar is intervals in columns. A checklist grid is a bipartite mapping. A formation is positions with domain-given coordinates. If one of the three shipped lenses fits, bind roles to your fields and write no picture at all.
+
+1. **What is CONTENT?** Everything a page shows — a pitch's sections, a chart's tags, the words of a section — is records of a kind, seeded, never a JSON file a view imports beside the graph: the scene, Find, the record pages and Ask see records and nothing else. `graview check` names a face module that reads one (`face-reads-content-beside-the-graph`).
 
 ### Do this
 
@@ -7505,7 +7510,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 460 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 461 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -7523,7 +7528,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
 | `entry` | One subpath a package exports, as a product imports it. | 106 |
 | `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 30 |
-| `check` | A thing graview check can say, read out of the checker's source. | 125 |
+| `check` | A thing graview check can say, read out of the checker's source. | 126 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |
 | `concept` | One of the ideas a Graview declaration is made of: not in the repository, the reason it is shaped the way it is. | 7 |
 | `recipe` | The prompt on the front page with a different task, and the declaration and seed an agent made of it, under docs/site/recipes/. | 4 |

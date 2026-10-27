@@ -545,7 +545,7 @@ you to commit. Commit as you declare: \`${run} verify\` rewrites
 \`${docs}/agents.md\` and \`${docs}/llms.txt\` from the declaration, and they belong in
 the commit beside the change they describe.
 
-\`AGENTS.md\` is what an assistant reads first: the loop, the three rules and
+\`AGENTS.md\` is what an assistant reads first: the loop, the four rules and
 the skills, a line each. \`CLAUDE.md\` imports it.
 
 ## Where things are

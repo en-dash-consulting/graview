@@ -11,7 +11,7 @@ Or not at all: a project made by `graview create` has it as a devDependency, so 
 ## graview check
 
 ```text
-graview check <entry> [--views <module>] [--json]
+graview check <entry> [--views <module>] [--face <dir>] [--json]
 
 --document <file>
     Any command that takes an <entry> takes a declaration document instead
@@ -22,7 +22,7 @@ graview check <entry> [--views <module>] [--json]
 
 ```
 
-Loads <entry> (a module whose default export, or `app` export, is a GraviewApp) and reports schema problems. Exits 1 on any error.
+Loads <entry> (a module whose default export, or `app` export, is a GraviewApp) and reports schema problems. Exits 1 on any error. Reads the face too — the project's src/ (the nearest package.json up from <entry>), or the directory --face names — and warns of a module that imports, loads or fetches a JSON file of the project's for content (face-reads-content-beside-the-graph): what it shows from there is on no record. The declaration, a seed and a template are read where they are.
 
 ## graview create
 

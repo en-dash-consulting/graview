@@ -11,7 +11,7 @@ import {
   slugify,
   validateScaffoldOptions,
 } from "../../src/scaffold/index.js";
-import { agentRules, SKILLS_BEGIN, SKILLS_END } from "../../src/scaffold/agents.js";
+import { agentDefaults, agentRules, SKILLS_BEGIN, SKILLS_END } from "../../src/scaffold/agents.js";
 import { generateAgentsMd } from "../../src/cli/docs.js";
 import { createSchema } from "../../src/index.js";
 
@@ -689,13 +689,14 @@ describe("what an agent reads first", () => {
   const project = scaffoldProject({ name: "Field Notes", kind: "note" });
   const notes = project.files.find((file) => file.path === "AGENTS.md")!.contents;
 
-  it("is AGENTS.md at the root, with the loop, the three rules and a place for the skills", () => {
+  it("is AGENTS.md at the root, with the loop, the four rules and a place for the skills", () => {
     expect(notes).toContain("# Field Notes");
     expect(notes).toContain("pnpm check");
     expect(notes).toContain("pnpm verify");
     expect(notes).toContain("1. **The graph is the interface.**");
     expect(notes).toContain("2. **Only these mutations exist:**");
     expect(notes).toContain("3. **Preview before you apply.**");
+    expect(notes).toContain("4. **What the face shows is in the graph.**");
     expect(notes).toContain(SKILLS_BEGIN);
     expect(notes).toContain(SKILLS_END);
   });
@@ -707,6 +708,27 @@ describe("what an agent reads first", () => {
       expect(notes).toContain(line);
       expect(generated).toContain(line);
     }
+  });
+
+  it("says content a face shows is records — a kind or a field, seeded, never a JSON file a view imports — and that graview check names a reader of one", () => {
+    const generated = generateAgentsMd({ name: "Field Notes", schema: createSchema([]), mutations: [] } as never);
+    for (const text of [notes, generated]) {
+      expect(text).toMatch(/declare a kind or a field for it and seed it/);
+      expect(text).toMatch(/never a JSON file a view imports/);
+      expect(text).toContain("face-reads-content-beside-the-graph");
+    }
+  });
+
+  it("makes a declaration change that loses nothing the default, without asking, in a repository git keeps — in both files", () => {
+    const generated = generateAgentsMd({ name: "Field Notes", schema: createSchema([]), mutations: [] } as never);
+    for (const line of agentDefaults()) {
+      expect(notes).toContain(line);
+      expect(generated).toContain(line);
+    }
+    const said = agentDefaults().join("\n");
+    expect(said).toMatch(/loses nothing/);
+    expect(said).toMatch(/without asking/);
+    expect(said).toMatch(/Ask first only when/);
   });
 
   it("is imported by a one-line CLAUDE.md", () => {
