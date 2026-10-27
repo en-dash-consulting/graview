@@ -172,9 +172,12 @@ Everything a Graview app declares, and the checker that verifies it.
   `traitsOf(document | app)` reads a declaration's traits in the closed
   vocabulary `TRAITS` (people who own things, a status that moves, money
   against a budget, …), each with the kinds, fields, rules, lenses and acts
-  that carry it and one sentence, never off hand-written tags; beside
-  `inferJobs` and `composeDesign`, which propose a declaration's jobs and
-  one design whole.
+  that carry it and one sentence, never off hand-written tags;
+  `startingDocument({ base?, drop?, add?, name, purpose? })` composes a
+  document from a template's parts and trait modules, each joined to the
+  kind people see most, that compiles with no warning, and says what it
+  took from where; beside `inferJobs` and `composeDesign`, which propose a
+  declaration's jobs and one design whole.
 
 ```sh
 npx graview create my-app          # a product on Graview, started (also: npm create graview)

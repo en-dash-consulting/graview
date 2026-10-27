@@ -68,7 +68,7 @@ export interface Trait {
  * that say ownership. Each list is what the catalog's own templates say,
  * and nothing a declaration could not have meant.
  */
-const PERSON_NOUNS = new Set(["person", "people", "member", "user", "player", "guest", "candidate", "participant", "traveller", "traveler", "volunteer", "interviewer", "interviewee", "contact", "trade", "staff", "student", "employee", "teammate", "crew", "attendee", "friend", "customer", "client", "driver", "speaker", "host", "teacher", "parent", "kid", "child", "coach", "patient", "tenant", "resident", "neighbor", "applicant", "recruit", "contributor", "assignee", "worker", "collaborator", "runner"]);
+const PERSON_NOUNS = new Set(["person", "people", "member", "user", "player", "guest", "candidate", "participant", "traveler", "volunteer", "interviewer", "interviewee", "contact", "trade", "staff", "student", "employee", "teammate", "crew", "attendee", "friend", "customer", "client", "driver", "speaker", "host", "teacher", "parent", "kid", "child", "coach", "patient", "tenant", "resident", "neighbor", "applicant", "recruit", "contributor", "assignee", "worker", "collaborator", "runner"]);
 const PLACE_NOUNS = new Set(["place", "venue", "location", "room", "site", "building", "store", "warehouse", "city", "country", "region", "address", "hall", "stadium", "office", "shelf"]);
 const SOURCE_NOUNS = new Set(["source", "reference", "citation", "evidence"]);
 const GROUPING_NOUNS = new Set(["season", "era", "period", "epoch", "edition", "generation", "age", "campaign", "tournament"]);
@@ -111,7 +111,9 @@ const targetOf = (document: GraviewDocument, to: unknown): string | undefined =>
 export function isPeopleKind(document: GraviewDocument, kind: string): boolean {
   const spec = document.kinds[kind];
   if (!spec) return false;
-  return spec.people === true || PERSON_NOUNS.has(lower(kind)) || PERSON_NOUNS.has(nounOf(document, kind));
+  // A noun spelled with a doubled l elsewhere (a trip's travelers, in British spelling) is the same person.
+  const plain = (noun: string) => lower(noun).replace(/ll/g, "l");
+  return spec.people === true || PERSON_NOUNS.has(plain(kind)) || PERSON_NOUNS.has(plain(nounOf(document, kind)));
 }
 const isPlaceKind = (document: GraviewDocument, kind: string) => PLACE_NOUNS.has(lower(kind)) || PLACE_NOUNS.has(nounOf(document, kind));
 const isSourceKind = (document: GraviewDocument, kind: string) => SOURCE_NOUNS.has(lower(kind)) || SOURCE_NOUNS.has(nounOf(document, kind));
@@ -402,23 +404,26 @@ const READINGS: Readonly<Record<TraitName, (document: GraviewDocument, found: Fo
       found.add("kinds", kind);
       found.add("fields", ...names.map((name) => `${kind}.${name}`));
       found.add("rules", ...rulesSaying(document, names, [kind]));
+      found.add("lenses", ...names.flatMap((name) => lensesBinding(document, "calendar", kind, "start", name)));
       found.add("acts", ...actsOn(document, kind).filter(([, act]) => names.some((name) => (act.writes ?? []).includes(name) || act.sets?.[name] !== undefined)).map(([act]) => act));
       found.say(repeating.length > 0 ? `${Plural(document, kind)} repeat (${repeating[0]}).` : `${Plural(document, kind)} come round again, each with when it was last done.`);
     }
   },
   comparison(document, found) {
     for (const [name, rule] of Object.entries(document.rules ?? {})) {
-      if (!ONE_PER_GROUP.test(rule.require) || rule.over === "graph") continue;
-      const group = rule.over;
-      // The kind compared: the one whose relation the count walks in, else the group itself.
+      if (!ONE_PER_GROUP.test(rule.require)) continue;
+      // The kind compared: the one whose relation the count walks in from the group, or the one swept over the whole graph.
+      const group = rule.over === "graph" ? undefined : rule.over;
       const walked = /in\('([^']+)'\)/.exec(rule.require)?.[1];
-      const compared = walked ? kindsOf(document).find(([, spec]) => spec.edges?.[walked])?.[0] : undefined;
+      const swept = /all\('([^']+)'/.exec(rule.require)?.[1];
+      const compared = group ? (walked ? kindsOf(document).find(([, spec]) => spec.edges?.[walked])?.[0] : undefined) : swept && document.kinds[swept] ? swept : undefined;
+      if (!compared && !group) continue;
       const value = /==\s*'([^']+)'/.exec(rule.require)?.[1];
-      found.add("kinds", ...(compared ? [compared] : []), group);
+      // The group's relation is the group's, not the comparison's: dropping the comparison leaves the grouping standing.
+      found.add("kinds", ...(compared ? [compared] : []), ...(group ? [group] : []));
       found.add("rules", name);
-      if (compared && walked) found.add("relations", `${compared}.${walked}`);
       if (compared && value) found.add("acts", ...actsOn(document, compared).filter(([, act]) => Object.values(act.sets ?? {}).includes(value)).map(([act]) => act));
-      found.say(compared ? `${Plural(document, compared)} compared within each ${nounOf(document, group)}, one ${value ?? "chosen"}.` : `One ${value ?? "chosen"} per ${nounOf(document, group)}.`);
+      found.say(compared && group ? `${Plural(document, compared)} compared within each ${nounOf(document, group)}, one ${value ?? "chosen"}.` : compared ? `${Plural(document, compared)} compared, one ${value ?? "chosen"}.` : `One ${value ?? "chosen"} per ${nounOf(document, group!)}.`);
     }
   },
 };
