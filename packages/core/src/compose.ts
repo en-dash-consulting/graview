@@ -299,3 +299,6 @@ export function composeDesign(source: GraviewDocument | GraviewApp<AnySchema>, o
 
   return { edits, said: reasons };
 }
+
+export { TRAITS, TRAIT_WORDS, traitsOf, hasTrait, traitWords } from "./traits.js";
+export type { Trait, TraitName } from "./traits.js";

@@ -168,6 +168,13 @@ Everything a Graview app declares, and the checker that verifies it.
   field to that column's value, or else an act told the value — and
   `columnMoves` the ones one seat may run on one record, its conditions
   judged.
+- **What a declaration is made of** — `@graview/core/compose`, on no page:
+  `traitsOf(document | app)` reads a declaration's traits in the closed
+  vocabulary `TRAITS` (people who own things, a status that moves, money
+  against a budget, …), each with the kinds, fields, rules, lenses and acts
+  that carry it and one sentence, never off hand-written tags; beside
+  `inferJobs` and `composeDesign`, which propose a declaration's jobs and
+  one design whole.
 
 ```sh
 npx graview create my-app          # a product on Graview, started (also: npm create graview)

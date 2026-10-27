@@ -36,7 +36,8 @@ export const SURFACES = [
   {
     name: "the declaration and check finding codes",
     // One design proposed from a declaration (`composeDesign`, Roadmap f-design-composer): edits a host applies, held to `editDocument` and the critic.
-    paths: [/^packages\/core\/src\/cli\/check\//, /^packages\/core\/src\/document\//, /^packages\/core\/src\/validate-graph\.ts$/, /^packages\/core\/src\/compose\.ts$/],
+    // What a declaration is made of (`traitsOf`, the closed `TRAITS` vocabulary, Roadmap f-document-traits): a name there is never renamed or taken away within the major.
+    paths: [/^packages\/core\/src\/cli\/check\//, /^packages\/core\/src\/document\//, /^packages\/core\/src\/validate-graph\.ts$/, /^packages\/core\/src\/compose\.ts$/, /^packages\/core\/src\/traits\.ts$/],
   },
   {
     name: "derived tool names and input schemas",
