@@ -1,5 +1,20 @@
 # @graview/react
 
+## 0.1.60
+
+### Patch Changes
+
+- Updated dependencies [613489b]
+- Updated dependencies [4eda24b]
+- Updated dependencies [4e41a99]
+- Updated dependencies [4affb32]
+- Updated dependencies [b253ca8]
+- Updated dependencies [3e2d346]
+  - @graview/core@0.1.60
+  - @graview/tools@0.1.60
+  - @graview/layout@0.1.60
+  - @graview/render@0.1.60
+
 ## 0.1.59
 
 ### Patch Changes
