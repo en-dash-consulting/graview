@@ -2,6 +2,7 @@ import type { GraviewApp } from "../app.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { WorkflowStep } from "../workflow-shape.js";
 import { stepKindOf } from "./steps.js";
+import { workflowReach } from "./resolve.js";
 import { workflowWorldOfApp } from "./world.js";
 
 /*
@@ -28,30 +29,24 @@ export interface MapWorkflow {
   readonly steps: readonly string[];
 }
 
-/** Every workflow the app declares, as the Scene draws it, in declared order. */
+/** Every workflow the app declares, as the Scene draws it, in declared order: dreaming, built in and at work on every district, is not drawn. */
 export function workflowsOnTheMap<S extends AnySchema>(app: GraviewApp<S>): readonly MapWorkflow[] {
   const declared = Object.entries(app.workflows ?? {});
   if (declared.length === 0) return [];
   const world = workflowWorldOfApp(app);
   const kinds = new Set(app.schema.kinds as readonly string[]);
   return declared.map(([name, workflow]) => {
-    const reads: string[] = [];
-    const writes: string[] = [];
-    const steps: string[] = [];
-    for (const step of (workflow.steps ?? []) as readonly WorkflowStep[]) {
-      const kind = stepKindOf(step);
-      if (!kind) continue;
-      steps.push(kind.words(step));
-      const touched = kind.touches(step, world);
-      for (const one of touched.reads) if (kinds.has(one) && !reads.includes(one)) reads.push(one);
-      for (const one of touched.writes) if (kinds.has(one) && !writes.includes(one)) writes.push(one);
-    }
+    const steps = (workflow.steps ?? []) as readonly WorkflowStep[];
+    const reach = workflowReach(steps, world);
     // What starts it on a change reads that kind too: a workflow run when a grocery list is made is wired to grocery lists.
-    for (const trigger of workflow.when ?? []) {
-      const kind = "made" in trigger ? trigger.made : "changed" in trigger ? trigger.changed : undefined;
-      if (kind !== undefined && kinds.has(kind) && !reads.includes(kind)) reads.push(kind);
-    }
-    return { name, title: workflow.title, status: workflow.status === "paused" ? "paused" : "active", reads, writes, steps };
+    const started = (workflow.when ?? []).flatMap((trigger) => ("made" in trigger ? [trigger.made] : "changed" in trigger ? [trigger.changed] : []));
+    const reads = [...new Set([...reach.reads, ...started])].filter((kind) => kinds.has(kind));
+    const writes = reach.writes.filter((kind) => kinds.has(kind));
+    const said = steps.flatMap((step) => {
+      const kind = stepKindOf(step);
+      return kind ? [kind.words(step)] : [];
+    });
+    return { name, title: workflow.title, status: workflow.status === "paused" ? "paused" : "active", reads, writes, steps: said };
   });
 }
 

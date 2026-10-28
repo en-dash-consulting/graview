@@ -9,6 +9,8 @@ import { frictionSinkTo, toolMistakes, type FrictionDraft } from "@graview/core/
 import { learningOf, readFriction } from "./learn-cli.js";
 
 export { learn, LEARN_USAGE } from "./learn-cli.js";
+export { workflow, WORKFLOW_USAGE } from "./workflow-cli.js";
+import { workflowToolsFor } from "./workflow-cli.js";
 import { createMcpAdapter } from "./agent/adapters.js";
 import { createToolRuntime } from "./agent/tools.js";
 import { serveMcpStdio } from "./mcp-stdio.js";
@@ -30,7 +32,7 @@ import type { DreamAnswers, DreamCache, DreamModel } from "./tidy.js";
 
 export const MCP_USAGE = `  graview mcp <entry> [--data <dir> | --sqlite <file> | --remote-url <url>]
                       [--seed <file>] [--as <seat>] [--roles a,b] [--header "k: v"]
-                      [--read-only] [--list] [--no-friction]
+                      [--read-only] [--list] [--no-friction] [--workflows]
       Speaks MCP over stdio for the app's store, so an agent with only a
       shell attaches to the same tools the in-app seat has: the reads, the
       previews, undo, and every act the seat's principal may run. Against a
@@ -40,7 +42,10 @@ export const MCP_USAGE = `  graview mcp <entry> [--data <dir> | --sqlite <file> 
       catalog a host registers without hand-writing a schema. A tool call
       refused as invalid is kept beside the store with the form of the next
       call of that tool that worked (friction.json, or the server's
-      /graview/friction); --no-friction keeps none.
+      /graview/friction); --no-friction keeps none. --workflows lists
+      run_workflow for the app's workflows (their runs kept beside the
+      store), and for a document entry pause_workflow and resume_workflow,
+      which write the document: for an owner's seat only.
 
   graview apply <entry> (--call <name> --args '<json>' | --plan <file> | --undo <batch>)
                         [--preview] [--intent "..."] [--as <seat>] [--roles a,b]
@@ -229,7 +234,9 @@ export async function mcp(argv: readonly string[]): Promise<number> {
   // What the app's own actor learned from use, read at each call from the files beside the store (Roadmap f-learned-suggestions), from what this seat sees.
   const files = host.files;
   const learned = files ? () => learningOf(app, host.store, readFriction(flag(argv, "--friction") ?? files.friction), fileLearned(files.learned).list(), { seat: principal }).suggestions : undefined;
-  const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: host.subscriptions, ...(learned ? { learned } : {}) });
+  // An owner's seat runs, pauses and resumes the app's workflows when asked to (--workflows): the runs beside the store, a pause written into a document entry (Roadmap f-jobs-declared).
+  const workflows = argv.includes("--workflows") && files && Object.keys(app.workflows ?? {}).length > 0 ? await workflowToolsFor(app, entryArg(argv, 0)!, files.friction) : undefined;
+  const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: host.subscriptions, ...(learned ? { learned } : {}), ...(workflows ? { workflows } : {}) });
   /*
    * A TOOL CALL REFUSED AS INVALID IS WHAT AN AGENT COULD NOT DO (Roadmap
    * f-friction-log), kept beside the store with the form of the next call

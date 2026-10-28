@@ -3,6 +3,9 @@
   "formatVersion": 1,
   "name": "The household",
   "description": "A household's routines, plans, week of events and grocery lists, and what the app does on its own with them.",
+  "brand": {
+    "timeZone": "America/New_York"
+  },
   "kinds": {
     "routine": {
       "noun": "routine",
