@@ -24,6 +24,15 @@ import type { GuestNode, GuestProps } from "../protocol.js";
  *       Escape and its Close button close, giving the keyboard back to the
  *       button. A view's code cannot open it: only the viewer's press does.
  *
+ *   <graview-video autoplay cover data-record="moment:x" data-field="clip">
+ *       a hero background (Roadmap f-video-hero): `autoplay` is muted,
+ *       looping, inline, with no controls — autoplay without muted never
+ *       plays, so the one word means all of it — and `cover` fills the box
+ *       the view sized (`object-fit: cover`). Where the person asked for
+ *       less motion (`prefers-reduced-motion: reduce`) it stands still at
+ *       its poster, fetching no more than its metadata, and is let go or
+ *       held again as the setting changes.
+ *
  * `data-index` picks one file of a list (0 by default). Both are for a view
  * whose manifest asks for `pictures`; the file comes from where the host
  * serves it (`file`, else the href against the page). A record the view was
@@ -76,14 +85,33 @@ export function namedFile(element: Element, shown: GuestProps | undefined, as: "
 /** A video said to somebody who cannot see it. */
 const videoLabel = (file: FileValue) => `${file.caption?.trim() || file.name}, ${videoWords(file)}`;
 
+/** How a `<graview-video>` asked to be played (f-video-hero): as a background, filling its box, or held still at its poster. */
+export interface PlayerWay {
+  readonly autoplay?: boolean;
+  readonly cover?: boolean;
+  /** The person asked for less motion: an `autoplay` player stands at its poster, paused, until they do not. */
+  readonly still?: boolean;
+}
+
 /** The player, drawn in `into`: what the face draws (primitives' files), with the DOM alone. */
-function drawPlayer(document: Document, into: ParentNode, file: FileValue, at: (href: string) => string | undefined, src: string): HTMLVideoElement {
+function drawPlayer(document: Document, into: ParentNode, file: FileValue, at: (href: string) => string | undefined, src: string, way: PlayerWay = {}): HTMLVideoElement {
   const video = document.createElement("video");
   video.setAttribute("data-graview-video", "");
-  video.setAttribute("controls", "");
-  video.setAttribute("preload", "metadata");
   video.setAttribute("playsinline", "");
   video.setAttribute("aria-label", videoLabel(file));
+  if (way.autoplay) {
+    /* A background: muted (autoplay without it never plays), looping, no controls; fetched ahead only where it will play. */
+    video.setAttribute("data-graview-video-autoplay", "");
+    video.setAttribute("muted", "");
+    video.muted = true;
+    video.setAttribute("loop", "");
+    video.setAttribute("preload", way.still ? "metadata" : "auto");
+    if (way.still) video.setAttribute("data-graview-video-still", "");
+    else video.setAttribute("autoplay", "");
+  } else {
+    video.setAttribute("controls", "");
+    video.setAttribute("preload", "metadata");
+  }
   const poster = file.poster ? at(file.poster) : undefined;
   if (poster) video.setAttribute("poster", poster);
   if (file.width && file.height) {
@@ -91,7 +119,11 @@ function drawPlayer(document: Document, into: ParentNode, file: FileValue, at: (
     video.setAttribute("height", String(file.height));
     video.style.aspectRatio = `${file.width} / ${file.height}`;
   } else video.style.aspectRatio = "16 / 9";
-  video.style.cssText += ";display:block;width:100%;height:auto;max-height:80vh;background:#000;border-radius:var(--graview-radius, 8px)";
+  if (way.cover) {
+    /* It fills the box the view sized, cut at the box's edges; the view's own stylesheet rounds and clips the box. */
+    video.setAttribute("data-graview-video-cover", "");
+    video.style.cssText += ";display:block;width:100%;height:100%;max-height:none;aspect-ratio:auto;object-fit:cover;background:#000";
+  } else video.style.cssText += ";display:block;width:100%;height:auto;max-height:80vh;background:#000;border-radius:var(--graview-radius, 8px)";
   const captions = file.captions ? at(file.captions) : undefined;
   if (captions) {
     const track = document.createElement("track");
@@ -128,8 +160,34 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
       return undefined;
     }
   };
-  /** What each player was drawn for: drawn again only when the file it names moved. */
+  /** What each player was drawn for: drawn again only when the file it names, or the way it is played, moved. */
   const drawn = new WeakMap<Element, string>();
+  /*
+   * LESS MOTION, WHERE A PERSON ASKS FOR IT: a background plays only while
+   * they do not. Every `autoplay` player drawn is kept here, so a setting
+   * changed while the page is open pauses each at its poster, or lets it go.
+   */
+  const lessMotion = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : undefined;
+  const backgrounds = new Set<HTMLVideoElement>();
+  const hold = (video: HTMLVideoElement, still: boolean) => {
+    if (still) {
+      video.removeAttribute("autoplay");
+      video.setAttribute("data-graview-video-still", "");
+      video.pause();
+    } else {
+      video.removeAttribute("data-graview-video-still");
+      video.setAttribute("autoplay", "");
+      video.setAttribute("preload", "auto");
+      void video.play?.()?.catch?.(() => undefined);
+    }
+  };
+  const onMotionChange = () => {
+    for (const video of backgrounds) {
+      if (!video.isConnected) backgrounds.delete(video);
+      else hold(video, lessMotion?.matches === true);
+    }
+  };
+  lessMotion?.addEventListener?.("change", onMotionChange);
   let dialog: HTMLDialogElement | undefined;
   /* Closed as a dialog closes, where the engine has no `close` of its own. */
   const shut = (box: HTMLDialogElement) => {
@@ -152,7 +210,8 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
           continue;
         }
         const named = namedFile(element, shown, "video");
-        const key = "file" in named ? JSON.stringify(named.file) : "";
+        const way: PlayerWay = { autoplay: element.hasAttribute("autoplay"), cover: element.hasAttribute("cover"), still: lessMotion?.matches === true };
+        const key = "file" in named ? JSON.stringify([named.file, way.autoplay, way.cover]) : "";
         if (drawn.get(element) === key && shadow.childNodes.length > 0) continue;
         drawn.set(element, key);
         shadow.replaceChildren();
@@ -168,7 +227,8 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
         const style = document.createElement("style");
         style.textContent = ":host { display: block; min-width: 0; }";
         shadow.appendChild(style);
-        drawPlayer(document, shadow, named.file, at, src);
+        const video = drawPlayer(document, shadow, named.file, at, src, way);
+        if (way.autoplay) backgrounds.add(video);
       }
     },
     open(trigger) {
@@ -232,6 +292,8 @@ export function createGuestMedia(window: Window & typeof globalThis, options: Gu
       if (dialog) shut(dialog);
       dialog?.remove();
       dialog = undefined;
+      lessMotion?.removeEventListener?.("change", onMotionChange);
+      backgrounds.clear();
     },
   };
 }

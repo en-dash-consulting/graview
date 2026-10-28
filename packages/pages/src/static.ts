@@ -34,6 +34,7 @@ import {
   emojiMark,
   logoOf,
 
+  logoScheme,
   markHref,
   pluralOf,
   recordPath,
@@ -564,8 +565,8 @@ body { font: var(--graview-weight-body) 1rem/1.5 var(--graview-font-body); -webk
 .gv-masthead a { display: inline-flex; align-items: center; gap: 10px; color: var(--graview-ink-muted); text-decoration: none; font-weight: 600; }
 .gv-mark { height: 28px; width: auto; }
 span.gv-mark { font-size: 1.5rem; line-height: 28px; }
-[data-graview-scheme-only="${scheme === "dark" ? "light" : "dark"}"] { display: none; }
-${scheme === "dark" ? `[data-graview-logo-fallback="invert"] { filter: invert(1) hue-rotate(180deg); mix-blend-mode: screen; }\n` : ""}
+[data-graview-scheme-only="${logoScheme(brand, scheme) === "dark" ? "light" : "dark"}"] { display: none; }
+${logoScheme(brand, scheme) === "dark" ? `[data-graview-logo-fallback="invert"] { filter: invert(1) hue-rotate(180deg); mix-blend-mode: screen; }\n` : ""}
 h1, h2, h3, h4, h5, h6 { font-family: var(--graview-font-display); font-weight: var(--graview-weight-display); line-height: 1.2; margin: 0.6em 0 0.3em; break-after: avoid-page; }
 h1 { font-size: 1.728rem; margin-top: 0.4em; text-wrap: balance; }
 h2 { font-size: 1.2rem; text-wrap: balance; }
@@ -581,7 +582,7 @@ a { color: var(--graview-accent); text-decoration-thickness: 1px; text-underline
 .gv-text[data-tone="warn"], .gv-text[data-tone="bad"] { color: var(--graview-bad); }
 .gv-text[data-tone="good"] { color: var(--graview-good); }
 .gv-section, .gv-part { border-top: 1px solid var(--graview-edge); padding-top: 12px; margin-top: 20px; }
-.gv-problems { border-left: 3px solid var(--graview-warn); background: var(--graview-panel-warning); padding: 10px 16px; border-radius: 0 var(--graview-radius) var(--graview-radius) 0; }
+.gv-problems { border: 1px solid var(--graview-edge); background: var(--graview-panel-warning); padding: 10px 16px; border-radius: var(--graview-radius); }
 .gv-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 24px; margin: 8px 0; }
 .gv-fields div { break-inside: avoid; }
 .gv-fields dt { font-size: 0.833rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graview-ink-muted); }

@@ -9,10 +9,18 @@ export type Destination =
   | { readonly record: string; readonly where?: unknown; readonly section?: unknown }
   | { readonly place: string; readonly where?: unknown; readonly section?: unknown };
 
-/** A place as a link names it and a sentence says it: its slug, and the title a reader knows it by. */
+/**
+ * A place as a link names it and a sentence says it: its slug, and the
+ * title a reader knows it by. One of the vocabulary (`placeNamesFrom`,
+ * FR-235) also says what it is — the Scene, the home, a kind's list or a
+ * titled place — and the kind it is over; one handed bare is a titled
+ * place.
+ */
 export interface NamedPlace {
   readonly as: string;
   readonly title?: string;
+  readonly kind?: string | null;
+  readonly is?: "overview" | "home" | "list" | "place";
 }
 
 /** A title as an address word: "Songs by writer" is `songs-by-writer`, as core's `placeSlug` makes it. */

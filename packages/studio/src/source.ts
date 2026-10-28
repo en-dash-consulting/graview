@@ -449,6 +449,21 @@ export function ruleLines(read: Read, rule: Node, kept: boolean): string[] {
    * same rule the studio judged, through the same `expressionRule`, instead
    * of a stub that holds nothing or throws.
    */
+  // A coverage rule is written as one (Roadmap f-rule-covers-every): its walk, not an expression.
+  const coversEvery = str(rule, "coversEvery");
+  if (coversEvery && str(rule, "coversThrough")) {
+    const spec = [
+      `  over: ${q(whole ? "graph" : label(over!))},`,
+      `  covers: { every: ${q(coversEvery)}, through: ${q(str(rule, "coversThrough")!)}${str(rule, "coversVia") ? `, via: ${q(str(rule, "coversVia")!)}` : ""} },`,
+      ...(str(rule, "when") ? [`  when: ${q(str(rule, "when")!)},`] : []),
+      ...(str(rule, "says") ? [`  says: ${q(str(rule, "says")!)},`] : []),
+      `  title: ${q(str(rule, "title") ?? ruleName)},`,
+      ...(str(rule, "description") ? [`  description: ${q(str(rule, "description")!)},`] : []),
+      ...(repairs.length > 0 ? [`  repairs: [${repairs.map(q).join(", ")}],`] : []),
+      ...(bool(rule, "judgesPast") ? [`  judgesPast: true,`] : []),
+    ];
+    return [`export const ${camel(ruleName)} = coverageRule(${q(ruleName)}, {`, ...spec, `});`];
+  }
   const require = str(rule, "require");
   if (require) {
     const spec = [
@@ -560,9 +575,10 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
 
   const rules = read.ofKind("rule");
   const judged = rules.some((rule) => str(rule, "require"));
+  const covering = rules.some((rule) => str(rule, "coversEvery") && str(rule, "coversThrough"));
   const invariantsTs = [
     `import { bindSchema, type Violation } from "@graview/core";`,
-    ...(judged ? [`import { expressionRule } from "@graview/core/document";`] : []),
+    ...(judged || covering ? [`import { ${[...(covering ? ["coverageRule"] : []), ...(judged ? ["expressionRule"] : [])].join(", ")} } from "@graview/core/document";`] : []),
     `import { ${schemaVar} } from "./schema.js";`,
     ``,
     `const { defineInvariant, defineGraphInvariant } = bindSchema(${schemaVar});`,

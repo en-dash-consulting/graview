@@ -41,6 +41,8 @@ import {
 // What a seat is served keeps the fields its sight keeps (Roadmap f-field-sight): the protocol judges them.
 import "@graview/core/field-sight";
 import "@graview/core/publishing";
+// And a vote on a suggestion (Roadmap f-suggestion-votes): the op a vote keeps is made where the log is.
+import "@graview/core/tidying";
 import { argumentWords } from "@graview/core/words";
 import { cursorAt, seqAt, type Cursor } from "./cursor.js";
 import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LimitAsked, type LiveClientMessage, type LiveServerMessage } from "./live.js";

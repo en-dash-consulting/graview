@@ -24,6 +24,7 @@ import { computedOf } from "./computed.js";
 import { sayAmount } from "./amount.js";
 import type { AmountMark } from "../schema/amount-mark.js";
 import { type Formatter, type Money, type TemplatePart } from "./template.js";
+import type { CoverPlan } from "./covers.js";
 
 /** The most of a text value a line says, its end cut to "…". */
 const LONGEST_VALUE = 60;
@@ -42,7 +43,10 @@ export interface LineWords {
 /** A rule as its line is made from: the kind it judges and its parsed judgment. */
 export interface LinedRule {
   readonly over: string;
-  readonly require: Expr;
+  /** What must hold; absent on a coverage rule, whose `covers` says its walk. */
+  readonly require?: Expr | undefined;
+  /** A coverage rule's walk (Roadmap f-rule-covers-every). */
+  readonly covers?: CoverPlan | undefined;
   readonly when?: Expr | undefined;
 }
 
@@ -418,13 +422,21 @@ function call(e: Extract<Expr, { t: "call" }>, kind: Kind, r: Reader): Parts {
   }
 }
 
+/** A coverage rule's walk in words: "through stances, then issue". */
+function walkWords(covers: CoverPlan): Parts {
+  const step = (relation: string) => name(humanizeField(relation).toLowerCase());
+  return [word("through"), step(covers.through.relation), ...(covers.via ? [word(","), word("then"), step(covers.via.relation)] : [])];
+}
+
 /** A rule's line from the declaration alone: what must hold, and which records it judges. */
 export function ruleLineOf(rule: LinedRule, words: LineWords): RuleLine {
   const r = reader(words);
   const kind = rule.over === "graph" ? null : rule.over;
+  // A coverage rule: "reaches every issue through stances, then issue".
+  const parts: Parts = rule.covers ? [word("reaches every"), name(r.noun(rule.covers.every)), ...walkWords(rule.covers)] : say(rule.require!, kind, r);
   return finishedLine({
     ...(kind === null ? {} : { kind }),
-    parts: say(rule.require, kind, r),
+    parts,
     ...(rule.when ? { when: say(rule.when, kind, r) } : {}),
   });
 }
@@ -436,10 +448,18 @@ export function ruleLineOf(rule: LinedRule, words: LineWords): RuleLine {
  * says it, after "not". Never throws: a line that cannot be worked out is
  * the rule's own line.
  */
-export function brokenLineOf(rule: LinedRule, words: LineWords, ctx: EvalContext): RuleLine {
+export function brokenLineOf(rule: LinedRule, words: LineWords, ctx: EvalContext, far?: AnyGraphNode): RuleLine {
   const r = reader(words);
   const kind = rule.over === "graph" ? null : rule.over;
   const subject = ctx.subject;
+  // A coverage rule broken is the pair: "does not reach Housing through stances, then issue".
+  if (rule.covers) {
+    return finishedLine({
+      ...(kind === null ? {} : { kind }),
+      parts: far ? [word("does not reach"), r.valueWords(far), ...walkWords(rule.covers)] : [word("does not reach every"), name(r.noun(rule.covers.every)), ...walkWords(rule.covers)],
+      ...(subject ? { record: labelOf(words.schema.tryDefinition(subject.kind), subject) } : {}),
+    });
+  }
   const held = (e: Expr): Value | undefined => {
     try {
       return evaluateExpr(e, { ...ctx, budget: 2_000 });
@@ -519,9 +539,9 @@ export function brokenLineOf(rule: LinedRule, words: LineWords, ctx: EvalContext
   };
   let parts: Parts;
   try {
-    parts = why(rule.require);
+    parts = why(rule.require!);
   } catch {
-    parts = [word("not"), OPEN, ...say(rule.require, kind, r), CLOSE];
+    parts = [word("not"), OPEN, ...say(rule.require!, kind, r), CLOSE];
   }
   return finishedLine({
     ...(kind === null ? {} : { kind }),

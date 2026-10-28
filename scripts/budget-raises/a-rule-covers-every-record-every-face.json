@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 7700,
+  "gzipped": 2258,
+  "note": "Raised when a rule came to cover every record without a cost warning (Roadmap f-rule-covers-every): the schema's `covers`, the compiler's resolution and findings, the linear judge, the rule's line in words and its pair's broken line, and the studio's three words for the walk. Measured at 2_398_822 / 872_793 against main's 2_391_122 / 870_535: 7_700 more minified, 2_258 gzipped."
+}

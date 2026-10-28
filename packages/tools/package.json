@@ -60,6 +60,10 @@
     "./starter": {
       "types": "./dist/starter.d.ts",
       "default": "./dist/starter.js"
+    },
+    "./reshape": {
+      "types": "./dist/reshape.d.ts",
+      "default": "./dist/reshape.js"
     }
   },
   "scripts": {

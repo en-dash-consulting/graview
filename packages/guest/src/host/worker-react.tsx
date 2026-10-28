@@ -1,4 +1,4 @@
-import type { AnySchema, KindOfSchema, Principal, Store } from "@graview/core";
+import type { AnySchema, KindOfSchema, PagesArrangement, Principal, Store } from "@graview/core";
 import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useContext, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import type { GuestPlace } from "../protocol.js";
@@ -73,6 +73,8 @@ interface MountProps {
   readonly goTo?: GoTo;
   /** The app's named places. */
   readonly places?: () => readonly GuestPlace[];
+  /** The app's arrangement: what the declaration calls the Scene, for the vocabulary a link is judged by (FR-235). */
+  readonly arrangement?: () => PagesArrangement | undefined;
   /** Changes when the app's scheme does: the view is pushed its look again. */
   readonly scheme?: string;
   /** The app's brand (FR-127): its name and logo, pushed again when it changes. */
@@ -101,14 +103,14 @@ function useDefinitionThen(definition: WorkerViewDefinition): WorkerViewDefiniti
 }
 
 /** The region a worker view is drawn in, mounted when it is drawn; the host's half is fetched then. */
-function WorkerViewMount({ definition, store, principal, input, goTo, places, scheme, brand, onFailure, drawsItsOwn, tick }: MountProps) {
+function WorkerViewMount({ definition, store, principal, input, goTo, places, arrangement, scheme, brand, onFailure, drawsItsOwn, tick }: MountProps) {
   const holder = useRef<HTMLDivElement>(null);
   const mounted = useRef<WorkerView | null>(null);
   const hostFiles = useHostFiles();
   /* Where the face that holds the view to a box hears how tall it drew (the Scene's preview): the host measures, the view never says. */
   const told = useContext(ViewContentHeight);
-  const latest = useRef({ input, goTo, places, onFailure, brand, hostFiles, told });
-  latest.current = { input, goTo, places, onFailure, brand, hostFiles, told };
+  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand, hostFiles, told });
+  latest.current = { input, goTo, places, arrangement, onFailure, brand, hostFiles, told };
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
@@ -126,6 +128,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         /* Links stay in the app (FR-93): a record, a place or a kind's list — narrowed and to a section — on whichever face the view is drawn. */
         goTo: () => latest.current.goTo,
         places: () => latest.current.places?.() ?? [],
+        arrangement: () => latest.current.arrangement?.(),
         brand: () => latest.current.brand,
         onFailure: (reason, detail) => latest.current.onFailure(reason, detail),
         ...(drawsItsOwn ? { fallback: false as const } : {}),
@@ -236,6 +239,7 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
         input={() => inputOf(latest.current)}
         goTo={goTo}
         places={() => graview.views.places()}
+        arrangement={() => graview.views.arrangement?.()}
         scheme={graview.scheme}
         brand={graview.brand}
         tick={props}
@@ -373,7 +377,7 @@ export function workerHome(definition: WorkerViewDefinition, options: { readonly
         store={context.store}
         principal={context.principal ?? graview?.principal ?? { kind: "human" }}
         goTo={goTo}
-        {...(graview ? { places: () => graview.views.places(), scheme: graview.scheme, brand: graview.brand } : {})}
+        {...(graview ? { places: () => graview.views.places(), arrangement: () => graview.views.arrangement?.(), scheme: graview.scheme, brand: graview.brand } : {})}
         drawsItsOwn={Fallback !== undefined}
         onFailure={(reason, detail) => {
           setFailed(reason);

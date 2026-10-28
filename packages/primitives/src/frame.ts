@@ -41,9 +41,9 @@ export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, F
 export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces } from "./scene-places.js";
 export type { BarAction, BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 export type { HostAction } from "./profile.js";
-export { createNoticeBoard, fetchNotices, NoticeBoardContext, Notices, TOAST_MS } from "./notices.js";
+export { createNoticeBoard, fetchNotices, frameworkVoice, NoticeBoardContext, Notices, sceneReportWhere, TOAST_MS } from "./notices.js";
 export { appKeyOf, readerLenses } from "./reader-lenses.js";
-export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
+export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeReport, NoticeReporting, NoticeTone } from "./notices.js";
 export { Standing, StandingDot, standingWords } from "./workbench/standing.js";
 export { descentTarget } from "./workbench/descent.js";
 export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";

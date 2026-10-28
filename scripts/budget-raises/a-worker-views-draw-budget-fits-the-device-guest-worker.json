@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker",
+  "minified": 30,
+  "gzipped": 0,
+  "note": "Raised when a worker view's draw budget came to fit the device (Roadmap f-view-budget-fits-device): the shared worker start measures itself from new Worker to its ready and hands the time to onReady, and the draw budget reads its allowance at each batch; the kit's guest, which shares both, is not fitted. Measured at 26_799 / 11_290 against 26_769 / 11_345: 30 more minified, and 55 under gzipped."
+}

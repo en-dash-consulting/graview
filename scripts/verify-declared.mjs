@@ -911,7 +911,8 @@ try {
                   return {
                     width: Math.round(box(li).width),
                     chip: li.querySelector('[data-graview-primitive="chip"]') !== null,
-                    whole: title ? title.textContent === li.querySelector("a")?.getAttribute("aria-label") && title.scrollWidth <= title.clientWidth + 1 : false,
+                    // Its whole name — and where a broken rule names the record, the kit's flag after it (Roadmap f-blocks-home-flagged).
+                    whole: title ? (li.hasAttribute("data-graview-flagged") ? (title.textContent ?? "").replace(/ \S+$/, "") : title.textContent) === li.querySelector("a")?.getAttribute("aria-label") && title.scrollWidth <= title.clientWidth + 1 : false,
                   };
                 }),
               }

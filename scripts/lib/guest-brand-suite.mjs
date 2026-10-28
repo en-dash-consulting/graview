@@ -85,7 +85,8 @@ export async function brandSuite({ repoRoot, build, browser, claim, report, POLI
   if (proxied && !policy) throw new Error(`--policy is page or one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
   /* Claude's view frame is an opaque origin: no address of its own, so the second logo is inline there too. */
   const secondLogo = POLICY === "claude" ? { logo: SVG_B, bytes: Buffer.from(SVG_B), width: 30, height: 30 } : { logo: PNG_PATH, bytes: PNG, width: 36, height: 18 };
-  const first = { name: "En Dash", logo: SVG_A, typography: { display: "Georgia, 'Times New Roman', serif" }, shape: { radius: 4 } };
+  /* One theme for every view (Roadmap f-app-wide-view-theme): the first brand dresses every view in a stylesheet of its own and fades between records; the second has neither. */
+  const first = { name: "En Dash", logo: SVG_A, typography: { display: "Georgia, 'Times New Roman', serif" }, shape: { radius: 4 }, views: { css: ".mast h2 { letter-spacing: 0.25em; padding: 40px; text-transform: uppercase }", motion: "fade" } };
   const second = { name: "En Dash Consulting", logo: secondLogo.logo, typography: { display: "'Courier New', Courier, monospace" }, shape: { radius: 16 } };
   const widgetJs = (
     await build({
@@ -219,6 +220,13 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
           bytes,
           viewFont: getComputedStyle(heading).fontFamily,
           viewRadius: getComputedStyle(heading).borderTopLeftRadius,
+          /* The app's stylesheet for every view (Roadmap f-app-wide-view-theme): where it stands among the region's sheets, what it says, and what of it the heading shows. */
+          sheets: [...root.querySelectorAll("style")].map((one) => one.getAttributeNames().find((name) => name.startsWith("data-graview"))),
+          themeSheet: root.querySelector("[data-graview-view-theme]")?.textContent ?? null,
+          letterSpacing: getComputedStyle(heading).letterSpacing,
+          transform: getComputedStyle(heading).textTransform,
+          padding: getComputedStyle(heading).paddingTop,
+          motion: root.querySelector("[data-graview-view-root]")?.getAttribute("data-graview-motion") ?? null,
           radiusSaid: root.querySelector("#radius").textContent,
           pushes: Number(root.querySelector("#mast").getAttribute("data-pushes")),
           appHeadingFont: pageHeading ? getComputedStyle(pageHeading).fontFamily : null,
@@ -236,6 +244,12 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
     claim("its corners are the app's radius, by var(--graview-radius) and props.theme.radius alike", before.viewRadius === "4px" && before.radiusSaid === "4px", { viewRadius: before.viewRadius, said: before.radiusSaid });
     claim("its logo is the brand's inline SVG, byte for byte, at the SVG's own size", sameBytes(before.bytes, [...Buffer.from(SVG_A)]) && before.natural.join("x") === "48x24", { natural: before.natural, scheme: before.scheme, bytes: Array.isArray(before.bytes) ? before.bytes.length : before.bytes });
     claim(blobAllowed ? "the logo is handed as a blob: URL of the page itself, which the policy lets an image load from" : "the logo is handed as a data: image, since the policy's img-src has no blob:", blobAllowed ? before.scheme === "blob" : before.scheme === "data", { src: before.src.slice(0, 60) });
+    claim(
+      "the view is drawn with the app's stylesheet for every view, a sheet of the host's between the region's rules and the view's own: the heading takes its letter-spacing and its capitals, and the view's own padding wins where both say one",
+      before.sheets.join(",") === "data-graview-region,data-graview-view-theme,data-graview-view-style" && /letter-spacing: 0\.25em/.test(before.themeSheet ?? "") && before.letterSpacing !== "normal" && before.transform === "uppercase" && before.padding === "4px",
+      { sheets: before.sheets, letterSpacing: before.letterSpacing, transform: before.transform, padding: before.padding },
+    );
+    claim("and, the brand asking for it, its root is set to fade between records", before.motion === "fade", { motion: before.motion });
 
     await app.evaluate(() => {
       const region = document.querySelector('[data-worker-view="masthead"]');
@@ -251,6 +265,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
     claim("and takes the new radius", after.viewRadius === "16px" && after.radiusSaid === "16px", { viewRadius: after.viewRadius, said: after.radiusSaid });
     claim(`and draws the new logo, byte for byte, at its own size (${secondLogo.width}×${secondLogo.height})`, sameBytes(after.bytes, [...secondLogo.bytes]) && after.natural.join("x") === `${secondLogo.width}x${secondLogo.height}`, { natural: after.natural, scheme: after.scheme, bytes: Array.isArray(after.bytes) ? after.bytes.length : after.bytes });
     claim("it followed the brand by being pushed it, not redrawn: the same region and the same image element, one push more", after.marked && after.pushes > before.pushes, { marked: after.marked, pushes: [before.pushes, after.pushes] });
+    claim("after the brand changes to one with no stylesheet for its views, the host's sheet is empty, the heading's letter-spacing and capitals are the browser's again, and nothing fades", after.themeSheet === "" && after.letterSpacing === "normal" && after.transform === "none" && after.motion === null, { themeSheet: after.themeSheet, letterSpacing: after.letterSpacing, transform: after.transform, motion: after.motion });
     if (revoked !== null) claim("the last logo's blob: URL is let go once the new one is drawn", revoked === true, { url: before.src });
     if (secondLogo.logo === PNG_PATH) {
       /*

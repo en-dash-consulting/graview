@@ -45,6 +45,23 @@ export const PARTIAL_DAY = /^\d{4}(?:-(?:0[1-9]|1[0-2]))?$/;
 /** What a document's date holds: a day, a month (`2016-05`) or a year (`2006`) alone. */
 export const DATE_VALUE = /^\d{4}(?:-(?:0[1-9]|1[0-2])(?:-\d{2})?)?$/;
 
+/**
+ * THE DAYS A DATE COVERS (Roadmap f-partial-dates-arithmetic): a day is
+ * itself; a month alone (`2016-05`) runs from its first day to its last; a
+ * year alone (`2006`) from January 1 to December 31. Undefined for anything
+ * that is not a day, a month or a year. A rule compares a date that knows
+ * only its year or its month by this span — before or after only when the
+ * whole span is, equal when the spans are — and the calendar draws a month
+ * alone across it.
+ */
+export function daySpanOf(value: string): { readonly from: string; readonly to: string } | undefined {
+  if (ISO_DAY.test(value)) return { from: value, to: value };
+  if (!PARTIAL_DAY.test(value)) return undefined;
+  if (value.length === 4) return { from: `${value}-01-01`, to: `${value}-12-31` };
+  const last = new Date(Date.UTC(+value.slice(0, 4), +value.slice(5, 7), 0)).getUTCDate();
+  return { from: `${value}-01`, to: `${value}-${String(last).padStart(2, "0")}` };
+}
+
 /** A moment as the record holds it: a day, a `T` or a space, and a time of day, with or without seconds and a zone. */
 export const ISO_MOMENT = /^\d{4}(-\d\d){2}[T ]\d\d:\d\d(:[\d.]+)?(Z|[+-][\d:]+)?$/;
 
@@ -131,6 +148,9 @@ export function sayingIn<T>(saying: Saying, run: () => T): T {
 
 /** The locale a value is said in: the reader's when a host passed one, else the app's (`app`, else the page's), else en-US. */
 export const localeFor = (app?: string): string => readers ?? usable(app) ?? drawn ?? DEFAULT_LOCALE;
+
+/** The app's own locale, never the reader's: `app`, else the page's app's, else en-US. What a value the language builds and a record keeps is said in. */
+export const appLocaleFor = (app?: string): string => usable(app) ?? drawn ?? DEFAULT_LOCALE;
 
 /** The zone an instant is said in, when somebody said one: the person's, else the app's (`app`, else the page's). Undefined is the runtime's clock. */
 export const zoneFor = (app?: string): string | undefined => readersZone ?? usableZone(app) ?? drawnZone;

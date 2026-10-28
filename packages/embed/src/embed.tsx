@@ -1,7 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
-import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
+import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, frameworkVoice, NoticeBoardContext, sceneReportWhere, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { afterFirstDraw, createPartsWatch, ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, PageDoorContext, PartsWatchContext, useNavigation, type AwaySummary, type ErrorReport, type PageDoor, type PartsWatch, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
@@ -19,6 +19,7 @@ import {
   FrameBar,
   FrameFirstLook,
   FrameNotices,
+  placeOfPath,
   providerProps,
   storeOf,
   useErrorReport,
@@ -469,6 +470,11 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const { at: pageAt, setAt: setPageAt, steering, steer } = useSteering(pagesAt.current.path);
   const whereabouts = useContext(Whereabouts);
   if (whereabouts) whereabouts.pages = () => pagesAt.current.path;
+  // The scene's view, kept where a host's Report this can read the record it is focused on (FR-237) — `mount`'s own whereabouts, or a React host's.
+  const [ownSpot] = useState<Whereabouts>(() => ({}));
+  const spot = whereabouts ?? ownSpot;
+  // What the app's own surfaces say on the board is the framework's, which a host's Report this may answer (FR-237).
+  const voice = useMemo(() => frameworkVoice(notices), [notices]);
   const toggled = useRef<((face: EmbedFace, path?: string, stop?: string) => void) | undefined>(undefined);
   // A page Back or Forward landed on is where the routed face is, though its router reports no arrival (FR-137).
   const landed = useCallback((path: string) => void (pagesAt.current.path = path), []);
@@ -616,15 +622,20 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
-      <FrameNotices rootRef={rootRef} board={notices} />
+      <FrameNotices
+        rootRef={rootRef}
+        board={notices}
+        onReport={props.onReport}
+        where={() => (shown === "pages" ? placeOfPath(pageAt) : shown === "picture" ? { place: "picture" } : sceneReportWhere(spot.view?.focusId))}
+      />
       {/* A first look at the app's own controls, once, over whichever face is drawn. */}
       <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} />
       <FaceBoundary module="@graview/react" report={report} content>
       <PartsWatchContext.Provider value={parts}>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
-        <NoticeBoardContext.Provider value={notices}>
+        <NoticeBoardContext.Provider value={voice}>
         <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} opens={opens} />
-        {whereabouts ? <Watch into={whereabouts} /> : null}
+        <Watch into={spot} />
         <DrawnSignal rootRef={rootRef} face={face} shown={shown} path={pageAt} stop={stop} draft={draft.n} onDrawn={props.onDrawn} parts={parts} />
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
         {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} opens={opens} landed={landed} /> : null}

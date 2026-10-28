@@ -1940,6 +1940,13 @@ handle.notify({
 });
 handle.notify({ id: "newer", kind: "banner", sentence: "A newer version is available.", action: { label: "Reload", onSelect: () =&gt; location.reload() } });</code></pre></div>
 <p>A toast goes by itself after six seconds (<code>timeout</code> says otherwise, <code>false</code> keeps it), unless it carries an action, when it waits for one; a banner stays until it is dismissed. A notice said again under the same <code>id</code> takes the place of the one before. An action is a press (onSelect) or a link (<code>href</code>), and either closes the notice; every notice also has a dismiss control. Banners are drawn at the top of the picture and toasts at its foot, in the framework's floating panel and the embed's scheme, in the top layer and kept over any popover that opens after them; each is said aloud as it arrives, and one whose tone is bad is said as an alert. <code>@graview/embed/pages</code> has the same <code>notify</code>; a React host drawing <code>&lt;Embed&gt;</code> makes a board with <code>createNoticeBoard()</code>, passes it as <code>notices</code>, and says things on it.</p>
+<p>A notice carries its tone as a small tinted chip at its head, not as a colored border on one side; the card is one hairline all round, in the app's radius.</p>
+<p>The toasts the framework raises itself — a tidying the host refused, a take-back that failed — can carry the host's own "Report this":</p>
+<div class="code" data-scroller><pre><code class="language-ts">mount(root, {
+  app,
+  onReport: ({ message, code, place, record, version }) =&gt; openFeedback({ error: message, code, place, record, version }),
+});</code></pre></div>
+<p>Given <code>onReport</code>, every warning or error toast the framework raises draws a native button, "Report this", named for the toast ("Report this: “Up next” could not be hidden."), and hands the hook the toast's words (<code>message</code>), a refusal's <code>code</code> when it had one, the <code>place</code> the reader is on — a list's or a place's slug, <code>home</code>, <code>overview</code> on the scene — the <code>record</code> when a record's page or card is open, and the framework's <code>version</code>. The toast stays while the button has focus, and stays once pressed, so the words are there to read beside the host's dialog. The host's own notices, said through <code>notify</code>, carry no such button (<code>NoticeReport</code> is the report's type).</p>
 <h3>What went wrong, and how long it took</h3>
 <div class="code" data-scroller><pre><code class="language-ts">mount(root, {
   app,

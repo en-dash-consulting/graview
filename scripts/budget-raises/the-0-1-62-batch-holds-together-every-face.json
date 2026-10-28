@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 128,
+  "note": "Raised when the seat's proposed change to the app joined the 0.1.62 batch's twelve branches: each measured alone against main, together they came to 80 bytes gzipped (896_529 against 896_449) over their summed raises, held for a few bytes either side."
+}

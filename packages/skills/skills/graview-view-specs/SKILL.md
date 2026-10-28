@@ -92,6 +92,12 @@ fields, edges, label, roles — is `graview-node-kind`.
    one worked out from the record alone (no graph is in hand). A document's
    top-level `computed` holds facts of the whole graph, read as
    `fact('name')`; a kind's is changed with `set-computed`.
+   A computed value may be words or a moment, not only a number:
+   `heading: "concat(name, ' · ', format(day, 'EEE d MMM'))"` and
+   `startsAt: "datetime(day, '09:30')"` build a title and a start time
+   (with `addMinutes`, `weekday`, `startOfWeek` beside them), said in the
+   app's `brand.locale` on its `brand.timeZone` — see graview-invariant for
+   the pattern pieces and what `graview check` refuses.
    `{ expr, format: "percent" }` (or `"money"`, `"duration"`, a `unit`;
    `set-format` sets it) says it so on its page, cards and CSV;
    `round(x, 3)` rounds; `hidden: true` keeps a helper off its page, cards

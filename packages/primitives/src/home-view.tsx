@@ -15,8 +15,9 @@ export function homeView(blocks: readonly unknown[]): ViewComponent<AnySchema> {
   let view = MADE.get(blocks);
   if (!view) {
     const compiled = compileBlocks(blocks);
+    // The records a broken rule names reach the blocks, which mark them where they draw them (Roadmap f-blocks-home-flagged).
     view = (props: ViewProps<AnySchema>) =>
-      props.mode === "fullscreen" ? <SpecPlace blocks={compiled} slot="home" heading={2} firstHeading={1} /> : <SpecPlace blocks={compiled} slot="home" heading={3} firstHeading={2} />;
+      props.mode === "fullscreen" ? <SpecPlace blocks={compiled} slot="home" heading={2} firstHeading={1} {...(props.flagged ? { flagged: props.flagged } : {})} /> : <SpecPlace blocks={compiled} slot="home" heading={3} firstHeading={2} {...(props.flagged ? { flagged: props.flagged } : {})} />;
     MADE.set(blocks, view);
   }
   return view;

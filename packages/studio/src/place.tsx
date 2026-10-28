@@ -4,6 +4,7 @@ import type { DocumentEdit, Finding, GraviewDocument } from "@graview/core/docum
 import { EMPTY_VIEW, withWithin } from "@graview/layout";
 import { BesideTheMap, GraviewProvider, Scene, createViews, useGraview, useGraviewIfAny, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
 import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews } from "@graview/primitives";
+import { mayChangeDeclaration } from "@graview/tools";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -249,21 +250,15 @@ export function maySeeTheStudio<S extends AnySchema>(
   store: Store<S>,
   principal: Parameters<Store<S>["mayAdminister"]>[1],
 ): boolean {
-  const administered = [...store.modules.administered.keys()];
-  if (administered.length > 0) return administered.some((name) => store.mayAdminister(name, principal));
   /*
-   * WITH A POLICY AND NO INSTALLATION, the declaration is the business of
-   * whoever may already do everything in it — a grant of every act, on
-   * every kind, not only their own. A storefront with shoppers and staff
-   * offered its own declaration, roles and rules to somebody browsing who
-   * may do nothing but sign up (the seventh walk).
+   * THE SAME JUDGMENT THE SEAT MAKES (`mayChangeDeclaration`, `@graview/tools`,
+   * Roadmap f-seat-reshape): with a policy and no installation, the
+   * declaration is the business of whoever may already do everything in it
+   * — a grant of every act, on every kind, not only their own. A storefront
+   * with shoppers and staff offered its own declaration, roles and rules to
+   * somebody browsing who may do nothing but sign up (the seventh walk).
    */
-  const policy = store.policy;
-  if (!policy) return true;
-  const roles = principal?.roles ?? [];
-  return policy.grants.some(
-    (grant) => grant.mutations === "*" && !grant.self && (grant.kinds === undefined || grant.kinds === "*") && (grant.roles === "*" || roles.some((role) => (grant.roles as readonly string[]).includes(role))),
-  );
+  return mayChangeDeclaration(store, principal);
 }
 
 export { INSTALLATION_MODULE };

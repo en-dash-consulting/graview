@@ -93,6 +93,10 @@
       "types": "./dist/friction.d.ts",
       "default": "./dist/friction.js"
     },
+    "./css": {
+      "types": "./dist/css.d.ts",
+      "default": "./dist/css.js"
+    },
     "./learn": {
       "types": "./dist/learn.d.ts",
       "default": "./dist/learn.js"
@@ -100,6 +104,10 @@
     "./compose": {
       "types": "./dist/compose.d.ts",
       "default": "./dist/compose.js"
+    },
+    "./traits": {
+      "types": "./dist/trait-vocabulary.d.ts",
+      "default": "./dist/trait-vocabulary.js"
     },
     "./subscriptions": {
       "types": "./dist/subscriptions.d.ts",
@@ -219,6 +227,8 @@
     "./src/field-sight.ts",
     "./dist/publishing.js",
     "./src/publishing.ts",
+    "./dist/tidying.js",
+    "./src/tidying.ts",
     "./dist/typing.js",
     "./src/typing.ts"
   ],

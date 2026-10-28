@@ -130,6 +130,33 @@ export interface DescribedForm {
   readonly fields: readonly DescribedFormField[];
 }
 
+/**
+ * A VIDEO A WORKER VIEW PLACES (Roadmap f-video-hero), as a headless run
+ * says it: which record's field it is, what the browser is handed, and
+ * whether it will play — so an agent that wrote a hero can confirm the
+ * video plays without opening a browser. `playable` is a source a browser
+ * plays (MP4, WebM or Ogg: what a host's upload transcodes to) with a
+ * poster to show before it plays and under reduced motion; `why` says
+ * what is missing when it is not.
+ */
+export interface DescribedVideo {
+  readonly record: string;
+  readonly field: string;
+  /** What it shows: its caption, else its name. */
+  readonly text: string;
+  readonly name: string;
+  /** Its media type: `video/mp4`. */
+  readonly source: string;
+  readonly duration?: number;
+  readonly poster: boolean;
+  /** `<graview-video autoplay>`: muted, looping, inline, with no controls — a background. */
+  readonly autoplay: boolean;
+  /** `<graview-video cover>`: it fills its box. */
+  readonly cover: boolean;
+  readonly playable: boolean;
+  readonly why?: string;
+}
+
 export interface PlaceDescription {
   /** On the home: what its masthead says (FR-125). */
   readonly masthead?: DescribedMasthead;
@@ -149,6 +176,8 @@ export interface PlaceDescription {
   readonly parts: readonly DescribedPart[];
   /** The forms it offers this seat, each with its fields in the order asked: a kind's list its creating acts', a visitor form's place its own. */
   readonly forms?: readonly DescribedForm[];
+  /** The videos a worker view places (`<graview-video>`), each with whether it plays; absent where it places none. */
+  readonly videos?: readonly DescribedVideo[];
   readonly problems: readonly DescribedProblem[];
   /** The same, as plain text a chat can quote. */
   readonly text: string;

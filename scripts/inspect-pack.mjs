@@ -44,7 +44,7 @@ const REQUIRED = [/(^|\/)dist\/index\.js$/, /(^|\/)dist\/index\.d\.ts$/, /(^|\/)
  * built previews nothing.
  */
 const REQUIRED_IN = {
-  graview: [/^dist\/preview\/index\.html$/, /^dist\/preview\/page\.js$/],
+  graview: [/^dist\/preview\/index\.html$/, /^dist\/preview\/page\.js$/, /^dist\/preview\/splash\.js$/],
   // A place rendered to static HTML off the browser (FR-174): an entry of its own, which nothing on a page imports.
   "@graview/pages": [/^dist\/static\.js$/, /^dist\/static\.d\.ts$/],
 };

@@ -1,4 +1,4 @@
-import { SCHEMES, type Brand } from "@graview/core";
+import { groundSchemes, SCHEMES, type Brand } from "@graview/core";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { AppMark, themeCss } from "../../src/index.js";
@@ -55,6 +55,23 @@ describe("the theme's sheet", () => {
     expect(light).toMatch(/\[data-graview-scheme-only="dark"\]\s*\{\s*display:\s*none/);
     expect(dark).toMatch(/\[data-graview-logo-fallback="invert"\]\s*\{[^}]*filter:\s*invert\(1\) hue-rotate\(180deg\)[^}]*mix-blend-mode:\s*screen/);
     expect(light).not.toContain("invert(1)");
+  });
+
+  /*
+   * A LIGHT SCHEME WHOSE GROUND IS DARK is drawn as a dark page (Roadmap
+   * f-dark-brand-accent), so it draws the dark logo (Roadmap
+   * f-logo-on-dark-light-ground): a dark mark made for paper vanished on it.
+   */
+  it("hides the light logo, not the dark one, in a light scheme whose ground is dark", () => {
+    const black = themeCss("light", brand({ logo: { light: LIGHT, dark: DARK }, schemes: groundSchemes("#000000") }));
+    expect(black).toMatch(/\[data-graview-scheme-only="light"\]\s*\{\s*display:\s*none/);
+    expect(black).not.toMatch(/\[data-graview-scheme-only="dark"\]\s*\{\s*display:\s*none/);
+    // And inverts a light logo that asked to be, there as in the dark scheme.
+    expect(black).toContain("invert(1)");
+    // A light ground that is light keeps the light logo.
+    const paper = themeCss("light", brand({ logo: { light: LIGHT, dark: DARK }, schemes: groundSchemes("#f4efe6") }));
+    expect(paper).toMatch(/\[data-graview-scheme-only="dark"\]\s*\{\s*display:\s*none/);
+    expect(paper).not.toContain("invert(1)");
   });
 
   it("scopes both to an embed's own box", () => {

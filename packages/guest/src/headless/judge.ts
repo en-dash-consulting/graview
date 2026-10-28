@@ -1,4 +1,4 @@
-import type { DescribedPart, DescribedProblem } from "@graview/core/describe";
+import type { DescribedPart, DescribedProblem, DescribedVideo } from "@graview/core/describe";
 import { placeNamed, placesSaid, quoted, unsureOfViews } from "../host/links-words.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { handedLinks, judgeLink, linkRefusedWords } from "../host/external-links.js";
@@ -18,7 +18,7 @@ import type { HeadlessFailureReason, HeadlessInput, HeadlessTranscript } from ".
 
 export type Judged =
   /** `drawn`: the drawing itself, for the host to read a press against (0.1.45). */
-  | { readonly ok: true; readonly parts: readonly DescribedPart[]; readonly problems: readonly DescribedProblem[]; readonly drawn: DrawnTranscript }
+  | { readonly ok: true; readonly parts: readonly DescribedPart[]; readonly problems: readonly DescribedProblem[]; readonly drawn: DrawnTranscript; readonly videos: readonly DescribedVideo[] }
   | { readonly ok: false; readonly reason: HeadlessFailureReason; readonly detail: string };
 
 /* SMIL sets an attribute after the host judged it, and moves past a person's wish for less motion. */
@@ -66,7 +66,12 @@ export function sayRefusal(refusal: ViewRefusal, host: ImageHost & { readonly li
   }
 }
 
-export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessInput): Judged {
+/** What the host adds to a transcript's drawing beyond what the isolate was told: the app's stylesheet for every view (Roadmap f-app-wide-view-theme). */
+export interface JudgeOptions {
+  readonly theme?: string;
+}
+
+export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessInput, options: JudgeOptions = {}): Judged {
   const { limits } = input;
   if (transcript.messages > limits.messages) return { ok: false, reason: "flood", detail: `It sent ${transcript.messages} messages, more than the ${limits.messages} a view may send in a second.` };
   const acts = new Set(input.acts);
@@ -76,7 +81,7 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   /* A link out goes where the records the view was shown say, or to an origin the host lists, as on the page. */
   const handed = handedLinks(input.props);
   /* Nothing loads in a run: the app's own image is drawn as the path the live host resolves, where the host says it does. */
-  const drawn = drawTranscript(transcript.renders, transcript.sheets, { maxNodes: limits.maxNodes, ...(input.origin ? { origin: input.origin } : {}), ...(input.imageOrigins ? { imageOrigins: input.imageOrigins } : {}), ...(input.assets ? { asset: (path: string) => path } : {}), link: (value: string) => judgeLink(value, { handed, ...(input.linkOrigins ? { origins: input.linkOrigins } : {}) }) });
+  const drawn = drawTranscript(transcript.renders, transcript.sheets, { maxNodes: limits.maxNodes, ...(input.origin ? { origin: input.origin } : {}), ...(input.imageOrigins ? { imageOrigins: input.imageOrigins } : {}), ...(input.assets ? { asset: (path: string) => path } : {}), ...(options.theme ? { theme: options.theme } : {}), link: (value: string) => judgeLink(value, { handed, ...(input.linkOrigins ? { origins: input.linkOrigins } : {}) }) });
   if (drawn.over) return { ok: false, reason: "nodes", detail: `It drew more than the ${limits.maxNodes.toLocaleString("en-US")} things a view may draw.` };
   // A kind's list is somewhere a view may go by name too, by its plural or the kind's name.
   const goes = [...input.places, ...(input.lists ?? []).filter((slug) => !input.places.some((place) => place.as === slug)).map((slug) => ({ as: slug }))];
@@ -98,5 +103,5 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
     if ("place" in went && !placeNamed(goes, went.place))
       problems.push({ at: "navigate", says: unsure ? `It goes to the place ${quoted(went.place)}, which is none of the places this run was told of.${placesSaid(goes)}${unsureOfViews}` : `It goes to the place ${quoted(went.place)}, which this app does not have.${placesSaid(goes)}` });
   }
-  return { ok: true, parts: said.parts, problems, drawn };
+  return { ok: true, parts: said.parts, problems, drawn, videos: said.videos };
 }

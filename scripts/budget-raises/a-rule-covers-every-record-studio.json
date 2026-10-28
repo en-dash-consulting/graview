@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 7154,
+  "gzipped": 2117,
+  "note": "Raised when a rule came to cover every record without a cost warning (Roadmap f-rule-covers-every): the studio keeps a coverage rule through its round trip (`coversEvery`, `coversThrough`, `coversVia` on a rule) and writes it back as `coverageRule`, over the core's share of the same change. Measured at 1_717_339 / 604_494 against main's 1_710_185 / 602_377: 7_154 more minified, 2_117 gzipped."
+}

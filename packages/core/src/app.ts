@@ -4,6 +4,7 @@ import type { InvariantDefinition } from "./invariants/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import type { Policy } from "./permissions/types.js";
 import type { Publishing } from "./publish.js";
+import type { AppTidying } from "./mutations/vote-suggestion.js";
 import type { Brand } from "./theme/types.js";
 import type { ModuleMap } from "./modules.js";
 import type { GraphSnapshot } from "./graph/types.js";
@@ -212,6 +213,15 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * where it is honored; `graview check` judges the roles it names.
    */
   readonly publishing?: Publishing;
+  /**
+   * WHAT THE APP SAYS OF SUGGESTIONS AS A WHOLE (Roadmap f-suggestion-votes):
+   * `autoAcceptAt`, the votes for a suggestion at which the app's own actor
+   * makes it without waiting for someone who may. Absent, a suggestion
+   * waits until one of them decides, however many voted. Handed to the
+   * store (`StoreOptions.tidying`), which is where it is honored; a kind's
+   * own `tidying` says what the actor may do to its records on its own.
+   */
+  readonly tidying?: AppTidying;
   /**
    * The name, the palette and the typography this installation wears.
    *

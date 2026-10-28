@@ -1,0 +1,7 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 702,
+  "gzipped": 950,
+  "changeset": "the-seat-proposes-a-change-to-the-app.md",
+  "note": "Raised when the seat came to propose a change to the app itself (Roadmap f-seat-reshape): the studio's door reads the same judgment the seat does (`mayChangeDeclaration`, `@graview/tools`), the provider, the frame and the router carry `onProposeChange`, and a seat turn keeps the card it was answered with. Measured at 1_710_887 / 603_371 against 1_710_185 / 602_421 minified and gzipped."
+}

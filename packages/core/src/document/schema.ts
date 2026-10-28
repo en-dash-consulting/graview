@@ -20,6 +20,17 @@ export const MAX_DOCUMENT_BYTES = 256 * 1024;
 /** The most a brand's logo or page icon may be, written inline (FR-124). */
 const MARK_MAX = 64 * 1024;
 
+/**
+ * HOW AN APP'S PAGE OPENS (Roadmap f-splash-in-document): the styles an
+ * opening screen draws in, and the shaders `@graview/pages/splash` ships
+ * for the `shader` style — named, never written into a document, since
+ * data is never code. The renderer keeps the same two lists.
+ */
+export const SPLASH_STYLES = ["plain", "editorial", "shader", "ascii"] as const;
+export type SplashStyle = (typeof SPLASH_STYLES)[number];
+export const SPLASH_SHADERS = ["drift", "ripple", "veil"] as const;
+export type SplashShader = (typeof SPLASH_SHADERS)[number];
+
 /** kebab-case: kinds, acts, rules, edges, roles, modules. */
 export const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 /** Field names are identifiers so a rule can say them bare: `quote != null`. */
@@ -259,6 +270,17 @@ function build() {
      */
     setsOther: z.optional(z.record(fieldName, ValueSpec)),
     /**
+     * Fields set on every record the subject is ALREADY linked to through a
+     * relation, by relation (Roadmap f-acts-update-linked): `"setsLinked":
+     * { "event": { "title": { "expr": "name" } } }` on an act `on` a plan
+     * item carries its name to each of its events, in the same change. An
+     * expression reads the subject's fields, with `to` the far record; a
+     * `$to` is that record. Each far record's own edit is what the store
+     * judges, so the act is refused, naming the record, where the person
+     * may not change it.
+     */
+    setsLinked: z.optional(z.record(edgeName, z.record(fieldName, ValueSpec))),
+    /**
      * The subject's links severed before it connects (FR-115): `true`, those
      * of the relation it connects; or the relations named, each at the
      * subject's own end. The link being made is kept.
@@ -278,15 +300,37 @@ function build() {
     args: z.optional(z.record(z.string(), ValueSpec)),
   });
 
-  const RuleSpec = z.strictObject({
-    title: z.optional(str(1, 120)),
-    description: z.optional(sentence),
-    over: z.union([z.literal("graph"), name("kind")]),
-    when: z.optional(expression),
-    require: expression,
-    says: z.optional(template),
-    repairs: z.optional(some(RepairSpec, undefined, 10)),
+  /**
+   * A COVERAGE RULE (Roadmap f-rule-covers-every): each record of the kind
+   * is linked, `through` a relation — and `via` one more when the first
+   * reaches an intermediate kind — to `every` record of another kind. The
+   * store judges it in one pass over the links, never through the
+   * expression evaluator, so the checker has no cost to warn of.
+   */
+  const CoverSpec = z.strictObject({
+    every: name("kind"),
+    through: edgeName,
+    via: z.optional(edgeName),
   });
+
+  const RuleSpec = z
+    .strictObject({
+      title: z.optional(str(1, 120)),
+      description: z.optional(sentence),
+      over: z.union([z.literal("graph"), name("kind")]),
+      when: z.optional(expression),
+      require: z.optional(expression),
+      covers: z.optional(CoverSpec),
+      says: z.optional(template),
+      repairs: z.optional(some(RepairSpec, undefined, 10)),
+    })
+    .check(
+      z.superRefine((r, ctx) => {
+        if (!r.require && !r.covers) ctx.addIssue({ code: "custom", message: 'a rule says what must hold in "require", or what each record must be linked to in "covers"', path: ["require"] });
+        if (r.require && r.covers) ctx.addIssue({ code: "custom", message: 'a rule is judged by "require" or by "covers", not both', path: ["covers"] });
+        if (r.covers && r.over === "graph") ctx.addIssue({ code: "custom", message: 'a coverage rule is over a kind, whose records it follows through their links; name the kind in "over"', path: ["over"] });
+      }),
+    );
 
   const GrantSpec = z.strictObject({
     roles: z.union([some(name("role"), 1), z.literal("*")]),
@@ -389,6 +433,41 @@ function build() {
      * the description stays the app's, in listings and on the name's hover.
      */
     subtitle: z.optional(z.literal(false)),
+    /*
+     * THE OPENING SCREEN (Roadmap f-splash-in-document): what the page shows
+     * while the app's code loads, gone the moment a place has drawn. In the
+     * document, so an export, an import and a remix carry it. `style` is
+     * one of `SPLASH_STYLES`; `image` is a mark as the logo is one (inline
+     * SVG, or a path on the app's own host; `brand-splash-image`); `title`
+     * stands in for the app's name and `kicker` is one small line over it;
+     * `shader` names one of `SPLASH_SHADERS` for the shader style
+     * (`brand-splash-shader`). Drawn by `@graview/pages/splash`.
+     */
+    splash: z.optional(
+      z.strictObject({
+        style: z.enum(SPLASH_STYLES),
+        image: z.optional(str(1, MARK_MAX)),
+        title: z.optional(str(1, 80)),
+        kicker: z.optional(str(1, 80)),
+        shader: z.optional(str(1, 40)),
+      }),
+    ),
+    /*
+     * ONE THEME FOR EVERY VIEW (Roadmap f-app-wide-view-theme): a stylesheet
+     * every worker view is drawn with before its own, and whether a view
+     * fades when the record it shows changes. The sheet is held to the
+     * sanitizer and the length a view's own is by the checker
+     * (`brand-views-css`, brand-check.ts), not here: the limit is the
+     * sanitizer's (`@graview/core/css`), which a page fetches only as it
+     * first draws a view, and the shape a page reads up front names it
+     * nowhere, so the two share no module.
+     */
+    views: z.optional(
+      z.strictObject({
+        css: z.optional(str(1)),
+        motion: z.optional(z.enum(["none", "fade"])),
+      }),
+    ),
   });
 
   const loose = z.record(z.string(), z.unknown());
@@ -553,8 +632,13 @@ function build() {
         publishers: z.optional(some(name("role"), 1, 40)),
       }),
     ),
+    /**
+     * What the app says of suggestions as a whole (Roadmap f-suggestion-votes): `autoAcceptAt`, the votes for a
+     * suggestion at which the app's own actor makes it. A kind's own `tidying` says what the actor may do to its records.
+     */
+    tidying: z.optional(z.strictObject({ autoAcceptAt: z.optional(z.number().check(z.int(), z.minimum(1), z.maximum(10_000))) })),
   });
-  return { FieldSpec, EdgeSpec, ComputedSpec, KindSpec, ValueSpec, EffectSpec, ActSpec, RepairSpec, RuleSpec, GrantSpec, SightSpec, PolicySpec, BrandSpec, PagesSpec, DocumentSpec };
+  return { FieldSpec, EdgeSpec, ComputedSpec, KindSpec, ValueSpec, EffectSpec, ActSpec, RepairSpec, CoverSpec, RuleSpec, GrantSpec, SightSpec, PolicySpec, BrandSpec, PagesSpec, DocumentSpec };
 }
 
 let built: ReturnType<typeof build> | undefined;
@@ -569,6 +653,7 @@ export const ValueSpec = z.lazy(() => shapes().ValueSpec);
 export const EffectSpec = z.lazy(() => shapes().EffectSpec);
 export const ActSpec = z.lazy(() => shapes().ActSpec);
 export const RepairSpec = z.lazy(() => shapes().RepairSpec);
+export const CoverSpec = z.lazy(() => shapes().CoverSpec);
 export const RuleSpec = z.lazy(() => shapes().RuleSpec);
 export const GrantSpec = z.lazy(() => shapes().GrantSpec);
 export const SightSpec = z.lazy(() => shapes().SightSpec);
@@ -585,6 +670,7 @@ export type ValueSpec = z.infer<typeof ValueSpec>;
 export type EffectSpec = z.infer<typeof EffectSpec>;
 export type ActSpec = z.infer<typeof ActSpec>;
 export type RuleSpec = z.infer<typeof RuleSpec>;
+export type CoverSpec = z.infer<typeof CoverSpec>;
 export type SightSpec = z.infer<typeof SightSpec>;
 export type PolicySpec = z.infer<typeof PolicySpec>;
 export type BrandSpec = z.infer<typeof BrandSpec>;

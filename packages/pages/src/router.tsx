@@ -1,6 +1,6 @@
 import { numberAsRead, pluralLabel, type AnySchema, type Store } from "@graview/core";
 import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
-import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
+import { HOME_SLUG, openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
 import { narrowedPath } from "@graview/core/navigate";
 import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
@@ -421,6 +421,9 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
         return node ? narrowedPath(recordPath(context.store.schema, node.kind, to.record), { section: also?.section }) : undefined;
       }
       if ("place" in to) {
+        /* A view may name the home and the Scene (FR-235): the front page here, and the Scene's own address, its stop never a page's section. */
+        if (to.place === HOME_SLUG) return narrowedPath("/", { section: also?.section });
+        if (to.place === OVERVIEW_SLUG) return OVERVIEW_PATH;
         const place = context.views?.places().find((candidate) => candidate.as === to.place);
         return place ? narrowedPath(pathOfPlace(context, place), also) : undefined;
       }
@@ -429,14 +432,30 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
     const go = (path: string | undefined) => {
       if (path !== undefined) navigate(path);
     };
+    /*
+     * THE SCENE FROM A PAGE (FR-235), as "Show in the scene" and the bar's
+     * switch reach it: the host's own way where it draws the scene (an
+     * embed, `context.overview`), else the scene's address where this face
+     * owns its page (`sceneHref`); an embedded face that draws no scene has
+     * none, and the link goes nowhere.
+     */
+    const toOverview = () => {
+      if (context.overview) return context.overview();
+      if (!context.embedded) window.location.assign(context.sceneHref ?? "/");
+    };
+    const overviewHref = (): string | undefined => {
+      if (context.overview) return hostHref === false ? undefined : hostHref ? hostHref(OVERVIEW_PATH) : `${base}${OVERVIEW_PATH}`;
+      return context.embedded ? undefined : (context.sceneHref ?? "/");
+    };
     return {
       record: (id, also) => go(pathOf({ record: id }, also)),
-      place: (as, also) => go(pathOf({ place: as }, also)),
+      place: (as, also) => (as === OVERVIEW_SLUG ? toOverview() : go(pathOf({ place: as }, also))),
       list: (kind, also) => go(pathOf({ list: kind }, also)),
       // A view drawn stands in the main column, at its own address, as the seat's does.
       draft: () => navigate("/~draft"),
       // What a view's <a data-record> carries as its href: this face's address for it (0.1.47), or the host's, or none where the host has none.
       href: (to, also) => {
+        if ("place" in to && to.place === OVERVIEW_SLUG) return overviewHref();
         const path = hostHref === false ? undefined : pathOf(to, also);
         if (path === undefined) return undefined;
         return hostHref ? hostHref(path) : `${base}${path}`;
@@ -701,6 +720,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.seats ? { seats: context.seats } : {}) /* So the person's button names the seat, not its principal id. */}
       onSeat={(seat) => (outer ? outer.takeSeat(seat) : setTaken({ from: handed.principal, seat }))}
       {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
+      {...(context.onProposeChange ? { onProposeChange: context.onProposeChange } : {})}
       {...(context.onExport ? { onExport: context.onExport } : {})}
       {...(context.ai ? { ai: context.ai } : {})}
       {...(context.subscriptions ? { subscriptions: context.subscriptions } : {})}

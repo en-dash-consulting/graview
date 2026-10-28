@@ -150,7 +150,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     }
     rules[rule.name] = {
       over: rule.scope === "graph" ? "graph" : rule.scope.kind,
-      require: rule.judgment.require,
+      ...(rule.judgment.require ? { require: rule.judgment.require } : {}),
+      ...(rule.judgment.covers ? { covers: rule.judgment.covers } : {}),
       ...(rule.judgment.when ? { when: rule.judgment.when } : {}),
       ...(rule.judgment.says ? { says: rule.judgment.says } : {}),
       ...(rule.label ? { title: rule.label } : {}),
@@ -191,6 +192,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     ...(app.connections ? { connections: app.connections as GraviewDocument["connections"] } : {}),
     ...(app.forms ? { forms: structuredClone(app.forms) as GraviewDocument["forms"] } : {}),
     ...(app.publishing ? { publishing: structuredClone(app.publishing) as GraviewDocument["publishing"] } : {}),
+    ...(app.tidying ? { tidying: structuredClone(app.tidying) as GraviewDocument["tidying"] } : {}),
     // Who it is for and its jobs are data (Roadmap f-app-jobs); a job's next act the document could not carry is left out, as a grant's is.
     ...(app.purpose ? { purpose: { ...structuredClone(app.purpose), ...(app.purpose.jobs ? { jobs: app.purpose.jobs.map((job) => (job.act !== undefined && unwritten.has(job.act) ? (({ act: _act, ...rest }) => structuredClone(rest))(job) : structuredClone(job))) } : {}) } as GraviewDocument["purpose"] } : {}),
     // View specs are already data: they are the document's views (FR-03).

@@ -1,4 +1,4 @@
-import { svgProblem, type BrandLogo } from "@graview/core";
+import { svgProblem, type BrandLogo, type BrandViews } from "@graview/core";
 import type { GuestTheme } from "../protocol.js";
 
 /*
@@ -62,6 +62,12 @@ export interface GuestBrand {
   readonly name?: string;
   /** An inline SVG string, a `data:` image, or an address on the page's own origin — or one for each scheme, the guest handed the one its scheme draws. */
   readonly logo?: string | BrandLogo;
+  /**
+   * What every worker view inherits (Roadmap f-app-wide-view-theme): the
+   * app's stylesheet, drawn in the view's region before its own, and the
+   * fade between records. Never handed to the view: the host draws them.
+   */
+  readonly views?: BrandViews;
 }
 
 /**

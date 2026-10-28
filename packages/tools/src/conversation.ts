@@ -1,5 +1,6 @@
 import {
   brokenWords,
+  DATE_VALUE,
   dayAsRead,
   pluralOf,
   humanizeField,
@@ -15,12 +16,15 @@ import {
   type Store,
   type Violation,
 } from "@graview/core";
-import { argumentWords, lowerFirst, readableFields, tellApart } from "@graview/core/words";
+import { argumentWords, lowerFirst, readableFields, readPartialDay, tellApart } from "@graview/core/words";
 import { search } from "@graview/core/search";
 import { formFields, type FormField } from "@graview/core/forms";
+import type { GraviewDocument } from "@graview/core/document";
 import type { HostAi } from "./ai.js";
+import type { Decide } from "./fast.js";
 import { validateProposals, type Completion, type ProposedCall } from "./intelligence.js";
 import type { OfferedQuestion } from "./questions.js";
+import type { ReshapeProposal } from "./reshape.js";
 
 /**
  * ONE MOVE THE SEAT MAKES, as data both faces apply.
@@ -126,6 +130,29 @@ export interface ChatReply {
    * answered, which is said by saying nothing.
    */
   readonly via?: string;
+  /**
+   * A CHANGE TO THE APP ITSELF (Roadmap f-seat-reshape): the words asked for
+   * a new kind of thing to keep, a field, a part to drop, and code composed
+   * the change (`@graview/tools/reshape`). Drawn as a card — added, kept
+   * and dropped as chips the person toggles, anything breaking said plainly
+   * — and handed to the host's `onProposeChange` when accepted. Only ever
+   * present where the context carried `reshape`.
+   */
+  readonly reshape?: ReshapeProposal;
+}
+
+/**
+ * WHAT A SEAT THAT MAY CHANGE THE APP IS HANDED: the app's document (or how
+ * to get it, fetched when first needed) and the host's `decide`. Given, the
+ * seat's turn lists `propose_change` and a host's model may call it; the
+ * panel reads the words for a change to the app's shape itself. A seat
+ * whose role may not change the declaration, or whose host handed no
+ * `onProposeChange`, is handed none, and the tool does not exist for it.
+ */
+export interface ReshapeContext {
+  /** The app's document, or how to get it when first needed; none (undefined) for an app declared in code, whose seat is then offered no change. */
+  readonly document: GraviewDocument | undefined | (() => GraviewDocument | undefined | Promise<GraviewDocument | undefined>);
+  readonly decide: Decide;
 }
 
 export interface ChatContext {
@@ -161,6 +188,8 @@ export interface ChatContext {
   readonly place?: string;
   /** The day it is (YYYY-MM-DD) where the app is pinned to one: what "this week" and "overdue" are read against. */
   readonly today?: string;
+  /** Given only to a seat that may change the app itself, with a host to apply it: the turn then lists `propose_change`. */
+  readonly reshape?: ReshapeContext;
 }
 
 export type Responder<S extends AnySchema = AnySchema> = (
@@ -592,7 +621,8 @@ export function graphResponder<S extends AnySchema>(
         .map((field) => {
           const raw = (node as Record<string, unknown>)[field.key];
           if (typeof raw === "boolean" && !/\s/.test(field.label)) return raw ? quietly(field.label) : `not ${quietly(field.label)}`;
-          if (typeof raw === "string" && ISO_DAY.test(raw)) return `${quietly(field.label)} ${dayAsRead(raw)}`;
+          // A year or a month alone is said as one too: "first seen May 2016", never "2016-05" (Roadmap f-partial-dates-in-conversation).
+          if (typeof raw === "string" && DATE_VALUE.test(raw)) return `${quietly(field.label)} ${dayAsRead(raw)}`;
           return field.alone.startsWith(field.label) ? quietly(field.label) + field.alone.slice(field.label.length) : `${quietly(field.label)} ${field.alone}`;
         })
         .join(", ");
@@ -745,6 +775,17 @@ function answerFrom(
     case "text":
       return quoted;
     case "date": {
+      /*
+       * A YEAR OR A MONTH AS SAID (Roadmap f-partial-dates-in-conversation).
+       * "Founded in 2006" names a year, "first seen May 2016" a month, and a
+       * date that may know only that much (`partial`) keeps it as said —
+       * `2006`, `2016-05` — rather than the day it is, which would be a
+       * false exact date. A date that must be a day is still the day it is.
+       */
+      if (field.partial) {
+        const said = partialDaySaid(asked);
+        if (said !== undefined) return said;
+      }
       const day = today ?? new Date().toISOString().slice(0, 10);
       // A sentence that names no hour still has to give one when the act asks for a time of day.
       return field.time ? `${day}T09:00` : day;
@@ -803,5 +844,22 @@ export function llmResponder<S extends AnySchema>(options: {
   return async (store, text, context = {}) => (await import("./seat-model.js")).answerWithModel(options, store, text, context);
 }
 
-/** A day alone, as the record holds it: `YYYY-MM-DD`. */
-const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+/** A month as a person writes it in a sentence, whole or by its first three letters ("sept" too). */
+const MONTH_SAID = "(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec)";
+/** A year alone in a sentence: four digits that are not part of a day (`2016-05-04`), a number or an id. */
+const YEAR_SAID = /(?<![\w\-/.])((?:1\d|20)\d{2})(?![\w\-/.:])/;
+/** A month and its year in a sentence: "May 2016", "sept. 2016", "2016-05", "5/2016". */
+const MONTH_SAID_WITH_YEAR = new RegExp(`(?<![\\w\\-/])(${MONTH_SAID}\\.? (?:1\\d|20)\\d{2}|(?:1\\d|20)\\d{2}-(?:0[1-9]|1[0-2])|(?:0?[1-9]|1[0-2])/(?:1\\d|20)\\d{2})(?![\\w\\-/:])`);
+
+/**
+ * The year or the month a sentence names, as a record keeps one — `2006`,
+ * `2016-05` — read by core's own reader of a year or a month alone
+ * (`readPartialDay`); undefined when it names none. A month is looked for
+ * first, so "May 2016" is the month and not the year in it.
+ */
+function partialDaySaid(sentence: string): string | undefined {
+  const month = sentence.match(MONTH_SAID_WITH_YEAR)?.[1];
+  if (month !== undefined) return readPartialDay(month);
+  const year = sentence.match(YEAR_SAID)?.[1];
+  return year !== undefined ? readPartialDay(year) : undefined;
+}

@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 31600,
+  "note": "Raised when formulas came to join text and build a date-time (Roadmap f-formula-text-datetime) and an act to carry a change to the records it is linked to (Roadmap f-acts-update-linked): the evaluator's seven functions and their date arithmetic (`expr/when.ts`), the checker's typing of them (`expr/typing.ts`, `expr-type-findings.ts`), the act findings for `setsLinked`, the compiled act's `through` effect, the editor keeping a carried field in step, `describe`'s line for what an act carries, and the store judging each far record's own edit; the worker compiles, checks and runs documents, so it carries all of it, unminified. Measured at 2_332_502 B against 2_301_008: 31_494 more, rounded up to the hundred."
+}

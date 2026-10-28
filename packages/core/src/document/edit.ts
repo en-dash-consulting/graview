@@ -48,7 +48,7 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
-import { brandFindings, emojiIconSentence, groundWords, subtitleSentence } from "./brand-check.js";
+import { brandFindings, emojiIconSentence, groundWords, splashSentence, subtitleSentence, viewsCssSentence, viewsMotionSentence } from "./brand-check.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
 import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
@@ -242,6 +242,15 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         scheme: z.union([z.enum(["light", "dark", "auto"]), z.null()]).optional(),
         // Whether the home draws the description as the line under the name (Roadmap f-home-subtitle-separate): false keeps it off, true or null draws it again.
         subtitle: z.union([z.boolean(), z.null()]).optional(),
+        // The opening screen (Roadmap f-splash-in-document), whole; null for Graview's own.
+        splash: z.union([z.object({ style: z.string(), image: z.string().min(1).optional(), title: z.string().min(1).max(80).optional(), kicker: z.string().min(1).max(80).optional(), shader: z.string().min(1).max(40).optional() }).strict(), z.null()]).optional(),
+        // What every worker view inherits (Roadmap f-app-wide-view-theme): a stylesheet drawn before each view's own (its length the sanitizer's to refuse, in `brandFindings`), and a fade between records; null clears either, or all of it.
+        views: z
+          .union([
+            z.object({ css: z.union([z.string().min(1), z.null()]).optional(), motion: z.union([z.enum(["none", "fade"]), z.null()]).optional() }).strict(),
+            z.null(),
+          ])
+          .optional(),
       })
       .strict(),
     "set-name": z.object({ op: z.literal("set-name"), name: z.string().min(1).max(80) }).strict(),
@@ -610,8 +619,8 @@ function proseSwap(from: string, to: string): (text: string) => string {
 const subjectKinds = (act: Doc): Kinds => (act.on ? new Set(asArray(act.on)) : NONE);
 
 /** The kinds each `set` in an act writes to: its subject, a record it made, the other end of what it connects (FR-115), or (for a `$ref` target) any kind. */
-function setTargets(act: Doc, doc?: Doc): { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "setsOther" | "writes" | "effect" | "create"; index?: number }[] {
-  const out: { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "setsOther" | "writes" | "effect" | "create"; index?: number }[] = [];
+function setTargets(act: Doc, doc?: Doc): { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "setsOther" | "setsLinked" | "writes" | "effect" | "create"; index?: number; relation?: string }[] {
+  const out: { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "setsOther" | "setsLinked" | "writes" | "effect" | "create"; index?: number; relation?: string }[] = [];
   const made = new Map<string, string>();
   if (act.creates) made.set("new", act.creates);
   (act.effects ?? []).forEach((e: Doc) => {
@@ -622,6 +631,11 @@ function setTargets(act: Doc, doc?: Doc): { set: Record<string, unknown>; kinds:
     const relation = act.connects ?? act.severs;
     const end = doc && relation ? farEnd(doc.kinds, relation, asArray(act.on)) : undefined;
     out.push({ set: act.setsOther, kinds: end && end.kinds !== "*" ? new Set(end.kinds) : "*", where: "setsOther" });
+  }
+  // What it carries to the records linked to its subject, by relation: the kinds at each relation's far end.
+  for (const [relation, set] of Object.entries(act.setsLinked ?? {}) as [string, Record<string, unknown>][]) {
+    const end = doc ? farEnd(doc.kinds, relation, asArray(act.on)) : undefined;
+    out.push({ set, kinds: end && end.kinds !== "*" ? new Set(end.kinds) : "*", where: "setsLinked", relation });
   }
   (act.effects ?? []).forEach((e: Doc, index: number) => {
     if (e.create) out.push({ set: e.set ?? {}, kinds: new Set([e.create]), where: "create", index });
@@ -676,10 +690,18 @@ class Editor {
     // An edit that names nothing to change is refused, never applied with nothing said.
     const named = Object.keys(e).filter((key) => key !== "op" && e[key] !== undefined);
     if (named.length === 0) return this.fail(i, "", "a set-brand edit names at least one key of the brand to set, or null to clear one", '{"op": "set-brand", "accent": "#0f6e5c"}');
-    const emptyPart = (["typography", "shape", "accents"] as const).find((key) => isObject(e[key]) && Object.keys(e[key]).length === 0);
+    const emptyPart = (["typography", "shape", "accents", "views"] as const).find((key) => isObject(e[key]) && Object.keys(e[key]).length === 0);
     if (emptyPart) return this.fail(i, emptyPart, `${emptyPart} names no part to set; name one, or give null to clear all of it`);
     const judged = brandFindings(
-      { ...(typeof e.timeZone === "string" ? { timeZone: e.timeZone } : {}), ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
+      {
+        ...(typeof e.timeZone === "string" ? { timeZone: e.timeZone } : {}),
+        ...(isObject(e.splash) ? { splash: e.splash } : {}),
+        ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}),
+        ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}),
+        ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}),
+        // The stylesheet every view gets is judged as a page draws it (Roadmap f-app-wide-view-theme): an edit that would leave part of it undrawn is refused, saying which part.
+        ...(isObject(e.views) && typeof e.views["css"] === "string" ? { views: { css: e.views["css"] } } : {}),
+      },
       { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}) },
     );
     if (judged.length > 0) return void this.findings.push(...judged);
@@ -820,6 +842,33 @@ class Editor {
       if (e.subtitle === false) brand["subtitle"] = false;
       else delete brand["subtitle"];
       this.said.push(subtitleSentence(e.subtitle !== false));
+    }
+    // The opening screen is set whole or cleared: its keys are few, and half of one is nothing a page could draw.
+    if (e.splash !== undefined) {
+      if (e.splash === null) delete brand["splash"];
+      else brand["splash"] = e.splash;
+      if (!(e.splash === null && !isObject(this.doc.brand?.splash))) this.said.push(splashSentence(e.splash));
+    }
+    /* What every view inherits (Roadmap f-app-wide-view-theme): the stylesheet and the fade, each set or cleared on its own, null clearing both. */
+    if (e.views === null) {
+      const had: Record<string, unknown> = brand["views"] ?? {};
+      if (had["css"] !== undefined || had["motion"] === undefined) this.said.push(viewsCssSentence(false));
+      if (had["motion"] === "fade") this.said.push(viewsMotionSentence(undefined));
+      delete brand["views"];
+    } else if (isObject(e.views)) {
+      const into: Record<string, unknown> = { ...(brand["views"] ?? {}) };
+      if (e.views["css"] !== undefined) {
+        if (e.views["css"] === null) delete into["css"];
+        else into["css"] = e.views["css"];
+        this.said.push(viewsCssSentence(e.views["css"] !== null));
+      }
+      if (e.views["motion"] !== undefined) {
+        if (e.views["motion"] === "fade") into["motion"] = "fade";
+        else delete into["motion"];
+        this.said.push(viewsMotionSentence(e.views["motion"] === "fade" ? "fade" : undefined));
+      }
+      if (Object.keys(into).length === 0) delete brand["views"];
+      else brand["views"] = into;
     }
     if (Object.keys(brand).length === 0) delete this.doc.brand;
     else this.doc.brand = brand;
@@ -2213,7 +2262,7 @@ class Editor {
       gone.push("its hue");
     }
     for (const [name, rule] of Object.entries(this.doc.rules ?? {}) as [string, Doc][]) {
-      if (rule.over === kind || exprMentions(this.doc, rule.when, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" }) || exprMentions(this.doc, rule.require, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" })) {
+      if (rule.over === kind || rule.covers?.every === kind || exprMentions(this.doc, rule.when, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" }) || exprMentions(this.doc, rule.require, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" })) {
         delete this.doc.rules[name];
         gone.push(titled("rule", name, rule));
       }
@@ -2769,6 +2818,11 @@ class Editor {
         if (act.connects === r.from) act.connects = r.to;
         if (act.severs === r.from) act.severs = r.to;
         if (Array.isArray(act.replaces)) act.replaces = act.replaces.map((e: string) => (e === r.from ? r.to : e));
+        if (act.setsLinked?.[r.from] !== undefined) {
+          const carried: Doc = {};
+          for (const [k, v] of Object.entries(act.setsLinked)) carried[k === r.from ? r.to : k] = v;
+          act.setsLinked = carried;
+        }
         for (const e of act.effects ?? []) {
           if (e.connect === r.from) e.connect = r.to;
           if (e.sever === r.from) e.sever = r.to;
@@ -2784,6 +2838,7 @@ class Editor {
           if (t.set[r.from] === `$${r.from}`) args.set(r.from, r.to);
           if (t.where === "sets") act.sets = renamed;
           else if (t.where === "setsOther") act.setsOther = renamed;
+          else if (t.where === "setsLinked") act.setsLinked[t.relation!] = renamed;
           else act.effects[t.index!].set = renamed;
         }
         if (act.writes && (hasKind(on, r.kind) || act.creates === r.kind) && act.writes.includes(r.from)) {
@@ -2835,7 +2890,12 @@ class Editor {
       const before = JSON.stringify(rule);
       const ctx: Kinds = rule.over === "graph" ? NONE : new Set([rule.over]);
       if (rule.when !== undefined) rule.when = exprAt(rule.when, ctx);
-      rule.require = exprAt(rule.require, ctx);
+      if (rule.require !== undefined) rule.require = exprAt(rule.require, ctx);
+      // A coverage rule names its kind and its relations outright: each follows its rename.
+      if (rule.covers) {
+        if (r.t === "kind" && rule.covers.every === r.from) rule.covers.every = r.to;
+        if (r.t === "edge") for (const key of ["through", "via"] as const) if (rule.covers[key] === r.from) rule.covers[key] = r.to;
+      }
       const mentioned = JSON.stringify(rule) !== before;
       if (rule.says !== undefined) rule.says = tmplAt(rule.says, ctx, mentioned ? prose : undefined);
       if (r.t === "kind" && rule.over === r.from) rule.over = r.to;
@@ -2986,6 +3046,13 @@ class Editor {
       const on = subjectKinds(act);
       let uses = exprMentions(doc, act.allowedWhen, on, r) || templateMentions(doc, act.refusal, on, r);
       if (r.t === "edge") uses ||= act.connects === r.from || act.severs === r.from || (act.effects ?? []).some((e: Doc) => e.connect === r.from || e.sever === r.from);
+      // A relation it carried values through carries nothing now: the entry goes; an act that did nothing else goes with it.
+      if (r.t === "edge" && !uses && act.setsLinked?.[r.from] !== undefined) {
+        delete act.setsLinked[r.from];
+        if (Object.keys(act.setsLinked).length === 0) delete act.setsLinked;
+        const stillDoes = act.creates || act.writes || act.sets || act.setsLinked || act.connects || act.severs || act.removes || (act.effects ?? []).length > 0;
+        if (!stillDoes) uses = true;
+      }
       // A relation it only replaced goes from the list; one that replaced nothing else goes with it (FR-115).
       if (r.t === "edge" && !uses && Array.isArray(act.replaces) && act.replaces.includes(r.from)) {
         act.replaces = act.replaces.filter((e: string) => e !== r.from);
@@ -3006,7 +3073,10 @@ class Editor {
         if (act.args && Object.keys(act.args).length === 0) delete act.args;
         if (act.sets && Object.keys(act.sets).length === 0) delete act.sets;
         if (act.setsOther && Object.keys(act.setsOther).length === 0) delete act.setsOther;
-        const doesSomething = act.creates || act.writes || act.sets || act.connects || act.severs || act.removes || (act.effects ?? []).some((e: Doc) => e.create || e.connect || e.sever || e.remove || (e.set && Object.keys(e.set).length > 0));
+        // A relation whose carried fields are all gone carries nothing: it goes from `setsLinked`, and an empty `setsLinked` goes with it.
+        for (const [relation, set] of Object.entries(act.setsLinked ?? {}) as [string, Doc][]) if (Object.keys(set).length === 0) delete act.setsLinked[relation];
+        if (act.setsLinked && Object.keys(act.setsLinked).length === 0) delete act.setsLinked;
+        const doesSomething = act.creates || act.writes || act.sets || act.setsLinked || act.connects || act.severs || act.removes || (act.effects ?? []).some((e: Doc) => e.create || e.connect || e.sever || e.remove || (e.set && Object.keys(e.set).length > 0));
         if (!doesSomething) uses = true;
         else if (act.effects) {
           act.effects = act.effects.filter((e: Doc) => !(e.set && !e.create && Object.keys(e.set).length === 0));
@@ -3019,7 +3089,9 @@ class Editor {
     }
     for (const [name, rule] of Object.entries(doc.rules ?? {}) as [string, Doc][]) {
       const ctx: Kinds = rule.over === "graph" ? NONE : new Set([rule.over]);
-      if (exprMentions(doc, rule.when, ctx, r) || exprMentions(doc, rule.require, ctx, r) || templateMentions(doc, rule.says, ctx, r)) {
+      // A coverage rule goes with the kind it covers or a relation it walks.
+      const walked = rule.covers !== undefined && ((r.t === "kind" && rule.covers.every === r.from) || (r.t === "edge" && (rule.covers.through === r.from || rule.covers.via === r.from)));
+      if (walked || exprMentions(doc, rule.when, ctx, r) || exprMentions(doc, rule.require, ctx, r) || templateMentions(doc, rule.says, ctx, r)) {
         delete doc.rules[name];
         gone.push(titled("rule", name, rule));
       }

@@ -98,13 +98,16 @@ export function edgeValue(ids: unknown): string[] | null {
   return list.length > 0 ? list : null;
 }
 
-/** Reads a node's mapped values, in OUR field names. */
+/** Reads a node's mapped values, in OUR field names — each as both sides compare it, where the mapping says what people type is looser (`normalize`). */
 function mappedValues(
   node: Record<string, unknown>,
   mapping: ResourceMapping,
 ): Record<string, unknown> {
   const values: Record<string, unknown> = {};
-  for (const ours of Object.keys(mapping.fields)) values[ours] = node[ours];
+  for (const ours of Object.keys(mapping.fields)) {
+    const normalize = mapping.normalize?.[ours];
+    values[ours] = normalize ? normalize(node[ours]) : node[ours];
+  }
   return values;
 }
 

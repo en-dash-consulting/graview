@@ -1,6 +1,7 @@
 import type { Primitive } from "../graph/primitives.js";
 import type { MutationCall } from "../mutations/types.js";
 import type { Lineage } from "./lineage.js";
+import type { SuggestionVote } from "../mutations/vote-suggestion.js";
 
 /**
  * WHO CAN AUTHOR AN OP, AS THIS BUILD KNOWS THEM. The set is open: a kind
@@ -188,6 +189,18 @@ export interface Operation {
    * anew. Absent, it waits until a person answers it.
    */
   readonly expiresAt?: string;
+  /**
+   * A VOTE ON A SUGGESTION (Roadmap f-suggestion-votes): set on the op of
+   * the built-in `vote-suggestion` act, which touches no record — what
+   * Accept and Decline keep for a seat that may see the suggestion and
+   * may not make its change. `{ suggestion, vote }`, the vote `for`,
+   * `against` or `null` (one withdrawn); one standing vote per person, the
+   * latest. Read into a suggestion's `tally` (`suggestions`,
+   * `@graview/core/tidying`). An op without it reads as before, and folds
+   * the same; a build before it reads this one as a change that touched
+   * nothing.
+   */
+  readonly vote?: SuggestionVote;
   /**
    * HOW FAR READERS ARE SERVED, set by a publish (Roadmap
    * f-publishing-lifecycle): in an `on-publish` app, the seats not

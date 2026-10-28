@@ -200,9 +200,10 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             display: "grid",
             gap: 12,
             padding: "16px 18px",
-            borderLeft: "3px solid var(--graview-warn)",
+            // One hairline all round and the tinted panel (FR-236): no thick border on one side.
+            border: "1px solid var(--graview-edge)",
             background: "var(--graview-panel-warning)",
-            borderRadius: "0 var(--graview-radius, 12px) var(--graview-radius, 12px) 0",
+            borderRadius: "var(--graview-radius, 12px)",
           }}
         >
           {lined.map((violation, index) => (

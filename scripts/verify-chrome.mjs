@@ -26,7 +26,10 @@
  * `automated`) makes two links it is sure of and suggests one it is not, so
  * Activity folds its run into one digest row that opens to each change with
  * its lineage, and the Suggested tray beside it holds the third until a
- * person declines it — which the actor is refused next time.
+ * person declines it — which the actor is refused next time. With
+ * `reader=1` the page is a seat that may see the suggestion and may not
+ * make it, whose Accept is a vote (f-suggestion-votes); with `vote=1` a
+ * reader's vote is already cast when the keeper opens the tray.
  *
  *   node scripts/verify-chrome.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
@@ -66,7 +69,8 @@ async function buildHost() {
     stdin: {
       contents: `
         import { mount } from "@graview/embed";
-        import { declined, suggest, suggestions } from "@graview/core/tidying";
+        import { capabilities, memoryViews } from "@graview/core";
+        import { declined, suggest, suggestions, voteSuggestion } from "@graview/core/tidying";
         import { todoApp } from ${JSON.stringify(todo)};
         import seed from ${JSON.stringify(seed)};
         const asked = new URLSearchParams(location.search);
@@ -75,6 +79,11 @@ async function buildHost() {
           seed,
           face: asked.get("face") ?? "graview",
           principal: { kind: "human", id: "user-nora", roles: ["keeper"] },
+          /*
+           * A reader who may see a suggestion and may not make the change, when the page asks (f-suggestion-votes): the list's grant to
+           * everybody dropped from the policy, and a seat with no role — a visitor by link, as a host would seat one.
+           */
+          ...(asked.get("reader") ? { app: { ...todoApp, policy: { ...todoApp.policy, grants: todoApp.policy.grants.filter((grant) => grant.roles !== "*") } }, principal: { kind: "human", id: "user-vis", name: "Vis", roles: [] } } : {}),
           label: "Things",
           heading: false,
           height: "100%",
@@ -84,6 +93,14 @@ async function buildHost() {
           ...(asked.get("away") ? { whileAway: { tidied: 2, waiting: 1 } } : {}),
           // Whether the quick ask is drawn, when the page asks.
           ...(asked.get("quickAsk") ? { quickAsk: asked.get("quickAsk") !== "false" } : {}),
+          // The page the routed face opens on, when the page asks.
+          ...(asked.get("path") ? { path: asked.get("path") } : {}),
+          // A host that refuses every change to the declaration, when the page asks: the framework says so in a toast of its own (FR-237).
+          ...(asked.get("refuse")
+            ? { keptViews: memoryViews({ may: { views: true, lenses: true }, declaration: { change: () => Promise.reject(new Error("The app could not be changed: the host is holding it while a repair is checked.")), restore() {} } }) }
+            : {}),
+          // The host's Report this (FR-237), when the page asks: what it is handed is kept for the claim.
+          ...(asked.get("report") ? { onReport: (report) => { (window.__reports ??= []).push(report); } } : {}),
           /*
            * Somebody else here, when the page asks: Sam, on the whole thing, held as a socket holds a presence — so the bar
            * draws who is here (FR-155) and its list is opened with the rest of the family.
@@ -102,8 +119,10 @@ async function buildHost() {
           ],
         };
         window.__handle = mount(document.getElementById("app"), options);
-        // What reads the suggestions back, for the claims that ask the store what a person declined.
-        window.__tidying = { declined, suggestions };
+        // What reads the suggestions back, for the claims that ask the store what a person declined, and casts a vote as somebody else.
+        window.__tidying = { declined, suggestions, voteSuggestion };
+        // The framework's version, as a host's Report this is handed it (FR-237).
+        window.__version = capabilities().version;
         /*
          * The app's own actor tidied, when the page asks: two links it is sure of, made with their lineage, and one it is not, suggested.
          * Its run is one row of Activity, and the suggestion waits in the Suggested tray beside it.
@@ -114,6 +133,8 @@ async function buildHost() {
           store.apply({ name: "wait-for", args: { taskId: "t-paint", blockerId: "t-shelves" } }, { author: actor, lineage: { basis: "The shelves cover the wall that needs paint", confidence: 0.93 } });
           store.apply({ name: "wait-for", args: { taskId: "t-broadband", blockerId: "t-notice" } }, { author: actor, lineage: { basis: "The broadband moves with the notice date", confidence: 0.9 } });
           suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage: { basis: "The post is redirected from the day notice is given", confidence: 0.45 } });
+          // A reader's vote for it already cast, when the page asks (f-suggestion-votes): what the keeper reads beside Accept.
+          if (asked.get("vote")) voteSuggestion(store, suggestions(store)[0].id, "for", { author: { kind: "human", id: "user-vis", name: "Vis", roles: [] } });
         }
         /*
          * A crowded tray, when the page asks: a task renamed to 120 characters with no space, and a suggestion for each task it could
@@ -689,6 +710,71 @@ try {
     report.checks.whatTidyingDidAndSuggestsIsSaidOnTheTodoExample = { ...tidying, ok: Object.values(tidying).every((one) => one.ok) };
   }
   /*
+   * ---- A suggestion takes a vote from someone who may not accept it (f-suggestion-votes), on both faces: a reader — the list's grant
+   * to everybody dropped, a seat with no role — presses Accept in the tray and is not refused: the row says "Your vote was recorded"
+   * and stays, nothing is made, the store counts the vote as theirs, and the keyboard never lands on <body>; and the keeper, with
+   * that vote cast, reads "1 for, 0 against" beside Accept and is offered no vote of their own.
+   */
+  {
+    const votes = {};
+    for (const face of ["graview", "pages"]) {
+      const asReader = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      asReader.on("pageerror", (error) => errors.push(error.message));
+      await asReader.goto(`${at("chrome-host")}/?face=${face}&tidy=1&reader=1`, { waitUntil: "load" });
+      await asReader.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await asReader.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      const reader = await asReader.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-accept"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const store = window.__handle.store;
+        const before = store.graph.allEdges().length;
+        const accept = document.querySelector('[data-testid="suggestion-accept"]');
+        const described = document.getElementById(accept?.getAttribute("aria-describedby") ?? "")?.textContent ?? null;
+        accept?.focus();
+        accept?.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-voted"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const [waiting] = window.__tidying.suggestions(store, { kind: "human", id: "user-vis", roles: [] });
+        return {
+          described,
+          said: document.querySelector('[data-testid="suggestion-voted"]')?.textContent ?? null,
+          pressed: document.querySelector('[data-testid="suggestion-accept"]')?.getAttribute("aria-pressed") ?? null,
+          rows: document.querySelectorAll('[data-testid="suggestion"]').length,
+          refused: document.querySelector('[data-testid="suggestion-refused"]')?.textContent ?? null,
+          unchanged: store.graph.allEdges().length === before,
+          tally: waiting?.tally ?? null,
+          keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
+        };
+      });
+      await asReader.close();
+      const asKeeper = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      asKeeper.on("pageerror", (error) => errors.push(error.message));
+      await asKeeper.goto(`${at("chrome-host")}/?face=${face}&tidy=1&vote=1`, { waitUntil: "load" });
+      await asKeeper.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await asKeeper.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      const keeper = await asKeeper.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-accept"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        return {
+          tally: document.querySelector('[data-testid="suggestion-tally"]')?.textContent ?? null,
+          votes: document.querySelector('[data-testid="suggestion-accept"]')?.hasAttribute("aria-pressed") ?? null,
+          withdraw: document.querySelector('[data-testid="suggestion-withdraw-vote"]') !== null,
+        };
+      });
+      await asKeeper.keyboard.press("Escape");
+      await asKeeper.close();
+      const ok =
+        reader !== null && reader.described === "Counts as your vote; somebody who may make it decides." && reader.said === "Your vote was recorded." && reader.pressed === "true" && reader.rows === 1 && reader.refused === null && reader.unchanged &&
+        reader.tally !== null && reader.tally.for === 1 && reader.tally.against === 0 && reader.tally.mine === "for" && reader.keyboard !== "BODY" &&
+        keeper !== null && keeper.tally === "1 for, 0 against" && keeper.votes === false && keeper.withdraw === false;
+      votes[face] = { reader, keeper, ok };
+    }
+    report.checks.aSuggestionTakesAVoteFromAReaderAndShowsTheTallyToWhoMayDecide = { ...votes, ok: Object.values(votes).every((one) => one.ok) };
+  }
+  /*
    * ---- "Not now" is one person's, and the tray says what tidying did while they were away, on both faces: the host hands what
    * whileAway() worked out; the tray says it in a line; Not now, pressed from the keyboard, hides the suggestion from this reader
    * alone — kept in this browser, nothing in the log, still waiting for everyone else — and the keyboard never lands on <body>.
@@ -871,6 +957,89 @@ try {
       }
     }
     report.checks.aHostSpeaksInTheAppsOwnNotices = { ...notices, ok: Object.values(notices).every((one) => one.ok) };
+  }
+  /* ---- FR-236: no notice carries a side accent; FR-237: an error toast the framework raised offers the host's Report this */
+  {
+    const accents = {};
+    const reporting = {};
+    /* The framework's own error toast: a tidying the host refused — Hide on the list's place, with a host that refuses every change to the declaration. */
+    const refused = async (page) => {
+      const standing = page.locator('[data-testid="app-places-standing"] [aria-current="page"]');
+      const stands = (await standing.count()) > 0 && (await standing.first().isVisible());
+      await (stands ? standing.first() : page.locator('[data-testid="app-places-open"]').first()).click({ button: "right" });
+      const row = page.locator('[data-testid="context-menu"] [data-menu-item="hide-list"]');
+      const offered = await row.waitFor({ timeout: 10_000 }).then(() => true, () => false);
+      if (offered) await row.click();
+      const toast = page.locator('[data-testid="notices-toasts"] [data-testid="notice"][data-tone="bad"]');
+      const said = await toast.first().waitFor({ timeout: 10_000 }).then(() => true, () => false);
+      return { offered, said };
+    };
+    for (const colorScheme of ["light", "dark"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, colorScheme });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=pages&path=/tasks&refuse=1&report=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForTimeout(600);
+      /* The host's banner and a toast of every tone, beside the framework's own error toast. */
+      await page.evaluate(() => {
+        window.__handle.notify({ kind: "banner", tone: "warn", sentence: "Offline — changes will be sent when you reconnect.", action: { label: "Retry", onSelect: () => {} } });
+        for (const tone of ["info", "good", "warn", "bad"]) window.__handle.notify({ kind: "toast", tone, sentence: `A ${tone} toast from the host.`, timeout: false });
+      });
+      const raised = await refused(page);
+      await page.waitForTimeout(300);
+      /* FR-236: no element in a toast or a banner has a border on its left wider than its other sides. */
+      const sides = await page.evaluate(() => {
+        const cards = [...document.querySelectorAll('[data-testid="notice"]')];
+        const wide = [];
+        for (const card of cards) {
+          for (const element of [card, ...card.querySelectorAll("*")]) {
+            const style = getComputedStyle(element);
+            const [left, right, top, bottom] = [style.borderLeftWidth, style.borderRightWidth, style.borderTopWidth, style.borderBottomWidth].map((one) => parseFloat(one) || 0);
+            if (left > Math.max(right, top, bottom)) wide.push(`${element.tagName.toLowerCase()}${element.getAttribute("data-testid") ? `[${element.getAttribute("data-testid")}]` : ""} ${left}px left, ${right}/${top}/${bottom}`);
+          }
+        }
+        const chips = cards.map((card) => card.querySelector('[data-testid="notice-chip"]')).filter(Boolean);
+        return { cards: cards.length, tones: cards.map((card) => card.getAttribute("data-tone")).sort(), chips: chips.length, chipsHidden: chips.every((chip) => chip.getAttribute("aria-hidden") === "true"), wide };
+      });
+      const readable = await noticeLooks(page, "toast");
+      accents[colorScheme] = { ...raised, ...sides, contrast: readable?.contrast ?? null, ok: raised.offered && raised.said && sides.cards === 6 && sides.chips === 6 && sides.chipsHidden && sides.wide.length === 0 && (readable?.contrast ?? 0) >= 4.5 };
+      if (colorScheme === "light") {
+        /* FR-237: a native button named for the toast, the toast held while it has focus, the report handed to the host, and the toast gone once focus has moved on and its time runs out. */
+        const button = page.locator('[data-testid="notice-report"]');
+        const drawn = await button.first().waitFor({ timeout: 5_000 }).then(() => true, () => false);
+        const named = drawn ? await button.first().evaluate((one) => ({ tag: one.tagName, label: one.getAttribute("aria-label"), text: one.textContent })) : null;
+        if (drawn) await button.first().focus();
+        await page.waitForTimeout(7_500);
+        const held = await page.evaluate(() => document.querySelector('[data-testid="notice-report"]') !== null && document.activeElement?.getAttribute("data-testid") === "notice-report");
+        if (drawn) await page.keyboard.press("Enter");
+        await page.waitForTimeout(200);
+        const handed = await page.evaluate(() => ({ reports: window.__reports ?? [], version: window.__version, stillThere: document.querySelector('[data-testid="notice-report"]') !== null }));
+        await page.evaluate(() => document.querySelector('[data-testid="profile-button"]')?.focus());
+        await page.waitForTimeout(7_500);
+        const gone = await page.evaluate(() => document.querySelector('[data-testid="notice-report"]') === null);
+        const report0 = handed.reports[0] ?? null;
+        reporting.withTheHook = {
+          drawn, named, held, handed: report0, stillThere: handed.stillThere, gone,
+          ok: drawn && named?.tag === "BUTTON" && named.label === "Report this: The app could not be changed: the host is holding it while a repair is checked." && named.text === "Report this" && held && handed.reports.length === 1 && report0.message === "The app could not be changed: the host is holding it while a repair is checked." && report0.place === "tasks" && report0.record === undefined && report0.version === handed.version && handed.stillThere && gone,
+        };
+      }
+      await page.close();
+    }
+    /* Without the hook, the same toast carries no button; and the host's own error toast never does. */
+    {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, colorScheme: "light" });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=pages&path=/tasks&refuse=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForTimeout(600);
+      const raised = await refused(page);
+      await page.waitForTimeout(300);
+      const without = await page.evaluate(() => ({ toasts: document.querySelectorAll('[data-testid="notices-toasts"] [data-testid="notice"]').length, buttons: document.querySelectorAll('[data-testid="notice-report"]').length }));
+      reporting.withoutTheHook = { ...raised, ...without, ok: raised.offered && raised.said && without.toasts >= 1 && without.buttons === 0 };
+      await page.close();
+    }
+    report.checks.noticesCarryNoSideAccent = { ...accents, ok: Object.values(accents).every((one) => one.ok) };
+    report.checks.anErrorToastOffersTheHostsReport = { ...reporting, ok: Object.values(reporting).every((one) => one.ok) };
   }
   /* ---- One bar on the scene, the whole-page Shell's and the embed's: the same parts under the same ids, one row */
   {

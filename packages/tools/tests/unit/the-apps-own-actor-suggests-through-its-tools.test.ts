@@ -1,4 +1,4 @@
-import { createSchema, defineNode, Store, type AnySchema, type Author } from "@graview/core";
+import { createSchema, defineNode, Store, type AnySchema, type Author, type Policy, type Principal } from "@graview/core";
 import { declineSuggestion, suggestions } from "@graview/core/tidying";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -56,5 +56,39 @@ describe("suggest_changes", () => {
     expect(toolDefinitions({ schema }, seat).definitions.map((tool) => tool.name)).not.toContain("suggest_changes");
     expect(toolDefinitions({ schema }, actor).definitions.map((tool) => tool.name)).toContain("suggest_changes");
     expect(await runtime.call("suggest_changes", link)).toMatchObject({ ok: false, reason: "forbidden", error: expect.stringMatching(/Only the app's own actor/) });
+  });
+});
+
+/*
+ * A SEAT THAT MAY NOT MAKE THE CHANGE VOTES THROUGH THE SAME TOOLS (Roadmap
+ * f-suggestion-votes): accept_suggestion answers `voted: "for"` and keeps
+ * nothing of the change, decline_suggestion `voted: "against"`, and
+ * list_suggestions counts the seat's own vote in each suggestion's tally.
+ */
+describe("accept_suggestion and decline_suggestion from a seat that may not make the change", () => {
+  const policy: Policy = { roles: ["keeper", "reader"], grants: [{ roles: ["keeper"], mutations: "*" }] };
+  const ria: Principal = { kind: "agent", id: "claude", name: "Claude", onBehalfOf: { kind: "human", id: "ria", name: "Ria", roles: ["reader"] } };
+
+  it("answer with the seat's vote, which list_suggestions counts, and the suggestion still waits", async () => {
+    const store = new Store<AnySchema>({ schema, policy, snapshot: storeOf().graph.snapshot() });
+    await createToolRuntime(store, { author: actor }).call("suggest_changes", link);
+    const [waiting] = suggestions(store);
+    const reader = createToolRuntime(store, { author: ria });
+    const accepted = (await reader.call("accept_suggestion", { suggestion: waiting!.id })) as { ok: boolean; data: { voted?: string } };
+    expect(accepted.ok).toBe(true);
+    expect(accepted.data.voted).toBe("for");
+    expect(store.graph.allEdges()).toEqual([]);
+    expect(suggestions(store)).toHaveLength(1);
+    const listed = (await reader.call("list_suggestions", {})) as { data: { suggestions: { tally: unknown }[] } };
+    expect(listed.data.suggestions[0]!.tally).toEqual({ for: 1, against: 0, mine: "for" });
+    const declined = (await reader.call("decline_suggestion", { suggestion: waiting!.id })) as { data: { voted?: string } };
+    expect(declined.data.voted).toBe("against");
+    expect(suggestions(store)).toHaveLength(1);
+    // The keeper decides it as ever: no vote, the change made.
+    const keeper = createToolRuntime(store, { author: { kind: "human", id: "kay", roles: ["keeper"] } as Principal });
+    const made = (await keeper.call("accept_suggestion", { suggestion: waiting!.id })) as { ok: boolean; data: { voted?: string } };
+    expect(made.ok).toBe(true);
+    expect(made.data.voted).toBeUndefined();
+    expect(store.graph.allEdges()).toHaveLength(1);
   });
 });

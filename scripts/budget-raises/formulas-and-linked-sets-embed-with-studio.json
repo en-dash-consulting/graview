@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 16700,
+  "gzipped": 5500,
+  "note": "Raised when formulas came to join text and build a date-time (Roadmap f-formula-text-datetime) and an act to carry a change to the records it is linked to (Roadmap f-acts-update-linked): the evaluator's seven functions and the date arithmetic they share, the checker's typing of them, the act findings for `setsLinked`, the compiled act's `through` effect, the editor keeping a carried field in step, and the store judging each far record's own edit. Measured at 1_726_813 / 607_856 against 1_710_185 / 602_377: 16_628 / 5_479 more, rounded up to the hundred."
+}

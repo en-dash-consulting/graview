@@ -119,6 +119,7 @@ ${/* CARDS IN ONE ROW KEEP THEIR OWN HEIGHT: a card with a long summary
 .graview-spec-list[data-as="card"]{grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr));gap:10px;align-items:start}
 .graview-spec-list[data-as="names"]{display:flex;flex-wrap:wrap;gap:4px 12px}
 .graview-spec-item{position:relative;min-width:0}
+.graview-spec-item[data-graview-flagged] > .graview-spec-row > .graview-spec-title{color:var(--graview-warn)}
 .graview-spec-item-name{font-size:.875rem;font-weight:600}
 .graview-spec-item-link{all:unset;position:absolute;inset:0;z-index:${LOCAL_LAYERS.raised};min-height:24px;border-radius:10px;cursor:pointer}
 .graview-spec-item-link:hover{background:color-mix(in srgb,var(--graview-accent) 6%,transparent)}

@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 0,
+  "gzipped": 32,
+  "note": "Raised when the 0.1.62 batch's twelve branches were merged (calendar guests, the view budget fitted to the device, notices without the side accent, views linking to the Scene, formulas and linked updates, partial dates, the video hero, coverage rules, the opening screen, suggestion votes, one theme for every view, Recently): each measured alone against main, together they came to 22 bytes gzipped (124_363 against 124_341) over their summed raises, held for a few bytes either side."
+}

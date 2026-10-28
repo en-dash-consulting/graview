@@ -1,13 +1,13 @@
 import { faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles, type KeptViews, type ResolveApp } from "@graview/core";
 import { BesideTheMap, HostFilesContext, KeptViewsProvider, PanFree, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
-import { useCallback, useState, type ReactNode, useRef } from "react";
+import { useCallback, useMemo, useState, type ReactNode, useRef } from "react";
 import { withOverview } from "@graview/layout/view";
 import { LinesKey } from "./lines-key.js";
 import { MapPanel } from "./map-panel-door.js";
 import { ShowInstallation } from "./installation.js";
 import { Profile, type HostAction } from "./profile.js";
-import { createNoticeBoard, NoticeBoardContext, Notices, type NoticeBoard } from "./notices.js";
+import { createNoticeBoard, frameworkVoice, NoticeBoardContext, Notices, sceneReportWhere, type NoticeBoard, type NoticeReport, type NoticeReporting } from "./notices.js";
 import { DraftDoor } from "./draft-door.js";
 import { appKeyOf } from "./reader-lenses.js";
 import { registerReaderLenses } from "./declared-lens-doors.js";
@@ -94,6 +94,13 @@ export interface ShellProps {
    */
   readonly barActions?: readonly BarAction[];
   /**
+   * THE HOST'S "REPORT THIS" (FR-237): given, every warning or error toast
+   * the framework raises itself carries a button that hands the host the
+   * toast's words, where the reader is and the framework's version. The
+   * host's own notices carry none.
+   */
+  readonly onReport?: (report: NoticeReport) => void;
+  /**
    * A GRAVIEW SIGNATURE: a quiet "Built with Graview" at the foot of the
    * person's menu, linking to graview.dev. Off by default — an app leads
    * with its own name and mark; Graview's own examples turn it on.
@@ -172,6 +179,7 @@ function ShellFace<S extends AnySchema>({
   studio,
   hostActions,
   barActions,
+  onReport,
   signature = false,
   quickAsk = true,
   notices,
@@ -186,6 +194,11 @@ function ShellFace<S extends AnySchema>({
   /* The board the app speaks on: the host's, else the shell's own — a kept lens is said there, with Take back. */
   const [ownBoard] = useState(() => createNoticeBoard());
   const board = notices ?? ownBoard;
+  // What the app's own surfaces say on it is the framework's, which a host's Report this may answer (FR-237).
+  const voice = useMemo(() => frameworkVoice(board), [board]);
+  const spot = useRef(view);
+  spot.current = view;
+  const report = useMemo<NoticeReporting | undefined>(() => (onReport ? { tell: onReport, where: () => sceneReportWhere(spot.current.focusId) } : undefined), [onReport]);
   // The Shell owns the whole page, so the page wears the brand's icon (FR-124).
   useFavicon(faviconHref(brand));
   // An act that removes what the keyboard stood on lands it on what still stands.
@@ -216,7 +229,7 @@ function ShellFace<S extends AnySchema>({
       };
 
   const drawn = (
-    <NoticeBoardContext.Provider value={board}>
+    <NoticeBoardContext.Provider value={voice}>
     {/* A district opened here is listed in the panel beside the map. */}
     <BesideTheMap.Provider value={true}>
     <div ref={shell} style={{ display: "flex", flexDirection: "column", height: screen ?? "100dvh", overflow: "hidden" }}>
@@ -324,7 +337,7 @@ function ShellFace<S extends AnySchema>({
         <PastBar face="scene" />
         </PanFree>
       </main>
-      <Notices board={board} anchor={scene} />
+      <Notices board={board} anchor={scene} report={report} />
       {firstLook ? <FirstLookDoor firstLook={firstLook} root={inShell} app={appKeyOf(brand, store.schema)} /> : null}
     </div>
     </BesideTheMap.Provider>

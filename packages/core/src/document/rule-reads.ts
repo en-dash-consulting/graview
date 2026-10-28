@@ -27,7 +27,7 @@ export function factsIn(expr: Expr): string[] {
 
 /** The facts a rule's message says: in its sentence, or, with none, in what it requires, which its line says. */
 export function factsSaid(shape: RuleShapeSource): string[] {
-  const said = shape.says ? shape.says.flatMap((part) => (part.expr ? [part.expr] : [])) : [shape.require, ...(shape.when ? [shape.when] : [])];
+  const said = shape.says ? shape.says.flatMap((part) => (part.expr ? [part.expr] : [])) : [...(shape.require ? [shape.require] : []), ...(shape.when ? [shape.when] : [])];
   return [...new Set(said.flatMap(factsIn))];
 }
 
@@ -41,6 +41,8 @@ export function readsBeyondItsSubject(shape: RuleShapeSource, kinds: ReadonlyMap
   const kind = kinds?.get(shape.over);
   return (
     shape.over === "graph" ||
+    // A coverage rule walks its subject's links and holds them against every record of a kind.
+    shape.covers !== undefined ||
     [shape.require, shape.when, ...(shape.says ?? []).map((part) => part.expr)].some(
       (expr) =>
         expr !== undefined &&

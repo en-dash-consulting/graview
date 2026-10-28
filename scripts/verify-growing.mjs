@@ -47,7 +47,15 @@
  *   kind does not have goes nowhere and says why; a shared address opens
  *   the list narrowed at its section; and "Up next", kept off the lists
  *   (`hidden`), is on neither the bar nor the page list, and is still
- *   drawn at its address.
+ *   drawn at its address;
+ *
+ *   and a view links to the Scene (FR-235): the home's
+ *   `<a data-place="overview">` carries the Scene's address and lands on
+ *   the Scene's overview, `graview.navigate("overview")` the same, and
+ *   (`?lists=4&face=scene`) a view of the features drawn on the scene
+ *   rises from its district to the whole thing by either — with nothing
+ *   said as a problem, where the page once said "overview" was no place
+ *   of this app while the headless check passed it.
  *
  *   node scripts/verify-growing.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>] [--probe]
  */
@@ -160,10 +168,21 @@ const ranked = [...features]
 const HOME_MANIFEST = { name: "roadmap-home", title: "The roadmap", attach: "home", cardinality: "many", reads: { kinds: ["feature"] } };
 const HOME_SOURCE = `graview.render(graview.html\`<h2>What we are making</h2>
 <p><a id="building" data-place="features" data-filter="stage:building">Being built</a></p>
-<p><button id="section" type="button">Every feature</button> <button id="wrong" type="button">By a field it lacks</button></p>\`);
+<p><button id="section" type="button">Every feature</button> <button id="wrong" type="button">By a field it lacks</button></p>
+<p><a id="to-scene" data-place="overview">The whole thing</a> <button id="scene-code" type="button">The scene, by code</button></p>\`);
 graview.on("click", "#section", () => graview.navigate({ place: "up-next", section: "Every feature" }));
-graview.on("click", "#wrong", () => graview.navigate({ place: "features", where: { stag: "building" } }));`;
+graview.on("click", "#wrong", () => graview.navigate({ place: "features", where: { stag: "building" } }));
+graview.on("click", "#scene-code", () => graview.navigate("overview"));`;
 const HIDDEN = `(roadmap) => ({ ...roadmap, lenses: roadmap.lenses.map((lens) => (lens.title === "Up next" ? { ...lens, hidden: true } : lens)) })`;
+/*
+ * `?lists=4&face=scene`: a worker view of the features drawn on the scene
+ * (FR-235), linking to the Scene's overview by `data-place="overview"`
+ * and by `graview.navigate("overview")` — from a district, the whole thing.
+ */
+const WALL_MANIFEST = { name: "feature-wall", title: "Feature wall", attach: "feature", cardinality: "many", reads: { kinds: ["feature"] } };
+const WALL_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<h2>The wall</h2><p>\${props.nodes.length} features</p>
+<p><a id="wall-scene" data-place="overview">The whole thing</a> <button id="wall-code" type="button">The scene, by code</button></p>\`));
+graview.on("click", "#wall-code", () => graview.navigate("overview"));`;
 const building = features.filter((feature) => feature.stage === "building").length;
 const shipped = features.filter((feature) => feature.stage === "shipped").length;
 
@@ -195,6 +214,7 @@ async function buildHost() {
                 : roadmap;
         window.__problems = [];
         const home = { manifest: ${JSON.stringify(HOME_MANIFEST)}, worker: { source: ${JSON.stringify(HOME_SOURCE)} }, onProblem: (said) => window.__problems.push(said) };
+        const wall = { manifest: ${JSON.stringify(WALL_MANIFEST)}, worker: { source: ${JSON.stringify(WALL_SOURCE)} }, onProblem: (said) => window.__problems.push(said) };
         const compiled = compileDocumentWithoutCheck(document_, { today: () => "2026-10-12" });
         if (!compiled.ok) {
           window.__failed = compiled.findings.map((finding) => finding.message).join("; ");
@@ -203,7 +223,7 @@ async function buildHost() {
           window.__handle = mount(document.getElementById("app"), {
             app: compiled.app,
             seed,
-            face: "pages",
+            face: asked.get("face") ?? "pages",
             routing: "address",
             principal: { kind: "human", id: "u:owner", roles: ["owner"] },
             label: compiled.app.name,
@@ -211,7 +231,7 @@ async function buildHost() {
             height: "100dvh",
             fonts: false,
             studio: false,
-            ...(asked.get("lists") === "3" ? { views: (schema, registry) => registerWorkerView(registry, home) } : {}),
+            ...(asked.get("lists") === "3" ? { views: (schema, registry) => registerWorkerView(registry, home) } : asked.get("lists") === "4" ? { views: (schema, registry) => registerWorkerView(registry, wall) } : {}),
           });
           window.__handle.drawn().then(() => { window.__ready = true; });
         }`,
@@ -392,7 +412,7 @@ function drawnOrder(kindPath) {
 
 const host = await buildHost();
 const errors = [];
-const seen = { chips: [], pane: [], typed: [], via: [], named: [], badges: [], cards: [], seeAll: [], rows: [], page: [], grouped: [], opened: [], resorted: [], ranked: [], narrowed: [], section: [], refused: [], shared: [], hidden: [] };
+const seen = { chips: [], pane: [], typed: [], via: [], named: [], badges: [], cards: [], seeAll: [], rows: [], page: [], grouped: [], opened: [], resorted: [], ranked: [], narrowed: [], section: [], refused: [], shared: [], hidden: [], scene: [] };
 const featureNames = features.map((feature) => feature.name);
 let browser;
 try {
@@ -615,6 +635,35 @@ try {
           seen.refused.push({ engine, screen: screen.name, ...(await where(page)), problems: await page.evaluate(() => window.__problems) });
           await close();
         }
+        /*
+         * A VIEW LINKS TO THE SCENE (FR-235): on the pages, `<a data-place="overview">` carries the Scene's address and lands on it,
+         * `graview.navigate("overview")` the same; on the scene, from a district, each rises to the whole thing. Nothing is said as a problem.
+         */
+        {
+          // The embed names the face at altitude "graview" and the one on the ground "scene": either is the Scene, not the pages.
+          const landed = (page) => page.waitForFunction(() => window.__handle.where().face !== "pages" && location.pathname.endsWith("/places/overview"), null, { timeout: 20_000 }).then(() => true, () => false);
+          const sceneState = (page) => page.evaluate(() => ({ where: window.__handle.where(), pathname: location.pathname, problems: window.__problems }));
+          for (const press of ["#to-scene", "#scene-code"]) {
+            const { page, close } = await open("/", "lists=3");
+            const drawn = await homeDrawn(page);
+            const href = press === "#to-scene" ? await page.locator(press).getAttribute("href") : null;
+            await page.locator(press).click();
+            const arrived = await landed(page);
+            seen.scene.push({ engine, screen: screen.name, on: "pages", press, drawn, href, arrived, ...(await sceneState(page)) });
+            await close();
+          }
+          const wallDrawn = (page) => page.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="feature-wall"]')?.shadowRoot?.querySelector("#wall-scene")), null, { timeout: 30_000 }).then(() => true, () => false);
+          const rose = (page) => page.waitForFunction(() => /(^|[#&])overview=1(&|$)/.test(window.__handle.where().stop), null, { timeout: 20_000 }).then(() => true, () => false);
+          for (const press of ["#wall-scene", "#wall-code"]) {
+            const { page, close } = await open("/places/overview", "lists=4&face=scene#focus=aggregate%3Afeature&in.view=feature-wall");
+            const drawn = await wallDrawn(page);
+            const before = await page.evaluate(() => window.__handle.where().stop);
+            await page.locator(press).click();
+            const arrived = await rose(page);
+            seen.scene.push({ engine, screen: screen.name, on: "scene", press, drawn, before, arrived, ...(await sceneState(page)) });
+            await close();
+          }
+        }
         {
           const { page, close } = await open("/places", "lists=3");
           const listed = await page.evaluate(() => (document.querySelector('[data-testid="places"]')?.textContent ?? "").includes("Up next"));
@@ -746,6 +795,21 @@ report.checks.aSharedAddressOpensTheListNarrowedAtItsSection = {
 report.checks.aLensKeptOffTheListsIsOnNeitherTheBarNorThePageListAndIsReachedAtItsAddress = {
   seen: seen.hidden.map((one, index) => ({ ...one, reached: seen.section[index]?.title ?? null })),
   ok: every(seen.hidden, (one, index) => one.bar.some((key) => key === "app-place-kind:feature") && !one.bar.some((key) => /up-next/.test(key)) && one.pageList === false && seen.section[index]?.title === "Up next"),
+};
+report.checks.aViewsLinkToTheOverviewLandsOnTheScenesOverviewOnBothFacesByALinkAndByNavigate = {
+  seen: seen.scene,
+  ok:
+    [["pages", "#to-scene"], ["pages", "#scene-code"], ["scene", "#wall-scene"], ["scene", "#wall-code"]].every(([on, press]) => seen.scene.some((one) => one.on === on && one.press === press)) &&
+    seen.scene.every(
+      (one) =>
+        one.drawn &&
+        one.arrived &&
+        one.problems.length === 0 &&
+        one.where.face !== "pages" &&
+        one.where.path === "/places/overview" &&
+        /(^|[#&])overview=1(&|$)/.test(one.where.stop) &&
+        (one.on === "pages" ? one.pathname.endsWith("/places/overview") && (one.press !== "#to-scene" || /\/places\/overview$/.test(one.href ?? "")) : !/overview=1/.test(one.before)),
+    ),
 };
 report.checks.noPageScrollsSideways ={ seen: seen.page, ok: seen.page.length > 0 && seen.page.every((one) => !one.sideways) };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };

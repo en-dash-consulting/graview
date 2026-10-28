@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 153,
+  "gzipped": 46,
+  "changeset": "a-view-links-to-the-scene.md",
+  "note": "Raised when a view came to link to the Scene (FR-235, Roadmap f-view-links-to-scene): up front are the home's and the Scene's words on the routed face's way of going (`HOME_SLUG`, the overview's own address and the embed's way to it) and on the Scene's (the whole thing from above, the page's door for the home). The vocabulary itself rides the worker view's host, fetched with the first view. Measured at 579_425 / 201_491 against 579_272 / 201_445: 153 / 46 more."
+}

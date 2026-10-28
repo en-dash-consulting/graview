@@ -51,14 +51,19 @@ A document (`graview-document@1`) holds the same brand as data, every key option
   "favicon": "/graview/assets/<sha256>.svg",
   "typography": { "display": "system-serif", "body": "system-sans" },
   "shape": { "radius": 6, "density": 0.9 },
-  "accents": { "workshop": 168 }, "scheme": "dark"
+  "accents": { "workshop": 168 }, "scheme": "dark",
+  "views": { "motion": "fade" }, "splash": { "style": "editorial" }
 }
 ```
 
+- **One theme for every view** is `views`: `css`, drawn before each view's own sheet and held to its rules (`brand-views-css`), and `motion: "fade"` between records.
+
 - **A mark** — the logo, one for each scheme, and the page icon, an emoji among them — is `graview-logo`: inline SVG or a path on the app's own host, drawn as given, and one that could act refused (`brand-mark`).
 - **A face** is `system-serif`, `system-sans`, `system-mono`, a face every system has (Georgia, Menlo), or a web font on `DOCUMENT_FONTS`; one named by its address is refused (`brand-font`). The host decides where web fonts load from.
-- **An accent** must read as given in light: `set-brand` refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names. It is judged on the ground it is drawn on: gold on a black ground is kept, and gold on paper is also answered with the dark page it reads on. Contrast is judged on colors alone; a logo is a picture and is not measured.
+- **An accent** must read as given in light: `set-brand` refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names. It is judged on the ground it is drawn on: gold on a black ground is kept, and gold on paper is also answered with the dark page it reads on. A logo is not measured.
 - **A ground** is the page background, so apps stop sharing one off-white: `"#eef3f8"`, or `{ "light": "#f4efe6", "dark": "#1a1612" }`; `null` goes back to Graview's. Cards, the edge and floating sheets are drawn from it; a light one alone gets a dark ground of its hue, and a dark one for light is drawn as a dark page. One where any pair `graview check` holds (faint ink on a card too) drops short is refused like an accent, with a shade that passes all of them — "Muted ink #586174 on the ground #9a9a94 is 2.1:1; 4.5:1 is needed — #dcdcda would pass." In TypeScript, `brandFromAccent({ accent, base: groundSchemes("#eef3f8") })`.
+
+- **An opening screen** (`splash`) shows until a place has drawn: `style` `plain`, `editorial`, `ascii` or `shader` (a shipped name, `drift`, `ripple` or `veil`, never code; else `brand-splash-shader`), with an `image`, `title` and `kicker`. It travels with the document; a host inlines `splashHtml` from `@graview/pages/splash`.
 
 ### Styling by conversation
 

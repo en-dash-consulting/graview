@@ -39,6 +39,7 @@ import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
 import { formatValue, renderTemplate, type Money, type TemplatePart } from "./template.js";
+import { uncovered, type CoverPlan } from "./covers.js";
 import { rememberDocument } from "./remembered.js";
 import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
@@ -86,8 +87,20 @@ export interface ReplaceEffect {
   readonly keep: string;
 }
 
+/**
+ * What `setsLinked` means (Roadmap f-acts-update-linked): these fields set
+ * on every record the subject is already linked to through the relation,
+ * in the same change — each far record in turn the value's `$to`, its
+ * expressions read standing on the subject. Only an act's shorthand says it.
+ */
+export interface LinkedSetEffect {
+  readonly set: Readonly<Record<string, ValueSpec>>;
+  /** The relation walked from the subject, from whichever end the declaration puts it on. */
+  readonly through: string;
+}
+
 /** An effect as an act means it: one a document lists, or what a shorthand alone says. */
-export type ActEffect = EffectSpec | ReplaceEffect;
+export type ActEffect = EffectSpec | ReplaceEffect | LinkedSetEffect;
 
 /** One argument an act asks for: a field's value, a record of some kinds, or anything (a value set on a record of no known kind). */
 export type ArgPlan =
@@ -139,7 +152,10 @@ export interface ActPlan {
 
 export interface RulePlan {
   readonly title: string;
-  readonly require: Expr;
+  /** What must hold, parsed — or, for a coverage rule, nothing: `covers` says its walk. */
+  readonly require?: Expr;
+  /** A coverage rule's walk, each step with its direction resolved (Roadmap f-rule-covers-every). */
+  readonly covers?: CoverPlan;
   readonly when?: Expr;
   readonly says?: readonly TemplatePart[];
 }
@@ -356,6 +372,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   // The day is the app's: the date in its `brand.timeZone`, never the server's or the reader's (Roadmap f-app-time-zone).
   const zone = document.brand?.timeZone;
   const today = options.today ?? (() => isoToday(zone));
+  // And so are the locale a value the language says is said in and the clock it builds a moment on (`format`, `datetime`): the app's, never the reader's.
+  const saying = { ...(document.brand?.locale ? { locale: document.brand.locale } : {}), ...(zone ? { timeZone: zone } : {}) };
   const edges = new Map<string, EdgePlan>(plan.edges.map(([name, edge]) => [name, edge]));
   const shapes = new Map<string, KindShape>();
   for (const [kind, spec] of Object.entries(document.kinds)) {
@@ -461,6 +479,9 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   for (const [name, act] of Object.entries(document.acts ?? {})) {
     const planned = plan.acts[name]!;
     const { title, effects, guard, refusal, destructive, idempotent, creates, connects, severs, writes, writesOther, sets } = planned;
+    // What it carries to the records linked to its subject, by relation (Roadmap f-acts-update-linked): the store judges each far record's own edit.
+    const writesLinked: Record<string, readonly string[]> = {};
+    for (const e of effects) if ("through" in e) writesLinked[e.through] = [...new Set([...(writesLinked[e.through] ?? []), ...Object.keys(e.set)])];
     const args = new Map(planned.args);
     const shape: Record<string, z.ZodMiniType> = {};
     for (const [arg, a] of args) shape[arg] = argSchema(a, money);
@@ -476,7 +497,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const creation = effects.find((e): e is Extract<ActEffect, { create: string }> => "create" in e);
     /** What an effect's value is, as the act works it out: an expression, a literal (`$$` saying one `$`), the time or an argument. */
     const valueOf = (value: ValueSpec, bindings: Record<string, unknown>, graph: GraphReader, subject: AnyGraphNode | null = null): unknown => {
-      if (isRecord(value) && "expr" in value) return evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, today: today() });
+      if (isRecord(value) && "expr" in value) return evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, today: today(), ...saying });
       const ref = refName(value);
       return ref === undefined ? (typeof value === "string" && value.startsWith("$$") ? value.slice(1) : value) : ref === "now" ? new Date().toISOString() : ref === "today" ? today() : bindings[ref];
     };
@@ -523,6 +544,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         // Said even when empty (FR-110): a document act's writes are read off it, so nothing guesses them from its arguments' names.
         writes,
         ...(Object.keys(writesOther).length > 0 ? { writesOther } : {}),
+        ...(Object.keys(writesLinked).length > 0 ? { writesLinked } : {}),
         ...(Object.keys(sets).length > 0 ? { sets } : {}),
         // Its condition, judged on a record without the call's arguments: what lends typing into a field it writes (`type-text`).
         ...(guard
@@ -531,7 +553,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                 const subject = graph.getNode(id);
                 if (!subject || (subjectKinds.length > 0 && !subjectKinds.includes(subject.kind))) return false;
                 try {
-                  return evaluateExpr(guard, { graph, subject, kinds: shapes, bindings: {}, today: today() }) === true;
+                  return evaluateExpr(guard, { graph, subject, kinds: shapes, bindings: {}, today: today(), ...saying }) === true;
                 } catch {
                   return false;
                 }
@@ -555,7 +577,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           if (guard && subject) {
             let allowed: Value;
             try {
-              allowed = evaluateExpr(guard, { graph, subject, kinds: shapes, bindings, today: today() });
+              allowed = evaluateExpr(guard, { graph, subject, kinds: shapes, bindings, today: today(), ...saying });
             } catch (e) {
               if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not be judged: ${e.sentence}`);
               throw e;
@@ -625,6 +647,36 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               } else {
                 sever({ kind, from, to });
               }
+            } else if ("through" in effect) {
+              /*
+               * CARRIED ACROSS A LINK (Roadmap f-acts-update-linked): every
+               * record the subject reaches through the relation, from
+               * whichever end it stands on, takes the fields — each in turn
+               * the value's `$to`, the expressions read on the subject with
+               * `to` the far record. Under the seat's sight, so a record it
+               * may not see is not reached; whether it may change each one
+               * the store judged before this ran (`writesLinked`).
+               */
+              if (!subject) throw new ActRefusal(`"${title}" carries a change to linked records, and has no record to start from`, "invalid");
+              const fromSubject = edges.get(effect.through)?.from.includes(subject.kind) ?? true;
+              const far = fromSubject ? graph.out(subject.id, effect.through) : graph.in(subject.id, effect.through);
+              for (const node of far) {
+                const patch: Record<string, unknown> = {};
+                for (const [field, value] of Object.entries(effect.set)) {
+                  let v: unknown;
+                  if (refName(value) === "to") v = node.id;
+                  else if (isRecord(value) && "expr" in value) {
+                    try {
+                      v = evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: { ...bindings, to: node }, today: today(), ...saying });
+                    } catch (e) {
+                      if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not work out a value for ${labelFor(node)}: ${e.sentence}`);
+                      throw e;
+                    }
+                  } else v = resolve(value, undefined);
+                  if (v !== undefined) patch[field] = v;
+                }
+                if (Object.keys(patch).length > 0) context.patchNode(node.id, patch);
+              }
             } else if ("set" in effect) {
               const targetId = String(resolve(effect.target ?? "$subject", undefined) ?? "");
               const target = graph.getNode(targetId);
@@ -659,13 +711,13 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   // ── rules ────────────────────────────────────────────────────────────────
   const invariants: InvariantDefinition[] = [];
   for (const [name, rule] of Object.entries(document.rules ?? {})) {
-    const { title, require, when, says } = plan.rules[name]!;
+    const { title, require, when, says, covers } = plan.rules[name]!;
     const repairs = rule.repairs ?? [];
     // The store's day when it hands one (pinned, or ticked: FR-176), else the clock.
     const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today(), linked?: LinkedReader): Violation[] => {
       // A link to another app that could not be read is noted (FR-171): a rule that holds without it holds; one that does not cannot be judged, and says why.
       const unread: UnreadLink[] = [];
-      const ctx = { graph, subject, kinds: shapes, today: day, ...(linked ? { linked } : {}), onUnread: (u: UnreadLink) => unread.push(u) };
+      const ctx = { graph, subject, kinds: shapes, today: day, ...saying, ...(linked ? { linked } : {}), onUnread: (u: UnreadLink) => unread.push(u) };
       let holds: boolean;
       /*
        * A RULE THAT CANNOT ANSWER IS THE ENGINE'S TO SAY (FR-29). Out of
@@ -674,9 +726,17 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
        * `could-not-judge`. Both name the rule and its subject, and neither
        * is a hang or a crash that takes the other rules down.
        */
+      /** The records a coverage rule's subject does not reach: one problem each, naming both (Roadmap f-rule-covers-every). */
+      let missing: AnyGraphNode[] = [];
       try {
         if (when && evaluateExpr(when, ctx) !== true) return [];
-        holds = evaluateExpr(require, ctx) === true;
+        if (covers && subject) {
+          // One pass over the subject's links, never through the evaluator: nothing here can run out of budget.
+          missing = uncovered(graph, subject, covers);
+          holds = missing.length === 0;
+        } else {
+          holds = evaluateExpr(require!, ctx) === true;
+        }
         if (!holds && unread.length > 0) throw new ExprEvalError(`it reads ${unreadSaid(unread[0]!)}`, 0);
       } catch (e) {
         if (e instanceof ExprBudgetError) throw new RuleBudgetError(e.sentence);
@@ -704,6 +764,23 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         // Said as the act reads from where the rule stands: from the finding, "Name the work that fixes it".
         return [{ mutation: r.act, label: r.label ?? (far ? act!.fromTheOtherEnd : act?.title) ?? r.act.replace(/-/g, " "), args, ...(missing.length > 0 ? { missing } : {}) }];
       });
+      if (covers && subject) {
+        /*
+         * EACH MISSING PAIR IS ONE PROBLEM naming both records. The sentence
+         * may say either by its kind's name — "{candidate} has no stance on
+         * {issue}" — bound beside the subject's own fields.
+         */
+        return missing.map((far) => ({
+          invariant: name,
+          subjectId: subject.id,
+          label: title,
+          message: says
+            ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, money, bindings: { [subject.kind]: subject, [far.kind]: far } })
+            : `${labelFor(subject)}: ${title} — ${labelFor(far)}`,
+          nodeIds: [subject.id, far.id],
+          repairs: repairList,
+        }));
+      }
       return [
         {
           invariant: name,
@@ -718,8 +795,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const declared = {
       label: title,
       // What its line is said from (`@graview/core/lines`): data, so a page that judges carries no words.
-      shape: { over: rule.over, require, when, says, declared: document.kinds, money, kinds: shapes, today },
-      judgment: { require: rule.require, ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
+      shape: { over: rule.over, require, ...(covers ? { covers } : {}), when, says, declared: document.kinds, money, kinds: shapes, today },
+      judgment: { ...(rule.require ? { require: rule.require } : {}), ...(rule.covers ? { covers: rule.covers } : {}), ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
       ...(rule.description ? { description: rule.description } : {}),
       ...(repairs.length > 0 ? { repairs: repairs.map((r) => r.act) } : {}),
     };
@@ -756,6 +833,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     ...(document.forms ? { forms: document.forms as never } : {}),
     // When edits reach readers (Roadmap f-publishing-lifecycle): the store a host makes honors it.
     ...(document.publishing ? { publishing: document.publishing } : {}),
+    // What it says of suggestions as a whole (Roadmap f-suggestion-votes): the store a host makes honors it.
+    ...(document.tidying ? { tidying: document.tidying } : {}),
     // Who it is for and what they come to do (Roadmap f-app-jobs): data the checker, the describer and a seat read.
     ...(document.purpose ? { purpose: document.purpose } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.

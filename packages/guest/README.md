@@ -326,6 +326,24 @@ content security policy, tries every way out, and finds no request leaving
 it in Chromium, WebKit or Firefox; and it reads a view's own controls back
 from each engine's accessibility tree with their states.
 
+### One theme for every view
+
+Each view carried its own copy of the stylesheet, so a polished home and
+the record pages drifted apart. An app's brand now names what every worker
+view inherits, `brand.views` in a document and `Brand.views` in a
+declaration: `css`, a stylesheet the host draws in each view's region
+before the view's own — the same sanitizer, the same 64,000 characters
+(`@graview/core/css`), so a view's own rule wins where both say one and
+nothing in it reaches further than a view's could — and `motion`, `"fade"`
+to fade a view's drawing out and in when the record it shows changes
+(nothing moves where the person asked for less motion; a shared-element
+transition between records is not this). The brand's typeface and scheme
+tokens reach a view as they always did. The view is never told: the host
+dresses it, and dresses it again when the brand changes. `graview check`
+says what of the stylesheet the open kit leaves out (`brand-views-css`),
+and a headless run (`runWorkerViewHeadless`'s `brand`) draws it first in
+its `css`, so a picture of the view is dressed as the page dresses it.
+
 ### A link out goes only where the view was handed
 
 `<a href="${record.url}">` is drawn where its address is one a record the
@@ -507,7 +525,12 @@ followed by it on a press or Enter, to a record the viewer may see or a
 place the app has. `graview.navigate("offer:coaching")` and
 `graview.navigate({ place: "the-packages" })` are held to the same. A bare
 string is a record the viewer may see first, then a place by that slug, so
-`graview.navigate("the-packages")` goes to the place. A destination that
+`graview.navigate("the-packages")` goes to the place. The Scene and the
+home are places by name too (FR-235): `data-place="overview"` goes to the
+Scene's overview and `data-place="home"` to the front page, on either
+face; a kind's list by its slug. What a view may name is one vocabulary,
+`placeNamesOf` on `@graview/core/navigate`, read alike by the headless
+check and the page. A destination that
 is neither goes nowhere and says why — in the view's console, and to the
 host's problems (the onProblem option on `mountWorkerView` and on a registered view's
 definition) — naming the places there are. The
@@ -550,9 +573,32 @@ code cannot open it. A record the view was not shown, a field that holds
 no such file, or a view without `pictures` draws nothing and says why, in
 the view's console and to the host's problems. A video is handed to the
 view as its facts (`name`, `type`, `bytes`, `width`, `height`, `caption`,
-`duration`), never an address; a headless run says a placed video as "The
-waves at dusk, a 45-second video". A frame guest places none: its frame is
-another origin.
+`duration`, and `poster: true` where it has one), never an address; a
+headless run says a placed video as "The waves at dusk, a 45-second
+video". A frame guest places none: its frame is another origin.
+
+A video plays as a hero background (Roadmap f-video-hero) where the view
+asks for one:
+
+```html
+<graview-video autoplay cover data-record="moment:dusk" data-field="clip"></graview-video>
+```
+
+`autoplay` is muted, looping, inline and without controls — autoplay
+without muted never plays, so the one word means all of it — and `cover`
+fills the box the view sized (`object-fit: cover`; the view's stylesheet
+rounds and clips the box). Where the person asked for less motion
+(`prefers-reduced-motion: reduce`) the background stands still at its
+poster, fetching only its metadata, and is let go when they stop asking.
+The source, the poster and the controls stay the host's: `src`, `poster`,
+`controls`, `loop` and `muted` on a `<graview-video>` are refused. A
+headless run's description carries `videos`, one per placed
+`<graview-video>` — the record and field, what it shows, its `source`
+(the media type), its `duration`, whether it has a `poster`, `autoplay`
+and `cover`, and `playable`: a source every browser plays (MP4, WebM or
+Ogg, what a host's upload transcodes to) with a poster to stand at, with
+`why` when it is not — so an agent confirms a hero plays without opening
+a browser; `placeText` says each in one line under "Videos:".
 
 ### Files a person drops on it
 
@@ -712,6 +758,25 @@ record by its label, drawn by the host — is drawn in the region, and
 `error` (it threw before it drew), `start` (it never started) or
 `manifest`, with a sentence saying it, once. A host draws its own in its place with `fallback`; the React
 registrations draw whatever the registry drew for the kind before.
+
+The time budgets fit the device. `pushMs` and `drawMs` are what a fast
+device is held to: the page measures how long its first view's worker took
+to start — from `new Worker` to its runtime's ready, which is the device
+making a thread and parsing and running the runtime — once, and keeps it.
+Every view on the page is given its base times that pace: 1 for a start of
+60 ms or under (a laptop keeps today's guard), rising to a ceiling of 4 for a
+start of 240 ms or more, so a car's browser that draws a home view in two
+seconds keeps it where it fell back before. A host's own numbers scale the
+same way and never past four times; the counts — `messages`, `maxNodes`,
+`maxSourceBytes` — never scale, so a flood is a flood on any device. The
+sentence a stopped view is given names the budget it was actually held to
+("It took longer than 2,400 ms…"), `pace` on the mounted view says the
+page's pace once its worker is ready, and the page keeps whatever it shows —
+the drawing before, or nothing — until the view draws or that budget runs
+out; nothing is drawn in its place and then swapped. The headless runner's
+`pushMs` is the server's and stays fixed. A start the network slowed —
+`worker: { url }` answered late — reads as a slow device too; a view on a
+slow link gets a slow device's time, and no more of anything else.
 
 What is left: work a view schedules with timers between pushes is not
 timed per push. A view that busies its own worker for just under

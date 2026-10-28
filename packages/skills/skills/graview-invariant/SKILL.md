@@ -118,7 +118,13 @@ and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`;
 (`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list
 key sorts by its first value, then its next), `first(S)` for one record,
 `either(a, b)` for the first that is something; `if(cond, a, b)`, which
-works out only the branch it takes; `round(x, places)`; `present`, `len`, dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set
+works out only the branch it takes; `round(x, places)`; `present`, `len`, dates.
+Words and moments too: `concat(name, ' · ', place)`; `format(start,
+'EEE d MMM · h:mm a')` by a closed pattern (`EEE`, `EEEE`, `d`, `MMM`,
+`MMMM`, `yyyy`, `h:mm a`, `HH:mm`, quoted words) in `brand.locale` on
+`brand.timeZone`; `datetime(due, '09:30')` (or `at`); `addMinutes`;
+`weekday` (`mon`…`sun`); `startOfWeek`. `graview check` types them
+(`expr-type`, `format-pattern`). `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set
 and give each record reached once; sets meet with `&`, join with `|` and part
 with `-` — LifeLogics' coverage is one figure,
 `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step
@@ -131,13 +137,35 @@ face's own screen say it once (`factValues` from `@graview/core/blocks`;
 `describe_place` on the home lists them). Every evaluation
 has a step budget: a rule that reads too much is `over-budget`, never a hang.
 
+## A rule that covers every record
+
+"Every candidate has a stance on every issue", counted in the rule
+language, is `rule-cost`. Declare it as coverage instead:
+
+```json
+"stance-on-every-issue": {
+  "over": "candidate",
+  "covers": { "every": "issue", "through": "stances", "via": "issue" },
+  "says": "{candidate} has no stance on {issue}"
+}
+```
+
+`covers` replaces `require`: each `over` record must reach every live
+`every` record `through` a relation (then `via` one more). The store judges
+it in one pass over the links; each missing pair is one problem, and `says`
+names either record by its kind. `rule-covers-relation` refuses a walk that
+does not get there; `coverageRule` is the TypeScript twin.
+
 The same language works out what a document's act sets, so a repair can be
 one declared act that does all of it: org's `assign-ownership` is `on:
 "component"`, `connects: "owns"` (from the person given, as the relation is
 declared), `replaces: ["owns", "proposedOwner"]` (the links it supersedes),
 and `sets: { ownership: { expr: "if(to == 'person-nick', 'nick_owns',
 'owned_elsewhere')" } }`; `setsOther` sets the record at the link's other
-end. Each previews and undoes as one act.
+end; `"setsLinked": { "event": { "title": { "expr": "name" } } }` carries
+a change to the records the subject is already linked to, in the same
+change, judged by each far record's own edit (`act-sets-linked-relation`,
+`act-sets-linked-field`). Each previews and undoes as one act.
 
 ## The horizon
 

@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 1145,
+  "gzipped": 394,
+  "note": "Raised when a document's brand came to name what every worker view inherits (Roadmap f-app-wide-view-theme): the host draws the brand's stylesheet in a `<style>` of its own before the view's, dresses the view again on every push, and fades the drawing out and in when the record it shows changes. Measured at 225_701 / 85_865 against 224_556 / 85_471: 1_145 / 394 more."
+}

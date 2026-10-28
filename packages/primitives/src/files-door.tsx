@@ -10,4 +10,4 @@ import { lazyModule } from "@graview/react/provider";
 const FILES = /* @__PURE__ */ lazyModule(retryingImport(() => import("./files.js")));
 
 export const Files = FILES.part((m: typeof import("./files.js"), props: import("./files.js").FilesProps) => m.drawFiles(props), { quiet: true });
-export type { FilesProps } from "./files.js";
+export type { FilesProps, VideoWay } from "./files.js";

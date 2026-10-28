@@ -382,6 +382,93 @@ const openProfile = async (page) => {
   } finally {
     seedbed.stop();
   }
+
+  /*
+   * ASK AI IN AN APP PROPOSES A CHANGE TO THE APP ITSELF (Roadmap
+   * f-seat-reshape). "We also need who's driving" had no path inside the
+   * app: the seat's tools read, and the menu's suggestions cover records.
+   * Now, for a seat whose role may change the declaration and a host that
+   * handed `onProposeChange`, the words go to the host's `decide` as the
+   * starter's questions, code composes the change, and the person sees a
+   * card — added, kept, dropped as chips, breaking said plainly — whose
+   * Accept hands the host one change. Things keeps its declaration in
+   * code, so the host here is a stub on the page; the model is a stub that
+   * reads "who" as people who own things. A member — whose role may not
+   * change the declaration — is never offered it: the same words draw no
+   * card, nothing is refused.
+   */
+  const reshaping = await startVite("todo", portFor("todo"));
+  try {
+    const asked = async (as) => {
+      const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+      const errors = [];
+      page.on("pageerror", (e) => errors.push(String(e).slice(0, 90)));
+      await page.addInitScript(() => {
+        window.__todoProposed = [];
+        window.__todoProposeChange = async (proposal) => {
+          window.__todoProposed.push(proposal);
+          return "applied";
+        };
+        window.__todoAi = {
+          name: "stub",
+          decide: async (_state, questions) => {
+            const answers = {};
+            for (const key of Object.keys(questions)) answers[key] = { type: "noul", noul: key === "need:owners" ? 0.95 : 0.05 };
+            return { answers, usage: { inputTokens: 0, outputTokens: 0 } };
+          },
+        };
+      });
+      await page.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1&chat=1&as=${as}`, { waitUntil: "load" });
+      await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await page.waitForTimeout(900);
+      // The conversation lives in Activity, beside the tidy seat: open it the way a person would.
+      await page.click('[data-testid="activity-button"]');
+      await page.waitForSelector('[data-testid="chat-draft"]', { timeout: 10_000 });
+      await page.fill('[data-testid="chat-draft"]', "we also need who's driving");
+      await page.click('[data-testid="chat-send"]');
+      const card = await page.waitForSelector('[data-testid="chat-reshape"]', { timeout: 20_000 }).catch(() => null);
+      const read = await page.evaluate(() => ({
+        chips: [...document.querySelectorAll('[data-testid="chat-reshape-chip"]')].map((chip) => ({ words: chip.textContent.trim(), on: chip.getAttribute("aria-pressed") === "true" })),
+        breaking: document.querySelector('[data-testid="chat-reshape-breaking"]')?.textContent ?? null,
+        answered: [...document.querySelectorAll('[data-testid="chat-panel"] ol > li')].map((li) => li.textContent.trim().slice(0, 80)),
+      }));
+      return { page, errors, card: card !== null, ...read };
+    };
+
+    const nora = await asked("user-nora");
+    check("todo: the keeper's 'we also need who's driving' is answered with a card adding people who own things and keeping the tasks",
+      nora.card && nora.chips.some((chip) => chip.words === "people who own things" && chip.on) && nora.chips.some((chip) => chip.words === "tasks" && chip.on) && nora.breaking === null,
+      `${nora.chips.map((chip) => `${chip.words}${chip.on ? "" : " (off)"}`).join(" · ") || nora.answered.join(" | ")}`);
+    if (nora.card) {
+      await nora.page.click('[data-testid="chat-reshape-accept"]');
+      await nora.page.waitForFunction(() => window.__todoProposed.length > 0, null, { timeout: 10_000 }).catch(() => null);
+      await nora.page.waitForTimeout(400);
+      const handed = await nora.page.evaluate(() => {
+        const proposal = window.__todoProposed[0];
+        return {
+          count: window.__todoProposed.length,
+          add: proposal?.add ?? [],
+          drop: proposal?.drop ?? [],
+          brings: proposal?.card.adds.map((chip) => chip.brings ?? "").join(" ") ?? "",
+          applied: document.querySelector('[data-testid="chat-applied"]')?.textContent ?? null,
+          accept: document.querySelector('[data-testid="chat-reshape-accept"]') !== null,
+        };
+      });
+      check("todo: Accept hands the host one proposal — people who own things added, nothing dropped, an owner link among what it brings — and the card says it was applied",
+        handed.count === 1 && handed.add.join(",") === "owners" && handed.drop.length === 0 && /owner link/.test(handed.brings) && handed.applied !== null && !handed.accept,
+        `${handed.count} handed · add ${handed.add.join(",") || "none"} · drop ${handed.drop.join(",") || "none"} · ${handed.applied ?? "not applied"}`);
+    }
+    check("todo: nothing threw while the app was reshaped", nora.errors.length === 0, nora.errors[0] ?? "");
+    await nora.page.close();
+
+    const sam = await asked("user-sam");
+    check("todo: a member is never offered a change to the app — the same words draw no card, and nothing is refused",
+      !sam.card && sam.answered.length >= 2 && !sam.answered.some((line) => /refused|may not/i.test(line)) && sam.errors.length === 0,
+      sam.answered.join(" | ") || sam.errors[0] || "");
+    await sam.page.close();
+  } finally {
+    reshaping.stop();
+  }
 } finally {
   await browser.close();
 }

@@ -20,11 +20,8 @@
  *
  * Exported on `@graview/core/compose`, on no page.
  */
-import type { GraviewApp } from "./app.js";
 import type { GraviewDocument, KindSpec } from "./document/schema.js";
-import { toDocument } from "./document/to-document.js";
 import { humanizeField } from "./schema/define-node.js";
-import type { AnySchema } from "./schema/schema.js";
 
 /** The closed vocabulary, in the order traits are said. */
 export const TRAITS = ["owners", "status", "schedule", "budget", "places", "sources", "stock", "votes", "private", "history", "publishing", "roster", "routines", "comparison"] as const;
@@ -46,6 +43,30 @@ export const TRAIT_WORDS: Readonly<Record<TraitName, string>> = {
   roster: "a roster of people",
   routines: "repeating routines",
   comparison: "a comparison to pick one from",
+};
+
+/**
+ * WHAT EACH TRAIT'S MODULE BRINGS where an app lacks it, in a person's words
+ * (Roadmap f-seat-reshape): what the card a seat draws says under a trait
+ * before anything is composed, so a page need not carry the composer to
+ * say it. What a module is made of is `startingDocument`'s (the kind, the
+ * link, the acts, the rule, the view each names), and these words follow it.
+ */
+export const TRAIT_BRINGS: Readonly<Record<TraitName, string>> = {
+  owners: "a person kind (or the people the app has), an owner link, Give it to someone, a rule that every one has somebody on it, and Who has what",
+  status: "a status with named steps (or the one the app has), an act for each step, and a board",
+  schedule: "a due date, Set the date, the on-time rule, and a calendar",
+  budget: "a cost beside the money the app keeps, a budget on the kind it is grouped under, Set the budget, and the over-budget rule",
+  places: "a place kind, a link to one, and a map of where things are",
+  sources: "a source kind, a link from each claim to its source, and the rule that a claim names one",
+  stock: "what is on hand and the reorder level, Count the stock, and the running-low rule",
+  votes: "a vote on each, Vote for it, and a tally",
+  private: "a sight that keeps each person's own records to them",
+  history: "the record book: an era or season each belongs to, and a timeline",
+  publishing: "a published status, Publish it, and what the public sees",
+  roster: "a person kind with the fields a roster keeps, and the list of who is here",
+  routines: "how often each repeats and when it was last done, Mark it done, and the overdue rule",
+  comparison: "a side-by-side of the candidates, one chosen, and Choose it",
 };
 
 /** One trait a declaration carries: what carries it, named, and one sentence. Fields and relations are said as `<kind>.<name>`; lenses by title. */
@@ -139,7 +160,7 @@ function coveragesOver(document: GraviewDocument, kind: string, side: "rows" | "
 function rulesSaying(document: GraviewDocument, names: readonly string[], over?: readonly string[]): string[] {
   const wanted = new Set(names);
   return Object.entries(document.rules ?? {})
-    .filter(([, rule]) => (over === undefined || rule.over === "graph" || over.includes(rule.over)) && [...tokens(`${rule.when ?? ""} ${rule.require} ${rule.says ?? ""}`)].some((token) => wanted.has(token)))
+    .filter(([, rule]) => (over === undefined || rule.over === "graph" || over.includes(rule.over)) && [...tokens(`${rule.when ?? ""} ${rule.require ?? ""} ${rule.says ?? ""}`)].some((token) => wanted.has(token)))
     .map(([name]) => name);
 }
 
@@ -253,7 +274,7 @@ const READINGS: Readonly<Record<TraitName, (document: GraviewDocument, found: Fo
       found.add("acts", ...actsOn(document, one.kind).filter(([, act]) => (act.writes ?? []).includes(one.name) || act.sets?.[one.name] !== undefined).map(([act]) => act));
     }
     // The rules that hold a sum to a budget: those whose requirement says a budget field's name.
-    found.add("rules", ...rulesSaying(document, names).filter((rule) => budgets.some((budget) => tokens(document.rules![rule]!.require).has(budget.name))));
+    found.add("rules", ...rulesSaying(document, names).filter((rule) => budgets.some((budget) => tokens(document.rules![rule]!.require ?? "").has(budget.name))));
     const sum = sums[0]!;
     const budget = budgets.find((one) => one.kind === sum.kind) ?? budgets[0]!;
     found.say(`${Plural(document, sum.kind)}' ${lower(humanizeField(sum.name))} against ${budget.kind === sum.kind ? "each one's" : `each ${nounOf(document, budget.kind)}'s`} ${lower(humanizeField(budget.name))}.`);
@@ -378,7 +399,7 @@ const READINGS: Readonly<Record<TraitName, (document: GraviewDocument, found: Fo
         found.add("kinds", kind);
         found.add("fields", `${kind}.${name}`, ...words.map((word) => `${kind}.${word}`));
         found.add("acts", ...actsOn(document, kind).filter(([, act]) => act.sets?.[name] === published).map(([act]) => act));
-        found.add("rules", ...rulesSaying(document, [name, ...words], [kind]).filter((rule) => tokens(`${document.rules![rule]!.when ?? ""} ${document.rules![rule]!.require}`).has(published) || words.some((word) => tokens(document.rules![rule]!.require).has(word))));
+        found.add("rules", ...rulesSaying(document, [name, ...words], [kind]).filter((rule) => tokens(`${document.rules![rule]!.when ?? ""} ${document.rules![rule]!.require ?? ""}`).has(published) || words.some((word) => tokens(document.rules![rule]!.require ?? "").has(word))));
         found.say(`${Plural(document, kind)} go from ${lower(field.options![0]!)} to ${lower(published)}, with their words.`);
       }
     }
@@ -411,7 +432,7 @@ const READINGS: Readonly<Record<TraitName, (document: GraviewDocument, found: Fo
   },
   comparison(document, found) {
     for (const [name, rule] of Object.entries(document.rules ?? {})) {
-      if (!ONE_PER_GROUP.test(rule.require)) continue;
+      if (!rule.require || !ONE_PER_GROUP.test(rule.require)) continue;
       // The kind compared: the one whose relation the count walks in from the group, or the one swept over the whole graph.
       const group = rule.over === "graph" ? undefined : rule.over;
       const walked = /in\('([^']+)'\)/.exec(rule.require)?.[1];
@@ -428,18 +449,16 @@ const READINGS: Readonly<Record<TraitName, (document: GraviewDocument, found: Fo
   },
 };
 
-const isDocument = (source: GraviewDocument | GraviewApp<AnySchema>): source is GraviewDocument => (source as GraviewDocument).format === "graview-document";
-
 /**
- * THE TRAITS A DECLARATION CARRIES, in `TRAITS` order, each with what
- * carries it and one sentence. A TypeScript app is read as the document it
- * would be (`toDocument`). Nothing is read off prose: a template that says
+ * THE TRAITS A DOCUMENT CARRIES, in `TRAITS` order, each with what carries
+ * it and one sentence. Nothing is read off prose: a template that says
  * "budget" in its pitch and declares no budget field has no budget trait,
  * and one that declares a budget beside its quotes has it whatever its
- * pitch says.
+ * pitch says. A TypeScript app is read through `traitsOf` on
+ * `@graview/core/compose`, which writes it as the document it would be;
+ * this reading alone is what a page carries (`@graview/core/traits`).
  */
-export function traitsOf(source: GraviewDocument | GraviewApp<AnySchema>): Trait[] {
-  const document = isDocument(source) ? source : toDocument(source).document;
+export function traitsOfDocument(document: GraviewDocument): Trait[] {
   const traits: Trait[] = [];
   for (const trait of TRAITS) {
     const found = new Found();

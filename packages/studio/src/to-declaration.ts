@@ -29,7 +29,7 @@ import {
   type Policy,
   type Sight,
 } from "@graview/core";
-import { expressionRule } from "@graview/core/document";
+import { coverageRule, expressionRule } from "@graview/core/document";
 import { isMarkdownField } from "@graview/core/words";
 import * as z from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
@@ -399,6 +399,19 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
      * A judgment in words is judged — the studio's own rule and the
      * checkout's alike, since the words are the judgment (FR-07).
      */
+    const coversEvery = str(rule, "coversEvery");
+    if (coversEvery && str(rule, "coversThrough")) {
+      return coverageRule(ruleName, {
+        over: scope === "graph" ? "graph" : scope.kind,
+        covers: { every: coversEvery, through: str(rule, "coversThrough")!, ...(str(rule, "coversVia") ? { via: str(rule, "coversVia")! } : {}) },
+        ...(str(rule, "when") ? { when: str(rule, "when")! } : {}),
+        ...(str(rule, "says") ? { says: str(rule, "says")! } : {}),
+        title: str(rule, "title") ?? ruleName,
+        ...(description ? { description } : {}),
+        ...(repairs.length > 0 ? { repairs } : {}),
+        ...(bool(rule, "judgesPast") ? { judgesPast: true } : {}),
+      });
+    }
     const require = str(rule, "require");
     if (require) {
       return expressionRule(

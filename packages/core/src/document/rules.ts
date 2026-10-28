@@ -12,6 +12,7 @@ import { isoToday } from "../days.js";
 import { parseTemplate } from "./template-parse.js";
 import { parsedComputed } from "./computed.js";
 import { linkedRelations, type LinkedReader } from "../schema/linked.js";
+import { resolveCovers, uncovered, type CoverPlan, type CoverSpec } from "./covers.js";
 
 /**
  * What every kind of a COMPILED schema holds, for the rule language to read
@@ -128,4 +129,88 @@ export function expressionRule(
       ? defineInvariant(name, { scope: "graph", ...common, evaluate: ({ graph, today: day, context }: { graph: unknown; today?: string; context?: { linked?: LinkedReader } }) => judge(graph as GraphReader, null, day, context?.linked) } as never)
       : defineInvariant(name, { scope: { kind: spec.over }, ...common, evaluate: ({ graph, subject, today: day, context }: { graph: unknown; subject: unknown; today?: string; context?: { linked?: LinkedReader } }) => judge(graph as GraphReader, subject as AnyGraphNode, day, context?.linked) } as never)
   ) as InvariantDefinition;
+}
+
+/** A coverage rule, as a TypeScript declaration writes one: each record of `over` reaches every record of `covers.every` through its links. */
+export interface CoverageRuleSpec {
+  /** The kind whose records are each held to the coverage. */
+  readonly over: string;
+  /** The kind every record must reach, the relation walked from the record, and the relation from there when the first stops short. */
+  readonly covers: CoverSpec;
+  /** Only the records for which this holds are judged. */
+  readonly when?: string;
+  /** The sentence each missing pair says: "{candidate} has no stance on {issue}" — either record by its kind's name, the subject's fields bare. */
+  readonly says?: string;
+  readonly title?: string;
+  readonly description?: string;
+  readonly repairs?: readonly string[];
+  readonly judgesPast?: boolean;
+}
+
+const PLANS = new WeakMap<object, Map<string, CoverPlan | string>>();
+
+/**
+ * A RULE THAT EACH RECORD IS LINKED TO EVERY RECORD OF A KIND (Roadmap
+ * f-rule-covers-every), the TypeScript twin of a document's `covers`.
+ * Written in the rule language — `every(all('issue'), …)` for every
+ * candidate — the checker says `rule-cost` of it; declared as a walk it is
+ * judged in one pass over the record's links, never through the evaluator,
+ * and each far record the subject does not reach is one problem naming
+ * both. The walk's directions are read from the schema of the graph being
+ * judged, once per schema; a relation that does not reach the kind is
+ * `could-not-judge`, in the words `graview check` would have said.
+ */
+export function coverageRule(name: string, spec: CoverageRuleSpec, options: { readonly today?: () => string } = {}): InvariantDefinition {
+  const when = spec.when ? parseExpr(spec.when) : undefined;
+  const says = spec.says ? parseTemplate(spec.says) : undefined;
+  const title = spec.title ?? name.replace(/-/g, " ");
+  const today = options.today ?? isoToday;
+  const planOf = (graph: GraphReader): CoverPlan => {
+    const schema = (graph as { readonly schema?: AnySchema }).schema;
+    if (!schema) throw new Error("a coverage rule needs the graph's kinds: judge a Graph, which carries its schema");
+    let plans = PLANS.get(schema);
+    if (!plans) PLANS.set(schema, (plans = new Map()));
+    let plan = plans.get(name);
+    if (plan === undefined) {
+      const resolved = resolveCovers(spec.over, spec.covers, (relation) => schema.edge(relation), (kind) => schema.tryDefinition(kind) !== undefined);
+      plan = "plan" in resolved ? resolved.plan : `its "${resolved.problem.key}" cannot be followed: ${resolved.problem.message}`;
+      plans.set(name, plan);
+    }
+    if (typeof plan === "string") throw new Error(plan);
+    return plan;
+  };
+  const judge = (graph: GraphReader, subject: AnyGraphNode, day = today()): Violation[] => {
+    const shapes = shapesOf(graph);
+    const ctx = { graph, subject, kinds: shapes, today: day };
+    try {
+      if (when && evaluateExpr(when, ctx) !== true) return [];
+    } catch (error) {
+      if (error instanceof ExprBudgetError) throw new RuleBudgetError(error.sentence);
+      if (error instanceof ExprEvalError) throw new Error(error.sentence);
+      throw error;
+    }
+    const label = (node: AnyGraphNode): string => {
+      const definition = (graph as { readonly schema?: AnySchema }).schema?.tryDefinition(node.kind) as { label?: (n: AnyGraphNode) => string } | undefined;
+      return definition?.label?.(node) ?? node.id;
+    };
+    return uncovered(graph, subject, planOf(graph)).map((far) => ({
+      invariant: name,
+      subjectId: subject.id,
+      label: title,
+      message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, bindings: { [subject.kind]: subject, [far.kind]: far } }) : `${label(subject)}: ${title} — ${label(far)}`,
+      nodeIds: [subject.id, far.id],
+      repairs: (spec.repairs ?? []).map((mutation) => ({ mutation, label: mutation.replace(/-/g, " "), args: { id: subject.id } })),
+    }));
+  };
+  return defineInvariant(name, {
+    scope: { kind: spec.over },
+    label: title,
+    // What its line is said from (`@graview/core/lines`), once the graph's schema has resolved the walk; `covers` as declared until then.
+    shape: { over: spec.over, covers: { every: spec.covers.every, through: { relation: spec.covers.through, out: true }, ...(spec.covers.via ? { via: { relation: spec.covers.via, out: true } } : {}) }, when, says, today },
+    judgment: { covers: spec.covers, ...(spec.when ? { when: spec.when } : {}), ...(spec.says ? { says: spec.says } : {}) },
+    ...(spec.description ? { description: spec.description } : {}),
+    ...(spec.repairs && spec.repairs.length > 0 ? { repairs: [...spec.repairs] } : {}),
+    ...(spec.judgesPast ? { judgesPast: true } : {}),
+    evaluate: ({ graph, subject, today: day }: { graph: unknown; subject: unknown; today?: string }) => judge(graph as GraphReader, subject as AnyGraphNode, day),
+  } as never) as InvariantDefinition;
 }

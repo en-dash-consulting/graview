@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 3192,
+  "gzipped": 1029,
+  "changeset": "a-rule-covers-every-record-without-a-cost-warning.md",
+  "note": "Raised when a rule came to cover every record without a cost warning (Roadmap f-rule-covers-every): the rule's `covers` read by the schema and the compiler, its walk resolved against the relations and judged in one pass over the links (`covers.ts`), and each missing pair said as a problem, all of which the compile a hosted page carries up front reaches. Measured at 634_742 / 220_874 against main's 631_550 / 219_845: 3_192 more minified, 1_029 gzipped."
+}

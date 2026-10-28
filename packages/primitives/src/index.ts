@@ -54,7 +54,7 @@ export type { ConnectionsProps } from "./connections.js";
 export { EditableTitle, EditableValue, FieldLink, Fields, humanize, LongValue } from "./editable.js";
 // A record's pictures and documents (FR-162, FR-163): drawn, and put there through the host's files.
 export { Files } from "./files-door.js";
-export type { FilesProps } from "./files-door.js";
+export type { FilesProps, VideoWay } from "./files-door.js";
 // Choosing several records on a list, and the bar that acts on them all at once (fetched with the first one chosen).
 export { CHOOSING_CSS, LONG_PRESS_MS, useChoosing } from "./choosing.js";
 export type { Choosing } from "./choosing.js";
@@ -142,9 +142,9 @@ export { ShowInstallation } from "./installation.js";
 export { Seats } from "./seats.js";
 export { Profile } from "./profile.js";
 export type { HostAction } from "./profile.js";
-export { createNoticeBoard, fetchNotices, Notices, TOAST_MS } from "./notices.js";
+export { createNoticeBoard, fetchNotices, frameworkVoice, Notices, TOAST_MS } from "./notices.js";
 export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
-export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
+export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeReport, NoticeReporting, NoticeTone } from "./notices.js";
 export { buildReach, ReachView, reachLens } from "./lens/reach.js";
 export type { Reach, ReachCell } from "./lens/reach.js";
 export { Shell } from "./shell.js";
@@ -230,11 +230,13 @@ export {
   createCalendarLens,
   dayOf,
   daysBetween,
+  daysCovered,
   daysFrom,
   endOfMonth,
   entriesIn,
   entriesOn,
   finerThan,
+  knowsOnlyItsYear,
   minutesOf,
   placeOnCalendar,
   rangesOf,

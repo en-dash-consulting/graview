@@ -54,6 +54,7 @@ import {
   checkCodeDescribes,
   checkForms,
   checkPublishing,
+  checkTidying,
 } from "./check/index.js";
 import type { CheckContext, Finding } from "./check/context.js";
 
@@ -125,6 +126,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>, options: Check
   checkFieldSight(ctx);
   checkForms(ctx);
   checkPublishing(ctx);
+  checkTidying(ctx);
   checkPalette(ctx);
   checkLensBindings(ctx);
   checkDeclaredLenses(ctx);

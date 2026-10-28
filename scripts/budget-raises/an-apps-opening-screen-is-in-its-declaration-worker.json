@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 3799,
+  "note": "Raised when an app's opening screen came to be in its declaration (Roadmap f-splash-in-document): the document's shape gains `brand.splash`, the brand findings judge its image and its shader's name, `set-brand` sets and clears it and the diff says it, which the worker carries through `@graview/core/document` and `@graview/core/check`. The worker had 646 bytes of room under 2_301_008. Measured at 2_304_161 B against 2_300_362."
+}

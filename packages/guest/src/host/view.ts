@@ -1,7 +1,7 @@
 import { imageRefusedWords } from "./open-judge.js";
 import { keepClicked } from "./clicked.js";
 import { guestPlacesOf } from "./links-words.js";
-import type { AnySchema, FileValue, HostFiles, Principal, Store } from "@graview/core";
+import type { AnySchema, FileValue, HostFiles, PagesArrangement, Principal, Store } from "@graview/core";
 import { storedFilesOf } from "./marks.js";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
@@ -11,9 +11,10 @@ import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, 
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
 import { judgeCodeAct, type DropGrant } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
+import { fitBudget, keepStart, paceOf } from "./device-pace.js";
 import { checkViewSource } from "./view-source.js";
 import { viewScript } from "./view-script.js";
-import { createLinks, listsOf, type Arrival, type Destination } from "./links.js";
+import { createLinks, listsOf, placeVocabulary, type Arrival, type Destination } from "./links.js";
 import { addressAt, arriveAt } from "./arrive-at.js";
 import type { GoTo } from "@graview/react/provider";
 import type { GuestPictureHand } from "./pictures.js";
@@ -63,7 +64,7 @@ export type WorkerViewFailure =
   | "nodes"
   /** It sent more than `messages` messages in `messageWindowMs`. */
   | "flood"
-  /** It took longer than `pushMs` to draw what it was shown. */
+  /** It took longer than `pushMs`, fitted to the device, to draw what it was shown. */
   | "slow";
 
 export interface WorkerViewLimits extends GuestLimits {
@@ -78,14 +79,21 @@ export interface WorkerViewLimits extends GuestLimits {
   /**
    * How long the view may take over one push of what it is shown — its
    * listeners' own time, as its runtime measures it, and the time until the
-   * runtime says it has drawn, as the host measures it — in milliseconds.
-   * 1 000 by default. Time the host's own page was held up is not counted.
+   * runtime says it has drawn, as the host measures it — in milliseconds,
+   * on a fast device. 1 000 by default. Time the host's own page was held
+   * up is not counted. FITTED TO THE DEVICE (Roadmap
+   * f-view-budget-fits-device): the page measures how long its first view's
+   * worker took to start, once, and every view's `pushMs` and `drawMs` are
+   * this base times that pace — 1 for a start of 60 ms or under, up to 4.
+   * The sentence a stopped view is given names the budget it was held to.
    */
   readonly pushMs?: number;
   /**
    * The most of any one second the host's page may spend drawing what the
-   * view sent, in milliseconds: past it the batch is left undrawn and the
-   * view is stopped as slow. 100 by default.
+   * view sent, in milliseconds, on a fast device: past it the batch is left
+   * undrawn and the view is stopped as slow. 100 by default; fitted to the
+   * device as `pushMs` is. `messages`, `maxNodes` and the byte limits are
+   * never fitted: a flood is a flood on any device.
    */
   readonly drawMs?: number;
 }
@@ -148,8 +156,17 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
   readonly hrefOf?: (to: Arrival) => string | undefined;
   /** The face's own way of going (`useGoTo`), read when the view goes: where `onNavigate` is not given, the arrival is gone to by it, and its `href` is a link's address. */
   readonly goTo?: () => GoTo | undefined;
-  /** The app's named places: what the view is told of, and may link to by slug. None by default. */
+  /**
+   * The app's named places — the registry's pictures, each over a kind —
+   * which the host reads through the one vocabulary (`placeVocabulary`,
+   * FR-235): with the Scene (`overview`), the home and each kind's list
+   * the viewer sees, it is what the view is told of (`props.places`) and
+   * may link to by slug. None handed, the vocabulary still names the
+   * Scene, the home and the lists.
+   */
   readonly places?: () => readonly GuestPlace[];
+  /** The app's arrangement (`views.arrangement()`): what the declaration calls the Scene, for the vocabulary's title of it. */
+  readonly arrangement?: () => PagesArrangement | undefined;
   /**
    * The app's look now. Read off the region by default: the `--graview-*`
    * tokens it inherits, and the scheme of the nearest `data-graview-scheme`
@@ -249,6 +266,13 @@ export interface WorkerView {
   readonly refused: readonly ViewRefusal[];
   /** How tall what it drew is, in CSS pixels, as the host last measured it (`onContentHeight`); `undefined` before it draws. */
   readonly contentHeight: number | undefined;
+  /**
+   * How many times a fast device's time this page's views are given
+   * (Roadmap f-view-budget-fits-device): 1 on a fast page, up to 4; what
+   * the page measured once from its first worker's start, and `undefined`
+   * until this view's worker has said ready.
+   */
+  readonly pace: number | undefined;
   dispose(): void;
 }
 
@@ -293,6 +317,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
 
   const stats: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   const limiter = createGuestLimiter(options.limits);
+  /*
+   * THE LIMITS, AS GIVEN: `pushMs` and `drawMs` are the host's base — its
+   * own numbers, else the defaults — and are fitted to the device once the
+   * worker has said ready (device-pace.ts), so `limits` names the budget the
+   * view is actually held to, in its sentence as in its timers. The counts
+   * and the bytes stay as given.
+   */
   const limits = {
     maxSourceBytes: options.limits?.maxSourceBytes ?? 256_000,
     maxNodes: options.limits?.maxNodes ?? 5_000,
@@ -302,6 +333,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     silentMs: options.limits?.silentMs ?? 5_000,
     drawMs: options.limits?.drawMs ?? 100,
   };
+  const base = { pushMs: limits.pushMs, drawMs: limits.drawMs };
+  /* The page's pace, once this view's worker has started: what its time budgets were fitted by. */
+  let pace: number | undefined;
   /* What the view was last shown: the plain face drawn in its place, if it fails. */
   let lastProps: GuestProps | undefined;
   /* What works out its records' computed values, once fetched (below). */
@@ -441,9 +475,21 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    */
   const logo = createGuestLogo(window, () => looked(), "blob");
   const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(region), options.brand, logo);
+  /*
+   * ONE THEME FOR EVERY VIEW (Roadmap f-app-wide-view-theme): the brand's
+   * stylesheet for its views and its fade between records, drawn by the
+   * host in the region — never handed to the view — and dressed again on
+   * every push, which is how a brand the host changes reaches it.
+   */
+  const dress = () => {
+    const views = options.brand?.()?.views;
+    drawing?.theme(views?.css);
+    drawing?.motion(views?.motion ?? "none");
+  };
   let pushed = "";
   const push = () => {
     pushed = JSON.stringify(theme());
+    dress();
     session?.push();
   };
   const looked = () => {
@@ -518,9 +564,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const clock = window.performance;
   const pending = new Map<number, number>();
   let ticked = clock.now();
-  const every = Math.max(10, Math.min(250, Math.floor(limits.pushMs / 4)));
   const startTiming = () => {
     if (timing) return;
+    /* A quarter of the budget as it was fitted, between 10 and 250 ms. */
+    const every = Math.max(10, Math.min(250, Math.floor(limits.pushMs / 4)));
     ticked = clock.now();
     timing = window.setInterval(() => {
       const at = clock.now();
@@ -533,8 +580,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       }
     }, every);
   };
-  /* The host's own time drawing the view, at most `drawMs` of any second (draw-budget.ts): past it, the view is slow. */
-  const budget = createDrawBudget(limits.drawMs, () => clock.now());
+  /* The host's own time drawing the view, at most `drawMs` of any second (draw-budget.ts), as fitted to the device: past it, the view is slow. */
+  const budget = createDrawBudget(() => limits.drawMs, () => clock.now());
   /* The fields the view marked `data-prefill`, filled by the host from the record after each batch it draws (FR-150, press.ts). */
   let refill = () => {};
   const draw = (one: ["render", unknown] | ["style", readonly string[]]) => {
@@ -546,10 +593,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     if (one[0] === "render") refill();
   };
   /* Links stay in the app (FR-93): a record the viewer may see, or a place the app has. */
-  const lists = () => listsOf(options.store.schema, new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]));
+  const kept = () => new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
+  const lists = () => listsOf(options.store.schema, kept());
+  /* The one vocabulary (FR-235): the Scene, the home, each kind's list and each titled place, as the headless check reads them. */
+  const vocabulary = () => placeVocabulary(options.store.schema, options.places?.() ?? [], { kept: kept(), ...(options.arrangement ? { pages: options.arrangement() } : {}) });
   const links = createLinks({
     sees: (id) => options.store.seenBy(options.principal).graph.has(id),
-    places: () => guestPlacesOf(options.places?.() ?? []),
+    places: vocabulary,
     lists,
     schema: options.store.schema,
     ...(options.onNavigate ? { onNavigate: options.onNavigate } : options.goTo ? { onNavigate: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
@@ -799,6 +849,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         return { pressed };
       },
     });
+    dress();
     for (const one of waiting.splice(0)) draw(one);
     watchHeight();
     mark();
@@ -817,8 +868,19 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     onError: (detail) => {
       if (!drew) fail("error", detail);
     },
-    onReady: (nonce, given) => {
+    onReady: (nonce, given, startMs) => {
       port = given;
+      /*
+       * THE BUDGET FITS THE DEVICE (Roadmap f-view-budget-fits-device): the
+       * page keeps its first worker's start, and the host's base — its own
+       * numbers, else the defaults — is given that many times over, up to
+       * four, before the first push is timed. A fast page keeps today's
+       * guard; the counts never move. The page keeps whatever it shows — the
+       * drawing before this one, or nothing — until the view draws or this
+       * budget runs out: nothing is drawn in its place and then swapped.
+       */
+      pace = paceOf(keepStart(window, startMs));
+      Object.assign(limits, fitBudget(base, pace));
       startTiming();
       const live = createGuestHost({
         store: options.store,
@@ -833,8 +895,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           given.postMessage(message);
         },
         props: () => {
-          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), ...(options.places ? { places: guestPlacesOf(options.places()) } : {}), ...(computed ? { computed } : {}) });
+          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), places: guestPlacesOf(vocabulary()), ...(computed ? { computed } : {}) });
+          const was = shown;
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
+          /* The record it shows changed (Roadmap f-app-wide-view-theme): under the brand's "fade", what is drawn goes before the new one comes. */
+          if (lastProps && (was.size !== shown.size || [...shown].some((id) => !was.has(id)))) drawing?.fade();
           lastProps = props;
           return props;
         },
@@ -866,7 +931,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         /* Past the message allowance, a view is stopped, not read on (FR-94). */
         onFlood: () => fail("flood"),
         onStyle: (sheets) => draw(["style", sheets]),
-        places: () => [...new Set([...guestPlacesOf(options.places?.() ?? []).map((place) => place.as), ...lists().map((list) => list.slug)])],
+        places: () => [...new Set([...vocabulary().map((place) => place.as), ...lists().map((list) => list.slug)])],
         ...(options.limits ? { limits: options.limits } : {}),
         limiter,
       });
@@ -949,6 +1014,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
       get contentHeight() {
         return contentHeight;
+      },
+      get pace() {
+        return pace;
       },
       dispose() {
         failed = true;

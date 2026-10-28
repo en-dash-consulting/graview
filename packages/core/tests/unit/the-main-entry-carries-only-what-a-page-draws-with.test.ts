@@ -3,6 +3,7 @@ import * as arrange from "../../src/arrange.js";
 import * as blocks from "../../src/blocks.js";
 import * as catalog from "../../src/catalog.js";
 import * as city from "../../src/city.js";
+import * as css from "../../src/css.js";
 import * as csv from "../../src/csv.js";
 import * as shown from "../../src/shown.js";
 import * as check from "../../src/check.js";
@@ -47,8 +48,10 @@ const OFF_THE_PAGE = {
   "@graview/core/shown": { from: shown, names: ["shownList"] },
   // Roadmap f-view-export-csv: a place's list written as a spreadsheet, fetched when somebody presses "Export CSV".
   "@graview/core/csv": { from: csv, names: ["CSV_BOM", "csvCell", "csvFileName", "csvSafe", "listCsv", "listCsvRows", "saveShownList", "switchExport", "toCsv"] },
+  // Roadmap f-app-wide-view-theme: the one CSS sanitizer — the guest host's as it first draws on the open kit, and the checker's for a document's `brand.views.css`.
+  "@graview/core/css": { from: css, names: ["CSS_AT_RULES", "CSS_DRAWN_AS", "CSS_FRAGMENT_PROPERTIES", "CSS_FUNCTIONS", "CSS_KEYWORD_PROPERTIES", "CSS_PREFIXED_SELECTORS", "CSS_PROPERTIES", "CSS_REFUSED_SELECTORS", "OPEN_MAX_STYLESHEET", "sanitizeDeclarations", "sanitizeStylesheet", "sanitizeStylesheets", "sanitizeValue", "serializeIdent", "serializeString", "serializeValues", "tokenize"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
-  "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug"] },
+  "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug", "placeNamesFrom", "placeNamesOf"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
   "@graview/core/history": { from: history, names: ["declarationSentence", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.
@@ -85,13 +88,13 @@ const OFF_THE_PAGE = {
   },
   // Roadmap f-learned-suggestions: the app's own actor suggesting changes to the app from evidence of use, accepted through the editor or declined for good — a host's and a command's, on no page.
   "@graview/core/learn": { from: learn, names: ["acceptAppSuggestion", "declineAppSuggestion", "keptDecisions", "LEARNING_ACTOR", "learnFromUse", "learningFrom", "memoryLearned"] },
-  // Roadmap f-design-composer: jobs inferred and one design proposed whole — a host's, on no page; f-document-traits: what a declaration is made of, in a closed vocabulary; f-compose-from-parts: a starting document composed from a template's parts and trait modules; a kind's noun and plural as the declaration spells them, for a host that writes about its kinds (the starter).
-  "@graview/core/compose": { from: compose, names: ["ACCENT_PALETTE", "accentFor", "composeDesign", "inferJobs", "MOST_INFERRED_JOBS", "hasTrait", "nounWords", "pluralWords", "TRAIT_WORDS", "TRAITS", "traitsOf", "traitWords", "startingDocument"] },
+  // Roadmap f-design-composer: jobs inferred and one design proposed whole — a host's, on no page; f-document-traits: what a declaration is made of, in a closed vocabulary; f-compose-from-parts: a starting document composed from a template's parts and trait modules; a kind's noun and plural as the declaration spells them, for a host that writes about its kinds (the starter); f-seat-reshape: a change to the app composed from the reading a seat proposed, its breaking changes in words — a host's, on no page (the vocabulary a page says it in is on /traits).
+  "@graview/core/compose": { from: compose, names: ["ACCENT_PALETTE", "accentFor", "composeDesign", "inferJobs", "MOST_INFERRED_JOBS", "hasTrait", "nounWords", "pluralWords", "TRAIT_WORDS", "TRAITS", "traitsOf", "traitWords", "startingDocument", "composeReshape", "breakingOf", "TRAIT_BRINGS", "traitsOfDocument"] },
   "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "existingViewsOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,
-    names: ["acceptSuggestion", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "meaningKey", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "tidyingOf", "tidyingRefusal", "typedRowWords", "withdrawSuggestion"],
+    names: ["acceptSuggestion", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "mayDecide", "meaningKey", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
   },
 } as const;
 

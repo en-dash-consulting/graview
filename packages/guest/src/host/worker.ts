@@ -117,7 +117,7 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
 
   const stats: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   const limiter = createGuestLimiter(options.limits);
-  const budget = createDrawBudget(options.limits?.drawMs ?? 100, () => window.performance.now());
+  const budget = createDrawBudget(() => options.limits?.drawMs ?? 100, () => window.performance.now());
   let session: GuestHost | undefined;
   let renderer: KitRenderer | undefined;
   let started: StartedWorker | undefined;

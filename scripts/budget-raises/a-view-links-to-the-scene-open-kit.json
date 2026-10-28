@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 5073,
+  "gzipped": 1948,
+  "note": "Raised when a view came to link to the Scene (FR-235, Roadmap f-view-links-to-scene): the host judges a link and a navigate by the one vocabulary the headless check reads — `placeNamesFrom` on `@graview/core/navigate`, which builds the app's places from what the face holds (the home, the Scene, each kind's list, each titled place, in the arrangement's order) as `placesFrom` does for the bar — and the open kit, which bundles the host whole, carries that builder and the places module it stands on. Measured at 229_629 / 87_424 against 224_556 / 85_476: 5_073 / 1_948 more."
+}

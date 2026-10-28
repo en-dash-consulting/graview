@@ -21,7 +21,7 @@ import type {
 import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type DismissalStore, type Place, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
-import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
+import { createSeatTalk, type KeepLensHost, type ProposeChangeHost, type SeatTalk } from "./seat-talk.js";
 import { createAiDesk, type AiDesk } from "./ai-desk.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
@@ -381,6 +381,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly brand?: Brand;
   /** Where a lens the seat drew is kept: the host's, when it keeps one (`GraviewProviderProps.onKeepLens`). */
   readonly onKeepLens?: KeepLensHost;
+  /** Where a change to the app the seat proposed is applied: the host's, when it gave one (`GraviewProviderProps.onProposeChange`). */
+  readonly onProposeChange?: ProposeChangeHost;
   /** The app this is mounted with (`GraviewProviderProps.app`), or the one it is drawn inside. */
   readonly app?: GraviewApp<S> | undefined;
   /** The reader's locale the host passed (`GraviewProviderProps.locale`, FR-178), or the one it is drawn inside. */
@@ -532,6 +534,16 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * `{ kept: true }`; otherwise the lens is kept as the reader's own.
    */
   readonly onKeepLens?: KeepLensHost | undefined;
+  /**
+   * WHERE A CHANGE TO THE APP THE SEAT PROPOSED IS APPLIED (`ProposeChangeHost`,
+   * Roadmap f-seat-reshape): handed the proposal a person accepted on the
+   * seat's card — "we also need who's driving" read as a person kind and
+   * an owner link, composed by code — the host previews and applies it
+   * under its own policy, as the person, as one undoable change, and
+   * answers `"applied"` or `"declined"`. Unsaid, the seat never offers a
+   * change to the app: the tool does not exist for it.
+   */
+  readonly onProposeChange?: ProposeChangeHost | undefined;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
   /**
@@ -720,6 +732,7 @@ export function GraviewProvider<S extends AnySchema>({
   locale: readerLocale,
   timeZone: readerTimeZone,
   onKeepLens,
+  onProposeChange,
   providers,
   ai: handedAi,
   files,
@@ -810,6 +823,8 @@ export function GraviewProvider<S extends AnySchema>({
   const subscriptions = hostSubscriptions ?? outer?.subscriptions ?? ownSubscriptions;
   /* The host that keeps a drawn lens: this provider's, else the one it is drawn inside. */
   const keepLens = onKeepLens ?? outer?.onKeepLens;
+  /* The host that applies a change to the app: this provider's, else the one it is drawn inside. */
+  const proposeChange = onProposeChange ?? outer?.onProposeChange;
   const app = mountedApp ?? (outer?.app as GraviewApp<S> | undefined);
   /*
    * WHAT DAYS, TIMES AND NUMBERS ARE SAID IN (FR-178): the reader's a host
@@ -1202,6 +1217,7 @@ export function GraviewProvider<S extends AnySchema>({
       ...(providers ? { providers } : {}),
       ...(brand ? { brand } : {}),
       ...(keepLens ? { onKeepLens: keepLens } : {}),
+      ...(proposeChange ? { onProposeChange: proposeChange } : {}),
       app,
       ...(locale ? { locale } : {}),
       ...(timeZone ? { timeZone } : {}),

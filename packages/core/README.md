@@ -59,7 +59,9 @@ Everything a Graview app declares, and the checker that verifies it.
   A number field may say its range (`min`, `max`, `step`), which every form,
   tool and apply honors; an act's `connects` links from whichever end
   of the relation its subject is, `replaces` severs the links it supersedes and set the record at the
-  other end (its "setsOther" key). `editDocument`, `diffDocuments` and
+  other end (its "setsOther" key), and its "setsLinked" key carries a change to the
+  records its subject is already linked to through a relation, judged by
+  each far record's own edit. `editDocument`, `diffDocuments` and
   `planMigration` change a document and say what the change does to stored
   data.
   A host that compiles a document on its server hands the page
@@ -155,6 +157,16 @@ Everything a Graview app declares, and the checker that verifies it.
   the block resolver are on the subpaths above because a bundler places a
   whole module in every chunk that can reach it: a hosted page imports both
   barrels up front, and would otherwise carry them before a face is fetched.
+- **A view's CSS, read as a browser reads it** — `@graview/core/css`, on no
+  page: the CSS tokenizer and parser, and the sanitizer over them
+  (`sanitizeStylesheet`, `sanitizeStylesheets`, `sanitizeDeclarations`,
+  `sanitizeValue`) that keeps of a stylesheet only what the open kit allows
+  — the tables `CSS_PROPERTIES`, `CSS_FUNCTIONS`, `CSS_AT_RULES` and the
+  rest, `url(#id)` on a paint alone, nothing that fetches — up to
+  `OPEN_MAX_STYLESHEET` characters. It is the framework's one judge of CSS:
+  `@graview/guest` draws a worker view's stylesheet through it, and the
+  checker holds a document's own stylesheet for every view
+  (`brand.views.css`) to it, so what passes is what a page draws.
 - **A place's address** — `addressOf(place, { basePath })` spells a place
   from `placesOf` as the routed face links to it under a host's base path,
   `pathWithin` reads an address back, and `basePathOf` normalizes a base.

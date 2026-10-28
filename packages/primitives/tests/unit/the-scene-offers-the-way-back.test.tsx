@@ -164,7 +164,8 @@ describe("the scene's way back", () => {
 function heldWhen(held: () => boolean) {
   const matches = Element.prototype.matches;
   vi.spyOn(Element.prototype, "matches").mockImplementation(function (this: Element, selector: string) {
-    return selector === ":hover, :focus-within" ? held() : matches.call(this, selector);
+    // The pointer's half of the hold; the keyboard's is whether the stack contains the focused element (an-error-toast-offers-the-hosts-report-this).
+    return selector === ":hover" ? held() : matches.call(this, selector);
   });
 }
 

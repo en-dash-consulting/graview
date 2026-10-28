@@ -325,7 +325,7 @@ export async function main(argv: string[]): Promise<number> {
         // One place, as one seat sees it, over the seed it is handed (FR-89).
         const seedFile = flag(argv, "--seed");
         const snapshot = seedFile ? readSnapshot(readFileSync(resolve(seedFile), "utf8")).snapshot : undefined;
-        const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}), ...(snapshot ? { snapshot } : {}) });
+        const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(app.publishing ? { publishing: app.publishing } : {}), ...(app.tidying ? { tidying: app.tidying } : {}), ...(snapshot ? { snapshot } : {}) });
         const width = Number(flag(argv, "--width") ?? "1440");
         const principal = role ? { kind: "human" as const, id: flag(argv, "--id") ?? role, roles: [role] } : { kind: "system" as const, id: "graview-describe" };
         const said = describePlace(store as never, principal, place, { app: app as never, width: Number.isFinite(width) && width > 0 ? width : 1440 });

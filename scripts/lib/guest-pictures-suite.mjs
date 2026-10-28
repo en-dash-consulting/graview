@@ -65,12 +65,16 @@ const FACE_STAGGER_MS = 8;
  * A RECORD'S VIDEO IN A VIEW (0.1.37): "Job reel" places the porch's clip
  * for the host to play, and a button that opens the step's photograph in
  * the host's full-screen viewer. It draws no <video> and holds no path.
+ * And a hero (Roadmap f-video-hero): the same clip placed again at the
+ * foot as `<graview-video autoplay cover>`, a background the host plays
+ * muted and looping in the box the view sized.
  */
 export const REEL_MANIFEST = { name: "job-reel", title: "Job reel", attach: "job", cardinality: "many", pictures: true };
 export const REEL_JS = `
-graview.style(\`.reel { display: grid; gap: 8px; padding: 12px; } graview-video { width: 320px; }\`);
+graview.style(\`.reel { display: grid; gap: 8px; padding: 12px; } graview-video { width: 320px; } .hero { width: 100%; height: 120px; border-radius: 12px; overflow: hidden; }\`);
 graview.onProps((props) => {
-  graview.render(graview.html\`\${props.nodes.map((job) => graview.html\`<section class="reel" data-key="\${job.id}"><h3>\${job.label}</h3>\${job.clip ? graview.html\`<p data-said>\${job.clip.name} \${job.clip.duration}</p><graview-video data-record="\${job.id}" data-field="clip"></graview-video>\` : ""}<button data-lightbox data-record="\${job.id}" data-field="photos" data-index="1">See the step</button></section>\`)}\`);
+  const porch = props.nodes.find((job) => job.clip);
+  graview.render(graview.html\`\${props.nodes.map((job) => graview.html\`<section class="reel" data-key="\${job.id}"><h3>\${job.label}</h3>\${job.clip ? graview.html\`<p data-said>\${job.clip.name} \${job.clip.duration}</p><graview-video data-record="\${job.id}" data-field="clip"></graview-video>\` : ""}<button data-lightbox data-record="\${job.id}" data-field="photos" data-index="1">See the step</button></section>\`)}\${porch ? graview.html\`<graview-video class="hero" autoplay cover data-record="\${porch.id}" data-field="clip"></graview-video>\` : ""}\`);
 });
 `;
 
@@ -418,6 +422,54 @@ window.__handle = mount(document.getElementById("app"), {
     );
     claim("the view is handed the clip's facts, never its path, and its own drawing holds no <video>", player.said === "porch.webm 1" && player.named === 0 && player.videos === 0, { said: player.said, named: player.named, videos: player.videos });
     claim("the host fetched the clip with the reader's session", asked.some((one) => one.path === "/graview/files/clip-5d0a.webm") && asked.every((one) => one.signed), asked);
+
+    /* A VIDEO THAT PLAYS AS A HERO BACKGROUND (Roadmap f-video-hero): the same clip, placed with `autoplay cover`. */
+    await until(() => {
+      const video = document.querySelector('[data-worker-view="job-reel"]')?.shadowRoot?.querySelector("graview-video[autoplay]")?.shadowRoot?.querySelector("video");
+      return Boolean(video && video.readyState >= 1);
+    }, "the hero's clip, drawn by the host");
+    const readHero = () => tab.evaluate(() => {
+      const box = document.querySelector('[data-worker-view="job-reel"]').shadowRoot.querySelector("graview-video[autoplay]");
+      const video = box.shadowRoot.querySelector("video");
+      const rect = box.getBoundingClientRect();
+      return {
+        autoplay: video.hasAttribute("autoplay"),
+        muted: video.muted,
+        loop: video.loop,
+        inline: video.hasAttribute("playsinline"),
+        controls: video.controls,
+        preload: video.getAttribute("preload"),
+        poster: video.getAttribute("poster"),
+        fit: getComputedStyle(video).objectFit,
+        box: [Math.round(rect.width), Math.round(rect.height)],
+        video: [Math.round(video.getBoundingClientRect().width), Math.round(video.getBoundingClientRect().height)],
+        still: video.hasAttribute("data-graview-video-still"),
+        paused: video.paused,
+        time: video.currentTime,
+        said: box.shadowRoot.querySelector("figcaption")?.textContent ?? null,
+      };
+    });
+    const hero = await readHero();
+    claim(
+      "a <graview-video autoplay cover> is a background the host plays: muted, looping, inline, with no controls, its poster, and filling the box the view sized",
+      hero.autoplay && hero.muted && hero.loop && hero.inline && !hero.controls && hero.preload === "auto" && hero.poster === "/graview/files/clip-5d0a.png" && hero.fit === "cover" && hero.box[1] === 120 && hero.video[0] === hero.box[0] && hero.video[1] === 120 && !hero.still && hero.said === null,
+      hero,
+    );
+    /* Played by the browser alone: no press, no call from the view. Given a few seconds, since an engine starts a background when it is ready to. */
+    const played = await tab.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const video = document.querySelector('[data-worker-view="job-reel"]').shadowRoot.querySelector("graview-video[autoplay]").shadowRoot.querySelector("video");
+          const started = Date.now();
+          const look = () => {
+            if (!video.paused || video.currentTime > 0) return resolve({ playing: true, paused: video.paused, time: video.currentTime, after: Date.now() - started });
+            if (Date.now() - started > 6_000) return resolve({ playing: false, paused: video.paused, time: video.currentTime, after: Date.now() - started, error: video.error?.code ?? null, ready: video.readyState });
+            setTimeout(look, 100);
+          };
+          look();
+        }),
+    );
+    claim("the hero background plays on its own, pressed by nobody", played.playing, played);
     const opener = tab.locator('[data-worker-view="job-reel"] button[data-lightbox]').first();
     await opener.click();
     await until(() => {
@@ -434,6 +486,21 @@ window.__handle = mount(document.getElementById("app"), {
     const back = await tab.evaluate(() => document.querySelector('[data-worker-view="job-reel"]').shadowRoot.activeElement?.getAttribute("data-lightbox") !== undefined && document.querySelector('[data-worker-view="job-reel"]').shadowRoot.activeElement?.localName === "button");
     claim("Escape closes the viewer and gives the keyboard back to the view's button", back, { back });
     claim("the reel view did not fail, and nothing was left out", (await tab.evaluate(() => [...window.__failures, ...window.__problems])).length === 0, await tab.evaluate(() => ({ failures: window.__failures, problems: window.__problems })));
+
+    /* LESS MOTION, WHERE A PERSON ASKS FOR IT: the hero stands still at its poster, fetching only its metadata, and the ordinary player is as it was. */
+    await tab.emulateMedia({ reducedMotion: "reduce" });
+    await tab.goto(`${HOST}/?reel`, { waitUntil: "load" });
+    await until(() => Boolean(document.querySelector('[data-worker-view="job-reel"]')?.shadowRoot?.querySelector("graview-video[autoplay]")?.shadowRoot?.querySelector("video")), "the hero, drawn where the person asked for less motion");
+    await tab.waitForTimeout(500);
+    const stillHero = await readHero();
+    claim(
+      "where the person asked for less motion, the hero stands still at its poster, fetching only its metadata, muted and looping still, with no controls",
+      !stillHero.autoplay && stillHero.still && stillHero.paused && stillHero.time === 0 && stillHero.preload === "metadata" && stillHero.poster === "/graview/files/clip-5d0a.png" && stillHero.muted && stillHero.loop && !stillHero.controls && stillHero.fit === "cover",
+      stillHero,
+    );
+    /* Leave the page before the preference goes back: a hero let go on this page would fetch its clip into the next section's ledger. */
+    await tab.goto("about:blank");
+    await tab.emulateMedia({ reducedMotion: "no-preference" });
 
     /* A FULL-SIZE EXIF JPEG IN A pictures: true VIEW, ON A PAGE THAT REFUSES blob: IMAGES (FR-192). */
     asked.length = 0;
@@ -453,7 +520,7 @@ window.__handle = mount(document.getElementById("app"), {
       return { natural: [image.naturalWidth, image.naturalHeight], scheme: src.slice(0, src.indexOf(":")), length: src.length, alt: image.getAttribute("alt"), failures: window.__failures, problems: window.__problems };
     });
     claim("on a page that refuses blob: images, a pictures: true view draws the full-size EXIF JPEG on a record, at its own 1200×900, the data: image the host made", full.natural.join("x") === "1200x900" && full.scheme === "data" && full.length > 512_000 && full.alt === "The harbor at dusk", full);
-    claim("the host fetched the photograph once, with the reader's session", asked.length === 1 && asked[0].path === MOMENT && asked[0].signed, asked);
+    claim("the host fetched the photograph once, with the reader's session", asked.length === 1 && asked[0].path === MOMENT && asked[0].signed, [...asked]);
     claim("the full-size photograph's view did not fail, nothing was refused and nothing was left out", full.failures.length === 0 && full.problems.length === 0, { failures: full.failures, problems: full.problems });
 
     /*

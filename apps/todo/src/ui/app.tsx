@@ -3,10 +3,11 @@ import {
   GraviewProvider,
   useGraph,
   useGraview,
+  type ProposeChangeHost,
   type Scheme,
   type SceneProps,
 } from "@graview/react";
-import { AgentSeat, Shell } from "@graview/primitives";
+import { AgentSeat, ChatPanel, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
 import type { HostFiles, PresenceChannel, Principal, SubscriptionStore } from "@graview/core";
 import type { HistoryHost } from "@graview/core/history";
@@ -20,6 +21,9 @@ import { today } from "./when.js";
 import { todoViews } from "./views.js";
 
 type S = TodoSchema;
+
+/** `?chat=1`: the app's conversation drawn in Activity, beside the tidy seat. */
+const CHAT = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("chat") === "1";
 
 /**
  * The whole shell, and it is short on purpose.
@@ -107,6 +111,8 @@ export interface TodoAppProps {
   readonly subscriptions?: SubscriptionStore;
   /** What the host keeps outside the log for playback (`history` on the provider): a harness hands an archive here. */
   readonly history?: HistoryHost;
+  /** Where a change to the app the seat proposed is applied (Roadmap f-seat-reshape): a harness's stub host, through `__todoProposeChange`. */
+  readonly onProposeChange?: ProposeChangeHost;
 }
 
 export function TodoApp({
@@ -125,6 +131,7 @@ export function TodoApp({
   files,
   subscriptions,
   history,
+  onProposeChange,
 }: TodoAppProps) {
   const created = useMemo(() => store ?? createTodoUiStore(), [store]);
   const views = useMemo(() => todoViews(), []);
@@ -146,6 +153,7 @@ export function TodoApp({
       {...(ai ? { ai } : {})}
       {...(subscriptions ? { subscriptions } : {})}
       {...(history ? { history } : {})}
+      {...(onProposeChange ? { onProposeChange } : {})}
     >
       <TodoShell
         remembers={remembers}
@@ -220,7 +228,19 @@ function TodoShell({
        * anything is written.
        */
       studio={<StudioPlace app={todoApp} />}
-      seat={(onCall) => <TidyButton onCall={onCall} />}
+      /*
+       * THE SEAT IN ACTIVITY: the tidy button, and at `?chat=1` the app's
+       * conversation beside it — the panel a product places, here so a
+       * harness can drive it (verify-seat: a change to the app proposed
+       * from words, Roadmap f-seat-reshape). Off unless asked for, so no
+       * other harness meets a conversation it did not open.
+       */
+      seat={(onCall) => (
+        <>
+          <TidyButton onCall={onCall} />
+          {CHAT ? <ChatPanel<S> shared onCall={onCall} /> : null}
+        </>
+      )}
       remembers={remembers}
       syncUrl={syncUrl}
       renderer={renderer}

@@ -21,7 +21,7 @@ import { compileMutation } from "./mutations/define-mutation.js";
 import { wouldRun } from "./mutations/would-run.js";
 import { actSpelledAs, nearestAct } from "./mutations/act-spelling.js";
 import { InvalidArguments } from "./mutations/invalid-arguments.js";
-import { deriveMutations, derivedVia, removeVia } from "./mutations/derive-edits.js";
+import { deriveMutations, derivedVia, editMutationName, editVia, removeVia } from "./mutations/derive-edits.js";
 import { repeatingFields, repeatMakes } from "./mutations/derive-repeats.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { namesMade, resolveMade } from "./mutations/made.js";
@@ -29,6 +29,7 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
+import { VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying } from "./mutations/vote-suggestion.js";
 import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { declinedIn, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
@@ -132,6 +133,13 @@ export interface StoreOptions<S extends AnySchema> {
    * the policy is, so every surface that reads a seat's view is served it.
    */
   readonly publishing?: Publishing;
+  /**
+   * WHAT THE DECLARATION SAYS OF SUGGESTIONS (Roadmap f-suggestion-votes):
+   * `autoAcceptAt`, the votes for a suggestion at which the app's own actor
+   * makes it. On the store, as the policy is, so the server that keeps the
+   * log is the one that makes it.
+   */
+  readonly tidying?: AppTidying;
   /**
    * The app's declared modules, and which are on for THIS installation.
    *
@@ -551,11 +559,15 @@ export class Store<S extends AnySchema> {
   private keeper: AnyMutationDefinition<S> | undefined;
   /** "Type text", when the store answers to its own (Roadmap f-collab-text). */
   private typer: AnyMutationDefinition<S> | undefined;
+  /** "Vote on a suggestion" (Roadmap f-suggestion-votes), when the app declared no act by that name. */
+  private voter: AnyMutationDefinition<S> | undefined;
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
   readonly policy: Policy | undefined;
   /** When edits reach readers (`StoreOptions.publishing`). */
   readonly publishing: Publishing | undefined;
+  /** What the declaration says of suggestions as a whole (`StoreOptions.tidying`). */
+  readonly tidying: AppTidying | undefined;
   /**
    * The intelligence the app declared, so a surface can read the DOORS.
    *
@@ -618,6 +630,7 @@ export class Store<S extends AnySchema> {
     if (this.timeZone) this.ticked = { day: isoToday(this.timeZone), on: isoToday(this.timeZone) };
     this.policy = options.policy;
     this.publishing = options.publishing;
+    this.tidying = options.tidying;
     this.by = options.principal ?? HUMAN;
     this.intelligence = options.intelligence ?? [];
     for (const provider of options.intelligence ?? []) {
@@ -654,6 +667,11 @@ export class Store<S extends AnySchema> {
     if (!options.past && !this.mutations.has(KEEP_LINK)) {
       this.keeper = keepLinkMutation(options.schema);
       this.mutations.set(KEEP_LINK, this.keeper);
+    }
+    // "Vote on a suggestion" (Roadmap f-suggestion-votes): answered by every store, offered by no list. An app's own `vote-suggestion` keeps its name.
+    if (!options.past && !this.mutations.has(VOTE_SUGGESTION)) {
+      this.voter = voteSuggestionMutation();
+      this.mutations.set(VOTE_SUGGESTION, this.voter);
     }
 
     const horizon = given("horizon", options.horizon);
@@ -879,7 +897,7 @@ export class Store<S extends AnySchema> {
   }
 
   allMutations(): AnyMutationDefinition<S>[] {
-    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && mutation !== this.typer && !this.mutationDisabled(mutation));
+    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && mutation !== this.typer && mutation !== this.voter && !this.mutationDisabled(mutation));
   }
 
   /** The declared acts a derived act resolves its permission through; keeping a link, those that make or break its relation. */
@@ -951,6 +969,8 @@ export class Store<S extends AnySchema> {
     const mutation = this.mutations.get(call.name) ?? (call.name === PUBLISH ? this.publisher : undefined);
     // Publishing is the declaration's `publishers`, not a grant's.
     if (mutation && mutation === this.publisher) return PUBLISHING.verdict!(this, principal) as ReturnType<typeof permits>;
+    // A vote on a suggestion is anybody's who may see it (Roadmap f-suggestion-votes): whether they do is judged where the op is made.
+    if (mutation && mutation === this.voter) return { ok: true } as ReturnType<typeof permits>;
     /*
      * KEEPING A LINK ONLY THE DERIVED ACTS MAKE is judged as they are: on
      * the record it leaves, so riding everybody's grant it reaches only the
@@ -990,6 +1010,16 @@ export class Store<S extends AnySchema> {
       // Taking a record out, or folding it away, rides the making of the kind only over what this principal made (W-201).
       mutation?.derived !== undefined && UNMAKING.has(mutation.derived.act),
     );
+    /*
+     * A VALUE CARRIED ACROSS A LINK (Roadmap f-acts-update-linked) is each
+     * far record's own edit: the act is refused, naming the record, where
+     * this principal may not change one of the records its subject is
+     * linked to — judged here, before `apply`, as every grant is.
+     */
+    if (verdict.ok && mutation?.writesLinked && typeof id === "string") {
+      const refused = this.refusesLinked(mutation, id, principal);
+      if (refused) return refused;
+    }
     if (!verdict.ok || !mutation?.derived || !this.repeatMakes(mutation, call, id, principal)) return verdict;
     /*
      * AND A CHANGE TO ONE DAY THAT MAKES A RECORD ("change just this one",
@@ -998,6 +1028,43 @@ export class Store<S extends AnySchema> {
      * retitle a shift has not been trusted with making one.
      */
     return permits(this.policy, principal, call.name, kind, removeVia([...this.mutations.values()], mutation.derived.kind), typeof id === "string" ? id : undefined, this.words);
+  }
+
+  /**
+   * The first record linked to the subject that this principal may not
+   * change, as a refusal of the act naming it (Roadmap f-acts-update-linked);
+   * undefined when every record the act would carry a value to is theirs to
+   * edit. Each is judged as its kind's own edit is — the grants, the acts the
+   * edit rides, what the principal made — over the graph as they see it.
+   */
+  private refusesLinked(mutation: AnyMutationDefinition<S>, subjectId: string, principal: Principal): ReturnType<typeof permits> | undefined {
+    const served = isSystem(principal) ? this.graph : seenBy(this, principal).graph;
+    const subject = served.getNode(subjectId);
+    if (!subject) return undefined;
+    const all = [...this.mutations.values()];
+    for (const relation of Object.keys(mutation.writesLinked ?? {})) {
+      const declaredHere = (this.schema.tryDefinition(subject.kind) as { edges?: Record<string, unknown> } | undefined)?.edges?.[relation] !== undefined;
+      const far = declaredHere ? served.out(subject.id, relation) : served.in(subject.id, relation);
+      for (const node of far) {
+        const edit = editMutationName(node.kind);
+        const own = this.mutations.get(edit);
+        const verdict = own ? this.permits({ name: edit, args: { [own.subject?.arg ?? "id"]: node.id } }, principal) : permits(this.policy, principal, edit, node.kind, editVia(this.schema, all, node.kind), node.id, this.words);
+        if (verdict.ok) continue;
+        const title = this.words.act?.(mutation.name) ?? mutation.name;
+        const label = (this.labels ??= new LabelIndex(this.graph)).labelOf(node.id) ?? node.id;
+        const noun = this.words.noun?.(node.kind) ?? node.kind;
+        return {
+          ok: false,
+          refusal: {
+            mutation: mutation.name,
+            kind: subject.kind,
+            wouldNeed: verdict.refusal.wouldNeed,
+            message: `Not permitted: “${title}” would change “${label}”, ${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun} that is not yours to change. ${verdict.refusal.message}`,
+          },
+        } as ReturnType<typeof permits>;
+      }
+    }
+    return undefined;
   }
 
   /** Whether a call of a repeat act makes a record (`repeatMakes`), read off the series as this principal is served it. */
@@ -1514,6 +1581,23 @@ export class Store<S extends AnySchema> {
     return twin;
   }
 
+  /**
+   * Whether these calls, as this author with this lineage, would be kept
+   * rather than refused — rehearsed, told to nobody. What a vote asks
+   * before it has the app's own actor make a suggestion that reached
+   * `autoAcceptAt` (Roadmap f-suggestion-votes): a record a person said to
+   * leave alone, or a change a person declined meanwhile, leaves the
+   * suggestion waiting for someone who may, and the vote stands.
+   */
+  private wouldKeep(calls: readonly MutationCall[], author: Author | Principal, lineage: Lineage): boolean {
+    try {
+      this.rehearsal().applying(calls, { author, lineage });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   private previewPrimitives(
     primitives: readonly Primitive[],
     meta: {
@@ -1592,18 +1676,27 @@ export class Store<S extends AnySchema> {
      * seat holds say what it may do at all; `may` narrows what THIS provider
      * was brought in for, and the narrower of the two wins.
      */
-    const permitted = (call: MutationCall) => {
-      const verdict = this.policy || (this.publisher && call.name === PUBLISH) ? this.permits(call, author as Principal) : undefined;
-      if (verdict && !verdict.ok) this.refuse(verdict.refusal, author.id);
+    const permitted = (call: MutationCall, as: Author | Principal = author) => {
+      const verdict = this.policy || (this.publisher && call.name === PUBLISH) ? this.permits(call, as as Principal) : undefined;
+      if (verdict && !verdict.ok) this.refuse(verdict.refusal, as.id);
     };
-    const declared = (call: MutationCall) => {
-      const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call, author as Principal);
-      if (refusal) this.refuse(refusal, author.id);
+    const declared = (call: MutationCall, as: Author | Principal = author) => {
+      const refusal = this.refusesAgent(call, as) ?? this.namesTurnedOff(call, as as Principal);
+      if (refusal) this.refuse(refusal, as.id);
     };
     /* A call that names a record an earlier call makes (`{ $made: n }`, FR-193) is asked once that record is there to name. */
     const naming = calls.map(namesMade);
     calls.forEach((call, at) => naming[at] || permitted(call));
     calls.forEach((call, at) => naming[at] || declared(call));
+    /*
+     * THE GESTURE'S CALLS, AND WHAT ONE OF THEM HAS THE APP'S OWN ACTOR MAKE
+     * (Roadmap f-suggestion-votes): a vote that brings a suggestion to the
+     * declaration's `autoAcceptAt` queues the suggestion's calls behind it,
+     * as the actor, in this same gesture — one batch, one undo, one answer
+     * to whoever sent it — and the people who voted decided it, so the
+     * declaration's `tidying` does not stand in the actor's way (`decided`).
+     */
+    const queue: { readonly sent: MutationCall; readonly as: Author | Principal; readonly lineage: Lineage | undefined; readonly decided: boolean }[] = calls.map((sent) => ({ sent, as: author, lineage, decided: false }));
     /*
      * THE APP'S OWN ACTOR IS HELD TO WHAT PEOPLE SAID: a change a person
      * declined is not made again, a record a person said to leave alone is
@@ -1627,32 +1720,46 @@ export class Store<S extends AnySchema> {
     const renamed = new Map<string, string>();
     const rename = (value: unknown): unknown => (typeof value === "string" ? (renamed.get(value) ?? value) : Array.isArray(value) ? value.map(rename) : value);
     try {
-      for (const [at, sent] of calls.entries()) {
+      for (let at = 0; at < queue.length; at++) {
+        const { sent, as, lineage: lined, decided } = queue[at]!;
+        const named = at < naming.length ? naming[at]! : namesMade(sent);
         const { mintedHint: hint, ...plain } = sent;
         const asked = renamed.size ? { ...plain, args: Object.fromEntries(Object.entries(plain.args).map(([key, value]) => [key, rename(value)])) } : plain;
-        const call = naming[at] ? resolveMade(asked, madeIds, at) : asked;
-        if (naming[at]) (permitted(call), declared(call));
+        const call = named ? resolveMade(asked, madeIds, at) : asked;
+        if (named || decided) (permitted(call, as), declared(call, as));
         const definition = this.mutation(call.name);
         if (definition === this.publisher) {
-          const op = PUBLISHING.op!(this, { id: this.nextId(), at: this.now() }, call, batch, author as Principal, options);
+          const op = PUBLISHING.op!(this, { id: this.nextId(), at: this.now() }, call, batch, as as Principal, options);
           ops.push(op);
           intents.push(op.intent);
           continue;
         }
-        const missing = this.missingFor(call, author as Principal);
+        if (definition === this.voter) {
+          // A vote on a suggestion (Roadmap f-suggestion-votes): its op, judged as the voter sees the suggestion, and nothing of the graph.
+          if (!VOTING.op) throw new GraphError("Load @graview/core/tidying to vote on a suggestion.");
+          const op = VOTING.op(this, { id: this.nextId(), at: this.now() }, call, batch, as as Principal, options);
+          this.log.append(op);
+          ops.push(op);
+          intents.push(op.intent);
+          // At the declaration's `autoAcceptAt`, the suggestion is made here, in the same gesture, by the app's own actor — when the actor would be let.
+          const accept = VOTING.accepting?.(this, op);
+          if (accept && this.wouldKeep(accept.calls, accept.author, accept.lineage)) for (const made of accept.calls) queue.push({ sent: made, as: accept.author, lineage: lineageOf(accept.lineage), decided: true });
+          continue;
+        }
+        const missing = this.missingFor(call, as as Principal);
         if (missing) throw missing;
         let compiled: ReturnType<typeof compileMutation>;
         try {
-          compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(author as Principal), hint });
+          compiled = compileMutation(this.graph, definition, call.args, { ...this.sighted(as as Principal), hint });
         } catch (error) {
           // A press the act's own input refused: the watch tells a form filled wrongly from an act offered whole.
-          if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal(error, author.id);
+          if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal(error, as.id);
           throw error;
         }
         if (hint !== undefined && compiled.firstMinted !== undefined && compiled.firstMinted !== hint) renamed.set(hint, compiled.firstMinted);
-        if (automated) {
-          const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(author), { declaration: !this.suggesting });
-          if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, author.id);
+        if (isAutomated(as)) {
+          const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(as), { declaration: !this.suggesting && !decided });
+          if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, as.id);
         }
         /*
          * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
@@ -1672,7 +1779,7 @@ export class Store<S extends AnySchema> {
           id: this.nextId(),
           seq: this.log.length,
           batch,
-          author,
+          author: as,
           /*
            * THE ACT'S OWN SENTENCE, kept; what the gesture was for goes
            * beside it (FR-18). An act with no `describe` has no sentence of
@@ -1696,7 +1803,7 @@ export class Store<S extends AnySchema> {
           ...given("mergedInto", compiled.mergedInto),
           at: this.now(),
           ...given("via", options.via),
-          ...given("lineage", lineage),
+          ...given("lineage", lined),
         };
         this.graph.applyPrimitives(op.primitives);
         this.log.append(op);
@@ -2094,6 +2201,13 @@ export class Store<S extends AnySchema> {
          */
         const judged = this.rootOf(target);
         const by = actingAs(judged.author as Principal).id;
+        // A vote is its voter's to take back (Roadmap f-suggestion-votes), the system's, or a seat's the policy grants every act.
+        if (judged.vote !== undefined) {
+          if (this.policy && !isSystem(author as Principal) && by !== actingAs(author as Principal).id && !this.grantsEveryAct(author as Principal)) {
+            return { mutation: "undo", wouldNeed: [], message: `Not permitted to undo "${target.intent}": only whoever voted takes their vote back.` };
+          }
+          continue;
+        }
         if (!judged.mutation) {
           // A change that changed nothing (a suggestion, an announcement) is anybody's who sees it to take back: declining a suggestion is one.
           if (judged.primitives.length === 0) continue;

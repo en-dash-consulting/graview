@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 2460,
+  "note": "Raised when a view came to link to the Scene (FR-235, Roadmap f-view-links-to-scene): the one vocabulary a view may name (`placeNamesOf`, `placeNamesFrom` on `@graview/core/navigate`), which the headless check now reads a `data-place` and a `navigate` by, the home's word (`HOME_SLUG`) and the Scene's title beside it, and the check's refusal naming the Scene and the home among the places there are. Measured at 2_303_468 B against 2_301_008: 2_460 more."
+}

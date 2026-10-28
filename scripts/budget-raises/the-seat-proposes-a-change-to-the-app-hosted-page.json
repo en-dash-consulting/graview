@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 145,
+  "gzipped": 70,
+  "changeset": "the-seat-proposes-a-change-to-the-app.md",
+  "note": "Raised when the seat came to propose a change to the app itself (Roadmap f-seat-reshape): the provider and the frame carry `onProposeChange` up front, and the document barrel says `documentOf` from where it lives so the seat may read the remembered document without the writer. The reading, the card and the seat's tool ride the seat's model, fetched with the first ask a model answers; the composer stays off the page. Measured at 631_695 / 219_915 against 631_550 / 219_845 minified and gzipped."
+}

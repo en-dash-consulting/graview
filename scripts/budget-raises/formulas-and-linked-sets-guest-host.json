@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 450,
+  "gzipped": 160,
+  "note": "Raised when formulas came to join text and build a date-time (Roadmap f-formula-text-datetime): the app's own locale beside the reader's (`appLocaleFor` in `days.ts`), which the host says days in. Measured at 29_296 / 13_540 against 28_854 / 13_383: 442 / 157 more."
+}
