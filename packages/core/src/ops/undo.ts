@@ -143,6 +143,24 @@ export function checkUndo(
   }
 
   /*
+   * NOT WHAT A CONNECTION SENT OUT (Roadmap f-sync-guest-changes-in-history).
+   * The op changed nothing here, and what it says went out went out: an
+   * invitation is in somebody's inbox. The guests change by changing them
+   * here, which the next pass sends.
+   */
+  if (ops.some((op) => op.sentOut !== undefined)) {
+    return {
+      ok: false,
+      ops,
+      blockedBy: [],
+      includeBatches: [],
+      message: ops.every((op) => op.sentOut === undefined || op.sentOut.refused)
+        ? "Nothing to take back: nothing went out."
+        : "Nothing to take back: an invitation already went out. Change the guests here, and the next pass sends that.",
+    };
+  }
+
+  /*
    * NOT A PUBLISH WHOSE PREDECESSOR IS BEHIND THE UNDO HORIZON (Roadmap
    * f-publishing-lifecycle, FR-23): said by `@graview/core/publishing`,
    * loaded wherever a store of an app that publishes is served.

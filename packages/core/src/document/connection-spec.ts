@@ -54,7 +54,10 @@ function build() {
      * is invited while their `invite` toggle is on (`inviteMe`; `false`
      * says the app has no toggle and every address is invited). Google's
      * invitation emails go out only with `notify: true`; the default is
-     * quiet.
+     * quiet. `max` is the most guests one event invites (Roadmap
+     * f-sync-guest-changes-in-history): an event that would invite somebody
+     * past it is held unsent, and said; `graview check` refuses one that
+     * is not a whole number above 0.
      */
     fields: z.strictObject({
       summary: fieldName,
@@ -65,8 +68,8 @@ function build() {
       description: z.optional(fieldName),
       guests: z.optional(
         z.union(
-          [fieldName, z.strictObject({ via: edgeName, emails: z.optional(fieldName), invite: z.optional(z.union([fieldName, z.literal(false)])), notify: z.optional(z.boolean()) })],
-          'guests names a field holding the addresses, or { "via": "<relation>", "emails"?, "invite"?, "notify"? } to invite the people a relation reaches',
+          [fieldName, z.strictObject({ via: edgeName, emails: z.optional(fieldName), invite: z.optional(z.union([fieldName, z.literal(false)])), notify: z.optional(z.boolean()), max: z.optional(z.number()) })],
+          'guests names a field holding the addresses, or { "via": "<relation>", "emails"?, "invite"?, "notify"?, "max"? } to invite the people a relation reaches',
         ),
       ),
     }),

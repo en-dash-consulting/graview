@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 12500,
+  "note": "Raised when a connection pass came to say whom it invited (Roadmap f-sync-guest-changes-in-history): the engine counts the guests each write invited and took off, holds an event over the declared `max`, appends the history line of what went out with its words (`sync/guest-words`), keeps what was sent and the last pass in its state, the transport reads Google's own error message, the checker judges `max` (`connection-guests-max`), and `guestsOf` and `connectionStatus` read it back. Measured at 2_395_430 B against 2_382_984: 12_446 more."
+}

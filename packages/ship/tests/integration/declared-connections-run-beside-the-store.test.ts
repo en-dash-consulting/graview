@@ -269,3 +269,17 @@ describe("a served store's Notion tables joined by a relation", () => {
     expect(Object.values(again).every((report) => report.pushed.length === 0 && report.applied.length === 0)).toBe(true);
   });
 });
+
+describe("sayReport counts the guests a pass invited and took off", () => {
+  it("says invited 2 to 3 events · 1 taken off, from the writes that reached the calendar", () => {
+    const report = {
+      system: "google-calendar", applied: [], echoes: [], conflicts: [], resolved: [], pushed: ["a", "b", "c"], queued: [], refused: [], gone: [], offline: false, state: { links: {}, outbox: [] },
+      guests: [
+        { localId: "a", invited: ["ada@example.com"], removed: [] },
+        { localId: "b", invited: ["ada@example.com"], removed: ["bo@example.com"] },
+        { localId: "c", invited: [], removed: [], leftOut: [{ person: "kid", why: "invite-off" as const }] },
+      ],
+    };
+    expect(sayReport(report)).toBe("sent 3 to it · invited 2 to 2 events · 1 taken off");
+  });
+});

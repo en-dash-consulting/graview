@@ -214,7 +214,7 @@ export { FieldRevisions, fieldsWritten, NEVER_WRITTEN, writtenBy } from "./ops/r
 export type { FieldConflict, FieldRevision } from "./ops/revisions.js";
 export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck, UndoRefused } from "./ops/undo.js";
-export type { Author, AuthorKind, Batch, Operation, Via } from "./ops/types.js";
+export type { Author, AuthorKind, Batch, Operation, SentOut, Via } from "./ops/types.js";
 export { AUTHOR_KINDS, authorKindOf } from "./ops/types.js";
 export { LINEAGE_BASIS_LIMIT, LINEAGE_EVIDENCE_LIMIT, LINEAGE_LIMIT, LINEAGE_MODEL_LIMIT, lineageOf, type Lineage } from "./ops/lineage.js";
 // What a link was based on, and whether a person has kept it, are `@graview/core/provenance`'s, fetched with what draws them (FR-172).

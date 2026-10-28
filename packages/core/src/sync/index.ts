@@ -21,7 +21,9 @@ export type { ScriptedNotion, ScriptedNotionOptions, ScriptedRequest } from "./n
 export { syncConflictInvariant, SYNC_CONFLICTS } from "./conflict.js";
 export type { SyncConflictOptions } from "./conflict.js";
 export { SyncEngine, edgeValue, sharedLinks } from "./engine.js";
-export type { SettledConflict, SharedLinks, SyncOptions, SyncRefusal, SyncReport } from "./engine.js";
+export type { GuestChange, GuestLeftOut, SettledConflict, SharedLinks, SyncGuests, SyncOptions, SyncRefusal, SyncReport } from "./engine.js";
+export { connectionStatus, guestsOf } from "./status.js";
+export type { ConnectionStatus, RecordGuests } from "./status.js";
 export { allowTools, doorClient, mcpClient, mcpDoor, mcpRemote, ownHost, sameOrigin } from "./mcp.js";
 export type { DoorHeaders, DoorRequest, DoorResponse, McpClientOptions, McpDoorOptions, McpRemoteOptions, ToolCall } from "./mcp.js";
 export { EMPTY_SYNC_STATE, SYNC_STATE_FORMAT, systemAuthor } from "./types.js";
@@ -29,7 +31,9 @@ export type {
   ConflictPolicy,
   DeletedConflict,
   FieldConflict,
+  GuestsKept,
   LinkResolver,
+  PassKept,
   RemoteAck,
   RemoteChange,
   RemoteLink,
