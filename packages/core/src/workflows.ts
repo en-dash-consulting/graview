@@ -26,5 +26,5 @@ export { nextOf, nextRunAt, scheduleOf, scheduleOfCron, scheduleOfWords, schedul
 export { triggerWords, workflowWords } from "./workflows/words.js";
 export { triggeredBy, type FiredTrigger, type WorkflowCommit } from "./workflows/triggered.js";
 export { documentWorkflowFindings, workflowFindings, workflowFindingsOf } from "./workflows/findings.js";
-export { recordsOver, workflowKey, workflowSpecHash, workflowValue } from "./workflows/values.js";
+export { keyedId, recordsOver, workflowKey, workflowSpecHash, workflowValue } from "./workflows/values.js";
 export { followsFindings, policiesOf, policyInstruction, type WorkflowPolicy } from "./workflows/policies.js";

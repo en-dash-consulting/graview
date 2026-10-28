@@ -64,3 +64,17 @@ export function workflowSpecHash(declared: WorkflowDeclaration): string {
   const { status: _status, ...rest } = declared;
   return sha256Hex(canonicalize(rest));
 }
+
+/** A key as an id may carry it: letters, digits and a few marks; a long one, or one with none of those, by its hash. */
+const keySlug = (text: string): string => {
+  const slug = text.toLowerCase().replace(/[^a-z0-9._:-]+/g, "-").replace(/^-+|-+$/g, "");
+  return slug.length > 0 && slug.length <= 120 ? slug : sha256Hex(text).slice(0, 24);
+};
+
+/**
+ * THE ID A KEYED RECORD IS MADE UNDER (Roadmap f-job-idempotency):
+ * `<prefix>:wf.<workflow>.<key>` — the prefix the kind's ids carry, the
+ * workflow's name and the key slugged — asked for as a client asks for an
+ * id, so the store itself refuses a second record of the same key.
+ */
+export const keyedId = (prefix: string, workflow: string, key: string): string => `${prefix}:wf.${workflow}.${keySlug(key)}`;
