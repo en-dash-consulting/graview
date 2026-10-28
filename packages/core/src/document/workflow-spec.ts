@@ -33,6 +33,7 @@ function build() {
     status: z.optional(z.enum(["active", "paused"])),
     approve: z.optional(shapes.approve),
     steps: z.array(StepSpec).check(z.minLength(1), z.maxLength(MOST_STEPS)),
+    follows: z.optional(kind),
   });
   const WorkflowsSpec = z.record(z.string().check(z.regex(NAME, 'workflow names are kebab-case, like "next-weeks-events"')), WorkflowSpec).check(z.refine((all: Record<string, unknown>) => Object.keys(all).length <= MOST_WORKFLOWS, `an app declares at most ${MOST_WORKFLOWS} workflows`));
   return { TriggerSpec, StepSpec, WorkflowSpec, WorkflowsSpec };

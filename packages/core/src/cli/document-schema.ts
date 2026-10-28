@@ -1,6 +1,7 @@
 import * as z from "../schema/zod.js";
 import { ConnectionSpec } from "../document/connection-spec.js";
 import { PurposeSpec } from "../document/purpose-spec.js";
+import { WorkflowSpec } from "../document/workflow-spec.js";
 import { DocumentSpec, FieldSpec, KindSpec, RuleSpec } from "../document/schema.js";
 import { BLOCK_KEYS, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, MAX_TEXT_LINES, VIEW_FIELD_FORMATS, VIEW_SLOTS, VIEW_TONES } from "../document/views.js";
 import { SHIPPED_LENSES, SHIPPED_LENS_NAMES } from "../places.js";
@@ -106,6 +107,14 @@ export function documentJsonSchema(version: string): Json {
   properties["purpose"] = {
     ...purpose,
     description: "Who the app is for (`for`), and up to twelve jobs they come to it to do: each a question in their words (`ask`), answered by the records of one kind (`kind`) a rule-language condition holds for (`where`), in an order (`sort`), with the act they usually take next (`act`), for some roles or everybody (`roles`).",
+  };
+  // Workflows likewise (Roadmap f-jobs-declared, `workflow-spec.ts`): read loosely by the compiler, judged by the checker, said here whole.
+  const { $schema: _workflow, ...workflow } = z.toJSONSchema(built(WorkflowSpec) as z.ZodMiniType, { io: "input", unrepresentable: "any" }) as Json;
+  properties["workflows"] = {
+    description: "What the app does on its own, by name: each a title, what starts it (`when`: `every` in words like \"sunday 18:00\", `cron`, a record `made` or `changed`, a connection `synced`, or `byHand`), whether it is paused, what its changes become (`approve`: apply, suggest or ask) and its steps in order — run an act (`act`, once or `over` the records a rule picks, `key` for what it makes) or let a model propose (`agent`).",
+    type: "object",
+    propertyNames: { pattern: "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+    additionalProperties: workflow,
   };
   rest["$defs"] = { ...((rest["$defs"] as Json | undefined) ?? {}), ...blockDefs() };
   return {

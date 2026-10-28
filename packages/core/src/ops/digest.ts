@@ -141,11 +141,15 @@ const atNight = (at: string): boolean => {
  * A digest said as Activity says a change: "Tidied 6 things today",
  * "Tidied a thing on Oct 12" — the day it fell on the app's clock (Roadmap
  * f-app-time-zone). A run made wholly in the night, ending today, is
- * "Tidied 12 things overnight".
+ * "Tidied 12 things overnight". A workflow's run is said by its title:
+ * "Fill out next week's events: 6 things today".
  */
-export function digestWords(digest: { readonly things: number; readonly at: string; readonly run?: string; readonly batches?: readonly Pick<Batch, "at">[] }, today: string = dayOfMoment(new Date().toISOString()) ?? isoToday()): string {
+export function digestWords(digest: { readonly things: number; readonly at: string; readonly run?: string; readonly batches?: readonly Pick<Batch, "at">[]; readonly author?: Pick<Author, "id" | "name"> }, today: string = dayOfMoment(new Date().toISOString()) ?? isoToday()): string {
   const day = dayOfMoment(digest.at) ?? digest.at.slice(0, 10);
   const overnight = digest.run !== undefined && day === today && [digest.at, ...(digest.batches ?? []).map((batch) => batch.at)].every(atNight);
   const when = overnight ? "overnight" : day === today ? "today" : `on ${dayOfMonthAsRead(day)}`;
-  return `Tidied ${digest.things === 1 ? "one thing" : `${digest.things} things`} ${when}`;
+  const things = digest.things === 1 ? "one thing" : `${digest.things} things`;
+  // A workflow's run (Roadmap f-jobs-declared) is said by the workflow's title: "Fill out next week's events: 6 things today".
+  if (digest.author?.id?.startsWith("workflow:") && digest.author.name) return `${digest.author.name}: ${things} ${when}`;
+  return `Tidied ${things} ${when}`;
 }
