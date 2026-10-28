@@ -9,6 +9,7 @@ import { isRepeat, occurrences, repeatKey, WEEKDAYS } from "../repeat.js";
 import type { AnySchema } from "../schema/schema.js";
 import { weekdaysOf } from "../sync/recurrence.js";
 import { addDays, weekdayOf } from "../wall-time.js";
+import { sha256Hex } from "../integrity.js";
 import type { GenerateStep, GenerateWindow, WorkflowValue } from "../workflow-shape.js";
 
 /*
@@ -110,24 +111,15 @@ export interface GenerateWants {
   readonly problems: readonly { readonly source?: string; readonly why: string }[];
 }
 
-/** A short, steady hash: FNV-1a, as eight hex digits. */
-const hashOf = (text: string): string => {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
-  return h.toString(16).padStart(8, "0");
-};
-
 /**
- * THE ID A KEY GIVES: `<kind>:<workflow>.<key>`, the key's letters kept
- * where an id may hold them, and a hash of it when they are not all kept or
- * it runs long. The store makes a record under an id asked for and refuses
- * a second, so the same key is the same record however often a run repeats.
+ * THE ID A KEY GIVES: `<kind>:wf.<workflow>.<key>`, the key folded to what
+ * an id may hold (a long one by its hash) — the same form an act step's
+ * key gives. The store makes a record under an id asked for and refuses a
+ * second, so the same key is the same record however often a run repeats.
  */
 export function keyedId(kind: string, workflow: string, key: string): string {
-  const kept = key.replace(/[^A-Za-z0-9._:-]+/g, "-");
-  const head = `${kind}:${workflow}.`;
-  if (kept === key && head.length + kept.length <= 200) return head + kept;
-  return `${(head + kept).slice(0, 180)}.${hashOf(key)}`;
+  const slug = key.toLowerCase().replace(/[^a-z0-9._:-]+/g, "-").replace(/^-+|-+$/g, "");
+  return `${kind}:wf.${workflow}.${slug.length > 0 && slug.length <= 120 ? slug : sha256Hex(key).slice(0, 24)}`;
 }
 
 const asValue = (value: Value): unknown => (value instanceof NodeSet ? value.nodes.map((node) => node.id) : value !== null && typeof value === "object" && !Array.isArray(value) && typeof (value as AnyGraphNode).id === "string" ? (value as AnyGraphNode).id : value);
@@ -150,6 +142,8 @@ export interface GenerateReading {
   /** The workflow's name: in every id the step makes. */
   readonly workflow: string;
   readonly now: number;
+  /** The run's day on the app's clock; read from `now` in `timeZone` when unsaid. */
+  readonly today?: string | undefined;
   readonly timeZone?: string | undefined;
   readonly locale?: string | undefined;
 }
@@ -157,7 +151,7 @@ export interface GenerateReading {
 /** WHAT A GENERATE STEP WANTS, on the graph as it stands: every record, in day order. */
 export function generateWants(step: GenerateStep, reading: GenerateReading): GenerateWants {
   const zone = reading.timeZone ?? "UTC";
-  const today = isoToday(zone, reading.now);
+  const today = reading.today ?? isoToday(zone, reading.now);
   const now = new Date(reading.now).toISOString();
   const kinds: ReadonlyMap<string, KindShape> = shapesOfSchema(reading.schema);
   const base = { graph: reading.graph, kinds, today, now, timeZone: zone, ...(reading.locale ? { locale: reading.locale } : {}) };

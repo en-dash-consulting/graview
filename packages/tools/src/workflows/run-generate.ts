@@ -47,7 +47,7 @@ export const runGenerateStep: StepRunner<GenerateStep> = {
     const schema = store.schema;
     const graph = context.seen.graph;
     const brand = context.app.brand as { readonly timeZone?: string; readonly locale?: string } | undefined;
-    const wants = generateWants(step, { graph, schema, workflow: context.workflow.name, now: context.now, timeZone: store.timeZone ?? brand?.timeZone, locale: brand?.locale });
+    const wants = generateWants(step, { graph, schema, workflow: context.workflow.name, now: context.now, today: context.today, timeZone: brand?.timeZone ?? store.timeZone, locale: brand?.locale });
     for (const problem of wants.problems) context.holdBack(problem.source ? `${problem.source}: ${problem.why}.` : `${problem.why.replace(/^./, (first) => first.toUpperCase())}.`);
 
     const makers = store.allMutations().filter((mutation) => (mutation.creates as readonly string[] | undefined)?.includes(step.generate));
