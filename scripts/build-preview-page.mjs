@@ -67,6 +67,23 @@ for (const file of doorsOpenAtOnce(built.outputFiles, built.metafile)) writeFile
 // The head names the pages face's chunks and what it opens as it first draws (FR-194), as a host names them from its own build.
 const head = preloadLinks(built.metafile, { entry: "page.js", faces: ["pages"], fetches: ["/graview/document"], chunks: firstDrawChunks(built.metafile, "pages") });
 writeFileSync(join(out, "index.html"), PAGE.replace("<!--preloads-->", head));
+/*
+ * THE OPENING SCREEN'S RENDERER, BESIDE THE PAGE (Roadmap f-splash-in-document):
+ * `@graview/pages/splash` has no import, so it bundles to one small module
+ * the dispatcher hands `preview`, and the tool takes no dependency on the
+ * pages face (whose React peer `npx graview` would otherwise install).
+ */
+await esbuild.build({
+  entryPoints: { splash: join(repo, "packages/pages/src/splash.ts") },
+  bundle: true,
+  format: "esm",
+  platform: "neutral",
+  target: "es2022",
+  minify: true,
+  outdir: out,
+  entryNames: "[name]",
+  logLevel: "warning",
+});
 
 const bytes = readdirSync(out).reduce((sum, file) => sum + statSync(join(out, file)).size, 0);
 process.stdout.write(`the preview page: ${readdirSync(out).length} files, ${Math.round(bytes / 1024)} KB, in packages/graview/dist/preview\n`);

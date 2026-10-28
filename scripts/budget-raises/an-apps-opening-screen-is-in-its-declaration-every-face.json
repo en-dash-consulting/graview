@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 1946,
+  "gzipped": 722,
+  "note": "Raised when an app's opening screen came to be in its declaration (Roadmap f-splash-in-document): the document's shape gains `brand.splash`, the brand findings judge its image and its shader's name (`brand-splash-image`, `brand-splash-shader`), `set-brand` sets and clears it and the diff says it, all of which every face carries through `@graview/core/document`. The gzipped had 612 bytes of room under 871_139. Measured at 2_393_068 / 871_249 against 2_391_122 / 870_527: 1_946 more minified, 722 gzipped."
+}

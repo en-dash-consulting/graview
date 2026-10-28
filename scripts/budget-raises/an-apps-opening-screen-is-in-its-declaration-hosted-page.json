@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 144,
+  "gzipped": 65,
+  "changeset": "an-apps-opening-screen-is-in-its-declaration.md",
+  "note": "Raised when an app's opening screen came to be in its declaration (Roadmap f-splash-in-document): the document's shape gains `brand.splash` (a style, an image, a title, a kicker and a shader's name), which the hosted page reads with the rest of the brand. The page had 29 bytes of room under 631_579. Measured at 631_694 / 219_910 against 631_550 / 219_845: 144 more minified, 65 gzipped."
+}

@@ -19,6 +19,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/compile.ts"), "utf8"),
   // What a view's blocks are found wanting by: one validator, for the check and a document's compile alike (`warning("view-whole-text", …)`).
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/views.ts"), "utf8"),
+  // The brand's own findings (`brand-mark`, `brand-splash-image`, …), judged wherever a document is.
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/document/brand-check.ts"), "utf8"),
   // What a relation to another app's kind is found wanting by (FR-171): said with the checker, never by a page that compiles without it.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/linked-findings.ts"), "utf8"),
   // …and one such relation alone, judged by the check and an `add-relation` edit in the same words.

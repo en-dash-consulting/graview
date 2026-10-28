@@ -20,6 +20,17 @@ export const MAX_DOCUMENT_BYTES = 256 * 1024;
 /** The most a brand's logo or page icon may be, written inline (FR-124). */
 const MARK_MAX = 64 * 1024;
 
+/**
+ * HOW AN APP'S PAGE OPENS (Roadmap f-splash-in-document): the styles an
+ * opening screen draws in, and the shaders `@graview/pages/splash` ships
+ * for the `shader` style — named, never written into a document, since
+ * data is never code. The renderer keeps the same two lists.
+ */
+export const SPLASH_STYLES = ["plain", "editorial", "shader", "ascii"] as const;
+export type SplashStyle = (typeof SPLASH_STYLES)[number];
+export const SPLASH_SHADERS = ["drift", "ripple", "veil"] as const;
+export type SplashShader = (typeof SPLASH_SHADERS)[number];
+
 /** kebab-case: kinds, acts, rules, edges, roles, modules. */
 export const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 /** Field names are identifiers so a rule can say them bare: `quote != null`. */
@@ -422,6 +433,25 @@ function build() {
      * the description stays the app's, in listings and on the name's hover.
      */
     subtitle: z.optional(z.literal(false)),
+    /*
+     * THE OPENING SCREEN (Roadmap f-splash-in-document): what the page shows
+     * while the app's code loads, gone the moment a place has drawn. In the
+     * document, so an export, an import and a remix carry it. `style` is
+     * one of `SPLASH_STYLES`; `image` is a mark as the logo is one (inline
+     * SVG, or a path on the app's own host; `brand-splash-image`); `title`
+     * stands in for the app's name and `kicker` is one small line over it;
+     * `shader` names one of `SPLASH_SHADERS` for the shader style
+     * (`brand-splash-shader`). Drawn by `@graview/pages/splash`.
+     */
+    splash: z.optional(
+      z.strictObject({
+        style: z.enum(SPLASH_STYLES),
+        image: z.optional(str(1, MARK_MAX)),
+        title: z.optional(str(1, 80)),
+        kicker: z.optional(str(1, 80)),
+        shader: z.optional(str(1, 40)),
+      }),
+    ),
   });
 
   const loose = z.record(z.string(), z.unknown());

@@ -48,7 +48,7 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
-import { brandFindings, emojiIconSentence, groundWords, subtitleSentence } from "./brand-check.js";
+import { brandFindings, emojiIconSentence, groundWords, splashSentence, subtitleSentence } from "./brand-check.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
 import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
@@ -242,6 +242,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         scheme: z.union([z.enum(["light", "dark", "auto"]), z.null()]).optional(),
         // Whether the home draws the description as the line under the name (Roadmap f-home-subtitle-separate): false keeps it off, true or null draws it again.
         subtitle: z.union([z.boolean(), z.null()]).optional(),
+        // The opening screen (Roadmap f-splash-in-document), whole; null for Graview's own.
+        splash: z.union([z.object({ style: z.string(), image: z.string().min(1).optional(), title: z.string().min(1).max(80).optional(), kicker: z.string().min(1).max(80).optional(), shader: z.string().min(1).max(40).optional() }).strict(), z.null()]).optional(),
       })
       .strict(),
     "set-name": z.object({ op: z.literal("set-name"), name: z.string().min(1).max(80) }).strict(),
@@ -684,7 +686,7 @@ class Editor {
     const emptyPart = (["typography", "shape", "accents"] as const).find((key) => isObject(e[key]) && Object.keys(e[key]).length === 0);
     if (emptyPart) return this.fail(i, emptyPart, `${emptyPart} names no part to set; name one, or give null to clear all of it`);
     const judged = brandFindings(
-      { ...(typeof e.timeZone === "string" ? { timeZone: e.timeZone } : {}), ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
+      { ...(typeof e.timeZone === "string" ? { timeZone: e.timeZone } : {}), ...(isObject(e.splash) ? { splash: e.splash } : {}), ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
       { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}) },
     );
     if (judged.length > 0) return void this.findings.push(...judged);
@@ -825,6 +827,12 @@ class Editor {
       if (e.subtitle === false) brand["subtitle"] = false;
       else delete brand["subtitle"];
       this.said.push(subtitleSentence(e.subtitle !== false));
+    }
+    // The opening screen is set whole or cleared: its keys are few, and half of one is nothing a page could draw.
+    if (e.splash !== undefined) {
+      if (e.splash === null) delete brand["splash"];
+      else brand["splash"] = e.splash;
+      if (!(e.splash === null && !isObject(this.doc.brand?.splash))) this.said.push(splashSentence(e.splash));
     }
     if (Object.keys(brand).length === 0) delete this.doc.brand;
     else this.doc.brand = brand;
