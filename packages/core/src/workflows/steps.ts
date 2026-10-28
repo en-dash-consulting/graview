@@ -3,6 +3,7 @@ import { NAME } from "../document/schema.js";
 import type { WorkflowStep } from "../workflow-shape.js";
 import { actStep } from "./step-act.js";
 import { agentStep } from "./step-agent.js";
+import { generateStep } from "./step-generate.js";
 import type { WorkflowWorld } from "./world.js";
 
 /*
@@ -71,6 +72,7 @@ export interface StepKind<Step = never> {
 export const STEP_KINDS = {
   act: actStep,
   agent: agentStep,
+  generate: generateStep,
 } as const satisfies Readonly<Record<string, StepKind<never>>>;
 
 export type StepKindKey = keyof typeof STEP_KINDS;

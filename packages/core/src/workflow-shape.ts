@@ -84,8 +84,43 @@ export interface AgentStep {
   readonly approve?: WorkflowApproval;
 }
 
+/** Where a generate step's dates come from: a kind, the records a rule picks of it, and the field that holds each one's date. */
+export interface GenerateFrom {
+  readonly kind: string;
+  readonly where?: string;
+  /** A date or a moment (one day), one that repeats (`<field>Repeat` beside it), or a set of weekdays ("mon", "wed"). */
+  readonly dates: string;
+}
+
+/** The days a generate step makes records for: words ("next week", "this week", "next 7 days", "today", "tomorrow"), or two expressions. */
+export type GenerateWindow = string | { readonly from: string; readonly to: string };
+
+/**
+ * MAKE DATED RECORDS FROM A PATTERN (Roadmap f-job-generate-from-pattern):
+ * for each day in `window` that a source record's date falls on — a date,
+ * a date that repeats, a set of weekdays — one record of the kind
+ * `generate` names, its fields from `set` (read on the source, with `date`
+ * the occurrence and `source` its record), linked back through `link`.
+ * Made once per `key` ("{source}:{date}" when unsaid): a rerun changes what
+ * the source changed and nothing a person changed, unless `overwrite`.
+ */
+export interface GenerateStep {
+  readonly generate: string;
+  readonly from: readonly GenerateFrom[];
+  readonly window: GenerateWindow;
+  readonly set?: Readonly<Record<string, WorkflowValue>>;
+  readonly key?: string;
+  /** The relation between a made record and its source: the made kind's, or the source kind's. */
+  readonly link?: string;
+  /** The act that makes one, where more than one act makes the kind (not `act`, which would make the step an act step). */
+  readonly using?: string;
+  /** A rerun sets a field again even where a person changed it. */
+  readonly overwrite?: boolean;
+  readonly approve?: WorkflowApproval;
+}
+
 /** One step of a workflow: one of `STEP_KINDS`, told apart by its one discriminating key. */
-export type WorkflowStep = ActStep | AgentStep;
+export type WorkflowStep = ActStep | AgentStep | GenerateStep;
 
 /** A workflow as it is declared. */
 export interface WorkflowDeclaration {
