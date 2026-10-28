@@ -134,6 +134,8 @@ export interface WorkflowDeclaration {
   readonly approve?: WorkflowApproval;
   /** In order; at least one. */
   readonly steps: readonly WorkflowStep[];
+  /** A kind of policy records the run reads and its model steps are told (Roadmap f-job-rule-inputs). */
+  readonly follows?: string;
 }
 
 /** An app's workflows, by slug name. */
