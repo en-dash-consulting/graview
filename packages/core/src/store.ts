@@ -29,7 +29,7 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
-import { VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying } from "./mutations/vote-suggestion.js";
+import { advisoryVoterOf, signedOutSeat, SIGN_IN_TO_VOTE, VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying, type VotesOptions } from "./mutations/vote-suggestion.js";
 import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { declinedIn, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
@@ -140,6 +140,14 @@ export interface StoreOptions<S extends AnySchema> {
    * log is the one that makes it.
    */
   readonly tidying?: AppTidying;
+  /**
+   * WHAT THE HOST SAYS OF VOTES (Roadmap f-votes-shared-seat): a vote on a
+   * suggestion from a shared or signed-out seat (`Principal.shared`, a
+   * `visitor`) is refused, "Sign in to vote on this suggestion", unless
+   * `advisory: "visitors"` keeps it as advisory — under the seat's
+   * `visitorKey`, counted apart, never toward `autoAcceptAt`.
+   */
+  readonly votes?: VotesOptions;
   /**
    * The app's declared modules, and which are on for THIS installation.
    *
@@ -568,6 +576,8 @@ export class Store<S extends AnySchema> {
   readonly publishing: Publishing | undefined;
   /** What the declaration says of suggestions as a whole (`StoreOptions.tidying`). */
   readonly tidying: AppTidying | undefined;
+  /** What the host says of votes from a shared or signed-out seat (`StoreOptions.votes`). */
+  readonly votes: VotesOptions | undefined;
   /**
    * The intelligence the app declared, so a surface can read the DOORS.
    *
@@ -631,6 +641,7 @@ export class Store<S extends AnySchema> {
     this.policy = options.policy;
     this.publishing = options.publishing;
     this.tidying = options.tidying;
+    this.votes = options.votes;
     this.by = options.principal ?? HUMAN;
     this.intelligence = options.intelligence ?? [];
     for (const provider of options.intelligence ?? []) {
@@ -969,8 +980,17 @@ export class Store<S extends AnySchema> {
     const mutation = this.mutations.get(call.name) ?? (call.name === PUBLISH ? this.publisher : undefined);
     // Publishing is the declaration's `publishers`, not a grant's.
     if (mutation && mutation === this.publisher) return PUBLISHING.verdict!(this, principal) as ReturnType<typeof permits>;
-    // A vote on a suggestion is anybody's who may see it (Roadmap f-suggestion-votes): whether they do is judged where the op is made.
-    if (mutation && mutation === this.voter) return { ok: true } as ReturnType<typeof permits>;
+    /*
+     * A vote on a suggestion is anybody's who may see it (Roadmap f-suggestion-votes): whether they do is judged where the op is made.
+     * But not a seat that is nobody in particular (Roadmap f-votes-shared-seat): every signed-out stranger served as one `anonymous`
+     * cast one shared vote that any of them could flip. Refused, unless the host keeps such votes as advisory and said whose this is.
+     */
+    if (mutation && mutation === this.voter) {
+      if (signedOutSeat(principal) && (this.votes?.advisory !== "visitors" || advisoryVoterOf(principal) === undefined)) {
+        return { ok: false, refusal: { mutation: call.name, wouldNeed: [], message: SIGN_IN_TO_VOTE } } as ReturnType<typeof permits>;
+      }
+      return { ok: true } as ReturnType<typeof permits>;
+    }
     /*
      * KEEPING A LINK ONLY THE DERIVED ACTS MAKE is judged as they are: on
      * the record it leaves, so riding everybody's grant it reaches only the
@@ -1677,7 +1697,9 @@ export class Store<S extends AnySchema> {
      * was brought in for, and the narrower of the two wins.
      */
     const permitted = (call: MutationCall, as: Author | Principal = author) => {
-      const verdict = this.policy || (this.publisher && call.name === PUBLISH) ? this.permits(call, as as Principal) : undefined;
+      // A vote is judged with no policy too: a shared seat's vote is refused whether or not the app says who may do what (Roadmap f-votes-shared-seat).
+      const voting = this.voter !== undefined && this.mutations.get(call.name) === this.voter;
+      const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting ? this.permits(call, as as Principal) : undefined;
       if (verdict && !verdict.ok) this.refuse(verdict.refusal, as.id);
     };
     const declared = (call: MutationCall, as: Author | Principal = author) => {
@@ -2203,6 +2225,10 @@ export class Store<S extends AnySchema> {
         const by = actingAs(judged.author as Principal).id;
         // A vote is its voter's to take back (Roadmap f-suggestion-votes), the system's, or a seat's the policy grants every act.
         if (judged.vote !== undefined) {
+          // An advisory vote is its visitor's, not the shared seat's (Roadmap f-votes-shared-seat): another stranger on the same seat may not take it back.
+          if (judged.vote.advisory && !isSystem(author as Principal) && advisoryVoterOf(author as Principal) !== judged.vote.voter && !(this.policy && this.grantsEveryAct(author as Principal))) {
+            return { mutation: "undo", wouldNeed: [], message: `Not permitted to undo "${target.intent}": only whoever voted takes their vote back.` };
+          }
           if (this.policy && !isSystem(author as Principal) && by !== actingAs(author as Principal).id && !this.grantsEveryAct(author as Principal)) {
             return { mutation: "undo", wouldNeed: [], message: `Not permitted to undo "${target.intent}": only whoever voted takes their vote back.` };
           }
