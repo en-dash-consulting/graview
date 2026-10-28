@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
 import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
-import type { AwaySummary, FieldTyping, KeepLensHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
+import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Onward } from "./onward.js";
 
@@ -122,6 +122,13 @@ export interface PageContext<S extends AnySchema> {
    * lens is the reader's own.
    */
   readonly onKeepLens?: KeepLensHost;
+  /**
+   * Where a change to the app the seat proposed is applied (`onProposeChange`,
+   * Roadmap f-seat-reshape): handed the accepted proposal's card and edits,
+   * the host applies it as the person, as one undoable change, and answers
+   * `"applied"` or `"declined"`. Unsaid, the seat never offers one.
+   */
+  readonly onProposeChange?: ProposeChangeHost;
   /**
    * WHERE "EXPORT CSV" SAVES A LIST (Roadmap f-view-export-csv): handed the
    * CSV text and the file name, for a host that saves files itself. Unsaid,

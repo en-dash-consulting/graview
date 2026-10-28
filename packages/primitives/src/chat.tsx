@@ -3,24 +3,31 @@ import { useAttention } from "@graview/react/drawing";
 import { useGraview, useSeatTalkState, useSelection } from "@graview/react/provider";
 import { kindCardId, withFocus, withOverview, withSelection } from "@graview/layout/view";
 import {
+  aiOff,
   completionFor,
   createToolRuntime,
+  decideFor,
   describeProposal,
   loadPins,
+  mayChangeDeclaration,
   resolveProposal,
   seatResponder,
   stillNeeded,
   type ChatReply,
   type ProposedCall,
+  type ReshapeContext,
   type Responder,
   type SeatMove,
   type ToolCall,
   withNotNow,
 } from "@graview/tools";
+import type { ReshapeProposal } from "@graview/tools/reshape";
+import type { TraitName } from "@graview/core/compose";
 import type { SeatTurn } from "@graview/react/provider";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { dismissalsOf } from "./dismissals.js";
 import { useLensKeeping } from "./lens-keeping.js";
+import { ReshapeCard } from "./reshape-card.js";
 import { useSceneGo } from "./seat-move.js";
 import { useSubject } from "./subject.js";
 import { proposalKey, SeatComposer, SeatThread, Settled, useSeatConversation } from "./seat.js";
@@ -84,6 +91,15 @@ export interface ChatPanelProps<S extends AnySchema> {
 const DRAW = /\b(?:board|kanban|timeline|calendar|gantt|who covers|covers what|coverage|floor plan|layout|draw|chart|(?:list|table) of|as an? (?:list|table|board|calendar|timeline|grid))\b/i;
 /** An ask that changes the view on screen: group by, sort by, only, call it, as a … */
 const REFINE = /\b(?:group(?:ed)? by|split by|sort(?:ed)? by|order(?:ed)? by|only|call it|name it|as an? (?:board|kanban|calendar|timeline|list|table|cards|rows|grid|plan|layout)|show all|all of them|clear the filter|no filter)\b/i;
+/**
+ * AN ASK ABOUT THE APP ITSELF (Roadmap f-seat-reshape): a new thing to keep
+ * track of, a part to drop, a split. Read conservatively — "we also need",
+ * "keep track of who", "add a field", "we don't need … any more" — so a
+ * sentence about a record ("we need to pay the florist") is never sent to
+ * the composer; and even one that is, which the reading finds adds and
+ * drops nothing, falls through to the usual answer.
+ */
+const RESHAPE = /\b(?:(?:we|i) (?:also|still|now) need|also (?:need|track|keep)|(?:keep )?track (?:of )?(?:who|which|what|where|when|how much)|add (?:a|an|another|the) (?:field|column|kind|status|stage|date|deadline|due date|budget|place|location|person|people|owner|assignee)|(?:don'?t|do not|no longer|never) need(?: the| any| our| these| those)?\b[^.?!]*?\b(?:any ?more|any longer|at all)|no longer need|get rid of|split (?:this|it|them|the \w+) into|stop (?:tracking|keeping))\b/i;
 
 // Never an acronym's: "CVEs by severity" stays, never "cVEs by severity".
 const lowerFirst = (text: string) => (/^.\p{Lu}/u.test(text) ? text : text.charAt(0).toLowerCase() + text.slice(1));
@@ -117,7 +133,7 @@ export function ChatPanel<S extends AnySchema>({
   place,
   onDraft,
 }: ChatPanelProps<S>) {
-  const { store, views, view, principal, setView, seatWho, noteSeat, session, ai, seatTalk, brand, app, subscriptions, signIn, dismissals } = useGraview<S>();
+  const { store, views, view, principal, setView, seatWho, noteSeat, session, ai, seatTalk, brand, app, subscriptions, signIn, dismissals, onProposeChange } = useGraview<S>();
   const sceneGo = useSceneGo();
   const go = onMove ?? sceneGo;
   const { takeBack } = useLensKeeping(go);
@@ -155,6 +171,27 @@ export function ChatPanel<S extends AnySchema>({
   );
   /* THE GRAPH FIRST, THE HOST'S MODEL AFTER IT: a host that passes `respond` answers in its place. */
   const answer = useMemo<Responder<S>>(() => respond ?? seatResponder<S>(ai), [respond, ai]);
+
+  /*
+   * A SEAT THAT MAY CHANGE THE APP ITSELF (Roadmap f-seat-reshape): only
+   * where the host handed `onProposeChange`, gave a model that decides,
+   * mounted the app, and this seat's role may change the declaration —
+   * the judgment the studio's door makes (`mayChangeDeclaration`). For any
+   * other seat the tool does not exist: no door, no card, nothing refused.
+   */
+  const decide = useMemo(() => (aiOff(ai) ? undefined : (ai.fast?.decide ?? decideFor(ai))), [ai]);
+  const reshape = useMemo<ReshapeContext | undefined>(() => {
+    if (!onProposeChange || !app || !decide || respond) return undefined;
+    if (!mayChangeDeclaration(store, { ...author, ...(principal.roles ? { roles: principal.roles } : {}) })) return undefined;
+    /*
+     * The app's document, remembered from the one it compiled from or written
+     * from the app, fetched when first asked for — through the reshape door,
+     * never by importing `@graview/core/document` here: a page that fetched
+     * that entry when asked made its whole namespace live, and the editor it
+     * re-exports rode up front with the first draw.
+     */
+    return { decide, document: async () => (await import("@graview/tools/reshape")).documentOfApp(app) };
+  }, [onProposeChange, app, decide, respond, store, author, principal]);
 
   useEffect(() => (onCall ? runtime.onCall(onCall) : undefined), [runtime, onCall]);
   // What the conversation looked at reaches the picture, like any seat's reads.
@@ -198,6 +235,24 @@ export function ChatPanel<S extends AnySchema>({
     return { say: `Here is ${lowerFirst(result.said)} Ask to change it, or keep it as a lens.`, proposals: [], grounded: true };
   };
 
+  /*
+   * ASKED FOR A CHANGE TO THE APP, THE SEAT COMPOSES IT (`@graview/tools/reshape`,
+   * fetched with the first such ask): the words go to the host's `decide`
+   * as the starter's questions, code composes the edits, and the answer is
+   * a card. A reading that adds and drops nothing is no answer, and the ask
+   * goes on to the model or the graph as any other would.
+   */
+  const reshapeIfAsked = async (text: string): Promise<ChatReply | undefined> => {
+    if (!reshape || !RESHAPE.test(text)) return undefined;
+    const engine = await import("@graview/tools/reshape");
+    const document = typeof reshape.document === "function" ? await reshape.document() : reshape.document;
+    // An app declared in code has no document to change: the words go on to the usual answer.
+    if (!document) return undefined;
+    const made = await engine.proposeReshape({ said: text, document, decide: reshape.decide });
+    if (!made.proposal) return undefined;
+    return { say: made.proposal.card.said, proposals: [], reshape: made.proposal, grounded: true };
+  };
+
   const conversation = useSeatConversation({
     ...(shared ? { talk: seatTalk } : {}),
     said: (proposal) => describeProposal(store, proposal),
@@ -205,6 +260,8 @@ export function ChatPanel<S extends AnySchema>({
     answer: async (text, context) => {
       const drawn = await drawIfAsked(text);
       if (drawn) return drawn;
+      const reshaped = await reshapeIfAsked(text);
+      if (reshaped) return reshaped;
       /* The places this seat may go to, and where it stands: what "go to The week" and "here" are read against. */
       const { placesFromViews } = await import("@graview/tools/go");
       const here = place ?? view.within?.["view"];
@@ -220,6 +277,8 @@ export function ChatPanel<S extends AnySchema>({
         ...(today ? { today } : {}),
         // And a host's turn reads with the same tools: its `describe_place` knows the app too.
         ...(app ? { app: app as GraviewApp<AnySchema> } : {}),
+        // And, for a seat that may change the app with a host to apply it, the one tool that proposes it.
+        ...(reshape ? { reshape } : {}),
       });
     },
     onReply: (reply) => {
@@ -296,6 +355,37 @@ export function ChatPanel<S extends AnySchema>({
     settle(key, { state: "applied", said });
     return true;
   };
+
+  /*
+   * A CHANGE TO THE APP ACCEPTED goes to the host, which applies it as the
+   * person, as one undoable change, under its own policy — or declines it.
+   * Either answer is said where the card stood; the host's refusal is a
+   * refusal said at the seat, never a card that stays live.
+   */
+  const acceptReshape = async (proposal: ReshapeProposal, key: string): Promise<void> => {
+    if (!onProposeChange) return;
+    try {
+      const answered = await onProposeChange(proposal);
+      if (answered === "applied") {
+        settle(key, { state: "applied", said: proposal.card.said });
+        noteSeat({ type: "said", author, say: `Changed the app: ${lowerFirst(proposal.card.said)}` });
+      } else {
+        settle(key, { state: "refused", error: "The host declined this change to the app." });
+        noteSeat({ type: "refused", author, where: null, say: "The host declined this change to the app." });
+      }
+    } catch (error) {
+      settle(key, { state: "refused", error: error instanceof Error ? error.message : String(error) });
+    }
+  };
+  /* The card said again, for a chip toggled: the same words over the same document; the host composes what is accepted. */
+  const recompose = reshape
+    ? async (said: string, add: readonly TraitName[], drop: readonly string[]): Promise<ReshapeProposal> => {
+        const engine = await import("@graview/tools/reshape");
+        const document = typeof reshape.document === "function" ? await reshape.document() : reshape.document;
+        if (!document) throw new Error("This app's declaration is code, not a document the seat can change.");
+        return engine.reshapeCard({ said, document, add, drop });
+      }
+    : undefined;
 
   /* ONE REQUEST, ONE PRESS: a turn's proposals in order, stopping at the first that asks or is refused. */
   const applyAll = async (turn: number, proposals: readonly ProposedCall[]) => {
@@ -421,6 +511,20 @@ export function ChatPanel<S extends AnySchema>({
             : said
         }
         renderAfter={(turn, index) => [
+          /* A CHANGE TO THE APP ITSELF, as a card of chips the person toggles, with Accept (Roadmap f-seat-reshape). */
+          ...(turn.reshape
+            ? [
+                <ReshapeCard
+                  key={`${index}:reshape`}
+                  proposal={turn.reshape}
+                  testId={testId}
+                  outcome={outcomes.get(`${index}:reshape`)}
+                  {...(recompose ? { recompose: (add, drop) => recompose(turn.reshape!.said, add, drop) } : {})}
+                  onAccept={(proposal) => acceptReshape(proposal, `${index}:reshape`)}
+                  onDecline={(proposal) => settle(`${index}:reshape`, { state: "declined", said: proposal.card.said })}
+                />,
+              ]
+            : []),
           /* A PICTURE THE MOVES COULD NOT SHOW, offered: drawn when pressed. */
           ...(turn.offer
             ? [

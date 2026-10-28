@@ -1,0 +1,7 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 0,
+  "gzipped": 1,
+  "changeset": "the-seat-proposes-a-change-to-the-app.md",
+  "note": "Raised by one gzipped byte when the seat came to propose a change to the app itself (Roadmap f-seat-reshape): the guest host's own bytes are the same as before (38_185 minified, as main), but the budget had no headroom and the chunk names its imports carry, hashed beside the new doors, gzip a byte larger. Measured at 38_185 / 16_861 against 38_185 / 16_861 minified and gzipped, the allowance 16_860."
+}

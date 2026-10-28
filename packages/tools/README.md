@@ -166,6 +166,36 @@ and `askKinda` run a turn through the host's `decide`; `stillUnmet` says
 what a refused template leaves wanting. On no page: a server or a terminal
 asks it.
 
+## A change to the app from a sentence: `@graview/tools/reshape`
+
+"We also need to track who's driving", said in an app, is a change to the
+app itself, and the same judgments the starter makes read it:
+`reshapeQuestions(said, document)` asks a Noul per trait the app lacks
+(`need:<trait>`) and a Noul per part it has (`drop:kind:<name>`,
+`drop:trait:<name>`) over what they said and the app in words;
+`readReshape(answers, thresholds)` reads them (a trait added at 0.7, a kind
+or trait dropped at 0.7, every raw Noul kept); `reshapeCard({ said,
+document, add, drop })` says the card in words — `said` in one sentence,
+`adds` (each trait with what its module brings, `TRAIT_BRINGS`), `keeps`,
+`drops`, and `breaking` as far as the seat can say — and the same function
+answers a chip toggled. `proposeReshape({ said, document, decide })` runs
+the turn through the host's `decide`; its proposal is null when the reading
+changes nothing. What the seat hands the host on Accept is the reading as
+the person left it, `{ said, add, drop, card }`, through
+`onProposeChange(proposal) → "applied" | "declined"` on `GraviewProvider`,
+`mount`, `<Embed>` and the pages' context; the host composes the edits from
+it (`composeReshape({ document, add, drop })` on `@graview/core/compose`,
+which also says `breaking` from the edits), previews them with its data and
+applies them as the person, as one undoable change, under its own policy.
+The composer never rides on a page. A host's model with tools is offered
+`propose_change` on its turn. Only a seat whose role may change the
+declaration (`mayChangeDeclaration(store, principal)`, the judgment the
+studio's door shares) with a host that handed the hook is offered it; for
+any other seat the tool does not exist. The document is the one the app
+was compiled from (`documentOfApp`); an app declared in code remembers
+itself first (`rememberDocument`) or is offered no change. Fetched with the
+seat's model, never up front.
+
 ## Drawing a view on the fly, and keeping it as a lens
 
 Asked for a way of seeing — "a board of deliverables by status", "a timeline

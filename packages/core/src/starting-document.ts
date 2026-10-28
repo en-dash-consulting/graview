@@ -23,7 +23,7 @@ import { designFindings } from "./document/design-findings.js";
 import { editDocument, type DocumentEdit } from "./document/edit.js";
 import { FORMAT, FORMAT_VERSION, type GraviewDocument, type KindSpec } from "./document/schema.js";
 import { humanizeField } from "./schema/define-node.js";
-import { an, DUE_FIELD, hasTrait, isPeopleKind, listedWords, mainKindOf, movingChoices, TRAITS, traitNounOf, traitPluralOf, traitsOf, traitWords, type TraitName } from "./traits.js";
+import { an, DUE_FIELD, hasTrait, isPeopleKind, listedWords, mainKindOf, movingChoices, TRAITS, traitNounOf, traitPluralOf, traitsOfDocument, traitWords, type TraitName } from "./traits.js";
 
 export interface StartingOptions {
   /** The template's document to start from; none starts from nothing. */
@@ -55,6 +55,13 @@ export interface StartingDocument {
   readonly left: readonly Part[];
   /** Each change in a sentence, as `editDocument` says it; and what could not be done, said. */
   readonly said: readonly string[];
+  /**
+   * THE EDITS THAT TOOK, in order: the same change as a list `editDocument`
+   * applies to the base in one call (Roadmap f-seat-reshape). A host that
+   * applies a declaration's changes through its own path — a proposal a
+   * person accepts, one undo — applies these, and gets `document`.
+   */
+  readonly edits: readonly DocumentEdit[];
 }
 
 const DONE = new Set(["done", "complete", "completed", "closed", "shipped", "booked", "paid", "finished", "resolved", "published", "delivered", "approved", "merged", "released", "signed", "won", "returned", "fixed", "filed", "chosen"]);
@@ -98,6 +105,7 @@ class Composer {
   readonly took: Part[] = [];
   readonly left: Part[] = [];
   readonly said: string[] = [];
+  readonly edits: DocumentEdit[] = [];
   constructor(doc: GraviewDocument) {
     this.doc = doc;
   }
@@ -111,6 +119,7 @@ class Composer {
     }
     this.doc = outcome.document;
     this.said.push(...outcome.said);
+    this.edits.push(edit);
     if (from !== undefined) for (const part of parts) this.took.push({ ...part, from });
     return true;
   }
@@ -470,7 +479,7 @@ const MODULES: Readonly<Record<TraitName, Module>> = {
  * needs it; so does the kind people see most and the field its label says.
  */
 function dropTrait(c: Composer, name: TraitName, from: string) {
-  const traits = traitsOf(c.doc);
+  const traits = traitsOfDocument(c.doc);
   const trait = traits.find((one) => one.trait === name);
   if (!trait) return c.said.push(`${c.doc.name} has no ${traitWords(name)} to leave out.`);
   const shared = new Set(traits.filter((one) => one.trait !== name).flatMap((one) => [...one.fields, ...one.relations]));
@@ -546,7 +555,7 @@ export function startingDocument(options: StartingOptions): StartingDocument {
   const dropped = new Set(c.left.map((part) => `${part.what}:${part.part}`));
   c.took.splice(0, c.took.length, ...c.took.filter((part) => !dropped.has(`${part.what}:${part.part}`)));
   if (base) {
-    for (const trait of traitsOf(c.doc)) c.took.push({ part: trait.trait, what: "trait", from });
+    for (const trait of traitsOfDocument(c.doc)) c.took.push({ part: trait.trait, what: "trait", from });
     for (const rule of Object.keys(c.doc.rules ?? {})) c.took.push({ part: rule, what: "rule", from });
     for (const lens of c.doc.lenses ?? []) if (typeof (lens as { title?: unknown }).title === "string") c.took.push({ part: (lens as { title: string }).title, what: "lens", from });
   }
@@ -578,5 +587,41 @@ export function startingDocument(options: StartingOptions): StartingDocument {
       c.apply(edit as DocumentEdit);
     }
   }
-  return { document: c.doc, took: c.took, left: c.left, said: c.said };
+  return { document: c.doc, took: c.took, left: c.left, said: c.said, edits: c.edits };
+}
+
+/** A reshape composed: a starting document from the app's own, with what the change loses said in plain words. */
+export interface ComposedReshape extends StartingDocument {
+  /** What the change loses — a kind's records, a field's values, a relation's links — one sentence each; empty when nothing is lost. */
+  readonly breaking: readonly string[];
+  /** What the composer could not do, said: a module that could not join this base. */
+  readonly notDone: readonly string[];
+}
+
+/** What a removal loses, in plain words; nothing for a rule, a lens or an act, which hold no records. */
+export function breakingOf(base: GraviewDocument, edit: DocumentEdit): string | undefined {
+  const kind = typeof edit["kind"] === "string" ? edit["kind"] : undefined;
+  if (edit.op === "remove-kind" && kind) return `All ${base.kinds[kind] ? traitPluralOf(base, kind) : kind} records go, with their links.`;
+  if (edit.op === "remove-field" && kind && typeof edit["field"] === "string") return `${capital(kind)}'s ${edit["field"]} values go.`;
+  if (edit.op === "remove-relation" && kind && typeof edit["relation"] === "string") return `The ${kind} → ${edit["relation"]} links go.`;
+  return undefined;
+}
+
+/**
+ * A CHANGE TO AN APP COMPOSED FROM A SEAT'S READING (Roadmap f-seat-reshape):
+ * the traits to add and the kinds and traits to drop, as the seat read them
+ * off a person's words and the person left them on the card, composed onto
+ * the app's own document by `startingDocument` — its edits the change a
+ * host applies as one, with what each removal loses said. The host's half,
+ * on no page: a page says the card in words (`@graview/tools/reshape`) and
+ * hands the reading to its host, which composes here, previews with its
+ * data and applies as the person.
+ */
+export function composeReshape(options: { readonly document: GraviewDocument; readonly add: readonly TraitName[]; readonly drop: readonly string[] }): ComposedReshape {
+  const made = startingDocument({ base: options.document, name: options.document.name, add: [...new Set(options.add)], drop: [...new Set(options.drop)] });
+  return {
+    ...made,
+    breaking: [...new Set(made.edits.map((edit) => breakingOf(options.document, edit)).filter((words): words is string => words !== undefined))],
+    notDone: made.said.filter((line) => line.startsWith("Not done")),
+  };
 }

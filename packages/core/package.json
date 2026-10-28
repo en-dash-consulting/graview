@@ -105,6 +105,10 @@
       "types": "./dist/compose.d.ts",
       "default": "./dist/compose.js"
     },
+    "./traits": {
+      "types": "./dist/trait-vocabulary.d.ts",
+      "default": "./dist/trait-vocabulary.js"
+    },
     "./subscriptions": {
       "types": "./dist/subscriptions.d.ts",
       "default": "./dist/subscriptions.js"

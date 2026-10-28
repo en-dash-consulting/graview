@@ -37,6 +37,7 @@ import { relationActName } from "./mutations/derived-names.js";
 import { humanizeField } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import { accentProblem } from "./theme/accent.js";
+import { traitsOfDocument, type Trait } from "./traits.js";
 
 export type { DocumentEdit } from "./document/edit.js";
 /** A kind said by its noun and its plural, as the declaration spells them — for a host that writes about a document's kinds (the starter), never from the kind's id alone. */
@@ -303,7 +304,17 @@ export function composeDesign(source: GraviewDocument | GraviewApp<AnySchema>, o
   return { edits, said: reasons };
 }
 
-export { TRAITS, TRAIT_WORDS, traitsOf, hasTrait, traitWords } from "./traits.js";
+export { TRAIT_BRINGS, TRAITS, TRAIT_WORDS, hasTrait, traitsOfDocument, traitWords } from "./traits.js";
 export type { Trait, TraitName } from "./traits.js";
-export { startingDocument } from "./starting-document.js";
-export type { Part, PartKind, StartingDocument, StartingOptions } from "./starting-document.js";
+export { breakingOf, composeReshape, startingDocument } from "./starting-document.js";
+export type { ComposedReshape, Part, PartKind, StartingDocument, StartingOptions } from "./starting-document.js";
+
+/**
+ * THE TRAITS A DECLARATION CARRIES (`traitsOfDocument`), a TypeScript app
+ * read as the document it would be (`toDocument`). Here, with the composer,
+ * because writing an app as a document is not a page's to carry; the
+ * reading alone is `@graview/core/traits`.
+ */
+export function traitsOf(source: GraviewDocument | GraviewApp<AnySchema>): Trait[] {
+  return traitsOfDocument(isDocument(source) ? source : toDocument(source).document);
+}

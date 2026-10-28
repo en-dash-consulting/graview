@@ -71,7 +71,9 @@ export {
 } from "./intelligence.js";
 export type { Completion, CompletionImage, CompletionReply, CompletionRequest, Intelligence, ProposedCall } from "./intelligence.js";
 export { graphResponder, llmResponder } from "./conversation.js";
-export type { ChatContext, ChatReply, Responder } from "./conversation.js";
+export type { ChatContext, ChatReply, Responder, ReshapeContext } from "./conversation.js";
+// Whose seat may change the app itself: the judgment the studio's door and the seat's `propose_change` share (Roadmap f-seat-reshape).
+export { mayChangeDeclaration } from "./agent/declaration.js";
 // Where an ask takes the app (`resolveAsk` is `@graview/tools/go`'s, fetched with the seat that asks).
 export type { AskAbout, AskAnswer, AskContext, SeatMove, SeatOffer } from "./go.js";
 export { completionFor, decideFor, localCompletion, openAiCompatibleCompletion, seatResponder, WEBLLM_URL, xaiCompletion } from "./local.js";
