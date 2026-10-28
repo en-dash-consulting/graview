@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version ()
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.62)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -818,6 +818,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.62`](https://graview.dev/docs/releases.html#v0-1-62)
 - [`0.1.61`](https://graview.dev/docs/releases.html#v0-1-61)
 - [`0.1.60`](https://graview.dev/docs/releases.html#v0-1-60)
 - [`0.1.59`](https://graview.dev/docs/releases.html#v0-1-59)
@@ -876,6 +877,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.62
+
+Published October 28, 2026 · the current version
+
+Calendar events invite the people they are about, a view links to the Scene, formulas build words and times, an act carries a change across a link, a rule covers every record, and the seat proposes a change to the app.
+
+- **Calendar guests.** A Google connection's `guests` maps the people an event is about to its attendees both ways: a field of addresses, or `{ via: "who" }` through a relation to people with Invite me on. Quiet by default (`notify` sends invitations); an unknown attendee is kept, never dropped.
+- **Views.** A view links to the Scene and the home (`data-place="overview"`, `graview.navigate`), read from one vocabulary the live host and the headless check share; a worker view's draw budget fits the device it runs on; `brand.views` gives every view one stylesheet and a fade between records; `<graview-video autoplay cover>` is a muted, looping hero background.
+- **Rules and acts.** `concat`, `format`, `datetime`, `addMinutes`, `weekday` and `startOfWeek` build words and moments in the app's locale and zone; `setsLinked` carries a change to the records an act's subject is linked to, in one undo; a rule's `covers` judges that each record reaches every one of another kind without a cost warning; a date that knows only its year or month is compared by its span and drawn across its month.
+- **Pages and notices.** A notice carries its tone as a chip, not a side accent, and the framework's own error toasts offer a host's Report this (`onReport`); a home's Recently leaves out what the reader cannot see; `brand.splash` puts the app's opening screen in its declaration, drawn by `@graview/pages/splash` and `graview preview`.
+- **The seat and tidying.** For an owner or editor with a host to apply it, the seat proposes a change to the app from words, as a card of what it adds, keeps and drops; a suggestion pressed by someone who may not make it records their vote, and whoever may decide sees the tally.
+
+**Before you upgrade:** New: a Google connection's `fields.guests` and the codes `connection-guests-field` and `connection-guests-via`; every Google write now says `sendUpdates` (none unless `notify`); `placeNamesOf` and `placeNamesFrom` on `@graview/core/navigate`; the rule functions `concat`, `format`, `datetime`, `at`, `addMinutes`, `weekday`, `startOfWeek` and the codes `expr-type`, `format-pattern`; an act's `setsLinked` with `act-sets-linked-relation` and `act-sets-linked-field`; a rule's `covers` (making `require` optional) with `rule-covers-relation`; `brand.splash` and `brand.views` with `brand-splash-*` and `brand-views-css`; `@graview/core/css`, `@graview/core/traits`, `@graview/pages/splash`, `@graview/tools/reshape`; `onReport` and `onProposeChange` beside `barActions`; the op `vote-suggestion`, `tidying.autoAcceptAt` and the warning `tidying-votes-unreachable`. Changed: `PageContext.overview` takes an optional stop; a partial date compares by the span it covers; a worker view's push and draw budgets scale with how slowly its worker started, up to four times. Stored formats and the wire are otherwise unchanged; `capabilities().shipped` names the three ids these changesets announce.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.62) · [The full changelog for 0.1.62](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0162)
 
 ## 0.1.61
 
@@ -7603,7 +7620,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 468 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 469 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -7628,7 +7645,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 63 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 64 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made
