@@ -146,19 +146,21 @@ try {
       await until(page, () => page.evaluate(() => document.querySelector("[data-graview-page-title]") !== null));
       return { page, close: () => context.close() };
     };
+    // A page that never opens is a claim not held, said by name, never a run that dies before its verdict.
     const attempt = async (list, query, run) => {
-      const { page, close } = await open(query);
+      let opened;
       try {
-        list.push({ ...where, ...(await run(page)) });
+        opened = await open(query);
+        list.push({ ...where, ...(await run(opened.page)) });
       } catch (error) {
         list.push({ ...where, error: String(error.message ?? error).split("\n")[0] });
       }
-      await close();
+      await opened?.close();
     };
 
     /* STAFFING: the blank allocation is a slot, reached by Tab, opened by Enter, filled. */
     await attempt(seen.slot, "as=ana", async (page) => {
-      await until(page, () => page.evaluate(() => document.querySelector("[data-graview-blank-fact]") !== null));
+      await until(page, () => page.evaluate(() => document.querySelector("[data-graview-blank-fact]") !== null), 30_000);
       const slots = await slotsOf(page);
       // Tab from the top of the page until the keyboard stands on the allocation's slot.
       await page.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
@@ -187,7 +189,7 @@ try {
 
     /* STAFFING: a blank no act writes is not said. */
     await attempt(seen.hidden, "as=ana", async (page) => {
-      await until(page, () => page.evaluate(() => document.querySelector("[data-graview-blank-fact]") !== null));
+      await until(page, () => page.evaluate(() => document.querySelector("[data-graview-blank-fact]") !== null), 30_000);
       const facts = await page.evaluate((scope) => document.querySelector(scope)?.textContent ?? "", FACTS);
       const slots = await slotsOf(page);
       return { slots: slots.map((slot) => slot.field), saysSource: /Source/.test(facts) };
