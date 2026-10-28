@@ -65,7 +65,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.61
 
-Published October 27, 2026 · the current version
+Published October 27, 2026
 
 A host's buttons stand on the app bar, a choice takes several of its options, a weekly record is one recurring event, a connection refused says its ways out, and a compaction can be asked to stay readable by an older build.
 
