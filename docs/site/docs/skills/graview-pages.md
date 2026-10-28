@@ -43,7 +43,7 @@ The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, P
 - `/search?q=` — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places `<PageFind>` or `<PageUndo>` where it wants them, else they are drawn around it (`without: ["find"]` goes without; at a bar's height, `graview-pages-design`).
 - **The quick ask** (⌘K, where `ai` gives a model): a bar and answer card by the page's heading, the ROUTE what "this" means. `context.quickAsk: false` draws none.
 
-Everything a page shows is a derivation the scene uses too: `recordFacts`, `deriveAffordances`, `store.permits`. **A page never decides what an act is or who may take it** — it strikes through what the seat may not, and says why. A record's facts, `computed` ones too, read in declared order or as the kind's `display.page` groups them; prose keeps its paragraphs, full width.
+Everything a page shows is a derivation the scene uses too: `recordFacts`, `deriveAffordances`, `store.permits`. **A page never decides what an act is or who may take it** — it strikes through what the seat may not, and says why. A record's facts, `computed` ones too, read in declared order or as `display.page` groups them; prose keeps its paragraphs. A blank the seat's act writes is a slot ("Add Role"); one nothing writes stays unsaid.
 
 **Typed together.** Over a served store, hand the face `typing` (`openRemote`'s `remote.typing`; an embed passes it) and prose is edited live: each keystroke a splice, no Save, others' carets drawn. Markdown, a document's `text` and a string past 500 characters are; a short string is not, and stays a whole value with a Save: a name or a title is changed whole, two people merging letters into one name is a worse name, and a whole write keeps its stale-write check (`markCollaborative` overrides). A keystroke rides an act that writes the field and would run on the record now — its `allowedWhen`, its `allowedOn`, or its `apply` asked — so a record the act refuses is read only to typing too.
 
@@ -104,11 +104,11 @@ pnpm build && npx graview check ./dist/domain/app.js   # the declaration is stil
 pnpm test                                               # render every page you registered
 ```
 
-Render each registered page with `PagesApp` and `initialPath` in a test (`apps/seedbed/tests/integration/chapters.test.ts`). Then open it: a design that passes its tests and reads like an admin panel has replaced nothing.
+Render each registered page with `PagesApp` and `initialPath` in a test (`apps/seedbed/tests/integration/chapters.test.ts`). Then open it: a design that reads like an admin panel has replaced nothing.
 
 ### What the check cannot see
 
-- Whether the design's words are the domain's. The derived pages use the declaration's `description` and `inverse`; a design that writes its own sentences must keep them true as the declaration changes.
+- Whether the design's words are the domain's. The derived pages use the declaration's `description` and `inverse`; a design's own sentences must stay true as the declaration changes.
 - Whether a page gives every act `facts.actions` offers room: only a person can see that.
 
 ---

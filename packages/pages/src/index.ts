@@ -1,7 +1,7 @@
 export { createPageRegistry, kindOfSlug, placeHref, placePath, pluralSlug, recordPath, spatialHref } from "./registry.js";
 export type { RouteRegistration } from "./registry.js";
 export type { PageRegistry, PageRegistration, PageSection, PageType, ShellComponent, ShellOptions, SurfaceType } from "./registry.js";
-export { kindFacts, kindMap, rankedRepairs, recordFacts } from "./facts.js";
+export { blankWritable, kindFacts, kindMap, rankedRepairs, recordFacts } from "./facts.js";
 export type { KindFacts, KindMap, KindRelation, RecordFacts, RecordLinkGroup, FactsOptions } from "./facts.js";
 export { DerivedForm } from "./form.js";
 export { RecordField } from "./record-field.js";
