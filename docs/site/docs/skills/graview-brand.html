@@ -1843,16 +1843,19 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   "typography": { "display": "system-serif", "body": "system-sans" },
   "shape": { "radius": 6, "density": 0.9 },
   "accents": { "workshop": 168 }, "scheme": "dark",
-  "views": { "css": ".card { padding: 12px }", "motion": "fade" }
+  "views": { "motion": "fade" }, "splash": { "style": "editorial" }
 }</code></pre></div>
 <ul>
-<li><strong>One theme for every view</strong> is <code>views</code>: <code>css</code>, a stylesheet every worker view is drawn with before its own (the view's rule wins where both say one), held to what a view's own may be — nothing that fetches, no <code>@import</code>, no <code>:host</code>; <code>graview check</code> says what of it the open kit leaves out (<code>brand-views-css</code>), and <code>set-brand</code> refuses it until clean. <code>motion: "fade"</code> fades a view out and in when the record it shows changes; a shared-element transition is not on offer.</li>
+<li><strong>One theme for every view</strong> is <code>views</code>: <code>css</code>, a sheet drawn before each worker view's own (the view's rule wins), held to what a view's own may be (<code>brand-views-css</code> names what the open kit leaves out; <code>set-brand</code> refuses it until clean), and <code>motion: "fade"</code> between records.</li>
 </ul>
 <ul>
 <li><strong>A mark</strong> — the logo, one for each scheme, and the page icon, an emoji among them — is <code>graview-logo</code>: inline SVG or a path on the app's own host, drawn as given, and one that could act refused (<code>brand-mark</code>).</li>
 <li><strong>A face</strong> is <code>system-serif</code>, <code>system-sans</code>, <code>system-mono</code>, a face every system has (Georgia, Menlo), or a web font on <code>DOCUMENT_FONTS</code>; one named by its address is refused (<code>brand-font</code>). The host decides where web fonts load from.</li>
 <li><strong>An accent</strong> must read as given in light: <code>set-brand</code> refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names. It is judged on the ground it is drawn on: gold on a black ground is kept, and gold on paper is also answered with the dark page it reads on. Contrast is judged on colors alone; a logo is a picture and is not measured.</li>
 <li><strong>A ground</strong> is the page background, so apps stop sharing one off-white: <code>"#eef3f8"</code>, or <code>{ "light": "#f4efe6", "dark": "#1a1612" }</code>; <code>null</code> goes back to Graview's. Cards, the edge and floating sheets are drawn from it; a light one alone gets a dark ground of its hue, and a dark one for light is drawn as a dark page. One where any pair <code>graview check</code> holds (faint ink on a card too) drops short is refused like an accent, with a shade that passes all of them — "Muted ink #586174 on the ground #9a9a94 is 2.1:1; 4.5:1 is needed — #dcdcda would pass." In TypeScript, `brandFromAccent({ accent, base: groundSchemes("#eef3f8") })`.</li>
+</ul>
+<ul>
+<li><strong>An opening screen</strong> (<code>splash</code>) shows until a place has drawn: <code>style</code> <code>plain</code>, <code>editorial</code>, <code>ascii</code> or <code>shader</code> (a shipped name, <code>drift</code>, <code>ripple</code> or <code>veil</code>, never code; else <code>brand-splash-shader</code>), with an <code>image</code>, <code>title</code> and <code>kicker</code>. It travels with the document; a host inlines <code>splashHtml</code> from <code>@graview/pages/splash</code> in its first HTML.</li>
 </ul>
 <h3>Styling by conversation</h3>
 <p>This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more editorial", "our green is #1B4332", "make people amber and money green" — because the whole look is one serializable declaration:</p>

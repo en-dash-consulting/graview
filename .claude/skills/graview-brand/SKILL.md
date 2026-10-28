@@ -105,17 +105,14 @@ and the description stays in listings and on the name's hover):
   "typography": { "display": "system-serif", "body": "system-sans" },
   "shape": { "radius": 6, "density": 0.9 },
   "accents": { "workshop": 168 }, "scheme": "dark",
-  "views": { "css": ".card { padding: 12px }", "motion": "fade" }
+  "views": { "motion": "fade" }, "splash": { "style": "editorial" }
 }
 ```
 
-- **One theme for every view** is `views`: `css`, a stylesheet every worker
-  view is drawn with before its own (the view's rule wins where both say
-  one), held to what a view's own may be — nothing that fetches, no
-  `@import`, no `:host`; `graview check` says what of it the open kit
-  leaves out (`brand-views-css`), and `set-brand` refuses it until clean.
-  `motion: "fade"` fades a view out and in when the record it shows
-  changes; a shared-element transition is not on offer.
+- **One theme for every view** is `views`: `css`, a sheet drawn before each
+  worker view's own (the view's rule wins), held to what a view's own may be
+  (`brand-views-css` names what the open kit leaves out; `set-brand` refuses
+  it until clean), and `motion: "fade"` between records.
 
 - **A mark** — the logo, one for each scheme, and the page icon, an emoji
   among them — is `graview-logo`: inline SVG or a path on the app's own
@@ -141,6 +138,12 @@ and the description stays in listings and on the name's hover):
   "Muted ink #586174 on the ground #9a9a94 is 2.1:1; 4.5:1 is needed —
   #dcdcda would pass." In TypeScript, `brandFromAccent({ accent, base:
   groundSchemes("#eef3f8") })`.
+
+- **An opening screen** (`splash`) shows until a place has drawn: `style`
+  `plain`, `editorial`, `ascii` or `shader` (a shipped name, `drift`,
+  `ripple` or `veil`, never code; else `brand-splash-shader`), with an
+  `image`, `title` and `kicker`. It travels with the document; a host
+  inlines `splashHtml` from `@graview/pages/splash` in its first HTML.
 
 ## Styling by conversation
 
