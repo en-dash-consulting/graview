@@ -109,10 +109,9 @@ and the description stays in listings and on the name's hover):
 }
 ```
 
-- **One theme for every view** is `views`: `css`, a sheet drawn before each
-  worker view's own (the view's rule wins), held to what a view's own may be
-  (`brand-views-css` names what the open kit leaves out; `set-brand` refuses
-  it until clean), and `motion: "fade"` between records.
+- **One theme for every view** is `views`: `css`, drawn before each view's
+  own sheet and held to its rules (`brand-views-css`), and `motion: "fade"`
+  between records.
 
 - **A mark** — the logo, one for each scheme, and the page icon, an emoji
   among them — is `graview-logo`: inline SVG or a path on the app's own
@@ -126,8 +125,7 @@ and the description stays in listings and on the name's hover):
   text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the
   shade it names. It is judged on the ground it is drawn on: gold on a
   black ground is kept, and gold on paper is also answered with the dark
-  page it reads on. Contrast is judged on colors alone; a logo is a
-  picture and is not measured.
+  page it reads on. A logo is not measured.
 - **A ground** is the page background, so apps stop sharing one off-white:
   `"#eef3f8"`, or `{ "light": "#f4efe6", "dark": "#1a1612" }`; `null`
   goes back to Graview's. Cards, the edge and floating sheets are drawn
@@ -143,7 +141,7 @@ and the description stays in listings and on the name's hover):
   `plain`, `editorial`, `ascii` or `shader` (a shipped name, `drift`,
   `ripple` or `veil`, never code; else `brand-splash-shader`), with an
   `image`, `title` and `kicker`. It travels with the document; a host
-  inlines `splashHtml` from `@graview/pages/splash` in its first HTML.
+  inlines `splashHtml` from `@graview/pages/splash`.
 
 ## Styling by conversation
 

@@ -58,7 +58,7 @@ toggle: `var(--graview-panel)`, `--graview-ground`, `--graview-ink`,
 take `var()`; put paints in the stylesheet. `props.theme` says the same
 tokens as values, with `scheme`, `name` and `logo`, pushed again when the
 brand or the toggle changes. Shared rules go in `brand.views.css`
-(`graview-brand`), drawn before each view's own; the view's rule wins.
+(`graview-brand`), drawn before each view's own; the view's wins.
 
 ## Its box, and the gutter
 

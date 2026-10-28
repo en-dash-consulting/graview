@@ -119,17 +119,12 @@ and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`;
 key sorts by its first value, then its next), `first(S)` for one record,
 `either(a, b)` for the first that is something; `if(cond, a, b)`, which
 works out only the branch it takes; `round(x, places)`; `present`, `len`, dates.
-Words and moments are built too: `concat(name, ' · ', place)` joins words
-(nothing joins as no words, where `+` makes the whole nothing);
-`format(start, 'EEE d MMM · h:mm a')` says a moment by a closed pattern
-(`EEE`, `EEEE`, `d`, `MMM`, `MMMM`, `yyyy`, `h:mm a`, `HH:mm`, other words in
-single quotes) in the app's `brand.locale` on its `brand.timeZone`;
-`datetime(due, '09:30')` (or `at(due, startTime)`) is the instant that day
-reaches at that wall time in the app's zone; `addMinutes(start, 90)`;
-`weekday(due)` is `mon` to `sun`; `startOfWeek(due)` (or `…, 'sun'`) is the
-day its week starts. `graview check` types them from the declaration
-(`format` of a number, a time piece of a date, a pattern piece outside the
-list, a time not written `HH:MM`): `expr-type`, `format-pattern`. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set
+Words and moments too: `concat(name, ' · ', place)`; `format(start,
+'EEE d MMM · h:mm a')` by a closed pattern (`EEE`, `EEEE`, `d`, `MMM`,
+`MMMM`, `yyyy`, `h:mm a`, `HH:mm`, quoted words) in `brand.locale` on
+`brand.timeZone`; `datetime(due, '09:30')` (or `at`); `addMinutes`;
+`weekday` (`mon`…`sun`); `startOfWeek`. `graview check` types them
+(`expr-type`, `format-pattern`). `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set
 and give each record reached once; sets meet with `&`, join with `|` and part
 with `-` — LifeLogics' coverage is one figure,
 `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step
@@ -144,11 +139,8 @@ has a step budget: a rule that reads too much is `over-budget`, never a hang.
 
 ## A rule that covers every record
 
-"Every candidate has a stance on every issue" can be written in the rule
-language — count the distinct issues a candidate's stances reach against
-`all('issue')` — and `graview check` rightly warns `rule-cost` of it: the
-evaluator would walk every issue for every candidate. Declare it as a
-coverage rule instead, and there is nothing to warn of:
+"Every candidate has a stance on every issue", counted in the rule
+language, is `rule-cost`. Declare it as coverage instead:
 
 ```json
 "stance-on-every-issue": {
@@ -158,18 +150,11 @@ coverage rule instead, and there is nothing to warn of:
 }
 ```
 
-`covers` takes the place of `require`: each record of `over` must reach
-every live record of `every`, `through` a relation of its own kind (or one
-that points at it) and `via` one more when the first lands on a kind in
-between; `through` alone when it reaches the covered kind. The store judges
-it in one pass over the record's links, never through the evaluator, so it
-has no budget to run out of; each far record the subject does not reach is
-one problem naming both, and `says` may name either record by its kind
-(`{candidate}`, `{issue}`). `graview check` refuses a relation that does
-not exist or does not lead from the kind to the covered one
-(`rule-covers-relation`, at `covers.through` or `covers.via`), and a rule
-saying both or neither of `require` and `covers`. In TypeScript the same
-rule is `coverageRule` from `@graview/core/document`.
+`covers` replaces `require`: each `over` record must reach every live
+`every` record `through` a relation (then `via` one more). The store judges
+it in one pass over the links; each missing pair is one problem, and `says`
+names either record by its kind. `rule-covers-relation` refuses a walk that
+does not get there; `coverageRule` is the TypeScript twin.
 
 The same language works out what a document's act sets, so a repair can be
 one declared act that does all of it: org's `assign-ownership` is `on:
@@ -177,16 +162,10 @@ one declared act that does all of it: org's `assign-ownership` is `on:
 declared), `replaces: ["owns", "proposedOwner"]` (the links it supersedes),
 and `sets: { ownership: { expr: "if(to == 'person-nick', 'nick_owns',
 'owned_elsewhere')" } }`; `setsOther` sets the record at the link's other
-end. An act `on` a kind may also carry a change to the records its subject
-is ALREADY linked to: `"setsLinked": { "event": { "title": { "expr":
-"name" } } }` on `rename-item` retitles every event linked through `event`
-in the same change, each expression read on the subject with `to` the far
-record (`concat(name, ' for ', to.title)`). One undo takes all of it back;
-the store judges each far record's own edit, so the act is refused, naming
-the record, where one is not the person's to change. `graview check` says
-`act-sets-linked-relation` (no such relation joins the subject's kind) and
-`act-sets-linked-field` (no such field at the far end, or a value it could
-not hold). Each previews and undoes as one act.
+end; `"setsLinked": { "event": { "title": { "expr": "name" } } }` carries
+a change to the records the subject is already linked to, in the same
+change, judged by each far record's own edit (`act-sets-linked-relation`,
+`act-sets-linked-field`). Each previews and undoes as one act.
 
 ## The horizon
 
