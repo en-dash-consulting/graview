@@ -55,7 +55,7 @@ import { canonicalize } from "./canonical.js";
 import { quotedAtTheEnd } from "./quote.js";
 import { isRecord as isObject, respellDocument } from "./respell.js";
 import { refName } from "./compiled.js";
-import { localeSentence, timeZoneSentence } from "./diff.js";
+import { derivesSentence, localeSentence, timeZoneSentence } from "./diff.js";
 import { accentProblem } from "../theme/accent.js";
 import { darkPageFor, groundProblem } from "../theme/ground-check.js";
 import type { Ground } from "../theme/ground.js";
@@ -151,6 +151,7 @@ export const EDIT_OPS = [
   "set-people",
   "set-archives",
   "set-tidying",
+  "set-derives",
   "add-grant",
   "remove-grant",
   "add-sight",
@@ -329,6 +330,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "set-archives": z.object({ op: z.literal("set-archives"), kind: kindName, archives: z.boolean() }).strict(),
     // What the app's own actor may do on its own to a kind, or to one relation of it (`@graview/core/tidying`).
     "set-tidying": z.object({ op: z.literal("set-tidying"), kind: kindName, relation: z.optional(z.string()), tidying: z.enum(["never", "no-links", "allowed"]) }).strict(),
+    // What a kind follows (Roadmap f-keep-linked): the kind, the relation joining them and the fields worked out from it; null, it follows nothing.
+    "set-derives": z.object({ op: z.literal("set-derives"), kind: kindName, derives: z.union([z.object({ from: kindName, via: z.string(), set: z.record(z.string(), z.unknown()) }).strict(), z.null()]) }).strict(),
     "add-grant": z.object({ op: z.literal("add-grant") }).passthrough(),
     "remove-grant": z.object({ op: z.literal("remove-grant") }).passthrough(),
     "add-sight": z.object({ op: z.literal("add-sight") }).passthrough(),
@@ -1087,6 +1090,8 @@ class Editor {
         return this.setArchives(i, e);
       case "set-tidying":
         return this.setTidying(i, e);
+      case "set-derives":
+        return this.setDerives(i, e);
       case "add-grant":
       case "remove-grant":
       case "add-sight":
@@ -1994,6 +1999,74 @@ class Editor {
    * never tidied is given no leave-alone-<kind> or allow-tidying-<kind>,
    * which a grant may not then name.
    */
+  /**
+   * WHAT A KIND FOLLOWS (Roadmap f-keep-linked): each record of it linked
+   * through `via` to a record of `from` takes the fields `set` works out
+   * from it, kept in step by the store in the same change; null, it
+   * follows nothing and its records keep the values they hold.
+   */
+  private setDerives(i: number, e: Doc) {
+    const spec = this.kind(i, e.kind);
+    if (!spec) return;
+    if (e.derives === null) {
+      const was = spec.derives?.from;
+      delete spec.derives;
+      this.said.push(was ? derivesSentence(e.kind, undefined) : `${e.kind} follows nothing, as before.`);
+      return;
+    }
+    const { from, via, set } = e.derives as { from: string; via: string; set: Doc };
+    if (!this.doc.kinds[from]) return this.fail(i, "derives.from", `"${from}" is not a kind this app has`);
+    const joins = (spec.edges?.[via] && (spec.edges[via].to === "*" || spec.edges[via].to.includes(from))) || (this.doc.kinds[from].edges?.[via] && (this.doc.kinds[from].edges[via].to === "*" || this.doc.kinds[from].edges[via].to.includes(e.kind)));
+    if (!joins) return this.fail(i, "derives.via", `"${via}" does not join ${words(e.kind)} to ${words(from)}`, `name a relation of ${e.kind} to ${from}, or of ${from} to ${e.kind} (add one with add-relation in the same change)`);
+    spec.derives = { from, via, set };
+    this.said.push(derivesSentence(e.kind, spec.derives));
+  }
+
+  /**
+   * WHAT A KIND FOLLOWS, held to a rename or a removal (Roadmap
+   * f-keep-linked): the names it says follow a rename; a value reading
+   * what is removed goes, and a `derives` left setting nothing, or
+   * following a kind or relation that is gone, goes with it.
+   */
+  private followDerives(r: Rename, removing: boolean): string[] {
+    const touched: string[] = [];
+    for (const [kind, spec] of Object.entries(this.doc.kinds) as [string, Doc][]) {
+      const d = spec.derives;
+      if (!d) continue;
+      const before = JSON.stringify(d);
+      const ctx = new Set([d.from as string]);
+      if ((r.t === "kind" && d.from === r.from) || (r.t === "edge" && d.via === r.from)) {
+        if (removing) {
+          delete spec.derives;
+          touched.push(`what ${kind} follows`);
+          continue;
+        }
+      }
+      const set: Doc = {};
+      for (const [field, value] of Object.entries(d.set ?? {}) as [string, unknown][]) {
+        let key = field;
+        if (r.t === "field" && r.kind === kind && field === r.from) {
+          if (removing) continue;
+          key = r.to;
+        }
+        if (isObject(value) && typeof (value as Doc).expr === "string") {
+          const source = (value as Doc).expr as string;
+          if (removing) {
+            if (!exprMentions(this.doc, source, ctx, r)) set[key] = value;
+          } else set[key] = { expr: rewriteExpr(this.doc, source, ctx, r) };
+        } else set[key] = value;
+      }
+      if (!removing && r.t === "kind" && d.from === r.from) d.from = r.to;
+      if (!removing && r.t === "edge" && d.via === r.from) d.via = r.to;
+      d.set = set;
+      if (Object.keys(set).length === 0) {
+        delete spec.derives;
+        touched.push(`what ${kind} follows`);
+      } else if (JSON.stringify(d) !== before) touched.push(`what ${kind} follows`);
+    }
+    return touched;
+  }
+
   private setTidying(i: number, e: Doc) {
     const spec = this.kind(i, e.kind);
     if (!spec) return;
@@ -2300,6 +2373,7 @@ class Editor {
      * kind, or drew by it, goes, and `pages.first` with it when it named it.
      */
     const swept: Rename = { t: "kind", from: kind, to: "\u0000" };
+    gone.push(...this.followDerives(swept, true));
     for (const [other, spec] of Object.entries(this.doc.kinds) as [string, Doc][]) {
       for (const [name, c] of Object.entries(spec.computed ?? {}) as [string, Doc][]) {
         if (exprMentions(this.doc, typeof c === "string" ? c : c.expr, new Set([other]), swept)) gone.push(...this.dropComputed(other, name));
@@ -2775,6 +2849,8 @@ class Editor {
     const exprAt = (source: string | undefined, ctx: Kinds): string | undefined => (source === undefined ? undefined : rewriteExpr(doc, source, ctx, r));
     const tmplAt = (source: string | undefined, ctx: Kinds, words?: (t: string) => string): string | undefined => (source === undefined ? undefined : rewriteTemplate(doc, source, ctx, r, words));
 
+    // What a kind follows (Roadmap f-keep-linked): its kind, relation and values follow the rename.
+    touched.push(...this.followDerives(r, false));
     // Kinds: templates, the lifecycle, where relations lead.
     for (const [kind, spec] of Object.entries(doc.kinds) as [string, Doc][]) {
       const here = new Set([kind]);
@@ -3020,6 +3096,7 @@ class Editor {
     const gone: string[] = [];
     // A kind's list ordered or grouped by it lets that go (a stored field removed, a computed one no longer worked out).
     if (r.t === "field") gone.push(...this.listsFollow(r.kind, r.from, undefined));
+    gone.push(...this.followDerives(r, true));
     for (const [kind, spec] of Object.entries(doc.kinds) as [string, Doc][]) {
       for (const key of ["label", "describe"] as const) {
         if (templateMentions(doc, spec[key], new Set([kind]), r)) {

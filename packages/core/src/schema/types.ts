@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { Figure } from "./figures.js";
+import type { DerivesDeclaration } from "../keep-linked.js";
 
 /** What an automated author may do to a kind's records on its own: nothing (`never`), or everything but link and unlink them (`no-links`). */
 export type KindTidying = "never" | "no-links";
@@ -182,6 +183,13 @@ export interface NodeDefinitionSpec<
    * stays fixed.
    */
   readonly keptInStep?: readonly string[];
+  /**
+   * A RECORD THAT FOLLOWS ANOTHER (Roadmap f-keep-linked): its fields
+   * worked out from the record of another kind it is linked to, kept in
+   * step by the store in the same change as either one's edit
+   * (`keep-linked.ts`). A document's kind is given this from its `derives`.
+   */
+  readonly derives?: DerivesDeclaration;
   /**
    * A REQUIRED FIELD'S DEFAULT, declared beside the schema rather than in it.
    *

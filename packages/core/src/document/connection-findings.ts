@@ -80,6 +80,16 @@ function shapeFinding(at: string, raw: unknown, issue: { readonly code: string; 
   return error("shape", path, issue.message);
 }
 
+/**
+ * A COMPUTED FIELD MAPPED INTO A CONNECTION (Roadmap f-keep-linked): worked
+ * out here and sent, read-only on the way out — so a connection that only
+ * reads has nothing to send it with.
+ */
+function computedProblem(kind: string, field: string, what: string, direction: string): ((path: string) => Finding) | undefined {
+  if (direction !== "read") return undefined;
+  return (path) => error("connection-computed-read", path, `${kind}'s ${field} is worked out here, so it is only ever sent, and this connection only reads: ${what} would never be kept`, `make the connection "both", or map a stored field to ${what}`);
+}
+
 /** No such kind, said once for the connection. */
 function noKind(at: string, document: GraviewDocument, kind: string, what: string): Finding {
   return error("connection-kind", `${at}.kind`, `there is no kind called ${kind} for ${what} to be`, `name one of ${Object.keys(document.kinds).join(", ")}`);
@@ -95,6 +105,13 @@ function googleConnection(at: string, name: string, connection: GoogleCalendarCo
   const seen = new Map<string, string>();
   for (const [theirs, ours] of mapped) {
     const path = `${at}.fields.${theirs}`;
+    // A computed field (Roadmap f-keep-linked) is worked out here, so it is sent and never read back: an event's words or times, never its guests or weekdays.
+    if (!kind.fields[ours] && kind.computed?.[ours] !== undefined && theirs !== "guests" && theirs !== "days") {
+      const problem = computedProblem(connection.kind, ours, theirs === "summary" ? "the event's title" : `the event's ${theirs}`, connection.direction);
+      if (problem) findings.push(problem(path));
+      seen.set(ours, theirs);
+      continue;
+    }
     if (!kind.fields[ours]) {
       findings.push(
         theirs === "guests"
@@ -190,6 +207,12 @@ function notionConnection(at: string, connection: NotionConnectionSpec, document
       const path = `${at}.properties.${field}`;
       const name = typeof property === "string" ? property : property.name;
       const declared = typeof property === "string" ? undefined : property.type;
+      if (!kind.fields[field] && !edges[field] && kind.computed?.[field] !== undefined) {
+        const problem = declared === "relation" ? (where: string) => error("connection-relation", where, `the property ${name} is a relation, the pages it links, and ${field} is worked out to a value`, `map ${field} to a property that holds a value`) : computedProblem(connection.kind, field, `the property ${name}`, connection.direction);
+        if (problem) findings.push(problem(path));
+        seen.set(name, field);
+        continue;
+      }
       if (!kind.fields[field] && !edges[field]) {
         const names = [...Object.keys(kind.fields), ...Object.keys(edges)];
         findings.push(error("connection-field", path, `${connection.kind} has no field or relation called ${field} to hold the property ${name}`, `name one of ${names.join(", ")}`));

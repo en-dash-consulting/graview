@@ -44,6 +44,13 @@ export interface ResourceMapping {
    */
   readonly ours?: readonly string[];
   /**
+   * COMPUTED FIELDS SENT (Roadmap f-keep-linked): worked out from the
+   * record over the store's graph, never stored on it, so read through the
+   * declaration rather than off the node — and, being worked out, never
+   * read back: each is in `ours` too.
+   */
+  readonly computed?: readonly string[];
+  /**
    * Where the two systems disagree about REPRESENTATION, not about names.
    *
    * A mapping is a rename, plus this. The household example stores a block's start as

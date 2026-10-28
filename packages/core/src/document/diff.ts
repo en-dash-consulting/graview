@@ -49,6 +49,14 @@ export const localeSentence = (locale: string | undefined): string =>
 /** What a change of the app's time zone says (Roadmap f-app-time-zone). */
 export const timeZoneSentence = (timeZone: string | undefined): string => (timeZone ? `Times are said in ${timeZone}.` : "Times are said on each reader's own clock.");
 
+/** What a change to what a kind follows says (Roadmap f-keep-linked). */
+export function derivesSentence(kind: string, derives: { readonly from: string; readonly via: string; readonly set: Readonly<Record<string, unknown>> } | undefined): string {
+  const words = (k: string) => k.replace(/-/g, " ");
+  if (!derives) return `Each ${words(kind)} no longer follows another record; its records keep the values they hold.`;
+  const fields = Object.keys(derives.set);
+  return `Each ${words(kind)} follows its ${words(derives.from)} through "${derives.via}": ${fields.length > 1 ? `${fields.slice(0, -1).join(", ")} and ${fields.at(-1)}` : fields[0]} kept in step.`;
+}
+
 export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument): DocumentDiff {
   // A key renamed within the format is not a change (FR-134): both are read as this build spells them.
   const before = respellDocument(stored).document;
@@ -169,6 +177,8 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     if (!same(wasRoles, now.fieldRoles ?? {})) sentences.push(`Which of ${withArticle(kind)}'s fields is its time, its author or a lens's role changes.`);
     if (!was.people !== !now.people) sentences.push(peopleSentence(after.kinds, continues.get(kind) ?? kind, now.people === true));
     if ((was.archives === false) !== (now.archives === false)) sentences.push(archivesSentence(after.kinds, continues.get(kind) ?? kind, now.archives !== false));
+    // What it follows (Roadmap f-keep-linked).
+    if (!same(was.derives, now.derives)) sentences.push(derivesSentence(continues.get(kind) ?? kind, now.derives));
     // What the app's own actor may do on its own, to the kind and to each relation it keeps (`@graview/core/tidying`).
     if ((was.tidying ?? "allowed") !== (now.tidying ?? "allowed")) sentences.push(tidyingSentence(after.kinds, continues.get(kind) ?? kind, undefined, now.tidying ?? "allowed"));
     for (const [relation, edge] of Object.entries(now.edges ?? {})) {

@@ -4,6 +4,7 @@ import { edgeId, type AnyGraphNode, type GraphEdge, type GraphSnapshot } from ".
 import { evaluate } from "./invariants/engine.js";
 import type { EvaluateOptions, InvariantDefinition } from "./invariants/types.js";
 import { humanizeField, labelOf } from "./schema/define-node.js";
+import { keepsLinked, outOfStep } from "./keep-linked.js";
 import type { AnySchema } from "./schema/schema.js";
 
 /**
@@ -24,6 +25,7 @@ import type { AnySchema } from "./schema/schema.js";
  *   edge-disallowed  a link the declaration does not allow between those kinds
  *   rule-error       a rule threw rather than judged (`could-not-judge`)
  *   rule-budget      a rule would have read more than its budget (`over-budget`)
+ *   derived-out-of-step  a record that follows another (`derives`) says other than its source works out
  */
 export type GraphFindingCode =
   | "node-shape"
@@ -31,7 +33,8 @@ export type GraphFindingCode =
   | "edge-dangling"
   | "edge-disallowed"
   | "rule-error"
-  | "rule-budget";
+  | "rule-budget"
+  | "derived-out-of-step";
 
 /** Every code, in the order findings are reported. */
 export const GRAPH_FINDING_CODES: readonly GraphFindingCode[] = [
@@ -41,6 +44,7 @@ export const GRAPH_FINDING_CODES: readonly GraphFindingCode[] = [
   "edge-disallowed",
   "rule-error",
   "rule-budget",
+  "derived-out-of-step",
 ];
 
 /**
@@ -264,6 +268,27 @@ export function validateGraph<S extends AnySchema>(
     }
   }
 
+  /*
+   * A RECORD THAT FOLLOWS ANOTHER (Roadmap f-keep-linked) and says other
+   * than its source works out: a field worked out from the source changed
+   * on its own side, which cannot go back, or a record made before the
+   * kind said what it follows. Its repair sets the field again.
+   */
+  if (keepsLinked(schema)) {
+    const graph = Graph.from(schema, { nodes: [...nodes.values()].filter((node) => !unknownKind.has(node.id)) as never, edges: held }, { validate: false });
+    for (const step of outOfStep(schema, graph, nodes.values())) {
+      const node = nodes.get(step.id)!;
+      const source = nodes.get(step.source)!;
+      findings.push({
+        code: "derived-out-of-step",
+        id: step.id,
+        detail: step.field,
+        message: `${named(schema, node)}: ${humanizeField(step.field)} says ${JSON.stringify(step.holds ?? null)}, and it follows ${named(schema, source)}, which works it out as ${JSON.stringify(step.follows ?? null)}`,
+        repair: { action: "coerce", primitives: [{ op: "patch-node", id: step.id, before: { [step.field]: step.holds === undefined ? UNSET : step.holds }, after: { [step.field]: step.follows === undefined ? UNSET : step.follows } }] },
+      });
+    }
+  }
+
   return findings.sort(
     (a, b) =>
       GRAPH_FINDING_CODES.indexOf(a.code) - GRAPH_FINDING_CODES.indexOf(b.code) ||
@@ -302,6 +327,7 @@ export function repairPlan(findings: readonly GraphFinding[]): RepairPlan {
   const dangling = new Set<string>();
   const disallowed = new Set<string>();
   let unjudged = 0;
+  const derivedFields = new Set<string>();
 
   for (const finding of findings) {
     if (finding.code === "rule-error" || finding.code === "rule-budget") unjudged++;
@@ -320,6 +346,7 @@ export function repairPlan(findings: readonly GraphFinding[]): RepairPlan {
         if (finding.code === "edge-disallowed") disallowed.add(id);
         removedEdges.set(id, primitive);
       } else if (primitive.op === "patch-node") {
+        if (finding.code === "derived-out-of-step") for (const field of Object.keys(primitive.after)) derivedFields.add(`${primitive.id}|${field}`);
         const patch = patches.get(primitive.id) ?? { before: {}, after: {} };
         Object.assign(patch.before, primitive.before);
         Object.assign(patch.after, primitive.after);
@@ -331,7 +358,9 @@ export function repairPlan(findings: readonly GraphFinding[]): RepairPlan {
   const patchPrimitives: Primitive[] = [];
   for (const [id, patch] of [...patches].sort(([a], [b]) => byString(a, b))) {
     if (removedNodes.has(id)) continue;
-    for (const value of Object.values(patch.after)) {
+    for (const [field, value] of Object.entries(patch.after)) {
+      // A derived field set again is said as itself, not as a default.
+      if (derivedFields.has(`${id}|${field}`)) continue;
       if (value === UNSET) cleared++;
       else coerced++;
     }
@@ -342,6 +371,7 @@ export function repairPlan(findings: readonly GraphFinding[]): RepairPlan {
   if (unknown > 0) said.push(`${count(unknown, "record of a kind this app no longer has", "records of kinds this app no longer has")} would be removed, with their links`);
   if (cleared > 0) said.push(count(cleared, "field that no longer fits would be cleared", "fields that no longer fit would be cleared"));
   if (coerced > 0) said.push(count(coerced, "required field would be set to its default", "required fields would be set to their defaults"));
+  if (derivedFields.size > 0) said.push(count(derivedFields.size, "field of a record that follows another would be set again from its source", "fields of records that follow another would be set again from their sources"));
   if (unfit > 0) said.push(`${count(unfit, "record that cannot be made to fit would be removed", "records that cannot be made to fit would be removed")}, with their links`);
   if (dangling.size > 0) said.push(count(dangling.size, "link to a record that is not there would be removed", "links to records that are not there would be removed"));
   if (disallowed.size > 0) said.push(count(disallowed.size, "link this app no longer allows would be removed", "links this app no longer allows would be removed"));

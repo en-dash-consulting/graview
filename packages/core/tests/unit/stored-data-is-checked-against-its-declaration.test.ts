@@ -106,7 +106,8 @@ describe("validateGraph", () => {
 
   it("names every code it can produce, and each code here is seeded by a test above", () => {
     expect([...GRAPH_FINDING_CODES].sort()).toEqual(
-      ["edge-dangling", "edge-disallowed", "kind-unknown", "node-shape", "rule-budget", "rule-error"],
+      // derived-out-of-step is seeded in a-derived-record-follows-its-source.test.ts.
+      ["derived-out-of-step", "edge-dangling", "edge-disallowed", "kind-unknown", "node-shape", "rule-budget", "rule-error"],
     );
   });
 });

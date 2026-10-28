@@ -136,6 +136,17 @@ function fieldSpecs(app: GraviewApp, kind: string): Record<string, FieldSpec> {
   return out;
 }
 
+/**
+ * A kind's computed fields among `mapped` (Roadmap f-keep-linked): worked
+ * out here, so sent and never read back — the resource's `ours` and
+ * `computed`.
+ */
+function computedMapped(app: GraviewApp, kind: string, mapped: readonly string[]): Pick<ResourceMapping, "ours" | "computed"> {
+  const definition = app.schema.tryDefinition(kind) as { computed?: Readonly<Record<string, unknown>>; fields?: { shape?: Record<string, unknown> } } | undefined;
+  const worked = mapped.filter((field) => definition?.computed !== undefined && Object.hasOwn(definition.computed, field) && !Object.hasOwn(definition.fields?.shape ?? {}, field));
+  return worked.length > 0 ? { ours: worked, computed: worked } : {};
+}
+
 /** Whether a field of the kind is a `date` (an all-day event's day) rather than a `datetime`. */
 export function isDayField(app: GraviewApp, kind: string, field: string): boolean {
   return fieldSpecs(app, kind)[field]?.type === "date";
@@ -314,6 +325,7 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
     encode,
     decode,
     ...(Object.keys(normalize).length > 0 ? { normalize } : {}),
+    ...computedMapped(app, kind, Object.values(fields).filter((field): field is string => typeof field === "string")),
     ...(declaration.direction === "read"
       ? { readonly: true, because: `Each ${kind} comes from a Google calendar this app only reads: change it there.` }
       : {}),
@@ -430,6 +442,7 @@ export function notionConnectionMapping(
     ...(Object.keys(edges).length > 0 ? { edges } : {}),
     encode,
     decode,
+    ...computedMapped(app, kind, Object.keys(fields)),
     ...(declaration.direction === "read" ? { readonly: true, because: `Each ${kind} comes from a Notion database this app only reads: change it there.` } : {}),
   };
   return { mapping: { system: "notion", resources: [resource] }, refs, ...(titleRef ? { titleRef } : {}), quiet };
@@ -511,7 +524,7 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
     // Google mails the guests only when the declaration asks (`guests.notify`); every write says so either way.
     notify: typeof declaration.fields.guests === "object" && declaration.fields.guests.notify === true,
   });
-  const creates = creatingAct(app as GraviewApp, declaration.kind, Object.keys(resource.fields));
+  const creates = creatingAct(app as GraviewApp, declaration.kind, Object.keys(resource.fields).filter((field) => !resource.computed?.includes(field)));
   const decoded = decodedBy(resource);
   let made = 0;
   const engine = new SyncEngine<S>(
@@ -562,7 +575,7 @@ function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
     known: () => Object.values(engine?.snapshot.links ?? {}).map((link) => link.id),
     ...(run.say ? { say: run.say } : {}),
   });
-  const creates = creatingAct(app as GraviewApp, declaration.kind, Object.keys(resource.fields));
+  const creates = creatingAct(app as GraviewApp, declaration.kind, Object.keys(resource.fields).filter((field) => !resource.computed?.includes(field)));
   const decoded = decodedBy(resource);
   engine = new SyncEngine<S>(
     {
