@@ -219,6 +219,8 @@
     "./src/field-sight.ts",
     "./dist/publishing.js",
     "./src/publishing.ts",
+    "./dist/tidying.js",
+    "./src/tidying.ts",
     "./dist/typing.js",
     "./src/typing.ts"
   ],

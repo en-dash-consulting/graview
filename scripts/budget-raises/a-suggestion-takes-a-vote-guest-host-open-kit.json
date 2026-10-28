@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 0,
+  "gzipped": 10,
+  "note": "Raised when a suggestion came to take a vote from someone who may not accept it (Roadmap f-suggestion-votes): nothing of the guest host changed — its minified size is the same byte for byte — but the chunks it shares with the store carry new content hashes in their names, and the gzipped entry came to 10 bytes more than the budget had room for. 0 / 10 more. Measured at 224_556 / 85_481 against 224_556 / 85_471 on a fresh build of main."
+}

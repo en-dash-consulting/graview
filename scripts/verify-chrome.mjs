@@ -26,7 +26,10 @@
  * `automated`) makes two links it is sure of and suggests one it is not, so
  * Activity folds its run into one digest row that opens to each change with
  * its lineage, and the Suggested tray beside it holds the third until a
- * person declines it — which the actor is refused next time.
+ * person declines it — which the actor is refused next time. With
+ * `reader=1` the page is a seat that may see the suggestion and may not
+ * make it, whose Accept is a vote (f-suggestion-votes); with `vote=1` a
+ * reader's vote is already cast when the keeper opens the tray.
  *
  *   node scripts/verify-chrome.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
@@ -67,7 +70,7 @@ async function buildHost() {
       contents: `
         import { mount } from "@graview/embed";
         import { capabilities, memoryViews } from "@graview/core";
-        import { declined, suggest, suggestions } from "@graview/core/tidying";
+        import { declined, suggest, suggestions, voteSuggestion } from "@graview/core/tidying";
         import { todoApp } from ${JSON.stringify(todo)};
         import seed from ${JSON.stringify(seed)};
         const asked = new URLSearchParams(location.search);
@@ -76,6 +79,11 @@ async function buildHost() {
           seed,
           face: asked.get("face") ?? "graview",
           principal: { kind: "human", id: "user-nora", roles: ["keeper"] },
+          /*
+           * A reader who may see a suggestion and may not make the change, when the page asks (f-suggestion-votes): the list's grant to
+           * everybody dropped from the policy, and a seat with no role — a visitor by link, as a host would seat one.
+           */
+          ...(asked.get("reader") ? { app: { ...todoApp, policy: { ...todoApp.policy, grants: todoApp.policy.grants.filter((grant) => grant.roles !== "*") } }, principal: { kind: "human", id: "user-vis", name: "Vis", roles: [] } } : {}),
           label: "Things",
           heading: false,
           height: "100%",
@@ -111,8 +119,8 @@ async function buildHost() {
           ],
         };
         window.__handle = mount(document.getElementById("app"), options);
-        // What reads the suggestions back, for the claims that ask the store what a person declined.
-        window.__tidying = { declined, suggestions };
+        // What reads the suggestions back, for the claims that ask the store what a person declined, and casts a vote as somebody else.
+        window.__tidying = { declined, suggestions, voteSuggestion };
         // The framework's version, as a host's Report this is handed it (FR-237).
         window.__version = capabilities().version;
         /*
@@ -125,6 +133,8 @@ async function buildHost() {
           store.apply({ name: "wait-for", args: { taskId: "t-paint", blockerId: "t-shelves" } }, { author: actor, lineage: { basis: "The shelves cover the wall that needs paint", confidence: 0.93 } });
           store.apply({ name: "wait-for", args: { taskId: "t-broadband", blockerId: "t-notice" } }, { author: actor, lineage: { basis: "The broadband moves with the notice date", confidence: 0.9 } });
           suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage: { basis: "The post is redirected from the day notice is given", confidence: 0.45 } });
+          // A reader's vote for it already cast, when the page asks (f-suggestion-votes): what the keeper reads beside Accept.
+          if (asked.get("vote")) voteSuggestion(store, suggestions(store)[0].id, "for", { author: { kind: "human", id: "user-vis", name: "Vis", roles: [] } });
         }
         /*
          * A crowded tray, when the page asks: a task renamed to 120 characters with no space, and a suggestion for each task it could
@@ -698,6 +708,71 @@ try {
       tidying[face] = { tray, digest, declined, ok };
     }
     report.checks.whatTidyingDidAndSuggestsIsSaidOnTheTodoExample = { ...tidying, ok: Object.values(tidying).every((one) => one.ok) };
+  }
+  /*
+   * ---- A suggestion takes a vote from someone who may not accept it (f-suggestion-votes), on both faces: a reader — the list's grant
+   * to everybody dropped, a seat with no role — presses Accept in the tray and is not refused: the row says "Your vote was recorded"
+   * and stays, nothing is made, the store counts the vote as theirs, and the keyboard never lands on <body>; and the keeper, with
+   * that vote cast, reads "1 for, 0 against" beside Accept and is offered no vote of their own.
+   */
+  {
+    const votes = {};
+    for (const face of ["graview", "pages"]) {
+      const asReader = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      asReader.on("pageerror", (error) => errors.push(error.message));
+      await asReader.goto(`${at("chrome-host")}/?face=${face}&tidy=1&reader=1`, { waitUntil: "load" });
+      await asReader.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await asReader.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      const reader = await asReader.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-accept"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const store = window.__handle.store;
+        const before = store.graph.allEdges().length;
+        const accept = document.querySelector('[data-testid="suggestion-accept"]');
+        const described = document.getElementById(accept?.getAttribute("aria-describedby") ?? "")?.textContent ?? null;
+        accept?.focus();
+        accept?.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-voted"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const [waiting] = window.__tidying.suggestions(store, { kind: "human", id: "user-vis", roles: [] });
+        return {
+          described,
+          said: document.querySelector('[data-testid="suggestion-voted"]')?.textContent ?? null,
+          pressed: document.querySelector('[data-testid="suggestion-accept"]')?.getAttribute("aria-pressed") ?? null,
+          rows: document.querySelectorAll('[data-testid="suggestion"]').length,
+          refused: document.querySelector('[data-testid="suggestion-refused"]')?.textContent ?? null,
+          unchanged: store.graph.allEdges().length === before,
+          tally: waiting?.tally ?? null,
+          keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
+        };
+      });
+      await asReader.close();
+      const asKeeper = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      asKeeper.on("pageerror", (error) => errors.push(error.message));
+      await asKeeper.goto(`${at("chrome-host")}/?face=${face}&tidy=1&vote=1`, { waitUntil: "load" });
+      await asKeeper.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await asKeeper.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      const keeper = await asKeeper.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-accept"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        return {
+          tally: document.querySelector('[data-testid="suggestion-tally"]')?.textContent ?? null,
+          votes: document.querySelector('[data-testid="suggestion-accept"]')?.hasAttribute("aria-pressed") ?? null,
+          withdraw: document.querySelector('[data-testid="suggestion-withdraw-vote"]') !== null,
+        };
+      });
+      await asKeeper.keyboard.press("Escape");
+      await asKeeper.close();
+      const ok =
+        reader !== null && reader.described === "Counts as your vote; somebody who may make it decides." && reader.said === "Your vote was recorded." && reader.pressed === "true" && reader.rows === 1 && reader.refused === null && reader.unchanged &&
+        reader.tally !== null && reader.tally.for === 1 && reader.tally.against === 0 && reader.tally.mine === "for" && reader.keyboard !== "BODY" &&
+        keeper !== null && keeper.tally === "1 for, 0 against" && keeper.votes === false && keeper.withdraw === false;
+      votes[face] = { reader, keeper, ok };
+    }
+    report.checks.aSuggestionTakesAVoteFromAReaderAndShowsTheTallyToWhoMayDecide = { ...votes, ok: Object.values(votes).every((one) => one.ok) };
   }
   /*
    * ---- "Not now" is one person's, and the tray says what tidying did while they were away, on both faces: the host hands what

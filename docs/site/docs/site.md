@@ -18,7 +18,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
 | `entry` | One subpath a package exports, as a product imports it. | 108 |
 | `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 30 |
-| `check` | A thing graview check can say, read out of the checker's source. | 126 |
+| `check` | A thing graview check can say, read out of the checker's source. | 127 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |
 | `concept` | One of the ideas a Graview declaration is made of: not in the repository, the reason it is shaped the way it is. | 7 |
 | `recipe` | The prompt on the front page with a different task, and the declaration and seed an agent made of it, under docs/site/recipes/. | 4 |

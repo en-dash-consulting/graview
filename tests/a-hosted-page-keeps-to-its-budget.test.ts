@@ -175,6 +175,7 @@ describe("a hosted page", () => {
     // 1045 KB since formulas came to join text and build a date-time and an act to carry a change across a link (Roadmap f-formula-text-datetime, f-acts-update-linked): the evaluator's seven functions and their date arithmetic, the compiled act's `through` effect and the store judging each far record's own edit: the scene face measured 1_068_380 B, 7_109 more than main (1_061_271).
     // 1038 KB since a year or a month alone came to be kept, compared and drawn (Roadmap f-partial-dates-arithmetic and its three siblings): the span a date covers, a rule comparing by it, which scheme's logo a scheme draws, a blocks home's mark and the calendar's month: the scene face measured 1_062_625 B, 1_354 more than main (1_061_271).
     // 1040 KB since a rule came to cover every record without a cost warning (Roadmap f-rule-covers-every): the schema's `covers`, the compiler resolving the walk against the relations, and the judge that walks it once: the scene face measured 1_064_463 B, 3_192 more than main (1_061_271).
+    // 1040 KB since a suggestion came to take a vote from someone who may not accept it (Roadmap f-suggestion-votes): the built-in vote-suggestion act, the vote on its op, the gesture that queues what the deciding vote has the actor make, and the tray's vote and tally: the scene face measured 1_064_592 B, 3_321 more than main (1_061_271).
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1045 * 1024);
   });
 

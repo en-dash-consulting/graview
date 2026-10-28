@@ -1,4 +1,7 @@
 import type { MutationCall } from "../mutations/types.js";
+import type { Vote } from "../mutations/vote-suggestion.js";
+import { actingAs } from "../permissions/policy.js";
+import type { Principal } from "../permissions/types.js";
 import type { Lineage } from "./lineage.js";
 import { undoneIn } from "./log.js";
 import type { Author, Operation } from "./types.js";
@@ -25,6 +28,21 @@ export interface Suggestion {
   readonly expiresAt?: string;
   /** The records its calls name, so a tray can point at them. */
   readonly about: readonly string[];
+  /**
+   * THE VOTES ON IT (Roadmap f-suggestion-votes): how many people's
+   * standing vote is for it and against it, and the reader's own when they
+   * cast one (`mine`) — what a tray shows beside Accept to whoever may
+   * decide, says back to a voter, and a list sorts on.
+   */
+  readonly tally: SuggestionTally;
+}
+
+/** The standing votes on a suggestion, counted (Roadmap f-suggestion-votes). */
+export interface SuggestionTally {
+  readonly for: number;
+  readonly against: number;
+  /** The reader's own standing vote, when one was named to `suggestions` and they cast one. */
+  readonly mine?: "for" | "against";
 }
 
 /**
@@ -67,6 +85,43 @@ export interface WaitingOptions {
   readonly now?: string;
   /** What the person reading said "not now" to; those are not among what waits for them. */
   readonly dismissed?: readonly Dismissal[] | undefined;
+  /** Who is reading, so each suggestion's `tally.mine` is their standing vote (Roadmap f-suggestion-votes). */
+  readonly voter?: Principal | undefined;
+}
+
+/** Who a vote is counted as: the person, for an agent acting for one; a seat with no id, by its session. */
+export const voterId = (author: Author): string | undefined => actingAs(author as Principal).id ?? author.session;
+
+/**
+ * THE STANDING VOTES IN A LOG, by suggestion then by voter (Roadmap
+ * f-suggestion-votes): each person's latest vote that still stands — a
+ * later vote replaces an earlier one, `null` withdraws it, an undone vote
+ * never counted, and a vote withheld from the reader is not theirs to
+ * count. One pass over the ops, asked once per reading.
+ */
+export function votesIn(ops: readonly Operation[]): ReadonlyMap<string, ReadonlyMap<string, Exclude<Vote, null>>> {
+  const undone = undoneIn(ops);
+  const standing = new Map<string, Map<string, Exclude<Vote, null>>>();
+  for (const op of ops) {
+    if (op.vote === undefined || op.withheld || undone.has(op.id)) continue;
+    const who = voterId(op.author);
+    if (who === undefined) continue;
+    let votes = standing.get(op.vote.suggestion);
+    if (!votes) standing.set(op.vote.suggestion, (votes = new Map()));
+    if (op.vote.vote === null) votes.delete(who);
+    else votes.set(who, op.vote.vote);
+  }
+  return standing;
+}
+
+/** The votes on one suggestion, counted, with the reader's own when they are named. */
+export function tallyOf(votes: ReadonlyMap<string, Exclude<Vote, null>> | undefined, voter?: Principal): SuggestionTally {
+  let votedFor = 0;
+  let against = 0;
+  for (const vote of votes?.values() ?? []) vote === "for" ? votedFor++ : against++;
+  const me = voter && voterId(voter);
+  const mine = me !== undefined ? votes?.get(me) : undefined;
+  return { for: votedFor, against, ...(mine !== undefined ? { mine } : {}) };
 }
 
 /** Whether a suggestion's op has stopped waiting by its own expiry. */
@@ -82,18 +137,21 @@ export const isDismissed = (dismissed: readonly Dismissal[] | undefined, id: str
  * that was taken back later), a live undo declined it, or it expired. A
  * withheld op is no suggestion for the seat it was withheld from. `has`
  * keeps, of the ids its calls name, the records (`about`). One the reader
- * said "not now" to (`options.dismissed`) is left out for them.
+ * said "not now" to (`options.dismissed`) is left out for them. Each
+ * carries the standing votes on it (`tally`), the reader's own among them
+ * when `options.voter` names them.
  */
 export function suggestionsIn(ops: readonly Operation[], has: (id: string) => boolean = () => true, options: WaitingOptions = {}): Suggestion[] {
   const undone = undoneIn(ops);
   const accepted = new Set(ops.map((op) => op.lineage?.suggestion));
   const now = options.now ?? new Date().toISOString();
+  let votes: ReturnType<typeof votesIn> | undefined;
   return ops
     .filter((op) => op.suggests && !op.withheld && !undone.has(op.id) && !accepted.has(op.id) && !expired(op, now) && !isDismissed(options.dismissed, op.id, now))
     .map(({ id, batch, suggests, intent, author, lineage, at, expiresAt }) => {
       const about = new Set<string>();
       // Every string its calls hold, kept where it is a record.
       JSON.stringify(suggests!.map((call) => call.args), (_, value) => (typeof value === "string" && has(value) && about.add(value), value));
-      return { id, batch, calls: suggests!, intent, author, ...(lineage ? { lineage } : {}), at, expiresAt, about: [...about] };
+      return { id, batch, calls: suggests!, intent, author, ...(lineage ? { lineage } : {}), at, expiresAt, about: [...about], tally: tallyOf((votes ??= votesIn(ops)).get(id), options.voter) };
     });
 }

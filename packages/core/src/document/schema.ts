@@ -616,6 +616,11 @@ function build() {
         publishers: z.optional(some(name("role"), 1, 40)),
       }),
     ),
+    /**
+     * What the app says of suggestions as a whole (Roadmap f-suggestion-votes): `autoAcceptAt`, the votes for a
+     * suggestion at which the app's own actor makes it. A kind's own `tidying` says what the actor may do to its records.
+     */
+    tidying: z.optional(z.strictObject({ autoAcceptAt: z.optional(z.number().check(z.int(), z.minimum(1), z.maximum(10_000))) })),
   });
   return { FieldSpec, EdgeSpec, ComputedSpec, KindSpec, ValueSpec, EffectSpec, ActSpec, RepairSpec, CoverSpec, RuleSpec, GrantSpec, SightSpec, PolicySpec, BrandSpec, PagesSpec, DocumentSpec };
 }

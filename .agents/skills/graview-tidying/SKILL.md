@@ -47,7 +47,17 @@ opens in and how its cards read are `graview-lists`.
    (`Dismissal`, handed to `suggestions(store, who, { dismissed })`), hides
    it from them alone and binds the actor to nothing. The tray's Not now
    keeps it in the host's `dismissals`, else the browser; a seat says it
-   with `withNotNow(runtime, dismissals)`.
+   with `withNotNow(runtime, dismissals)`. Someone who may see a suggestion
+   and may not make its change — a reader, a visitor by link — is not
+   refused: their Accept and Decline are a vote, for or against
+   (`acceptSuggestion` and `declineSuggestion` answer `voted`;
+   `voteSuggestion(store, id, "for" | "against" | null)` casts, changes or
+   withdraws one), one standing vote each; whoever may decide (`mayDecide`)
+   reads each suggestion's `tally: { for, against, mine }` beside Accept.
+   Say `"tidying": { "autoAcceptAt": 4 }` at the top of the document to
+   have the actor make a suggestion at four votes for, the voters in its
+   `lineage.voters`; `graview check` warns when the app has no policy,
+   since then nobody votes.
 
 3. **Hold it to what people said.** A person says "Leave this one alone" on
    a record (`leave-alone-<kind>`, cleared by `allow-tidying-<kind>`;
@@ -112,6 +122,9 @@ and refuses an alias another kind or field is already called
 - Have a test actor (`automated: true`) suggest a link and decline it from
   the tray: `suggest(store, …)` of the same calls then refuses, and a
   record left alone refuses the actor's change by name.
+- Accept a suggestion as a seat the policy grants nothing: the answer says
+  `voted: "for"`, the graph is unchanged, and `suggestions(store, seat)[0].tally`
+  is `{ for: 1, against: 0, mine: "for" }`.
 - Run `graview dream` twice: the second run suggests nothing new, and its
   JSON says each finding is already waiting.
 - Run `graview learn` after `--decline <key>`: that suggestion is gone,

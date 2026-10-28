@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 9018,
+  "note": "Raised when a suggestion came to take a vote from someone who may not accept it (Roadmap f-suggestion-votes): the server loads `@graview/core/tidying` beside publishing, since a vote's op is made where the log is — the suggestions waiting, the standing votes and what the deciding vote has the app's own actor make — and the store carries the built-in vote-suggestion act, the gesture's queue and who may take a vote back. Measured at 2_309_434 B against 2_300_416 on a fresh build of main."
+}
