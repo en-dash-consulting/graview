@@ -89,6 +89,10 @@
       "types": "./dist/jobs.d.ts",
       "default": "./dist/jobs.js"
     },
+    "./workflows": {
+      "types": "./dist/workflows.d.ts",
+      "default": "./dist/workflows.js"
+    },
     "./friction": {
       "types": "./dist/friction.d.ts",
       "default": "./dist/friction.js"

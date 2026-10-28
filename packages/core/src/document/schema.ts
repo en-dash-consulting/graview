@@ -1,6 +1,7 @@
 import * as z from "../schema/zod.js";
 import { LINKED_TARGET } from "../schema/linked.js";
 import type { AppPurpose } from "../job-shape.js";
+import type { AppWorkflows } from "../workflow-shape.js";
 
 /*
  * THE GRAVIEW DECLARATION DOCUMENT, v1 — as data a stranger can hand us.
@@ -619,6 +620,12 @@ function build() {
      * `./purpose-spec.ts`) is the checker's to judge and an edit's to hold, and the JSON schema says it.
      */
     purpose: z.optional(loose as unknown as z.ZodMiniType<AppPurpose>),
+    /**
+     * What the app does on its own, and when (Roadmap f-jobs-declared, `workflow-shape.ts`): workflows by
+     * name, each a title, what starts it and its steps. Read loosely here, as a page that draws the app runs
+     * none; their shape (`WorkflowSpec`, `./workflow-spec.ts`) is the checker's to judge and an edit's to hold.
+     */
+    workflows: z.optional(z.record(name("workflow"), loose) as unknown as z.ZodMiniType<AppWorkflows>),
     /** Forms for visitors, by name: each one act, its fields, and what the visitor is told once it is received. */
     forms: z.optional(z.record(name("form"), FormSpec)),
     /**

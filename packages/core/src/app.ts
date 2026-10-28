@@ -15,6 +15,7 @@ import type { HomeView, ViewSpecsByKind } from "./document/views.js";
 import type { PagesArrangement } from "./views/types.js";
 import type { VisitorFormDeclaration } from "./visitor-form-shape.js";
 import type { AppPurpose } from "./job-shape.js";
+import type { AppWorkflows } from "./workflow-shape.js";
 
 /**
  * Everything one application declares, in one object. `graview check` and
@@ -302,6 +303,17 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    *   purpose: { for: "Two people sharing chores", jobs: [{ name: "due-today", ask: "What's due today?", kind: "task", where: "not done and due <= today()", sort: "due", act: "complete" }] }
    */
   readonly purpose?: AppPurpose;
+  /**
+   * WHAT THE APP DOES ON ITS OWN, AND WHEN (Roadmap f-jobs-declared): by
+   * name, each a title, what starts it — a clock in words or cron on the
+   * brand's time zone, a record made or changed, a connection's pass, a
+   * person — and its steps, each one of `STEP_KINDS`. `graview check` holds
+   * each to the declaration (`workflow-*`); `@graview/core/workflows`
+   * resolves and says them; `@graview/tools/workflows` runs one.
+   *
+   *   workflows: { "tidy-done": { title: "Set aside what is done", when: [{ every: "day 03:00" }], steps: [{ act: "archive-task", over: { kind: "task", where: "done" } }] } }
+   */
+  readonly workflows?: AppWorkflows;
 }
 
 /**
