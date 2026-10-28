@@ -110,6 +110,8 @@ export async function view(argv: readonly string[]): Promise<number> {
     places: (app.views?.places?.() ?? []).filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map((place) => ({ as: place.as, title: place.title, kind: place.kind })),
     // The app's registered views' places are its places above: there is no host here keeping others, so a name none of them is goes nowhere.
     views: [],
+    /* Dressed as the app dresses every view (Roadmap f-app-wide-view-theme), so what the browser audits is what a page draws. */
+    ...(app.brand?.views ? { brand: { views: app.brand.views } } : {}),
     ...(width ? { width: Number(width) } : {}),
     ...(pressAt ? { press: { selector: pressAt, typed } } : {}),
     ...(auditing ? { audit: true } : {}),
@@ -118,14 +120,13 @@ export async function view(argv: readonly string[]): Promise<number> {
   let audit = result.ok ? result.audit : undefined;
   if (inBrowser && result.ok && result.drawing) {
     const { auditInBrowser, BrowserMissing, loadPlaywright } = await import("./audit/browser.js");
-    /* Its stylesheets as the host keeps them: judged here, not in the headless run a worker may import. */
-    const { sanitizeStylesheets } = await import("./host/css.js");
     const { markupOf } = await import("./headless/serialize.js");
     const mark = "data-graview-audit-clicked";
     try {
       const { AUDIT_PAGE_SCRIPT } = await import("./audit/page.generated.js");
+      /* Its stylesheets as the host draws them (`result.css`): judged by the run, the app's own for every view first. */
       audit = await auditInBrowser(
-        { markup: markupOf(result.drawing.root, new Set(result.drawing.clicked), mark), clicked: `[${mark}]`, css: sanitizeStylesheets(result.transcript.sheets ?? []).css, title: manifest.title ?? manifest.name },
+        { markup: markupOf(result.drawing.root, new Set(result.drawing.clicked), mark), clicked: `[${mark}]`, css: result.css, title: manifest.title ?? manifest.name },
         { playwright: await loadPlaywright(), script: AUDIT_PAGE_SCRIPT, theme: HEADLESS_THEME, ...(width ? { width: Number(width) } : {}) },
       );
     } catch (error) {

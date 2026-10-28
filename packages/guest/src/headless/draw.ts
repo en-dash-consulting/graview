@@ -1,4 +1,4 @@
-import { sanitizeStylesheets } from "../host/css.js";
+import { sanitizeStylesheet, sanitizeStylesheets } from "../host/css.js";
 import { createOpenRenderer } from "../host/open-render.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { createTree, type TreeElement } from "./tree.js";
@@ -18,13 +18,23 @@ export interface DrawnTranscript {
   readonly size: number;
   /** It went past `maxNodes`. */
   readonly over: boolean;
-  /** The stylesheets as a page would draw them, one after another. */
+  /** The stylesheets as a page would draw them, one after another — the app's own for every view first (`theme`), where it has one. */
   readonly css: string;
   /** The element drawn for a view's id: what a press the run made landed on (0.1.45). */
   elementOf(id: string): TreeElement | undefined;
 }
 
-export function drawTranscript(renders: readonly unknown[], sheets: readonly string[] | undefined, options: { readonly maxNodes: number; readonly origin?: string; readonly imageOrigins?: readonly string[]; readonly asset?: (path: string) => string | undefined; readonly link?: (value: string) => string | undefined }): DrawnTranscript {
+export interface DrawTranscriptOptions {
+  readonly maxNodes: number;
+  readonly origin?: string;
+  readonly imageOrigins?: readonly string[];
+  readonly asset?: (path: string) => string | undefined;
+  readonly link?: (value: string) => string | undefined;
+  /** The app's stylesheet for every view (`brand.views.css`, Roadmap f-app-wide-view-theme), drawn before the view's own as the page draws it; its refusals are the checker's to say, not the view's. */
+  readonly theme?: string;
+}
+
+export function drawTranscript(renders: readonly unknown[], sheets: readonly string[] | undefined, options: DrawTranscriptOptions): DrawnTranscript {
   const { root } = createTree();
   let over = false;
   const renderer = createOpenRenderer(root as unknown as Node, {
@@ -44,5 +54,7 @@ export function drawTranscript(renders: readonly unknown[], sheets: readonly str
     kept = judged.css;
     for (const one of judged.refused) refused.push({ reason: "css", name: "stylesheet", css: one });
   }
-  return { root, refused, size: renderer.size, over, css: kept, elementOf: (id) => renderer.elementOf(id) as unknown as TreeElement | undefined };
+  const dressed = options.theme ? sanitizeStylesheet(options.theme).css : "";
+  const css = dressed && kept ? `${dressed}\n${kept}` : dressed || kept;
+  return { root, refused, size: renderer.size, over, css, elementOf: (id) => renderer.elementOf(id) as unknown as TreeElement | undefined };
 }

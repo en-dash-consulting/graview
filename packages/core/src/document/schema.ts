@@ -452,6 +452,22 @@ function build() {
         shader: z.optional(str(1, 40)),
       }),
     ),
+    /*
+     * ONE THEME FOR EVERY VIEW (Roadmap f-app-wide-view-theme): a stylesheet
+     * every worker view is drawn with before its own, and whether a view
+     * fades when the record it shows changes. The sheet is held to the
+     * sanitizer and the length a view's own is by the checker
+     * (`brand-views-css`, brand-check.ts), not here: the limit is the
+     * sanitizer's (`@graview/core/css`), which a page fetches only as it
+     * first draws a view, and the shape a page reads up front names it
+     * nowhere, so the two share no module.
+     */
+    views: z.optional(
+      z.strictObject({
+        css: z.optional(str(1)),
+        motion: z.optional(z.enum(["none", "fade"])),
+      }),
+    ),
   });
 
   const loose = z.record(z.string(), z.unknown());

@@ -1,7 +1,7 @@
 import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
 import { darkLogoSentence, logoParts } from "./logo.js";
-import { emojiIconSentence, splashSentence, subtitleSentence } from "./brand-check.js";
+import { emojiIconSentence, splashSentence, subtitleSentence, viewsCssSentence, viewsMotionSentence } from "./brand-check.js";
 import { emojiOf } from "../theme/marks.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
 import { narrows, rangeWords } from "./range.js";
@@ -237,6 +237,10 @@ function brandSentences(was: Brand, now: Brand, appName: string): string[] {
   }
   if ((was.subtitle === false) !== (now.subtitle === false)) out.push(subtitleSentence(now.subtitle !== false));
   if (!same(was.splash, now.splash)) out.push(splashSentence(now.splash));
+  // What every view inherits (Roadmap f-app-wide-view-theme): the stylesheet's presence, its text, and the fade.
+  if ((was.views?.css === undefined) !== (now.views?.css === undefined)) out.push(viewsCssSentence(now.views?.css !== undefined));
+  else if (!same(was.views?.css, now.views?.css)) out.push("The stylesheet every view is drawn with changes.");
+  if ((was.views?.motion === "fade") !== (now.views?.motion === "fade")) out.push(viewsMotionSentence(now.views?.motion));
   if (!same(was.scheme ?? "auto", now.scheme ?? "auto")) out.push(now.scheme === "light" || now.scheme === "dark" ? `The app opens ${now.scheme} when the reader has not chosen.` : "The app follows the reader's system for light and dark.");
   return out;
 }

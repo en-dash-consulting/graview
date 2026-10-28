@@ -105,9 +105,17 @@ and the description stays in listings and on the name's hover):
   "typography": { "display": "system-serif", "body": "system-sans" },
   "shape": { "radius": 6, "density": 0.9 },
   "accents": { "workshop": 168 }, "scheme": "dark",
-  "splash": { "style": "editorial" }
+  "views": { "css": ".card { padding: 12px }", "motion": "fade" }
 }
 ```
+
+- **One theme for every view** is `views`: `css`, a stylesheet every worker
+  view is drawn with before its own (the view's rule wins where both say
+  one), held to what a view's own may be — nothing that fetches, no
+  `@import`, no `:host`; `graview check` says what of it the open kit
+  leaves out (`brand-views-css`), and `set-brand` refuses it until clean.
+  `motion: "fade"` fades a view out and in when the record it shows
+  changes; a shared-element transition is not on offer.
 
 - **A mark** — the logo, one for each scheme, and the page icon, an emoji
   among them — is `graview-logo`: inline SVG or a path on the app's own
@@ -133,14 +141,6 @@ and the description stays in listings and on the name's hover):
   "Muted ink #586174 on the ground #9a9a94 is 2.1:1; 4.5:1 is needed —
   #dcdcda would pass." In TypeScript, `brandFromAccent({ accent, base:
   groundSchemes("#eef3f8") })`.
-
-- **An opening screen** (`splash`) shows while the app's code loads, gone
-  once a place has drawn: a `style` — `plain`, `editorial`, `shader` (one
-  the framework ships: `"shader": "drift"`, `"ripple"` or `"veil"`, never
-  code) or `ascii` — an `image` (as the logo), a `title` and a `kicker`. `set-brand` sets it whole, `null` clears it; a
-  shader it does not ship is refused by name (`brand-splash-shader`). It
-  travels with the document; `graview preview` draws it; a host inlines
-  `splashHtml` from `@graview/pages/splash` in its first HTML.
 
 ## Styling by conversation
 

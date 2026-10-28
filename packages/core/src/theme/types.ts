@@ -76,6 +76,22 @@ export interface BrandLogo {
 /** A brand's page icon: a mark (inline SVG or a path), or one standard emoji. */
 export type FaviconSpec = string | { readonly emoji: string };
 
+/**
+ * What every worker view of an app inherits (Roadmap f-app-wide-view-theme).
+ * The brand's typeface and scheme tokens reach a view as they always did;
+ * this is the stylesheet beyond them, and the motion between records.
+ */
+export interface BrandViews {
+  /**
+   * A stylesheet every worker view's region gets before the view's own,
+   * held to the same sanitizer and the same 64,000 characters a view's is
+   * (`@graview/core/css`): a view's own rule wins where both say one.
+   */
+  readonly css?: string;
+  /** `"fade"`: a view's drawing fades out and in when the record it shows changes. `"none"` (the default) swaps at once. */
+  readonly motion?: "none" | "fade";
+}
+
 export interface Brand {
   /** The product name, shown where the framework shows a wordmark. */
   readonly name: string;
@@ -117,6 +133,13 @@ export interface Brand {
    * stamp, or a scheme the host asks for, is a choice and wins.
    */
   readonly scheme?: Scheme | "auto";
+  /**
+   * ONE THEME FOR EVERY VIEW (Roadmap f-app-wide-view-theme): a stylesheet
+   * every worker view of the app is drawn with before its own, and whether
+   * a view fades when the record it shows changes. A document's
+   * `brand.views`.
+   */
+  readonly views?: BrandViews;
   readonly typography?: {
     /** Applied to everything. Include a real fallback stack. */
     readonly body?: string;

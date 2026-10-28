@@ -3,6 +3,7 @@ import * as arrange from "../../src/arrange.js";
 import * as blocks from "../../src/blocks.js";
 import * as catalog from "../../src/catalog.js";
 import * as city from "../../src/city.js";
+import * as css from "../../src/css.js";
 import * as csv from "../../src/csv.js";
 import * as shown from "../../src/shown.js";
 import * as check from "../../src/check.js";
@@ -47,6 +48,8 @@ const OFF_THE_PAGE = {
   "@graview/core/shown": { from: shown, names: ["shownList"] },
   // Roadmap f-view-export-csv: a place's list written as a spreadsheet, fetched when somebody presses "Export CSV".
   "@graview/core/csv": { from: csv, names: ["CSV_BOM", "csvCell", "csvFileName", "csvSafe", "listCsv", "listCsvRows", "saveShownList", "switchExport", "toCsv"] },
+  // Roadmap f-app-wide-view-theme: the one CSS sanitizer — the guest host's as it first draws on the open kit, and the checker's for a document's `brand.views.css`.
+  "@graview/core/css": { from: css, names: ["CSS_AT_RULES", "CSS_DRAWN_AS", "CSS_FRAGMENT_PROPERTIES", "CSS_FUNCTIONS", "CSS_KEYWORD_PROPERTIES", "CSS_PREFIXED_SELECTORS", "CSS_PROPERTIES", "CSS_REFUSED_SELECTORS", "OPEN_MAX_STYLESHEET", "sanitizeDeclarations", "sanitizeStylesheet", "sanitizeStylesheets", "sanitizeValue", "serializeIdent", "serializeString", "serializeValues", "tokenize"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug", "placeNamesFrom", "placeNamesOf"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.

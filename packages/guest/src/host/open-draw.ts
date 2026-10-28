@@ -1,5 +1,5 @@
 import type { GuestDomEvent } from "../protocol.js";
-import { sanitizeStylesheets, type CssRefusal } from "./css.js";
+import { sanitizeStylesheet, sanitizeStylesheets, type CssRefusal } from "./css.js";
 import type { OpenNamespace, OpenRefusal } from "./open-judge.js";
 import { createOpenRenderer, type OpenRenderer } from "./open-render.js";
 
@@ -39,7 +39,14 @@ export { handedLinks, judgeLink, linkRefusedWords } from "./external-links.js";
  * view runs once in a millisecond, to where it ends, on no scroll (a scroll-driven one included), and every transition
  * is as short. It is `!important` in a layer of the host's: an important declaration in a layer wins over every
  * unlayered one whatever its specificity, and a view's stylesheet can write no `@layer`.
+ *
+ * ONE THEME FOR EVERY VIEW (Roadmap f-app-wide-view-theme). The app's own stylesheet for its views (`brand.views.css`)
+ * is a `<style>` of the host's between the region's rules and the view's own sheet, judged by the same sanitizer, so
+ * the view's rule wins wherever both say one and nothing in it reaches further than a view's could. Where the brand
+ * asks for it (`brand.views.motion: "fade"`), the root fades out when the record it shows changes and in again once
+ * the view has drawn the new one — the one transition the host itself makes, held to the reduced-motion rule above.
  */
+export const FADE_MS = 180;
 export const REGION_CSS = `
 :host { display: block; position: relative; contain: layout paint style; isolation: isolate; overflow: clip; min-width: 0; }
 :host(:focus-within) { overflow-clip-margin: var(--graview-ring-reach, 4px); }
@@ -51,7 +58,9 @@ export const REGION_CSS = `
 [data-graview-view-root] [data-graview-ring-inside]:focus-visible { outline-offset: calc(-1 * max(2px, var(--graview-focus-width, 2px))) !important; }
 [data-graview-view-root] .graview-sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }
 [data-graview-view-root] a[href]:not([data-graview-link])::after { content: " ↗" !important; content: " ↗" / " (opens in a new tab)" !important; }
-@layer graview-motion { @media (prefers-reduced-motion: reduce) { [data-graview-view-root] *, [data-graview-view-root] ::before, [data-graview-view-root] ::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; animation-timeline: auto !important; transition-duration: 1ms !important; scroll-behavior: auto !important; } } }
+[data-graview-view-root][data-graview-motion="fade"] { transition: opacity ${FADE_MS}ms ease; }
+[data-graview-view-root][data-graview-fade] { opacity: 0; }
+@layer graview-motion { @media (prefers-reduced-motion: reduce) { [data-graview-view-root], [data-graview-view-root] *, [data-graview-view-root] ::before, [data-graview-view-root] ::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; animation-timeline: auto !important; transition-duration: 1ms !important; scroll-behavior: auto !important; } } }
 `;
 
 /** How far the ring reaches past a control's edge by default — its 2px and its 2px offset — and the most the region lets any ring paint past its own. */
@@ -107,6 +116,19 @@ export interface OpenDrawing {
   apply(records: unknown, spent?: () => boolean): boolean;
   /** Draw the view's stylesheets, every one it gave, in order, as the open kit allows them. */
   style(sheets: readonly string[]): void;
+  /**
+   * Dress the view in the app's own stylesheet for every view (`brand.views.css`, Roadmap f-app-wide-view-theme),
+   * drawn before the view's own and judged as it is; `undefined` takes it off. What the checker warned of is left out here too.
+   */
+  theme(css: string | undefined): void;
+  /** How the drawing moves between records (`brand.views.motion`): `"fade"` fades out and in, `"none"` swaps at once. */
+  motion(kind: "none" | "fade"): void;
+  /**
+   * The record it shows is about to change: under `"fade"`, fade what is drawn out, and in again once the next batch
+   * has drawn — or after a moment, should the view draw nothing new. Nothing, before the first drawing or when the
+   * person asked for less motion.
+   */
+  fade(): void;
   readonly renderer: OpenRenderer;
   /** What was refused of the drawing and the stylesheet (the last 200 of each). */
   readonly refused: readonly ViewRefusal[];
@@ -121,11 +143,24 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
   const base = document.createElement("style");
   base.setAttribute("data-graview-region", "");
   base.textContent = REGION_CSS;
+  /* The app's stylesheet for every view, before the view's own: the view's rule wins where both say one. */
+  const dress = document.createElement("style");
+  dress.setAttribute("data-graview-view-theme", "");
   const sheet = document.createElement("style");
   sheet.setAttribute("data-graview-view-style", "");
   const into = document.createElement("div");
   into.setAttribute("data-graview-view-root", "");
-  shadow.append(base, sheet, into);
+  shadow.append(base, dress, sheet, into);
+  const window = document.defaultView;
+  /* The fade between records (Roadmap f-app-wide-view-theme): when it began, and the hand that ends it should no batch come. */
+  let fadeBegan: number | undefined;
+  let fadeGuard: ReturnType<typeof setTimeout> | undefined;
+  const unfade = () => {
+    if (fadeGuard !== undefined) clearTimeout(fadeGuard);
+    fadeGuard = undefined;
+    fadeBegan = undefined;
+    into.removeAttribute("data-graview-fade");
+  };
 
   const renderer = createOpenRenderer(into, {
     origin: options.origin,
@@ -232,7 +267,31 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
         const now = renderer.elementOf(id) as HTMLElement | undefined;
         if (now?.isConnected && typeof now.focus === "function") now.focus({ preventScroll: true });
       }
+      /* Drawn while faded out: it fades in once the fade out has run its course, so the eye sees one go and one come. */
+      if (fadeBegan !== undefined) {
+        if (fadeGuard !== undefined) clearTimeout(fadeGuard);
+        fadeGuard = setTimeout(unfade, Math.max(0, FADE_MS - (Date.now() - fadeBegan)));
+      }
       return done;
+    },
+    theme(given) {
+      dress.textContent = given ? sanitizeStylesheet(given).css : "";
+    },
+    motion(kind) {
+      if (kind === "fade") into.setAttribute("data-graview-motion", "fade");
+      else {
+        into.removeAttribute("data-graview-motion");
+        unfade();
+      }
+    },
+    fade() {
+      if (into.getAttribute("data-graview-motion") !== "fade" || into.childNodes.length === 0) return;
+      if (window?.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+      if (fadeBegan === undefined) into.setAttribute("data-graview-fade", "");
+      fadeBegan = Date.now();
+      if (fadeGuard !== undefined) clearTimeout(fadeGuard);
+      /* A view that draws nothing new for the record is not left invisible. */
+      fadeGuard = setTimeout(unfade, FADE_MS * 4);
     },
     style(given) {
       const judged = sanitizeStylesheets(given);
@@ -254,6 +313,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
     dispose() {
       for (const type of EVENTS) shadow.removeEventListener(type, hear);
       shadow.removeEventListener("toggle", hear, true);
+      unfade();
       renderer.dispose();
       shadow.replaceChildren();
     },

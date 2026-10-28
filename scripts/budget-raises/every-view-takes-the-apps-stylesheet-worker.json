@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 9034,
+  "note": "Raised when a document's brand came to name what every worker view inherits (Roadmap f-app-wide-view-theme): the brand's key in the shape, `brandOf`, the checker's `brand-views-css` and `set-brand`'s `views` over the one sanitizer (`@graview/core/css`, which the worker already carried as the headless run's), the diff's sentences, and a headless run's `css` dressed with the app's sheet. The worker had 592 bytes of room under 2_301_008. Measured at 2_309_450 B against 2_300_416."
+}

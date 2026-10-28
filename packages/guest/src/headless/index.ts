@@ -24,7 +24,7 @@
  * manifest, its drawing drawn by the open kit's own renderer into a tree of
  * plain objects, and said as a place is said.
  */
-import type { AnySchema, Principal, Store } from "@graview/core";
+import type { AnySchema, BrandViews, Principal, Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
 import { checkManifest, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
@@ -104,6 +104,14 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   readonly input?: GuestViewInput;
   /** The app's look. A light one in the framework's own colors by default. */
   readonly theme?: GuestTheme;
+  /**
+   * What every view of the app inherits (`Brand.views`, Roadmap
+   * f-app-wide-view-theme), as the live host takes it: its stylesheet is
+   * drawn before the view's own in the run's `css`, so a picture of the
+   * view is dressed as the page dresses it. Its refusals are the checker's
+   * to say (`brand-views-css`), not this view's.
+   */
+  readonly brand?: { readonly views?: BrandViews };
   /** The app's named places, which the view may link to (FR-93). */
   readonly places?: readonly (GuestPlace | { readonly slug: string; readonly title: string; readonly kind: string | null })[];
   /**
@@ -190,6 +198,8 @@ export interface HeadlessDescribed {
   readonly props: GuestProps;
   /** What it sent: every batch it drew, its stylesheet, the acts it asked for and where it asked to go. */
   readonly transcript: HeadlessTranscript;
+  /** Its stylesheets as a page draws them, judged: the app's own for every view first (`brand.views.css`), then the view's in the order it gave them. What a picture of the drawing is styled with. */
+  readonly css: string;
   /** What the press `options.press` asked for would do, judged as the live host would: the description is of what it drew before it. */
   readonly pressed?: HeadlessPress;
   /** What `options.audit` found in what it drew, before any press. */
@@ -365,7 +375,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
 
   /* Judged again here, from the transcript alone — what it drew before a press it was asked for, and every act it asked for. */
   const pressedAt = options.press !== undefined ? transcript.pressed : undefined;
-  const judged = judgeTranscript(pressedAt ? { ...transcript, renders: transcript.renders.slice(0, pressedAt.renders) } : transcript, input);
+  const judged = judgeTranscript(pressedAt ? { ...transcript, renders: transcript.renders.slice(0, pressedAt.renders) } : transcript, input, options.brand?.views?.css ? { theme: options.brand.views.css } : {});
   if (!judged.ok) return failed(judged.reason, judged.detail, transcript);
   /*
    * A FILTER OR A SECTION IT ASKED FOR, held to the kind here, where the
@@ -410,5 +420,5 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     /* After the audit, which gave the tree the host's marks: what a page would hold. */
     if (options.drawing === true) drawing = { root: judged.drawn.root as unknown as TreeElement, clicked: clicked as unknown as TreeElement[] };
   }
-  return { ok: true, description: { ...description, text: placeText(description) }, props, transcript, ...(pressed ? { pressed } : {}), ...(audit ? { audit } : {}), ...(drawing ? { drawing } : {}) };
+  return { ok: true, description: { ...description, text: placeText(description) }, props, transcript, css: judged.drawn.css, ...(pressed ? { pressed } : {}), ...(audit ? { audit } : {}), ...(drawing ? { drawing } : {}) };
 }

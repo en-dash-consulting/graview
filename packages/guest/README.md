@@ -326,6 +326,24 @@ content security policy, tries every way out, and finds no request leaving
 it in Chromium, WebKit or Firefox; and it reads a view's own controls back
 from each engine's accessibility tree with their states.
 
+### One theme for every view
+
+Each view carried its own copy of the stylesheet, so a polished home and
+the record pages drifted apart. An app's brand now names what every worker
+view inherits, `brand.views` in a document and `Brand.views` in a
+declaration: `css`, a stylesheet the host draws in each view's region
+before the view's own — the same sanitizer, the same 64,000 characters
+(`@graview/core/css`), so a view's own rule wins where both say one and
+nothing in it reaches further than a view's could — and `motion`, `"fade"`
+to fade a view's drawing out and in when the record it shows changes
+(nothing moves where the person asked for less motion; a shared-element
+transition between records is not this). The brand's typeface and scheme
+tokens reach a view as they always did. The view is never told: the host
+dresses it, and dresses it again when the brand changes. `graview check`
+says what of the stylesheet the open kit leaves out (`brand-views-css`),
+and a headless run (`runWorkerViewHeadless`'s `brand`) draws it first in
+its `css`, so a picture of the view is dressed as the page dresses it.
+
 ### A link out goes only where the view was handed
 
 `<a href="${record.url}">` is drawn where its address is one a record the
