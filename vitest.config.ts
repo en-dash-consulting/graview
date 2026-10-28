@@ -68,7 +68,6 @@ export default defineConfig({
       "@graview/layout/sizes": fileURLToPath(new URL("./packages/layout/src/sizes.ts", import.meta.url)),
       "@graview/layout/view-moves": fileURLToPath(new URL("./packages/layout/src/view-moves.ts", import.meta.url)),
       "@graview/layout": src("layout"),
-      "@graview/tools/workflows": fileURLToPath(new URL("./packages/tools/src/workflows.ts", import.meta.url)),
       "@graview/tools/cli": fileURLToPath(new URL("./packages/tools/src/cli.ts", import.meta.url)),
       "@graview/tools/frame": fileURLToPath(new URL("./packages/tools/src/frame.ts", import.meta.url)),
       "@graview/tools/edit": fileURLToPath(new URL("./packages/tools/src/edit.ts", import.meta.url)),
