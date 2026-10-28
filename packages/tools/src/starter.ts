@@ -2,7 +2,7 @@ import type { GraviewDocument } from "@graview/core/document";
 import { TRAITS, TRAIT_WORDS, pluralWords, traitsOf, type TraitName } from "@graview/core/compose";
 import type { Answer, Decide } from "./fast.js";
 import type { Question } from "./questions.js";
-import { choiceOf, noulOf, scoreOf } from "./tidy/system-one.js";
+import { choiceOf, expectedLevelOf, noulOf, scoreOf } from "./tidy/system-one.js";
 
 /*
  * `@graview/tools/starter` — THE STARTER'S QUESTIONS AS DATA (Roadmap
@@ -29,7 +29,7 @@ export interface StarterTemplate {
   readonly title: string;
   readonly pitch: string;
   readonly useCases?: readonly string[];
-  /** A longer word on it; the first 280 characters go to the model. */
+  /** A longer word on it, as markdown; its first 280 characters of plain prose go to the model (`readmeExcerpt`). */
   readonly readme?: string;
   readonly document: GraviewDocument;
 }
@@ -134,6 +134,53 @@ type Lens = { readonly name?: unknown; readonly title?: unknown };
 const lensesOf = (document: GraviewDocument): { name: string; title: string }[] =>
   (Array.isArray(document.lenses) ? (document.lenses as Lens[]) : []).flatMap((lens) => (typeof lens.title === "string" ? [{ name: typeof lens.name === "string" ? lens.name : "lens", title: lens.title }] : []));
 
+/**
+ * A README AS THE MODEL READS IT: from its first plain sentence — past the
+ * title, the badges and any heading — with the markdown taken out (a link
+ * said as its words, emphasis and code as their text, a list item as its
+ * line, a table, an image and a code block left out), cut at a word to
+ * `README_EXCERPT` characters. What a person would read aloud, not the
+ * source of the page.
+ */
+export function readmeExcerpt(readme: string, length = README_EXCERPT): string {
+  const inline = (line: string) =>
+    line
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/\[([^\]]*)\]\[[^\]]*\]/g, "$1")
+      .replace(/<[^>]+>/g, "")
+      .replace(/`([^`]*)`/g, "$1")
+      .replace(/(\*\*|__)(.+?)\1/g, "$2")
+      .replace(/(^|[^\w*])[*_]([^*_\s][^*_]*?)[*_](?=[^\w*]|$)/g, "$1$2")
+      .replace(/~~(.+?)~~/g, "$1")
+      .replace(/\s+/g, " ")
+      .trim();
+  const lines: string[] = [];
+  let fenced = false;
+  let begun = false;
+  for (const raw of readme.split(/\r?\n/)) {
+    if (/^\s*(```|~~~)/.test(raw)) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced) continue;
+    const line = raw.trim();
+    if (line === "" || /^#{1,6}(\s|$)/.test(line) || /^(-{3,}|\*{3,}|_{3,}|={3,})$/.test(line) || line.startsWith("|") || /^\[[^\]]+\]:\s/.test(line)) continue;
+    const listed = /^([-*+]|\d+[.)])\s+/.test(line);
+    const text = inline(line.replace(/^>\s?/, "").replace(/^([-*+]|\d+[.)])\s+/, ""));
+    if (text === "") continue;
+    // The first plain sentence: a line of prose, not a list item, that has a word in it.
+    if (!begun && (listed || !/[A-Za-z]{2}/.test(text))) continue;
+    begun = true;
+    lines.push(text);
+  }
+  const plain = lines.join(" ");
+  if (plain.length <= length) return plain;
+  const cut = plain.slice(0, length);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > length / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:.\-–—]+$/, "")}…`;
+}
+
 /** A template in words, as the model reads it: nothing it could not have told a person. */
 function templateState(template: StarterTemplate): Record<string, unknown> {
   const document = template.document;
@@ -144,7 +191,7 @@ function templateState(template: StarterTemplate): Record<string, unknown> {
     ...(template.useCases && template.useCases.length > 0 ? { for: template.useCases } : {}),
     keeps: Object.keys(document.kinds ?? {}).map((kind) => pluralOf(kind, document.kinds ?? {})),
     "made of": traitsOf(document).map((trait) => trait.said),
-    ...(template.readme ? { about: template.readme.length > README_EXCERPT ? `${template.readme.slice(0, README_EXCERPT).trimEnd()}…` : template.readme } : {}),
+    ...(template.readme && readmeExcerpt(template.readme) ? { about: readmeExcerpt(template.readme) } : {}),
   };
 }
 
@@ -263,14 +310,15 @@ export function readStarter(answers: Readonly<Record<string, Answer>>, threshold
   for (const [key, answer] of Object.entries(answers)) {
     if (key.startsWith("fit:")) {
       const fit = scoreOf(answer, FIT_LEVELS.length) ?? 0;
-      const level = Math.round(fit * (FIT_LEVELS.length - 1) * 100) / 100;
+      // The level from the expected level itself, rounded once: from the rounded score it would fall on 0.04 steps.
+      const level = Math.round((expectedLevelOf(answer, FIT_LEVELS.length) ?? 0) * 100) / 100;
       ranked.push({ id: key.slice("fit:".length), level, fit, shown: level >= at.show });
     } else if (key.startsWith("need:")) {
       const trait = key.slice("need:".length);
       if (isTrait(trait)) needs[trait] = noulOf(answer) ?? 0;
     }
   }
-  ranked.sort((a, b) => b.fit - a.fit || a.id.localeCompare(b.id));
+  ranked.sort((a, b) => b.level - a.level || b.fit - a.fit || a.id.localeCompare(b.id));
   const audience = choiceOf(answers["audience"]);
   const horizon = choiceOf(answers["horizon"]);
   return {
@@ -284,10 +332,16 @@ export function readStarter(answers: Readonly<Record<string, Answer>>, threshold
   };
 }
 
-/** What a template refused leaves unmet: the traits the reading says they need that the template's declaration lacks — what "No" says before it shows the next. */
-export function stillUnmet(reading: StarterReading, template: StarterTemplate): TraitName[] {
+/**
+ * What a template refused leaves unmet: the traits needed that the
+ * template's declaration lacks — what "No" says before it shows the next.
+ * The traits needed are a first turn's reading, or the traits themselves
+ * (a host that keeps only `reading.traits`, or adds one a person named).
+ */
+export function stillUnmet(needed: StarterReading | readonly TraitName[], template: StarterTemplate): TraitName[] {
   const has = new Set(traitsOf(template.document).map((trait) => trait.trait));
-  return reading.traits.filter((trait) => !has.has(trait));
+  const traits: readonly TraitName[] = Array.isArray(needed) ? needed : (needed as StarterReading).traits;
+  return traits.filter((trait) => !has.has(trait));
 }
 
 /** A turn run through the host's model: the reading, the raw answers to keep, and what the call cost. */

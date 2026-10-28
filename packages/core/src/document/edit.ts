@@ -62,7 +62,7 @@ import type { Ground } from "../theme/ground.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
 import { capitalize, listed as listOf } from "../capital.js";
 import { quoted } from "./quote.js";
-import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, archivesSentence, tidyingSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, appTidyingSentence, archivesSentence, tidyingSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
 
 /*
  * STRUCTURAL EDITS — a closed vocabulary for changing what an app declares.
@@ -151,6 +151,7 @@ export const EDIT_OPS = [
   "set-people",
   "set-archives",
   "set-tidying",
+  "set-app-tidying",
   "add-grant",
   "remove-grant",
   "add-sight",
@@ -329,6 +330,8 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "set-archives": z.object({ op: z.literal("set-archives"), kind: kindName, archives: z.boolean() }).strict(),
     // What the app's own actor may do on its own to a kind, or to one relation of it (`@graview/core/tidying`).
     "set-tidying": z.object({ op: z.literal("set-tidying"), kind: kindName, relation: z.optional(z.string()), tidying: z.enum(["never", "no-links", "allowed"]) }).strict(),
+    // What the app says of suggestions as a whole (`tidying` at the top of the document): the votes at which the app's own actor makes one; null takes it away.
+    "set-app-tidying": z.object({ op: z.literal("set-app-tidying"), autoAcceptAt: z.union([z.number().int().min(1).max(10_000), z.null()]) }).strict(),
     "add-grant": z.object({ op: z.literal("add-grant") }).passthrough(),
     "remove-grant": z.object({ op: z.literal("remove-grant") }).passthrough(),
     "add-sight": z.object({ op: z.literal("add-sight") }).passthrough(),
@@ -1087,6 +1090,8 @@ class Editor {
         return this.setArchives(i, e);
       case "set-tidying":
         return this.setTidying(i, e);
+      case "set-app-tidying":
+        return this.setAppTidying(e);
       case "add-grant":
       case "remove-grant":
       case "add-sight":
@@ -2023,6 +2028,23 @@ class Editor {
     else spec.tidying = tidying;
     if (!already && (was === "never" || tidying === "never")) this.toolsMoved.add(`leave-alone-${e.kind} and allow-tidying-${e.kind} ${tidying === "never" ? "are gone" : "are offered"}`);
     this.said.push(tidyingSentence(this.doc.kinds, e.kind, undefined, tidying, already));
+  }
+
+  /**
+   * WHAT THE APP SAYS OF SUGGESTIONS AS A WHOLE (Roadmap f-suggestion-votes):
+   * `tidying.autoAcceptAt`, the votes for a suggestion at which the app's
+   * own actor makes it; null takes it away, and a suggestion waits for
+   * somebody who may decide. A `tidying` left saying nothing goes.
+   */
+  private setAppTidying(e: Doc) {
+    const autoAcceptAt = e.autoAcceptAt as number | null;
+    const was = (this.doc.tidying as { autoAcceptAt?: number } | undefined)?.autoAcceptAt;
+    const tidying: Doc = { ...(this.doc.tidying ?? {}) };
+    if (autoAcceptAt === null) delete tidying.autoAcceptAt;
+    else tidying.autoAcceptAt = autoAcceptAt;
+    if (Object.keys(tidying).length === 0) delete this.doc.tidying;
+    else this.doc.tidying = tidying;
+    this.said.push(appTidyingSentence(autoAcceptAt ?? undefined, was === (autoAcceptAt ?? undefined)));
   }
 
   /** A grant or a sight as the document holds one, or undefined having said why not. */

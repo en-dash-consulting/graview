@@ -121,6 +121,13 @@ export function tidyingSentence(kinds: Kinds, kind: string, relation: string | u
   return already ? `${plural} could already be tidied.` : `${plural} can be tidied again.`;
 }
 
+/** What the app says of suggestions as a whole: the votes at which its own actor makes one, or none. */
+export function appTidyingSentence(autoAcceptAt: number | undefined, already = false): string {
+  if (autoAcceptAt === undefined) return already ? "A suggestion already waited for somebody who may decide, however many voted for it." : "A suggestion now waits for somebody who may decide, however many vote for it.";
+  const people = autoAcceptAt === 1 ? "one person" : `${autoAcceptAt} people`;
+  return already ? `The app already made a suggestion on its own once ${people} voted for it.` : `The app makes a suggestion on its own once ${people} ${autoAcceptAt === 1 ? "votes" : "vote"} for it.`;
+}
+
 export const FIRST_GRANT = "The app gets a policy: from now on, only what a grant gives is allowed.";
 export const FIRST_SIGHT = "From now on, a kind no sight names is seen by nobody but the system.";
 export const NO_GRANT_LEFT = "No grant is left, so nobody but the system may do anything.";

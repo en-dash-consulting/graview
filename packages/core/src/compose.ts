@@ -307,7 +307,7 @@ export function composeDesign(source: GraviewDocument | GraviewApp<AnySchema>, o
 export { TRAIT_BRINGS, TRAITS, TRAIT_WORDS, hasTrait, traitsOfDocument, traitWords } from "./traits.js";
 export type { Trait, TraitName } from "./traits.js";
 export { breakingOf, composeReshape, startingDocument } from "./starting-document.js";
-export type { ComposedReshape, Part, PartKind, StartingDocument, StartingOptions } from "./starting-document.js";
+export type { ComposedReshape, DropPart, Part, PartKind, StartingDocument, StartingOptions } from "./starting-document.js";
 
 /**
  * THE TRAITS A DECLARATION CARRIES (`traitsOfDocument`), a TypeScript app

@@ -49,6 +49,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "remove-grant": { op: "remove-grant", roles: ["viewer"], mutations: ["book"] },
   "add-sight": { op: "add-sight", roles: "*", kinds: ["vendor", "category"] },
   "remove-sight": { op: "remove-sight", roles: "*", kinds: ["category", "vendor"] },
+  "set-app-tidying": { op: "set-app-tidying", autoAcceptAt: 4 },
   "set-purpose": { op: "set-purpose", for: "The couple and their planner" },
   "add-job": { op: "add-job", job: { name: "unbooked", ask: "Who is still unbooked?", kind: "vendor", where: "status != 'booked'", sort: "due" } },
   "edit-job": { op: "edit-job", name: "unbooked", sort: { by: "quote", direction: "desc" } },
