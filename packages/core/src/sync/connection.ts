@@ -3,7 +3,8 @@ import type { AnySchema } from "../schema/schema.js";
 import type { Store } from "../store.js";
 import { fieldSpecOf } from "../document/field-spec.js";
 import type { FieldSpec } from "../document/schema.js";
-import type { ConnectionSpec, GoogleCalendarConnectionSpec, NotionConnectionSpec } from "../document/connection-spec.js";
+import { notionSourcesOf, type ConnectionSpec, type GoogleCalendarConnectionSpec, type NotionConnectionSpec, type NotionSourceSpec } from "../document/connection-spec.js";
+import { humanizeField } from "../schema/humanize.js";
 import { GOOGLE_COLORS, MADE_BY_GRAVIEW, inConnectionFilter, tagPattern } from "./connection-filter.js";
 import type { EdgeDeclaration } from "../schema/types.js";
 import { relationActName } from "../mutations/derived-names.js";
@@ -16,7 +17,7 @@ import { instantIn, timeZoneFor, wallIn } from "../days.js";
 import { isRepeat, isRepeatField, repeatKey, type Weekday } from "../repeat.js";
 import { addDays } from "../wall-time.js";
 import { firstWeekday, hhmm, instantOfMoment, isoInstant, minutesOf, momentOfInstant, recurrenceOf, repeatOf, wallOfMoment, weekdayOf, weekdaysOf, weeklyRule } from "./recurrence.js";
-import { notion, notionKey } from "./notion.js";
+import { notion, notionKey, type NotionMade, type NotionSourceOptions } from "./notion.js";
 import { NOTION_EDGE, NOTION_INFERABLE, notionFieldType } from "./notion-types.js";
 import type { LinkResolver, RemoteSystem, ResourceMapping, SyncMapping, SyncState } from "./types.js";
 
@@ -60,6 +61,16 @@ import type { LinkResolver, RemoteSystem, ResourceMapping, SyncMapping, SyncStat
  *   app (`sharedLinks()`), so it may be another connection's record; one
  *   not linked yet is held until it is. A relation of one takes the first
  *   page Notion lists, and says the rest once.
+ * - SEVERAL DATA SOURCES of one database (`sources`) are one engine of
+ *   several resources (`pages:<kind>`), each kept with its kind; a relation
+ *   between two of them is found through the same links.
+ * - THE PROPERTIES IT NEEDS ARE MADE (`make`): each mapped field the data
+ *   source lacks is given a property of the type it is held in — words a
+ *   text, a choice a select with the choice's options, a relation one to
+ *   the source keeping the kind it reaches — named as the declaration
+ *   names it, or, matched by name, as the field reads ("Due date"). The
+ *   name field is the title Notion always has. None is made for a
+ *   connection that only reads, or that says `create: false`.
  * - READ means the other system owns the kind: an act here that would change
  *   a record of it is refused with a sentence saying so (`SyncEngine.guard`),
  *   rather than accepted and never sent.
@@ -337,41 +348,101 @@ function edgeSpecs(app: GraviewApp, kind: string): Readonly<Record<string, EdgeD
 
 /** The kinds a Notion connection of the app keeps. */
 function notionKinds(app: GraviewApp): Set<string> {
-  return new Set(Object.values(app.connections ?? {}).flatMap((declared) => (declared.system === "notion" ? [declared.kind] : [])));
+  return new Set(Object.values(app.connections ?? {}).flatMap((declared) => (declared.system === "notion" ? notionSourcesOf(declared).map((one) => one.kind) : [])));
 }
 
-/** What a Notion connection maps: the engine's mapping, the property names the transport resolves with their field types, the name that is the title, and the relations matched by name that need not be there. */
-export function notionConnectionMapping(
-  app: GraviewApp,
-  declaration: NotionConnectionSpec,
-  say?: (line: string) => void,
-): { readonly mapping: SyncMapping; readonly refs: Readonly<Record<string, string | undefined>>; readonly titleRef?: string; readonly quiet: readonly string[] } {
-  const { kind } = declaration;
+/** The property type a field of each type is made as, when a data source lacks it. */
+const MADE_AS: Readonly<Record<string, string>> = {
+  string: "rich_text",
+  text: "rich_text",
+  number: "number",
+  integer: "number",
+  enum: "select",
+  "several choices": "multi_select",
+  list: "multi_select",
+  date: "date",
+  datetime: "date",
+  boolean: "checkbox",
+  url: "url",
+  email: "email",
+  phone: "phone_number",
+};
+/** The property types a connection may make: Notion makes neither a status nor people from here. */
+const MAKEABLE = new Set(["rich_text", "number", "select", "multi_select", "date", "checkbox", "url", "email", "phone_number", "relation"]);
+
+/** A choice's option as a property's option is made: "in-progress" is "In progress". */
+const optionWords = (option: string) => {
+  const spaced = option.replace(/[_-]+/g, " ").trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+};
+
+/** What one data source of a Notion connection maps: its resource's mapping, the names the transport resolves, the title, the relations that need not be there, and what to make. */
+export interface NotionSourceMapping {
+  readonly resource: ResourceMapping;
+  readonly refs: Readonly<Record<string, string | undefined>>;
+  readonly titleRef?: string;
+  readonly quiet: readonly string[];
+  readonly make: Readonly<Record<string, NotionMade>>;
+}
+
+/** What a Notion connection maps: the engine's mapping, and each data source's part of it. */
+export function notionConnectionMapping(app: GraviewApp, declaration: NotionConnectionSpec, say?: (line: string) => void): { readonly mapping: SyncMapping; readonly sources: readonly (NotionSourceMapping & { readonly spec: NotionSourceSpec })[] } {
+  const specs = notionSourcesOf(declaration);
+  const resourceOfKind = new Map(specs.map((one) => [one.kind, one.resource]));
+  const making = declaration.create !== false && declaration.direction !== "read";
+  const sources = specs.map((spec) => ({ spec, ...notionSourceMapping(app, declaration, spec, making ? resourceOfKind : undefined, say) }));
+  return { mapping: { system: "notion", resources: sources.map((one) => one.resource) }, sources };
+}
+
+function notionSourceMapping(app: GraviewApp, declaration: NotionConnectionSpec, source: NotionSourceSpec, making: ReadonlyMap<string, string> | undefined, say?: (line: string) => void): NotionSourceMapping {
+  const { kind } = source;
   const specs = fieldSpecs(app, kind);
   const relations = edgeSpecs(app, kind);
+  const named = nameField(specs);
   const fields: Record<string, string> = {};
   const edges: Record<string, string> = {};
   const refs: Record<string, string | undefined> = {};
+  const make: Record<string, NotionMade> = {};
   const quiet: string[] = [];
   let titleRef: string | undefined;
-  if (declaration.properties) {
-    for (const [field, property] of Object.entries(declaration.properties)) {
+  /** What a field is made as, when its data source lacks the property: the type it is held in, with a choice's options. */
+  const makeField = (field: string, ref: string, name: string | undefined, declared?: string) => {
+    if (!making || field === named) return;
+    const spec = specs[field];
+    const type = declared ?? (spec ? MADE_AS[notionFieldType(spec)] : undefined);
+    if (!type || !MAKEABLE.has(type) || type === "relation") return;
+    const options = (type === "select" || type === "multi_select") && spec?.options ? spec.options.map(optionWords) : undefined;
+    make[ref] = { type, ...(name && name !== ref ? { name } : {}), ...(options ? { options } : {}) };
+  };
+  /** A relation's property is made only when it links a kind another source of this connection keeps. */
+  const makeEdge = (edge: string, ref: string) => {
+    const to = relations[edge]?.to;
+    const target = making && to !== "*" && to?.length === 1 ? making.get(to[0]!) : undefined;
+    if (target) make[ref] = { type: "relation", to: target };
+  };
+  if (source.properties) {
+    for (const [field, property] of Object.entries(source.properties)) {
       const ref = typeof property === "string" ? property : property.name;
       if (!specs[field] && relations[field]) {
         edges[field] = ref;
         refs[ref] = NOTION_EDGE;
+        makeEdge(field, ref);
         continue;
       }
       fields[field] = ref;
       refs[ref] = specs[field] ? notionFieldType(specs[field]) : undefined;
+      // The name field is the title every data source has, if no property is called what it names.
+      if (field === named) titleRef = ref;
+      makeField(field, ref, undefined, typeof property === "string" ? undefined : property.type);
     }
   } else {
     for (const [field, spec] of Object.entries(specs)) {
       if (!NOTION_INFERABLE.has(notionFieldType(spec))) continue;
       fields[field] = field;
       refs[field] = notionFieldType(spec);
+      makeField(field, field, humanizeField(field));
     }
-    titleRef = nameField(specs);
+    titleRef = named;
     // A relation is kept by name only when every kind it reaches is another Notion connection's: a relation property of its name may not be there.
     const kept = notionKinds(app);
     for (const [edge, spec] of Object.entries(relations)) {
@@ -425,14 +496,14 @@ export function notionConnectionMapping(
   }
   const resource: ResourceMapping = {
     kind,
-    resource: "pages",
+    resource: source.resource,
     fields,
     ...(Object.keys(edges).length > 0 ? { edges } : {}),
     encode,
     decode,
     ...(declaration.direction === "read" ? { readonly: true, because: `Each ${kind} comes from a Notion database this app only reads: change it there.` } : {}),
   };
-  return { mapping: { system: "notion", resources: [resource] }, refs, ...(titleRef ? { titleRef } : {}), quiet };
+  return { resource, refs, ...(titleRef ? { titleRef } : {}), quiet, make };
 }
 
 /**
@@ -546,39 +617,52 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
 function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaration: NotionConnectionSpec): Connection<S> {
   const { app, store } = run;
   if (!run.databaseId) throw new Error(`connection ${run.name}: a Notion connection needs its database's id`);
-  const { mapping, refs, titleRef, quiet } = notionConnectionMapping(app as GraviewApp, declaration, run.say);
-  const resource = mapping.resources[0]!;
+  const { mapping, sources } = notionConnectionMapping(app as GraviewApp, declaration, run.say);
   let engine: SyncEngine<S> | undefined;
   const remote = notion({
     databaseId: run.databaseId,
-    ...(declaration.source ? { source: declaration.source } : {}),
+    sources: sources.map(
+      (one): NotionSourceOptions => ({
+        resource: one.resource.resource,
+        ...(one.spec.source ? { source: one.spec.source } : {}),
+        refs: one.refs,
+        ...(one.titleRef ? { titleRef: one.titleRef } : {}),
+        ...(one.quiet.length > 0 ? { quiet: one.quiet } : {}),
+        ...(Object.keys(one.make).length > 0 ? { make: one.make } : {}),
+      }),
+    ),
     token: () => run.token(),
     ...(run.secretName ? { secretName: run.secretName } : {}),
     ...(run.fetch ? { fetch: run.fetch } : {}),
-    refs,
-    ...(titleRef ? { titleRef } : {}),
-    ...(quiet.length > 0 ? { quiet } : {}),
-    // The pages linked when the pass began: a whole read that no longer lists one finds out whether it is gone.
-    known: () => Object.values(engine?.snapshot.links ?? {}).map((link) => link.id),
+    // The pages linked when the pass began, of one source: a whole read that no longer lists one finds out whether it is gone.
+    known: (resource) => Object.values(engine?.snapshot.links ?? {}).flatMap((link) => (link.resource === resource ? [link.id] : [])),
     ...(run.say ? { say: run.say } : {}),
   });
-  const creates = creatingAct(app as GraviewApp, declaration.kind, Object.keys(resource.fields));
-  const decoded = decodedBy(resource);
+  // Each source's kind is made through its own act, from its own fields.
+  const made = new Map(
+    sources.map((one) => {
+      const resource = one.resource;
+      return [resource.resource, { kind: resource.kind, creates: creatingAct(app as GraviewApp, resource.kind, Object.keys(resource.fields)), decoded: decodedBy(resource) }] as const;
+    }),
+  );
+  const relationsOf = new Map(sources.map((one) => [one.resource.kind, relationActs(store, one.resource.kind)]));
   engine = new SyncEngine<S>(
     {
       store,
       mapping,
       remote,
       ...(run.links ? { links: run.links } : {}),
-      ...relationActs(store, declaration.kind),
+      connectInbound: (call) => relationsOf.get(call.kind)?.connectInbound?.(call) ?? null,
+      disconnectInbound: (call) => relationsOf.get(call.kind)?.disconnectInbound?.(call) ?? null,
       conflicts: declaration.conflicts ?? "report",
-      applyInbound: ({ localId, fields }) => ({ name: `edit-${declaration.kind}`, args: { id: localId, ...fields } }),
-      removeInbound: ({ localId }) => ({ name: `remove-${declaration.kind}`, args: { id: localId } }),
-      createInbound: ({ id, fields }) => {
-        if (!creates) return null;
+      applyInbound: ({ localId, kind, fields }) => ({ name: `edit-${kind}`, args: { id: localId, ...fields } }),
+      removeInbound: ({ localId, kind }) => ({ name: `remove-${kind}`, args: { id: localId } }),
+      createInbound: ({ resource, id, fields }) => {
+        const source = made.get(resource);
+        if (!source?.creates) return null;
         // An empty property is no value for a record being made; the page's own id names it, so a full read makes it once.
-        const values = Object.fromEntries(Object.entries(decoded(fields)).filter(([, value]) => value !== null && value !== undefined));
-        return { name: creates, args: { id: `${declaration.kind}:${run.name}-${notionKey(id)}`, ...values } };
+        const values = Object.fromEntries(Object.entries(source.decoded(fields)).filter(([, value]) => value !== null && value !== undefined));
+        return { name: source.creates, args: { id: `${source.kind}:${run.name}-${notionKey(id)}`, ...values } };
       },
     },
     run.state,

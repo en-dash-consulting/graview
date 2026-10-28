@@ -91,8 +91,8 @@ exporting the app itself is `graview-ship`.
 
 5. **Keep it in step with a Notion database by declaring it.**
    `system: "notion"`, `database` (its 32-character id, or `{ env }`),
-   `source` when the database holds several data sources (one's name or
-   id; refused otherwise with a sentence naming them), `kind`, `properties` (field → property name, or `{ name, type }` for the
+   `source` when the database holds several data sources (name or id),
+   `kind`, `properties` (field → property name, or `{ name, type }` for the
    checker to judge the type; absent, each field finds the property of its
    name and the name field the title), `direction`, `conflicts`, `every`,
    `paused`. The secret is an internal integration's, read from
@@ -102,8 +102,11 @@ exporting the app itself is `graview-ship`.
    `datetime`), checkbox, URL, email and phone go both ways; people are
    read as names; formulas, rollups and files are left alone and said
    once. A page archived there is gone here, and one removed here is
-   archived there. `scriptedNotion()` is a Notion in memory to test
-   against.
+   archived there. A mapped property the source lacks is made on the
+   first pass, of its field's type (said in `report.said`), never
+   renamed or deleted; `create: false`
+   or a read connection makes none. `scriptedNotion()` is a Notion in
+   memory to test against.
 
    What a change there lands through, credited to the system: a page or
    event made there becomes a record through `add-<kind>`, or else the
@@ -114,27 +117,27 @@ exporting the app itself is `graview-ship`.
    buttons — a default, the field left blank, an event part mapped, another
    kind, a kind made for events — each with its edits (`set-default`,
    `set-required`, `set-connection`, `add-kind`) where one can be written,
-   and the framework's own sentence as `details`; a change lands through the derived `edit-<kind>`, which
+   and the framework's sentence as `details`; a change lands through the derived `edit-<kind>`, which
    writes every mapped field even where a named step (a status moved
    along) writes it too, so declare no `edit-<kind>` of your own unless it writes
    them all (`connection-edit`). One this store refuses (a blank row) is
    said once, kept as `skipped`, and tried again when it changes there.
 
-6. **Several Notion tables joined by relations: one connection per
-   table, relations as edges.** Declare the edge on the kind
+6. **Several kinds: `sources` in one database, or one connection per
+   database; relations as edges.** `"sources": [{ "source": "Tasks",
+   "kind": "task", "properties"? }, …]` in place of `source`, `kind`,
+   `properties`. Declare the edge on the kind
    (`"reindeer": { "to": ["reindeer"], "cardinality": "one" }`) and map it
    to the relation property in `properties` (`"reindeer": "Reindeer
    Fleet"`, or `{ "name", "type": "relation" }`); the kind it reaches must
-   be another Notion connection's. A link in Notion lands through
-   `connect-<kind>-<edge>` / `disconnect-…`; one made here is written as
-   the whole relation. A page not read yet is held and linked once its
+   be kept by a Notion source. A link in Notion lands through
+   `connect-<kind>-<edge>` / `disconnect-…`. A page not read yet is held and linked once its
    table is, whatever order the connections run in (`runConnections`
    shares one `sharedLinks()`; a host making engines itself passes one
    `links` to every `connection()`). A relation of one keeps the first
-   page and says the rest once. For a dual relation, declare the edge on
-   the side you need; declaring both sides converges with nothing sent. A
-   read-only connection refuses links made here. An edge both sides
-   changed is a conflict like a field, under `conflicts`.
+   page and says the rest once. A dual relation may be declared on either
+   side or both. An edge is held in conflict like a field. A record's page says "Kept in
+   step with Notion · Tasks", linked there.
 
 ## Then find out whether it worked
 
@@ -154,8 +157,9 @@ field that holds no addresses or through a relation that reaches no people
 the calendar would stay here. For Notion it refuses a secret written in
 the declaration (`connection-secret`), a field that cannot hold the
 property's type, a relation property mapped to a field or another type
-mapped to an edge (`connection-relation`), and an edge to a kind no Notion
-connection keeps (`connection-relation-target`); it warns a people
+mapped to an edge (`connection-relation`), an edge to a kind no Notion
+source keeps (`connection-relation-target`), and two sources for one kind
+(`connection-sources`); it warns a people
 property is only read (`connection-read-only`). Report what it said; a host's line says why it
 could not reach the other side (`report.problem`).
 

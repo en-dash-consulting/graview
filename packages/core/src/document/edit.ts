@@ -20,7 +20,7 @@ import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
 import { JobSpec } from "./purpose-spec.js";
 import { aliasWord, documentAliasFindings } from "../alias-findings.js";
 import { humanizeField, withArticle } from "../schema/define-node.js";
-import { ConnectionSpec } from "./connection-spec.js";
+import { ConnectionSpec, connectionKinds } from "./connection-spec.js";
 import { linkedRelationFindings } from "./linked-relation-findings.js";
 import { linkedRelationOfSpec, reachesAnotherApp, type LinkedRelation } from "../schema/linked.js";
 import {
@@ -1133,7 +1133,9 @@ class Editor {
     const was = this.doc.connections?.[name] !== undefined;
     (this.doc.connections ??= {})[name] = parsed.data;
     const system = parsed.data.system === "notion" ? "a Notion database" : "a Google calendar";
-    this.said.push(`The connection ${name} ${was ? "now keeps" : "keeps"} ${pluralOf(this.doc.kinds, parsed.data.kind)} in step with ${system}${parsed.data.direction === "read" ? ", which owns them" : ", both ways"}.`);
+    const kinds = connectionKinds(parsed.data).map((kind) => pluralOf(this.doc.kinds, kind));
+    const said = kinds.length <= 1 ? kinds.join("") : `${kinds.slice(0, -1).join(", ")} and ${kinds.at(-1)}`;
+    this.said.push(`The connection ${name} ${was ? "now keeps" : "keeps"} ${said} in step with ${system}${parsed.data.direction === "read" ? ", which owns them" : ", both ways"}.`);
   }
 
   // ── other words for a kind or a field (Roadmap f-learned-suggestions) ──

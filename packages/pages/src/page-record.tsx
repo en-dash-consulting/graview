@@ -1,5 +1,5 @@
 import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Place, type Violation } from "@graview/core";
-import { describeNode, pageSections } from "@graview/core/words";
+import { describeNode, keptInStepWith, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
 import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
@@ -150,6 +150,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * address and a link, and listed nowhere; a record's page had listed the
    * hidden ones first, ahead of the pictures the app meant to show.
    */
+  // THE OTHER SYSTEM IT IS KEPT IN STEP WITH: a Notion data source or a calendar, and where it is there.
+  const kept = node ? keptInStepWith(context.app?.connections, facts.kind, id) : undefined;
   const seenIn = placesOf(context).filter((place) => !place.hidden && (place.kind === facts.kind || place.across === facts.kind));
 
   return (
@@ -177,6 +179,19 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           />
         ) : null}
         {seenIn.length > 0 ? <SeenIn context={context} places={seenIn} /> : null}
+        {kept ? (
+          <p style={{ ...quiet, margin: 0 }} data-testid="record-kept-in-step" data-graview-system={kept.system}>
+            Kept in step with {kept.words}
+            {kept.href ? (
+              <>
+                {" · "}
+                <a href={kept.href} target="_blank" rel="noopener noreferrer" style={link}>
+                  Open in {kept.system === "notion" ? "Notion" : "Google Calendar"}
+                </a>
+              </>
+            ) : null}
+          </p>
+        ) : null}
       </header>
 
       {node && isArchived(node) ? <ArchivedSaid context={context} id={id} kind={facts.kind} /> : null}

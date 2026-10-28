@@ -64,6 +64,12 @@ export interface SyncReport {
   readonly gone: readonly string[];
   readonly offline: boolean;
   /**
+   * What the transport did to the remote, or found there, said as
+   * sentences: "Made 3 properties in Notion: Status, Due and Owner".
+   * Absent when it said nothing new.
+   */
+  readonly said?: readonly string[];
+  /**
    * What the remote said when it could not be reached, in its transport's
    * words — a secret it refused, a database not shared — so a host says
    * why rather than only that. Absent when the run reached it.
@@ -696,6 +702,7 @@ export class SyncEngine<S extends AnySchema> {
     const policy = this.policy;
     let offline = false;
     let problem: string | undefined;
+    let said: readonly string[] | undefined;
 
     let links: Record<string, RemoteLink> = { ...this.state.links };
     let cursor = this.state.cursor;
@@ -727,6 +734,7 @@ export class SyncEngine<S extends AnySchema> {
     try {
       const result = await this.options.remote.pull(cursor);
       cursor = result.cursor;
+      said = result.said;
       const byRemoteId = new Map(
         Object.entries(links).map(([localId, link]) => [`${link.resource}:${link.id}`, localId]),
       );
@@ -990,6 +998,7 @@ export class SyncEngine<S extends AnySchema> {
       refused,
       gone,
       offline,
+      ...(said && said.length > 0 ? { said } : {}),
       ...(problem ? { problem } : {}),
       state: this.snapshot,
     };
