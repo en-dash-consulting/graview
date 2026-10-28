@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-28T21:30:01.381Z",
+  "at": "2026-10-27T22:54:53.498Z",
   "packages": {
     "@graview/core": {
-      "files": 1436,
-      "tarballBytes": 1828885,
+      "files": 1388,
+      "tarballBytes": 1741633,
       "ok": true
     },
     "create-graview": {
@@ -13,17 +13,17 @@
     },
     "@graview/embed": {
       "files": 63,
-      "tarballBytes": 97948,
+      "tarballBytes": 95541,
       "ok": true
     },
     "graview": {
-      "files": 189,
-      "tarballBytes": 775871,
+      "files": 183,
+      "tarballBytes": 753247,
       "ok": true
     },
     "@graview/guest": {
-      "files": 308,
-      "tarballBytes": 441565,
+      "files": 304,
+      "tarballBytes": 452787,
       "ok": true
     },
     "@graview/layout": {
@@ -32,18 +32,18 @@
       "ok": true
     },
     "@graview/pages": {
-      "files": 143,
-      "tarballBytes": 213254,
+      "files": 139,
+      "tarballBytes": 201999,
       "ok": true
     },
     "@graview/primitives": {
-      "files": 650,
-      "tarballBytes": 870539,
+      "files": 646,
+      "tarballBytes": 858864,
       "ok": true
     },
     "@graview/react": {
       "files": 319,
-      "tarballBytes": 384383,
+      "tarballBytes": 383343,
       "ok": true
     },
     "@graview/render": {
@@ -53,22 +53,22 @@
     },
     "@graview/ship": {
       "files": 211,
-      "tarballBytes": 332613,
+      "tarballBytes": 331463,
       "ok": true
     },
     "@graview/skills": {
       "files": 47,
-      "tarballBytes": 112772,
+      "tarballBytes": 110073,
       "ok": true
     },
     "@graview/studio": {
       "files": 75,
-      "tarballBytes": 149235,
+      "tarballBytes": 148152,
       "ok": true
     },
     "@graview/tools": {
-      "files": 251,
-      "tarballBytes": 404259,
+      "files": 243,
+      "tarballBytes": 390452,
       "ok": true
     }
   },
@@ -79,12 +79,12 @@
     {
       "name": "the pages face alone",
       "load": "first",
-      "minified": 700444,
-      "gzipped": 256607,
-      "chunks": 42,
+      "minified": 684224,
+      "gzipped": 250546,
+      "chunks": 40,
       "budget": {
-        "minified": 700456,
-        "gzipped": 256700
+        "minified": 684264,
+        "gzipped": 250594
       },
       "carries": [],
       "defers": [],
@@ -103,12 +103,12 @@
     {
       "name": "a visitor's form alone",
       "load": "first",
-      "minified": 255805,
-      "gzipped": 93514,
+      "minified": 249036,
+      "gzipped": 91320,
       "chunks": 8,
       "budget": {
-        "minified": 255826,
-        "gzipped": 93528
+        "minified": 249077,
+        "gzipped": 91368
       },
       "carries": [],
       "defers": [],
@@ -125,12 +125,12 @@
     {
       "name": "a visitor's form handed a compiled app",
       "load": "first",
-      "minified": 339735,
-      "gzipped": 124354,
+      "minified": 328340,
+      "gzipped": 120482,
       "chunks": 10,
       "budget": {
-        "minified": 339821,
-        "gzipped": 124373
+        "minified": 328373,
+        "gzipped": 120523
       },
       "carries": [],
       "defers": [],
@@ -148,8 +148,8 @@
     {
       "name": "embed without the studio",
       "load": "first",
-      "minified": 408706,
-      "gzipped": 142819,
+      "minified": 404872,
+      "gzipped": 141389,
       "chunks": 9,
       "budget": {
         "minified": 725090,
@@ -175,12 +175,12 @@
     {
       "name": "every face",
       "load": "all",
-      "minified": 2464438,
-      "gzipped": 896755,
-      "chunks": 177,
+      "minified": 2393843,
+      "gzipped": 871470,
+      "chunks": 171,
       "budget": {
-        "minified": 2609353,
-        "gzipped": 896827
+        "minified": 2550329,
+        "gzipped": 872078
       },
       "carries": [],
       "defers": [],
@@ -202,12 +202,12 @@
     {
       "name": "embed with the studio handed in",
       "load": "first",
-      "minified": 1775163,
-      "gzipped": 624250,
-      "chunks": 86,
+      "minified": 1710692,
+      "gzipped": 602580,
+      "chunks": 82,
       "budget": {
-        "minified": 1935349,
-        "gzipped": 624331
+        "minified": 1881752,
+        "gzipped": 603082
       },
       "carries": [],
       "defers": [],
@@ -257,12 +257,12 @@
     {
       "name": "the guest host, before a worker is drawn",
       "load": "first",
-      "minified": 32081,
-      "gzipped": 14637,
+      "minified": 28854,
+      "gzipped": 13382,
       "chunks": 8,
       "budget": {
-        "minified": 32222,
-        "gzipped": 14704
+        "minified": 28859,
+        "gzipped": 13421
       },
       "carries": [],
       "defers": [],
@@ -276,12 +276,12 @@
     {
       "name": "the guest host, registering a worker view",
       "load": "first",
-      "minified": 41508,
-      "gzipped": 18130,
+      "minified": 38185,
+      "gzipped": 16859,
       "chunks": 10,
       "budget": {
-        "minified": 41649,
-        "gzipped": 18195
+        "minified": 38185,
+        "gzipped": 16860
       },
       "carries": [],
       "defers": [],
@@ -295,12 +295,12 @@
     {
       "name": "the guest host, drawing a worker",
       "load": "first",
-      "minified": 29790,
-      "gzipped": 12439,
+      "minified": 26769,
+      "gzipped": 11278,
       "chunks": 4,
       "budget": {
-        "minified": 29936,
-        "gzipped": 12492
+        "minified": 26769,
+        "gzipped": 11345
       },
       "carries": [],
       "defers": [],
@@ -313,12 +313,12 @@
     {
       "name": "the guest host, drawing a worker view on the open kit",
       "load": "all",
-      "minified": 238081,
-      "gzipped": 90393,
+      "minified": 225782,
+      "gzipped": 85848,
       "chunks": 18,
       "budget": {
-        "minified": 238302,
-        "gzipped": 90588
+        "minified": 225782,
+        "gzipped": 85853
       },
       "carries": [],
       "defers": [],
@@ -332,7 +332,7 @@
       "name": "a worker view's runtime",
       "load": "all",
       "minified": 63604,
-      "gzipped": 21964,
+      "gzipped": 21963,
       "chunks": 1,
       "budget": {
         "minified": 63622,
