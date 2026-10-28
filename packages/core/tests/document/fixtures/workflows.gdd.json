@@ -1,0 +1,179 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "The household",
+  "description": "A household's routines, plans, week of events and grocery lists, and what the app does on its own with them.",
+  "kinds": {
+    "routine": {
+      "noun": "routine",
+      "plural": "routines",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "active": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "plan-item": {
+      "noun": "plan item",
+      "plural": "plan items",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "date": {
+          "type": "date"
+        }
+      }
+    },
+    "event": {
+      "noun": "event",
+      "plural": "events",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "date": {
+          "type": "date"
+        }
+      },
+      "edges": {
+        "for-plan": {
+          "to": [
+            "plan-item"
+          ],
+          "cardinality": "one",
+          "description": "the plan item it keeps",
+          "inverse": "its events"
+        }
+      }
+    },
+    "grocery-list": {
+      "noun": "grocery list",
+      "plural": "grocery lists",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "open",
+            "done"
+          ],
+          "default": "open",
+          "required": true
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-routine": {
+      "title": "Add a routine",
+      "creates": "routine",
+      "description": "Something done every week."
+    },
+    "add-plan-item": {
+      "title": "Add a plan item",
+      "creates": "plan-item",
+      "description": "Something planned."
+    },
+    "add-event": {
+      "title": "Add an event",
+      "creates": "event",
+      "description": "Put an event on the week."
+    },
+    "add-grocery-list": {
+      "title": "Add a grocery list",
+      "creates": "grocery-list",
+      "description": "A list for the shop."
+    }
+  },
+  "roles": [
+    "owner"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner"
+        ],
+        "mutations": "*"
+      }
+    ]
+  },
+  "workflows": {
+    "next-weeks-events": {
+      "title": "Fill out next week's events",
+      "when": [
+        {
+          "every": "sunday 18:00"
+        }
+      ],
+      "steps": [
+        {
+          "act": "add-event",
+          "over": {
+            "kind": "routine",
+            "where": "active"
+          },
+          "args": {
+            "name": {
+              "expr": "name"
+            }
+          },
+          "key": "{id}"
+        }
+      ]
+    },
+    "keep-events-in-step": {
+      "title": "Keep events in step with plan items",
+      "when": [
+        {
+          "changed": "plan-item",
+          "fields": [
+            "name",
+            "date"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "agent": "Rename each event to match the plan item it keeps.",
+          "reads": [
+            "plan-item",
+            "event"
+          ],
+          "acts": [
+            "edit-event"
+          ]
+        }
+      ]
+    },
+    "set-aside-done-lists": {
+      "title": "Set aside done grocery lists",
+      "when": [
+        {
+          "every": "day 03:00"
+        }
+      ],
+      "status": "paused",
+      "steps": [
+        {
+          "act": "archive-grocery-list",
+          "over": {
+            "kind": "grocery-list",
+            "where": "status == 'done'"
+          }
+        }
+      ]
+    }
+  }
+}

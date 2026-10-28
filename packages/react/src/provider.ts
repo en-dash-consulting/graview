@@ -26,7 +26,7 @@ export { BesideTheMap } from "./beside-the-map.js";
 // The host's files (FR-163), where a file field's editor finds them.
 export { HostFilesContext, useHostFiles } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
-export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, OnExport, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
+export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, OnExport, PointerMenu, SceneHandle, Scheme, Seat, ViewMode, WorkflowRuns } from "./context.js";
 // Typing together (Roadmap f-collab-text): the host's `typing`, where an editor of a field typed together finds it.
 export { TypingContext } from "./typing.js";
 export type { FieldTyping, LiveTyping } from "./typing.js";

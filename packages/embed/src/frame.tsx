@@ -2,7 +2,7 @@ import type { HistoryHost } from "@graview/core/history";
 import { faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarAction, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
-import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
+import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -396,6 +396,13 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly whileAway?: AwaySummary | undefined;
   /**
+   * HOW EACH WORKFLOW'S LAST RUN WENT (Roadmap f-jobs-declared): the host's
+   * log of runs (`WorkflowLog` from `@graview/tools/workflows`). Given, a
+   * workflow standing on the scene's map says under its title how its last
+   * run went. Unsaid, the workflows stand without it.
+   */
+  readonly workflowRuns?: WorkflowRuns | undefined;
+  /**
    * THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (Roadmap
    * f-place-menu-views), on either face: `{ current, onChange, hide, show,
    * remove, restore, lens? }` (`KeptViews`). Right-clicking a place in the
@@ -739,6 +746,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     subscriptions: props.subscriptions,
     dismissals: props.dismissals,
     whileAway: props.whileAway,
+    workflowRuns: props.workflowRuns,
     keptViews: props.keptViews,
     onExport: props.onExport,
     signIn: props.signIn,

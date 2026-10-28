@@ -15,3 +15,4 @@ export { actStep, keyFields, kindWords } from "./workflows/step-act.js";
 export { agentStep } from "./workflows/step-agent.js";
 export { workflowWorldOfApp, workflowWorldOfDocument, type WorkflowConnection, type WorkflowWorld } from "./workflows/world.js";
 export { WorkflowSpec, WorkflowStepSpec, WorkflowTriggerSpec, WorkflowsSpec } from "./document/workflow-spec.js";
+export { agoWords, lastRunWords, workflowSpots, workflowsOnTheMap, type MapWorkflow, type RunSaid, type SpotPlot, type WorkflowSpot } from "./workflows/on-the-map.js";

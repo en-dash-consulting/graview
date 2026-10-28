@@ -1,7 +1,7 @@
 import { SCENE_LAYERS } from "@graview/core";
 import { toIso, TOP_DOWN } from "@graview/core/city";
 import type { SceneNode } from "./scene-node.js";
-import type { AnySchema, Store } from "@graview/core";
+import type { AnySchema, GraviewApp, Store } from "@graview/core";
 import {
   aggregateId,
   cameraLimit,
@@ -801,6 +801,16 @@ const Ribbons = /* @__PURE__ */ ribbonsModule.part(
   { what: "The relations", quiet: true },
 );
 
+/*
+ * THE APP'S WORKFLOWS ON THE MAP (`workflows-layer.tsx`), fetched with the
+ * declaration's reading of them only for an app that declares one.
+ */
+const workflowsModule = /* @__PURE__ */ lazyModule(retryingImport(() => import("./workflows-layer.js")));
+const Workflows = /* @__PURE__ */ workflowsModule.part(
+  (module, props: Parameters<typeof import("./workflows-layer.js").WorkflowsLayer>[0]) => <module.WorkflowsLayer {...props} />,
+  { what: "The workflows", quiet: true },
+);
+
 const ABOVE_KEY = "graview:map-from-above";
 /** Whether this person looks at the city from straight above: their own way of looking, kept in this browser when it can be. */
 function useFromAbove(): [boolean, (above: boolean) => void] {
@@ -1275,6 +1285,20 @@ export function Scene<S extends AnySchema>({
         }}
       />
       </Suspense>
+      ) : null}
+      {/* THE APP'S WORKFLOWS, each in the street beside the district it writes, wired to what it reads and writes (see workflows-layer.tsx). */}
+      {view.overview && frame.city && context.app?.workflows && Object.keys(context.app.workflows).length > 0 ? (
+        <Suspense fallback={null}>
+          <Workflows
+            frame={frame}
+            {...extent}
+            pan={frame.city.pan}
+            app={context.app as unknown as GraviewApp<AnySchema>}
+            runs={context.workflowRuns}
+            graphVersion={nodes}
+            hiddenKinds={context.hiddenKinds}
+          />
+        </Suspense>
       ) : null}
       {useDom ? (
         /*
