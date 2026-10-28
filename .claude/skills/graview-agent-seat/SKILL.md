@@ -171,6 +171,20 @@ path to the store:
   `llmResponder` with `principal` in the context: the prompt is what that
   seat sees. Proposals are logged `via: "ai:<name>"`. "Why do I still have
   mosquitoes?" is a walk through THIS graph, not a paragraph about gardens.
+  **A change to the app itself** ("we also need to track who's driving")
+  is a card, not a chat: hand the host's `onProposeChange(proposal)` to
+  `GraviewProvider`, `mount` or the pages' context and the conversation
+  reads such words through `ai.decide` as the starter's questions
+  (`@graview/tools/reshape`), the person toggles added, kept and dropped
+  as chips and presses Accept, and the host composes the edits from the
+  proposal's `add` and `drop` (`composeReshape`, `@graview/core/compose`,
+  on the server — never on a page), previews them and applies them as the
+  person, as one undoable change — or answers `"declined"`. `ai.turn` is
+  offered `propose_change` for it. Only a seat whose role may change the
+  declaration (`mayChangeDeclaration`, the studio's own gate) is offered
+  it; a viewer never is, and without the hook the tool does not exist. An
+  app declared in code remembers itself as a document first
+  (`rememberDocument(app, toDocument(app).document)`) or is offered none.
 - **External agents** arrive over the derived tool surface with a scoped
   principal.
 - **A desk** — the model INSIDE the product, taking photographs or words and

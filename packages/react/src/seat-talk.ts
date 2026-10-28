@@ -1,5 +1,6 @@
 import type { ChatReply, OfferedQuestion, ProposedCall, SeatMove, SeatOffer } from "@graview/tools";
 import type { AddLensEdit, RemoveLensEdit, SeatDraft } from "@graview/tools/draft";
+import type { ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal } from "@graview/tools/reshape";
 import { useSyncExternalStore } from "react";
 
 /**
@@ -43,7 +44,23 @@ export interface SeatTurn {
   readonly offer?: SeatOffer;
   /** A lens kept from a draft, said in the conversation, with the way to take it back. */
   readonly kept?: SeatKept;
+  /**
+   * A CHANGE TO THE APP ITSELF the seat proposed (Roadmap f-seat-reshape):
+   * drawn as a card of chips — added, kept, dropped — with Accept, which
+   * hands it to the host's `onProposeChange`.
+   */
+  readonly reshape?: ReshapeProposal;
 }
+
+/**
+ * THE HOST THAT APPLIES A CHANGE TO THE APP THE SEAT PROPOSED
+ * (`onProposeChange`, `@graview/tools/reshape`): handed the proposal a
+ * person accepted — its card and the edits that make it — it previews and
+ * applies the change under its own policy, as the person, as one undoable
+ * change, and answers `"applied"`; or `"declined"`. Without it the seat
+ * never offers a change to the app.
+ */
+export type { ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal };
 
 /** A lens kept from a draft: the edit, whether the declaration has it now, and whether it was taken back. */
 export interface SeatKept {

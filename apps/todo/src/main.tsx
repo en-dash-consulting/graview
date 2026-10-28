@@ -1,3 +1,4 @@
+import type { ProposeChangeHost } from "@graview/react";
 import { themeCss, type Scheme } from "@graview/primitives";
 import { applySettings } from "@graview/react";
 import { createRoot } from "react-dom/client";
@@ -146,6 +147,18 @@ void import("@graview/core/subscriptions").then(({ watchSubscriptions }) =>
  * (`HistoryHost.archived`, FR-196) as `__todoHistory` before the page loads.
  */
 const history = (window as unknown as { __todoHistory?: HistoryHost }).__todoHistory;
+/*
+ * WHERE A CHANGE TO THE APP THE SEAT PROPOSED IS APPLIED (Roadmap
+ * f-seat-reshape): Things keeps its declaration in code, so it has no path
+ * to apply one; a harness hands a stub host as `__todoProposeChange` before
+ * the page loads, and without one the seat never offers the change.
+ */
+const onProposeChange = (window as unknown as { __todoProposeChange?: ProposeChangeHost }).__todoProposeChange;
+/* The seat proposes a change to a document, and Things is code: with a host to apply one, it remembers itself as the document it would be. */
+if (onProposeChange) {
+  const { rememberDocument, toDocument } = await import("@graview/core/document");
+  rememberDocument(todoApp, toDocument(todoApp).document);
+}
 
 if (window.location.pathname.startsWith("/pages")) {
   createRoot(root).render(
@@ -177,6 +190,7 @@ if (window.location.pathname.startsWith("/pages")) {
         ...(files ? { files } : {}),
         subscriptions,
         ...(history ? { history } : {}),
+        ...(onProposeChange ? { onProposeChange } : {}),
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is
@@ -198,6 +212,7 @@ if (window.location.pathname.startsWith("/pages")) {
       {...(files ? { files } : {})}
       subscriptions={subscriptions}
       {...(history ? { history } : {})}
+      {...(onProposeChange ? { onProposeChange } : {})}
       syncUrl
       renderer="auto"
       initialScheme={scheme}

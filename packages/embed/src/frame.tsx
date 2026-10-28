@@ -2,7 +2,7 @@ import type { HistoryHost } from "@graview/core/history";
 import { faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarAction, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
-import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
+import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -300,6 +300,19 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * to keep it".
    */
   readonly onKeepLens?: KeepLensHost;
+  /**
+   * WHERE A CHANGE TO THE APP THE SEAT PROPOSED IS APPLIED (Roadmap
+   * f-seat-reshape). "We also need who's driving" is read, through the
+   * host's `decide`, as a person kind and an owner link, composed by code
+   * and drawn as a card of chips; pressed Accept, the proposal — the card
+   * and the edits that make it — is handed here. The host previews and
+   * applies it under its own policy, as the person, as one undoable change
+   * (Graview Cloud: its propose_change and apply_change), then `setApp`
+   * with the new document; or declines it. Unsaid, the seat never offers a
+   * change to the app, and a seat whose role may not change the declaration
+   * is never offered one either.
+   */
+  readonly onProposeChange?: ProposeChangeHost;
   /**
    * THE AI THE SEAT MAY USE, decided by the host and never by a reader:
    * `{ complete }` (the host's model: prompt in, text out) for open
@@ -682,6 +695,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     memory: props.memory,
     presenceTtlMs: props.presenceTtlMs,
     onKeepLens: props.onKeepLens,
+    onProposeChange: props.onProposeChange,
     ai: props.ai,
     files: props.files,
     resolveApp: props.resolveApp,

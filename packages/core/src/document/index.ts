@@ -31,7 +31,9 @@ export { expressionRule, shapesOfSchema } from "./rules.js";
 export { computedOf, validateComputed } from "./computed.js";
 export type { ComputedEntry, ComputedKind } from "./computed.js";
 export type { ExpressionRuleSpec } from "./rules.js";
-export { documentOf, toDocument } from "./to-document.js";
+export { toDocument } from "./to-document.js";
+// From where they live, not through `to-document`: a page that reads the remembered document (the seat, Roadmap f-seat-reshape) must not make the writer and what it reads live with it.
+export { documentOf, rememberDocument } from "./remembered.js";
 export { isGraviewTemplate, readGraviewTemplate, templateSeedPrimitives, TemplateSpec, TEMPLATE_FORMAT, TEMPLATE_FORMAT_VERSION, TEMPLATE_QUESTION_TYPES } from "./graview-template.js";
 export type { GraviewTemplate, InstantiatedTemplate, RefusedTemplate, TemplateCall, TemplateQuestion, TemplateSeed, TemplateSeedNode, TemplateSetupStep } from "./graview-template.js";
 export type { ToDocumentResult } from "./to-document.js";

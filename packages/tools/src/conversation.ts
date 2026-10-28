@@ -18,9 +18,12 @@ import {
 import { argumentWords, lowerFirst, readableFields, tellApart } from "@graview/core/words";
 import { search } from "@graview/core/search";
 import { formFields, type FormField } from "@graview/core/forms";
+import type { GraviewDocument } from "@graview/core/document";
 import type { HostAi } from "./ai.js";
+import type { Decide } from "./fast.js";
 import { validateProposals, type Completion, type ProposedCall } from "./intelligence.js";
 import type { OfferedQuestion } from "./questions.js";
+import type { ReshapeProposal } from "./reshape.js";
 
 /**
  * ONE MOVE THE SEAT MAKES, as data both faces apply.
@@ -126,6 +129,29 @@ export interface ChatReply {
    * answered, which is said by saying nothing.
    */
   readonly via?: string;
+  /**
+   * A CHANGE TO THE APP ITSELF (Roadmap f-seat-reshape): the words asked for
+   * a new kind of thing to keep, a field, a part to drop, and code composed
+   * the change (`@graview/tools/reshape`). Drawn as a card — added, kept
+   * and dropped as chips the person toggles, anything breaking said plainly
+   * — and handed to the host's `onProposeChange` when accepted. Only ever
+   * present where the context carried `reshape`.
+   */
+  readonly reshape?: ReshapeProposal;
+}
+
+/**
+ * WHAT A SEAT THAT MAY CHANGE THE APP IS HANDED: the app's document (or how
+ * to get it, fetched when first needed) and the host's `decide`. Given, the
+ * seat's turn lists `propose_change` and a host's model may call it; the
+ * panel reads the words for a change to the app's shape itself. A seat
+ * whose role may not change the declaration, or whose host handed no
+ * `onProposeChange`, is handed none, and the tool does not exist for it.
+ */
+export interface ReshapeContext {
+  /** The app's document, or how to get it when first needed; none (undefined) for an app declared in code, whose seat is then offered no change. */
+  readonly document: GraviewDocument | undefined | (() => GraviewDocument | undefined | Promise<GraviewDocument | undefined>);
+  readonly decide: Decide;
 }
 
 export interface ChatContext {
@@ -161,6 +187,8 @@ export interface ChatContext {
   readonly place?: string;
   /** The day it is (YYYY-MM-DD) where the app is pinned to one: what "this week" and "overdue" are read against. */
   readonly today?: string;
+  /** Given only to a seat that may change the app itself, with a host to apply it: the turn then lists `propose_change`. */
+  readonly reshape?: ReshapeContext;
 }
 
 export type Responder<S extends AnySchema = AnySchema> = (

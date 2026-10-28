@@ -100,6 +100,7 @@ export function useSeatConversation({
         ...(reply.offer ? { offer: reply.offer } : {}),
         ...(reply.unsure ? { unsure: true } : {}),
         ...(reply.via ? { via: reply.via } : {}),
+        ...(reply.reshape ? { reshape: reply.reshape } : {}),
       },
     ]);
     onReply?.(reply);

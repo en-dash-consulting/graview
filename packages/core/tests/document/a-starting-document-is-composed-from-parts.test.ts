@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { compileDocument, designFindings } from "../../src/check.js";
-import { composeDesign, startingDocument, TRAITS, traitsOf, type Part, type TraitName } from "../../src/compose.js";
+import { breakingOf, composeDesign, composeReshape, startingDocument, TRAITS, traitsOf, type Part, type TraitName } from "../../src/compose.js";
 import { editDocument, readDocument, type GraviewDocument } from "../../src/document/index.js";
 
 /**
@@ -235,4 +235,63 @@ describe("the editor, taking a kind out", () => {
 it("every name in the vocabulary has a module", () => {
   const made = Object.fromEntries(TRAITS.map((trait) => [trait, parts(startingDocument({ name: "Things", add: [trait] }).took, "trait")]));
   expect(made).toEqual(Object.fromEntries(TRAITS.map((trait) => [trait, [trait]])) as Record<TraitName, string[]>);
+});
+
+/**
+ * THE EDITS THAT TOOK ARE THE CHANGE (Roadmap f-seat-reshape): a host that
+ * applies a declaration's changes through its own path — a proposal a
+ * person accepts, one undo — applies `edits` to the base in one call and
+ * gets the same document the composer handed on.
+ */
+describe("the edits a starting document took", () => {
+  it("replay onto the base as one change, giving the composed document, on every template and trait", () => {
+    for (const { id, document } of catalog) {
+      for (const trait of TRAITS) {
+        const made = startingDocument({ base: document, name: document.name, add: [trait] });
+        const replayed = editDocument(document, made.edits);
+        expect(replayed.ok, `${id} + ${trait} replays`).toBe(true);
+        if (!replayed.ok) continue;
+        expect(replayed.document, `${id} + ${trait} is the same document`).toEqual(made.document);
+      }
+    }
+  });
+
+  it("are none for a trait the base already carries, and name a drop as its own remove edits", () => {
+    const chores = template("household-chores");
+    expect(startingDocument({ base: chores, name: chores.name, add: ["owners"] }).edits).toEqual([]);
+    const dropped = startingDocument({ base: chores, name: chores.name, drop: ["area"] });
+    expect(dropped.edits.map((edit) => edit.op)).toContain("remove-kind");
+    expect(dropped.left.map((part) => part.part)).toContain("area");
+  });
+});
+
+/**
+ * A CHANGE A SEAT READ OFF A PERSON'S WORDS IS COMPOSED BY THE HOST (Roadmap
+ * f-seat-reshape): `composeReshape` takes the reading as the person left it
+ * on the card — the traits to add, the kinds and traits to drop — and
+ * answers the starting document's edits with what each removal loses said.
+ */
+describe("a reshape composed from a seat's reading", () => {
+  it("adds a person kind and an owner link to the vendor shortlist for people who own things, losing nothing", () => {
+    const shortlist = template("vendor-shortlist");
+    const made = composeReshape({ document: shortlist, add: ["owners"], drop: [] });
+    expect(made.edits.find((edit) => edit.op === "add-kind")).toMatchObject({ kind: "person" });
+    expect(made.edits.find((edit) => edit.op === "add-relation")).toMatchObject({ kind: "vendor", relation: "owner", to: ["person"] });
+    expect(made.breaking).toEqual([]);
+    expect(made.notDone).toEqual([]);
+    expect(problems(made.document)).toEqual([]);
+    expect(editDocument(shortlist, made.edits)).toMatchObject({ ok: true, document: made.document });
+  });
+
+  it("says what a dropped kind, field and relation lose, and nothing for a rule or a view", () => {
+    const shortlist = template("vendor-shortlist");
+    expect(breakingOf(shortlist, { op: "remove-kind", kind: "category" })).toBe("All categories records go, with their links.");
+    expect(breakingOf(shortlist, { op: "remove-field", kind: "vendor", field: "quote" })).toBe("Vendor's quote values go.");
+    expect(breakingOf(shortlist, { op: "remove-relation", kind: "vendor", relation: "category" })).toBe("The vendor → category links go.");
+    expect(breakingOf(shortlist, { op: "remove-rule", rule: "over-budget" })).toBeUndefined();
+    expect(breakingOf(shortlist, { op: "remove-lens", title: "Compared" })).toBeUndefined();
+    const dropped = composeReshape({ document: shortlist, add: [], drop: ["category"] });
+    expect(dropped.breaking).toEqual(["All categories records go, with their links."]);
+    expect(dropped.left.map((part) => part.part)).toContain("category");
+  });
 });
