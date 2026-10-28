@@ -37,8 +37,8 @@ import type { ChangeOutcome, RunWorkflowOptions, StepChange, StepContext, Workfl
 
 const said = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-/** The last seq the log holds: what a run reads through. */
-const headOf = (store: Store<AnySchema>): number => store.log.all().at(-1)?.seq ?? 0;
+/** The seq the log's next op takes: a run reads every op before it. */
+const headOf = (store: Store<AnySchema>): number => (store.log.all().at(-1)?.seq ?? -1) + 1;
 
 /** The day a moment falls on in a zone: what `$today` reads. */
 const dayIn = (at: number, zone: string | undefined): string => {
@@ -99,7 +99,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
 
   const asked = dry ? undefined : askedOf({ store, principal, run: id, workflow: { name: workflow.name, title: workflow.title }, via });
   const follows = policiesOf(store.graph as never, store.schema, declared.follows);
-  const since = store.log.all().filter((op) => op.seq > cursor);
+  const since = store.log.all().filter((op) => op.seq >= cursor);
   const through = headOf(store);
   const seen = store.seenBy(principal as Principal);
 

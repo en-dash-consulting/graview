@@ -49,7 +49,7 @@ export interface WorkflowRun {
   readonly suggested: readonly string[];
   /** What it held back, by step (its index), and why, in words. */
   readonly heldBack: readonly { readonly step: number; readonly why: string }[];
-  /** The op seq it read the log through: the next run's `made` and `changed` triggers read after it. */
+  /** How far it read the log: every op before this seq. The next run reads from here (`StepContext.since`); a dry or failed run leaves it where the last good run had it. */
   readonly through: number;
   /** A hash of the workflow as declared when it ran: the first run after a change is a dry run. */
   readonly specHash: string;
@@ -132,7 +132,7 @@ export interface StepContext<S extends AnySchema = AnySchema> {
   readonly ai?: HostAi;
   /** The policy records the workflow follows (`follows`), read once for the run; none when it follows none. */
   readonly follows: readonly WorkflowPolicy[];
-  /** The ops after the previous run's `through`: what `made` and `changed` read. */
+  /** The ops from the last good run's `through` on: what was made and changed since it. */
   readonly since: readonly Operation[];
   /**
    * THE ONE DOOR: a change made, previewed (a dry run), suggested or let
