@@ -16,7 +16,9 @@
  *   opened by Enter into the same editor a value opens, and the allocation
  *   typed there is kept and said as the fact;
  *   a blank no act writes (`source`, fixed) is not said at all;
- *   sat down as a reader, the record is drawn with no slot to fill.
+ *   sat down as a reader, the record is drawn with no slot to fill, and a
+ *   placement's filled values are read, never controls — where staffing's
+ *   are (Roadmap request:in-place-editors-ignore-grants).
  *
  *   node scripts/verify-blank-facts.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
@@ -38,6 +40,8 @@ const engines = asked ? [asked] : QUICK ? ["chromium"] : ENGINES;
 const STAFFING = resolve(repoRoot, "scripts/fixtures/blank-facts/staffing-app.ts");
 const DESK = { width: 1280, height: 800 };
 const RECORD = "/placements/placement-4";
+/** A placement whose facts are all filled. */
+const FILLED = "/placements/placement-3";
 
 const report = { at: new Date().toISOString(), engines, width: DESK.width, checks: {} };
 
@@ -131,26 +135,26 @@ const slotsOf = (page) =>
 
 const host = await buildHost();
 const errors = [];
-const seen = { slot: [], hidden: [], reader: [] };
+const seen = { slot: [], hidden: [], reader: [], readOnly: [] };
 let browser;
 try {
   for (const engine of engines) {
     browser = await launchEngine(engine, { headless: !process.argv.includes("--headed") });
     const where = { engine, width: DESK.width };
-    const open = async (query) => {
+    const open = async (query, path = RECORD) => {
       const context = await browser.newContext({ viewport: DESK, locale: "en-US" });
       const page = await context.newPage();
-      page.on("pageerror", (error) => errors.push(`${engine} ${RECORD}?${query}: ${error.message}`));
-      await page.goto(`${at("blank-facts-host")}${RECORD}?${query}`, { waitUntil: "load" });
+      page.on("pageerror", (error) => errors.push(`${engine} ${path}?${query}: ${error.message}`));
+      await page.goto(`${at("blank-facts-host")}${path}?${query}`, { waitUntil: "load" });
       await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
       await until(page, () => page.evaluate(() => document.querySelector("[data-graview-page-title]") !== null));
       return { page, close: () => context.close() };
     };
     // A page that never opens is a claim not held, said by name, never a run that dies before its verdict.
-    const attempt = async (list, query, run) => {
+    const attempt = async (list, query, run, path) => {
       let opened;
       try {
-        opened = await open(query);
+        opened = await open(query, path);
         list.push({ ...where, ...(await run(opened.page)) });
       } catch (error) {
         list.push({ ...where, error: String(error.message ?? error).split("\n")[0] });
@@ -202,6 +206,18 @@ try {
       const slots = await slotsOf(page);
       return { title, slots: slots.map((slot) => slot.field) };
     });
+    /* A FILLED VALUE IS A CONTROL ONLY FOR A SEAT AN ACT LETS CHANGE IT: staffing's are, a reader's are read. */
+    const controls = (page) =>
+      page.evaluate(() => ({
+        editable: document.querySelectorAll('[data-testid="record-fields"] [data-graview-editable], [data-graview-page-title] [data-graview-editable]').length,
+        readOnly: [...document.querySelectorAll('[data-testid="record-fields"] [data-graview-readonly]')].map((one) => one.getAttribute("data-graview-field")),
+      }));
+    for (const [as, who] of [["ana", "staffing"], ["rui", "reader"]]) {
+      await attempt(seen.readOnly, `as=${as}`, async (page) => {
+        await until(page, () => page.evaluate(() => document.querySelector('[data-testid="record-fields"] [data-graview-field="allocation"]') !== null), 30_000);
+        return { who, ...(await controls(page)) };
+      }, FILLED);
+    }
     await browser.close();
     browser = undefined;
   }
@@ -230,6 +246,14 @@ report.checks.aBlankFieldNoActWritesStaysHidden = {
 report.checks.aReaderSeesNoEmptySlot = {
   seen: seen.reader,
   ok: all(seen.reader, (one) => one.title.includes("Placement 4") && one.slots.length === 0),
+};
+report.checks.aReaderSeesNoEditableValue = {
+  seen: seen.readOnly,
+  ok:
+    seen.readOnly.length === engines.length * 2 &&
+    seen.readOnly.every((one) => !one.error) &&
+    seen.readOnly.filter((one) => one.who === "staffing").every((one) => one.editable > 0) &&
+    seen.readOnly.filter((one) => one.who === "reader").every((one) => one.editable === 0 && ["allocation", "role"].every((field) => one.readOnly.includes(field))),
 };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 

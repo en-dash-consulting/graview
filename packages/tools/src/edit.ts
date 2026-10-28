@@ -93,9 +93,19 @@ export interface EditableField {
 export function editableFields<S extends AnySchema>(
   store: Store<S>,
   nodeId: string,
+  options: {
+    /**
+     * WHO IS CHANGING IT (Roadmap request:in-place-editors-ignore-grants): only
+     * an act this principal may run is offered, so a reader's values are drawn
+     * read-only rather than as controls the store would refuse. Unsaid, every
+     * act is, as before.
+     */
+    readonly principal?: Principal;
+  } = {},
 ): readonly EditableField[] {
   const node = store.graph.getNode(nodeId) as Record<string, unknown> | undefined;
   if (!node) return [];
+  const permitted = options.principal ? new Set(store.permittedMutations(options.principal).map((mutation) => mutation.name)) : undefined;
   const kind = node["kind"] as string;
   const definition = store.schema.tryDefinition(kind);
   if (!definition) return [];
@@ -110,6 +120,7 @@ export function editableFields<S extends AnySchema>(
     const accepts =
       subject.kinds === "*" || (subject.kinds as readonly string[]).includes(kind);
     if (!accepts) continue;
+    if (permitted && !permitted.has(mutation.name)) continue;
 
     const shape = (mutation.input as { shape?: Record<string, unknown> }).shape ?? {};
     for (const name of fieldsWrittenBy(mutation, definition)) {

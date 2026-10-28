@@ -73,14 +73,14 @@ export function blankWritable<S extends AnySchema>(store: Store<S>, id: string, 
   const node = store.graph.getNode(id) as Record<string, unknown> | undefined;
   if (!node) return [];
   const seat = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
-  const permitted = new Set(store.permittedMutations(...(seat ? [seat] : [])).map((mutation) => mutation.name));
   const files = new Set(fileFieldsOf(store.schema.tryDefinition(node["kind"] as string)));
-  return editableFields(store, id)
+  // The same acts the in-place editor on a filled value offers this seat: those its grants let it run.
+  return editableFields(store, id, ...(seat ? [{ principal: seat }] : []))
     .filter((field) => {
       const value = node[field.field];
       const blank = value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
       const shape = field.shape.type === "several" ? (field.shape.of.type === "choice" ? "several" : "") : field.shape.type;
-      return blank && field.takesValue && field.open.length === 0 && SLOT_SHAPES.has(shape) && !files.has(field.field) && permitted.has(field.mutation);
+      return blank && field.takesValue && field.open.length === 0 && SLOT_SHAPES.has(shape) && !files.has(field.field);
     })
     .map((field) => field.field);
 }

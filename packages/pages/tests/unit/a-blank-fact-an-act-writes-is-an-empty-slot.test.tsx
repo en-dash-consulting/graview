@@ -40,13 +40,13 @@ const policy: Policy = { roles: ["staffer", "reader"], grants: [{ roles: ["staff
 const STAFFER: Principal = { kind: "human", id: "user-ana", roles: ["staffer"] };
 const READER: Principal = { kind: "human", id: "user-rui", roles: ["reader"] };
 
-async function opened(principal: Principal) {
-  const store = new Store({ schema, mutations: [place], policy, snapshot: { nodes: [{ id: "p4", kind: "placement", label: "Placement 4" }] as never, edges: [] } });
+async function opened(principal: Principal, path = "/placements/p4") {
+  const store = new Store({ schema, mutations: [place], policy, snapshot: { nodes: [{ id: "p4", kind: "placement", label: "Placement 4" }, { id: "p3", kind: "placement", label: "Placement 3", allocation: 40, role: "lead" }] as never, edges: [] } });
   const context: PageContext<typeof schema> = { store, views: createViews(schema), principal };
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
-  await act(async () => root.render(<PagesApp context={context} initialPath="/placements/p4" />));
+  await act(async () => root.render(<PagesApp context={context} initialPath={path} />));
   const done = async () => {
     await act(async () => root.unmount());
     host.remove();
@@ -92,5 +92,18 @@ describe("a blank fact on a record's page", () => {
     expect(host.querySelector("[data-graview-blank-fact]")).toBeNull();
     expect(host.querySelector("[data-graview-blank]")).toBeNull();
     await done();
+  });
+
+  it("is drawn editable only where an act the seat may run writes it: a reader's filled values are read-only", async () => {
+    const staffer = await opened(STAFFER, "/placements/p3");
+    expect(staffer.host.querySelector('[data-testid="record-fields"] [data-graview-field="allocation"][data-graview-editable]')).not.toBeNull();
+    await staffer.done();
+    const reader = await opened(READER, "/placements/p3");
+    const fields = reader.host.querySelector('[data-testid="record-fields"]')!;
+    expect(fields.querySelector("[data-graview-editable]")).toBeNull();
+    expect(fields.querySelector('[data-graview-field="allocation"][data-graview-readonly]')?.textContent).toBe("40");
+    // The name over the page is no control for a reader either.
+    expect(reader.host.querySelector("[data-graview-page-title] [data-graview-editable]")).toBeNull();
+    await reader.done();
   });
 });
