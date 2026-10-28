@@ -1,5 +1,5 @@
-import { sha256Hex, type AnyGraphNode, type AnySchema, type MutationCall, type Operation, type Principal, type Store } from "@graview/core";
-import { recordsOver, workflowKey, workflowValue, type ActStep } from "@graview/core/workflows";
+import { type AnyGraphNode, type AnySchema, type MutationCall, type Operation, type Principal, type Store } from "@graview/core";
+import { keyedId, recordsOver, workflowKey, workflowValue, type ActStep } from "@graview/core/workflows";
 import type { StepContext, StepRunner } from "./types.js";
 
 /*
@@ -19,15 +19,6 @@ import type { StepContext, StepRunner } from "./types.js";
  * made again: the run holds it back and says so. Without `key`, a call
  * that would change nothing is not made.
  */
-
-/** A key as an id may carry it: letters, digits and a few marks; a long one by its hash. */
-const keySlug = (text: string): string => {
-  const slug = text.toLowerCase().replace(/[^a-z0-9._:-]+/g, "-").replace(/^-+|-+$/g, "");
-  return slug.length > 0 && slug.length <= 120 ? slug : sha256Hex(text).slice(0, 24);
-};
-
-/** The id a keyed record is made under. */
-export const keyedId = (prefix: string, workflow: string, key: string): string => `${prefix}:wf.${workflow}.${keySlug(key)}`;
 
 /** The record an earlier run of this workflow made under a key, by the key on the lineage of the op that made it. */
 function madeUnderKey(store: Store<AnySchema>, author: string | undefined, key: string): string | undefined {

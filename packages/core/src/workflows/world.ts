@@ -3,7 +3,7 @@ import { actsOfDocument } from "../document/act-spellings.js";
 import type { GraviewDocument } from "../document/schema.js";
 import { jobWorldOfApp, jobWorldOfDocument, type JobWorld } from "../job-findings.js";
 import { deriveMutations } from "../mutations/derive-edits.js";
-import { derivedActOf } from "../mutations/derived-names.js";
+import { derivedActOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
 import type { AnySchema } from "../schema/schema.js";
 
 /*
@@ -44,7 +44,11 @@ export function workflowWorldOfDocument(document: GraviewDocument): WorkflowWorl
   const acts = document.acts ?? {};
   return {
     ...jobWorldOfDocument(document),
-    acts: actsOfDocument(document),
+    // A kind that is never set aside (`archives: false`) is given no archive, unarchive or merge: as the app's derived acts leave them out.
+    acts: actsOfDocument(document).filter((act) => {
+      const derived = derivedActOf(act);
+      return !derived || document.kinds[derived.kind]?.archives !== false || givenWhenNeverArchived(derived.act);
+    }),
     actMakes(name) {
       const act = acts[name] as { creates?: string; effects?: readonly unknown[] } | undefined;
       if (act) return [...new Set([...(act.creates ? [act.creates] : []), ...(act.effects ?? []).flatMap((effect) => (isRecord(effect) && typeof effect["create"] === "string" ? [effect["create"]] : []))])];
