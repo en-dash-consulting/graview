@@ -18,6 +18,9 @@ const refusedFormat = (format: string, type: string): string => {
 import { farEnd } from "./far-end.js";
 import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
 import { JobSpec } from "./purpose-spec.js";
+import { workflowFindingsOf } from "../workflows/findings.js";
+import { resolveWorkflow } from "../workflows/resolve.js";
+import { workflowWorldOfDocument } from "../workflows/world.js";
 import { aliasWord, documentAliasFindings } from "../alias-findings.js";
 import { humanizeField, withArticle } from "../schema/define-node.js";
 import { ConnectionSpec } from "./connection-spec.js";
@@ -162,6 +165,11 @@ export const EDIT_OPS = [
   "add-alias",
   "set-aliases",
   "set-connection",
+  "add-workflow",
+  "set-workflow",
+  "remove-workflow",
+  "pause-workflow",
+  "resume-workflow",
 ] as const;
 export type EditOp = (typeof EDIT_OPS)[number];
 
@@ -357,6 +365,12 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "set-aliases": z.object({ op: z.literal("set-aliases"), kind: kindName, field: fieldName.optional(), aliases: z.union([z.array(z.string().min(1).max(40)).max(MOST_ALIASES), z.null()]) }).strict(),
     // A connection declared whole, by its name: set where there was none, or replaced (FR-229); null takes it away.
     "set-connection": z.object({ op: z.literal("set-connection"), name: kindName, connection: z.union([z.record(z.string(), z.unknown()), z.null()]) }).strict(),
+    // A workflow by its name (Roadmap f-jobs-declared): added where there was none, replaced whole, removed, paused or resumed.
+    "add-workflow": z.object({ op: z.literal("add-workflow"), name: kindName, workflow: z.record(z.string(), z.unknown()) }).strict(),
+    "set-workflow": z.object({ op: z.literal("set-workflow"), name: kindName, workflow: z.record(z.string(), z.unknown()) }).strict(),
+    "remove-workflow": z.object({ op: z.literal("remove-workflow"), name: kindName }).strict(),
+    "pause-workflow": z.object({ op: z.literal("pause-workflow"), name: kindName }).strict(),
+    "resume-workflow": z.object({ op: z.literal("resume-workflow"), name: kindName }).strict(),
   };
 }
 let shapes: Record<EditOp, z.ZodType> | undefined;
@@ -1106,6 +1120,15 @@ class Editor {
         return this.setAliases(i, e.kind, e.field, e.aliases ?? []);
       case "set-connection":
         return this.setConnection(i, e.name, e.connection);
+      case "add-workflow":
+        return this.placeWorkflow(i, e.name, e.workflow, "add");
+      case "set-workflow":
+        return this.placeWorkflow(i, e.name, e.workflow, "set");
+      case "remove-workflow":
+        return this.removeWorkflow(i, e.name);
+      case "pause-workflow":
+      case "resume-workflow":
+        return this.setWorkflowStatus(i, e.name, e.op === "pause-workflow" ? "paused" : "active");
     }
   }
 
@@ -1240,6 +1263,50 @@ class Editor {
     const [job] = this.doc.purpose.jobs.splice(index, 1);
     this.keepPurpose({ ...this.doc.purpose });
     this.said.push(`The job "${job.name}" (${quotedAtTheEnd(job.ask)}) is removed.`);
+  }
+
+  // ── what the app does on its own, and when (Roadmap f-jobs-declared) ──
+
+  /** The workflow a name names, or undefined having said why. */
+  private workflowNamed(i: number, name: string): Doc | undefined {
+    const workflows: Doc = this.doc.workflows ?? {};
+    if (Object.hasOwn(workflows, name)) return workflows[name];
+    const names = Object.keys(workflows);
+    this.fail(i, "name", `there is no workflow "${name}"${names.length > 0 ? `; the workflows are ${names.map((one) => `"${one}"`).join(", ")}` : ""}`);
+    return undefined;
+  }
+
+  /** A workflow added or replaced whole, judged as `graview check` judges it (`workflow-*`): kept only when nothing is wrong with it. */
+  private placeWorkflow(i: number, name: string, workflow: Doc, how: "add" | "set") {
+    const workflows: Doc = { ...(this.doc.workflows ?? {}) };
+    if (how === "add" && Object.hasOwn(workflows, name)) return this.fail(i, "name", `there is already a workflow "${name}"`, `Change it with {"op": "set-workflow", "name": "${name}", …}, or name this one otherwise.`);
+    if (how === "set" && !Object.hasOwn(workflows, name) && !this.workflowNamed(i, name)) return;
+    const found = workflowFindingsOf(name, workflow, workflowWorldOfDocument(this.doc));
+    const wrong = found.filter((finding) => finding.severity === "error");
+    for (const finding of wrong) this.failAs(finding.code, i, `workflow${finding.path ? `.${finding.path}` : ""}`, finding.message, finding.fix);
+    if (wrong.length > 0) return;
+    workflows[name] = workflow;
+    this.doc.workflows = workflows;
+    const resolved = resolveWorkflow(name, workflow as never, workflowWorldOfDocument(this.doc));
+    this.said.push(`${how === "add" ? "A new workflow" : "The workflow"} “${resolved.title}”${how === "add" ? "" : " is now"}: ${resolved.words.slice(0, resolved.words.lastIndexOf(":"))}, ${resolved.steps.length === 1 ? "one step" : `${resolved.steps.length} steps`}${resolved.status === "paused" ? ", paused" : ""}.`);
+    for (const finding of found) if (finding.severity === "warning") this.said.push(finding.message);
+  }
+
+  private removeWorkflow(i: number, name: string) {
+    const workflow = this.workflowNamed(i, name);
+    if (!workflow) return;
+    const { [name]: _gone, ...rest } = this.doc.workflows as Doc;
+    if (Object.keys(rest).length === 0) delete this.doc.workflows;
+    else this.doc.workflows = rest;
+    this.said.push(`The workflow “${workflow.title ?? name}” is removed.`);
+  }
+
+  private setWorkflowStatus(i: number, name: string, status: "active" | "paused") {
+    const workflow = this.workflowNamed(i, name);
+    if (!workflow) return;
+    const { status: _was, ...rest } = workflow;
+    this.doc.workflows = { ...this.doc.workflows, [name]: status === "paused" ? { ...rest, status } : rest };
+    this.said.push(status === "paused" ? `The workflow “${workflow.title ?? name}” is paused: it runs on no clock and no change until it is resumed.` : `The workflow “${workflow.title ?? name}” runs again.`);
   }
 
   /** How a record's page orders and groups its facts (FR-148): judged as the compile judges `kinds.<kind>.page`. */

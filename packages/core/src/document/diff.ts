@@ -198,6 +198,7 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
   sentences.push(...viewSentences(before, after));
   sentences.push(...lensSentences(before.lenses ?? [], after.lenses ?? []));
   sentences.push(...pagesSentences(before.pages, after.pages, after.kinds));
+  sentences.push(...workflowSentences(before.workflows, after.workflows));
   for (const k of ["modules", "settings"] as const) if (!same(before[k], after[k])) sentences.push(`The app's ${k} change.`);
 
   const breaking = removedKinds.length + removedFields.length + retypedFields.length + droppedOptions.length + removedEdges.length + newlyRequired.length + narrowedRanges.length > 0;
@@ -327,6 +328,27 @@ function lensSentences(before: readonly LooseLens[], after: readonly LooseLens[]
 }
 
 type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?: string; primary?: readonly string[]; scene?: string; pages?: string; lists?: Readonly<Record<string, KindList>> } | undefined;
+
+/** The app's workflows (Roadmap f-jobs-declared), by name: added, removed, paused, resumed, or changed. */
+function workflowSentences(before: GraviewDocument["workflows"], after: GraviewDocument["workflows"]): string[] {
+  if (same(before, after)) return [];
+  const out: string[] = [];
+  const titled = (workflow: { readonly title?: string } | undefined, name: string) => `“${workflow?.title ?? name}”`;
+  for (const name of new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})])) {
+    const was = before?.[name];
+    const now = after?.[name];
+    if (same(was, now)) continue;
+    if (!was) out.push(`A new workflow, ${titled(now, name)}${now?.status === "paused" ? ", paused" : ""}.`);
+    else if (!now) out.push(`The workflow ${titled(was, name)} is removed.`);
+    else {
+      const { status: wasStatus, ...wasRest } = was;
+      const { status: nowStatus, ...nowRest } = now;
+      if ((wasStatus ?? "active") !== (nowStatus ?? "active")) out.push(nowStatus === "paused" ? `The workflow ${titled(now, name)} is paused.` : `The workflow ${titled(now, name)} runs again.`);
+      if (!same(wasRest, nowRest)) out.push(`The workflow ${titled(now, name)} changes: its next run is a dry run.`);
+    }
+  }
+  return out;
+}
 
 /** The arrangement (FR-80), compared part by part. */
 function pagesSentences(before: Arrangement, after: Arrangement, kinds: GraviewDocument["kinds"]): string[] {

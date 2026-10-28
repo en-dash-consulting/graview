@@ -1,5 +1,5 @@
 import type { AnySchema, Author, GraviewApp, MutationCall, Operation, Store, Via } from "@graview/core";
-import type { WorkflowApproval, WorkflowStep } from "@graview/core/workflows";
+import type { WorkflowApproval, WorkflowPolicy, WorkflowStep } from "@graview/core/workflows";
 import type { HostAi } from "../ai.js";
 import type { Severity } from "../tidy/policy.js";
 
@@ -123,11 +123,15 @@ export interface StepContext<S extends AnySchema = AnySchema> {
   readonly run: string;
   readonly principal: Author;
   readonly now: number;
+  /** The run's day on the app's clock: what `$today` reads. */
+  readonly today: string;
   readonly dry: boolean;
   /** What this step's changes become: its own word, else the workflow's, else the default. */
   readonly approve: WorkflowApproval;
   readonly trigger: WorkflowRunTrigger;
   readonly ai?: HostAi;
+  /** The policy records the workflow follows (`follows`), read once for the run; none when it follows none. */
+  readonly follows: readonly WorkflowPolicy[];
   /** The ops after the previous run's `through`: what `made` and `changed` read. */
   readonly since: readonly Operation[];
   /**
