@@ -168,7 +168,7 @@ describe("graview check judges a connection's sources", () => {
     const sources = (list: unknown[]) => document({ garden: { ...both(), sources: list } });
     expect(codes(sources([{ source: "Tasks", kind: "chore" }]))).toEqual(["connection-kind connections.garden.sources.0.kind"]);
     expect(codes(sources([{ source: "Tasks", kind: "task" }, { source: "More tasks", kind: "task" }]))).toEqual(["connection-sources connections.garden.sources.1.kind"]);
-    expect(codes(sources([{ source: "Tasks", kind: "task", properties: { name: "Name", colour: "Colour" } }]))).toEqual(["connection-field connections.garden.sources.0.properties.colour"]);
+    expect(codes(sources([{ source: "Tasks", kind: "task", properties: { name: "Name", shade: "Shade" } }]))).toEqual(["connection-field connections.garden.sources.0.properties.shade"]);
     expect(codes(sources([{ source: "Tasks", kind: "task" }, { source: "tasks", kind: "bed" }]))).toEqual(["connection-sources connections.garden.sources.1.source"]);
   });
 
