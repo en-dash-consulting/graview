@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 4703,
+  "gzipped": 1869,
+  "note": "Raised when the right-click menu came to say what is under the cursor: \"Copy link\" under \"Open in a new tab\", \"Copy\" for a selection, a column's \"Add a task in Doing\" and \"Show only Doing\" read from `data-column`, a finger resting on text left to the phone's selection, and \"Inspect\" at the foot (its sheet fetched when first asked). 4703 / 1869 more. Measured at 1_779_020 / 625_863 against 1_774_317 / 623_994."
+}

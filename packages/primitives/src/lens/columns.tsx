@@ -495,6 +495,8 @@ function ColumnsBoard({ boards, title, options }: { readonly boards: readonly Bo
                   key={value}
                   className="graview-columns-column"
                   data-graview-column={value}
+                  // What the context menu reads under the cursor (`data-column`, as a worker view marks one): "Add a task in Doing", "Show only Doing".
+                  {...(column.value !== null ? { "data-column": `${board.field}:${column.value}`, "data-column-kind": board.kind, "data-column-label": column.label } : {})}
                   data-droppable={droppable || undefined}
                   data-over={(droppable && (over === value || carriedHere)) || undefined}
                   // The lens first (FR-109): a phone's screen reader says a region by its name alone, and "Researching, 0" does not say which board — nor does the app's name, so an embed leaves this one as it is.

@@ -1,13 +1,19 @@
-import { fieldWords, pluralLabel, type AnySchema, type Place } from "@graview/core";
+import { argumentsTaken, fieldWords, humanizeField, layer, nounOf, pluralLabel, withArticle, type AnySchema, type Place } from "@graview/core";
+import { narrowedPath } from "@graview/core/navigate";
+import { retryingImport } from "@graview/core/retry";
 import { aggregateId } from "@graview/layout/view";
 import { GhostDoor, Inspector, NotifyDoor, useBoardMoveSection, useInlineAiSection, useNotifySection, useViewTidyingSection } from "@graview/primitives/pages";
 import { MenuSections } from "@graview/react/drawing";
-import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
-import { useCallback, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
+import { lazyPart, PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import type { Inspected } from "./inspect-sheet.js";
 import { useHref, useLocation, useNavigate } from "react-router-dom";
 import type { PageContext } from "./page-context.js";
 import { pathOfPlace } from "./page-places.js";
 import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
+
+/* What "Inspect" opens, fetched the first time somebody asks. */
+const InspectSheet = lazyPart(retryingImport(() => import("./inspect-sheet.js").then((module) => ({ default: module.InspectSheet }))));
 
 /**
  * THE CONTEXT MENU ON THE ROUTED FACE — the scene's own menu (`Inspector`
@@ -19,7 +25,15 @@ import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
  * has the keyboard, and by a finger resting on the page. THE BROWSER KEEPS
  * ITS OWN MENU in a text field or editable text, over text somebody has
  * selected, and whenever Shift is held with the right-click — the way to
- * a link's "Open in new tab" too, which the menu also offers itself.
+ * a link's "Open in new tab" too, which the menu also offers itself, with
+ * "Copy link" under it. A right-click elsewhere while text is selected
+ * offers "Copy" first; a finger resting on text leaves it to the phone's
+ * own selection, opening the menu only on a card, a row or a handle.
+ *
+ * WHAT IS UNDER THE CURSOR: a column — a status board's, or a region a
+ * worker view marked `data-column="<field>:<value>"` — offers "Add a task
+ * in Doing" and "Show only Doing"; and "Inspect", at the foot, says what
+ * Graview knows of the thing (a page cannot open the browser's tools).
  */
 
 /** What a menu opened here is about, before it is placed. */
@@ -39,7 +53,68 @@ function typingIn(element: Element | null): boolean {
 /** Whether the press landed on text somebody selected: the browser's menu copies it. */
 function onSelectedText(element: Element): boolean {
   const selected = typeof getSelection === "function" ? getSelection() : null;
-  return selected !== null && !selected.isCollapsed && selected.containsNode(element, true);
+  if (selected === null || selected.isCollapsed) return false;
+  for (let at = 0; at < selected.rangeCount; at++) if (selected.getRangeAt(at).intersectsNode(element)) return true;
+  return false;
+}
+
+/** The element itself under a press, inside a worker view's shadow root where the event was retargeted to its host. */
+function innermost(event: { readonly target: EventTarget | null; readonly nativeEvent: Event }): Element {
+  const first = event.nativeEvent.composedPath?.()[0];
+  return first instanceof Element ? first : (event.target as Element);
+}
+
+/** An element's parent, out through a shadow root to its host. */
+function upFrom(element: Element): Element | null {
+  if (element.parentElement) return element.parentElement;
+  const root = element.getRootNode();
+  return root instanceof ShadowRoot ? root.host : null;
+}
+
+/** The nearest element at or above this one, through shadow roots, with the attribute. */
+function nearestWith(element: Element, attribute: string): Element | null {
+  for (let at: Element | null = element; at; at = upFrom(at)) if (at.hasAttribute(attribute)) return at;
+  return null;
+}
+
+/** What a press could be about besides its text: a card, a row, a link, a control, a column — what a finger resting on opens the menu. */
+const HANDLE = 'a[href], button, summary, label, input, select, [role="button"], [draggable="true"], [data-graview-pick], [data-graview-listed], [data-graview-record], [data-graview-act], [data-graview-editable], [data-record], [data-act], [data-column]';
+
+/**
+ * Whether a finger at this point rests on text a person could select — a
+ * character drawn there, in an element that is no handle: the phone's own
+ * selection is what it is for, not the menu.
+ */
+function onSelectableText(element: Element, x: number, y: number): boolean {
+  for (let at: Element | null = element; at; at = upFrom(at)) if (at.matches(HANDLE)) return false;
+  if (typeof getComputedStyle === "function" && getComputedStyle(element).userSelect === "none") return false;
+  for (const child of element.childNodes) {
+    if (child.nodeType !== Node.TEXT_NODE || !child.nodeValue?.trim()) continue;
+    const range = document.createRange();
+    range.selectNodeContents(child);
+    // A document that lays nothing out (jsdom) has no boxes to be on.
+    if (typeof range.getClientRects !== "function") return false;
+    for (const box of range.getClientRects()) if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom) return true;
+  }
+  return false;
+}
+
+/** Text somebody selected inside this face, or none. */
+function selectedIn(face: HTMLElement | null): string | null {
+  const selected = typeof getSelection === "function" ? getSelection() : null;
+  if (!selected || selected.isCollapsed || !face || !selected.anchorNode || !face.contains(selected.anchorNode)) return null;
+  const text = selected.toString();
+  return text.trim() ? text : null;
+}
+
+/** Puts words on the clipboard, saying so quietly; a browser that refuses is said too. */
+function copied(text: string, said: (sentence: string) => void, what: string) {
+  const writing = navigator.clipboard?.writeText?.(text);
+  if (!writing) return said(`${what} could not be copied here`);
+  void writing.then(
+    () => said(`${what} copied`),
+    () => said(`${what} could not be copied here`),
+  );
 }
 
 /** What the keyboard goes back to when the menu closes: the nearest control at the target, else what had it. */
@@ -56,7 +131,7 @@ export function PagesContextMenu<S extends AnySchema>({ context, root, children 
 }
 
 function Menu<S extends AnySchema>({ context, root, children }: { readonly context: PageContext<S>; readonly root: RefObject<HTMLElement | null>; readonly children: ReactNode }) {
-  const { setMenuAt } = useGraview<S>();
+  const { setMenuAt, keptViews } = useGraview<S>();
   const { store } = context;
   const schema = store.schema;
   const navigate = useNavigate();
@@ -149,25 +224,66 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     [aimAtPage, aimAtLink, store, schema, base],
   );
 
+  /**
+   * THE COLUMN UNDER THE CURSOR: the nearest `data-column="<field>:<value>"`
+   * — a status board's column, or a region a worker view marked — of the
+   * kind it says (`data-column-kind`), else the kind the place or list is of.
+   */
+  const columnAt = useCallback(
+    (element: Element, aimed: Aimed): MenuColumn | undefined => {
+      const marked = nearestWith(element, "data-column");
+      const said = marked?.getAttribute("data-column") ?? "";
+      const split = said.indexOf(":");
+      if (!marked || split <= 0 || split === said.length - 1) return undefined;
+      const field = said.slice(0, split);
+      const value = said.slice(split + 1);
+      const place = aimed.place === undefined ? undefined : context.views?.places().find((one) => one.as === aimed.place);
+      const kind = nearestWith(marked, "data-column-kind")?.getAttribute("data-column-kind") ?? place?.kind ?? (aimed.about?.length === 1 && aimed.about[0]!.startsWith("aggregate:") ? kindOfAggregate(aimed.about[0]!) : undefined);
+      if (kind === undefined || !schema.tryDefinition(kind)) return undefined;
+      return { kind, field, value, label: marked.getAttribute("data-column-label") ?? humanizeField(value) };
+    },
+    [context.views, schema],
+  );
+
   /** What resting on an element in this face gets ready (FR-186): the menu a right-click there would open, as the Inspector's sections are told it. */
   const readyAt = useCallback(
     (element: Element): MenuTarget | null => {
       const face = root.current;
       if (face === null || !face.contains(element) || typingIn(element) || element.closest("[data-graview-popover]")) return null;
       const aimed = aimAt(element);
-      return { face: "pages", on: aimed.on, about: aimed.about ?? [], field: aimed.field, place: aimed.place, href: aimed.href, act: aimed.act, element: homeOf(element) };
+      return { face: "pages", on: aimed.on, about: aimed.about ?? [], field: aimed.field, place: aimed.place, href: aimed.href, act: aimed.act, column: columnAt(element, aimed), element: homeOf(element) };
     },
-    [aimAt, root],
+    [aimAt, columnAt, root],
   );
 
-  /** Opens the menu about what is at `element`, at a point. */
+  /** The menu last opened here, so a row of it can open it again with an act begun ("Add a task in Doing"). */
+  const last = useRef<PointerMenu | null>(null);
+  /** The text selected when it opened, which "Copy" copies. */
+  const selection = useRef<string | null>(null);
+
+  /** Opens the menu about what is at `element`, at a point; `inner` is what was under it inside a worker view. */
   const open = useCallback(
-    (element: Element, x: number, y: number) => {
+    (element: Element, x: number, y: number, inner: Element = element) => {
       const aimed = aimAt(element);
-      setMenuAt({ ...aimed, x: Math.round(x), y: Math.round(y), returnTo: homeOf(element) });
+      const column = columnAt(inner, aimed);
+      selection.current = selectedIn(root.current);
+      const menu: PointerMenu = { ...aimed, ...(column ? { column } : {}), x: Math.round(x), y: Math.round(y), returnTo: homeOf(element) };
+      last.current = menu;
+      setMenuAt(menu);
     },
-    [aimAt, setMenuAt],
+    [aimAt, columnAt, setMenuAt, root],
   );
+
+  /* "Link copied", said quietly at the foot of the page and gone. */
+  const [said, setSaid] = useState<{ readonly sentence: string; readonly at: number } | null>(null);
+  useEffect(() => {
+    if (!said) return;
+    const gone = setTimeout(() => setSaid(null), 2400);
+    return () => clearTimeout(gone);
+  }, [said]);
+  const say = useCallback((sentence: string) => setSaid({ sentence, at: Date.now() }), []);
+  /* What "Inspect" is showing, or nothing. */
+  const [inspected, setInspected] = useState<Inspected | null>(null);
 
   /** Opens it at an element, as the keyboard does: at the element's start, under its first line. */
   const openAt = useCallback(
@@ -246,7 +362,26 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
       const here = path !== undefined && pathname === path.split("?")[0];
       if (path !== undefined && !here) items.push({ id: "open", label: "Open", run: () => navigate(path) });
       const href = path !== undefined ? `${base}${path}` : target.href;
-      if (href !== undefined) items.push({ id: "open-in-a-new-tab", label: "Open in a new tab", run: () => void window.open(href, "_blank", "noopener") });
+      if (href !== undefined) {
+        items.push({ id: "open-in-a-new-tab", label: "Open in a new tab", run: () => void window.open(href, "_blank", "noopener") });
+        // The same address, whole, for pasting elsewhere.
+        items.push({ id: "copy-link", label: "Copy link", run: () => copied(new URL(href, location.href).href, say, "Link") });
+      }
+      /*
+       * A COLUMN UNDER THE CURSOR, on its ground rather than a card in it:
+       * a new record put in it — the add act begun with the column's value
+       * given — and the place narrowed to it, as an address would narrow it.
+       */
+      const column = target.on === undefined ? target.column : undefined;
+      if (column) {
+        const adds = store.allMutations().find((mutation) => (mutation.creates as readonly string[] | undefined)?.includes(column.kind) && (argumentsTaken(mutation)?.includes(column.field) ?? false));
+        if (adds && last.current) {
+          const menu = last.current;
+          items.push({ id: "add-in-column", label: `Add ${withArticle(nounOf(schema.tryDefinition(column.kind), column.kind))} in ${column.label}`, run: () => setMenuAt({ ...menu, begin: { act: adds.name, given: { [column.field]: column.value } } }) });
+        }
+        const listPath = place ? pathOfPlace(context, place) : `/${pluralSlug(schema, column.kind)}`;
+        items.push({ id: "show-only-column", label: `Show only ${column.label}`, run: () => navigate(narrowedPath(listPath, { filter: `${column.field}:${column.value}` })) });
+      }
       // Where the scene is to be had: the embed's own way, else the scene's address when the face owns its page.
       const stop = node ? `#focus=${encodeURIComponent(node.id)}` : place ? `#focus=${encodeURIComponent(aggregateId(place.kind))}&view=${encodeURIComponent(place.as)}` : kind ? `#focus=${encodeURIComponent(aggregateId(kind))}` : undefined;
       if (stop !== undefined && (context.overview || !context.embedded)) {
@@ -267,7 +402,37 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
       }
       return items.length > 0 ? { id: "pages", items } : null;
     },
-    [store, schema, context, pathname, base, navigate, root],
+    [store, schema, context, pathname, base, navigate, root, say, setMenuAt],
+  );
+  /* Text somebody selected, copied: the first row, before anything else, where a right-click with a selection opened the menu. */
+  const copy = useMemo<MenuSectionSource>(
+    () => (target: MenuTarget) => {
+      const text = selection.current;
+      if (target.face !== "pages" || text === null) return null;
+      return { id: "selection", at: "start", items: [{ id: "copy-selection", label: "Copy", run: () => copied(text, say, "Text") }] };
+    },
+    [say],
+  );
+  /*
+   * "INSPECT", AT THE FOOT, after a rule: what Graview knows of the thing
+   * under the cursor (a page cannot open the browser's own tools) — its
+   * kind, its id, the field, place and view that drew it, its column, its
+   * link, and for whoever may change the app, how it is declared.
+   */
+  const inspect = useMemo<MenuSectionSource>(
+    () => (target: MenuTarget) => {
+      if (target.face !== "pages") return null;
+      const node = target.on === undefined ? undefined : store.graph.getNode(target.on);
+      const place = target.place === undefined ? undefined : context.views?.places().find((one) => one.as === target.place);
+      const kind = node?.kind ?? place?.kind ?? target.column?.kind ?? (target.about.length === 1 && target.about[0]!.startsWith("aggregate:") ? kindOfAggregate(target.about[0]!) : undefined);
+      const path = node ? recordPath(schema, node.kind, node.id) : place ? pathOfPlace(context, place) : kind ? `/${pluralSlug(schema, kind)}` : undefined;
+      const href = path !== undefined ? new URL(`${base}${path}`, location.href).href : target.href;
+      const may = keptViews?.current().may;
+      const owner = may?.lenses === true || may?.views === true || store.policy === undefined;
+      const shown: Inspected = { on: node?.id, kind, field: target.field, place, column: target.column, href, owner, returnTo: target.element ?? null };
+      return { id: "inspect", items: [{ id: "inspect", label: "Inspect", run: () => setInspected(shown) }] };
+    },
+    [store, schema, context, base, keptViews],
   );
   /* A value on its record's page, changed where it stands: the first row, before the record's acts. */
   const change = useMemo<MenuSectionSource>(
@@ -296,7 +461,7 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     [pathname, context, navigate],
   );
   const tidy = useViewTidyingSection(away);
-  const sections = useMemo(() => [change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, board, own, tidy, notify, inlineAi]);
+  const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : []), inspect], [copy, change, board, own, tidy, notify, inlineAi, inspect]);
 
   return (
     <MenuSections sections={sections}>
@@ -314,16 +479,19 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
           if (Date.now() - openedBy.current < 700) return;
           // Nowhere to point (a key the browser turned into this): at the element, as the keyboard does.
           if (event.clientX === 0 && event.clientY === 0 && target instanceof HTMLElement) openAt(target);
-          else open(target, event.clientX, event.clientY);
+          else open(target, event.clientX, event.clientY, innermost(event));
         }}
         onPointerDown={(event) => {
           swallow.current = false;
           if (event.pointerType === "mouse" || !event.isPrimary) return;
           const target = event.target as Element;
+          const inner = innermost(event);
           // A list that chooses keeps its own long press: resting on a row chooses it.
           if (typingIn(target) || target.closest("[data-graview-choose], [data-graview-popover]")) return;
-          stop();
           const { clientX: x, clientY: y } = event;
+          // Resting on text is selecting it, the phone's own way: the menu opens on a card, a row or a handle.
+          if (onSelectableText(inner, x, y)) return;
+          stop();
           press.current = {
             x,
             y,
@@ -331,7 +499,7 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
               press.current = null;
               swallow.current = true;
               openedBy.current = Date.now();
-              open(target, x, y);
+              open(target, x, y, inner);
             }, LONG_PRESS_MS),
           };
         }}
@@ -356,9 +524,23 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
       <GhostDoor placement="page" />
       {/* The sheet "Notify me…" opens, already filled in. */}
       <NotifyDoor />
+      {/* What "Inspect" says of the thing under the cursor. */}
+      {inspected ? (
+        <Suspense fallback={null}>
+          <InspectSheet store={store as never} inspected={inspected} close={() => setInspected(null)} />
+        </Suspense>
+      ) : null}
+      {/* "Link copied", heard and seen, quietly. */}
+      <p role="status" data-testid="menu-said" style={said ? SAID : HIDDEN}>
+        {said?.sentence ?? ""}
+      </p>
     </MenuSections>
   );
 }
+
+/** The quiet line at the foot of the window that says a copy was made. */
+const SAID = { position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)", margin: 0, padding: "6px 12px", borderRadius: 8, fontSize: "0.875rem", background: "var(--graview-panel)", color: "var(--graview-ink)", border: "1px solid var(--graview-edge)", boxShadow: "var(--graview-lift-low)", zIndex: layer("toast"), pointerEvents: "none" } as const;
+const HIDDEN = { position: "absolute", width: 1, height: 1, margin: -1, padding: 0, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0 } as const;
 
 /** The kind a single-kind group id names. */
 function kindOfAggregate(id: string): string | undefined {

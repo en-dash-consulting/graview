@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 10009,
+  "gzipped": 4160,
+  "note": "Raised when the right-click menu came to say what is under the cursor: \"Copy link\" under \"Open in a new tab\", \"Copy\" for a selection, a column's \"Add a task in Doing\" and \"Show only Doing\" read from `data-column`, a finger resting on text left to the phone's selection, and \"Inspect\" at the foot (its sheet fetched when first asked). 10009 / 4160 more. Measured at 2_473_601 / 900_654 against 2_463_592 / 896_494."
+}
