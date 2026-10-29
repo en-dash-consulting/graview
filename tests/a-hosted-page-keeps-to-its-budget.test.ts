@@ -187,8 +187,8 @@ describe("a hosted page", () => {
     // 1054 KB since an iPad's bar came to fit and its scene to hold still: the bar taking what runs past its row off the places' room, the city keeping a choice in sight from where it stands, and the scene's box held while only Safari's toolbar folded away: the scene face measured 1_079_279 B, 1_763 more than main (1_077_516).
     // 1066 KB once the 0.1.63 batch held C1–C9 and the workflows (W1, W2, W3, W5), each measured alone against main: the scene face measured 1_090_838 B.
     // 1066 KB once the archive step and a run asked as one suggestion (Roadmap f-retention-rules, f-job-approvals) joined the 0.1.63 batch: the scene face measured 1_090_783 B.
+    // 1068 KB once the 0.1.63 batch also held the archive step and a run asked as one suggestion (W4): the scene face measured 1_092_396 B.
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1068 * 1024);
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1066 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
