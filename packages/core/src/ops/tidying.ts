@@ -127,11 +127,14 @@ export function declinesIn(ops: readonly Operation[], meanings?: ActMeanings): R
   const undone = undoneIn(ops);
   const byId = new Map(ops.map((op) => [op.id, op]));
   const declines = new Map<string, Operation>();
+  // The calls of a suggestion a person accepted one by one before declining the rest: those were said yes to (Roadmap f-job-approvals).
+  const took = new Map<string, number[]>();
+  for (const op of ops) if (op.lineage?.suggestion !== undefined && op.lineage.items) took.set(op.lineage.suggestion, [...(took.get(op.lineage.suggestion) ?? []), ...op.lineage.items]);
   for (const op of ops) {
     const target = op.undoes !== undefined && !undone.has(op.id) && !op.withheld ? byId.get(op.undoes) : undefined;
     // A suggestion its own maker took back was withdrawn, not declined: nobody said no to it (`withdrawSuggestion`).
     if (target?.suggests && target.author.kind === op.author.kind && target.author.id === op.author.id) continue;
-    const calls = target?.suggests ?? (target?.mutation && (target.lineage || op.undoneLineage) ? [target.mutation] : []);
+    const calls = target?.suggests ? target.suggests.filter((_, at) => !took.get(target.id)?.includes(at)) : target?.mutation && (target.lineage || op.undoneLineage) ? [target.mutation] : [];
     if (calls.length > 0) for (const asked of [calls, ...calls.map((call) => [call])]) declines.set(meaningKey(asked, meanings), op);
   }
   return declines;

@@ -182,6 +182,15 @@ export interface Operation {
    */
   readonly suggests?: readonly MutationCall[];
   /**
+   * WHAT EACH CALL OF A SUGGESTION WOULD DO, in its act's own sentence, in
+   * the order of `suggests` (Roadmap f-job-approvals): kept on a suggestion
+   * of several calls — a workflow's run asked about as one — so the tray
+   * lists each change and a person accepts them one by one. Absent on a
+   * suggestion of one call, and on one whose calls could not be told apart
+   * when it was made; then `intent` says them all.
+   */
+  readonly suggestsSaid?: readonly string[];
+  /**
    * WHEN A SUGGESTION STOPS WAITING (an ISO time), when its maker said: on
    * a suggestion's op only. From then on it leaves the Suggested tray and
    * cannot be accepted or declined; nothing is undone, since it changed

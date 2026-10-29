@@ -12,11 +12,13 @@
  * `@graview/tools/workflows`' (`runWorkflow`). An entry of its own, on no
  * page: nothing a page draws runs a workflow.
  */
-export type { ActStep, AgentStep, AppWorkflows, WorkflowApproval, WorkflowDeclaration, WorkflowOver, WorkflowStep, WorkflowTrigger, WorkflowValue } from "./workflow-shape.js";
+export type { ActStep, AgentStep, ArchiveStep, AppWorkflows, WorkflowApproval, WorkflowDeclaration, WorkflowOver, WorkflowStep, WorkflowTrigger, WorkflowValue } from "./workflow-shape.js";
 export { MOST_STEPS, MOST_WORKFLOWS } from "./workflow-shape.js";
 export { kindNoun, STEP_KINDS, stepKindOf, stepShapes, type KindNoun, type StepCheck, type StepKind, type StepKindKey, type StepShapes, type WorkflowFinding } from "./workflows/steps.js";
 export { actStep, keyFields } from "./workflows/step-act.js";
 export { agentStep } from "./workflows/step-agent.js";
+export { afterMs, afterWords, archiveStep } from "./workflows/step-archive.js";
+export { followsFindings, keeps, policiesOf, policyApplies, policyInstruction, type WorkflowPolicy } from "./workflows/policies.js";
 export { workflowWorldOfApp, workflowWorldOfDocument, type WorkflowConnection, type WorkflowWorld } from "./workflows/world.js";
 export { WorkflowSpec, WorkflowStepSpec, WorkflowTriggerSpec, WorkflowsSpec } from "./document/workflow-spec.js";
 export { declaredWorkflows, DREAMING, dreamingWorkflow, resolveWorkflow, workflowAuthor, workflowReach, workflowsOf, type ResolvedWorkflow } from "./workflows/resolve.js";
@@ -26,4 +28,3 @@ export { triggerWords, workflowWords } from "./workflows/words.js";
 export { triggeredBy, type FiredTrigger, type WorkflowCommit } from "./workflows/triggered.js";
 export { documentWorkflowFindings, workflowFindings, workflowFindingsOf } from "./workflows/findings.js";
 export { keyedId, recordsOver, workflowKey, workflowSpecHash, workflowValue } from "./workflows/values.js";
-export { followsFindings, policiesOf, policyInstruction, type WorkflowPolicy } from "./workflows/policies.js";

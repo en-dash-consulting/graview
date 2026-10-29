@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 4095,
+  "gzipped": 1398,
+  "note": "Raised when a workflow came to set aside what is done with and to ask about a run as one suggestion (Roadmap f-retention-rules, f-job-approvals): a lineage that names which of a suggestion's changes a person took (`items`) and a decline that leaves those out, and the tray's list of a run's changes each with its own Accept. 4_095 / 1_378 more, and 20 gzipped bytes of room for what gzip moves between runs. Measured at 1_799_011 / 631_913 against 1_794_916 / 630_535 on feat/workflows."
+}

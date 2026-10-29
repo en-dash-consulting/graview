@@ -83,7 +83,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-app-jobs: an app's jobs resolved and answered as a seat sees it — a design's, a seat's and a host's, fetched when one is drawn.
   "@graview/core/jobs": { from: jobs, names: ["answerJob", "jobIsFor", "jobsFor", "jobsOf", "MOST_JOBS"] },
   // Roadmap f-jobs-declared: what the app does on its own and when — its shape, its step kinds, its schedule, what starts it, what the checker says — a host's and a runner's, on no page.
-  "@graview/core/workflows": { from: workflows, names: ["declaredWorkflows", "DREAMING", "MOST_STEPS", "MOST_WORKFLOWS", "SCHEDULE_WORDS", "STEP_KINDS", "WorkflowSpec", "WorkflowStepSpec", "WorkflowTriggerSpec", "WorkflowsSpec", "actStep", "agentStep", "documentWorkflowFindings", "dreamingWorkflow", "followsFindings", "keyFields", "keyedId", "kindNoun", "nextOf", "nextRunAt", "policiesOf", "policyInstruction", "recordsOver", "resolveWorkflow", "scheduleOf", "scheduleOfCron", "scheduleOfWords", "scheduleWords", "stepKindOf", "stepShapes", "triggerWords", "triggeredBy", "workflowAuthor", "workflowFindings", "workflowFindingsOf", "workflowKey", "workflowReach", "workflowSpecHash", "workflowValue", "workflowWords", "workflowWorldOfApp", "workflowWorldOfDocument", "workflowsOf"] },
+  "@graview/core/workflows": { from: workflows, names: ["declaredWorkflows", "DREAMING", "MOST_STEPS", "MOST_WORKFLOWS", "SCHEDULE_WORDS", "STEP_KINDS", "WorkflowSpec", "WorkflowStepSpec", "WorkflowTriggerSpec", "WorkflowsSpec", "actStep", "afterMs", "afterWords", "agentStep", "archiveStep", "documentWorkflowFindings", "dreamingWorkflow", "followsFindings", "keeps", "keyFields", "keyedId", "kindNoun", "nextOf", "nextRunAt", "policiesOf", "policyApplies", "policyInstruction", "recordsOver", "resolveWorkflow", "scheduleOf", "scheduleOfCron", "scheduleOfWords", "scheduleWords", "stepKindOf", "stepShapes", "triggerWords", "triggeredBy", "workflowAuthor", "workflowFindings", "workflowFindingsOf", "workflowKey", "workflowReach", "workflowSpecHash", "workflowValue", "workflowWords", "workflowWorldOfApp", "workflowWorldOfDocument", "workflowsOf"] },
   // Roadmap f-friction-log: what people looked for and could not do — kept, counted across people, said to a model; a page records through the main entry's `recordFriction` alone.
   "@graview/core/friction": {
     from: friction,
@@ -97,7 +97,7 @@ const OFF_THE_PAGE = {
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,
-    names: ["acceptSuggestion", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "mayDecide", "meaningKey", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
+    names: ["acceptSuggestion", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "mayDecide", "meaningKey", "proposalWords", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "takenIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
   },
 } as const;
 

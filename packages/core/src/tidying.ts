@@ -36,11 +36,13 @@ import type { AnySchema } from "./schema/schema.js";
 import { seatOf } from "./seat-of.js";
 import type { ApplyOptions, ApplyResult, Store } from "./store.js";
 import { EMPTY_DIFF } from "./graph/diff.js";
+import { ARCHIVED } from "./graph/archived.js";
+import { nounOf, pluralOf } from "./schema/define-node.js";
 
 export { declinedIn, declinesIn, meaningKey, suggestionKey, tidyingOf, tidyingRefusal } from "./ops/tidying.js";
 export type { ActMeanings } from "./ops/tidying.js";
-export { isDismissed, suggestionsIn, tallyOf, votesIn } from "./ops/suggestions.js";
-export type { Dismissal, DismissalStore, Suggestion, SuggestionTally, WaitingOptions } from "./ops/suggestions.js";
+export { isDismissed, suggestionsIn, takenIn, tallyOf, votesIn } from "./ops/suggestions.js";
+export type { Dismissal, DismissalStore, Suggestion, SuggestionItem, SuggestionTally, WaitingOptions } from "./ops/suggestions.js";
 export type { AppTidying, SuggestionVote, Vote } from "./mutations/vote-suggestion.js";
 export { digestWords, foldDigests, isSuggestionBatch, typedRowWords } from "./ops/digest.js";
 export type { ActivityRow, TypedRow } from "./ops/digest.js";
@@ -120,6 +122,9 @@ export function suggest<S extends AnySchema>(store: Store<S>, calls: readonly Mu
   const planned = rehearsal.applying(calls, { author, lineage, ...given("via", options.via) });
   if (planned.ops.length === 0) return undefined;
   const described = [...new Set(planned.ops.flatMap((op) => op.described ?? []))];
+  // Each call's own sentence, when the calls are several and each made one op: what the tray lists and a person accepts one by one (Roadmap f-job-approvals).
+  const own = planned.ops.filter((one) => one.mutation !== null && one.author === author);
+  const said = calls.length > 1 && own.length === calls.length ? own.map((one) => one.intent) : undefined;
   const op: Operation = {
     id: kept.nextId(),
     seq: whole.log.length,
@@ -136,6 +141,7 @@ export function suggest<S extends AnySchema>(store: Store<S>, calls: readonly Mu
     ...given("via", options.via),
     lineage,
     suggests: calls,
+    ...given("suggestsSaid", said),
     ...given("expiresAt", options.expiresAt),
   };
   whole.log.append(op);
@@ -175,6 +181,17 @@ export function mayDecide<S extends AnySchema>(store: Store<S>, suggestion: Pick
   return suggestion.calls.every((call) => whole.permits(call, who).ok);
 }
 
+/** What accepting a suggestion takes besides who accepts it: of a suggestion of several calls, only some (Roadmap f-job-approvals). */
+export interface AcceptOptions extends ApplyOptions {
+  /**
+   * THE CALLS TO TAKE, by their place in the suggestion (`Suggestion.items`'
+   * `at`): those are made, carrying the suggestion's lineage with these
+   * places (`lineage.items`), and the rest still wait. Unsaid, every call
+   * still waiting.
+   */
+  readonly items?: readonly number[];
+}
+
 /** What accepting or declining a suggestion answers: the change made, or — from a seat that may not make it — the vote kept instead (`voted`). */
 export type SuggestionAnswer<S extends AnySchema> = ApplyResult<S> & { readonly voted?: Exclude<Vote, null> };
 
@@ -211,13 +228,53 @@ function waitingFor<S extends AnySchema>(store: Store<S>, id: string, author: Au
  * theirs is — carrying the suggestion's lineage, which names it
  * (`lineage.suggestion`), so it waits no longer.
  */
-export function acceptSuggestion<S extends AnySchema>(store: Store<S>, id: string, options: ApplyOptions = {}): SuggestionAnswer<S> {
+export function acceptSuggestion<S extends AnySchema>(store: Store<S>, id: string, options: AcceptOptions = {}): SuggestionAnswer<S> {
   const whole = seatOf(store)?.store ?? store;
-  const author = options.author ?? keptOf(whole).by;
-  const suggestion = waitingFor(whole, id, author);
+  const { items: asked, ...applying } = options;
+  const author = applying.author ?? keptOf(whole).by;
+  const waiting = waitingFor(whole, id, author);
+  // Some of a suggestion of several (Roadmap f-job-approvals): each named place one still waiting, in the suggestion's order.
+  const items = asked === undefined ? waiting.items : waiting.items.filter((item) => asked.includes(item.at));
+  if (asked !== undefined && (asked.length === 0 || items.length !== new Set(asked).size)) throw new GraphError("Name the changes to accept by their place among those still waiting in the suggestion.");
+  const suggestion = { ...waiting, calls: items.map((item) => item.call) };
   // From a seat the store would refuse the change, a vote for it (Roadmap f-suggestion-votes).
-  if (!mayDecide(whole, suggestion, author as Principal)) return voteSuggestion(whole, id, "for", { ...options, author });
-  return whole.applyAll(suggestion.calls, { ...options, author, lineage: { ...suggestion.lineage!, suggestion: id } });
+  if (!mayDecide(whole, suggestion, author as Principal)) return voteSuggestion(whole, id, "for", { ...applying, author });
+  // The places it took, when it took less than the whole of what was suggested: the rest still wait.
+  const suggested = whole.log.get(id)?.suggests?.length ?? items.length;
+  const some = items.length < suggested ? { items: items.map((item) => item.at) } : {};
+  return whole.applyAll(suggestion.calls, { ...applying, author, lineage: { ...waiting.lineage!, suggestion: id, ...some } });
+}
+
+/**
+ * A SUGGESTION OF SEVERAL CHANGES SAID AS ONE (Roadmap f-job-approvals):
+ * what its ops would do, counted by what and of which kind — "Next week:
+ * 28 events to add, 3 to change, 1 to archive". A made record is one to
+ * add, one set aside is one to archive, one taken out is one to remove,
+ * and any other change is one to change. `title`, when said, leads.
+ */
+export function proposalWords(schema: AnySchema, graph: { getNode(id: string): unknown }, ops: readonly Pick<Operation, "primitives">[], title?: string): string {
+  const counts = new Map<string, number>();
+  for (const op of ops) {
+    const made = op.primitives.find((one) => one.op === "add-node");
+    const gone = op.primitives.find((one) => one.op === "remove-node");
+    const patch = op.primitives.find((one) => one.op === "patch-node" || one.op === "splice-text") as { id: string; after?: Record<string, unknown> } | undefined;
+    const verb = made ? "add" : gone ? "remove" : patch?.after?.[ARCHIVED] === true ? "archive" : "change";
+    const id = made ? made.node.id : gone ? gone.node.id : (patch?.id ?? "");
+    const kind = made ? made.node.kind : gone ? gone.node.kind : ((graph.getNode(id) as { kind?: string } | undefined)?.kind ?? "");
+    const key = `${verb}\u0000${kind}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  let last = "";
+  const parts = ["add", "change", "archive", "remove"].flatMap((verb) =>
+    [...counts].filter(([key]) => key.startsWith(`${verb}\u0000`)).map(([key, n]) => {
+      const kind = key.slice(verb.length + 1);
+      const noun = kind === "" || kind === last ? "" : ` ${n === 1 ? nounOf(schema.tryDefinition(kind) as never, kind) : pluralOf(schema, kind)}`;
+      last = kind;
+      return `${n === 1 ? "one" : n}${noun} to ${verb}`;
+    }),
+  );
+  const said = parts.join(", ") || "nothing to change";
+  return title ? `${title}: ${said}` : said.replace(/^./, (first) => first.toUpperCase());
 }
 
 /**

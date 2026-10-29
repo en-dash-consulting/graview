@@ -43,7 +43,10 @@ opens in and how its cards read are `graview-lists`.
    night's work one `lineage.run`, name the judge in `lineage.actor` and
    the records it rests on in `lineage.evidence`; give a suggestion an
    `expiresAt`, after which it leaves the tray and the next run judges it
-   again. "Not now" is not a decline: it is the person's own state
+   again. A suggestion of several calls (a workflow's run with
+   `approve: "ask"`) lists each change; `acceptSuggestion(store, id,
+   { items: [0, 2] })` takes some, the rest wait, Decline takes the rest.
+   "Not now" is not a decline: it is the person's own state
    (`Dismissal`, handed to `suggestions(store, who, { dismissed })`), hides
    it from them alone and binds the actor to nothing. The tray's Not now
    keeps it in the host's `dismissals`, else the browser; a seat says it
