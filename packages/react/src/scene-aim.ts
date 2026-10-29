@@ -34,6 +34,13 @@ interface Aim {
 const CARD = "[data-graview-view]";
 const CHROME = "button, a, input, select, textarea, [role='button'], aside, section[aria-label], [data-graview-popover], [data-graview-offstage], [data-graview-overlay]";
 
+/** The control a press landed on, inside the scene: chrome over it, or a control a view drew in a card — not a mark a view draws to be picked. */
+function controlUnder(target: EventTarget | null, ground: Element): boolean {
+  if (!(target instanceof Element) || target.closest("[data-graview-pick]")) return false;
+  const control = target.closest(CHROME);
+  return control !== null && control !== ground && ground.contains(control);
+}
+
 function cardOf(target: EventTarget | null): Element | null {
   return target instanceof Element ? target.closest(CARD) : null;
 }
@@ -79,8 +86,16 @@ export function useAimedPress(ground: RefObject<HTMLElement | null>, swallow: Re
       if (!doubleTap) {
         // What the person aimed at is what is under the finger: nothing moved, nothing to do.
         if (aimed === under) return;
-        // A press on chrome over the scene (the zoom, a pane) that was aimed at bare ground is the chrome's.
-        if (aimed === null && !under) return;
+        /*
+         * A PRESS ON A CONTROL IS THE CONTROL'S — the sheet the tap opened, its
+         * "Add", a pane, the zoom. A quick hand reaches for the panel the
+         * choice opened the moment it is there, and that press is aimed at
+         * the panel, not at the card that stood where it now stands. Only a
+         * finger's second tap of a double-tap is taken from a control (above).
+         */
+        if (controlUnder(event.target, element)) return;
+        // Aimed at bare ground: whatever is there now keeps its press.
+        if (aimed === null) return;
       }
       event.stopPropagation();
       taken = { to: aimed, double: aimed !== null && aimed === noted.on };

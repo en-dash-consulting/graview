@@ -59,7 +59,7 @@ matchWith({ search, touchWeights });
 import type { PointerStore } from "./pointer.js";
 import type { PlotsProps } from "./plots.js";
 import { Occupants } from "./occupants.js";
-import { EdgeSigns, useHungShowings, useTrailBox } from "./edge-signs.js";
+import { EdgeSigns, hungOn, useHungShowings, useTrailBox } from "./edge-signs.js";
 import { useCameraFlights } from "./scene-camera.js";
 import { useKeyboardKeepsToWhatIsSeen } from "./scene-covered.js";
 import { useDock, useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type Held } from "./scene-hand.js";
@@ -1426,7 +1426,7 @@ export function Scene<S extends AnySchema>({
         <EdgeSigns
           result={result}
           schema={store.schema as AnySchema}
-          chrome={[...(sized.chrome ?? []), ...(trailBox ? [trailBox] : []), ...hungShowings]}
+          chrome={[...(sized.chrome ?? []), ...(trailBox ? [trailBox] : []), ...hungOn(hungShowings, result.nodes)]}
           onGo={(by) => {
             nudge(by.x, by.y);
             noteMoved();

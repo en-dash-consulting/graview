@@ -91,7 +91,8 @@ const stateOf = (page) =>
         scale: Number((visualViewport?.scale ?? 1).toFixed(3)),
         offsetTop: Math.round(visualViewport?.offsetTop ?? 0),
       },
-      overscroll: ground ? getComputedStyle(ground).overscrollBehaviorY : null,
+      // An engine that does not know the property (WebKit on Linux in Playwright 1.49) cannot be asked it.
+      overscroll: !ground ? null : CSS.supports("overscroll-behavior", "contain") ? getComputedStyle(ground).overscrollBehaviorY : "unknown to this engine",
       ring: Boolean(document.activeElement?.matches?.(":focus-visible") && document.activeElement.closest("[data-graview-view]")),
     };
   });
@@ -437,7 +438,7 @@ async function turnsAndToolbar(page, where, phone) {
 }
 
 /** Every page above, and the ground's own word: a list's scroll stops at the ground. */
-const pageStill = (state) => stillPage(state) && state.overscroll === "contain";
+const pageStill = (state) => stillPage(state) && (state.overscroll === "contain" || state.overscroll === "unknown to this engine");
 
 /**
  * FRAMES UNDER THE HAND, at a quarter of the processor: a drag across the
@@ -490,58 +491,52 @@ try {
     browser = await launchEngine(engine);
     const name = PHONES[engine];
     const phone = devices[name];
-    // A phone: its own touches.
-    {
-      const context = await browser.newContext({ ...phone });
-      const page = await context.newPage();
-      page.on("pageerror", (error) => errors.push(`${engine} ${name}: ${error.message}`));
-      const cdp = engine === "chromium" ? await context.newCDPSession(page) : null;
-      const hand = touchHand(page, engine, cdp);
-      const where = { engine, device: name };
-      const step = async (list, run) => {
+    /*
+     * A PAGE OF ITS OWN FOR EACH GESTURE, in a context of its own. One page
+     * opened forty times over crashed WebKit on the nightly's Linux runner
+     * part way through ("Page crashed"), and every gesture after it failed
+     * for the crash rather than for anything it did.
+     */
+    const run = async (options, label, gestures) => {
+      for (const [list, gesture] of gestures) {
+        const context = await browser.newContext(options);
+        const page = await context.newPage();
+        page.on("pageerror", (error) => errors.push(`${engine} ${label}: ${error.message}`));
+        const cdp = engine === "chromium" && options.hasTouch ? await context.newCDPSession(page) : null;
+        const hand = options.hasTouch ? touchHand(page, engine, cdp) : mouseHand(page);
+        const where = { engine, device: label };
         try {
-          list.push(await run());
+          list.push(await gesture(page, hand, where, cdp));
         } catch (error) {
           list.push({ where, ok: false, error: String(error?.message ?? error) });
         }
         seen.page.push({ where, after: list.at(-1)?.error ? "threw" : "ran", state: await stateOf(page).catch(() => null) });
-      };
-      await step(seen.tap, () => tapChooses(page, hand, where));
-      await step(seen.ground, () => tapOnGroundNeverPans(page, hand, where));
-      await step(seen.drag, () => dragNeverSelects(page, hand, where));
-      await step(seen.pinch, () => pinchUnderFingers(page, hand, where));
-      await step(seen.double, () => doubleGoesIn(page, hand, where, false));
-      await step(seen.quick, () => twoQuickTaps(page, hand, where));
-      await step(seen.preview, () => previewScrolls(page, hand, where));
-      await step(seen.turn, () => turnsAndToolbar(page, where, phone));
-      await step(seen.up, () => upFromFocus(page, where));
-      if (cdp) await step(seen.frames, () => framesUnderTheHand(page, hand, cdp, where));
-      await context.close();
-    }
+        await context.close().catch(() => {});
+      }
+    };
+    // A phone: its own touches.
+    await run({ ...phone }, name, [
+      [seen.tap, (page, hand, where) => tapChooses(page, hand, where)],
+      [seen.ground, (page, hand, where) => tapOnGroundNeverPans(page, hand, where)],
+      [seen.drag, (page, hand, where) => dragNeverSelects(page, hand, where)],
+      [seen.pinch, (page, hand, where) => pinchUnderFingers(page, hand, where)],
+      [seen.double, (page, hand, where) => doubleGoesIn(page, hand, where, false)],
+      [seen.quick, (page, hand, where) => twoQuickTaps(page, hand, where)],
+      [seen.preview, (page, hand, where) => previewScrolls(page, hand, where)],
+      [seen.turn, (page, _hand, where) => turnsAndToolbar(page, where, phone)],
+      [seen.up, (page, _hand, where) => upFromFocus(page, where)],
+      ...(engine === "chromium" ? [[seen.frames, (page, hand, where, cdp) => framesUnderTheHand(page, hand, cdp, where)]] : []),
+    ]);
     // A desk: a mouse and a wheel.
-    {
-      const context = await browser.newContext({ viewport: DESK });
-      const page = await context.newPage();
-      page.on("pageerror", (error) => errors.push(`${engine} desk: ${error.message}`));
-      const hand = mouseHand(page);
-      const where = { engine, device: "desk 1440×900" };
-      const step = async (list, run) => {
-        try {
-          list.push(await run());
-        } catch (error) {
-          list.push({ where, ok: false, error: String(error?.message ?? error) });
-        }
-        seen.page.push({ where, state: await stateOf(page).catch(() => null) });
-      };
-      await step(seen.tap, () => tapChooses(page, hand, where));
-      await step(seen.ground, () => tapOnGroundNeverPans(page, hand, where));
-      await step(seen.drag, () => dragNeverSelects(page, hand, where));
-      await step(seen.wheel, () => wheelUnderCursor(page, where));
-      await step(seen.double, () => doubleGoesIn(page, hand, where, true));
-      await step(seen.quick, () => twoQuickTaps(page, hand, where));
-      await step(seen.up, () => upFromFocus(page, where));
-      await context.close();
-    }
+    await run({ viewport: DESK }, "desk 1440×900", [
+      [seen.tap, (page, hand, where) => tapChooses(page, hand, where)],
+      [seen.ground, (page, hand, where) => tapOnGroundNeverPans(page, hand, where)],
+      [seen.drag, (page, hand, where) => dragNeverSelects(page, hand, where)],
+      [seen.wheel, (page, _hand, where) => wheelUnderCursor(page, where)],
+      [seen.double, (page, hand, where) => doubleGoesIn(page, hand, where, true)],
+      [seen.quick, (page, hand, where) => twoQuickTaps(page, hand, where)],
+      [seen.up, (page, _hand, where) => upFromFocus(page, where)],
+    ]);
     await browser.close();
     browser = undefined;
   }
