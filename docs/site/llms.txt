@@ -42,7 +42,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 
 ## Skills
 
-- [Skills](https://graview.dev/docs/skills.md): The 30 skills that teach an assistant the authoring moves, each ending in a real check.
+- [Skills](https://graview.dev/docs/skills.md): The 31 skills that teach an assistant the authoring moves, each ending in a real check.
 - [graview-agent-seat](https://graview.dev/docs/skills/graview-agent-seat.md): Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
 - [graview-brand](https://graview.dev/docs/skills/graview-brand.md): Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 - [graview-desk](https://graview.dev/docs/skills/graview-desk.md): Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
@@ -73,6 +73,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 - [graview-view-specs](https://graview.dev/docs/skills/graview-view-specs.md): Say how a Graview kind's card, row and page read, as data — blocks from a closed set bound by {field} templates and rule-language conditions, headlines, figures and lists of related records — and the values worked out from others (computed) that they show, verified by graview check and the page rather than by assuming the spec drew.
 - [graview-visitor-forms](https://graview.dev/docs/skills/graview-visitor-forms.md): Open one act of a Graview app to people who never join it — an RSVP, a sign-up, a request — as a form drawn alone, run as a visitor the host mints per answer, its answers landing as records and nothing else of the app shown — verified by graview check and by opening the form as that visitor.
 - [graview-worker-view](https://graview.dev/docs/skills/graview-worker-view.md): Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+- [graview-workflows](https://graview.dev/docs/skills/graview-workflows.md): Have a Graview app do something on its own — fill next week from a pattern, keep one record in step with another, set aside what is done, send what is public each morning — declared as a workflow (or a kind that follows another), checked by graview check and proven by a dry run before anything is kept.
 
 ## Recipes
 

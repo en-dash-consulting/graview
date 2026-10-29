@@ -1821,7 +1821,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
       <div class="code" data-scroller aria-label="graview docs, usage" style="margin-top: 10px;"><pre><code class="language-text">graview docs &lt;entry&gt; [--out &lt;dir&gt;] [--views &lt;module&gt;]</code></pre></div>
     </section>
     <section id="skills" aria-labelledby="h-skills">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-skills">What a model reads before it writes (30 skills)</h2></div>
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-skills">What a model reads before it writes (31 skills)</h2></div>
       <p>Skills that teach an assistant the authoring moves, each ending in a real graview check verdict. Installed into a product by <code>graview skills install .</code> — which <code>graview create</code> runs for you — into <code>.claude/skills</code> and <code>.agents/skills</code>, so Claude Code and Codex find the same instructions.</p>
       <ul class="cards">
         <li><a href="skills/graview-agent-seat.html"><strong>graview-agent-seat</strong><span>Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.</span></a></li>
@@ -1854,6 +1854,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
         <li><a href="skills/graview-view-specs.html"><strong>graview-view-specs</strong><span>Say how a Graview kind's card, row and page read, as data — blocks from a closed set bound by {field} templates and rule-language conditions, headlines, figures and lists of related records — and the values worked out from others (computed) that they show, verified by graview check and the page rather than by assuming the spec drew.</span></a></li>
         <li><a href="skills/graview-visitor-forms.html"><strong>graview-visitor-forms</strong><span>Open one act of a Graview app to people who never join it — an RSVP, a sign-up, a request — as a form drawn alone, run as a visitor the host mints per answer, its answers landing as records and nothing else of the app shown — verified by graview check and by opening the form as that visitor.</span></a></li>
         <li><a href="skills/graview-worker-view.html"><strong>graview-worker-view</strong><span>Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.</span></a></li>
+        <li><a href="skills/graview-workflows.html"><strong>graview-workflows</strong><span>Have a Graview app do something on its own — fill next week from a pattern, keep one record in step with another, set aside what is done, send what is public each morning — declared as a workflow (or a kind that follows another), checked by graview check and proven by a dry run before anything is kept.</span></a></li>
       </ul>
     </section>
     <section id="studio" aria-labelledby="h-studio">
