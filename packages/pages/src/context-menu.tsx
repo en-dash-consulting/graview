@@ -298,6 +298,14 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
   const openedBy = useRef(0);
   /** A finger resting on the page. */
   const press = useRef<{ x: number; y: number; timer: ReturnType<typeof setTimeout> } | null>(null);
+  /**
+   * WHETHER TEXT WAS SELECTED BEFORE THE RIGHT BUTTON WENT DOWN. Safari and
+   * every WebKit on a Mac select the word under a right-click between the
+   * press and the menu, so the menu found "text somebody selected" under
+   * every right-click on words and left the browser's own: a selection the
+   * press itself made is not one a person made.
+   */
+  const rightDown = useRef<{ readonly at: number; readonly had: boolean } | null>(null);
   /** The press that opened the menu by resting opens nothing else. */
   const swallow = useRef(false);
   const stop = () => {
@@ -470,6 +478,11 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
         style={{ display: "contents" }}
         onContextMenu={(event) => {
           const target = event.target as Element;
+          const down = rightDown.current;
+          rightDown.current = null;
+          // A word the right-click itself selected (WebKit on a Mac) is put back: nobody selected it.
+          const pressMade = down !== null && !down.had && Date.now() - down.at < 2000;
+          if (pressMade && !event.shiftKey && !typingIn(target)) getSelection()?.removeAllRanges();
           // The browser's own: Shift held, a text field, editable text, text somebody selected.
           if (event.shiftKey || typingIn(target) || onSelectedText(target)) return;
           event.preventDefault();
@@ -480,6 +493,11 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
           // Nowhere to point (a key the browser turned into this): at the element, as the keyboard does.
           if (event.clientX === 0 && event.clientY === 0 && target instanceof HTMLElement) openAt(target);
           else open(target, event.clientX, event.clientY, innermost(event));
+        }}
+        onMouseDownCapture={(event) => {
+          if (event.button !== 2) return;
+          const selected = typeof getSelection === "function" ? getSelection() : null;
+          rightDown.current = { at: Date.now(), had: selected !== null && !selected.isCollapsed };
         }}
         onPointerDown={(event) => {
           swallow.current = false;

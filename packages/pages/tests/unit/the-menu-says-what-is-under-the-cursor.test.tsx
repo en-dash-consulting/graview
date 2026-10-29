@@ -139,6 +139,21 @@ describe("the right-click menu on the routed face", () => {
     await until(() => written.length > 0, "the clipboard");
     expect(written[0]).toBe(said);
   });
+
+  it("opens over a word the right-click itself selected, as Safari selects one, and puts the selection back", async () => {
+    const host = await tasks("/tasks/deposit");
+    const heading = host.querySelector<HTMLElement>('[data-testid="record-fields"] h2')!;
+    // Nothing selected when the button goes down; WebKit selects the word under it before the menu event.
+    await act(async () => void heading.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, button: 2 })));
+    const range = document.createRange();
+    range.selectNodeContents(heading);
+    getSelection()!.addRange(range);
+    const event = await rightClick(heading);
+    expect(event.defaultPrevented).toBe(true);
+    expect(menu()).not.toBeNull();
+    expect(rows()).not.toContain("copy-selection");
+    expect(getSelection()!.isCollapsed).toBe(true);
+  });
 });
 
 /* A STATUS BOARD: the tasks document's board, a column of it under the cursor. */
