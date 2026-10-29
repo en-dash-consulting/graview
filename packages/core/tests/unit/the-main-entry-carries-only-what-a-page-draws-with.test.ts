@@ -94,7 +94,7 @@ const OFF_THE_PAGE = {
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,
-    names: ["acceptSuggestion", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "mayDecide", "meaningKey", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
+    names: ["acceptSuggestion", "advisoryVoterOf", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "mayDecide", "meaningKey", "SIGN_IN_TO_VOTE", "signedOutSeat", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
   },
 } as const;
 

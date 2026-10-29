@@ -148,6 +148,12 @@ export interface SceneHandle {
 export interface AwaySummary {
   readonly tidied: number;
   readonly waiting?: number;
+  /**
+   * HOW MANY AGREE WITH ONE THAT WAITS (Roadmap f-votes-shared-seat): the
+   * most people whose vote stands for a waiting suggestion, said in the
+   * tray's line, "3 readers agree with one that waits". `whileAway` counts it.
+   */
+  readonly agreed?: number;
 }
 
 export interface GraviewContextValue<S extends AnySchema> {

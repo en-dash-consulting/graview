@@ -25,6 +25,7 @@ import {
   type SubscriptionStore,
   type KeptViews,
   type KeptViewsMay,
+  type VotesOptions,
 } from "@graview/core";
 import { judgeWithLines } from "@graview/core/lines";
 import { holdTypingRuns, matchSubscriptions } from "@graview/core/subscriptions";
@@ -336,6 +337,14 @@ export interface AdapterStoreHandlerOptions<S extends AnySchema> extends Handler
    * kinds kept from every route, as a sight keeps a record.
    */
   readonly enabledModules?: readonly string[];
+  /**
+   * WHAT THIS HOST SAYS OF VOTES (Roadmap f-votes-shared-seat), handed to
+   * the store it opens: a vote on a suggestion from a seat `seatOf` marks
+   * `shared` (every signed-out visitor as one) or a `visitor` is refused,
+   * unless `{ advisory: "visitors" }` keeps it — under the seat's
+   * `visitorKey`, counted apart, never toward `autoAcceptAt`.
+   */
+  readonly votes?: VotesOptions;
 }
 
 /**
@@ -533,10 +542,10 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       ...(options.seed ? { seed: options.seed } : {}),
       ...(options.enabledModules ? { enabledModules: options.enabledModules } : {}),
       // What the handler's store lands itself is in a batch no client could have named first.
-      storeOptions: { batchIds: serverBatchIds() },
+      storeOptions: { batchIds: serverBatchIds(), ...(options.votes ? { votes: options.votes } : {}) },
     });
   let opened = (await opening(options.app)) as OpenedStore<AnySchema>;
-  const { adapter, seed: _seed, scope: _scope, enabledModules: _modules, ...rest } = options;
+  const { adapter, seed: _seed, scope: _scope, enabledModules: _modules, votes: _votes, ...rest } = options;
   const { handler, swap } = storeHandler({
     ...rest,
     store: opened.store as unknown as Store<S>,

@@ -1,5 +1,5 @@
 import type { MutationCall } from "../mutations/types.js";
-import type { Vote } from "../mutations/vote-suggestion.js";
+import { advisoryVoterOf, signedOutSeat, type Vote } from "../mutations/vote-suggestion.js";
 import { actingAs } from "../permissions/policy.js";
 import type { Principal } from "../permissions/types.js";
 import type { Lineage } from "./lineage.js";
@@ -43,6 +43,13 @@ export interface SuggestionTally {
   readonly against: number;
   /** The reader's own standing vote, when one was named to `suggestions` and they cast one. */
   readonly mine?: "for" | "against";
+  /**
+   * THE ADVISORY VOTES, apart (Roadmap f-votes-shared-seat): what visitors
+   * on a shared or signed-out seat said, where the host keeps their votes
+   * (`StoreOptions.votes`) — never counted in `for` and `against`, and
+   * never toward `autoAcceptAt`. Absent when none stand.
+   */
+  readonly advisory?: { readonly for: number; readonly against: number };
 }
 
 /**
@@ -97,14 +104,18 @@ export const voterId = (author: Author): string | undefined => actingAs(author a
  * f-suggestion-votes): each person's latest vote that still stands — a
  * later vote replaces an earlier one, `null` withdraws it, an undone vote
  * never counted, and a vote withheld from the reader is not theirs to
- * count. One pass over the ops, asked once per reading.
+ * count. One pass over the ops, asked once per reading. The advisory votes
+ * (Roadmap f-votes-shared-seat) are counted only when asked for
+ * (`{ advisory: true }`), by the visitor each names, and then alone.
  */
-export function votesIn(ops: readonly Operation[]): ReadonlyMap<string, ReadonlyMap<string, Exclude<Vote, null>>> {
+export function votesIn(ops: readonly Operation[], options: { readonly advisory?: boolean } = {}): ReadonlyMap<string, ReadonlyMap<string, Exclude<Vote, null>>> {
   const undone = undoneIn(ops);
   const standing = new Map<string, Map<string, Exclude<Vote, null>>>();
+  const advisory = options.advisory === true;
   for (const op of ops) {
     if (op.vote === undefined || op.withheld || undone.has(op.id)) continue;
-    const who = voterId(op.author);
+    if ((op.vote.advisory === true) !== advisory) continue;
+    const who = advisory ? op.vote.voter : voterId(op.author);
     if (who === undefined) continue;
     let votes = standing.get(op.vote.suggestion);
     if (!votes) standing.set(op.vote.suggestion, (votes = new Map()));
@@ -114,14 +125,25 @@ export function votesIn(ops: readonly Operation[]): ReadonlyMap<string, Readonly
   return standing;
 }
 
-/** The votes on one suggestion, counted, with the reader's own when they are named. */
-export function tallyOf(votes: ReadonlyMap<string, Exclude<Vote, null>> | undefined, voter?: Principal): SuggestionTally {
+/** For and against, counted. */
+function counted(votes: ReadonlyMap<string, Exclude<Vote, null>> | undefined): { for: number; against: number } {
   let votedFor = 0;
   let against = 0;
   for (const vote of votes?.values() ?? []) vote === "for" ? votedFor++ : against++;
-  const me = voter && voterId(voter);
-  const mine = me !== undefined ? votes?.get(me) : undefined;
-  return { for: votedFor, against, ...(mine !== undefined ? { mine } : {}) };
+  return { for: votedFor, against };
+}
+
+/**
+ * The votes on one suggestion, counted, with the reader's own when they are
+ * named — and the advisory votes apart (`advisoryVotes`), where a reader on
+ * a shared or signed-out seat finds their own.
+ */
+export function tallyOf(votes: ReadonlyMap<string, Exclude<Vote, null>> | undefined, voter?: Principal, advisoryVotes?: ReadonlyMap<string, Exclude<Vote, null>>): SuggestionTally {
+  const visitor = signedOutSeat(voter) ? advisoryVoterOf(voter) : undefined;
+  const me = voter && (visitor === undefined ? voterId(voter) : undefined);
+  const mine = visitor !== undefined ? advisoryVotes?.get(visitor) : me !== undefined ? votes?.get(me) : undefined;
+  const advisory = counted(advisoryVotes);
+  return { ...counted(votes), ...(mine !== undefined ? { mine } : {}), ...(advisory.for + advisory.against > 0 ? { advisory } : {}) };
 }
 
 /** Whether a suggestion's op has stopped waiting by its own expiry. */
@@ -146,12 +168,13 @@ export function suggestionsIn(ops: readonly Operation[], has: (id: string) => bo
   const accepted = new Set(ops.map((op) => op.lineage?.suggestion));
   const now = options.now ?? new Date().toISOString();
   let votes: ReturnType<typeof votesIn> | undefined;
+  let advisory: ReturnType<typeof votesIn> | undefined;
   return ops
     .filter((op) => op.suggests && !op.withheld && !undone.has(op.id) && !accepted.has(op.id) && !expired(op, now) && !isDismissed(options.dismissed, op.id, now))
     .map(({ id, batch, suggests, intent, author, lineage, at, expiresAt }) => {
       const about = new Set<string>();
       // Every string its calls hold, kept where it is a record.
       JSON.stringify(suggests!.map((call) => call.args), (_, value) => (typeof value === "string" && has(value) && about.add(value), value));
-      return { id, batch, calls: suggests!, intent, author, ...(lineage ? { lineage } : {}), at, expiresAt, about: [...about], tally: tallyOf((votes ??= votesIn(ops)).get(id), options.voter) };
+      return { id, batch, calls: suggests!, intent, author, ...(lineage ? { lineage } : {}), at, expiresAt, about: [...about], tally: tallyOf((votes ??= votesIn(ops)).get(id), options.voter, (advisory ??= votesIn(ops, { advisory: true })).get(id)) };
     });
 }

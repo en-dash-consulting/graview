@@ -26,7 +26,7 @@
  */
 import { GraphError } from "./graph/graph.js";
 import type { MutationCall } from "./mutations/types.js";
-import { VOTE_SUGGESTION, VOTING, type Vote } from "./mutations/vote-suggestion.js";
+import { advisoryVoterOf, signedOutSeat, VOTE_SUGGESTION, VOTING, type Vote } from "./mutations/vote-suggestion.js";
 import { lineageOf, LINEAGE_VOTERS_LIMIT, type Lineage } from "./ops/lineage.js";
 import { expired, suggestionsIn, votesIn, type Dismissal, type Suggestion } from "./ops/suggestions.js";
 import { declinedIn, isAutomated, meaningKey, type ActMeanings } from "./ops/tidying.js";
@@ -41,7 +41,8 @@ export { declinedIn, declinesIn, meaningKey, suggestionKey, tidyingOf, tidyingRe
 export type { ActMeanings } from "./ops/tidying.js";
 export { isDismissed, suggestionsIn, tallyOf, votesIn } from "./ops/suggestions.js";
 export type { Dismissal, DismissalStore, Suggestion, SuggestionTally, WaitingOptions } from "./ops/suggestions.js";
-export type { AppTidying, SuggestionVote, Vote } from "./mutations/vote-suggestion.js";
+export { advisoryVoterOf, SIGN_IN_TO_VOTE, signedOutSeat } from "./mutations/vote-suggestion.js";
+export type { AppTidying, SuggestionVote, Vote, VotesOptions } from "./mutations/vote-suggestion.js";
 export { digestWords, foldDigests, isSuggestionBatch, typedRowWords } from "./ops/digest.js";
 export type { ActivityRow, TypedRow } from "./ops/digest.js";
 export { LEFT_ALONE } from "./graph/archived.js";
@@ -278,6 +279,8 @@ VOTING.op = (held, made, call, batch, author, options) => {
   const store = held as Store<AnySchema>;
   const { suggestion: id, vote } = call.args as { suggestion: string; vote: Vote };
   const suggestion = waitingFor(store, id, author);
+  // From a shared or signed-out seat the store let vote (`StoreOptions.votes`), advisory, and its visitor's (Roadmap f-votes-shared-seat).
+  const voter = signedOutSeat(author) ? advisoryVoterOf(author) : undefined;
   const intent = vote === "for" ? `For: ${suggestion.intent}` : vote === "against" ? `Against: ${suggestion.intent}` : `Withdraws a vote on: ${suggestion.intent}`;
   return {
     id: made.id,
@@ -292,7 +295,7 @@ VOTING.op = (held, made, call, batch, author, options) => {
     ...(suggestion.about.length > 0 ? { described: suggestion.about } : {}),
     at: made.at,
     ...(options.via !== undefined ? { via: options.via as Via } : {}),
-    vote: { suggestion: id, vote },
+    vote: { suggestion: id, vote, ...(voter !== undefined ? { advisory: true as const, voter } : {}) },
   };
 };
 
