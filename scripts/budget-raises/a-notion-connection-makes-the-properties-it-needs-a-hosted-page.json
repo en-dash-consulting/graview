@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 200,
+  "gzipped": 66,
+  "changeset": "a-notion-connection-makes-the-properties-it-needs.md",
+  "note": "Raised when a Notion connection came to keep several data sources of one database, each its own kind (request: Notion autocreates the necessary properties): up front is the compile reading a connection's sources for the fields each kind keeps in step (`fieldsKeptInStep`). Making properties, the sources' engine and the record page's line are fetched with what asks for them. Measured at 645_863 / 224_712 against 645_663 / 224_646: 200 more minified, 66 gzipped."
+}

@@ -148,6 +148,8 @@ export interface RemoteSystem {
   pull(cursor?: string): Promise<{
     readonly changes: readonly RemoteChange[];
     readonly cursor: string;
+    /** What the transport did to the remote to keep these records, or found there, as sentences: properties it made in Notion, one of another type it left. */
+    readonly said?: readonly string[];
   }>;
   push(writes: readonly RemoteWrite[]): Promise<readonly RemoteAck[]>;
 }

@@ -37,6 +37,16 @@ import type { RemoteAck, RemoteChange, RemoteSystem, RemoteWrite } from "./types
  *   type `NOTION_EDGE`): its value is the ids of the pages it reaches, every
  *   one of them — Notion lists 25 on a page and the rest through the
  *   property's own endpoint, which is followed — and it is written whole.
+ * - SEVERAL DATA SOURCES of one database are kept by one transport, each
+ *   its own resource (`sources`): a pull reads each in turn, with a cursor
+ *   of its own, and a push writes each page to the source its resource is.
+ * - THE PROPERTIES A MAPPING NEEDS ARE MADE (`make`): a name that finds no
+ *   property, and has a property to make, is given one by changing the
+ *   data source (PATCH /data_sources/{id}), each pull that finds it missing;
+ *   a relation's is made to the source of this transport it links. Nothing
+ *   there is renamed or deleted, and a property of another type is said and
+ *   left. What was made is said in the pull's `said`, as every note is the
+ *   first time.
  * - Notion asking us to slow down (429) is waited out as its `Retry-After`
  *   says, within a bound; a refused secret (401) and a database the
  *   integration cannot see (404) are said as sentences that say what to do.
@@ -45,9 +55,40 @@ import type { RemoteAck, RemoteChange, RemoteSystem, RemoteWrite } from "./types
 export const NOTION_API = "https://api.notion.com/v1";
 export const NOTION_VERSION = "2025-09-03";
 
+/** A property to make when a data source lacks it: its type, the name it is given, its options, and for a relation the resource whose source it links. */
+export interface NotionMade {
+  readonly type: string;
+  /** The name it is given in Notion; the name the mapping uses when absent. */
+  readonly name?: string;
+  /** A select's or a multi-select's options, as they are made. */
+  readonly options?: readonly string[];
+  /** For a relation: the resource of this transport whose data source it links. */
+  readonly to?: string;
+}
+
+/** One data source of the database, kept in step as one resource. */
+export interface NotionSourceOptions {
+  /** What the engine calls its pages (`pages`, or `pages:<kind>` for one of several). */
+  readonly resource: string;
+  /** The data source, by its name or id, when the database holds several. */
+  readonly source?: string;
+  /** As `NotionOptions.refs`, for this source. */
+  readonly refs?: Readonly<Record<string, string | undefined>>;
+  readonly quiet?: readonly string[];
+  readonly titleRef?: string;
+  /** The properties to make, by the name the mapping uses, when the source lacks them. Absent: none is made. */
+  readonly make?: Readonly<Record<string, NotionMade>>;
+}
+
 export interface NotionOptions {
   /** The database's id: the 32 characters in its link, before `?v=`. */
   readonly databaseId: string;
+  /**
+   * SEVERAL DATA SOURCES, each its own resource. Absent: one, the `pages`
+   * resource, named by `source` and mapped by `refs`, `quiet`, `titleRef`
+   * and `make` below.
+   */
+  readonly sources?: readonly NotionSourceOptions[];
   /** The data source to keep in step, by its name or id, when the database holds several. */
   readonly source?: string;
   /** The internal integration's secret, asked before every request. */
@@ -69,8 +110,10 @@ export interface NotionOptions {
   readonly quiet?: readonly string[];
   /** A name that, finding no property of its own, is the database's title. */
   readonly titleRef?: string;
-  /** The pages this sync has linked, by Notion's id, so a full read can tell which are gone. */
-  known?(): readonly string[];
+  /** The properties to make when the data source lacks them (`NotionSourceOptions.make`). */
+  readonly make?: Readonly<Record<string, NotionMade>>;
+  /** The pages this sync has linked, by Notion's id, so a full read can tell which are gone — those of one resource. */
+  known?(resource: string): readonly string[];
   /** How often a pull reads the whole database to see what was archived, in ms (10 minutes by default). */
   readonly sweepEvery?: number;
   /** The longest a run waits out Notion's rate limit, in ms (60 seconds by default). */
@@ -232,15 +275,43 @@ interface Cursor {
   readonly since?: string;
   readonly swept: number;
 }
-const readCursor = (cursor: string | undefined): Cursor | undefined => {
-  if (!cursor) return undefined;
+const oneCursor = (parsed: Partial<Cursor> | undefined): Cursor | undefined =>
+  parsed && typeof parsed.swept === "number" ? { swept: parsed.swept, ...(typeof parsed.since === "string" ? { since: parsed.since } : {}) } : undefined;
+/** Each resource's cursor: a connection of one source keeps its own as it always has; one of several keeps them by resource (`by`). */
+const readCursors = (cursor: string | undefined): Map<string, Cursor> => {
+  const out = new Map<string, Cursor>();
+  if (!cursor) return out;
   try {
-    const parsed = JSON.parse(cursor) as Partial<Cursor>;
-    return typeof parsed.swept === "number" ? { swept: parsed.swept, ...(typeof parsed.since === "string" ? { since: parsed.since } : {}) } : undefined;
+    const parsed = JSON.parse(cursor) as Partial<Cursor> & { by?: Record<string, Partial<Cursor>> };
+    const single = oneCursor(parsed);
+    if (single) out.set("pages", single);
+    for (const [resource, one] of Object.entries(parsed.by ?? {})) {
+      const read = oneCursor(one);
+      if (read) out.set(resource, read);
+    }
   } catch {
-    return undefined;
+    // A cursor this build cannot read is a whole read, as none is.
   }
+  return out;
 };
+
+/** A property's settings as Notion takes them when one is made. */
+function madeSettings(made: NotionMade, linked?: string): Json {
+  switch (made.type) {
+    case "select":
+    case "multi_select":
+      return { [made.type]: { options: (made.options ?? []).map((name) => ({ name })) } };
+    case "number":
+      return { number: { format: "number" } };
+    case "relation":
+      return { relation: { data_source_id: linked, type: "single_property", single_property: {} } };
+    default:
+      return { [made.type]: {} };
+  }
+}
+
+/** "Status, Due and Owner". */
+const listed = (names: readonly string[]) => (names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`);
 
 export function notion(options: NotionOptions): RemoteSystem {
   const doFetch = options.fetch ?? (globalThis.fetch as Fetcher);
@@ -251,9 +322,12 @@ export function notion(options: NotionOptions): RemoteSystem {
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const maxWait = options.maxWait ?? 60_000;
   const said = new Set<string>();
+  /* What was said for the first time since the last pull returned: the pull's `said`. */
+  let fresh: string[] = [];
   const note = (line: string) => {
     if (said.has(line)) return;
     said.add(line);
+    fresh.push(line);
     options.say?.(line);
   };
 
@@ -292,10 +366,10 @@ export function notion(options: NotionOptions): RemoteSystem {
     }
   };
 
-  /** The data source this connection keeps in step: the database's only one, or the one `source` names. */
-  let sourceId: string | undefined;
-  const dataSource = async (): Promise<string> => {
-    if (sourceId) return sourceId;
+  /** The database, read once: its title and its data sources. */
+  let held: { readonly title: string; readonly sources: readonly { readonly id: string; readonly name: string }[] } | undefined;
+  const databaseOf = async () => {
+    if (held) return held;
     let answer: Json;
     try {
       answer = await call("GET", `/databases/${encodeURIComponent(databaseId)}`);
@@ -312,87 +386,213 @@ export function notion(options: NotionOptions): RemoteSystem {
       }
       throw error;
     }
-    const sources = ((answer["data_sources"] as Json[] | undefined) ?? []).map((one) => ({ id: String(one["id"]), name: String(one["name"] ?? "") }));
-    const title = ((answer["title"] as Json[] | undefined) ?? []).map((part) => String(part["plain_text"] ?? "")).join("") || databaseId;
-    const named = options.source;
-    const chosen = named
-      ? (sources.find((one) => notionKey(one.id) === notionKey(named)) ?? sources.find((one) => one.name === named) ?? sources.find((one) => loose(one.name) === loose(named)))
-      : sources.length === 1
-        ? sources[0]
-        : undefined;
-    if (!chosen) {
-      const list = sources.map((one) => one.name || one.id).join(", ");
-      throw new NotionError(
-        named
-          ? `notion: the database ${title} has no data source ${named}; it holds ${list || "none"}`
-          : `notion: the database ${title} holds ${sources.length} data sources — ${list} — so the connection says which with source`,
-        400,
-        "validation_error",
-      );
-    }
-    sourceId = chosen.id;
-    return chosen.id;
+    held = {
+      title: ((answer["title"] as Json[] | undefined) ?? []).map((part) => String(part["plain_text"] ?? "")).join("") || databaseId,
+      sources: ((answer["data_sources"] as Json[] | undefined) ?? []).map((one) => ({ id: String(one["id"]), name: String(one["name"] ?? "") })),
+    };
+    return held;
   };
 
-  /** The data source's properties, by name — and a sentence when the integration cannot see it. */
-  let schema: Map<string, Property> | undefined;
-  const database = async (): Promise<Map<string, Property>> => {
-    const answer = await call("GET", `/data_sources/${encodeURIComponent(await dataSource())}`);
-    const properties = new Map<string, Property>();
-    for (const [name, property] of Object.entries((answer["properties"] as Record<string, Json> | undefined) ?? {})) {
-      const type = String(property["type"]);
-      const options = ((property[type] as Json | undefined)?.["options"] as Json[] | undefined) ?? [];
-      properties.set(name, { name, type, options: options.map((option) => String(option["name"])) });
-    }
-    schema = properties;
-    return properties;
-  };
+  const declared: readonly NotionSourceOptions[] = options.sources ?? [
+    {
+      resource: "pages",
+      ...(options.source ? { source: options.source } : {}),
+      ...(options.refs ? { refs: options.refs } : {}),
+      ...(options.quiet ? { quiet: options.quiet } : {}),
+      ...(options.titleRef ? { titleRef: options.titleRef } : {}),
+      ...(options.make ? { make: options.make } : {}),
+    },
+  ];
 
-  /** The mapping's names, each to the property it finds: by name, loosely, and the title for `titleRef`. */
-  const resolve = (properties: Map<string, Property>): Map<string, Property> => {
-    const found = resolveRefs(properties);
-    // What is kept in step by nothing, said once: a formula, a rollup, a relation no relation here holds.
-    const held = new Set([...found.values()].map((property) => property.name));
-    const alone = [...properties.values()].filter((property) => !NOTION_FITS[property.type] && !held.has(property.name));
-    if (alone.length > 0) {
-      note(`left alone in Notion: ${alone.map((property) => `${property.name} (${property.type}${NOTION_LEFT_ALONE[property.type] ? `: ${NOTION_LEFT_ALONE[property.type]}` : ""})`).join(", ")}`);
-    }
-    return found;
-  };
-  const resolveRefs = (properties: Map<string, Property>): Map<string, Property> => {
-    const found = new Map<string, Property>();
-    if (!options.refs) {
-      for (const property of properties.values()) if (NOTION_FITS[property.type]) found.set(property.name, property);
+  /** One data source, kept as one resource: its id, its properties, and the pages it reads and writes. */
+  const keeper = (spec: NotionSourceOptions) => {
+    let sourceId: string | undefined;
+    /** Its id: the database's only source, or the one `source` names. */
+    const dataSource = async (): Promise<string> => {
+      if (sourceId) return sourceId;
+      const { title, sources } = await databaseOf();
+      const named = spec.source;
+      const chosen = named
+        ? (sources.find((one) => notionKey(one.id) === notionKey(named)) ?? sources.find((one) => one.name === named) ?? sources.find((one) => loose(one.name) === loose(named)))
+        : sources.length === 1
+          ? sources[0]
+          : undefined;
+      if (!chosen) {
+        const list = sources.map((one) => one.name || one.id).join(", ");
+        throw new NotionError(
+          named
+            ? `notion: the database ${title} has no data source ${named}; it holds ${list || "none"}`
+            : `notion: the database ${title} holds ${sources.length} data sources — ${list} — so the connection says which with source`,
+          400,
+          "validation_error",
+        );
+      }
+      sourceId = chosen.id;
+      return chosen.id;
+    };
+
+    /** Its properties, by name. */
+    let schema: Map<string, Property> | undefined;
+    const readSchema = async (): Promise<Map<string, Property>> => {
+      const answer = await call("GET", `/data_sources/${encodeURIComponent(await dataSource())}`);
+      const properties = new Map<string, Property>();
+      for (const [name, property] of Object.entries((answer["properties"] as Record<string, Json> | undefined) ?? {})) {
+        const type = String(property["type"]);
+        const listed = ((property[type] as Json | undefined)?.["options"] as Json[] | undefined) ?? [];
+        properties.set(name, { name, type, options: listed.map((option) => String(option["name"])) });
+      }
+      schema = properties;
+      return properties;
+    };
+
+    /** The property a mapping's name finds: by name, loosely, and the title for `titleRef`. */
+    const find = (properties: Map<string, Property>, ref: string): Property | undefined => {
+      const byLoose = [...properties.values()].find((property) => loose(property.name) === loose(ref));
+      return properties.get(ref) ?? byLoose ?? (ref === spec.titleRef ? [...properties.values()].find((property) => property.type === "title") : undefined);
+    };
+
+    /**
+     * THE PROPERTIES IT LACKS, MADE: each name of `make` that finds no
+     * property is given one in a single change of the data source; a
+     * relation's links the source of the resource it names. Said once, as
+     * a sentence; a refusal is said and the pass goes on without them.
+     */
+    const makeMissing = async (properties: Map<string, Property>): Promise<Map<string, Property>> => {
+      if (!spec.make) return properties;
+      const wanted: Record<string, Json> = {};
+      const names: string[] = [];
+      for (const [ref, made] of Object.entries(spec.make)) {
+        if (find(properties, ref)) continue;
+        let linked: string | undefined;
+        if (made.type === "relation") {
+          const other = keepers.find((one) => one.resource === made.to);
+          if (!other) continue;
+          linked = await other.dataSource();
+        }
+        const name = made.name ?? ref;
+        wanted[name] = madeSettings(made, linked);
+        names.push(name);
+      }
+      if (names.length === 0) return properties;
+      try {
+        await call("PATCH", `/data_sources/${encodeURIComponent(await dataSource())}`, { properties: wanted });
+      } catch (error) {
+        note(`could not make ${listed(names)} in Notion: ${error instanceof Error ? error.message.replace(/^notion: /, "") : String(error)}`);
+        return properties;
+      }
+      note(`Made ${names.length} ${names.length === 1 ? "property" : "properties"} in Notion${declared.length > 1 ? ` for ${spec.resource.replace(/^pages:/, "")}` : ""}: ${listed(names)}`);
+      return readSchema();
+    };
+
+    /** The mapping's names, each to the property it finds. */
+    const resolve = (properties: Map<string, Property>): Map<string, Property> => {
+      const found = resolveRefs(properties);
+      // What is kept in step by nothing, said once: a formula, a rollup, a relation no relation here holds.
+      const kept = new Set([...found.values()].map((property) => property.name));
+      const alone = [...properties.values()].filter((property) => !NOTION_FITS[property.type] && !kept.has(property.name));
+      if (alone.length > 0) {
+        note(`left alone in Notion: ${alone.map((property) => `${property.name} (${property.type}${NOTION_LEFT_ALONE[property.type] ? `: ${NOTION_LEFT_ALONE[property.type]}` : ""})`).join(", ")}`);
+      }
       return found;
-    }
-    const byLoose = new Map([...properties.values()].map((property) => [loose(property.name), property]));
-    const title = [...properties.values()].find((property) => property.type === "title");
-    const missing: string[] = [];
-    for (const [ref, fieldType] of Object.entries(options.refs)) {
-      const property = properties.get(ref) ?? byLoose.get(loose(ref)) ?? (ref === options.titleRef ? title : undefined);
-      if (!property) {
-        if (!options.quiet?.includes(ref)) missing.push(ref);
-        continue;
+    };
+    const resolveRefs = (properties: Map<string, Property>): Map<string, Property> => {
+      const found = new Map<string, Property>();
+      if (!spec.refs) {
+        for (const property of properties.values()) if (NOTION_FITS[property.type]) found.set(property.name, property);
+        return found;
       }
-      if (fieldType === NOTION_EDGE || property.type === "relation") {
-        if (fieldType === NOTION_EDGE && property.type === "relation") found.set(ref, property);
-        else if (fieldType === NOTION_EDGE) note(`${ref}: the property ${property.name} is a ${property.type} property, and a relation holds only a relation property, so it is left out`);
-        else note(`${ref}: the property ${property.name} is a relation, which a relation of the kind holds and a field does not, so it is left out`);
-        continue;
+      const missing: string[] = [];
+      for (const [ref, fieldType] of Object.entries(spec.refs)) {
+        const property = find(properties, ref);
+        if (!property) {
+          if (!spec.quiet?.includes(ref)) missing.push(ref);
+          continue;
+        }
+        if (fieldType === NOTION_EDGE || property.type === "relation") {
+          if (fieldType === NOTION_EDGE && property.type === "relation") found.set(ref, property);
+          else if (fieldType === NOTION_EDGE) note(`${ref}: the property ${property.name} is a ${property.type} property, and a relation holds only a relation property, so it is left out`);
+          else note(`${ref}: the property ${property.name} is a relation, which a relation of the kind holds and a field does not, so it is left out`);
+          continue;
+        }
+        if (!NOTION_FITS[property.type]) {
+          note(`${ref}: the property ${property.name} is a ${property.type} property, which is not kept in step, so it is left out`);
+          continue;
+        }
+        if (fieldType && !notionFits(property.type, fieldType)) {
+          note(`${ref}: the property ${property.name} is a ${property.type} property, and a ${fieldType} field cannot hold it, so it is left out`);
+          continue;
+        }
+        found.set(ref, property);
       }
-      if (!NOTION_FITS[property.type]) {
-        note(`${ref}: the property ${property.name} is a ${property.type} property, which is not kept in step, so it is left out`);
-        continue;
+      if (missing.length > 0) note(`no property in the ${declared.length > 1 ? `data source for ${spec.resource.replace(/^pages:/, "")}` : "database"} for ${missing.join(", ")}, so ${missing.length === 1 ? "it is" : "they are"} not kept in step`);
+      return found;
+    };
+
+    /** Every page of one query: edited on or after `since`, oldest first; without it, the whole source. */
+    const query = async (since: string | undefined): Promise<Json[]> => {
+      const pages: Json[] = [];
+      let start: string | undefined;
+      for (;;) {
+        const answer = await call("POST", `/data_sources/${encodeURIComponent(await dataSource())}/query`, {
+          page_size: options.pageSize ?? 100,
+          sorts: [{ timestamp: "last_edited_time", direction: "ascending" }],
+          ...(since ? { filter: { timestamp: "last_edited_time", last_edited_time: { on_or_after: since } } } : {}),
+          ...(start ? { start_cursor: start } : {}),
+        });
+        pages.push(...((answer["results"] as Json[] | undefined) ?? []));
+        if (answer["has_more"] === true && typeof answer["next_cursor"] === "string") {
+          start = answer["next_cursor"];
+          continue;
+        }
+        return pages;
       }
-      if (fieldType && !notionFits(property.type, fieldType)) {
-        note(`${ref}: the property ${property.name} is a ${property.type} property, and a ${fieldType} field cannot hold it, so it is left out`);
-        continue;
+    };
+
+    /** Whether a page this sync knew is gone from the source: archived, in the trash, moved out, or not there at all. */
+    const goneFromSource = async (id: string): Promise<boolean> => {
+      try {
+        const page = await call("GET", `/pages/${encodeURIComponent(id)}`);
+        const parent = page["parent"] as Json | undefined;
+        return page["archived"] === true || page["in_trash"] === true || notionKey(String(parent?.["data_source_id"] ?? "")) !== notionKey(await dataSource());
+      } catch (error) {
+        if (error instanceof NotionError && error.status === 404) return true;
+        throw error;
       }
-      found.set(ref, property);
-    }
-    if (missing.length > 0) note(`no property in the database for ${missing.join(", ")}, so ${missing.length === 1 ? "it is" : "they are"} not kept in step`);
-    return found;
+    };
+
+    /** Its properties as this pass keeps them: read, what it lacks made, resolved. */
+    const ready = async (): Promise<Map<string, Property>> => resolve(await makeMissing(await readSchema()));
+
+    return {
+      resource: spec.resource,
+      dataSource,
+      ready,
+      /** What a push resolves against: the properties the last pull read, or read now. */
+      resolved: async () => (schema ? resolve(schema) : ready()),
+
+      async pull(at: Cursor | undefined, resolved: Map<string, Property>, time: number): Promise<{ readonly changes: RemoteChange[]; readonly cursor: Cursor }> {
+        const whole = !at || time - at.swept >= (options.sweepEvery ?? DEFAULT_SWEEP);
+        const pages = await query(whole ? undefined : at.since);
+        let since = at?.since;
+        const changes: RemoteChange[] = [];
+        for (const page of pages) {
+          const edited = String(page["last_edited_time"] ?? "");
+          if (edited && (!since || edited > since)) since = edited;
+          const archived = page["archived"] === true || page["in_trash"] === true;
+          changes.push({ resource: spec.resource, id: String(page["id"]), version: notionVersion(page), ...(archived ? { deleted: true } : { fields: await fieldsOf(page, resolved) }) });
+        }
+        if (whole && options.known) {
+          const listedHere = new Set(pages.map((page) => notionKey(String(page["id"]))));
+          for (const id of options.known(spec.resource)) {
+            if (listedHere.has(notionKey(id))) continue;
+            if (await goneFromSource(id)) changes.push({ resource: spec.resource, id, version: "gone", deleted: true });
+          }
+        }
+        return { changes, cursor: { ...(since ? { since } : {}), swept: whole ? time : at.swept } };
+      },
+    };
   };
+  const keepers = declared.map(keeper);
 
   const fieldsOf = async (page: Json, resolved: Map<string, Property>): Promise<Json> => {
     const properties = (page["properties"] as Record<string, Json> | undefined) ?? {};
@@ -424,71 +624,38 @@ export function notion(options: NotionOptions): RemoteSystem {
     }
   };
 
-  /** Every page of one query: edited on or after `since`, oldest first; without it, the whole database. */
-  const query = async (since: string | undefined): Promise<Json[]> => {
-    const pages: Json[] = [];
-    let start: string | undefined;
-    for (;;) {
-      const answer = await call("POST", `/data_sources/${encodeURIComponent(await dataSource())}/query`, {
-        page_size: options.pageSize ?? 100,
-        sorts: [{ timestamp: "last_edited_time", direction: "ascending" }],
-        ...(since ? { filter: { timestamp: "last_edited_time", last_edited_time: { on_or_after: since } } } : {}),
-        ...(start ? { start_cursor: start } : {}),
-      });
-      pages.push(...((answer["results"] as Json[] | undefined) ?? []));
-      if (answer["has_more"] === true && typeof answer["next_cursor"] === "string") {
-        start = answer["next_cursor"];
-        continue;
-      }
-      return pages;
-    }
-  };
-
-  /** Whether a page this sync knew is gone from the database: archived, in the trash, moved out, or not there at all. */
-  const goneFromDatabase = async (id: string): Promise<boolean> => {
-    try {
-      const page = await call("GET", `/pages/${encodeURIComponent(id)}`);
-      const parent = page["parent"] as Json | undefined;
-      return page["archived"] === true || page["in_trash"] === true || notionKey(String(parent?.["data_source_id"] ?? "")) !== notionKey(await dataSource());
-    } catch (error) {
-      if (error instanceof NotionError && error.status === 404) return true;
-      throw error;
-    }
-  };
-
   return {
     name: "notion",
 
     async pull(cursor) {
-      const resolved = resolve(await database());
-      const at = readCursor(cursor);
+      fresh = [];
       const time = now();
-      const whole = !at || time - at.swept >= (options.sweepEvery ?? DEFAULT_SWEEP);
-      const pages = await query(whole ? undefined : at.since);
-      let since = at?.since;
+      const cursors = readCursors(cursor);
+      // Every source made ready first: a relation made on one links another's source.
+      const resolved = new Map<string, Map<string, Property>>();
+      for (const one of keepers) resolved.set(one.resource, await one.ready());
       const changes: RemoteChange[] = [];
-      for (const page of pages) {
-        const edited = String(page["last_edited_time"] ?? "");
-        if (edited && (!since || edited > since)) since = edited;
-        const archived = page["archived"] === true || page["in_trash"] === true;
-        changes.push({ resource: "pages", id: String(page["id"]), version: notionVersion(page), ...(archived ? { deleted: true } : { fields: await fieldsOf(page, resolved) }) });
+      const next = new Map<string, Cursor>();
+      for (const one of keepers) {
+        const pulled = await one.pull(cursors.get(one.resource), resolved.get(one.resource)!, time);
+        changes.push(...pulled.changes);
+        next.set(one.resource, pulled.cursor);
       }
-      if (whole && options.known) {
-        const listed = new Set(pages.map((page) => notionKey(String(page["id"]))));
-        for (const id of options.known()) {
-          if (listed.has(notionKey(id))) continue;
-          if (await goneFromDatabase(id)) changes.push({ resource: "pages", id, version: "gone", deleted: true });
-        }
-      }
-      return { changes, cursor: JSON.stringify({ ...(since ? { since } : {}), swept: whole ? time : at.swept }) };
+      // One source of `pages` keeps its cursor as it always has; several keep theirs by resource.
+      const only = keepers.length === 1 && keepers[0]!.resource === "pages" ? next.get("pages") : undefined;
+      const written = only ?? { by: Object.fromEntries(next) };
+      const said = fresh;
+      fresh = [];
+      return { changes, cursor: JSON.stringify(written), ...(said.length > 0 ? { said } : {}) };
     },
 
     async push(writes) {
-      const resolved = resolve(schema ?? (await database()));
       const acks: RemoteAck[] = [];
       for (const write of writes) {
         try {
-          acks.push(await one(write, resolved));
+          const one = keepers.find((keeper) => keeper.resource === write.resource) ?? (keepers.length === 1 ? keepers[0] : undefined);
+          if (!one) throw new Error(`notion: no data source here keeps ${write.resource}`);
+          acks.push(await writeOne(write, await one.resolved(), one.dataSource));
         } catch (error) {
           // One refusal is not a failed run: the engine keeps the local state for this write and says so.
           acks.push({ localId: write.localId, id: write.id ?? "", version: "", error: error instanceof Error ? error.message : String(error) });
@@ -498,7 +665,7 @@ export function notion(options: NotionOptions): RemoteSystem {
     },
   };
 
-  async function one(write: RemoteWrite, resolved: Map<string, Property>): Promise<RemoteAck> {
+  async function writeOne(write: RemoteWrite, resolved: Map<string, Property>, dataSource: () => Promise<string>): Promise<RemoteAck> {
     if (write.deleted && write.id) {
       try {
         await call("PATCH", `/pages/${encodeURIComponent(write.id)}`, { in_trash: true });

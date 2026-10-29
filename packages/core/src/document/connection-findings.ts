@@ -10,7 +10,7 @@ import { NOTION_FITS, NOTION_INFERABLE, NOTION_READ_ONLY, NOTION_SECRET, notionF
 import { startAndEndOf } from "../wall-time.js";
 import { weekdayOf } from "../sync/recurrence.js";
 import { error, warning, type Finding, type FindingFix } from "./findings.js";
-import { ConnectionSpec, type GoogleCalendarConnectionSpec, type NotionConnectionSpec } from "./connection-spec.js";
+import { ConnectionSpec, notionSourcesOf, type GoogleCalendarConnectionSpec, type NotionConnectionSpec, type NotionSourceSpec } from "./connection-spec.js";
 import type { FieldSpec, GraviewDocument } from "./schema.js";
 
 /*
@@ -63,7 +63,7 @@ function secretIn(value: unknown, at: string): string | undefined {
 
 const KEYS: Readonly<Record<string, string>> = {
   "google-calendar": "system, calendar, auth, kind, fields, filter, direction, conflicts, every, paused and description",
-  notion: "system, database, source, auth, kind, properties, direction, conflicts, every, paused and description",
+  notion: "system, database, source, auth, kind, properties, sources, create, direction, conflicts, every, paused and description",
 };
 
 /** A shape the connection does not have, at its place: an unknown key, or a value of the wrong kind. */
@@ -177,22 +177,54 @@ function googleConnection(at: string, name: string, connection: GoogleCalendarCo
 }
 
 function notionConnection(at: string, connection: NotionConnectionSpec, document: GraviewDocument, app?: GraviewApp): Finding[] {
+  if (connection.sources) {
+    const findings: Finding[] = [];
+    // One form or the other: several sources each say their own kind and properties.
+    for (const key of ["kind", "source", "properties"] as const) {
+      if (connection[key] !== undefined) findings.push(error("connection-sources", `${at}.${key}`, `this connection names its sources, each with its kind and properties, and ${key} is said for each source there`, `move ${key} into the source it belongs to, or drop sources`));
+    }
+    const kinds = new Map<string, number>();
+    const named = new Map<string, number>();
+    const sources = notionSourcesOf(connection);
+    sources.forEach((source, index) => {
+      const where = `${at}.sources.${index}`;
+      const twice = kinds.get(source.kind);
+      if (twice !== undefined) {
+        findings.push(error("connection-sources", `${where}.kind`, `sources ${twice} and ${index} both keep ${source.kind}, and each kind is kept by one data source`, `name another kind here, or drop one of them`));
+        return;
+      }
+      kinds.set(source.kind, index);
+      const key = source.source!.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const same = named.get(key);
+      if (same !== undefined) findings.push(error("connection-sources", `${where}.source`, `sources ${same} and ${index} both name the data source ${source.source}, and one data source holds the pages of one kind`, "name each data source once"));
+      named.set(key, index);
+      findings.push(...notionSource(where, connection, source, document, app));
+    });
+    return findings;
+  }
+  if (connection.kind === undefined) return [error("connection-kind", `${at}.kind`, "a Notion connection names the kind its pages are, or its sources, each with the kind it keeps", `say "kind", or "sources": [{ "source", "kind" }]`)];
+  return notionSource(at, connection, notionSourcesOf(connection)[0]!, document, app);
+}
+
+/** One data source of a Notion connection, judged at `at` (the connection, or one of its sources): its kind, and each property it maps. */
+function notionSource(at: string, connection: NotionConnectionSpec, source: NotionSourceSpec, document: GraviewDocument, app?: GraviewApp): Finding[] {
   const findings: Finding[] = [];
-  const kind = document.kinds[connection.kind];
-  if (!kind) return [noKind(at, document, connection.kind, "the database's pages")];
+  const kindName = source.kind;
+  const kind = document.kinds[kindName];
+  if (!kind) return [noKind(at, document, kindName, "the database's pages")];
   let mapped: string[];
   const relations: string[] = [];
-  if (connection.properties) {
+  if (source.properties) {
     mapped = [];
     const seen = new Map<string, string>();
     const edges = kind.edges ?? {};
-    for (const [field, property] of Object.entries(connection.properties)) {
+    for (const [field, property] of Object.entries(source.properties)) {
       const path = `${at}.properties.${field}`;
       const name = typeof property === "string" ? property : property.name;
       const declared = typeof property === "string" ? undefined : property.type;
       if (!kind.fields[field] && !edges[field]) {
         const names = [...Object.keys(kind.fields), ...Object.keys(edges)];
-        findings.push(error("connection-field", path, `${connection.kind} has no field or relation called ${field} to hold the property ${name}`, `name one of ${names.join(", ")}`));
+        findings.push(error("connection-field", path, `${kindName} has no field or relation called ${field} to hold the property ${name}`, `name one of ${names.join(", ")}`));
         continue;
       }
       const twice = seen.get(name);
@@ -201,10 +233,10 @@ function notionConnection(at: string, connection: NotionConnectionSpec, document
       if (!kind.fields[field]) {
         // One of the kind's relations, held by a relation property: its pages are records another Notion connection keeps.
         if (declared && declared !== "relation") {
-          findings.push(error("connection-relation", path, `${field} is a relation of ${connection.kind}, and the property ${name} is a ${declared}: a relation is held by a relation property, the pages it links`, `name a relation property, or map a field of ${connection.kind} to ${name}`));
+          findings.push(error("connection-relation", path, `${field} is a relation of ${kindName}, and the property ${name} is a ${declared}: a relation is held by a relation property, the pages it links`, `name a relation property, or map a field of ${kindName} to ${name}`));
           continue;
         }
-        const problem = relationTarget(connection.kind, field, edges[field]!.to, document);
+        const problem = relationTarget(kindName, field, edges[field]!.to, document);
         if (problem) {
           findings.push(error("connection-relation-target", path, problem.message, problem.fix));
           continue;
@@ -213,7 +245,7 @@ function notionConnection(at: string, connection: NotionConnectionSpec, document
         continue;
       }
       if (declared === "relation") {
-        findings.push(error("connection-relation", path, `the property ${name} is a relation, the pages it links, and ${field} is a field of ${connection.kind}, which holds one value`, `declare a relation of ${connection.kind} to the kind those pages are, and map it to ${name}`));
+        findings.push(error("connection-relation", path, `the property ${name} is a relation, the pages it links, and ${field} is a field of ${kindName}, which holds one value`, `declare a relation of ${kindName} to the kind those pages are, and map it to ${name}`));
         continue;
       }
       mapped.push(field);
@@ -229,17 +261,17 @@ function notionConnection(at: string, connection: NotionConnectionSpec, document
         findings.push(warning("connection-read-only", path, `${name} is a people property, which is read from Notion and never written: a change to ${field} here stays here`));
       }
     }
-    if (mapped.length === 0 && Object.keys(connection.properties).length === 0) {
+    if (mapped.length === 0 && Object.keys(source.properties).length === 0) {
       findings.push(error("connection-properties", `${at}.properties`, "the connection maps no property, so nothing would be kept in step", "map a field to a property, or drop properties to match them by name"));
     }
   } else {
     mapped = Object.entries(kind.fields).filter(([, spec]) => NOTION_INFERABLE.has(spec.type)).map(([field]) => field);
-    if (mapped.length === 0) findings.push(error("connection-properties", `${at}.kind`, `${connection.kind} has no field a Notion property could be held in`, "give it a string, number, date, enum, list or boolean field"));
+    if (mapped.length === 0) findings.push(error("connection-properties", `${at}.kind`, `${kindName} has no field a Notion property could be held in`, "give it a string, number, date, enum, list or boolean field"));
   }
   if (app && mapped.length > 0) {
-    findings.push(...landing(at, connection.kind, mapped, { made: "a page made in the database", fields: "the page's fields", change: "a change in Notion", deleted: "a page archived in Notion", theirs: "Notion pages", one: "a Notion page", part: "a Notion property", things: "pages" }, app, document));
+    findings.push(...landing(at, kindName, mapped, { made: "a page made in the database", fields: "the page's fields", change: "a change in Notion", deleted: "a page archived in Notion", theirs: "Notion pages", one: "a Notion page", part: "a Notion property", things: "pages" }, app, document));
   }
-  if (app) findings.push(...linking(connection.kind, relations, document, app, { where: (relation) => `${at}.properties.${relation}`, made: "a link made in Notion", taken: "a link taken away in Notion", leave: (relation) => `leave ${relation} out of properties` }));
+  if (app) findings.push(...linking(kindName, relations, document, app, { where: (relation) => `${at}.properties.${relation}`, made: "a link made in Notion", taken: "a link taken away in Notion", leave: (relation) => `leave ${relation} out of properties` }));
   return findings;
 }
 
@@ -318,9 +350,10 @@ function guestsVia(at: string, name: string, connection: GoogleCalendarConnectio
 function relationTarget(kindName: string, relation: string, to: readonly string[] | "*", document: GraviewDocument): { readonly message: string; readonly fix: string } | undefined {
   const kept = new Set(
     Object.values(document.connections ?? {})
-      .map((raw) => raw as { system?: unknown; kind?: unknown })
-      .filter((raw) => raw.system === "notion" && typeof raw.kind === "string")
-      .map((raw) => String(raw.kind)),
+      .map((raw) => raw as Parameters<typeof notionSourcesOf>[0] & { system?: unknown })
+      .filter((raw) => raw.system === "notion")
+      .flatMap((raw) => notionSourcesOf(raw).map((one) => one.kind))
+      .filter((kind) => typeof kind === "string"),
   );
   const keptBy = kept.size > 0 ? `the Notion connections here keep ${[...kept].join(", ")}` : "no other Notion connection is declared";
   if (to === "*") return { message: `${kindName}'s ${relation} reaches any kind, and a Notion relation links the pages of one database`, fix: `say the kind it reaches with "to", and keep that kind with a Notion connection of its own` };

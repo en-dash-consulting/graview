@@ -1,5 +1,5 @@
 import type { AnySchema, GraviewApp, Store } from "@graview/core";
-import { NOTION_AUTH_ENV, connection, sharedLinks, type ConnectionDeclaration, type Fetcher, type GoogleTokenRequest, type SyncReport, type SyncState } from "@graview/core/sync";
+import { NOTION_AUTH_ENV, connection, notionSourcesOf, sharedLinks, type ConnectionDeclaration, type Fetcher, type GoogleTokenRequest, type SyncReport, type SyncState } from "@graview/core/sync";
 
 /**
  * THE APP'S DECLARED CONNECTIONS, RUN BESIDE ITS STORE (`connections.<name>`).
@@ -133,6 +133,8 @@ export function sayReport(report: SyncReport): string | undefined {
   if (report.refused.length) said.push(`refused: ${report.refused.map((one) => `${one.resource ? `${notion ? "Notion's page" : "the calendar's"} ${one.id}` : one.localId} (${one.error})`).join(", ")}`);
   if (report.resolved.length) said.push(`${report.resolved.length} conflict${report.resolved.length === 1 ? "" : "s"} settled`);
   if (report.conflicts.length) said.push(`${report.conflicts.length} conflict${report.conflicts.length === 1 ? "" : "s"} held`);
+  // What the transport did there, as it said it: "Made 3 properties in Notion: Status, Due and Owner".
+  if (report.said?.length) said.push(...report.said);
   if (report.offline) said.push(`could not reach ${place}${report.problem ? ` (${report.problem})` : ""}; will try again`);
   return said.length > 0 ? said.join(" · ") : undefined;
 }
@@ -187,7 +189,7 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
         links,
       });
       engines.push({ name, every: (declaration.every ?? 30) * 1000, engine: made.engine });
-      say(`${name}: ${declaration.direction === "read" ? "reading" : "keeping in step with"} a Notion database into ${declaration.kind}, every ${declaration.every ?? 30} s`);
+      say(`${name}: ${declaration.direction === "read" ? "reading" : "keeping in step with"} a Notion database into ${notionSourcesOf(declaration).map((one) => one.kind).join(", ")}, every ${declaration.every ?? 30} s`);
       continue;
     }
     const calendarId =options.calendar?.({ connection: name, declaration }) ?? (typeof declaration.calendar === "string" ? declaration.calendar : lookup(declaration.calendar.env));

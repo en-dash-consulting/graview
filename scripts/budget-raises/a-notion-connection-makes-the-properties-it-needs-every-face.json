@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 3295,
+  "gzipped": 1192,
+  "note": "Raised when a Notion connection came to keep several data sources of one database and to make the properties it needs (request: Notion autocreates the necessary properties): the record page's line, the compile reading a connection's sources, and the studio's editor judging a connection's new shape (`sources`, `create`) and saying the kinds it keeps. Measured at 2_466_887 / 897_686 against 2_463_592 / 896_494: 3_295 / 1_192 more."
+}
