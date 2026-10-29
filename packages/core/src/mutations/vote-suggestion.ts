@@ -112,6 +112,13 @@ export interface VotingServed {
    * made.
    */
   accepting?: (store: object, vote: Operation) => { readonly calls: readonly MutationCall[]; readonly author: Principal; readonly lineage: Lineage } | undefined;
+  /**
+   * A PROPOSAL'S OP (Roadmap f-proposals-for-review): the calls a
+   * "Propose changes" call holds, rehearsed as its author with the grant to
+   * propose standing in for the grant to run, kept as a suggestion with the
+   * author as its maker — or undefined when they would change nothing.
+   */
+  propose?: (store: object, made: { readonly id: string; readonly at: string }, call: MutationCall, batch: string, author: Principal, options: { readonly via?: unknown }) => Operation | undefined;
 }
 /*
  * One object for the store and `@graview/core/tidying`, found by a key

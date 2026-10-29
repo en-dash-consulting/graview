@@ -67,7 +67,10 @@ export function actWords(document: GraviewDocument, act: string): string {
 
 /** What a grant lets, without its stop: "a participant may "Change the participant" on participants, only on their own record". */
 export function grantBody(document: GraviewDocument, grant: GrantWords): string {
-  const acts = grant.mutations === "*" ? "do anything" : listed(grant.mutations.map((act) => actWords(document, act)));
+  const runs = grant.mutations === "*" ? "do anything" : grant.mutations.length > 0 ? listed(grant.mutations.map((act) => actWords(document, act))) : "";
+  // And what they may propose, which somebody who may run it accepts (Roadmap f-proposals-for-review).
+  const proposes = grant.propose === undefined ? "" : `propose ${grant.propose === "*" ? "anything" : listed(grant.propose.map((act) => actWords(document, act)))} for review`;
+  const acts = [runs, proposes].filter(Boolean).join(" and ");
   // A grant naming no kind gives nothing (the policy matches no kind against it), and says so rather than reading as a grant on every kind.
   const kinds = !Array.isArray(grant.kinds) ? "" : grant.kinds.length > 0 ? ` on ${listed(grant.kinds.map((kind) => pluralWords(document.kinds, kind)))}` : " on no kind, so on nothing";
   const person = peopleKinds(document.kinds)[0];

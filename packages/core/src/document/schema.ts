@@ -357,15 +357,23 @@ function build() {
       }),
     );
 
-  const GrantSpec = z.strictObject({
-    roles: z.union([some(name("role"), 1), z.literal("*")]),
-    mutations: z.union([some(name("act"), 1), z.literal("*")]),
-    kinds: z.optional(z.union([z.array(name("kind")), z.literal("*")])),
-    describe: z.optional(sentence),
-    self: z.optional(z.boolean()),
-    /** Only on the principal's own end of the link the act connects or severs. */
-    ownEnd: z.optional(z.boolean()),
-  });
+  const GrantSpec = z
+    .strictObject({
+      roles: z.union([some(name("role"), 1), z.literal("*")]),
+      mutations: z.union([some(name("act")), z.literal("*")]),
+      kinds: z.optional(z.union([z.array(name("kind")), z.literal("*")])),
+      describe: z.optional(sentence),
+      self: z.optional(z.boolean()),
+      /** Only on the principal's own end of the link the act connects or severs. */
+      ownEnd: z.optional(z.boolean()),
+      /** Acts these roles may propose and may not run (Roadmap f-proposals-for-review): kept as a suggestion somebody who may run them accepts. */
+      propose: z.optional(z.union([some(name("act"), 1), z.literal("*")])),
+    })
+    .check(
+      z.superRefine((g, ctx) => {
+        if (Array.isArray(g.mutations) && g.mutations.length === 0 && g.propose === undefined) ctx.addIssue({ code: "custom", message: 'a grant names at least one act in "mutations", or the acts it lets these roles propose in "propose"', path: ["mutations"] });
+      }),
+    );
 
   /**
    * Who sees which kinds — the framework's `Sight`, one meaning (FR-02).

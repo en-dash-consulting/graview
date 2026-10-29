@@ -2255,12 +2255,13 @@ class Editor {
         return this.failAs("sight-field", i, `${key}.${n}`, `"${field}" is not a field of ${kinds.join(" or ")}`, `one of ${[...new Set(kinds.flatMap((kind) => Object.keys(this.doc.kinds[kind]?.fields ?? {})))].join(", ")}`);
       }
     }
-    if (!sight && part.mutations !== "*") {
-      for (const [n, act] of part.mutations.entries()) {
+    for (const key of sight ? [] : (["mutations", "propose"] as const)) {
+      if (part[key] === undefined || part[key] === "*") continue;
+      for (const [n, act] of (part[key] as string[]).entries()) {
         const derived = derivedActOf(act);
         if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind] && (this.doc.kinds[derived.kind].archives !== false || givenWhenNeverArchived(derived.act)) && (this.doc.kinds[derived.kind].tidying !== "never" || givenWhenNeverTidied(derived.act))) || givesRelationAct(act, this.doc.kinds)) continue;
         const relationActs = relationActsOf(documentRelations(this.doc.kinds)).filter((name) => givesRelationAct(name, this.doc.kinds));
-        return this.failAs("grant-act", i, `mutations.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap(derivedActsOf), ...relationActs].join(", ")}`);
+        return this.failAs("grant-act", i, `${key}.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap(derivedActsOf), ...relationActs].join(", ")}`);
       }
     }
     const said: string[] = [];
@@ -2299,12 +2300,12 @@ class Editor {
   private removePolicyPart(i: number, part: Doc, sight: boolean) {
     const list: Doc[] = (sight ? this.doc.policy?.sees : this.doc.policy?.grants) ?? [];
     const sameSet = (a: unknown, b: unknown) => a === b || (Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x) => b.includes(x)));
-    const keys = sight ? ["own", "via"] : ["kinds", "self", "ownEnd", "describe"];
+    const keys = sight ? ["own", "via"] : ["kinds", "self", "ownEnd", "propose", "describe"];
     const matches = list.filter(
       (one) =>
         sameSet(one.roles, part.roles) &&
         (sight ? sameSet(one.kinds, part.kinds) : sameSet(one.mutations, part.mutations)) &&
-        keys.every((key) => part[key] === undefined || (typeof part[key] === "boolean" ? (one[key] ?? false) === part[key] : key === "kinds" ? sameSet(one[key] ?? "*", part[key]) : one[key] === part[key])),
+        keys.every((key) => part[key] === undefined || (typeof part[key] === "boolean" ? (one[key] ?? false) === part[key] : key === "kinds" ? sameSet(one[key] ?? "*", part[key]) : key === "propose" ? sameSet(one[key], part[key]) : one[key] === part[key])),
     );
     const what = sight ? "sight" : "grant";
     const say = (one: Doc) => (sight ? `${whoWords(one.roles)} ${sightWords(this.doc, one as SightWords)}` : grantBody(this.doc, one as GrantWords));

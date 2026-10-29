@@ -279,3 +279,22 @@ export function permittedMutations<S extends AnySchema>(
 /** The kinds a mutation's subject may be, or one unknown kind when it takes any or none. */
 export const subjectKinds = (mutation: Pick<AnyMutationDefinition<AnySchema>, "subject">): readonly (string | undefined)[] =>
   mutation.subject && mutation.subject.kinds !== "*" ? (mutation.subject.kinds as readonly string[]) : [undefined];
+
+/**
+ * WHETHER A PRINCIPAL MAY PROPOSE AN ACT (Roadmap f-proposals-for-review):
+ * a grant to one of their roles names it in `propose` (or says `"*"`), on
+ * this kind where it names kinds. Asked of a call the policy refuses to
+ * run: no policy, or the system, runs it instead and proposes nothing.
+ */
+export function proposes(policy: Policy | undefined, principal: Principal, mutation: string, kind?: string): boolean {
+  if (!policy || isSystem(principal)) return false;
+  const acting = actingAs(principal);
+  return policy.grants.some((grant) => grant.propose !== undefined && grantsTo(grant, acting) && matches(grant.propose, mutation) && (grant.kinds === undefined || grant.kinds === "*" || (kind !== undefined && grant.kinds.includes(kind))));
+}
+
+/** The acts a principal may propose and may not run: what lists `propose_changes` for an agent seat acting for them. */
+export function proposedMutations<S extends AnySchema>(policy: Policy | undefined, principal: Principal, mutations: readonly AnyMutationDefinition<S>[]): readonly AnyMutationDefinition<S>[] {
+  if (!policy || !policy.grants.some((grant) => grant.propose !== undefined)) return [];
+  const runs = new Set(permittedMutations(policy, principal, mutations));
+  return mutations.filter((mutation) => !runs.has(mutation) && subjectKinds(mutation).some((kind) => proposes(policy, principal, mutation.name, kind)));
+}

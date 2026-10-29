@@ -31,7 +31,9 @@
  * make it, whose Accept is a vote (f-suggestion-votes); with `vote=1` a
  * reader's vote is already cast when the keeper opens the tray; with
  * `signedOut=1` the reader is the host's one shared signed-out seat, with
- * the host's way in (f-votes-shared-seat).
+ * the host's way in (f-votes-shared-seat); with `proposer=1` the reader
+ * is Pat, a helper the policy lets propose a rename and not make one
+ * (f-proposals-for-review).
  *
  *   node scripts/verify-chrome.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
@@ -72,7 +74,7 @@ async function buildHost() {
       contents: `
         import { mount } from "@graview/embed";
         import { capabilities, memoryViews } from "@graview/core";
-        import { declined, suggest, suggestions, voteSuggestion } from "@graview/core/tidying";
+        import { acceptSuggestion, declined, suggest, suggestions, voteSuggestion } from "@graview/core/tidying";
         import { todoApp } from ${JSON.stringify(todo)};
         import seed from ${JSON.stringify(seed)};
         const asked = new URLSearchParams(location.search);
@@ -95,6 +97,16 @@ async function buildHost() {
                 app: { ...todoApp, policy: { ...todoApp.policy, grants: todoApp.policy.grants.filter((grant) => grant.roles !== "*") } },
                 principal: { kind: "human", id: "anonymous", roles: [], shared: true },
                 signIn: { label: "Sign in to make changes", run: () => { window.__signedIn = (window.__signedIn ?? 0) + 1; } },
+              }
+            : {}),
+          /*
+           * A helper who may propose a rename and may not make one, when the page asks (f-proposals-for-review): the list's grant to
+           * everybody dropped, and a grant that only proposes.
+           */
+          ...(asked.get("proposer")
+            ? {
+                app: { ...todoApp, policy: { ...todoApp.policy, roles: [...todoApp.policy.roles, "helper"], grants: [...todoApp.policy.grants.filter((grant) => grant.roles !== "*"), { roles: ["helper"], mutations: [], propose: ["rename"] }] } },
+                principal: { kind: "human", id: "user-pat", name: "Pat", roles: ["helper"] },
               }
             : {}),
           label: "Things",
@@ -133,7 +145,7 @@ async function buildHost() {
         };
         window.__handle = mount(document.getElementById("app"), options);
         // What reads the suggestions back, for the claims that ask the store what a person declined, and casts a vote as somebody else.
-        window.__tidying = { declined, suggestions, voteSuggestion };
+        window.__tidying = { acceptSuggestion, declined, suggestions, voteSuggestion };
         // The framework's version, as a host's Report this is handed it (FR-237).
         window.__version = capabilities().version;
         /*
@@ -795,6 +807,51 @@ try {
       votes[face] = { reader, keeper, ok };
     }
     report.checks.aSuggestionTakesAVoteFromAReaderAndShowsTheTallyToWhoMayDecide = { ...votes, ok: Object.values(votes).every((one) => one.ok) };
+  }
+  /*
+   * ---- A proposal waits for its reviewer (f-proposals-for-review), on the routed face: Pat, a helper the policy lets propose a
+   * rename and not make one, opens a task's page, where Rename is offered rather than struck through and its form's button reads
+   * "Propose"; pressed, the task keeps its name, the change waits in the Suggested tray as "Proposed by you" with Withdraw rather than
+   * a vote; and the keeper's accept makes it as the keeper, its lineage naming the proposal and Pat.
+   */
+  {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto(`${at("chrome-host")}/?face=pages&proposer=1&path=/tasks/t-paint`, { waitUntil: "load" });
+    await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+    const act = page.locator('[data-testid="record-actions"] button[data-graview-act="rename"]').first();
+    await act.waitFor({ timeout: 30_000 }).catch(() => {});
+    const offered = (await act.count()) > 0;
+    let proposed = null;
+    if (offered) {
+      await act.click();
+      const form = page.locator('form[data-testid="form-rename"]');
+      await form.waitFor({ timeout: 10_000 }).catch(() => {});
+      const button = (await form.locator('[data-graview-part="submit"]').textContent().catch(() => null))?.trim() ?? null;
+      await form.locator("input").first().fill("Paint the hall");
+      await form.locator('[data-graview-part="submit"]').click();
+      await page.waitForFunction(() => window.__tidying.suggestions(window.__handle.store).length > 0, null, { timeout: 10_000 }).catch(() => {});
+      await page.locator('[data-testid="app-bar"] [data-testid="suggested-button"]').click({ timeout: 10_000 }).catch(() => {});
+      await page.waitForSelector('[data-testid="proposals"] [data-testid="suggestion"]', { timeout: 10_000 }).catch(() => {});
+      proposed = await page.evaluate(() => {
+        const store = window.__handle.store;
+        const [waiting] = window.__tidying.suggestions(store);
+        const row = document.querySelector('[data-testid="proposals"] [data-testid="suggestion"]');
+        const unchanged = store.graph.getNode("t-paint")?.label !== "Paint the hall";
+        const said = { by: row?.querySelector('[data-testid="proposed-by"]')?.textContent ?? null, withdraw: row?.querySelector('[data-testid="proposal-withdraw"]') !== null, vote: row?.querySelector('[data-testid="suggestion-accept"]') !== null };
+        const keeper = { kind: "human", id: "user-nora", name: "Nora", roles: ["keeper"] };
+        const made = waiting ? window.__tidying.acceptSuggestion(store, waiting.id, { author: keeper }) : null;
+        const op = made?.ops[0];
+        return { unchanged, proposedBy: waiting?.lineage?.proposedBy ?? null, said, accepted: { label: store.graph.getNode("t-paint")?.label ?? null, author: op?.author?.id ?? null, lineage: op?.lineage ?? null, waiting: window.__tidying.suggestions(store).length } };
+      });
+      proposed = { button, ...proposed };
+    }
+    await page.close();
+    const ok =
+      offered && proposed !== null && proposed.button === "Propose" && proposed.unchanged && proposed.proposedBy === "user-pat" &&
+      proposed.said.by === "Proposed by you:" && proposed.said.withdraw && !proposed.said.vote &&
+      proposed.accepted.label === "Paint the hall" && proposed.accepted.author === "user-nora" && proposed.accepted.lineage?.proposedBy === "user-pat" && typeof proposed.accepted.lineage?.suggestion === "string" && proposed.accepted.waiting === 0;
+    report.checks.aProposalWaitsForItsReviewer = { offered, proposed, ok };
   }
   /*
    * ---- A workflow's run is one suggestion that lists its changes and takes them one at a time (f-job-approvals), on both faces:

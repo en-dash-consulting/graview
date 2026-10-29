@@ -1,4 +1,4 @@
-import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Place, type Violation } from "@graview/core";
+import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Place, type Principal, type Violation } from "@graview/core";
 import { describeNode, keptInStepWith, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
@@ -104,7 +104,14 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * facts, not the rendering — but listing it again under "what can be
    * done" is the same button twice on one page.
    */
-  const offered = facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant");
+  /*
+   * AND WHAT THIS SEAT MAY PROPOSE AND MAY NOT RUN (Roadmap
+   * f-proposals-for-review): offered beside the rest, its form's button
+   * reading "Propose", rather than struck through.
+   */
+  const asking = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
+  const proposable = asking ? facts.actions.withheld.filter((affordance) => affordance.provider !== "invariant" && store.mayPropose({ name: affordance.mutation, args: { ...affordance.args } }, asking)) : [];
+  const offered = [...facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant"), ...proposable];
   /*
    * WHAT TAKES A RECORD AWAY WAITS ONE PRESS BEHIND THE REST (FR-173):
    * archive, merge and remove, the tail of the ranked list, behind "Show N
@@ -463,7 +470,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               style={{ ...button, ...quiet, justifySelf: "start" }}
             />
           ) : null}
-          <WithheldActs context={context} withheld={facts.actions.withheld} />
+          <WithheldActs context={context} withheld={facts.actions.withheld.filter((affordance) => !proposable.includes(affordance))} />
         </section>
       ) : null}
 

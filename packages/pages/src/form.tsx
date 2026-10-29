@@ -663,6 +663,14 @@ export function DerivedForm<S extends AnySchema>({
   const fields = (only === undefined ? all : only.flatMap((name) => all.find((spec) => spec.name === name) ?? [])).filter((spec) => !kept?.has(spec.name));
   const words: Words = (name) => argumentWords(store.schema, mutation, name);
   /*
+   * AN ACT THIS SEAT MAY PROPOSE AND MAY NOT RUN (Roadmap
+   * f-proposals-for-review): its button reads "Propose", and pressed it
+   * keeps the change as the seat's proposal, which waits in the Suggested
+   * tray for somebody who may make it.
+   */
+  const proposing = seat !== undefined && store.mayPropose({ name: mutation.name, args: { ...prefilled } }, seat);
+  const [proposed, setProposed] = useState(false);
+  /*
    * AN END MOVES WITH ITS START (Roadmap f-date-inputs): a start typed or
    * picked carries its end as far as it moved, and a first start puts an
    * empty end an hour after it. The start it moved from is the last one
@@ -720,8 +728,21 @@ export function DerivedForm<S extends AnySchema>({
       data-testid={`form-${mutation.name}`}
       onSubmit={(event) => {
         event.preventDefault();
+        const call = { name: mutation.name, args: { ...changedArgs(formArgs(fields, values), start), ...prefilled } };
+        if (proposing) {
+          // Kept as a proposal, through the module that keeps suggestions, fetched when one is first made.
+          void import("@graview/core/tidying")
+            .then(({ propose }) => {
+              propose(store, seat!, [call]);
+              setFailed(null);
+              setProposed(true);
+              onDone?.();
+            })
+            .catch((error: unknown) => setFailed(failureWords(store.schema, store.allMutations(), error)));
+          return;
+        }
         try {
-          store.apply({ name: mutation.name, args: { ...changedArgs(formArgs(fields, values), start), ...prefilled } }, principal ? { author: principal } : {});
+          store.apply(call, principal ? { author: principal } : {});
           setFailed(null);
           const next = startOf();
           setStart(next);
@@ -757,8 +778,13 @@ export function DerivedForm<S extends AnySchema>({
           {failed}
         </p>
       ) : null}
-      <button type="submit" data-graview-part="submit">
-        {label ?? mutation.title ?? mutation.name}
+      {proposed ? (
+        <p data-testid="proposed" data-graview-part="proposed" role="status">
+          Proposed: it waits in Suggested for somebody who may make it.
+        </p>
+      ) : null}
+      <button type="submit" data-graview-part="submit" {...(proposing ? { "data-graview-proposes": "", title: `${label ?? mutation.title ?? mutation.name}: you may propose it, and somebody who may make it decides` } : {})}>
+        {proposing ? "Propose" : (label ?? mutation.title ?? mutation.name)}
       </button>
     </form>
   );

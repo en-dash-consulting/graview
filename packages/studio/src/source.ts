@@ -627,6 +627,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
           ...(str(g, "describe") ? [`describe: ${q(str(g, "describe")!)}`] : []),
           ...(bool(g, "self") ? ["self: true"] : []),
           ...(bool(g, "ownEnd") ? ["ownEnd: true"] : []),
+          ...(list(g, "propose")?.length ? [`propose: ${list(g, "propose")!.includes("*") ? '"*"' : `[${list(g, "propose")!.map(q).join(", ")}]`}`] : []),
         ];
         return `    { ${parts.join(", ")} },`;
       }),
