@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.62)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.63)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -839,6 +839,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.63`](https://graview.dev/docs/releases.html#v0-1-63)
 - [`0.1.62`](https://graview.dev/docs/releases.html#v0-1-62)
 - [`0.1.61`](https://graview.dev/docs/releases.html#v0-1-61)
 - [`0.1.60`](https://graview.dev/docs/releases.html#v0-1-60)
@@ -899,9 +900,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.63
+
+Published October 29, 2026 · the current version
+
+An app declares workflows that fill next week, keep records in step, archive what is done and label what arrives; people propose changes for review; Notion makes the properties it needs; a connection says whom it invited; and the right-click menu says what is under the cursor.
+
+- **Workflows.** A document's `workflows` run on a schedule (words or cron, in the app's zone), when a record is made or changed, after a connection's pass, or by hand. Steps run an act over a query, make dated records from a pattern (`generate`), archive what is done after N days (`archive`), label each record with a model and a floor of plain rules (`classify`), or ask an agent within a budget. A run never makes a record twice, its first run after a change is a dry run, a paused workflow holds, and what it asks waits as one suggestion a person accepts whole or one change at a time. Workflows stand on the Scene's map; `graview workflow` lists and runs them; an owner's seat runs, pauses and resumes them.
+- **Records in step.** A kind may say it `derives` from another: a plan item's rename renames its event in the same change and the next sync sends it; a computed field may be sent out through a connection.
+- **Proposals and votes.** A grant may say `propose`: such a seat's form reads Propose, and a reviewer accepts or declines what it proposed. A shared or signed-out seat is refused a vote unless the host keeps visitors' votes advisory, apart from the tally that accepts.
+- **Connections.** A Notion connection keeps several data sources of one database, one kind each, and makes the properties it needs. A calendar pass says in history whom it invited or took off, caps an event's guests, and lets a host read them back.
+- **Pages.** The right-click menu offers Copy link and Inspect, leaves selected text to copy, and offers Add and Show only on a column; a blank field an act writes is an empty slot to fill, and a reader sees values plainly; an iPad's bar fits and its Scene glides once per tap; money never reads .00; a timeline that cannot draw is refused with its bindings named.
+
+**Before you upgrade:** New: the document's `workflows` with its step kinds and `workflow-*` codes, `@graview/core/workflows` and `@graview/tools/workflows`, the edits `add-workflow`, `set-workflow`, `remove-workflow`, `pause-workflow`, `resume-workflow`, `set-derives`, `set-app-tidying`; a kind's `derives` with `derives-*` codes and the stored-data code `derived-out-of-step`; a grant's `propose`, the built-in act `propose-changes` and the tool `propose_changes`; `run_workflow`, `pause_workflow` and `resume_workflow` where a host wires them; a Notion connection's `sources` and `create`, and `connection-sources`; a calendar's `guests.max` and `connection-guests-max`; the optional op fields `sentOut` and `suggestsSaid` and the lineage keys `items` and `proposedBy`; `Principal.shared` and `visitorKey`, and `votes: { advisory }`; a money field's `places`; `splashHtml`'s per-page words and the `caustics` shader. Changed: a vote from a shared or visitor seat is refused; a provider given no principal in an app with a policy offers no in-place editors; `runWorkerViewHeadless` reads a place's missing kind from the app or throws; `add-lens` refuses a timeline that cannot draw; a kind may work out 60 computed fields. The wire is otherwise unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.63) · [The full changelog for 0.1.63](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0163)
+
 ## 0.1.62
 
-Published October 28, 2026 · the current version
+Published October 28, 2026
 
 Calendar events invite the people they are about, a view links to the Scene, formulas build words and times, an act carries a change across a link, a rule covers every record, and the seat proposes a change to the app.
 
@@ -7733,7 +7750,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 473 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 474 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -7758,7 +7775,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 64 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 65 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made

@@ -1,5 +1,36 @@
 # @graview/layout
 
+## 0.1.63
+
+### Patch Changes
+
+- b2afea5: An iPad in Safari: the app bar fits, and the Scene doesn't jump (Roadmap request:top-nav-extends-off-the-screen-horizontally-on-an-ipad-in-safari and request:scene-view-is-glitchy-on-an-ipad-awkwardly-shoots-around-on-clicking-different-things, filed from Homeflow). Three things were found, by following the bar and the city frame by frame in WebKit at each iPad's size.
+  
+  The bar ran past the screen on an iPad Mini turned (1024 wide): five places stood, and the person sat 21 pixels off the right edge with no page scroll to reach it. The room for the places was measured to Find's end, and Find stops giving at its least, so once the tools after it — the scene's Activity, arriving after the places were weighed — took more than the row had left, Find's end went past the row with them and the room still read as enough. The bar now takes what runs past its row off the places' room (and off the switch's words), so a place folds into More instead, and a tool that arrives after the bar was drawn is watched from when it does. Between 640 and 710 pixels the row with the one control ran over the same way, and the switch now draws its marks alone there.
+  
+  The Scene shot about from altitude. With the panel beside the map, a city that runs past the window keeps the chosen district in sight by the least move — measured from the city's middle every time, so choosing a district at the right edge slid the city left, the next slid it further, and choosing one in plain sight slid it all the way back. The city now moves from where it stands: a layout hands back how far it moved (`CityFrame.stood`), the next is given it (`cityStood` on `LayoutOptions`, `stood` on `placeCity`) at the same cell, and a district already in sight is chosen with nothing moving.
+  
+  And a window grown by Safari's toolbar folding away, its width the same, laid the scene out again for the taller box and slid the city by half of it. On a touch screen the scene keeps the box it was laid out for while the box grows by no more than a toolbar (120 px) and by just what the window grew; a box that shrinks, a turn, and growth the page made itself are followed at once. The pointer-and-click doubling a tap was suspected of was looked for and is not there: one tap is one focus and one change of view.
+  
+  The layout's tests hold the city moving from where it stood (`a-district-in-sight-is-chosen-with-nothing-moving`), react's the box held through a toolbar (`the-scene-holds-still-when-a-toolbar-folds-away`), primitives' the bar folding what runs over (`places-stand-in-the-bar-when-there-is-room`), and the viewport harness holds three new claims in WebKit at the iPad Pro 11, iPad (gen 7) and iPad Mini sizes, upright and turned: `theBarFitsAnIpadInBothOrientations` on the todo example's Shell and an app of ten kinds, `aTapOnTheSceneMovesTheCameraOnce` and `theSceneHoldsStillWhenSafarisToolbarCollapses`. A hosted page carries 0.7 KB more up front (697 bytes minified, 170 gzipped; handed a compiled app, 697 and 175), raised in `scripts/budget-raises/an-ipad-bar-fits-and-the-scene-holds-still-*.json`.
+  
+  Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. `@graview/layout` gains the optional `LayoutOptions.cityStood`, `CityFrame.stood` and the `CityStood` type; nothing that read a frame before reads it differently. What Graview Cloud does: nothing; Homeflow and every hosted app on an iPad get the bar and the Scene as they are on the next build.
+- Updated dependencies [c91af18]
+- Updated dependencies [4fa4e62]
+- Updated dependencies [c85bcc0]
+- Updated dependencies [511184d]
+- Updated dependencies [e92448c]
+- Updated dependencies [ac514dc]
+- Updated dependencies [52aed08]
+- Updated dependencies [bd2a06c]
+- Updated dependencies [db91f9f]
+- Updated dependencies [53c5090]
+- Updated dependencies [696afa4]
+- Updated dependencies [013977e]
+- Updated dependencies [d6edd89]
+- Updated dependencies [45a60d6]
+  - @graview/core@0.1.63
+
 ## 0.1.62
 
 ### Patch Changes
