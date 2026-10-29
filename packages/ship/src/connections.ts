@@ -66,11 +66,25 @@ export interface RunConnectionsOptions<S extends AnySchema> {
   readonly settle?: number;
   /** Each pass's news and each problem, as a line. */
   say?(line: string): void;
+  /**
+   * EACH PASS'S REPORT, WHOLE, as each connection's pass ends — the first
+   * one included, which a host otherwise only reads as `say`'s line. What
+   * the line says is here as data (`said`, `saidBy`, `refused`, `guests`),
+   * so a host need not split the line. A throw here is said, and the pass
+   * goes on.
+   */
+  onReport?(connection: string, report: SyncReport): void;
 }
 
 export interface RunningConnections {
   /** The connections running, by name. */
   readonly running: readonly string[];
+  /**
+   * THE FIRST PASS'S REPORTS, by connection name: the pass that starts when
+   * the connections do, settled when it ends. Empty when nothing runs. A
+   * connection whose pass failed is not in it (`say` says why).
+   */
+  readonly firstPass: Promise<Readonly<Record<string, SyncReport>>>;
   /** One pass of every running connection now, after any pass already going. */
   runNow(): Promise<Readonly<Record<string, SyncReport>>>;
   /** Stops the timers, after the pass going finishes. */
@@ -239,6 +253,11 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
         const line = sayReport(report);
         if (line) say(`${name}: ${line}`);
         kept[name] = engine.snapshot;
+        try {
+          options.onReport?.(name, report);
+        } catch (error) {
+          say(`${name}: onReport failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
       } catch (error) {
         say(`${name}: the pass failed: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -275,6 +294,7 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
   const timers: ReturnType<typeof setInterval>[] = [];
   let settling: ReturnType<typeof setTimeout> | undefined;
   let unsubscribe: (() => void) | undefined;
+  let firstPass: Promise<Readonly<Record<string, SyncReport>>> = Promise.resolve({});
   if (engines.length > 0) {
     const every = Math.min(...engines.map((one) => one.every));
     timers.push(setInterval(() => void runNow(), every));
@@ -284,11 +304,12 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
       if (settling) clearTimeout(settling);
       settling = setTimeout(() => void runNow(), options.settle ?? 1500);
     });
-    void runNow();
+    firstPass = runNow();
   }
 
   return {
     running: engines.map((one) => one.name),
+    firstPass,
     runNow,
     async stop() {
       stopped = true;

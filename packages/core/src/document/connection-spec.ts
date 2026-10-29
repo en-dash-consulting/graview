@@ -57,7 +57,9 @@ function build() {
      * quiet. `max` is the most guests one event invites (Roadmap
      * f-sync-guest-changes-in-history): an event that would invite somebody
      * past it is held unsent, and said; `graview check` refuses one that
-     * is not a whole number above 0.
+     * is not a whole number above 0. The field form takes them too, as
+     * `{ field, notify?, max? }` (request:guests-field-form-takes-max):
+     * `"guests": "<field>"` is `{ "field": "<field>" }` said short.
      */
     fields: z.strictObject({
       summary: fieldName,
@@ -68,8 +70,12 @@ function build() {
       description: z.optional(fieldName),
       guests: z.optional(
         z.union(
-          [fieldName, z.strictObject({ via: edgeName, emails: z.optional(fieldName), invite: z.optional(z.union([fieldName, z.literal(false)])), notify: z.optional(z.boolean()), max: z.optional(z.number()) })],
-          'guests names a field holding the addresses, or { "via": "<relation>", "emails"?, "invite"?, "notify"?, "max"? } to invite the people a relation reaches',
+          [
+            fieldName,
+            z.strictObject({ field: fieldName, notify: z.optional(z.boolean()), max: z.optional(z.number()) }),
+            z.strictObject({ via: edgeName, emails: z.optional(fieldName), invite: z.optional(z.union([fieldName, z.literal(false)])), notify: z.optional(z.boolean()), max: z.optional(z.number()) }),
+          ],
+          'guests names a field holding the addresses (or { "field": "<field>", "notify"?, "max"? }), or { "via": "<relation>", "emails"?, "invite"?, "notify"?, "max"? } to invite the people a relation reaches',
         ),
       ),
     }),
@@ -158,6 +164,29 @@ export const ConnectionSpec = z.lazy(() => (built ??= build()));
 export type ConnectionSpec = z.infer<typeof ConnectionSpec>;
 export type GoogleCalendarConnectionSpec = Extract<ConnectionSpec, { system: "google-calendar" }>;
 export type NotionConnectionSpec = Extract<ConnectionSpec, { system: "notion" }>;
+
+/** A Google calendar connection's guests, in any of their forms. */
+export type GuestsSpec = NonNullable<GoogleCalendarConnectionSpec["fields"]["guests"]>;
+/** The guests typed in a field, said whole: `{ field, notify?, max? }`. */
+export type GuestsInField = Extract<GuestsSpec, { readonly field: string }>;
+/** The guests reached through a relation: `{ via, emails?, invite?, notify?, max? }`. */
+export type GuestsViaRelation = Extract<GuestsSpec, { readonly via: string }>;
+
+/**
+ * THE GUESTS IN A FIELD, whichever way they are said
+ * (request:guests-field-form-takes-max): `"guests": "<field>"` is
+ * `{ field: "<field>" }`. Undefined for the relation form, or no guests.
+ */
+export function guestsInField(guests: GuestsSpec | undefined): GuestsInField | undefined {
+  if (guests === undefined) return undefined;
+  if (typeof guests === "string") return { field: guests };
+  return "field" in guests ? guests : undefined;
+}
+
+/** The guests reached through a relation, or undefined for the field forms. */
+export function guestsViaRelation(guests: GuestsSpec | undefined): GuestsViaRelation | undefined {
+  return guests !== undefined && typeof guests === "object" && "via" in guests ? guests : undefined;
+}
 
 /** One data source a Notion connection keeps in step with one kind, and the resource its pages are to the engine. */
 export interface NotionSourceSpec {

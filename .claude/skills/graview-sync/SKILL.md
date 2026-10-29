@@ -64,7 +64,7 @@ exporting the app itself is `graview-ship`.
    `GOOGLE_CLIENT_ID`/`_CLIENT_SECRET`/`_REFRESH_TOKEN` (or
    `auth: { env, file }`), the cursor in `connections.json` beside the data;
    `--no-sync` leaves it off. A host calls `runConnections({ app, store,
-   state, token })`.
+   state, token, onReport })`: each pass's reports, whole; `firstPass`.
 
    **"Invite my email on events I'm on."** `fields.guests` is a field of
    addresses (a `list`, or one `email`), or `{ "via": "who" }`, the
@@ -84,11 +84,11 @@ exporting the app itself is `graview-ship`.
    5. Say the default is quiet — no email is sent (`sendUpdates=none` on
       every write); `notify: true` on `guests` switches on Google's
       invitations.
-   6. Never invite kids or anyone without Invite me; the framework refuses
-      to: a person without the toggle is no guest either way, an attendee
-      matching them is held as an address and never linked, and one
+   6. Never invite anyone without Invite me; the framework refuses to: an
+      attendee matching them is held as an address, never linked, and one
       matching nobody is kept and sent back as it was.
-   7. `"max": 20` on `guests` holds an event over it unsent.
+   7. `"max": 20` on `guests` holds an event over it unsent; a field's
+      form takes it as `{ "field": "<field>", "max": 20 }`.
    8. Check: `report.guests`, the history line, `guestsOf`.
 
 5. **Keep it in step with a Notion database by declaring it.**
@@ -137,7 +137,8 @@ exporting the app itself is `graview-ship`.
    shares one `sharedLinks()`; a host making engines itself passes one
    `links` to every `connection()`). A relation of one keeps the first
    page and says the rest once. Declare a dual relation on either side or
-   both; an edge conflicts like a field.
+   both; an edge conflicts like a field. Each sentence of `report.said`
+   names its kind; `report.saidBy` holds `{ kind, sentence }`.
 
 ## Then find out whether it worked
 
@@ -168,9 +169,7 @@ after a projection sends nothing; a field changed on both sides is in the
 report and sent by neither until `resolve`; an act on a read-only kind is
 not offered and is refused with its `because`. Against Google itself,
 `node scripts/verify-google-calendar.mjs` (credentials of your own, never in
-CI) writes its claims to `docs/google-calendar.json` — a round trip both
-ways, an all-day event kept a day, a declared filter honored, a person's
-emails invited and taken off, an unknown attendee kept — and
+CI) writes its claims to `docs/google-calendar.json`, and
 `node scripts/verify-notion.mjs` does the same against a Notion workspace
 (`docs/notion.json`; `--stub` against the scripted one).
 

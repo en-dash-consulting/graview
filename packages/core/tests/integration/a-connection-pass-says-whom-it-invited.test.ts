@@ -11,20 +11,22 @@ import { connection, connectionStatus, guestsOf, type Fetcher, type SyncReport }
  * write that reached Google invited and took off, the app's history keeps a
  * line credited to the calendar, a refused write invites nobody and is said
  * once, a declared `max` holds an event unsent, and a host reads back what
- * was sent from the kept state alone.
+ * was sent from the kept state alone. The guests typed in a field take `max`
+ * too, as `{ field, max }` (request:guests-field-form-takes-max), held to in
+ * the same words and judged by the same findings.
  */
 
-const home = (guests: Record<string, unknown>) => ({
+const home = (guests: Record<string, unknown>, whole?: unknown) => ({
   format: "graview-document",
   formatVersion: 1,
   name: "Home",
   kinds: {
     person: { fields: { name: { type: "string", required: true }, emails: { type: "list", of: "string" }, inviteMe: { type: "boolean" } } },
-    event: { fields: { name: { type: "string", required: true }, starts: { type: "datetime" }, ends: { type: "datetime" } }, edges: { who: { to: ["person"] } } },
+    event: { fields: { name: { type: "string", required: true }, starts: { type: "datetime" }, ends: { type: "datetime" }, invitees: { type: "list", of: "string" }, count: { type: "number" } }, edges: { who: { to: ["person"] } } },
   },
   acts: { "add-person": { creates: "person" }, "add-event": { creates: "event" } },
   connections: {
-    cal: { system: "google-calendar", calendar: "home@example.com", kind: "event", fields: { summary: "name", start: "starts", end: "ends", guests: { via: "who", ...guests } }, direction: "both", conflicts: "theirs" },
+    cal: { system: "google-calendar", calendar: "home@example.com", kind: "event", fields: { summary: "name", start: "starts", end: "ends", guests: whole ?? { via: "who", ...guests } }, direction: "both", conflicts: "theirs" },
   },
 });
 
@@ -74,8 +76,8 @@ function google() {
   };
 }
 
-function opened(guests: Record<string, unknown> = {}) {
-  const compiled = compileDocument(home(guests));
+function opened(guests: Record<string, unknown> = {}, whole?: unknown) {
+  const compiled = compileDocument(home(guests, whole));
   if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
   const app = compiled.app as GraviewApp<AnySchema>;
   const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], snapshot: { nodes: [], edges: [] } });
@@ -274,5 +276,41 @@ describe("a host reads back what a connection sent", () => {
     const report = await pass();
     expect(guestsOf(engine.snapshot, declaration, "event:run")!.sent!.notified).toBe(true);
     expect(connectionStatus(report.state, declaration).lastPass).toMatchObject({ pushed: 1, invited: 1 });
+  });
+});
+
+describe("the guests typed in a field take max as the relation's do", () => {
+  it("holds an event whose field would invite past max unsent, in the same words", async () => {
+    const { pass, act, store, remote, eventOf, lines } = opened({}, { field: "invitees", max: 2 });
+    act("add-event", { id: "event:dinner", name: "Dinner", starts: "2026-11-02T15:00:00Z", ends: "2026-11-02T16:00:00Z", invitees: ["ada@example.com"] });
+    await pass();
+    store.apply({ name: "edit-event", args: { id: "event:dinner", invitees: ["ada@example.com", "ben@example.com", "cat@example.com"] } }, { author: { kind: "human", id: "nick" }, intent: "by hand" });
+    const held = await pass();
+    expect(held.refused).toEqual([{ localId: "event:dinner", error: "Dinner has 3 guests; this connection invites at most 2" }]);
+    expect(held.pushed).toEqual([]);
+    expect(remote.invited(eventOf("event:dinner"))).toEqual(["ada@example.com"]);
+    expect(lines().at(-1)!.intent).toMatch(/^Did not invite .* to Dinner: Dinner has 3 guests; this connection invites at most 2$/);
+    store.apply({ name: "edit-event", args: { id: "event:dinner", invitees: ["ada@example.com", "ben@example.com"] } }, { author: { kind: "human", id: "nick" }, intent: "by hand" });
+    expect((await pass()).pushed).toEqual(["event:dinner"]);
+    expect(remote.invited(eventOf("event:dinner"))).toEqual(["ada@example.com", "ben@example.com"]);
+  });
+
+  it("is the short form said whole: { field } with no max sends what \"guests\": \"<field>\" sends", async () => {
+    for (const whole of ["invitees", { field: "invitees" }]) {
+      const { pass, act, remote, eventOf } = opened({}, whole);
+      act("add-event", { id: "event:run", name: "Run", starts: "2026-11-02T15:00:00Z", ends: "2026-11-02T16:00:00Z", invitees: ["ada@example.com", "ben@example.com", "cat@example.com"] });
+      expect((await pass()).pushed).toEqual(["event:run"]);
+      expect(remote.invited(eventOf("event:run"))).toEqual(["ada@example.com", "ben@example.com", "cat@example.com"]);
+    }
+  });
+
+  it("is refused by graview check as the relation's max is, and its field judged at guests.field", () => {
+    const found = (whole: unknown) => compileDocument(home({}, whole)).findings.filter((finding) => finding.severity === "error").map((finding) => `${finding.code} ${finding.path}: ${finding.message}`);
+    expect(found({ field: "invitees", max: 20 })).toEqual([]);
+    expect(found({ field: "invitees", max: 0 })).toEqual(["connection-guests-max connections.cal.fields.guests.max: max is the most guests one event invites, a whole number above 0, and it is 0"]);
+    expect(found({ field: "invitees", max: 2.5 })).toHaveLength(1);
+    expect(found({ field: "guestList", max: 2 })).toEqual(["connection-guests-field connections.cal.fields.guests.field: event has no field called guestList to hold the event's guests"]);
+    expect(found({ field: "count" })).toEqual(["connection-guests-field connections.cal.fields.guests.field: the event's guests are addresses, a list of them or one email, and count is a number field"]);
+    expect(compileDocument(home({}, { field: "invitees", emails: "emails" })).findings.map((finding) => finding.code)).toContain("unknown-key");
   });
 });
