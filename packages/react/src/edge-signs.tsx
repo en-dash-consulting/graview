@@ -254,3 +254,27 @@ export function useTrailBox(ground: RefObject<HTMLElement | null>): Box | null {
   }, [ground]);
   return box;
 }
+
+/**
+ * THE SHOWINGS AS THEY ARE DRAWN, in the ground's pixels: the names of a
+ * chosen district's pictures hanging under its own. The layout knows the
+ * showings of a district a lens is open on (`CityFrame.showings`); a
+ * district only chosen hangs them too, and on a phone the sign for Eras,
+ * past the right edge, stood on Albums' "Tracklists" — a tap there took
+ * the sign's press. Read once the picture has landed (`landed`), so a sign
+ * steps past where they stand, not where they were on the way.
+ */
+export function useHungShowings(ground: RefObject<HTMLElement | null>, landed: boolean, picture: unknown): readonly Box[] {
+  const [boxes, setBoxes] = useState<readonly Box[]>([]);
+  useLayoutEffect(() => {
+    const at = ground.current;
+    if (!at || !landed) return;
+    const mine = at.getBoundingClientRect();
+    const next = [...at.querySelectorAll<HTMLElement>(".graview-drive-in")]
+      .map((hung) => hung.getBoundingClientRect())
+      .filter((box) => box.width > 0 && box.height > 0)
+      .map((box) => ({ x: Math.round(box.left - mine.left), y: Math.round(box.top - mine.top), width: Math.round(box.width), height: Math.round(box.height) }));
+    setBoxes((now) => (now.length === next.length && now.every((box, i) => box.x === next[i]!.x && box.y === next[i]!.y && box.width === next[i]!.width && box.height === next[i]!.height) ? now : next));
+  }, [ground, landed, picture]);
+  return boxes;
+}
