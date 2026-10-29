@@ -265,8 +265,10 @@ describe("what a commit starts", () => {
 
 describe("a workflow's run in Activity", () => {
   it("is said by the workflow's title", () => {
-    expect(digestWords({ things: 6, at: "2026-11-01T18:00:00Z", run: "workflow:w:1", author: { id: "workflow:w", name: "Fill out next week's events" } }, "2026-11-01")).toBe("Fill out next week's events: 6 things today");
-    expect(digestWords({ things: 1, at: "2026-11-01T18:00:00Z", author: { id: "tidying", name: "Graview, tidying" } }, "2026-11-01")).toBe("Tidied one thing today");
+    // Noon, on the day as the runner's own clock reads it: "today" in any zone.
+    const at = new Date(2026, 10, 1, 12).toISOString();
+    expect(digestWords({ things: 6, at, author: { id: "workflow:w", name: "Fill out next week's events" } }, "2026-11-01")).toBe("Fill out next week's events: 6 things today");
+    expect(digestWords({ things: 1, at, author: { id: "tidying", name: "Graview, tidying" } }, "2026-11-01")).toBe("Tidied one thing today");
   });
 });
 
