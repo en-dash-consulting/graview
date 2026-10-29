@@ -1,6 +1,6 @@
 import { ARCHIVED, isAutomated, type AnySchema, type Lineage, type MutationCall, type Primitive, type Principal, type Store } from "@graview/core";
 import { suggest } from "@graview/core/tidying";
-import { policiesOf, resolveWorkflow, workflowAuthor, workflowSpecHash, workflowWorldOfApp } from "@graview/core/workflows";
+import { declaredWorkflows, policiesOf, resolveWorkflow, workflowAuthor, workflowSpecHash, workflowWorldOfApp } from "@graview/core/workflows";
 import { routeOf } from "../tidy/policy.js";
 import { askedOf } from "./ask.js";
 import { stepRunnerOf } from "./steps.js";
@@ -52,8 +52,9 @@ const dayIn = (at: number, zone: string | undefined): string => {
 /** RUN ONE WORKFLOW ONCE, and keep the run in the host's log. */
 export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptions<S>): Promise<WorkflowRun> {
   const store = options.store as unknown as Store<AnySchema>;
-  const declared = options.app.workflows?.[options.workflow];
-  if (!declared) throw new Error(`The app has no workflow "${options.workflow}"${Object.keys(options.app.workflows ?? {}).length > 0 ? `; it has ${Object.keys(options.app.workflows ?? {}).map((name) => `"${name}"`).join(", ")}` : ""}.`);
+  const workflows = declaredWorkflows(options.app) ?? {};
+  const declared = workflows[options.workflow];
+  if (!declared) throw new Error(`The app has no workflow "${options.workflow}"${Object.keys(workflows).length > 0 ? `; it has ${Object.keys(workflows).map((name) => `"${name}"`).join(", ")}` : ""}.`);
   const world = workflowWorldOfApp(options.app);
   const workflow = resolveWorkflow(options.workflow, declared, world);
   const principal = options.principal ?? workflowAuthor(workflow);

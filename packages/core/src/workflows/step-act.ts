@@ -19,8 +19,6 @@ const quoted = (names: Iterable<string>): string => [...names].map((name) => `"$
 /** The names a key's `{field}` template reads. */
 export const keyFields = (key: string): string[] => [...key.matchAll(/\{([^{}|\s]+)(?:\s*\|[^{}]*)?\}/g)].map((found) => found[1]!);
 
-/** A kind's name as words: "grocery-list" → "grocery list". */
-export const kindWords = (kind: string): string => kind.replace(/-/g, " ");
 
 export const actStep: StepKind<ActStep> = {
   key: "act",
@@ -76,8 +74,8 @@ export const actStep: StepKind<ActStep> = {
     }
     return out;
   },
-  words(step) {
-    const over = step.over ? ` for each ${kindWords(step.over.kind)}${step.over.where ? ` where ${step.over.where}` : ""}${step.over.limit ? ` (at most ${step.over.limit})` : ""}` : "";
+  words(step, noun) {
+    const over = step.over ? ` for each ${noun(step.over.kind)}${step.over.where ? ` where ${step.over.where}` : ""}${step.over.limit ? ` (at most ${step.over.limit})` : ""}` : "";
     return `Run “${step.act}”${over}`;
   },
   touches(step, world: WorkflowWorld) {

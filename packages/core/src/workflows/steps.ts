@@ -1,5 +1,6 @@
 import * as z from "../schema/zod.js";
 import { NAME } from "../document/schema.js";
+import { nounOf } from "../schema/define-node.js";
 import type { WorkflowStep } from "../workflow-shape.js";
 import { actStep } from "./step-act.js";
 import { agentStep } from "./step-agent.js";
@@ -51,6 +52,12 @@ export interface StepShapes {
   readonly approve: z.ZodMiniType;
 }
 
+/** A kind as a person reads it: its noun, as the declaration says it ("grocery list", "car"). */
+export type KindNoun = (kind: string) => string;
+
+/** A kind's noun when no declaration is at hand: its name, read as words. */
+export const kindNoun: KindNoun = (kind) => nounOf(undefined, kind);
+
 /** One kind of step. */
 export interface StepKind<Step = never> {
   /** Its one discriminating key: a step that holds it is this kind. */
@@ -61,8 +68,8 @@ export interface StepKind<Step = never> {
   shape(shapes: StepShapes): z.ZodMiniType;
   /** What the checker says of one, at its place. */
   findings(step: Step, check: StepCheck): WorkflowFinding[];
-  /** One line: "Run “add-event” for each routine where active". */
-  words(step: Step): string;
+  /** One line: "Run “add-event” for each routine where active", each kind by its noun. */
+  words(step: Step, noun: KindNoun): string;
   /** The kinds it reads and the kinds it may write, by name. */
   touches(step: Step, world: WorkflowWorld): { readonly reads: readonly string[]; readonly writes: readonly string[] };
 }

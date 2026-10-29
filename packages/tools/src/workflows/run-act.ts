@@ -1,4 +1,4 @@
-import { type AnyGraphNode, type AnySchema, type MutationCall, type Operation, type Principal, type Store } from "@graview/core";
+import { pluralOf, type AnyGraphNode, type AnySchema, type MutationCall, type Operation, type Principal, type Store } from "@graview/core";
 import { keyedId, recordsOver, workflowKey, workflowValue, type ActStep } from "@graview/core/workflows";
 import type { StepContext, StepRunner } from "./types.js";
 
@@ -114,7 +114,7 @@ export const runActStep: StepRunner<ActStep> = {
       return context.skipped(`the app has no act “${step.act}”.`);
     }
     const ids = step.over ? recordsOver(store, step.over, context.principal as Principal) : [undefined];
-    if (step.over && ids.length === 0) context.note(`Step ${context.index + 1}: no ${step.over.kind.replace(/-/g, " ")} records to run over.`);
+    if (step.over && ids.length === 0) context.note(`Step ${context.index + 1}: no ${pluralOf(store.schema, step.over.kind).toLowerCase()} to run over.`);
     for (const id of ids) {
       const record = id === undefined ? undefined : (store.graph.getNode(id) as AnyGraphNode | undefined);
       const args: Record<string, unknown> = {};
