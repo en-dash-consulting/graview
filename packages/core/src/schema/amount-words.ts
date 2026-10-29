@@ -15,11 +15,11 @@ export const isCurrencyCode = (unit: string | undefined): unit is string => /^[A
  * field's own, else the app's) and no unit beside it.
  */
 export function amountMark(mark: AmountMark): AmountMark {
-  const { format, unit, currency, locale } = mark;
+  const { format, unit, currency, locale, places } = mark;
   const code = isCurrencyCode(unit);
   const money = format === "money" || (!format && code);
   const named = money ? (code ? unit : currency) : undefined;
-  return { ...(money ? { format: "money" as const } : format ? { format } : {}), ...(unit && !(money && code) ? { unit } : {}), ...(named ? { currency: named } : {}), ...(locale ? { locale } : {}) };
+  return { ...(money ? { format: "money" as const } : format ? { format } : {}), ...(unit && !(money && code) ? { unit } : {}), ...(named ? { currency: named } : {}), ...(locale ? { locale } : {}), ...(money && places === 0 ? { places } : {}) };
 }
 
 /** What an amount is, in a sentence a model or a reader of the declaration can act on: "An amount of money in USD: a plain number, 1250.5 for 1,250.50 USD." */

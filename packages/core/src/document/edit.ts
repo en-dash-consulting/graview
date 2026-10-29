@@ -28,6 +28,7 @@ import {
   ActSpec,
   ALIAS,
   MOST_ALIASES,
+  MOST_COMPUTED,
   EDGE_NAME,
   EdgeSpec,
   FIELD_NAME,
@@ -41,7 +42,7 @@ import {
   type FieldType,
   type GraviewDocument,
 } from "./schema.js";
-import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES, unknownLensOption, viewReference } from "../places.js";
+import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES, TIMELINE_AXIS_ROLES, timelineBindingsWords, unknownLensOption, viewReference } from "../places.js";
 import { LENSES_THAT_LIST, listsRecords } from "../lenses-that-list.js";
 import { placeSlug, VIEW_REFERENCE, type HostView, type KindList } from "../views/types.js";
 import { documentListFields, kindListFindings, kindListWords, listGroup, listSort, sortTypeOfDocumentField } from "../kind-list.js";
@@ -61,6 +62,9 @@ import { accentProblem } from "../theme/accent.js";
 import { darkPageFor, groundProblem } from "../theme/ground-check.js";
 import type { Ground } from "../theme/ground.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
+
+/** Whether a field or a computed field is said as money: its format, or a unit that is a currency. */
+const isMoney = (f: Record<string, unknown>): boolean => f["format"] === "money" || (f["format"] === undefined && typeof f["unit"] === "string" && /^[A-Z]{3}$/.test(f["unit"]));
 import { capitalize, listed as listOf } from "../capital.js";
 import { quoted } from "./quote.js";
 import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, appTidyingSentence, archivesSentence, tidyingSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
@@ -209,7 +213,7 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
     "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), multiple: z.boolean().optional(), of: z.enum(["string", "number", "date", "image", "video", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
     "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional(), labels: z.record(z.string().min(1).max(80), z.union([z.string().min(1).max(80), z.null()])).optional() }).strict(),
-    "set-format": z.object({ op: z.literal("set-format"), kind: kindName, field: fieldName, format: z.union([z.enum(["money", "percent", "duration", "markdown"]), z.null()]).optional(), unit: z.union([z.string().min(1).max(12), z.null()]).optional() }).strict(),
+    "set-format": z.object({ op: z.literal("set-format"), kind: kindName, field: fieldName, format: z.union([z.enum(["money", "percent", "duration", "markdown"]), z.null()]).optional(), unit: z.union([z.string().min(1).max(12), z.null()]).optional(), places: z.union([z.literal(0), z.null()]).optional() }).strict(),
     "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
     "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
     "set-default": z.object({ op: z.literal("set-default"), kind: kindName, field: fieldName, default: z.unknown() }).strict(),
@@ -1068,7 +1072,10 @@ class Editor {
         const fields: string[] = e.fields;
         const seen = new Set<string>();
         for (const [n, field] of fields.entries()) {
-          if (!spec.fields[field]) return this.fail(i, `fields.${n}`, `a glance at ${e.kind} is to say "${field}", and ${e.kind} has no field called that`, `use one of: ${Object.keys(spec.fields).join(", ")}`);
+          // A computed field may be glanced at (FR-83): worked out for each card, as its page works it out — unless it is kept off what a record says of itself.
+          const worked = spec.computed?.[field];
+          if (!spec.fields[field] && worked === undefined) return this.fail(i, `fields.${n}`, `a glance at ${e.kind} is to say "${field}", and ${e.kind} has no field or computed field called that`, `use one of: ${[...Object.keys(spec.fields), ...Object.keys(spec.computed ?? {})].join(", ")}`);
+          if (!spec.fields[field] && isObject(worked) && worked["hidden"] === true) return this.fail(i, `fields.${n}`, `${e.kind}'s "${field}" is worked out and kept off its card, page and CSV, so a glance cannot say it`, `show it first: set-computed with "hidden": false`);
           if (seen.has(field)) return this.fail(i, `fields.${n}`, `"${field}" is in the glance twice; name each field once`);
           seen.add(field);
         }
@@ -1441,6 +1448,7 @@ class Editor {
       if (!Array.isArray(e.options?.blocks) || e.options.blocks.length === 0) return this.fail(i, "options.blocks", 'a lens drawn from blocks has blocks: "options": {"blocks": [{"headline": "…"}, {"list": "all(\'<kind>\')", "as": "card"}]}');
     }
     if (name === "columns" && !(this.columnsHold(i, e.bindings) && this.boardOptionsHold(i, e.bindings as Doc, e.options))) return;
+    if (name === "timeline" && !this.timelineHolds(i, e.bindings, e.options)) return;
     if (was) lenses[at] = lens;
     else lenses.splice(e.at === undefined ? lenses.length : Math.min(e.at, lenses.length), 0, lens);
     const index = was ? at : lenses.indexOf(lens);
@@ -1510,6 +1518,37 @@ class Editor {
       const others = Object.keys(roles as Doc).filter((role) => role !== "column");
       if (others.length > 0) return (this.fail(i, `bindings.${kind}.${others[0]}`, `a board binds only "column"`), false);
     }
+    return true;
+  }
+
+  /**
+   * A TIMELINE THAT WOULD DRAW, held before it is added: a timeline lays out
+   * spans by number across columns, so each kind it binds is a kind, its
+   * `start` and `end` are number fields, and its columns are named in the
+   * options or read from a choice field bound to `column`. A timeline over a
+   * project's start and end dates was accepted, said nothing and drew
+   * nothing — never a place; it is refused here in the words the checker
+   * uses (`lens-cannot-draw`), pointing spans of dates at the calendar.
+   */
+  private timelineHolds(i: number, bindings: unknown, options: Doc | undefined): boolean {
+    const refuse = (path: string, message: string, kind: string, start?: unknown, end?: unknown) => (this.failAs("lens-cannot-draw", i, path, `a timeline here would not draw: ${message}`, timelineBindingsWords(kind, typeof start === "string" ? start : "start", typeof end === "string" ? end : "end")), false);
+    if (!isObject(bindings) || Object.keys(bindings).length === 0) return refuse("bindings", "it binds no kind", "<kind>");
+    let columns = Array.isArray(options?.["columns"]) && options["columns"].length > 0;
+    for (const [kind, roles] of Object.entries(bindings)) {
+      if (!isObject(this.doc.kinds[kind])) return (this.fail(i, `bindings.${kind}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`), false);
+      if (!isObject(roles)) return refuse(`bindings.${kind}`, `it does not say which fields of ${kind} it lays out`, kind);
+      const fields = this.doc.kinds[kind].fields as Record<string, Doc>;
+      for (const role of TIMELINE_AXIS_ROLES) {
+        const field = roles[role];
+        if (typeof field !== "string") return refuse(`bindings.${kind}.${role}`, `it does not say which field of ${kind} is its ${role}`, kind, roles["start"], roles["end"]);
+        if (!(field in fields)) return (this.fail(i, `bindings.${kind}.${role}`, `${kind} has no field "${field}"; it has ${Object.keys(fields).join(", ")}`), false);
+        const type = fields[field]["type"];
+        if (type !== "number" && type !== "integer" && type !== "duration") return refuse(`bindings.${kind}.${role}`, `${kind}'s ${field} is ${withArticle(String(type ?? "text"))} field, and a timeline's axis is a number`, kind, roles["start"], roles["end"]);
+      }
+      const column = typeof roles["column"] === "string" ? roles["column"] : typeof roles["columns"] === "string" ? roles["columns"] : undefined;
+      if (column !== undefined && fields[column]?.["type"] === "enum") columns = true;
+    }
+    if (!columns) return refuse("options.columns", "it has no columns — no option names them and no `column` role is bound to a choice field", Object.keys(bindings)[0]!);
     return true;
   }
 
@@ -1993,7 +2032,7 @@ class Editor {
       if (e.expr === undefined) return this.fail(i, "expr", `to work out "${name}", give its expression, like "list * units"`);
       if (spec.fields[name] || spec.edges?.[name]) return this.fail(i, "name", `${e.kind} already has a ${spec.fields[name] ? "field" : "relation"} called "${name}"`);
       if (KEYWORDS.has(name)) return this.fail(i, "name", `"${name}" is a word the rule language keeps; pick another name`);
-      if (Object.keys(spec.computed ?? {}).length >= 20) return this.fail(i, "name", "a kind works out at most 20 computed fields");
+      if (Object.keys(spec.computed ?? {}).length >= MOST_COMPUTED) return this.fail(i, "name", `a kind works out at most ${MOST_COMPUTED} computed fields`);
     }
     const was: Doc = existing === undefined ? {} : typeof existing === "string" ? { expr: existing } : { ...existing };
     const next: Doc = { ...was };
@@ -2622,7 +2661,7 @@ class Editor {
     if (worked !== undefined && !this.doc.kinds[e.kind].fields[e.field]) return this.setComputedFormat(i, e, worked);
     const f = this.field(i, e.kind, e.field);
     if (!f) return;
-    if (e.format === undefined && e.unit === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration" for a number, "markdown" for a text field, or null for neither), a "unit" ("EUR", "kg", or null), or both');
+    if (e.format === undefined && e.unit === undefined && e.places === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration" for a number, "markdown" for a text field, or null for neither), a "unit" ("EUR", "kg", or null), "places" (0 for money in whole units, or null), or some of them');
     if (f.type === "text") {
       if (e.unit !== undefined && e.unit !== null) return this.fail(i, "unit", refusedFormat("a unit", f.type));
       if (e.format && e.format !== "markdown") return this.fail(i, "format", refusedFormat(e.format, f.type));
@@ -2633,10 +2672,11 @@ class Editor {
     }
     if (!formatFits(typeof e.format === "string" ? e.format : "money", f.type)) return this.fail(i, "field", refusedFormat(typeof e.format === "string" ? e.format : "a unit", f.type));
     const before = formatWords(f, this.doc.brand);
-    for (const key of ["format", "unit"]) {
+    for (const key of ["format", "unit", "places"]) {
       if (e[key] === null) delete f[key];
       else if (e[key] !== undefined) f[key] = e[key];
     }
+    if (f.places !== undefined && !isMoney(f)) return this.fail(i, "places", `"places" is said of money, and ${e.kind}'s ${e.field} is ${formatWords(f, this.doc.brand) ?? "a plain number"}`, 'say "format": "money" with it, or leave "places" out');
     const now = formatWords(f, this.doc.brand);
     this.said.push(`${e.kind}'s ${e.field} is said as ${now ?? "a plain number"}${before ? `, where it was ${before.replace(/ — .*/, "")}` : ""}; its values are kept.`);
   }
@@ -2649,15 +2689,16 @@ class Editor {
    * its expression is left.
    */
   private setComputedFormat(i: number, e: Doc, worked: string | Doc) {
-    if (e.format === undefined && e.unit === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration", or null for none), a "unit" ("EUR", "kg", or null), or both');
+    if (e.format === undefined && e.unit === undefined && e.places === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration", or null for none), a "unit" ("EUR", "kg", or null), "places" (0 for money in whole units, or null), or some of them');
     if (e.format === "markdown") return this.fail(i, "format", `${e.field} is worked out, not written, so it cannot be Markdown; a computed field is said as "money", "percent" or "duration"`);
     const spec = this.doc.kinds[e.kind];
     const next: Doc = typeof worked === "string" ? { expr: worked } : { ...worked };
     const before = formatWords(next, this.doc.brand);
-    for (const key of ["format", "unit"]) {
+    for (const key of ["format", "unit", "places"]) {
       if (e[key] === null) delete next[key];
       else if (e[key] !== undefined) next[key] = e[key];
     }
+    if (next.places !== undefined && !isMoney(next)) return this.fail(i, "places", `"places" is said of money, and ${e.kind}'s ${e.field} is ${formatWords(next, this.doc.brand) ?? "a plain number"}`, 'say "format": "money" with it, or leave "places" out');
     spec.computed[e.field] = Object.keys(next).length === 1 ? next.expr : next;
     const now = formatWords(next, this.doc.brand);
     this.said.push(`${e.kind}'s ${e.field} is worked out as before and said as ${now ?? "a plain number"}${before ? `, where it was ${before.replace(/ — .*/, "")}` : ""}.`);

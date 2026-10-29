@@ -11,17 +11,17 @@ import type { AmountMark } from "../schema/amount-mark.js";
  */
 
 /** A number field's format in words, with what a value reads as; `undefined` for a plain number. A text field's Markdown is not a number's format, so it is said as itself. */
-export function formatWords(f: { readonly format?: string | undefined; readonly unit?: string | undefined }, brand?: { readonly currency?: string | undefined; readonly locale?: string | undefined }): string | undefined {
+export function formatWords(f: { readonly format?: string | undefined; readonly unit?: string | undefined; readonly places?: number | undefined }, brand?: { readonly currency?: string | undefined; readonly locale?: string | undefined }): string | undefined {
   if (!f.format && !f.unit) return undefined;
   if (f.format === "markdown") return "written in Markdown";
   // A number shown as a duration is the duration type: whole minutes.
   if (f.format === "duration") return `a duration in whole minutes, as {"type": "duration"} is — 90 reads ${sayDuration(90, brand?.locale)}`;
   const mark = amountMark({ ...(brand?.currency ? { currency: brand.currency } : {}), ...(brand?.locale ? { locale: brand.locale } : {}), ...(f as AmountMark) });
-  const example = mark.format === "percent" ? 0.15 : mark.format === "money" ? 10000 : 12;
+  const example = mark.format === "percent" ? 0.15 : mark.format === "money" ? (mark.places === 0 ? 1250.5 : 10000) : 12;
   const reads = ` — ${example} reads ${sayAmount(example, mark)}`;
   switch (mark.format) {
     case "money":
-      return mark.currency ? `money in ${mark.currency}${reads}` : `money in no currency yet, so it reads ${sayAmount(example, mark)} — say the app's, { "brand": { "currency": "USD" } }`;
+      return mark.currency ? `money in ${mark.currency}${mark.places === 0 ? ", in whole units" : ""}${reads}` : `money in no currency yet, so it reads ${sayAmount(example, mark)} — say the app's, { "brand": { "currency": "USD" } }`;
     case "percent":
       return `a percent, kept as a fraction${reads}`;
     default:

@@ -70,6 +70,10 @@ function readFormatter(text: string): { readonly format: Formatter; readonly arg
     const most = text.slice(colon + 1).trim();
     if (!/^\d+$/.test(most) || Number(most) < 20 || Number(most) > 1000) throw new TemplateError("excerpt is told at most how many characters, 20 to 1000: {summary | excerpt: 80}");
     args.push(most);
+  } else if (colon >= 0 && name === "money") {
+    // Money in whole units, rounded: `money: 0`; with none, cents only where the sum has them.
+    if (text.slice(colon + 1).trim() !== "0") throw new TemplateError("money is told 0 for whole units, rounded — {total | money: 0} — or nothing, for cents only where a sum has them");
+    args.push("0");
   } else if (colon >= 0) {
     const rest = text.slice(colon + 1);
     let at = 0;
@@ -85,7 +89,7 @@ function readFormatter(text: string): { readonly format: Formatter; readonly arg
   if (name === "plural" && (args.length < 1 || args.length > 2)) {
     throw new TemplateError("plural is told its noun, like {count | plural: 'offer'}, and its plural where English does not make it: plural: 'person', 'people'");
   }
-  if (name !== "plural" && name !== "excerpt" && args.length > 0) throw new TemplateError(`"${name}" takes nothing after it`);
+  if (name !== "plural" && name !== "excerpt" && name !== "money" && args.length > 0) throw new TemplateError(`"${name}" takes nothing after it`);
   return { format: name as Formatter, args };
 }
 

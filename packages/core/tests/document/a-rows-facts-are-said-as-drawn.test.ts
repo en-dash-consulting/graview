@@ -31,7 +31,7 @@ const resolved = (blocks: readonly unknown[], slot: "row" | "card" | "page") => 
 describe("a row's line of facts", () => {
   it("carries each choice as a chip, said as it reads, and the rest as words, in the order written", () => {
     const [line] = resolved([{ text: "{severity} · {status} · {type} · disclosed {disclosed}" }], "row");
-    expect(line).toMatchObject({ t: "text", text: "high · contained · supply-chain · disclosed May 18, 2026" });
+    expect(line).toMatchObject({ t: "text", text: "high · contained · supply chain · disclosed May 18, 2026" });
     expect(line?.t === "text" ? line.runs : undefined).toEqual([
       { text: "High", field: "severity" },
       { text: "Contained", field: "status" },

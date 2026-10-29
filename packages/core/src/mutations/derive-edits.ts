@@ -7,7 +7,7 @@ import { DATE_VALUE, dayAsRead, ISO_MOMENT, momentAsRead } from "../days.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
 import { labelOf } from "../schema/define-node.js";
 import { LEFT_ALONE } from "../graph/archived.js";
-import { fieldWords, humanizeField, nounOf } from "../schema/define-node.js";
+import { fieldWords, humanizeValue, nounOf } from "../schema/define-node.js";
 import { linkedRelationOf } from "../schema/linked.js";
 import { repeatedBy } from "../repeat.js";
 import type { AnySchema } from "../schema/schema.js";
@@ -285,7 +285,7 @@ function valueSaid(definition: AnyNodeDefinition, schema: unknown, field: string
   if (ISO_MOMENT.test(value)) return momentAsRead(value);
   // A choice by its option's words; anything else written, by its start (FR-180) and in quotes.
   for (let def = z.defOf(schema) as { readonly type?: string; readonly innerType?: unknown } | undefined; def; def = z.defOf(def.innerType) as typeof def) {
-    if (def.type === "enum") return humanizeField(value);
+    if (def.type === "enum") return humanizeValue(value);
   }
   return `“${excerpt(value, 60)}”`;
 }

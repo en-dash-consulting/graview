@@ -7,7 +7,8 @@ import { rendered } from "./the-review.js";
 /**
  * BADGES THAT FOLLOW ONE ANOTHER FLOW SIDE BY SIDE. A card with three
  * badges drew each on a line of its own, the view being a column; on the
- * record's page too. A run of badges is one line that wraps, as chips are.
+ * record's page too. A run of badges is one line that wraps, as chips are,
+ * each said by its option's label, as a chip is (Roadmap f-lifelogics-findings).
  */
 beforeAll(() => Promise.all([fetchDeclaredLenses(), fetchHomeView()]));
 
@@ -17,14 +18,14 @@ describe("badges that follow one another flow side by side", () => {
   it("on a card", async () => {
     const { host, done } = await rendered("/places/every-finding");
     const card = host.querySelector('[data-graview-listed="f1"] [data-graview-spec="card"]')!;
-    expect(runs(card)).toEqual([["high", "layout", "now"]]);
+    expect(runs(card)).toEqual([["High", "Layout", "Now"]]);
     await done();
   });
 
   it("on a record's page", async () => {
     const { host, done } = await rendered("/findings/f3");
     const page = host.querySelector('[data-graview-spec="page"][data-graview-kind="finding"]')!;
-    expect(runs(page)).toEqual([["low", "words", "later"]]);
+    expect(runs(page)).toEqual([["Low", "Words", "Later"]]);
     await done();
   });
 });

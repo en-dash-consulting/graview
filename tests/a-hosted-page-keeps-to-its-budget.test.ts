@@ -181,7 +181,8 @@ describe("a hosted page", () => {
     // 1054 KB since a Notion connection came to keep several data sources and to say on a record's page which one keeps it ("Kept in step with Notion · Tasks"): the line on the record's page and the compile reading a connection's sources: the scene face measured 1_078_654 B, 987 more than main (1_077_667).
     // 1056 KB once the 0.1.63 batch's branches were merged, each measured alone against main: the scene face measured 1_080_549 B.
     // 1060 KB since a record came to follow the record it derives from (Roadmap f-keep-linked): the store keeping `derives` in step and `validateGraph` saying one out of step: the scene face measured 1_082_988 B, over feat/workflows.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1060 * 1024);
+    // 1056 KB since a timeline came to be accepted only where it draws, money never to read ".00", an option to be said by its label in a template and a batch of acts by each act (Roadmap f-lifelogics-findings): the timeline's bindings in words, a sum rounded to the cent and its places, a choice's labels on each kind's shape: the scene face measured 1_080_480 B, 2_813 more than main (1_077_667).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1064 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

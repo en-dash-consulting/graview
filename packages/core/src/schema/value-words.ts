@@ -1,4 +1,4 @@
-import { humanizeField } from "./define-node.js";
+import { humanizeField, humanizeValue } from "./define-node.js";
 import type { AnyNodeDefinition } from "./types.js";
 
 /*
@@ -17,7 +17,7 @@ import type { AnyNodeDefinition } from "./types.js";
  */
 export function valueWords(definition: AnyNodeDefinition | undefined, key: string, value: unknown): string {
   const format = definition?.display?.format?.[key];
-  return format ? format(value) : typeof value === "string" ? humanizeField(value) : String(value);
+  return format ? format(value) : typeof value === "string" ? humanizeValue(value) : String(value);
 }
 
 /**

@@ -56,8 +56,11 @@ when the bindings do not (reach; a coverage over its columns).
   it is drawn). `range: "years"` with `horizon: { years: 30, title: "The
   career" }` spans its records, first to last, as well as `years` from
   `today`; `from` and `to` (years: 1962, 2023) pin its ends.
-- **A timeline** needs columns: named in `columns`, or read from the
-  choices of the field its `column` role is bound to.
+- **A timeline** lays out spans by number — minutes of a day, 0 to 1440 —
+  so `start` and `end` are number fields, and it needs columns: named in
+  `columns`, or read from the choices of the field its `column` role is
+  bound to. Over dates it draws nothing, and `add-lens` refuses it
+  (`lens-cannot-draw`); spans of dates are a calendar's, `{ start, end }`.
 - **A coverage**'s `sort` orders its rows and `columnSort` its columns;
   a status board's `sort` orders its cards: a field or `{ by, direction }`,
   `label` the name, held to the kind. A coverage with no columns, or no
@@ -99,7 +102,8 @@ not draw and what it ignores:
   `lensOptionsRefused(stored, proposed)` (`@graview/core/document`): an
   error for each such key the same lens did not already carry.
 - `lens-cannot-draw` — it binds no kind, its board's column field is not a
-  choice, its timeline has no columns, its calendar's `today` is not a
+  choice, its timeline has no columns or binds a field that is not a
+  number (its fix names the bindings a timeline takes, and the calendar), its calendar's `today` is not a
   date or its `range` not one it opens at, it stands on what is not a
   kind, or its title has nothing to make an address of.
 - `lens-not-shipped` — a title on a lens the framework does not draw;
