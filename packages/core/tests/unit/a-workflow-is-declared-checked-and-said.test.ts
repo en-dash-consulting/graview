@@ -5,7 +5,7 @@ import { diffDocuments, editDocument } from "../../src/document/index.js";
 import type { GraviewDocument } from "../../src/document/schema.js";
 import { Store, type AnySchema, type GraviewApp } from "../../src/index.js";
 import { digestWords } from "../../src/tidying.js";
-import { nextRunAt, scheduleWords, STEP_KINDS, triggeredBy, workflowsOf, workflowWords, type WorkflowDeclaration } from "../../src/workflows.js";
+import { declaredWorkflows, nextRunAt, scheduleWords, STEP_KINDS, triggeredBy, workflowsOf, workflowWords, type WorkflowDeclaration } from "../../src/workflows.js";
 
 /*
  * A WORKFLOW IS DECLARED, CHECKED AND SAID (Roadmap f-jobs-declared): the
@@ -52,11 +52,12 @@ const codes = (document: unknown) => {
 const withWorkflow = (workflow: unknown, extra: Record<string, unknown> = {}) => ({ ...HOME, ...extra, workflows: { w: workflow } });
 
 describe("a workflow in the declaration", () => {
-  it("round-trips through compile onto the app as it was written", () => {
+  it("round-trips through compile as it was written, read off the document the app remembers and never copied onto what a page draws", () => {
     const result = compiled(HOME);
     expect(result.ok, JSON.stringify(result.findings.filter((f) => f.severity === "error"))).toBe(true);
     if (!result.ok) return;
-    expect(result.app.workflows).toEqual(HOME.workflows);
+    expect(declaredWorkflows(result.app)).toEqual(HOME.workflows);
+    expect(result.app.workflows).toBeUndefined();
   });
 
   it("is said whole in the JSON schema an editor reads", () => {
@@ -90,7 +91,7 @@ describe("what the checker says of a workflow", () => {
   });
 
   it("refuses a rule that does not read or reads what is not there (workflow-where-invalid)", () => {
-    expect(codes(withWorkflow({ title: "T", when: [{ made: "grocery-list", where: "colour == 'red'" }], steps: [{ act: "add-event", over: { kind: "routine", where: "active ==" }, args: { name: "x" } }] }))).toEqual(["workflow-where-invalid @ workflows.w.steps.0.over.where", "workflow-where-invalid @ workflows.w.when.0.where"]);
+    expect(codes(withWorkflow({ title: "T", when: [{ made: "grocery-list", where: "color == 'red'" }], steps: [{ act: "add-event", over: { kind: "routine", where: "active ==" }, args: { name: "x" } }] }))).toEqual(["workflow-where-invalid @ workflows.w.steps.0.over.where", "workflow-where-invalid @ workflows.w.when.0.where"]);
   });
 
   it("refuses a schedule it cannot read, naming what it reads (workflow-schedule-invalid)", () => {
@@ -105,7 +106,7 @@ describe("what the checker says of a workflow", () => {
   });
 
   it("refuses a key that reads what the step does not have (workflow-key-field-unknown)", () => {
-    expect(codes(withWorkflow({ title: "T", when: [{ byHand: true }], steps: [{ act: "add-event", over: { kind: "routine" }, args: { name: "x" }, key: "{id}:{colour}" }] }))).toEqual(["workflow-key-field-unknown @ workflows.w.steps.0.key"]);
+    expect(codes(withWorkflow({ title: "T", when: [{ byHand: true }], steps: [{ act: "add-event", over: { kind: "routine" }, args: { name: "x" }, key: "{id}:{color}" }] }))).toEqual(["workflow-key-field-unknown @ workflows.w.steps.0.key"]);
   });
 
   it("refuses a model's step that may propose nothing, offering the acts over what it reads (workflow-agent-acts-empty)", () => {

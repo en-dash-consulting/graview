@@ -5,8 +5,9 @@ import { conditionProblems } from "../job-findings.js";
 import { nearestAct } from "../mutations/act-spelling.js";
 import type { GenerateStep } from "../workflow-shape.js";
 import { DEFAULT_GENERATE_KEY, GENERATE_REFS, windowWordsProblem } from "./generate-words.js";
-import { keyFields, kindWords } from "./step-act.js";
-import type { StepCheck, StepKind, StepShapes, WorkflowFinding } from "./steps.js";
+import { keyFields } from "./step-act.js";
+import { withArticle } from "../schema/define-node.js";
+import type { KindNoun, StepCheck, StepKind, StepShapes, WorkflowFinding } from "./steps.js";
 import type { WorkflowWorld } from "./world.js";
 
 /*
@@ -26,8 +27,6 @@ import type { WorkflowWorld } from "./world.js";
  * back through `link`, and made once per key (`{source}:{date}` unsaid).
  * What it wants is `generate.ts`'; running it is `@graview/tools/workflows`'.
  */
-
-const withA = (noun: string): string => `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
 
 const quoted = (names: Iterable<string>): string => [...names].map((name) => `"${name}"`).join(", ") || "none";
 
@@ -55,7 +54,7 @@ function valueProblems(expr: string, kindName: string, world: WorkflowWorld): st
   for (const fn of shape.unknownFunctions) problems.push(`"${expr}" calls "${fn}", which is not a function the rule language knows`);
   for (const name of shape.names) {
     if (name === "date" || name === "source" || name === "id" || name === "label" || kind.fields[name] || kind.edges.has(name) || kind.computed.includes(name)) continue;
-    problems.push(`"${expr}" reads "${name}", and ${kindWords(kindName)} has no field, relation or computed field called that`);
+    problems.push(`"${expr}" reads "${name}", and ${world.noun(kindName)} has no field, relation or computed field called that`);
   }
   return problems;
 }
@@ -96,15 +95,15 @@ export const generateStep: StepKind<GenerateStep> = {
     else if (step.using !== undefined) {
       if (!world.acts.includes(step.using)) {
         const near = nearestAct(step.using, world.acts);
-        out.push({ code: "workflow-act-unknown", severity: "error", path: `${at}.using`, message: `${said} makes its records with "${step.using}", which is not an act of this app.`, fix: near ? `Did you mean "${near}"?` : `Name the act that makes ${kindWords(step.generate)} records.`, ...(near ? { edits: [withStep(check, (one) => ({ ...one, using: near }))] } : {}) });
+        out.push({ code: "workflow-act-unknown", severity: "error", path: `${at}.using`, message: `${said} makes its records with "${step.using}", which is not an act of this app.`, fix: near ? `Did you mean "${near}"?` : `Name the act that makes ${world.noun(step.generate)} records.`, ...(near ? { edits: [withStep(check, (one) => ({ ...one, using: near }))] } : {}) });
       } else if (!(world.actMakes(step.using) ?? []).includes(step.generate)) {
         const makers = actsMaking(world, step.generate);
-        out.push({ code: "workflow-generate-act-makes-other", severity: "error", path: `${at}.using`, message: `${said} makes ${kindWords(step.generate)} records with "${step.using}", and that act makes none.`, fix: makers.length > 0 ? `Name an act that makes one: ${quoted(makers)}.` : `Declare an act that creates "${step.generate}".`, ...(makers.length === 1 ? { edits: [withStep(check, (one) => ({ ...one, using: makers[0] }))] } : {}) });
+        out.push({ code: "workflow-generate-act-makes-other", severity: "error", path: `${at}.using`, message: `${said} makes ${world.noun(step.generate)} records with "${step.using}", and that act makes none.`, fix: makers.length > 0 ? `Name an act that makes one: ${quoted(makers)}.` : `Declare an act that creates "${step.generate}".`, ...(makers.length === 1 ? { edits: [withStep(check, (one) => ({ ...one, using: makers[0] }))] } : {}) });
       }
     } else {
       const makers = actsMaking(world, step.generate);
-      if (makers.length === 0) out.push({ code: "workflow-generate-no-act", severity: "error", path: `${at}.generate`, message: `${said} makes ${kindWords(step.generate)} records, and no act of this app makes one.`, fix: `Declare an act that creates "${step.generate}", like { "add-${step.generate}": { "creates": "${step.generate}" } }.` });
-      else if (makers.length > 1) out.push({ code: "workflow-generate-act-ambiguous", severity: "error", path: `${at}.using`, message: `${said} makes ${kindWords(step.generate)} records, and ${makers.length} acts make one (${quoted(makers)}), so it cannot tell which.`, fix: `Say which with "using".`, edits: [withStep(check, (one) => ({ ...one, using: makers[0] }))] });
+      if (makers.length === 0) out.push({ code: "workflow-generate-no-act", severity: "error", path: `${at}.generate`, message: `${said} makes ${world.noun(step.generate)} records, and no act of this app makes one.`, fix: `Declare an act that creates "${step.generate}", like { "add-${step.generate}": { "creates": "${step.generate}" } }.` });
+      else if (makers.length > 1) out.push({ code: "workflow-generate-act-ambiguous", severity: "error", path: `${at}.using`, message: `${said} makes ${world.noun(step.generate)} records, and ${makers.length} acts make one (${quoted(makers)}), so it cannot tell which.`, fix: `Say which with "using".`, edits: [withStep(check, (one) => ({ ...one, using: makers[0] }))] });
     }
     step.from.forEach((from, i) => {
       const kind = world.kinds.get(from.kind);
@@ -118,13 +117,13 @@ export const generateStep: StepKind<GenerateStep> = {
           code: "workflow-generate-dates-unknown",
           severity: "error",
           path: `${at}.from.${i}.dates`,
-          message: `${said} reads the dates of ${kindWords(from.kind)} records from "${from.dates}", and ${kindWords(from.kind)} has no field called that.`,
+          message: `${said} reads the dates of ${world.noun(from.kind)} records from "${from.dates}", and ${world.noun(from.kind)} has no field called that.`,
           fix: `Name the field that holds its date, its repeating date or its weekdays: ${quoted(dated.length > 0 ? dated : Object.keys(kind.fields))}.`,
           ...(dated.length === 1 ? { edits: [withStep(check, (one) => ({ ...one, from: (one["from"] as Record<string, unknown>[]).map((source, j) => (j === i ? { ...source, dates: dated[0] } : source)) }))] } : {}),
         });
       }
       if (from.where !== undefined) {
-        for (const problem of conditionProblems(from.where, from.kind, kind, world)) out.push({ code: "workflow-where-invalid", severity: "error", path: `${at}.from.${i}.where`, message: `${said} cannot pick its ${kindWords(from.kind)} records: ${problem}.`, fix: `Write it in the rule language over the fields of "${from.kind}" (${quoted(Object.keys(kind.fields))}) and its relations.` });
+        for (const problem of conditionProblems(from.where, from.kind, kind, world)) out.push({ code: "workflow-where-invalid", severity: "error", path: `${at}.from.${i}.where`, message: `${said} cannot pick its ${world.noun(from.kind)} records: ${problem}.`, fix: `Write it in the rule language over the fields of "${from.kind}" (${quoted(Object.keys(kind.fields))}) and its relations.` });
       }
     });
     if (typeof step.window === "string") {
@@ -136,18 +135,18 @@ export const generateStep: StepKind<GenerateStep> = {
     if (made) {
       for (const [field, value] of Object.entries(step.set ?? {})) {
         if (!made.fields[field] && !made.edges.has(field)) {
-          out.push({ code: "workflow-generate-set-unknown", severity: "error", path: `${at}.set.${field}`, message: `${said} sets "${field}" on ${kindWords(step.generate)} records, and ${kindWords(step.generate)} has no field called that.`, fix: `Set one of its fields: ${quoted(Object.keys(made.fields))}.` });
+          out.push({ code: "workflow-generate-set-unknown", severity: "error", path: `${at}.set.${field}`, message: `${said} sets "${field}" on ${world.noun(step.generate)} records, and ${world.noun(step.generate)} has no field called that.`, fix: `Set one of its fields: ${quoted(Object.keys(made.fields))}.` });
         }
         if (typeof value === "string" && value.startsWith("$") && !(GENERATE_REFS as readonly string[]).includes(value)) {
           out.push({ code: "workflow-generate-value-invalid", severity: "error", path: `${at}.set.${field}`, message: `${said} sets "${field}" to "${value}", which names nothing a generate step gives.`, fix: `Give ${quoted(GENERATE_REFS)}, { "expr": … } read on the source, or a value as it is.` });
         } else if (value !== null && typeof value === "object" && !Array.isArray(value) && "expr" in value) {
-          for (const from of step.from) for (const problem of valueProblems(String(value.expr), from.kind, world)) out.push({ code: "workflow-generate-value-invalid", severity: "error", path: `${at}.set.${field}`, message: `${said} cannot read "${field}" on ${kindWords(from.kind)} records: ${problem}.`, fix: `Read the fields of "${from.kind}", "date" (the day it falls on) or "source" (its record).` });
+          for (const from of step.from) for (const problem of valueProblems(String(value.expr), from.kind, world)) out.push({ code: "workflow-generate-value-invalid", severity: "error", path: `${at}.set.${field}`, message: `${said} cannot read "${field}" on ${world.noun(from.kind)} records: ${problem}.`, fix: `Read the fields of "${from.kind}", "date" (the day it falls on) or "source" (its record).` });
         }
       }
     }
     if (step.link !== undefined && made) {
       const holders = [step.generate, ...step.from.map((from) => from.kind)].filter((kind) => world.kinds.get(kind)?.edges.has(step.link!));
-      if (holders.length === 0) out.push({ code: "workflow-generate-link-unknown", severity: "error", path: `${at}.link`, message: `${said} links what it makes to its source through "${step.link}", and neither ${kindWords(step.generate)} nor ${step.from.map((from) => kindWords(from.kind)).join(" nor ")} declares a relation called that.`, fix: `Name a relation of "${step.generate}" to its sources (${quoted(made.edges)}), or of a source to "${step.generate}".` });
+      if (holders.length === 0) out.push({ code: "workflow-generate-link-unknown", severity: "error", path: `${at}.link`, message: `${said} links what it makes to its source through "${step.link}", and neither ${world.noun(step.generate)} nor ${step.from.map((from) => world.noun(from.kind)).join(" nor ")} declares a relation called that.`, fix: `Name a relation of "${step.generate}" to its sources (${quoted(made.edges)}), or of a source to "${step.generate}".` });
     }
     const key = step.key ?? DEFAULT_GENERATE_KEY;
     const fields = keyFields(key);
@@ -155,14 +154,14 @@ export const generateStep: StepKind<GenerateStep> = {
     for (const field of fields) {
       if (["source", "date", "kind", "id"].includes(field)) continue;
       const lacking = step.from.filter((from) => { const kind = world.kinds.get(from.kind); return kind && !kind.fields[field] && !kind.computed.includes(field) && field !== "label"; });
-      if (lacking.length > 0) out.push({ code: "workflow-key-field-unknown", severity: "error", path: `${at}.key`, message: `${said}'s key reads "{${field}}", and ${lacking.map((from) => kindWords(from.kind)).join(" and ")} has no field called that.`, fix: `Read "{source}", "{date}" or a field every source kind has.` });
+      if (lacking.length > 0) out.push({ code: "workflow-key-field-unknown", severity: "error", path: `${at}.key`, message: `${said}'s key reads "{${field}}", and ${lacking.map((from) => world.noun(from.kind)).join(" and ")} has no field called that.`, fix: `Read "{source}", "{date}" or a field every source kind has.` });
     }
     return out;
   },
-  words(step) {
+  words(step, noun: KindNoun) {
     const window = typeof step.window === "string" ? step.window : `from ${step.window.from} to ${step.window.to}`;
-    const sources = step.from.map((from, i) => `${i === 0 ? withA(kindWords(from.kind)) : kindWords(from.kind)}${from.where ? ` where ${from.where}` : ""}`).join(" or ");
-    return `Make ${withA(kindWords(step.generate))} for each day ${window} ${sources} falls on`;
+    const sources = step.from.map((from, i) => `${i === 0 ? withArticle(noun(from.kind)) : noun(from.kind)}${from.where ? ` where ${from.where}` : ""}`).join(" or ");
+    return `Make ${withArticle(noun(step.generate))} for each day ${window} ${sources} falls on`;
   },
   touches(step, world: WorkflowWorld) {
     const sources = step.from.map((from) => from.kind);

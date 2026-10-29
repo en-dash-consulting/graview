@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
 import type { GraviewDocument } from "../../src/document/index.js";
 import { Store, type AnySchema, type GraviewApp } from "../../src/index.js";
-import { datesIn, generateStep, generateWants, keyedId, windowDays, workflowWords, type GenerateStep } from "../../src/workflows.js";
+import { datesIn, declaredWorkflows, generateStep, generateWants, keyedId, kindNoun, windowDays, workflowWords, type GenerateStep } from "../../src/workflows.js";
 
 /**
  * A GENERATE STEP WANTS EACH DAY OF ITS WINDOW ONCE (Roadmap
@@ -86,8 +86,8 @@ describe("what Homeflow's Sunday run wants", () => {
 
   it("is said in one line beside the workflow's words", () => {
     const { app, steps } = homeflow();
-    expect(generateStep.words(steps[0]!)).toBe("Make an event for each day next week a routine where active falls on");
-    expect(workflowWords({ name: "next-weeks-events", ...app.workflows!["next-weeks-events"]! } as never)).toContain("next week's events");
+    expect(generateStep.words(steps[0]!, kindNoun)).toBe("Make an event for each day next week a routine where active falls on");
+    expect(workflowWords({ name: "next-weeks-events", ...declaredWorkflows(app)!["next-weeks-events"]! } as never)).toContain("next week's events");
   });
 });
 

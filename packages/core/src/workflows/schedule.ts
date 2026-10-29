@@ -1,4 +1,3 @@
-import { instantIn, wallIn } from "../days.js";
 
 /*
  * WHEN A WORKFLOW RUNS ON A CLOCK (Roadmap f-jobs-declared): words a person
@@ -128,52 +127,6 @@ export function scheduleOf(trigger: { readonly every?: string; readonly cron?: s
   return undefined;
 }
 
-const nextDay = (day: string): string => new Date(Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10) + 1)).toISOString().slice(0, 10);
-const weekdayOf = (day: string): number => new Date(`${day}T00:00:00Z`).getUTCDay();
-
-function dayRuns(schedule: Schedule, day: string): boolean {
-  if (!schedule.months.has(+day.slice(5, 7))) return false;
-  const onDay = schedule.days.has(+day.slice(8, 10));
-  const onWeekday = schedule.weekdays.has(weekdayOf(day));
-  // Cron's rule: narrowed both ways, either runs it.
-  return schedule.daysSaid && schedule.weekdaysSaid ? onDay || onWeekday : onDay && onWeekday;
-}
-
-/** The instant a wall time on a day runs: a time the clock skips that day runs the moment the clock jumps past it. */
-function runsAt(day: string, minutes: number, zone: string | undefined): number {
-  const instant = instantIn(day, minutes, zone);
-  const there = wallIn(instant, zone);
-  if (there.day === day && there.minutes === minutes) return instant;
-  // Skipped: the first instant on the wall at or after it.
-  for (let later = minutes + 1; later < minutes + 180 && later < 24 * 60; later++) {
-    const at = instantIn(day, later, zone);
-    const wall = wallIn(at, zone);
-    if (wall.day === day && wall.minutes === later) return at;
-  }
-  return instant;
-}
-
-/**
- * WHEN A SCHEDULE NEXT RUNS, after a moment: on the wall clock of `zone`
- * (the runtime's when unsaid), DST-correct. Undefined when it never does
- * in the next five years ("month 31" in a schedule that only says February).
- */
-export function nextOf(schedule: Schedule, after: Date | number, zone?: string): Date | undefined {
-  const from = typeof after === "number" ? after : after.getTime();
-  const hours = [...schedule.hours].sort((a, b) => a - b);
-  const minutes = [...schedule.minutes].sort((a, b) => a - b);
-  let day = wallIn(from, zone).day;
-  for (let i = 0; i < 366 * 5; i++, day = nextDay(day)) {
-    if (!dayRuns(schedule, day)) continue;
-    for (const hour of hours)
-      for (const minute of minutes) {
-        const at = runsAt(day, hour * 60 + minute, zone);
-        if (at > from) return new Date(at);
-      }
-  }
-  return undefined;
-}
-
 const twelve = (minutes: number): string => {
   const hour = Math.floor(minutes / 60);
   const minute = minutes % 60;
@@ -201,22 +154,4 @@ export function scheduleWords(trigger: { readonly every?: string; readonly cron?
   if (!schedule.daysSaid) return `Every ${[...schedule.weekdays].sort().map((d) => capital(WEEKDAYS[d]!)).join(" and ")} ${time}`;
   if (!schedule.weekdaysSaid && schedule.days.size === 1) return `On the ${ordinal([...schedule.days][0]!)} of each month ${time}`;
   return `On the schedule “${raw}”`;
-}
-
-/**
- * WHEN A WORKFLOW NEXT RUNS ON ITS CLOCK, after a moment: the earliest of
- * its `every` and `cron` triggers, on the wall clock of `zone` (the brand's
- * `timeZone`). Undefined for one that is paused, has no clock, or whose
- * schedules do not read.
- */
-export function nextRunAt(workflow: { readonly when: readonly object[]; readonly status?: string }, after: Date | number, zone?: string): Date | undefined {
-  if (workflow.status === "paused") return undefined;
-  let soonest: Date | undefined;
-  for (const trigger of workflow.when) {
-    const schedule = scheduleOf(trigger as { every?: string; cron?: string });
-    if (schedule === undefined || typeof schedule === "string") continue;
-    const next = nextOf(schedule, after, zone);
-    if (next && (!soonest || next < soonest)) soonest = next;
-  }
-  return soonest;
 }

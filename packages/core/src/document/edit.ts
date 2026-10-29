@@ -18,9 +18,7 @@ const refusedFormat = (format: string, type: string): string => {
 import { farEnd } from "./far-end.js";
 import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
 import { JobSpec } from "./purpose-spec.js";
-import { workflowFindingsOf } from "../workflows/findings.js";
-import { resolveWorkflow } from "../workflows/resolve.js";
-import { workflowWorldOfDocument } from "../workflows/world.js";
+import { WORKFLOW_JUDGING } from "../workflows/judging.js";
 import { aliasWord, documentAliasFindings } from "../alias-findings.js";
 import { humanizeField, withArticle } from "../schema/define-node.js";
 import { ConnectionSpec } from "./connection-spec.js";
@@ -1281,15 +1279,17 @@ class Editor {
     const workflows: Doc = { ...(this.doc.workflows ?? {}) };
     if (how === "add" && Object.hasOwn(workflows, name)) return this.fail(i, "name", `there is already a workflow "${name}"`, `Change it with {"op": "set-workflow", "name": "${name}", …}, or name this one otherwise.`);
     if (how === "set" && !Object.hasOwn(workflows, name) && !this.workflowNamed(i, name)) return;
-    const found = workflowFindingsOf(name, workflow, workflowWorldOfDocument(this.doc));
-    const wrong = found.filter((finding) => finding.severity === "error");
-    for (const finding of wrong) this.failAs(finding.code, i, `workflow${finding.path ? `.${finding.path}` : ""}`, finding.message, finding.fix);
-    if (wrong.length > 0) return;
+    const shaped = typeof workflow.title === "string" && Array.isArray(workflow.when) && workflow.when.length > 0 && Array.isArray(workflow.steps) && workflow.steps.length > 0;
+    if (!shaped) return this.fail(i, "workflow", "a workflow is { title, when: [...], steps: [...] }, each list with at least one", `{"op": "${how}-workflow", "name": "${name}", "workflow": {"title": "…", "when": [{"every": "day 03:00"}], "steps": [{"act": "…"}]}}`);
+    // Judged as `graview check` judges it, where the checker is loaded; else kept as shaped, and the check says the rest.
+    const judged = WORKFLOW_JUDGING.judge?.(name, workflow, { ...this.doc, workflows });
+    for (const finding of judged?.errors ?? []) this.failAs(finding.code, i, `workflow${finding.path ? `.${finding.path}` : ""}`, finding.message, finding.fix);
+    if (judged && judged.errors.length > 0) return;
     workflows[name] = workflow;
     this.doc.workflows = workflows;
-    const resolved = resolveWorkflow(name, workflow as never, workflowWorldOfDocument(this.doc));
-    this.said.push(`${how === "add" ? "A new workflow" : "The workflow"} “${resolved.title}”${how === "add" ? "" : " is now"}: ${resolved.words.slice(0, resolved.words.lastIndexOf(":"))}, ${resolved.steps.length === 1 ? "one step" : `${resolved.steps.length} steps`}${resolved.status === "paused" ? ", paused" : ""}.`);
-    for (const finding of found) if (finding.severity === "warning") this.said.push(finding.message);
+    const steps = (workflow.steps as unknown[]).length;
+    this.said.push(`${how === "add" ? "A new workflow" : "The workflow"} “${workflow.title}”${how === "add" ? "" : " is now"}: ${judged?.said ?? `${steps === 1 ? "one step" : `${steps} steps`}${workflow.status === "paused" ? ", paused" : ""}`}.`);
+    for (const warning of judged?.warnings ?? []) this.said.push(warning);
   }
 
   private removeWorkflow(i: number, name: string) {

@@ -1,4 +1,4 @@
-import { labelOf, type AnyGraphNode, type MutationCall, type Operation } from "@graview/core";
+import { counted, labelOf, type AnyGraphNode, type MutationCall, type Operation } from "@graview/core";
 import { generateWants, type GenerateStep, type WantedRecord } from "@graview/core/workflows";
 import type { StepContext, StepRunner } from "./types.js";
 
@@ -53,7 +53,7 @@ export const runGenerateStep: StepRunner<GenerateStep> = {
     const makers = store.allMutations().filter((mutation) => (mutation.creates as readonly string[] | undefined)?.includes(step.generate));
     const maker = step.using ? makers.find((mutation) => mutation.name === step.using) : makers.length === 1 ? makers[0] : undefined;
     if (!maker) {
-      context.skipped(step.using ? `"${step.using}" does not make ${step.generate} records.` : makers.length === 0 ? `No act makes ${step.generate} records.` : `Several acts make ${step.generate} records; the step says none of them.`);
+      context.skipped(step.using ? `"${step.using}" does not make one of “${step.generate}”.` : makers.length === 0 ? `No act makes one of “${step.generate}”.` : `Several acts make one of “${step.generate}”; the step says none of them.`);
       return;
     }
     const madeDefinition = schema.tryDefinition(step.generate) as { readonly edges?: Readonly<Record<string, unknown>> } | undefined;
@@ -87,7 +87,7 @@ export const runGenerateStep: StepRunner<GenerateStep> = {
         const link = linkOf(wanted);
         if (step.link !== undefined && !link.call && !unlinkedSaid) {
           unlinkedSaid = true;
-          context.holdBack(`No act links ${step.generate} records through "${step.link}", so what it makes is not linked to its source.`);
+          context.holdBack(`No act links through "${step.link}", so what it makes is not linked to its source.`);
         }
         context.change({ calls: [{ name: maker.name, args: { ...wanted.values, id: wanted.id } }, ...(link.call ? [link.call] : [])], basis, confidence: 1, key: wanted.key });
         continue;
@@ -111,7 +111,7 @@ export const runGenerateStep: StepRunner<GenerateStep> = {
       if (calls.length > 0) context.change({ calls, basis, confidence: 1, key: wanted.key });
     }
     const days = wants.from === wants.to ? wants.from : `${wants.from} to ${wants.to}`;
-    context.note(`${wants.wanted.length === 0 ? "Nothing" : `${wants.wanted.length} ${step.generate} record${wants.wanted.length === 1 ? "" : "s"}`} wanted for ${days}.`);
+    context.note(`${wants.wanted.length === 0 ? "Nothing" : counted(schema, step.generate, wants.wanted.length)} wanted for ${days}.`);
     if (keptChanges > 0) context.note(`Kept ${keptChanges} change${keptChanges === 1 ? "" : "s"} a person made to what it made before.`);
     if (keptAside > 0) context.note(`Left ${keptAside} record${keptAside === 1 ? "" : "s"} a person set aside where ${keptAside === 1 ? "it is" : "they are"}.`);
     if (notMadeAgain > 0) context.note(`Did not make ${notMadeAgain} record${notMadeAgain === 1 ? "" : "s"} again that ${notMadeAgain === 1 ? "was" : "were"} taken away.`);
