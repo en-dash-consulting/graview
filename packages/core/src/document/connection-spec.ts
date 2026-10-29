@@ -54,7 +54,10 @@ function build() {
      * is invited while their `invite` toggle is on (`inviteMe`; `false`
      * says the app has no toggle and every address is invited). Google's
      * invitation emails go out only with `notify: true`; the default is
-     * quiet.
+     * quiet. `max` is the most guests one event invites (Roadmap
+     * f-sync-guest-changes-in-history): an event that would invite somebody
+     * past it is held unsent, and said; `graview check` refuses one that
+     * is not a whole number above 0.
      */
     fields: z.strictObject({
       summary: fieldName,
@@ -65,8 +68,8 @@ function build() {
       description: z.optional(fieldName),
       guests: z.optional(
         z.union(
-          [fieldName, z.strictObject({ via: edgeName, emails: z.optional(fieldName), invite: z.optional(z.union([fieldName, z.literal(false)])), notify: z.optional(z.boolean()) })],
-          'guests names a field holding the addresses, or { "via": "<relation>", "emails"?, "invite"?, "notify"? } to invite the people a relation reaches',
+          [fieldName, z.strictObject({ via: edgeName, emails: z.optional(fieldName), invite: z.optional(z.union([fieldName, z.literal(false)])), notify: z.optional(z.boolean()), max: z.optional(z.number()) })],
+          'guests names a field holding the addresses, or { "via": "<relation>", "emails"?, "invite"?, "notify"?, "max"? } to invite the people a relation reaches',
         ),
       ),
     }),
@@ -92,13 +95,35 @@ function build() {
    * A key of `properties` may name one of the kind's RELATIONS (edges) in
    * place of a field, held by a Notion relation property: its links are the
    * pages the property reaches, each a record another Notion connection of
-   * the app keeps (`"reindeer": "Reindeer Fleet"`, or with
-   * `"type": "relation"`). Matched by name, a relation whose name a
-   * relation property has is kept too.
+   * the app keeps, or another source of this one (`"reindeer": "Reindeer
+   * Fleet"`, or with `"type": "relation"`). Matched by name, a relation
+   * whose name a relation property has is kept too.
+   *
+   * SEVERAL DATA SOURCES OF ONE DATABASE, EACH ITS OWN KIND (`sources`, in
+   * place of `source`, `kind` and `properties`): each names its data source
+   * by name or id, the kind its pages are, and its own `properties`. A
+   * relation between two of them is a Notion relation property, as it is
+   * between two connections.
+   *
+   * THE PROPERTIES IT NEEDS ARE MADE: a field mapped to a property the data
+   * source lacks is given one, of the type the field is held in, on the
+   * first pass and whenever one goes missing — never renamed, never
+   * deleted, and one there of another type is said and left. `create:
+   * false` turns that off; a connection that only reads makes none.
    */
   const notionTypes = [...Object.keys(NOTION_FITS), "relation"] as unknown as [string, ...string[]];
   const keptName = z.string().check(z.regex(EDGE_NAME, 'a key of properties is one of the kind\'s fields or relations, like "dueDate" or "reindeer"'));
   const notionType = z.enum(notionTypes, `a property's type is one a connection keeps in step: ${notionTypes.join(", ")}`);
+  /* This kind's field or relation → the data source's property, by its name in Notion, or `{ name, type }` with its type. */
+  const properties = z.optional(z.record(keptName, z.union([str(1, 100), z.strictObject({ name: str(1, 100), type: notionType })])));
+  /* One data source of the database and the kind its pages are. */
+  const NotionSource = z.strictObject({
+    /* The data source, by its name in Notion or its id. */
+    source: str(1, 200),
+    kind: kindName,
+    description: z.optional(sentence),
+    properties,
+  });
   const Notion = z.strictObject({
     system: z.literal("notion"),
     description: z.optional(sentence),
@@ -107,9 +132,13 @@ function build() {
     /* The data source, by its name in Notion or its id, when the database holds several. */
     source: z.optional(str(1, 200)),
     auth,
-    kind: kindName,
-    /* This kind's field or relation → the database's property, by its name in Notion, or `{ name, type }` with its type. */
-    properties: z.optional(z.record(keptName, z.union([str(1, 100), z.strictObject({ name: str(1, 100), type: notionType })]))),
+    /* The kind its pages are; absent when `sources` names a kind for each. */
+    kind: z.optional(kindName),
+    properties,
+    /* Several data sources of the database, each kept in step with its own kind (in place of source, kind and properties). */
+    sources: z.optional(z.array(NotionSource).check(z.minLength(1), z.maxLength(20))),
+    /* Whether a property a mapped field lacks is made in Notion (true unless said). */
+    create: z.optional(z.boolean()),
     direction,
     conflicts,
     every,
@@ -129,3 +158,32 @@ export const ConnectionSpec = z.lazy(() => (built ??= build()));
 export type ConnectionSpec = z.infer<typeof ConnectionSpec>;
 export type GoogleCalendarConnectionSpec = Extract<ConnectionSpec, { system: "google-calendar" }>;
 export type NotionConnectionSpec = Extract<ConnectionSpec, { system: "notion" }>;
+
+/** One data source a Notion connection keeps in step with one kind, and the resource its pages are to the engine. */
+export interface NotionSourceSpec {
+  /** The data source by its name or id; absent when the database holds one. */
+  readonly source?: string;
+  readonly kind: string;
+  readonly properties?: NotionConnectionSpec["properties"];
+  readonly description?: string;
+  /** What the engine calls its pages, kept in its links: `pages` for a connection of one source, `pages:<kind>` for each of `sources`. */
+  readonly resource: string;
+}
+
+/**
+ * A NOTION CONNECTION'S DATA SOURCES, each with its kind: its `sources`, or
+ * the one its top names (`source`, `kind`, `properties`). Read loosely, so
+ * the checker can ask it of a connection it is still judging.
+ */
+export function notionSourcesOf(connection: Pick<NotionConnectionSpec, "source" | "kind" | "properties" | "sources">): readonly NotionSourceSpec[] {
+  if (connection.sources && connection.sources.length > 0) {
+    return connection.sources.map((one) => ({ source: one.source, kind: one.kind, ...(one.properties ? { properties: one.properties } : {}), ...(one.description ? { description: one.description } : {}), resource: `pages:${one.kind}` }));
+  }
+  if (connection.kind === undefined) return [];
+  return [{ ...(connection.source ? { source: connection.source } : {}), kind: connection.kind, ...(connection.properties ? { properties: connection.properties } : {}), resource: "pages" }];
+}
+
+/** The kinds a connection keeps: a calendar's one, or each of a Notion connection's sources'. */
+export function connectionKinds(connection: ConnectionSpec): readonly string[] {
+  return connection.system === "notion" ? notionSourcesOf(connection).map((one) => one.kind) : [connection.kind];
+}

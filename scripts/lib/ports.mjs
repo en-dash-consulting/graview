@@ -67,6 +67,8 @@ export const OWN = {
   "chrome-host": 5288,
   /** The host's page `verify-declared` mounts a document's declared lenses and arrangement into (FR-79, FR-80). */
   "declared-host": 5284,
+  /** The host's page `verify-menu` mounts the tasks' status board and a view that marks its own columns into, to right-click a column. */
+  "menu-host": 5212,
   /** The host's page `verify-address` serves an app at under a base path, and an article beside it (FR-106). */
   "address-host": 5278,
   /** The host's page `verify-brand` mounts the En Dash document into, to see the whole brand drawn on both faces (FR-124, FR-125). */
@@ -85,6 +87,8 @@ export const OWN = {
   "drawn-host": 5259,
   /** The host's page `verify-screen-reader` mounts a roadmap into, in two tabs sat down as two people, to hear what a screen reader is told. */
   "screen-reader-host": 5256,
+  /** The host's page `verify-blank-facts` mounts a staffing firm's placements into, sat down as staffing or as a reader. */
+  "blank-facts-host": 5233,
   /** The host's page `verify-field-types` mounts a choir's rehearsals into: a phone to call, a place to map, a duration said and summed. */
   "field-types-host": 5257,
   /** The host's page `verify-app-links` mounts purchase scenarios that link other apps into, with a resolver of its own (FR-171). */

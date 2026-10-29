@@ -16,6 +16,49 @@ export interface SuggestionVote {
   /** The id of the suggestion's op. */
   readonly suggestion: string;
   readonly vote: Vote;
+  /**
+   * AN ADVISORY VOTE (Roadmap f-votes-shared-seat): one cast from a shared
+   * or signed-out seat where the host let such votes be kept
+   * (`StoreOptions.votes`). Counted apart, in `tally.advisory`, and never
+   * toward `autoAcceptAt`.
+   */
+  readonly advisory?: true;
+  /** Whose advisory vote it is: the host's key for the visitor behind the seat (`Principal.visitorKey`), not the shared seat's id. */
+  readonly voter?: string;
+}
+
+/**
+ * WHAT A HOST SAYS OF VOTES ON SUGGESTIONS (Roadmap f-votes-shared-seat),
+ * on the store as the policy is. `advisory: "visitors"` keeps a vote from a
+ * shared or signed-out seat (`Principal.shared`, or a `visitor`) as
+ * advisory — shown in the tally apart, never counted toward `autoAcceptAt`
+ * — as long as the seat says which visitor it is (`visitorKey`). Unsaid,
+ * such a vote is refused.
+ */
+export interface VotesOptions {
+  readonly advisory?: "visitors";
+}
+
+/** What a vote from a shared or signed-out seat is refused with, where the host keeps no advisory votes. */
+export const SIGN_IN_TO_VOTE = "Sign in to vote on this suggestion.";
+
+/**
+ * WHETHER THIS SEAT IS NOBODY IN PARTICULAR (Roadmap f-votes-shared-seat):
+ * one the host serves every signed-out visitor as (`shared`), or a
+ * `visitor` — or an agent acting for one of those.
+ */
+export function signedOutSeat(principal: Principal | undefined): boolean {
+  if (!principal) return false;
+  if (principal.shared === true || principal.kind === "visitor") return true;
+  return signedOutSeat(principal.onBehalfOf);
+}
+
+/** The key an advisory vote from this seat is kept under: the host's for its visitor, else a form visitor's own id; undefined when it names nobody. */
+export function advisoryVoterOf(principal: Principal | undefined): string | undefined {
+  if (!principal) return undefined;
+  if (principal.shared !== true && principal.kind !== "visitor") return advisoryVoterOf(principal.onBehalfOf);
+  const key = principal.visitorKey ?? (principal.shared === true ? undefined : principal.id);
+  return key ? key : undefined;
 }
 
 /**

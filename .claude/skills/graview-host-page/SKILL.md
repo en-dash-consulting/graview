@@ -78,8 +78,6 @@ decides the frame; the app still decides what is in it.**
 
 ## Knowing when a place has drawn
 
-A face on the page is not yet a place a person can read: its parts, the
-fonts, a worker view's drawing and its pictures may still be on their way.
 Once the place the reader is on has drawn and settled — every part drawn
 on it arrived or said it did not, the fonts and images loaded, each worker
 view drawn or stopped (what stands in its place drawn), and nothing moving
@@ -98,6 +96,9 @@ Picture a place by waiting for the attribute, never a timer:
 ```ts
 await page.waitForSelector(`[data-graview-drawn="/places/the-week"]`);
 ```
+
+An inlined opening screen says the page's own words over the brand's:
+`splashHtml(brand, { title, kicker, fade? })`.
 
 ## A view proposed and not kept
 

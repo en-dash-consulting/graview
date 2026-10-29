@@ -12,7 +12,7 @@ import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 import { capitalize, lowerFirst } from "../capital.js";
 import { kindListWords, sortTypeOfDocumentField } from "../kind-list.js";
 import type { KindList } from "../views/types.js";
-import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, archivesSentence, tidyingSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, appTidyingSentence, archivesSentence, tidyingSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
 
 /*
  * WHAT A CHANGE TO THE APP MEANS, IN WORDS — and whether data would move.
@@ -48,6 +48,14 @@ export const localeSentence = (locale: string | undefined): string =>
 
 /** What a change of the app's time zone says (Roadmap f-app-time-zone). */
 export const timeZoneSentence = (timeZone: string | undefined): string => (timeZone ? `Times are said in ${timeZone}.` : "Times are said on each reader's own clock.");
+
+/** What a change to what a kind follows says (Roadmap f-keep-linked). */
+export function derivesSentence(kind: string, derives: { readonly from: string; readonly via: string; readonly set: Readonly<Record<string, unknown>> } | undefined): string {
+  const words = (k: string) => k.replace(/-/g, " ");
+  if (!derives) return `Each ${words(kind)} no longer follows another record; its records keep the values they hold.`;
+  const fields = Object.keys(derives.set);
+  return `Each ${words(kind)} follows its ${words(derives.from)} through "${derives.via}": ${fields.length > 1 ? `${fields.slice(0, -1).join(", ")} and ${fields.at(-1)}` : fields[0]} kept in step.`;
+}
 
 export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument): DocumentDiff {
   // A key renamed within the format is not a change (FR-134): both are read as this build spells them.
@@ -169,6 +177,8 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     if (!same(wasRoles, now.fieldRoles ?? {})) sentences.push(`Which of ${withArticle(kind)}'s fields is its time, its author or a lens's role changes.`);
     if (!was.people !== !now.people) sentences.push(peopleSentence(after.kinds, continues.get(kind) ?? kind, now.people === true));
     if ((was.archives === false) !== (now.archives === false)) sentences.push(archivesSentence(after.kinds, continues.get(kind) ?? kind, now.archives !== false));
+    // What it follows (Roadmap f-keep-linked).
+    if (!same(was.derives, now.derives)) sentences.push(derivesSentence(continues.get(kind) ?? kind, now.derives));
     // What the app's own actor may do on its own, to the kind and to each relation it keeps (`@graview/core/tidying`).
     if ((was.tidying ?? "allowed") !== (now.tidying ?? "allowed")) sentences.push(tidyingSentence(after.kinds, continues.get(kind) ?? kind, undefined, now.tidying ?? "allowed"));
     for (const [relation, edge] of Object.entries(now.edges ?? {})) {
@@ -185,6 +195,9 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     for (const n of keys(b)) if (n in a && !same((a as Record<string, unknown>)[n], (b as Record<string, unknown>)[n])) sentences.push(`The ${noun} "${(b as Record<string, { title?: string }>)[n]!.title ?? n}" changes.`);
   }
   sentences.push(...policySentences(before, after));
+  // What the app says of suggestions as a whole: the votes at which its own actor makes one.
+  const autoAccept = (doc: GraviewDocument) => (doc.tidying as { autoAcceptAt?: number } | undefined)?.autoAcceptAt;
+  if (autoAccept(before) !== autoAccept(after)) sentences.push(appTidyingSentence(autoAccept(after)));
   if (!same(before.brand?.accent, after.brand?.accent) || !same(before.brand?.ground, after.brand?.ground)) sentences.push("The app's colors change.");
   sentences.push(...brandSentences(before.brand ?? {}, after.brand ?? {}, after.name));
   // The app's money (FR-100) and its locale (FR-178), said apart from its colors.

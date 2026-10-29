@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 723,
+  "gzipped": 240,
+  "note": "Raised when a shared or signed-out seat came to be refused a vote on a suggestion (Roadmap f-votes-shared-seat): the store asks whether a vote's seat is anybody in particular — `shared`, a visitor, or an agent acting for one — and keeps a host's advisory vote under its visitor, counted apart. 723 / 240 more. Measured at 340_458 / 124_599 against 339_735 / 124_359 on a fresh build of main."
+}

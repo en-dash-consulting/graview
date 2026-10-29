@@ -29,7 +29,9 @@
  * person declines it — which the actor is refused next time. With
  * `reader=1` the page is a seat that may see the suggestion and may not
  * make it, whose Accept is a vote (f-suggestion-votes); with `vote=1` a
- * reader's vote is already cast when the keeper opens the tray.
+ * reader's vote is already cast when the keeper opens the tray; with
+ * `signedOut=1` the reader is the host's one shared signed-out seat, with
+ * the host's way in (f-votes-shared-seat).
  *
  *   node scripts/verify-chrome.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
@@ -84,6 +86,17 @@ async function buildHost() {
            * everybody dropped from the policy, and a seat with no role — a visitor by link, as a host would seat one.
            */
           ...(asked.get("reader") ? { app: { ...todoApp, policy: { ...todoApp.policy, grants: todoApp.policy.grants.filter((grant) => grant.roles !== "*") } }, principal: { kind: "human", id: "user-vis", name: "Vis", roles: [] } } : {}),
+          /*
+           * The host's one shared signed-out seat, when the page asks (f-votes-shared-seat): every stranger served as one "anonymous",
+           * marked shared, and the host's way in — what the tray offers in place of a vote the store would refuse.
+           */
+          ...(asked.get("signedOut")
+            ? {
+                app: { ...todoApp, policy: { ...todoApp.policy, grants: todoApp.policy.grants.filter((grant) => grant.roles !== "*") } },
+                principal: { kind: "human", id: "anonymous", roles: [], shared: true },
+                signIn: { label: "Sign in to make changes", run: () => { window.__signedIn = (window.__signedIn ?? 0) + 1; } },
+              }
+            : {}),
           label: "Things",
           heading: false,
           height: "100%",
@@ -834,6 +847,43 @@ try {
       runs[face] = { run, ok };
     }
     report.checks.aRunsSuggestionListsItsChangesAndTakesOneAtATime = { ...runs, ok: Object.values(runs).every((one) => one.ok) };
+  }
+  /*
+   * ---- A visitor is offered Sign in rather than a vote (f-votes-shared-seat), on both faces: the host's one shared signed-out seat
+   * opens the tray and finds the host's "Sign in to vote" — a native button — where Accept and Decline were, before pressing
+   * anything; pressing it asks the host, nothing is kept in the log, and the keyboard never lands on <body>.
+   */
+  {
+    const offered = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&tidy=1&signedOut=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      const visitor = await page.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const store = window.__handle.store;
+        const signIn = document.querySelector('[data-testid="suggestion-sign-in"]');
+        const seen = { tag: signIn?.tagName ?? null, said: signIn?.textContent ?? null, accept: document.querySelector('[data-testid="suggestion-accept"]') !== null, decline: document.querySelector('[data-testid="suggestion-decline"]') !== null };
+        signIn?.focus();
+        signIn?.click();
+        await new Promise((done) => setTimeout(done, 50));
+        return {
+          ...seen,
+          asked: window.__signedIn ?? 0,
+          votesKept: store.log.all().filter((op) => op.vote !== undefined).length,
+          keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
+        };
+      });
+      await page.close();
+      const ok = visitor !== null && visitor.tag === "BUTTON" && visitor.said === "Sign in to vote" && !visitor.accept && !visitor.decline && visitor.asked === 1 && visitor.votesKept === 0 && visitor.keyboard !== "BODY";
+      offered[face] = { visitor, ok };
+    }
+    report.checks.aVisitorIsOfferedSignInRatherThanAVote = { ...offered, ok: Object.values(offered).every((one) => one.ok) };
   }
   /*
    * ---- "Not now" is one person's, and the tray says what tidying did while they were away, on both faces: the host hands what

@@ -5,7 +5,8 @@ import { notionKey, notionProperty } from "./notion.js";
  * A SCRIPTED NOTION: the endpoints a Notion connection reaches, in memory.
  *
  * Retrieve, make and archive a database, and the data sources it holds
- * (Notion's 2025-09-03 API: a database of one source, or of several); query
+ * (Notion's 2025-09-03 API: a database of one source, or of several), and
+ * add properties to a source (PATCH /data_sources/{id}); query
  * a source (a `last_edited_time` filter, oldest first, `has_more` and
  * `next_cursor`); make, read and change a page, put one in the trash. It answers as Notion does where a connection
  * would notice: a secret it does not take is 401, a database not shared
@@ -94,6 +95,8 @@ export interface ScriptedNotion {
   source(databaseId: string, spec: SourceSpec): string;
   /** A database's data sources' ids, in order. */
   sources(databaseId: string): string[];
+  /** A data source's properties (a database's first), by name to type. */
+  properties(sourceId: string): Record<string, string>;
   /** Shares a database with the integration, or takes it back. */
   share(databaseId: string, shared: boolean): void;
   /** A page as Notion would answer it. */
@@ -360,6 +363,33 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     return source;
   };
 
+  /**
+   * A data source changed (PATCH /data_sources/{id}), as Notion does it: a
+   * property not there is added, of the type its settings name, and put on
+   * every page already there; one there of the same type takes its new
+   * options; one there of another type is changed as asked (Notion would).
+   * A status cannot be made, and a second title is refused.
+   */
+  const changeSource = (source: Source, body: Json): Source => {
+    const added = specOf({ properties: body["properties"] }, source.title);
+    for (const [name, type] of Object.entries(added.properties)) {
+      if (type === "status") throw new Refusal(400, "validation_error", `body.properties.${name}: a status property cannot be made through the API.`);
+      if (type === "title" && [...source.properties.values()].some((one) => one.type === "title" && one.name !== name)) throw new Refusal(400, "validation_error", "A data source has one title property.");
+      const was = source.properties.get(name);
+      const property: SourceProperty = { id: was?.id ?? `p${source.properties.size + 1}m`, name, type, options: [...(added.options?.[name] ?? was?.options ?? [])] };
+      const relation = added.relations?.[name];
+      if (relation) {
+        const other = sourceOrFirst(relation.to);
+        if (!other) throw new Refusal(400, "validation_error", `${name} is not a relation to a data source that exists.`);
+        property.relation = { source: other.id };
+      }
+      source.properties.set(name, property);
+      if (was?.type === type) continue;
+      for (const page of pages.values()) if (sourceOfPage(page) === source) (page["properties"] as Json)[name] = kept(source, name, { [type]: type in EMPTY ? EMPTY[type] : null });
+    }
+    return source;
+  };
+
   const createDatabase = (spec: SourceSpec): Container => {
     made += 1;
     const database: Container = { id: uuid(made, "d0"), title: spec.title ?? "Untitled", sources: [], shared: true, archived: false };
@@ -401,6 +431,7 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     if ((match = /^\/databases\/([^/]+)$/.exec(path)) && method === "GET") return databaseShown(visible(decodeURIComponent(match[1]!)));
     if ((match = /^\/databases\/([^/]+)\/query$/.exec(path))) throw new Refusal(400, "invalid_request_url", "Invalid request URL: a database is queried through its data source, POST /v1/data_sources/{id}/query.");
     if ((match = /^\/data_sources\/([^/]+)$/.exec(path)) && method === "GET") return sourceShown(visibleSource(decodeURIComponent(match[1]!)));
+    if ((match = /^\/data_sources\/([^/]+)$/.exec(path)) && method === "PATCH") return sourceShown(changeSource(visibleSource(decodeURIComponent(match[1]!)), body));
     if ((match = /^\/data_sources\/([^/]+)\/query$/.exec(path)) && method === "POST") {
       const database = visibleSource(decodeURIComponent(match[1]!));
       const since = ((body["filter"] as Json | undefined)?.["last_edited_time"] as Json | undefined)?.["on_or_after"] as string | undefined;
@@ -530,6 +561,11 @@ export function scriptedNotion(options: ScriptedNotionOptions = {}): ScriptedNot
     pages: (databaseId, archived = false) => {
       const source = sourceOrFirst(databaseId);
       return [...pages.values()].filter((page) => source !== undefined && sourceOfPage(page) === source && (archived || !inTrash(page))).map(shown);
+    },
+    properties(sourceId) {
+      const source = sourceOrFirst(sourceId);
+      if (!source) throw new Error(`scripted notion: no data source ${sourceId}`);
+      return Object.fromEntries([...source.properties.values()].map((property) => [property.name, property.type]));
     },
     add(databaseId, values) {
       const database = sourceOrFirst(databaseId);

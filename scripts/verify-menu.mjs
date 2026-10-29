@@ -18,13 +18,28 @@
  * Escape giving the keyboard back; the browser's own menu kept in a text
  * field and with Shift held; and axe over the menu while it is open.
  *
+ * And what the menu knows of what is under the cursor (Roadmap
+ * request:add-copy-link-under-open-in-a-new-tab, request:right-click-
+ * context-menu-options-to-be-more-relevant-to-the-item-under-my-cursor):
+ * "Copy link" right under "Open in a new tab", copying the whole address
+ * and saying so; "Inspect" at the foot, a sheet of the thing's kind, id and
+ * link; a selection copied by "Copy" rather than swallowed, the browser's
+ * own menu kept on the selected text and a finger resting on text left to
+ * the phone's selection; and a column — a status board's, and one a worker
+ * view marked `data-column` — offering a task added in it and the place
+ * narrowed to it.
+ *
  *   node scripts/verify-menu.mjs [--engine=chromium|webkit|firefox]
  */
-import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { createServer } from "node:http";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
-import { serving } from "./lib/serve.mjs";
+import { serving, vacant } from "./lib/serve.mjs";
+import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { deadline } from "./lib/deadline.mjs";
 
@@ -34,6 +49,7 @@ const ENGINE = engineName();
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
 let app;
 let browser;
+let menuHost;
 // Each claim gets three minutes; one that takes longer fails by name (lib/deadline.mjs).
 const reach = deadline({
   verdict: resolve(repoRoot, "docs/menu.json"),
@@ -41,11 +57,122 @@ const reach = deadline({
   cleanup: async () => {
     await browser?.close();
     app?.stop();
+    menuHost?.stop();
   },
 });
 app = await serving("todo", portFor("todo"), repoRoot);
 
 const MENU = '[data-testid="context-menu"]';
+
+/*
+ * THE TASKS' STATUS BOARD, AND A VIEW THAT MARKS ITS OWN COLUMNS, mounted
+ * the way Graview Cloud mounts an app: the embed on the pages, at its own
+ * address under a base, the reader its owner.
+ */
+const TASKS = resolve(repoRoot, "packages/core/tests/document/fixtures/tasks.gdd.json");
+const MENU_BASE = "/menu";
+const BY_HAND = { name: "by-hand", title: "By hand", attach: "task", cardinality: "many" };
+const BY_HAND_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<div class="by-hand">\${["todo", "doing", "done"].map((status) => graview.html\`<section data-column=\${"status:" + status} style="min-height:120px;padding:8px;border:1px solid"><h3>\${status}</h3><ul>\${props.nodes.filter((task) => task.status === status).map((task) => graview.html\`<li>\${task.label}</li>\`)}</ul></section>\`)}</div>\`));`;
+const BOARD_SEED = {
+  nodes: [
+    { id: "t1", kind: "task", label: "Write the brief", status: "todo" },
+    { id: "t2", kind: "task", label: "Book the hall", status: "doing" },
+  ],
+  edges: [],
+};
+
+async function serveMenuHost() {
+  const require = createRequire(import.meta.url);
+  const esbuild = require("esbuild");
+  const out = mkdtempSync(join(tmpdir(), "graview-menu-host-"));
+  await esbuild.build({
+    stdin: {
+      contents: `
+        import { mount } from "@graview/embed";
+        import { registerWorkerView } from "@graview/guest/host/views";
+        import { compileDocumentWithoutCheck } from "@graview/core/document";
+        import tasks from ${JSON.stringify(TASKS)};
+        const compiled = compileDocumentWithoutCheck(tasks, { today: () => "2026-09-01" });
+        if (!compiled.ok) throw new Error("the document did not compile");
+        window.__handle = mount(document.getElementById("app"), {
+          app: compiled.app,
+          seed: ${JSON.stringify(BOARD_SEED)},
+          principal: { kind: "human", id: "p1", roles: ["owner"] },
+          face: "pages",
+          views: (schema, registry) => registerWorkerView(registry, { manifest: ${JSON.stringify(BY_HAND)}, worker: { source: ${JSON.stringify(BY_HAND_SOURCE)} } }),
+          bar: true,
+          label: "The tasks",
+          heading: 1,
+          height: "100%",
+          fonts: false,
+          studio: false,
+          routing: "address",
+          basePath: "${MENU_BASE}/",
+        });
+        window.__handle.drawn().then(() => { window.__ready = true; });
+      `,
+      resolveDir: resolve(repoRoot, "packages/embed"),
+      loader: "js",
+    },
+    bundle: true,
+    splitting: true,
+    format: "esm",
+    platform: "browser",
+    outdir: out,
+    entryNames: "entry",
+    define: { "process.env.NODE_ENV": '"development"' },
+    jsx: "automatic",
+    plugins: [graviewSources(repoRoot)],
+    logLevel: "silent",
+  });
+  const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>The tasks</title><style>body{margin:0}#app{position:relative;height:100vh}</style></head><body><div id="app"></div><script type="module" src="/entry.js"></script></body></html>`;
+  const server = createServer((request, response) => {
+    const path = decodeURIComponent((request.url ?? "/").split("?")[0]);
+    const file = join(out, path.replace(/^\/+/, ""));
+    if (path.endsWith(".js") && file.startsWith(out) && existsSync(file)) {
+      response.writeHead(200, { "content-type": "text/javascript" });
+      response.end(readFileSync(file));
+      return;
+    }
+    if (path === MENU_BASE || path.startsWith(`${MENU_BASE}/`)) {
+      response.writeHead(200, { "content-type": "text/html" });
+      response.end(page);
+      return;
+    }
+    response.writeHead(404);
+    response.end();
+  });
+  await vacant(portFor("menu-host"));
+  await new Promise((ready) => server.listen(portFor("menu-host"), ready));
+  return { stop: () => (server.close(), rmSync(out, { recursive: true, force: true })) };
+}
+
+/**
+ * A FINGER RESTING at a point: Chromium's touch input, which raises the
+ * pointer events a phone does; elsewhere the same pointer events, said by
+ * the page. Says which it was.
+ */
+async function restAt(context, on, { x, y }) {
+  if (ENGINE === "chromium") {
+    const cdp = await context.newCDPSession(on);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    await on.waitForTimeout(800);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await on.waitForTimeout(300);
+    return "touch";
+  }
+  await on.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, composed: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y })), { x, y });
+  await on.waitForTimeout(800);
+  await on.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, composed: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y })), { x, y });
+  await on.waitForTimeout(300);
+  return "pointer events";
+}
+
+/** Every copy the page makes, kept where a harness can read it: the clipboard itself asks a person. */
+const KEEP_COPIES = () => {
+  window.__copied = [];
+  Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: (text) => (window.__copied.push(text), Promise.resolve()) } });
+};
 
 /** The menu's offered mutations, in document order, via each row's pin. */
 const offeredOrder = (page) =>
@@ -416,6 +543,7 @@ try {
     [390, 844, "phone"],
   ]) {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: size === "phone" });
+    await context.addInitScript(KEEP_COPIES);
     const on = await context.newPage();
     on.on("pageerror", (error) => errors.push(`${size}: ${error.message}`));
 
@@ -556,35 +684,158 @@ try {
       ok: inFind === false && shifted === false && plain === true,
     };
 
+    /* ------------------------------------------------- Copy link, under Open in a new tab */
+    reach(`theMenuOffersCopyLinkUnderOpenInANewTab_${size}`);
+    await on.goto(pagesAt("/tasks"), { waitUntil: "networkidle" });
+    await on.waitForSelector('[data-graview-record="t-deposit"]', { timeout: 30_000 });
+    const linked = await pagesMenu(on, '[data-graview-record="t-deposit"]');
+    await on.evaluate(() => (window.__copied = []));
+    await on.click(`${MENU} [data-menu-item="copy-link"]`).catch(() => undefined);
+    await on.waitForFunction(() => window.__copied.length > 0, null, { timeout: 5_000 }).catch(() => undefined);
+    const linkCopied = await on.evaluate(() => {
+      const said = document.querySelector('[data-testid="menu-said"]');
+      const box = said?.getBoundingClientRect();
+      return { copied: window.__copied[0] ?? null, said: said?.textContent ?? null, seen: Boolean(box && box.width > 1 && box.height > 1), menuGone: !document.querySelector('[data-testid="context-menu"]') };
+    });
+    const expectedLink = new URL("/pages/tasks/t-deposit", at("todo")).href;
+    report.checks[`theMenuOffersCopyLinkUnderOpenInANewTab_${size}`] = {
+      rows: linked?.rows ?? null,
+      ...linkCopied,
+      expectedLink,
+      ok:
+        linked !== null &&
+        linked.rows.indexOf("copy-link") === linked.rows.indexOf("open-in-a-new-tab") + 1 &&
+        linked.rows.includes("open-in-a-new-tab") &&
+        linkCopied.copied === expectedLink &&
+        linkCopied.said === "Link copied" &&
+        linkCopied.seen &&
+        linkCopied.menuGone,
+    };
+    await putAway(on);
+
+    /* ------------------------------------------------- Inspect, at the foot */
+    reach(`inspectSaysWhatIsUnderTheCursor_${size}`);
+    const inspecting = await pagesMenu(on, '[data-graview-record="t-deposit"]');
+    const foot = await on.evaluate(() => {
+      const sections = [...document.querySelectorAll('[data-testid="context-menu"] [data-menu-section]')];
+      return sections.at(-1)?.getAttribute("data-menu-section") ?? null;
+    });
+    await on.click(`${MENU} [data-menu-item="inspect"]`).catch(() => undefined);
+    await on.waitForSelector('[data-testid="inspect-sheet"]', { timeout: 10_000 }).catch(() => undefined);
+    const sheet = await on.evaluate(() => {
+      const shown = document.querySelector('[data-testid="inspect-sheet"]');
+      if (!shown) return null;
+      const box = shown.getBoundingClientRect();
+      return {
+        heading: shown.querySelector("h2")?.textContent ?? "",
+        kind: shown.querySelector('[data-inspect="kind"] code')?.textContent ?? null,
+        record: shown.querySelector('[data-inspect="record"] code')?.textContent ?? null,
+        link: shown.querySelector('[data-testid="inspect-link"]')?.href ?? null,
+        declared: Boolean(shown.querySelector('[data-inspect="declared"]')),
+        inTheWindow: box.left >= 0 && box.top >= 0 && box.right <= innerWidth + 1 && box.bottom <= innerHeight + 1,
+        focusIn: shown.contains(document.activeElement),
+      };
+    });
+    await on.keyboard.press("Escape");
+    await on.waitForTimeout(250);
+    const sheetGone = !(await on.$('[data-testid="inspect-sheet"]'));
+    report.checks[`inspectSaysWhatIsUnderTheCursor_${size}`] = {
+      lastRow: inspecting?.rows.at(-1) ?? null,
+      foot,
+      sheet,
+      sheetGone,
+      ok:
+        inspecting !== null &&
+        inspecting.rows.at(-1) === "inspect" &&
+        foot === "inspect" &&
+        sheet !== null &&
+        sheet.heading.includes("Pay the deposit") &&
+        sheet.kind === "task" &&
+        sheet.record === "t-deposit" &&
+        sheet.link === expectedLink &&
+        sheet.inTheWindow &&
+        sheet.focusIn &&
+        sheetGone,
+    };
+
+    /* ------------------------------------------------- a selection, copied and not swallowed */
+    reach(`aSelectionIsCopiedNotSwallowed_${size}`);
+    const selected = await on.evaluate(() => {
+      const title = document.querySelector("main [data-graview-page-title], main h1");
+      const range = document.createRange();
+      range.selectNodeContents(title);
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+      return getSelection().toString();
+    });
+    // On the selected text itself: the browser's own menu (Copy, Look up), never ours.
+    const onTheText = await prevented("main [data-graview-page-title], main h1", false);
+    const oursOnIt = Boolean(await on.$(MENU));
+    await putAway(on);
+    // Elsewhere, with the text still selected: ours, Copy first.
+    await on.evaluate(() => {
+      const title = document.querySelector("main [data-graview-page-title], main h1");
+      const range = document.createRange();
+      range.selectNodeContents(title);
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+      window.__copied = [];
+    });
+    const elsewhere = await prevented('[data-graview-record="t-deposit"]', false);
+    await on.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+    await on.waitForTimeout(200);
+    const withSelection = await menuSays(on);
+    await on.click(`${MENU} [data-menu-item="copy-selection"]`).catch(() => undefined);
+    await on.waitForFunction(() => window.__copied.length > 0, null, { timeout: 5_000 }).catch(() => undefined);
+    const copiedText = await on.evaluate(() => window.__copied[0] ?? null);
+    await putAway(on);
+    await on.evaluate(() => getSelection().removeAllRanges());
+    /* A finger resting on text is selecting it: no menu over it, where a row or a value still opens one. */
+    let restedOnText = null;
+    if (size === "phone") {
+      await on.goto(pagesAt("/tasks/t-deposit"), { waitUntil: "networkidle" });
+      await on.waitForSelector("main h1", { timeout: 30_000 });
+      const point = await on.evaluate(() => {
+        const title = document.querySelector('[data-testid="record-fields"] h2');
+        const range = document.createRange();
+        range.selectNodeContents(title.firstChild ?? title);
+        const box = range.getClientRects()[0] ?? title.getBoundingClientRect();
+        return { x: Math.round(box.left + Math.min(8, box.width / 2)), y: Math.round(box.top + box.height / 2) };
+      });
+      await restAt(context, on, point);
+      restedOnText = { menu: Boolean(await on.$(MENU)) };
+      await putAway(on);
+    }
+    report.checks[`aSelectionIsCopiedNotSwallowed_${size}`] = {
+      selected,
+      onTheText,
+      oursOnIt,
+      elsewhere,
+      firstRow: withSelection?.rows[0] ?? null,
+      copiedText,
+      restedOnText,
+      ok:
+        selected.trim().length > 0 &&
+        onTheText === false &&
+        !oursOnIt &&
+        elsewhere === true &&
+        withSelection !== null &&
+        withSelection.rows[0] === "copy-selection" &&
+        copiedText === selected &&
+        (restedOnText === null || restedOnText.menu === false),
+    };
+
     /* ------------------------------------------------- a finger resting on the page */
     if (size === "phone") {
       reach("pagesLongPressOpensTheMenu_phone");
       await on.goto(pagesAt("/tasks/t-deposit"), { waitUntil: "networkidle" });
       await on.waitForSelector("main h1", { timeout: 30_000 });
+      // A value on the page: a handle, which a resting finger opens the menu on (text alone is the phone's to select).
       const box = await on.evaluate(() => {
-        const at = document.querySelector('[data-testid="record-fields"] h2')?.getBoundingClientRect();
-        return at ? { x: Math.round(at.left + at.width / 2), y: Math.round(at.top + at.height / 2) } : null;
+        const at = document.querySelector('[data-testid="record-fields"] [data-graview-editable][data-graview-field]')?.getBoundingClientRect();
+        return at ? { x: Math.round(at.left + Math.min(12, at.width / 2)), y: Math.round(at.top + at.height / 2) } : null;
       });
-      /*
-       * A REAL FINGER where the engine can be given one (Chromium's touch
-       * input, which raises the pointer events a phone does); elsewhere the
-       * same pointer events, said by the page.
-       */
-      let how = "touch";
-      if (ENGINE === "chromium" && box) {
-        const cdp = await context.newCDPSession(on);
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: box.x, y: box.y }] });
-        await on.waitForTimeout(800);
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-      } else if (box) {
-        how = "pointer events";
-        await on.evaluate(({ x, y }) => {
-          const target = document.elementFromPoint(x, y);
-          target?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y }));
-        }, box);
-        await on.waitForTimeout(800);
-        await on.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y })), box);
-      }
+      const how = box ? await restAt(context, on, box) : "nowhere";
       await on.waitForTimeout(300);
       const rested = await menuSays(on);
       // Still on the record's page: the press that opened the menu followed nothing.
@@ -599,6 +850,101 @@ try {
     }
     await context.close();
   }
+
+  /* ================================================ A COLUMN UNDER THE CURSOR */
+  /*
+   * "Like on a custom view if I'm on a column and I right click, I probably
+   * want to add an item in that column or view only items in that column."
+   * On the tasks' status board, and on a worker view that marks its own
+   * columns `data-column="status:<value>"`: a right-click on a column's
+   * ground offers "Add a task in Doing" — the add act, its status given —
+   * and "Show only Doing", the place narrowed as its address narrows it.
+   */
+  reach("aColumnOffersAddInItAndShowOnlyIt");
+  menuHost = await serveMenuHost();
+  const hostAt = (path) => `http://localhost:${portFor("menu-host")}${MENU_BASE}${path}`;
+  const columns = {};
+  for (const [width, height, size] of [
+    [1440, 900, "desk"],
+    [390, 844, "phone"],
+  ]) {
+    const context = await browser.newContext({ viewport: { width, height }, hasTouch: size === "phone" });
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`${size} column: ${error.message}`));
+    const said = () =>
+      on.evaluate(() => {
+        const menu = document.querySelector('[data-testid="context-menu"]');
+        return menu ? Object.fromEntries([...menu.querySelectorAll("[data-menu-item]")].map((row) => [row.getAttribute("data-menu-item"), (row.textContent ?? "").trim()])) : null;
+      });
+    /** A point at the top of a column's ground: its heading's line, clear of its cards. */
+    const columnPoint = (selector, inView) =>
+      on.evaluate(
+        ([selector, inView]) => {
+          const roots = inView ? [...document.querySelectorAll("*")].map((element) => element.shadowRoot).filter(Boolean) : [document];
+          const column = roots.map((root) => root.querySelector(selector)).find(Boolean);
+          if (!column) return null;
+          column.scrollIntoView({ block: "center" });
+          const box = column.getBoundingClientRect();
+          return { x: Math.round(box.left + Math.min(box.width - 4, 12)), y: Math.round(box.top + 6) };
+        },
+        [selector, inView],
+      );
+    const rightAt = async (point) => {
+      await on.mouse.click(point.x, point.y, { button: "right" });
+      await on.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+      await on.waitForTimeout(250);
+      return said();
+    };
+
+    // The status board.
+    await on.goto(hostAt("/places/the-board"), { waitUntil: "load" });
+    await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+    await on.waitForSelector('[data-column="status:doing"]', { timeout: 30_000 });
+    const boardPoint = await columnPoint('[data-column="status:doing"]', false);
+    const board = boardPoint ? await rightAt(boardPoint) : null;
+    await on.click(`${MENU} [data-menu-item="add-in-column"]`).catch(() => undefined);
+    const asked = await on.waitForSelector(`${MENU} form input`, { timeout: 10_000 }).catch(() => null);
+    const name = `Hang the lights ${size}`;
+    if (asked) {
+      await asked.fill(name);
+      await on.keyboard.press("Enter");
+    }
+    const added = await on
+      .waitForFunction((name) => [...document.querySelectorAll('[data-column="status:doing"] [data-graview-listed]')].some((card) => (card.textContent ?? "").includes(name)), name, { timeout: 10_000 })
+      .then(() => true, () => false);
+    if (await on.$(MENU)) await on.keyboard.press("Escape");
+    const againPoint = await columnPoint('[data-column="status:doing"]', false);
+    if (againPoint) await rightAt(againPoint);
+    await on.click(`${MENU} [data-menu-item="show-only-column"]`).catch(() => undefined);
+    const narrowed = await on
+      .waitForFunction(() => location.search.includes("filter=status%3Adoing") && !document.querySelector('[data-graview-listed="t1"]') && Boolean(document.querySelector('[data-graview-listed="t2"]')), null, { timeout: 10_000 })
+      .then(() => true, () => false);
+
+    // The worker view that marks its own columns.
+    await on.goto(hostAt("/places/by-hand"), { waitUntil: "load" });
+    await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+    await on.waitForFunction(() => [...document.querySelectorAll("*")].some((element) => element.shadowRoot?.querySelector('[data-column="status:doing"]')), null, { timeout: 30_000 }).catch(() => undefined);
+    const viewPoint = await columnPoint('[data-column="status:doing"]', true);
+    const view = viewPoint ? await rightAt(viewPoint) : null;
+    await on.click(`${MENU} [data-menu-item="show-only-column"]`).catch(() => undefined);
+    const viewNarrowed = await on
+      .waitForFunction(
+        () => {
+          const drawn = [...document.querySelectorAll("*")].map((element) => element.shadowRoot?.querySelector(".by-hand")).find(Boolean);
+          return location.search.includes("filter=status%3Adoing") && drawn !== undefined && !drawn.textContent.includes("Write the brief") && drawn.textContent.includes("Book the hall");
+        },
+        null,
+        { timeout: 10_000 },
+      )
+      .then(() => true, () => false);
+    columns[size] = { board, added, narrowed, view, viewNarrowed };
+    await context.close();
+  }
+  const offers = (rows) => rows !== null && /^Add a task in Doing$/i.test(rows["add-in-column"] ?? "") && /^Show only Doing$/i.test(rows["show-only-column"] ?? "");
+  report.checks.aColumnOffersAddInItAndShowOnlyIt = {
+    ...columns,
+    ok: Object.values(columns).every((one) => offers(one.board) && one.added && one.narrowed && offers(one.view) && one.viewNarrowed),
+  };
 
   /* ================================================ THE SCENE'S GROUND IS OURS TOO (FR-228) */
   /*
@@ -733,6 +1079,7 @@ try {
 } finally {
   await browser?.close();
   app.stop();
+  menuHost?.stop();
 }
 
 writeFileSync(resolve(repoRoot, "docs/menu.json"), `${JSON.stringify(report, null, 2)}\n`);

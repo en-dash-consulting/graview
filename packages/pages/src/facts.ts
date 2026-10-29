@@ -12,7 +12,8 @@ import {
 import { readableFields, tellApart } from "@graview/core/words";
 import type { AffordanceSet } from "@graview/tools";
 import { deriveAffordances } from "@graview/tools/derive";
-import { withComputed } from "@graview/core/blocks";
+import { editableFields } from "@graview/tools/edit";
+import { fileFieldsOf, withComputed } from "@graview/core/blocks";
 
 /**
  * Everything a record page says, derived ONCE.
@@ -49,6 +50,39 @@ export interface RecordFacts {
 export interface FactsOptions {
   readonly principal?: Principal;
   readonly context?: Readonly<Record<string, unknown>>;
+  /** The blank fields said as empty slots (`blankWritable`): a page that changes values in place asks for them. */
+  readonly blanks?: readonly string[];
+}
+
+/** What a blank slot opens: a box, a day, a number, a choice or several — what the in-place editor asks for. */
+const SLOT_SHAPES = new Set(["text", "date", "number", "choice", "several"]);
+
+/**
+ * THE BLANK FIELDS OF A RECORD THIS SEAT MAY FILL (Roadmap
+ * request:record-pages-draw-writable-but-blank-facts-as-empty-editable-slots).
+ * A placement made without its allocation had nowhere on its own page to
+ * be given one: a blank fact was not drawn, and the act that writes it
+ * (`edit-placement`) surfaces only as the editor on a fact. Each field with
+ * no value that an act this seat may run writes — taking the value, asking
+ * nothing else — is said as an empty slot that opens that editor. A field
+ * no act writes stays unsaid when blank, and a seat the policy keeps from
+ * the act (a reader) is offered no slot. A file field is filled where its
+ * files are put (FR-163), not here.
+ */
+export function blankWritable<S extends AnySchema>(store: Store<S>, id: string, principal?: Principal): readonly string[] {
+  const node = store.graph.getNode(id) as Record<string, unknown> | undefined;
+  if (!node) return [];
+  const seat = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
+  const files = new Set(fileFieldsOf(store.schema.tryDefinition(node["kind"] as string)));
+  // The same acts the in-place editor on a filled value offers this seat: those its grants let it run.
+  return editableFields(store, id, ...(seat ? [{ principal: seat }] : []))
+    .filter((field) => {
+      const value = node[field.field];
+      const blank = value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
+      const shape = field.shape.type === "several" ? (field.shape.of.type === "choice" ? "several" : "") : field.shape.type;
+      return blank && field.takesValue && field.open.length === 0 && SLOT_SHAPES.has(shape) && !files.has(field.field);
+    })
+    .map((field) => field.field);
 }
 
 export function recordFacts<S extends AnySchema>(
@@ -123,7 +157,7 @@ export function recordFacts<S extends AnySchema>(
     kind: node.kind as string,
     label: name(node),
     // Its computed fields beside its stored ones, worked out from the store this page reads — the seat's (FR-83).
-    fields: readableFields(withComputed(store.schema, store.graph as never, node as never) as Record<string, unknown>, definition),
+    fields: readableFields(withComputed(store.schema, store.graph as never, node as never) as Record<string, unknown>, definition, options.blanks ? { blanks: options.blanks } : {}),
     violations: violationsTouching(store.violations(options.context), [id]),
     /*
      * The record IS the focus: a page about one task leads with that task's

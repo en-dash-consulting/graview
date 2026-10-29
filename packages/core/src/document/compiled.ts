@@ -46,6 +46,7 @@ import { moneyOf } from "./brand.js";
 import { markAmount } from "../schema/amount-mark.js";
 import { DATE_VALUE, ISO_DAY, isMoment, isoToday } from "../days.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
+import type { DerivesDeclaration } from "../keep-linked.js";
 
 /*
  * A COMPILED APP, HANDED TO THE PAGE (FR-123).
@@ -129,6 +130,17 @@ export interface KindPlan {
   readonly durations?: readonly string[];
   /** The fields a declared connection maps (`kept-in-step.ts`): its derived edit writes them whoever else does. */
   readonly keptInStep?: readonly string[];
+  /** What it follows (Roadmap f-keep-linked): each field's value parsed, and the fields set from the source's own as they are. */
+  readonly derives?: DerivesPlan;
+}
+
+/** A kind's `derives`, as the compile read it: the source's end of the relation, each value parsed, what goes back. */
+export interface DerivesPlan {
+  readonly from: string;
+  readonly via: string;
+  readonly sourceEnd: "from" | "to";
+  readonly set: readonly (readonly [string, { readonly expr: Expr } | { readonly value: unknown }])[];
+  readonly back: Readonly<Record<string, string>>;
 }
 
 export interface ActPlan {
@@ -390,6 +402,33 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   if (plan.facts) shapes.set(GRAPH_FACTS, { computed: new Map(plan.facts) } as Partial<KindShape> as KindShape);
   // What `{x | money}` says in a label, a sentence or a refusal: the app's currency and locale (FR-100).
   const money = moneyOf(document);
+  /*
+   * WHAT A KIND FOLLOWS (Roadmap f-keep-linked), as the store keeps it:
+   * each value read standing on the source record, `to` the record that
+   * follows it. One that cannot be worked out is left as it is.
+   */
+  const following = (plan: DerivesPlan): DerivesDeclaration => ({
+    from: plan.from,
+    via: plan.via,
+    sourceEnd: plan.sourceEnd,
+    back: plan.back,
+    values(graph, source, derived) {
+      const values: Record<string, unknown> = {};
+      for (const [field, value] of plan.set) {
+        if ("value" in value) values[field] = value.value;
+        else {
+          try {
+            const worked = evaluateExpr(value.expr, { graph, subject: source, kinds: shapes, bindings: { to: derived }, today: today(), ...saying });
+            // A value a field holds: a record or a set of them is not one.
+            if (worked === null || typeof worked !== "object" || Array.isArray(worked)) values[field] = worked;
+          } catch (e) {
+            if (!(e instanceof ExprEvalError)) throw e;
+          }
+        }
+      }
+      return values;
+    },
+  });
 
   // ── kinds ────────────────────────────────────────────────────────────────
   // Each kind's defaults: what a record is made with before an act sets anything.
@@ -463,6 +502,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
       // The fields a declared connection maps, which its derived edit writes whoever else does.
       ...(plan.kinds[kind]?.keptInStep ? { keptInStep: plan.kinds[kind].keptInStep } : {}),
+      // What it follows (Roadmap f-keep-linked): each value read standing on the source, `to` this record; the store keeps them in step.
+      ...(plan.kinds[kind]?.derives ? { derives: following(plan.kinds[kind].derives) } : {}),
     } as never);
   });
   const schema = createSchema(definitions as never, document.computed);

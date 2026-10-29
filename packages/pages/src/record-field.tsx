@@ -28,6 +28,15 @@ export interface RecordFieldProps {
  * from the derived page's.
  */
 export function RecordField<S extends AnySchema>({ nodeId, node, field, inPlace, labelStyle = eyebrow }: RecordFieldProps): ReactNode {
+  if (field.blank) {
+    // A blank an act this seat may run writes: its label, and a dim "add" that opens the same editor a value would.
+    return (
+      <div style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }} data-graview-blank-fact={field.key}>
+        <dt style={labelStyle}>{field.label}</dt>
+        <dd style={{ margin: 0, minWidth: 0 }}>{inPlace ? <EditableValue<S> nodeId={nodeId} field={field.key} value="" said={`Add ${field.label}`} blank /> : null}</dd>
+      </div>
+    );
+  }
   if (field.files) {
     return <Files as="field" read={!inPlace} nodeId={nodeId} field={field.key} label={field.label} files={field.files} labelStyle={labelStyle} style={{ gap: 4 }} />;
   }

@@ -313,6 +313,8 @@ export function restoreBatches<S extends AnySchema>(store: Store<S>, seq: number
   return store
     .batches()
     .filter((batch) => !batch.undone && batch.ops[0]!.seq >= seq)
+    // What a connection sent out changed nothing here, and is not taken back (Roadmap f-sync-guest-changes-in-history).
+    .filter((batch) => !batch.ops.every((op) => op.sentOut !== undefined))
     .filter((batch) => !batch.ops.every((op) => op.undoes !== undefined && (position.get(op.undoes) ?? -1) >= seq))
     .map((batch) => batch.id);
 }

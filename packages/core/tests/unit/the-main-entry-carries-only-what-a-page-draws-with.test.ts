@@ -73,7 +73,7 @@ const OFF_THE_PAGE = {
   "@graview/core/json-schema": { from: jsonSchema, names: ["argumentsNeverShown", "mutationToolSchema", "nodeJsonSchema", "schemaJson", "toJsonSchema"] },
   // FR-179: the matcher, a record and an argument said in words, and what the seat and the seeding read.
   "@graview/core/search": { from: search, names: ["MATCHED_MOST", "NEAR_BELOW", "actsOn", "describeSearched", "fold", "fragmentOf", "matchNode", "parseQuery", "search", "searchableFields", "slipsBetween", "squeeze", "stemOf", "strengthOf", "touchWeights"] },
-  "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "excerptOf", "failureWords", "isLongText", "isMarkdownField", "pageSections", "readableFields", "repeatAsRead", "repeatingDateAsRead", "tellApart", "viaSaid", "fieldSays", "mapsHref", "parseDuration", "sayDuration", "sayPhone", "telHref", "typedHref", "typedWords", "typedFieldOf", "edgeWords", "valueWords", "amountBox", "amountInBox", "readAmount", "endAfterStartMoved", "namesInstant", "readPartialDay", "readWhenTyped", "startAndEndOf", "storedOfWall", "wallNow", "wallOfStored", "zoneSaid", "capitalize", "lowerFirst"] },
+  "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "excerptOf", "failureWords", "isLongText", "isMarkdownField", "pageSections", "readableFields", "repeatAsRead", "repeatingDateAsRead", "tellApart", "viaSaid", "fieldSays", "mapsHref", "parseDuration", "sayDuration", "sayPhone", "telHref", "typedHref", "typedWords", "typedFieldOf", "edgeWords", "valueWords", "amountBox", "amountInBox", "readAmount", "endAfterStartMoved", "namesInstant", "readPartialDay", "readWhenTyped", "startAndEndOf", "storedOfWall", "wallNow", "wallOfStored", "zoneSaid", "capitalize", "lowerFirst", "keptInStepWith"] },
   // FR-180: Markdown read into blocks, fetched with the first a page draws.
   "@graview/core/markdown": { from: markdown, names: ["escapeHtml", "headingLevel", "inlineOf", "markdownBlocks", "markdownHtml", "safeHref"] },
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "archivedSeenBy", "archiveFrom", "beginning", "placesFrom", "placesOf", "viewPlaceOf"] },
@@ -97,7 +97,7 @@ const OFF_THE_PAGE = {
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,
-    names: ["acceptSuggestion", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "mayDecide", "meaningKey", "proposalWords", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "takenIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
+    names: ["acceptSuggestion", "advisoryVoterOf", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "mayDecide", "meaningKey", "proposalWords", "SIGN_IN_TO_VOTE", "signedOutSeat", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "takenIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
   },
 } as const;
 

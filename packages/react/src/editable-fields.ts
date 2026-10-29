@@ -21,8 +21,9 @@ export function useEditableFields<S extends AnySchema>(
   const { store, principal } = useGraview<S>();
   const nodes = useGraph<S>();
   const fields = useMemo(
-    () => (id === null ? [] : editableFields(store, id)),
-    [store, id, nodes],
+    // Only what an act this seat may run writes is changed where it is shown (Roadmap request:in-place-editors-ignore-grants).
+    () => (id === null ? [] : editableFields(store, id, { principal })),
+    [store, id, nodes, principal],
   );
   const commit = useCallback(
     (field: EditableField, value: unknown, rest: Record<string, unknown> = {}) => {

@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 22800,
+  "note": "Raised when a record came to follow the record it derives from (Roadmap f-keep-linked): the store keeps a kind's `derives` in step in the same change as either side's edit (`keep-linked.ts`), a compiled app builds each kind's values from its plan, and `validateGraph` says a record out of step. The checker's `derives-*` findings, `set-derives` and its following of renames and removals, and a connection's computed fields come with it. Measured at 2_444_407 B against 2_421_669 B on feat/workflows, 22_738 more."
+}

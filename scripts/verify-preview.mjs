@@ -31,7 +31,9 @@
  *   table the hosts add reaches a reader only once they publish;
  *   and the org given an opening screen (`brand.splash`, Roadmap
  *   f-splash-in-document) opens on it — in the first HTML, on the page
- *   before the app's code ran, gone once the place has drawn.
+ *   before the app's code ran, gone once the place has drawn; and the
+ *   screen alone is a status axe finds nothing on, its light-through-water
+ *   shader drawing, moving, and still for a reader who asks for less motion.
  *
  *   node scripts/verify-preview.mjs [--engine=chromium|webkit|firefox]
  *
@@ -525,6 +527,65 @@ try {
     }
     rmSync(dir, { recursive: true, force: true });
     report.checks.anOpeningScreenCoversThePageUntilItsPlaceHasDrawn = { styles, ok: Object.values(styles).every((one) => one.ok) };
+  }
+
+  /*
+   * ---- the opening screen alone, as `splashHtml` writes it, on a page no place ever draws on (Roadmap
+   * splash-html-aria-label-without-role, splash-shader-light-through-water). axe finds nothing on it in any style —
+   * it is a status, named by its title — and light through water (`caustics`) draws: its WebGL canvas stays (a
+   * shader that failed to compile or link takes it away), what it shows moves, and for a reader who asks for less
+   * motion it stands still.
+   */
+  {
+    const { splashHtml, SPLASH_STYLES } = await import("../packages/pages/dist/splash.js");
+    const SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 9"><rect width="16" height="9" fill="#0f6e5c"/><circle cx="12" cy="3" r="2" fill="#f7f7f2"/></svg>';
+    const brand = { name: "Org chart", accent: "#0f6e5c" };
+    const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
+    const pageOf = (splash) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Org chart</title><style>${splash.css}</style></head><body>${splash.html}<script>${splash.script}</script><main id="graview-app"><h1>Org chart</h1></main></body></html>`;
+    const axeFound = {};
+    for (const style of SPLASH_STYLES) {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      try {
+        await page.setContent(pageOf(splashHtml({ ...brand, splash: { style, image: SVG, kicker: "Who does what", ...(style === "shader" ? { shader: "caustics" } : {}) } })), { waitUntil: "load" });
+        await page.addScriptTag({ content: axeSource });
+        const found = await page.evaluate(async () => {
+          const result = await window.axe.run(document.getElementById("graview-splash"), { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } });
+          return result.violations.map((violation) => `${violation.id}: ${violation.help}`);
+        });
+        axeFound[style] = { role: await page.getAttribute("#graview-splash", "role"), found, ok: found.length === 0 };
+      } catch (error) {
+        axeFound[style] = { error: String(error?.stack ?? error), ok: false };
+      } finally {
+        await page.close();
+      }
+    }
+    report.checks.theOpeningScreenIsAStatusAxeFindsNothingOn = { styles: axeFound, ok: Object.values(axeFound).every((one) => one.ok && one.role === "status") };
+
+    const water = async (reducedMotion) => {
+      const page = await browser.newPage({ viewport: { width: 640, height: 400 }, reducedMotion });
+      try {
+        await page.setContent(pageOf(splashHtml({ ...brand, splash: { style: "shader", shader: "caustics", image: SVG } })), { waitUntil: "load" });
+        const webgl = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl"));
+        await page.waitForTimeout(700);
+        const canvas = page.locator("#graview-splash .graview-splash-canvas");
+        const stays = (await canvas.count()) === 1;
+        const first = stays ? await canvas.screenshot() : undefined;
+        await page.waitForTimeout(700);
+        const second = stays ? await canvas.screenshot() : undefined;
+        return { webgl, stays, moves: !!first && !!second && !first.equals(second) };
+      } finally {
+        await page.close();
+      }
+    };
+    try {
+      const moving = await water("no-preference");
+      const still = await water("reduce");
+      // A browser with no WebGL shows the editorial screen instead, which the claim above covers; one with it must draw.
+      const ok = moving.webgl ? moving.stays && moving.moves && still.stays && !still.moves : ENGINE !== "chromium";
+      report.checks.lightThroughWaterDrawsMovesAndStandsStillForLessMotion = { moving, still, ok };
+    } catch (error) {
+      report.checks.lightThroughWaterDrawsMovesAndStandsStillForLessMotion = { error: String(error?.stack ?? error), ok: false };
+    }
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

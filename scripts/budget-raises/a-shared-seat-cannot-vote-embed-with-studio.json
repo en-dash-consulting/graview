@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 1033,
+  "gzipped": 356,
+  "note": "Raised when a shared or signed-out seat came to be refused a vote on a suggestion (Roadmap f-votes-shared-seat): the store asks whether a vote's seat is anybody in particular — `shared`, a visitor, or an agent acting for one — and keeps a host's advisory vote under its visitor, counted apart; the tray's Sign in to vote and the visitors' words in the tally. 1_033 / 356 more. Measured at 1_775_350 / 624_350 against 1_774_317 / 623_994 on a fresh build of main."
+}

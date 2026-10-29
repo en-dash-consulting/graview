@@ -57,10 +57,16 @@ opens in and how its cards read are `graview-lists`.
    `voteSuggestion(store, id, "for" | "against" | null)` casts, changes or
    withdraws one), one standing vote each; whoever may decide (`mayDecide`)
    reads each suggestion's `tally: { for, against, mine }` beside Accept.
-   Say `"tidying": { "autoAcceptAt": 4 }` at the top of the document to
-   have the actor make a suggestion at four votes for, the voters in its
-   `lineage.voters`; `graview check` warns when the app has no policy,
-   since then nobody votes.
+   Say `"tidying": { "autoAcceptAt": 4 }` at the top of the document (the
+   edit `{"op": "set-app-tidying", "autoAcceptAt": 4}`, `null` to take it
+   away) to have the actor make a suggestion at four votes for, the voters
+   in its `lineage.voters`; `graview check` warns when the app has no policy,
+   since then nobody votes. A seat no one person holds — the host's one
+   signed-out seat (`shared: true` on its principal) or a `visitor` — is
+   refused a vote ("Sign in to vote on this suggestion"), and the tray
+   offers the host's `signIn` instead; `votes: { advisory: "visitors" }` on
+   the store keeps such a vote under the seat's `visitorKey`, in
+   `tally.advisory`, never toward `autoAcceptAt`.
 
 3. **Hold it to what people said.** A person says "Leave this one alone" on
    a record (`leave-alone-<kind>`, cleared by `allow-tidying-<kind>`;

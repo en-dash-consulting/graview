@@ -42,7 +42,7 @@ import {
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import { HostFilesContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
-import type { MenuSectionSource } from "./menu-types.js";
+import type { MenuColumn, MenuSectionSource } from "./menu-types.js";
 
 import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
@@ -120,6 +120,14 @@ export interface PointerMenu {
   readonly href?: string | undefined;
   /** The act it was opened on, by its declared name: a record's act, a list's way to begin one. */
   readonly act?: string | undefined;
+  /** The column it was opened in (`MenuTarget.column`). */
+  readonly column?: MenuColumn | undefined;
+  /**
+   * AN ACT TO BEGIN AT ONCE, its form open under it with these values
+   * already given — "Add a task in Doing" from a column's menu: the add act,
+   * the column's field given its value, asking only what is left.
+   */
+  readonly begin?: { readonly act: string; readonly given: Readonly<Record<string, unknown>> } | undefined;
   /** What the menu is headed with, when not the name of what it is about: a place's title. */
   readonly title?: string | undefined;
   /** Where the keyboard goes back to when it closes; the card it was opened on when unsaid. */
@@ -148,6 +156,12 @@ export interface SceneHandle {
 export interface AwaySummary {
   readonly tidied: number;
   readonly waiting?: number;
+  /**
+   * HOW MANY AGREE WITH ONE THAT WAITS (Roadmap f-votes-shared-seat): the
+   * most people whose vote stands for a waiting suggestion, said in the
+   * tray's line, "3 readers agree with one that waits". `whileAway` counts it.
+   */
+  readonly agreed?: number;
 }
 
 export interface GraviewContextValue<S extends AnySchema> {

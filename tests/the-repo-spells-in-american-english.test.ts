@@ -90,6 +90,7 @@ const ALLOWED_IN: Readonly<Record<string, readonly RegExp[]>> = {
   "packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts": [/"cancelled"/g],
   "packages/core/tests/integration/a-weekly-record-is-one-recurring-event.test.ts": [/"cancelled"/g],
   "packages/core/tests/integration/calendar-events-invite-the-people-they-are-about.test.ts": [/"cancelled"/g],
+  "packages/core/tests/integration/a-connection-pass-says-whom-it-invited.test.ts": [/"cancelled"/g],
   // The key older builds wrote in a document, read as its new name (FR-134).
   "packages/core/src/document/respell.ts": [/honoured/g],
   "packages/core/src/conformance/fixtures.ts": [/"honoured"/g],

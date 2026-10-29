@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 643,
+  "gzipped": 303,
+  "note": "Raised when a connection pass came to say whom it invited (Roadmap f-sync-guest-changes-in-history): the store takes a host-made op's `described` and `sentOut` (`AppendOp`), and undo refuses a line of what a connection sent out with its own sentence (\"Nothing to take back: an invitation already went out.\"). Measured at 1_774_960 / 624_277 against 1_774_317 / 623_994: 643 / 283 more, raised 303 gzipped for the few bytes gzip moves between runs."
+}

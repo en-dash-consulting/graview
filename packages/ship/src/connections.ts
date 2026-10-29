@@ -1,5 +1,5 @@
 import type { AnySchema, GraviewApp, Store } from "@graview/core";
-import { NOTION_AUTH_ENV, connection, sharedLinks, type ConnectionDeclaration, type Fetcher, type GoogleTokenRequest, type SyncReport, type SyncState } from "@graview/core/sync";
+import { NOTION_AUTH_ENV, connection, notionSourcesOf, sharedLinks, type ConnectionDeclaration, type Fetcher, type GoogleTokenRequest, type SyncReport, type SyncState } from "@graview/core/sync";
 
 /**
  * THE APP'S DECLARED CONNECTIONS, RUN BESIDE ITS STORE (`connections.<name>`).
@@ -122,11 +122,19 @@ export function sayReport(report: SyncReport): string | undefined {
   const said: string[] = [];
   if (report.applied.length) said.push(`took ${report.applied.length} from ${place}`);
   if (report.pushed.length) said.push(`sent ${report.pushed.length} to ${notion ? "Notion" : "it"}`);
+  // Whom the pass invited and took off, counted (Roadmap f-sync-guest-changes-in-history): only writes that reached the calendar.
+  const invited = (report.guests ?? []).filter((one) => one.invited.length > 0);
+  const invitedCount = invited.reduce((sum, one) => sum + one.invited.length, 0);
+  const removedCount = (report.guests ?? []).reduce((sum, one) => sum + one.removed.length, 0);
+  if (invitedCount) said.push(`invited ${invitedCount} to ${invited.length} event${invited.length === 1 ? "" : "s"}`);
+  if (removedCount) said.push(`${removedCount} taken off`);
   if (report.gone.length) said.push(`${report.gone.length} gone there`);
   // A change coming in that this store refused names the calendar's event or Notion's page, which may have no record here.
   if (report.refused.length) said.push(`refused: ${report.refused.map((one) => `${one.resource ? `${notion ? "Notion's page" : "the calendar's"} ${one.id}` : one.localId} (${one.error})`).join(", ")}`);
   if (report.resolved.length) said.push(`${report.resolved.length} conflict${report.resolved.length === 1 ? "" : "s"} settled`);
   if (report.conflicts.length) said.push(`${report.conflicts.length} conflict${report.conflicts.length === 1 ? "" : "s"} held`);
+  // What the transport did there, as it said it: "Made 3 properties in Notion: Status, Due and Owner".
+  if (report.said?.length) said.push(...report.said);
   if (report.offline) said.push(`could not reach ${place}${report.problem ? ` (${report.problem})` : ""}; will try again`);
   return said.length > 0 ? said.join(" · ") : undefined;
 }
@@ -181,7 +189,7 @@ export function runConnections<S extends AnySchema>(options: RunConnectionsOptio
         links,
       });
       engines.push({ name, every: (declaration.every ?? 30) * 1000, engine: made.engine });
-      say(`${name}: ${declaration.direction === "read" ? "reading" : "keeping in step with"} a Notion database into ${declaration.kind}, every ${declaration.every ?? 30} s`);
+      say(`${name}: ${declaration.direction === "read" ? "reading" : "keeping in step with"} a Notion database into ${notionSourcesOf(declaration).map((one) => one.kind).join(", ")}, every ${declaration.every ?? 30} s`);
       continue;
     }
     const calendarId =options.calendar?.({ connection: name, declaration }) ?? (typeof declaration.calendar === "string" ? declaration.calendar : lookup(declaration.calendar.env));

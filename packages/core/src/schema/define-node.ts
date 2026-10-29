@@ -121,6 +121,12 @@ export interface ReadableField {
   readonly href?: string;
   /** The field name in words, after `display.labels` and humanizing. */
   readonly label: string;
+  /**
+   * HELD BLANK, SAID AS AN EMPTY SLOT: the field has no value and the reader
+   * asked for it (`readableFields`'s `blanks`) — an act the seat may run
+   * writes it. `value`, `stored` and `alone` are empty.
+   */
+  readonly blank?: true;
   /** The value in words, after `display.format` and the built-in defaults: a day as a person reads it, a choice as it is declared. */
   readonly value: string;
   /**

@@ -99,8 +99,9 @@ under its routes:
 Everything a page shows is a derivation the scene uses too: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
 or who may take it** — it strikes through what the seat may not, and says why.
-A record's facts, `computed` ones too, read in declared order or as the
-kind's `display.page` groups them; prose keeps its paragraphs, full width.
+A record's facts, `computed` ones too, read in declared order or as
+`display.page` groups them; prose keeps its paragraphs. A blank the seat's
+act writes is a slot ("Add Role"); one nothing writes stays unsaid.
 
 **Typed together.** Over a served store, hand the face `typing`
 (`openRemote`'s `remote.typing`; an embed passes it) and prose is edited
@@ -196,12 +197,12 @@ pnpm test                                               # render every page you 
 
 Render each registered page with `PagesApp` and `initialPath` in a test
 (`apps/seedbed/tests/integration/chapters.test.ts`). Then open it: a design
-that passes its tests and reads like an admin panel has replaced nothing.
+that reads like an admin panel has replaced nothing.
 
 ## What the check cannot see
 
 - Whether the design's words are the domain's. The derived pages use the
-  declaration's `description` and `inverse`; a design that writes its own
-  sentences must keep them true as the declaration changes.
+  declaration's `description` and `inverse`; a design's own sentences must
+  stay true as the declaration changes.
 - Whether a page gives every act `facts.actions` offers room: only a person
   can see that.

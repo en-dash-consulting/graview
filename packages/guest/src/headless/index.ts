@@ -24,7 +24,7 @@
  * manifest, its drawing drawn by the open kit's own renderer into a tree of
  * plain objects, and said as a place is said.
  */
-import type { AnySchema, BrandViews, Principal, Store } from "@graview/core";
+import { HOME_SLUG, OVERVIEW_SLUG, type AnySchema, type BrandViews, type GraviewApp, type Principal, type Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
 import { checkManifest, manifestActs, readsComputed, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
@@ -112,8 +112,22 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
    * to say (`brand-views-css`), not this view's.
    */
   readonly brand?: { readonly views?: BrandViews };
-  /** The app's named places, which the view may link to (FR-93). */
-  readonly places?: readonly (GuestPlace | { readonly slug: string; readonly title: string; readonly kind: string | null })[];
+  /**
+   * The app's named places, which the view may link to (FR-93): a guest's
+   * (`as`) or an app's as `placesOf` lists them (`slug`). A place handed
+   * without its kind is read from `app` — or, without it, from the kinds'
+   * lists and the views' places the run knows — and one that cannot be is
+   * refused by name, never dropped (Roadmap
+   * headless-view-check-drops-places-without-a-kind). Only the home and the
+   * Scene are over no kind.
+   */
+  readonly places?: readonly (GuestPlace | { readonly slug: string; readonly title: string; readonly kind?: string | null })[];
+  /**
+   * The declaration the store was made from. Handed, a place without its
+   * kind is read from the app's own places (`placesOf`), which cannot be
+   * wrong about it.
+   */
+  readonly app?: GraviewApp<S>;
   /**
    * THE VIEWS THE HOST KEEPS (Roadmap f-check-view-places), by their
    * manifests — the same list `describePlace` and `placesOf` take: each
@@ -277,6 +291,43 @@ const seatOf = (principal: Principal) => (principal.kind === "system" ? "the sys
 const slugOf = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 /**
+ * EVERY HANDED PLACE WITH ITS KIND. The vocabulary reads a place over a
+ * kind; one handed with none used to be passed over without a word, so a
+ * host that handed `{ slug, title }` saw every lens the app declares said
+ * as missing (2026-10-28). Its kind is read from the app's own places when
+ * the slug is one of them — the declaration's, when the host hands `app`;
+ * the kinds' lists and the views' places otherwise — and a slug that is
+ * none of them is refused here, by name, rather than checked against
+ * nothing. The home and the Scene are over no kind, and stay so.
+ */
+async function withKinds<S extends AnySchema>(
+  handed: readonly unknown[],
+  from: { readonly schema: AnySchema; readonly app?: GraviewApp<S>; readonly views: readonly { readonly name: string; readonly title?: string; readonly attach: string; readonly cardinality?: "one" | "many"; readonly hidden?: boolean }[] },
+): Promise<readonly unknown[]> {
+  const kindless = (one: unknown) => typeof one === "object" && one !== null && !(typeof (one as { kind?: unknown }).kind === "string" && (one as { kind: string }).kind.length > 0);
+  const wordOf = (one: object) => {
+    const { as, slug } = one as { as?: unknown; slug?: unknown };
+    return typeof as === "string" && as.length > 0 ? as : typeof slug === "string" && slug.length > 0 ? slug : undefined;
+  };
+  const missing = handed.filter((one) => kindless(one) && ![undefined, HOME_SLUG, OVERVIEW_SLUG].includes(wordOf(one as object)));
+  if (missing.length === 0) return handed;
+  const { placesFrom, placesOf, viewPlaceOf } = await import("@graview/core/seat");
+  const known = from.app ? placesOf(from.app, { views: from.views }) : placesFrom(from.schema, from.views.flatMap((view) => viewPlaceOf(view) ?? []));
+  const kindOf = (one: object) => known.find((each) => each.slug === wordOf(one) && each.kind !== null);
+  const unknown = missing.filter((one) => !kindOf(one as object)).map((one) => `"${wordOf(one as object)}"`);
+  if (unknown.length > 0) {
+    const slugs = unknown.length === 1 ? "that slug" : "those slugs";
+    const where = from.app ? `the app declares no place by ${slugs}` : `no kind's list or view the run holds is at ${slugs}, and the app, which would say its lenses, was not handed (\`app\`)`;
+    throw new TypeError(`runWorkerViewHeadless was handed the place${unknown.length === 1 ? "" : "s"} ${unknown.join(", ")} without ${unknown.length === 1 ? "its kind" : "their kinds"}, and ${where}: hand each place's \`kind\` as \`placesOf(app)\` lists it, or the app.`);
+  }
+  return handed.map((one) => {
+    if (!missing.includes(one)) return one;
+    const place = kindOf(one as object)!;
+    return { ...(one as object), kind: place.kind, ...(place.over ? { over: place.over } : {}) };
+  });
+}
+
+/**
  * RUN A WORKER VIEW ONCE, HEADLESS, IN THE HOST'S ISOLATE, AND SAY WHAT IT
  * DREW FOR ONE SEAT. The manifest is checked against the app and the
  * source against what a view may say before anything runs; the view is
@@ -309,7 +360,8 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const viewPlaces = [...(options.views ?? []), manifest].flatMap((view) => viewPlaceOf(view) ?? []).map((place) => ({ as: place.as, title: place.title, kind: place.kind }));
   /* Read through the one vocabulary (FR-235) — the Scene, the home, each kind's list the seat sees, each titled place — as the live host reads them, so the check and the page agree. */
   const kept = new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds]);
-  const places = placeVocabulary(store.schema, [...(options.places ?? []), ...viewPlaces], { kept });
+  const handedPlaces = await withKinds(options.places ?? [], { schema: store.schema, ...(options.app ? { app: options.app } : {}), views: [...(options.views ?? []), manifest] });
+  const places = placeVocabulary(store.schema, [...handedPlaces, ...viewPlaces], { kept });
   const placesUnsure = options.views === undefined;
   /* A record's computed values beside its fields, as the page hands them (Roadmap f-computed-in-views). */
   const computed = readsComputed(store, manifest) ? (await import("../host/computed.js")).computedOn(store.schema) : undefined;

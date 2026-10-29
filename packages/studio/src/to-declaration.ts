@@ -574,7 +574,16 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     ...(base?.workflows ? { workflows: base.workflows } : {}),
     // The connections are carried, not edited here yet: a renamed kind's calendar follows it.
     ...(base?.connections
-      ? { connections: Object.fromEntries(Object.entries(base.connections).map(([key, connection]) => [key, { ...connection, kind: follow(connection.kind) }])) }
+      ? {
+          connections: Object.fromEntries(
+            Object.entries(base.connections).map(([key, connection]) => [
+              key,
+              connection.system === "notion"
+                ? { ...connection, ...(connection.kind !== undefined ? { kind: follow(connection.kind) } : {}), ...(connection.sources ? { sources: connection.sources.map((source) => ({ ...source, kind: follow(source.kind) })) } : {}) }
+                : { ...connection, kind: follow(connection.kind) },
+            ]),
+          ),
+        }
       : {}),
   };
 }

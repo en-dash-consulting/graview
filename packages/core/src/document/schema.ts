@@ -29,7 +29,7 @@ const MARK_MAX = 64 * 1024;
  */
 export const SPLASH_STYLES = ["plain", "editorial", "shader", "ascii"] as const;
 export type SplashStyle = (typeof SPLASH_STYLES)[number];
-export const SPLASH_SHADERS = ["drift", "ripple", "veil"] as const;
+export const SPLASH_SHADERS = ["drift", "ripple", "veil", "caustics"] as const;
 export type SplashShader = (typeof SPLASH_SHADERS)[number];
 
 /** kebab-case: kinds, acts, rules, edges, roles, modules. */
@@ -190,6 +190,9 @@ function build() {
     }),
   ]);
 
+  /** A value an effect writes: a literal, `$arg`, `$subject`, `$new`, `$now`, `$today`, or `{ expr }`. */
+  const ValueSpec = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.unknown()), z.strictObject({ expr: expression })]);
+
   const KindSpec = z.strictObject({
     noun: z.optional(str(1, 40)),
     plural: z.optional(str(1, 40)),
@@ -238,10 +241,18 @@ function build() {
     archives: z.optional(z.literal(false)),
     /** What the app's own actor may do to its records on its own: `"never"` nothing, `"no-links"` all but link and unlink them (`@graview/core/tidying`). */
     tidying: z.optional(z.enum(["never", "no-links"])),
+    /**
+     * A RECORD THAT FOLLOWS ANOTHER (Roadmap f-keep-linked): each record of
+     * this kind linked through `via` to a record of `from` takes the fields
+     * `set` works out from it — `{ "expr": … }` read standing on the source,
+     * `to` this record — in the same change as the source's edit. A field
+     * set from one of the source's own fields (`{ "expr": "name" }`) changed
+     * here goes back to the source; one worked out otherwise is flagged
+     * (`derived-out-of-step`). Archiving or removing the source archives it.
+     */
+    derives: z.optional(z.strictObject({ from: name("kind"), via: edgeName, set: z.record(fieldName, ValueSpec) })),
   });
 
-  /** A value an effect writes: a literal, `$arg`, `$subject`, `$new`, `$now`, `$today`, or `{ expr }`. */
-  const ValueSpec = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.unknown()), z.strictObject({ expr: expression })]);
 
   const ref = z.string().check(z.regex(/^\$[A-Za-z][A-Za-z0-9]*$/, 'a reference is "$" and a name, like "$subject" or "$new"'));
 

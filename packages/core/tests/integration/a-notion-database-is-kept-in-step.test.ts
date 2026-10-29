@@ -353,8 +353,8 @@ describe("what Notion refuses, said", () => {
 });
 
 describe("properties matched by name", () => {
-  it("keeps each field in step with the property of its name, the name field with the title, and says the fields it found none for", async () => {
-    const { stub, db, engine, nodes, said } = opened(database({ properties: undefined }));
+  it("keeps each field in step with the property of its name, the name field with the title, and says the fields it found none for when it makes none", async () => {
+    const { stub, db, engine, nodes, said } = opened(database({ properties: undefined, create: false }));
     stub.add(db, { Name: "Inferred", Estimate: 1, Done: true, Tags: ["home"] });
     await engine.run();
     expect(nodes()[0]).toMatchObject({ name: "Inferred", estimate: 1, tags: ["home"] });

@@ -1,4 +1,4 @@
-import { nameOfAuthor, type AnySchema, type DismissalStore, type Suggestion } from "@graview/core";
+import { nameOfAuthor, VOTE_SUGGESTION, type AnySchema, type DismissalStore, type Suggestion } from "@graview/core";
 import { lineageWords } from "@graview/core/provenance";
 import { acceptSuggestion, declineSuggestion, mayDecide, suggestions, voteSuggestion } from "@graview/core/tidying";
 import { POPOVER_STYLE, useGoTo, useGraph, useGraview, usePopover } from "@graview/react/provider";
@@ -13,10 +13,15 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
 /**
  * WHAT THE APP'S OWN ACTOR LEFT WHILE A PERSON WAS AWAY, in a line: "3
  * suggestions waiting · tidied 12 things while you were away", or undefined
- * when there is nothing to say.
+ * when there is nothing to say — and, when the host counted them
+ * (`AwaySummary.agreed`), how many agree with one: "3 readers agree with one
+ * that waits".
  */
-export function awayWords(waiting: number, tidied: number): string | undefined {
-  const parts = [waiting > 0 ? `${waiting === 1 ? "one suggestion" : `${waiting} suggestions`} waiting` : "", tidied > 0 ? `tidied ${tidied === 1 ? "one thing" : `${tidied} things`} while you were away` : ""].filter(Boolean);
+export function awayWords(waiting: number, tidied: number, agreed = 0): string | undefined {
+  const parts = [
+    waiting > 0 ? `${waiting === 1 ? "one suggestion" : `${waiting} suggestions`} waiting` : "",
+    waiting > 0 && agreed > 0 ? `${agreed === 1 ? "a reader agrees" : `${agreed} readers agree`} with one that waits` : "",
+    tidied > 0 ? `tidied ${tidied === 1 ? "one thing" : `${tidied} things`} while you were away` : ""].filter(Boolean);
   return parts.length > 0 ? parts.join(" · ").replace(/^./, (first) => first.toUpperCase()) : undefined;
 }
 
@@ -38,7 +43,10 @@ export function awayWords(waiting: number, tidied: number): string | undefined {
  * refused (Roadmap f-suggestion-votes): their Accept and Decline are a
  * vote, the row says "Your vote was recorded" and stays, pressed again
  * the other way it changes, and Withdraw vote takes it back; whoever may
- * decide sees the tally beside Accept, "4 for, 1 against".
+ * decide sees the tally beside Accept, "4 for, 1 against". A shared or
+ * signed-out seat whose vote the store would refuse (Roadmap
+ * f-votes-shared-seat) is offered the host's "Sign in to vote" in their
+ * place, or no vote at all where the host gave no way in.
  */
 export function SuggestedTray() {
   const { store, principal, dismissals: host, whileAway, app } = useGraview<AnySchema>();
@@ -61,7 +69,7 @@ export function SuggestedTray() {
         }
       : null;
   const tidied = whileAway?.tidied ?? 0;
-  const away = whileAway ? awayWords(waiting.length, tidied) : undefined;
+  const away = whileAway ? awayWords(waiting.length, tidied, whileAway.agreed) : undefined;
   if (waiting.length === 0 && tidied === 0) return null;
   /*
    * A ROW SETTLED, THE KEYBOARD STAYS IN THE TRAY: on the next row's first
@@ -172,8 +180,25 @@ const VOTED = { recorded: "Your vote was recorded.", withdrawn: "Your vote was w
 /** A suggestion of several said after who suggests it: a headline that starts with their name ("Fill out next week's events: …") says it once. */
 const headlineAfter = (by: string, headline: string): string => (headline.startsWith(`${by}: `) ? headline.slice(by.length + 2) : headline);
 
-/** The votes on a suggestion, said beside Accept to whoever may decide: "4 for, 1 against". */
-export const tallyWords = (tally: Suggestion["tally"]): string => `${tally.for} for, ${tally.against} against`;
+/**
+ * The votes on a suggestion, said beside Accept to whoever may decide: "4
+ * for, 1 against" — and the advisory votes of visitors on a shared or
+ * signed-out seat apart, never among them (Roadmap f-votes-shared-seat):
+ * "2 for, 0 against · 3 visitors agree".
+ */
+export const tallyWords = (tally: Suggestion["tally"]): string => {
+  const people = `${tally.for} for, ${tally.against} against`;
+  const visitors = advisoryWords(tally.advisory);
+  return visitors ? `${people} · ${visitors}` : people;
+};
+
+/** What visitors said, apart: "3 visitors agree, one disagrees", or "" when none voted. */
+export function advisoryWords(advisory: Suggestion["tally"]["advisory"]): string {
+  if (!advisory) return "";
+  const agree = advisory.for === 0 ? "" : advisory.for === 1 ? "a visitor agrees" : `${advisory.for} visitors agree`;
+  const disagree = advisory.against === 0 ? "" : advisory.against === 1 ? `${agree ? "one" : "a visitor"} disagrees` : `${advisory.against}${agree ? "" : " visitors"} disagree`;
+  return [agree, disagree].filter(Boolean).join(", ");
+}
 
 /**
  * One suggestion: what it would do and why, its records, and Accept,
@@ -183,7 +208,7 @@ export const tallyWords = (tally: Suggestion["tally"]): string => `${tally.for} 
  * withdraw it; whoever may decide reads the tally beside Accept.
  */
 function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly suggestion: Suggestion; readonly notNow: DismissalStore; readonly settled: (heard: string) => void; readonly heard: (word: string) => void; readonly goes: (id: string) => ((id: string) => void) | null }) {
-  const { store, principal, seats, people } = useGraview<AnySchema>();
+  const { store, principal, seats, people, signIn } = useGraview<AnySchema>();
   const [refused, setRefused] = useState<string | null>(null);
   const [voted, setVoted] = useState<string | null>(null);
   const hint = useId();
@@ -191,6 +216,13 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
   const by = nameOfAuthor(suggestion.author, { graph: store.graph as never, schema: store.schema, seats, people });
   // Whether this seat decides it, or votes on it: the store's own answer, the one Accept would meet.
   const decides = useMemo(() => mayDecide(store, suggestion, principal), [store, suggestion, principal]);
+  /*
+   * AND WHETHER IT MAY VOTE AT ALL (Roadmap f-votes-shared-seat): a shared or
+   * signed-out seat's vote is refused unless the host keeps it advisory. Such
+   * a seat is offered the host's way in, "Sign in to vote", before it
+   * presses — or, with none, no vote to press.
+   */
+  const votes = useMemo(() => decides || store.permits({ name: VOTE_SUGGESTION, args: { suggestion: suggestion.id, vote: "for" } }, principal).ok, [decides, store, suggestion.id, principal]);
   const { tally } = suggestion;
   const settle = async (how: keyof typeof HEARD | "withdraw") => {
     setRefused(null);
@@ -236,36 +268,44 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
         </div>
       ) : null}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, minWidth: 0 }}>
-        <button
-          type="button"
-          data-testid="suggestion-accept"
-          onClick={() => void settle("accept")}
-          {...(decides ? {} : { "aria-pressed": tally.mine === "for", "aria-describedby": voting })}
-          style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}
-        >
-          {decides && suggestion.items.length > 1 ? "Accept all" : "Accept"}
-        </button>
+        {votes ? (
+          <button
+            type="button"
+            data-testid="suggestion-accept"
+            onClick={() => void settle("accept")}
+            {...(decides ? {} : { "aria-pressed": tally.mine === "for", "aria-describedby": voting })}
+            style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}
+          >
+            {decides && suggestion.items.length > 1 ? "Accept all" : "Accept"}
+          </button>
+        ) : signIn ? (
+          <button type="button" data-testid="suggestion-sign-in" onClick={() => signIn.run()} style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}>
+            Sign in to vote
+          </button>
+        ) : null}
         {/* The votes so far, to whoever may decide: a voter is told their own, not everyone's. */}
-        {decides && tally.for + tally.against > 0 ? (
+        {decides && tally.for + tally.against + (tally.advisory ? tally.advisory.for + tally.advisory.against : 0) > 0 ? (
           <span data-testid="suggestion-tally" style={{ ...WRAPS, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
             {tallyWords(tally)}
           </span>
         ) : null}
-        <button
-          type="button"
-          data-testid="suggestion-decline"
-          onClick={() => void settle("decline")}
-          {...(decides ? {} : { "aria-pressed": tally.mine === "against", "aria-describedby": voting })}
-          style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}
-        >
-          Decline
-        </button>
-        {!decides ? (
+        {votes ? (
+          <button
+            type="button"
+            data-testid="suggestion-decline"
+            onClick={() => void settle("decline")}
+            {...(decides ? {} : { "aria-pressed": tally.mine === "against", "aria-describedby": voting })}
+            style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}
+          >
+            Decline
+          </button>
+        ) : null}
+        {!decides && votes ? (
           <span id={voting} style={VISUALLY_HIDDEN}>
             Counts as your vote; somebody who may make it decides.
           </span>
         ) : null}
-        {!decides && tally.mine !== undefined ? (
+        {!decides && votes && tally.mine !== undefined ? (
           <button
             type="button"
             data-testid="suggestion-withdraw-vote"
