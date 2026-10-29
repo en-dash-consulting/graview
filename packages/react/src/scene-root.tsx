@@ -1,7 +1,9 @@
 import { SCENE_LAYERS } from "@graview/core";
 import { toIso, TOP_DOWN } from "@graview/core/city";
 import type { SceneNode } from "./scene-node.js";
-import type { AnySchema, Store } from "@graview/core";
+import type { AnySchema, GraviewApp, Store } from "@graview/core";
+import { documentOf } from "@graview/core/document";
+import type { AppWorkflows } from "@graview/core/workflows";
 import {
   aggregateId,
   cameraLimit,
@@ -829,6 +831,8 @@ function useFromAbove(): [boolean, (above: boolean) => void] {
  */
 export const cityGround = lazyModule(retryingImport(() => import("./plots.js")));
 const Plots = cityGround.part((module, props: PlotsProps) => <module.Plots {...props} />, { quiet: true });
+/* THE APP'S WORKFLOWS ON THE MAP (`workflows-layer.tsx`), fetched with the ground they stand on. */
+const Workflows = cityGround.part((module, props: Parameters<typeof import("./workflows-layer.js").WorkflowsLayer>[0]) => <module.WorkflowsLayer {...props} />, { quiet: true });
 
 /** SCENE FURNITURE in the ground's other corner: the way a map carries its own zoom. */
 function ZoomControls({ zoom, zoomBy, above, setAbove }: { readonly zoom: number; readonly zoomBy: (factor: number) => void; readonly above: boolean; readonly setAbove: (above: boolean) => void }) {
@@ -895,6 +899,8 @@ export function Scene<S extends AnySchema>({
   children,
 }: SceneProps) {
   const context = useGraview<S>();
+  /* The app's workflows, its own or its document's: a compiled app carries them only there (`declaredWorkflows`). */
+  const declaredWorkflows = context.app ? ((context.app as { workflows?: AppWorkflows }).workflows ?? (documentOf(context.app)?.workflows as AppWorkflows | undefined)) : undefined;
   const { store, scheme, views, view, setView, selection, setSelection, setMenuAt, emphasis, brand, noteMoved, robots, motion } = context;
   // A panel beside the map shows what is chosen from altitude, a record in focus among it (`mapChoice`).
   const besideTheMap = useContext(BesideTheMap);
@@ -1275,6 +1281,22 @@ export function Scene<S extends AnySchema>({
         }}
       />
       </Suspense>
+      ) : null}
+      {/* THE APP'S WORKFLOWS, each in the street beside the district it writes, wired to what it reads and writes (see workflows-layer.tsx). */}
+      {view.overview && frame.city && declaredWorkflows ? (
+        <Suspense fallback={null}>
+          <Workflows
+            frame={frame}
+            {...extent}
+            pan={frame.city.pan}
+            app={context.app as unknown as GraviewApp<AnySchema>}
+            workflows={declaredWorkflows}
+            acts={store.allMutations() as never}
+            runs={context.workflowRuns}
+            graphVersion={nodes}
+            hiddenKinds={context.hiddenKinds}
+          />
+        </Suspense>
       ) : null}
       {useDom ? (
         /*

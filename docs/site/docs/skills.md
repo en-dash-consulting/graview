@@ -1,6 +1,6 @@
 # The skills
 
-Graview's 30 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
+Graview's 31 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
 
 ```sh
 graview skills install .
@@ -38,9 +38,10 @@ graview skills install .
 - [graview-view-specs](https://graview.dev/docs/skills/graview-view-specs.html): Say how a Graview kind's card, row and page read, as data — blocks from a closed set bound by {field} templates and rule-language conditions, headlines, figures and lists of related records — and the values worked out from others (computed) that they show, verified by graview check and the page rather than by assuming the spec drew.
 - [graview-visitor-forms](https://graview.dev/docs/skills/graview-visitor-forms.html): Open one act of a Graview app to people who never join it — an RSVP, a sign-up, a request — as a form drawn alone, run as a visitor the host mints per answer, its answers landing as records and nothing else of the app shown — verified by graview check and by opening the form as that visitor.
 - [graview-worker-view](https://graview.dev/docs/skills/graview-worker-view.html): Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+- [graview-workflows](https://graview.dev/docs/skills/graview-workflows.html): Have a Graview app do something on its own — fill next week from a pattern, keep one record in step with another, set aside what is done, send what is public each morning — declared as a workflow (or a kind that follows another), checked by graview check and proven by a dry run before anything is kept.
 
 ---
 
-The 30 skills that teach an assistant the authoring moves, each ending in a real check.
+The 31 skills that teach an assistant the authoring moves, each ending in a real check.
 
 The page: https://graview.dev/docs/skills.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

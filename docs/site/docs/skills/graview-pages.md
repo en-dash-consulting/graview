@@ -1,6 +1,6 @@
 # graview-pages
 
-`graview-pages` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).
+`graview-pages` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 

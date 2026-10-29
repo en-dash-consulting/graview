@@ -34,7 +34,7 @@ graview describe <entry> [--as <role>] [--views <module>] [--place <slug|id>]
 graview docs <entry> [--out <dir>] [--views <module>]
 ```
 
-## What a model reads before it writes (30 skills)
+## What a model reads before it writes (31 skills)
 
 Skills that teach an assistant the authoring moves, each ending in a real graview check verdict. Installed into a product by `graview skills install .` — which `graview create` runs for you — into `.claude/skills` and `.agents/skills`, so Claude Code and Codex find the same instructions.
 
@@ -68,6 +68,7 @@ Skills that teach an assistant the authoring moves, each ending in a real gravie
 - [graview-view-specs](https://graview.dev/docs/skills/graview-view-specs.html): Say how a Graview kind's card, row and page read, as data — blocks from a closed set bound by {field} templates and rule-language conditions, headlines, figures and lists of related records — and the values worked out from others (computed) that they show, verified by graview check and the page rather than by assuming the spec drew.
 - [graview-visitor-forms](https://graview.dev/docs/skills/graview-visitor-forms.html): Open one act of a Graview app to people who never join it — an RSVP, a sign-up, a request — as a form drawn alone, run as a visitor the host mints per answer, its answers landing as records and nothing else of the app shown — verified by graview check and by opening the form as that visitor.
 - [graview-worker-view](https://graview.dev/docs/skills/graview-worker-view.html): Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+- [graview-workflows](https://graview.dev/docs/skills/graview-workflows.html): Have a Graview app do something on its own — fill next week from a pattern, keep one record in step with another, set aside what is done, send what is public each morning — declared as a workflow (or a kind that follows another), checked by graview check and proven by a dry run before anything is kept.
 
 ## The studio: a model edits the declaration itself
 

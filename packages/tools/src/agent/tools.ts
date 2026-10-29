@@ -47,6 +47,7 @@ import type { ToolAnnotations, ToolDefinition } from "./tool-definition.js";
 import type { AppSuggestion } from "@graview/core/learn";
 import { authorship, markHits } from "./untrusted.js";
 import { SUBSCRIPTION_TOOLS } from "./subscription-tools.js";
+import { runWorkflowToolCall, WORKFLOW_TOOL_NAMES, workflowToolsOf, type WorkflowTools } from "./workflow-tools.js";
 import { READ_HITS } from "./bounds.js";
 import {
   deriveAffordances,
@@ -233,6 +234,15 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
    * Never said in a seat's context: it is asked for, not carried.
    */
   readonly learned?: () => readonly AppSuggestion[] | Promise<readonly AppSuggestion[]>;
+  /**
+   * WHAT THE APP DOES ON ITS OWN (Roadmap f-jobs-declared): given — a host
+   * hands it to an owner's seat, `seatWorkflows` from
+   * `@graview/tools/workflows` is one — and the app declares workflows, the
+   * seat lists `run_workflow` (now, or as a dry run), and with `workflows.edit`
+   * also `pause_workflow` and `resume_workflow`. Unsaid, or a read-only
+   * seat, none of them is listed.
+   */
+  readonly workflows?: WorkflowTools;
 }
 
 /** Whether an app has a relation to another app's kind. */
@@ -668,7 +678,7 @@ const LIST_APP_SUGGESTIONS: ToolDefinition = {
   annotations: { title: "List suggested changes to the app", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 };
 
-const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, SUGGEST_CHANGES.name, DRAFT_VIEW.name, KEEP_LENS.name, FIND_LINKED.name, LIST_APP_SUGGESTIONS.name, ...SUBSCRIPTION_TOOLS.map((tool) => tool.name)];
+const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, SUGGEST_CHANGES.name, DRAFT_VIEW.name, KEEP_LENS.name, FIND_LINKED.name, LIST_APP_SUGGESTIONS.name, ...SUBSCRIPTION_TOOLS.map((tool) => tool.name), ...WORKFLOW_TOOL_NAMES];
 const MAX_NAME = 64;
 
 /**
@@ -799,12 +809,14 @@ function surfaceOf(
   schema?: AnySchema,
   /** Whether the host hands what the app's own actor learned: `list_app_suggestions` is listed. */
   learns = false,
+  /** The workflow tools the host hands this seat (`workflowToolsOf`): listed unless the seat is read-only. */
+  workflows: readonly ToolDefinition[] = [],
 ): { readonly definitions: readonly ToolDefinition[]; readonly names: ReadonlyMap<string, string> } {
   const names = toolNames(acts.map((act) => act.name));
   const drawing = [...draftTools(drafts, readOnly), ...(links ? [FIND_LINKED] : []), ...(subscribes ? SUBSCRIPTION_TOOLS : []), ...(learns ? [LIST_APP_SUGGESTIONS] : [])];
   const definitions = readOnly
     ? [...READ_TOOLS.filter((tool) => !tool.mutating), ...drawing]
-    : [...READ_TOOLS, ACT_ON_SEVERAL, ...(automated ? [SUGGEST_CHANGES] : []), ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act), schema as AnySchema))];
+    : [...READ_TOOLS, ACT_ON_SEVERAL, ...(automated ? [SUGGEST_CHANGES] : []), ...drawing, ...workflows, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act), schema as AnySchema))];
   return { definitions, names };
 }
 
@@ -819,6 +831,8 @@ export interface ToolDefinitionsOptions {
   readonly subscriptions?: boolean;
   /** List `list_app_suggestions`, as a runtime given `learned` lists it. */
   readonly learned?: boolean;
+  /** List `run_workflow` for these workflows (`declaredWorkflows(app)`'s names), and with `manage` `pause_workflow` and `resume_workflow`, as a runtime given `workflows` (with `workflows.edit`) lists them. */
+  readonly workflows?: { readonly names: readonly string[]; readonly manage?: boolean };
 }
 
 /**
@@ -852,7 +866,7 @@ export function toolDefinitions<S extends AnySchema>(
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),
   ]);
-  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true, isAutomated(principal), app.schema as AnySchema, options.learned === true);
+  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true, isAutomated(principal), app.schema as AnySchema, options.learned === true, workflowToolsOf(options.workflows?.names ?? [], options.workflows ? (options.workflows.manage ? "manage" : "run") : undefined));
   return { definitions, hash: surfaceHash(definitions) };
 }
 
@@ -891,6 +905,7 @@ export function createToolRuntime<S extends AnySchema>(
     isAutomated(principal),
     store.schema as AnySchema,
     options.learned !== undefined,
+    workflowToolsOf(options.workflows?.declared().map((one) => one.name) ?? [], options.workflows ? (options.workflows.edit ? "manage" : "run") : undefined),
   );
   const hash = surfaceHash(definitions);
   /*
@@ -1196,6 +1211,14 @@ export function createToolRuntime<S extends AnySchema>(
             subscriptions: options.subscriptions!,
           });
           return answer.ok ? { ok: true, data: answer.data } : { ok: false, error: answer.error };
+        }
+
+        case "run_workflow":
+        case "pause_workflow":
+        case "resume_workflow": {
+          // Run as the app's own actor, kept in the host's log; a pause is the host's write of the declaration (Roadmap f-jobs-declared).
+          const answer = await runWorkflowToolCall(definition.name, args, { principal, workflows: options.workflows! });
+          return answer.ok ? { ok: true, data: answer.data } : { ok: false, error: answer.error, ...(answer.reason ? { reason: answer.reason } : {}) };
         }
 
         case "list_app_suggestions": {
