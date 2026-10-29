@@ -9,7 +9,8 @@ import { isRepeat, occurrences, repeatKey, WEEKDAYS } from "../repeat.js";
 import type { AnySchema } from "../schema/schema.js";
 import { weekdaysOf } from "../sync/recurrence.js";
 import { addDays, weekdayOf } from "../wall-time.js";
-import { sha256Hex } from "../integrity.js";
+import { keyedId } from "./values.js";
+import { DEFAULT_GENERATE_KEY, MOST_GENERATED, MOST_WINDOW_DAYS, WINDOW_WORDS, windowWordsProblem } from "./generate-words.js";
 import type { GenerateStep, GenerateWindow, WorkflowValue } from "../workflow-shape.js";
 
 /*
@@ -22,25 +23,6 @@ import type { GenerateStep, GenerateWindow, WorkflowValue } from "../workflow-sh
  * is not there yet, changing what the source changed and leaving what a
  * person changed — is `@graview/tools/workflows`'.
  */
-
-/** A key when the step says none: one record per source and day. */
-export const DEFAULT_GENERATE_KEY = "{source}:{date}";
-
-/** The longest window a step makes records for, in days. */
-export const MOST_WINDOW_DAYS = 366;
-
-/** The most records one step wants in one run. */
-export const MOST_GENERATED = 2000;
-
-const WINDOW_WORDS = /^(?:today|tomorrow|this week|next week|next (\d{1,3}) days?)$/;
-
-/** What a window says in words, or why it cannot be read. */
-export function windowWordsProblem(window: string): string | undefined {
-  const found = WINDOW_WORDS.exec(window.trim().toLowerCase());
-  if (!found) return `"${window}" is not a window it can read: say "today", "tomorrow", "this week", "next week" or "next 7 days", or give { "from": …, "to": … }`;
-  if (found[1] !== undefined && (+found[1] < 1 || +found[1] > MOST_WINDOW_DAYS)) return `"${window}" is not between 1 and ${MOST_WINDOW_DAYS} days`;
-  return undefined;
-}
 
 /** The days a window covers, from and to (both included), on a day and the app's clock. A week starts on Monday. */
 export function windowDays(window: GenerateWindow, at: { readonly today: string; readonly zone: string; readonly evaluate?: (expr: string) => Value }): { readonly from: string; readonly to: string } {
@@ -109,17 +91,6 @@ export interface GenerateWants {
   readonly wanted: readonly WantedRecord[];
   /** What could not be read, by source record, in words. */
   readonly problems: readonly { readonly source?: string; readonly why: string }[];
-}
-
-/**
- * THE ID A KEY GIVES: `<kind>:wf.<workflow>.<key>`, the key folded to what
- * an id may hold (a long one by its hash) — the same form an act step's
- * key gives. The store makes a record under an id asked for and refuses a
- * second, so the same key is the same record however often a run repeats.
- */
-export function keyedId(kind: string, workflow: string, key: string): string {
-  const slug = key.toLowerCase().replace(/[^a-z0-9._:-]+/g, "-").replace(/^-+|-+$/g, "");
-  return `${kind}:wf.${workflow}.${slug.length > 0 && slug.length <= 120 ? slug : sha256Hex(key).slice(0, 24)}`;
 }
 
 const asValue = (value: Value): unknown => (value instanceof NodeSet ? value.nodes.map((node) => node.id) : value !== null && typeof value === "object" && !Array.isArray(value) && typeof (value as AnyGraphNode).id === "string" ? (value as AnyGraphNode).id : value);
@@ -214,6 +185,3 @@ function valueOf(spec: WorkflowValue, at: { readonly node: AnyGraphNode; readonl
   if (spec !== null && typeof spec === "object" && !Array.isArray(spec)) return asValue(at.read((spec as { expr: string }).expr));
   return spec;
 }
-
-/** The `$` names a generate step's values may give. */
-export const GENERATE_REFS = ["$date", "$source", "$subject", "$today", "$now"] as const;

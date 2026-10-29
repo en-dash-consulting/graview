@@ -18,7 +18,8 @@ export { STEP_KINDS, stepKindOf, stepShapes, type StepCheck, type StepKind, type
 export { actStep, keyFields, kindWords } from "./workflows/step-act.js";
 export { agentStep } from "./workflows/step-agent.js";
 export { actsMaking, generateStep } from "./workflows/step-generate.js";
-export { datesIn, DEFAULT_GENERATE_KEY, generateWants, keyedId, MOST_GENERATED, MOST_WINDOW_DAYS, windowDays, type GenerateReading, type GenerateWants, type WantedRecord } from "./workflows/generate.js";
+export { datesIn, generateWants, windowDays, type GenerateReading, type GenerateWants, type WantedRecord } from "./workflows/generate.js";
+export { DEFAULT_GENERATE_KEY, MOST_GENERATED, MOST_WINDOW_DAYS } from "./workflows/generate-words.js";
 export { workflowWorldOfApp, workflowWorldOfDocument, type WorkflowConnection, type WorkflowWorld } from "./workflows/world.js";
 export { WorkflowSpec, WorkflowStepSpec, WorkflowTriggerSpec, WorkflowsSpec } from "./document/workflow-spec.js";
 export { DREAMING, dreamingWorkflow, resolveWorkflow, workflowAuthor, workflowReach, workflowsOf, type ResolvedWorkflow } from "./workflows/resolve.js";

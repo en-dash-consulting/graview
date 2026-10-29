@@ -4,7 +4,7 @@ import { ExprSyntaxError, parseExpr } from "../document/expr/parse.js";
 import { conditionProblems } from "../job-findings.js";
 import { nearestAct } from "../mutations/act-spelling.js";
 import type { GenerateStep } from "../workflow-shape.js";
-import { DEFAULT_GENERATE_KEY, GENERATE_REFS, windowWordsProblem } from "./generate.js";
+import { DEFAULT_GENERATE_KEY, GENERATE_REFS, windowWordsProblem } from "./generate-words.js";
 import { keyFields, kindWords } from "./step-act.js";
 import type { StepCheck, StepKind, StepShapes, WorkflowFinding } from "./steps.js";
 import type { WorkflowWorld } from "./world.js";

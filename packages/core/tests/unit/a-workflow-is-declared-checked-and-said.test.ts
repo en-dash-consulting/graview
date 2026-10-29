@@ -65,7 +65,7 @@ describe("a workflow in the declaration", () => {
   });
 
   it("is a closed set of step kinds, each told apart by one key", () => {
-    expect(Object.keys(STEP_KINDS)).toEqual(["act", "agent"]);
+    expect(Object.keys(STEP_KINDS)).toEqual(["act", "agent", "generate"]);
   });
 });
 

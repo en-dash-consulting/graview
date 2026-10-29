@@ -42,7 +42,7 @@ function homeflow(document: GraviewDocument = fixture()) {
       edges: [],
     },
   });
-  return { app, store, steps: (document.workflows!["next-weeks-events"] as { steps: GenerateStep[] }).steps };
+  return { app, store, steps: (document.workflows!["next-weeks-events"] as unknown as { steps: GenerateStep[] }).steps };
 }
 
 const wantsOf = (step: GenerateStep, store: Store<AnySchema>) => generateWants(step, { graph: store.graph, schema: store.schema, workflow: "next-weeks-events", now: SUNDAY_EVENING, timeZone: "America/New_York" });
