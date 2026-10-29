@@ -14,6 +14,7 @@ acceptanceCriteria:
   - "a full local pnpm verify and the branch Nightly hold before the release PR merges"
   - "r-0-1-40 is published listing only what shipped"
 description: "Nick asked, from a hosted family weekend app's journey home view, to drop photos and a phone video from Finder onto a day card and have moments appear there: Roadmap f-views-take-a-drop (FR-193), with the face's empty-files drop hint and an empty video field's control checked beside it."
+completedAt: "2026-10-20T18:00:00.000Z"
 lastModified: "2026-10-20T07:30:00.000Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---

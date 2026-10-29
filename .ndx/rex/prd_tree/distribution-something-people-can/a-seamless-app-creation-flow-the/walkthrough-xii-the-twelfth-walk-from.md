@@ -15,6 +15,7 @@ acceptanceCriteria:
   - "all nine stages walked by an agent that did not do the previous walks"
   - "docs/walkthrough-findings.md gains nothing; if it does, the fixes land with criteria and the walk repeats"
 description: "Roadmap f-walk-xii (later). The eleventh walk (an animal shelter, 2026-10-18) found W-226 to W-231, all fixed in 0.1.34. Carried open in docs/walkthrough-findings.md: playback's two claims failing locally, no two gauntlet kinds sharing a field name, the watch not hearing an act's own input refusing, 25 Tabs to a long list's first box on the pages, the scaffold's record page showing fields as plain text, 41 keyboard presses to tie an animal to a kennel on the scene, and graview create --link under npm writing link: dependencies npm cannot install."
+completedAt: "2026-10-20T03:23:46.000Z"
 lastModified: "2026-10-20T04:00:00.000Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---

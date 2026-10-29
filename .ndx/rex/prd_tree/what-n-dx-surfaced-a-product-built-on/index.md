@@ -9,6 +9,7 @@ tags:
   - "framework"
 source: "n-dx's Graview projection notepad, 2026-10-10 (../n-dx, packages/graview and packages/graview-face)"
 description: "The n-dx agent built a Graview projection of n-dx (an adapter emitting a document and a snapshot, a product face, a SyncEngine to rex over MCP) and wrote down what would have made it easier: stable block keys, types from the document, document-level facts, field roles, a finer bar, a JSON Schema, preview/shots/doctor, sync conflict policy and snapshots that say what they hold."
+completedAt: "2026-10-11T18:40:00.000Z"
 lastModified: "2026-10-11T08:00:00.000Z"
 ---
 
