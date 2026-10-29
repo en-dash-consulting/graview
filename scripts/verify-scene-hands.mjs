@@ -108,11 +108,13 @@ async function settled(page) {
   await page.waitForTimeout(SETTLE);
   const where = () =>
     page.evaluate(() => [...document.querySelectorAll(".graview-ground [data-graview-view]")].map((card) => card.getBoundingClientRect()).map((box) => `${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)}`).join(" ") + (document.querySelector(".graview-ground[data-graview-settled]") ? "" : "moving"));
+  // Still across two looks, 400 ms apart: on a slow runner one quiet look came while the sheet's own module was still loading.
   let last = await where();
-  for (let i = 0; i < 16; i += 1) {
-    await page.waitForTimeout(300);
+  let still = 0;
+  for (let i = 0; i < 30 && still < 2; i += 1) {
+    await page.waitForTimeout(400);
     const now = await where();
-    if (now === last) return;
+    still = now === last ? still + 1 : 0;
     last = now;
   }
 }
@@ -144,6 +146,8 @@ async function open(page, hash = "#overview=1") {
   opened += 1;
   await arriveWithoutWebfonts(page, `${at("discography")}/?fresh=1&visit=${opened}${hash}`);
   await page.waitForFunction(() => "__graviewReady" in window, null, { timeout: 120_000 });
+  // A district chosen or opened brings its panel up, beside the map or as a sheet, and the city is fitted to what it leaves: wait for it.
+  if (/[#&](sel|focus)=/.test(hash)) await page.waitForSelector("[data-graview-map-panel]", { timeout: 30_000 }).catch(() => {});
   await settled(page);
 }
 
