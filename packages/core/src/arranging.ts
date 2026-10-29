@@ -1,5 +1,5 @@
 import { reaches, type Archived } from "./graph/archived.js";
-import { humanizeField, labelOf } from "./schema/define-node.js";
+import { humanizeField, humanizeValue, labelOf } from "./schema/define-node.js";
 import { tellApart } from "./schema/reading.js";
 import { matchNode, parseQuery } from "./search.js";
 import { dayAsRead, isoToday, monthAsRead, PARTIAL_DAY } from "./days.js";
@@ -274,7 +274,7 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
       } else {
         const format = definition?.display?.format?.[grouping.by];
         // A choice's group is headed by its option's label, never its id (Roadmap f-option-labels).
-        put(String(value), format ? format(value) : type === "choice" ? humanizeField(String(value)) : String(value), node);
+        put(String(value), format ? format(value) : type === "choice" ? humanizeValue(String(value)) : String(value), node);
       }
       continue;
     }

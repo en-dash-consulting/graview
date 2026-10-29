@@ -532,10 +532,15 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
  * sentence and a refusal, as `{amount | money}` does — worked out here, so
  * a page handed the compiled app renders it with nothing more.
  */
-function saidAsDeclared(parts: readonly TemplatePart[], fields: GraviewDocument["kinds"][string]["fields"] | undefined): readonly TemplatePart[] {
+function saidAsDeclared(parts: readonly TemplatePart[], fields: GraviewDocument["kinds"][string]["fields"] | undefined, computed?: GraviewDocument["kinds"][string]["computed"]): readonly TemplatePart[] {
   return parts.map((part) => {
-    const format = !part.format && part.expr?.t === "ident" ? fields?.[part.expr.name]?.format : undefined;
-    return format === "money" || format === "percent" ? { ...part, format } : part;
+    if (part.format || part.expr?.t !== "ident") return part;
+    const name = part.expr.name;
+    const worked = computed?.[name];
+    const said: { readonly format?: string; readonly places?: number } | undefined = fields?.[name] ?? (typeof worked === "object" ? worked : undefined);
+    const format = said?.format;
+    // Money in whole units where the field says `"places": 0`, as `{x | money: 0}` says it.
+    return format === "money" || format === "percent" ? { ...part, format, ...(format === "money" && said?.places === 0 ? { formatArgs: ["0"] } : {}) } : part;
   });
 }
 
@@ -553,8 +558,8 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
     // Which of them work out a length of time, read from their parse here, where the parser is (`durations.ts`).
     const durations = computed ? durationsOf(document, kind, [...computed]) : [];
     kinds[kind] = {
-      ...(labelSource ? { label: saidAsDeclared(parseTemplate(labelSource), spec.fields) } : {}),
-      ...(spec.describe ? { describe: saidAsDeclared(parseTemplate(spec.describe), spec.fields) } : {}),
+      ...(labelSource ? { label: saidAsDeclared(parseTemplate(labelSource), spec.fields, spec.computed) } : {}),
+      ...(spec.describe ? { describe: saidAsDeclared(parseTemplate(spec.describe), spec.fields, spec.computed) } : {}),
       ...(computed ? { computed: [...computed] } : {}),
       ...(durations.length > 0 ? { durations } : {}),
       ...(keptInStep.has(kind) ? { keptInStep: keptInStep.get(kind)! } : {}),

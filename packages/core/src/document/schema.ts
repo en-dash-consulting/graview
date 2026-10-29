@@ -39,6 +39,14 @@ export const FIELD_NAME = /^[a-z][A-Za-z0-9]*$/;
 export const ALIAS = /^[a-z0-9\u00df-\u00ff'-]+( [a-z0-9\u00df-\u00ff'-]+){0,2}$/;
 /** The most aliases a kind or a field keeps. */
 export const MOST_ALIASES = 12;
+/**
+ * How many values a kind may work out (FR-83): each is worked out for every
+ * record a card, a row or a page draws, from a budget of steps of its own,
+ * so the cap bounds what one record costs to read — sixty expressions, not
+ * a price breakdown's worth less (Roadmap f-lifelogics-findings, which met
+ * the twenty it was).
+ */
+export const MOST_COMPUTED = 60;
 const RESERVED_FIELDS = new Set(["id", "kind"]);
 
 /**
@@ -121,6 +129,8 @@ function build() {
       unit: z.optional(str(undefined, 12)),
       /** How a number is shown (`money`, `percent`, `duration`), or that a `text` field is written in Markdown (FR-180; the checker's `field-format` says which goes where). */
       format: z.optional(z.enum(["money", "percent", "duration", "markdown"])),
+      /** `0`: money said in whole units, rounded — "$22,758" for 22758.40. Without it money shows cents only where a sum has them, never ".00". Only money says it. */
+      places: z.optional(z.literal(0)),
       /** A number's range (FR-114): the least and the most it may be, and the step its values are whole multiples of (JSON Schema's `multipleOf`). */
       min: z.optional(z.number()),
       max: z.optional(z.number()),
@@ -150,6 +160,7 @@ function build() {
           if (!f.options?.includes(option)) ctx.addIssue({ code: "custom", message: `"${option}" is labeled, and is none of the field's options`, path: ["optionLabels", option] });
         }
         if (f.type !== "list" && f.of) ctx.addIssue({ code: "custom", message: '"of" belongs only on a list field', path: ["of"] });
+        if (f.places !== undefined && !(f.format === "money" || (!f.format && /^[A-Z]{3}$/.test(f.unit ?? "")))) ctx.addIssue({ code: "custom", message: '"places" belongs only on money: a number field with "format": "money"', path: ["places"] });
         if (f.repeats && f.type !== "date" && f.type !== "datetime") ctx.addIssue({ code: "custom", message: '"repeats" belongs only on a date or datetime field', path: ["repeats"] });
       }),
     );
@@ -184,6 +195,8 @@ function build() {
       /** How its number is said, as a number field's is (FR-217): money, a percent, a duration; and its `unit`. Set with `set-format`. */
       format: z.optional(z.enum(["money", "percent", "duration"])),
       unit: z.optional(str(1, 12)),
+      /** `0`: its money said in whole units, rounded, as a money field's `places` says. */
+      places: z.optional(z.literal(0)),
       /** Kept off a record's page, card and CSV, and still worked out for a sort, a rule or a view (FR-217). */
       hidden: z.optional(z.boolean()),
     }),
@@ -220,7 +233,7 @@ function build() {
      * expression read like a field — `"net": "sum(out('includes'), list * units)"` —
      * or `{ expr, label?, description? }`. Never written by an act.
      */
-    computed: z.optional(z.record(z.string(), ComputedSpec).check(z.refine((c: Record<string, unknown>) => Object.keys(c).length <= 20, "a kind works out at most 20 computed fields"))),
+    computed: z.optional(z.record(z.string(), ComputedSpec).check(z.refine((c: Record<string, unknown>) => Object.keys(c).length <= MOST_COMPUTED, `a kind works out at most ${MOST_COMPUTED} computed fields`))),
     /**
      * Which field fills which role (the definition's `fieldRoles`): `when`, a
      * record's natural time, which lists open newest first by and a timeline

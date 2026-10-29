@@ -11,6 +11,7 @@ import {
   defineNode,
   edgeId,
   humanizeField,
+  humanizeValue,
   RuleBudgetError,
   withArticle,
   type AnyGraphNode,
@@ -292,7 +293,7 @@ export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): 
   if (spec.collaborative !== undefined && (spec.type === "text" || spec.type === "string")) (z.defOf(schema) as Record<symbol, 0 | 1>)[Symbol.for("@graview/core:collaborative")] = spec.collaborative ? 1 : 0;
   if (spec.description) schema = schema.check(z.describe(spec.description));
   // What a number is said as — money in the app's currency, a percent, a measure — read by every face, every form and every tool.
-  if (numeric && (spec.format === "money" || spec.format === "percent" || (!spec.format && spec.unit))) markAmount(schema, { ...money, ...(spec.format ? { format: spec.format } : {}), ...(spec.unit ? { unit: spec.unit } : {}) });
+  if (numeric && (spec.format === "money" || spec.format === "percent" || (!spec.format && spec.unit))) markAmount(schema, { ...money, ...(spec.format ? { format: spec.format } : {}), ...(spec.unit ? { unit: spec.unit } : {}), ...(spec.places === 0 ? { places: 0 as const } : {}) });
   return optional ? z.optional(schema) : schema;
 }
 
@@ -379,11 +380,13 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   for (const [kind, spec] of Object.entries(document.kinds)) {
     const computed = plan.kinds[kind]?.computed;
     const linked = linkedEdges(spec.edges);
+    const choices = new Map(Object.entries(spec.fields).flatMap(([name, f]) => (f.type === "enum" ? [[name, f.optionLabels ?? {}] as const] : [])));
     shapes.set(kind, {
       fields: new Set([...Object.keys(spec.fields), ...linked.keys()]),
       edges: new Map(Object.entries(localEdges(spec.edges)).map(([name, e]) => [name, e.cardinality ?? "many"])),
       ...(computed ? { computed: new Map(computed) } : {}),
       ...(linked.size > 0 ? { linked } : {}),
+      ...(choices.size > 0 ? { choices } : {}),
     });
   }
   // No record is of the whole graph's shape: it is its facts alone.
@@ -427,7 +430,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
      */
     const optionLabeled = Object.entries(spec.fields).filter(([, f]) => f.type === "enum" && ((f.optionLabels && Object.keys(f.optionLabels).length > 0) || f.multiple));
     // A choice that takes several (FR-233) says each option it holds by its label, in one line: "CTO, QA".
-    const optionWords = (f: FieldSpec) => (value: unknown): string => (typeof value === "string" && f.optionLabels && Object.hasOwn(f.optionLabels, value) ? f.optionLabels[value]! : humanizeField(String(value)));
+    const optionWords = (f: FieldSpec) => (value: unknown): string => (typeof value === "string" && f.optionLabels && Object.hasOwn(f.optionLabels, value) ? f.optionLabels[value]! : humanizeValue(String(value)));
     const format = Object.fromEntries(optionLabeled.map(([n, f]) => [n, f.multiple ? (value: unknown) => (Array.isArray(value) ? value.map(optionWords(f)).join(", ") : optionWords(f)(value)) : optionWords(f)]));
     const formatted = optionLabeled.length > 0;
     // Defaults stay out of the zod schema (hydration must not invent values) and ride beside it, for a repair to read.
@@ -857,13 +860,13 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
  * (`amount`), as a number field of that format is marked. With nothing to
  * add, it is left as the document wrote it.
  */
-function workedOutAs(entry: { readonly expr: string; readonly format?: string; readonly unit?: string }, duration: boolean, money: { readonly currency?: string; readonly locale?: string } | undefined): Record<string, unknown> | undefined {
+function workedOutAs(entry: { readonly expr: string; readonly format?: string; readonly unit?: string; readonly places?: 0 }, duration: boolean, money: { readonly currency?: string; readonly locale?: string } | undefined): Record<string, unknown> | undefined {
   const asDuration = duration || entry.format === "duration";
   const amounted = entry.format === "money" || entry.format === "percent" || (!entry.format && entry.unit !== undefined);
   if (!asDuration && !amounted) return undefined;
   return {
     ...entry,
     ...(asDuration ? { as: "duration" } : {}),
-    ...(amounted ? { amount: { ...money, ...(entry.format ? { format: entry.format } : {}), ...(entry.unit ? { unit: entry.unit } : {}) } } : {}),
+    ...(amounted ? { amount: { ...money, ...(entry.format ? { format: entry.format } : {}), ...(entry.unit ? { unit: entry.unit } : {}), ...(entry.places === 0 ? { places: 0 } : {}) } } : {}),
   };
 }

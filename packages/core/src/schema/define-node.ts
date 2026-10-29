@@ -1,7 +1,7 @@
 import type { z } from "zod";
 import { isoToday, numberAsRead } from "../days.js";
 import { capitalize } from "../capital.js";
-import { humanizeField } from "./humanize.js";
+import { humanizeField, humanizeValue } from "./humanize.js";
 import type { FileValue } from "./files.js";
 import type { LinkedRecordRef, LinkedRelation } from "./linked.js";
 import type {
@@ -164,7 +164,7 @@ export function actTitle(act: { readonly name: string; readonly title?: string }
 }
 
 // A key spoken (`humanize.ts`): a module of its own, so what speaks one alone — a view's `choices` — reaches nothing else here.
-export { humanizeField };
+export { humanizeField, humanizeValue };
 
 /**
  * A field in words, as the declaration says it: its `display.labels` entry,
