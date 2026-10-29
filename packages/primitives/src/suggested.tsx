@@ -1,6 +1,6 @@
-import { nameOfAuthor, VOTE_SUGGESTION, type AnySchema, type DismissalStore, type Suggestion } from "@graview/core";
+import { actingAs, nameOfAuthor, VOTE_SUGGESTION, type AnySchema, type DismissalStore, type Suggestion } from "@graview/core";
 import { lineageWords } from "@graview/core/provenance";
-import { acceptSuggestion, declineSuggestion, mayDecide, suggestions, voteSuggestion } from "@graview/core/tidying";
+import { acceptSuggestion, declineSuggestion, isProposal, mayDecide, suggestions, voteSuggestion, withdrawSuggestion } from "@graview/core/tidying";
 import { POPOVER_STYLE, useGoTo, useGraph, useGraview, usePopover } from "@graview/react/provider";
 import { useEffect, useId, useMemo, useReducer, useState } from "react";
 import { dismissalsOf, tomorrow } from "./dismissals.js";
@@ -47,6 +47,11 @@ export function awayWords(waiting: number, tidied: number, agreed = 0): string |
  * signed-out seat whose vote the store would refuse (Roadmap
  * f-votes-shared-seat) is offered the host's "Sign in to vote" in their
  * place, or no vote at all where the host gave no way in.
+ *
+ * What a person proposed (Roadmap f-proposals-for-review) is listed apart,
+ * first, under "Proposed": each "Proposed by Ada", answered by whoever
+ * may make it as the app's own suggestions are — and its proposer, who may
+ * not, is offered Withdraw in their place.
  */
 export function SuggestedTray() {
   const { store, principal, dismissals: host, whileAway, app } = useGraview<AnySchema>();
@@ -153,11 +158,21 @@ export function SuggestedTray() {
             </p>
           ) : null}
           <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.45, color: "var(--graview-ink-faint)" }}>{waiting.length > 0 ? "Not made yet: each waits for you." : "What it did is in Activity."}</p>
-          <ol data-testid="suggestions" style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, fontSize: "0.8125rem", minWidth: 0 }}>
-            {waiting.map((one) => (
-              <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} heard={hear} goes={goes} />
-            ))}
-          </ol>
+          {/* A person's proposals apart from the app's own suggestions, and first: somebody is waiting on an answer. */}
+          {[waiting.filter(isProposal), waiting.filter((one) => !isProposal(one))].map((some, at) =>
+            some.length === 0 ? null : (
+              <div key={at} style={{ display: "grid", gap: 6, minWidth: 0 }}>
+                {waiting.some(isProposal) ? (
+                  <h3 style={{ margin: 0, fontSize: "0.75rem", fontWeight: 600, color: "var(--graview-ink-muted)" }}>{at === 0 ? "Proposed" : "Suggested by the app"}</h3>
+                ) : null}
+                <ol data-testid={at === 0 ? "proposals" : "suggestions"} style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, fontSize: "0.8125rem", minWidth: 0 }}>
+                  {some.map((one) => (
+                    <SuggestionRow key={one.id} suggestion={one} notNow={notNow} settled={settled} heard={hear} goes={goes} />
+                  ))}
+                </ol>
+              </div>
+            ),
+          )}
           {/* What the last press did, said to a screen reader: the row it was on is gone. */}
           <span role="status" data-testid="suggestion-heard" style={VISUALLY_HIDDEN}>
             {heard}
@@ -172,7 +187,7 @@ export function SuggestedTray() {
 const WRAPS = { minWidth: 0, overflowWrap: "anywhere" } as const;
 
 /** What each answer to a suggestion is said as, once the row it was on is gone. */
-const HEARD = { accept: "Accepted.", decline: "Declined: it will not be suggested again.", later: "Hidden from you until tomorrow." } as const;
+const HEARD = { accept: "Accepted.", decline: "Declined: it will not be suggested again.", later: "Hidden from you until tomorrow.", withdraw: "Withdrawn." } as const;
 
 /** What a vote is said as, to the person who cast it: the row stays, since the suggestion still waits. */
 const VOTED = { recorded: "Your vote was recorded.", withdrawn: "Your vote was withdrawn." } as const;
@@ -224,10 +239,14 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
    */
   const votes = useMemo(() => decides || store.permits({ name: VOTE_SUGGESTION, args: { suggestion: suggestion.id, vote: "for" } }, principal).ok, [decides, store, suggestion.id, principal]);
   const { tally } = suggestion;
-  const settle = async (how: keyof typeof HEARD | "withdraw") => {
+  // A person's proposal (Roadmap f-proposals-for-review), and whether it is this seat's own: its proposer withdraws it rather than votes on it.
+  const proposal = isProposal(suggestion);
+  const mine = proposal && principal !== undefined && !decides && actingAs(principal).id === suggestion.lineage!.proposedBy;
+  const settle = async (how: keyof typeof HEARD | "unvote") => {
     setRefused(null);
     try {
-      if (how === "accept" || how === "decline") {
+      if (how === "withdraw") withdrawSuggestion(store, suggestion.id, { author: principal });
+      else if (how === "accept" || how === "decline") {
         const answer = how === "accept" ? acceptSuggestion(store, suggestion.id, { author: principal }) : declineSuggestion(store, suggestion.id, { author: principal });
         // A vote, not the change: the suggestion still waits, so the row stays and says so.
         if (answer.voted !== undefined) {
@@ -235,7 +254,7 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
           heard(VOTED.recorded);
           return;
         }
-      } else if (how === "withdraw") {
+      } else if (how === "unvote") {
         voteSuggestion(store, suggestion.id, null, { author: principal });
         setVoted(VOTED.withdrawn);
         heard(VOTED.withdrawn);
@@ -251,10 +270,22 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
   return (
     <li data-testid="suggestion" data-suggestion={suggestion.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 5, lineHeight: 1.45, minWidth: 0 }}>
       <span data-graview-suggestion-words="" style={WRAPS}>
-        <strong style={{ fontWeight: 600 }}>{by}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>suggests</span> {suggestion.items.length > 1 ? headlineAfter(by, suggestion.headline ?? suggestion.intent) : suggestion.intent}
+        {proposal ? (
+          <>
+            <span data-testid="proposed-by" style={{ color: "var(--graview-ink-muted)" }}>
+              Proposed by <strong style={{ fontWeight: 600, color: "var(--graview-ink)" }}>{mine ? "you" : by}</strong>:
+            </span>{" "}
+          </>
+        ) : (
+          <>
+            <strong style={{ fontWeight: 600 }}>{by}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>suggests</span>{" "}
+          </>
+        )}
+        {suggestion.items.length > 1 ? headlineAfter(by, suggestion.headline ?? suggestion.intent) : suggestion.intent}
       </span>
       <SuggestionItems suggestion={suggestion} decides={decides} heard={heard} />
-      {suggestion.lineage ? (
+      {/* A proposal's basis is the person's own words, when they gave any: "Proposed by Ada" is said once, above. */}
+      {suggestion.lineage && !(proposal && suggestion.lineage.basis.startsWith("Proposed by ")) ? (
         <span data-graview-lineage="" style={{ ...WRAPS, color: "var(--graview-ink-faint)" }}>
           {lineageWords(suggestion.lineage)}
         </span>
@@ -268,7 +299,11 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
         </div>
       ) : null}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, minWidth: 0 }}>
-        {votes ? (
+        {mine ? (
+          <button type="button" data-testid="proposal-withdraw" onClick={() => void settle("withdraw")} style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}>
+            Withdraw
+          </button>
+        ) : votes ? (
           <button
             type="button"
             data-testid="suggestion-accept"
@@ -289,7 +324,7 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
             {tallyWords(tally)}
           </span>
         ) : null}
-        {votes ? (
+        {votes && !mine ? (
           <button
             type="button"
             data-testid="suggestion-decline"
@@ -300,16 +335,16 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
             Decline
           </button>
         ) : null}
-        {!decides && votes ? (
+        {!decides && votes && !mine ? (
           <span id={voting} style={VISUALLY_HIDDEN}>
             Counts as your vote; somebody who may make it decides.
           </span>
         ) : null}
-        {!decides && votes && tally.mine !== undefined ? (
+        {!decides && votes && !mine && tally.mine !== undefined ? (
           <button
             type="button"
             data-testid="suggestion-withdraw-vote"
-            onClick={() => void settle("withdraw")}
+            onClick={() => void settle("unvote")}
             style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem", border: "1px solid transparent", background: "transparent", boxShadow: "none", color: "var(--graview-ink-muted)" }}
           >
             Withdraw vote

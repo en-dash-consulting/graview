@@ -65,6 +65,16 @@ export interface Grant {
    * that connects and severs nothing (`grant-own-end-without-link`).
    */
   readonly ownEnd?: boolean;
+  /**
+   * WHAT THESE ROLES MAY PROPOSE (Roadmap f-proposals-for-review): acts, by
+   * name or `"*"`, that a seat holding the grant may not run but may ask
+   * for — its call kept as a suggestion with the person as its author
+   * (`propose`, `@graview/core/tidying`), made when somebody who may run it
+   * accepts it. On the grant's `kinds`, as `mutations` are; `self` and
+   * `ownEnd` hold what it runs, not what it proposes. A grant that only
+   * proposes says `mutations: []`.
+   */
+  readonly propose?: readonly string[] | "*";
 }
 
 /**

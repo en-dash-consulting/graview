@@ -188,7 +188,8 @@ describe("a hosted page", () => {
     // 1066 KB once the 0.1.63 batch held C1–C9 and the workflows (W1, W2, W3, W5), each measured alone against main: the scene face measured 1_090_838 B.
     // 1066 KB once the archive step and a run asked as one suggestion (Roadmap f-retention-rules, f-job-approvals) joined the 0.1.63 batch: the scene face measured 1_090_783 B.
     // 1068 KB once the 0.1.63 batch also held the archive step and a run asked as one suggestion (W4): the scene face measured 1_092_396 B.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1068 * 1024);
+    // 1071 KB since a person came to propose changes and a reviewer to accept them (Roadmap f-proposals-for-review): the store's own "Propose changes" act and the proposal it makes, a grant's `propose`, and an act's form whose button reads "Propose": the scene face measured 1_096_224 B, 3_828 more than batch/0-1-63 (1_092_396).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1071 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

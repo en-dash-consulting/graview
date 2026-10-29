@@ -464,6 +464,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     ...(str(g, "describe") ? { describe: str(g, "describe") } : {}),
     ...(g["self"] === true ? { self: true } : {}),
     ...(g["ownEnd"] === true ? { ownEnd: true } : {}),
+    ...(Array.isArray(g["propose"]) && g["propose"].length > 0 ? { propose: (g["propose"] as string[]).includes("*") ? "*" : sorted((g["propose"] as string[]).map(String)) } : {}),
   });
   // A sight's own words are the framework's alone: a document's sight has none to keep.
   const fieldsOf = (sight: Node, key: string) => (Array.isArray(sight[key]) && (sight[key] as unknown[]).length > 0 ? { [key]: (sight[key] as unknown[]).map(String) } : {});
@@ -476,7 +477,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     ...fieldsOf(sight, "hide"),
   });
   const policyOf = (read: Read) => ({
-    grants: read.ofKind("grant").map((g) => grantOf(read, g)).filter((grant) => grant.mutations === "*" || grant.mutations.length > 0),
+    grants: read.ofKind("grant").map((g) => grantOf(read, g)).filter((grant) => grant.mutations === "*" || grant.mutations.length > 0 || "propose" in grant),
     sees: read.ofKind("sight").map((sight) => sightOf(read, sight)).filter((sight) => sight.kinds.length > 0),
   });
   const [had, has] = [policyOf(was), policyOf(now)];

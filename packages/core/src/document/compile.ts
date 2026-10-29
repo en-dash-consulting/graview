@@ -405,7 +405,10 @@ function validate(document: GraviewDocument): Finding[] {
   if (policy) {
     policy.grants.forEach((grant, i) => {
       if (grant.roles !== "*" && roles.size > 0) for (const r of grant.roles) if (!roles.has(r)) findings.push(error("grant-role", `policy.grants.${i}.roles`, `"${r}" is not one of the document's roles`));
-      if (grant.mutations !== "*") for (const m of grant.mutations) if (!acts[m] && !derivedActOf(m) && !documentRelationActOf(m, document.kinds)) findings.push(error("grant-act", `policy.grants.${i}.mutations`, `"${m}" is not an act this document declares`, didYouMeanAct(m, document)));
+      for (const key of ["mutations", "propose"] as const) {
+        const named = grant[key];
+        if (named !== undefined && named !== "*") for (const m of named) if (!acts[m] && !derivedActOf(m) && !documentRelationActOf(m, document.kinds)) findings.push(error("grant-act", `policy.grants.${i}.${key}`, `"${m}" is not an act this document declares`, didYouMeanAct(m, document)));
+      }
     });
     (policy.sees ?? []).forEach((sight, i) => {
       for (const k of sight.kinds) if (!kinds.has(k)) findings.push(error("sight-kind", `policy.sees.${i}.kinds`, `"${k}" is not a kind this document declares`));

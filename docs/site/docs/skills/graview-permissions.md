@@ -48,6 +48,8 @@ The coach sees "Show the installation" in the person's menu on the app bar and t
 
 1. **Open one act to people with no account.** An RSVP or a sign-up is a grant to a `visitor` role the host mints per answer, a sight that never names it, and `forms.<name>` saying the act: the `graview-visitor-forms` skill.
 
+1. **Let a role propose what it may not run.** `{ roles: ["helper"], mutations: [], propose: ["close-task"] }`: the act's form reads "Propose", an agent acting for them gets `propose_changes`, and the change waits in the Suggested tray as "Proposed by Ada" until a seat that may run it accepts it, as themselves (lineage `proposedBy`), or declines it. Reviewing is running: no grant of its own.
+
 ### Worked examples
 
 - `packages/core/tests/unit/permissions.test.ts` — grants by role, by mutation and by subject kind, and the refusal that names who could

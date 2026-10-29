@@ -23,11 +23,22 @@
  * (`tidying.autoAcceptAt`), by the actor, with the voters in its lineage.
  * Loaded, this module teaches the store how a vote's op is made
  * (`VOTING`), as `@graview/core/publishing` does for a publish.
+ *
+ * And a person proposes (Roadmap f-proposals-for-review): a seat the
+ * policy lets propose an act it may not run (a grant's `propose`) keeps
+ * its calls as the same suggestion op, with itself as the author
+ * (`propose`), which waits in the tray as "Proposed by Ada" until whoever
+ * may run them accepts it — made as the reviewer, its lineage naming the
+ * proposal and its proposer — or declines it, or the proposer withdraws it.
  */
 import { GraphError } from "./graph/graph.js";
 import type { MutationCall } from "./mutations/types.js";
 import { advisoryVoterOf, signedOutSeat, VOTE_SUGGESTION, VOTING, type Vote } from "./mutations/vote-suggestion.js";
 import { lineageOf, LINEAGE_VOTERS_LIMIT, type Lineage } from "./ops/lineage.js";
+import { PROPOSE_CHANGES, type ProposeChangesArgs } from "./mutations/propose-changes.js";
+import { permittedMutations, proposes, subjectKinds } from "./permissions/policy.js";
+import type { Policy } from "./permissions/types.js";
+import type { AnyMutationDefinition } from "./mutations/types.js";
 import { expired, suggestionsIn, votesIn, type Dismissal, type Suggestion } from "./ops/suggestions.js";
 import { declinedIn, isAutomated, meaningKey, type ActMeanings } from "./ops/tidying.js";
 import type { Author, Operation, Via } from "./ops/types.js";
@@ -81,7 +92,7 @@ export interface SuggestionsOptions {
  */
 interface Kept<S extends AnySchema> {
   readonly by: Author | Principal;
-  rehearsal(): Kept<S> & { suggesting: boolean };
+  rehearsal(): Kept<S> & { suggesting: boolean; proposing: boolean };
   applying(calls: readonly MutationCall[], options: ApplyOptions): ApplyResult<S>;
   nextId(): string;
   mintBatch(kind: "batch" | "undo"): string;
@@ -290,7 +301,9 @@ export function declineSuggestion<S extends AnySchema>(store: Store<S>, id: stri
   const suggestion = waitingFor(whole, id, author);
   // From a seat the store would refuse the change, a vote against it (Roadmap f-suggestion-votes): a decline is whoever may decide's.
   if (!mayDecide(whole, suggestion, author as Principal)) return voteSuggestion(whole, id, "against", { ...options, author });
-  return whole.undo(suggestion.batch, { ...options, author });
+  // A person's proposal is answered in words (Roadmap f-proposals-for-review): "Declined Ada's proposal: …".
+  const answered = isProposal(suggestion) && options.intent === undefined ? { intent: `Declined ${possessive(proposerName(suggestion))} proposal: ${suggestion.intent}` } : {};
+  return whole.undo(suggestion.batch, { ...options, ...answered, author });
 }
 
 /**
@@ -378,3 +391,50 @@ VOTING.accepting = (held, vote) => {
   const author = isAutomated(suggestion.author) ? suggestion.author : TIDYING_ACTOR;
   return { calls: suggestion.calls, author: author as Principal, lineage: { ...suggestion.lineage!, suggestion: id, voters: voters.slice(0, LINEAGE_VOTERS_LIMIT) } };
 };
+
+/**
+ * WHETHER A SUGGESTION IS A PERSON'S PROPOSAL (Roadmap
+ * f-proposals-for-review): its lineage names who proposed it
+ * (`proposedBy`), as `propose` keeps one — not the app's own actor's.
+ */
+export const isProposal = (suggestion: Pick<Suggestion, "lineage">): boolean => suggestion.lineage?.proposedBy !== undefined;
+
+/** Who proposed a suggestion, as they are named: "Ada". */
+const proposerName = (suggestion: Pick<Suggestion, "author">): string => suggestion.author.name ?? suggestion.author.id ?? "Somebody";
+
+/** "Ada's", "Jess'". */
+const possessive = (name: string): string => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
+
+/**
+ * PROPOSE CHANGES FOR REVIEW (Roadmap f-proposals-for-review): the calls
+ * kept as one suggestion with `principal` as its author — the store's
+ * "Propose changes" act, so it goes over the wire as any call does and is
+ * made where the log is kept. Refused, in a sentence, where the seat may
+ * neither run nor propose one of the acts (a grant's `propose`); each call
+ * judged as the store judges it for whoever accepts it — the act's own
+ * guard, the invariants, what the seat may see — on a rehearsal, and none
+ * of it applied. The same change already waiting is answered with the
+ * suggestion that waits; one that would change nothing is not proposed
+ * (undefined). Whoever may run the calls accepts it (`acceptSuggestion`),
+ * as themselves, its lineage naming the proposal and its proposer
+ * (`suggestion`, `proposedBy`), or declines it, which answers it in
+ * words; the proposer may withdraw it (`withdrawSuggestion`). Accepted, it
+ * lands in the working state, and reaches readers on the next publish
+ * where the app publishes.
+ */
+export function propose<S extends AnySchema>(store: Store<S>, principal: Principal, calls: readonly MutationCall[], intent?: string): Operation | undefined {
+  const whole = seatOf(store)?.store ?? store;
+  const meanings = keptOf(whole).actMeanings();
+  const key = meaningKey(calls, meanings);
+  const waiting = suggestions(whole, principal).find((one) => isProposal(one) && meaningKey(one.calls, meanings) === key);
+  if (waiting) return whole.log.get(waiting.id);
+  const args: ProposeChangesArgs = { calls: calls.map(({ name, args }) => ({ name, args })), ...given("intent", intent) };
+  return whole.applyAll([{ name: PROPOSE_CHANGES, args: args as never }], { author: principal }).ops.find((op) => op.suggests !== undefined);
+}
+
+/** The acts a principal may propose and may not run: what lists `propose_changes` for an agent seat acting for them. */
+export function proposedMutations<S extends AnySchema>(policy: Policy | undefined, principal: Principal, mutations: readonly AnyMutationDefinition<S>[]): readonly AnyMutationDefinition<S>[] {
+  if (!policy || !policy.grants.some((grant) => grant.propose !== undefined)) return [];
+  const runs = new Set(permittedMutations(policy, principal, mutations));
+  return mutations.filter((mutation) => !runs.has(mutation) && subjectKinds(mutation).some((kind) => proposes(policy, principal, mutation.name, kind)));
+}

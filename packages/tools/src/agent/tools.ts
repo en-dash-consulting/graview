@@ -40,7 +40,7 @@ import {
 // A reader of an app that publishes is served the last publish (Roadmap f-publishing-lifecycle).
 import { publishMutation, publishRefusal } from "@graview/core/publishing";
 import { answerSeenBy } from "@graview/core/seat";
-import { acceptSuggestion, declineSuggestion, suggest, suggestions } from "@graview/core/tidying";
+import { acceptSuggestion, declineSuggestion, isProposal, propose, proposedMutations, suggest, suggestions } from "@graview/core/tidying";
 import { search, type SearchRanker } from "@graview/core/search";
 import { argumentsNeverShown, mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import type { ToolAnnotations, ToolDefinition } from "./tool-definition.js";
@@ -537,6 +537,27 @@ const SUGGEST_CHANGES: ToolDefinition = {
   annotations: { title: "Suggest changes", readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 };
 
+/*
+ * WHAT A PERSON PROPOSES FOR REVIEW (Roadmap f-proposals-for-review): an
+ * agent acting for somebody the policy lets propose an act they may not run
+ * (a grant's `propose`) asks for it, and it waits for whoever may run it.
+ * Listed only for a seat that may propose some act.
+ */
+const PROPOSE_CHANGES_TOOL: ToolDefinition = {
+  name: "propose_changes",
+  title: "Propose changes for review",
+  description:
+    "Propose calls ({ act, args }) this seat may not run as one proposal that somebody who may run them accepts or declines, with what it is for in the person's words (intent). Changes nothing now; each call is judged as it would be for the reviewer, and an act this seat may neither run nor propose is refused. Returns the proposal's id (list_suggestions shows it waiting).",
+  inputSchema: {
+    type: "object",
+    properties: { calls: { type: "array", items: { type: "object", properties: { act: { type: "string" }, args: { type: "object" } }, required: ["act", "args"] } }, intent: { type: "string", description: "What the proposal is for, in words: 1 to 500 characters." } },
+    required: ["calls"],
+    additionalProperties: false,
+  },
+  mutating: true,
+  annotations: { title: "Propose changes for review", readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+};
+
 const LENS_SPEC = {
   type: "object",
   description: "A lens, as draft_view returns one.",
@@ -678,7 +699,7 @@ const LIST_APP_SUGGESTIONS: ToolDefinition = {
   annotations: { title: "List suggested changes to the app", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 };
 
-const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, SUGGEST_CHANGES.name, DRAFT_VIEW.name, KEEP_LENS.name, FIND_LINKED.name, LIST_APP_SUGGESTIONS.name, ...SUBSCRIPTION_TOOLS.map((tool) => tool.name), ...WORKFLOW_TOOL_NAMES];
+const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, SUGGEST_CHANGES.name, PROPOSE_CHANGES_TOOL.name, DRAFT_VIEW.name, KEEP_LENS.name, FIND_LINKED.name, LIST_APP_SUGGESTIONS.name, ...SUBSCRIPTION_TOOLS.map((tool) => tool.name), ...WORKFLOW_TOOL_NAMES];
 const MAX_NAME = 64;
 
 /**
@@ -811,12 +832,14 @@ function surfaceOf(
   learns = false,
   /** The workflow tools the host hands this seat (`workflowToolsOf`): listed unless the seat is read-only. */
   workflows: readonly ToolDefinition[] = [],
+  /** Whether the seat may propose an act it may not run (a grant's `propose`): `propose_changes` is listed. */
+  proposes = false,
 ): { readonly definitions: readonly ToolDefinition[]; readonly names: ReadonlyMap<string, string> } {
   const names = toolNames(acts.map((act) => act.name));
   const drawing = [...draftTools(drafts, readOnly), ...(links ? [FIND_LINKED] : []), ...(subscribes ? SUBSCRIPTION_TOOLS : []), ...(learns ? [LIST_APP_SUGGESTIONS] : [])];
   const definitions = readOnly
     ? [...READ_TOOLS.filter((tool) => !tool.mutating), ...drawing]
-    : [...READ_TOOLS, ACT_ON_SEVERAL, ...(automated ? [SUGGEST_CHANGES] : []), ...drawing, ...workflows, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act), schema as AnySchema))];
+    : [...READ_TOOLS, ACT_ON_SEVERAL, ...(automated ? [SUGGEST_CHANGES] : []), ...(proposes ? [PROPOSE_CHANGES_TOOL] : []), ...drawing, ...workflows, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act), schema as AnySchema))];
   return { definitions, names };
 }
 
@@ -866,7 +889,7 @@ export function toolDefinitions<S extends AnySchema>(
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),
   ]);
-  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true, isAutomated(principal), app.schema as AnySchema, options.learned === true, workflowToolsOf(options.workflows?.names ?? [], options.workflows ? (options.workflows.manage ? "manage" : "run") : undefined));
+  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true, isAutomated(principal), app.schema as AnySchema, options.learned === true, workflowToolsOf(options.workflows?.names ?? [], options.workflows ? (options.workflows.manage ? "manage" : "run") : undefined), proposedMutations(app.policy, principal, acts).length > 0);
   return { definitions, hash: surfaceHash(definitions) };
 }
 
@@ -906,6 +929,7 @@ export function createToolRuntime<S extends AnySchema>(
     store.schema as AnySchema,
     options.learned !== undefined,
     workflowToolsOf(options.workflows?.declared().map((one) => one.name) ?? [], options.workflows ? (options.workflows.edit ? "manage" : "run") : undefined),
+    proposedMutations(store.policy, principal, acts).length > 0,
   );
   const hash = surfaceHash(definitions);
   /*
@@ -1239,6 +1263,8 @@ export function createToolRuntime<S extends AnySchema>(
               about: one.about,
               // The votes on it (Roadmap f-suggestion-votes): what a seat sorts on, and its own among them.
               tally: one.tally,
+              // A person's proposal (Roadmap f-proposals-for-review): who proposed it, apart from the app's own suggestions.
+              ...(isProposal(one) ? { proposedBy: one.lineage!.proposedBy } : {}),
               ...(one.lineage ? { basis: { untrusted: true as const, authoredBy: by, text: one.lineage.basis }, ...(one.lineage.confidence !== undefined ? { confidence: one.lineage.confidence } : {}) } : {}),
             };
           });
@@ -1250,6 +1276,14 @@ export function createToolRuntime<S extends AnySchema>(
           const calls = (args["calls"] as { act: string; args: Record<string, unknown> }[]).map((call) => ({ name: actNamed(call.act) ?? call.act, args: call.args }));
           const op = suggest(store, calls, { author: principal, lineage: { basis: args["basis"], confidence: args["confidence"] } as never, ...viaNow(options.via) });
           return { ok: true, data: { suggestion: op?.id ?? null } };
+        }
+
+        case "propose_changes": {
+          // Each act by its tool name or its declared name, kept as this seat's proposal (`propose` rehearses it as the reviewer would meet it).
+          const calls = ((args["calls"] as { act: string; args: Record<string, unknown> }[]) ?? []).map((call) => ({ name: actNamed(call.act) ?? call.act, args: call.args ?? {} }));
+          const intent = typeof args["intent"] === "string" && args["intent"].trim() !== "" ? args["intent"].trim() : undefined;
+          const op = propose(store, principal, calls, intent);
+          return { ok: true, data: { proposal: op?.id ?? null, ...(op ? { intent: op.intent } : {}) } };
         }
 
         case "accept_suggestion":

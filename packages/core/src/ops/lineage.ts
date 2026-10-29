@@ -85,6 +85,14 @@ export interface Lineage {
    * still wait. Absent, it took every call still waiting. At most 500.
    */
   readonly items?: readonly number[];
+  /**
+   * WHO PROPOSED IT (Roadmap f-proposals-for-review): the id of the person
+   * whose proposal (`propose`, `@graview/core/tidying`) this suggestion
+   * is, or this change accepted — kept on the suggestion and carried by
+   * whatever accepts it, so the log says whose idea the reviewer made.
+   * 1–120 characters.
+   */
+  readonly proposedBy?: string;
 }
 
 /** The longest basis an op keeps: a reason, not a transcript. */
@@ -103,7 +111,7 @@ export const LINEAGE_VOTERS_LIMIT = 200;
 export const LINEAGE_LIMIT = 4000;
 
 /** The keys that name something in 1–120 characters. */
-const NAMES = ["model", "suggestion", "interaction", "actor", "run"];
+const NAMES = ["model", "suggestion", "interaction", "actor", "run", "proposedBy"];
 
 /** A string of 1–120 characters. */
 const isName = (value: unknown): value is string => typeof value === "string" && value.length > 0 && value.length <= LINEAGE_MODEL_LIMIT;
@@ -121,7 +129,7 @@ const asJson = (value: unknown): unknown => {
  * A lineage as an op keeps it — the basis and model trimmed, a key this
  * build does not know kept as JSON keeps it (a later build's) — or a
  * GraphError: a basis of 1–500 characters, a confidence from 0 to 1, a
- * model, suggestion, interaction, actor and run of 1–120 characters,
+ * model, suggestion, interaction, actor, run and proposer of 1–120 characters,
  * evidence of at most 50 such ids, the fields its basis read as at most
  * 200 `<id>#<field>`, voters of at most 200 such ids, items of at most 500 places, no key that would reach a prototype, and
  * the whole at most 4000 characters written out. Asked before anything is
@@ -147,7 +155,7 @@ export function lineageOf(value: unknown): Lineage | undefined {
     else fits &&= key !== "__proto__" && key !== "constructor" && key !== "prototype" && (said = asJson(said)) !== undefined;
     if (fits) kept[key] = said;
   }
-  if (!fits) throw new GraphError("A lineage is { basis: 1 to 500 characters, confidence?: 0 to 1, model?, suggestion?, interaction?, actor?, run?: 1 to 120 characters, evidence?: up to 50 ids, read?: up to 200 <id>#<field>, voters?: up to 200 ids, items?: up to 500 places }");
+  if (!fits) throw new GraphError("A lineage is { basis: 1 to 500 characters, confidence?: 0 to 1, model?, suggestion?, interaction?, actor?, run?, proposedBy?: 1 to 120 characters, evidence?: up to 50 ids, read?: up to 200 <id>#<field>, voters?: up to 200 ids, items?: up to 500 places }");
   if (JSON.stringify(kept).length > LINEAGE_LIMIT) throw new GraphError(`A lineage is at most ${LINEAGE_LIMIT} characters written out.`);
   return kept as unknown as Lineage;
 }

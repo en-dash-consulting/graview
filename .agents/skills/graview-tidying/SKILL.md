@@ -125,6 +125,15 @@ opens in and how its cards read are `graview-lists`.
    `floor`'s links and words — asked of a person first, and always for an
    option in `confirm`. The workflows skill to come says how to write one.
 
+7. **A person proposes too.** `propose(store, principal, calls, intent)`
+   keeps the same suggestion op with the person as author and
+   `lineage.proposedBy`, where a grant's `propose` lets them ask for an act
+   they may not run (the permissions skill). The tray lists it apart,
+   "Proposed by Ada"; whoever may run it accepts it as themselves, declines
+   it ("Declined Ada's proposal: …"), or its proposer withdraws it.
+   Accepted, it is in the working state, and reaches readers on the next
+   publish where the app publishes.
+
 ## Then find out whether it worked
 
 ```sh

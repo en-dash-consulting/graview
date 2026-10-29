@@ -453,6 +453,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(str(g, "describe") ? { describe: str(g, "describe")! } : {}),
       ...(bool(g, "self") ? { self: true } : {}),
       ...(bool(g, "ownEnd") ? { ownEnd: true } : {}),
+      ...(list(g, "propose")?.length ? { propose: list(g, "propose")!.includes("*") ? ("*" as const) : list(g, "propose")! } : {}),
     };
   });
   /*

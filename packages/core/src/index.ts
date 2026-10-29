@@ -221,6 +221,7 @@ export { LINEAGE_BASIS_LIMIT, LINEAGE_EVIDENCE_LIMIT, LINEAGE_LIMIT, LINEAGE_MOD
 export type { HasLog, LinkProvenance, LinkRef } from "./ops/provenance.js";
 export { KEEP_LINK } from "./mutations/keep-link.js";
 // A vote on a suggestion (Roadmap f-suggestion-votes): the act every store answers to, what its op keeps, and what the app says of suggestions as a whole.
+export { PROPOSE_CHANGES, type ProposeChangesArgs } from "./mutations/propose-changes.js";
 export { VOTE_SUGGESTION, type AppTidying, type SuggestionVote, type Vote, type VotesOptions } from "./mutations/vote-suggestion.js";
 // Typing into a field typed together (Roadmap f-collab-text): the act every store answers to, and whether a field is one.
 export { TYPE_TEXT } from "./text/typing-hook.js";
@@ -235,6 +236,7 @@ export {
   isSystem,
   permits,
   permittedMutations,
+  proposes,
   rolesOf,
   rolesWhoCould, whyNot,
 } from "./permissions/policy.js";

@@ -285,6 +285,8 @@ export const grantNode = defineNode("grant", {
     self: z.boolean(),
     /** Only on the seat's own end of the link the act makes or breaks (Roadmap f-own-end-grants). */
     ownEnd: z.boolean().optional(),
+    /** The acts it lets these roles propose and not run, by name or "*" (Roadmap f-proposals-for-review). */
+    propose: z.array(z.string()).optional(),
     everyone: z.boolean(),
     allActs: z.boolean(),
     allKinds: z.boolean(),

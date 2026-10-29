@@ -265,6 +265,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       label: g.describe ?? `${who} may ${what}`,
       self: g.self ?? false,
       ...(g.ownEnd ? { ownEnd: true } : {}),
+      ...(g.propose ? { propose: g.propose === "*" ? ["*"] : [...g.propose] } : {}),
       everyone: g.roles === "*",
       allActs: g.mutations === "*",
       allKinds: g.kinds === undefined || g.kinds === "*",

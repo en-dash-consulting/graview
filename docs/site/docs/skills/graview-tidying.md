@@ -24,6 +24,8 @@ A list that grows fills with what is finished and what was entered twice, and th
 
 1. **A workflow runs the app's own actor on a schedule** of the app's choosing. A document's `workflows` names each: a `title`, `when` (`{ "every": "sunday 18:00" }`, `cron`, `made`, `changed`, `synced`, `byHand`), `approve` and its `steps` — an act over the records a rule picks, with a `key` so a rerun changes what it made, or a model proposing from a list of acts. Dreaming is the one every app has (`workflowsOf`, `@graview/core/workflows`); `runWorkflow` from `@graview/tools/workflows` runs the rest, the first run after a change a dry run. A `classify` step labels each record with one of a choice field's options — a model's judgment and how sure, or without one the `floor`'s links and words — asked of a person first, and always for an option in `confirm`. The workflows skill to come says how to write one.
 
+1. **A person proposes too.** `propose(store, principal, calls, intent)` keeps the same suggestion op with the person as author and `lineage.proposedBy`, where a grant's `propose` lets them ask for an act they may not run (the permissions skill). The tray lists it apart, "Proposed by Ada"; whoever may run it accepts it as themselves, declines it ("Declined Ada's proposal: …"), or its proposer withdraws it. Accepted, it is in the working state, and reaches readers on the next publish where the app publishes.
+
 ### Then find out whether it worked
 
 ```sh

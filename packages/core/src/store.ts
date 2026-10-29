@@ -35,7 +35,8 @@ import { TYPE_TEXT, TYPING } from "./text/typing-hook.js";
 import type { FieldRevision } from "./ops/revisions.js";
 import { declinedIn, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
-import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, grantsTo, isSystem, permits, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
+import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
 import { nounOf } from "./schema/define-node.js";
@@ -574,6 +575,8 @@ export class Store<S extends AnySchema> {
   private typer: AnyMutationDefinition<S> | undefined;
   /** "Vote on a suggestion" (Roadmap f-suggestion-votes), when the app declared no act by that name. */
   private voter: AnyMutationDefinition<S> | undefined;
+  /** "Propose changes" (Roadmap f-proposals-for-review), when the app declared no act by that name. */
+  private proposer: AnyMutationDefinition<S> | undefined;
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
   readonly policy: Policy | undefined;
@@ -619,6 +622,8 @@ export class Store<S extends AnySchema> {
   private rehearsing = false;
   /** True of a rehearsal for a suggestion: the actor is held to what a person said, not to the declaration's `tidying`, since a person decides it. */
   private suggesting = false;
+  /** True of a rehearsal for a proposal (Roadmap f-proposals-for-review): an act its author may propose is let through, as it will be for whoever accepts it. */
+  private proposing = false;
   /**
    * The day a host last ticked this store to (FR-176), and the day the clock
    * read when it did: what its rules are judged on, where nothing pins one,
@@ -688,6 +693,11 @@ export class Store<S extends AnySchema> {
     if (!options.past && !this.mutations.has(VOTE_SUGGESTION)) {
       this.voter = voteSuggestionMutation();
       this.mutations.set(VOTE_SUGGESTION, this.voter);
+    }
+    // "Propose changes" (Roadmap f-proposals-for-review): answered by every store, offered by no list.
+    if (!options.past && !this.mutations.has(PROPOSE_CHANGES)) {
+      this.proposer = proposeChangesMutation();
+      this.mutations.set(PROPOSE_CHANGES, this.proposer);
     }
 
     const horizon = given("horizon", options.horizon);
@@ -913,7 +923,7 @@ export class Store<S extends AnySchema> {
   }
 
   allMutations(): AnyMutationDefinition<S>[] {
-    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && mutation !== this.typer && mutation !== this.voter && !this.mutationDisabled(mutation));
+    return [...this.mutations.values(), ...(this.publisher ? [this.publisher] : [])].filter((mutation) => mutation !== this.keeper && mutation !== this.typer && mutation !== this.voter && mutation !== this.proposer && !this.mutationDisabled(mutation));
   }
 
   /** The declared acts a derived act resolves its permission through; keeping a link, those that make or break its relation. */
@@ -1012,6 +1022,8 @@ export class Store<S extends AnySchema> {
       }
       return { ok: true } as ReturnType<typeof permits>;
     }
+    // A proposal is its author's to make where each call it holds is one they may run or may propose (Roadmap f-proposals-for-review).
+    if (mutation && mutation === this.proposer) return this.permitsProposal(call, principal);
     /*
      * KEEPING A LINK ONLY THE DERIVED ACTS MAKE is judged as they are: on
      * the record it leaves, so riding everybody's grant it reaches only the
@@ -1069,6 +1081,77 @@ export class Store<S extends AnySchema> {
      * retitle a shift has not been trusted with making one.
      */
     return permits(this.policy, principal, call.name, kind, removeVia([...this.mutations.values()], mutation.derived.kind), typeof id === "string" ? id : undefined, this.words);
+  }
+
+  /**
+   * WHETHER THIS PRINCIPAL MAY PROPOSE THIS CALL AND MAY NOT RUN IT (Roadmap
+   * f-proposals-for-review): the policy refuses them the act and a grant's
+   * `propose` names it, on the kind the call is on. What turns an act's
+   * form's button into "Propose", and what a proposal's rehearsal lets
+   * through.
+   */
+  mayPropose(call: MutationCall, principal: Principal = HUMAN): boolean {
+    if (!this.policy || this.past || signedOutSeat(principal)) return false;
+    call = this.spelledCall(call);
+    const mutation = this.mutations.get(call.name);
+    if (!mutation || mutation === this.proposer || mutation === this.voter || this.refusesAgent(call, principal) || this.namesTurnedOff(call, principal)) return false;
+    return !this.permits(call, principal).ok && proposes(this.policy, principal, call.name, this.subjectKindOf(call, principal));
+  }
+
+  /**
+   * A PROPOSAL'S OP (Roadmap f-proposals-for-review): the calls a "Propose
+   * changes" call holds, rehearsed as its author with the grant to propose
+   * standing in for the grant to run, kept as `suggest` keeps a suggestion
+   * — no primitives, each call's sentence, the records they name — with
+   * the author as its maker and a lineage naming them (`proposedBy`), its
+   * basis the proposal in their own words, else "Proposed by Ada"; or
+   * undefined when the calls would change nothing. Made here, so a store
+   * answers a proposal over the wire whatever else it loaded.
+   */
+  private proposal(call: MutationCall, batch: string, author: Principal, via: Via | undefined): Operation | undefined {
+    const { calls, intent } = call.args as { calls: MutationCall[]; intent?: string };
+    if (calls.length === 0 || calls.length > MOST_PROPOSED || calls.some((one) => !one.args || typeof one.args !== "object" || Array.isArray(one.args))) throw new GraphError(`A proposal holds 1 to ${MOST_PROPOSED} changes, each an act's name and its arguments.`);
+    const by = actingAs(author).id ?? author.session;
+    if (by === undefined) throw new GraphError("A proposal is somebody's: sign in to propose a change.");
+    const lineage = lineageOf({ basis: (intent ?? `Proposed by ${author.name ?? by}`).slice(0, 500), proposedBy: by.slice(0, 120) })!;
+    const rehearsal = this.rehearsal();
+    rehearsal.proposing = true;
+    const planned = rehearsal.applying(calls, { author, lineage, ...given("via", via) });
+    if (planned.ops.length === 0) return undefined;
+    const described = [...new Set(planned.ops.flatMap((op) => op.described ?? []))];
+    const own = planned.ops.filter((one) => one.mutation !== null && one.author === author);
+    return {
+      id: this.nextId(),
+      seq: this.log.length,
+      batch,
+      author,
+      intent: planned.ops.map((one) => one.intent).join("; "),
+      ...given("batchIntent", intent),
+      mutation: null,
+      primitives: [],
+      reads: [],
+      writes: [],
+      ...(described.length > 0 ? { described } : {}),
+      at: this.now(),
+      ...given("via", via),
+      lineage,
+      suggests: calls,
+      ...given("suggestsSaid", calls.length > 1 && own.length === calls.length ? own.map((one) => one.intent) : undefined),
+    };
+  }
+
+  /** A "Propose changes" call, judged: every call it holds one this principal may run or may propose, from a seat that is somebody. */
+  private permitsProposal(call: MutationCall, principal: Principal): ReturnType<typeof permits> {
+    const no = (message: string) => ({ ok: false, refusal: { mutation: call.name, wouldNeed: [], message } }) as ReturnType<typeof permits>;
+    if (signedOutSeat(principal)) return no("Sign in to propose a change.");
+    const calls = Array.isArray(call.args["calls"]) ? (call.args["calls"] as MutationCall[]) : [];
+    for (const one of calls) {
+      if (typeof one?.name !== "string") continue;
+      const verdict = this.permits(one, principal);
+      if (verdict.ok || this.mayPropose(one, principal)) continue;
+      return no(`Not permitted to propose this: ${verdict.refusal.message.replace(/^Not permitted: /, "")}`);
+    }
+    return { ok: true } as ReturnType<typeof permits>;
   }
 
   /**
@@ -1728,8 +1811,9 @@ export class Store<S extends AnySchema> {
     const permitted = (call: MutationCall, as: Author | Principal = author) => {
       // A vote is judged with no policy too: a shared seat's vote is refused whether or not the app says who may do what (Roadmap f-votes-shared-seat).
       const voting = this.voter !== undefined && this.mutations.get(call.name) === this.voter;
-      const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting ? this.permits(call, as as Principal) : undefined;
-      if (verdict && !verdict.ok) this.refuse(verdict.refusal, as.id);
+      const verdict = this.policy || (this.publisher && call.name === PUBLISH) || voting || this.mutations.get(call.name) === this.proposer ? this.permits(call, as as Principal) : undefined;
+      // Rehearsing a proposal, an act its author may propose stands as the reviewer's would (Roadmap f-proposals-for-review).
+      if (verdict && !verdict.ok && !(this.proposing && this.mayPropose(call, as as Principal))) this.refuse(verdict.refusal, as.id);
     };
     const declared = (call: MutationCall, as: Author | Principal = author) => {
       const refusal = this.refusesAgent(call, as) ?? this.namesTurnedOff(call, as as Principal);
@@ -1795,6 +1879,15 @@ export class Store<S extends AnySchema> {
           // At the declaration's `autoAcceptAt`, the suggestion is made here, in the same gesture, by the app's own actor — when the actor would be let.
           const accept = VOTING.accepting?.(this, op);
           if (accept && this.wouldKeep(accept.calls, accept.author, accept.lineage)) for (const made of accept.calls) queue.push({ sent: made, as: accept.author, lineage: lineageOf(accept.lineage), decided: true });
+          continue;
+        }
+        if (definition === this.proposer) {
+          // A proposal (Roadmap f-proposals-for-review): a suggestion with its author as its maker, and nothing of the graph until it is accepted.
+          const op = this.proposal(call, batch, as as Principal, options.via);
+          if (!op) continue;
+          this.log.append(op);
+          ops.push(op);
+          intents.push(op.intent);
           continue;
         }
         const missing = this.missingFor(call, as as Principal);
