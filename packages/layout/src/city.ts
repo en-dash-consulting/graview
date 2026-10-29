@@ -1,6 +1,6 @@
 import { type AnySchema } from "@graview/core";
 import { cityMap, PITCH, toIso, type CityMap, type Plot } from "@graview/core/city";
-import type { CityFrame, Layout } from "./types.js";
+import type { CityFrame, CityStood, Layout } from "./types.js";
 
 /**
  * THE CITY AT ALTITUDE: districts on the lattice, one uniform scale.
@@ -118,6 +118,13 @@ export function placeCity(
     readonly zoom?: number;
     /** The kinds whose districts are chosen: a city drawn past the window keeps these, and their names, inside it. */
     readonly keep?: readonly string[];
+    /**
+     * Where the city stood the last time it was placed (`CityFrame.stood`):
+     * the move it made to keep a choice in sight, at the cell it made it.
+     * At the same cell, a choice is kept in sight from there — the city
+     * does not go back to its middle to set out again.
+     */
+    readonly stood?: CityStood;
     /** The pan baked into the cards, recorded on the frame so the ground can tween with them. */
     readonly pan?: { readonly x: number; readonly y: number };
     /** A cell's height over its width: 0.5 at an angle, 1 from straight above. */
@@ -336,6 +343,7 @@ export function placeCity(
     return { cell: where.cell * by, originX: mid.x + (where.originX - mid.x) * by, originY: mid.y + (where.originY - mid.y) * by };
   };
   let closer = 1;
+  let stood: CityStood | undefined;
   if (fitsUnder(draw(where)) < cards.length) {
     /*
      * Each spacing at the least closer camera that names every district,
@@ -370,6 +378,19 @@ export function placeCity(
      * the sheet it opened takes the foot of a phone, and a district past
      * the edge could not be pressed again or asked for its acts.
      */
+    /*
+     * AND IT MOVES FROM WHERE IT STANDS. The least move was measured from
+     * the city's middle every time: on an iPad, with the panel beside the
+     * map, choosing a district at the right edge slid the city left,
+     * choosing the next one slid it further, and choosing one in plain
+     * sight slid it all the way back — the picture shooting about under the
+     * finger. From where it stood (`stood`, at this cell), a district
+     * already in sight is chosen with nothing moving, and one past the edge
+     * is brought in from there, the least it can.
+     */
+    const from = options.stood && Math.abs(options.stood.cell - where.cell) < 0.01 ? options.stood : null;
+    if (from) where = { ...where, originX: where.originX + from.x, originY: where.originY + from.y };
+    const base = { x: where.originX - (from?.x ?? 0), y: where.originY - (from?.y ?? 0) };
     const kept = draw(where).filter((one) => options.keep?.includes(one.card.kind));
     if (kept.length > 0) {
       const boxes = kept.flatMap((one) => [{ x: one.x - one.halfW, y: one.y - one.halfH, width: one.halfW * 2, height: one.halfH * 2 }, plateBox(one, plate(one.card))]);
@@ -380,6 +401,7 @@ export function placeCity(
       const by = (low: number, high: number, span: number) => (high - low > span - 16 ? span / 2 - (low + high) / 2 : low < 8 ? 8 - low : high > span - 8 ? span - 8 - high : 0);
       where = { ...where, originX: where.originX + by(left, right, canvas.width), originY: where.originY + by(top, bottom, canvas.height) };
     }
+    stood = { x: where.originX - base.x, y: where.originY - base.y, cell: where.cell };
   }
 
   /*
@@ -463,6 +485,7 @@ export function placeCity(
     extent: { x: where.originX + e.minX, y: where.originY + e.minY, width: e.maxX - e.minX, height: e.maxY - e.minY },
     openedShare: 1,
     ...(tilt !== 0.5 ? { tilt } : {}),
+    ...(stood && (stood.x !== 0 || stood.y !== 0) ? { stood } : {}),
     ...(plateAt.size > 0
       ? {
           nameplates: drawn.flatMap((one) => {

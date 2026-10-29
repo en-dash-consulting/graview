@@ -183,6 +183,7 @@ describe("a hosted page", () => {
     // 1060 KB since a record came to follow the record it derives from (Roadmap f-keep-linked): the store keeping `derives` in step and `validateGraph` saying one out of step: the scene face measured 1_082_988 B, over feat/workflows.
     // 1056 KB since a timeline came to be accepted only where it draws, money never to read ".00", an option to be said by its label in a template and a batch of acts by each act (Roadmap f-lifelogics-findings): the timeline's bindings in words, a sum rounded to the cent and its places, a choice's labels on each kind's shape: the scene face measured 1_080_480 B, 2_813 more than main (1_077_667).
     // 1054 KB since an app's workflows came to stand on the Scene's map (Roadmap f-jobs-declared): the scene reading the declared workflows and its door to their layer: the scene face measured 1_078_353 B, 566 more than feat/workflows (1_077_787).
+    // 1054 KB since an iPad's bar came to fit and its scene to hold still: the bar taking what runs past its row off the places' room, the city keeping a choice in sight from where it stands, and the scene's box held while only Safari's toolbar folded away: the scene face measured 1_079_279 B, 1_763 more than main (1_077_516).
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1064 * 1024);
   });
 
