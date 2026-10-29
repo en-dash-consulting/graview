@@ -1,7 +1,8 @@
 import type { GraviewApp } from "../app.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { Author } from "../ops/types.js";
-import type { WorkflowApproval, WorkflowDeclaration, WorkflowStep, WorkflowTrigger } from "../workflow-shape.js";
+import { documentOf } from "../document/remembered.js";
+import type { AppWorkflows, WorkflowApproval, WorkflowDeclaration, WorkflowStep, WorkflowTrigger } from "../workflow-shape.js";
 import { stepKindOf } from "./steps.js";
 import { workflowWorldOfApp, type WorkflowWorld } from "./world.js";
 import { workflowWords } from "./words.js";
@@ -60,8 +61,16 @@ export function workflowReach(steps: readonly WorkflowStep[], world: WorkflowWor
 export function resolveWorkflow(name: string, declared: WorkflowDeclaration, world: WorkflowWorld): ResolvedWorkflow {
   const reach = workflowReach(declared.steps ?? [], world);
   const resolved = { name, title: declared.title, when: declared.when ?? [], status: declared.status ?? "active", approve: declared.approve ?? (reach.sendsOut ? "ask" : "apply"), steps: declared.steps ?? [] } as const;
-  return { ...resolved, words: workflowWords(resolved), ...reach };
+  return { ...resolved, words: workflowWords(resolved, world.noun), ...reach };
 }
+
+/**
+ * AN APP'S WORKFLOWS AS DECLARED: `defineApp({ workflows })`'s, or the
+ * document's an app was compiled from (`documentOf`) — read there rather
+ * than copied onto the compiled app, so a page that draws the app carries
+ * none of them.
+ */
+export const declaredWorkflows = (app: object): AppWorkflows | undefined => (app as { workflows?: AppWorkflows }).workflows ?? (documentOf(app)?.workflows as AppWorkflows | undefined);
 
 /** Whether the app's own actor has anything it may tidy: some kind that does not say `tidying: "never"`. */
 const actorTidies = (schema: AnySchema): boolean => (schema.kinds as readonly string[]).some((kind) => (schema.tryDefinition(kind) as { tidying?: string } | undefined)?.tidying !== "never");
@@ -78,9 +87,10 @@ export const dreamingWorkflow = (): ResolvedWorkflow => {
  * actor has nothing it may tidy.
  */
 export function workflowsOf<S extends AnySchema>(app: GraviewApp<S>): ResolvedWorkflow[] {
-  const declared = Object.entries(app.workflows ?? {});
+  const workflows = declaredWorkflows(app);
+  const declared = Object.entries(workflows ?? {});
   const world = declared.length > 0 ? workflowWorldOfApp(app) : undefined;
   const out = declared.map(([name, workflow]) => resolveWorkflow(name, workflow, world!));
-  if (!app.workflows?.[DREAMING] && actorTidies(app.schema)) out.push(dreamingWorkflow());
+  if (!workflows?.[DREAMING] && actorTidies(app.schema)) out.push(dreamingWorkflow());
   return out;
 }

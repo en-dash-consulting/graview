@@ -234,7 +234,9 @@
     "./dist/tidying.js",
     "./src/tidying.ts",
     "./dist/typing.js",
-    "./src/typing.ts"
+    "./src/typing.ts",
+    "./dist/workflows/findings.js",
+    "./src/workflows/findings.ts"
   ],
   "repository": {
     "type": "git",

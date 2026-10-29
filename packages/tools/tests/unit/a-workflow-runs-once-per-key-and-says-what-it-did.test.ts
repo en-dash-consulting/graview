@@ -1,6 +1,7 @@
 import { Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { digestWords, foldDigests } from "@graview/core/tidying";
+import { declaredWorkflows } from "@graview/core/workflows";
 import { describe, expect, it } from "vitest";
 import { memoryWorkflowLog, runWorkflow, STEP_RUNNERS, type StepRunner, type WorkflowLog } from "../../src/workflows.js";
 
@@ -43,6 +44,8 @@ const HOME = {
 const compiled = compileDocument(HOME);
 if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings.filter((f) => f.severity === "error")));
 const app = compiled.app as GraviewApp<AnySchema>;
+// What the document declares, as a TypeScript app would hold it: a variant below is the app with these changed.
+const declared = declaredWorkflows(app)!;
 
 const NOW = "2026-11-01T22:00:00.000Z";
 
@@ -173,7 +176,7 @@ describe("an act step over a query, keyed", () => {
 });
 
 describe("pausing and a dry run", () => {
-  const paused = { ...app, workflows: { ...app.workflows, "next-weeks-events": { ...app.workflows!["next-weeks-events"]!, status: "paused" as const } } };
+  const paused = { ...app, workflows: { ...declared, "next-weeks-events": { ...declared["next-weeks-events"]!, status: "paused" as const } } };
 
   it("a paused workflow's clock starts nothing, and says so", async () => {
     const store = homeStore();
@@ -240,7 +243,7 @@ describe("a model's step", () => {
   it("keeps the records it shows the model to its token budget", async () => {
     const store = withEvents();
     store.applyAll(Array.from({ length: 40 }, (_, at) => ({ name: "add-event", args: { name: `Class ${at + 1}`, date: "2026-11-20" } })));
-    const tight = { ...app, workflows: { ...app.workflows, "close-events": { ...app.workflows!["close-events"]!, steps: [{ agent: "Mark events that are over as done.", reads: ["event"], acts: ["edit-event"], budget: { tokens: 700 } }] } } };
+    const tight = { ...app, workflows: { ...declared, "close-events": { ...declared["close-events"]!, steps: [{ agent: "Mark events that are over as done.", reads: ["event"], acts: ["edit-event"], budget: { tokens: 700 } }] } } };
     let prompt = "";
     const ai = { complete: async (request: { prompt: string }) => ((prompt = request.prompt), { text: '{"proposals": []}' }) };
     const log = memoryWorkflowLog();

@@ -4,6 +4,7 @@ import type { GraviewDocument } from "../document/schema.js";
 import { jobWorldOfApp, jobWorldOfDocument, type JobWorld } from "../job-findings.js";
 import { deriveMutations } from "../mutations/derive-edits.js";
 import { derivedActOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
+import { nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 
 /*
@@ -26,6 +27,8 @@ export interface WorkflowWorld extends JobWorld {
   /** The kinds an act makes records of; undefined where the app has no act of that name. */
   actMakes(name: string): readonly string[] | undefined;
   readonly connections: ReadonlyMap<string, WorkflowConnection>;
+  /** A kind as a person reads it: the noun its declaration says. */
+  noun(kind: string): string;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -55,6 +58,7 @@ export function workflowWorldOfDocument(document: GraviewDocument): WorkflowWorl
       return derivedActOf(name) || this.actOn(name) !== undefined ? [] : undefined;
     },
     connections: connectionsOf(document.connections),
+    noun: (kind) => nounOf(document.kinds[kind] as { noun?: string } | undefined, kind),
   };
 }
 
@@ -71,5 +75,6 @@ export function workflowWorldOfApp<S extends AnySchema>(app: GraviewApp<S>): Wor
       return mutation ? [...((mutation as { creates?: readonly string[] }).creates ?? [])] : undefined;
     },
     connections: connectionsOf(app.connections as Readonly<Record<string, unknown>> | undefined),
+    noun: (kind) => nounOf(app.schema.tryDefinition(kind) as { noun?: string } | undefined, kind),
   };
 }
