@@ -1,6 +1,6 @@
 # graview-view-links
 
-`graview-view-links` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Send a person from a Graview worker view to a record, a place or a list — an <a data-record>, or a whole card or row bound to a record that opens on a click, a phone's tap and Enter — narrowed and to a section, and prove each lands by pressing it on a phone as well as a desk rather than assuming a card the describer lists opens.
+`graview-view-links` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Send a person from a Graview worker view to a record, a place or a list — an <a data-record>, or a whole card or row bound to a record that opens on a click, a phone's tap and Enter — narrowed and to a section, and prove each lands by pressing it on a phone as well as a desk rather than assuming a card the describer lists opens.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -48,6 +48,10 @@ A phone makes a tap a `click` on what the finger landed on; iOS does so only on 
 ### Narrowed, and to a section
 
 A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in navigate, `data-filter="stage:building"` on a link — the words the list's own arranging line writes, so the address is `/features?filter= stage%3Abuilding` and can be shared. A lens narrows the records it is handed; a blocks lens lists what its own `where` says. Any destination may take a **section**, a heading's words or an element's id (`section: "Every feature"`, `data-section`): the page scrolls there and gives it the keyboard (`#every-feature`). On the scene a list is the kind's stop narrowed (`in.filter`); a section is looked for there too. A filter on a field the kind lacks, or a choice it lacks, goes nowhere and says why (`Features have no field "stag" to filter by; they filter by …`), so link to the list narrowed rather than to a lens per filter; a lens kept only as a link target can be hidden (set-lens-hidden, `graview-pages`).
+
+### A column the menu knows
+
+Mark a region that holds one value of a field `data-column="status:doing"` (and `data-column-kind="task"` where the place is not that kind's; a heading's words in `data-column-label`). A right-click there, as on a status board's column, offers "Add a task in Doing" — the add act with `status` given — and "Show only Doing", the place narrowed as above.
 
 ### Then find out whether it worked
 

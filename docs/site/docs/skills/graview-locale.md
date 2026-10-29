@@ -1,6 +1,6 @@
 # graview-locale
 
-`graview-locale` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say a Graview app's money, days, times and numbers the way its people say them — a currency, a locale and a time zone declared once on the brand, a field kept as money, {net | money} and {at | time} in a template — and let graview check refuse a code, a locale or a zone it cannot write rather than trusting the page.
+`graview-locale` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say a Graview app's money, days, times and numbers the way its people say them — a currency, a locale and a time zone declared once on the brand, a field kept as money, {net | money} and {at | time} in a template — and let graview check refuse a code, a locale or a zone it cannot write rather than trusting the page.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -14,7 +14,7 @@ A sum with no currency is a bare number, a date in somebody else's order is a mi
 
 1. **Say its money.** `currency: "EUR"` and `locale: "de-DE"` on the brand (a document's `brand` may carry them alone, without an accent; the edit is `set-brand`) are what a sum is said in wherever a block names none: a figure or a field shown as money, and `{net | money}` in a template — "21.000 €". A block's own `currency` wins. Without one, sums are numbers.
 
-1. **Mark a field as money.** A document field marked `"format": "money"` is said in it on every face — record, list, card, table, form ("$" beside the box, "$1,250.50" taken as typed) — and its own `"unit": "EUR"` wins. `set-format` changes only a field's format or unit.
+1. **Mark a field as money.** A document field marked `"format": "money"` is said in it on every face — record, list, card, table, form ("$" beside the box, "$1,250.50" taken as typed) — and its own `"unit": "EUR"` wins. A sum shows cents only where it has them, never ".00" ("$11,424" beside "$22,758.40"); `"places": 0` on a money field (or a computed one), and `{total | money: 0}` in a template, say whole units, rounded ("$22,758"). `set-format` changes only a field's format, unit or places.
 
 1. **Say its days and numbers.** The locale says every day, time and number on every face: en-US unless it says ("Sep 10, 2023", "3:30 PM", "1,250"); "en-GB" keeps the day first. The reader's, a host's `locale` on the embed or the provider, wins over it.
 

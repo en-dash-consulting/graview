@@ -1013,6 +1013,7 @@ export function layout<S extends AnySchema>(
           ...(opts.cityOrder ? { order: opts.cityOrder } : {}),
           ...(opts.plots ? { plots: opts.plots } : {}),
           ...(options.cityZoom && options.cityZoom !== 1 ? { zoom: options.cityZoom } : {}),
+          ...(options.cityStood ? { stood: options.cityStood } : {}),
           // The chosen districts, and the one a lens is open on, stay in sight when the city runs past the window.
           // And the district of a record in focus beside the panel: its building is lit, so it is in sight.
           keep: [...(state.selection ?? []), ...(state.focusId ? [state.focusId] : [])].flatMap((id) => (id.startsWith("kind:") ? [id.slice(5)] : id.startsWith("aggregate:") && !id.includes("|") ? [id.slice(10)] : recordBeside && id === focus?.id ? [focus.kind as string] : [])),

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 338,
+  "gzipped": 102,
+  "changeset": "a-workflow-archives-what-is-done-with-and-asks-as-one.md",
+  "note": "Raised when a workflow came to set aside what is done with and to ask about a run as one suggestion (Roadmap f-retention-rules, f-job-approvals): a lineage that names which of a suggestion's changes a person took (`items`) and a decline that leaves those out. Measured at 646_075 / 224_763 against 645_737 / 224_671 minified and gzipped."
+}

@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 350,
+  "gzipped": 124,
+  "note": "Raised when a connection pass came to say whom it invited (Roadmap f-sync-guest-changes-in-history): the store takes a host-made op's `described` and `sentOut` (`AppendOp`), and undo refuses a line of what a connection sent out with its own sentence (\"Nothing to take back: an invitation already went out.\"). Measured at 700_794 / 256_711 against 700_444 / 256_607: 350 / 104 more, raised 124 gzipped for the few bytes gzip moves between runs."
+}

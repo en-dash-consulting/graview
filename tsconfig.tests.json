@@ -32,6 +32,7 @@
       "@graview/core/tidying": ["./packages/core/src/tidying.ts"],
       "@graview/core/catalog": ["./packages/core/src/catalog.ts"],
       "@graview/core/jobs": ["./packages/core/src/jobs.ts"],
+      "@graview/core/workflows": ["./packages/core/src/workflows.ts"],
       "@graview/core/compose": ["./packages/core/src/compose.ts"],
       "@graview/core/subscriptions": ["./packages/core/src/subscriptions.ts"],
       "@graview/core/friction": ["./packages/core/src/friction.ts"],

@@ -1798,7 +1798,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-locale</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-locale</code> is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say a Graview app's money, days, times and numbers the way its people say them — a currency, a locale and a time zone declared once on the brand, a field kept as money, {net | money} and {at | time} in a template — and let graview check refuse a code, a locale or a zone it cannot write rather than trusting the page.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-locale</code> is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say a Graview app's money, days, times and numbers the way its people say them — a currency, a locale and a time zone declared once on the brand, a field kept as money, {net | money} and {at | time} in a template — and let graview check refuse a code, a locale or a zone it cannot write rather than trusting the page.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1810,7 +1810,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <li><strong>Say its money.</strong> <code>currency: "EUR"</code> and <code>locale: "de-DE"</code> on the brand (a document's <code>brand</code> may carry them alone, without an accent; the edit is <code>set-brand</code>) are what a sum is said in wherever a block names none: a figure or a field shown as money, and <code>{net | money}</code> in a template — "21.000 €". A block's own <code>currency</code> wins. Without one, sums are numbers.</li>
 </ol>
 <ol>
-<li><strong>Mark a field as money.</strong> A document field marked <code>"format": "money"</code> is said in it on every face — record, list, card, table, form ("$" beside the box, "$1,250.50" taken as typed) — and its own <code>"unit": "EUR"</code> wins. <code>set-format</code> changes only a field's format or unit.</li>
+<li><strong>Mark a field as money.</strong> A document field marked <code>"format": "money"</code> is said in it on every face — record, list, card, table, form ("$" beside the box, "$1,250.50" taken as typed) — and its own <code>"unit": "EUR"</code> wins. A sum shows cents only where it has them, never ".00" ("$11,424" beside "$22,758.40"); <code>"places": 0</code> on a money field (or a computed one), and <code>{total | money: 0}</code> in a template, say whole units, rounded ("$22,758"). <code>set-format</code> changes only a field's format, unit or places.</li>
 </ol>
 <ol>
 <li><strong>Say its days and numbers.</strong> The locale says every day, time and number on every face: en-US unless it says ("Sep 10, 2023", "3:30 PM", "1,250"); "en-GB" keeps the day first. The reader's, a host's <code>locale</code> on the embed or the provider, wins over it.</li>

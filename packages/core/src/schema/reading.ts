@@ -145,6 +145,14 @@ export function readableFields(
     readonly locale?: string | undefined;
     /** The app's time zone its instants are said in (Roadmap f-app-time-zone): a person's a host passed wins, and the page's when unsaid. */
     readonly timeZone?: string | undefined;
+    /**
+     * FIELDS HELD BLANK THAT ARE STILL SAID, as empty slots (Roadmap
+     * request:record-pages-draw-writable-but-blank-facts-as-empty-editable-slots):
+     * the fields with no value a record's page may fill — those an act this
+     * seat may run writes. Each is read `blank`, with its label and no
+     * value, where the declaration orders it. Never on a glance.
+     */
+    readonly blanks?: readonly string[];
   } = {},
 ): readonly ReadableField[] {
   const display = definition?.display;
@@ -182,12 +190,25 @@ export function readableFields(
    * out of the glance, still read "Critical · Security · High".
    */
   const exact = options.glance && display?.glance !== undefined;
-  const keys = [...new Set(exact ? chosen : [...chosen, ...declaredOrder(definition), ...Object.keys(node)])].filter((key) => Object.hasOwn(node, key));
+  const blanks = new Set(options.glance ? [] : (options.blanks ?? []));
+  const keys = [...new Set(exact ? chosen : [...chosen, ...declaredOrder(definition), ...Object.keys(node)])].filter((key) => Object.hasOwn(node, key) || blanks.has(key));
   const entries = keys.map((key) => [key, node[key]] as const);
   for (const [key, value] of entries) {
-    if (skip.has(key) || value === undefined || value === null) continue;
+    if (skip.has(key)) continue;
     // A computed field kept off what a record says of itself (FR-217): still worked out for a sort, a rule or a view.
     if (workedOutHidden(definition, key)) continue;
+    /*
+     * A BLANK THE PAGE MAY FILL IS AN EMPTY SLOT where the field stands, so a
+     * new record's allocation is set from its own page; a blank nothing here
+     * may write is not said at all.
+     */
+    // Another app's address or a record in one (FR-171) is picked where it is drawn, never typed into a slot.
+    const declared = shapeOf?.[key];
+    if (blanks.has(key) && !isAppLinkField(declared) && !linkedRelationOf(declared) && (value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0))) {
+      fields.push({ key, label: fieldWords(definition, key), value: "", stored: "", alone: "", long: false, blank: true });
+      continue;
+    }
+    if (value === undefined || value === null) continue;
     const format = display?.format?.[key];
     // A picture or a document (FR-162) is drawn, not said on a glance; its words are its names.
     const files = format ? [] : filesOf(value);

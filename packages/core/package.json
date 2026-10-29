@@ -89,6 +89,10 @@
       "types": "./dist/jobs.d.ts",
       "default": "./dist/jobs.js"
     },
+    "./workflows": {
+      "types": "./dist/workflows.d.ts",
+      "default": "./dist/workflows.js"
+    },
     "./friction": {
       "types": "./dist/friction.d.ts",
       "default": "./dist/friction.js"
@@ -230,7 +234,9 @@
     "./dist/tidying.js",
     "./src/tidying.ts",
     "./dist/typing.js",
-    "./src/typing.ts"
+    "./src/typing.ts",
+    "./dist/workflows/findings.js",
+    "./src/workflows/findings.ts"
   ],
   "repository": {
     "type": "git",

@@ -85,14 +85,17 @@ this package serves lists, records, forms, problems and history as ordinary link
   `docs/static-pages.md`.
 
 - **An opening screen, from the document.** `@graview/pages/splash`'s `splashHtml(brand,
-  { scheme?, name? })` draws a document's `brand.splash` — `plain`, `editorial`, `shader`
+  { scheme?, name?, title?, kicker?, fade? })` draws a document's `brand.splash` — `plain`, `editorial`, `shader`
   (one of a few shaders shipped here, named by `shader`, never written in a document) or
   `ascii`, with an image as the logo takes one, a title and a kicker — as `{ html, css,
   script }`: a host inlines the three in its first HTML before the app's root, and the
   script takes the screen away once a place says `data-graview-drawn` (or the page fails,
   or fifteen seconds pass), still under reduced motion. It imports nothing — not React, not
   the framework — so a page's first paint never waits on the bundle the screen covers for.
-  `graview preview` inlines it; a brand with no `splash` answers empty strings.
+  `graview preview` inlines it; a brand with no `splash` answers empty strings. The screen
+  is a status named by its title; `title` and `kicker` say a page's own words over the
+  brand's, and `fade: false` takes it away at once, as automation (`navigator.webdriver`)
+  does. The shaders are `drift`, `ripple`, `veil` and `caustics` (light through water).
 
 The host applies `themeCss` from `@graview/primitives` (or supplies its own `--graview-*`
 tokens); the default pages render entirely from those tokens.

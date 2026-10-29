@@ -1,6 +1,7 @@
 import * as z from "../schema/zod.js";
 import { LINKED_TARGET } from "../schema/linked.js";
 import type { AppPurpose } from "../job-shape.js";
+import type { AppWorkflows } from "../workflow-shape.js";
 
 /*
  * THE GRAVIEW DECLARATION DOCUMENT, v1 — as data a stranger can hand us.
@@ -28,7 +29,7 @@ const MARK_MAX = 64 * 1024;
  */
 export const SPLASH_STYLES = ["plain", "editorial", "shader", "ascii"] as const;
 export type SplashStyle = (typeof SPLASH_STYLES)[number];
-export const SPLASH_SHADERS = ["drift", "ripple", "veil"] as const;
+export const SPLASH_SHADERS = ["drift", "ripple", "veil", "caustics"] as const;
 export type SplashShader = (typeof SPLASH_SHADERS)[number];
 
 /** kebab-case: kinds, acts, rules, edges, roles, modules. */
@@ -39,6 +40,14 @@ export const FIELD_NAME = /^[a-z][A-Za-z0-9]*$/;
 export const ALIAS = /^[a-z0-9\u00df-\u00ff'-]+( [a-z0-9\u00df-\u00ff'-]+){0,2}$/;
 /** The most aliases a kind or a field keeps. */
 export const MOST_ALIASES = 12;
+/**
+ * How many values a kind may work out (FR-83): each is worked out for every
+ * record a card, a row or a page draws, from a budget of steps of its own,
+ * so the cap bounds what one record costs to read — sixty expressions, not
+ * a price breakdown's worth less (Roadmap f-lifelogics-findings, which met
+ * the twenty it was).
+ */
+export const MOST_COMPUTED = 60;
 const RESERVED_FIELDS = new Set(["id", "kind"]);
 
 /**
@@ -121,6 +130,8 @@ function build() {
       unit: z.optional(str(undefined, 12)),
       /** How a number is shown (`money`, `percent`, `duration`), or that a `text` field is written in Markdown (FR-180; the checker's `field-format` says which goes where). */
       format: z.optional(z.enum(["money", "percent", "duration", "markdown"])),
+      /** `0`: money said in whole units, rounded — "$22,758" for 22758.40. Without it money shows cents only where a sum has them, never ".00". Only money says it. */
+      places: z.optional(z.literal(0)),
       /** A number's range (FR-114): the least and the most it may be, and the step its values are whole multiples of (JSON Schema's `multipleOf`). */
       min: z.optional(z.number()),
       max: z.optional(z.number()),
@@ -150,6 +161,7 @@ function build() {
           if (!f.options?.includes(option)) ctx.addIssue({ code: "custom", message: `"${option}" is labeled, and is none of the field's options`, path: ["optionLabels", option] });
         }
         if (f.type !== "list" && f.of) ctx.addIssue({ code: "custom", message: '"of" belongs only on a list field', path: ["of"] });
+        if (f.places !== undefined && !(f.format === "money" || (!f.format && /^[A-Z]{3}$/.test(f.unit ?? "")))) ctx.addIssue({ code: "custom", message: '"places" belongs only on money: a number field with "format": "money"', path: ["places"] });
         if (f.repeats && f.type !== "date" && f.type !== "datetime") ctx.addIssue({ code: "custom", message: '"repeats" belongs only on a date or datetime field', path: ["repeats"] });
       }),
     );
@@ -184,10 +196,15 @@ function build() {
       /** How its number is said, as a number field's is (FR-217): money, a percent, a duration; and its `unit`. Set with `set-format`. */
       format: z.optional(z.enum(["money", "percent", "duration"])),
       unit: z.optional(str(1, 12)),
+      /** `0`: its money said in whole units, rounded, as a money field's `places` says. */
+      places: z.optional(z.literal(0)),
       /** Kept off a record's page, card and CSV, and still worked out for a sort, a rule or a view (FR-217). */
       hidden: z.optional(z.boolean()),
     }),
   ]);
+
+  /** A value an effect writes: a literal, `$arg`, `$subject`, `$new`, `$now`, `$today`, or `{ expr }`. */
+  const ValueSpec = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.unknown()), z.strictObject({ expr: expression })]);
 
   const KindSpec = z.strictObject({
     noun: z.optional(str(1, 40)),
@@ -220,7 +237,7 @@ function build() {
      * expression read like a field — `"net": "sum(out('includes'), list * units)"` —
      * or `{ expr, label?, description? }`. Never written by an act.
      */
-    computed: z.optional(z.record(z.string(), ComputedSpec).check(z.refine((c: Record<string, unknown>) => Object.keys(c).length <= 20, "a kind works out at most 20 computed fields"))),
+    computed: z.optional(z.record(z.string(), ComputedSpec).check(z.refine((c: Record<string, unknown>) => Object.keys(c).length <= MOST_COMPUTED, `a kind works out at most ${MOST_COMPUTED} computed fields`))),
     /**
      * Which field fills which role (the definition's `fieldRoles`): `when`, a
      * record's natural time, which lists open newest first by and a timeline
@@ -237,10 +254,18 @@ function build() {
     archives: z.optional(z.literal(false)),
     /** What the app's own actor may do to its records on its own: `"never"` nothing, `"no-links"` all but link and unlink them (`@graview/core/tidying`). */
     tidying: z.optional(z.enum(["never", "no-links"])),
+    /**
+     * A RECORD THAT FOLLOWS ANOTHER (Roadmap f-keep-linked): each record of
+     * this kind linked through `via` to a record of `from` takes the fields
+     * `set` works out from it — `{ "expr": … }` read standing on the source,
+     * `to` this record — in the same change as the source's edit. A field
+     * set from one of the source's own fields (`{ "expr": "name" }`) changed
+     * here goes back to the source; one worked out otherwise is flagged
+     * (`derived-out-of-step`). Archiving or removing the source archives it.
+     */
+    derives: z.optional(z.strictObject({ from: name("kind"), via: edgeName, set: z.record(fieldName, ValueSpec) })),
   });
 
-  /** A value an effect writes: a literal, `$arg`, `$subject`, `$new`, `$now`, `$today`, or `{ expr }`. */
-  const ValueSpec = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.unknown()), z.strictObject({ expr: expression })]);
 
   const ref = z.string().check(z.regex(/^\$[A-Za-z][A-Za-z0-9]*$/, 'a reference is "$" and a name, like "$subject" or "$new"'));
 
@@ -332,15 +357,23 @@ function build() {
       }),
     );
 
-  const GrantSpec = z.strictObject({
-    roles: z.union([some(name("role"), 1), z.literal("*")]),
-    mutations: z.union([some(name("act"), 1), z.literal("*")]),
-    kinds: z.optional(z.union([z.array(name("kind")), z.literal("*")])),
-    describe: z.optional(sentence),
-    self: z.optional(z.boolean()),
-    /** Only on the principal's own end of the link the act connects or severs. */
-    ownEnd: z.optional(z.boolean()),
-  });
+  const GrantSpec = z
+    .strictObject({
+      roles: z.union([some(name("role"), 1), z.literal("*")]),
+      mutations: z.union([some(name("act")), z.literal("*")]),
+      kinds: z.optional(z.union([z.array(name("kind")), z.literal("*")])),
+      describe: z.optional(sentence),
+      self: z.optional(z.boolean()),
+      /** Only on the principal's own end of the link the act connects or severs. */
+      ownEnd: z.optional(z.boolean()),
+      /** Acts these roles may propose and may not run (Roadmap f-proposals-for-review): kept as a suggestion somebody who may run them accepts. */
+      propose: z.optional(z.union([some(name("act"), 1), z.literal("*")])),
+    })
+    .check(
+      z.superRefine((g, ctx) => {
+        if (Array.isArray(g.mutations) && g.mutations.length === 0 && g.propose === undefined) ctx.addIssue({ code: "custom", message: 'a grant names at least one act in "mutations", or the acts it lets these roles propose in "propose"', path: ["mutations"] });
+      }),
+    );
 
   /**
    * Who sees which kinds — the framework's `Sight`, one meaning (FR-02).
@@ -619,6 +652,12 @@ function build() {
      * `./purpose-spec.ts`) is the checker's to judge and an edit's to hold, and the JSON schema says it.
      */
     purpose: z.optional(loose as unknown as z.ZodMiniType<AppPurpose>),
+    /**
+     * What the app does on its own, and when (Roadmap f-jobs-declared, `workflow-shape.ts`): workflows by
+     * name, each a title, what starts it and its steps. Read loosely here, as a page that draws the app runs
+     * none; their shape (`WorkflowSpec`, `./workflow-spec.ts`) is the checker's to judge and an edit's to hold.
+     */
+    workflows: z.optional(z.record(name("workflow"), loose) as unknown as z.ZodMiniType<AppWorkflows>),
     /** Forms for visitors, by name: each one act, its fields, and what the visitor is told once it is received. */
     forms: z.optional(z.record(name("form"), FormSpec)),
     /**

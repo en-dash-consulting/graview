@@ -515,7 +515,7 @@ try {
       // Roadmap f-edit-form-prefilled: the record's change opens on what the record holds, never "—": no field left blank that the page's facts say has a value.
       const blank = await ada.evaluate(() =>
         [...document.querySelectorAll('[data-testid="record-actions"] form :is(input[type=text], textarea, select)')]
-          .filter((one) => one.value === "" && [...document.querySelectorAll(`dd [data-graview-field="${one.name}"]`)].some((fact) => fact.textContent.trim() !== ""))
+          .filter((one) => one.value === "" && [...document.querySelectorAll(`dd [data-graview-field="${one.name}"]`)].some((fact) => !fact.closest("[data-graview-blank-fact]") && fact.textContent.trim() !== ""))
           .map((one) => one.name),
       );
       check("an act's form: every field opens on the record's value, never “—”", blank.length === 0 && form.said.every((one) => !/, —, pop-up button/.test(one.line)), { blank });

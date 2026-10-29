@@ -2,10 +2,11 @@ import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import type { AnySchema } from "../schema/schema.js";
 import { fieldWords, nounOf } from "../schema/define-node.js";
 import { valueWords } from "../schema/value-words.js";
+import { humanizeValue } from "../schema/humanize.js";
 import { evaluateExpr, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";
-import { capitalized, EMPTY_GRAPH, formatMoney, formatValue, headlineSaid, namerOf, type Money, type TemplatePart } from "./template.js";
+import { capitalized, EMPTY_GRAPH, formatMoney, formatValue, headlineSaid, namerOf, optionsSaid, type Money, type TemplatePart } from "./template.js";
 import { parseTemplate } from "./template-parse.js";
 import { fieldSpecOf } from "./field-spec.js";
 import { linkedRefsOf, type LinkedRecordRef, type LinkedRelation } from "../schema/linked.js";
@@ -306,6 +307,17 @@ function judge(expr: Parsed<Expr>, ctx: BlockContext): Judged {
   }
 }
 
+/** The labels a choice field's options were given (Roadmap f-option-labels), read off the definition's words for them: an option said only as its id spoken has none. */
+function labelsOf(ctx: BlockContext, field: string): Readonly<Record<string, string>> {
+  const format = ctx.definition?.display?.format?.[field];
+  const options = ctx.fields[field]?.options ?? [];
+  if (!format) return {};
+  return Object.fromEntries(options.flatMap((option) => {
+    const said = format(option);
+    return said !== humanizeValue(option) ? [[option, said]] : [];
+  }));
+}
+
 /** A template's words, each part judged as `renderTemplate` judges it — and what could not be, said. */
 /**
  * A MARKDOWN FIELD NAMED BARE IN A TEMPLATE (FR-180) is never said with its
@@ -334,6 +346,9 @@ function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext, prose?: 
         if (prose && parts.length === 1) return (markdown = true), judged.value;
         return markdownWords(judged.value);
       }
+      // A choice named bare (`{status}`), in a badge, a title or a line, is said by its option's label (Roadmap f-option-labels), as a field block says it.
+      const choice = !part.format && part.expr?.t === "ident" && ctx.fields[part.expr.name]?.type === "enum" ? part.expr.name : undefined;
+      if (choice && (typeof judged.value === "string" || Array.isArray(judged.value))) return capitalized(part, optionsSaid(judged.value, labelsOf(ctx, choice), parts.length === 1));
       // A field named bare (`{price}`) is said as it declares: money as money.
       const amount = !part.format && part.expr?.t === "ident" && typeof judged.value === "number" ? amountAt(ctx, part.expr.name) : undefined;
       // A record is said by its kind's label, `{out('affects') | and}` as "src/files.ts and tsconfig.json", never its id.

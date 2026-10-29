@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 11148,
+  "note": "Raised when a Notion connection came to keep several data sources of one database, each its own kind, and to make the properties it needs (request: Notion autocreates the necessary properties): the connection's `sources` and `create` in its shape, the checker's `connection-sources` and its per-source findings, one engine of several resources with a transport keeping each source's cursor, the properties a source lacks made of their fields' types, and what was made said in the report. Measured at 2_394_132 B against 2_382_984: 11_148 more."
+}

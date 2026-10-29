@@ -29,7 +29,11 @@
  * person declines it — which the actor is refused next time. With
  * `reader=1` the page is a seat that may see the suggestion and may not
  * make it, whose Accept is a vote (f-suggestion-votes); with `vote=1` a
- * reader's vote is already cast when the keeper opens the tray.
+ * reader's vote is already cast when the keeper opens the tray; with
+ * `signedOut=1` the reader is the host's one shared signed-out seat, with
+ * the host's way in (f-votes-shared-seat); with `proposer=1` the reader
+ * is Pat, a helper the policy lets propose a rename and not make one
+ * (f-proposals-for-review).
  *
  *   node scripts/verify-chrome.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
@@ -70,7 +74,7 @@ async function buildHost() {
       contents: `
         import { mount } from "@graview/embed";
         import { capabilities, memoryViews } from "@graview/core";
-        import { declined, suggest, suggestions, voteSuggestion } from "@graview/core/tidying";
+        import { acceptSuggestion, declined, suggest, suggestions, voteSuggestion } from "@graview/core/tidying";
         import { todoApp } from ${JSON.stringify(todo)};
         import seed from ${JSON.stringify(seed)};
         const asked = new URLSearchParams(location.search);
@@ -84,6 +88,27 @@ async function buildHost() {
            * everybody dropped from the policy, and a seat with no role — a visitor by link, as a host would seat one.
            */
           ...(asked.get("reader") ? { app: { ...todoApp, policy: { ...todoApp.policy, grants: todoApp.policy.grants.filter((grant) => grant.roles !== "*") } }, principal: { kind: "human", id: "user-vis", name: "Vis", roles: [] } } : {}),
+          /*
+           * The host's one shared signed-out seat, when the page asks (f-votes-shared-seat): every stranger served as one "anonymous",
+           * marked shared, and the host's way in — what the tray offers in place of a vote the store would refuse.
+           */
+          ...(asked.get("signedOut")
+            ? {
+                app: { ...todoApp, policy: { ...todoApp.policy, grants: todoApp.policy.grants.filter((grant) => grant.roles !== "*") } },
+                principal: { kind: "human", id: "anonymous", roles: [], shared: true },
+                signIn: { label: "Sign in to make changes", run: () => { window.__signedIn = (window.__signedIn ?? 0) + 1; } },
+              }
+            : {}),
+          /*
+           * A helper who may propose a rename and may not make one, when the page asks (f-proposals-for-review): the list's grant to
+           * everybody dropped, and a grant that only proposes.
+           */
+          ...(asked.get("proposer")
+            ? {
+                app: { ...todoApp, policy: { ...todoApp.policy, roles: [...todoApp.policy.roles, "helper"], grants: [...todoApp.policy.grants.filter((grant) => grant.roles !== "*"), { roles: ["helper"], mutations: [], propose: ["rename"] }] } },
+                principal: { kind: "human", id: "user-pat", name: "Pat", roles: ["helper"] },
+              }
+            : {}),
           label: "Things",
           heading: false,
           height: "100%",
@@ -120,7 +145,7 @@ async function buildHost() {
         };
         window.__handle = mount(document.getElementById("app"), options);
         // What reads the suggestions back, for the claims that ask the store what a person declined, and casts a vote as somebody else.
-        window.__tidying = { declined, suggestions, voteSuggestion };
+        window.__tidying = { acceptSuggestion, declined, suggestions, voteSuggestion };
         // The framework's version, as a host's Report this is handed it (FR-237).
         window.__version = capabilities().version;
         /*
@@ -135,6 +160,15 @@ async function buildHost() {
           suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage: { basis: "The post is redirected from the day notice is given", confidence: 0.45 } });
           // A reader's vote for it already cast, when the page asks (f-suggestion-votes): what the keeper reads beside Accept.
           if (asked.get("vote")) voteSuggestion(store, suggestions(store)[0].id, "for", { author: { kind: "human", id: "user-vis", name: "Vis", roles: [] } });
+        }
+        /*
+         * A workflow's run asked about as one, when the page asks (f-job-approvals): three tasks to archive in one suggestion, said
+         * as one, each change its own sentence — what a workflow whose approve is "ask" leaves in the tray.
+         */
+        if (asked.get("run")) {
+          const store = window.__handle.store;
+          const actor = { kind: "system", id: "workflow:tidy", name: "Set aside finished tasks", automated: true };
+          suggest(store, ["t-paint", "t-shelves", "t-broadband"].map((id) => ({ name: "archive-task", args: { id } })), { author: actor, lineage: { basis: "Finished a week ago", run: "workflow:tidy:2026-10-28", actor: "workflow:tidy" }, intent: "Set aside finished tasks: 3 tasks to archive" });
         }
         /*
          * A crowded tray, when the page asks: a task renamed to 120 characters with no space, and a suggestion for each task it could
@@ -773,6 +807,140 @@ try {
       votes[face] = { reader, keeper, ok };
     }
     report.checks.aSuggestionTakesAVoteFromAReaderAndShowsTheTallyToWhoMayDecide = { ...votes, ok: Object.values(votes).every((one) => one.ok) };
+  }
+  /*
+   * ---- A proposal waits for its reviewer (f-proposals-for-review), on the routed face: Pat, a helper the policy lets propose a
+   * rename and not make one, opens a task's page, where Rename is offered rather than struck through and its form's button reads
+   * "Propose"; pressed, the task keeps its name, the change waits in the Suggested tray as "Proposed by you" with Withdraw rather than
+   * a vote; and the keeper's accept makes it as the keeper, its lineage naming the proposal and Pat.
+   */
+  {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto(`${at("chrome-host")}/?face=pages&proposer=1&path=/tasks/t-paint`, { waitUntil: "load" });
+    await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+    const act = page.locator('[data-testid="record-actions"] button[data-graview-act="rename"]').first();
+    await act.waitFor({ timeout: 30_000 }).catch(() => {});
+    const offered = (await act.count()) > 0;
+    let proposed = null;
+    if (offered) {
+      await act.click();
+      const form = page.locator('form[data-testid="form-rename"]');
+      await form.waitFor({ timeout: 10_000 }).catch(() => {});
+      const button = (await form.locator('[data-graview-part="submit"]').textContent().catch(() => null))?.trim() ?? null;
+      await form.locator("input").first().fill("Paint the hall");
+      await form.locator('[data-graview-part="submit"]').click();
+      await page.waitForFunction(() => window.__tidying.suggestions(window.__handle.store).length > 0, null, { timeout: 10_000 }).catch(() => {});
+      await page.locator('[data-testid="app-bar"] [data-testid="suggested-button"]').click({ timeout: 10_000 }).catch(() => {});
+      await page.waitForSelector('[data-testid="proposals"] [data-testid="suggestion"]', { timeout: 10_000 }).catch(() => {});
+      proposed = await page.evaluate(() => {
+        const store = window.__handle.store;
+        const [waiting] = window.__tidying.suggestions(store);
+        const row = document.querySelector('[data-testid="proposals"] [data-testid="suggestion"]');
+        const unchanged = store.graph.getNode("t-paint")?.label !== "Paint the hall";
+        const said = { by: row?.querySelector('[data-testid="proposed-by"]')?.textContent ?? null, withdraw: row?.querySelector('[data-testid="proposal-withdraw"]') !== null, vote: row?.querySelector('[data-testid="suggestion-accept"]') !== null };
+        const keeper = { kind: "human", id: "user-nora", name: "Nora", roles: ["keeper"] };
+        const made = waiting ? window.__tidying.acceptSuggestion(store, waiting.id, { author: keeper }) : null;
+        const op = made?.ops[0];
+        return { unchanged, proposedBy: waiting?.lineage?.proposedBy ?? null, said, accepted: { label: store.graph.getNode("t-paint")?.label ?? null, author: op?.author?.id ?? null, lineage: op?.lineage ?? null, waiting: window.__tidying.suggestions(store).length } };
+      });
+      proposed = { button, ...proposed };
+    }
+    await page.close();
+    const ok =
+      offered && proposed !== null && proposed.button === "Propose" && proposed.unchanged && proposed.proposedBy === "user-pat" &&
+      proposed.said.by === "Proposed by you:" && proposed.said.withdraw && !proposed.said.vote &&
+      proposed.accepted.label === "Paint the hall" && proposed.accepted.author === "user-nora" && proposed.accepted.lineage?.proposedBy === "user-pat" && typeof proposed.accepted.lineage?.suggestion === "string" && proposed.accepted.waiting === 0;
+    report.checks.aProposalWaitsForItsReviewer = { offered, proposed, ok };
+  }
+  /*
+   * ---- A workflow's run is one suggestion that lists its changes and takes them one at a time (f-job-approvals), on both faces:
+   * the row says the run as one, "Accept all" stands where Accept does, the changes open each in its act's own sentence with its own
+   * Accept, and one accepted is made while the rest still wait in the same row — the keyboard never on <body>.
+   */
+  {
+    const runs = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&run=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      const run = await page.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-items"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const words = document.querySelector("[data-graview-suggestion-words]")?.textContent ?? "";
+        const all = document.querySelector('[data-testid="suggestion-accept"]')?.textContent ?? null;
+        const summary = document.querySelector('[data-testid="suggestion-items"] summary');
+        summary?.click();
+        await new Promise((done) => setTimeout(done, 100));
+        const items = [...document.querySelectorAll('[data-testid="suggestion-item"]')].map((item) => item.firstElementChild?.textContent ?? "");
+        const second = document.querySelectorAll('[data-testid="suggestion-item-accept"]')[1];
+        const label = second?.getAttribute("aria-label") ?? null;
+        second?.focus();
+        second?.click();
+        for (let turn = 0; turn < 50 && document.querySelectorAll('[data-testid="suggestion-item"]').length !== 2; turn++) await new Promise((done) => setTimeout(done, 50));
+        const store = window.__handle.store;
+        return {
+          words,
+          all,
+          items,
+          label,
+          left: document.querySelectorAll('[data-testid="suggestion-item"]').length,
+          rows: document.querySelectorAll('[data-testid="suggestion"]').length,
+          archived: store.graph.getNode("t-shelves")?.$archived === true,
+          untouched: store.graph.getNode("t-paint")?.$archived !== true,
+          heard: document.querySelector('[data-testid="suggestion-heard"]')?.textContent ?? null,
+          keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
+        };
+      });
+      await page.keyboard.press("Escape");
+      await page.close();
+      const ok =
+        run !== null && /^Set aside finished tasks suggests 3 tasks to archive$/.test(run.words.trim()) && run.all === "Accept all" && run.items.length === 3 && run.items.every((one) => /^Archive /.test(one)) &&
+        run.label === `Accept: ${run.items[1]}` && run.left === 2 && run.rows === 1 && run.archived && run.untouched && run.heard === "Accepted that change; the rest still wait." && run.keyboard !== "BODY";
+      runs[face] = { run, ok };
+    }
+    report.checks.aRunsSuggestionListsItsChangesAndTakesOneAtATime = { ...runs, ok: Object.values(runs).every((one) => one.ok) };
+  }
+  /*
+   * ---- A visitor is offered Sign in rather than a vote (f-votes-shared-seat), on both faces: the host's one shared signed-out seat
+   * opens the tray and finds the host's "Sign in to vote" — a native button — where Accept and Decline were, before pressing
+   * anything; pressing it asks the host, nothing is kept in the log, and the keyboard never lands on <body>.
+   */
+  {
+    const offered = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&tidy=1&signedOut=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      const visitor = await page.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const store = window.__handle.store;
+        const signIn = document.querySelector('[data-testid="suggestion-sign-in"]');
+        const seen = { tag: signIn?.tagName ?? null, said: signIn?.textContent ?? null, accept: document.querySelector('[data-testid="suggestion-accept"]') !== null, decline: document.querySelector('[data-testid="suggestion-decline"]') !== null };
+        signIn?.focus();
+        signIn?.click();
+        await new Promise((done) => setTimeout(done, 50));
+        return {
+          ...seen,
+          asked: window.__signedIn ?? 0,
+          votesKept: store.log.all().filter((op) => op.vote !== undefined).length,
+          keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
+        };
+      });
+      await page.close();
+      const ok = visitor !== null && visitor.tag === "BUTTON" && visitor.said === "Sign in to vote" && !visitor.accept && !visitor.decline && visitor.asked === 1 && visitor.votesKept === 0 && visitor.keyboard !== "BODY";
+      offered[face] = { visitor, ok };
+    }
+    report.checks.aVisitorIsOfferedSignInRatherThanAVote = { ...offered, ok: Object.values(offered).every((one) => one.ok) };
   }
   /*
    * ---- "Not now" is one person's, and the tray says what tidying did while they were away, on both faces: the host hands what

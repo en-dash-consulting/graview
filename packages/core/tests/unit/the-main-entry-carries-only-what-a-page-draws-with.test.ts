@@ -16,6 +16,7 @@ import * as forms from "../../src/forms.js";
 import * as friction from "../../src/friction.js";
 import * as history from "../../src/history.js";
 import * as jobs from "../../src/jobs.js";
+import * as workflows from "../../src/workflows.js";
 import * as learn from "../../src/learn.js";
 import * as past from "../../src/past.js";
 import * as importing from "../../src/import/index.js";
@@ -65,14 +66,14 @@ const OFF_THE_PAGE = {
   "@graview/core/import": { from: importing, names: ["coerceCell", "ImportMappingError", "importRows", "parseCsv", "previewImport", "proposeMapping", "readBoolean", "readDateTime", "readDay", "readNumber", "readOption"] },
   "@graview/core/describe": { from: describePlaces, names: ["columnActs", "columnChoices", "columnMoves", "columnOf", "columnReach", "columnSteps", "describePlace", "placeText", "resolveFor", "shadowedPageSlots", "statusColumns"] },
   "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt", "clockReaders", "designFindings"] },
-  "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "districtBlocks", "districtState", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "TIER_HEIGHT", "TILTED", "toIso", "TOP_DOWN", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail"] },
+  "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "districtBlocks", "districtState", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "TIER_HEIGHT", "TILTED", "toIso", "TOP_DOWN", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail", "agoWords", "lastRunWords", "workflowSpots", "workflowsOnTheMap"] },
   // The map alone, laid out before the scene draws; what stands on the ground is /scene's, fetched with the ground.
   "@graview/core/city": { from: city, names: ["BLOCK", "cityExtent", "cityMap", "districtState", "MAX_SIDE", "PITCH", "plotsOverlap", "sharedEdges", "sideFor", "TILTED", "toIso", "TOP_DOWN"] },
   "@graview/core/figures": { from: figures, names: ["FIGURES", "FIGURE_NAMES", "figureBrief", "figureFaults", "figureSvg"] },
   "@graview/core/json-schema": { from: jsonSchema, names: ["argumentsNeverShown", "mutationToolSchema", "nodeJsonSchema", "schemaJson", "toJsonSchema"] },
   // FR-179: the matcher, a record and an argument said in words, and what the seat and the seeding read.
   "@graview/core/search": { from: search, names: ["MATCHED_MOST", "NEAR_BELOW", "actsOn", "describeSearched", "fold", "fragmentOf", "matchNode", "parseQuery", "search", "searchableFields", "slipsBetween", "squeeze", "stemOf", "strengthOf", "touchWeights"] },
-  "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "excerptOf", "failureWords", "isLongText", "isMarkdownField", "pageSections", "readableFields", "repeatAsRead", "repeatingDateAsRead", "tellApart", "viaSaid", "fieldSays", "mapsHref", "parseDuration", "sayDuration", "sayPhone", "telHref", "typedHref", "typedWords", "typedFieldOf", "edgeWords", "valueWords", "amountBox", "amountInBox", "readAmount", "endAfterStartMoved", "namesInstant", "readPartialDay", "readWhenTyped", "startAndEndOf", "storedOfWall", "wallNow", "wallOfStored", "zoneSaid", "capitalize", "lowerFirst"] },
+  "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "excerptOf", "failureWords", "isLongText", "isMarkdownField", "pageSections", "readableFields", "repeatAsRead", "repeatingDateAsRead", "tellApart", "viaSaid", "fieldSays", "mapsHref", "parseDuration", "sayDuration", "sayPhone", "telHref", "typedHref", "typedWords", "typedFieldOf", "edgeWords", "valueWords", "amountBox", "amountInBox", "readAmount", "endAfterStartMoved", "namesInstant", "readPartialDay", "readWhenTyped", "startAndEndOf", "storedOfWall", "wallNow", "wallOfStored", "zoneSaid", "capitalize", "lowerFirst", "keptInStepWith"] },
   // FR-180: Markdown read into blocks, fetched with the first a page draws.
   "@graview/core/markdown": { from: markdown, names: ["escapeHtml", "headingLevel", "inlineOf", "markdownBlocks", "markdownHtml", "safeHref"] },
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "archivedSeenBy", "archiveFrom", "beginning", "placesFrom", "placesOf", "viewPlaceOf"] },
@@ -81,6 +82,8 @@ const OFF_THE_PAGE = {
   "@graview/core/subscriptions": { from: subscriptions, names: ["holdTypingRuns", "matchSubscriptions", "subscribersNow", "subscriptionProblem", "subscriptionWords", "TYPING_QUIET_MS", "watchSubscriptions"] },
   // Roadmap f-app-jobs: an app's jobs resolved and answered as a seat sees it — a design's, a seat's and a host's, fetched when one is drawn.
   "@graview/core/jobs": { from: jobs, names: ["answerJob", "jobIsFor", "jobsFor", "jobsOf", "MOST_JOBS"] },
+  // Roadmap f-jobs-declared: what the app does on its own and when — its shape, its step kinds, its schedule, what starts it, what the checker says — a host's and a runner's, on no page.
+  "@graview/core/workflows": { from: workflows, names: ["actsMaking", "actStep", "afterMs", "afterWords", "agentStep", "archiveStep", "classifyAsks", "classifyStep", "classifyWords", "datesIn", "declaredWorkflows", "DEFAULT_GENERATE_KEY", "documentWorkflowFindings", "DREAMING", "dreamingWorkflow", "floorLabel", "followsFindings", "generateStep", "generateWants", "keeps", "keyedId", "keyFields", "kindNoun", "linksIn", "MOST_GENERATED", "MOST_STEPS", "MOST_WINDOW_DAYS", "MOST_WORKFLOWS", "nextOf", "nextRunAt", "policiesOf", "policyApplies", "policyInstruction", "recordsOver", "resolveWorkflow", "SCHEDULE_WORDS", "scheduleOf", "scheduleOfCron", "scheduleOfWords", "scheduleWords", "STEP_KINDS", "stepKindOf", "stepShapes", "triggeredBy", "triggerWords", "windowDays", "workflowAuthor", "workflowFindings", "workflowFindingsOf", "workflowKey", "workflowReach", "workflowsOf", "WorkflowSpec", "workflowSpecHash", "WorkflowsSpec", "WorkflowStepSpec", "WorkflowTriggerSpec", "workflowValue", "workflowWords", "workflowWorldOfApp", "workflowWorldOfDocument"] },
   // Roadmap f-friction-log: what people looked for and could not do — kept, counted across people, said to a model; a page records through the main entry's `recordFriction` alone.
   "@graview/core/friction": {
     from: friction,
@@ -94,7 +97,7 @@ const OFF_THE_PAGE = {
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,
-    names: ["acceptSuggestion", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isSuggestionBatch", "LEFT_ALONE", "mayDecide", "meaningKey", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
+    names: ["acceptSuggestion", "advisoryVoterOf", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isDismissed", "isProposal", "isSuggestionBatch", "LEFT_ALONE", "mayDecide", "meaningKey", "propose", "proposedMutations", "proposalWords", "SIGN_IN_TO_VOTE", "signedOutSeat", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "takenIn", "tallyOf", "tidyingOf", "tidyingRefusal", "typedRowWords", "voteSuggestion", "votesIn", "withdrawSuggestion"],
   },
 } as const;
 

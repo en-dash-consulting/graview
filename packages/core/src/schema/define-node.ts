@@ -1,7 +1,7 @@
 import type { z } from "zod";
 import { isoToday, numberAsRead } from "../days.js";
 import { capitalize } from "../capital.js";
-import { humanizeField } from "./humanize.js";
+import { humanizeField, humanizeValue } from "./humanize.js";
 import type { FileValue } from "./files.js";
 import type { LinkedRecordRef, LinkedRelation } from "./linked.js";
 import type {
@@ -121,6 +121,12 @@ export interface ReadableField {
   readonly href?: string;
   /** The field name in words, after `display.labels` and humanizing. */
   readonly label: string;
+  /**
+   * HELD BLANK, SAID AS AN EMPTY SLOT: the field has no value and the reader
+   * asked for it (`readableFields`'s `blanks`) — an act the seat may run
+   * writes it. `value`, `stored` and `alone` are empty.
+   */
+  readonly blank?: true;
   /** The value in words, after `display.format` and the built-in defaults: a day as a person reads it, a choice as it is declared. */
   readonly value: string;
   /**
@@ -164,7 +170,7 @@ export function actTitle(act: { readonly name: string; readonly title?: string }
 }
 
 // A key spoken (`humanize.ts`): a module of its own, so what speaks one alone — a view's `choices` — reaches nothing else here.
-export { humanizeField };
+export { humanizeField, humanizeValue };
 
 /**
  * A field in words, as the declaration says it: its `display.labels` entry,

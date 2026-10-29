@@ -1,12 +1,12 @@
-import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Place, type Violation } from "@graview/core";
-import { describeNode, pageSections } from "@graview/core/words";
+import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Place, type Principal, type Violation } from "@graview/core";
+import { describeNode, keptInStepWith, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
 import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
-import { rankedRepairs, recordFacts } from "./facts.js";
+import { blankWritable, rankedRepairs, recordFacts } from "./facts.js";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { DerivedForm } from "./form.js";
 import { WithheldActs } from "./withheld-acts.js";
@@ -56,6 +56,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const facts = recordFacts(store, id, {
     ...(principal ? { principal } : {}),
     ...(invariantContext ? { context: invariantContext } : {}),
+    // A blank this seat may fill is an empty slot where values are changed in place.
+    ...(inPlace ? { blanks: blankWritable(store, id, principal) } : {}),
   });
   // Its problems, each with its rule's line once the words are here.
   const lined = useLined(store, facts?.violations ?? NO_PROBLEMS);
@@ -102,7 +104,14 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * facts, not the rendering — but listing it again under "what can be
    * done" is the same button twice on one page.
    */
-  const offered = facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant");
+  /*
+   * AND WHAT THIS SEAT MAY PROPOSE AND MAY NOT RUN (Roadmap
+   * f-proposals-for-review): offered beside the rest, its form's button
+   * reading "Propose", rather than struck through.
+   */
+  const asking = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
+  const proposable = asking ? facts.actions.withheld.filter((affordance) => affordance.provider !== "invariant" && store.mayPropose({ name: affordance.mutation, args: { ...affordance.args } }, asking)) : [];
+  const offered = [...facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant"), ...proposable];
   /*
    * WHAT TAKES A RECORD AWAY WAITS ONE PRESS BEHIND THE REST (FR-173):
    * archive, merge and remove, the tail of the ranked list, behind "Show N
@@ -150,6 +159,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * address and a link, and listed nowhere; a record's page had listed the
    * hidden ones first, ahead of the pictures the app meant to show.
    */
+  // THE OTHER SYSTEM IT IS KEPT IN STEP WITH: a Notion data source or a calendar, and where it is there.
+  const kept = node ? keptInStepWith(context.app?.connections, facts.kind, id) : undefined;
   const seenIn = placesOf(context).filter((place) => !place.hidden && (place.kind === facts.kind || place.across === facts.kind));
 
   return (
@@ -177,6 +188,19 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           />
         ) : null}
         {seenIn.length > 0 ? <SeenIn context={context} places={seenIn} /> : null}
+        {kept ? (
+          <p style={{ ...quiet, margin: 0 }} data-testid="record-kept-in-step" data-graview-system={kept.system}>
+            Kept in step with {kept.words}
+            {kept.href ? (
+              <>
+                {" · "}
+                <a href={kept.href} target="_blank" rel="noopener noreferrer" style={link}>
+                  Open in {kept.system === "notion" ? "Notion" : "Google Calendar"}
+                </a>
+              </>
+            ) : null}
+          </p>
+        ) : null}
       </header>
 
       {node && isArchived(node) ? <ArchivedSaid context={context} id={id} kind={facts.kind} /> : null}
@@ -446,7 +470,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               style={{ ...button, ...quiet, justifySelf: "start" }}
             />
           ) : null}
-          <WithheldActs context={context} withheld={facts.actions.withheld} />
+          <WithheldActs context={context} withheld={facts.actions.withheld.filter((affordance) => !proposable.includes(affordance))} />
         </section>
       ) : null}
 

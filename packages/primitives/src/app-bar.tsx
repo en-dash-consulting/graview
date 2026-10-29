@@ -572,7 +572,14 @@ export function AppBar({
     watch.observe(element);
     // What stands beside the places — the tools, a count on the standing — changes their room without changing the bar's width.
     for (const tool of element.querySelectorAll(".graview-bar-tools > *")) watch.observe(tool);
+    // And a tool that comes later — who else is here, a host's buttons — is watched from when it does.
+    const tools = element.querySelector(".graview-bar-tools");
+    const arrivals = typeof MutationObserver === "undefined" || !tools ? null : new MutationObserver(() => {
+      for (const tool of tools.children) watch.observe(tool);
+    });
+    arrivals?.observe(tools!, { childList: true });
     return () => {
+      arrivals?.disconnect();
       watch.disconnect();
       fonts?.removeEventListener?.("loadingdone", weigh);
     };
@@ -814,12 +821,36 @@ function roomForWords(header: HTMLElement): boolean | null {
   const given = nameGiven(header);
   // The app's name on two lines whatever stands beside it has given its room already: no room for the words.
   if (given === null) return false;
-  let spare = mid.getBoundingClientRect().width - wanted - given;
+  let spare = mid.getBoundingClientRect().width - wanted - given - overrun(header);
   if (find && find.getBoundingClientRect().width > 0) {
     const basis = parseFloat(getComputedStyle(find).flexBasis);
     if (isFinite(basis)) spare -= Math.max(0, basis - find.getBoundingClientRect().width);
   }
   return faces.getAttribute("data-switch-drawn") === "icons" ? spare >= words + 2 : spare >= -1;
+}
+
+/**
+ * HOW FAR THE ROW RUNS PAST ITS END, in pixels: what stands last on it — a
+ * tool, the person — measured against the row's own end inside its padding.
+ * Find's end was the measure of the room, and Find stops giving at its
+ * least: once the tools after it had more than the row left (the scene's
+ * Activity arriving after the places were weighed, an iPad's 1024 px with
+ * five places standing), Find's end went past the row with them, the room
+ * read as enough, and the person stood off the screen. What runs over is
+ * room the places and the switch's words do not have.
+ */
+function overrun(header: HTMLElement): number {
+  const row = header.querySelector<HTMLElement>(".graview-bar-row");
+  const box = header.getBoundingClientRect();
+  if (!row || !(box.width > 0)) return 0;
+  const end = box.right - (parseFloat(getComputedStyle(row).paddingRight) || 0);
+  let last = end;
+  for (const one of row.querySelectorAll<HTMLElement>(":scope > *, .graview-bar-tools > *")) {
+    if (one.classList.contains("graview-bar-tools") || one.classList.contains("graview-bar-ruler") || one.classList.contains("graview-bar-said")) continue;
+    const rect = one.getBoundingClientRect();
+    if (rect.width > 0) last = Math.max(last, rect.right);
+  }
+  return Math.max(0, last - end);
 }
 
 /**
@@ -1214,7 +1245,7 @@ function standsIn(header: HTMLElement, current: number, wordsAsked: boolean, ran
    * the places 8 px roomier than the row and squeeze the app's name by it.
    * With no Find, the middle's own room.
    */
-  const room = end && end.width > 0 ? end.right - from - (parseFloat(getComputedStyle(find!).minWidth) || 0) - 16 : mid.getBoundingClientRect().width - given;
+  const room = (end && end.width > 0 ? end.right - from - (parseFloat(getComputedStyle(find!).minWidth) || 0) - 16 : mid.getBoundingClientRect().width - given) - overrun(header);
   const primary = [...ranks].map((rank) => rank !== "0");
   return placesThatStand({ widths, current, room: Math.floor(room + drawnWords - words), more, primary })?.join(",") ?? null;
 }

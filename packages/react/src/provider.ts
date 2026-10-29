@@ -20,13 +20,13 @@
 export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, PLACE_MENU_EVENT, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
 // Sections of the context menu beside its acts: a host's are the provider's `menuSections`; a face adds its own with `MenuSections` (`./drawing`).
-export type { MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
+export type { MenuColumn, MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 // Whether a panel beside the map lists a district opened from altitude.
 export { BesideTheMap } from "./beside-the-map.js";
 // The host's files (FR-163), where a file field's editor finds them.
 export { HostFilesContext, useHostFiles } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
-export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, OnExport, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
+export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, OnExport, PointerMenu, SceneHandle, Scheme, Seat, ViewMode, WorkflowRuns } from "./context.js";
 // Typing together (Roadmap f-collab-text): the host's `typing`, where an editor of a field typed together finds it.
 export { TypingContext } from "./typing.js";
 export type { FieldTyping, LiveTyping } from "./typing.js";

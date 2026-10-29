@@ -1,0 +1,201 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Homeflow week",
+  "description": "A household's routines, school drives and plan items, filled out as next week's events every Sunday evening.",
+  "brand": {
+    "timeZone": "America/New_York"
+  },
+  "kinds": {
+    "routine": {
+      "noun": "routine",
+      "plural": "routines",
+      "label": "{name}",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "startsAt": {
+          "type": "datetime",
+          "required": true,
+          "repeats": true
+        },
+        "active": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "drive": {
+      "noun": "drive",
+      "plural": "drives",
+      "label": "{name}",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "days": {
+          "type": "enum",
+          "multiple": true,
+          "options": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri",
+            "sat",
+            "sun"
+          ]
+        },
+        "at": {
+          "type": "string"
+        }
+      }
+    },
+    "plan-item": {
+      "noun": "plan item",
+      "plural": "plan items",
+      "label": "{name}",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "date": {
+          "type": "date"
+        }
+      },
+      "edges": {
+        "event": {
+          "to": [
+            "event"
+          ],
+          "cardinality": "one",
+          "description": "the event it is on the calendar as",
+          "inverse": "the plan item it is for"
+        }
+      }
+    },
+    "event": {
+      "noun": "event",
+      "plural": "events",
+      "label": "{name}",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "startsAt": {
+          "type": "datetime"
+        }
+      },
+      "edges": {
+        "pattern": {
+          "to": [
+            "routine",
+            "drive"
+          ],
+          "cardinality": "one",
+          "description": "the routine or drive it was made from",
+          "inverse": "the events made from it"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-routine": {
+      "title": "Add a routine",
+      "creates": "routine",
+      "description": "Something the household does every week, like swim practice."
+    },
+    "add-drive": {
+      "title": "Add a drive",
+      "creates": "drive",
+      "description": "A school run on the weekdays it happens, at the time it leaves."
+    },
+    "add-plan-item": {
+      "title": "Add a plan item",
+      "creates": "plan-item",
+      "description": "A one-off thing on a day, like the dentist."
+    },
+    "add-event": {
+      "title": "Add an event",
+      "creates": "event",
+      "description": "One thing on the calendar, at a time."
+    }
+  },
+  "workflows": {
+    "next-weeks-events": {
+      "title": "Fill out next week's events",
+      "when": [
+        {
+          "every": "sunday 18:00"
+        },
+        {
+          "byHand": true
+        }
+      ],
+      "approve": "apply",
+      "steps": [
+        {
+          "generate": "event",
+          "from": [
+            {
+              "kind": "routine",
+              "where": "active",
+              "dates": "startsAt"
+            }
+          ],
+          "window": "next week",
+          "set": {
+            "name": {
+              "expr": "name"
+            },
+            "startsAt": "$date"
+          },
+          "link": "pattern"
+        },
+        {
+          "generate": "event",
+          "from": [
+            {
+              "kind": "drive",
+              "dates": "days"
+            }
+          ],
+          "window": "next week",
+          "set": {
+            "name": {
+              "expr": "concat('Drive: ', name)"
+            },
+            "startsAt": {
+              "expr": "datetime(date, at)"
+            }
+          },
+          "link": "pattern"
+        },
+        {
+          "generate": "event",
+          "from": [
+            {
+              "kind": "plan-item",
+              "dates": "date"
+            }
+          ],
+          "window": "next week",
+          "set": {
+            "name": {
+              "expr": "name"
+            },
+            "startsAt": {
+              "expr": "datetime(date, '09:00')"
+            }
+          },
+          "link": "event"
+        }
+      ]
+    }
+  }
+}

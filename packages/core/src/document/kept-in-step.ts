@@ -16,7 +16,11 @@ type Loose = { readonly system?: unknown; readonly kind?: unknown; readonly fiel
 export function fieldsKeptInStep(connections: unknown, kinds: Readonly<Record<string, { readonly fields: Readonly<Record<string, { readonly type: string }>> }>>): ReadonlyMap<string, readonly string[]> {
   const kept = new Map<string, Set<string>>();
   if (!connections || typeof connections !== "object") return new Map();
-  for (const raw of Object.values(connections as Record<string, Loose>)) {
+  // A Notion connection of several data sources is read as one per source, each with its kind and properties.
+  const each = Object.values(connections as Record<string, Loose & { readonly sources?: unknown }>).flatMap((raw): Loose[] =>
+    raw && typeof raw === "object" && raw.system === "notion" && Array.isArray(raw.sources) ? (raw.sources as Loose[]).filter((one) => one && typeof one === "object").map((one) => ({ system: "notion", kind: one.kind, properties: one.properties })) : [raw],
+  );
+  for (const raw of each) {
     if (!raw || typeof raw !== "object" || typeof raw.kind !== "string") continue;
     const fields = kinds[raw.kind]?.fields;
     if (!fields) continue;
@@ -32,3 +36,4 @@ export function fieldsKeptInStep(connections: unknown, kinds: Readonly<Record<st
   }
   return new Map([...kept].filter(([, set]) => set.size > 0).map(([kind, set]) => [kind, Object.keys(kinds[kind]!.fields).filter((field) => set.has(field))]));
 }
+

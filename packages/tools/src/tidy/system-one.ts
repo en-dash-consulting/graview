@@ -57,11 +57,21 @@ export function noulOf(answer: SystemOneAnswer | undefined): number | undefined 
  * else from the score itself.
  */
 export function scoreOf(answer: SystemOneAnswer | undefined, levels: number): number | undefined {
+  const expected = expectedLevelOf(answer, levels);
+  return expected === undefined ? undefined : round(expected / (levels - 1));
+}
+
+/**
+ * A Score's expected level, 0 to `levels - 1`, unrounded: what `scoreOf`
+ * scales to 0 to 1. A reader that says the level itself rounds this, not
+ * the scaled score, so a level is not held to the score's hundredths.
+ */
+export function expectedLevelOf(answer: SystemOneAnswer | undefined, levels: number): number | undefined {
   if (answer?.type !== "score" || levels < 2) return undefined;
   const entries = Object.entries(answer.probabilities ?? {}).map(([level, p]) => [Number(level), p] as const).filter(([level, p]) => Number.isInteger(level) && Number.isFinite(p));
   const total = entries.reduce((sum, [, p]) => sum + p, 0);
   const expected = total > 0 ? entries.reduce((sum, [level, p]) => sum + level * p, 0) / total : answer.score;
-  return Number.isFinite(expected) ? round(expected / (levels - 1)) : undefined;
+  return Number.isFinite(expected) ? Math.max(0, Math.min(levels - 1, expected)) : undefined;
 }
 
 /** A Choice: what was chosen, how sure (its probability), and its margin over the next. */

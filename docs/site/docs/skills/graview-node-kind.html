@@ -1798,7 +1798,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-node-kind</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-node-kind</code> is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-node-kind</code> is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1838,6 +1838,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <li><strong><code>lifecycle</code></strong> when members expire — `{ field: "status", retired: ["played"] }<code> or </code>{ field: "until", retired: "date" }`. Every count then aggregates over the horizon ("4, +12 past") instead of drowning, and <code>graview check</code> refuses a lifecycle reading a missing field.</li>
 <li><strong>A figure</strong>, line art of the THING at the city's three-quarter angle — a person, a plot of ground, a gutter — drawn wherever the kind is drawn. Nine ship; any domain that is not an abstract tracker runs out of them at once, so draw the rest: `graview figure ./dist/domain/app.js --kind gutter --from "a gutter along a roof edge"` prints the brief (the rules, the angle, a shipped figure as the style), and <code>--judge &lt;file&gt;</code> reads the answer back, holds it to the rules <code>graview check</code> holds a figure to, and prints the line to paste. Then look at it at twenty pixels, which is the size a chip gives it.</li>
 <li><strong>A declared hue</strong> in the brand (<code>accents: { fixture: 210 }</code>) for a chosen color, not a stable hash: every chip dot, roof and focus tag follows.</li>
+<li><strong>What it follows</strong>, when its records copy another kind's (an event of its plan item): `"derives": { "from": "plan-item", "via": "source", "set": { "title": { "expr": "name" } } }`. The store keeps each linked record in step in the same change as either side's edit: a field set from a source field as it is goes back, one worked out otherwise is flagged in <code>store.findings()</code>, and archiving the source archives it.</li>
 </ul>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm build &amp;&amp; npx graview check ./dist/domain/app.js

@@ -108,6 +108,23 @@ export interface GoogleCalendarOptions {
 
 const BASE = "https://www.googleapis.com/calendar/v3";
 
+/**
+ * WHAT GOOGLE SAID, beside its status (Roadmap
+ * f-sync-guest-changes-in-history): its own `error.message` ("Too many
+ * attendees"), or a host's own `error` in its place, so a refusal can be
+ * put in words; nothing when the body says none.
+ */
+async function saidBy(response: { json(): Promise<unknown> }): Promise<string> {
+  try {
+    const body = (await response.json()) as { error?: { message?: unknown } | string; message?: unknown } | null;
+    const error = body?.error;
+    const message = typeof error === "string" ? error : typeof error?.message === "string" ? error.message : typeof body?.message === "string" ? body.message : undefined;
+    return message ? `: ${message}` : "";
+  } catch {
+    return "";
+  }
+}
+
 /** Reads a dotted path out of a nested response — `start.dateTime`. */
 function at(record: Record<string, unknown>, path: string): unknown {
   return path
@@ -167,7 +184,7 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
      * which is exactly the wrong response to "your cursor is no good".
      */
     if (response.status === 410) return { expired: true } as const;
-    if (!response.ok) throw new Error(`google-calendar: HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`google-calendar: HTTP ${response.status}${await saidBy(response)}`);
     // A deletion is answered 204, with no body to read.
     if (response.status === 204) return { expired: false, body: {} as Record<string, unknown> } as const;
     return { expired: false, body: (await response.json()) as Record<string, unknown> } as const;

@@ -14,9 +14,9 @@ import { formatMoney } from "./money.js";
  */
 
 /** A number in the words its field declares: "$10,000", "13%", "12 kg". A unit that is a currency ("EUR") makes it money in that currency. */
-export function sayAmount(value: number, { format, unit, currency, locale }: AmountMark): string {
+export function sayAmount(value: number, { format, unit, currency, locale, places }: AmountMark): string {
   const code = /^[A-Z]{3}$/.test(unit ?? "");
-  if (format === "money" || (!format && code)) return formatMoney(value, { ...(locale ? { locale } : {}), ...((code ? unit : currency) ? { currency: code ? unit! : currency! } : {}) });
+  if (format === "money" || (!format && code)) return formatMoney(value, { ...(locale ? { locale } : {}), ...((code ? unit : currency) ? { currency: code ? unit! : currency! } : {}) }, places);
   if (format === "percent") return numberAsRead(value, locale, { style: "percent", maximumFractionDigits: 0 });
   return numberAsRead(value, locale) + (unit ? ` ${unit}` : "");
 }

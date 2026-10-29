@@ -269,3 +269,54 @@ describe("a served store's Notion tables joined by a relation", () => {
     expect(Object.values(again).every((report) => report.pushed.length === 0 && report.applied.length === 0)).toBe(true);
   });
 });
+
+describe("sayReport counts the guests a pass invited and took off", () => {
+  it("says invited 2 to 3 events · 1 taken off, from the writes that reached the calendar", () => {
+    const report = {
+      system: "google-calendar", applied: [], echoes: [], conflicts: [], resolved: [], pushed: ["a", "b", "c"], queued: [], refused: [], gone: [], offline: false, state: { links: {}, outbox: [] },
+      guests: [
+        { localId: "a", invited: ["ada@example.com"], removed: [] },
+        { localId: "b", invited: ["ada@example.com"], removed: ["bo@example.com"] },
+        { localId: "c", invited: [], removed: [], leftOut: [{ person: "kid", why: "invite-off" as const }] },
+      ],
+    };
+    expect(sayReport(report)).toBe("sent 3 to it · invited 2 to 2 events · 1 taken off");
+  });
+});
+
+/* ------------------------------ one database of several kinds, its properties made (request: Notion autocreates) */
+
+describe("a served store's Notion database of several data sources", () => {
+  it("keeps each source with its kind, makes the properties a source lacks, and says what it made in the pass's line", async () => {
+    const notion = scriptedNotion();
+    const database = notion.database({ title: "Chores", properties: { Name: "title" } });
+    notion.source(database, { title: "Rooms", properties: { Name: "title" } });
+    const [, rooms] = notion.sources(database);
+    notion.add(rooms!, { Name: "Kitchen" });
+    const opened = open({
+      format: "graview-document",
+      formatVersion: 1,
+      name: "Chores",
+      kinds: { task: { fields: { name: { type: "string", required: true }, done: { type: "boolean" } } }, room: { fields: { name: { type: "string", required: true } } } },
+      acts: { "add-task": { creates: "task" }, "add-room": { creates: "room" } },
+      connections: {
+        house: {
+          system: "notion",
+          database: { env: "CHORES_DATABASE" },
+          direction: "both",
+          sources: [
+            { source: "Chores", kind: "task", properties: { name: "Name", done: "Done" } },
+            { source: "Rooms", kind: "room" },
+          ],
+        },
+      },
+    });
+    const said: string[] = [];
+    const running = runConnections({ ...opened, env: { CHORES_DATABASE: database, NOTION_TOKEN: notion.secret }, fetch: notion.fetch, say: (line) => said.push(line) });
+    await running.runNow();
+    await running.stop();
+    expect(said).toContain("house: keeping in step with a Notion database into task, room, every 30 s");
+    expect(said).toContain("house: took 1 from Notion · Made 1 property in Notion for task: Done");
+    expect(opened.store.graph.allNodes().map((node) => `${node.kind} ${String((node as unknown as Record<string, unknown>)["name"])}`)).toEqual(["room Kitchen"]);
+  });
+});

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 711,
+  "gzipped": 236,
+  "changeset": "a-shared-or-signed-out-seat-cannot-vote-on-a-suggestion.md",
+  "note": "Raised when a shared or signed-out seat came to be refused a vote on a suggestion (Roadmap f-votes-shared-seat): the store asks whether a vote's seat is anybody in particular — `shared`, a visitor, or an agent acting for one — and keeps a host's advisory vote under its visitor, counted apart. 711 / 236 more. Measured at 592_263 / 206_034 against 591_552 / 205_798 on a fresh build of main."
+}

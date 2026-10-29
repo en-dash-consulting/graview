@@ -17,14 +17,23 @@ export interface Money {
 }
 
 
-/** A sum of money in words: "$21,000", "21.000 €" — whole sums without cents, others with two. */
-export function formatMoney(value: number, money: Money = {}): string {
-  const whole = Number.isInteger(value);
+/**
+ * A sum of money in words: "$21,000", "21.000 €" — whole sums without
+ * cents, others with two, and never ".00". The sum is rounded to the cent
+ * before it is judged whole, so 11423.999999 worked out by a computed field
+ * reads "$11,424", as 11424 does, and not "$11,424.00" beside "$7,840" in
+ * one list (Roadmap f-lifelogics-findings). `places: 0` says it in whole
+ * units, rounded: "$22,758" for 22758.40 — a field's `"places": 0`, a
+ * template's `{total | money: 0}`.
+ */
+export function formatMoney(value: number, money: Money = {}, places?: 0): string {
+  const sum = places === 0 ? Math.round(value) : Math.round(value * 100) / 100;
+  const whole = Number.isInteger(sum);
   const digits = { maximumFractionDigits: whole ? 0 : 2, minimumFractionDigits: whole ? 0 : 2 };
   try {
-    return numberAsRead(value, money.locale, money.currency ? { style: "currency", currency: money.currency, ...digits } : digits);
+    return numberAsRead(sum, money.locale, money.currency ? { style: "currency", currency: money.currency, ...digits } : digits);
   } catch {
     // A currency the runtime does not know is said as a plain number, never a thrown page.
-    return numberAsRead(value, money.locale, digits);
+    return numberAsRead(sum, money.locale, digits);
   }
 }

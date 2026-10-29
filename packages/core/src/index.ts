@@ -214,14 +214,15 @@ export { FieldRevisions, fieldsWritten, NEVER_WRITTEN, writtenBy } from "./ops/r
 export type { FieldConflict, FieldRevision } from "./ops/revisions.js";
 export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck, UndoRefused } from "./ops/undo.js";
-export type { Author, AuthorKind, Batch, Operation, Via } from "./ops/types.js";
+export type { Author, AuthorKind, Batch, Operation, SentOut, Via } from "./ops/types.js";
 export { AUTHOR_KINDS, authorKindOf } from "./ops/types.js";
 export { LINEAGE_BASIS_LIMIT, LINEAGE_EVIDENCE_LIMIT, LINEAGE_LIMIT, LINEAGE_MODEL_LIMIT, lineageOf, type Lineage } from "./ops/lineage.js";
 // What a link was based on, and whether a person has kept it, are `@graview/core/provenance`'s, fetched with what draws them (FR-172).
 export type { HasLog, LinkProvenance, LinkRef } from "./ops/provenance.js";
 export { KEEP_LINK } from "./mutations/keep-link.js";
 // A vote on a suggestion (Roadmap f-suggestion-votes): the act every store answers to, what its op keeps, and what the app says of suggestions as a whole.
-export { VOTE_SUGGESTION, type AppTidying, type SuggestionVote, type Vote } from "./mutations/vote-suggestion.js";
+export { PROPOSE_CHANGES, type ProposeChangesArgs } from "./mutations/propose-changes.js";
+export { VOTE_SUGGESTION, type AppTidying, type SuggestionVote, type Vote, type VotesOptions } from "./mutations/vote-suggestion.js";
 // Typing into a field typed together (Roadmap f-collab-text): the act every store answers to, and whether a field is one.
 export { TYPE_TEXT } from "./text/typing-hook.js";
 export type { TypeTextArgs } from "./mutations/type-text.js";
@@ -235,6 +236,7 @@ export {
   isSystem,
   permits,
   permittedMutations,
+  proposes,
   rolesOf,
   rolesWhoCould, whyNot,
 } from "./permissions/policy.js";
@@ -293,7 +295,7 @@ export { excerpt } from "./excerpt.js";
 // A grid lens's order and a coverage with nothing to cross, said once for the lens and describePlace (2026-10-15).
 export { gridSortOf, gridSortProblem, sortForGrid, type GridSort } from "./grid-sort.js";
 export { coverageUnlinkedWords } from "./coverage-words.js";
-export { actTitle, allLabel, article, counted, pluralLabel, pluralOf, fieldWords, humanizeField, nounOf, summarize, withArticle } from "./schema/define-node.js";
+export { actTitle, allLabel, article, counted, pluralLabel, pluralOf, fieldWords, humanizeField, humanizeValue, nounOf, summarize, withArticle } from "./schema/define-node.js";
 // What each option of a kind's choices is called, for a view handed records as they are kept (Roadmap f-option-labels).
 export { choiceWords } from "./schema/choice-words.js";
 // Days, times and numbers as a person reads them, in the reader's or the app's locale (FR-178), and instants on the person's or the app's clock (Roadmap f-app-time-zone).
@@ -353,6 +355,7 @@ export { sha256Hex, snapshotHash } from "./integrity.js";
 export type { VerifyResult } from "./integrity.js";
 // Stored data checked against its declaration (FR-21).
 export { GRAPH_FINDING_CODES, repairPlan, validateGraph } from "./validate-graph.js";
+export type { DerivesDeclaration } from "./keep-linked.js";
 export type {
   FindingRepair,
   GraphFinding,

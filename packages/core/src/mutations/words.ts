@@ -1,7 +1,7 @@
 import { lowerFirst } from "../capital.js";
 import { InvalidArguments } from "./invalid-arguments.js";
 import type { AnySchema } from "../schema/schema.js";
-import { fieldWords, humanizeField } from "../schema/define-node.js";
+import { fieldWords, humanizeValue } from "../schema/define-node.js";
 
 /** The parts of a mutation that say which kinds its arguments fill. */
 interface Filling {
@@ -35,10 +35,10 @@ export function argumentWords(
     return {
       // A kind's `label` is its name: "Label *" is the field's key, not a word for it.
       label: declared ?? fieldWords(definition, name),
-      option: (value) => (format ? format(value) : humanizeField(value)),
+      option: (value) => (format ? format(value) : humanizeValue(value)),
     };
   }
-  return { label: fieldWords(undefined, name), option: (value) => humanizeField(value) };
+  return { label: fieldWords(undefined, name), option: (value) => humanizeValue(value) };
 }
 
 /**

@@ -453,6 +453,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(str(g, "describe") ? { describe: str(g, "describe")! } : {}),
       ...(bool(g, "self") ? { self: true } : {}),
       ...(bool(g, "ownEnd") ? { ownEnd: true } : {}),
+      ...(list(g, "propose")?.length ? { propose: list(g, "propose")!.includes("*") ? ("*" as const) : list(g, "propose")! } : {}),
     };
   });
   /*
@@ -570,9 +571,20 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
           },
         }
       : {}),
+    // The workflows are carried, not edited here yet (Roadmap f-jobs-declared): `graview check` says what a renamed or removed kind leaves them naming.
+    ...(base?.workflows ? { workflows: base.workflows } : {}),
     // The connections are carried, not edited here yet: a renamed kind's calendar follows it.
     ...(base?.connections
-      ? { connections: Object.fromEntries(Object.entries(base.connections).map(([key, connection]) => [key, { ...connection, kind: follow(connection.kind) }])) }
+      ? {
+          connections: Object.fromEntries(
+            Object.entries(base.connections).map(([key, connection]) => [
+              key,
+              connection.system === "notion"
+                ? { ...connection, ...(connection.kind !== undefined ? { kind: follow(connection.kind) } : {}), ...(connection.sources ? { sources: connection.sources.map((source) => ({ ...source, kind: follow(source.kind) })) } : {}) }
+                : { ...connection, kind: follow(connection.kind) },
+            ]),
+          ),
+        }
       : {}),
   };
 }

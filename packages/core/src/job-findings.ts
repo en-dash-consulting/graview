@@ -57,10 +57,18 @@ const quotedList = (names: Iterable<string>): string => [...names].map((name) =>
 
 /** What is wrong with one job's `where`, said in sentences, or nothing. */
 function whereProblems(job: JobDeclaration, kind: JobKind, world: JobWorld): string[] {
-  if (job.where === undefined) return [];
+  return job.where === undefined ? [] : conditionProblems(job.where, job.kind, kind, world);
+}
+
+/**
+ * What is wrong with a rule-language condition read with a record of `kindName` as its subject, said as
+ * "its where …" sentences, or nothing: what a job's `where` and a workflow's are held to alike.
+ */
+export function conditionProblems(where: string, kindName: string, kind: JobKind, world: JobWorld): string[] {
+  const job = { kind: kindName };
   let shape: ReturnType<typeof analyzeExpr>;
   try {
-    shape = analyzeExpr(parseExpr(job.where));
+    shape = analyzeExpr(parseExpr(where));
   } catch (e) {
     if (!(e instanceof ExprSyntaxError)) throw e;
     return [`its where does not read: ${e.sentence} (at character ${e.at + 1})`];

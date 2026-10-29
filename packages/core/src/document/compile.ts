@@ -28,6 +28,7 @@ import { resolveCovers } from "./covers.js";
 import { parsedComputed, workedOutAlone } from "./computed.js";
 import { durationsOf } from "./durations.js";
 import { fieldsKeptInStep } from "./kept-in-step.js";
+import { isRecord } from "./respell.js";
 import { askedOrder, pageFieldFindings } from "./page-fields.js";
 import {
   build,
@@ -40,6 +41,7 @@ import {
   type ArgPlan,
   type CompiledApp,
   type CompiledDocument,
+  type DerivesPlan,
   type EdgePlan,
   type KindPlan,
   type RefusedDocument,
@@ -280,6 +282,8 @@ function validate(document: GraviewDocument): Finding[] {
         }
       }
     }
+    // What it follows (Roadmap f-keep-linked): its expressions parse here; the names they read are the checker's (`derives-findings.ts`).
+    for (const [field, value] of Object.entries(spec.derives?.set ?? {})) if (isRecord(value) && "expr" in value) tryExpr(String(value.expr), `${at}.derives.set.${field}`, findings);
     for (const [field, f] of Object.entries(spec.fields)) {
       if (f.default !== undefined && f.type === "enum") {
         // A choice that takes several (FR-233) starts as a list of its options; one that takes one, as one of them.
@@ -401,7 +405,10 @@ function validate(document: GraviewDocument): Finding[] {
   if (policy) {
     policy.grants.forEach((grant, i) => {
       if (grant.roles !== "*" && roles.size > 0) for (const r of grant.roles) if (!roles.has(r)) findings.push(error("grant-role", `policy.grants.${i}.roles`, `"${r}" is not one of the document's roles`));
-      if (grant.mutations !== "*") for (const m of grant.mutations) if (!acts[m] && !derivedActOf(m) && !documentRelationActOf(m, document.kinds)) findings.push(error("grant-act", `policy.grants.${i}.mutations`, `"${m}" is not an act this document declares`, didYouMeanAct(m, document)));
+      for (const key of ["mutations", "propose"] as const) {
+        const named = grant[key];
+        if (named !== undefined && named !== "*") for (const m of named) if (!acts[m] && !derivedActOf(m) && !documentRelationActOf(m, document.kinds)) findings.push(error("grant-act", `policy.grants.${i}.${key}`, `"${m}" is not an act this document declares`, didYouMeanAct(m, document)));
+      }
     });
     (policy.sees ?? []).forEach((sight, i) => {
       for (const k of sight.kinds) if (!kinds.has(k)) findings.push(error("sight-kind", `policy.sees.${i}.kinds`, `"${k}" is not a kind this document declares`));
@@ -532,11 +539,38 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
  * sentence and a refusal, as `{amount | money}` does — worked out here, so
  * a page handed the compiled app renders it with nothing more.
  */
-function saidAsDeclared(parts: readonly TemplatePart[], fields: GraviewDocument["kinds"][string]["fields"] | undefined): readonly TemplatePart[] {
+function saidAsDeclared(parts: readonly TemplatePart[], fields: GraviewDocument["kinds"][string]["fields"] | undefined, computed?: GraviewDocument["kinds"][string]["computed"]): readonly TemplatePart[] {
   return parts.map((part) => {
-    const format = !part.format && part.expr?.t === "ident" ? fields?.[part.expr.name]?.format : undefined;
-    return format === "money" || format === "percent" ? { ...part, format } : part;
+    if (part.format || part.expr?.t !== "ident") return part;
+    const name = part.expr.name;
+    const worked = computed?.[name];
+    const said: { readonly format?: string; readonly places?: number } | undefined = fields?.[name] ?? (typeof worked === "object" ? worked : undefined);
+    const format = said?.format;
+    // Money in whole units where the field says `"places": 0`, as `{x | money: 0}` says it.
+    return format === "money" || format === "percent" ? { ...part, format, ...(format === "money" && said?.places === 0 ? { formatArgs: ["0"] } : {}) } : part;
   });
+}
+
+/**
+ * WHAT A KIND FOLLOWS, PLANNED (Roadmap f-keep-linked): which end of the
+ * relation its source stands on — the relation declared on this kind
+ * points at the source, one declared on the source points here — each
+ * value parsed, and the fields set from one of the source's own stored
+ * fields as it is, which go back when changed here.
+ */
+function derivesPlan(kind: string, derives: NonNullable<KindSpec["derives"]>, document: GraviewDocument): DerivesPlan {
+  const sourceEnd = document.kinds[kind]?.edges?.[derives.via] !== undefined ? "to" : "from";
+  const source = document.kinds[derives.from];
+  const set: [string, { expr: Expr } | { value: unknown }][] = [];
+  const back: Record<string, string> = {};
+  for (const [field, value] of Object.entries(derives.set)) {
+    if (isRecord(value) && "expr" in value) {
+      const expr = parseExpr(value.expr);
+      set.push([field, { expr }]);
+      if (expr.t === "ident" && source?.fields[expr.name]) back[field] = expr.name;
+    } else set.push([field, { value: typeof value === "string" && value.startsWith("$$") ? value.slice(1) : value }]);
+  }
+  return { from: derives.from, via: derives.via, sourceEnd, set, back };
 }
 
 function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
@@ -553,11 +587,12 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
     // Which of them work out a length of time, read from their parse here, where the parser is (`durations.ts`).
     const durations = computed ? durationsOf(document, kind, [...computed]) : [];
     kinds[kind] = {
-      ...(labelSource ? { label: saidAsDeclared(parseTemplate(labelSource), spec.fields) } : {}),
-      ...(spec.describe ? { describe: saidAsDeclared(parseTemplate(spec.describe), spec.fields) } : {}),
+      ...(labelSource ? { label: saidAsDeclared(parseTemplate(labelSource), spec.fields, spec.computed) } : {}),
+      ...(spec.describe ? { describe: saidAsDeclared(parseTemplate(spec.describe), spec.fields, spec.computed) } : {}),
       ...(computed ? { computed: [...computed] } : {}),
       ...(durations.length > 0 ? { durations } : {}),
       ...(keptInStep.has(kind) ? { keptInStep: keptInStep.get(kind)! } : {}),
+      ...(spec.derives ? { derives: derivesPlan(kind, spec.derives, document) } : {}),
     };
   }
 

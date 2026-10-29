@@ -43,7 +43,10 @@ opens in and how its cards read are `graview-lists`.
    night's work one `lineage.run`, name the judge in `lineage.actor` and
    the records it rests on in `lineage.evidence`; give a suggestion an
    `expiresAt`, after which it leaves the tray and the next run judges it
-   again. "Not now" is not a decline: it is the person's own state
+   again. A suggestion of several calls (a workflow's run with
+   `approve: "ask"`) lists each change; `acceptSuggestion(store, id,
+   { items: [0, 2] })` takes some, the rest wait, Decline takes the rest.
+   "Not now" is not a decline: it is the person's own state
    (`Dismissal`, handed to `suggestions(store, who, { dismissed })`), hides
    it from them alone and binds the actor to nothing. The tray's Not now
    keeps it in the host's `dismissals`, else the browser; a seat says it
@@ -54,10 +57,16 @@ opens in and how its cards read are `graview-lists`.
    `voteSuggestion(store, id, "for" | "against" | null)` casts, changes or
    withdraws one), one standing vote each; whoever may decide (`mayDecide`)
    reads each suggestion's `tally: { for, against, mine }` beside Accept.
-   Say `"tidying": { "autoAcceptAt": 4 }` at the top of the document to
-   have the actor make a suggestion at four votes for, the voters in its
-   `lineage.voters`; `graview check` warns when the app has no policy,
-   since then nobody votes.
+   Say `"tidying": { "autoAcceptAt": 4 }` at the top of the document (the
+   edit `{"op": "set-app-tidying", "autoAcceptAt": 4}`, `null` to take it
+   away) to have the actor make a suggestion at four votes for, the voters
+   in its `lineage.voters`; `graview check` warns when the app has no policy,
+   since then nobody votes. A seat no one person holds — the host's one
+   signed-out seat (`shared: true` on its principal) or a `visitor` — is
+   refused a vote ("Sign in to vote on this suggestion"), and the tray
+   offers the host's `signIn` instead; `votes: { advisory: "visitors" }` on
+   the store keeps such a vote under the seat's `visitorKey`, in
+   `tally.advisory`, never toward `autoAcceptAt`.
 
 3. **Hold it to what people said.** A person says "Leave this one alone" on
    a record (`leave-alone-<kind>`, cleared by `allow-tidying-<kind>`;
@@ -102,6 +111,28 @@ opens in and how its cards read are `graview-lists`.
    `declineAppSuggestion` is kept (`learned.json` beside the store) and
    handed back as `declined`, never offered again. `graview learn <entry>
    --data ./data` prints them; `--accept <key>` or `--decline <key>`.
+
+6. **A workflow runs the app's own actor on a schedule** of the app's
+   choosing. A document's `workflows` names each: a `title`, `when`
+   (`{ "every": "sunday 18:00" }`, `cron`, `made`, `changed`, `synced`,
+   `byHand`), `approve` and its `steps` — an act over the records a rule
+   picks, with a `key` so a rerun changes what it made, or a model
+   proposing from a list of acts. Dreaming is the one every app has
+   (`workflowsOf`, `@graview/core/workflows`); `runWorkflow` from
+   `@graview/tools/workflows` runs the rest, the first run after a change
+   a dry run. A `classify` step labels each record with one of a choice
+   field's options — a model's judgment and how sure, or without one the
+   `floor`'s links and words — asked of a person first, and always for an
+   option in `confirm`. The workflows skill to come says how to write one.
+
+7. **A person proposes too.** `propose(store, principal, calls, intent)`
+   keeps the same suggestion op with the person as author and
+   `lineage.proposedBy`, where a grant's `propose` lets them ask for an act
+   they may not run (the permissions skill). The tray lists it apart,
+   "Proposed by Ada"; whoever may run it accepts it as themselves, declines
+   it ("Declined Ada's proposal: …"), or its proposer withdraws it.
+   Accepted, it is in the working state, and reaches readers on the next
+   publish where the app publishes.
 
 ## Then find out whether it worked
 

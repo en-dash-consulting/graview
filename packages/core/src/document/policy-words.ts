@@ -67,7 +67,10 @@ export function actWords(document: GraviewDocument, act: string): string {
 
 /** What a grant lets, without its stop: "a participant may "Change the participant" on participants, only on their own record". */
 export function grantBody(document: GraviewDocument, grant: GrantWords): string {
-  const acts = grant.mutations === "*" ? "do anything" : listed(grant.mutations.map((act) => actWords(document, act)));
+  const runs = grant.mutations === "*" ? "do anything" : grant.mutations.length > 0 ? listed(grant.mutations.map((act) => actWords(document, act))) : "";
+  // And what they may propose, which somebody who may run it accepts (Roadmap f-proposals-for-review).
+  const proposes = grant.propose === undefined ? "" : `propose ${grant.propose === "*" ? "anything" : listed(grant.propose.map((act) => actWords(document, act)))} for review`;
+  const acts = [runs, proposes].filter(Boolean).join(" and ");
   // A grant naming no kind gives nothing (the policy matches no kind against it), and says so rather than reading as a grant on every kind.
   const kinds = !Array.isArray(grant.kinds) ? "" : grant.kinds.length > 0 ? ` on ${listed(grant.kinds.map((kind) => pluralWords(document.kinds, kind)))}` : " on no kind, so on nothing";
   const person = peopleKinds(document.kinds)[0];
@@ -119,6 +122,13 @@ export function tidyingSentence(kinds: Kinds, kind: string, relation: string | u
   if (tidying === "never") return already ? `${plural} were already never tidied.` : `${plural} are never tidied: nothing automated changes them or their links on its own, and tidying may only suggest.`;
   if (tidying === "no-links") return already ? `${plural} were already never linked automatically.` : `${plural} are never linked or unlinked automatically: tidying may change them, and only suggest a link.`;
   return already ? `${plural} could already be tidied.` : `${plural} can be tidied again.`;
+}
+
+/** What the app says of suggestions as a whole: the votes at which its own actor makes one, or none. */
+export function appTidyingSentence(autoAcceptAt: number | undefined, already = false): string {
+  if (autoAcceptAt === undefined) return already ? "A suggestion already waited for somebody who may decide, however many voted for it." : "A suggestion now waits for somebody who may decide, however many vote for it.";
+  const people = autoAcceptAt === 1 ? "one person" : `${autoAcceptAt} people`;
+  return already ? `The app already made a suggestion on its own once ${people} voted for it.` : `The app makes a suggestion on its own once ${people} ${autoAcceptAt === 1 ? "votes" : "vote"} for it.`;
 }
 
 export const FIRST_GRANT = "The app gets a policy: from now on, only what a grant gives is allowed.";

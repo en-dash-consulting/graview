@@ -33,6 +33,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/act-findings.ts"), "utf8"),
   // What a document's brand is found wanting by (`brand-*`), decided in one place for the check and a `set-brand` edit alike.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/brand-check.ts"), "utf8"),
+  // A workflow's findings: each step kind's, and the workflow's own (Roadmap f-jobs-declared).
+  ...readdirSync(resolve(SKILLS_DIR, "../../core/src/workflows")).map((name) => readFileSync(resolve(SKILLS_DIR, "../../core/src/workflows", name), "utf8")),
 ].join("\n");
 
 /**
@@ -83,6 +85,7 @@ describe("the skills package", () => {
       "graview-view-specs",
       "graview-visitor-forms",
       "graview-worker-view",
+      "graview-workflows",
     ]);
   });
 

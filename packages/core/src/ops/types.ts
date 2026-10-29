@@ -182,6 +182,15 @@ export interface Operation {
    */
   readonly suggests?: readonly MutationCall[];
   /**
+   * WHAT EACH CALL OF A SUGGESTION WOULD DO, in its act's own sentence, in
+   * the order of `suggests` (Roadmap f-job-approvals): kept on a suggestion
+   * of several calls — a workflow's run asked about as one — so the tray
+   * lists each change and a person accepts them one by one. Absent on a
+   * suggestion of one call, and on one whose calls could not be told apart
+   * when it was made; then `intent` says them all.
+   */
+  readonly suggestsSaid?: readonly string[];
+  /**
    * WHEN A SUGGESTION STOPS WAITING (an ISO time), when its maker said: on
    * a suggestion's op only. From then on it leaves the Suggested tray and
    * cannot be accepted or declined; nothing is undone, since it changed
@@ -211,6 +220,26 @@ export interface Operation {
    * reads as before, and folds the same.
    */
   readonly publishedThrough?: number;
+  /**
+   * WHAT A CONNECTION SENT OUT (Roadmap f-sync-guest-changes-in-history):
+   * set on the op a connection's pass appends after a write with guests
+   * reached the other system — "Invited Ada to Long run", "Took
+   * bo@example.com off Long run" — or was refused there (`refused`). It is
+   * history and nothing else: no primitives, no reads, no writes, credited
+   * to the connection's system author, the records its sentence names in
+   * `described`. Not undone: what went out went out, and the guests change
+   * by changing them here (`checkUndo` says so). An op without it reads as
+   * before, and folds the same; a build before it reads this one as a
+   * change that touched nothing.
+   */
+  readonly sentOut?: SentOut;
+}
+
+/** What one pass sent out for one record: how many guests it invited and took off, and whether the other system refused it. */
+export interface SentOut {
+  readonly invited: number;
+  readonly removed: number;
+  readonly refused?: true;
 }
 
 export interface Batch {

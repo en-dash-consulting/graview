@@ -10,7 +10,8 @@
  * `edgeWords`), and an amount asked for as it is said (`amountBox`,
  * `amountInBox`, `readAmount`), and a date typed as
  * people say it (`readWhenTyped`, `storedOfWall`, `wallOfStored`, `zoneSaid`,
- * `endAfterStartMoved`, `startAndEndOf`).
+ * `endAfterStartMoved`, `startAndEndOf`), and the other system a record is
+ * kept in step with (`keptInStepWith`).
  *
  * Apart from `@graview/core` because a bundler places a whole file in a
  * page's first chunk when the first chunk can reach it and any chunk uses
@@ -41,3 +42,6 @@ export type { AmountBox } from "./amount-input.js";
 export { readPartialDay, readWhenTyped } from "./when-typed.js";
 export { endAfterStartMoved, namesInstant, startAndEndOf, storedOfWall, wallNow, wallOfStored, zoneSaid } from "./wall-time.js";
 export type { WallTime } from "./wall-time.js";
+// The other system a record is kept in step with, as its page says it: "Kept in step with Notion · Tasks", linked there.
+export { keptInStepWith } from "./document/kept-in-step-with.js";
+export type { KeptInStepWith } from "./document/kept-in-step-with.js";

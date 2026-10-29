@@ -42,12 +42,13 @@ import {
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import { HostFilesContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
-import type { MenuSectionSource } from "./menu-types.js";
+import type { MenuColumn, MenuSectionSource } from "./menu-types.js";
 
 import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
 import type { ViewComponent, ViewMode } from "./view-registry.js";
 import type { HistoryHost } from "@graview/core/history";
+import type { RunSaid } from "@graview/core/scene";
 import { PlaybackContext, useOwnPlayback, useReadersServed, type Playback } from "./past.js";
 import { TypingContext, type FieldTyping } from "./typing.js";
 
@@ -120,6 +121,14 @@ export interface PointerMenu {
   readonly href?: string | undefined;
   /** The act it was opened on, by its declared name: a record's act, a list's way to begin one. */
   readonly act?: string | undefined;
+  /** The column it was opened in (`MenuTarget.column`). */
+  readonly column?: MenuColumn | undefined;
+  /**
+   * AN ACT TO BEGIN AT ONCE, its form open under it with these values
+   * already given — "Add a task in Doing" from a column's menu: the add act,
+   * the column's field given its value, asking only what is left.
+   */
+  readonly begin?: { readonly act: string; readonly given: Readonly<Record<string, unknown>> } | undefined;
   /** What the menu is headed with, when not the name of what it is about: a place's title. */
   readonly title?: string | undefined;
   /** Where the keyboard goes back to when it closes; the card it was opened on when unsaid. */
@@ -148,6 +157,12 @@ export interface SceneHandle {
 export interface AwaySummary {
   readonly tidied: number;
   readonly waiting?: number;
+  /**
+   * HOW MANY AGREE WITH ONE THAT WAITS (Roadmap f-votes-shared-seat): the
+   * most people whose vote stands for a waiting suggestion, said in the
+   * tray's line, "3 readers agree with one that waits". `whileAway` counts it.
+   */
+  readonly agreed?: number;
 }
 
 export interface GraviewContextValue<S extends AnySchema> {
@@ -280,6 +295,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly dismissals?: DismissalStore | undefined;
   /** WHAT THE APP'S OWN ACTOR DID WHILE THE READER WAS AWAY: the host's `whileAway`. */
   readonly whileAway?: AwaySummary | undefined;
+  /** HOW EACH WORKFLOW'S LAST RUN WENT: the host's `workflowRuns`, else the provider's around it. */
+  readonly workflowRuns?: WorkflowRuns | undefined;
   /**
    * WHAT A SIGNED-OUT READER COULD GAIN (FR-183): the host's `signIn`, else
    * the provider's around it. Given, the reader is a visitor: the menu and
@@ -389,6 +406,11 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly locale?: string | undefined;
   /** The person's time zone the host passed (`GraviewProviderProps.timeZone`), or the one it is drawn inside. */
   readonly timeZone?: string | undefined;
+}
+
+/** What the Scene reads of a host's log of workflow runs: the last run of one, by name (`WorkflowLog` from `@graview/tools/workflows` has it). */
+export interface WorkflowRuns {
+  last(name: string): RunSaid | undefined;
 }
 
 /** The provider's value; exported for `KeptViewsProvider` (./tidied-views.ts), never from a barrel. */
@@ -650,6 +672,15 @@ export interface GraviewProviderProps<S extends AnySchema> {
    */
   readonly whileAway?: AwaySummary | undefined;
   /**
+   * HOW EACH WORKFLOW'S LAST RUN WENT (Roadmap f-jobs-declared): the host's
+   * log of runs (`WorkflowLog` from `@graview/tools/workflows`, or anything
+   * with its `last(name)`). Given, each workflow standing on the Scene's
+   * map says under its title how its last run went — "Last ran 2 hours
+   * ago: made 28" — read again whenever the graph changes. Unsaid, the
+   * provider around this one's, else the workflows stand without it.
+   */
+  readonly workflowRuns?: WorkflowRuns | undefined;
+  /**
    * WHAT A SIGNED-OUT READER COULD GAIN (FR-183): `{ label, run, roles? }`,
    * handed only while the reader is a visitor. Where every act withheld
    * from them is one a member could take (one of `roles`, the roles signing
@@ -745,6 +776,7 @@ export function GraviewProvider<S extends AnySchema>({
   subscriptions: hostSubscriptions,
   dismissals,
   whileAway,
+  workflowRuns: hostWorkflowRuns,
   signIn: hostSignIn,
   view,
   onViewChange,
@@ -754,6 +786,7 @@ export function GraviewProvider<S extends AnySchema>({
   const around = useContext(GraviewContext);
   const hostSections = menuSections ?? around?.menuSections;
   const signIn = hostSignIn ?? around?.signIn;
+  const workflowRuns = hostWorkflowRuns ?? around?.workflowRuns;
   const keptViews = hostKeptViews ?? around?.keptViews;
   const onExport = hostOnExport ?? around?.onExport;
   /* Who is at the keyboard: see "WHO IS AT THE KEYBOARD" below. */
@@ -1197,6 +1230,7 @@ export function GraviewProvider<S extends AnySchema>({
       subscriptions,
       dismissals,
       whileAway,
+      ...(workflowRuns ? { workflowRuns } : {}),
       signIn,
       linkedReads,
       movedByHand,
@@ -1257,6 +1291,7 @@ export function GraviewProvider<S extends AnySchema>({
       subscriptions,
       dismissals,
       whileAway,
+      workflowRuns,
       signIn,
       linkedReads,
       movedByHand,

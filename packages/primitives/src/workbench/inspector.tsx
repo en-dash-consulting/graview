@@ -239,7 +239,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const target: MenuTarget | null =
     menuAt === null
       ? null
-      : { face: menuAt.face ?? "scene", on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place, href: menuAt.href, act: menuAt.act, element: menuAt.returnTo };
+      : { face: menuAt.face ?? "scene", on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place, href: menuAt.href, act: menuAt.act, column: menuAt.column, element: menuAt.returnTo };
   const beside = useMenuSections(target);
   /*
    * Whether the derivation is withholding a creating act for want of the
@@ -249,6 +249,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const waiting = observations.some((observation) => observation.id.startsWith("schema:waits:"));
   const { apply, preview } = useApplyAffordance();
   const [pending, setPending] = useState<string | null>(null);
+  /* What a begun act was given (`PointerMenu.begin`): answered already, so its form asks the rest. */
+  const [given, setBegun] = useState<{ readonly id: string; readonly given: Readonly<Record<string, unknown>> } | null>(null);
   const [expanded, setExpanded] = useState(false);
   /* The withheld acts past the first three, on request — never dropped without a word. */
   const [allWithheld, setAllWithheld] = useState(false);
@@ -349,6 +351,27 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     setFailed(null);
     setQuery("");
   }, [selection, menuAt?.about]);
+
+  /*
+   * AN ACT BEGUN FROM THE MENU WITH VALUES GIVEN (`PointerMenu.begin`): "Add
+   * a task in Doing" opens the add act's form with the column's value
+   * already answered, asking only what is left — or applies it outright
+   * when nothing is. Once per menu, after the reset above.
+   */
+  const begun = useRef<unknown>(null);
+  useEffect(() => {
+    const begin = menuAt?.begin;
+    if (!begin || begun.current === menuAt) return;
+    const found = affordances.find((affordance) => affordance.mutation === begin.act);
+    if (!found) return;
+    begun.current = menuAt;
+    // Given whether the form would ask it or the act would default it: a column's value is the record's.
+    const answered = { ...begin.given };
+    setBegun({ id: found.id, given: answered });
+    if (found.open.every((parameter) => parameter.name in answered)) act({ ...found, args: { ...found.args, ...answered }, open: [] });
+    else setPending(found.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuAt, affordances]);
 
   /*
    * The strip reserves NOTHING. It is a transient elevated surface, and it
@@ -506,7 +529,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     if (last && last.heading === heading) (last.items as Affordance[]).push(affordance);
     else sections.push({ heading, tone, items: [affordance] });
   }
-  const open = affordances.find((affordance) => affordance.id === pending);
+  const found = affordances.find((affordance) => affordance.id === pending);
+  const open = found && given?.id === found.id ? { ...found, args: { ...found.args, ...given.given }, open: found.open.filter((parameter) => !(parameter.name in given.given)) } : found;
 
   /*
    * An observation that OPENS by restating the name is trimmed, not dropped.

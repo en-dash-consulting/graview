@@ -1,6 +1,6 @@
 # graview-host-page
 
-`graview-host-page` is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
+`graview-host-page` is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Host a Graview app as the page itself — a service that serves it, a chat's widget, the address bar handed over, the host's own menu and news inside it — and picture its places honestly: wait for data-graview-drawn or onDrawn rather than a timer, open a page on a view proposed and not kept (draftView), and photograph places with graview preview and graview shots (--view, --manifest).
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -22,13 +22,15 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ### Knowing when a place has drawn
 
-A face on the page is not yet a place a person can read: its parts, the fonts, a worker view's drawing and its pictures may still be on their way. Once the place the reader is on has drawn and settled — every part drawn on it arrived or said it did not, the fonts and images loaded, each worker view drawn or stopped (what stands in its place drawn), and nothing moving for 200 ms — the embed's root wears `data-graview-drawn` (`DRAWN_ATTRIBUTE`), its value the place's path, and `mount`'s `onDrawn(place)` is told where it is as `where()` says it (`EmbedWhere`: face, path, stop). A move to another page, stop or face takes the attribute off in the commit that moves, and the next place puts it back as it settles; a place that never stops moving is said drawn after ten seconds all the same. A worker view's region says `data-worker-view-drawn` once it has drawn what it was last shown. A React host that wants the face committed, not settled, passes `onFaceDrawn` to `<Embed>`.
+Once the place the reader is on has drawn and settled — every part drawn on it arrived or said it did not, the fonts and images loaded, each worker view drawn or stopped (what stands in its place drawn), and nothing moving for 200 ms — the embed's root wears `data-graview-drawn` (`DRAWN_ATTRIBUTE`), its value the place's path, and `mount`'s `onDrawn(place)` is told where it is as `where()` says it (`EmbedWhere`: face, path, stop). A move to another page, stop or face takes the attribute off in the commit that moves, and the next place puts it back as it settles; a place that never stops moving is said drawn after ten seconds all the same. A worker view's region says `data-worker-view-drawn` once it has drawn what it was last shown. A React host that wants the face committed, not settled, passes `onFaceDrawn` to `<Embed>`.
 
 Picture a place by waiting for the attribute, never a timer:
 
 ```ts
 await page.waitForSelector(`[data-graview-drawn="/places/the-week"]`);
 ```
+
+An inlined opening screen says the page's own words over the brand's: `splashHtml(brand, { title, kicker, fade? })`.
 
 ### A view proposed and not kept
 

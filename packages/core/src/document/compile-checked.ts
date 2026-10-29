@@ -1,6 +1,7 @@
 import { checkApp, dropAnsweredGlances } from "../cli/check.js";
 import { designFindings } from "./design-findings.js";
 import { actFindings } from "./act-findings.js";
+import { derivesFindings } from "./derives-findings.js";
 import { linkedFindings } from "./linked-findings.js";
 import { connectionFindings } from "./connection-findings.js";
 import { factFindings, roleFindings } from "./facts-and-roles.js";
@@ -14,6 +15,7 @@ import { hasErrors, type Finding } from "./findings.js";
 import { viewBraces, viewKeys } from "./views.js";
 import { withRightNames } from "./right-names.js";
 import { documentJobFindings } from "../job-findings.js";
+import { documentWorkflowFindings } from "../workflows/findings.js";
 import { documentAliasFindings } from "../alias-findings.js";
 
 /*
@@ -35,13 +37,13 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
     const read = readDocument(raw).document;
     // A name written in the other convention is told its right spelling (`right-names.ts`).
     const named = withRightNames(compiled.findings, raw);
-    return { ok: false, findings: read ? [...named, ...actFindings(read), ...computedFindings(read), ...exprTypeFindings(read), ...factFindings(read), ...roleFindings(read), ...formatFindings(read), ...linkedFindings(read), ...connectionFindings(read), ...documentJobFindings(read), ...documentAliasFindings(read)] : named };
+    return { ok: false, findings: read ? [...named, ...actFindings(read), ...derivesFindings(read), ...computedFindings(read), ...exprTypeFindings(read), ...factFindings(read), ...roleFindings(read), ...formatFindings(read), ...linkedFindings(read), ...connectionFindings(read), ...documentJobFindings(read), ...documentWorkflowFindings(read), ...documentAliasFindings(read)] : named };
   }
   const { app, document } = compiled;
   // What the brand may hold (FR-124): a mark that could act or load, a face from off the list.
   // A block's key is its own in its view: a face claims it by that key.
   // A relation to another app's kinds (FR-171), said in the checker's words, not the page's.
-  const own = [...linkedFindings(document), ...actFindings(document), ...formatFindings(document), ...computedFindings(document), ...exprTypeFindings(document), ...factFindings(document), ...roleFindings(document), ...brandFindings(document.brand, options.fonts ? { fonts: options.fonts } : {}), ...viewKeys(document.views, "views", undefined, document.lenses), ...connectionFindings(document, app as never), ...documentJobFindings(document), ...documentAliasFindings(document)];
+  const own = [...linkedFindings(document), ...actFindings(document), ...derivesFindings(document), ...formatFindings(document), ...computedFindings(document), ...exprTypeFindings(document), ...factFindings(document), ...roleFindings(document), ...brandFindings(document.brand, options.fonts ? { fonts: options.fonts } : {}), ...viewKeys(document.views, "views", undefined, document.lenses), ...connectionFindings(document, app as never), ...documentJobFindings(document), ...documentWorkflowFindings(document), ...documentAliasFindings(document)];
   if (hasErrors(own)) return { ok: false, findings: [...compiled.findings, ...own] };
   // Braces in a block's plain words (FR-99): asked here, with the checker, and not of a page that compiles without it.
   // The checker's sentence for an accent (FR-126) or a ground says what the compile's did, and more: once is enough.

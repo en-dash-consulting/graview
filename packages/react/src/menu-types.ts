@@ -28,8 +28,23 @@ export interface MenuTarget {
   readonly href?: string | undefined;
   /** The act it landed on — a record's "What can be done", a list's way to begin one — by its declared name. */
   readonly act?: string | undefined;
+  /** The column it landed in — a status board's, or a region a view marked `data-column` — when it landed in one. */
+  readonly column?: MenuColumn | undefined;
   /** The element it was opened from, which the keyboard goes back to. */
   readonly element?: HTMLElement | null | undefined;
+}
+
+/**
+ * A COLUMN UNDER THE CURSOR: a status board's column, a region a worker
+ * view marked `data-column="<field>:<value>"` — the kind it holds, the
+ * field its records are put in it by, that field's value there, and the
+ * column's own words.
+ */
+export interface MenuColumn {
+  readonly kind: string;
+  readonly field: string;
+  readonly value: string;
+  readonly label: string;
 }
 
 /** One row of a section: pressed, it runs and the menu closes. */

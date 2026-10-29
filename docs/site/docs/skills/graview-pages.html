@@ -1798,7 +1798,7 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-pages</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-pages</code> is one of Graview's 30 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-pages</code> is one of Graview's 31 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to the door of a product design that replaces every surface (graview-pages-design).</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1829,7 +1829,7 @@ if (location.pathname.startsWith("/pages")) {
 <li><code>/search?q=</code> — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places <code>&lt;PageFind&gt;</code> or <code>&lt;PageUndo&gt;</code> where it wants them, else they are drawn around it (<code>without: ["find"]</code> goes without; at a bar's height, <code>graview-pages-design</code>).</li>
 <li><strong>The quick ask</strong> (⌘K, where <code>ai</code> gives a model): a bar and answer card by the page's heading, the ROUTE what "this" means. <code>context.quickAsk: false</code> draws none.</li>
 </ul>
-<p>Everything a page shows is a derivation the scene uses too: <code>recordFacts</code>, <code>deriveAffordances</code>, <code>store.permits</code>. <strong>A page never decides what an act is or who may take it</strong> — it strikes through what the seat may not, and says why. A record's facts, <code>computed</code> ones too, read in declared order or as the kind's <code>display.page</code> groups them; prose keeps its paragraphs, full width.</p>
+<p>Everything a page shows is a derivation the scene uses too: <code>recordFacts</code>, <code>deriveAffordances</code>, <code>store.permits</code>. <strong>A page never decides what an act is or who may take it</strong> — it strikes through what the seat may not, and says why. A record's facts, <code>computed</code> ones too, read in declared order or as <code>display.page</code> groups them; prose keeps its paragraphs. A blank the seat's act writes is a slot ("Add Role"); one nothing writes stays unsaid.</p>
 <p><strong>Typed together.</strong> Over a served store, hand the face <code>typing</code> (<code>openRemote</code>'s <code>remote.typing</code>; an embed passes it) and prose is edited live: each keystroke a splice, no Save, others' carets drawn. Markdown, a document's <code>text</code> and a string past 500 characters are; a short string is not, and stays a whole value with a Save: a name or a title is changed whole, two people merging letters into one name is a worse name, and a whole write keeps its stale-write check (<code>markCollaborative</code> overrides). A keystroke rides an act that writes the field and would run on the record now — its <code>allowedWhen</code>, its <code>allowedOn</code>, or its <code>apply</code> asked — so a record the act refuses is read only to typing too.</p>
 <p><strong>On a phone this face is the answer.</strong> <code>Shell</code> carries <code>pagesHref</code>.</p>
 <h3>Rung one: a page in the app's own words</h3>
@@ -1872,10 +1872,10 @@ export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm build &amp;&amp; npx graview check ./dist/domain/app.js   # the declaration is still whole
 pnpm test                                               # render every page you registered</code></pre></div>
-<p>Render each registered page with <code>PagesApp</code> and <code>initialPath</code> in a test (<code>apps/seedbed/tests/integration/chapters.test.ts</code>). Then open it: a design that passes its tests and reads like an admin panel has replaced nothing.</p>
+<p>Render each registered page with <code>PagesApp</code> and <code>initialPath</code> in a test (<code>apps/seedbed/tests/integration/chapters.test.ts</code>). Then open it: a design that reads like an admin panel has replaced nothing.</p>
 <h3>What the check cannot see</h3>
 <ul>
-<li>Whether the design's words are the domain's. The derived pages use the declaration's <code>description</code> and <code>inverse</code>; a design that writes its own sentences must keep them true as the declaration changes.</li>
+<li>Whether the design's words are the domain's. The derived pages use the declaration's <code>description</code> and <code>inverse</code>; a design's own sentences must stay true as the declaration changes.</li>
 <li>Whether a page gives every act <code>facts.actions</code> offers room: only a person can see that.</li>
 </ul>
     </section>

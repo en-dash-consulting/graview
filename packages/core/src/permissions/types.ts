@@ -13,6 +13,23 @@ export interface Principal extends Author {
   readonly roles?: readonly string[];
   /** The person an agent acts for: its roles bound the agent's, and a `self` grant reads their id. */
   readonly onBehalfOf?: Principal;
+  /**
+   * A SEAT NO ONE PERSON HOLDS (Roadmap f-votes-shared-seat): the host
+   * serves every signed-out visitor as this one principal (Cloud's
+   * `anonymous`), or this reader is signed out. It reads what its roles let
+   * it read, and its vote on a suggestion is nobody's, so the store refuses
+   * one ("Sign in to vote on this suggestion") unless the host made such
+   * votes advisory (`StoreOptions.votes`) and said which visitor this is
+   * (`visitorKey`).
+   */
+  readonly shared?: true;
+  /**
+   * THE ONE VISITOR BEHIND A SHARED SEAT, in the host's own key (a cookie's
+   * id, say): what an advisory vote is kept under, so one stranger's vote
+   * is theirs to change and no other's. Read only for a seat that is
+   * `shared` or a `visitor`.
+   */
+  readonly visitorKey?: string;
 }
 
 /**
@@ -48,6 +65,16 @@ export interface Grant {
    * that connects and severs nothing (`grant-own-end-without-link`).
    */
   readonly ownEnd?: boolean;
+  /**
+   * WHAT THESE ROLES MAY PROPOSE (Roadmap f-proposals-for-review): acts, by
+   * name or `"*"`, that a seat holding the grant may not run but may ask
+   * for — its call kept as a suggestion with the person as its author
+   * (`propose`, `@graview/core/tidying`), made when somebody who may run it
+   * accepts it. On the grant's `kinds`, as `mutations` are; `self` and
+   * `ownEnd` hold what it runs, not what it proposes. A grant that only
+   * proposes says `mutations: []`.
+   */
+  readonly propose?: readonly string[] | "*";
 }
 
 /**

@@ -18,15 +18,17 @@ const refusedFormat = (format: string, type: string): string => {
 import { farEnd } from "./far-end.js";
 import { jobFindings, jobWorldOfDocument } from "../job-findings.js";
 import { JobSpec } from "./purpose-spec.js";
+import { WORKFLOW_JUDGING } from "../workflows/judging.js";
 import { aliasWord, documentAliasFindings } from "../alias-findings.js";
 import { humanizeField, withArticle } from "../schema/define-node.js";
-import { ConnectionSpec } from "./connection-spec.js";
+import { ConnectionSpec, connectionKinds } from "./connection-spec.js";
 import { linkedRelationFindings } from "./linked-relation-findings.js";
 import { linkedRelationOfSpec, reachesAnotherApp, type LinkedRelation } from "../schema/linked.js";
 import {
   ActSpec,
   ALIAS,
   MOST_ALIASES,
+  MOST_COMPUTED,
   EDGE_NAME,
   EdgeSpec,
   FIELD_NAME,
@@ -40,7 +42,7 @@ import {
   type FieldType,
   type GraviewDocument,
 } from "./schema.js";
-import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES, unknownLensOption, viewReference } from "../places.js";
+import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES, TIMELINE_AXIS_ROLES, timelineBindingsWords, unknownLensOption, viewReference } from "../places.js";
 import { LENSES_THAT_LIST, listsRecords } from "../lenses-that-list.js";
 import { placeSlug, VIEW_REFERENCE, type HostView, type KindList } from "../views/types.js";
 import { documentListFields, kindListFindings, kindListWords, listGroup, listSort, sortTypeOfDocumentField } from "../kind-list.js";
@@ -55,14 +57,17 @@ import { canonicalize } from "./canonical.js";
 import { quotedAtTheEnd } from "./quote.js";
 import { isRecord as isObject, respellDocument } from "./respell.js";
 import { refName } from "./compiled.js";
-import { localeSentence, timeZoneSentence } from "./diff.js";
+import { derivesSentence, localeSentence, timeZoneSentence } from "./diff.js";
 import { accentProblem } from "../theme/accent.js";
 import { darkPageFor, groundProblem } from "../theme/ground-check.js";
 import type { Ground } from "../theme/ground.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
+
+/** Whether a field or a computed field is said as money: its format, or a unit that is a currency. */
+const isMoney = (f: Record<string, unknown>): boolean => f["format"] === "money" || (f["format"] === undefined && typeof f["unit"] === "string" && /^[A-Z]{3}$/.test(f["unit"]));
 import { capitalize, listed as listOf } from "../capital.js";
 import { quoted } from "./quote.js";
-import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, archivesSentence, tidyingSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, appTidyingSentence, archivesSentence, tidyingSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
 
 /*
  * STRUCTURAL EDITS — a closed vocabulary for changing what an app declares.
@@ -151,6 +156,8 @@ export const EDIT_OPS = [
   "set-people",
   "set-archives",
   "set-tidying",
+  "set-app-tidying",
+  "set-derives",
   "add-grant",
   "remove-grant",
   "add-sight",
@@ -162,6 +169,11 @@ export const EDIT_OPS = [
   "add-alias",
   "set-aliases",
   "set-connection",
+  "add-workflow",
+  "set-workflow",
+  "remove-workflow",
+  "pause-workflow",
+  "resume-workflow",
 ] as const;
 export type EditOp = (typeof EDIT_OPS)[number];
 
@@ -201,7 +213,7 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
     "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), multiple: z.boolean().optional(), of: z.enum(["string", "number", "date", "image", "video", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
     "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional(), labels: z.record(z.string().min(1).max(80), z.union([z.string().min(1).max(80), z.null()])).optional() }).strict(),
-    "set-format": z.object({ op: z.literal("set-format"), kind: kindName, field: fieldName, format: z.union([z.enum(["money", "percent", "duration", "markdown"]), z.null()]).optional(), unit: z.union([z.string().min(1).max(12), z.null()]).optional() }).strict(),
+    "set-format": z.object({ op: z.literal("set-format"), kind: kindName, field: fieldName, format: z.union([z.enum(["money", "percent", "duration", "markdown"]), z.null()]).optional(), unit: z.union([z.string().min(1).max(12), z.null()]).optional(), places: z.union([z.literal(0), z.null()]).optional() }).strict(),
     "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
     "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
     "set-default": z.object({ op: z.literal("set-default"), kind: kindName, field: fieldName, default: z.unknown() }).strict(),
@@ -329,6 +341,10 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "set-archives": z.object({ op: z.literal("set-archives"), kind: kindName, archives: z.boolean() }).strict(),
     // What the app's own actor may do on its own to a kind, or to one relation of it (`@graview/core/tidying`).
     "set-tidying": z.object({ op: z.literal("set-tidying"), kind: kindName, relation: z.optional(z.string()), tidying: z.enum(["never", "no-links", "allowed"]) }).strict(),
+    // What the app says of suggestions as a whole (`tidying` at the top of the document): the votes at which the app's own actor makes one; null takes it away.
+    "set-app-tidying": z.object({ op: z.literal("set-app-tidying"), autoAcceptAt: z.union([z.number().int().min(1).max(10_000), z.null()]) }).strict(),
+    // What a kind follows (Roadmap f-keep-linked): the kind, the relation joining them and the fields worked out from it; null, it follows nothing.
+    "set-derives": z.object({ op: z.literal("set-derives"), kind: kindName, derives: z.union([z.object({ from: kindName, via: z.string(), set: z.record(z.string(), z.unknown()) }).strict(), z.null()]) }).strict(),
     "add-grant": z.object({ op: z.literal("add-grant") }).passthrough(),
     "remove-grant": z.object({ op: z.literal("remove-grant") }).passthrough(),
     "add-sight": z.object({ op: z.literal("add-sight") }).passthrough(),
@@ -357,6 +373,12 @@ function buildShapes(): Record<EditOp, z.ZodType> {
     "set-aliases": z.object({ op: z.literal("set-aliases"), kind: kindName, field: fieldName.optional(), aliases: z.union([z.array(z.string().min(1).max(40)).max(MOST_ALIASES), z.null()]) }).strict(),
     // A connection declared whole, by its name: set where there was none, or replaced (FR-229); null takes it away.
     "set-connection": z.object({ op: z.literal("set-connection"), name: kindName, connection: z.union([z.record(z.string(), z.unknown()), z.null()]) }).strict(),
+    // A workflow by its name (Roadmap f-jobs-declared): added where there was none, replaced whole, removed, paused or resumed.
+    "add-workflow": z.object({ op: z.literal("add-workflow"), name: kindName, workflow: z.record(z.string(), z.unknown()) }).strict(),
+    "set-workflow": z.object({ op: z.literal("set-workflow"), name: kindName, workflow: z.record(z.string(), z.unknown()) }).strict(),
+    "remove-workflow": z.object({ op: z.literal("remove-workflow"), name: kindName }).strict(),
+    "pause-workflow": z.object({ op: z.literal("pause-workflow"), name: kindName }).strict(),
+    "resume-workflow": z.object({ op: z.literal("resume-workflow"), name: kindName }).strict(),
   };
 }
 let shapes: Record<EditOp, z.ZodType> | undefined;
@@ -1050,7 +1072,10 @@ class Editor {
         const fields: string[] = e.fields;
         const seen = new Set<string>();
         for (const [n, field] of fields.entries()) {
-          if (!spec.fields[field]) return this.fail(i, `fields.${n}`, `a glance at ${e.kind} is to say "${field}", and ${e.kind} has no field called that`, `use one of: ${Object.keys(spec.fields).join(", ")}`);
+          // A computed field may be glanced at (FR-83): worked out for each card, as its page works it out — unless it is kept off what a record says of itself.
+          const worked = spec.computed?.[field];
+          if (!spec.fields[field] && worked === undefined) return this.fail(i, `fields.${n}`, `a glance at ${e.kind} is to say "${field}", and ${e.kind} has no field or computed field called that`, `use one of: ${[...Object.keys(spec.fields), ...Object.keys(spec.computed ?? {})].join(", ")}`);
+          if (!spec.fields[field] && isObject(worked) && worked["hidden"] === true) return this.fail(i, `fields.${n}`, `${e.kind}'s "${field}" is worked out and kept off its card, page and CSV, so a glance cannot say it`, `show it first: set-computed with "hidden": false`);
           if (seen.has(field)) return this.fail(i, `fields.${n}`, `"${field}" is in the glance twice; name each field once`);
           seen.add(field);
         }
@@ -1087,6 +1112,10 @@ class Editor {
         return this.setArchives(i, e);
       case "set-tidying":
         return this.setTidying(i, e);
+      case "set-app-tidying":
+        return this.setAppTidying(e);
+      case "set-derives":
+        return this.setDerives(i, e);
       case "add-grant":
       case "remove-grant":
       case "add-sight":
@@ -1106,6 +1135,15 @@ class Editor {
         return this.setAliases(i, e.kind, e.field, e.aliases ?? []);
       case "set-connection":
         return this.setConnection(i, e.name, e.connection);
+      case "add-workflow":
+        return this.placeWorkflow(i, e.name, e.workflow, "add");
+      case "set-workflow":
+        return this.placeWorkflow(i, e.name, e.workflow, "set");
+      case "remove-workflow":
+        return this.removeWorkflow(i, e.name);
+      case "pause-workflow":
+      case "resume-workflow":
+        return this.setWorkflowStatus(i, e.name, e.op === "pause-workflow" ? "paused" : "active");
     }
   }
 
@@ -1133,7 +1171,9 @@ class Editor {
     const was = this.doc.connections?.[name] !== undefined;
     (this.doc.connections ??= {})[name] = parsed.data;
     const system = parsed.data.system === "notion" ? "a Notion database" : "a Google calendar";
-    this.said.push(`The connection ${name} ${was ? "now keeps" : "keeps"} ${pluralOf(this.doc.kinds, parsed.data.kind)} in step with ${system}${parsed.data.direction === "read" ? ", which owns them" : ", both ways"}.`);
+    const kinds = connectionKinds(parsed.data).map((kind) => pluralOf(this.doc.kinds, kind));
+    const said = kinds.length <= 1 ? kinds.join("") : `${kinds.slice(0, -1).join(", ")} and ${kinds.at(-1)}`;
+    this.said.push(`The connection ${name} ${was ? "now keeps" : "keeps"} ${said} in step with ${system}${parsed.data.direction === "read" ? ", which owns them" : ", both ways"}.`);
   }
 
   // ── other words for a kind or a field (Roadmap f-learned-suggestions) ──
@@ -1240,6 +1280,52 @@ class Editor {
     const [job] = this.doc.purpose.jobs.splice(index, 1);
     this.keepPurpose({ ...this.doc.purpose });
     this.said.push(`The job "${job.name}" (${quotedAtTheEnd(job.ask)}) is removed.`);
+  }
+
+  // ── what the app does on its own, and when (Roadmap f-jobs-declared) ──
+
+  /** The workflow a name names, or undefined having said why. */
+  private workflowNamed(i: number, name: string): Doc | undefined {
+    const workflows: Doc = this.doc.workflows ?? {};
+    if (Object.hasOwn(workflows, name)) return workflows[name];
+    const names = Object.keys(workflows);
+    this.fail(i, "name", `there is no workflow "${name}"${names.length > 0 ? `; the workflows are ${names.map((one) => `"${one}"`).join(", ")}` : ""}`);
+    return undefined;
+  }
+
+  /** A workflow added or replaced whole, judged as `graview check` judges it (`workflow-*`): kept only when nothing is wrong with it. */
+  private placeWorkflow(i: number, name: string, workflow: Doc, how: "add" | "set") {
+    const workflows: Doc = { ...(this.doc.workflows ?? {}) };
+    if (how === "add" && Object.hasOwn(workflows, name)) return this.fail(i, "name", `there is already a workflow "${name}"`, `Change it with {"op": "set-workflow", "name": "${name}", …}, or name this one otherwise.`);
+    if (how === "set" && !Object.hasOwn(workflows, name) && !this.workflowNamed(i, name)) return;
+    const shaped = typeof workflow.title === "string" && Array.isArray(workflow.when) && workflow.when.length > 0 && Array.isArray(workflow.steps) && workflow.steps.length > 0;
+    if (!shaped) return this.fail(i, "workflow", "a workflow is { title, when: [...], steps: [...] }, each list with at least one", `{"op": "${how}-workflow", "name": "${name}", "workflow": {"title": "…", "when": [{"every": "day 03:00"}], "steps": [{"act": "…"}]}}`);
+    // Judged as `graview check` judges it, where the checker is loaded; else kept as shaped, and the check says the rest.
+    const judged = WORKFLOW_JUDGING.judge?.(name, workflow, { ...this.doc, workflows });
+    for (const finding of judged?.errors ?? []) this.failAs(finding.code, i, `workflow${finding.path ? `.${finding.path}` : ""}`, finding.message, finding.fix);
+    if (judged && judged.errors.length > 0) return;
+    workflows[name] = workflow;
+    this.doc.workflows = workflows;
+    const steps = (workflow.steps as unknown[]).length;
+    this.said.push(`${how === "add" ? "A new workflow" : "The workflow"} “${workflow.title}”${how === "add" ? "" : " is now"}: ${judged?.said ?? `${steps === 1 ? "one step" : `${steps} steps`}${workflow.status === "paused" ? ", paused" : ""}`}.`);
+    for (const warning of judged?.warnings ?? []) this.said.push(warning);
+  }
+
+  private removeWorkflow(i: number, name: string) {
+    const workflow = this.workflowNamed(i, name);
+    if (!workflow) return;
+    const { [name]: _gone, ...rest } = this.doc.workflows as Doc;
+    if (Object.keys(rest).length === 0) delete this.doc.workflows;
+    else this.doc.workflows = rest;
+    this.said.push(`The workflow “${workflow.title ?? name}” is removed.`);
+  }
+
+  private setWorkflowStatus(i: number, name: string, status: "active" | "paused") {
+    const workflow = this.workflowNamed(i, name);
+    if (!workflow) return;
+    const { status: _was, ...rest } = workflow;
+    this.doc.workflows = { ...this.doc.workflows, [name]: status === "paused" ? { ...rest, status } : rest };
+    this.said.push(status === "paused" ? `The workflow “${workflow.title ?? name}” is paused: it runs on no clock and no change until it is resumed.` : `The workflow “${workflow.title ?? name}” runs again.`);
   }
 
   /** How a record's page orders and groups its facts (FR-148): judged as the compile judges `kinds.<kind>.page`. */
@@ -1362,6 +1448,7 @@ class Editor {
       if (!Array.isArray(e.options?.blocks) || e.options.blocks.length === 0) return this.fail(i, "options.blocks", 'a lens drawn from blocks has blocks: "options": {"blocks": [{"headline": "…"}, {"list": "all(\'<kind>\')", "as": "card"}]}');
     }
     if (name === "columns" && !(this.columnsHold(i, e.bindings) && this.boardOptionsHold(i, e.bindings as Doc, e.options))) return;
+    if (name === "timeline" && !this.timelineHolds(i, e.bindings, e.options)) return;
     if (was) lenses[at] = lens;
     else lenses.splice(e.at === undefined ? lenses.length : Math.min(e.at, lenses.length), 0, lens);
     const index = was ? at : lenses.indexOf(lens);
@@ -1431,6 +1518,37 @@ class Editor {
       const others = Object.keys(roles as Doc).filter((role) => role !== "column");
       if (others.length > 0) return (this.fail(i, `bindings.${kind}.${others[0]}`, `a board binds only "column"`), false);
     }
+    return true;
+  }
+
+  /**
+   * A TIMELINE THAT WOULD DRAW, held before it is added: a timeline lays out
+   * spans by number across columns, so each kind it binds is a kind, its
+   * `start` and `end` are number fields, and its columns are named in the
+   * options or read from a choice field bound to `column`. A timeline over a
+   * project's start and end dates was accepted, said nothing and drew
+   * nothing — never a place; it is refused here in the words the checker
+   * uses (`lens-cannot-draw`), pointing spans of dates at the calendar.
+   */
+  private timelineHolds(i: number, bindings: unknown, options: Doc | undefined): boolean {
+    const refuse = (path: string, message: string, kind: string, start?: unknown, end?: unknown) => (this.failAs("lens-cannot-draw", i, path, `a timeline here would not draw: ${message}`, timelineBindingsWords(kind, typeof start === "string" ? start : "start", typeof end === "string" ? end : "end")), false);
+    if (!isObject(bindings) || Object.keys(bindings).length === 0) return refuse("bindings", "it binds no kind", "<kind>");
+    let columns = Array.isArray(options?.["columns"]) && options["columns"].length > 0;
+    for (const [kind, roles] of Object.entries(bindings)) {
+      if (!isObject(this.doc.kinds[kind])) return (this.fail(i, `bindings.${kind}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`), false);
+      if (!isObject(roles)) return refuse(`bindings.${kind}`, `it does not say which fields of ${kind} it lays out`, kind);
+      const fields = this.doc.kinds[kind].fields as Record<string, Doc>;
+      for (const role of TIMELINE_AXIS_ROLES) {
+        const field = roles[role];
+        if (typeof field !== "string") return refuse(`bindings.${kind}.${role}`, `it does not say which field of ${kind} is its ${role}`, kind, roles["start"], roles["end"]);
+        if (!(field in fields)) return (this.fail(i, `bindings.${kind}.${role}`, `${kind} has no field "${field}"; it has ${Object.keys(fields).join(", ")}`), false);
+        const type = fields[field]["type"];
+        if (type !== "number" && type !== "integer" && type !== "duration") return refuse(`bindings.${kind}.${role}`, `${kind}'s ${field} is ${withArticle(String(type ?? "text"))} field, and a timeline's axis is a number`, kind, roles["start"], roles["end"]);
+      }
+      const column = typeof roles["column"] === "string" ? roles["column"] : typeof roles["columns"] === "string" ? roles["columns"] : undefined;
+      if (column !== undefined && fields[column]?.["type"] === "enum") columns = true;
+    }
+    if (!columns) return refuse("options.columns", "it has no columns — no option names them and no `column` role is bound to a choice field", Object.keys(bindings)[0]!);
     return true;
   }
 
@@ -1914,7 +2032,7 @@ class Editor {
       if (e.expr === undefined) return this.fail(i, "expr", `to work out "${name}", give its expression, like "list * units"`);
       if (spec.fields[name] || spec.edges?.[name]) return this.fail(i, "name", `${e.kind} already has a ${spec.fields[name] ? "field" : "relation"} called "${name}"`);
       if (KEYWORDS.has(name)) return this.fail(i, "name", `"${name}" is a word the rule language keeps; pick another name`);
-      if (Object.keys(spec.computed ?? {}).length >= 20) return this.fail(i, "name", "a kind works out at most 20 computed fields");
+      if (Object.keys(spec.computed ?? {}).length >= MOST_COMPUTED) return this.fail(i, "name", `a kind works out at most ${MOST_COMPUTED} computed fields`);
     }
     const was: Doc = existing === undefined ? {} : typeof existing === "string" ? { expr: existing } : { ...existing };
     const next: Doc = { ...was };
@@ -1994,6 +2112,74 @@ class Editor {
    * never tidied is given no leave-alone-<kind> or allow-tidying-<kind>,
    * which a grant may not then name.
    */
+  /**
+   * WHAT A KIND FOLLOWS (Roadmap f-keep-linked): each record of it linked
+   * through `via` to a record of `from` takes the fields `set` works out
+   * from it, kept in step by the store in the same change; null, it
+   * follows nothing and its records keep the values they hold.
+   */
+  private setDerives(i: number, e: Doc) {
+    const spec = this.kind(i, e.kind);
+    if (!spec) return;
+    if (e.derives === null) {
+      const was = spec.derives?.from;
+      delete spec.derives;
+      this.said.push(was ? derivesSentence(e.kind, undefined) : `${e.kind} follows nothing, as before.`);
+      return;
+    }
+    const { from, via, set } = e.derives as { from: string; via: string; set: Doc };
+    if (!this.doc.kinds[from]) return this.fail(i, "derives.from", `"${from}" is not a kind this app has`);
+    const joins = (spec.edges?.[via] && (spec.edges[via].to === "*" || spec.edges[via].to.includes(from))) || (this.doc.kinds[from].edges?.[via] && (this.doc.kinds[from].edges[via].to === "*" || this.doc.kinds[from].edges[via].to.includes(e.kind)));
+    if (!joins) return this.fail(i, "derives.via", `"${via}" does not join ${words(e.kind)} to ${words(from)}`, `name a relation of ${e.kind} to ${from}, or of ${from} to ${e.kind} (add one with add-relation in the same change)`);
+    spec.derives = { from, via, set };
+    this.said.push(derivesSentence(e.kind, spec.derives));
+  }
+
+  /**
+   * WHAT A KIND FOLLOWS, held to a rename or a removal (Roadmap
+   * f-keep-linked): the names it says follow a rename; a value reading
+   * what is removed goes, and a `derives` left setting nothing, or
+   * following a kind or relation that is gone, goes with it.
+   */
+  private followDerives(r: Rename, removing: boolean): string[] {
+    const touched: string[] = [];
+    for (const [kind, spec] of Object.entries(this.doc.kinds) as [string, Doc][]) {
+      const d = spec.derives;
+      if (!d) continue;
+      const before = JSON.stringify(d);
+      const ctx = new Set([d.from as string]);
+      if ((r.t === "kind" && d.from === r.from) || (r.t === "edge" && d.via === r.from)) {
+        if (removing) {
+          delete spec.derives;
+          touched.push(`what ${kind} follows`);
+          continue;
+        }
+      }
+      const set: Doc = {};
+      for (const [field, value] of Object.entries(d.set ?? {}) as [string, unknown][]) {
+        let key = field;
+        if (r.t === "field" && r.kind === kind && field === r.from) {
+          if (removing) continue;
+          key = r.to;
+        }
+        if (isObject(value) && typeof (value as Doc).expr === "string") {
+          const source = (value as Doc).expr as string;
+          if (removing) {
+            if (!exprMentions(this.doc, source, ctx, r)) set[key] = value;
+          } else set[key] = { expr: rewriteExpr(this.doc, source, ctx, r) };
+        } else set[key] = value;
+      }
+      if (!removing && r.t === "kind" && d.from === r.from) d.from = r.to;
+      if (!removing && r.t === "edge" && d.via === r.from) d.via = r.to;
+      d.set = set;
+      if (Object.keys(set).length === 0) {
+        delete spec.derives;
+        touched.push(`what ${kind} follows`);
+      } else if (JSON.stringify(d) !== before) touched.push(`what ${kind} follows`);
+    }
+    return touched;
+  }
+
   private setTidying(i: number, e: Doc) {
     const spec = this.kind(i, e.kind);
     if (!spec) return;
@@ -2025,6 +2211,23 @@ class Editor {
     this.said.push(tidyingSentence(this.doc.kinds, e.kind, undefined, tidying, already));
   }
 
+  /**
+   * WHAT THE APP SAYS OF SUGGESTIONS AS A WHOLE (Roadmap f-suggestion-votes):
+   * `tidying.autoAcceptAt`, the votes for a suggestion at which the app's
+   * own actor makes it; null takes it away, and a suggestion waits for
+   * somebody who may decide. A `tidying` left saying nothing goes.
+   */
+  private setAppTidying(e: Doc) {
+    const autoAcceptAt = e.autoAcceptAt as number | null;
+    const was = (this.doc.tidying as { autoAcceptAt?: number } | undefined)?.autoAcceptAt;
+    const tidying: Doc = { ...(this.doc.tidying ?? {}) };
+    if (autoAcceptAt === null) delete tidying.autoAcceptAt;
+    else tidying.autoAcceptAt = autoAcceptAt;
+    if (Object.keys(tidying).length === 0) delete this.doc.tidying;
+    else this.doc.tidying = tidying;
+    this.said.push(appTidyingSentence(autoAcceptAt ?? undefined, was === (autoAcceptAt ?? undefined)));
+  }
+
   /** A grant or a sight as the document holds one, or undefined having said why not. */
   private policyPart(i: number, e: Doc, sight: boolean): Doc | undefined {
     const { op: _op, ...rest } = e;
@@ -2052,12 +2255,13 @@ class Editor {
         return this.failAs("sight-field", i, `${key}.${n}`, `"${field}" is not a field of ${kinds.join(" or ")}`, `one of ${[...new Set(kinds.flatMap((kind) => Object.keys(this.doc.kinds[kind]?.fields ?? {})))].join(", ")}`);
       }
     }
-    if (!sight && part.mutations !== "*") {
-      for (const [n, act] of part.mutations.entries()) {
+    for (const key of sight ? [] : (["mutations", "propose"] as const)) {
+      if (part[key] === undefined || part[key] === "*") continue;
+      for (const [n, act] of (part[key] as string[]).entries()) {
         const derived = derivedActOf(act);
         if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind] && (this.doc.kinds[derived.kind].archives !== false || givenWhenNeverArchived(derived.act)) && (this.doc.kinds[derived.kind].tidying !== "never" || givenWhenNeverTidied(derived.act))) || givesRelationAct(act, this.doc.kinds)) continue;
         const relationActs = relationActsOf(documentRelations(this.doc.kinds)).filter((name) => givesRelationAct(name, this.doc.kinds));
-        return this.failAs("grant-act", i, `mutations.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap(derivedActsOf), ...relationActs].join(", ")}`);
+        return this.failAs("grant-act", i, `${key}.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap(derivedActsOf), ...relationActs].join(", ")}`);
       }
     }
     const said: string[] = [];
@@ -2096,12 +2300,12 @@ class Editor {
   private removePolicyPart(i: number, part: Doc, sight: boolean) {
     const list: Doc[] = (sight ? this.doc.policy?.sees : this.doc.policy?.grants) ?? [];
     const sameSet = (a: unknown, b: unknown) => a === b || (Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x) => b.includes(x)));
-    const keys = sight ? ["own", "via"] : ["kinds", "self", "ownEnd", "describe"];
+    const keys = sight ? ["own", "via"] : ["kinds", "self", "ownEnd", "propose", "describe"];
     const matches = list.filter(
       (one) =>
         sameSet(one.roles, part.roles) &&
         (sight ? sameSet(one.kinds, part.kinds) : sameSet(one.mutations, part.mutations)) &&
-        keys.every((key) => part[key] === undefined || (typeof part[key] === "boolean" ? (one[key] ?? false) === part[key] : key === "kinds" ? sameSet(one[key] ?? "*", part[key]) : one[key] === part[key])),
+        keys.every((key) => part[key] === undefined || (typeof part[key] === "boolean" ? (one[key] ?? false) === part[key] : key === "kinds" ? sameSet(one[key] ?? "*", part[key]) : key === "propose" ? sameSet(one[key], part[key]) : one[key] === part[key])),
     );
     const what = sight ? "sight" : "grant";
     const say = (one: Doc) => (sight ? `${whoWords(one.roles)} ${sightWords(this.doc, one as SightWords)}` : grantBody(this.doc, one as GrantWords));
@@ -2300,6 +2504,7 @@ class Editor {
      * kind, or drew by it, goes, and `pages.first` with it when it named it.
      */
     const swept: Rename = { t: "kind", from: kind, to: "\u0000" };
+    gone.push(...this.followDerives(swept, true));
     for (const [other, spec] of Object.entries(this.doc.kinds) as [string, Doc][]) {
       for (const [name, c] of Object.entries(spec.computed ?? {}) as [string, Doc][]) {
         if (exprMentions(this.doc, typeof c === "string" ? c : c.expr, new Set([other]), swept)) gone.push(...this.dropComputed(other, name));
@@ -2457,7 +2662,7 @@ class Editor {
     if (worked !== undefined && !this.doc.kinds[e.kind].fields[e.field]) return this.setComputedFormat(i, e, worked);
     const f = this.field(i, e.kind, e.field);
     if (!f) return;
-    if (e.format === undefined && e.unit === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration" for a number, "markdown" for a text field, or null for neither), a "unit" ("EUR", "kg", or null), or both');
+    if (e.format === undefined && e.unit === undefined && e.places === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration" for a number, "markdown" for a text field, or null for neither), a "unit" ("EUR", "kg", or null), "places" (0 for money in whole units, or null), or some of them');
     if (f.type === "text") {
       if (e.unit !== undefined && e.unit !== null) return this.fail(i, "unit", refusedFormat("a unit", f.type));
       if (e.format && e.format !== "markdown") return this.fail(i, "format", refusedFormat(e.format, f.type));
@@ -2468,10 +2673,11 @@ class Editor {
     }
     if (!formatFits(typeof e.format === "string" ? e.format : "money", f.type)) return this.fail(i, "field", refusedFormat(typeof e.format === "string" ? e.format : "a unit", f.type));
     const before = formatWords(f, this.doc.brand);
-    for (const key of ["format", "unit"]) {
+    for (const key of ["format", "unit", "places"]) {
       if (e[key] === null) delete f[key];
       else if (e[key] !== undefined) f[key] = e[key];
     }
+    if (f.places !== undefined && !isMoney(f)) return this.fail(i, "places", `"places" is said of money, and ${e.kind}'s ${e.field} is ${formatWords(f, this.doc.brand) ?? "a plain number"}`, 'say "format": "money" with it, or leave "places" out');
     const now = formatWords(f, this.doc.brand);
     this.said.push(`${e.kind}'s ${e.field} is said as ${now ?? "a plain number"}${before ? `, where it was ${before.replace(/ — .*/, "")}` : ""}; its values are kept.`);
   }
@@ -2484,15 +2690,16 @@ class Editor {
    * its expression is left.
    */
   private setComputedFormat(i: number, e: Doc, worked: string | Doc) {
-    if (e.format === undefined && e.unit === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration", or null for none), a "unit" ("EUR", "kg", or null), or both');
+    if (e.format === undefined && e.unit === undefined && e.places === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration", or null for none), a "unit" ("EUR", "kg", or null), "places" (0 for money in whole units, or null), or some of them');
     if (e.format === "markdown") return this.fail(i, "format", `${e.field} is worked out, not written, so it cannot be Markdown; a computed field is said as "money", "percent" or "duration"`);
     const spec = this.doc.kinds[e.kind];
     const next: Doc = typeof worked === "string" ? { expr: worked } : { ...worked };
     const before = formatWords(next, this.doc.brand);
-    for (const key of ["format", "unit"]) {
+    for (const key of ["format", "unit", "places"]) {
       if (e[key] === null) delete next[key];
       else if (e[key] !== undefined) next[key] = e[key];
     }
+    if (next.places !== undefined && !isMoney(next)) return this.fail(i, "places", `"places" is said of money, and ${e.kind}'s ${e.field} is ${formatWords(next, this.doc.brand) ?? "a plain number"}`, 'say "format": "money" with it, or leave "places" out');
     spec.computed[e.field] = Object.keys(next).length === 1 ? next.expr : next;
     const now = formatWords(next, this.doc.brand);
     this.said.push(`${e.kind}'s ${e.field} is worked out as before and said as ${now ?? "a plain number"}${before ? `, where it was ${before.replace(/ — .*/, "")}` : ""}.`);
@@ -2775,6 +2982,8 @@ class Editor {
     const exprAt = (source: string | undefined, ctx: Kinds): string | undefined => (source === undefined ? undefined : rewriteExpr(doc, source, ctx, r));
     const tmplAt = (source: string | undefined, ctx: Kinds, words?: (t: string) => string): string | undefined => (source === undefined ? undefined : rewriteTemplate(doc, source, ctx, r, words));
 
+    // What a kind follows (Roadmap f-keep-linked): its kind, relation and values follow the rename.
+    touched.push(...this.followDerives(r, false));
     // Kinds: templates, the lifecycle, where relations lead.
     for (const [kind, spec] of Object.entries(doc.kinds) as [string, Doc][]) {
       const here = new Set([kind]);
@@ -3020,6 +3229,7 @@ class Editor {
     const gone: string[] = [];
     // A kind's list ordered or grouped by it lets that go (a stored field removed, a computed one no longer worked out).
     if (r.t === "field") gone.push(...this.listsFollow(r.kind, r.from, undefined));
+    gone.push(...this.followDerives(r, true));
     for (const [kind, spec] of Object.entries(doc.kinds) as [string, Doc][]) {
       for (const key of ["label", "describe"] as const) {
         if (templateMentions(doc, spec[key], new Set([kind]), r)) {

@@ -11,13 +11,17 @@ import { roadsOf } from "../village.js";
 import { deriveMutations, subjectKindsOf } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
 import { crowdedHues, HUE_CROWDING } from "../theme/derive.js";
-import { pluralOf, withArticle } from "../schema/define-node.js";
+import { nounOf, pluralOf, withArticle } from "../schema/define-node.js";
+import type { DerivesDeclaration } from "../keep-linked.js";
 import { ruleLineWords } from "../invariants/line.js";
 import { ruleLine } from "../lines.js";
 import { declaredLenses, isShippedLens } from "../places.js";
 import { listsRecords } from "../lenses-that-list.js";
 import { placesOf } from "../app-places.js";
 import { columnReach } from "../columns.js";
+import { stepKindOf } from "../workflows/steps.js";
+import { declaredWorkflows, resolveWorkflow } from "../workflows/resolve.js";
+import { workflowWorldOfApp } from "../workflows/world.js";
 import { computedOf } from "../document/computed.js";
 import { placePath } from "../views/types.js";
 import { dayAsRead, DEFAULT_LOCALE, numberAsRead, timeAsRead } from "../days.js";
@@ -103,6 +107,22 @@ export function describeApp<S extends AnySchema>(
         ...(job.act ? [`then "${job.act}"`] : []),
       ].join(", ");
       lines.push(`  "${job.ask}" — ${answer}${job.roles && job.roles.length > 0 && !options.as ? ` (for ${list([...job.roles])})` : ""}.`);
+    }
+  }
+
+  /*
+   * WHAT IT DOES ON ITS OWN (Roadmap f-jobs-declared): each declared
+   * workflow by name, in a sentence, paused or not, and its steps one to a
+   * line. Dreaming, every app's own, is not declared and not said here.
+   */
+  const workflows = Object.entries(declaredWorkflows(app) ?? {});
+  if (workflows.length > 0) {
+    lines.push("", "## What it does on its own");
+    const world = workflowWorldOfApp(app);
+    for (const [name, declared] of workflows) {
+      const workflow = resolveWorkflow(name, declared, world);
+      lines.push(`  ${name} — ${workflow.words}${workflow.status === "paused" ? " (paused)" : ""}; its changes are ${workflow.approve === "apply" ? "applied" : workflow.approve === "suggest" ? "applied or suggested by how sure it is" : "asked about first"}.`);
+      workflow.steps.forEach((step, at) => lines.push(`    ${at + 1}. ${stepKindOf(step)?.words(step, world.noun) ?? "a step Graview does not run"}`));
     }
   }
 
@@ -400,6 +420,17 @@ export function describeApp<S extends AnySchema>(
     }),
   );
   if (carriedLines.length > 0) lines.push("", "## Carried across links", ...carriedLines);
+
+  // WHAT FOLLOWS ANOTHER (Roadmap f-keep-linked): kept in step by the store, in the same change as either side's edit.
+  const followLines = app.schema.definitions.flatMap((definition) => {
+    const derives = (definition as { derives?: DerivesDeclaration }).derives;
+    if (!derives) return [];
+    const back = Object.keys(derives.back);
+    return [
+      `  Each ${nounOf(definition, definition.kind)} follows its ${nounOf(app.schema.tryDefinition(derives.from), derives.from)} through ${derives.via}, in the same change as the ${nounOf(app.schema.tryDefinition(derives.from), derives.from)}'s edit${back.length > 0 ? `; a change to its ${list(back)} goes back to the ${nounOf(app.schema.tryDefinition(derives.from), derives.from)}` : ""}; archiving or removing the ${nounOf(app.schema.tryDefinition(derives.from), derives.from)} archives it.`,
+    ];
+  });
+  if (followLines.length > 0) lines.push("", "## Kept in step with another record", ...followLines);
 
   /*
    * WHAT IT LINKS IN OTHER APPS (FR-171): a relation to another app's kind is

@@ -44,6 +44,13 @@ export interface ResourceMapping {
    */
   readonly ours?: readonly string[];
   /**
+   * COMPUTED FIELDS SENT (Roadmap f-keep-linked): worked out from the
+   * record over the store's graph, never stored on it, so read through the
+   * declaration rather than off the node — and, being worked out, never
+   * read back: each is in `ours` too.
+   */
+  readonly computed?: readonly string[];
+  /**
    * Where the two systems disagree about REPRESENTATION, not about names.
    *
    * A mapping is a rename, plus this. The household example stores a block's start as
@@ -93,6 +100,8 @@ export interface ResourceMapping {
 export interface SyncMapping {
   /** Names the system, and appears as the author of every inbound change. */
   readonly system: string;
+  /** The system's name as a person reads it ("Google Calendar"), on what a connection says it sent; the system's id when absent. */
+  readonly name?: string;
   readonly resources: readonly ResourceMapping[];
 }
 
@@ -146,6 +155,8 @@ export interface RemoteSystem {
   pull(cursor?: string): Promise<{
     readonly changes: readonly RemoteChange[];
     readonly cursor: string;
+    /** What the transport did to the remote to keep these records, or found there, as sentences: properties it made in Notion, one of another type it left. */
+    readonly said?: readonly string[];
   }>;
   push(writes: readonly RemoteWrite[]): Promise<readonly RemoteAck[]>;
 }
@@ -189,6 +200,41 @@ export interface SyncState {
    * until the remote's version of it changes.
    */
   readonly skipped?: Readonly<Record<string, string>>;
+  /**
+   * WHAT THE CONNECTION LAST DID WITH EACH RECORD'S GUESTS (Roadmap
+   * f-sync-guest-changes-in-history), by our id: the addresses its last
+   * write that reached the remote said, and the last write with guests the
+   * remote refused or the connection held (a record over `max`) — kept so
+   * a refusal is said once in the history, and read back by `guestsOf`.
+   */
+  readonly guests?: Readonly<Record<string, GuestsKept>>;
+  /** The last pass, as `connectionStatus` reads it: when, and what it did. */
+  readonly lastPass?: PassKept;
+}
+
+/** What a connection last did with one record's guests. */
+export interface GuestsKept {
+  /** The addresses the last write that reached the remote invited, sorted; when, and whether the remote mailed them (`notify`). */
+  readonly sent?: { readonly addresses: readonly string[]; readonly notified: boolean; readonly at: string };
+  /** The last write with guests that did not go: the addresses it would have sent, why, and when. Gone once one goes. */
+  readonly refused?: { readonly addresses: readonly string[]; readonly error: string; readonly at: string };
+}
+
+/** One pass, kept: when it ran, whether it reached the remote, and how many of each thing it did. */
+export interface PassKept {
+  readonly at: string;
+  readonly offline: boolean;
+  /** What the remote said when it could not be reached. */
+  readonly problem?: string;
+  readonly applied: number;
+  readonly pushed: number;
+  readonly queued: number;
+  readonly conflicts: number;
+  /** What did not land, and why, as the report said it. */
+  readonly refused: readonly { readonly localId: string; readonly error: string }[];
+  /** Guests invited and taken off, counted across records. */
+  readonly invited: number;
+  readonly removed: number;
 }
 
 /**

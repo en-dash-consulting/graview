@@ -21,11 +21,18 @@ export interface WhileAway {
   readonly waiting: number;
   /** Of those, the ones made since. */
   readonly suggestedSince: number;
+  /**
+   * THE MOST PEOPLE WHO AGREE WITH ONE THAT WAITS (Roadmap
+   * f-votes-shared-seat): the standing votes for the waiting suggestion
+   * with the most of them — people's, not visitors' advisory ones — said
+   * "3 readers agree with one that waits". 0 when nobody voted for one.
+   */
+  readonly agreed: number;
   /** How many things the actor did on its own since, not counting what was taken back. */
   readonly tidied: number;
   /** Activity's digest rows since: each run of the actor's changes as one row. */
   readonly digests: readonly Extract<ActivityRow, { digest: unknown }>["digest"][];
-  /** "3 suggestions waiting · tidied 12 things while you were away", or undefined when there is nothing to say. */
+  /** "3 suggestions waiting · 3 readers agree with one that waits · tidied 12 things while you were away", or undefined when there is nothing to say. */
   readonly said: string | undefined;
 }
 
@@ -44,10 +51,12 @@ export function whileAway<S extends AnySchema>(store: Store<S>, since: AwaySince
   const batches = seen.batches().filter((batch) => batch.ops.length > 0 && after(batch.ops[0]!));
   const digests = foldDigests(batches, (id) => byId.get(id)).flatMap((row) => ("digest" in row ? [row.digest] : []));
   const tidied = digests.reduce((sum, digest) => sum + digest.things, 0);
+  const agreed = waitingNow.reduce((most, one) => Math.max(most, one.tally.for), 0);
   const parts = [
     waitingNow.length > 0 ? `${waitingNow.length === 1 ? "one suggestion" : `${waitingNow.length} suggestions`} waiting` : "",
+    agreed > 0 ? `${agreed === 1 ? "a reader agrees" : `${agreed} readers agree`} with one that waits` : "",
     tidied > 0 ? `tidied ${tidied === 1 ? "one thing" : `${tidied} things`} while you were away` : "",
   ].filter(Boolean);
   const said = parts.length > 0 ? parts.join(" · ").replace(/^./, (first) => first.toUpperCase()) : undefined;
-  return { waiting: waitingNow.length, suggestedSince, tidied, digests, said };
+  return { waiting: waitingNow.length, suggestedSince, agreed, tidied, digests, said };
 }

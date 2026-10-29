@@ -45,10 +45,12 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "set-people": { op: "set-people", kind: "vendor", people: true },
   "set-archives": { op: "set-archives", kind: "category", archives: false },
   "set-tidying": { op: "set-tidying", kind: "vendor", tidying: "no-links" },
+  "set-derives": { op: "set-derives", kind: "vendor", derives: { from: "category", via: "fills", set: { notes: { expr: "name" } } } },
   "add-grant": { op: "add-grant", roles: ["viewer"], mutations: ["book"], describe: "A viewer books what the planners chose." },
   "remove-grant": { op: "remove-grant", roles: ["viewer"], mutations: ["book"] },
   "add-sight": { op: "add-sight", roles: "*", kinds: ["vendor", "category"] },
   "remove-sight": { op: "remove-sight", roles: "*", kinds: ["category", "vendor"] },
+  "set-app-tidying": { op: "set-app-tidying", autoAcceptAt: 4 },
   "set-purpose": { op: "set-purpose", for: "The couple and their planner" },
   "add-job": { op: "add-job", job: { name: "unbooked", ask: "Who is still unbooked?", kind: "vendor", where: "status != 'booked'", sort: "due" } },
   "edit-job": { op: "edit-job", name: "unbooked", sort: { by: "quote", direction: "desc" } },
@@ -56,9 +58,14 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "add-alias": { op: "add-alias", kind: "vendor", alias: "supplier" },
   "set-aliases": { op: "set-aliases", kind: "vendor", field: "quote", aliases: ["cost", "fee"] },
   "set-connection": { op: "set-connection", name: "deadlines", connection: { system: "google-calendar", calendar: "primary", kind: "vendor", fields: { summary: "name", start: "due", end: "until" }, direction: "read" } },
+  "add-workflow": { op: "add-workflow", name: "tidy-vendors", workflow: { title: "Tidy vendors", when: [{ every: "day 03:00" }], steps: [{ act: "edit-vendor", over: { kind: "vendor" }, args: { name: { expr: "name" } } }] } },
+  "set-workflow": { op: "set-workflow", name: "tidy-vendors", workflow: { title: "Tidy vendors weekly", when: [{ every: "sunday 03:00" }], steps: [{ act: "edit-vendor", over: { kind: "vendor" }, args: { name: { expr: "name" } } }] } },
+  "remove-workflow": { op: "remove-workflow", name: "tidy-vendors" },
+  "pause-workflow": { op: "pause-workflow", name: "tidy-vendors" },
+  "resume-workflow": { op: "resume-workflow", name: "tidy-vendors" },
 };
 /** An edit that needs something the fixture does not have, and what to do first. */
-const FIRST: Partial<Record<(typeof EDIT_OPS)[number], Record<string, unknown>>> = { "remove-lens": ONE_OF_EACH["add-lens"], "set-lens-hidden": ONE_OF_EACH["add-lens"], "remove-grant": ONE_OF_EACH["add-grant"], "remove-sight": ONE_OF_EACH["add-sight"], "edit-job": ONE_OF_EACH["add-job"], "remove-job": ONE_OF_EACH["add-job"], "rename-view": { op: "arrange-pages", first: "view:eagles-nest" }, "set-connection": { op: "add-field", kind: "vendor", field: "until", spec: { type: "date" } } };
+const FIRST: Partial<Record<(typeof EDIT_OPS)[number], Record<string, unknown>>> = { "remove-lens": ONE_OF_EACH["add-lens"], "set-lens-hidden": ONE_OF_EACH["add-lens"], "remove-grant": ONE_OF_EACH["add-grant"], "remove-sight": ONE_OF_EACH["add-sight"], "edit-job": ONE_OF_EACH["add-job"], "remove-job": ONE_OF_EACH["add-job"], "rename-view": { op: "arrange-pages", first: "view:eagles-nest" }, "set-connection": { op: "add-field", kind: "vendor", field: "until", spec: { type: "date" } }, "set-workflow": ONE_OF_EACH["add-workflow"], "remove-workflow": ONE_OF_EACH["add-workflow"], "pause-workflow": ONE_OF_EACH["add-workflow"], "resume-workflow": ONE_OF_EACH["add-workflow"] };
 
 describe("every edit says what it did", () => {
   it.each(EDIT_OPS.map((op) => [op]))("%s", (op) => {

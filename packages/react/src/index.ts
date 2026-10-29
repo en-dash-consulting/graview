@@ -1,7 +1,7 @@
 export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, PLACE_MENU_EVENT, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
 export { MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.js";
-export type { MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
+export type { MenuColumn, MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 export { BesideTheMap } from "./beside-the-map.js";
 export { HostFilesContext, useHostFiles } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
@@ -15,7 +15,7 @@ export type { Placed } from "./placement.js";
 export type { OccupantsProps } from "./occupants.js";
 export { foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO } from "./robot.js";
 export type { RobotEvent, RobotMode, RobotState, SeatNote } from "./robot.js";
-export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, OnExport, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
+export type { ActsDoor, AdministeredModule, AwaySummary, DrawnBox, GraviewContextValue, GraviewProviderProps, OnExport, PointerMenu, SceneHandle, Scheme, Seat, ViewMode, WorkflowRuns } from "./context.js";
 export { createPointerStore } from "./pointer.js";
 export type { PointerStore, ScenePoint } from "./pointer.js";
 export { applySettings, honorSetting, loadSetting, rememberSetting } from "./settings.js";

@@ -104,7 +104,7 @@ describe("the entry", () => {
     expect(inputs.filter((path) => /node_modules\//.test(path))).toEqual([]);
     expect(inputs.filter((path) => /packages\/(core|react|primitives|tools|layout|render|embed|guest)\//.test(path))).toEqual([]);
     const bytes = bundled.outputFiles[0]!.contents.byteLength;
-    // The whole renderer, its three shaders among it, minified: a host inlines it in its first HTML.
+    // The whole renderer, its four shaders among it, minified: a host inlines it in its first HTML.
     expect(bytes).toBeLessThan(14 * 1024);
     const context = createContext({});
     runInContext(bundled.outputFiles[0]!.text, context);

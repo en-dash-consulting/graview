@@ -37,7 +37,7 @@
  * deal's amount marked `"format": "money"` reads "$10,000" — never a bare
  * 10000 — on its record page, its list's rows, its board's cards, the
  * scene's record and the kind's table, with its percent, duration and
- * measure said as declared; the form to add one shows "$" beside its
+ * measure said as declared, and a sum whole to the cent never ".00"; the form to add one shows "$" beside its
  * amount and takes "$1,250.50" as written.
  *
  * And a review app as a Cloud author built it (`review.gdd.json`): a home
@@ -133,6 +133,8 @@ const MONEY_SEED = {
   nodes: [
     { id: "d1", kind: "deal", name: "Acme rebrand", amount: 10000, margin: 0.125, effort: 90, weight: 12.5, fee: 1250.5, stage: "won" },
     { id: "d2", kind: "deal", name: "Harbor signage", amount: 4250.75, stage: "lead" },
+    /* A sum worked out a hair under whole, as a computed price is (Roadmap f-lifelogics-findings): it read "$11,424.00". */
+    { id: "d3", kind: "deal", name: "Pier works", amount: 11423.999999999998, stage: "lost" },
   ],
   edges: [],
 };
@@ -353,6 +355,20 @@ try {
       await page.close();
     }
     report.checks.everyDeclaredLensHasItsPageOnThePagesFace = { pages, ok: TITLES.every((title) => pages[title]?.heading?.includes(title) && pages[title].lens && pages[title].drawn) };
+
+    /*
+     * A timeline is a place where it draws (Roadmap f-lifelogics-findings): bound to number fields (minutes of
+     * a day) and a choice of days, each shift is a span on its page. One bound to dates is refused by add-lens
+     * before it is ever a place (`a-timeline-that-cannot-draw-is-refused-and-names-its-bindings.test.ts`).
+     */
+    const week = await open(`face=pages&path=${encodeURIComponent("/places/the-week")}`, { width: 1280, height: 900 });
+    await week.waitForFunction(() => (document.querySelector('[data-testid="place-lens"]')?.textContent ?? "").includes("Friday bar"), null, { timeout: 15_000 }).catch(() => {});
+    const spans = await week.evaluate(() => {
+      const text = document.querySelector('[data-testid="place-lens"]')?.textContent ?? "";
+      return { monday: text.includes("Monday door"), friday: text.includes("Friday bar") };
+    });
+    await week.close();
+    report.checks.aTimelineBoundToMinutesAndDaysDrawsEachSpanOnItsPage = { spans, ok: spans.monday && spans.friday };
   }
 
   /* ---- FR-80 on the Pages face: it opens on the first place; the home is in order; the hidden kind leaves the nav and stays reachable */
@@ -768,6 +784,7 @@ try {
     const list = await open(`doc=money&face=pages&path=${encodeURIComponent("/deals")}`, { width: 1280, height: 900 });
     const listText = await read(list, "main");
     await list.close();
+    report.checks.aSumWholeToTheCentReadsWithoutCentsAndNeverPointOhOh = { whole: listText.includes("$11,424"), pointOhOh: /\$[\d,]+\.00\b/.test(listText), ok: listText.includes("$11,424") && !/\$[\d,]+\.00\b/.test(listText) };
     report.checks.aMoneyFieldIsSaidAsMoneyInItsListsRows = { dollars: listText.includes("$10,000"), cents: listText.includes("$4,250.75"), bare: bare.test(listText), ok: listText.includes("$10,000") && listText.includes("$4,250.75") && !bare.test(listText) };
 
     const board = await open(`doc=money&face=pages&path=${encodeURIComponent("/places/the-pipeline")}`, { width: 1280, height: 900 });
