@@ -2,6 +2,7 @@ import type { WorkflowStep } from "@graview/core/workflows";
 import { runActStep } from "./run-act.js";
 import { runAgentStep } from "./run-agent.js";
 import { runGenerateStep } from "./run-generate.js";
+import { runArchiveStep } from "./run-archive.js";
 import { runClassifyStep } from "./run-classify.js";
 import type { StepRunner } from "./types.js";
 
@@ -10,6 +11,7 @@ export const STEP_RUNNERS: Readonly<Record<string, StepRunner<never>>> = {
   act: runActStep,
   agent: runAgentStep,
   generate: runGenerateStep,
+  archive: runArchiveStep,
   classify: runClassifyStep,
 };
 
