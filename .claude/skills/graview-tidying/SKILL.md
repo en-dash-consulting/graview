@@ -120,7 +120,10 @@ opens in and how its cards read are `graview-lists`.
    proposing from a list of acts. Dreaming is the one every app has
    (`workflowsOf`, `@graview/core/workflows`); `runWorkflow` from
    `@graview/tools/workflows` runs the rest, the first run after a change
-   a dry run. The workflows skill to come says how to write one.
+   a dry run. A `classify` step labels each record with one of a choice
+   field's options — a model's judgment and how sure, or without one the
+   `floor`'s links and words — asked of a person first, and always for an
+   option in `confirm`. The workflows skill to come says how to write one.
 
 ## Then find out whether it worked
 

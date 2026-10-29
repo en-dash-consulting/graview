@@ -3,6 +3,7 @@ import { runActStep } from "./run-act.js";
 import { runAgentStep } from "./run-agent.js";
 import { runGenerateStep } from "./run-generate.js";
 import { runArchiveStep } from "./run-archive.js";
+import { runClassifyStep } from "./run-classify.js";
 import type { StepRunner } from "./types.js";
 
 /** Every kind of step, run, by the key `STEP_KINDS` tells it apart by. A new kind: its file, and one line here. */
@@ -11,6 +12,7 @@ export const STEP_RUNNERS: Readonly<Record<string, StepRunner<never>>> = {
   agent: runAgentStep,
   generate: runGenerateStep,
   archive: runArchiveStep,
+  classify: runClassifyStep,
 };
 
 /** The runner for a step, by the one key of `STEP_RUNNERS` it holds. */

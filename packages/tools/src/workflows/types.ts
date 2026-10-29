@@ -100,6 +100,8 @@ export interface StepChange {
   readonly model?: string;
   /** The stable key of what it makes (an act step's `key`), kept on the lineage. */
   readonly key?: string;
+  /** It waits for a person whatever `approve` says: a label a host shows the public (a classify step's `confirm`). */
+  readonly ask?: boolean;
 }
 
 /** What `StepContext.change` did with one change. */

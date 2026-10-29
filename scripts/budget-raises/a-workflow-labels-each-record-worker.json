@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 6600,
+  "note": "Raised when a workflow came to label each record: `compileDocument` holds every workflow step to the declaration, so the classify step's checker (its shape, its findings, its words and the floor's link and word reading, `workflows/step-classify.ts`) is on the worker's path; asking the model and running the step (`@graview/tools/workflows`) are kept off it. Measured at 2_513_563 B against 2_507_013 B with the step taken out of STEP_KINDS on batch/0-1-63 at 3f7d8a789."
+}
