@@ -179,7 +179,8 @@ describe("a hosted page", () => {
     // 1053 KB once the 0.1.62 batch's twelve branches were merged, each measured alone against main: the scene face measured 1_077_516 B.
     // 1054 KB since a shared or signed-out seat came to be refused a vote on a suggestion (Roadmap f-votes-shared-seat): who is anybody in particular, an advisory vote kept under its visitor and counted apart, and the tray's Sign in to vote: the scene face measured 1_078_694 B, 1_027 more than main (1_077_667).
     // 1054 KB since a Notion connection came to keep several data sources and to say on a record's page which one keeps it ("Kept in step with Notion · Tasks"): the line on the record's page and the compile reading a connection's sources: the scene face measured 1_078_654 B, 987 more than main (1_077_667).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1054 * 1024);
+    // 1056 KB once the 0.1.63 batch's branches were merged, each measured alone against main: the scene face measured 1_080_549 B.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1056 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
