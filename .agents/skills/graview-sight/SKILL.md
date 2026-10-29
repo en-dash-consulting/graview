@@ -66,7 +66,10 @@ to remember.
    does — and so does a host that serves seats without `@graview/ship`.
    Without it a sight with `hide` or
    `fields` shows nothing: the store keeps the record rather than serve a
-   field it cannot judge. A page `openRemote` opened needs nothing: its
+   field it cannot judge — a maker's own record too, so
+   `{ roles: "*", kinds: ["ticket"], own: true, hide: ["triage"] }` that
+   shows a sender nothing means the import is missing; loaded, it shows
+   them their ticket without `triage`. A page `openRemote` opened needs nothing: its
    host judged what it was sent, and that store alone is trusted — a
    whole store on the same page still needs the import. An agent's tool
    for an act lists no argument writing a field the seat never sees.
