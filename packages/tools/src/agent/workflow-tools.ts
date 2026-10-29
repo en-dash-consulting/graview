@@ -1,4 +1,9 @@
 import type { AnySchema, GraviewApp, Principal } from "@graview/core";
+import { documentOf } from "@graview/core/document";
+import type { AppWorkflows } from "@graview/core/workflows";
+
+/** The workflows an app declares: its own, else the document it was compiled from (as `declaredWorkflows` reads them). */
+const workflowsDeclaredBy = (app: object): AppWorkflows | undefined => (app as { workflows?: AppWorkflows }).workflows ?? (documentOf(app)?.workflows as AppWorkflows | undefined);
 import type { WorkflowRun } from "../workflows/types.js";
 import type { ToolDefinition } from "./tool-definition.js";
 
@@ -70,7 +75,7 @@ export function workflowToolsOf(names: readonly string[], listed: "run" | "manag
 }
 
 /** The app's workflows, by name, in declared order. */
-export const workflowNames = (app: Pick<GraviewApp, "workflows"> | undefined): readonly string[] => Object.keys(app?.workflows ?? {});
+export const workflowNames = (app: object | undefined): readonly string[] => Object.keys((app && workflowsDeclaredBy(app)) ?? {});
 
 /** What a run answers a model: the run, less the ids nobody reads, with its counts and its sentences. */
 function runAnswer(run: WorkflowRun) {
@@ -104,8 +109,9 @@ export async function runWorkflowToolCall(
   const edit = context.workflows.edit;
   if (!edit) return { ok: false, error: "This seat's host does not write the app's declaration, so it cannot pause or resume a workflow. Nothing was changed.", reason: "forbidden" };
   const pause = name === "pause_workflow";
-  const status = context.app.workflows?.[asked]?.status ?? "active";
-  if ((status === "paused") === pause) return { ok: true, data: { workflow: asked, status, said: `“${context.app.workflows![asked]!.title}” is already ${status}. Nothing was changed.` } };
+  const declared = workflowsDeclaredBy(context.app)![asked]!;
+  const status = declared.status ?? "active";
+  if ((status === "paused") === pause) return { ok: true, data: { workflow: asked, status, said: `“${declared.title}” is already ${status}. Nothing was changed.` } };
   const written = await edit({ op: pause ? "pause-workflow" : "resume-workflow", name: asked });
   if (!written.ok) return { ok: false, error: written.error };
   return {

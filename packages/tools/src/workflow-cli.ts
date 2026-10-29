@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { entryArg, isDocument, loadApp } from "@graview/core/cli";
 import type { AnySchema, GraviewApp, Store } from "@graview/core";
 import { lastRunWords } from "@graview/core/scene";
-import { nextRunAt, workflowsOf } from "@graview/core/workflows";
+import { declaredWorkflows, nextRunAt, workflowsOf } from "@graview/core/workflows";
 import { openHost } from "./cli.js";
 import type { WorkflowTools } from "./agent/workflow-tools.js";
 import type { WorkflowLog, WorkflowRun } from "./workflows/types.js";
@@ -97,8 +97,9 @@ export async function workflowToolsFor(app: GraviewApp, store: Store<AnySchema>,
       if (!checked.ok) return { ok: false, error: `The app it would make does not check: ${sayFindings(checked.findings)}` };
       writeFileSync(path, `${JSON.stringify(edited.document, null, 2)}\n`);
       // The seat's app is the one it was opened with: what a run reads of the pause, it reads from here on.
-      const declared = (app.workflows ?? {})[edit.name];
-      if (declared) (app as { workflows?: Record<string, unknown> }).workflows = { ...app.workflows, [edit.name]: { ...declared, status: edit.op === "pause-workflow" ? "paused" : "active" } };
+      const all = declaredWorkflows(app) ?? {};
+      const declared = all[edit.name];
+      if (declared) (app as { workflows?: Record<string, unknown> }).workflows = { ...all, [edit.name]: { ...declared, status: edit.op === "pause-workflow" ? "paused" : "active" } };
       return { ok: true, said: edited.said.join(" ") || `${edit.op === "pause-workflow" ? "Paused" : "Resumed"} “${declared?.title ?? edit.name}”.` };
     },
   });
@@ -148,7 +149,8 @@ export async function workflow(argv: readonly string[]): Promise<number> {
     say(`graview workflow: --now takes a moment like 2026-11-01T18:00:00Z, not "${asked}".\n`);
     return 2;
   }
-  const declared = Object.keys(app.workflows ?? {});
+  const workflows = declaredWorkflows(app) ?? {};
+  const declared = Object.keys(workflows);
   if (name === "dreaming" && !declared.includes(name)) {
     say("graview workflow: dreaming is the app's built-in nightly workflow; run it with graview dream.\n");
     return 2;
@@ -162,7 +164,7 @@ export async function workflow(argv: readonly string[]): Promise<number> {
     return list(app, undefined, now, argv.includes("--json"));
   }
   const { workflowAuthor, resolveWorkflow, workflowWorldOfApp } = await import("@graview/core/workflows");
-  const author = name !== undefined ? workflowAuthor(resolveWorkflow(name, app.workflows![name]!, workflowWorldOfApp(app))) : { kind: "system" as const, id: "workflow", automated: true as const };
+  const author = name !== undefined ? workflowAuthor(resolveWorkflow(name, workflows[name]!, workflowWorldOfApp(app))) : { kind: "system" as const, id: "workflow", automated: true as const };
   const host = await openHost(app, argv, author, "cli");
   try {
     const log = host.files ? fileWorkflowLog(runsFileOf(host.files.friction)) : undefined;

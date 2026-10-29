@@ -1,5 +1,7 @@
 import type { GraviewApp } from "../app.js";
+import { documentOf } from "../document/remembered.js";
 import { subjectKindsOf } from "../mutations/derive-edits.js";
+import type { AppWorkflows } from "../workflow-shape.js";
 import type { AnySchema } from "../schema/schema.js";
 
 /*
@@ -43,12 +45,19 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 const strings = (value: unknown): string[] => (typeof value === "string" ? [value] : Array.isArray(value) ? value.filter((one): one is string => typeof one === "string") : []);
 
 /**
+ * The workflows an app declares, read the way `declaredWorkflows` reads them
+ * — a TypeScript app's own, else the document it was compiled from — and
+ * nothing more: no checker, no resolving.
+ */
+export const workflowsDeclaredBy = (app: object): AppWorkflows | undefined => (app as { workflows?: AppWorkflows }).workflows ?? (documentOf(app)?.workflows as AppWorkflows | undefined);
+
+/**
  * Every workflow the app declares, as the Scene draws it, in declared
  * order, given every act the app has (`store.allMutations()`: the derived
  * ones too). Dreaming, built in and at work on every district, is not drawn.
  */
 export function workflowsOnTheMap<S extends AnySchema>(app: GraviewApp<S>, acts: readonly MapAct[]): readonly MapWorkflow[] {
-  const declared = Object.entries(app.workflows ?? {});
+  const declared = Object.entries(workflowsDeclaredBy(app) ?? {});
   if (declared.length === 0) return [];
   const kinds = new Set(app.schema.kinds as readonly string[]);
   const byName = new Map(acts.map((act) => [act.name, act]));

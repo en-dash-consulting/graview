@@ -1,6 +1,6 @@
 {
   "budget": "the pages face alone",
   "minified": 97,
-  "gzipped": 40,
-  "note": "Raised when an app's workflows came to stand on the Scene's map and an owner's seat came to run, pause and resume them (Roadmap f-jobs-declared): the provider and the embed hand the scene the host's log of runs (`workflowRuns`), the scene draws the workflows' layer with the ground it stands on, and the tool surface lists run_workflow, pause_workflow and resume_workflow for a host that hands them. Measured at 700_541 / 256_651 against 700_444 / 256_611 on feat/workflows, minified and gzipped."
+  "gzipped": 42,
+  "note": "Raised when an app's workflows came to stand on the Scene's map and an owner's seat came to run, pause and resume them (Roadmap f-jobs-declared): the provider and the embed hand the scene the host's log of runs (`workflowRuns`), the scene draws the workflows' layer with the ground it stands on, read off the declaration without the checker, and the tool surface lists run_workflow, pause_workflow and resume_workflow for a host that hands them. Measured at 700_541 / 256_651 against 700_444 / 256_609 on feat/workflows, minified and gzipped."
 }

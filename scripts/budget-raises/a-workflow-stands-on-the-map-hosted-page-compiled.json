@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page handed a compiled app",
-  "minified": 91,
-  "gzipped": 49,
+  "minified": 170,
+  "gzipped": 148,
   "changeset": "a-workflow-stands-on-the-map-and-runs-from-a-shell.md",
-  "note": "Raised when an app's workflows came to stand on the Scene's map and an owner's seat came to run, pause and resume them (Roadmap f-jobs-declared): the provider and the embed hand the scene the host's log of runs (`workflowRuns`), the scene draws the workflows' layer with the ground it stands on, and the tool surface lists run_workflow, pause_workflow and resume_workflow for a host that hands them. Measured at 591_685 / 205_863 against 591_594 / 205_814 on feat/workflows, minified and gzipped."
+  "note": "Raised when an app's workflows came to stand on the Scene's map and an owner's seat came to run, pause and resume them (Roadmap f-jobs-declared): the provider and the embed hand the scene the host's log of runs (`workflowRuns`), the scene draws the workflows' layer with the ground it stands on, read off the declaration without the checker, and the tool surface lists run_workflow, pause_workflow and resume_workflow for a host that hands them. Measured at 591_722 / 205_948 against 591_552 / 205_800 on feat/workflows, minified and gzipped."
 }

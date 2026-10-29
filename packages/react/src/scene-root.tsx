@@ -1279,7 +1279,7 @@ export function Scene<S extends AnySchema>({
       </Suspense>
       ) : null}
       {/* THE APP'S WORKFLOWS, each in the street beside the district it writes, wired to what it reads and writes (see workflows-layer.tsx). */}
-      {view.overview && frame.city && context.app?.workflows && Object.keys(context.app.workflows).length > 0 ? (
+      {view.overview && frame.city && context.app ? (
         <Suspense fallback={null}>
           <Workflows
             frame={frame}
