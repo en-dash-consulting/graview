@@ -88,6 +88,8 @@ exporting the app itself is `graview-ship`.
       to: a person without the toggle is no guest either way, an attendee
       matching them is held as an address and never linked, and one
       matching nobody is kept and sent back as it was.
+   7. `"max": 20` on `guests` holds an event over it unsent.
+   8. Check: `report.guests`, the history line, `guestsOf`.
 
 5. **Keep it in step with a Notion database by declaring it.**
    `system: "notion"`, `database` (its 32-character id, or `{ env }`),

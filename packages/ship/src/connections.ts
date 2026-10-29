@@ -122,6 +122,12 @@ export function sayReport(report: SyncReport): string | undefined {
   const said: string[] = [];
   if (report.applied.length) said.push(`took ${report.applied.length} from ${place}`);
   if (report.pushed.length) said.push(`sent ${report.pushed.length} to ${notion ? "Notion" : "it"}`);
+  // Whom the pass invited and took off, counted (Roadmap f-sync-guest-changes-in-history): only writes that reached the calendar.
+  const invited = (report.guests ?? []).filter((one) => one.invited.length > 0);
+  const invitedCount = invited.reduce((sum, one) => sum + one.invited.length, 0);
+  const removedCount = (report.guests ?? []).reduce((sum, one) => sum + one.removed.length, 0);
+  if (invitedCount) said.push(`invited ${invitedCount} to ${invited.length} event${invited.length === 1 ? "" : "s"}`);
+  if (removedCount) said.push(`${removedCount} taken off`);
   if (report.gone.length) said.push(`${report.gone.length} gone there`);
   // A change coming in that this store refused names the calendar's event or Notion's page, which may have no record here.
   if (report.refused.length) said.push(`refused: ${report.refused.map((one) => `${one.resource ? `${notion ? "Notion's page" : "the calendar's"} ${one.id}` : one.localId} (${one.error})`).join(", ")}`);

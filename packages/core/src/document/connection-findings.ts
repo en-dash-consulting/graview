@@ -272,9 +272,13 @@ function guestsVia(at: string, name: string, connection: GoogleCalendarConnectio
   }
   const reached = edge.to[0]!;
   const people = document.kinds[reached];
+  // The cap is a count of guests: a whole number above 0, or no cap at all (Roadmap f-sync-guest-changes-in-history).
+  const max = guests.max;
+  const capped = max !== undefined && !(Number.isInteger(max) && max > 0) ? [error("connection-guests-max", `${path}.max`, `max is the most guests one event invites, a whole number above 0, and it is ${max}`, "say a whole number above 0, or leave max out to invite everyone")] : [];
+  if (capped.length > 0 && !people) return capped;
   // A relation to a kind that is not there is the document's finding, said once where the relation is.
   if (!people) return [];
-  const findings: Finding[] = [];
+  const findings: Finding[] = [...capped];
   const emails = guests.emails ?? "emails";
   const invite = guests.invite ?? "inviteMe";
   const plural = capitalize(people.plural ?? `${people.noun ?? humanizeField(reached).toLowerCase()}s`);

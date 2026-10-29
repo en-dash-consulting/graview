@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 350,
+  "gzipped": 158,
+  "note": "Raised when a connection pass came to say whom it invited (Roadmap f-sync-guest-changes-in-history): the store takes a host-made op's `described` and `sentOut` (`AppendOp`), and undo refuses a line of what a connection sent out with its own sentence (\"Nothing to take back: an invitation already went out.\"). Measured at 340_085 / 124_492 against 339_735 / 124_354: 350 / 138 more, raised 158 gzipped for the few bytes gzip moves between runs."
+}

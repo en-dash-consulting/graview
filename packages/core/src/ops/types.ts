@@ -211,6 +211,26 @@ export interface Operation {
    * reads as before, and folds the same.
    */
   readonly publishedThrough?: number;
+  /**
+   * WHAT A CONNECTION SENT OUT (Roadmap f-sync-guest-changes-in-history):
+   * set on the op a connection's pass appends after a write with guests
+   * reached the other system — "Invited Ada to Long run", "Took
+   * bo@example.com off Long run" — or was refused there (`refused`). It is
+   * history and nothing else: no primitives, no reads, no writes, credited
+   * to the connection's system author, the records its sentence names in
+   * `described`. Not undone: what went out went out, and the guests change
+   * by changing them here (`checkUndo` says so). An op without it reads as
+   * before, and folds the same; a build before it reads this one as a
+   * change that touched nothing.
+   */
+  readonly sentOut?: SentOut;
+}
+
+/** What one pass sent out for one record: how many guests it invited and took off, and whether the other system refused it. */
+export interface SentOut {
+  readonly invited: number;
+  readonly removed: number;
+  readonly refused?: true;
 }
 
 export interface Batch {

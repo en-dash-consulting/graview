@@ -26,7 +26,7 @@ import { repeatingFields, repeatMakes } from "./mutations/derive-repeats.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { namesMade, resolveMade } from "./mutations/made.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
-import type { Author, Batch, Operation, Via } from "./ops/types.js";
+import type { Author, Batch, Operation, SentOut, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
 import { advisoryVoterOf, signedOutSeat, SIGN_IN_TO_VOTE, VOTE_SUGGESTION, VOTING, voteSuggestionMutation, type AppTidying, type VotesOptions } from "./mutations/vote-suggestion.js";
@@ -364,6 +364,10 @@ export interface AppendOp {
   readonly via?: Via;
   /** What it was based on (FR-172), checked as `ApplyOptions.lineage` is. */
   readonly lineage?: Lineage;
+  /** The records (and `<id>#<field>`) its sentence read, so a seat that may not see one is served it withheld (FR-55). */
+  readonly described?: readonly string[];
+  /** What a connection sent out (Roadmap f-sync-guest-changes-in-history): an op of history alone, never undone. */
+  readonly sentOut?: SentOut;
 }
 
 /** `{ [key]: value }` where the value is said, and nothing where it is not: an optional key left off rather than undefined. */
@@ -1972,6 +1976,8 @@ export class Store<S extends AnySchema> {
         ...given("undoes", made.undoes),
         ...given("via", made.via),
         ...given("lineage", lineageOf(made.lineage)),
+        ...given("described", made.described),
+        ...given("sentOut", made.sentOut),
       };
       if (taken.has(op.id)) throw new GraphError(`Op "${op.id}" (${op.intent}) is already in the log`, "A host-made op needs an id of its own; leave `id` out and the store mints one.");
       taken.add(op.id);

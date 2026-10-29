@@ -9,7 +9,7 @@ import type { EdgeDeclaration } from "../schema/types.js";
 import { relationActName } from "../mutations/derived-names.js";
 import type { AnyMutationDefinition } from "../mutations/types.js";
 import { creatingActFor } from "./creating-act.js";
-import { SyncEngine, type SharedLinks, type SyncOptions } from "./engine.js";
+import { SyncEngine, type GuestLeftOut, type SharedLinks, type SyncGuests, type SyncOptions } from "./engine.js";
 import { googleCalendar, type Fetcher, type GoogleTokenRequest } from "./google-calendar.js";
 import { addressesOf, addressesOfAttendees, attendeesOf, guestBook, type GuestGraph } from "./guests.js";
 import { instantIn, timeZoneFor, wallIn } from "../days.js";
@@ -318,7 +318,7 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
       ? { readonly: true, because: `Each ${kind} comes from a Google calendar this app only reads: change it there.` }
       : {}),
   };
-  return { mapping: { system: "google-calendar", resources: [resource] }, ...(guests ? { guests } : {}) };
+  return { mapping: { system: "google-calendar", name: "Google Calendar", resources: [resource] }, ...(guests ? { guests } : {}) };
 }
 
 /** Words compared loosely: "In progress", "in-progress" and "inProgress" are one. */
@@ -513,6 +513,7 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
   });
   const creates = creatingAct(app as GraviewApp, declaration.kind, Object.keys(resource.fields));
   const decoded = decodedBy(resource);
+  const kept = keptGuests(app as GraviewApp, declaration, store, guests);
   let made = 0;
   const engine = new SyncEngine<S>(
     {
@@ -521,6 +522,9 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
       remote,
       // The guests' relation resolves through the guest book: a person's remote id is their guest key.
       ...(guests ? { links: guests, ...relationActs(store, declaration.kind) } : {}),
+      // What each pass invites and takes off is said in the history and the report, and a record over `max` is held (Roadmap f-sync-guest-changes-in-history).
+      ...(kept ? { guests: kept } : {}),
+      ...(run.now ? { now: run.now } : {}),
       conflicts: declaration.conflicts ?? "report",
       applyInbound: ({ localId, fields }) => ({ name: `edit-${declaration.kind}`, args: { id: localId, ...fields } }),
       removeInbound: ({ localId }) => ({ name: `remove-${declaration.kind}`, args: { id: localId } }),
@@ -541,6 +545,42 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
   );
   const unguard = declaration.direction === "read" ? engine.guard() : undefined;
   return { engine, mapping, remote, ...(unguard ? { unguard } : {}) };
+}
+
+/**
+ * THE GUESTS A GOOGLE CONNECTION KEEPS, as the engine counts them (Roadmap
+ * f-sync-guest-changes-in-history): the field of addresses, or the relation
+ * whose remote ids are guest keys — each said by the person holding it, the
+ * people it reaches and does not invite said with why, and the declared
+ * `max` held to.
+ */
+function keptGuests<S extends AnySchema>(app: GraviewApp, declaration: GoogleCalendarConnectionSpec, store: Store<S>, book: LinkResolver | undefined): SyncGuests | undefined {
+  const spec = declaration.fields.guests;
+  if (spec === undefined) return undefined;
+  if (typeof spec === "string") return { field: spec, addresses: (value) => addressesOf(value) };
+  const reaches = edgeSpecs(app, declaration.kind)[spec.via]?.to;
+  const kinds = new Set(reaches === undefined || reaches === "*" ? [] : reaches);
+  const emails = spec.emails ?? "emails";
+  const invite = spec.invite ?? "inviteMe";
+  return {
+    field: spec.via,
+    // A guest key holds every address of one person, joined with ","; a bare address is one held as it is.
+    addresses: (value) => attendeesOf(value).map((one) => one.email!),
+    ...(book ? { whose: (address: string) => book.localId(address) } : {}),
+    emails,
+    leftOut(localId) {
+      const out: GuestLeftOut[] = [];
+      for (const target of store.graph.out(localId, spec.via, { archived: "all" }) as unknown as Record<string, unknown>[]) {
+        const person = String(target["id"]);
+        if (!kinds.has(String(target["kind"]))) out.push({ person, why: "not-a-person" });
+        else if (invite !== false && target[invite] !== true) out.push({ person, why: "invite-off" });
+        else if (addressesOf(target[emails]).length === 0) out.push({ person, why: "no-address" });
+      }
+      return out;
+    },
+    ...(spec.max !== undefined ? { max: spec.max } : {}),
+    notify: spec.notify === true,
+  };
 }
 
 function notionConnection<S extends AnySchema>(run: ConnectionRun<S>, declaration: NotionConnectionSpec): Connection<S> {

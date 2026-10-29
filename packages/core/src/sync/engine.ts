@@ -1,7 +1,9 @@
 import type { GraphReader } from "../graph/types.js";
 import { splicedRecord } from "../graph/primitives.js";
 import { PermissionDeniedError } from "../permissions/types.js";
-import type { ApplyOptions, PlannedChange, Store } from "../store.js";
+import type { AppendOp, ApplyOptions, PlannedChange, Store } from "../store.js";
+import { labelOf, nounOf, pluralOf } from "../schema/define-node.js";
+import { passSaid, recordSaid, refusedSaid } from "./guest-words.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import type { AnyMutationDefinition, MutationCall } from "../mutations/types.js";
 import type { Principal } from "../permissions/types.js";
@@ -22,6 +24,7 @@ import {
   type SyncConflict,
   type SyncMapping,
   type SyncState,
+  type GuestsKept,
 } from "./types.js";
 
 /** A conflict the engine's policy settled, and the side it took. */
@@ -69,7 +72,66 @@ export interface SyncReport {
    * why rather than only that. Absent when the run reached it.
    */
   readonly problem?: string;
+  /**
+   * WHOM THE PASS INVITED AND TOOK OFF (Roadmap
+   * f-sync-guest-changes-in-history), record by record, for a connection
+   * that keeps guests (`SyncOptions.guests`): only writes that reached the
+   * remote — one it refused, or the connection held, invited nobody — and
+   * the people the record reaches who were left out, and why. Absent when
+   * no write said its guests.
+   */
+  readonly guests?: readonly GuestChange[];
   readonly state: SyncState;
+}
+
+/** One record's guests as a pass sent them: addresses invited and taken off, sorted, and who was left out. */
+export interface GuestChange {
+  readonly localId: string;
+  readonly invited: readonly string[];
+  readonly removed: readonly string[];
+  readonly leftOut?: readonly GuestLeftOut[];
+}
+
+/**
+ * SOMEBODY THE RECORD REACHES WHO WAS NOT INVITED, and why: their Invite
+ * me is off (`invite-off`), they have no address (`no-address`), or the
+ * record reached is not one of the people the guests are (`not-a-person`).
+ */
+export interface GuestLeftOut {
+  readonly address?: string;
+  /** The record of the person (or the thing reached), by our id. */
+  readonly person?: string;
+  readonly why: "invite-off" | "no-address" | "not-a-person";
+}
+
+/**
+ * THE GUESTS A CONNECTION KEEPS (Roadmap f-sync-guest-changes-in-history):
+ * which of a mapping's fields or relations is the attendees, read as
+ * addresses, so a pass can say whom it invited and took off, hold a record
+ * over `max`, and keep what it last sent (`SyncState.guests`).
+ */
+export interface SyncGuests {
+  /** Our field or relation kept as the attendees. */
+  readonly field: string;
+  /** The addresses a value of it says, in our representation: lowercased, once each. */
+  addresses(value: unknown): readonly string[];
+  /** The record of the person holding an address, when the app has one: said by their name. */
+  whose?(address: string): string | undefined;
+  /** The field of a person's addresses, so a seat that may not see it is not told them in the history. */
+  readonly emails?: string;
+  /** Who the record reaches and is not invited, and why. */
+  leftOut?(localId: string): readonly GuestLeftOut[];
+  /** The most guests one record invites: a write that invites somebody past it is held unsent, and said. */
+  readonly max?: number;
+  /** Whether the remote mails the guests a write invites, kept with what was sent. */
+  readonly notify?: boolean;
+}
+
+/** One write's guests on the way out: every address it says, and what changed since both sides last agreed. */
+interface Outgoing {
+  readonly addresses: readonly string[];
+  readonly invited: readonly string[];
+  readonly removed: readonly string[];
 }
 
 /**
@@ -203,6 +265,10 @@ export interface SyncOptions<S extends AnySchema> {
   connectInbound?(call: { readonly localId: string; readonly kind: string; readonly edge: string; readonly to: string }): MutationCall | null;
   /** The act that unlinks them, for a link the remote took away (`disconnect-<kind>-<edge>`). Absent: the link stays here. */
   disconnectInbound?(call: { readonly localId: string; readonly kind: string; readonly edge: string; readonly to: string }): MutationCall | null;
+  /** The guests the connection keeps, when it keeps some (Roadmap f-sync-guest-changes-in-history). */
+  readonly guests?: SyncGuests;
+  /** The clock a pass and a sent guest list are stamped with; the runtime's when absent. */
+  now?(): Date;
 }
 
 /** What one change coming in is, as the acts it lands through: a record made or its fields, and its links. */
@@ -940,6 +1006,32 @@ export class SyncEngine<S extends AnySchema> {
      * limit is discovered.
      */
     const deduped = [...new Map(this.pending().map((write) => [write.localId, write])).values()];
+    const at = (this.options.now?.() ?? new Date()).toISOString();
+    const guests = this.options.guests;
+    const guestsKept: Record<string, GuestsKept> = { ...this.state.guests };
+    const outgoing = new Map<string, Outgoing>();
+    const lines: AppendOp[] = [];
+    const changes: GuestChange[] = [];
+    if (guests) {
+      for (const write of [...deduped]) {
+        const out = this.outgoing(guests, write, links);
+        if (!out) continue;
+        /*
+         * OVER THE CAP, HELD: a write that would invite somebody to a record
+         * with more guests than the connection invites to one is not sent at
+         * all, and said in words — once in the history, on every pass in the
+         * report, for as long as it stands.
+         */
+        if (guests.max !== undefined && out.invited.length > 0 && out.addresses.length > guests.max) {
+          const error = `${this.labelOf(write.localId)} has ${out.addresses.length} guests; this connection invites at most ${guests.max}`;
+          refused.push({ localId: write.localId, error });
+          deduped.splice(deduped.indexOf(write), 1);
+          this.refusedLine(guests, write.localId, out, error, at, guestsKept, lines);
+          continue;
+        }
+        outgoing.set(write.localId, out);
+      }
+    }
     let queued: RemoteWrite[] = deduped;
 
     if (!offline && deduped.length > 0) {
@@ -948,6 +1040,9 @@ export class SyncEngine<S extends AnySchema> {
         for (const ack of acks) {
           if (ack.error) {
             refused.push({ localId: ack.localId, error: ack.error });
+            // A write the remote refused invited nobody: said once in the history, never counted.
+            const out = outgoing.get(ack.localId);
+            if (guests && out) this.refusedLine(guests, ack.localId, out, ack.error, at, guestsKept, lines);
             // A refused delete is said once: we stop asking, rather than
             // being refused again on every pass for as long as we run.
             if (deduped.find((write) => write.localId === ack.localId)?.deleted) {
@@ -957,6 +1052,13 @@ export class SyncEngine<S extends AnySchema> {
             continue;
           }
           pushed.push(ack.localId);
+          const out = guests ? outgoing.get(ack.localId) : undefined;
+          if (guests && out) {
+            guestsKept[ack.localId] = { sent: { addresses: out.addresses, notified: guests.notify === true, at } };
+            const leftOut = guests.leftOut?.(ack.localId) ?? [];
+            if (out.invited.length > 0 || out.removed.length > 0 || leftOut.length > 0) changes.push({ localId: ack.localId, invited: out.invited, removed: out.removed, ...(leftOut.length > 0 ? { leftOut } : {}) });
+            if (out.invited.length > 0 || out.removed.length > 0) lines.push(this.guestLine(guests, ack.localId, out, recordSaid(this.namesOf(guests, out.invited), this.namesOf(guests, out.removed), this.labelOf(ack.localId)), {}));
+          } else if (deduped.find((write) => write.localId === ack.localId)?.deleted) delete guestsKept[ack.localId];
           links = this.linkAfterPush(links, ack, deduped);
         }
         // Anything the remote did not acknowledge at all stays queued rather
@@ -969,6 +1071,20 @@ export class SyncEngine<S extends AnySchema> {
       }
     }
 
+    this.sayGuests(lines, changes);
+    for (const id of Object.keys(guestsKept)) if (!links[id] && !this.options.store.graph.getNode(id)) delete guestsKept[id];
+    const lastPass = {
+      at,
+      offline,
+      ...(problem ? { problem } : {}),
+      applied: applied.length,
+      pushed: pushed.length,
+      queued: queued.length,
+      conflicts: (this.state.conflicts ?? []).length,
+      refused: refused.map(({ localId, error }) => ({ localId, error })),
+      invited: changes.reduce((sum, change) => sum + change.invited.length, 0),
+      removed: changes.reduce((sum, change) => sum + change.removed.length, 0),
+    };
     this.state = {
       ...(cursor === undefined ? {} : { cursor }),
       links,
@@ -977,6 +1093,8 @@ export class SyncEngine<S extends AnySchema> {
       ...(this.state.gone ? { gone: this.state.gone } : {}),
       ...(this.state.unresolved ? { unresolved: this.state.unresolved } : {}),
       ...(this.state.skipped ? { skipped: this.state.skipped } : {}),
+      ...(Object.keys(guestsKept).length > 0 ? { guests: guestsKept } : {}),
+      lastPass,
     };
 
     return {
@@ -991,8 +1109,87 @@ export class SyncEngine<S extends AnySchema> {
       gone,
       offline,
       ...(problem ? { problem } : {}),
+      ...(changes.length > 0 ? { guests: changes } : {}),
       state: this.snapshot,
     };
+  }
+
+  /** A write's guests on the way out, or undefined when it does not say them. */
+  private outgoing(guests: SyncGuests, write: RemoteWrite, links: Readonly<Record<string, RemoteLink>>): Outgoing | undefined {
+    if (write.deleted || !write.fields) return undefined;
+    const mapping = this.mappingFor(write.resource);
+    const theirs = mapping ? keptOf(mapping)[guests.field] : undefined;
+    if (!mapping || theirs === undefined || !(theirs in write.fields)) return undefined;
+    const sorted = (value: unknown) => [...new Set(guests.addresses(value))].sort();
+    const addresses = sorted(ourFields({ [theirs]: write.fields[theirs] }, mapping, true)[guests.field]);
+    const link = links[write.localId];
+    const before = link ? sorted(link.fields[guests.field]) : [];
+    return { addresses, invited: addresses.filter((one) => !before.includes(one)), removed: before.filter((one) => !addresses.includes(one)) };
+  }
+
+  /** A record's label, as its kind says it. */
+  private labelOf(localId: string): string {
+    const node = this.options.store.graph.getNode(localId) as ({ id: string; kind: string } & Record<string, unknown>) | undefined;
+    return node ? labelOf(this.options.store.schema.tryDefinition(node.kind) as never, node) : localId;
+  }
+
+  /** Addresses as people say them: the name of the person holding each, once, else the address. */
+  private namesOf(guests: SyncGuests, addresses: readonly string[]): string[] {
+    return [...new Set(addresses.map((one) => {
+      const person = guests.whose?.(one);
+      return person === undefined ? one : this.labelOf(person);
+    }))];
+  }
+
+  /**
+   * ONE HISTORY LINE FOR WHAT WENT OUT, credited to the connection's system:
+   * no primitives, no reads, no writes — it changed nothing here and stands
+   * in no undo's way — and the records and fields its sentence read named
+   * in `described`, so a seat that may not see them is served it withheld.
+   */
+  private guestLine(guests: SyncGuests, localId: string, out: Outgoing, intent: string, extra: { readonly refused?: true }): AppendOp {
+    const people = [...out.invited, ...out.removed].map((one) => guests.whose?.(one)).filter((id): id is string => id !== undefined);
+    const described = [...new Set([localId, `${localId}#${guests.field}`, ...people, ...(guests.emails ? people.map((id) => `${id}#${guests.emails}`) : [])])];
+    const name = this.options.mapping.name;
+    return { author: { ...systemAuthor(this.options.mapping.system), ...(name ? { name } : {}) }, intent, primitives: [], reads: [], writes: [], described, sentOut: { invited: out.invited.length, removed: out.removed.length, ...extra } };
+  }
+
+  /** A write with guests that did not go, said once while it stays the same write refused for the same reason. */
+  private refusedLine(guests: SyncGuests, localId: string, out: Outgoing, error: string, at: string, kept: Record<string, GuestsKept>, lines: AppendOp[]): void {
+    if (out.invited.length === 0 && out.removed.length === 0) return;
+    const was = kept[localId]?.refused;
+    if (was && was.error === error && same(was.addresses, out.addresses)) return;
+    kept[localId] = { ...kept[localId], refused: { addresses: out.addresses, error, at } };
+    lines.push(this.guestLine(guests, localId, out, refusedSaid(this.namesOf(guests, out.invited), this.namesOf(guests, out.removed), this.labelOf(localId), error), { refused: true }));
+  }
+
+  /**
+   * THE PASS'S LINES, IN ONE BATCH: each record's own sentence, and over
+   * several the pass's ("Invited 2 people to 3 events"). Appended after
+   * the writes went, so a store that will not take them (one opened at a
+   * past moment) loses only the words, never the pass.
+   */
+  private sayGuests(lines: readonly AppendOp[], changes: readonly GuestChange[]): void {
+    if (lines.length === 0) return;
+    let ops = lines;
+    if (lines.length > 1) {
+      const kind = (id: string) => String((this.options.store.graph.getNode(id) as { kind?: string } | undefined)?.kind ?? "");
+      const first = changes[0]?.localId ?? "";
+      const noun = nounOf(this.options.store.schema.tryDefinition(kind(first)) as never, kind(first) || "record");
+      const plural = kind(first) ? pluralOf(this.options.store.schema, kind(first)) : "records";
+      const invited = new Set(changes.flatMap((change) => this.namesOf(this.options.guests!, change.invited)));
+      const removed = new Set(changes.flatMap((change) => this.namesOf(this.options.guests!, change.removed)));
+      const sent = passSaid(invited.size, changes.filter((change) => change.invited.length > 0).length, removed.size, changes.filter((change) => change.removed.length > 0).length, noun, plural);
+      const held = lines.filter((line) => line.sentOut?.refused).length;
+      const notSent = held > 0 ? `${held} not sent` : "";
+      const batchIntent = [sent, notSent].filter(Boolean).join("; ");
+      ops = lines.map((line) => ({ ...line, batchIntent: batchIntent.charAt(0).toUpperCase() + batchIntent.slice(1) }));
+    }
+    try {
+      this.options.store.append(ops);
+    } catch {
+      // The writes went: the words are the only thing lost.
+    }
   }
 
   private heldState(held: Map<string, SyncConflict>): { conflicts?: readonly SyncConflict[] } {
