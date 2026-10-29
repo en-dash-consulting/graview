@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 2000,
+  "note": "Raised when the 0.1.64 batch held its builds together: a workflow run's `spent`, `chain` and `runCount` (Roadmap f-workflow-runs-say-more) and a count of one relation read from the edge index (f-count-past-graph-budget) each fit under the worker's room on their own branch, beside connection reports naming their source and an app's images drawn under its base, which raised it, but not all together. Measured at 2_528_822, 1_920 over 2_526_902."
+}
