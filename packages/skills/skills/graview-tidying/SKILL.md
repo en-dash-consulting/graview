@@ -109,6 +109,16 @@ opens in and how its cards read are `graview-lists`.
    handed back as `declined`, never offered again. `graview learn <entry>
    --data ./data` prints them; `--accept <key>` or `--decline <key>`.
 
+6. **A workflow runs the app's own actor on a schedule** of the app's
+   choosing. A document's `workflows` names each: a `title`, `when`
+   (`{ "every": "sunday 18:00" }`, `cron`, `made`, `changed`, `synced`,
+   `byHand`), `approve` and its `steps` — an act over the records a rule
+   picks, with a `key` so a rerun changes what it made, or a model
+   proposing from a list of acts. Dreaming is the one every app has
+   (`workflowsOf`, `@graview/core/workflows`); `runWorkflow` from
+   `@graview/tools/workflows` runs the rest, the first run after a change
+   a dry run. The workflows skill to come says how to write one.
+
 ## Then find out whether it worked
 
 ```sh

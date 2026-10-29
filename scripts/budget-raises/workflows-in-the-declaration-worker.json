@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 37912,
+  "note": "Raised when an app came to declare workflows (Roadmap f-jobs-declared): the worker's `graview check` and `describeApp` judge and say a document's `workflows` — each step kind's shape and findings (8.5 KB of findings, 6.6 KB of step kinds), the schedule's words and cron read (6.9 KB), what a workflow may name (2.2 KB), its sentence — and `editDocument` takes the five workflow edits (4.7 KB). When a workflow next runs and running one are on `@graview/core/workflows` and `@graview/tools/workflows`, which the worker does not import. The worker had 3 bytes of room under 2_382_987. Measured at 2_420_897 B against 2_382_984."
+}

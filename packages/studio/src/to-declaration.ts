@@ -570,6 +570,8 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
           },
         }
       : {}),
+    // The workflows are carried, not edited here yet (Roadmap f-jobs-declared): `graview check` says what a renamed or removed kind leaves them naming.
+    ...(base?.workflows ? { workflows: base.workflows } : {}),
     // The connections are carried, not edited here yet: a renamed kind's calendar follows it.
     ...(base?.connections
       ? {

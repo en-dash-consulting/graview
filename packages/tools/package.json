@@ -64,6 +64,10 @@
     "./reshape": {
       "types": "./dist/reshape.d.ts",
       "default": "./dist/reshape.js"
+    },
+    "./workflows": {
+      "types": "./dist/workflows.d.ts",
+      "default": "./dist/workflows.js"
     }
   },
   "scripts": {

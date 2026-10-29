@@ -16,6 +16,7 @@ import * as forms from "../../src/forms.js";
 import * as friction from "../../src/friction.js";
 import * as history from "../../src/history.js";
 import * as jobs from "../../src/jobs.js";
+import * as workflows from "../../src/workflows.js";
 import * as learn from "../../src/learn.js";
 import * as past from "../../src/past.js";
 import * as importing from "../../src/import/index.js";
@@ -81,6 +82,8 @@ const OFF_THE_PAGE = {
   "@graview/core/subscriptions": { from: subscriptions, names: ["holdTypingRuns", "matchSubscriptions", "subscribersNow", "subscriptionProblem", "subscriptionWords", "TYPING_QUIET_MS", "watchSubscriptions"] },
   // Roadmap f-app-jobs: an app's jobs resolved and answered as a seat sees it — a design's, a seat's and a host's, fetched when one is drawn.
   "@graview/core/jobs": { from: jobs, names: ["answerJob", "jobIsFor", "jobsFor", "jobsOf", "MOST_JOBS"] },
+  // Roadmap f-jobs-declared: what the app does on its own and when — its shape, its step kinds, its schedule, what starts it, what the checker says — a host's and a runner's, on no page.
+  "@graview/core/workflows": { from: workflows, names: ["declaredWorkflows", "DREAMING", "MOST_STEPS", "MOST_WORKFLOWS", "SCHEDULE_WORDS", "STEP_KINDS", "WorkflowSpec", "WorkflowStepSpec", "WorkflowTriggerSpec", "WorkflowsSpec", "actStep", "agentStep", "documentWorkflowFindings", "dreamingWorkflow", "followsFindings", "keyFields", "keyedId", "kindNoun", "nextOf", "nextRunAt", "policiesOf", "policyInstruction", "recordsOver", "resolveWorkflow", "scheduleOf", "scheduleOfCron", "scheduleOfWords", "scheduleWords", "stepKindOf", "stepShapes", "triggerWords", "triggeredBy", "workflowAuthor", "workflowFindings", "workflowFindingsOf", "workflowKey", "workflowReach", "workflowSpecHash", "workflowValue", "workflowWords", "workflowWorldOfApp", "workflowWorldOfDocument", "workflowsOf"] },
   // Roadmap f-friction-log: what people looked for and could not do — kept, counted across people, said to a model; a page records through the main entry's `recordFriction` alone.
   "@graview/core/friction": {
     from: friction,

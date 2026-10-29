@@ -18,6 +18,9 @@ import { declaredLenses, isShippedLens } from "../places.js";
 import { listsRecords } from "../lenses-that-list.js";
 import { placesOf } from "../app-places.js";
 import { columnReach } from "../columns.js";
+import { stepKindOf } from "../workflows/steps.js";
+import { declaredWorkflows, resolveWorkflow } from "../workflows/resolve.js";
+import { workflowWorldOfApp } from "../workflows/world.js";
 import { computedOf } from "../document/computed.js";
 import { placePath } from "../views/types.js";
 import { dayAsRead, DEFAULT_LOCALE, numberAsRead, timeAsRead } from "../days.js";
@@ -103,6 +106,22 @@ export function describeApp<S extends AnySchema>(
         ...(job.act ? [`then "${job.act}"`] : []),
       ].join(", ");
       lines.push(`  "${job.ask}" — ${answer}${job.roles && job.roles.length > 0 && !options.as ? ` (for ${list([...job.roles])})` : ""}.`);
+    }
+  }
+
+  /*
+   * WHAT IT DOES ON ITS OWN (Roadmap f-jobs-declared): each declared
+   * workflow by name, in a sentence, paused or not, and its steps one to a
+   * line. Dreaming, every app's own, is not declared and not said here.
+   */
+  const workflows = Object.entries(declaredWorkflows(app) ?? {});
+  if (workflows.length > 0) {
+    lines.push("", "## What it does on its own");
+    const world = workflowWorldOfApp(app);
+    for (const [name, declared] of workflows) {
+      const workflow = resolveWorkflow(name, declared, world);
+      lines.push(`  ${name} — ${workflow.words}${workflow.status === "paused" ? " (paused)" : ""}; its changes are ${workflow.approve === "apply" ? "applied" : workflow.approve === "suggest" ? "applied or suggested by how sure it is" : "asked about first"}.`);
+      workflow.steps.forEach((step, at) => lines.push(`    ${at + 1}. ${stepKindOf(step)?.words(step, world.noun) ?? "a step Graview does not run"}`));
     }
   }
 
