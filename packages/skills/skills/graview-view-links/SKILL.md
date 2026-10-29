@@ -126,6 +126,14 @@ field the kind lacks, or a choice it lacks, goes nowhere and says why
 to the list narrowed rather than to a lens per filter; a lens kept only
 as a link target can be hidden (set-lens-hidden, `graview-pages`).
 
+## A column the menu knows
+
+Mark a region that holds one value of a field `data-column="status:doing"`
+(and `data-column-kind="task"` where the place is not that kind's; a
+heading's words in `data-column-label`). A right-click there, as on a
+status board's column, offers "Add a task in Doing" — the add act with
+`status` given — and "Show only Doing", the place narrowed as above.
+
 ## Then find out whether it worked
 
 1. `graview check` the app the view links into: a link is only as sound as

@@ -5748,6 +5748,10 @@ A phone makes a tap a `click` on what the finger landed on; iOS does so only on 
 
 A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in navigate, `data-filter="stage:building"` on a link — the words the list's own arranging line writes, so the address is `/features?filter= stage%3Abuilding` and can be shared. A lens narrows the records it is handed; a blocks lens lists what its own `where` says. Any destination may take a **section**, a heading's words or an element's id (`section: "Every feature"`, `data-section`): the page scrolls there and gives it the keyboard (`#every-feature`). On the scene a list is the kind's stop narrowed (`in.filter`); a section is looked for there too. A filter on a field the kind lacks, or a choice it lacks, goes nowhere and says why (`Features have no field "stag" to filter by; they filter by …`), so link to the list narrowed rather than to a lens per filter; a lens kept only as a link target can be hidden (set-lens-hidden, `graview-pages`).
 
+### A column the menu knows
+
+Mark a region that holds one value of a field `data-column="status:doing"` (and `data-column-kind="task"` where the place is not that kind's; a heading's words in `data-column-label`). A right-click there, as on a status board's column, offers "Add a task in Doing" — the add act with `status` given — and "Show only Doing", the place narrowed as above.
+
 ### Then find out whether it worked
 
 1. `graview check` the app the view links into: a link is only as sound as the records and places it names.

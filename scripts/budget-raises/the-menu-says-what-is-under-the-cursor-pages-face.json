@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 4939,
+  "gzipped": 2070,
+  "note": "Raised when the right-click menu came to say what is under the cursor: \"Copy link\" under \"Open in a new tab\", \"Copy\" for a selection, a word WebKit's right-click selected put back, a column's \"Add a task in Doing\" and \"Show only Doing\" read from `data-column`, a finger resting on text left to the phone's selection, and \"Inspect\" at the foot (its sheet fetched when first asked). 4939 / 2070 more. Measured at 705_383 / 258_677 against 700_444 / 256_607."
+}
