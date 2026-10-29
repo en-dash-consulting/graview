@@ -91,7 +91,8 @@ const stateOf = (page) =>
         scale: Number((visualViewport?.scale ?? 1).toFixed(3)),
         offsetTop: Math.round(visualViewport?.offsetTop ?? 0),
       },
-      overscroll: ground ? getComputedStyle(ground).overscrollBehaviorY : null,
+      // An engine that does not know the property (WebKit on Linux in Playwright 1.49) cannot be asked it.
+      overscroll: !ground ? null : CSS.supports("overscroll-behavior", "contain") ? getComputedStyle(ground).overscrollBehaviorY : "unknown to this engine",
       ring: Boolean(document.activeElement?.matches?.(":focus-visible") && document.activeElement.closest("[data-graview-view]")),
     };
   });
@@ -107,11 +108,13 @@ async function settled(page) {
   await page.waitForTimeout(SETTLE);
   const where = () =>
     page.evaluate(() => [...document.querySelectorAll(".graview-ground [data-graview-view]")].map((card) => card.getBoundingClientRect()).map((box) => `${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)}`).join(" ") + (document.querySelector(".graview-ground[data-graview-settled]") ? "" : "moving"));
+  // Still across two looks, 400 ms apart: on a slow runner one quiet look came while the sheet's own module was still loading.
   let last = await where();
-  for (let i = 0; i < 16; i += 1) {
-    await page.waitForTimeout(300);
+  let still = 0;
+  for (let i = 0; i < 30 && still < 2; i += 1) {
+    await page.waitForTimeout(400);
     const now = await where();
-    if (now === last) return;
+    still = now === last ? still + 1 : 0;
     last = now;
   }
 }
@@ -143,6 +146,8 @@ async function open(page, hash = "#overview=1") {
   opened += 1;
   await arriveWithoutWebfonts(page, `${at("discography")}/?fresh=1&visit=${opened}${hash}`);
   await page.waitForFunction(() => "__graviewReady" in window, null, { timeout: 120_000 });
+  // A district chosen or opened brings its panel up, beside the map or as a sheet, and the city is fitted to what it leaves: wait for it.
+  if (/[#&](sel|focus)=/.test(hash)) await page.waitForSelector("[data-graview-map-panel]", { timeout: 30_000 }).catch(() => {});
   await settled(page);
 }
 
@@ -428,16 +433,28 @@ async function turnsAndToolbar(page, where, phone) {
   await page.setViewportSize({ width, height: height + 70 });
   await page.waitForTimeout(SETTLE);
   const toolbar = await boxOf(page, "kind:song");
+  /*
+   * NOT TURNED IN PLAYWRIGHT'S LINUX WEBKIT. Its web process dies when any
+   * page of the Shell is turned — on main as well, with the header, the
+   * scene and the bar all hidden; only the Shell's own column hidden spares
+   * it — reproduced in mcr.microsoft.com/playwright:v1.49.1-noble. WebKit on
+   * a Mac turns it, and so does Chromium; the toolbar folding away is still
+   * judged here.
+   */
+  if (where.engine === "webkit" && process.platform === "linux") {
+    const state = await stateOf(page);
+    return { where, before, toolbar, turned: "not on Linux WebKit, whose web process dies turning any Shell page", selected: state.selected, ok: near(before, toolbar, 1) && state.selected.includes("kind:song") && stillPage(state) };
+  }
   await page.setViewportSize({ width: height, height: width });
   await settled(page);
   await page.setViewportSize({ width, height });
   await settled(page);
   const state = await stateOf(page);
-  return { where, before, toolbar, selected: state.selected, ok: near(before, toolbar, 1) && state.selected.includes("kind:song") && stillPage(state) };
+  return { where, before, toolbar, turned: true, selected: state.selected, ok: near(before, toolbar, 1) && state.selected.includes("kind:song") && stillPage(state) };
 }
 
 /** Every page above, and the ground's own word: a list's scroll stops at the ground. */
-const pageStill = (state) => stillPage(state) && state.overscroll === "contain";
+const pageStill = (state) => stillPage(state) && (state.overscroll === "contain" || state.overscroll === "unknown to this engine");
 
 /**
  * FRAMES UNDER THE HAND, at a quarter of the processor: a drag across the
@@ -490,58 +507,52 @@ try {
     browser = await launchEngine(engine);
     const name = PHONES[engine];
     const phone = devices[name];
-    // A phone: its own touches.
-    {
-      const context = await browser.newContext({ ...phone });
-      const page = await context.newPage();
-      page.on("pageerror", (error) => errors.push(`${engine} ${name}: ${error.message}`));
-      const cdp = engine === "chromium" ? await context.newCDPSession(page) : null;
-      const hand = touchHand(page, engine, cdp);
-      const where = { engine, device: name };
-      const step = async (list, run) => {
+    /*
+     * A PAGE OF ITS OWN FOR EACH GESTURE, in a context of its own. One page
+     * opened forty times over crashed WebKit on the nightly's Linux runner
+     * part way through ("Page crashed"), and every gesture after it failed
+     * for the crash rather than for anything it did.
+     */
+    const run = async (options, label, gestures) => {
+      for (const [list, gesture] of gestures) {
+        const context = await browser.newContext(options);
+        const page = await context.newPage();
+        page.on("pageerror", (error) => errors.push(`${engine} ${label}: ${error.message}`));
+        const cdp = engine === "chromium" && options.hasTouch ? await context.newCDPSession(page) : null;
+        const hand = options.hasTouch ? touchHand(page, engine, cdp) : mouseHand(page);
+        const where = { engine, device: label };
         try {
-          list.push(await run());
+          list.push(await gesture(page, hand, where, cdp));
         } catch (error) {
           list.push({ where, ok: false, error: String(error?.message ?? error) });
         }
         seen.page.push({ where, after: list.at(-1)?.error ? "threw" : "ran", state: await stateOf(page).catch(() => null) });
-      };
-      await step(seen.tap, () => tapChooses(page, hand, where));
-      await step(seen.ground, () => tapOnGroundNeverPans(page, hand, where));
-      await step(seen.drag, () => dragNeverSelects(page, hand, where));
-      await step(seen.pinch, () => pinchUnderFingers(page, hand, where));
-      await step(seen.double, () => doubleGoesIn(page, hand, where, false));
-      await step(seen.quick, () => twoQuickTaps(page, hand, where));
-      await step(seen.preview, () => previewScrolls(page, hand, where));
-      await step(seen.turn, () => turnsAndToolbar(page, where, phone));
-      await step(seen.up, () => upFromFocus(page, where));
-      if (cdp) await step(seen.frames, () => framesUnderTheHand(page, hand, cdp, where));
-      await context.close();
-    }
+        await context.close().catch(() => {});
+      }
+    };
+    // A phone: its own touches.
+    await run({ ...phone }, name, [
+      [seen.tap, (page, hand, where) => tapChooses(page, hand, where)],
+      [seen.ground, (page, hand, where) => tapOnGroundNeverPans(page, hand, where)],
+      [seen.drag, (page, hand, where) => dragNeverSelects(page, hand, where)],
+      [seen.pinch, (page, hand, where) => pinchUnderFingers(page, hand, where)],
+      [seen.double, (page, hand, where) => doubleGoesIn(page, hand, where, false)],
+      [seen.quick, (page, hand, where) => twoQuickTaps(page, hand, where)],
+      [seen.preview, (page, hand, where) => previewScrolls(page, hand, where)],
+      [seen.turn, (page, _hand, where) => turnsAndToolbar(page, where, phone)],
+      [seen.up, (page, _hand, where) => upFromFocus(page, where)],
+      ...(engine === "chromium" ? [[seen.frames, (page, hand, where, cdp) => framesUnderTheHand(page, hand, cdp, where)]] : []),
+    ]);
     // A desk: a mouse and a wheel.
-    {
-      const context = await browser.newContext({ viewport: DESK });
-      const page = await context.newPage();
-      page.on("pageerror", (error) => errors.push(`${engine} desk: ${error.message}`));
-      const hand = mouseHand(page);
-      const where = { engine, device: "desk 1440×900" };
-      const step = async (list, run) => {
-        try {
-          list.push(await run());
-        } catch (error) {
-          list.push({ where, ok: false, error: String(error?.message ?? error) });
-        }
-        seen.page.push({ where, state: await stateOf(page).catch(() => null) });
-      };
-      await step(seen.tap, () => tapChooses(page, hand, where));
-      await step(seen.ground, () => tapOnGroundNeverPans(page, hand, where));
-      await step(seen.drag, () => dragNeverSelects(page, hand, where));
-      await step(seen.wheel, () => wheelUnderCursor(page, where));
-      await step(seen.double, () => doubleGoesIn(page, hand, where, true));
-      await step(seen.quick, () => twoQuickTaps(page, hand, where));
-      await step(seen.up, () => upFromFocus(page, where));
-      await context.close();
-    }
+    await run({ viewport: DESK }, "desk 1440×900", [
+      [seen.tap, (page, hand, where) => tapChooses(page, hand, where)],
+      [seen.ground, (page, hand, where) => tapOnGroundNeverPans(page, hand, where)],
+      [seen.drag, (page, hand, where) => dragNeverSelects(page, hand, where)],
+      [seen.wheel, (page, _hand, where) => wheelUnderCursor(page, where)],
+      [seen.double, (page, hand, where) => doubleGoesIn(page, hand, where, true)],
+      [seen.quick, (page, hand, where) => twoQuickTaps(page, hand, where)],
+      [seen.up, (page, _hand, where) => upFromFocus(page, where)],
+    ]);
     await browser.close();
     browser = undefined;
   }

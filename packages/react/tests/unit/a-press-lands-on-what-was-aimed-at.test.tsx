@@ -125,6 +125,19 @@ describe("a press lands on what was aimed at", () => {
     expect(heard).toEqual(["pointerdown kind:era", "click kind:era"]);
   });
 
+  it("leaves a quick press on the panel the tap opened to the panel, where a card stood before it came up", () => {
+    card("kind:location", { x: 0, y: 500, w: 390, h: 200 });
+    press(at("kind:location"), 140, 560, 1000, "mouse");
+    // The sheet came up over the foot, the city moved, and its "Add" stands where the district was.
+    card("kind:location", { x: 0, y: 200, w: 390, h: 200 });
+    const add = document.createElement("button");
+    add.setAttribute("aria-label", "Add location");
+    ground.append(add);
+    heard.length = 0;
+    press(add, 140, 560, 1200, "mouse");
+    expect(heard).toEqual(["pointerdown Add location", "click Add location"]);
+  });
+
   it("notes nothing for a press on a control: pressing a button twice is pressing it twice", () => {
     const plus = document.createElement("button");
     plus.setAttribute("aria-label", "Zoom in");
