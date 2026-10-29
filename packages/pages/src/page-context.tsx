@@ -195,6 +195,14 @@ export interface PageContext<S extends AnySchema> {
    */
   readonly files?: HostFiles;
   /**
+   * WHERE THE HOST SERVES THE APP'S OWN IMAGES (Roadmap
+   * f-brand-marks-under-app-base): `assetsAt(path)` for a path under
+   * `/graview/assets/` — the logo, the page icon, an image a script view
+   * draws by its path. Unsaid, the provider around these pages says, and
+   * without one every path is drawn as it is.
+   */
+  readonly assetsAt?: (path: string) => string;
+  /**
    * THE HOST'S WAY TO NAME ANOTHER APP (FR-171): an app-link field draws as
    * the app `resolveApp` answers — its name, icon and home headline, linked
    * to it — "linked app (no access)" where it says this viewer may not open

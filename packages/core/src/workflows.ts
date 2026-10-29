@@ -17,7 +17,7 @@ export { MOST_STEPS, MOST_WORKFLOWS } from "./workflow-shape.js";
 export { kindNoun, STEP_KINDS, stepKindOf, stepShapes, type KindNoun, type StepCheck, type StepKind, type StepKindKey, type StepShapes, type WorkflowFinding } from "./workflows/steps.js";
 export { actStep, keyFields } from "./workflows/step-act.js";
 export { agentStep } from "./workflows/step-agent.js";
-export { classifyAsks, classifyStep, classifyWords, floorLabel, linksIn, type FloorReading } from "./workflows/step-classify.js";
+export { classifyApplies, classifyAsks, classifyStep, classifyWords, floorLabel, linksIn, type FloorReading } from "./workflows/step-classify.js";
 export { actsMaking, generateStep } from "./workflows/step-generate.js";
 export { datesIn, generateWants, windowDays, type GenerateReading, type GenerateWants, type WantedRecord } from "./workflows/generate.js";
 export { DEFAULT_GENERATE_KEY, MOST_GENERATED, MOST_WINDOW_DAYS } from "./workflows/generate-words.js";
@@ -29,6 +29,6 @@ export { declaredWorkflows, DREAMING, dreamingWorkflow, resolveWorkflow, workflo
 export { scheduleOf, scheduleOfCron, scheduleOfWords, scheduleWords, SCHEDULE_WORDS, type Schedule } from "./workflows/schedule.js";
 export { nextOf, nextRunAt } from "./workflows/next.js";
 export { triggerWords, workflowWords } from "./workflows/words.js";
-export { triggeredBy, type FiredTrigger, type WorkflowCommit } from "./workflows/triggered.js";
+export { triggeredBy, workflowOrigin, type FiredTrigger, type WorkflowCommit, type WorkflowOrigin } from "./workflows/triggered.js";
 export { documentWorkflowFindings, workflowFindings, workflowFindingsOf } from "./workflows/findings.js";
 export { keyedId, recordsOver, workflowKey, workflowSpecHash, workflowValue } from "./workflows/values.js";

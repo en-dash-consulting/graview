@@ -10,7 +10,7 @@ import { NOTION_FITS, NOTION_INFERABLE, NOTION_READ_ONLY, NOTION_SECRET, notionF
 import { startAndEndOf } from "../wall-time.js";
 import { weekdayOf } from "../sync/recurrence.js";
 import { error, warning, type Finding, type FindingFix } from "./findings.js";
-import { ConnectionSpec, notionSourcesOf, type GoogleCalendarConnectionSpec, type NotionConnectionSpec, type NotionSourceSpec } from "./connection-spec.js";
+import { ConnectionSpec, guestsInField, guestsViaRelation, notionSourcesOf, type GoogleCalendarConnectionSpec, type GuestsViaRelation, type NotionConnectionSpec, type NotionSourceSpec } from "./connection-spec.js";
 import type { FieldSpec, GraviewDocument } from "./schema.js";
 
 /*
@@ -101,10 +101,12 @@ function googleConnection(at: string, name: string, connection: GoogleCalendarCo
   if (!kind) return [noKind(at, document, connection.kind, "the calendar's events")];
   const typeOf = (field: string) => kind.fields[field]?.type;
   const weekly = connection.fields.days !== undefined;
-  const mapped = Object.entries(connection.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string");
+  // The guests in a field are judged where they are named: `"guests": "<field>"`, or `{ "field" }` (request:guests-field-form-takes-max).
+  const inField = guestsInField(connection.fields.guests);
+  const mapped = Object.entries(connection.fields).flatMap(([theirs, ours]): [string, string][] => (typeof ours === "string" ? [[theirs, ours]] : theirs === "guests" && inField ? [[theirs, inField.field]] : []));
   const seen = new Map<string, string>();
   for (const [theirs, ours] of mapped) {
-    const path = `${at}.fields.${theirs}`;
+    const path = `${at}.fields.${theirs}${theirs === "guests" && typeof connection.fields.guests === "object" ? ".field" : ""}`;
     // A computed field (Roadmap f-keep-linked) is worked out here, so it is sent and never read back: an event's words or times, never its guests or weekdays.
     if (!kind.fields[ours] && kind.computed?.[ours] !== undefined && theirs !== "guests" && theirs !== "days") {
       const problem = computedProblem(connection.kind, ours, theirs === "summary" ? "the event's title" : `the event's ${theirs}`, connection.direction);
@@ -162,7 +164,9 @@ function googleConnection(at: string, name: string, connection: GoogleCalendarCo
   if (!weekly && start && end && WHEN.has(start) && WHEN.has(end) && start !== end) {
     findings.push(error("connection-when", `${at}.fields.end`, `${connection.fields.start} is a ${start} and ${connection.fields.end} a ${end}, and an event is all-day or timed at both ends`, "make both dates (all-day events) or both datetimes (timed events)"));
   }
-  if (typeof connection.fields.guests === "object") findings.push(...guestsVia(at, name, connection, connection.fields.guests, kind, document, app));
+  if (inField) findings.push(...guestsCapped(`${at}.fields.guests`, inField.max));
+  const viaRelation = guestsViaRelation(connection.fields.guests);
+  if (viaRelation) findings.push(...guestsVia(at, name, connection, viaRelation, kind, document, app));
 
   const filter = connection.filter;
   if (filter) {
@@ -304,6 +308,11 @@ const holdsAddresses = (spec: FieldSpec): boolean => spec.type === "email" || (s
 /** The fix that adds a list of addresses to a kind, as an edit a host applies. */
 const addressesField = (kind: string, field: string, label: string): FindingFix => ({ label, edits: [{ op: "add-field", kind, field, type: "list", of: "string" }] });
 
+/** The cap is a count of guests: a whole number above 0, or no cap at all (Roadmap f-sync-guest-changes-in-history) — in a field's form as in a relation's. */
+function guestsCapped(path: string, max: number | undefined): Finding[] {
+  return max !== undefined && !(Number.isInteger(max) && max > 0) ? [error("connection-guests-max", `${path}.max`, `max is the most guests one event invites, a whole number above 0, and it is ${max}`, "say a whole number above 0, or leave max out to invite everyone")] : [];
+}
+
 /**
  * THE GUESTS THROUGH A RELATION, JUDGED (Roadmap f-calendar-guests-mapping):
  * that `via` is one relation of the kind to one kind, that the kind it
@@ -313,7 +322,7 @@ const addressesField = (kind: string, field: string, label: string): FindingFix 
  * the calendar lands through are there. A field missing is offered as the
  * edit that adds it.
  */
-function guestsVia(at: string, name: string, connection: GoogleCalendarConnectionSpec, guests: Exclude<GoogleCalendarConnectionSpec["fields"]["guests"], string | undefined>, kind: GraviewDocument["kinds"][string], document: GraviewDocument, app?: GraviewApp): Finding[] {
+function guestsVia(at: string, name: string, connection: GoogleCalendarConnectionSpec, guests: GuestsViaRelation, kind: GraviewDocument["kinds"][string], document: GraviewDocument, app?: GraviewApp): Finding[] {
   const path = `${at}.fields.guests`;
   const kindName = connection.kind;
   const edges = kind.edges ?? {};
@@ -327,9 +336,7 @@ function guestsVia(at: string, name: string, connection: GoogleCalendarConnectio
   }
   const reached = edge.to[0]!;
   const people = document.kinds[reached];
-  // The cap is a count of guests: a whole number above 0, or no cap at all (Roadmap f-sync-guest-changes-in-history).
-  const max = guests.max;
-  const capped = max !== undefined && !(Number.isInteger(max) && max > 0) ? [error("connection-guests-max", `${path}.max`, `max is the most guests one event invites, a whole number above 0, and it is ${max}`, "say a whole number above 0, or leave max out to invite everyone")] : [];
+  const capped = guestsCapped(path, guests.max);
   if (capped.length > 0 && !people) return capped;
   // A relation to a kind that is not there is the document's finding, said once where the relation is.
   if (!people) return [];

@@ -337,12 +337,22 @@ describe("the cost check still refuses unbounded work", () => {
     expect(Date.now() - started).toBeLessThan(2_000);
   });
 
-  it("a computed field read inside a template spends the template's budget, not a fresh one", () => {
+  it("a computed field read inside a template is the value the record says, worked out under a record's budget and refused past it", () => {
     const { app, kinds } = compiled();
-    const nodes = [...NODES, ...Array.from({ length: 600 }, (_, i) => ({ id: `party:p${i}`, kind: "party", name: `P${i}`, role: "prime" }))];
-    const store = storeOf(app, nodes);
-    // A template has 500 steps; the discount's sweep of 600 parties cannot fit, so the part says "—".
-    expect(renderTemplate(parseTemplate("{net}"), { node: store.graph.getNode("package:whole") as AnyGraphNode, kinds, graph: store.graph as never })).toBe("—");
+    const parties = (length: number) => [...NODES, ...Array.from({ length }, (_, i) => ({ id: `party:p${i}`, kind: "party", name: `P${i}`, role: "prime" }))];
+    const net = (length: number) => {
+      const store = storeOf(app, parties(length));
+      const node = store.graph.getNode("package:whole") as AnyGraphNode;
+      return { said: renderTemplate(parseTemplate("{net}"), { node, kinds, graph: store.graph as never }), worked: computedValues(app.schema, store.graph as never, node) };
+    };
+    // A template has 500 steps; the discount's sweep of 600 parties is the computed field's, under a record's 10,000, so the row says what the record's page says (Roadmap f-count-past-graph-budget).
+    const six = net(600);
+    expect(six.said).not.toBe("—");
+    expect(six.said.replace(/[^0-9]/g, "")).toBe(String(six.worked.values["net"]));
+    // Past a record's budget it is refused on the row as it is on the page: the guard is the computed field's, not lifted.
+    const many = net(12_000);
+    expect(many.worked.refused["net"]).toMatch(/too much of the graph/);
+    expect(many.said).toBe("—");
   });
 });
 

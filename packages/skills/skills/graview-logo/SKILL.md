@@ -68,6 +68,24 @@ and the type are `graview-brand`; this is the picture beside the name.
   standard emoji (👩🏽‍🌾 and 🇺🇸 count as one) — is the icon and, with no
   logo, the mark; anything else is refused (`brand-emoji`).
 
+## Served under a base, and on a home screen
+
+- **A path is on the host's root.** `/graview/assets/<sha>.png` is where
+  a document names it; a host serving each app under a base
+  (`/a/<app>/`) says where it really is with
+  `assetsAt: (path) => base + path` on `mount`, `<Embed>`, the Shell or
+  `PagesApp` (`splashHtml` takes it too). The logo, the icon, the opening
+  screen's image and an image a worker view draws by its path load there;
+  inline SVG and an emoji are drawn as given.
+- **The head for a phone's home screen** is `homeScreenOf(brand, { base })`
+  from `@graview/core/head`: `html` (the icon typed by what it is, an
+  an Apple touch icon, `<link rel="manifest">`, a theme color per scheme,
+  one where the brand pins one), the `manifest`, and the `files` to answer
+  under the base. A PNG mark is every size as it is (or resized); an SVG or
+  an emoji is no PNG without a rasterizer, so it is offered as SVG alone
+  and no Apple touch icon is written — unless the host makes PNGs and
+  says `png: true`. `graview serve` and `graview preview` serve them.
+
 `describe_place("home")` says the app as the home draws it (its
 `masthead`): the name, the line under it, and the logo by its alt text.
 

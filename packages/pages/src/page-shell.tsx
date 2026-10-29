@@ -1,9 +1,10 @@
-import { AppBar, barPlaceAt, barPlaces, focusInto, Profile, SkipLinks, StandingDot, standingWords, toolStyle, useFavicon } from "@graview/primitives/pages";
+import { AppBar, barPlaceAt, barPlaces, focusInto, Profile, SkipLinks, StandingDot, standingWords, toolStyle, useFavicon, useThemeColor } from "@graview/primitives/pages";
 import { PagesActivity } from "./pages-activity.js";
-import { faviconHref, pagesTitle, pluralLabel, sceneTitle } from "@graview/core";
+import { assetSrc, faviconHref, pagesTitle, pluralLabel, sceneTitle } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import { Link, useHref, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useHostAssets } from "@graview/react/provider";
 import type { BarFind } from "@graview/primitives/pages";
 import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
@@ -32,8 +33,10 @@ export function DefaultShell<S extends AnySchema>({
 }) {
   const { store, brand } = context;
   useStoreTick(store);
-  // On its own the routed face owns the page, and wears the brand's icon; embedded, the host's page keeps its own (FR-124).
-  useFavicon(context.embedded ? undefined : faviconHref(brand));
+  // On its own the routed face owns the page, and wears the brand's icon where the host serves it, and its colors; embedded, the host's page keeps its own (FR-124).
+  const providedAssetsAt = useHostAssets();
+  useFavicon(context.embedded ? undefined : assetSrc(context.assetsAt ?? providedAssetsAt, faviconHref(brand)));
+  useThemeColor(context.embedded ? undefined : brand);
   return (
     <div
       style={{

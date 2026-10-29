@@ -57,7 +57,8 @@ describe("a preview's first HTML", () => {
 
   it("is the page as built when the document has no screen", async () => {
     const html = await text(plain, "/");
-    expect(html).toBe(PAGE);
+    // As built, with the app's home-screen head in it (Roadmap f-app-icons-home-screen), and no screen.
+    expect(html.replace(/<link rel="manifest"[\s\S]*?(?=<\/head>)/, "")).toBe(PAGE);
     expect(html).not.toContain("graview-splash");
   });
 });

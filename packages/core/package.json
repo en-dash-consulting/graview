@@ -53,6 +53,10 @@
       "types": "./dist/shown.d.ts",
       "default": "./dist/shown.js"
     },
+    "./head": {
+      "types": "./dist/head.d.ts",
+      "default": "./dist/head.js"
+    },
     "./csv": {
       "types": "./dist/csv.d.ts",
       "default": "./dist/csv.js"

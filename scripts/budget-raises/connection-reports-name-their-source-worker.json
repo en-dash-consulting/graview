@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 1600,
+  "note": "Raised when a Notion connection's report came to name the kind each sentence is of and the guests typed in a field came to take max (Roadmap f-connection-reports-and-guest-cap): `SyncReport.saidBy`, the `{ field, max }` form's schema, `guestsInField` and `guestsViaRelation`, which the worker imports with `@graview/core/sync` and `@graview/core/check`. The worker had no room under 2_525_052. Measured at 2_526_632."
+}

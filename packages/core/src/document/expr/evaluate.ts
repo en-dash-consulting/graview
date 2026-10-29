@@ -170,11 +170,23 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     working.add(key);
     const outer = bindings;
     bindings = undefined;
+    /*
+     * A COMPUTED FIELD IS THE SAME VALUE WHEREVER IT IS READ (Roadmap
+     * f-count-past-graph-budget). It is worked out under the budget a
+     * record's computed values have (`DEFAULT_BUDGET`, or more where the
+     * reader was given more), and costs its reader one step: a row whose
+     * template says `{songCount}` shows what the list's line and the record
+     * show, rather than giving up because a card's budget is smaller. A walk
+     * the template writes itself is still held to the card's budget.
+     */
+    const left = steps;
+    steps = Math.max(left, DEFAULT_BUDGET);
     try {
       const value = run(expr, node);
       worked.set(key, value);
       return value;
     } finally {
+      steps = left;
       bindings = outer;
       working.delete(key);
     }
@@ -370,6 +382,21 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     }
   }
 
+  /**
+   * THE RECORDS ONE RELATION JOINS TO THE SUBJECT, read from the edge index
+   * for one step whatever their number (Roadmap f-count-past-graph-budget):
+   * what `count(in('inGenre'))` and `exists(out('owner'))` ask. Nothing of
+   * them is read but how many there are, so a genre with 700 songs is
+   * counted as cheaply as one with ten. Undefined for anything else, which
+   * is walked and spent as ever.
+   */
+  function related(arg: Expr, subject: AnyGraphNode | null): readonly AnyGraphNode[] | undefined {
+    const edge = arg.t === "call" && (arg.fn === "in" || arg.fn === "out") && arg.args.length === 1 ? arg.args[0]! : undefined;
+    if (!subject || edge?.t !== "lit" || typeof edge.value !== "string") return undefined;
+    spend(1, arg.at);
+    return (arg as { fn: "in" | "out" }).fn === "out" ? ctx.graph.out(subject.id, edge.value) : ctx.graph.in(subject.id, edge.value);
+  }
+
   function call(e: Extract<Expr, { t: "call" }>, subject: AnyGraphNode | null): Value {
     const arity = (n: number, m = n) => {
       if (e.args.length < n || e.args.length > m) {
@@ -423,10 +450,10 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       }
       case "count":
         arity(1);
-        return asSet(arg(0), e.at, "count").nodes.length;
+        return (related(e.args[0]!, subject) ?? asSet(arg(0), e.at, "count").nodes).length;
       case "exists":
         arity(1);
-        return asSet(arg(0), e.at, "exists").nodes.length > 0;
+        return (related(e.args[0]!, subject) ?? asSet(arg(0), e.at, "exists").nodes).length > 0;
       case "every":
       case "some": {
         arity(2);

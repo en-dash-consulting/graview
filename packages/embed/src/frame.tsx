@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
-import { faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
+import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarAction, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
+import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type BarAction, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
 import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
@@ -342,6 +342,17 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly files?: HostFiles;
   /**
+   * WHERE THE HOST SERVES THE APP'S OWN IMAGES (Roadmap
+   * f-brand-marks-under-app-base): `assetsAt(path)` for a path under
+   * `/graview/assets/` — where Graview Cloud's `add_image` keeps the
+   * brand's logo, its page icon and the images a view draws by path. A
+   * host serving each app under a base (`/a/<app>/`) answers
+   * `base + path`, as `filesAt` does for a record's files. Inline SVG, an
+   * emoji and any other address are drawn as given. Unsaid, every path as
+   * the document names it, on the host's root.
+   */
+  readonly assetsAt?: (path: string) => string;
+  /**
    * THE HOST'S WAY TO NAME ANOTHER APP (FR-171): `resolveApp(address,
    * viewer)` answers `{ name, icon?, headline?, href }`, `{ denied: true }`
    * when this viewer may not open it, or null. An app-link field draws as
@@ -635,7 +646,8 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
   const css = useMemo(() => themeBaseCss(scheme, brand, { scope: `.${scope}` }), [scheme, brand, scope]);
 
   // The page's icon, only when the host said its page is the app's (FR-124).
-  useFavicon(props.favicon ? faviconHref(brand) : undefined);
+  useFavicon(props.favicon ? assetSrc(props.assetsAt, faviconHref(brand)) : undefined);
+  useThemeColor(props.favicon ? brand : undefined);
 
   // The brand's fonts, fetched once per family set, without the host's help.
   useEffect(() => {
@@ -740,6 +752,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     onProposeChange: props.onProposeChange,
     ai: props.ai,
     files: props.files,
+    assetsAt: props.assetsAt,
     resolveApp: props.resolveApp,
     history: props.history,
     linkedRecords: props.linkedRecords,

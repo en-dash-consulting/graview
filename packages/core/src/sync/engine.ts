@@ -74,6 +74,15 @@ export interface SyncReport {
    */
   readonly said?: readonly string[];
   /**
+   * THE SAME SENTENCES, EACH WITH THE KIND IT IS OF
+   * (request:notion-said-names-its-source), in the order `said` has them,
+   * so a host shows each beside its kind without reading the words: `kind`
+   * is the kind of the resource the transport said it of — a Notion
+   * connection's data source — and absent for a sentence of the whole
+   * connection. Present exactly when `said` is.
+   */
+  readonly saidBy?: readonly SaidSentence[];
+  /**
    * What the remote said when it could not be reached, in its transport's
    * words — a secret it refused, a database not shared — so a host says
    * why rather than only that. Absent when the run reached it.
@@ -89,6 +98,12 @@ export interface SyncReport {
    */
   readonly guests?: readonly GuestChange[];
   readonly state: SyncState;
+}
+
+/** One sentence of a report's `said`, with the kind it is of, when it is of one. */
+export interface SaidSentence {
+  readonly kind?: string;
+  readonly sentence: string;
 }
 
 /** One record's guests as a pass sent them: addresses invited and taken off, sorted, and who was left out. */
@@ -777,6 +792,7 @@ export class SyncEngine<S extends AnySchema> {
     let offline = false;
     let problem: string | undefined;
     let said: readonly string[] | undefined;
+    let saidBy: readonly SaidSentence[] | undefined;
 
     let links: Record<string, RemoteLink> = { ...this.state.links };
     let cursor = this.state.cursor;
@@ -809,6 +825,12 @@ export class SyncEngine<S extends AnySchema> {
       const result = await this.options.remote.pull(cursor);
       cursor = result.cursor;
       said = result.said;
+      // Each sentence with its kind: the transport's resource, read through the mapping (request:notion-said-names-its-source).
+      saidBy = result.said?.map((sentence, at) => {
+        const resource = result.saidOf?.[at]?.sentence === sentence ? result.saidOf[at]!.resource : undefined;
+        const kind = resource === undefined ? undefined : this.mappingFor(resource)?.kind;
+        return { ...(kind ? { kind } : {}), sentence };
+      });
       const byRemoteId = new Map(
         Object.entries(links).map(([localId, link]) => [`${link.resource}:${link.id}`, localId]),
       );
@@ -1124,7 +1146,7 @@ export class SyncEngine<S extends AnySchema> {
       refused,
       gone,
       offline,
-      ...(said && said.length > 0 ? { said } : {}),
+      ...(said && said.length > 0 ? { said, saidBy: saidBy ?? said.map((sentence) => ({ sentence })) } : {}),
       ...(problem ? { problem } : {}),
       ...(changes.length > 0 ? { guests: changes } : {}),
       state: this.snapshot,

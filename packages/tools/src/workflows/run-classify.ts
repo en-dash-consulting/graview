@@ -1,5 +1,5 @@
 import { isLeftAlone, labelOf, nounOf, pluralOf, withArticle, type AnyGraphNode, type AnySchema, type MutationCall, type Principal, type Store } from "@graview/core";
-import { classifyAsks, floorLabel, recordsOver, type ClassifyStep } from "@graview/core/workflows";
+import { classifyApplies, classifyAsks, floorLabel, recordsOver, type ClassifyStep } from "@graview/core/workflows";
 import { nodeState, questionsForKind, type Question } from "../questions.js";
 import { askAll } from "../tidy/asking.js";
 import { NONE_FITS } from "../tidy/judging.js";
@@ -18,13 +18,16 @@ import type { StepContext, StepRunner } from "./types.js";
  * set through the act that writes the field, the reason on the lineage
  * ("Jev: 90% sure “Buy now” is spam"). Where no model answered — none
  * lent, it failed, the budget ran out — the floor decides, sure (1), and
- * says which rule did; a record neither labels is left for a person, and
- * the run says how many. An option sure enough for its `setAside`
+ * says which rule did; a record neither labels is labeled the step's
+ * `otherwise`, when it says one, else left for a person, and the run says
+ * how many. What the model's requests spent is counted on the run
+ * (`spent`): requests, and the tokens its answers said. An option sure enough for its `setAside`
  * threshold archives the record too, as a change of its own.
  *
- * Every change waits for a person unless the step says its own `approve`;
- * an option in `confirm`, or a choice the model barely made over the next,
- * waits whatever it says (`StepChange.ask`).
+ * Every change waits for a person unless the step says its own `approve`,
+ * or the judgment reaches its option's `applyAt` (`StepChange.apply`); an
+ * option in `confirm`, or a choice the model barely made over the next
+ * below its `applyAt`, waits whatever it says (`StepChange.ask`).
  */
 
 /** A record's text, as the floor reads it: every string field, joined. */
@@ -91,6 +94,7 @@ export const runClassifyStep: StepRunner<ClassifyStep> = {
       };
       const asks = nodes.map((node) => ({ covers: [], state: { kind: { name: noun, ...(definition.description ? { "what it is": definition.description } : {}) }, record: nodeState(seen as Store<AnySchema>, node.id) ?? {} }, questions, read: () => [] }));
       const asked = await askAll({ ...model, model: named! }, asks, { budget: { requests: step.budget?.calls ?? 60, inputTokens: step.budget?.tokens ?? 200_000 } });
+      if (asked.usage.requests > 0) context.spent({ calls: asked.usage.requests, inputTokens: asked.usage.inputTokens, outputTokens: asked.usage.outputTokens, ...(asked.usage.costUsd !== undefined ? { costUsd: asked.usage.costUsd } : {}), model: named! });
       if (asked.error !== undefined) context.note(`Step ${context.index + 1}: the model failed (${asked.error}); the floor decided the rest.`);
       if (asked.stopped) context.note(`Step ${context.index + 1}: its budget of ${asked.stopped === "requests" ? "requests" : "tokens"} ran out; the floor decided the rest.`);
       asked.answers.forEach((answers, at) => {
@@ -112,25 +116,32 @@ export const runClassifyStep: StepRunner<ClassifyStep> = {
     };
 
     let left = 0;
+    let otherwise = 0;
     for (const node of nodes) {
       let label = judged.get(node.id);
       if (!label) {
         const floor = floorLabel(step.floor, textOf(node as Record<string, unknown>), (option) => holds(option)(node.id));
         if (floor && options.includes(floor.option)) label = { option: floor.option, confidence: 1, split: false, basis: `Sure: ${floor.basis}` };
       }
+      if (!label && step.otherwise !== undefined && options.includes(step.otherwise)) {
+        label = { option: step.otherwise, confidence: 1, split: false, basis: `${step.otherwise}, as no option cleared it` };
+        otherwise++;
+      }
       if (!label) {
         left++;
         continue;
       }
-      const ask = classifyAsks(step, label.option) || label.split;
+      const applies = classifyApplies(step, label.option, label.confidence);
+      const ask = !applies && (classifyAsks(step, label.option) || label.split);
       const lineage = { basis: label.basis, confidence: label.confidence, ...(judged.has(node.id) && named ? { model: named } : {}) };
       const calls: MutationCall[] = [{ name: writes.mutation, args: { [writes.subjectArg]: node.id, [writes.arg]: label.option } }];
-      context.change({ calls, ...lineage, severity: "categorize", ...(ask ? { ask: true } : {}) });
+      context.change({ calls, ...lineage, severity: "categorize", ...(ask ? { ask: true } : applies ? { apply: true } : {}) });
       const threshold = step.setAside?.[label.option];
       if (threshold !== undefined && label.confidence >= threshold) {
-        context.change({ calls: [{ name: `archive-${kind}`, args: { id: node.id } }], ...lineage, basis: `${label.basis}: set aside`, severity: "archive", ...(ask ? { ask: true } : {}) });
+        context.change({ calls: [{ name: `archive-${kind}`, args: { id: node.id } }], ...lineage, basis: `${label.basis}: set aside`, severity: "archive", ...(ask ? { ask: true } : applies ? { apply: true } : {}) });
       }
     }
+    if (otherwise > 0) context.note(`Labeled ${many(otherwise, noun, pluralOf(schema, kind))} ${step.otherwise}: ${model ? "neither the model nor the floor" : "no floor rule"} found an option that fit.`);
     if (left > 0) context.note(`Left ${many(left, noun, pluralOf(schema, kind))} for a person: ${model ? "neither the model nor the floor" : "no floor rule"} labeled ${left === 1 ? "it" : "them"}.`);
   },
 };

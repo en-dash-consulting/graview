@@ -12,6 +12,7 @@
 import "@graview/core/typing";
 export { createStoreHandler, presenceSeenBy, SEAT_HEADERS, seatFromHeaders, WIRE } from "./handler.js";
 export { SERVE_KEY, servedAddress } from "./seat-headers.js";
+export { homeScreenAnswer } from "./home-screen.js";
 export type { AdapterStoreHandlerOptions, DeclarationChange, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
 // Notify me (Roadmap f-notify-subscriptions): the wire's route, and its client.
 export { answerSubscriptions } from "./subscriptions.js";

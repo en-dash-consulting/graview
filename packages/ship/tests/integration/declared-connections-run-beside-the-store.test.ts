@@ -320,3 +320,56 @@ describe("a served store's Notion database of several data sources", () => {
     expect(opened.store.graph.allNodes().map((node) => `${node.kind} ${String((node as unknown as Record<string, unknown>)["name"])}`)).toEqual(["room Kitchen"]);
   });
 });
+
+/* ------------------------------ each pass's report handed to the host (request:notion-said-names-its-source) */
+
+describe("runConnections hands a host each pass's reports", () => {
+  it("hands back the first pass's reports and each pass's through onReport, with every sentence and the kind it is of", async () => {
+    const notion = scriptedNotion();
+    const database = notion.database({ title: "Chores", properties: { Name: "title" } });
+    notion.source(database, { title: "Rooms", properties: { Name: "title" } });
+    const opened = open({
+      format: "graview-document",
+      formatVersion: 1,
+      name: "Chores",
+      kinds: { task: { fields: { name: { type: "string", required: true }, done: { type: "boolean" } } }, room: { fields: { name: { type: "string", required: true } } } },
+      acts: { "add-task": { creates: "task" }, "add-room": { creates: "room" } },
+      connections: {
+        house: { system: "notion", database: { env: "CHORES_DATABASE" }, direction: "both", sources: [{ source: "Chores", kind: "task", properties: { name: "Name", done: "Done" } }, { source: "Rooms", kind: "room" }] },
+      },
+    });
+    const handed: string[] = [];
+    const running = runConnections({
+      ...opened,
+      env: { CHORES_DATABASE: database, NOTION_TOKEN: notion.secret },
+      fetch: notion.fetch,
+      onReport: (name, report) => handed.push(`${name} ${report.system} pushed ${report.pushed.length}`),
+    });
+    const first = await running.firstPass;
+    expect(Object.keys(first)).toEqual(["house"]);
+    expect(first["house"]!.saidBy).toEqual([{ kind: "task", sentence: "Made 1 property in Notion for task: Done" }]);
+    expect(handed).toEqual(["house notion pushed 0"]);
+    await running.runNow();
+    await running.stop();
+    expect(handed).toEqual(["house notion pushed 0", "house notion pushed 0"]);
+  });
+
+  it("settles the first pass empty when nothing runs, and says a host's onReport that throws without stopping the pass", async () => {
+    expect(await runConnections({ ...open(document({ paused: true })), env: {} }).firstPass).toEqual({});
+    const remote = google();
+    const said: string[] = [];
+    const running = runConnections({
+      ...open(document()),
+      env: { TEAM_CALENDAR: "cal" },
+      fetch: remote.fetch,
+      token: () => "t",
+      say: (line) => said.push(line),
+      onReport: () => {
+        throw new Error("the host fell over");
+      },
+    });
+    expect(Object.keys(await running.firstPass)).toEqual(["team"]);
+    await running.stop();
+    expect(said).toContain("team: onReport failed: the host fell over");
+  });
+});

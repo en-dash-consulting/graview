@@ -255,7 +255,7 @@ function buildShapes(): Record<EditOp, z.ZodType> {
         // Whether the home draws the description as the line under the name (Roadmap f-home-subtitle-separate): false keeps it off, true or null draws it again.
         subtitle: z.union([z.boolean(), z.null()]).optional(),
         // The opening screen (Roadmap f-splash-in-document), whole; null for Graview's own.
-        splash: z.union([z.object({ style: z.string(), image: z.string().min(1).optional(), title: z.string().min(1).max(80).optional(), kicker: z.string().min(1).max(80).optional(), shader: z.string().min(1).max(40).optional() }).strict(), z.null()]).optional(),
+        splash: z.union([z.object({ style: z.string(), image: z.string().min(1).optional(), title: z.string().min(1).max(80).optional(), kicker: z.string().min(1).max(80).optional(), shader: z.string().min(1).max(40).optional(), scheme: z.enum(["light", "dark", "device"]).optional() }).strict(), z.null()]).optional(),
         // What every worker view inherits (Roadmap f-app-wide-view-theme): a stylesheet drawn before each view's own (its length the sanitizer's to refuse, in `brandFindings`), and a fade between records; null clears either, or all of it.
         views: z
           .union([

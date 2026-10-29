@@ -14,6 +14,7 @@ import * as figures from "../../src/figures.js";
 import * as fieldSight from "../../src/field-sight.js";
 import * as forms from "../../src/forms.js";
 import * as friction from "../../src/friction.js";
+import * as head from "../../src/head.js";
 import * as history from "../../src/history.js";
 import * as jobs from "../../src/jobs.js";
 import * as workflows from "../../src/workflows.js";
@@ -53,6 +54,8 @@ const OFF_THE_PAGE = {
   "@graview/core/css": { from: css, names: ["CSS_AT_RULES", "CSS_DRAWN_AS", "CSS_FRAGMENT_PROPERTIES", "CSS_FUNCTIONS", "CSS_KEYWORD_PROPERTIES", "CSS_PREFIXED_SELECTORS", "CSS_PROPERTIES", "CSS_REFUSED_SELECTORS", "OPEN_MAX_STYLESHEET", "sanitizeDeclarations", "sanitizeStylesheet", "sanitizeStylesheets", "sanitizeValue", "serializeIdent", "serializeString", "serializeValues", "tokenize"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug", "placeNamesFrom", "placeNamesOf"] },
+  // Roadmap f-app-icons-home-screen: an app on a home screen — its head tags, its manifest and the files a host serves; a face's theme-color.
+  "@graview/core/head": { from: head, names: ["headHtml", "homeScreenOf", "MANIFEST_PATH", "themeColorsOf"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
   "@graview/core/history": { from: history, names: ["declarationSentence", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.
@@ -66,7 +69,7 @@ const OFF_THE_PAGE = {
   "@graview/core/import": { from: importing, names: ["coerceCell", "ImportMappingError", "importRows", "parseCsv", "previewImport", "proposeMapping", "readBoolean", "readDateTime", "readDay", "readNumber", "readOption"] },
   "@graview/core/describe": { from: describePlaces, names: ["columnActs", "columnChoices", "columnMoves", "columnOf", "columnReach", "columnSteps", "describePlace", "placeText", "resolveFor", "shadowedPageSlots", "statusColumns"] },
   "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt", "clockReaders", "designFindings"] },
-  "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "districtBlocks", "districtState", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "TIER_HEIGHT", "TILTED", "toIso", "TOP_DOWN", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail", "agoWords", "lastRunWords", "workflowSpots", "workflowsOnTheMap"] },
+  "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "districtBlocks", "districtState", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "TIER_HEIGHT", "TILTED", "toIso", "TOP_DOWN", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail", "agoWords", "lastRunWords", "runCount", "workflowSpots", "workflowsOnTheMap"] },
   // The map alone, laid out before the scene draws; what stands on the ground is /scene's, fetched with the ground.
   "@graview/core/city": { from: city, names: ["BLOCK", "cityExtent", "cityMap", "districtState", "MAX_SIDE", "PITCH", "plotsOverlap", "sharedEdges", "sideFor", "TILTED", "toIso", "TOP_DOWN"] },
   "@graview/core/figures": { from: figures, names: ["FIGURES", "FIGURE_NAMES", "figureBrief", "figureFaults", "figureSvg"] },
@@ -83,7 +86,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-app-jobs: an app's jobs resolved and answered as a seat sees it — a design's, a seat's and a host's, fetched when one is drawn.
   "@graview/core/jobs": { from: jobs, names: ["answerJob", "jobIsFor", "jobsFor", "jobsOf", "MOST_JOBS"] },
   // Roadmap f-jobs-declared: what the app does on its own and when — its shape, its step kinds, its schedule, what starts it, what the checker says — a host's and a runner's, on no page.
-  "@graview/core/workflows": { from: workflows, names: ["actsMaking", "actStep", "afterMs", "afterWords", "agentStep", "archiveStep", "classifyAsks", "classifyStep", "classifyWords", "datesIn", "declaredWorkflows", "DEFAULT_GENERATE_KEY", "documentWorkflowFindings", "DREAMING", "dreamingWorkflow", "floorLabel", "followsFindings", "generateStep", "generateWants", "keeps", "keyedId", "keyFields", "kindNoun", "linksIn", "MOST_GENERATED", "MOST_STEPS", "MOST_WINDOW_DAYS", "MOST_WORKFLOWS", "nextOf", "nextRunAt", "policiesOf", "policyApplies", "policyInstruction", "recordsOver", "resolveWorkflow", "SCHEDULE_WORDS", "scheduleOf", "scheduleOfCron", "scheduleOfWords", "scheduleWords", "STEP_KINDS", "stepKindOf", "stepShapes", "triggeredBy", "triggerWords", "windowDays", "workflowAuthor", "workflowFindings", "workflowFindingsOf", "workflowKey", "workflowReach", "workflowsOf", "WorkflowSpec", "workflowSpecHash", "WorkflowsSpec", "WorkflowStepSpec", "WorkflowTriggerSpec", "workflowValue", "workflowWords", "workflowWorldOfApp", "workflowWorldOfDocument"] },
+  "@graview/core/workflows": { from: workflows, names: ["actsMaking", "actStep", "afterMs", "afterWords", "agentStep", "archiveStep", "classifyApplies", "classifyAsks", "classifyStep", "classifyWords", "datesIn", "declaredWorkflows", "DEFAULT_GENERATE_KEY", "documentWorkflowFindings", "DREAMING", "dreamingWorkflow", "floorLabel", "followsFindings", "generateStep", "generateWants", "keeps", "keyedId", "keyFields", "kindNoun", "linksIn", "MOST_GENERATED", "MOST_STEPS", "MOST_WINDOW_DAYS", "MOST_WORKFLOWS", "nextOf", "nextRunAt", "policiesOf", "policyApplies", "policyInstruction", "recordsOver", "resolveWorkflow", "SCHEDULE_WORDS", "scheduleOf", "scheduleOfCron", "scheduleOfWords", "scheduleWords", "STEP_KINDS", "stepKindOf", "stepShapes", "triggeredBy", "triggerWords", "windowDays", "workflowAuthor", "workflowFindings", "workflowFindingsOf", "workflowKey", "workflowOrigin", "workflowReach", "workflowsOf", "WorkflowSpec", "workflowSpecHash", "WorkflowsSpec", "WorkflowStepSpec", "WorkflowTriggerSpec", "workflowValue", "workflowWords", "workflowWorldOfApp", "workflowWorldOfDocument"] },
   // Roadmap f-friction-log: what people looked for and could not do — kept, counted across people, said to a model; a page records through the main entry's `recordFriction` alone.
   "@graview/core/friction": {
     from: friction,

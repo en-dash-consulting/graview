@@ -159,6 +159,48 @@ describe("one database holds several kinds", () => {
   });
 });
 
+describe("with several sources, every sentence names its kind (request:notion-said-names-its-source)", () => {
+  const declared = both({
+    create: false,
+    sources: [
+      { source: "Tasks", kind: "task", properties: { name: "Name", stage: "Status", estimate: "Estimate" } },
+      { source: "Beds", kind: "bed", properties: { name: "Name", notes: "Notes" } },
+    ],
+  });
+  const shaped = (stub: ReturnType<typeof scriptedNotion>) => {
+    const db = stub.database({ title: "Tasks", properties: { Name: "title", Status: "select", Estimate: "rich_text", Total: "formula" } });
+    stub.source(db, { title: "Beds", properties: { Name: "title", Total: "formula" } });
+    return db;
+  };
+
+  it("says what it left alone and left out with the kind it is of, and the same note for two sources once each", async () => {
+    const { engine } = opened(declared, shaped);
+    const report = await engine.run();
+    const said = report.said ?? [];
+    expect(said).toContainEqual("task's Estimate: the property Estimate is a rich_text property, and a number field cannot hold it, so it is left out");
+    expect(said).toContainEqual("no property in the data source for bed for Notes, so it is not kept in step");
+    expect(said.filter((line) => line.startsWith("left alone in Notion"))).toEqual([expect.stringMatching(/^left alone in Notion for task: Total \(formula/), expect.stringMatching(/^left alone in Notion for bed: Total \(formula/)]);
+    expect(said.every((line) => / for (task|bed)\b|^(task|bed)'s /.test(line))).toBe(true);
+  });
+
+  it("hands each sentence back with its kind beside the words, in the order said has them", async () => {
+    const { engine } = opened(declared, shaped);
+    const report = await engine.run();
+    expect(report.saidBy?.map((one) => one.sentence)).toEqual(report.said);
+    expect(report.saidBy?.map((one) => `${one.kind}: ${one.sentence.slice(0, 12)}`)).toEqual(report.said!.map((line) => `${/\bbed\b/.test(line) ? "bed" : "task"}: ${line.slice(0, 12)}`));
+    // Nothing new said, nothing handed back.
+    const next = await engine.run();
+    expect([next.said, next.saidBy]).toEqual([undefined, undefined]);
+  });
+
+  it("keeps a connection of one source's sentences as they were, each with its kind", async () => {
+    const { engine } = opened(tasksOnly(), (stub) => stub.database({ title: "Tasks", properties: { Name: "title", Estimate: "rich_text" } }));
+    const report = await engine.run();
+    expect(report.said).toContainEqual("Estimate: the property Estimate is a rich_text property, and a number field cannot hold it, so it is left out");
+    expect(report.saidBy).toContainEqual({ kind: "task", sentence: "Estimate: the property Estimate is a rich_text property, and a number field cannot hold it, so it is left out" });
+  });
+});
+
 describe("graview check judges a connection's sources", () => {
   it("passes a connection of several sources", () => {
     expect(codes(document({ garden: both() }))).toEqual([]);
