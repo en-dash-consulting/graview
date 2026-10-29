@@ -25,11 +25,25 @@ import { FORMAT, FORMAT_VERSION, type GraviewDocument, type KindSpec } from "./d
 import { humanizeField } from "./schema/define-node.js";
 import { an, DUE_FIELD, hasTrait, isPeopleKind, listedWords, mainKindOf, movingChoices, TRAITS, traitNounOf, traitPluralOf, traitsOfDocument, traitWords, type TraitName } from "./traits.js";
 
+/**
+ * One part of the base to leave out, said as what it is: a kind, a rule
+ * (by its name), a lens (by its title) or a trait. A kinda turn's reading
+ * (`@graview/tools/starter`'s `KindaReading.drop`) is a list of these.
+ */
+export interface DropPart {
+  readonly part: "kind" | "rule" | "lens" | "trait";
+  readonly name: string;
+}
+
 export interface StartingOptions {
   /** The template's document to start from; none starts from nothing. */
   readonly base?: GraviewDocument;
-  /** Kinds and traits of the base to leave out, each by name. */
-  readonly drop?: readonly string[];
+  /**
+   * What of the base to leave out: a kind or a trait by its name, or any
+   * part as a `DropPart` — so the rules and views a person unticked go
+   * with the kinds, and are said in `left` and `edits`.
+   */
+  readonly drop?: readonly (string | DropPart)[];
   /** Traits to bring in, each as its module, joined to the kind people see most. */
   readonly add?: readonly TraitName[];
   /** What the app is called. */
@@ -525,6 +539,21 @@ function dropKind(c: Composer, kind: string, from: string) {
 
 const isTrait = (name: string): name is TraitName => (TRAITS as readonly string[]).includes(name);
 
+/** Drop a rule by its name, or say the base has none called so. */
+function dropRule(c: Composer, rule: string, from: string) {
+  if (!c.doc.rules?.[rule]) return c.said.push(`${c.doc.name} has no rule called ${rule} to leave out.`);
+  if (c.apply({ op: "remove-rule", rule })) c.left.push({ part: rule, what: "rule", from });
+}
+
+/** Drop a lens by its title, or say the base has none called so. */
+function dropLens(c: Composer, title: string, from: string) {
+  if (!(c.doc.lenses ?? []).some((lens) => (lens as { title?: unknown }).title === title)) return c.said.push(`${c.doc.name} has no view called ${title} to leave out.`);
+  if (c.apply({ op: "remove-lens", title })) c.left.push({ part: title, what: "lens", from });
+}
+
+/** A part to drop, said as what it is: a bare name is a trait when it names one and no kind does, else a kind. */
+const dropPartOf = (c: Composer, drop: string | DropPart): DropPart => (typeof drop !== "string" ? drop : isTrait(drop) && !Object.hasOwn(c.doc.kinds, drop) ? { part: "trait", name: drop } : { part: "kind", name: drop });
+
 /**
  * A STARTING DOCUMENT FROM PARTS: the base (or nothing) named, its
  * dropped kinds and traits taken out with what only they served, each
@@ -547,9 +576,15 @@ export function startingDocument(options: StartingOptions): StartingDocument {
   }
   if (options.purpose !== undefined && options.purpose !== (base?.purpose?.for ?? undefined)) c.apply({ op: "set-purpose", for: options.purpose });
 
-  for (const name of options.drop ?? []) {
-    if (isTrait(name) && !Object.hasOwn(c.doc.kinds, name)) dropTrait(c, name, from);
-    else dropKind(c, name, from);
+  // The rules and views first, then the kinds and traits: a rule a dropped kind would take with it is then said as dropped by name.
+  const drops = (options.drop ?? []).map((drop) => dropPartOf(c, drop));
+  for (const drop of [...drops.filter((one) => one.part === "rule" || one.part === "lens"), ...drops.filter((one) => one.part === "kind" || one.part === "trait")]) {
+    if (drop.part === "rule") dropRule(c, drop.name, from);
+    else if (drop.part === "lens") dropLens(c, drop.name, from);
+    else if (drop.part === "trait") {
+      if (isTrait(drop.name)) dropTrait(c, drop.name, from);
+      else c.said.push(`${drop.name} is not a trait Graview knows, so nothing is left out for it.`);
+    } else dropKind(c, drop.name, from);
   }
   // What the base still carries after the drops, said as its own: its traits, rules and lenses kept.
   const dropped = new Set(c.left.map((part) => `${part.what}:${part.part}`));
@@ -617,8 +652,9 @@ export function breakingOf(base: GraviewDocument, edit: DocumentEdit): string | 
  * hands the reading to its host, which composes here, previews with its
  * data and applies as the person.
  */
-export function composeReshape(options: { readonly document: GraviewDocument; readonly add: readonly TraitName[]; readonly drop: readonly string[] }): ComposedReshape {
-  const made = startingDocument({ base: options.document, name: options.document.name, add: [...new Set(options.add)], drop: [...new Set(options.drop)] });
+export function composeReshape(options: { readonly document: GraviewDocument; readonly add: readonly TraitName[]; readonly drop: readonly (string | DropPart)[] }): ComposedReshape {
+  const once = new Map(options.drop.map((drop) => [typeof drop === "string" ? drop : `${drop.part}:${drop.name}`, drop] as const));
+  const made = startingDocument({ base: options.document, name: options.document.name, add: [...new Set(options.add)], drop: [...once.values()] });
   return {
     ...made,
     breaking: [...new Set(made.edits.map((edit) => breakingOf(options.document, edit)).filter((words): words is string => words !== undefined))],

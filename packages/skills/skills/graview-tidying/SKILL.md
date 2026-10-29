@@ -54,9 +54,10 @@ opens in and how its cards read are `graview-lists`.
    `voteSuggestion(store, id, "for" | "against" | null)` casts, changes or
    withdraws one), one standing vote each; whoever may decide (`mayDecide`)
    reads each suggestion's `tally: { for, against, mine }` beside Accept.
-   Say `"tidying": { "autoAcceptAt": 4 }` at the top of the document to
-   have the actor make a suggestion at four votes for, the voters in its
-   `lineage.voters`; `graview check` warns when the app has no policy,
+   Say `"tidying": { "autoAcceptAt": 4 }` at the top of the document (the
+   edit `{"op": "set-app-tidying", "autoAcceptAt": 4}`, `null` to take it
+   away) to have the actor make a suggestion at four votes for, the voters
+   in its `lineage.voters`; `graview check` warns when the app has no policy,
    since then nobody votes.
 
 3. **Hold it to what people said.** A person says "Leave this one alone" on

@@ -12,7 +12,7 @@ import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 import { capitalize, lowerFirst } from "../capital.js";
 import { kindListWords, sortTypeOfDocumentField } from "../kind-list.js";
 import type { KindList } from "../views/types.js";
-import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, archivesSentence, tidyingSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, appTidyingSentence, archivesSentence, tidyingSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
 
 /*
  * WHAT A CHANGE TO THE APP MEANS, IN WORDS — and whether data would move.
@@ -185,6 +185,9 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     for (const n of keys(b)) if (n in a && !same((a as Record<string, unknown>)[n], (b as Record<string, unknown>)[n])) sentences.push(`The ${noun} "${(b as Record<string, { title?: string }>)[n]!.title ?? n}" changes.`);
   }
   sentences.push(...policySentences(before, after));
+  // What the app says of suggestions as a whole: the votes at which its own actor makes one.
+  const autoAccept = (doc: GraviewDocument) => (doc.tidying as { autoAcceptAt?: number } | undefined)?.autoAcceptAt;
+  if (autoAccept(before) !== autoAccept(after)) sentences.push(appTidyingSentence(autoAccept(after)));
   if (!same(before.brand?.accent, after.brand?.accent) || !same(before.brand?.ground, after.brand?.ground)) sentences.push("The app's colors change.");
   sentences.push(...brandSentences(before.brand ?? {}, after.brand ?? {}, after.name));
   // The app's money (FR-100) and its locale (FR-178), said apart from its colors.
