@@ -1,6 +1,5 @@
-import type { AnySchema, GraviewApp, Principal, Store } from "@graview/core";
-import type { HostAi } from "../ai.js";
-import type { WorkflowLog, WorkflowRun } from "../workflows/types.js";
+import type { AnySchema, GraviewApp, Principal } from "@graview/core";
+import type { WorkflowRun } from "../workflows/types.js";
 import type { ToolDefinition } from "./tool-definition.js";
 
 /*
@@ -8,18 +7,21 @@ import type { ToolDefinition } from "./tool-definition.js";
  * owner's seat runs one of the app's workflows now — or says what it
  * would do, keeping nothing — and pauses or resumes one, as the person
  * who keeps the app would from its settings. Listed only for an app that
- * declares workflows, on a seat whose host hands it `workflows`: the
- * host's log of runs, and — for pause and resume, which change the
- * declaration — its own write of the edit. The runner is fetched with the
- * first run (`../workflows/run.ts`): a seat never asked carries none of it.
+ * declares workflows, on a seat whose host hands it `workflows`: its own
+ * way to run one (`seatWorkflows`, with its store, its log of runs and its
+ * model), and — for pause and resume, which change the declaration — its
+ * own write of the edit. The runner is the host's to bring: a seat on a
+ * page carries none of it.
  */
 
-/** What a host gives a seat that may run the app's workflows: where the runs are kept, the model an agent step asks, and how a pause is written. */
+/**
+ * What a host gives a seat that may run the app's workflows: how one is run
+ * — `seatWorkflows` from `@graview/tools/workflows` runs it with the host's
+ * store, log and model — and how a pause is written.
+ */
 export interface WorkflowTools {
-  /** Where the runs are kept: a run reads on from the last one's `through`, and the first after a change is dry. */
-  readonly log: WorkflowLog;
-  /** The host's AI, for an agent step: without one an agent step is skipped and the run says so. */
-  readonly ai?: HostAi;
+  /** Run one now, by hand: `who` pressed it. A dry run keeps nothing; the first after a change is dry whatever is asked. */
+  run(name: string, options: { readonly dryRun: boolean; readonly who?: string }): Promise<WorkflowRun>;
   /**
    * Write `pause-workflow` or `resume-workflow` into the app's declaration
    * (a document host's write, as `drafts.keep` writes a lens). Absent,
@@ -86,34 +88,17 @@ function runAnswer(run: WorkflowRun) {
   };
 }
 
-/* The runner, fetched with the first run. A literal specifier: tools runs in workerd, which refuses one computed at run time. */
-let runner: Promise<typeof import("../workflows/run.js")> | undefined;
-const theRunner = () =>
-  (runner ??= import("../workflows/run.js").catch((error: unknown) => {
-    runner = undefined;
-    throw error;
-  }));
-
 /** Run one of the workflow tools for a seat. */
 export async function runWorkflowToolCall(
   name: string,
   args: Record<string, unknown>,
-  context: { readonly app: GraviewApp<AnySchema>; readonly store: Store<AnySchema>; readonly principal: Principal; readonly workflows: WorkflowTools },
+  context: { readonly app: GraviewApp<AnySchema>; readonly principal: Principal; readonly workflows: WorkflowTools },
 ): Promise<{ readonly ok: true; readonly data: unknown } | { readonly ok: false; readonly error: string; readonly reason?: "invalid" | "forbidden" }> {
   const names = workflowNames(context.app);
   const asked = String(args["name"] ?? "");
   if (!names.includes(asked)) return { ok: false, error: `No workflow is called "${asked}". The app's workflows are: ${names.join(", ") || "none"}. Nothing was changed.`, reason: "invalid" };
   if (name === "run_workflow") {
-    const { runWorkflow } = await theRunner();
-    const run = await runWorkflow({
-      app: context.app,
-      store: context.store,
-      workflow: asked,
-      log: context.workflows.log,
-      trigger: { kind: "byHand", ...(context.principal.id !== undefined ? { who: context.principal.id } : {}) },
-      ...(args["dryRun"] === true ? { dryRun: true } : {}),
-      ...(context.workflows.ai ? { ai: context.workflows.ai } : {}),
-    });
+    const run = await context.workflows.run(asked, { dryRun: args["dryRun"] === true, ...(context.principal.id !== undefined ? { who: context.principal.id } : {}) });
     return { ok: true, data: runAnswer(run) };
   }
   const edit = context.workflows.edit;

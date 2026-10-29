@@ -1,8 +1,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { entryArg, isDocument, loadApp } from "@graview/core/cli";
-import type { GraviewApp } from "@graview/core";
-import { lastRunWords, nextRunAt, workflowsOf } from "@graview/core/workflows";
+import type { AnySchema, GraviewApp, Store } from "@graview/core";
+import { lastRunWords } from "@graview/core/scene";
+import { nextRunAt, workflowsOf } from "@graview/core/workflows";
 import { openHost } from "./cli.js";
 import type { WorkflowTools } from "./agent/workflow-tools.js";
 import type { WorkflowLog, WorkflowRun } from "./workflows/types.js";
@@ -78,12 +79,15 @@ const runsFileOf = (friction: string): string => friction.replace(/friction\.jso
  * document, checked before it is kept. A TypeScript entry is changed in
  * its source, so it is offered no pause.
  */
-export async function workflowToolsFor(app: GraviewApp, entry: string, friction: string): Promise<WorkflowTools> {
+export async function workflowToolsFor(app: GraviewApp, store: Store<AnySchema>, entry: string, friction: string): Promise<WorkflowTools> {
+  const { seatWorkflows } = await import("./workflows/seat.js");
   const log = fileWorkflowLog(runsFileOf(friction));
-  if (!isDocument(entry)) return { log };
+  if (!isDocument(entry)) return seatWorkflows({ app, store, log });
   const { editDocument, sayFindings } = await import("@graview/core/document");
   const { compileDocument } = await import("@graview/core/check");
-  return {
+  return seatWorkflows({
+    app,
+    store,
     log,
     edit: async (edit) => {
       const path = resolve(entry);
@@ -97,7 +101,7 @@ export async function workflowToolsFor(app: GraviewApp, entry: string, friction:
       if (declared) (app as { workflows?: Record<string, unknown> }).workflows = { ...app.workflows, [edit.name]: { ...declared, status: edit.op === "pause-workflow" ? "paused" : "active" } };
       return { ok: true, said: edited.said.join(" ") || `${edit.op === "pause-workflow" ? "Paused" : "Resumed"} “${declared?.title ?? edit.name}”.` };
     },
-  };
+  });
 }
 
 /** The app's workflows, listed: a line each, or JSON. */

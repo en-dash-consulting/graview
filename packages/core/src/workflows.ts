@@ -26,4 +26,3 @@ export { triggeredBy, type FiredTrigger, type WorkflowCommit } from "./workflows
 export { documentWorkflowFindings, workflowFindings, workflowFindingsOf } from "./workflows/findings.js";
 export { keyedId, recordsOver, workflowKey, workflowSpecHash, workflowValue } from "./workflows/values.js";
 export { followsFindings, policiesOf, policyInstruction, type WorkflowPolicy } from "./workflows/policies.js";
-export { agoWords, lastRunWords, workflowSpots, workflowsOnTheMap, type MapWorkflow, type RunSaid, type SpotPlot, type WorkflowSpot } from "./workflows/on-the-map.js";

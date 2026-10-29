@@ -236,8 +236,9 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
   readonly learned?: () => readonly AppSuggestion[] | Promise<readonly AppSuggestion[]>;
   /**
    * WHAT THE APP DOES ON ITS OWN (Roadmap f-jobs-declared): given — a host
-   * hands it to an owner's seat — and the app declares workflows, the seat
-   * lists `run_workflow` (now, or as a dry run), and with `workflows.edit`
+   * hands it to an owner's seat, `seatWorkflows` from
+   * `@graview/tools/workflows` is one — and the app declares workflows, the
+   * seat lists `run_workflow` (now, or as a dry run), and with `workflows.edit`
    * also `pause_workflow` and `resume_workflow`. Unsaid, or a read-only
    * seat, none of them is listed.
    */
@@ -1216,7 +1217,7 @@ export function createToolRuntime<S extends AnySchema>(
         case "pause_workflow":
         case "resume_workflow": {
           // Run as the app's own actor, kept in the host's log; a pause is the host's write of the declaration (Roadmap f-jobs-declared).
-          const answer = await runWorkflowToolCall(definition.name, args, { app: options.app as unknown as GraviewApp<AnySchema>, store: store as unknown as Store<AnySchema>, principal, workflows: options.workflows! });
+          const answer = await runWorkflowToolCall(definition.name, args, { app: options.app as unknown as GraviewApp<AnySchema>, principal, workflows: options.workflows! });
           return answer.ok ? { ok: true, data: answer.data } : { ok: false, error: answer.error, ...(answer.reason ? { reason: answer.reason } : {}) };
         }
 

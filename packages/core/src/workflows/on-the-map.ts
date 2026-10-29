@@ -1,52 +1,74 @@
 import type { GraviewApp } from "../app.js";
+import { subjectKindsOf } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
-import type { WorkflowStep } from "../workflow-shape.js";
-import { stepKindOf } from "./steps.js";
-import { workflowReach } from "./resolve.js";
-import { workflowWorldOfApp } from "./world.js";
 
 /*
  * A WORKFLOW ON THE MAP (Roadmap f-jobs-declared, the Scene's part). From
  * altitude the Scene stands each kind on its plot; a workflow is the app's
  * own actor at work on some of them, so it stands in the street beside the
  * district it writes, wired to every kind it reads and writes — what its
- * steps say they touch (`STEP_KINDS`' `touches`), nothing guessed. Paused,
- * it is drawn dimmed; given the host's log, it says how its last run went
- * (`lastRunWords`). Declaration only — no graph, no window — so a test, a
- * thumbnail and the live Scene agree on where each one stands.
+ * steps name, nothing guessed. Paused, it is drawn dimmed; given the host's
+ * log, it says how its last run went (`lastRunWords`). Declaration only —
+ * no graph, no window — so a test and the live Scene agree on where each
+ * one stands.
+ *
+ * Read off the steps as they are written, never through `STEP_KINDS`: the
+ * Scene draws this, and the step kinds' shapes and checkers are the
+ * document compiler's, which a page that draws an app never loads. A step
+ * reads the kind it runs `over`, the kinds it `reads`, the kinds it makes
+ * records `from`; it writes the kinds the acts it runs (`act`, `acts`) act
+ * on and make, the kind it makes records of (`generate`) and the kind it
+ * sets aside (`archive`), which it reads too.
  */
 
-/** A workflow as the Scene draws it: its name, title and status, the kinds it reads and writes, and its steps in a line each. */
+/** A workflow as the Scene draws it: its name, title and status, and the kinds it reads and writes. */
 export interface MapWorkflow {
   readonly name: string;
   readonly title: string;
   readonly status: "active" | "paused";
-  /** Kinds its steps read, in the order they say them. */
+  /** Kinds its steps read, and what starts it on a change, in the order they say them. */
   readonly reads: readonly string[];
-  /** Kinds its steps may write — the kinds their acts act on and make. */
+  /** Kinds its steps may write. */
   readonly writes: readonly string[];
-  /** Its steps, one line each, as the checker and `describe` say them. */
-  readonly steps: readonly string[];
 }
 
-/** Every workflow the app declares, as the Scene draws it, in declared order: dreaming, built in and at work on every district, is not drawn. */
-export function workflowsOnTheMap<S extends AnySchema>(app: GraviewApp<S>): readonly MapWorkflow[] {
+/** An act as the map reads it: the kinds it acts on and the kinds it makes. */
+export interface MapAct {
+  readonly name: string;
+  readonly subject?: { readonly kinds: readonly string[] | "*" } | undefined;
+  readonly creates?: readonly string[] | undefined;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
+const strings = (value: unknown): string[] => (typeof value === "string" ? [value] : Array.isArray(value) ? value.filter((one): one is string => typeof one === "string") : []);
+
+/**
+ * Every workflow the app declares, as the Scene draws it, in declared
+ * order, given every act the app has (`store.allMutations()`: the derived
+ * ones too). Dreaming, built in and at work on every district, is not drawn.
+ */
+export function workflowsOnTheMap<S extends AnySchema>(app: GraviewApp<S>, acts: readonly MapAct[]): readonly MapWorkflow[] {
   const declared = Object.entries(app.workflows ?? {});
   if (declared.length === 0) return [];
-  const world = workflowWorldOfApp(app);
   const kinds = new Set(app.schema.kinds as readonly string[]);
+  const byName = new Map(acts.map((act) => [act.name, act]));
+  const actKinds = (name: string): string[] => {
+    const act = byName.get(name);
+    return act ? [...subjectKindsOf(app.schema, act as never), ...(act.creates ?? [])] : [];
+  };
   return declared.map(([name, workflow]) => {
-    const steps = (workflow.steps ?? []) as readonly WorkflowStep[];
-    const reach = workflowReach(steps, world);
-    // What starts it on a change reads that kind too: a workflow run when a grocery list is made is wired to grocery lists.
-    const started = (workflow.when ?? []).flatMap((trigger) => ("made" in trigger ? [trigger.made] : "changed" in trigger ? [trigger.changed] : []));
-    const reads = [...new Set([...reach.reads, ...started])].filter((kind) => kinds.has(kind));
-    const writes = reach.writes.filter((kind) => kinds.has(kind));
-    const said = steps.flatMap((step) => {
-      const kind = stepKindOf(step);
-      return kind ? [kind.words(step)] : [];
-    });
-    return { name, title: workflow.title, status: workflow.status === "paused" ? "paused" : "active", reads, writes, steps: said };
+    const reads: string[] = [];
+    const writes: string[] = [];
+    // What starts it on a change reads that kind: a workflow run when a grocery list is made is wired to grocery lists.
+    for (const trigger of (workflow.when ?? []) as unknown as readonly Record<string, unknown>[]) reads.push(...strings(trigger["made"]), ...strings(trigger["changed"]));
+    for (const step of (workflow.steps ?? []) as unknown as readonly Record<string, unknown>[]) {
+      const over = isRecord(step["over"]) ? strings(step["over"]["kind"]) : [];
+      const from = Array.isArray(step["from"]) ? step["from"].flatMap((source) => (isRecord(source) ? strings(source["kind"]) : [])) : [];
+      reads.push(...over, ...strings(step["reads"]), ...from, ...strings(step["archive"]));
+      writes.push(...[...strings(step["act"]), ...strings(step["acts"])].flatMap(actKinds), ...strings(step["generate"]), ...strings(step["archive"]));
+    }
+    const known = (list: readonly string[]) => [...new Set(list)].filter((kind) => kinds.has(kind));
+    return { name, title: workflow.title, status: workflow.status === "paused" ? "paused" : "active", reads: known(reads), writes: known(writes) };
   });
 }
 

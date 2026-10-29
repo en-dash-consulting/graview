@@ -48,7 +48,7 @@ import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
 import type { ViewComponent, ViewMode } from "./view-registry.js";
 import type { HistoryHost } from "@graview/core/history";
-import type { RunSaid } from "@graview/core/workflows";
+import type { RunSaid } from "@graview/core/scene";
 import { PlaybackContext, useOwnPlayback, useReadersServed, type Playback } from "./past.js";
 import { TypingContext, type FieldTyping } from "./typing.js";
 

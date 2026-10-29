@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { compileDocument } from "@graview/core/check";
-import type { GraviewApp } from "@graview/core";
+import { Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { workflow, workflowToolsFor } from "../../src/workflow-cli.js";
 
@@ -106,11 +106,14 @@ describe("graview workflow", () => {
 describe("graview mcp --workflows", () => {
   it("writes a pause into a document entry, checked, and the seat's app reads it at once; a TypeScript entry is offered no pause", async () => {
     const { entry } = household();
-    const app = compileDocument(JSON.parse(readFileSync(entry, "utf8"))).app as GraviewApp;
-    const tools = await workflowToolsFor(app, entry, join(root, "data", "friction.json"));
+    const compiled = compileDocument(JSON.parse(readFileSync(entry, "utf8")));
+    if (!compiled.ok) throw new Error("the household did not compile");
+    const app = compiled.app as GraviewApp;
+    const store = new Store({ schema: app.schema, mutations: app.mutations ?? [] }) as unknown as Store<AnySchema>;
+    const tools = await workflowToolsFor(app, store, entry, join(root, "data", "friction.json"));
     expect(await tools.edit!({ op: "pause-workflow", name: "next-weeks-events" })).toMatchObject({ ok: true });
     expect(JSON.parse(readFileSync(entry, "utf8")).workflows["next-weeks-events"].status).toBe("paused");
     expect(app.workflows!["next-weeks-events"]!.status).toBe("paused");
-    expect((await workflowToolsFor(app, join(root, "app.ts"), join(root, "friction.json"))).edit).toBeUndefined();
+    expect((await workflowToolsFor(app, store, join(root, "app.ts"), join(root, "friction.json"))).edit).toBeUndefined();
   });
 });

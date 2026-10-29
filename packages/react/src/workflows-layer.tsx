@@ -1,6 +1,5 @@
 import { pluralOf, SCENE_LAYERS, type AnySchema, type GraviewApp } from "@graview/core";
-import { toIso } from "@graview/core/scene";
-import { lastRunWords, workflowSpots, workflowsOnTheMap, type MapWorkflow, type SpotPlot } from "@graview/core/workflows";
+import { lastRunWords, toIso, workflowSpots, workflowsOnTheMap, type MapAct, type MapWorkflow, type SpotPlot } from "@graview/core/scene";
 import type { InterpolatedLayout } from "@graview/layout";
 import { useMemo, type ReactElement } from "react";
 import type { WorkflowRuns } from "./context.js";
@@ -15,8 +14,8 @@ import "./provider.js"; // A door: tied to what the page drew first (TIED DOORS,
  * says how its last run went when the host hands its log of runs
  * (`workflowRuns`); a paused one is drawn dimmed and says it is paused.
  *
- * Fetched apart, with the declaration's reading of workflows, only for an
- * app that declares one: everything it knows is handed in, as the
+ * Fetched with the ground it stands on (`plots.tsx`), drawn only for an
+ * app that declares a workflow: everything it knows is handed in, as the
  * ribbons' layer is, so it reaches into none of the provider's modules.
  * The pointer passes through it to the ground: it is said, not pressed.
  */
@@ -28,6 +27,8 @@ export interface WorkflowsLayerProps {
   /** The pan baked into the frame's cards, so a workflow stands in the street it is drawn beside. */
   readonly pan: { readonly x: number; readonly y: number };
   readonly app: GraviewApp<AnySchema>;
+  /** Every act the app has, the derived ones too (`store.allMutations()`): what a step that runs one writes. */
+  readonly acts: readonly MapAct[];
   /** The host's log of runs; unsaid, no last run is said. */
   readonly runs?: WorkflowRuns | undefined;
   /** The graph's version: a run's ops change it, and the last run is read again. */
@@ -51,8 +52,8 @@ const touchWords = (workflow: MapWorkflow, schema: AnySchema): string => {
   return [workflow.reads.length > 0 ? `reads ${said(workflow.reads)}` : "", workflow.writes.length > 0 ? `writes ${said(workflow.writes)}` : ""].filter(Boolean).join("; ");
 };
 
-export function WorkflowsLayer({ frame, width, height, pan, app, runs, graphVersion, hiddenKinds }: WorkflowsLayerProps): ReactElement | null {
-  const workflows = useMemo(() => workflowsOnTheMap(app), [app]);
+export function WorkflowsLayer({ frame, width, height, pan, app, acts, runs, graphVersion, hiddenKinds }: WorkflowsLayerProps): ReactElement | null {
+  const workflows = useMemo(() => workflowsOnTheMap(app, acts), [app, acts]);
   const city = frame.city;
   const plots = new Map<string, SpotPlot>();
   for (const node of frame.nodes) {

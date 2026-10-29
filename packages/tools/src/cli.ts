@@ -235,7 +235,7 @@ export async function mcp(argv: readonly string[]): Promise<number> {
   const files = host.files;
   const learned = files ? () => learningOf(app, host.store, readFriction(flag(argv, "--friction") ?? files.friction), fileLearned(files.learned).list(), { seat: principal }).suggestions : undefined;
   // An owner's seat runs, pauses and resumes the app's workflows when asked to (--workflows): the runs beside the store, a pause written into a document entry (Roadmap f-jobs-declared).
-  const workflows = argv.includes("--workflows") && files && Object.keys(app.workflows ?? {}).length > 0 ? await workflowToolsFor(app, entryArg(argv, 0)!, files.friction) : undefined;
+  const workflows = argv.includes("--workflows") && files && Object.keys(app.workflows ?? {}).length > 0 ? await workflowToolsFor(app, host.store as unknown as Store<AnySchema>, entryArg(argv, 0)!, files.friction) : undefined;
   const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: host.subscriptions, ...(learned ? { learned } : {}), ...(workflows ? { workflows } : {}) });
   /*
    * A TOOL CALL REFUSED AS INVALID IS WHAT AN AGENT COULD NOT DO (Roadmap

@@ -3,12 +3,12 @@ import { compileDocument } from "@graview/core/check";
 import { Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { createToolRuntime, toolDefinitions } from "../../src/index.js";
-import { memoryWorkflowLog } from "../../src/workflows.js";
+import { memoryWorkflowLog, seatWorkflows } from "../../src/workflows.js";
 
 /*
  * AN OWNER'S SEAT RUNS, PAUSES AND RESUMES A WORKFLOW (Roadmap
- * f-jobs-declared). A host hands an owner's seat `workflows` — its log of
- * runs, and its own write of the declaration — and the seat lists
+ * f-jobs-declared). A host hands an owner's seat `workflows` (`seatWorkflows`:
+ * its store, its log of runs, and its own write of the declaration) — and the seat lists
  * `run_workflow`, `pause_workflow` and `resume_workflow` for an app that
  * declares workflows: none for a read-only seat, none unhanded, and no
  * pause where the host writes no declaration. A run is the app's own
@@ -39,16 +39,18 @@ describe("an owner's seat and the app's workflows", () => {
     const store = storeOf(app);
     const log = memoryWorkflowLog();
     const edit = async () => ({ ok: true as const });
-    expect(names(createToolRuntime(store, { author: OWNER, app, workflows: { log, edit } }).definitions)).toEqual(["run_workflow", "pause_workflow", "resume_workflow"]);
-    expect(names(createToolRuntime(store, { author: OWNER, app, workflows: { log } }).definitions)).toEqual(["run_workflow"]);
-    expect(names(createToolRuntime(store, { author: OWNER, app, readOnly: true, workflows: { log, edit } }).definitions)).toEqual([]);
+    const managed = seatWorkflows({ app, store, log, edit });
+    expect(names(createToolRuntime(store, { author: OWNER, app, workflows: managed }).definitions)).toEqual(["run_workflow", "pause_workflow", "resume_workflow"]);
+    expect(names(createToolRuntime(store, { author: OWNER, app, workflows: seatWorkflows({ app, store, log }) }).definitions)).toEqual(["run_workflow"]);
+    expect(names(createToolRuntime(store, { author: OWNER, app, readOnly: true, workflows: managed }).definitions)).toEqual([]);
     expect(names(createToolRuntime(store, { author: OWNER, app }).definitions)).toEqual([]);
-    expect(names(createToolRuntime(store, { author: OWNER, app: { ...app, workflows: undefined }, workflows: { log, edit } }).definitions)).toEqual([]);
+    expect(names(createToolRuntime(store, { author: OWNER, app: { ...app, workflows: undefined }, workflows: managed }).definitions)).toEqual([]);
   });
 
   it("names the app's workflows as the only names a call takes", () => {
     const app = household();
-    const run = createToolRuntime(storeOf(app), { author: OWNER, app, workflows: { log: memoryWorkflowLog() } }).definitions.find((tool) => tool.name === "run_workflow")!;
+    const store = storeOf(app);
+    const run = createToolRuntime(store, { author: OWNER, app, workflows: seatWorkflows({ app, store, log: memoryWorkflowLog() }) }).definitions.find((tool) => tool.name === "run_workflow")!;
     expect((run.inputSchema["properties"] as Record<string, { enum?: string[] }>)["name"]!.enum).toEqual(["next-weeks-events", "keep-events-in-step", "set-aside-done-lists"]);
     expect(run.annotations).toMatchObject({ readOnlyHint: false, destructiveHint: false });
   });
@@ -64,7 +66,7 @@ describe("an owner's seat and the app's workflows", () => {
     const app = household();
     const store = storeOf(app);
     const log = memoryWorkflowLog();
-    const seat = createToolRuntime(store, { author: OWNER, app, workflows: { log } });
+    const seat = createToolRuntime(store, { author: OWNER, app, workflows: seatWorkflows({ app, store, log }) });
     const events = () => store.graph.nodesOfKind("event" as never).length;
 
     const first = await seat.call("run_workflow", { name: "next-weeks-events" });
@@ -90,7 +92,8 @@ describe("an owner's seat and the app's workflows", () => {
   it("pauses and resumes through the host's write, says a workflow already paused, and hands back the edit that takes it back", async () => {
     const app = household();
     const written: unknown[] = [];
-    const seat = createToolRuntime(storeOf(app), { author: OWNER, app, workflows: { log: memoryWorkflowLog(), edit: async (edit) => (written.push(edit), { ok: true }) } });
+    const store = storeOf(app);
+    const seat = createToolRuntime(store, { author: OWNER, app, workflows: seatWorkflows({ app, store, log: memoryWorkflowLog(), edit: async (edit) => (written.push(edit), { ok: true }) }) });
     expect(await seat.call("pause_workflow", { name: "next-weeks-events" })).toMatchObject({ ok: true, data: { status: "paused", undo: { op: "resume-workflow", name: "next-weeks-events" } } });
     expect(await seat.call("pause_workflow", { name: "set-aside-done-lists" })).toMatchObject({ ok: true, data: { status: "paused", said: "“Set aside done grocery lists” is already paused. Nothing was changed." } });
     expect(await seat.call("resume_workflow", { name: "set-aside-done-lists" })).toMatchObject({ ok: true, data: { status: "active", undo: { op: "pause-workflow", name: "set-aside-done-lists" } } });
@@ -102,7 +105,8 @@ describe("an owner's seat and the app's workflows", () => {
 
   it("refuses a workflow the app does not have, naming the ones it does", async () => {
     const app = household();
-    const seat = createToolRuntime(storeOf(app), { author: OWNER, app, workflows: { log: memoryWorkflowLog() } });
+    const store = storeOf(app);
+    const seat = createToolRuntime(store, { author: OWNER, app, workflows: seatWorkflows({ app, store, log: memoryWorkflowLog() }) });
     const refused = await seat.call("run_workflow", { name: "weekly-report" });
     expect(refused).toMatchObject({ ok: false, reason: "invalid" });
     expect((refused as { error: string }).error).toBe('No workflow is called "weekly-report". The app\'s workflows are: next-weeks-events, keep-events-in-step, set-aside-done-lists. Nothing was changed.');

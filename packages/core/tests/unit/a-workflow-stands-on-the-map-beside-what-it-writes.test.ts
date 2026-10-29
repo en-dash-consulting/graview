@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
 import { cityMap } from "../../src/city.js";
 import type { GraviewApp } from "../../src/index.js";
-import { agoWords, lastRunWords, workflowSpots, workflowsOnTheMap, type RunSaid } from "../../src/workflows.js";
+import { deriveMutations } from "../../src/mutations/derive-edits.js";
+import { agoWords, lastRunWords, workflowSpots, workflowsOnTheMap, type RunSaid } from "../../src/scene.js";
 
 /**
  * A WORKFLOW STANDS ON THE MAP BESIDE WHAT IT WRITES (Roadmap
@@ -21,33 +22,44 @@ const household = (): GraviewApp => {
   return compiled.app as GraviewApp;
 };
 
+/** Every act the app has, as a store lists them: its own, and the ones derived from its kinds. */
+const actsOf = (app: GraviewApp) => [...(app.mutations ?? []), ...deriveMutations(app.schema, app.mutations ?? [])] as never;
+
 const run = (over: Partial<RunSaid> = {}): RunSaid => ({ finished: "2026-10-25T18:02:00Z", outcome: "ok", dry: false, made: [], changed: [], archived: [], suggested: [], ...over });
 
 describe("a workflow on the map", () => {
   it("is wired to the kinds its steps read and write, and what starts it on a change", () => {
-    const on = workflowsOnTheMap(household());
+    const on = workflowsOnTheMap(household(), actsOf(household()));
     expect(on.map((one) => [one.name, one.reads, one.writes])).toEqual([
       ["next-weeks-events", ["routine"], ["event"]],
       ["keep-events-in-step", ["plan-item", "event"], ["event"]],
       ["set-aside-done-lists", ["grocery-list"], ["grocery-list"]],
     ]);
-    expect(on.find((one) => one.name === "next-weeks-events")!.steps).toEqual(["Run “add-event” for each routine where active"]);
   });
 
   it("knows a paused workflow as paused, and an unsaid status as active", () => {
-    const on = workflowsOnTheMap(household());
+    const on = workflowsOnTheMap(household(), actsOf(household()));
     expect(Object.fromEntries(on.map((one) => [one.name, one.status]))).toEqual({ "next-weeks-events": "active", "keep-events-in-step": "active", "set-aside-done-lists": "paused" });
+  });
+
+  it("reads the steps W2 and W4 add as they are written: what a step makes records of and from, and what it sets aside", () => {
+    const app = household();
+    const on = workflowsOnTheMap(
+      { ...app, workflows: { fill: { title: "Fill", when: [{ byHand: true }], steps: [{ generate: "event", from: [{ kind: "routine", dates: "date" }] } as never, { archive: "grocery-list", where: "status == 'done'" } as never] } } } as GraviewApp,
+      actsOf(app),
+    );
+    expect(on.map((one) => [one.reads, one.writes])).toEqual([[["routine", "grocery-list"], ["event", "grocery-list"]]]);
   });
 
   it("is nothing for an app that declares no workflow", () => {
     const app = household();
-    expect(workflowsOnTheMap({ ...app, workflows: undefined } as GraviewApp)).toEqual([]);
+    expect(workflowsOnTheMap({ ...app, workflows: undefined } as GraviewApp, actsOf(app))).toEqual([]);
   });
 
   it("stands in the street beside the district it writes first, a cell apart from another beside it, and never on any district's ground", () => {
     const app = household();
     const map = cityMap(app.schema);
-    const spots = workflowSpots(workflowsOnTheMap(app), map);
+    const spots = workflowSpots(workflowsOnTheMap(app, actsOf(app)), map);
     expect(spots.map((spot) => [spot.name, spot.beside])).toEqual([
       ["next-weeks-events", "event"],
       ["keep-events-in-step", "event"],
@@ -66,7 +78,7 @@ describe("a workflow on the map", () => {
 
   it("is not placed when it touches no kind on the map", () => {
     const app = household();
-    const spots = workflowSpots(workflowsOnTheMap(app), new Map([["routine", { col: 0, row: 0, side: 2 }]]));
+    const spots = workflowSpots(workflowsOnTheMap(app, actsOf(app)), new Map([["routine", { col: 0, row: 0, side: 2 }]]));
     expect(spots.map((spot) => spot.name)).toEqual(["next-weeks-events"]);
   });
 });

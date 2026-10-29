@@ -801,16 +801,6 @@ const Ribbons = /* @__PURE__ */ ribbonsModule.part(
   { what: "The relations", quiet: true },
 );
 
-/*
- * THE APP'S WORKFLOWS ON THE MAP (`workflows-layer.tsx`), fetched with the
- * declaration's reading of them only for an app that declares one.
- */
-const workflowsModule = /* @__PURE__ */ lazyModule(retryingImport(() => import("./workflows-layer.js")));
-const Workflows = /* @__PURE__ */ workflowsModule.part(
-  (module, props: Parameters<typeof import("./workflows-layer.js").WorkflowsLayer>[0]) => <module.WorkflowsLayer {...props} />,
-  { what: "The workflows", quiet: true },
-);
-
 const ABOVE_KEY = "graview:map-from-above";
 /** Whether this person looks at the city from straight above: their own way of looking, kept in this browser when it can be. */
 function useFromAbove(): [boolean, (above: boolean) => void] {
@@ -839,6 +829,8 @@ function useFromAbove(): [boolean, (above: boolean) => void] {
  */
 export const cityGround = lazyModule(retryingImport(() => import("./plots.js")));
 const Plots = cityGround.part((module, props: PlotsProps) => <module.Plots {...props} />, { quiet: true });
+/* THE APP'S WORKFLOWS ON THE MAP (`workflows-layer.tsx`), fetched with the ground they stand on. */
+const Workflows = cityGround.part((module, props: Parameters<typeof import("./workflows-layer.js").WorkflowsLayer>[0]) => <module.WorkflowsLayer {...props} />, { quiet: true });
 
 /** SCENE FURNITURE in the ground's other corner: the way a map carries its own zoom. */
 function ZoomControls({ zoom, zoomBy, above, setAbove }: { readonly zoom: number; readonly zoomBy: (factor: number) => void; readonly above: boolean; readonly setAbove: (above: boolean) => void }) {
@@ -1294,6 +1286,7 @@ export function Scene<S extends AnySchema>({
             {...extent}
             pan={frame.city.pan}
             app={context.app as unknown as GraviewApp<AnySchema>}
+            acts={store.allMutations() as never}
             runs={context.workflowRuns}
             graphVersion={nodes}
             hiddenKinds={context.hiddenKinds}
