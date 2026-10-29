@@ -1,5 +1,5 @@
 import type { AnySchema, KindOfSchema, PagesArrangement, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useContext, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
@@ -50,6 +50,14 @@ export interface WorkerViewDefinition {
    * of the same name stood. Nothing of it is kept anywhere.
    */
   readonly draft?: boolean;
+}
+
+/** The brand with its logo's paths under `/graview/assets/` where the host serves them (Roadmap f-brand-marks-under-app-base); as it is with no `assetsAt`. */
+function brandUnder(brand: GuestBrand | undefined, assetsAt: ((path: string) => string) | undefined): GuestBrand | undefined {
+  const logo = brand?.logo;
+  if (!assetsAt || !logo) return brand;
+  const at = (mark: string) => (mark.startsWith("/graview/assets/") ? assetsAt(mark) : mark);
+  return { ...brand, logo: typeof logo === "string" ? at(logo) : { ...logo, light: at(logo.light), ...(logo.dark ? { dark: at(logo.dark) } : {}) } };
 }
 
 const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
@@ -107,10 +115,14 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, ar
   const holder = useRef<HTMLDivElement>(null);
   const mounted = useRef<WorkerView | null>(null);
   const hostFiles = useHostFiles();
+  /* Where the app's own images are served (Roadmap f-brand-marks-under-app-base): the definition's word, else the page's host's. */
+  const hostAssets = useHostAssets();
   /* Where the face that holds the view to a box hears how tall it drew (the Scene's preview): the host measures, the view never says. */
   const told = useContext(ViewContentHeight);
-  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand, hostFiles, told });
-  latest.current = { input, goTo, places, arrangement, onFailure, brand, hostFiles, told };
+  // The logo a view is handed is fetched from the page's origin: a path under /graview/assets/ is fetched where the host serves it.
+  const served = useMemo(() => brandUnder(brand, hostAssets), [brand, hostAssets]);
+  const latest = useRef({ input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, told });
+  latest.current = { input, goTo, places, arrangement, onFailure, brand: served, hostFiles, hostAssets, told };
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
@@ -135,7 +147,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, ar
         ...(definition.limits ? { limits: definition.limits } : {}),
         ...(definition.author ? { author: definition.author } : {}),
         ...(definition.onProblem ? { onProblem: definition.onProblem } : {}),
-        ...(definition.asset ? { asset: definition.asset } : {}),
+        ...(definition.asset ? { asset: definition.asset } : latest.current.hostAssets ? { asset: (path: string) => latest.current.hostAssets?.(path) ?? path } : {}),
         ...(file ? { file } : {}),
         ...(definition.images ? { images: definition.images } : {}),
         ...(definition.links ? { links: definition.links } : {}),
@@ -150,7 +162,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, ar
       mounted.current = null;
     };
   }, [definition, store, principal]);
-  useEffect(() => mounted.current?.update(), [scheme, brand, tick]);
+  useEffect(() => mounted.current?.update(), [scheme, served, tick]);
   /* Never wider than what holds it (Roadmap f-view-place-min-width): a grid item at its content's min-content width took a phone's page past its edge. */
   const place = <div ref={holder} data-worker-view-place={definition.manifest.name} style={{ minWidth: 0 }} />;
   if (!definition.draft) return place;

@@ -14,6 +14,7 @@ import * as figures from "../../src/figures.js";
 import * as fieldSight from "../../src/field-sight.js";
 import * as forms from "../../src/forms.js";
 import * as friction from "../../src/friction.js";
+import * as head from "../../src/head.js";
 import * as history from "../../src/history.js";
 import * as jobs from "../../src/jobs.js";
 import * as workflows from "../../src/workflows.js";
@@ -53,6 +54,8 @@ const OFF_THE_PAGE = {
   "@graview/core/css": { from: css, names: ["CSS_AT_RULES", "CSS_DRAWN_AS", "CSS_FRAGMENT_PROPERTIES", "CSS_FUNCTIONS", "CSS_KEYWORD_PROPERTIES", "CSS_PREFIXED_SELECTORS", "CSS_PROPERTIES", "CSS_REFUSED_SELECTORS", "OPEN_MAX_STYLESHEET", "sanitizeDeclarations", "sanitizeStylesheet", "sanitizeStylesheets", "sanitizeValue", "serializeIdent", "serializeString", "serializeValues", "tokenize"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
   "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug", "placeNamesFrom", "placeNamesOf"] },
+  // Roadmap f-app-icons-home-screen: an app on a home screen — its head tags, its manifest and the files a host serves; a face's theme-color.
+  "@graview/core/head": { from: head, names: ["headHtml", "homeScreenOf", "MANIFEST_PATH", "themeColorsOf"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
   "@graview/core/history": { from: history, names: ["declarationSentence", "historyInWords", "makerOf", "makerWords", "restoreBatches", "ticksOf", "typedCounts", "typedRun", "typedSpans", "typingSentence", "typingWords", "unpublished"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.

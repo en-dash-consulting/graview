@@ -310,3 +310,20 @@ export function emojiMark(brand: { readonly logo?: string | BrandLogo; readonly 
   const emoji = emojiOf(brand?.favicon);
   return emoji !== undefined && emojiProblem(emoji) === null ? emoji : undefined;
 }
+
+/** Where a host keeps an app's own images (Graview Cloud's `add_image`), as a document names them: on the host's root. */
+export const HOST_ASSETS = "/graview/assets/";
+
+/**
+ * WHERE A HOST SERVES AN APP'S OWN IMAGE (Roadmap f-brand-marks-under-app-base):
+ * `assetsAt(path)` for a mark under `/graview/assets/` — a host serving
+ * each app under a base (`/a/<app>/`) answers `base + path` — and any
+ * other address as it is: inline SVG, an emoji's `data:` picture, a path
+ * relative to the page, another origin a TypeScript brand names. Unsaid,
+ * every address as it is.
+ */
+export function assetSrc(assetsAt: ((path: string) => string) | undefined, href: string): string;
+export function assetSrc(assetsAt: ((path: string) => string) | undefined, href: string | undefined): string | undefined;
+export function assetSrc(assetsAt: ((path: string) => string) | undefined, href: string | undefined): string | undefined {
+  return assetsAt && href !== undefined && href.startsWith(HOST_ASSETS) ? assetsAt(href) : href;
+}

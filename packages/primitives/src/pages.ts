@@ -33,7 +33,7 @@ export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 export { KindFigure } from "./figure.js";
 export { ownSentence, problemLine, problemTitle, RuleLineView, RuleParts, useLined, useRuleLines } from "./rule-line.js";
 export { useMarkup } from "./markup.js";
-export { AppMark, AppTitle, useFavicon } from "./app-title.js";
+export { AppMark, AppTitle, useFavicon, useThemeColor } from "./app-title.js";
 export { BarActivity } from "./bar-activity.js";
 // What tidying suggests, beside Activity on the routed face's bar, fetched only while something waits.
 export { BarSuggested } from "./bar-suggested.js";

@@ -141,8 +141,8 @@ and the description stays in listings and on the name's hover):
   `plain`, `editorial`, `ascii` or `shader` (a shipped name, `drift`,
   `ripple`, `veil` or `caustics`, light through water, never code; else
   `brand-splash-shader`), with an
-  `image`, `title` and `kicker`. It travels with the document; a host
-  inlines `splashHtml` from `@graview/pages/splash`.
+  `image`, `title` and `kicker`, in the brand's `scheme` or its own
+  (`light`, `dark`, `device`). A host inlines `splashHtml`.
 
 ## Styling by conversation
 
