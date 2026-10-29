@@ -29,6 +29,15 @@
  * view marked `data-column` — offering a task added in it and the place
  * narrowed to it.
  *
+ * And typing in the menu (Roadmap f-menu-type-anything), on both faces: a
+ * letter typed goes into the menu's field and narrows every row to those
+ * whose words begin with it, the Fast slot then finding what they mean as
+ * the typing rests; Enter runs the one lit; words that fit nothing are
+ * asked of a fake host AI — its Fast slot picking the context, its Thinking
+ * slot told only that — about what is under the cursor, its thinking
+ * marked on the thing itself and its answer a card beside it whose change
+ * is accepted and taken back; and with AI off the field only filters.
+ *
  *   node scripts/verify-menu.mjs [--engine=chromium|webkit|firefox]
  */
 import { createServer } from "node:http";
@@ -1063,6 +1072,299 @@ try {
         (rested === null || (rested.ground.opened && rested.ground.inTheWindow && rested.record.opened && rested.record.about)),
     };
     await context.close();
+  }
+
+  /* ================================================ TYPE IN THE MENU (Roadmap f-menu-type-anything) */
+  /*
+   * "When I right-click on anything, I want to be able to type in something
+   * about it. It could filter and show available actions, but I also would
+   * like it to accept freeform text and then hit enter, and see some
+   * thinking kind of thing on that part of the app that would pop back up
+   * with the changes that it is making or about to make." Driven on the
+   * scene's card and on the routed face's row for the same task, with a
+   * fake host AI that answers after a moment and proposes finishing it, and
+   * with AI off.
+   */
+  /*
+   * A FAKE HOST AI, BOTH SLOTS. The Fast slot answers each typed choice at
+   * once — the menu's rows ("complete" means "Finish it"), and which
+   * candidates and records a quick ask should send (the one that finishes
+   * the task, the first record) — keeping what it picked; the Thinking slot
+   * answers after a moment, keeping what it was told, and picks every
+   * candidate it was sent.
+   */
+  const FAKE_AI = () => {
+    window.__fastPicked = [];
+    window.__thinkingSaw = [];
+    const choose = (question, wanted) => {
+      const names = Object.keys(question.criteria);
+      const choice = names.find((name) => wanted.test(question.criteria[name])) ?? names[0];
+      return { type: "choice", choice, confidence: 0.9, probabilities: Object.fromEntries(names.map((name) => [name, name === choice ? 0.9 : 0.01])) };
+    };
+    window.__todoAi = {
+      name: "fake",
+      fast: {
+        model: "fake-fast",
+        decide: async (state, questions) => {
+          const answers = {};
+          for (const [key, question] of Object.entries(questions)) {
+            if (question.type !== "choice") continue;
+            if (key === "row") {
+              if (/complete/.test(state.typed ?? "")) answers.row = choose(question, /^Finish it$/);
+              continue;
+            }
+            if (key === "candidates" || key === "records") {
+              answers[key] = choose(question, key === "candidates" ? /^Finish it/ : /./);
+              window.__fastPicked.push({ key, said: question.criteria[answers[key].choice] });
+              continue;
+            }
+            answers[key] = choose(question, /./);
+          }
+          return { answers, usage: { inputTokens: 10, outputTokens: 1 } };
+        },
+      },
+      thinking: {
+        model: "fake-thinking",
+        think: async ({ prompt }) => {
+          await new Promise((done) => setTimeout(done, 1500));
+          const told = JSON.parse(prompt);
+          window.__thinkingSaw.push({ candidates: (told.candidates ?? []).map((one) => one.says), records: [...(told.state?.selection ?? []), ...(told.state?.neighbors ?? [])].map((one) => one.label) });
+          return { text: JSON.stringify({ answer: `About ${told.about}: it is not done yet, so finish it.`, pick: (told.candidates ?? []).map((one) => one.id) }) };
+        },
+      },
+    };
+  };
+  const KEEP_THE_STORE = () => {
+    const keep = (store) => (window.__menuStores ??= []).push(store);
+    const watch = (window.__graviewWatch ??= {});
+    const handed = watch.store;
+    watch.store = (store) => {
+      handed?.(store);
+      keep(store);
+    };
+  };
+  const doneOf = (on, id) => on.evaluate((id) => (window.__menuStores ?? []).find((one) => one.schema.kinds.includes("task"))?.graph.getNode(id)?.done === true, id);
+  /** What the menu shows as it is typed in: the field, the acts, the rows, the one lit. */
+  const typedSays = (on) =>
+    on.evaluate(() => {
+      const menu = document.querySelector('[data-testid="context-menu"]');
+      if (!menu) return null;
+      const field = menu.querySelector('[data-testid="menu-type"]');
+      const clean = (element) => (element.textContent ?? "").replace(/[…↵]/g, "").trim();
+      return {
+        typed: field?.value ?? null,
+        keyboardInTheField: document.activeElement === field,
+        acts: [...menu.querySelectorAll("[data-affordance]")].map(clean),
+        rows: [...menu.querySelectorAll("[data-menu-item]")].map((row) => ({ id: row.getAttribute("data-menu-item"), text: clean(row) })),
+        lit: menu.querySelector("[data-menu-lit]") ? clean(menu.querySelector("[data-menu-lit]")) : null,
+        noMatch: menu.querySelector('[data-testid="menu-no-match"]')?.textContent ?? null,
+      };
+    });
+  /** Every row's words begin with every word typed. */
+  const allFit = (said, words) => {
+    const fold = (text) => text.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    const wanted = fold(words);
+    return [...said.acts, ...said.rows.filter((row) => row.id !== "ask-typed").map((row) => row.text)].every((label) => wanted.every((word) => fold(label).some((one) => one.startsWith(word))));
+  };
+  const faces = {
+    scene: { at: (ai) => `${at("todo")}/?today=2026-09-01&fresh=1${ai}`, ready: async (on) => {
+      await on.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await on.waitForTimeout(800);
+    }, target: '[data-graview-pick="t-deposit"]' },
+    pages: { at: (ai) => `${at("todo")}/pages/tasks?today=2026-09-01&fresh=1${ai}`, ready: async (on) => {
+      await on.waitForSelector('[data-graview-record="t-deposit"]', { timeout: 60_000 });
+      await on.waitForTimeout(500);
+    }, target: '[data-graview-record="t-deposit"]' },
+  };
+  const opened = async (on, face, ai) => {
+    await on.goto(faces[face].at(ai), { waitUntil: "load" });
+    await faces[face].ready(on);
+    await on.click(faces[face].target, { button: "right" });
+    await on.waitForSelector(MENU, { timeout: 10_000 });
+    await on.waitForTimeout(250);
+  };
+  const typeIn = async (on, words) => {
+    await on.keyboard.type(words, { delay: 20 });
+    await on.waitForTimeout(250);
+    return typedSays(on);
+  };
+  const typing = { filters: {}, enter: {}, asks: {}, answer: {}, context: {}, off: {} };
+  for (const face of ["scene", "pages"]) {
+    reach(`typingInTheMenuFiltersItsItems_${face}`);
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    await context.addInitScript(KEEP_THE_STORE);
+    await context.addInitScript(KEEP_COPIES);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`typing ${face}: ${error.message}`));
+
+    /* Typing filters every row: the acts, Open, Copy link, Show in the scene, Inspect. */
+    await opened(on, face, "");
+    const firstStop = await on.evaluate(() => document.activeElement?.closest('[data-testid="context-menu"]') !== null && document.activeElement?.getAttribute("data-testid") !== "menu-type");
+    const before = await typedSays(on);
+    const fin = await typeIn(on, "fin");
+    await on.keyboard.press("Escape");
+    await on.waitForTimeout(150);
+    const cleared = await typedSays(on);
+    // A row that is not an act, found by its first word: Copy link on the pages, whatever the scene's own rows begin with.
+    const other = before?.rows.find((row) => (face === "pages" ? row.id === "copy-link" : !row.id.startsWith("ai-") && row.id !== "ask-typed")) ?? null;
+    const word = (other?.text ?? "").split(/\s+/)[0]?.toLowerCase() ?? "";
+    const copy = word ? await typeIn(on, word) : null;
+    // The Fast slot, once the typing rests: "complete" begins no row's words, and finds "Finish it".
+    await on.keyboard.press("Escape");
+    // Read at once, before the typing has rested (the Fast slot is asked 250 ms after the last key).
+    await on.keyboard.type("complete");
+    const completeAtOnce = await typedSays(on);
+    await on.waitForFunction(() => document.querySelector('[data-testid="context-menu"] [data-affordance][data-menu-lit]') !== null, null, { timeout: 5_000 }).catch(() => undefined);
+    const completeRested = await typedSays(on);
+    const fastRefines = { atOnce: completeAtOnce?.acts ?? null, rested: completeRested?.acts ?? null, lit: completeRested?.lit ?? null };
+    typing.filters[face] = { firstStop, before: { acts: before?.acts.length, rows: before?.rows.map((row) => row.id) }, fin, cleared: cleared?.typed, word, copy, fastRefines };
+    typing.filters[face].ok =
+      firstStop &&
+      before !== null && before.acts.length > 1 &&
+      fin !== null && fin.keyboardInTheField && fin.typed === "fin" && fin.acts.includes("Finish it") && fin.acts.length < before.acts.length && allFit(fin, "fin") && fin.lit === "Finish it" &&
+      cleared?.typed === "" &&
+      copy !== null && allFit(copy, copy.typed) && copy.rows.some((row) => row.id === other.id) && copy.rows.at(-1)?.id === "ask-typed" &&
+      fastRefines.atOnce !== null && !fastRefines.atOnce.includes("Finish it") && (fastRefines.rested ?? []).includes("Finish it") && fastRefines.lit === "Finish it";
+    await on.keyboard.press("Escape");
+    await on.keyboard.press("Escape");
+    await on.waitForTimeout(150);
+
+    /* Enter runs the row typed: Finish it on the scene; Copy link on the pages. */
+    reach(`enterRunsTheItemTyped_${face}`);
+    await opened(on, face, "");
+    const words = face === "pages" ? "copy li" : "finish";
+    const lit = await typeIn(on, words);
+    const doneBefore = await doneOf(on, "t-deposit");
+    await on.evaluate(() => (window.__copied = []));
+    await on.keyboard.press("Enter");
+    await on.waitForTimeout(500);
+    const ran = face === "pages" ? await on.evaluate(() => window.__copied[0] ?? null) : await doneOf(on, "t-deposit");
+    const menuGone = !(await on.$(MENU));
+    const keyboardOnBody = await on.evaluate(() => document.activeElement === document.body);
+    typing.enter[face] = { words, lit: lit?.lit, doneBefore, ran, menuGone, keyboardOnBody };
+    typing.enter[face].ok = menuGone && !keyboardOnBody && (face === "pages" ? lit?.lit === "Copy link" && ran === new URL("/pages/tasks/t-deposit", at("todo")).href : lit?.lit === "Finish it" && doneBefore === false && ran === true);
+
+    /* Free words, asked about what is under the cursor: the thinking marked on it, the answer a card beside it. */
+    reach(`freeWordsAskAboutWhatIsUnderTheCursor_${face}`);
+    await opened(on, face, "");
+    const asking = "is this one still waiting on anything?";
+    const askRow = await typeIn(on, asking);
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="ai-thinking-mark"]', { timeout: 5_000 }).catch(() => undefined);
+    await on.waitForTimeout(150);
+    const thinking = await on.evaluate(() => {
+      const mark = document.querySelector('[data-testid="ai-thinking-mark"]');
+      if (!mark) return null;
+      const on = mark.getAttribute("data-thinking-on");
+      const anchor = on ? document.querySelector(`[data-graview-ai-thinking]`) : null;
+      const m = mark.getBoundingClientRect();
+      const a = anchor?.getBoundingClientRect();
+      return {
+        on,
+        role: mark.getAttribute("role"),
+        said: (mark.textContent ?? "").trim(),
+        visible: getComputedStyle(mark).visibility === "visible" && m.width > 0,
+        anchorIs: anchor ? (anchor.getAttribute("data-graview-view") ?? anchor.getAttribute("data-graview-pick") ?? anchor.getAttribute("data-graview-record") ?? anchor.getAttribute("data-graview-listed")) : null,
+        // On the thing: its middle within the thing's box, give or take its own height.
+        onIt: Boolean(a && m.left + m.width / 2 >= a.left - 4 && m.left + m.width / 2 <= a.right + 4 && m.top + m.height / 2 >= a.top - m.height && m.top + m.height / 2 <= a.bottom + 4),
+        modal: document.querySelector('[role="dialog"][aria-modal="true"]') !== null,
+      };
+    });
+    const card = await on.evaluate(() => {
+      const card = document.querySelector('[data-testid="quick-ask"]');
+      return card ? { beside: card.getAttribute("data-quick-ask-beside"), asked: card.querySelector('[data-testid="quick-answer-asked"]')?.textContent ?? null } : null;
+    });
+    typing.asks[face] = { askRow: askRow?.rows.at(-1) ?? null, lit: askRow?.lit, thinking, card, menuGone: !(await on.$(MENU)) };
+    typing.asks[face].ok =
+      askRow !== null && askRow.acts.length === 0 && askRow.rows.at(-1)?.id === "ask-typed" && askRow.lit === `Ask about Pay the deposit: ${asking}` &&
+      thinking !== null && thinking.on === "t-deposit" && thinking.anchorIs === "t-deposit" && thinking.role === "status" && thinking.said.includes("Pay the deposit") && thinking.visible && thinking.onIt && !thinking.modal &&
+      card !== null && card.beside === "t-deposit" && card.asked === `“${asking}”` && typing.asks[face].menuGone;
+
+    /* The answer beside it, its change a ghost accepted and taken back. */
+    reach(`theAnswerShowsBesideItsTargetAndCanBeTakenBack_${face}`);
+    await on.waitForFunction(() => /not done yet/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? ""), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const answer = await on.evaluate(() => {
+      const card = document.querySelector('[data-testid="quick-ask"]');
+      if (!card) return null;
+      const beside = card.getAttribute("data-quick-ask-beside");
+      const anchor = beside ? document.querySelector(`[data-graview-view="${CSS.escape(beside)}"], [data-graview-pick="${CSS.escape(beside)}"], [data-graview-record="${CSS.escape(beside)}"]`) : null;
+      const a = anchor?.getBoundingClientRect();
+      const b = card.getBoundingClientRect();
+      return {
+        beside,
+        side: card.getAttribute("data-quick-ask-side"),
+        boxes: { it: a ? [Math.round(a.left), Math.round(a.top), Math.round(a.right), Math.round(a.bottom)] : null, card: [Math.round(b.left), Math.round(b.top), Math.round(b.right), Math.round(b.bottom)] },
+        text: card.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+        ghost: card.querySelector('[data-testid="ai-ghost"]') !== null,
+        proposed: [...card.querySelectorAll("[data-ghost-proposal]")].map((one) => (one.textContent ?? "").trim()),
+        overIt: Boolean(a && Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2),
+        inTheWindow: b.left >= 0 && b.top >= 0 && b.right <= innerWidth + 1 && b.bottom <= innerHeight + 1,
+        markGone: document.querySelector('[data-testid="ai-thinking-mark"]') === null && document.querySelector("[data-graview-ai-thinking]") === null,
+      };
+    });
+    const notMade = await doneOf(on, "t-deposit");
+    await on.click('[data-testid="quick-ask"] [data-testid="ghost-accept"]').catch(() => undefined);
+    await on.waitForTimeout(400);
+    const accepted = await doneOf(on, "t-deposit");
+    await on.click('[data-testid="quick-ask"] [data-testid="ghost-undo"]').catch(() => undefined);
+    await on.waitForTimeout(400);
+    const undone = await doneOf(on, "t-deposit");
+    typing.answer[face] = { answer, notMade, accepted, undone };
+
+    /* The Fast slot's pick is what reached the Thinking slot, and Activity says so. */
+    reach(`theFastSlotsPickIsWhatReachesTheThinkingSlot_${face}`);
+    const handed = await on.evaluate(() => ({ picked: window.__fastPicked.slice(), saw: window.__thinkingSaw.at(-1) ?? null }));
+    await on.click('[data-testid="quick-ask"] [data-testid="ghost-close"], [data-testid="quick-ask-close"]').catch(() => undefined);
+    await on.keyboard.press("Escape").catch(() => undefined);
+    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await on.waitForSelector('[data-testid="interaction-context"]', { timeout: 8_000 }).catch(() => undefined);
+    const said = await on.evaluate(() => {
+      const row = document.querySelector('[data-testid="interaction-context"]');
+      return row ? { by: row.getAttribute("data-context-by"), words: (row.textContent ?? "").trim() } : null;
+    });
+    const pickedCandidate = handed.picked.find((one) => one.key === "candidates")?.said ?? "";
+    const pickedRecord = handed.picked.find((one) => one.key === "records")?.said ?? "";
+    typing.context[face] = { picked: handed.picked, saw: handed.saw, activity: said };
+    typing.context[face].ok =
+      handed.saw !== null &&
+      handed.saw.candidates.length === 1 && pickedCandidate.endsWith(handed.saw.candidates[0]) && /^Finish it/.test(pickedCandidate) &&
+      (pickedRecord === "" ? handed.saw.records.length === 0 : handed.saw.records.length === 1 && pickedRecord.startsWith(handed.saw.records[0])) &&
+      said !== null && said.by === "fast" && said.words.includes("fake-fast");
+    typing.answer[face].ok = answer !== null && answer.beside === "t-deposit" && (answer.text ?? "").includes("not done yet") && answer.ghost && answer.proposed.length > 0 && !answer.overIt && answer.inTheWindow && answer.markGone && notMade === false && accepted === true && undone === false;
+    await context.close();
+
+    /* With AI off, the field only filters. */
+    reach(`withoutAiTheFieldOnlyFilters_${face}`);
+    const offContext = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    const off = await offContext.newPage();
+    off.on("pageerror", (error) => errors.push(`typing off ${face}: ${error.message}`));
+    await opened(off, face, "&ai=off");
+    const offFin = await typeIn(off, "fin");
+    const offNothing = await typeIn(off, "zzq");
+    await off.keyboard.press("Enter");
+    await off.waitForTimeout(300);
+    const stillOpen = Boolean(await off.$(MENU));
+    const noCard = !(await off.$('[data-testid="quick-ask"]'));
+    const placeholder = await off.getAttribute('[data-testid="menu-type"]', "placeholder").catch(() => null);
+    typing.off[face] = { fin: offFin, nothing: offNothing, stillOpen, noCard, placeholder };
+    typing.off[face].ok =
+      offFin !== null && offFin.acts.includes("Finish it") && allFit(offFin, "fin") && !offFin.rows.some((row) => row.id === "ask-typed" || row.id.startsWith("ai-")) &&
+      offNothing !== null && offNothing.acts.length === 0 && offNothing.rows.length === 0 && offNothing.lit === null && (offNothing.noMatch ?? "").includes("finzzq") &&
+      stillOpen && noCard && placeholder === "Type to filter…";
+    await offContext.close();
+  }
+  for (const [claim, of] of [
+    ["typingInTheMenuFiltersItsItems", typing.filters],
+    ["enterRunsTheItemTyped", typing.enter],
+    ["freeWordsAskAboutWhatIsUnderTheCursor", typing.asks],
+    ["theAnswerShowsBesideItsTargetAndCanBeTakenBack", typing.answer],
+    ["theFastSlotsPickIsWhatReachesTheThinkingSlot", typing.context],
+    ["withoutAiTheFieldOnlyFilters", typing.off],
+  ]) {
+    report.checks[claim] = { ...of, ok: ["scene", "pages"].every((face) => of[face]?.ok === true) };
+    for (const face of ["scene", "pages"]) delete report.checks[`${claim}_${face}`];
   }
 
   reach.done();

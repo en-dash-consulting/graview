@@ -236,7 +236,8 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]):not([ty
 function firstStop(pane: HTMLElement): HTMLElement {
   for (const candidate of pane.querySelectorAll<HTMLElement>(FOCUSABLE)) {
     // Not one that is hidden, or inside something hidden (a closed setting's own pane).
-    if (candidate.closest("[hidden]") === null && getComputedStyle(candidate).visibility !== "hidden") return candidate;
+    // Nor one that says it is not where the keyboard lands (the menu's field: a letter typed reaches it from its rows).
+    if (candidate.closest("[hidden]") === null && !candidate.hasAttribute("data-graview-not-first") && getComputedStyle(candidate).visibility !== "hidden") return candidate;
   }
   return pane;
 }

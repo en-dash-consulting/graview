@@ -532,6 +532,8 @@ export interface AiDevProxyOptions {
   readonly env?: Readonly<Record<string, string | undefined>>;
   /** The model when `GRAVIEW_AI_MODEL` is unset. */
   readonly model?: string;
+  /** The small, quick model a page's Fast slot is lent when `GRAVIEW_AI_FAST_MODEL` is unset (Roadmap f-menu-type-anything). */
+  readonly fastModel?: string;
   /** The Messages API. Its real endpoint unless a test says otherwise. */
   readonly endpoint?: string;
   /** The most one answer may be, in tokens. */
@@ -548,6 +550,9 @@ export interface AiDevProxyOptions {
 const AI_DEFAULTS = {
   endpoint: "https://api.anthropic.com/v1/messages",
   model: "claude-sonnet-5-5",
+  /* The Fast slot's stand-in in development: a small quick model, asked at low effort for a short answer. */
+  fastModel: "claude-haiku-5-5",
+  fastMaxTokens: 2_000,
   maxTokens: 16_000,
   limitBytes: 2_000_000,
 };
@@ -583,6 +588,7 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
     return key && key.trim().length > 0 ? key.trim() : undefined;
   };
   const modelOf = () => env["GRAVIEW_AI_MODEL"]?.trim() || options.model || AI_DEFAULTS.model;
+  const fastModelOf = () => env["GRAVIEW_AI_FAST_MODEL"]?.trim() || options.fastModel || AI_DEFAULTS.fastModel;
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
       // The page's probe, opened without the key: no model here until it is opened from the printed address.
@@ -593,7 +599,7 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
     const key = keyOf();
     const model = modelOf();
     if (req.method === "GET") {
-      sendJson(res, 200, key ? { configured: true, model, name: "claude" } : { configured: false, howTo: AI_HOW_TO });
+      sendJson(res, 200, key ? { configured: true, model, fast: fastModelOf(), name: "claude" } : { configured: false, howTo: AI_HOW_TO });
       return;
     }
     if (req.method !== "POST") {
@@ -605,14 +611,17 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
       return;
     }
     try {
-      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown; system?: unknown; images?: unknown; messages?: unknown; tools?: unknown; tool_choice?: unknown };
+      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown; system?: unknown; images?: unknown; messages?: unknown; tools?: unknown; tool_choice?: unknown; tier?: unknown };
+      /* The Fast slot's stand-in: a prompt asked of the small model, never a turn. */
+      const quick = ask.tier === "fast";
       /* A turn's step: the conversation so far, the seat's read tools, and its framing. */
       const step = Array.isArray(ask.messages) && ask.messages.length > 0;
       if (!step && (typeof ask.prompt !== "string" || ask.prompt.trim().length === 0)) {
         sendJson(res, 400, { error: "A request is { prompt, system?, images? }, or a turn's { system, messages, tools }." });
         return;
       }
-      const current = CURRENT.test(model);
+      const asked = quick ? fastModelOf() : model;
+      const current = !quick && CURRENT.test(asked);
       const upstream = await call(options.endpoint ?? AI_DEFAULTS.endpoint, {
         method: "POST",
         headers: {
@@ -623,9 +632,9 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
           ...(current ? { "anthropic-beta": "server-side-fallback-2026-07-01" } : {}),
         },
         body: JSON.stringify({
-          model,
-          max_tokens: options.maxTokens ?? AI_DEFAULTS.maxTokens,
-          ...(step
+          model: asked,
+          max_tokens: quick ? AI_DEFAULTS.fastMaxTokens : (options.maxTokens ?? AI_DEFAULTS.maxTokens),
+          ...(step && !quick
             ? {
                 ...(typeof ask.system === "string" && ask.system.length > 0 ? { system: ask.system } : {}),
                 messages: ask.messages,
@@ -636,7 +645,7 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
                 messages: [{ role: "user", content: promptContent(ask.prompt as string, ask.images) }],
               }),
           // A seat's answer is a few sentences: a low effort is quick and enough.
-          ...(current ? { output_config: { effort: "low" }, fallbacks: "default" } : {}),
+          ...(current ? { output_config: { effort: "low" }, fallbacks: "default" } : quick ? { output_config: { effort: "low" } } : {}),
         }),
       });
       const raw = await upstream.text();

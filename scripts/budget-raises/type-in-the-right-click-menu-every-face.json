@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 9680,
+  "gzipped": 3132,
+  "note": "Raised when the right-click menu took a field to type in (Roadmap f-menu-type-anything): the field, every row narrowed to the words typed, the Fast slot asked which row they mean once the typing rests, Enter on the lit row, the Ask row that opens the quick ask's card on the words, the Fast slot picking the context a quick ask sends the Thinking slot, Activity saying what was sent, and the thinking mark the card puts on what it is about. 9_680 / 3_132 more. Measured at 2_565_955 / 929_755 against 2_556_275 / 926_623."
+}

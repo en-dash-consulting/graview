@@ -1,5 +1,6 @@
 import { AI_BRIDGE_PATH, type AiBridgeAsk } from "@graview/core";
 import { NO_AI, type HostAi } from "./ai.js";
+import { completionDecide } from "./decide.js";
 import { turnThroughMessages, type MessagesStepReply } from "./turn.js";
 
 /** What the seat says in a dev build whose server holds no key. */
@@ -25,7 +26,7 @@ export async function aiThroughDevServer(options: { readonly path?: string; read
   const path = options.path ?? AI_BRIDGE_PATH;
   const call = options.fetch ?? (globalThis.fetch as unknown as Fetch | undefined);
   if (!call) return NO_AI;
-  let status: { configured?: unknown; name?: unknown; howTo?: unknown };
+  let status: { configured?: unknown; name?: unknown; howTo?: unknown; fast?: unknown };
   try {
     const probe = await call(path, { method: "GET" });
     if (!probe.ok) return NO_AI;
@@ -41,8 +42,29 @@ export async function aiThroughDevServer(options: { readonly path?: string; read
       if (!answer.ok) throw new Error(typeof body.error === "string" ? body.error : `The model door answered ${answer.status}.`);
       return body;
     };
+    /*
+     * A FAST SLOT IN DEVELOPMENT (Roadmap f-menu-type-anything): where the
+     * door names a small quick model, the page's Fast slot asks it each
+     * typed question through the same door (`tier: "fast"`), answered as a
+     * decision provider would (`completionDecide`) — a stand-in for Jev, in
+     * a dev server only, since a build has no door.
+     */
+    const fastModel = typeof status.fast === "string" && status.fast.length > 0 ? status.fast : undefined;
     return {
       name: typeof status.name === "string" ? status.name : "model",
+      ...(fastModel
+        ? {
+            fast: {
+              model: fastModel,
+              decide: completionDecide(async ({ prompt }) => {
+                const body = await post({ prompt, tier: "fast" } satisfies AiBridgeAsk);
+                if (typeof body.text !== "string") throw new Error("The model door answered with no text.");
+                const usage = body.usage as { inputTokens?: unknown; outputTokens?: unknown } | undefined;
+                return { text: body.text, ...(typeof usage?.inputTokens === "number" && typeof usage.outputTokens === "number" ? { usage: { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens } } : {}) };
+              }),
+            },
+          }
+        : {}),
       complete: async ({ prompt, system, images, signal }) => {
         const asked: AiBridgeAsk = { prompt, ...(system ? { system } : {}), ...(images?.length ? { images } : {}) };
         const body = await post(asked, signal);

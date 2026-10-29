@@ -79,7 +79,14 @@ change waits as a ghost (Accept, Accept some, Dismiss) and is kept as one
 batch with lineage `interaction`; a panel is a draft "Keep as a lens"
 keeps. Each interaction is an `AiInteraction` in Activity (filter All /
 Changes / AI, "Just mine") and on its record's page; `ai.interactions`
-`{ load, keep }` stores them. `ai={{ off: true }}` hides every AI part.
+`{ load, keep }` stores them. A letter typed in the menu narrows every row
+to those whose words begin with it, the Fast slot then lighting what they
+mean once the typing rests, Enter running the one lit; words that fit
+nothing are its last row, "Ask about <it>: …", answered on the quick ask's
+card beside the thing with its thinking marked on it — the Fast slot
+picking the context the Thinking slot is told (`entry.context`) — and with
+no model the field only filters. `ANTHROPIC_API_KEY=… pnpm dev` lends both
+slots through the dev server (`GRAVIEW_AI_FAST_MODEL`). `ai={{ off: true }}` hides every AI part.
 Prove it with stubs: `stubFast()`, `stubThinking()` from
 `@graview/tools/inline-ai` (`pnpm verify inline-ai`).
 

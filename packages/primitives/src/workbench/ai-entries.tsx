@@ -72,6 +72,15 @@ function modelWords(entry: AiInteraction): string | null {
   return `${models.join(", ")}${cost !== undefined ? ` · $${cost < 0.01 ? cost.toPrecision(2) : cost.toFixed(2)}` : ""}`;
 }
 
+/** What a quick ask told its model, said: "Told the model of 2 things it could do and 1 record, as stub-fast picked them". */
+function contextWords(entry: AiInteraction): string | null {
+  const sent = entry.context;
+  if (!sent) return null;
+  const count = (n: number, one: string, many: string) => `${n === 0 ? "no" : n} ${n === 1 ? one : many}`;
+  const what = `${count(sent.candidates.length, "thing it could do", "things it could do")} and ${count(sent.records.length, "record", "records")}`;
+  return sent.by === "fast" ? `Told the model of ${what}, as ${sent.model ?? "the Fast slot"} picked them` : `Told the model of ${what} around it`;
+}
+
 /**
  * ONE INTERACTION, AS ACTIVITY SAYS IT: who asked AI to do what about
  * which target, what it offered and what became of it, the batches it
@@ -85,6 +94,7 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
   const mine = entry.by.kind === "human" && entry.by.onBehalfOf === undefined && (entry.by.id === undefined || principal.id === undefined || entry.by.id === principal.id);
   const who = mine ? "you" : nameOfAuthor(entry.by, { graph: store.graph as never, schema: store.schema, seats, people });
   const models = modelWords(entry);
+  const context = contextWords(entry);
   const again = inlineAiOn(ai);
   const run = (work: (runner: typeof import("../inline-ai-menu.js")) => Promise<unknown>) => {
     setBusy(true);
@@ -116,6 +126,11 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
       {models ? (
         <div data-testid="interaction-model" style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
           {models}
+        </div>
+      ) : null}
+      {context ? (
+        <div data-testid="interaction-context" data-context-by={entry.context?.by} style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
+          {context}
         </div>
       ) : null}
       {again ? (

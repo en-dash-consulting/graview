@@ -845,6 +845,22 @@ export interface AiInteraction {
   readonly answer?: string;
   readonly usage?: readonly AiUsage[];
   readonly failed?: string;
+  /**
+   * WHAT THE THINKING MODEL WAS TOLD ABOUT (Roadmap f-menu-type-anything):
+   * the catalog's candidates and the records around the target sent with a
+   * quick ask — picked by the Fast slot (`by: "fast"`, its `model`) from
+   * all of them, else the default the target is scoped to (`by: "default"`).
+   * The target itself is always sent.
+   */
+  readonly context?: AiContextSent;
+}
+
+/** The context a quick ask sent to its thinking model: who chose it, and the candidate ids and record ids it held. */
+export interface AiContextSent {
+  readonly by: "fast" | "default";
+  readonly model?: string;
+  readonly candidates: readonly string[];
+  readonly records: readonly string[];
 }
 
 /** Whether an interaction concerns a record: its target names it, it offered it, or a batch it made touched it. */

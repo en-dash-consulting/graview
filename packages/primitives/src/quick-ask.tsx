@@ -76,6 +76,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
   const [said, setSaid] = useState<string | null>(null);
   const pane = useRef<HTMLElement | null>(null);
   const field = useRef<HTMLInputElement | null>(null);
+  const mark = useRef<HTMLSpanElement | null>(null);
   const list = useId();
   const live = useRef(true);
   const { ghost: held } = useAiDeskState(env.desk);
@@ -243,12 +244,25 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
     }
     field.current?.focus({ preventScroll: true });
     let frame = 0;
+    let marked: HTMLElement | null = null;
     const follow = () => {
-      placeBeside(element, anchorOf(element, target, face));
+      const anchor = anchorOf(element, target, face);
+      placeBeside(element, anchor);
+      // The thinking mark, on the thing itself while the answer is on its way.
+      const on = mark.current ? anchor : null;
+      if (marked !== on) {
+        marked?.removeAttribute("data-graview-ai-thinking");
+        on?.setAttribute("data-graview-ai-thinking", "");
+        marked = on;
+      }
+      if (mark.current) placeOn(mark.current, on);
       frame = requestAnimationFrame(follow);
     };
     follow();
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      marked?.removeAttribute("data-graview-ai-thinking");
+    };
   }, [target, face]);
 
   /* A press outside the bar puts it away; an answer stays until it is closed. */
@@ -402,6 +416,19 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       <span style={VISUALLY_HIDDEN} aria-live="polite">
         {rows.length > 0 && words.trim() ? `${rows.length} ${rows.length === 1 ? "way" : "ways"} to go on` : ""}
       </span>
+      {/*
+       * THINKING, IN PLACE (Roadmap f-menu-type-anything): while words are
+       * answered, a small mark on what they are about — the card, the row,
+       * the record's heading — not a modal; said politely to a screen reader.
+       */}
+      {answering !== null && result === null ? (
+        <span ref={mark} role="status" data-testid="ai-thinking-mark" style={THINKING}>
+          {/* Its pulse is the card's own, fetched with it: nothing a page loads up front; still for a reader who asks for less motion. */}
+          <style>{"@keyframes graview-thinking{from{opacity:.35}to{opacity:1}}@media (prefers-reduced-motion:reduce){[data-testid=ai-thinking-mark]>span{animation:none!important}}"}</style>
+          <span aria-hidden="true" style={THINKING_DOT} />
+          <span>Thinking about {about}…</span>
+        </span>
+      ) : null}
     </section>
   );
 }
@@ -416,8 +443,8 @@ function anchorOf(pane: HTMLElement | null, target: AiTarget, face: "scene" | "p
   const root: ParentNode = pane?.closest("[data-graview-embed]") ?? document;
   const ids = target.on === "list" ? [`aggregate:${target.kind}`, `kind:${target.kind}`] : target.on === "lens" && target.kind ? [`aggregate:${target.kind}`] : recordsOfTarget(target);
   for (const id of ids) {
-    // The record's own card where the picture draws one; else where it is picked from (a row of a district's list).
-    for (const element of root.querySelectorAll<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"], [data-graview-pick="${CSS.escape(id)}"]`)) {
+    // The record's own card where the picture draws one; else where it is picked from (a row of a district's list, a page's row or card).
+    for (const element of root.querySelectorAll<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"], [data-graview-pick="${CSS.escape(id)}"], [data-graview-record="${CSS.escape(id)}"], [data-graview-listed="${CSS.escape(id)}"]`)) {
       if (pane?.contains(element)) continue;
       const box = element.getBoundingClientRect();
       if (box.width > 0 && box.height > 0) return element;
@@ -462,14 +489,52 @@ function placeBeside(pane: HTMLElement, anchor: HTMLElement | null): void {
   if (style.left !== next.left) style.left = next.left;
   if (style.top !== next.top) style.top = next.top;
   if (style.width !== next.width) style.width = next.width;
-  const beside = anchor?.getAttribute("data-graview-view") ?? anchor?.getAttribute("data-graview-pick") ?? (anchor ? "page" : "");
+  const beside = anchor?.getAttribute("data-graview-view") ?? anchor?.getAttribute("data-graview-pick") ?? anchor?.getAttribute("data-graview-record") ?? anchor?.getAttribute("data-graview-listed") ?? (anchor ? "page" : "");
   if (pane.getAttribute("data-quick-ask-beside") !== beside) pane.setAttribute("data-quick-ask-beside", beside);
   if (pane.getAttribute("data-quick-ask-side") !== side) pane.setAttribute("data-quick-ask-side", side);
 }
 
+/** The thinking mark, at the top right of what it is on, inside its corner; hidden where there is nothing to stand on. */
+function placeOn(mark: HTMLElement, anchor: HTMLElement | null): void {
+  const at = anchor?.getBoundingClientRect();
+  const on = anchor?.getAttribute("data-graview-view") ?? anchor?.getAttribute("data-graview-pick") ?? anchor?.getAttribute("data-graview-record") ?? anchor?.getAttribute("data-graview-listed") ?? (anchor ? "page" : "");
+  if (mark.getAttribute("data-thinking-on") !== on) mark.setAttribute("data-thinking-on", on);
+  if (!at || at.width === 0) {
+    if (mark.style.visibility !== "hidden") mark.style.visibility = "hidden";
+    return;
+  }
+  const width = mark.getBoundingClientRect().width;
+  const left = `${Math.round(Math.max(GAP / 2, at.right - width - 6))}px`;
+  const top = `${Math.round(Math.max(GAP / 2, at.top - 10))}px`;
+  if (mark.style.left !== left) mark.style.left = left;
+  if (mark.style.top !== top) mark.style.top = top;
+  if (mark.style.visibility !== "visible") mark.style.visibility = "visible";
+}
+
+const THINKING: CSSProperties = {
+  position: "fixed",
+  visibility: "hidden",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  padding: "2px 8px",
+  borderRadius: 999,
+  fontSize: "0.75rem",
+  lineHeight: 1.4,
+  whiteSpace: "nowrap",
+  color: "var(--graview-ink)",
+  background: "var(--graview-float)",
+  border: "1px dashed var(--graview-accent)",
+  boxShadow: "var(--graview-lift-low)",
+  pointerEvents: "none",
+};
+const THINKING_DOT: CSSProperties = { width: 7, height: 7, borderRadius: 999, background: "var(--graview-accent)", animation: "graview-thinking 1s ease-in-out infinite alternate" };
+
 const CARD: CSSProperties = {
   position: "fixed",
   inset: "auto",
+  // As tall as what it holds: WebKit's own popover height stretched the card to the window's (its max-height).
+  height: "auto",
   margin: 0,
   zIndex: layer("popover"),
   boxSizing: "border-box",

@@ -55,11 +55,26 @@ describe("the model door", () => {
   it("with a key, says which model, never the key", async () => {
     const { sent, res } = respond();
     await aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY } })(request("GET"), res);
-    expect(JSON.parse(sent.body!)).toEqual({ configured: true, model: "claude-sonnet-5-5", name: "claude" });
+    expect(JSON.parse(sent.body!)).toEqual({ configured: true, model: "claude-sonnet-5-5", fast: "claude-haiku-5-5", name: "claude" });
     expect(sent.body).not.toContain(KEY);
     const other = respond();
     await aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY, GRAVIEW_AI_MODEL: "claude-opus-5-5" } })(request("GET"), other.res);
     expect(JSON.parse(other.sent.body!)).toMatchObject({ model: "claude-opus-5-5" });
+  });
+
+  it("asks a Fast slot's prompt of the small quick model, at low effort, which GRAVIEW_AI_FAST_MODEL may name (Roadmap f-menu-type-anything)", async () => {
+    const upstream = answered('{"row": {"choice": "r1", "confidence": 0.8}}');
+    const handler = aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY }, fetch: upstream, endpoint: "https://messages.test/v1/messages" });
+    const { sent, res } = respond();
+    await handler(request("POST", JSON.stringify({ prompt: "which row?", tier: "fast" })), res);
+    const body = JSON.parse(upstream.mock.calls[0]![1].body);
+    expect(body).toMatchObject({ model: "claude-haiku-5-5", output_config: { effort: "low" }, messages: [{ role: "user", content: "which row?" }] });
+    expect(body.max_tokens).toBeLessThanOrEqual(2_000);
+    expect(body).not.toHaveProperty("fallbacks");
+    expect(JSON.parse(sent.body!)).toEqual({ text: '{"row": {"choice": "r1", "confidence": 0.8}}' });
+    const named = respond();
+    await aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY, GRAVIEW_AI_FAST_MODEL: "claude-haiku-4-5" } })(request("GET"), named.res);
+    expect(JSON.parse(named.sent.body!)).toMatchObject({ fast: "claude-haiku-4-5" });
   });
 
   it("forwards a prompt to the Messages API with the key in its header, and answers with the text alone", async () => {
