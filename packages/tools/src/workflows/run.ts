@@ -4,7 +4,7 @@ import { declaredWorkflows, policiesOf, resolveWorkflow, workflowAuthor, workflo
 import { routeOf } from "../tidy/policy.js";
 import { askedOf } from "./ask.js";
 import { stepRunnerOf } from "./steps.js";
-import type { ChangeOutcome, RunWorkflowOptions, StepChange, StepContext, WorkflowOutcome, WorkflowRun } from "./types.js";
+import { MOST_CHAIN, type ChangeOutcome, type RunWorkflowOptions, type SpendSaid, type StepChange, type StepContext, type StepSpend, type WorkflowOutcome, type WorkflowRun, type WorkflowSpend } from "./types.js";
 
 /*
  * RUNNING ONE WORKFLOW (Roadmap f-jobs-declared, f-job-idempotency,
@@ -33,6 +33,13 @@ import type { ChangeOutcome, RunWorkflowOptions, StepChange, StepContext, Workfl
  * run's, so a retry reads the same ops and — an act step's `key` making
  * every record under one id — makes nothing twice. The host keeps the run
  * (`WorkflowLog`); the framework never writes it into the graph.
+ *
+ * A run says what its model steps spent (`spent`: calls and tokens, by
+ * step and in all), each step telling the door (`StepContext.spent`). A
+ * run another workflow's change started (`trigger.by`) carries the chain
+ * of workflows behind it (`chain`), read from the starting run in the log;
+ * one deeper than `chainLimit` (3 when unsaid) is held, and says so, so
+ * two workflows that wake each other stop.
  */
 
 const said = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -77,12 +84,33 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
   const notes: string[] = [];
   let skipped = false;
   let refused = false;
+  const spends = new Map<number, { calls: number; inputTokens: number; outputTokens: number; costUsd?: number; model?: string }>();
+
+  // The chain behind a run another workflow's change started: the starting run's own, and it.
+  const by = trigger.kind === "made" || trigger.kind === "changed" ? trigger.by : undefined;
+  const parent = by ? options.log.runs(by.workflow).find((run) => (by.run === undefined ? true : run.id === by.run)) : undefined;
+  const chain: readonly string[] = by ? [...(parent?.chain ?? []), by.workflow] : [];
+  const chainLimit = options.chainLimit ?? MOST_CHAIN;
+
+  const spentOf = (): WorkflowSpend => {
+    const steps: StepSpend[] = [...spends.entries()].sort(([a], [b]) => a - b).map(([step, one]) => ({ step, ...one }));
+    const total = (key: "calls" | "inputTokens" | "outputTokens") => steps.reduce((sum, one) => sum + one[key], 0);
+    const costs = steps.filter((one) => one.costUsd !== undefined);
+    return { calls: total("calls"), inputTokens: total("inputTokens"), outputTokens: total("outputTokens"), ...(costs.length > 0 ? { costUsd: costs.reduce((sum, one) => sum + one.costUsd!, 0) } : {}), steps };
+  };
 
   const finish = (outcome: WorkflowOutcome, dry: boolean, through: number): WorkflowRun => {
-    const run: WorkflowRun = { id, workflow: workflow.name, trigger, started, finished: new Date(Math.max(now, Date.now())).toISOString(), outcome, dry, made: [...made], changed: [...changed], archived: [...archived], suggested, heldBack, through, specHash, notes };
+    const run: WorkflowRun = { id, workflow: workflow.name, trigger, started, finished: new Date(Math.max(now, Date.now())).toISOString(), outcome, dry, made: [...made], changed: [...changed], archived: [...archived], suggested, heldBack, through, specHash, notes, spent: spentOf(), chain };
     options.log.add(run);
     return run;
   };
+
+  // Started by a chain of workflows past the limit: it does not run, and says why.
+  if (chain.length > chainLimit) {
+    const titles = [...chain, workflow.name].map((name) => `“${workflows[name]?.title ?? name}”`).join(" → ");
+    notes.push(`“${workflow.title}” was started by a chain of ${chain.length} workflow runs, each started by the one before (${titles}), past the limit of ${chainLimit}: it did not run.`);
+    return finish("held", true, cursor);
+  }
 
   // Paused: a clock or a change starts nothing; a person's Run now is a dry run.
   if (workflow.status === "paused" && trigger.kind !== "byHand") {
@@ -158,7 +186,7 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
               count(preview.primitives);
               return { as: "previewed", ops: preview.ops };
             }
-            const route = change.ask ? "ask" : approve === "apply" ? "act" : approve === "ask" ? "ask" : routeOf(change.confidence ?? 1, change.severity ?? "categorize");
+            const route = change.ask ? "ask" : change.apply || approve === "apply" ? "act" : approve === "ask" ? "ask" : routeOf(change.confidence ?? 1, change.severity ?? "categorize");
             if (route === "drop") return { as: "dropped" };
             if (route === "ask") {
               if ((approve === "ask" || change.ask) && asked) {
@@ -184,6 +212,16 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
         skipped(why) {
           skipped = true;
           heldBack.push({ step: index, why: `${at}: ${why}` });
+        },
+        spent(usage: SpendSaid) {
+          const one = spends.get(index) ?? { calls: 0, inputTokens: 0, outputTokens: 0 };
+          const count = (value: number | undefined) => (value !== undefined && Number.isFinite(value) && value > 0 ? value : 0);
+          one.calls += usage.calls === undefined ? 1 : count(usage.calls);
+          one.inputTokens += count(usage.inputTokens);
+          one.outputTokens += count(usage.outputTokens);
+          if (usage.costUsd !== undefined && Number.isFinite(usage.costUsd)) one.costUsd = (one.costUsd ?? 0) + usage.costUsd;
+          if (usage.model) one.model = usage.model.slice(0, 120);
+          spends.set(index, one);
         },
       };
       await runner.run(step as never, context);

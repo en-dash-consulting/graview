@@ -5,7 +5,7 @@ import { diffDocuments, editDocument } from "../../src/document/index.js";
 import type { GraviewDocument } from "../../src/document/schema.js";
 import { Store, type AnySchema, type GraviewApp } from "../../src/index.js";
 import { digestWords } from "../../src/tidying.js";
-import { declaredWorkflows, nextRunAt, scheduleWords, STEP_KINDS, triggeredBy, workflowsOf, workflowWords, type WorkflowDeclaration } from "../../src/workflows.js";
+import { declaredWorkflows, nextRunAt, scheduleWords, STEP_KINDS, triggeredBy, workflowOrigin, workflowsOf, workflowWords, type WorkflowDeclaration } from "../../src/workflows.js";
 
 /*
  * A WORKFLOW IS DECLARED, CHECKED AND SAID (Roadmap f-jobs-declared): the
@@ -276,5 +276,31 @@ describe("the acts a workflow may name", () => {
   it("leave out setting aside a kind that is never set aside, in a document as in an app", () => {
     const never = { ...HOME, kinds: { ...HOME.kinds, routine: { ...HOME.kinds.routine, archives: false } } };
     expect(codes({ ...never, workflows: { w: { title: "T", when: [{ byHand: true }], steps: [{ act: "archive-routine", over: { kind: "routine" } }] } } })).toEqual(["workflow-act-unknown @ workflows.w.steps.0.act"]);
+  });
+});
+
+describe("what another workflow's change starts", () => {
+  const result = compiled(HOME);
+  if (!result.ok) throw new Error("compiles");
+  const app = result.app as GraviewApp<AnySchema>;
+  const store = () => new Store<AnySchema>({ schema: app.schema, mutations: (app.mutations ?? []) as never, snapshot: { nodes: [], edges: [] } as never });
+  const workflow = (when: readonly unknown[]) => ({ name: "w", title: "W", when }) as never;
+
+  it("says which workflow's run made the ops that fired it, by its lineage or its author", () => {
+    const s = store();
+    const byRun = s.applyAll([{ name: "add-grocery-list", args: { name: "From a run", status: "done" } }], { author: { kind: "system", id: "workflow:other", name: "Other", automated: true }, lineage: { basis: "it ran", run: "workflow:other:2026-11-01T16:00:00.000Z" } }).ops;
+    expect(triggeredBy(workflow([{ made: "grocery-list" }]), { ops: byRun }, s)[0]?.by).toEqual({ workflow: "other", run: "workflow:other:2026-11-01T16:00:00.000Z" });
+    const byAuthor = s.applyAll([{ name: "add-grocery-list", args: { name: "From its author", status: "done" } }], { author: { kind: "system", id: "workflow:other", name: "Other", automated: true } }).ops;
+    expect(triggeredBy(workflow([{ made: "grocery-list" }]), { ops: byAuthor }, s)[0]?.by).toEqual({ workflow: "other" });
+    expect(workflowOrigin(byAuthor[0]!)).toEqual({ workflow: "other" });
+  });
+
+  it("says no workflow for a change a person made", () => {
+    const s = store();
+    const ops = s.applyAll([{ name: "add-grocery-list", args: { name: "Mine", status: "done" } }]).ops;
+    const fired = triggeredBy(workflow([{ made: "grocery-list" }]), { ops }, s);
+    expect(fired).toHaveLength(1);
+    expect(fired[0]?.by).toBeUndefined();
+    expect(workflowOrigin(ops[0]!)).toBeUndefined();
   });
 });

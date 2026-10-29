@@ -13,8 +13,10 @@ import type { WorkflowWorld } from "./world.js";
  * none lent, it failed, the budget ran out — the step's `floor` decides
  * deterministically (links counted in the record's text, blocklisted
  * words, a rule), and a record no floor rule matches is left for a
- * person. An option whose confidence reaches its `setAside` threshold
- * also archives the record; never removed.
+ * person — or labeled the step's `otherwise` when it says one. An option
+ * whose confidence reaches its `setAside` threshold also archives the
+ * record; never removed, and one that reaches its `applyAt` is set
+ * without asking.
  *
  * Nothing a host means to show the public becomes so without a person's
  * yes: the step's changes are asked of a person unless the step says its
@@ -28,6 +30,12 @@ const quoted = (names: Iterable<string>): string => [...names].map((name) => `"$
 
 /** Whether a step's changes wait for a person: always, unless the step says its own `approve` — and an option in `confirm` always. */
 export const classifyAsks = (step: ClassifyStep, option: string): boolean => step.approve === undefined || step.approve === "ask" || (step.confirm ?? []).includes(option);
+
+/** Whether a judgment is sure enough to be set without asking: it reaches its option's `applyAt`, and the option is not one `confirm` names. */
+export const classifyApplies = (step: ClassifyStep, option: string, confidence: number): boolean => {
+  const at = step.applyAt?.[option];
+  return at !== undefined && confidence >= at && !(step.confirm ?? []).includes(option);
+};
 
 const LINK = /\b(?:https?:\/\/|www\.)[^\s<>"')\]]+/gi;
 
@@ -69,8 +77,10 @@ const either = (items: readonly string[]): string => (items.length <= 1 ? (items
 export function classifyWords(step: ClassifyStep, noun: KindNoun, options?: readonly string[]): string {
   const among = step.options ?? options ?? [];
   const aside = Object.entries(step.setAside ?? {}).map(([option, at]) => `${option} at ${Math.round(at * 100)}% sure`);
+  const otherwise = step.otherwise !== undefined ? `, else ${step.otherwise}` : "";
+  const applies = Object.entries(step.applyAt ?? {}).map(([option, at]) => `${option} at ${Math.round(at * 100)}% sure`);
   const asks = step.approve === undefined || step.approve === "ask" ? " (asks a person first)" : (step.confirm ?? []).length > 0 ? ` (asks before ${either(step.confirm!)})` : "";
-  return `Label each ${noun(step.classify)}${step.where ? ` where ${step.where}` : ""} by its ${step.field.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase()}${among.length > 0 ? ` as ${either(among)}` : ""}${aside.length > 0 ? `; archive ${aside.join(", ")}` : ""}${asks}`;
+  return `Label each ${noun(step.classify)}${step.where ? ` where ${step.where}` : ""} by its ${step.field.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase()}${among.length > 0 ? ` as ${either(among)}` : ""}${otherwise}${applies.length > 0 ? `; sets ${applies.join(", ")} without asking` : ""}${aside.length > 0 ? `; archive ${aside.join(", ")}` : ""}${asks}`;
 }
 
 export const classifyStep: StepKind<ClassifyStep> = {
@@ -85,6 +95,8 @@ export const classifyStep: StepKind<ClassifyStep> = {
       instruction: z.optional(s.str(1, 2000)),
       floor: z.optional(z.record(s.str(1, 120), z.strictObject({ links: z.optional(z.number().check(z.int(), z.minimum(1), z.maximum(1000))), words: z.optional(z.array(s.str(1, 120)).check(z.maxLength(500))), expr: z.optional(s.expression) }))),
       setAside: z.optional(z.record(s.str(1, 120), z.number())),
+      applyAt: z.optional(z.record(s.str(1, 120), z.number())),
+      otherwise: z.optional(s.str(1, 120)),
       confirm: z.optional(z.array(s.str(1, 120)).check(z.maxLength(60))),
       relabel: z.optional(z.boolean()),
       model: z.optional(s.str(1, 120)),
@@ -135,12 +147,17 @@ export const classifyStep: StepKind<ClassifyStep> = {
         }
       }
     }
-    for (const [option, threshold] of Object.entries(step.setAside ?? {})) {
-      if (!judged(option)) unknown(option, `${at}.setAside.${option}`, "sets aside");
-      if (!(threshold >= 0 && threshold <= 1)) {
-        out.push({ code: "workflow-classify-threshold-invalid", severity: "error", path: `${at}.setAside.${option}`, message: `${said} sets aside "${option}" at ${threshold}, and how sure a judgment is runs from 0 to 1.`, fix: `Say a number from 0 to 1: 0.9 for "90% sure".` });
+    const thresholds = (key: "setAside" | "applyAt", how: string) => {
+      for (const [option, threshold] of Object.entries(step[key] ?? {})) {
+        if (!judged(option)) unknown(option, `${at}.${key}.${option}`, how);
+        if (!(threshold >= 0 && threshold <= 1)) {
+          out.push({ code: "workflow-classify-threshold-invalid", severity: "error", path: `${at}.${key}.${option}`, message: `${said} ${how} "${option}" at ${threshold}, and how sure a judgment is runs from 0 to 1.`, fix: `Say a number from 0 to 1: 0.9 for "90% sure".` });
+        }
       }
-    }
+    };
+    thresholds("setAside", "sets aside");
+    thresholds("applyAt", "sets without asking");
+    if (step.otherwise !== undefined && !judged(step.otherwise)) unknown(step.otherwise, `${at}.otherwise`, "labels what no option clears");
     if (Object.keys(step.setAside ?? {}).length > 0 && !world.acts.includes(`archive-${step.classify}`)) {
       out.push({ code: "workflow-archive-never", severity: "error", path: `${at}.setAside`, message: `${said} sets records aside, and the app says ${world.noun(step.classify)} records are never archived.`, fix: `Take "archives: false" off "${step.classify}", or let "setAside" go.` });
     }

@@ -193,3 +193,53 @@ describe("a classify step without a model", () => {
     expect(run.heldBack).toEqual([{ step: 0, why: "Step 1: no model was lent and the step has no floor, so nothing was labeled." }]);
   });
 });
+
+/*
+ * WHAT NO OPTION CLEARS, AND WHAT IT IS SURE ENOUGH OF (Roadmap
+ * f-workflow-runs-say-more, request classify-step-otherwise-and-apply-at):
+ * `otherwise` labels a record neither the model nor the floor found an
+ * option for, rather than leaving it unlabeled; `applyAt` sets a label the
+ * model is at least that sure of without asking, and asks below it as the
+ * step says — never for an option `confirm` names.
+ */
+describe("a classify step's otherwise and applyAt", () => {
+  it("labels what no option clears with otherwise, and says how many", async () => {
+    const app = appOf({ approve: "apply", otherwise: "needs-look" });
+    const store = storeOf(app);
+    const run = await runReal(app, store, memoryWorkflowLog(), judge());
+    expect(categoryOf(store, "f-meh")).toBe("needs-look");
+    expect(categoryOf(store, "f-buy")).toBe("spam");
+    expect(run.notes).toContain("Labeled one feedback needs-look: neither the model nor the floor found an option that fit.");
+    expect(run.notes.some((note) => note.startsWith("Left"))).toBe(false);
+  });
+
+  it("labels what no floor rule matches with otherwise when no model is lent", async () => {
+    const app = appOf({ approve: "apply", floor: { spam: { links: 2 } }, otherwise: "good-to-show" });
+    const store = storeOf(app);
+    await runReal(app, store, memoryWorkflowLog());
+    expect(["f-buy", "f-love", "f-dumb", "f-meh"].map((id) => categoryOf(store, id))).toEqual(["spam", "good-to-show", "good-to-show", "good-to-show"]);
+  });
+
+  it("sets a label at or above its applyAt without asking, and asks the rest as the step says", async () => {
+    const app = appOf({ applyAt: { spam: 0.9, rude: 0.9 } });
+    const store = storeOf(app);
+    await runReal(app, store, memoryWorkflowLog(), judge());
+    expect(categoryOf(store, "f-buy")).toBe("spam");
+    expect(categoryOf(store, "f-dumb")).toBeUndefined();
+    expect(categoryOf(store, "f-love")).toBeUndefined();
+    const waiting = suggestions(store);
+    expect(waiting).toHaveLength(1);
+    expect(waiting[0]!.calls).toEqual([
+      { name: "edit-feedback", args: { id: "f-love", category: "good-to-show" } },
+      { name: "edit-feedback", args: { id: "f-dumb", category: "rude" } },
+    ]);
+  });
+
+  it("asks before an option confirm names, whatever its applyAt", async () => {
+    const app = appOf({ applyAt: { spam: 0.5 }, confirm: ["spam"] });
+    const store = storeOf(app);
+    await runReal(app, store, memoryWorkflowLog(), judge());
+    expect(categoryOf(store, "f-buy")).toBeUndefined();
+    expect(suggestions(store)[0]!.calls).toContainEqual({ name: "edit-feedback", args: { id: "f-buy", category: "spam" } });
+  });
+});
