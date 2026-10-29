@@ -105,8 +105,8 @@ exporting the app itself is `graview-ship`.
    read as names; formulas, rollups and files are left alone and said
    once. A page archived there is gone here, and one removed here is
    archived there. A mapped property the source lacks is made on the
-   first pass (`report.said`), never renamed or deleted; `create: false`
-   makes none. A computed field may be mapped: sent, never read back.
+   first pass (`report.said`), never renamed or deleted (`create: false`:
+   none). A computed field may be mapped: sent, never read back.
    `scriptedNotion()` is a Notion in memory to test against.
 
    What a change there lands through, credited to the system: a page or
@@ -136,8 +136,8 @@ exporting the app itself is `graview-ship`.
    table is, whatever order the connections run in (`runConnections`
    shares one `sharedLinks()`; a host making engines itself passes one
    `links` to every `connection()`). A relation of one keeps the first
-   page and says the rest once. A dual relation may be declared on either
-   side or both; an edge conflicts like a field.
+   page and says the rest once. Declare a dual relation on either side or
+   both; an edge conflicts like a field.
 
 ## Then find out whether it worked
 
