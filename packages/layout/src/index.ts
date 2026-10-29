@@ -47,7 +47,7 @@ export { areaOf, boxOf, centroidOf, estimateWidth, fitLabel, overlaps, spanAt } 
 export type { FitOptions, FitPoint, FittedLabel, LabelBox, Measure } from "./label-fit.js";
 export { cameraLimit, collides, districtsPastTheEdge, panForZoom, placeCity } from "./city.js";
 export type { CityCard, Nameplate, PastTheEdge, PlacedCard } from "./city.js";
-export type { CityFrame } from "./types.js";
+export type { CityFrame, CityStood } from "./types.js";
 export { bandAggregateWords, bandCaps, bandOf, chooseGrouping, isBandAggregate, packBand, packRuns, runOf, shares } from "./band.js";
 export type { BandItem, BandOptions, BandSegment, Relevance } from "./band.js";
 export { bandCaptions, CAPTION_HEIGHT, CAPTION_RISE, captionRuns, captionText, captionWidth, MIN_CAPTION } from "./captions.js";

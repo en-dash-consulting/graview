@@ -177,7 +177,8 @@ describe("a hosted page", () => {
     // 1040 KB since a rule came to cover every record without a cost warning (Roadmap f-rule-covers-every): the schema's `covers`, the compiler resolving the walk against the relations, and the judge that walks it once: the scene face measured 1_064_463 B, 3_192 more than main (1_061_271).
     // 1040 KB since a suggestion came to take a vote from someone who may not accept it (Roadmap f-suggestion-votes): the built-in vote-suggestion act, the vote on its op, the gesture that queues what the deciding vote has the actor make, and the tray's vote and tally: the scene face measured 1_064_592 B, 3_321 more than main (1_061_271).
     // 1053 KB once the 0.1.62 batch's twelve branches were merged, each measured alone against main: the scene face measured 1_077_516 B.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1053 * 1024);
+    // 1054 KB since an iPad's bar came to fit and its scene to hold still: the bar taking what runs past its row off the places' room, the city keeping a choice in sight from where it stands, and the scene's box held while only Safari's toolbar folded away: the scene face measured 1_079_279 B, 1_763 more than main (1_077_516).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1054 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

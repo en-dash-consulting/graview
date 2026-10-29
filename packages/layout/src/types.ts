@@ -234,6 +234,13 @@ export interface Connector {
  * (0,0) meets the canvas before the pan. `extent` is the city's bounding
  * box in canvas pixels, unpanned.
  */
+/** Where a city stood: the move it made from its middle to keep a choice in sight, and the cell it was at when it made it. */
+export interface CityStood {
+  readonly x: number;
+  readonly y: number;
+  readonly cell: number;
+}
+
 export interface CityFrame {
   readonly cell: number;
   readonly originX: number;
@@ -253,6 +260,8 @@ export interface CityFrame {
   readonly extent: { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
   /** How much of an opened district's roster the city kept room for: 1 is all of it. */
   readonly openedShare?: number;
+  /** How far the city moved from its middle to keep what is chosen in sight, at its cell; absent where it did not. Handed back as `cityStood`. */
+  readonly stood?: CityStood;
   /** How the ground is seen: a cell's height over its width, a half at an angle and one from straight above. Absent is a half. */
   readonly tilt?: number;
   /**
@@ -417,6 +426,13 @@ export interface LayoutOptions {
    */
   readonly cityZoom?: number;
   /**
+   * WHERE THE CITY STOOD the last time it was laid out (`CityFrame.stood`):
+   * a choice from altitude is kept in sight from there rather than from the
+   * city's middle, so a district already in sight is chosen with nothing
+   * moving. Used at the same cell only.
+   */
+  readonly cityStood?: CityStood;
+  /**
    * HOW THE CITY IS SEEN: a cell's height over its width on the screen —
    * 0.5 at the angle the city has always stood at, 1 from straight above,
    * where every block lies flat and its state is its shade alone.
@@ -442,7 +458,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "besideTheMap" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "nameWidth" | "chrome" | "tilt" | "dock" | "headroom">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "besideTheMap" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "cityStood" | "nameWidth" | "chrome" | "tilt" | "dock" | "headroom">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1200, height: 420 },
