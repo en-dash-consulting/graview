@@ -16,7 +16,8 @@ import type { StepContext, StepRunner } from "./types.js";
  * step's `budget.calls` says more is allowed (one is all it needs), and the
  * records shown are cut to the step's `budget.tokens` (50,000 when unsaid).
  * No model lent — or the host turned AI off — and the step is skipped, said
- * on the run, which is then `partial`: never a failure.
+ * on the run, which is then `partial`: never a failure. What the call spent
+ * — the reply's `usage` — is counted on the run (`spent`).
  */
 
 const SYSTEM = [
@@ -61,11 +62,15 @@ export const runAgentStep: StepRunner<AgentStep> = {
     if (Math.ceil((SYSTEM.length + head.length) / 4) > tokens) return context.skipped(`its instruction and acts alone are past its budget of ${tokens} tokens.`);
     if (cut > 0) context.note(`Step ${context.index + 1}: ${cut} record${cut === 1 ? " was" : "s were"} left out to keep to its budget of ${tokens} tokens.`);
     let text: string;
+    const model = step.model ?? context.ai?.name ?? "model";
     try {
       const reply = await complete({ system: SYSTEM, prompt: `${head}${lines.join("\n")}` });
       text = reply.text;
-      if (reply.usage && reply.usage.inputTokens + reply.usage.outputTokens > tokens) context.note(`Step ${context.index + 1} spent ${reply.usage.inputTokens + reply.usage.outputTokens} tokens, past its budget of ${tokens}.`);
+      const usage = reply.usage;
+      context.spent({ calls: 1, model, ...(usage ? { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens, ...(usage.costUsd !== undefined ? { costUsd: usage.costUsd } : {}) } : {}) });
+      if (usage && usage.inputTokens + usage.outputTokens > tokens) context.note(`Step ${context.index + 1} spent ${usage.inputTokens + usage.outputTokens} tokens, past its budget of ${tokens}.`);
     } catch (error) {
+      context.spent({ calls: 1, model });
       return context.skipped(`the model did not answer: ${error instanceof Error ? error.message : String(error)}`);
     }
     const parsed = firstJsonObject(text);
@@ -73,7 +78,6 @@ export const runAgentStep: StepRunner<AgentStep> = {
     const proposals = (Array.isArray(raw) ? raw : []).map((one) => ({ ...one, mutation: one.mutation ?? one.act ?? "" }));
     const valid = validateProposals(seen as Store<AnySchema>, proposals, step.acts);
     if (valid.length < proposals.length) context.note(`Step ${context.index + 1}: ${proposals.length - valid.length} of what the model proposed named an act it may not propose, and was let go.`);
-    const model = step.model ?? context.ai?.name ?? "model";
     for (const proposal of valid) {
       const resolved = resolveProposal(seen as Store<AnySchema>, proposal);
       const sure = (proposal as { confidence?: unknown }).confidence;

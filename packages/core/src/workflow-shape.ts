@@ -148,11 +148,13 @@ export interface ClassifyFloorRule {
  * LABEL EACH RECORD (Roadmap f-feedback-triage-agent): one typed judgment
  * per record of `classify` — which of `field`'s options fits it, and how
  * sure — set through the kind's own act with the reason on its lineage.
- * Without a model, the `floor` decides; a record no rule matches is left
- * for a person. An option whose confidence reaches its `setAside`
- * threshold also archives the record (never removes it). Asked of a person
- * unless the step says its own `approve`; an option in `confirm` is
- * always asked. A record already labeled is passed by unless `relabel`.
+ * Without a model, the `floor` decides; a record no option clears — the
+ * model chose none and no floor rule holds — is labeled `otherwise` when
+ * the step says it, else left for a person. An option whose confidence
+ * reaches its `setAside` threshold also archives the record (never
+ * removes it). Asked of a person unless the step says its own `approve`,
+ * or the judgment reaches the option's `applyAt`; an option in `confirm`
+ * is always asked. A record already labeled is passed by unless `relabel`.
  */
 export interface ClassifyStep {
   readonly classify: string;
@@ -166,7 +168,11 @@ export interface ClassifyStep {
   readonly floor?: Readonly<Record<string, ClassifyFloorRule>>;
   /** An option, and how sure (0 to 1) a judgment must be for the record to be archived too. */
   readonly setAside?: Readonly<Record<string, number>>;
-  /** Options never set without a person's yes, whatever `approve` says. */
+  /** An option, and how sure (0 to 1) a judgment must be for the label to be set without asking; below it, it is asked as the step says. */
+  readonly applyAt?: Readonly<Record<string, number>>;
+  /** The option a record no option clears is labeled: the model chose none and no floor rule holds. Unsaid, such a record is left for a person. */
+  readonly otherwise?: string;
+  /** Options never set without a person's yes, whatever `approve` or `applyAt` says. */
   readonly confirm?: readonly string[];
   /** Judge a record again though it is labeled already. */
   readonly relabel?: boolean;

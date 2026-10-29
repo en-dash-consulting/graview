@@ -111,16 +111,27 @@ export function workflowSpots(workflows: readonly MapWorkflow[], plots: Readonly
   return out;
 }
 
-/** A run as `lastRunWords` reads it: `WorkflowRun` from `@graview/tools/workflows`, or any record with these. */
+/** How many records a run made, changed, set aside or suggested: the ids, or only how many there were. */
+export type RunCount = number | readonly string[];
+
+/**
+ * A run as `lastRunWords` reads it: `WorkflowRun` from
+ * `@graview/tools/workflows`, or any record with these. Each of `made`,
+ * `changed`, `archived` and `suggested` is the ids or a count; a host that
+ * keeps only counts sends the numbers, and the words are the same.
+ */
 export interface RunSaid {
   readonly finished: string;
   readonly outcome: "ok" | "nothing-new" | "partial" | "held" | "failed";
   readonly dry: boolean;
-  readonly made: readonly string[];
-  readonly changed: readonly string[];
-  readonly archived: readonly string[];
-  readonly suggested: readonly string[];
+  readonly made: RunCount;
+  readonly changed: RunCount;
+  readonly archived: RunCount;
+  readonly suggested: RunCount;
 }
+
+/** How many a count says: the number, or how many ids it holds. Anything else is none. */
+export const runCount = (count: RunCount | undefined): number => (typeof count === "number" ? (Number.isFinite(count) && count > 0 ? Math.floor(count) : 0) : Array.isArray(count) ? count.length : 0);
 
 /** "just now", "5 minutes ago", "2 hours ago", "yesterday", "3 days ago": how long before `now` a moment was. */
 export function agoWords(at: string | number | Date, now: string | number | Date = Date.now()): string {
@@ -145,10 +156,10 @@ export function lastRunWords(run: RunSaid | undefined, now: string | number | Da
   if (run.outcome === "failed") return `${when} and failed`;
   if (run.outcome === "held") return `${when}: held back`;
   const counts = [
-    [run.made.length, run.dry ? "would make" : "made"],
-    [run.changed.length, run.dry ? "would change" : "changed"],
-    [run.archived.length, run.dry ? "would set aside" : "set aside"],
-    [run.suggested.length, run.dry ? "would suggest" : "suggested"],
+    [runCount(run.made), run.dry ? "would make" : "made"],
+    [runCount(run.changed), run.dry ? "would change" : "changed"],
+    [runCount(run.archived), run.dry ? "would set aside" : "set aside"],
+    [runCount(run.suggested), run.dry ? "would suggest" : "suggested"],
   ] as const;
   const said = counts.filter(([count]) => count > 0).map(([count, verb]) => `${verb} ${count}`);
   const what = said.length > 0 ? said.join(", ") : "nothing new";

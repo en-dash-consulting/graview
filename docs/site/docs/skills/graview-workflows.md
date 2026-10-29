@@ -39,6 +39,8 @@ Pick the recipe that matches the sentence. Each ends the same way: check, then a
 
 **What its changes become.** `apply` makes them. `suggest` makes what it is sure enough of and puts the rest in the Suggested tray. `ask` gathers a run into one suggestion a person approves whole or item by item. A step may say its own `approve`. An `agent` step — `{ "agent": "<instruction>", "reads": [...], "acts": [...] }` — needs the host's model; with none lent the step is skipped and the run says so, never fails.
 
+**Labeling each record.** A `classify` step — `{ "classify": "feedback", "field": "category" }` — asks the model which option fits each record. `"otherwise": "needs-look"` labels a record no option clears (else it is left unlabeled for a person); `"applyAt": { "spam": 0.85 }` sets a label at least that sure without asking, and asks below it. An option in `confirm` is always asked. An option the field lacks, or a number past 0 to 1, is a `workflow-classify-*` finding.
+
 **Say it in TypeScript** the same way: `defineApp({ workflows })` takes the same objects.
 
 ### Then find out whether it worked
@@ -57,7 +59,7 @@ From altitude the Scene draws each workflow in the street beside the district it
 
 --workflows`); Graview Cloud's chat does it through `propose_change` with `add-workflow`, `set-workflow`, `pause-workflow`, `resume-workflow`.
 
-A host runs workflows on their clocks itself: `nextRunAt(workflow, after, zone)` and `triggeredBy(workflow, commit, app)` from `@graview/core/workflows` say when, `runWorkflow` from `@graview/tools/workflows` runs one, and its `WorkflowLog` keeps the runs.
+A host runs workflows on their clocks itself: `nextRunAt(workflow, after, zone)` and `triggeredBy(workflow, commit, app)` from `@graview/core/workflows` say when, `runWorkflow` from `@graview/tools/workflows` runs one, and its `WorkflowLog` keeps the runs. A run says what its model steps spent (`spent`: calls and tokens, by step and in all) — meter from that, never by wrapping the model. Pass a trigger's `by` (the workflow whose run fired it) into the run: it carries its `chain`, and one deeper than `chainLimit` (3) is held and says so, so two workflows that wake each other stop. `workflowRuns` takes counts (`made: 3`) as well as ids.
 
 ### What the check cannot see
 
