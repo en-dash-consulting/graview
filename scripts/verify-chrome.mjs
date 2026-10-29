@@ -150,6 +150,15 @@ async function buildHost() {
           if (asked.get("vote")) voteSuggestion(store, suggestions(store)[0].id, "for", { author: { kind: "human", id: "user-vis", name: "Vis", roles: [] } });
         }
         /*
+         * A workflow's run asked about as one, when the page asks (f-job-approvals): three tasks to archive in one suggestion, said
+         * as one, each change its own sentence — what a workflow whose approve is "ask" leaves in the tray.
+         */
+        if (asked.get("run")) {
+          const store = window.__handle.store;
+          const actor = { kind: "system", id: "workflow:tidy", name: "Set aside finished tasks", automated: true };
+          suggest(store, ["t-paint", "t-shelves", "t-broadband"].map((id) => ({ name: "archive-task", args: { id } })), { author: actor, lineage: { basis: "Finished a week ago", run: "workflow:tidy:2026-10-28", actor: "workflow:tidy" }, intent: "Set aside finished tasks: 3 tasks to archive" });
+        }
+        /*
          * A crowded tray, when the page asks: a task renamed to 120 characters with no space, and a suggestion for each task it could
          * wait for, each based on a sentence that names it — as Threat Watch's seventeen named "@tanstack/react-router".
          */
@@ -786,6 +795,58 @@ try {
       votes[face] = { reader, keeper, ok };
     }
     report.checks.aSuggestionTakesAVoteFromAReaderAndShowsTheTallyToWhoMayDecide = { ...votes, ok: Object.values(votes).every((one) => one.ok) };
+  }
+  /*
+   * ---- A workflow's run is one suggestion that lists its changes and takes them one at a time (f-job-approvals), on both faces:
+   * the row says the run as one, "Accept all" stands where Accept does, the changes open each in its act's own sentence with its own
+   * Accept, and one accepted is made while the rest still wait in the same row — the keyboard never on <body>.
+   */
+  {
+    const runs = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&run=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      const run = await page.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-items"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const words = document.querySelector("[data-graview-suggestion-words]")?.textContent ?? "";
+        const all = document.querySelector('[data-testid="suggestion-accept"]')?.textContent ?? null;
+        const summary = document.querySelector('[data-testid="suggestion-items"] summary');
+        summary?.click();
+        await new Promise((done) => setTimeout(done, 100));
+        const items = [...document.querySelectorAll('[data-testid="suggestion-item"]')].map((item) => item.firstElementChild?.textContent ?? "");
+        const second = document.querySelectorAll('[data-testid="suggestion-item-accept"]')[1];
+        const label = second?.getAttribute("aria-label") ?? null;
+        second?.focus();
+        second?.click();
+        for (let turn = 0; turn < 50 && document.querySelectorAll('[data-testid="suggestion-item"]').length !== 2; turn++) await new Promise((done) => setTimeout(done, 50));
+        const store = window.__handle.store;
+        return {
+          words,
+          all,
+          items,
+          label,
+          left: document.querySelectorAll('[data-testid="suggestion-item"]').length,
+          rows: document.querySelectorAll('[data-testid="suggestion"]').length,
+          archived: store.graph.getNode("t-shelves")?.$archived === true,
+          untouched: store.graph.getNode("t-paint")?.$archived !== true,
+          heard: document.querySelector('[data-testid="suggestion-heard"]')?.textContent ?? null,
+          keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName,
+        };
+      });
+      await page.keyboard.press("Escape");
+      await page.close();
+      const ok =
+        run !== null && /^Set aside finished tasks suggests 3 tasks to archive$/.test(run.words.trim()) && run.all === "Accept all" && run.items.length === 3 && run.items.every((one) => /^Archive /.test(one)) &&
+        run.label === `Accept: ${run.items[1]}` && run.left === 2 && run.rows === 1 && run.archived && run.untouched && run.heard === "Accepted that change; the rest still wait." && run.keyboard !== "BODY";
+      runs[face] = { run, ok };
+    }
+    report.checks.aRunsSuggestionListsItsChangesAndTakesOneAtATime = { ...runs, ok: Object.values(runs).every((one) => one.ok) };
   }
   /*
    * ---- A visitor is offered Sign in rather than a vote (f-votes-shared-seat), on both faces: the host's one shared signed-out seat

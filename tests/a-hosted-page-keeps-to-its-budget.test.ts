@@ -181,10 +181,13 @@ describe("a hosted page", () => {
     // 1054 KB since a Notion connection came to keep several data sources and to say on a record's page which one keeps it ("Kept in step with Notion · Tasks"): the line on the record's page and the compile reading a connection's sources: the scene face measured 1_078_654 B, 987 more than main (1_077_667).
     // 1056 KB once the 0.1.63 batch's branches were merged, each measured alone against main: the scene face measured 1_080_549 B.
     // 1060 KB since a record came to follow the record it derives from (Roadmap f-keep-linked): the store keeping `derives` in step and `validateGraph` saying one out of step: the scene face measured 1_082_988 B, over feat/workflows.
+    // 1055 KB since a workflow came to set aside what is done with and to ask about a run as one suggestion (Roadmap f-retention-rules, f-job-approvals): a lineage that names which of a suggestion's changes a person took, a decline that leaves those out, and the tray's list of a run's changes: the scene face measured 1_079_378 B, 1_549 more than feat/workflows (1_077_829).
     // 1056 KB since a timeline came to be accepted only where it draws, money never to read ".00", an option to be said by its label in a template and a batch of acts by each act (Roadmap f-lifelogics-findings): the timeline's bindings in words, a sum rounded to the cent and its places, a choice's labels on each kind's shape: the scene face measured 1_080_480 B, 2_813 more than main (1_077_667).
     // 1054 KB since an app's workflows came to stand on the Scene's map (Roadmap f-jobs-declared): the scene reading the declared workflows and its door to their layer: the scene face measured 1_078_353 B, 566 more than feat/workflows (1_077_787).
     // 1054 KB since an iPad's bar came to fit and its scene to hold still: the bar taking what runs past its row off the places' room, the city keeping a choice in sight from where it stands, and the scene's box held while only Safari's toolbar folded away: the scene face measured 1_079_279 B, 1_763 more than main (1_077_516).
     // 1066 KB once the 0.1.63 batch held C1–C9 and the workflows (W1, W2, W3, W5), each measured alone against main: the scene face measured 1_090_838 B.
+    // 1066 KB once the archive step and a run asked as one suggestion (Roadmap f-retention-rules, f-job-approvals) joined the 0.1.63 batch: the scene face measured 1_090_783 B.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1068 * 1024);
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1066 * 1024);
   });
 

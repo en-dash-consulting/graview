@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form alone",
+  "minified": 338,
+  "gzipped": 124,
+  "note": "Raised when a workflow came to set aside what is done with and to ask about a run as one suggestion (Roadmap f-retention-rules, f-job-approvals): a lineage that names which of a suggestion's changes a person took (`items`) and a decline that leaves those out, in the store the form runs on. 338 / 104 more, and 20 gzipped bytes of room for what gzip moves between runs. Measured at 256_143 / 93_618 against 255_805 / 93_514 on feat/workflows."
+}

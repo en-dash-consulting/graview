@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 338,
+  "gzipped": 115,
+  "note": "Raised when a workflow came to set aside what is done with and to ask about a run as one suggestion (Roadmap f-retention-rules, f-job-approvals): a lineage that names which of a suggestion's changes a person took (`items`) and a decline that leaves those out, and the tray's list of a run's changes each with its own Accept. 338 / 95 more, and 20 gzipped bytes of room for what gzip moves between runs. Measured at 700_782 / 256_704 against 700_444 / 256_609 on feat/workflows."
+}

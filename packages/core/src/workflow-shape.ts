@@ -119,8 +119,23 @@ export interface GenerateStep {
   readonly approve?: WorkflowApproval;
 }
 
+/**
+ * SET ASIDE WHAT IS DONE WITH (Roadmap f-retention-rules): archive the
+ * records of a kind `where` holds of, once they have stood `after` — "3
+ * days" since each last changed, or `{ field, days }` after a date it
+ * holds. Archived, never removed; a record left alone, a kind never
+ * tidied and a record a person brought back from this workflow's archive
+ * are passed by.
+ */
+export interface ArchiveStep {
+  readonly archive: string;
+  readonly where?: string;
+  readonly after?: string | { readonly field: string; readonly days: number };
+  readonly approve?: WorkflowApproval;
+}
+
 /** One step of a workflow: one of `STEP_KINDS`, told apart by its one discriminating key. */
-export type WorkflowStep = ActStep | AgentStep | GenerateStep;
+export type WorkflowStep = ActStep | AgentStep | GenerateStep | ArchiveStep;
 
 /** A workflow as it is declared. */
 export interface WorkflowDeclaration {

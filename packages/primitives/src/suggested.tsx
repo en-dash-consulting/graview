@@ -7,6 +7,7 @@ import { dismissalsOf, tomorrow } from "./dismissals.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { nameOf } from "./workbench/answer-args.js";
 import { NamedRecord } from "./workbench/named-record.js";
+import { SuggestionItems } from "./suggested-items.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -176,6 +177,9 @@ const HEARD = { accept: "Accepted.", decline: "Declined: it will not be suggeste
 /** What a vote is said as, to the person who cast it: the row stays, since the suggestion still waits. */
 const VOTED = { recorded: "Your vote was recorded.", withdrawn: "Your vote was withdrawn." } as const;
 
+/** A suggestion of several said after who suggests it: a headline that starts with their name ("Fill out next week's events: …") says it once. */
+const headlineAfter = (by: string, headline: string): string => (headline.startsWith(`${by}: `) ? headline.slice(by.length + 2) : headline);
+
 /**
  * The votes on a suggestion, said beside Accept to whoever may decide: "4
  * for, 1 against" — and the advisory votes of visitors on a shared or
@@ -247,8 +251,9 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
   return (
     <li data-testid="suggestion" data-suggestion={suggestion.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 5, lineHeight: 1.45, minWidth: 0 }}>
       <span data-graview-suggestion-words="" style={WRAPS}>
-        <strong style={{ fontWeight: 600 }}>{by}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>suggests</span> {suggestion.intent}
+        <strong style={{ fontWeight: 600 }}>{by}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>suggests</span> {suggestion.items.length > 1 ? headlineAfter(by, suggestion.headline ?? suggestion.intent) : suggestion.intent}
       </span>
+      <SuggestionItems suggestion={suggestion} decides={decides} heard={heard} />
       {suggestion.lineage ? (
         <span data-graview-lineage="" style={{ ...WRAPS, color: "var(--graview-ink-faint)" }}>
           {lineageWords(suggestion.lineage)}
@@ -271,7 +276,7 @@ function SuggestionRow({ suggestion, notNow, settled, heard, goes }: { readonly 
             {...(decides ? {} : { "aria-pressed": tally.mine === "for", "aria-describedby": voting })}
             style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}
           >
-            Accept
+            {decides && suggestion.items.length > 1 ? "Accept all" : "Accept"}
           </button>
         ) : signIn ? (
           <button type="button" data-testid="suggestion-sign-in" onClick={() => signIn.run()} style={{ minHeight: 24, padding: "1px 10px", fontSize: "0.75rem" }}>
