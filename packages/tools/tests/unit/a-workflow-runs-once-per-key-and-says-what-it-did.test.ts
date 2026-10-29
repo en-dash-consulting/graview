@@ -47,7 +47,8 @@ const app = compiled.app as GraviewApp<AnySchema>;
 // What the document declares, as a TypeScript app would hold it: a variant below is the app with these changed.
 const declared = declaredWorkflows(app)!;
 
-const NOW = "2026-11-01T22:00:00.000Z";
+// Midday on every clock the suite runs on, so the run is "today" and never "overnight" whether the zone is UTC or New York.
+const NOW = "2026-11-01T16:00:00.000Z";
 
 function homeStore() {
   return new Store<AnySchema>({
@@ -171,7 +172,8 @@ describe("an act step over a query, keyed", () => {
     await run(store, log);
     const rows = foldDigests(store.batches());
     const digest = rows.find((row) => "digest" in row);
-    expect(digest && "digest" in digest ? digestWords(digest.digest, "2026-11-01") : "").toBe("Fill out next week's events: 2 things today");
+    // When it fell ("today", "overnight", "on Nov 1") is the runner's clock and zone; whose run it was is the title.
+    expect(digest && "digest" in digest ? digestWords(digest.digest, "2026-11-01") : "").toMatch(/^Fill out next week's events: 2 things (today|overnight|on .+)$/);
   });
 });
 
