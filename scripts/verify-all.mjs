@@ -125,6 +125,8 @@ const CHAIN = [
   ["address", "verify-address.mjs"],
   // An app fills the phone after it turns, at the screen's height on both faces and in the Shell, in Chromium and WebKit (FR-165).
   ["viewport", "verify-viewport.mjs"],
+  // The scene under a finger and a mouse, on the discography's thousand songs: a tap chooses and never pans, a drag never chooses, a pinch and a wheel zoom under the hand, a double-tap goes in, a quick second tap lands where it was aimed, a list scrolls without moving its card, the page behind never scrolls, and the frames keep up at a quarter speed — on a phone and a desk, in Chromium and WebKit.
+  ["scene-hands", "verify-scene-hands.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],
@@ -159,7 +161,7 @@ const CHAIN = [
  * hold no state of a harness's (each opens its own browser context), and
  * runs side by side.
  */
-const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "renderer", "who", "journeys", "create"]);
+const ALONE = new Set(["lines", "panning", "first-load", "scale", "scene-at-scale", "scene-hands", "renderer", "who", "journeys", "create"]);
 
 /** Where the last run's verdicts are kept, for `--failed`. */
 const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");
