@@ -15,7 +15,7 @@ import type { ChangeOutcome, StepChange } from "./types.js";
  * one a person already declined is let go — never asked again. When the run
  * closes, its group replaces the one the workflow's last run left waiting
  * (withdrawn, which is no decline); a group that asks exactly what still
- * waits is the one that waits.
+ * waits is the one that waits, and the run suggested nothing new.
  */
 
 export interface AskedOptions {
@@ -62,7 +62,8 @@ export function askedOf(options: AskedOptions): Asked {
       if (!op) return undefined;
       // The last run's group stands no longer: this run's says what is still to do.
       for (const old of before) if (old.id !== op.id) withdrawSuggestion(store, old.id, { author: principal as Principal });
-      return op.id;
+      // Asked exactly as the group that waits: that one stands, and this run suggested nothing new.
+      return before.some((old) => old.id === op.id) ? undefined : op.id;
     },
   };
 }

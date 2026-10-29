@@ -200,14 +200,19 @@ describe("a workflow that asks gathers its run into one suggestion (f-job-approv
     expect(declined(store, [{ name: "archive-grocery-list", args: { id: "grocery-list:sunday" } }])).toBeUndefined();
   });
 
-  it("asks exactly what still waits, and the waiting one stands", async () => {
+  it("asks exactly what still waits, and the waiting one stands, three runs in a row: one suggestion, the later runs nothing new", async () => {
     const clock = { at: T0 };
     const store = storeAt(clock);
     clock.at = T0 + 5 * DAY;
     const { run, log } = await runReal(appWith({ tidy: ask }), store, "tidy", clock);
-    const again = await runWorkflow({ app: appWith({ tidy: ask }), store, workflow: "tidy", log, now: iso(clock.at + DAY) });
-    expect(again.suggested).toEqual(run.suggested);
-    expect(suggestions(store)).toHaveLength(1);
+    expect(run.suggested).toHaveLength(1);
+    for (const day of [1, 2]) {
+      const again = await runWorkflow({ app: appWith({ tidy: ask }), store, workflow: "tidy", log, now: iso(clock.at + day * DAY) });
+      expect(again.suggested).toEqual([]);
+      expect(again.outcome).toBe("nothing-new");
+      expect(suggestions(store).map((one) => one.id)).toEqual(run.suggested);
+    }
+    expect(store.log.all().filter((op) => op.suggests)).toHaveLength(1);
   });
 });
 
