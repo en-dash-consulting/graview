@@ -116,6 +116,9 @@ export interface GenerateStep {
   readonly using?: string;
   /** A rerun sets a field again even where a person changed it. */
   readonly overwrite?: boolean;
+  readonly approve?: WorkflowApproval;
+}
+
 /**
  * SET ASIDE WHAT IS DONE WITH (Roadmap f-retention-rules): archive the
  * records of a kind `where` holds of, once they have stood `after` — "3
