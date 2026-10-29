@@ -429,12 +429,24 @@ async function turnsAndToolbar(page, where, phone) {
   await page.setViewportSize({ width, height: height + 70 });
   await page.waitForTimeout(SETTLE);
   const toolbar = await boxOf(page, "kind:song");
+  /*
+   * NOT TURNED IN PLAYWRIGHT'S LINUX WEBKIT. Its web process dies when any
+   * page of the Shell is turned — on main as well, with the header, the
+   * scene and the bar all hidden; only the Shell's own column hidden spares
+   * it — reproduced in mcr.microsoft.com/playwright:v1.49.1-noble. WebKit on
+   * a Mac turns it, and so does Chromium; the toolbar folding away is still
+   * judged here.
+   */
+  if (where.engine === "webkit" && process.platform === "linux") {
+    const state = await stateOf(page);
+    return { where, before, toolbar, turned: "not on Linux WebKit, whose web process dies turning any Shell page", selected: state.selected, ok: near(before, toolbar, 1) && state.selected.includes("kind:song") && stillPage(state) };
+  }
   await page.setViewportSize({ width: height, height: width });
   await settled(page);
   await page.setViewportSize({ width, height });
   await settled(page);
   const state = await stateOf(page);
-  return { where, before, toolbar, selected: state.selected, ok: near(before, toolbar, 1) && state.selected.includes("kind:song") && stillPage(state) };
+  return { where, before, toolbar, turned: true, selected: state.selected, ok: near(before, toolbar, 1) && state.selected.includes("kind:song") && stillPage(state) };
 }
 
 /** Every page above, and the ground's own word: a list's scroll stops at the ground. */
