@@ -291,10 +291,3 @@ export function proposes(policy: Policy | undefined, principal: Principal, mutat
   const acting = actingAs(principal);
   return policy.grants.some((grant) => grant.propose !== undefined && grantsTo(grant, acting) && matches(grant.propose, mutation) && (grant.kinds === undefined || grant.kinds === "*" || (kind !== undefined && grant.kinds.includes(kind))));
 }
-
-/** The acts a principal may propose and may not run: what lists `propose_changes` for an agent seat acting for them. */
-export function proposedMutations<S extends AnySchema>(policy: Policy | undefined, principal: Principal, mutations: readonly AnyMutationDefinition<S>[]): readonly AnyMutationDefinition<S>[] {
-  if (!policy || !policy.grants.some((grant) => grant.propose !== undefined)) return [];
-  const runs = new Set(permittedMutations(policy, principal, mutations));
-  return mutations.filter((mutation) => !runs.has(mutation) && subjectKinds(mutation).some((kind) => proposes(policy, principal, mutation.name, kind)));
-}

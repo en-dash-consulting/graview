@@ -132,6 +132,13 @@ yesterday and now the button is gone.
     never names it, and `forms.<name>` saying the act: the
     `graview-visitor-forms` skill.
 
+11. **Let a role propose what it may not run.** `{ roles: ["helper"],
+    mutations: [], propose: ["close-task"] }`: the act's form reads
+    "Propose", an agent acting for them gets `propose_changes`, and the
+    change waits in the Suggested tray as "Proposed by Ada" until a seat
+    that may run it accepts it, as themselves (lineage `proposedBy`), or
+    declines it. Reviewing is running: no grant of its own.
+
 ## Worked examples
 
 - `packages/core/tests/unit/permissions.test.ts` — grants by role, by mutation

@@ -236,7 +236,6 @@ export {
   isSystem,
   permits,
   permittedMutations,
-  proposedMutations,
   proposes,
   rolesOf,
   rolesWhoCould, whyNot,

@@ -731,7 +731,7 @@ export function DerivedForm<S extends AnySchema>({
         const call = { name: mutation.name, args: { ...changedArgs(formArgs(fields, values), start), ...prefilled } };
         if (proposing) {
           // Kept as a proposal, through the module that keeps suggestions, fetched when one is first made.
-          void import("@graview/core/tidying")
+          void import("./propose-door.js")
             .then(({ propose }) => {
               propose(store, seat!, [call]);
               setFailed(null);

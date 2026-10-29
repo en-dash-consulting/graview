@@ -10,7 +10,6 @@ import {
   nodeRefArgs,
   permits,
   permittedMutations,
-  proposedMutations,
   onPublish,
   PUBLISH,
   refusalOf,
@@ -41,7 +40,7 @@ import {
 // A reader of an app that publishes is served the last publish (Roadmap f-publishing-lifecycle).
 import { publishMutation, publishRefusal } from "@graview/core/publishing";
 import { answerSeenBy } from "@graview/core/seat";
-import { acceptSuggestion, declineSuggestion, isProposal, propose, suggest, suggestions } from "@graview/core/tidying";
+import { acceptSuggestion, declineSuggestion, isProposal, propose, proposedMutations, suggest, suggestions } from "@graview/core/tidying";
 import { search, type SearchRanker } from "@graview/core/search";
 import { argumentsNeverShown, mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import type { ToolAnnotations, ToolDefinition } from "./tool-definition.js";

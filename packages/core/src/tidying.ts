@@ -36,7 +36,9 @@ import type { MutationCall } from "./mutations/types.js";
 import { advisoryVoterOf, signedOutSeat, VOTE_SUGGESTION, VOTING, type Vote } from "./mutations/vote-suggestion.js";
 import { lineageOf, LINEAGE_VOTERS_LIMIT, type Lineage } from "./ops/lineage.js";
 import { MOST_PROPOSED, PROPOSE_CHANGES, type ProposeChangesArgs } from "./mutations/propose-changes.js";
-import { actingAs } from "./permissions/policy.js";
+import { actingAs, permittedMutations, proposes, subjectKinds } from "./permissions/policy.js";
+import type { Policy } from "./permissions/types.js";
+import type { AnyMutationDefinition } from "./mutations/types.js";
 import { nameOfAuthor } from "./who.js";
 import { expired, suggestionsIn, votesIn, type Dismissal, type Suggestion } from "./ops/suggestions.js";
 import { declinedIn, isAutomated, meaningKey, type ActMeanings } from "./ops/tidying.js";
@@ -476,3 +478,10 @@ VOTING.propose = (held, made, call, batch, author, options) => {
     ...given("suggestsSaid", said),
   };
 };
+
+/** The acts a principal may propose and may not run: what lists `propose_changes` for an agent seat acting for them. */
+export function proposedMutations<S extends AnySchema>(policy: Policy | undefined, principal: Principal, mutations: readonly AnyMutationDefinition<S>[]): readonly AnyMutationDefinition<S>[] {
+  if (!policy || !policy.grants.some((grant) => grant.propose !== undefined)) return [];
+  const runs = new Set(permittedMutations(policy, principal, mutations));
+  return mutations.filter((mutation) => !runs.has(mutation) && subjectKinds(mutation).some((kind) => proposes(policy, principal, mutation.name, kind)));
+}

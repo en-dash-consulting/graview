@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { acceptSuggestion, declineSuggestion, isProposal, mayDecide, propose, suggestions, withdrawSuggestion } from "../../src/tidying.js";
-import { bindSchema, createSchema, defineNode, nodeRef, PROPOSE_CHANGES, proposedMutations, Store, type AnySchema, type Policy, type Principal } from "../../src/index.js";
+import { acceptSuggestion, declineSuggestion, isProposal, mayDecide, propose, proposedMutations, suggestions, withdrawSuggestion } from "../../src/tidying.js";
+import { bindSchema, createSchema, defineNode, nodeRef, PROPOSE_CHANGES, Store, type AnySchema, type Policy, type Principal } from "../../src/index.js";
 import { lineageOf } from "../../src/ops/lineage.js";
 
 /**
