@@ -22,8 +22,7 @@ export interface ProposeChangesArgs {
  * naming them (`proposedBy`): no primitives, waiting in the Suggested tray
  * until somebody who may run its calls accepts it, as themselves, or
  * declines it. Every store answers to it and no list offers it. It goes
- * over the wire like any call; the store makes its op itself
- * (`VOTING.propose`, filled in by `@graview/core/tidying`), each call
+ * over the wire like any call; the store makes its op itself, each call
  * judged as the store would judge it but for the grant to run it.
  */
 export function proposeChangesMutation<S extends AnySchema>(): AnyMutationDefinition<S> {
@@ -31,7 +30,7 @@ export function proposeChangesMutation<S extends AnySchema>(): AnyMutationDefini
     name: PROPOSE_CHANGES,
     title: "Propose changes",
     input: z.object({
-      calls: z.array(z.object({ name: z.string(), args: z.record(z.string(), z.unknown()) })),
+      calls: z.array(z.object({ name: z.string(), args: z.unknown() })),
       intent: z.optional(z.string()),
     }) as never,
     apply() {

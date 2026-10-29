@@ -36,7 +36,7 @@ import type { FieldRevision } from "./ops/revisions.js";
 import { declinedIn, isAutomated, tidyingRefusal, type ActMeanings } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, proposes, subjectKinds, type PolicyWords } from "./permissions/policy.js";
-import { PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
+import { MOST_PROPOSED, PROPOSE_CHANGES, proposeChangesMutation } from "./mutations/propose-changes.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { writersBehind } from "./ops/writers.js";
 import { nounOf } from "./schema/define-node.js";
@@ -1098,6 +1098,48 @@ export class Store<S extends AnySchema> {
     return !this.permits(call, principal).ok && proposes(this.policy, principal, call.name, this.subjectKindOf(call, principal));
   }
 
+  /**
+   * A PROPOSAL'S OP (Roadmap f-proposals-for-review): the calls a "Propose
+   * changes" call holds, rehearsed as its author with the grant to propose
+   * standing in for the grant to run, kept as `suggest` keeps a suggestion
+   * — no primitives, each call's sentence, the records they name — with
+   * the author as its maker and a lineage naming them (`proposedBy`), its
+   * basis the proposal in their own words, else "Proposed by Ada"; or
+   * undefined when the calls would change nothing. Made here, so a store
+   * answers a proposal over the wire whatever else it loaded.
+   */
+  private proposal(call: MutationCall, batch: string, author: Principal, via: Via | undefined): Operation | undefined {
+    const { calls, intent } = call.args as { calls: MutationCall[]; intent?: string };
+    if (calls.length === 0 || calls.length > MOST_PROPOSED || calls.some((one) => !one.args || typeof one.args !== "object" || Array.isArray(one.args))) throw new GraphError(`A proposal holds 1 to ${MOST_PROPOSED} changes, each an act's name and its arguments.`);
+    const by = actingAs(author).id ?? author.session;
+    if (by === undefined) throw new GraphError("A proposal is somebody's: sign in to propose a change.");
+    const lineage = lineageOf({ basis: (intent ?? `Proposed by ${author.name ?? by}`).slice(0, 500), proposedBy: by.slice(0, 120) })!;
+    const rehearsal = this.rehearsal();
+    rehearsal.proposing = true;
+    const planned = rehearsal.applying(calls, { author, lineage, ...given("via", via) });
+    if (planned.ops.length === 0) return undefined;
+    const described = [...new Set(planned.ops.flatMap((op) => op.described ?? []))];
+    const own = planned.ops.filter((one) => one.mutation !== null && one.author === author);
+    return {
+      id: this.nextId(),
+      seq: this.log.length,
+      batch,
+      author,
+      intent: planned.ops.map((one) => one.intent).join("; "),
+      ...given("batchIntent", intent),
+      mutation: null,
+      primitives: [],
+      reads: [],
+      writes: [],
+      ...(described.length > 0 ? { described } : {}),
+      at: this.now(),
+      ...given("via", via),
+      lineage,
+      suggests: calls,
+      ...given("suggestsSaid", calls.length > 1 && own.length === calls.length ? own.map((one) => one.intent) : undefined),
+    };
+  }
+
   /** A "Propose changes" call, judged: every call it holds one this principal may run or may propose, from a seat that is somebody. */
   private permitsProposal(call: MutationCall, principal: Principal): ReturnType<typeof permits> {
     const no = (message: string) => ({ ok: false, refusal: { mutation: call.name, wouldNeed: [], message } }) as ReturnType<typeof permits>;
@@ -1841,8 +1883,7 @@ export class Store<S extends AnySchema> {
         }
         if (definition === this.proposer) {
           // A proposal (Roadmap f-proposals-for-review): a suggestion with its author as its maker, and nothing of the graph until it is accepted.
-          if (!VOTING.propose) throw new GraphError("Load @graview/core/tidying to propose a change.");
-          const op = VOTING.propose(this, { id: this.nextId(), at: this.now() }, call, batch, as as Principal, options);
+          const op = this.proposal(call, batch, as as Principal, options.via);
           if (!op) continue;
           this.log.append(op);
           ops.push(op);

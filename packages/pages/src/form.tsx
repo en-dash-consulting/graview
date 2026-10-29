@@ -12,7 +12,7 @@ import {
 import { amountBox, amountInBox, argumentWords, endAfterStartMoved, failureWords, readAmount, startAndEndOf, tellApart } from "@graview/core/words";
 import type { AmountMark } from "@graview/core";
 import { askedFormFields, changedArgs, editStart, formArgs, keptArguments, type FormField } from "@graview/core/forms";
-import type { AnyMutationDefinition } from "@graview/core";
+import { PROPOSE_CHANGES, type AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
 import { Files, LinkedPicker, RepeatPicker, WhenInput } from "@graview/primitives/form";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
@@ -730,15 +730,15 @@ export function DerivedForm<S extends AnySchema>({
         event.preventDefault();
         const call = { name: mutation.name, args: { ...changedArgs(formArgs(fields, values), start), ...prefilled } };
         if (proposing) {
-          // Kept as a proposal, through the module that keeps suggestions, fetched when one is first made.
-          void import("./propose-door.js")
-            .then(({ propose }) => {
-              propose(store, seat!, [call]);
-              setFailed(null);
-              setProposed(true);
-              onDone?.();
-            })
-            .catch((error: unknown) => setFailed(failureWords(store.schema, store.allMutations(), error)));
+          // Kept as the seat's proposal: the store's own "Propose changes", which travels as any call does.
+          try {
+            store.apply({ name: PROPOSE_CHANGES, args: { calls: [call] } }, { author: seat! });
+            setFailed(null);
+            setProposed(true);
+            onDone?.();
+          } catch (error) {
+            setFailed(failureWords(store.schema, store.allMutations(), error));
+          }
           return;
         }
         try {

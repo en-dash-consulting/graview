@@ -35,11 +35,10 @@ import { GraphError } from "./graph/graph.js";
 import type { MutationCall } from "./mutations/types.js";
 import { advisoryVoterOf, signedOutSeat, VOTE_SUGGESTION, VOTING, type Vote } from "./mutations/vote-suggestion.js";
 import { lineageOf, LINEAGE_VOTERS_LIMIT, type Lineage } from "./ops/lineage.js";
-import { MOST_PROPOSED, PROPOSE_CHANGES, type ProposeChangesArgs } from "./mutations/propose-changes.js";
-import { actingAs, permittedMutations, proposes, subjectKinds } from "./permissions/policy.js";
+import { PROPOSE_CHANGES, type ProposeChangesArgs } from "./mutations/propose-changes.js";
+import { permittedMutations, proposes, subjectKinds } from "./permissions/policy.js";
 import type { Policy } from "./permissions/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
-import { nameOfAuthor } from "./who.js";
 import { expired, suggestionsIn, votesIn, type Dismissal, type Suggestion } from "./ops/suggestions.js";
 import { declinedIn, isAutomated, meaningKey, type ActMeanings } from "./ops/tidying.js";
 import type { Author, Operation, Via } from "./ops/types.js";
@@ -303,7 +302,7 @@ export function declineSuggestion<S extends AnySchema>(store: Store<S>, id: stri
   // From a seat the store would refuse the change, a vote against it (Roadmap f-suggestion-votes): a decline is whoever may decide's.
   if (!mayDecide(whole, suggestion, author as Principal)) return voteSuggestion(whole, id, "against", { ...options, author });
   // A person's proposal is answered in words (Roadmap f-proposals-for-review): "Declined Ada's proposal: …".
-  const answered = isProposal(suggestion) && options.intent === undefined ? { intent: `Declined ${possessive(proposerName(whole, suggestion))} proposal: ${suggestion.intent}` } : {};
+  const answered = isProposal(suggestion) && options.intent === undefined ? { intent: `Declined ${possessive(proposerName(suggestion))} proposal: ${suggestion.intent}` } : {};
   return whole.undo(suggestion.batch, { ...options, ...answered, author });
 }
 
@@ -400,10 +399,8 @@ VOTING.accepting = (held, vote) => {
  */
 export const isProposal = (suggestion: Pick<Suggestion, "lineage">): boolean => suggestion.lineage?.proposedBy !== undefined;
 
-/** Who proposed a suggestion, as Activity names them: "Ada". */
-function proposerName<S extends AnySchema>(store: Store<S>, suggestion: Pick<Suggestion, "author">): string {
-  return nameOfAuthor(suggestion.author, { graph: store.graph as never, schema: store.schema });
-}
+/** Who proposed a suggestion, as they are named: "Ada". */
+const proposerName = (suggestion: Pick<Suggestion, "author">): string => suggestion.author.name ?? suggestion.author.id ?? "Somebody";
 
 /** "Ada's", "Jess'". */
 const possessive = (name: string): string => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
@@ -434,50 +431,6 @@ export function propose<S extends AnySchema>(store: Store<S>, principal: Princip
   const args: ProposeChangesArgs = { calls: calls.map(({ name, args }) => ({ name, args })), ...given("intent", intent) };
   return whole.applyAll([{ name: PROPOSE_CHANGES, args: args as never }], { author: principal }).ops.find((op) => op.suggests !== undefined);
 }
-
-/*
- * HOW A PROPOSAL'S OP IS MADE, taught to the store (`VOTING.propose`): its
- * calls rehearsed as its author, an act they may propose let through as it
- * will be for whoever accepts it, and kept as `suggest` keeps one — no
- * primitives, each call's sentence, the records they name — with the
- * author as its maker and a lineage naming them (`proposedBy`), its basis
- * the proposal in the person's own words, else "Proposed by Ada".
- */
-VOTING.propose = (held, made, call, batch, author, options) => {
-  const store = held as Store<AnySchema>;
-  const kept = keptOf(store);
-  const { calls, intent } = call.args as unknown as ProposeChangesArgs;
-  if (calls.length === 0 || calls.length > MOST_PROPOSED) throw new GraphError(`A proposal holds 1 to ${MOST_PROPOSED} changes.`);
-  const by = actingAs(author).id ?? author.session;
-  if (by === undefined) throw new GraphError("A proposal is somebody's: sign in to propose a change.");
-  const name = nameOfAuthor(author, { graph: store.graph as never, schema: store.schema });
-  const lineage = lineageOf({ basis: (intent ?? `Proposed by ${name}`).slice(0, 500), proposedBy: by.slice(0, 120) })!;
-  const rehearsal = kept.rehearsal();
-  rehearsal.proposing = true;
-  const planned = rehearsal.applying(calls, { author, lineage, ...given("via", options.via as Via | undefined) });
-  if (planned.ops.length === 0) return undefined;
-  const described = [...new Set(planned.ops.flatMap((op) => op.described ?? []))];
-  const own = planned.ops.filter((one) => one.mutation !== null && one.author === author);
-  const said = calls.length > 1 && own.length === calls.length ? own.map((one) => one.intent) : undefined;
-  return {
-    id: made.id,
-    seq: store.log.length,
-    batch,
-    author,
-    intent: planned.ops.map((one) => one.intent).join("; "),
-    ...given("batchIntent", intent),
-    mutation: null,
-    primitives: [],
-    reads: [],
-    writes: [],
-    ...(described.length > 0 ? { described } : {}),
-    at: made.at,
-    ...given("via", options.via as Via | undefined),
-    lineage,
-    suggests: calls,
-    ...given("suggestsSaid", said),
-  };
-};
 
 /** The acts a principal may propose and may not run: what lists `propose_changes` for an agent seat acting for them. */
 export function proposedMutations<S extends AnySchema>(policy: Policy | undefined, principal: Principal, mutations: readonly AnyMutationDefinition<S>[]): readonly AnyMutationDefinition<S>[] {
