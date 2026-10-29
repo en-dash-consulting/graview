@@ -20,6 +20,7 @@
       "@graview/core/search": ["./packages/core/src/search.ts"],
       "@graview/core/words": ["./packages/core/src/words.ts"],
       "@graview/core/csv": ["./packages/core/src/csv.ts"],
+      "@graview/core/head": ["./packages/core/src/head.ts"],
       "@graview/core/shown": ["./packages/core/src/shown.ts"],
       "@graview/core/markdown": ["./packages/core/src/markdown.ts"],
       "@graview/core/seat": ["./packages/core/src/seat.ts"],

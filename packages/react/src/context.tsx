@@ -40,7 +40,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
-import { HostFilesContext } from "./files.js";
+import { HostAssetsContext, HostFilesContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
 import type { MenuColumn, MenuSectionSource } from "./menu-types.js";
 
@@ -593,6 +593,16 @@ export interface GraviewProviderProps<S extends AnySchema> {
    */
   readonly files?: HostFiles | undefined;
   /**
+   * WHERE THE HOST SERVES AN APP'S OWN IMAGES (Roadmap
+   * f-brand-marks-under-app-base): `assetsAt(path)` for a path under
+   * `/graview/assets/` — a host serving each app under a base
+   * (`/a/<app>/`) answers `base + path` — so the brand's logo, its page
+   * icon and an image a script view draws by its path load there. Inline
+   * SVG, an emoji and any other address are drawn as given. Unsaid, every
+   * path as it is.
+   */
+  readonly assetsAt?: ((path: string) => string) | undefined;
+  /**
    * THE HOST'S WAY TO NAME ANOTHER APP (FR-171): `resolveApp(address,
    * viewer)` answers an app-link field's app — its name, icon, home
    * headline and where it opens — `{ denied: true }` when this viewer may
@@ -767,6 +777,7 @@ export function GraviewProvider<S extends AnySchema>({
   providers,
   ai: handedAi,
   files,
+  assetsAt,
   resolveApp,
   history,
   linkedRecords,
@@ -1319,7 +1330,8 @@ export function GraviewProvider<S extends AnySchema>({
   );
 
   const live = useMemo(() => (typing ? { typing, sayCaret, who: others } : null), [typing, sayCaret, others]);
-  const filed = files ? <HostFilesContext.Provider value={files}>{children}</HostFilesContext.Provider> : children;
+  const assetsHeld = assetsAt ? <HostAssetsContext.Provider value={assetsAt}>{children}</HostAssetsContext.Provider> : children;
+  const filed = files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
       <PlaybackContext.Provider value={playback as unknown as Playback}>

@@ -1,4 +1,6 @@
-import { emojiMark, isInlineSvg, logoOf, markHref, svgProblem, type Brand } from "@graview/core";
+import { assetSrc, emojiMark, isInlineSvg, logoOf, markHref, svgProblem, type Brand } from "@graview/core";
+import { themeColorsOf } from "@graview/core/head";
+import { useHostAssets } from "@graview/react/provider";
 import { useEffect, type CSSProperties } from "react";
 import { useMarkup } from "./markup.js";
 
@@ -18,6 +20,8 @@ import { useMarkup } from "./markup.js";
 
 /** The brand's mark alone, `size` pixels tall — its logo, or with none its page icon's emoji; nothing when there is none, or none that may be drawn. */
 export function AppMark({ brand, size = 22 }: { readonly brand: Brand | undefined; readonly size?: number }) {
+  // A path under /graview/assets/ is drawn where the host serves the app's own images (its base, Roadmap f-brand-marks-under-app-base).
+  const assetsAt = useHostAssets();
   const logo = logoOf(brand);
   const light = drawable(logo?.light);
   // A dark one only beside a light one that can be drawn: the light one is what every scheme without its own draws.
@@ -40,7 +44,7 @@ export function AppMark({ brand, size = 22 }: { readonly brand: Brand | undefine
    */
   if (dark) {
     const face = (mark: string, markup: ReturnType<typeof useMarkup>, scheme: "light" | "dark") =>
-      isInlineSvg(mark) ? <span className="graview-logo-face" data-graview-scheme-only={scheme} dangerouslySetInnerHTML={markup} /> : <img className="graview-logo-face" data-graview-scheme-only={scheme} src={mark} alt="" />;
+      isInlineSvg(mark) ? <span className="graview-logo-face" data-graview-scheme-only={scheme} dangerouslySetInnerHTML={markup} /> : <img className="graview-logo-face" data-graview-scheme-only={scheme} src={assetSrc(assetsAt, mark)} alt="" />;
     return (
       <span className="graview-logo" data-testid="app-mark" style={box} {...named}>
         {face(light, lightMarkup, "light")}
@@ -51,7 +55,7 @@ export function AppMark({ brand, size = 22 }: { readonly brand: Brand | undefine
   // Only a light one, and the brand asked: in the dark scheme alone it is inverted and screened onto the ground (theme.ts).
   const fallback = logo?.darkFallback === "invert" ? { "data-graview-logo-fallback": "invert" } : {};
   if (isInlineSvg(light)) return <span className="graview-logo" data-testid="app-mark" style={box} {...fallback} {...named} dangerouslySetInnerHTML={lightMarkup} />;
-  return <img className="graview-logo" data-testid="app-mark" src={light} alt={said ? alt : ""} {...fallback} style={{ ...box, width: "auto" }} />;
+  return <img className="graview-logo" data-testid="app-mark" src={assetSrc(assetsAt, light)} alt={said ? alt : ""} {...fallback} style={{ ...box, width: "auto" }} />;
 }
 
 /** A mark that may be drawn: inline SVG that could not act, or an address an image is drawn from. */
@@ -115,4 +119,35 @@ export function useFavicon(href: string | undefined): void {
       });
     };
   }, [href]);
+}
+
+/**
+ * THE BROWSER'S CHROME IN THE APP'S COLORS (Roadmap f-app-icons-home-screen),
+ * for a face that owns the whole page as `useFavicon` is: a `<meta
+ * name="theme-color">` for each scheme the app is drawn in — one where the
+ * brand pins a scheme (`themeColorsOf`) — put in the head while the face is
+ * drawn, and the page's own put back after. `undefined` touches nothing.
+ */
+export function useThemeColor(brand: Brand | undefined): void {
+  const key = brand ? JSON.stringify(themeColorsOf(brand)) : "[]";
+  useEffect(() => {
+    const colors = JSON.parse(key) as ReturnType<typeof themeColorsOf>;
+    if (colors.length === 0 || typeof document === "undefined") return;
+    const own = [...document.head.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]:not([data-graview-theme-color])')];
+    // The page's own stand aside while the app's are in the head: the first that matches would win.
+    own.forEach((meta) => meta.setAttribute("name", "graview-theme-color-held"));
+    const made = colors.map(({ color, media }) => {
+      const meta = document.createElement("meta");
+      meta.name = "theme-color";
+      meta.content = color;
+      if (media) meta.media = media;
+      meta.setAttribute("data-graview-theme-color", "");
+      document.head.appendChild(meta);
+      return meta;
+    });
+    return () => {
+      made.forEach((meta) => meta.remove());
+      own.forEach((meta) => meta.setAttribute("name", "theme-color"));
+    };
+  }, [key]);
 }

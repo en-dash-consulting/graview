@@ -3,7 +3,7 @@ export { GoToContext, useGoTo } from "./go.js";
 export { MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.js";
 export type { MenuColumn, MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 export { BesideTheMap } from "./beside-the-map.js";
-export { HostFilesContext, useHostFiles } from "./files.js";
+export { HostAssetsContext, HostFilesContext, useHostAssets, useHostFiles } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
 export { Figure, Occupants, PersonFigure } from "./occupants.js";
 export { TypingContext } from "./typing.js";

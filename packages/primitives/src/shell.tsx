@@ -1,5 +1,5 @@
-import { faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles, type KeptViews, type ResolveApp } from "@graview/core";
-import { BesideTheMap, HostFilesContext, KeptViewsProvider, PanFree, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
+import { assetSrc, faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles, type KeptViews, type ResolveApp } from "@graview/core";
+import { BesideTheMap, HostAssetsContext, HostFilesContext, KeptViewsProvider, PanFree, Scene, useGraview, useHostAssets, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useMemo, useState, type ReactNode, useRef } from "react";
 import { withOverview } from "@graview/layout/view";
@@ -18,7 +18,7 @@ import { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
 import { SceneWayBack } from "./scene-way-back.js";
 import { PastBar } from "./past-bar.js";
 import { BackOut, Inspector, OverviewButton, Standing } from "./workbench/index.js";
-import { useFavicon } from "./app-title.js";
+import { useFavicon, useThemeColor } from "./app-title.js";
 import { useViewportHeight } from "./primitives/measure.js";
 import { ResolveAppContext } from "./resolve-app-context.js";
 import { FirstLookDoor, type FirstLook } from "./first-look-door.js";
@@ -126,6 +126,13 @@ export interface ShellProps {
    */
   readonly files?: HostFiles;
   /**
+   * WHERE THE HOST SERVES THE APP'S OWN IMAGES (Roadmap
+   * f-brand-marks-under-app-base), when the provider around the shell was
+   * not handed it: `assetsAt(path)` for a path under `/graview/assets/` —
+   * the logo, the page icon — and an image a script view draws by its path.
+   */
+  readonly assetsAt?: (path: string) => string;
+  /**
    * THE HOST'S WAY TO NAME ANOTHER APP (FR-171), when the provider around
    * the shell was not handed it: `resolveApp(address, viewer)` answers
    * `{ name, icon?, headline?, href }`, `{ denied: true }` or `null`, and an
@@ -184,6 +191,7 @@ function ShellFace<S extends AnySchema>({
   quickAsk = true,
   notices,
   files,
+  assetsAt: ownAssetsAt,
   resolveApp,
   firstLook,
 }: Omit<ShellProps, "keptViews">) {
@@ -199,8 +207,11 @@ function ShellFace<S extends AnySchema>({
   const spot = useRef(view);
   spot.current = view;
   const report = useMemo<NoticeReporting | undefined>(() => (onReport ? { tell: onReport, where: () => sceneReportWhere(spot.current.focusId) } : undefined), [onReport]);
-  // The Shell owns the whole page, so the page wears the brand's icon (FR-124).
-  useFavicon(faviconHref(brand));
+  // The Shell owns the whole page, so the page wears the brand's icon (FR-124) where the host serves it, and its colors.
+  const providedAssetsAt = useHostAssets();
+  const assetsAt = ownAssetsAt ?? providedAssetsAt;
+  useFavicon(assetSrc(assetsAt, faviconHref(brand)));
+  useThemeColor(brand);
   // An act that removes what the keyboard stood on lands it on what still stands.
   const shell = useRef<HTMLDivElement>(null);
   useTheKeyboardLandsSomewhere(shell);
@@ -344,5 +355,6 @@ function ShellFace<S extends AnySchema>({
     </NoticeBoardContext.Provider>
   );
   const resolved = resolveApp ? <ResolveAppContext.Provider value={resolveApp}>{drawn}</ResolveAppContext.Provider> : drawn;
-  return files ? <HostFilesContext.Provider value={files}>{resolved}</HostFilesContext.Provider> : resolved;
+  const assetsHeld = ownAssetsAt ? <HostAssetsContext.Provider value={ownAssetsAt}>{resolved}</HostAssetsContext.Provider> : resolved;
+  return files ? <HostFilesContext.Provider value={files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
 }

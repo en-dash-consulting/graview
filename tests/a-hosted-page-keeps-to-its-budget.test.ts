@@ -189,7 +189,8 @@ describe("a hosted page", () => {
     // 1066 KB once the archive step and a run asked as one suggestion (Roadmap f-retention-rules, f-job-approvals) joined the 0.1.63 batch: the scene face measured 1_090_783 B.
     // 1068 KB once the 0.1.63 batch also held the archive step and a run asked as one suggestion (W4): the scene face measured 1_092_396 B.
     // 1071 KB since a person came to propose changes and a reviewer to accept them (Roadmap f-proposals-for-review): the store's own "Propose changes" act and the proposal it makes, a grant's `propose`, and an act's form whose button reads "Propose": the scene face measured 1_096_224 B, 3_828 more than batch/0-1-63 (1_092_396).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1071 * 1024);
+    // 1072 KB since an app's own images came to be drawn under its base (Roadmap f-brand-marks-under-app-base) and a face that owns the page came to put the app's theme-color in its head (f-app-icons-home-screen): `assetsAt` on the provider and the frame, `assetSrc`, `useThemeColor` and `themeColorsOf`: the scene face measured 1_097_638 B, 1_414 more than main (1_096_224).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1072 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

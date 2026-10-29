@@ -49,8 +49,10 @@ export function groundWords(ground: Ground): string {
 /** What the opening screen is now, said the same by an edit and by the preview of a change (Roadmap f-splash-in-document). */
 export function splashSentence(splash: unknown): string {
   if (!splash || typeof splash !== "object") return "The app opens on Graview's own screen.";
-  const { style, shader } = splash as { style?: unknown; shader?: unknown };
-  const how = style === "editorial" ? "an editorial screen" : style === "shader" ? `a shader screen${typeof shader === "string" ? ` (${shader})` : ""}` : style === "ascii" ? "an ASCII screen" : "a plain screen";
+  const { style, shader, scheme } = splash as { style?: unknown; shader?: unknown; scheme?: unknown };
+  const kind = style === "editorial" ? "editorial screen" : style === "shader" ? `shader screen${typeof shader === "string" ? ` (${shader})` : ""}` : style === "ascii" ? "ASCII screen" : "plain screen";
+  const drawn = scheme === "light" || scheme === "dark" ? `${scheme} ${kind}` : kind;
+  const how = `${/^[aeiouAEIOU]/.test(drawn) ? "an" : "a"} ${drawn}${scheme === "device" ? " in the reader's own scheme" : ""}`;
   return `The app opens on ${how} while it loads.`;
 }
 /** How a splash's shader is refused, wherever it is judged. */
@@ -130,6 +132,9 @@ export function brandFindings(brand: Partial<BrandSpec> | undefined, options: Br
     if (!(SPLASH_STYLES as readonly string[]).includes(splash.style)) out.push(error("brand-splash-style", `${at}.splash.style`, `${JSON.stringify(splash.style)} is not a way an opening screen draws`, `say "style": one of ${SPLASH_STYLES.map((name) => `"${name}"`).join(", ")}`));
     if (typeof splash.shader === "string" && !(SPLASH_SHADERS as readonly string[]).includes(splash.shader)) out.push(error("brand-splash-shader", `${at}.splash.shader`, `"${splash.shader}" is not a shader the opening screen ships; a document names one, it never carries one`, SPLASH_SHADER_FIX));
     else if (typeof splash.shader === "string" && splash.style !== "shader") out.push(warning("brand-splash-shader", `${at}.splash.shader`, `the shader "${splash.shader}" is never drawn, because the opening screen's style is "${splash.style}"`, 'say "style": "shader", or remove "shader"'));
+    // Its scheme where the brand pins none (Roadmap f-splash-follows-declared-scheme): one the brand overrides is said, not kept quiet.
+    const pinned = brand.scheme === "light" || brand.scheme === "dark" ? brand.scheme : undefined;
+    if (typeof splash.scheme === "string" && pinned && splash.scheme !== pinned) out.push(warning("brand-splash-scheme", `${at}.splash.scheme`, `the opening screen is drawn ${pinned}, as the app is, so its own scheme "${splash.scheme}" is never used`, `remove "scheme" from the splash, or say the brand's "scheme": "auto"`));
   }
   /*
    * THE STYLESHEET EVERY VIEW GETS (Roadmap f-app-wide-view-theme), held to

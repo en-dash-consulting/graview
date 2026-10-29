@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1358,
+  "gzipped": 471,
+  "changeset": "brand-marks-under-an-app-base-and-home-screen-icons.md",
+  "note": "Raised when an app's own images came to be drawn under its base (Roadmap f-brand-marks-under-app-base: `assetsAt` on the provider, the frame, the Shell and the routed face, `assetSrc` and `HOST_ASSETS`) and a face that owns the page came to put the app's theme-color in its head (Roadmap f-app-icons-home-screen: `useThemeColor`, `themeColorsOf`), with an opening screen's own scheme in the document's shape (Roadmap f-splash-follows-declared-scheme). Measured at 603_964 / 209_895 against 602_606 / 209_424 minified and gzipped."
+}

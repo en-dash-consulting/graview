@@ -37,6 +37,11 @@
  * of its hue the brand derives, never Graview's paper or navy; the scene
  * on the deeper shade drawn from each — and a card is drawn apart from it.
  *
+ * And served under a base, as Graview Cloud serves each app (Roadmap
+ * f-brand-marks-under-app-base), with its own images only there: a fresh
+ * visitor's page draws the logo and wears the page's icon from under the
+ * base, each loaded, on each face.
+ *
  *   node scripts/verify-brand.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
 import { createServer } from "node:http";
@@ -68,6 +73,10 @@ const PAIR = {
   dark: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><rect width="24" height="24" fill="#fedcba"/></svg>',
 };
 const ON_WHITE = "/graview/assets/on-white.svg";
+// An app served under a base, as Graview Cloud serves each one (Roadmap f-brand-marks-under-app-base): its own images are there, and nowhere on the host's root.
+const APP_BASE = "/a/en-dash";
+const UNDER_BASE = "/graview/assets/under-base.svg";
+const UNDER_BASE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24" width="48" height="24"><rect width="48" height="24" fill="#0f6e5c"/></svg>';
 /** A page background of the app's own: a light one alone, so the dark scheme's is derived. */
 const GROUND = "#eef3f8";
 const ON_WHITE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24" width="48" height="24"><rect width="48" height="24" fill="#fff"/><circle cx="24" cy="12" r="8" fill="#0b2545"/></svg>';
@@ -104,7 +113,7 @@ async function buildHost() {
         if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
         // A logo for each scheme, or a light one the brand asked to invert in the dark (TrueNorth's picture on white).
         const logos = ${JSON.stringify({ pair: { light: PAIR.light, dark: PAIR.dark }, invert: { light: ON_WHITE, darkFallback: "invert" } })};
-        const logo = logos[asked.get("logo")];
+        const logo = asked.get("base") === "1" ? ${JSON.stringify(UNDER_BASE)} : logos[asked.get("logo")];
         // A page background of the app's own (Roadmap f-brand-ground).
         const ground = asked.get("ground");
         const brand = { ...enDash.brand, ...(logo ? { logo } : {}), ...(ground ? { ground } : {}) };
@@ -126,6 +135,8 @@ async function buildHost() {
           studio: false,
           bar: true,
           ...(asked.get("favicon") === "1" ? { favicon: true } : {}),
+          // Where the host serves the app's own images: under the app's base.
+          ...(asked.get("base") === "1" ? { assetsAt: (path) => ${JSON.stringify(APP_BASE)} + path } : {}),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });`,
       resolveDir: resolve(repoRoot, "packages/embed"),
@@ -144,7 +155,16 @@ async function buildHost() {
   writeFileSync(join(out, "index.html"), HOST_PAGE);
   const icons = { "/host-icon.svg": '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#999"/></svg>', [ICON]: ICON_SVG, [ON_WHITE]: ON_WHITE_SVG };
   const host = createServer((request, response) => {
-    const path = decodeURIComponent((request.url ?? "/").split("?")[0]);
+    let path = decodeURIComponent((request.url ?? "/").split("?")[0]);
+    // Under the app's base: its page, and its own images — the logo kept for it only there.
+    if (path === `${APP_BASE}/`) path = "/";
+    else if (path.startsWith(`${APP_BASE}/graview/assets/`)) {
+      const own = path.slice(APP_BASE.length);
+      const body = own === UNDER_BASE ? UNDER_BASE_SVG : icons[own];
+      response.writeHead(body ? 200 : 404, body ? { "content-type": "image/svg+xml" } : {});
+      response.end(body ?? "");
+      return;
+    }
     if (icons[path]) {
       response.writeHead(200, { "content-type": "image/svg+xml" });
       response.end(icons[path]);
@@ -180,6 +200,8 @@ function read() {
     radius: root ? getComputedStyle(root).getPropertyValue("--graview-radius").trim() : null,
     drawn: root ? getComputedStyle(root).colorScheme : null,
     icons: [...document.querySelectorAll('link[rel~="icon"]')].map((one) => one.getAttribute("href")),
+    // Each mark drawn as a picture by its address: where it was asked for, and whether it loaded.
+    pictures: [...document.querySelectorAll('[data-testid="app-mark"] img, img[data-testid="app-mark"]')].map((one) => ({ src: one.getAttribute("src"), loaded: one.complete && one.naturalWidth > 0 })),
     // Each mark's faces for a scheme, and which of them is drawn; and a light logo marked to invert, as it is styled.
     faces: marks.map((one) => [...one.querySelectorAll("[data-graview-scheme-only]")].map((face) => ({ scheme: face.getAttribute("data-graview-scheme-only"), drawn: getComputedStyle(face).display !== "none" && face.getBoundingClientRect().width > 0, fill: face.querySelector("rect")?.getAttribute("fill") ?? null }))),
     fallbacks: marks.filter((one) => one.hasAttribute("data-graview-logo-fallback")).map((one) => ({ filter: getComputedStyle(one).filter, blend: getComputedStyle(one).mixBlendMode })),
@@ -205,15 +227,16 @@ const preferred = [];
 const icons = [];
 const logos = [];
 const grounds = [];
+const underBase = [];
 let browser;
 try {
   for (const engine of engines) {
     browser = await launchEngine(engine, { headless: !process.argv.includes("--headed") });
-    const open = async (query, colorScheme = "light") => {
+    const open = async (query, colorScheme = "light", at_ = "/") => {
       const context = await browser.newContext({ viewport: DESK, colorScheme });
       const page = await context.newPage();
       page.on("pageerror", (error) => errors.push(`${engine} ${query}: ${error.message}`));
-      await page.goto(`${at("brand-host")}/?${query}`, { waitUntil: "load" });
+      await page.goto(`${at("brand-host")}${at_}?${query}`, { waitUntil: "load" });
       await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
       await page.waitForTimeout(800);
       const drawn = await page.evaluate(read);
@@ -225,6 +248,13 @@ try {
     for (const scheme of SCHEMES) for (const face of FACES) grounds.push({ engine, scheme, face, ...(await open(`face=${face}&theme=${scheme}&ground=${encodeURIComponent(GROUND)}`)).ground });
     for (const face of FACES) preferred.push({ engine, face, system: "light", stamped: "none", drawn: (await open(`face=${face}`, "light")).drawn });
     icons.push({ engine, owned: (await open("face=pages&favicon=1")).icons, embedded: (await open("face=pages")).icons });
+    // A visitor, fresh, opening the app at its base: the logo and the page's icon load from there.
+    for (const face of FACES) {
+      const drawn = await open(`face=${face}&favicon=1&base=1`, "light", `${APP_BASE}/`);
+      const icon = drawn.icons[0];
+      const answered = icon ? await fetch(new URL(icon, at("brand-host"))).then((response) => response.status) : null;
+      underBase.push({ engine, face, pictures: drawn.pictures, icons: drawn.icons, iconAnswered: answered });
+    }
     await browser.close();
     browser = undefined;
   }
@@ -260,6 +290,13 @@ const checks = {
     expected: GROUNDS,
     seen: grounds,
     ok: grounds.length === engines.length * SCHEMES.length * FACES.length && grounds.every((one) => one.token === (one.scheme === "light" ? GROUND : drawnFrom.dark.ground) && one.drawn === GROUNDS[one.scheme][one.face] && one.panel !== one.drawn) && drawnFrom.dark.ground !== GROUND,
+  },
+  aLogoUnderAnAppBaseLoadsForAVisitor: {
+    base: APP_BASE,
+    seen: underBase,
+    ok:
+      underBase.length === engines.length * FACES.length &&
+      underBase.every((one) => one.pictures.length > 0 && one.pictures.every((picture) => picture.loaded && picture.src === `${APP_BASE}${UNDER_BASE}`) && one.icons.length > 0 && one.icons.every((href) => href === `${APP_BASE}${ICON}`) && one.iconAnswered === 200),
   },
   noPageThrew: { errors, ok: errors.length === 0 },
 };
