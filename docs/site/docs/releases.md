@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.64`](https://graview.dev/docs/releases.html#v0-1-64)
 - [`0.1.63`](https://graview.dev/docs/releases.html#v0-1-63)
 - [`0.1.62`](https://graview.dev/docs/releases.html#v0-1-62)
 - [`0.1.61`](https://graview.dev/docs/releases.html#v0-1-61)
@@ -64,6 +65,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.64
+
+Published October 29, 2026 · the current version
+
+A workflow run says what it spent and what started it; a count of one relation is read whatever its size; an app's images load under its base and offer home-screen icons; a dark app opens through a dark screen; connection reports name their source; and the Scene holds steady under a finger and a mouse.
+
+- **Workflow runs.** A run says what its model steps spent, each step and in all, and which workflow started it: a chain of runs stops past three and holds what it would do. `runCount` counts a run's records. A classify step can label what no option clears (`otherwise`) and apply a label only above a confidence (`applyAt`).
+- **Counts and sight.** A count or an exists over one relation is read from the edge index in one step, so a rule, a computed field or a template that read one and was refused for its budget now draws. A sender sees their own ticket without the fields a sight hides from them. A `check:` code is always the checker's.
+- **Brand and the head.** An app's own images and logo load under its base (`assetsAt`), the head offers home-screen icons and a manifest (`@graview/core/head`, answered by `graview serve` and `graview preview`), and the theme color follows the app. A splash may declare its scheme, so a dark app opens through a dark screen on a light device.
+- **Connections.** A report says which source each sentence came from (`saidBy`), `runConnections` hands back each pass and the first one, and a calendar's guests field form takes `max`.
+- **The Scene.** Two fingers pinch-zoom under them on a phone and the wheel zooms under the cursor without laying the city out each frame; a tap or a quick second tap lands on what it was aimed at; a list in a card scrolls without moving the city or the page behind; turning a phone or folding its toolbar moves nothing; the edge signs step past a card's showings.
+
+**Before you upgrade:** New: `WorkflowRun.spent` and `chain`, `StepContext.spent`, a runner's `chainLimit`, `runCount` on `@graview/core/scene`, `triggeredBy().by` and `workflowOrigin`; a classify step's `otherwise` and `applyAt`; `@graview/core/head` (`homeScreenOf`, `themeColorsOf`, `headHtml`, `MANIFEST_PATH`), `assetSrc` and `HOST_ASSETS`, an `assetsAt` prop on the provider, the frame, the Shell, the routed face and the embed, `useThemeColor`; `brand.splash.scheme` and the warning `brand-splash-scheme`; `SyncReport.saidBy`, `onReport` and `firstPass`; a calendar's `fields.guests` as `{ field, notify?, max? }`. Changed: a count or exists over one relation is no longer refused for its budget; `graview serve` and `graview preview` answer `/manifest.webmanifest` and `/icon.svg`. Ops, stored formats in the graph, the wire and derived tool names are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.64) · [The full changelog for 0.1.64](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0164)
 
 ## 0.1.63
 
