@@ -1,4 +1,4 @@
-import { isLeftAlone, labelOf, nounOf, pluralOf, type AnyGraphNode, type AnySchema, type MutationCall, type Principal, type Store } from "@graview/core";
+import { isLeftAlone, labelOf, nounOf, pluralOf, withArticle, type AnyGraphNode, type AnySchema, type MutationCall, type Principal, type Store } from "@graview/core";
 import { classifyAsks, floorLabel, recordsOver, type ClassifyStep } from "@graview/core/workflows";
 import { nodeState, questionsForKind, type Question } from "../questions.js";
 import { askAll } from "../tidy/asking.js";
@@ -47,7 +47,7 @@ export const runClassifyStep: StepRunner<ClassifyStep> = {
     if (!definition) return context.skipped(`"${kind}" is not a kind of this app, so nothing was labeled.`);
     const question = questionsForKind(seen as Store<AnySchema>, kind).find((one) => one.about === "field" && one.field === step.field);
     const writes = question?.about === "field" ? question.writes : undefined;
-    if (!writes) return context.skipped(`no act sets the ${step.field} of a ${nounOf(definition, kind)}, so nothing was labeled.`);
+    if (!writes) return context.skipped(`no act sets the ${step.field} of ${withArticle(nounOf(definition, kind))}, so nothing was labeled.`);
     const options = step.options ?? (question!.question.type === "choice" ? Object.keys(question!.question.criteria).filter((option) => option !== NONE_FITS) : []);
     if (options.length === 0) return context.skipped(`"${step.field}" has no options to label with.`);
 
