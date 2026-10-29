@@ -139,7 +139,8 @@ and the description stays in listings and on the name's hover):
 
 - **An opening screen** (`splash`) shows until a place has drawn: `style`
   `plain`, `editorial`, `ascii` or `shader` (a shipped name, `drift`,
-  `ripple` or `veil`, never code; else `brand-splash-shader`), with an
+  `ripple`, `veil` or `caustics`, light through water, never code; else
+  `brand-splash-shader`), with an
   `image`, `title` and `kicker`. It travels with the document; a host
   inlines `splashHtml` from `@graview/pages/splash`.
 

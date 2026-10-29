@@ -28,7 +28,7 @@ const MARK_MAX = 64 * 1024;
  */
 export const SPLASH_STYLES = ["plain", "editorial", "shader", "ascii"] as const;
 export type SplashStyle = (typeof SPLASH_STYLES)[number];
-export const SPLASH_SHADERS = ["drift", "ripple", "veil"] as const;
+export const SPLASH_SHADERS = ["drift", "ripple", "veil", "caustics"] as const;
 export type SplashShader = (typeof SPLASH_SHADERS)[number];
 
 /** kebab-case: kinds, acts, rules, edges, roles, modules. */

@@ -18,7 +18,15 @@
  * for `data-graview-drawn` (the embed says it once the place has drawn and
  * settled, FR-188) — or a page error said as an alert, or fifteen seconds
  * — then fades the screen out and removes it. Reduced motion takes it away
- * at once and draws nothing that moves. The styles:
+ * at once and draws nothing that moves; so does a browser driven by
+ * automation (`navigator.webdriver`), or a host that says `fade: false`,
+ * so a picture of the page is never taken through a screen half gone.
+ *
+ * The screen is a status (`role="status"`, named by its title): a reader
+ * hears that the app is opening, and nothing it types on is read twice.
+ * Its words are the brand's — one brand for the app — unless the host says
+ * a page's own (`title`, `kicker`): the place being opened, set large. The
+ * styles:
  *
  *   plain      the ground, the app's mark and its name;
  *   editorial  the image full-bleed, the title very large at the foot;
@@ -35,7 +43,7 @@
 export const SPLASH_STYLES = ["plain", "editorial", "shader", "ascii"] as const;
 export type SplashStyle = (typeof SPLASH_STYLES)[number];
 /** The shaders shipped here by name: the same list as `SPLASH_SHADERS` on `@graview/core/document`. */
-export const SPLASH_SHADERS = ["drift", "ripple", "veil"] as const;
+export const SPLASH_SHADERS = ["drift", "ripple", "veil", "caustics"] as const;
 export type SplashShader = (typeof SPLASH_SHADERS)[number];
 
 /** The id of the screen's element, which the script finds and takes away. */
@@ -70,6 +78,16 @@ export interface SplashOptions {
   readonly scheme?: "light" | "dark" | "auto";
   /** The app's name where the brand names none (a document's `name`). */
   readonly name?: string;
+  /**
+   * THIS PAGE'S OWN WORDS (Roadmap splash-html-takes-where-it-opens): the
+   * place it opens on, set large, over the brand's `splash.title` for this
+   * page alone — the brand is one for the app, a page's opening words are
+   * the place's. An empty `kicker` says none.
+   */
+  readonly title?: string;
+  readonly kicker?: string;
+  /** Whether the screen fades as it goes (320 ms). It does unless `false`, a reader asks for less motion, or automation drives the browser. */
+  readonly fade?: boolean;
 }
 
 /** The screen as a host inlines it: the markup, its stylesheet and the script that takes it away. */
@@ -136,7 +154,8 @@ export function splashHtml(brand: SplashBrand, options: SplashOptions = {}): Spl
   if (!spec || !(SPLASH_STYLES as readonly string[]).includes(spec.style)) return { html: "", css: "", script: "" };
   const scheme = options.scheme ?? brand.scheme ?? "auto";
   const { light, dark, tintLight, tintDark, inkLight, inkDark } = colors(brand);
-  const title = spec.title ?? brand.name ?? options.name ?? "";
+  const title = options.title ?? spec.title ?? brand.name ?? options.name ?? "";
+  const kicker = options.kicker ?? spec.kicker;
   const shader = spec.style === "shader" ? ((SPLASH_SHADERS as readonly string[]).includes(spec.shader ?? "") ? spec.shader! : SPLASH_SHADERS[0]) : undefined;
   const picture = imageHref(spec.image);
   // The plain screen stands the app's mark over its name where the screen has no image of its own.
@@ -144,8 +163,9 @@ export function splashHtml(brand: SplashBrand, options: SplashOptions = {}): Spl
   const markDark = picture ?? (spec.style === "plain" ? imageHref(logoFor(brand.logo, "dark")) : undefined);
   const mark = (src: string | undefined, which: "light" | "dark") => (src ? `<img class="graview-splash-image" data-scheme="${which}" src="${escape(src)}" alt="" decoding="async">` : "");
   const images = spec.style === "plain" ? (markLight === markDark ? mark(markLight, "light").replace(' data-scheme="light"', "") : mark(markLight, "light") + mark(markDark, "dark")) : mark(picture, "light").replace(' data-scheme="light"', "");
-  const words = `${spec.kicker ? `<p class="graview-splash-kicker">${escape(spec.kicker)}</p>` : ""}<p class="graview-splash-title"${spec.style === "ascii" ? ` data-types="${escape(title)}"` : ""}>${spec.style === "ascii" ? "" : escape(title)}</p>`;
-  const html = `<div id="${SPLASH_ID}" popover="manual" data-style="${spec.style}" data-scheme="${scheme}"${shader ? ` data-shader="${shader}"` : ""} data-tint-light="${rgb(tintLight)}" data-tint-dark="${rgb(tintDark)}" aria-label="${escape(title)}">${images}${spec.style === "ascii" ? '<pre class="graview-splash-ascii" aria-hidden="true"></pre>' : ""}${spec.style === "shader" ? '<canvas class="graview-splash-canvas" aria-hidden="true"></canvas>' : ""}<div class="graview-splash-words">${words}</div></div>`;
+  // The ascii title types itself on; a reader hears the whole of it once, in the screen's name, not letter by letter.
+  const words = `${kicker ? `<p class="graview-splash-kicker">${escape(kicker)}</p>` : ""}<p class="graview-splash-title"${spec.style === "ascii" ? ` data-types="${escape(title)}" aria-hidden="true"` : ""}>${spec.style === "ascii" ? "" : escape(title)}</p>`;
+  const html = `<div id="${SPLASH_ID}" popover="manual" data-style="${spec.style}" data-scheme="${scheme}"${shader ? ` data-shader="${shader}"` : ""} data-tint-light="${rgb(tintLight)}" data-tint-dark="${rgb(tintDark)}"${options.fade === false ? " data-fade=\"off\"" : ""} role="status" aria-label="${escape(title)}">${images}${spec.style === "ascii" ? '<pre class="graview-splash-ascii" aria-hidden="true"></pre>' : ""}${spec.style === "shader" ? '<canvas class="graview-splash-canvas" aria-hidden="true"></canvas>' : ""}<div class="graview-splash-words">${words}</div></div>`;
 
   const id = `#${SPLASH_ID}`;
   const darkRules = `--gs-ground:${dark};--gs-ink:${inkDark};--gs-tint:${tintDark};--gs-light:0`;
@@ -186,11 +206,11 @@ export function splashHtml(brand: SplashBrand, options: SplashOptions = {}): Spl
 const SCRIPT = String.raw`(function(){
 var s=document.getElementById("graview-splash");if(!s)return;
 if(s.showPopover){try{s.showPopover()}catch(e){}}
-var mq=window.matchMedia?matchMedia("(prefers-reduced-motion: reduce)"):null,still=!!(mq&&mq.matches);
+var mq=window.matchMedia?matchMedia("(prefers-reduced-motion: reduce)"):null,still=!!(mq&&mq.matches),quick=still||navigator.webdriver===true||s.getAttribute("data-fade")==="off";
 var dark=s.getAttribute("data-scheme")==="dark"||(s.getAttribute("data-scheme")==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);
 var tint=(s.getAttribute(dark?"data-tint-dark":"data-tint-light")||"0,0,0").split(",").map(Number);
 var stop=null,gone=false,t0=Date.now();
-function go(){if(gone)return;gone=true;ob.disconnect();clearTimeout(most);if(stop)stop();if(still){if(s.parentNode)s.parentNode.removeChild(s);return}
+function go(){if(gone)return;gone=true;ob.disconnect();clearTimeout(most);if(stop)stop();if(quick){if(s.parentNode)s.parentNode.removeChild(s);return}
 s.setAttribute("data-gone","");setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s)},320)}
 function drawn(){return !!document.querySelector("[data-graview-drawn],[role=alert]")}
 var ob=new MutationObserver(function(){if(drawn())go()});
@@ -216,7 +236,8 @@ var canvas=s.querySelector(".graview-splash-canvas"),gl=canvas&&(canvas.getConte
 var which=s.getAttribute("data-shader")||"drift";
 var F={drift:"vec2 d=vec2(sin(u_time*.21)*.02,cos(u_time*.17)*.02);vec2 q=(uv-.5)*(1.06-.04*u_progress)+.5+d;q+=vec2(sin(q.y*6.+u_time*.5),cos(q.x*5.-u_time*.4))*.004;vec3 c=pic(q);c=mix(c,u_tint,(1.-u_progress)*.35+.12*(1.-uv.y));",
 ripple:"vec2 p=uv-.5;p.x*=u_resolution.x/u_resolution.y;float r=length(p);float w=sin(r*28.-u_time*2.6)*exp(-r*2.2)*.012*(1.-u_progress*.6);vec3 c=pic(uv+normalize(p+1e-5)*w);c=mix(c,u_tint,.18*(1.-u_progress)+.1*(1.-uv.y));",
-veil:"vec3 c=pic(uv);float band=smoothstep(-.3,.3,uv.x-uv.y*.6+sin(u_time*.35)*.25-.2);c=mix(c,u_tint,(.55-.4*u_progress)*band+.1*(1.-uv.y));"};
+veil:"vec3 c=pic(uv);float band=smoothstep(-.3,.3,uv.x-uv.y*.6+sin(u_time*.35)*.25-.2);c=mix(c,u_tint,(.55-.4*u_progress)*band+.1*(1.-uv.y));",
+caustics:"vec2 p=(uv-.5)*vec2(u_resolution.x/u_resolution.y,1.)*5.;vec2 i=p;float k=1.;for(int n=0;n<4;n++){float t=u_time*.3*(1.-3.5/float(n+1));i=p+vec2(cos(t-i.x)+sin(t+i.y),sin(t-i.y)+cos(t+i.x));k+=1./length(vec2(p.x/(sin(i.x+t)/.005),p.y/(cos(i.y+t)/.005)));}k=1.17-pow(k/4.,1.4);float l=clamp(pow(abs(k),8.),0.,1.);vec3 c=pic(uv+vec2(sin(i.x),cos(i.y))*.004);c=mix(c,u_tint,(1.-u_progress)*.3+.1*(1.-uv.y));c+=l*(.18+.22*u_light)*(1.-.5*u_progress);"};
 if(gl){
 var vs="attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
 var fs="precision mediump float;uniform sampler2D u_image;uniform float u_time,u_progress,u_light,u_has;uniform vec2 u_resolution,u_size;uniform vec3 u_tint,u_ground;"+
