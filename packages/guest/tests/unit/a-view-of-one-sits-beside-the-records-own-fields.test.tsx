@@ -60,7 +60,8 @@ describe("on the scene, the record drawn at full", () => {
     const s = store();
     const View = views.lookup("deliverable", { cardinality: "one", fidelity: "full" }) as ViewComponent<AnySchema>;
     return renderToStaticMarkup(
-      <GraviewProvider store={s} views={views} initialView={EMPTY_VIEW}>
+      // Sat down as Nick, whom the workshop's policy lets write the draft: an editor is offered only to a seat an act lets change it.
+      <GraviewProvider store={s} views={views} initialView={EMPTY_VIEW} principal={nick}>
         <View node={s.graph.getNode("deliverable:email") as never} cardinality="one" fidelity="full" mode="fullscreen" selected />
       </GraviewProvider>,
     );

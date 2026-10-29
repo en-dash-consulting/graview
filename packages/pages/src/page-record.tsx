@@ -6,7 +6,7 @@ import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } 
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
-import { rankedRepairs, recordFacts } from "./facts.js";
+import { blankWritable, rankedRepairs, recordFacts } from "./facts.js";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { DerivedForm } from "./form.js";
 import { WithheldActs } from "./withheld-acts.js";
@@ -56,6 +56,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const facts = recordFacts(store, id, {
     ...(principal ? { principal } : {}),
     ...(invariantContext ? { context: invariantContext } : {}),
+    // A blank this seat may fill is an empty slot where values are changed in place.
+    ...(inPlace ? { blanks: blankWritable(store, id, principal) } : {}),
   });
   // Its problems, each with its rule's line once the words are here.
   const lined = useLined(store, facts?.violations ?? NO_PROBLEMS);

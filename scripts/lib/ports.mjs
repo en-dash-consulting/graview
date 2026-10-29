@@ -85,6 +85,8 @@ export const OWN = {
   "drawn-host": 5259,
   /** The host's page `verify-screen-reader` mounts a roadmap into, in two tabs sat down as two people, to hear what a screen reader is told. */
   "screen-reader-host": 5256,
+  /** The host's page `verify-blank-facts` mounts a staffing firm's placements into, sat down as staffing or as a reader. */
+  "blank-facts-host": 5233,
   /** The host's page `verify-field-types` mounts a choir's rehearsals into: a phone to call, a place to map, a duration said and summed. */
   "field-types-host": 5257,
   /** The host's page `verify-app-links` mounts purchase scenarios that link other apps into, with a resolver of its own (FR-171). */

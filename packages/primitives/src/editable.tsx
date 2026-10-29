@@ -33,6 +33,7 @@ export function EditableValue<S extends AnySchema>({
   value,
   stored = value,
   said,
+  blank = false,
 }: {
   readonly nodeId: string;
   readonly field: string;
@@ -47,6 +48,13 @@ export function EditableValue<S extends AnySchema>({
   readonly said?: string;
   /** The value as the record keeps it, which the edit control holds and writes back: "2026-08-28", "tue". The value said, when not given. */
   readonly stored?: string;
+  /**
+   * HELD BLANK: the field has no value yet, and the control is an empty slot
+   * — a dim "add" that opens the same editor (Roadmap
+   * request:record-pages-draw-writable-but-blank-facts-as-empty-editable-slots).
+   * `said` names it ("Add Allocation").
+   */
+  readonly blank?: boolean;
 }) {
   const { fields, commit } = useEditableFields<S>(nodeId);
   const editable = fields.find((candidate) => candidate.field === field);
@@ -125,6 +133,7 @@ export function EditableValue<S extends AnySchema>({
         type="button"
         data-graview-field={field}
         data-graview-editable={editable.mutation}
+        {...(blank ? { "data-graview-blank": "" } : {})}
         // Named only where the name is more than the words it shows: a heading's words are its name already.
         {...(named === value ? {} : { "aria-label": named })}
         title={`${editable.title} — changes the ${words}, and can be undone`}
@@ -157,10 +166,11 @@ export function EditableValue<S extends AnySchema>({
           overflowWrap: "anywhere",
           paddingBottom: 1,
           borderBottom: "1px dashed var(--graview-edge-bright)",
-          color: "var(--graview-ink)",
+          // An empty slot says "add", dim beside the values that are there.
+          color: blank ? "var(--graview-ink-muted)" : "var(--graview-ink)",
         }}
       >
-        {value}
+        {blank ? "add" : value}
       </button>
     );
     if (!refused) return button;
@@ -328,6 +338,8 @@ export function EditableValue<S extends AnySchema>({
           onBlur={() => close(false)}
           style={{ font: "inherit", fontSize: "inherit" }}
         >
+          {/* A blank choice opens on no choice: the first option shown as chosen could never be picked. */}
+          {draft === "" ? <option value="" disabled>Choose…</option> : null}
           {/* Each choice as it is declared, as the value is said when it is not being changed. */}
           {editable.shape.options.map((option) => (
             <option key={option} value={option}>
