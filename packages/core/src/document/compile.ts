@@ -28,6 +28,7 @@ import { resolveCovers } from "./covers.js";
 import { parsedComputed, workedOutAlone } from "./computed.js";
 import { durationsOf } from "./durations.js";
 import { fieldsKeptInStep } from "./kept-in-step.js";
+import { isRecord } from "./respell.js";
 import { askedOrder, pageFieldFindings } from "./page-fields.js";
 import {
   build,
@@ -40,6 +41,7 @@ import {
   type ArgPlan,
   type CompiledApp,
   type CompiledDocument,
+  type DerivesPlan,
   type EdgePlan,
   type KindPlan,
   type RefusedDocument,
@@ -280,6 +282,8 @@ function validate(document: GraviewDocument): Finding[] {
         }
       }
     }
+    // What it follows (Roadmap f-keep-linked): its expressions parse here; the names they read are the checker's (`derives-findings.ts`).
+    for (const [field, value] of Object.entries(spec.derives?.set ?? {})) if (isRecord(value) && "expr" in value) tryExpr(String(value.expr), `${at}.derives.set.${field}`, findings);
     for (const [field, f] of Object.entries(spec.fields)) {
       if (f.default !== undefined && f.type === "enum") {
         // A choice that takes several (FR-233) starts as a list of its options; one that takes one, as one of them.
@@ -539,6 +543,28 @@ function saidAsDeclared(parts: readonly TemplatePart[], fields: GraviewDocument[
   });
 }
 
+/**
+ * WHAT A KIND FOLLOWS, PLANNED (Roadmap f-keep-linked): which end of the
+ * relation its source stands on — the relation declared on this kind
+ * points at the source, one declared on the source points here — each
+ * value parsed, and the fields set from one of the source's own stored
+ * fields as it is, which go back when changed here.
+ */
+function derivesPlan(kind: string, derives: NonNullable<KindSpec["derives"]>, document: GraviewDocument): DerivesPlan {
+  const sourceEnd = document.kinds[kind]?.edges?.[derives.via] !== undefined ? "to" : "from";
+  const source = document.kinds[derives.from];
+  const set: [string, { expr: Expr } | { value: unknown }][] = [];
+  const back: Record<string, string> = {};
+  for (const [field, value] of Object.entries(derives.set)) {
+    if (isRecord(value) && "expr" in value) {
+      const expr = parseExpr(value.expr);
+      set.push([field, { expr }]);
+      if (expr.t === "ident" && source?.fields[expr.name]) back[field] = expr.name;
+    } else set.push([field, { value: typeof value === "string" && value.startsWith("$$") ? value.slice(1) : value }]);
+  }
+  return { from: derives.from, via: derives.via, sourceEnd, set, back };
+}
+
 function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
   const edges = edgeIndex(document);
 
@@ -558,6 +584,7 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
       ...(computed ? { computed: [...computed] } : {}),
       ...(durations.length > 0 ? { durations } : {}),
       ...(keptInStep.has(kind) ? { keptInStep: keptInStep.get(kind)! } : {}),
+      ...(spec.derives ? { derives: derivesPlan(kind, spec.derives, document) } : {}),
     };
   }
 

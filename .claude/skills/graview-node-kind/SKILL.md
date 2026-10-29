@@ -147,6 +147,12 @@ data; `fieldRoles` for the timeline); `apps/seedbed/src/domain/schema.ts` (a
   size a chip gives it.
 - **A declared hue** in the brand (`accents: { fixture: 210 }`) for a chosen
   color, not a stable hash: every chip dot, roof and focus tag follows.
+- **What it follows**, when its records copy another kind's (an event of
+  its plan item): `"derives": { "from": "plan-item", "via": "source",
+  "set": { "title": { "expr": "name" } } }`. The store keeps each linked
+  record in step in the same change as either side's edit: a field set
+  from a source field as it is goes back, one worked out otherwise is
+  flagged in `store.findings()`, and archiving the source archives it.
 
 ## Then find out whether it worked
 

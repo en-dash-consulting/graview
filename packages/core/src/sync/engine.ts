@@ -1,4 +1,5 @@
-import type { GraphReader } from "../graph/types.js";
+import type { AnyGraphNode, GraphReader } from "../graph/types.js";
+import { computedValues } from "../document/computed-values.js";
 import { splicedRecord } from "../graph/primitives.js";
 import { PermissionDeniedError } from "../permissions/types.js";
 import type { AppendOp, ApplyOptions, PlannedChange, Store } from "../store.js";
@@ -426,6 +427,13 @@ export class SyncEngine<S extends AnySchema> {
     return this.reverse.byId.get(id);
   }
 
+  /** The record with the computed fields a connection sends, worked out over the store's graph (Roadmap f-keep-linked); a record or a set of them said by name. */
+  private withWorkedOut(node: Record<string, unknown>, fields: readonly string[]): Record<string, unknown> {
+    const { values } = computedValues(this.options.store.schema as AnySchema, this.options.store.graph as GraphReader, node as AnyGraphNode);
+    const said = (value: unknown): unknown => (Array.isArray(value) ? value.map(said) : value !== null && typeof value === "object" ? (value as { label?: unknown }).label : value);
+    return { ...node, ...Object.fromEntries(fields.map((field) => [field, said(values[field])])) };
+  }
+
   /**
    * A NODE'S VALUES AS THE REMOTE IS COMPARED WITH: its mapped fields, and
    * each mapped relation as the remote ids of the records it reaches — those
@@ -433,7 +441,7 @@ export class SyncEngine<S extends AnySchema> {
    * no engine has linked yet (made here, not sent) is not in it until it is.
    */
   private valuesOf(node: Record<string, unknown>, mapping: ResourceMapping): Record<string, unknown> {
-    const values = mappedValues(node, mapping);
+    const values = mappedValues(mapping.computed?.length ? this.withWorkedOut(node, mapping.computed) : node, mapping);
     if (!mapping.edges) return values;
     const id = node["id"] as string;
     const held = this.state?.unresolved?.[id];

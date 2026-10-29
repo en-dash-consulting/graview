@@ -44,6 +44,7 @@ An id is still a name a caller may choose: every act that declares `creates: ["f
 - **`lifecycle`** when members expire — `{ field: "status", retired: ["played"] }` or `{ field: "until", retired: "date" }`. Every count then aggregates over the horizon ("4, +12 past") instead of drowning, and `graview check` refuses a lifecycle reading a missing field.
 - **A figure**, line art of the THING at the city's three-quarter angle — a person, a plot of ground, a gutter — drawn wherever the kind is drawn. Nine ship; any domain that is not an abstract tracker runs out of them at once, so draw the rest: `graview figure ./dist/domain/app.js --kind gutter --from "a gutter along a roof edge"` prints the brief (the rules, the angle, a shipped figure as the style), and `--judge <file>` reads the answer back, holds it to the rules `graview check` holds a figure to, and prints the line to paste. Then look at it at twenty pixels, which is the size a chip gives it.
 - **A declared hue** in the brand (`accents: { fixture: 210 }`) for a chosen color, not a stable hash: every chip dot, roof and focus tag follows.
+- **What it follows**, when its records copy another kind's (an event of its plan item): `"derives": { "from": "plan-item", "via": "source", "set": { "title": { "expr": "name" } } }`. The store keeps each linked record in step in the same change as either side's edit: a field set from a source field as it is goes back, one worked out otherwise is flagged in `store.findings()`, and archiving the source archives it.
 
 ### Then find out whether it worked
 

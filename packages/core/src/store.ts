@@ -5,6 +5,7 @@ import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, diffTouched, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { normalize, writesOf, type Primitive } from "./graph/primitives.js";
+import { keepLinked, keepsLinked } from "./keep-linked.js";
 import { bareOp, inverseOf } from "./ops/inverse.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
 import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
@@ -966,6 +967,22 @@ export class Store<S extends AnySchema> {
    * action withheld by permission is stated rather than hidden, and stating
    * it needs the same answer the enforcement uses. One source, two readings.
    */
+  /**
+   * Whether a change to a derived record may go back to its source
+   * (Roadmap f-keep-linked): when the store judges a policy, only when its
+   * author may make the source's own edit with that value.
+   */
+  private writesBack(principal: Principal): ((source: { readonly id: string; readonly kind: string }, field: string, value: unknown) => boolean) | undefined {
+    if (!this.policy) return undefined;
+    return (source, field, value) => {
+      try {
+        return this.permits({ name: `edit-${source.kind}`, args: { id: source.id, [field]: value } }, principal).ok;
+      } catch {
+        return false;
+      }
+    };
+  }
+
   permits(
     call: MutationCall,
     principal: Principal = HUMAN,
@@ -1544,7 +1561,15 @@ export class Store<S extends AnySchema> {
     call = this.spelledCall(call);
     const definition = this.mutation(call.name);
     const compiled = compileMutation(this.graph, definition, call.args, this.sighted(options.author));
-    return this.previewPrimitives(this.asSplices(compiled.primitives), {
+    const made = this.asSplices(compiled.primitives);
+    // And what would follow it (Roadmap f-keep-linked), worked out on a copy.
+    let following: Primitive[] = [];
+    if (keepsLinked(this.schema)) {
+      const trial = Graph.from(this.schema, this.graph.snapshot());
+      trial.applyPrimitives(made);
+      following = keepLinked(this.schema, trial, made, { mayWriteBack: this.writesBack(options.author ?? (this.by as Principal)) });
+    }
+    return this.previewPrimitives([...made, ...following], {
       reads: compiled.reads,
       writes: compiled.writes,
       intent: compiled.intent,
@@ -1800,6 +1825,15 @@ export class Store<S extends AnySchema> {
          */
         if (compiled.primitives.length === 0) continue;
         minted[at] = compiled.firstMinted;
+        /*
+         * WHAT FOLLOWS IT (Roadmap f-keep-linked): the records that derive
+         * from what this changed take their values from it, and a change
+         * to one of those goes back to its source — in this op, so one undo
+         * takes both back. Applied to the graph as they are worked out.
+         */
+        const made = this.asSplices(compiled.primitives, options.base).map(normalize);
+        this.graph.applyPrimitives(made);
+        const following = keepsLinked(this.schema) ? keepLinked(this.schema, this.graph, made, { mayWriteBack: this.writesBack(as as Principal) }).map(normalize) : [];
         madeIds[at] =compiled.primitives.find((primitive): primitive is Extract<Primitive, { op: "add-node" }> => primitive.op === "add-node")?.node.id;
         const op: Operation = {
           id: this.nextId(),
@@ -1821,9 +1855,9 @@ export class Store<S extends AnySchema> {
            * instruction is lost the moment the op is written to JSON and the
            * inverse quietly does nothing. See `normalize` in primitives.ts.
            */
-          primitives: this.asSplices(compiled.primitives, options.base).map(normalize),
+          primitives: [...made, ...following],
           reads: compiled.reads,
-          writes: compiled.writes,
+          writes: following.length > 0 ? [...new Set([...compiled.writes, ...following.flatMap(writesOf)])] : compiled.writes,
           // Which records its sentence read, so a reader who may not see one is not handed the sentence (FR-55).
           ...(definition.describe !== undefined && compiled.described && compiled.described.length > 0 ? { described: compiled.described } : {}),
           ...given("mergedInto", compiled.mergedInto),
@@ -1831,7 +1865,6 @@ export class Store<S extends AnySchema> {
           ...given("via", options.via),
           ...given("lineage", lined),
         };
-        this.graph.applyPrimitives(op.primitives);
         this.log.append(op);
         ops.push(op);
         allPrimitives.push(...op.primitives);
@@ -2018,7 +2051,16 @@ export class Store<S extends AnySchema> {
     const rollback = this.graph.snapshot();
     const intent = options.intent ?? "Apply a change";
     const lineage = lineageOf(options.lineage);
-    const recorded = this.asSplices(primitives, options.base).map(normalize);
+    const handed = this.asSplices(primitives, options.base).map(normalize);
+    // What follows it (Roadmap f-keep-linked), worked out on the graph as it lands: the host's change keeps derived records in step too.
+    this.graph.applyPrimitives(handed);
+    let recorded = handed;
+    try {
+      if (keepsLinked(this.schema)) recorded = [...handed, ...keepLinked(this.schema, this.graph, handed, { mayWriteBack: this.writesBack(author as Principal) }).map(normalize)];
+    } catch (error) {
+      this.putBack(rollback, this.log.length);
+      throw error;
+    }
     const ops: Operation[] = [];
     if (recorded.length > 0) {
       const op: Operation = {
@@ -2035,7 +2077,6 @@ export class Store<S extends AnySchema> {
         ...given("via", options.via),
         ...given("lineage", lineage),
       };
-      this.graph.applyPrimitives(op.primitives);
       this.log.append(op);
       ops.push(op);
       tellTheWatchOfAnAuthor(author.id);

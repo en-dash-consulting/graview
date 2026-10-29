@@ -106,7 +106,8 @@ exporting the app itself is `graview-ship`.
    once. A page archived there is gone here, and one removed here is
    archived there. A mapped property the source lacks is made on the
    first pass (`report.said`), never renamed or deleted; `create: false`
-   makes none. `scriptedNotion()` is a Notion in memory to test against.
+   makes none. A computed field may be mapped: sent, never read back.
+   `scriptedNotion()` is a Notion in memory to test against.
 
    What a change there lands through, credited to the system: a page or
    event made there becomes a record through `add-<kind>`, or else the
