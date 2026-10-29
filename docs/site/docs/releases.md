@@ -67,7 +67,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.63
 
-Published October 29, 2026 · the current version
+Published October 29, 2026
 
 An app declares workflows that fill next week, keep records in step, archive what is done and label what arrives; people propose changes for review; Notion makes the properties it needs; a connection says whom it invited; and the right-click menu says what is under the cursor.
 
