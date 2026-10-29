@@ -1,7 +1,6 @@
 import * as z from "../schema/zod.js";
 import type { AgentStep } from "../workflow-shape.js";
 import type { StepCheck, StepKind, StepShapes, WorkflowFinding } from "./steps.js";
-import { kindWords } from "./step-act.js";
 import type { WorkflowWorld } from "./world.js";
 
 /*
@@ -50,8 +49,8 @@ export const agentStep: StepKind<AgentStep> = {
     });
     return out;
   },
-  words(step) {
-    const reads = step.reads.length > 0 ? ` reading ${step.reads.map(kindWords).join(", ")}` : "";
+  words(step, noun) {
+    const reads = step.reads.length > 0 ? ` reading ${step.reads.map(noun).join(", ")}` : "";
     return `Ask a model to ${step.agent.replace(/^./, (first) => first.toLowerCase()).replace(/[.!]$/, "")}${reads}, proposing ${step.acts.map((act) => `“${act}”`).join(", ") || "nothing"}`;
   },
   touches(step, world: WorkflowWorld) {

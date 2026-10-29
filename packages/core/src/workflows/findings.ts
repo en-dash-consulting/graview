@@ -6,7 +6,8 @@ import { MOST_WORKFLOWS, type WorkflowDeclaration, type WorkflowStep, type Workf
 import { followsFindings } from "./policies.js";
 import { scheduleOf } from "./schedule.js";
 import { STEP_KINDS, stepKindOf, stepShapes, type WorkflowFinding } from "./steps.js";
-import { workflowReach } from "./resolve.js";
+import { WORKFLOW_JUDGING } from "./judging.js";
+import { resolveWorkflow, workflowReach } from "./resolve.js";
 import { workflowWorldOfDocument, type WorkflowWorld } from "./world.js";
 
 /*
@@ -58,7 +59,7 @@ export function workflowFindingsOf(name: string, raw: unknown, world: WorkflowWo
       return;
     }
     const issues = shapeIssues(kind.shape(stepShapes()) as never, step, `steps.${index}`);
-    for (const issue of issues) out.push({ code: "workflow-shape", severity: "error", path: issue.path, message: `Step ${index + 1} of “${name}”: ${issue.message}.`, fix: `${kind.title}: see the shape a ${kind.key} step takes.` });
+    for (const issue of issues) out.push({ code: "workflow-shape", severity: "error", path: issue.path, message: `Step ${index + 1} of “${name}”: ${issue.message}.`, fix: `${kind.title}: say only the keys that kind of step takes.` });
     if (issues.length === 0) stepsOk.push(step as WorkflowStep);
     else return;
     out.push(...kind.findings(step as never, { world, workflow: name, index, said: `Step ${index + 1} of “${name}”`, declared: raw }));
@@ -135,3 +136,13 @@ export function documentWorkflowFindings(document: GraviewDocument): Finding[] {
     return finding.severity === "warning" ? warning(finding.code, path, finding.message, finding.fix, finding.edits) : error(finding.code, path, finding.message, finding.fix, finding.edits ? { edits: finding.edits } : undefined);
   });
 }
+
+// An edit asks this checker when it is loaded (`./judging.ts`).
+WORKFLOW_JUDGING.judge = (name, workflow, document) => {
+  const world = workflowWorldOfDocument(document as GraviewDocument);
+  const found = workflowFindingsOf(name, workflow, world);
+  const errors = found.filter((finding) => finding.severity === "error");
+  if (errors.length > 0) return { errors, warnings: [], said: "" };
+  const resolved = resolveWorkflow(name, workflow as never, world);
+  return { errors: [], warnings: found.filter((finding) => finding.severity === "warning").map((finding) => finding.message), said: `${resolved.words.slice(0, resolved.words.lastIndexOf(":"))}, ${resolved.steps.length === 1 ? "one step" : `${resolved.steps.length} steps`}${resolved.status === "paused" ? ", paused" : ""}` };
+};

@@ -22,6 +22,13 @@ import { nearOf, systemOneOf, type DreamModel } from "./system-one.js";
  * the floor. The declaration says where the actor may never act
  * (`tidying`), never where it may act unasked, so applying is the host's
  * word, not the app's, and off unless said.
+ *
+ * DREAMING IS THE BUILT-IN WORKFLOW EVERY APP HAS (Roadmap
+ * f-jobs-declared): `workflowsOf(app)` (`@graview/core/workflows`) lists it
+ * as `dreaming`, `builtIn: true`, every night at three, unless every kind
+ * says the actor never tidies it. A host runs it on that schedule with
+ * `dream`; a declared workflow runs with `runWorkflow`
+ * (`@graview/tools/workflows`).
  */
 
 /** "Graview, tidying": the app's own actor, as a run is made by unless a host names its own. */
