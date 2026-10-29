@@ -1,5 +1,5 @@
 import type { Matrix4 } from "@graview/render";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { SceneNode } from "./scene-node.js";
 
 /**
@@ -115,6 +115,35 @@ export function useElementSize(
     };
   }, [ref]);
 
+  return size;
+}
+
+/** The most a browser's own toolbars give back to the page when they collapse: Safari's, on an iPad and on a phone. */
+export const TOOLBAR_HEIGHT = 120;
+
+/**
+ * THE SCENE HOLDS STILL WHEN SAFARI'S TOOLBAR COLLAPSES. On a touch screen
+ * the browser's toolbar folds away and the window grows by its height —
+ * the width the same, the box the window's height taller — and the scene
+ * laid itself out again for the taller box: the city slid down by half of
+ * it, a picture under a finger moved, and a glide a tap had begun was
+ * begun again from somewhere else. A box that grows by no more than a
+ * toolbar, by just what the window grew, its width the same, on a touch
+ * screen, keeps the box the scene was laid out for: the ground is painted
+ * into the new room and nothing moves. Narrower or shorter is followed at
+ * once — what is laid out never stands past the box — and so is a turn,
+ * and growth the page made itself (a line over the scene put away).
+ */
+export function useBoxHeldThroughToolbars(size: { width: number; height: number } | null): { width: number; height: number } | null {
+  const laid = useRef<{ size: { width: number; height: number }; screen: number } | null>(null);
+  if (size === null) return laid.current?.size ?? null;
+  const was = laid.current;
+  const screen = typeof innerHeight === "number" ? innerHeight : 0;
+  if (was && was.size.width === size.width && was.size.height === size.height) return was.size;
+  const grew = was ? size.height - was.size.height : 0;
+  const touch = typeof navigator !== "undefined" && (navigator.maxTouchPoints > 0 || (typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches));
+  if (was && touch && size.width === was.size.width && grew > 0 && grew <= TOOLBAR_HEIGHT && Math.abs(screen - was.screen - grew) <= 1) return was.size;
+  laid.current = { size, screen };
   return size;
 }
 

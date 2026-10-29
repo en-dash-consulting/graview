@@ -65,7 +65,7 @@ import { useKeyboardKeepsToWhatIsSeen } from "./scene-covered.js";
 import { useDock, useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type Held } from "./scene-hand.js";
 import { whereIsIn } from "./where-drawn.js";
 import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
-import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
+import { selectionFor, useBoxHeldThroughToolbars, useElementSize, useRootUnit } from "./scene-helpers.js";
 import { Lines, provisionalLines, RelationCaptions } from "./scene-lines.js";
 import { railInset } from "./rails.js";
 import { useLayoutOptions } from "./scene-options.js";
@@ -305,11 +305,21 @@ function useLaidOut<S extends AnySchema>(
     const still = place.pan ? { ...place, pan: undefined } : place;
     return pinned ? withPin(still, pinned.id, { x: pinned.x, y: pinned.y }) : still;
   }, [place, pinned]);
-  const laid = useMemo<Layout>(
-    () => layout(store.graph, store.schema, atRest, sized),
+  /*
+   * WHERE THE CITY STOOD, handed to the next layout (`cityStood`): a
+   * district chosen from altitude is kept in sight from where the city is,
+   * so choosing one already in sight moves nothing, and one past the edge
+   * is brought in the least from there — not from the city's middle, which
+   * slid the whole map back and forth under each tap.
+   */
+  const stood = useRef<Layout["city"]>(undefined);
+  const laid = useMemo<Layout>(() => {
+    const was = stood.current?.stood;
+    const next = layout(store.graph, store.schema, atRest, was ? { ...sized, cityStood: was } : sized);
+    stood.current = next.city;
+    return next;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, atRest, sized, nodes],
-  );
+  }, [store, atRest, sized, nodes]);
   const still = useMemo<Layout>(
     () =>
       held && inPlace
@@ -906,7 +916,8 @@ export function Scene<S extends AnySchema>({
   const besideTheMap = useContext(BesideTheMap);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const size = useElementSize(wrapperRef);
+  // The box the scene is laid out for: the one it has, held while only a browser's toolbar folded away (`useBoxHeldThroughToolbars`).
+  const size = useBoxHeldThroughToolbars(useElementSize(wrapperRef));
   const unit = useRootUnit();
 
   // Pinch and ctrl+wheel: altitude from the ground, zoom about the pointer from above; the plain wheel pans. See scene-hand.ts.

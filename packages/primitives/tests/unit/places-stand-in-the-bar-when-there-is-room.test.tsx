@@ -191,10 +191,12 @@ describe("the places standing on the row (FR-145)", () => {
    * stands on one line 200 wide; `squeezed`, the places have pressed it
    * onto two lines that much narrower, and they begin that much sooner.
    */
-  function layOut(barWidth: number, squeezed = 0) {
+  function layOut(barWidth: number, squeezed = 0, runsOver = 0) {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
       const box = (left: number, width: number, height = 30) => ({ left, right: left + width, width, top: 0, bottom: height, height, x: left, y: 0, toJSON: () => ({}) }) as DOMRect;
       if (this.matches(".graview-bar")) return box(0, barWidth, 48);
+      // The person, last on the row: past the bar's end by `runsOver`, Find already at its least.
+      if (this.matches("[data-testid=person]")) return box(barWidth - 30 + runsOver, 30);
       if (this.matches(".graview-bar-mid")) return box(420 - squeezed, 300);
       if (this.matches(".graview-bar-find")) return box(barWidth - 264, 144);
       if (this.matches(".graview-bar-app")) return box(16, 228 - squeezed);
@@ -247,6 +249,28 @@ describe("the places standing on the row (FR-145)", () => {
     act(() => at.querySelector<HTMLButtonElement>('[data-testid="app-places"] [data-place-path="/map"]')!.click());
     expect(went).toEqual(["/map"]);
     act(() => root.unmount());
+  });
+
+  /*
+   * WHAT RUNS PAST THE ROW IS ROOM THE PLACES DO NOT HAVE. Find's end was
+   * the room's measure, and Find stops giving at its least: on an iPad 1024
+   * wide the scene's Activity came after the places were weighed, Find's
+   * end went past the row with the tools, the room read as enough and the
+   * person stood off the screen. The row's overrun is taken off the room.
+   */
+  it("fold more of themselves when a tool after Find runs the row past the bar's end", () => {
+    const standing = (at: HTMLElement) => [...at.querySelectorAll('[data-testid="app-places-standing"] > [data-place-path]')].length;
+    const person = <button type="button" data-testid="person">P</button>;
+    layOut(1280);
+    const fits = drawn(<AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(true)} switch="icons" places={workshop} current="home" reach={{}} tools={person} />);
+    const room = standing(fits.at);
+    act(() => fits.root.unmount());
+    vi.restoreAllMocks();
+    layOut(1280, 0, 160);
+    const over = drawn(<AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(true)} switch="icons" places={workshop} current="home" reach={{}} tools={person} />);
+    expect(room).toBeGreaterThanOrEqual(2);
+    expect(standing(over.at)).toBeLessThan(room);
+    act(() => over.root.unmount());
   });
 
   /*
