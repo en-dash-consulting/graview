@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 4620,
+  "gzipped": 1720,
+  "changeset": "a-record-follows-the-record-it-derives-from.md",
+  "note": "Raised when a record came to follow the record it derives from (Roadmap f-keep-linked): the store keeps a kind's `derives` in step in the same change as either side's edit (`keep-linked.ts`), a compiled app builds each kind's values from its plan, and `validateGraph` says a record out of step. Measured at 596_177 / 207_454 against 591_594 / 205_814 on feat/workflows, 4_583 / 1_640 more."
+}

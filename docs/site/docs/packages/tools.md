@@ -6,7 +6,7 @@
 pnpm add @graview/tools
 ```
 
-Entry points: `@graview/tools`, `@graview/tools/cli`, `@graview/tools/frame`, `@graview/tools/edit`, `@graview/tools/suggest`, `@graview/tools/derive`, `@graview/tools/go`, `@graview/tools/draft`, `@graview/tools/keep`, `@graview/tools/turn`, `@graview/tools/several`, `@graview/tools/inline-ai`, `@graview/tools/tidy`, `@graview/tools/starter`, `@graview/tools/reshape`
+Entry points: `@graview/tools`, `@graview/tools/cli`, `@graview/tools/frame`, `@graview/tools/edit`, `@graview/tools/suggest`, `@graview/tools/derive`, `@graview/tools/go`, `@graview/tools/draft`, `@graview/tools/keep`, `@graview/tools/turn`, `@graview/tools/several`, `@graview/tools/inline-ai`, `@graview/tools/tidy`, `@graview/tools/starter`, `@graview/tools/reshape`, `@graview/tools/workflows`
 
 ## What it is
 

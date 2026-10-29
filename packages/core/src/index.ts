@@ -353,6 +353,7 @@ export { sha256Hex, snapshotHash } from "./integrity.js";
 export type { VerifyResult } from "./integrity.js";
 // Stored data checked against its declaration (FR-21).
 export { GRAPH_FINDING_CODES, repairPlan, validateGraph } from "./validate-graph.js";
+export type { DerivesDeclaration } from "./keep-linked.js";
 export type {
   FindingRepair,
   GraphFinding,

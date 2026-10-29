@@ -103,7 +103,8 @@ exporting the app itself is `graview-ship`.
    read as names; formulas, rollups and files are left alone and said
    once. A page archived there is gone here, and one removed here is
    archived there. `scriptedNotion()` is a Notion in memory to test
-   against.
+   against. A computed field may be mapped in either system: sent, never
+   read back.
 
    What a change there lands through, credited to the system: a page or
    event made there becomes a record through `add-<kind>`, or else the

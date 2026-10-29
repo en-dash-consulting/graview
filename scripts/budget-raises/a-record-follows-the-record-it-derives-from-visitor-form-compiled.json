@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 4600,
+  "gzipped": 1720,
+  "note": "Raised when a record came to follow the record it derives from (Roadmap f-keep-linked): the store keeps a kind's `derives` in step in the same change as either side's edit (`keep-linked.ts`), a compiled app builds each kind's values from its plan, and `validateGraph` says a record out of step. 4_587 / 1_679 more. Measured at 344_364 / 126_048 against 339_777 / 124_369."
+}
