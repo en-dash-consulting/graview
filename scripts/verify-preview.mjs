@@ -33,7 +33,12 @@
  *   f-splash-in-document) opens on it — in the first HTML, on the page
  *   before the app's code ran, gone once the place has drawn; and the
  *   screen alone is a status axe finds nothing on, its light-through-water
- *   shader drawing, moving, and still for a reader who asks for less motion.
+ *   shader drawing, moving, and still for a reader who asks for less motion;
+ *   and the org declared dark, opened on a device that prefers light, opens
+ *   through a dark screen and is drawn dark (Roadmap
+ *   f-splash-follows-declared-scheme), its head offering the icon typed by
+ *   what it is, a manifest whose every icon is answered as what it says, and
+ *   the app's one color for the browser's chrome (f-app-icons-home-screen).
  *
  *   node scripts/verify-preview.mjs [--engine=chromium|webkit|firefox]
  *
@@ -527,6 +532,122 @@ try {
     }
     rmSync(dir, { recursive: true, force: true });
     report.checks.anOpeningScreenCoversThePageUntilItsPlaceHasDrawn = { styles, ok: Object.values(styles).every((one) => one.ok) };
+  }
+
+  /*
+   * ---- a dark app on a light device, kept on a home screen (Roadmap f-splash-follows-declared-scheme,
+   * f-app-icons-home-screen): the org declared dark, its page icon an emoji, its opening screen editorial. Opened on a
+   * device that prefers light, the screen is dark — its ground and its words — before any of the app's code ran, and
+   * the app then opens dark; the page's head offers the icon typed by what it is, a manifest that names the app and
+   * whose every icon the server answers as what it says it is, and the app's one color for the browser's chrome.
+   */
+  {
+    const dir = mkdtempSync(join(tmpdir(), "graview-dark-app-"));
+    const SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 9"><rect width="16" height="9" fill="#d7192f"/></svg>';
+    const declared = JSON.parse(readFileSync(resolve(repoRoot, DOCUMENT), "utf8"));
+    declared.brand = { ...(declared.brand ?? {}), scheme: "dark", favicon: { emoji: "🎤" }, splash: { style: "editorial", image: SVG, kicker: "Who does what" } };
+    const file = join(dir, "org-dark.gdd.json");
+    writeFileSync(file, JSON.stringify(declared));
+    await vacant(portFor("preview-splash"));
+    const darkServer = spawn(process.execPath, [CLI, "preview", file, "--seed", SEED, "--port", String(portFor("preview-splash"))], { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"] });
+    let darkSaid = "";
+    darkServer.stdout.on("data", (chunk) => (darkSaid += chunk));
+    darkServer.stderr.on("data", (chunk) => (darkSaid += chunk));
+    const darkBase = at("preview-splash");
+    const stopped = new Promise((done) => darkServer.on("exit", done));
+    try {
+      const began = Date.now();
+      for (;;) {
+        try {
+          if ((await fetch(`${darkBase}/graview/health`)).ok) break;
+        } catch {
+          // not listening yet
+        }
+        if (Date.now() - began > 30_000 || darkServer.exitCode !== null) throw new Error(`graview preview of the dark org did not start:\n${darkSaid}`);
+        await new Promise((ready) => setTimeout(ready, 200));
+      }
+      await admit(darkBase);
+      const page = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "light" });
+      page.on("pageerror", (error) => errors.push(`/ of a dark app: ${error.message}`));
+      // The screen as it stood the moment the document had parsed, before the app's module ran.
+      await page.addInitScript(() => {
+        document.addEventListener("DOMContentLoaded", () => {
+          const screen = document.getElementById("graview-splash");
+          const title = screen?.querySelector(".graview-splash-title");
+          window.__splashSeen = screen ? { scheme: screen.getAttribute("data-scheme"), ground: getComputedStyle(screen).backgroundColor, ink: title ? getComputedStyle(title).color : null } : null;
+          // The head as served, before the face drew (it points the page's icon at the brand's own while it is drawn).
+          window.__headIcons = [...document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]')].map((link) => ({ rel: link.rel, type: link.getAttribute("type"), href: link.getAttribute("href") }));
+        });
+      });
+      await page.goto(`${darkBase}/`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__graviewReady === true || typeof window.__graviewFailed === "string", null, { timeout: 60_000 });
+      await page.waitForSelector("[data-graview-drawn]", { state: "attached", timeout: 60_000 });
+      await page.waitForTimeout(600);
+      const seen = await page.evaluate(async () => {
+        const lightness = (color) => {
+          const [r, g, b] = (color ?? "").match(/[\d.]+/g)?.map(Number) ?? [NaN, NaN, NaN];
+          return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        };
+        const root = document.querySelector('[class^="graview-embed-"], [class*=" graview-embed-"]');
+        const icons = window.__headIcons ?? [];
+        const manifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute("href") ?? null;
+        const answered = async (href) => {
+          const response = await fetch(href);
+          return { href, status: response.status, type: (response.headers.get("content-type") ?? "").split(";")[0] };
+        };
+        const manifestResponse = manifestHref ? await fetch(manifestHref) : null;
+        const manifest = manifestResponse?.ok ? await manifestResponse.json() : null;
+        return {
+          splash: window.__splashSeen ?? null,
+          splashGroundLightness: lightness(window.__splashSeen?.ground),
+          splashInkLightness: lightness(window.__splashSeen?.ink),
+          app: root ? getComputedStyle(root).colorScheme : null,
+          icons,
+          iconsAnswered: await Promise.all(icons.filter((icon) => !icon.href.startsWith("data:")).map((icon) => answered(icon.href).then((said) => ({ ...said, said: icon.type })))),
+          manifestHref,
+          manifestType: (manifestResponse?.headers.get("content-type") ?? "").split(";")[0],
+          manifest,
+          manifestIcons: manifest ? await Promise.all(manifest.icons.map((icon) => answered(icon.src).then((said) => ({ ...said, said: icon.type })))) : [],
+          themeColors: [...document.querySelectorAll('meta[name="theme-color"]')].map((meta) => ({ content: meta.getAttribute("content"), media: meta.getAttribute("media"), lightness: lightness(meta.getAttribute("content").match(/[0-9a-f]{2}/gi).map((h) => parseInt(h, 16)).join(",")) })),
+        };
+      });
+      await page.close();
+      report.checks.aDarkAppOpensThroughADarkSplashOnALightDevice = {
+        device: "light",
+        ...seen.splash,
+        groundLightness: seen.splashGroundLightness,
+        inkLightness: seen.splashInkLightness,
+        app: seen.app,
+        ok: seen.splash?.scheme === "dark" && seen.splashGroundLightness < 0.25 && seen.splashInkLightness > 0.75 && seen.app === "dark",
+      };
+      report.checks.theHeadOffersHomeScreenIcons = {
+        icons: seen.icons,
+        iconsAnswered: seen.iconsAnswered,
+        manifestHref: seen.manifestHref,
+        manifestType: seen.manifestType,
+        manifest: seen.manifest,
+        manifestIcons: seen.manifestIcons,
+        themeColors: seen.themeColors,
+        ok:
+          seen.icons.some((icon) => icon.rel === "icon" && icon.type === "image/svg+xml") &&
+          seen.iconsAnswered.length > 0 &&
+          seen.iconsAnswered.every((icon) => icon.status === 200 && (!icon.said || icon.said === icon.type)) &&
+          seen.manifestType === "application/manifest+json" &&
+          seen.manifest?.name === declared.name &&
+          seen.manifest?.display === "standalone" &&
+          seen.manifestIcons.length > 0 &&
+          seen.manifestIcons.every((icon) => icon.status === 200 && icon.type === icon.said) &&
+          seen.themeColors.length > 0 &&
+          seen.themeColors.every((meta) => meta.media === null && meta.lightness < 0.25),
+      };
+    } catch (error) {
+      report.checks.aDarkAppOpensThroughADarkSplashOnALightDevice = { error: String(error?.stack ?? error), ok: false };
+      report.checks.theHeadOffersHomeScreenIcons = { error: String(error?.stack ?? error), ok: false };
+    } finally {
+      darkServer.kill();
+      await stopped;
+      rmSync(dir, { recursive: true, force: true });
+    }
   }
 
   /*

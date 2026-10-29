@@ -19,5 +19,5 @@ export type { SceneDistrict, SceneDistrictOptions } from "./scene-districts.js";
 export { sceneThumbnail } from "./document/thumbnail.js";
 export type { SceneThumbnailOptions, ThumbnailSource } from "./document/thumbnail.js";
 /* The app's workflows on the map (Roadmap f-jobs-declared): where each stands, what it is wired to, and its last run in words. */
-export { agoWords, lastRunWords, workflowSpots, workflowsOnTheMap } from "./workflows/on-the-map.js";
-export type { MapAct, MapWorkflow, RunSaid, SpotPlot, WorkflowSpot } from "./workflows/on-the-map.js";
+export { agoWords, lastRunWords, runCount, workflowSpots, workflowsOnTheMap } from "./workflows/on-the-map.js";
+export type { MapAct, MapWorkflow, RunCount, RunSaid, SpotPlot, WorkflowSpot } from "./workflows/on-the-map.js";

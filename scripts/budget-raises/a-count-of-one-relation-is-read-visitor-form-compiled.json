@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 298,
+  "gzipped": 0,
+  "note": "Raised when a count of one relation came to be read from the edge index for one step (`count(in('inGenre'))`, `exists(...)`), and a computed field read from a template, a block or a rule came to be worked out under a record's budget, so a row past a card's budget shows what the record's page shows (Roadmap f-count-past-graph-budget). 298 / 103 more, the gzipped within the budget's room. Measured at 351_057 / 128_236 against 350_759 / 128_133."
+}

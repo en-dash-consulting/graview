@@ -157,6 +157,8 @@ export interface RemoteSystem {
     readonly cursor: string;
     /** What the transport did to the remote to keep these records, or found there, as sentences: properties it made in Notion, one of another type it left. */
     readonly said?: readonly string[];
+    /** The same sentences, in the same order, each with the resource it is of when it is of one (a Notion data source): the report's `saidBy`. */
+    readonly saidOf?: readonly { readonly resource?: string; readonly sentence: string }[];
   }>;
   push(writes: readonly RemoteWrite[]): Promise<readonly RemoteAck[]>;
 }

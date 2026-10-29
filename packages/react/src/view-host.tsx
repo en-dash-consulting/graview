@@ -56,6 +56,8 @@ interface HostProps {
   onDragStart(event: ReactPointerEvent<HTMLElement>): void;
   onDragMove(event: ReactPointerEvent<HTMLElement>): void;
   onDragEnd(): void;
+  /** The browser took the touch (`pointercancel`): nothing the drag moved is kept. Without it a cancel ends the drag as a lift does. */
+  onDragCancel?(): void;
   /** True for the instant after a drag, so the click it produces is ignored. */
   readonly swallowClick: { current: boolean };
   readonly children: ReactNode;
@@ -89,6 +91,7 @@ export function SceneViewHost({
   onDragStart,
   onDragMove,
   onDragEnd,
+  onDragCancel,
   swallowClick,
   children,
 }: HostProps) {
@@ -391,7 +394,7 @@ export function SceneViewHost({
       onPointerDown={onDragStart}
       onPointerMove={onDragMove}
       onPointerUp={onDragEnd}
-      onPointerCancel={onDragEnd}
+      onPointerCancel={onDragCancel ?? onDragEnd}
       onClick={(event) => {
         // A drag that ends on a card must not also select it.
         if (swallowClick.current) return;

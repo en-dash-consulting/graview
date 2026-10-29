@@ -22,6 +22,7 @@ import { runConnections } from "./connections.js";
 import { fileConnectionState, readEnvFile } from "./connections-file.js";
 import { heldBy, holdFileOf, holdStore, sayHeld, sayTookOver, type StoreHold } from "./store-hold.js";
 import type { StoredMeta } from "./meta.js";
+import { homeScreenAnswer } from "./home-screen.js";
 
 /**
  * `graview serve` — the store behind HTTP, and the data in a folder you can
@@ -295,6 +296,8 @@ export async function serve(argv: readonly string[]): Promise<number> {
     ...(key !== undefined ? { key } : {}),
     allowOrigins: flags(argv, "--allow-origin"),
     where: backend.where,
+    // The app on a home screen: its manifest and its SVG mark, for a page that links them (Roadmap f-app-icons-home-screen).
+    answer: homeScreenAnswer(app.brand, { name: app.name }).answer,
     // Notify me: kept beside the store, and each match said here, where a host would deliver it.
     subscriptions: fileSubscriptions(subscriptionsFileOf(backend, app.name)),
     // The views a person hid or deleted from the place menu, kept beside the store, thirty days for a deleted one.

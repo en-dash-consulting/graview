@@ -254,3 +254,46 @@ export function useTrailBox(ground: RefObject<HTMLElement | null>): Box | null {
   }, [ground]);
   return box;
 }
+
+/**
+ * THE SHOWINGS AS THEY ARE DRAWN: the names of a chosen district's pictures
+ * hanging under its own. The layout knows the showings of a district a lens
+ * is open on (`CityFrame.showings`); a district only chosen hangs them too,
+ * and on a phone the sign for Eras, past the right edge, stood on Albums'
+ * "Tracklists" — a tap there took the sign's press. Read once the picture
+ * has landed (`landed`), each against its own card, so a pan — which moves
+ * the cards and the showings together — changes nothing here and draws the
+ * scene no second time; `hungOn` places them where the layout puts the card.
+ */
+export interface Hung {
+  /** The card the showings hang from. */
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+export function useHungShowings(ground: RefObject<HTMLElement | null>, landed: boolean, picture: unknown): readonly Hung[] {
+  const [hung, setHung] = useState<readonly Hung[]>([]);
+  useLayoutEffect(() => {
+    const at = ground.current;
+    if (!at || !landed) return;
+    const next = [...at.querySelectorAll<HTMLElement>(".graview-drive-in")].flatMap((one) => {
+      const card = one.closest<HTMLElement>("[data-graview-view]");
+      const box = one.getBoundingClientRect();
+      if (!card || box.width === 0 || box.height === 0) return [];
+      const from = card.getBoundingClientRect();
+      return [{ id: card.getAttribute("data-graview-view")!, x: Math.round(box.left - from.left), y: Math.round(box.top - from.top), width: Math.round(box.width), height: Math.round(box.height) }];
+    });
+    setHung((now) => (now.length === next.length && now.every((one, i) => one.id === next[i]!.id && one.x === next[i]!.x && one.y === next[i]!.y && one.width === next[i]!.width && one.height === next[i]!.height) ? now : next));
+  }, [ground, landed, picture]);
+  return hung;
+}
+
+/** The showings in the ground's pixels, where the layout puts the cards they hang from. */
+export function hungOn(hung: readonly Hung[], nodes: readonly { readonly id: string; readonly x: number; readonly y: number }[]): Box[] {
+  return hung.flatMap((one) => {
+    const card = nodes.find((node) => node.id === one.id);
+    return card ? [{ x: card.x + one.x, y: card.y + one.y, width: one.width, height: one.height }] : [];
+  });
+}

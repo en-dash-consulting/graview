@@ -60,6 +60,12 @@ export interface SplashSpec {
   readonly kicker?: string;
   /** For the shader style: one of `SPLASH_SHADERS`; the first when unsaid. */
   readonly shader?: string;
+  /**
+   * THE SCHEME THE SCREEN OPENS IN (Roadmap f-splash-follows-declared-scheme),
+   * where the brand pins none: `"light"`, `"dark"`, or `"device"` (the
+   * reader's system). Unsaid, the brand's `scheme`.
+   */
+  readonly scheme?: "light" | "dark" | "device";
 }
 
 /** What of a document's brand the screen reads: its words, colors, face and the screen itself. */
@@ -74,8 +80,21 @@ export interface SplashBrand {
 }
 
 export interface SplashOptions {
-  /** The scheme the page opens in: the brand's, else `auto` (the reader's system). */
+  /**
+   * The scheme this reader chose, where the host knows it (`light` or
+   * `dark`): it wins. `auto` is no choice, so a scheme the app declares —
+   * the brand's `scheme`, else the screen's own — still holds; with
+   * neither, the reader's system.
+   */
   readonly scheme?: "light" | "dark" | "auto";
+  /**
+   * WHERE THE HOST SERVES AN APP'S OWN IMAGE (Roadmap
+   * f-brand-marks-under-app-base): the screen's image and the plain
+   * screen's mark under `/graview/assets/` are drawn at `assetsAt(path)` —
+   * a host serving the app under a base answers `base + path`. Inline SVG
+   * and any other address as given.
+   */
+  readonly assetsAt?: (path: string) => string;
   /** The app's name where the brand names none (a document's `name`). */
   readonly name?: string;
   /**
@@ -144,6 +163,20 @@ function rgb(hex: string): string {
 }
 
 /**
+ * WHICH SCHEME THE SCREEN OPENS IN (Roadmap f-splash-follows-declared-scheme):
+ * the reader's own choice where the host says one; else the one the app
+ * declares — the brand's, else the screen's — so a dark app opens through a
+ * dark screen on a light device and then is drawn dark, rather than
+ * through a cream veil; else the device's.
+ */
+export function splashScheme(brand: SplashBrand, options: Pick<SplashOptions, "scheme"> = {}): "light" | "dark" | "auto" {
+  if (options.scheme === "light" || options.scheme === "dark") return options.scheme;
+  if (brand.scheme === "light" || brand.scheme === "dark") return brand.scheme;
+  const own = brand.splash?.scheme;
+  return own === "light" || own === "dark" ? own : "auto";
+}
+
+/**
  * THE SCREEN AS STRINGS. `html` is one element, `#graview-splash`, carrying
  * its style and scheme as data attributes; `css` is scoped to it; `script`
  * is plain, synchronous and self-contained, to be inlined after the markup.
@@ -152,15 +185,16 @@ function rgb(hex: string): string {
 export function splashHtml(brand: SplashBrand, options: SplashOptions = {}): Splash {
   const spec = brand.splash;
   if (!spec || !(SPLASH_STYLES as readonly string[]).includes(spec.style)) return { html: "", css: "", script: "" };
-  const scheme = options.scheme ?? brand.scheme ?? "auto";
+  const scheme = splashScheme(brand, options);
   const { light, dark, tintLight, tintDark, inkLight, inkDark } = colors(brand);
   const title = options.title ?? spec.title ?? brand.name ?? options.name ?? "";
   const kicker = options.kicker ?? spec.kicker;
   const shader = spec.style === "shader" ? ((SPLASH_SHADERS as readonly string[]).includes(spec.shader ?? "") ? spec.shader! : SPLASH_SHADERS[0]) : undefined;
-  const picture = imageHref(spec.image);
+  const under = (href: string | undefined) => (href && options.assetsAt && href.startsWith("/graview/assets/") ? options.assetsAt(href) : href);
+  const picture = under(imageHref(spec.image));
   // The plain screen stands the app's mark over its name where the screen has no image of its own.
-  const markLight = picture ?? (spec.style === "plain" ? imageHref(logoFor(brand.logo, "light")) : undefined);
-  const markDark = picture ?? (spec.style === "plain" ? imageHref(logoFor(brand.logo, "dark")) : undefined);
+  const markLight = picture ?? (spec.style === "plain" ? under(imageHref(logoFor(brand.logo, "light"))) : undefined);
+  const markDark = picture ?? (spec.style === "plain" ? under(imageHref(logoFor(brand.logo, "dark"))) : undefined);
   const mark = (src: string | undefined, which: "light" | "dark") => (src ? `<img class="graview-splash-image" data-scheme="${which}" src="${escape(src)}" alt="" decoding="async">` : "");
   const images = spec.style === "plain" ? (markLight === markDark ? mark(markLight, "light").replace(' data-scheme="light"', "") : mark(markLight, "light") + mark(markDark, "dark")) : mark(picture, "light").replace(' data-scheme="light"', "");
   // The ascii title types itself on; a reader hears the whole of it once, in the screen's name, not letter by letter.

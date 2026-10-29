@@ -3,7 +3,7 @@ import type { AnySchema } from "../schema/schema.js";
 import type { Store } from "../store.js";
 import { fieldSpecOf } from "../document/field-spec.js";
 import type { FieldSpec } from "../document/schema.js";
-import { notionSourcesOf, type ConnectionSpec, type GoogleCalendarConnectionSpec, type NotionConnectionSpec, type NotionSourceSpec } from "../document/connection-spec.js";
+import { guestsInField, guestsViaRelation, notionSourcesOf, type ConnectionSpec, type GoogleCalendarConnectionSpec, type NotionConnectionSpec, type NotionSourceSpec } from "../document/connection-spec.js";
 import { humanizeField } from "../schema/humanize.js";
 import { GOOGLE_COLORS, MADE_BY_GRAVIEW, inConnectionFilter, tagPattern } from "./connection-filter.js";
 import type { EdgeDeclaration } from "../schema/types.js";
@@ -280,14 +280,16 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
   const normalize: Record<string, (value: unknown) => unknown> = {};
   let edges: Record<string, string> | undefined;
   let guests: LinkResolver | undefined;
-  if (typeof fields.guests === "string") {
+  const inField = guestsInField(fields.guests);
+  const viaRelation = guestsViaRelation(fields.guests);
+  if (inField) {
     /*
      * THE GUESTS IN A FIELD: a list of addresses, or one email, kept as the
      * attendees. Read back as the sorted addresses (the first alone for an
      * email field), so an address added in the calendar lands in the field
      * and nothing is dropped.
      */
-    const field = fields.guests;
+    const field = inField.field;
     const single = specs[field]?.type === "email";
     guestsField[field] = "attendees";
     encode[field] = (value) => attendeesOf(value);
@@ -300,7 +302,7 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
       const found = addressesOf(value);
       return single ? (found[0] ?? null) : found;
     };
-  } else if (fields.guests) {
+  } else if (viaRelation) {
     /*
      * THE GUESTS THROUGH A RELATION: the edge's remote ids are guest keys.
      * Read back, each attendee is the key of the person with Invite me who
@@ -308,7 +310,7 @@ function googleMapping(app: GraviewApp, declaration: GoogleCalendarConnectionSpe
      * as part of the relation's value until a person matches it. Sent, the
      * keys are split back into addresses, once each.
      */
-    const { via, emails = "emails", invite = "inviteMe" } = fields.guests;
+    const { via, emails = "emails", invite = "inviteMe" } = viaRelation;
     const reaches = edgeSpecs(app, kind)[via]?.to;
     const book = guestBook({ ...(options.graph ? { graph: options.graph } : {}), kinds: reaches === undefined || reaches === "*" ? [] : reaches, emails, invite });
     guests = book;
@@ -639,9 +641,11 @@ function googleConnection<S extends AnySchema>(run: ConnectionRun<S>, declaratio
  * `max` held to.
  */
 function keptGuests<S extends AnySchema>(app: GraviewApp, declaration: GoogleCalendarConnectionSpec, store: Store<S>, book: LinkResolver | undefined): SyncGuests | undefined {
-  const spec = declaration.fields.guests;
+  // The guests in a field hold to `max` as the relation's do (request:guests-field-form-takes-max).
+  const inField = guestsInField(declaration.fields.guests);
+  if (inField) return { field: inField.field, addresses: (value) => addressesOf(value), ...(inField.max !== undefined ? { max: inField.max } : {}), notify: inField.notify === true };
+  const spec = guestsViaRelation(declaration.fields.guests);
   if (spec === undefined) return undefined;
-  if (typeof spec === "string") return { field: spec, addresses: (value) => addressesOf(value) };
   const reaches = edgeSpecs(app, declaration.kind)[spec.via]?.to;
   const kinds = new Set(reaches === undefined || reaches === "*" ? [] : reaches);
   const emails = spec.emails ?? "emails";

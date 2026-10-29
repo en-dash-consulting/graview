@@ -59,10 +59,11 @@ matchWith({ search, touchWeights });
 import type { PointerStore } from "./pointer.js";
 import type { PlotsProps } from "./plots.js";
 import { Occupants } from "./occupants.js";
-import { EdgeSigns, useTrailBox } from "./edge-signs.js";
+import { EdgeSigns, hungOn, useHungShowings, useTrailBox } from "./edge-signs.js";
 import { useCameraFlights } from "./scene-camera.js";
 import { useKeyboardKeepsToWhatIsSeen } from "./scene-covered.js";
 import { useDock, useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type Held } from "./scene-hand.js";
+import { useAimedPress } from "./scene-aim.js";
 import { whereIsIn } from "./where-drawn.js";
 import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
 import { selectionFor, useBoxHeldThroughToolbars, useElementSize, useRootUnit } from "./scene-helpers.js";
@@ -917,11 +918,12 @@ export function Scene<S extends AnySchema>({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   // The box the scene is laid out for: the one it has, held while only a browser's toolbar folded away (`useBoxHeldThroughToolbars`).
-  const size = useBoxHeldThroughToolbars(useElementSize(wrapperRef));
+  const measured = useElementSize(wrapperRef);
+  const size = useBoxHeldThroughToolbars(measured);
   const unit = useRootUnit();
 
   // Pinch and ctrl+wheel: altitude from the ground, zoom about the pointer from above; the plain wheel pans. See scene-hand.ts.
-  const { zoomAbout, panBy } = useWheelAndPinch({ stage: wrapperRef, view, setView });
+  const { zoomAbout, panBy, pinchBy, pinchDone, pinching } = useWheelAndPinch({ stage: wrapperRef, view, setView });
 
   // `nodes` is a cached snapshot that only changes when the graph does, so
   // the layout is recomputed exactly when the picture could have changed.
@@ -951,7 +953,17 @@ export function Scene<S extends AnySchema>({
    */
   const headroom = !view.overview && (view.zoom || view.past || view.relation) ? Math.ceil(14 + (34 * unit) / 16 + 6) : 0;
   // On the ground what stands over the foot (the timeline) is the layout's to keep clear; from altitude the city is fitted above it itself.
-  const sized = useLayoutOptions<S>(seenFrom, size, unit, closer * zoom, dock, nodes, headroom, view.overview ? 0 : dock.bottom);
+  /*
+   * AND THE SHEET HELD WITH IT. A phone's sheet is a share of the window, so
+   * it grows when the toolbar folds away, and the city was fitted again to
+   * what it left — drawn at another size under the finger. While the scene
+   * keeps its box, it keeps the sheet it was laid out beside.
+   */
+  const grown = measured && size ? measured.height - size.height : 0;
+  const keptDock = useRef(dock);
+  if (grown <= 0) keptDock.current = dock;
+  const docked = grown > 0 ? keptDock.current : dock;
+  const sized = useLayoutOptions<S>(seenFrom, size, unit, closer * zoom, docked, nodes, headroom, view.overview ? 0 : docked.bottom);
   // What the picture's trail covers, for the signs at the top edge to step past.
   const trailBox = useTrailBox(wrapperRef);
   const [panned, seen, panWithin, cameraLive, setCamera] = useCamera(view);
@@ -968,11 +980,15 @@ export function Scene<S extends AnySchema>({
   // one. Everything downstream draws the tween, not the destination.
   const firstMeasured = useFirstMeasured(size);
   /* THE HAND: dragging the ground to look around and a district to place it — see scene-hand.ts. */
+  /** Letting go of a hand's zoom: filled in below, where the camera is known. */
+  const zoomTo = useRef<(ratio: number, about: { x: number; y: number }) => void>(() => {});
   const shift = useWorldShift({
     stage: wrapperRef,
     pan: view.pan,
+    zoom,
     setView,
     settled,
+    zoomTo,
   });
   /*
    * A hand's pan is cut to with its offset already painted where the cut
@@ -986,6 +1002,8 @@ export function Scene<S extends AnySchema>({
   // Whether anything is moving: the hand, the wheel, or a transition not yet landed.
   // `t` is the tween's progress: a landed frame is at 1 (the frame is always a fresh object, never `result`).
   hand.tweening.current = frame.t < 1;
+  // The showings a chosen district hangs, as drawn once the picture lands: the signs at the edge step past them.
+  const hungShowings = useHungShowings(wrapperRef, frame.t >= 1, result);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the hand's refs are read when the frame changes
   useEffect(() => motion.set(hand.dragging.current || hand.steering.current || frame.t < 1), [motion, frame]);
   const touched = useTouched<S>();
@@ -1010,7 +1028,7 @@ export function Scene<S extends AnySchema>({
 
   // Wired here, where the shift exists; see the ref's own note in `useSteering`.
   settleLive.current = shift.settle;
-  const { onGroundDown, onCardDown, onDragMove, onDragUp, swallow } = useSceneDrag({
+  const { onGroundDown, onCardDown, onDragMove, onDragUp, onDragCancel, swallow } = useSceneDrag({
     view,
     panned,
     limit: () => cameraLimit(result),
@@ -1022,9 +1040,12 @@ export function Scene<S extends AnySchema>({
     noteMoved,
     shift,
     district,
+    pinching,
   });
   /* The ground answers a right-click and a resting finger with the scene's menu (FR-228). */
   const groundMenu = useGroundMenu({ swallow, setMenuAt, setSelection });
+  /* A press a beat after a tap that moved the city lands on what it was aimed at (scene-aim.ts). */
+  useAimedPress(wrapperRef, swallow);
 
   zoomAbout.current = (factor, clientX, clientY) => {
     if (!view.overview) return;
@@ -1049,6 +1070,39 @@ export function Scene<S extends AnySchema>({
     const ratio = next / current;
     setView((current) => withPan(current, panForZoom(current.pan ?? { x: 0, y: 0 }, cameraLive.current, pointer, center, ratio)));
     noteMoved();
+  };
+  /*
+   * TWO FINGERS FROM ALTITUDE: the city zoomed about where they were and
+   * moved as far as their middle moved, so what was under the fingers stays
+   * under them — written as one change of the view a frame, as the wheel's
+   * zoom is.
+   */
+  pinchBy.current = (factor, clientX, clientY, dx, dy) => {
+    if (!view.overview) return;
+    steer();
+    const box = wrapperRef.current?.getBoundingClientRect();
+    const about = box ? { x: clientX - box.left, y: clientY - box.top } : { x: 0, y: 0 };
+    // Held within the zoom the controls allow, against the zoom the view has now.
+    shift.zoomBy(factor, about, dx, dy, ZOOM_MIN / zoomLive.current, ZOOM_MAX / zoomLive.current);
+    noteMoved();
+  };
+  pinchDone.current = () => {
+    settleLive.current();
+  };
+  /*
+   * A HAND'S ZOOM LET GO OF, written into the view once: the city's zoom by
+   * `ratio`, and the pan that keeps the point the picture grew about where it
+   * stood — the same reckoning a step of the zoom's own buttons makes.
+   */
+  zoomTo.current = (ratio, about) => {
+    const current = zoomLive.current;
+    const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, current * ratio));
+    zoomLive.current = next;
+    zoomed.current = true;
+    setZoom(next);
+    const seenBox = result.visible ?? result;
+    const center = { x: seenBox.width / 2, y: seenBox.height / 2 };
+    setView((now) => withPan(now, panForZoom(now.pan ?? { x: 0, y: 0 }, cameraLive.current, about, center, next / current)));
   };
   /** The view's own pan moved by so much, held within the camera's reach. */
   const nudge = (dx: number, dy: number, limit = cameraLimit(result)) =>
@@ -1118,6 +1172,7 @@ export function Scene<S extends AnySchema>({
       onDragStart={(event) => onCardDown(node, event)}
       onDragMove={onDragMove}
       onDragEnd={onDragUp}
+      onDragCancel={onDragCancel}
       swallowClick={swallow}
     >
       {node.beyond ? (
@@ -1171,7 +1226,7 @@ export function Scene<S extends AnySchema>({
       }}
       onPointerCancel={() => {
         groundMenu.onPointerUp();
-        onDragUp();
+        onDragCancel();
       }}
       /*
        * RIGHT-CLICKING EMPTY GROUND opens the scene's menu, never the
@@ -1209,6 +1264,12 @@ export function Scene<S extends AnySchema>({
         // Never changed by a render: the hand writes the grabbing cursor while it holds the ground (`markHand`).
         cursor: "grab",
         touchAction: "none",
+        /*
+         * A LIST IN A CARD SCROLLED TO ITS END GOES NO FURTHER. Its finger's
+         * scroll chained on past the ground to the page: on a phone the page
+         * behind the scene pulled down to refresh, or rubber-banded.
+         */
+        overscrollBehavior: "contain",
         ["--graview-altitude" as string]: view.overview ? 1 : 0,
         /*
          * THE LATTICE THE CITY STANDS ON. The ground draws its diamonds at
@@ -1365,7 +1426,7 @@ export function Scene<S extends AnySchema>({
         <EdgeSigns
           result={result}
           schema={store.schema as AnySchema}
-          chrome={trailBox ? [...(sized.chrome ?? []), trailBox] : (sized.chrome ?? [])}
+          chrome={[...(sized.chrome ?? []), ...(trailBox ? [trailBox] : []), ...hungOn(hungShowings, result.nodes)]}
           onGo={(by) => {
             nudge(by.x, by.y);
             noteMoved();

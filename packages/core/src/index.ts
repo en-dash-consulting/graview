@@ -270,7 +270,7 @@ export {
 } from "./theme/identity.js";
 export type { SymbolOptions } from "./theme/identity.js";
 export { isoShade, SHAPE, shapeOf, TYPOGRAPHY, typographyOf } from "./theme/look.js";
-export { emojiMark, emojiOf, emojiProblem, emojiSvg, faviconHref, isInlineSvg, logoFor, logoOf, logoScheme, markHref, markProblem, MAX_INLINE_SVG, svgProblem } from "./theme/marks.js";
+export { assetSrc, emojiMark, emojiOf, emojiProblem, emojiSvg, faviconHref, HOST_ASSETS, isInlineSvg, logoFor, logoOf, logoScheme, markHref, markProblem, MAX_INLINE_SVG, svgProblem } from "./theme/marks.js";
 export { DOCUMENT_FONTS, familiesIn, fontProblem, isSystemFamily, stackOf, SYSTEM_FONTS, SYSTEM_STACKS } from "./theme/fonts.js";
 export type { SystemStack } from "./theme/fonts.js";
 export { accentProblem, documentSchemes, passingShade } from "./theme/accent.js";

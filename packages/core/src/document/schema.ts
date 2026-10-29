@@ -474,7 +474,8 @@ function build() {
      * SVG, or a path on the app's own host; `brand-splash-image`); `title`
      * stands in for the app's name and `kicker` is one small line over it;
      * `shader` names one of `SPLASH_SHADERS` for the shader style
-     * (`brand-splash-shader`). Drawn by `@graview/pages/splash`.
+     * (`brand-splash-shader`); `scheme` is the one it opens in where the
+     * brand's `scheme` pins none. Drawn by `@graview/pages/splash`.
      */
     splash: z.optional(
       z.strictObject({
@@ -483,6 +484,8 @@ function build() {
         title: z.optional(str(1, 80)),
         kicker: z.optional(str(1, 80)),
         shader: z.optional(str(1, 40)),
+        // The scheme it opens in where the brand pins none (Roadmap f-splash-follows-declared-scheme): "device" follows the reader's system.
+        scheme: z.optional(z.enum(["light", "dark", "device"])),
       }),
     ),
     /*

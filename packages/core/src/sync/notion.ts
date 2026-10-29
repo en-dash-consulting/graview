@@ -46,7 +46,8 @@ import type { RemoteAck, RemoteChange, RemoteSystem, RemoteWrite } from "./types
  *   a relation's is made to the source of this transport it links. Nothing
  *   there is renamed or deleted, and a property of another type is said and
  *   left. What was made is said in the pull's `said`, as every note is the
- *   first time.
+ *   first time; with several sources each sentence names its kind, and
+ *   `saidOf` keeps each with its resource (request:notion-said-names-its-source).
  * - Notion asking us to slow down (429) is waited out as its `Retry-After`
  *   says, within a bound; a refused secret (401) and a database the
  *   integration cannot see (404) are said as sentences that say what to do.
@@ -322,12 +323,13 @@ export function notion(options: NotionOptions): RemoteSystem {
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const maxWait = options.maxWait ?? 60_000;
   const said = new Set<string>();
-  /* What was said for the first time since the last pull returned: the pull's `said`. */
-  let fresh: string[] = [];
-  const note = (line: string) => {
-    if (said.has(line)) return;
-    said.add(line);
-    fresh.push(line);
+  /* What was said for the first time since the last pull returned, each with the resource it is of: the pull's `said` and `saidOf`. */
+  let fresh: { resource?: string; sentence: string }[] = [];
+  const note = (line: string, resource?: string) => {
+    const key = `${resource ?? ""}\n${line}`;
+    if (said.has(key)) return;
+    said.add(key);
+    fresh.push({ ...(resource ? { resource } : {}), sentence: line });
     options.say?.(line);
   };
 
@@ -406,6 +408,16 @@ export function notion(options: NotionOptions): RemoteSystem {
 
   /** One data source, kept as one resource: its id, its properties, and the pages it reads and writes. */
   const keeper = (spec: NotionSourceOptions) => {
+    /*
+     * WHICH SOURCE A SENTENCE IS OF (request:notion-said-names-its-source):
+     * with several, every sentence names its kind — " for <kind>", or
+     * "<kind>'s <name>" — and each is kept with its resource beside it.
+     */
+    const several = declared.length > 1;
+    const kindName = spec.resource.replace(/^pages:/, "");
+    const forKind = several ? ` for ${kindName}` : "";
+    const refOf = (ref: string) => (several ? `${kindName}'s ${ref}` : ref);
+    const noteHere = (line: string) => note(line, spec.resource);
     let sourceId: string | undefined;
     /** Its id: the database's only source, or the one `source` names. */
     const dataSource = async (): Promise<string> => {
@@ -477,10 +489,10 @@ export function notion(options: NotionOptions): RemoteSystem {
       try {
         await call("PATCH", `/data_sources/${encodeURIComponent(await dataSource())}`, { properties: wanted });
       } catch (error) {
-        note(`could not make ${listed(names)} in Notion: ${error instanceof Error ? error.message.replace(/^notion: /, "") : String(error)}`);
+        noteHere(`could not make ${listed(names)} in Notion${forKind}: ${error instanceof Error ? error.message.replace(/^notion: /, "") : String(error)}`);
         return properties;
       }
-      note(`Made ${names.length} ${names.length === 1 ? "property" : "properties"} in Notion${declared.length > 1 ? ` for ${spec.resource.replace(/^pages:/, "")}` : ""}: ${listed(names)}`);
+      noteHere(`Made ${names.length} ${names.length === 1 ? "property" : "properties"} in Notion${forKind}: ${listed(names)}`);
       return readSchema();
     };
 
@@ -491,7 +503,7 @@ export function notion(options: NotionOptions): RemoteSystem {
       const kept = new Set([...found.values()].map((property) => property.name));
       const alone = [...properties.values()].filter((property) => !NOTION_FITS[property.type] && !kept.has(property.name));
       if (alone.length > 0) {
-        note(`left alone in Notion: ${alone.map((property) => `${property.name} (${property.type}${NOTION_LEFT_ALONE[property.type] ? `: ${NOTION_LEFT_ALONE[property.type]}` : ""})`).join(", ")}`);
+        noteHere(`left alone in Notion${forKind}: ${alone.map((property) => `${property.name} (${property.type}${NOTION_LEFT_ALONE[property.type] ? `: ${NOTION_LEFT_ALONE[property.type]}` : ""})`).join(", ")}`);
       }
       return found;
     };
@@ -510,21 +522,21 @@ export function notion(options: NotionOptions): RemoteSystem {
         }
         if (fieldType === NOTION_EDGE || property.type === "relation") {
           if (fieldType === NOTION_EDGE && property.type === "relation") found.set(ref, property);
-          else if (fieldType === NOTION_EDGE) note(`${ref}: the property ${property.name} is a ${property.type} property, and a relation holds only a relation property, so it is left out`);
-          else note(`${ref}: the property ${property.name} is a relation, which a relation of the kind holds and a field does not, so it is left out`);
+          else if (fieldType === NOTION_EDGE) noteHere(`${refOf(ref)}: the property ${property.name} is a ${property.type} property, and a relation holds only a relation property, so it is left out`);
+          else noteHere(`${refOf(ref)}: the property ${property.name} is a relation, which a relation of the kind holds and a field does not, so it is left out`);
           continue;
         }
         if (!NOTION_FITS[property.type]) {
-          note(`${ref}: the property ${property.name} is a ${property.type} property, which is not kept in step, so it is left out`);
+          noteHere(`${refOf(ref)}: the property ${property.name} is a ${property.type} property, which is not kept in step, so it is left out`);
           continue;
         }
         if (fieldType && !notionFits(property.type, fieldType)) {
-          note(`${ref}: the property ${property.name} is a ${property.type} property, and a ${fieldType} field cannot hold it, so it is left out`);
+          noteHere(`${refOf(ref)}: the property ${property.name} is a ${property.type} property, and a ${fieldType} field cannot hold it, so it is left out`);
           continue;
         }
         found.set(ref, property);
       }
-      if (missing.length > 0) note(`no property in the ${declared.length > 1 ? `data source for ${spec.resource.replace(/^pages:/, "")}` : "database"} for ${missing.join(", ")}, so ${missing.length === 1 ? "it is" : "they are"} not kept in step`);
+      if (missing.length > 0) noteHere(`no property in the ${several ? `data source for ${kindName}` : "database"} for ${missing.join(", ")}, so ${missing.length === 1 ? "it is" : "they are"} not kept in step`);
       return found;
     };
 
@@ -644,9 +656,9 @@ export function notion(options: NotionOptions): RemoteSystem {
       // One source of `pages` keeps its cursor as it always has; several keep theirs by resource.
       const only = keepers.length === 1 && keepers[0]!.resource === "pages" ? next.get("pages") : undefined;
       const written = only ?? { by: Object.fromEntries(next) };
-      const said = fresh;
+      const saidOf = fresh;
       fresh = [];
-      return { changes, cursor: JSON.stringify(written), ...(said.length > 0 ? { said } : {}) };
+      return { changes, cursor: JSON.stringify(written), ...(saidOf.length > 0 ? { said: saidOf.map((one) => one.sentence), saidOf } : {}) };
     },
 
     async push(writes) {

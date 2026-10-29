@@ -10,7 +10,7 @@
  */
 export { CONNECTION_TAG, GOOGLE_COLORS, MADE_BY_GRAVIEW, connection, connectionMapping, creatingAct, inConnectionFilter, isDayField, notionConnectionMapping } from "./connection.js";
 export type { Connection, ConnectionDeclaration, ConnectionRun, NotionSourceMapping } from "./connection.js";
-export { connectionKinds, notionSourcesOf } from "../document/connection-spec.js";
+export { connectionKinds, guestsInField, guestsViaRelation, notionSourcesOf, type GuestsInField, type GuestsSpec, type GuestsViaRelation } from "../document/connection-spec.js";
 export type { GoogleCalendarConnectionSpec, NotionConnectionSpec, NotionSourceSpec } from "../document/connection-spec.js";
 export { googleCalendar, googleCalendarMapping } from "./google-calendar.js";
 export type { Fetcher, GoogleCalendarOptions, GoogleTokenRequest } from "./google-calendar.js";
@@ -22,7 +22,7 @@ export type { ScriptedNotion, ScriptedNotionOptions, ScriptedRequest } from "./n
 export { syncConflictInvariant, SYNC_CONFLICTS } from "./conflict.js";
 export type { SyncConflictOptions } from "./conflict.js";
 export { SyncEngine, edgeValue, sharedLinks } from "./engine.js";
-export type { GuestChange, GuestLeftOut, SettledConflict, SharedLinks, SyncGuests, SyncOptions, SyncRefusal, SyncReport } from "./engine.js";
+export type { GuestChange, GuestLeftOut, SaidSentence, SettledConflict, SharedLinks, SyncGuests, SyncOptions, SyncRefusal, SyncReport } from "./engine.js";
 export { connectionStatus, guestsOf } from "./status.js";
 export type { ConnectionStatus, RecordGuests } from "./status.js";
 export { allowTools, doorClient, mcpClient, mcpDoor, mcpRemote, ownHost, sameOrigin } from "./mcp.js";

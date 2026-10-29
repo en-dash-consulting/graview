@@ -6,7 +6,7 @@ import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
 import { createContext, Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
-import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
+import { GoToContext, GraviewProvider, lazyPart, hasLanded, HostAssetsContext, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type FieldTyping, type GoTo, type GoToAlso, type GoToTarget, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageQuickAsk } from "./quick-ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazyPart(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
@@ -742,7 +742,8 @@ export function PagesApp<S extends AnySchema>({
     routed
   );
   const timed = <PlaybackContext.Provider value={playback as unknown as Playback}>{inner}</PlaybackContext.Provider>;
-  const hosted = context.files ? <HostFilesContext.Provider value={context.files}>{timed}</HostFilesContext.Provider> : timed;
+  const assetsHeld = context.assetsAt ? <HostAssetsContext.Provider value={context.assetsAt}>{timed}</HostAssetsContext.Provider> : timed;
+  const hosted = context.files ? <HostFilesContext.Provider value={context.files}>{assetsHeld}</HostFilesContext.Provider> : assetsHeld;
   const filed = hrefOf === undefined ? hosted : <HrefOfContext.Provider value={hrefOf}>{hosted}</HrefOfContext.Provider>;
   if (initialPath !== undefined) {
     /*

@@ -88,7 +88,9 @@ fields, edges, label, roles — is `graview-node-kind`.
    `sort(all('package'), [standing, net], 'desc')`); no act or edit form
    offers it, and an act that sets one is refused (`computed-written`). It
    is worked out over the graph the reader holds, so a seat is served one
-   from what it may see. A glance may name one (`set-glance` takes it, not one
+   from what it may see, and reads the same on a row as on the page: a
+   card's smaller budget holds only walks its template writes itself, and
+   `count(in('inGenre'))` is read from the links whatever their number. A glance may name one (`set-glance` takes it, not one
    kept `hidden`), and a kind works out at most 60; a `label` or `describe` only
    one worked out from the record alone (no graph is in hand). A document's
    top-level `computed` holds facts of the whole graph, read as

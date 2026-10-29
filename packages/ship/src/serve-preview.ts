@@ -16,6 +16,7 @@ import { SERVE_KEY } from "./seat-headers.js";
 /** Where the store answers a seat its state. */
 const STATE_PATH = "/graview/state";
 import type { GraphSnapshot } from "./snapshot.js";
+import { homeScreenAnswer } from "./home-screen.js";
 
 /**
  * THE DEFAULT FACES OVER A DOCUMENT, WITH NO PRODUCT (`graview preview`).
@@ -209,8 +210,10 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
    * document this preview holds may be written (a lens tidied).
    */
   let paged: { readonly of: unknown; readonly html: string } | undefined;
+  // The app on a home screen (Roadmap f-app-icons-home-screen): its icons typed by what they are, its manifest and its colors, in the head.
+  const home = homeScreenAnswer(app.brand, { name: app.name });
   const pageHtml = (): string => {
-    const built = readFileSync(index, "utf8");
+    const built = readFileSync(index, "utf8").replace("</head>", `${home.screen.html}</head>`);
     const brand = typeof document === "object" && document !== null ? (document as { brand?: Record<string, unknown> }).brand : undefined;
     if (!options.splash || !brand || typeof brand["splash"] !== "object" || brand["splash"] === null) return built;
     if (paged && paged.of === document) return paged.html;
@@ -272,6 +275,8 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     if (request.method !== "GET" && request.method !== "HEAD") return undefined;
     const url = new URL(request.url);
     const path = decodeURIComponent(url.pathname);
+    const homeScreen = home.answer(request);
+    if (homeScreen) return homeScreen;
     const form = url.searchParams.get("form");
     if (path === "/graview/document" && form !== null) return formHanded(form);
     if (path === "/graview/document") {

@@ -1,4 +1,4 @@
-import type { ConnectionSpec } from "../document/connection-spec.js";
+import { guestsInField, guestsViaRelation, type ConnectionSpec } from "../document/connection-spec.js";
 import { addressesOf, attendeesOf } from "./guests.js";
 import type { GuestsKept, PassKept, SyncState } from "./types.js";
 
@@ -34,7 +34,7 @@ export interface RecordGuests {
 function guestsField(declaration: ConnectionSpec): string | undefined {
   if (declaration.system !== "google-calendar") return undefined;
   const guests = declaration.fields.guests;
-  return guests === undefined ? undefined : typeof guests === "string" ? guests : guests.via;
+  return guestsInField(guests)?.field ?? guestsViaRelation(guests)?.via;
 }
 
 /**

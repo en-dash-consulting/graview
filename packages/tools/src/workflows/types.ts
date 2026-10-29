@@ -1,5 +1,5 @@
 import type { AnySchema, Author, GraviewApp, MutationCall, Operation, Store, Via } from "@graview/core";
-import type { WorkflowApproval, WorkflowPolicy, WorkflowStep } from "@graview/core/workflows";
+import type { WorkflowApproval, WorkflowOrigin, WorkflowPolicy, WorkflowStep } from "@graview/core/workflows";
 import type { HostAi } from "../ai.js";
 import type { Severity } from "../tidy/policy.js";
 
@@ -27,9 +27,36 @@ export type WorkflowOutcome =
 /** What started a run. */
 export type WorkflowRunTrigger =
   | { readonly kind: "schedule"; readonly at: string }
-  | { readonly kind: "made" | "changed"; readonly records: readonly string[] }
+  /** `by`: another workflow's run made the change (`FiredTrigger.by` from `triggeredBy`); the run carries its chain. */
+  | { readonly kind: "made" | "changed"; readonly records: readonly string[]; readonly by?: WorkflowOrigin }
   | { readonly kind: "synced"; readonly connection: string }
   | { readonly kind: "byHand"; readonly who?: string };
+
+/** What one step's model calls spent. */
+export interface StepSpend {
+  /** The step's place in the workflow. */
+  readonly step: number;
+  /** Requests sent to a model. */
+  readonly calls: number;
+  readonly inputTokens: number;
+  readonly outputTokens: number;
+  /** Dollars, when the model's reply or the host's price said. */
+  readonly costUsd?: number;
+  /** The model it asked. */
+  readonly model?: string;
+}
+
+/** What a run's model steps spent: the totals, and each step that asked a model. All zero when none did. */
+export interface WorkflowSpend {
+  readonly calls: number;
+  readonly inputTokens: number;
+  readonly outputTokens: number;
+  readonly costUsd?: number;
+  readonly steps: readonly StepSpend[];
+}
+
+/** The most runs a chain of workflows waking each other goes to before a run is held: `RunWorkflowOptions.chainLimit` when unsaid. */
+export const MOST_CHAIN = 3;
 
 /** One run, as a host keeps it. */
 export interface WorkflowRun {
@@ -55,6 +82,15 @@ export interface WorkflowRun {
   readonly specHash: string;
   /** What it says, in sentences, in order. */
   readonly notes: readonly string[];
+  /** What its model steps spent — calls and tokens, by step and in all — so a host meters a run from the run alone. */
+  readonly spent: WorkflowSpend;
+  /**
+   * The workflows whose runs started this one, the first first: empty for
+   * a run a clock, a person, a connection or a person's change started.
+   * Its length is the run's depth; past the runner's `chainLimit` the run
+   * is held and says so.
+   */
+  readonly chain: readonly string[];
 }
 
 /** The host's log of runs: the last of a workflow's, all of them newest first, and keeping one. */
@@ -85,6 +121,8 @@ export interface RunWorkflowOptions<S extends AnySchema = AnySchema> {
   readonly principal?: Author;
   /** What its changes come through, as the log records it. `workflow:<name>` when unsaid. */
   readonly via?: Via;
+  /** How deep a chain of workflows started by each other's changes may go before a run is held (`MOST_CHAIN`, 3, when unsaid). */
+  readonly chainLimit?: number;
 }
 
 /** One change a step would make, before what `approve` makes of it. */
@@ -102,6 +140,17 @@ export interface StepChange {
   readonly key?: string;
   /** It waits for a person whatever `approve` says: a label a host shows the public (a classify step's `confirm`). */
   readonly ask?: boolean;
+  /** It is made whatever `approve` says, unless `ask`: a judgment sure enough for its option's `applyAt`. */
+  readonly apply?: boolean;
+}
+
+/** What a step tells the run a model call spent: `calls` 1 when unsaid. */
+export interface SpendSaid {
+  readonly calls?: number;
+  readonly inputTokens?: number;
+  readonly outputTokens?: number;
+  readonly costUsd?: number;
+  readonly model?: string;
 }
 
 /** What `StepContext.change` did with one change. */
@@ -148,6 +197,8 @@ export interface StepContext<S extends AnySchema = AnySchema> {
   note(said: string): void;
   /** The step did not run, and the run is `partial` for it. */
   skipped(why: string): void;
+  /** What a model call of this step spent, counted on the run's `spent`. */
+  spent(usage: SpendSaid): void;
 }
 
 /** One kind of step, run: keyed as `STEP_KINDS` is. */

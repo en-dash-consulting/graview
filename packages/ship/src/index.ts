@@ -35,6 +35,7 @@ export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
 export { openRemote, RemoteRefusedError, seatHeaders } from "./remote.js";
 export { filesAt } from "./files-at.js";
+export { homeScreenAnswer } from "./home-screen.js";
 export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
 export type { LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, RemoteOptions, RemoteRefusal, RemoteState, RemoteStatus, RemoteStore } from "./remote.js";
