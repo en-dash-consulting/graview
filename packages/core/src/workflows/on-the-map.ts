@@ -19,7 +19,7 @@ import type { AnySchema } from "../schema/schema.js";
  * reads the kind it runs `over`, the kinds it `reads`, the kinds it makes
  * records `from`; it writes the kinds the acts it runs (`act`, `acts`) act
  * on and make, the kind it makes records of (`generate`) and the kind it
- * sets aside (`archive`), which it reads too.
+ * sets aside (`archive`) or labels (`classify`), which it reads too.
  */
 
 /** A workflow as the Scene draws it: its name, title and status, and the kinds it reads and writes. */
@@ -66,8 +66,8 @@ export function workflowsOnTheMap<S extends AnySchema>(app: Pick<GraviewApp<S>, 
     for (const step of (workflow.steps ?? []) as unknown as readonly Record<string, unknown>[]) {
       const over = isRecord(step["over"]) ? strings(step["over"]["kind"]) : [];
       const from = Array.isArray(step["from"]) ? step["from"].flatMap((source) => (isRecord(source) ? strings(source["kind"]) : [])) : [];
-      reads.push(...over, ...strings(step["reads"]), ...from, ...strings(step["archive"]));
-      writes.push(...[...strings(step["act"]), ...strings(step["acts"])].flatMap(actKinds), ...strings(step["generate"]), ...strings(step["archive"]));
+      reads.push(...over, ...strings(step["reads"]), ...from, ...strings(step["archive"]), ...strings(step["classify"]));
+      writes.push(...[...strings(step["act"]), ...strings(step["acts"])].flatMap(actKinds), ...strings(step["generate"]), ...strings(step["archive"]), ...strings(step["classify"]));
     }
     const known = (list: readonly string[]) => [...new Set(list)].filter((kind) => kinds.has(kind));
     return { name, title: workflow.title, status: workflow.status === "paused" ? "paused" : "active", reads: known(reads), writes: known(writes) };

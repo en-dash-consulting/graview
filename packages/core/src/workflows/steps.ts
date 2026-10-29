@@ -5,6 +5,7 @@ import type { WorkflowStep } from "../workflow-shape.js";
 import { actStep } from "./step-act.js";
 import { agentStep } from "./step-agent.js";
 import { generateStep } from "./step-generate.js";
+import { classifyStep } from "./step-classify.js";
 import type { WorkflowWorld } from "./world.js";
 
 /*
@@ -80,6 +81,7 @@ export const STEP_KINDS = {
   act: actStep,
   agent: agentStep,
   generate: generateStep,
+  classify: classifyStep,
 } as const satisfies Readonly<Record<string, StepKind<never>>>;
 
 export type StepKindKey = keyof typeof STEP_KINDS;

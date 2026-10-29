@@ -158,10 +158,10 @@ export async function runWorkflow<S extends AnySchema>(options: RunWorkflowOptio
               count(preview.primitives);
               return { as: "previewed", ops: preview.ops };
             }
-            const route = approve === "apply" ? "act" : approve === "ask" ? "ask" : routeOf(change.confidence ?? 1, change.severity ?? "categorize");
+            const route = change.ask ? "ask" : approve === "apply" ? "act" : approve === "ask" ? "ask" : routeOf(change.confidence ?? 1, change.severity ?? "categorize");
             if (route === "drop") return { as: "dropped" };
             if (route === "ask") {
-              if (approve === "ask" && asked) {
+              if ((approve === "ask" || change.ask) && asked) {
                 const held = asked.add(change);
                 if (held.as === "suggested" && held.op) suggested.push(held.op);
                 return held;

@@ -119,8 +119,49 @@ export interface GenerateStep {
   readonly approve?: WorkflowApproval;
 }
 
+/** A floor rule: what labels a record when no model judges it — any one of these that holds. */
+export interface ClassifyFloorRule {
+  /** At least this many links (http, https or www) in its text fields. */
+  readonly links?: number;
+  /** Any of these words or phrases in its text fields, as whole words, any case. */
+  readonly words?: readonly string[];
+  /** A line of the rule language that holds of it. */
+  readonly expr?: string;
+}
+
+/**
+ * LABEL EACH RECORD (Roadmap f-feedback-triage-agent): one typed judgment
+ * per record of `classify` — which of `field`'s options fits it, and how
+ * sure — set through the kind's own act with the reason on its lineage.
+ * Without a model, the `floor` decides; a record no rule matches is left
+ * for a person. An option whose confidence reaches its `setAside`
+ * threshold also archives the record (never removes it). Asked of a person
+ * unless the step says its own `approve`; an option in `confirm` is
+ * always asked. A record already labeled is passed by unless `relabel`.
+ */
+export interface ClassifyStep {
+  readonly classify: string;
+  readonly where?: string;
+  /** The choice field the label is kept in. */
+  readonly field: string;
+  /** The options it may choose from: the field's, or some of them. */
+  readonly options?: readonly string[];
+  /** What the model is told, in words, beside the options. */
+  readonly instruction?: string;
+  readonly floor?: Readonly<Record<string, ClassifyFloorRule>>;
+  /** An option, and how sure (0 to 1) a judgment must be for the record to be archived too. */
+  readonly setAside?: Readonly<Record<string, number>>;
+  /** Options never set without a person's yes, whatever `approve` says. */
+  readonly confirm?: readonly string[];
+  /** Judge a record again though it is labeled already. */
+  readonly relabel?: boolean;
+  readonly model?: string;
+  readonly budget?: { readonly calls?: number; readonly tokens?: number };
+  readonly approve?: WorkflowApproval;
+}
+
 /** One step of a workflow: one of `STEP_KINDS`, told apart by its one discriminating key. */
-export type WorkflowStep = ActStep | AgentStep | GenerateStep;
+export type WorkflowStep = ActStep | AgentStep | GenerateStep | ClassifyStep;
 
 /** A workflow as it is declared. */
 export interface WorkflowDeclaration {

@@ -16,6 +16,7 @@ export { STEP_RUNNERS, stepRunnerOf } from "./workflows/steps.js";
 export { runActStep } from "./workflows/run-act.js";
 export { runAgentStep } from "./workflows/run-agent.js";
 export { runGenerateStep } from "./workflows/run-generate.js";
+export { runClassifyStep } from "./workflows/run-classify.js";
 export type { ChangeOutcome, RunWorkflowOptions, StepChange, StepContext, StepRunner, WorkflowLog, WorkflowOutcome, WorkflowRun, WorkflowRunTrigger } from "./workflows/types.js";
 export { seatWorkflows } from "./workflows/seat.js";
 export type { WorkflowTools } from "./agent/workflow-tools.js";

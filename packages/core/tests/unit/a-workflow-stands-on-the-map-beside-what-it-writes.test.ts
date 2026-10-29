@@ -53,6 +53,12 @@ describe("a workflow on the map", () => {
     expect(on.map((one) => [one.reads, one.writes])).toEqual([[["routine", "grocery-list"], ["event", "grocery-list"]]]);
   });
 
+  it("is wired to the kind a classify step labels, which it reads and writes", () => {
+    const app = household();
+    const on = workflowsOnTheMap(app, { label: { title: "Label", when: [{ made: "grocery-list" }], steps: [{ classify: "grocery-list", field: "status" } as never] } }, actsOf(app));
+    expect(on.map((one) => [one.reads, one.writes])).toEqual([[["grocery-list"], ["grocery-list"]]]);
+  });
+
   it("is nothing for an app that declares no workflow", () => {
     const app = household();
     expect(workflowsOnTheMap(app, undefined, actsOf(app))).toEqual([]);
