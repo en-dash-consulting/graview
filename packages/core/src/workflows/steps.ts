@@ -4,6 +4,7 @@ import { nounOf } from "../schema/define-node.js";
 import type { WorkflowStep } from "../workflow-shape.js";
 import { actStep } from "./step-act.js";
 import { agentStep } from "./step-agent.js";
+import { generateStep } from "./step-generate.js";
 import { archiveStep } from "./step-archive.js";
 import type { WorkflowWorld } from "./world.js";
 
@@ -79,6 +80,7 @@ export interface StepKind<Step = never> {
 export const STEP_KINDS = {
   act: actStep,
   agent: agentStep,
+  generate: generateStep,
   archive: archiveStep,
 } as const satisfies Readonly<Record<string, StepKind<never>>>;
 

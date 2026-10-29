@@ -3,7 +3,7 @@ import { keptArguments } from "../mutations/kept-arguments.js";
 import { argumentWords } from "../mutations/words.js";
 import type { AnyMutationDefinition } from "../mutations/types.js";
 import type { Principal } from "../permissions/types.js";
-import { actTitle, humanizeField, nounOf } from "../schema/define-node.js";
+import { actTitle, humanizeField, humanizeValue, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { Store } from "../store.js";
 import type { VisitorForm } from "../mutations/visitor-form.js";
@@ -51,7 +51,7 @@ function described(schema: AnySchema, field: FormField, words: (name: string) =>
     case "group":
       return { ...base, input: "group", fields: field.fields.map((one) => described(schema, one, words)) };
     case "variant":
-      return { ...base, input: "one of", choices: field.options.map((option) => humanizeField(option.value)) };
+      return { ...base, input: "one of", choices: field.options.map((option) => humanizeValue(option.value)) };
     default:
       return { ...base, input: "answer" };
   }

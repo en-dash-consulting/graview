@@ -1,0 +1,5 @@
+{
+  "budget": "Cloud's worker",
+  "bytes": 12300,
+  "note": "Raised when a workflow came to make next week's records from a pattern: `compileDocument` holds every workflow step to the declaration, so the generate step's checker (its shape, its findings and its words, `workflows/step-generate.ts` and `generate-words.ts`) is on the worker's path; what the step wants and how it runs (`generate.ts`, `@graview/tools/workflows`) are kept off it. Measured at 2_433_148 B against 2_420_907 B with the step taken out of STEP_KINDS on feat/workflows at 013977efa."
+}

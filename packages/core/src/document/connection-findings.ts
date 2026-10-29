@@ -240,7 +240,7 @@ function notionSource(at: string, connection: NotionConnectionSpec, source: Noti
       const name = typeof property === "string" ? property : property.name;
       const declared = typeof property === "string" ? undefined : property.type;
       if (!kind.fields[field] && !edges[field] && kind.computed?.[field] !== undefined) {
-        const problem = declared === "relation" ? (where: string) => error("connection-relation", where, `the property ${name} is a relation, the pages it links, and ${field} is worked out to a value`, `map ${field} to a property that holds a value`) : computedProblem(connection.kind, field, `the property ${name}`, connection.direction);
+        const problem = declared === "relation" ? (where: string) => error("connection-relation", where, `the property ${name} is a relation, the pages it links, and ${field} is worked out to a value`, `map ${field} to a property that holds a value`) : computedProblem(kindName, field, `the property ${name}`, connection.direction);
         if (problem) findings.push(problem(path));
         seen.set(name, field);
         continue;

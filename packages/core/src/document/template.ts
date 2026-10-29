@@ -5,6 +5,7 @@ import { DATE_VALUE, dayAsRead, dayOfMoment, ISO_DAY, ISO_MOMENT, isoToday, mome
 import { capitalize, listed } from "../capital.js";
 import { excerpt } from "../excerpt.js";
 import { formatMoney, type Money } from "./money.js";
+import { humanizeValue, optionInSentence } from "../schema/humanize.js";
 
 /*
  * TEMPLATES: "{name}", "{status} · {quote|money}", "{fills.name}".
@@ -159,7 +160,7 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
     case "words":
       return typeof value === "number" ? inWords(value, money?.locale) : String(value);
     case "money":
-      return typeof value === "number" ? formatMoney(value, money) : String(value);
+      return typeof value === "number" ? formatMoney(value, money, args[0] === "0" ? 0 : undefined) : String(value);
     case "percent":
       return typeof value === "number" ? numberAsRead(value, money?.locale, { style: "percent", maximumFractionDigits: 0 }) : String(value);
     case "upper":
@@ -206,6 +207,11 @@ export interface RenderContext {
 }
 
 /** Render a parsed template. A part that cannot be judged renders as "—" rather than failing the whole sentence. */
+/** A choice's value in a template: each option by its label, else spoken — as a chip says it when it is the template, in lower case among other words. */
+export function optionsSaid(value: string | readonly unknown[], labels: Readonly<Record<string, string>>, alone: boolean): string {
+  return (Array.isArray(value) ? value : [value]).map((one) => labels[String(one)] ?? (alone ? humanizeValue(String(one)) : optionInSentence(String(one)))).join(", ");
+}
+
 export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContext): string {
   const today = ctx.today ?? isoToday();
   const name = ctx.name ?? namerOf((ctx.graph as { readonly schema?: { tryDefinition(kind: string): unknown } } | undefined)?.schema);
@@ -221,6 +227,9 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
           budget: ctx.budget ?? 500,
           ...(ctx.bindings ? { bindings: ctx.bindings } : {}),
         });
+        // A choice field named bare (`{status}`) is said by its option's label, else its id spoken — alone as a chip says it, among other words in lower case — never the id.
+        const labels = !part.format && part.expr!.t === "ident" && ctx.node ? ctx.kinds.get(ctx.node.kind)?.choices?.get(part.expr!.name) : undefined;
+        if (labels && (typeof value === "string" || Array.isArray(value))) return capitalized(part, optionsSaid(value, labels, parts.length === 1));
         return capitalized(part, show(value, part.format, today, part.formatArgs, ctx.money, name));
       } catch (error) {
         if (error instanceof ExprEvalError) return "—";

@@ -23,7 +23,10 @@ brand, the name, mark, typeface and palette, is `graview-brand`.
 2. **Mark a field as money.** A document field marked `"format": "money"`
    is said in it on every face — record, list, card, table, form ("$" beside
    the box, "$1,250.50" taken as typed) — and its own `"unit": "EUR"` wins.
-   `set-format` changes only a field's format or unit.
+   A sum shows cents only where it has them, never ".00" ("$11,424" beside
+   "$22,758.40"); `"places": 0` on a money field (or a computed one), and
+   `{total | money: 0}` in a template, say whole units, rounded ("$22,758").
+   `set-format` changes only a field's format, unit or places.
 
 3. **Say its days and numbers.** The locale says every day, time and number
    on every face: en-US unless it says ("Sep 10, 2023", "3:30 PM",

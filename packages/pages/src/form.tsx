@@ -1,5 +1,6 @@
 import {
   humanizeField,
+  humanizeValue,
   nounOf,
   labelOf,
   recordFriction,
@@ -496,7 +497,7 @@ function Control<S extends AnySchema>({
               <option value="">—</option>
               {spec.options.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {humanizeField(option.value)}
+                  {humanizeValue(option.value)}
                 </option>
               ))}
             </select>

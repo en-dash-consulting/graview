@@ -107,7 +107,7 @@ describe("views reach every face", () => {
   it("draws the declaration's view specs with no views at all", async () => {
     const specified = defineApp({ name: "Vendors", schema, mutations: [], viewSpecs: { vendor: { card: [{ title: "{name}" }, { badge: "{status}", tone: "good" }] } } });
     await mounted({ app: specified, face: "pages" }, (host) => {
-      expect(host.querySelector('[data-graview-spec="card"] [data-graview-tone="good"]')?.textContent).toBe("booked");
+      expect(host.querySelector('[data-graview-spec="card"] [data-graview-tone="good"]')?.textContent).toBe("Booked");
     });
   });
 

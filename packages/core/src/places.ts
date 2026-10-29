@@ -52,6 +52,9 @@ export const SHIPPED_LENSES = {
 
 export type ShippedLensName = keyof typeof SHIPPED_LENSES;
 
+/** The roles a timeline lays out on its axis: both must be numbers. */
+export const TIMELINE_AXIS_ROLES = ["start", "end"] as const;
+
 /** From how many cards a status board shows its Find box without being asked (`options.search`). */
 export const SEARCH_UNASKED = 20;
 
@@ -141,6 +144,24 @@ function keepListed(options: Record<string, unknown>, key: string, holds: (one: 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
 /** The values an enum field takes, read from its schema; empty when it is not one. */
+/** Whether a kind's field holds a number (a number, a whole number, a length of time): what a timeline's axis is laid out in. */
+function isNumberField(schema: AnySchema, kind: string, field: string): boolean {
+  const shape = schema.tryDefinition(kind)?.fields.shape as Record<string, unknown> | undefined;
+  let def = defOf(shape?.[field]);
+  while (def && (def.type === "optional" || def.type === "default" || def.type === "nullable" || def.type === "prefault")) def = defOf(def.innerType);
+  return def?.type === "number";
+}
+
+/**
+ * WHAT A TIMELINE IS BOUND TO, IN WORDS: spans laid out by number — minutes
+ * of a day, 0 to 1440 — across columns (a weekday, a lane). Said wherever a
+ * timeline is refused, with the calendar for spans of dates, so a person
+ * who reached for a timeline over a project's start and end dates is told
+ * which lens draws that.
+ */
+export const timelineBindingsWords = (kind: string, start = "start", end = "end"): string =>
+  `A timeline lays out spans by number — minutes of a day, 0 to 1440 — across columns: "bindings": { "${kind}": { "start": "<a number field>", "end": "<a number field>", "column": "<a choice field, like a weekday>" } }, or "options": { "columns": ["mon", "tue", …] }. For spans of dates, draw a calendar: "lens": "calendar", "bindings": { "${kind}": { "start": "${start}", "end": "${end}" } }, "options": { "range": "month" }.`;
+
 function enumValues(schema: AnySchema, kind: string, field: string): readonly string[] {
   const shape = schema.tryDefinition(kind)?.fields.shape as Record<string, unknown> | undefined;
   // Read from zod's own definition, through optional and default, rather than through the JSON-schema writer a page need not carry.
@@ -219,6 +240,21 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
          * a weekday, a lane. A timeline with neither has nowhere to put a
          * span, so it says so rather than drawing an empty week.
          */
+        /*
+         * Its axis is a number, read as `Number(value)`: a date or a word
+         * bound to `start` or `end` would place every span at nothing, so
+         * it does not draw, and says what does (the calendar, for dates).
+         */
+        for (const kind of bound) {
+          const roles = bindings[kind] as Record<string, unknown>;
+          for (const role of TIMELINE_AXIS_ROLES) {
+            const field = roles[role];
+            if (typeof field !== "string" || !fieldsOf(kind).includes(field)) continue; // the binding check says so
+            if (!isNumberField(app.schema, kind, field)) {
+              return bad(`${at}.bindings.${kind}.${role}`, `its ${role} "${field}" is not a number, and a timeline's axis is`, timelineBindingsWords(kind, String(roles["start"] ?? "start"), String(roles["end"] ?? "end")));
+            }
+          }
+        }
         const columns = given["columns"];
         if (Array.isArray(columns)) {
           options["columns"] = columns.map((column) => (typeof column === "string" ? { id: column, label: column } : column));
@@ -229,7 +265,7 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
             return field ? enumValues(app.schema, kind, field) : [];
           });
           const values = [...new Set(derived)];
-          if (values.length === 0) return bad(`${at}.options.columns`, "it has no columns — no option names them and no `column` role is bound to a field of set values", `Bind "column" to a field whose values are the columns, or say "columns": ["mon", "tue", …].`);
+          if (values.length === 0) return bad(`${at}.options.columns`, "it has no columns — no option names them and no `column` role is bound to a field of set values", timelineBindingsWords(bound[0]!));
           options["columns"] = values.map((value) => ({ id: value, label: value.toUpperCase() }));
         }
         if (options["extent"] === undefined) options["extent"] = 1440;

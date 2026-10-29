@@ -19,6 +19,8 @@ export interface AmountMark {
   readonly unit?: string;
   readonly currency?: string;
   readonly locale?: string;
+  /** `0`: money said in whole units, rounded ("$22,758"); otherwise with cents only where it has them, never ".00". */
+  readonly places?: 0;
 }
 
 /** Marks a number schema with what it is said as. */

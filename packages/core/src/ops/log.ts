@@ -428,6 +428,18 @@ export function undoneIn(ops: readonly Operation[]): Set<string> {
   return new Set(ops.filter((op) => live.get(op.id) === false).map((op) => op.id));
 }
 
+/**
+ * WHAT A GESTURE OF SEVERAL ACTS SAYS, where its caller said nothing of it:
+ * each act's own sentence, once, in the order they ran — "Link A to B; Link
+ * C to D" — and past three, the first two and how many more. It said the
+ * first alone, so a batch that linked twelve records read in history as one
+ * link (Roadmap f-lifelogics-findings).
+ */
+function opsSaid(ops: readonly Operation[]): string {
+  const said = [...new Set(ops.map((op) => op.intent))];
+  return said.length <= 3 ? said.join("; ") : `${said.slice(0, 2).join("; ")}; and ${said.length - 2} more`;
+}
+
 /** Ops grouped into the gestures they were made in, in the order each began. */
 export function batchesOf(ops: readonly Operation[], undone: ReadonlySet<string>): Batch[] {
   const order: string[] = [];
@@ -446,8 +458,8 @@ export function batchesOf(ops: readonly Operation[], undone: ReadonlySet<string>
     return {
       id,
       author: first.author,
-      // What the gesture was for, when its caller said; else its first op's own sentence.
-      intent: first.batchIntent ?? first.intent,
+      // What the gesture was for, when its caller said; else its ops' own sentences — every one of a few, the first two and a count of many.
+      intent: first.batchIntent ?? opsSaid(ops),
       at: first.at,
       ...(first.lineage ? { lineage: first.lineage } : {}),
       ops,

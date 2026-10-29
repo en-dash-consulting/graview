@@ -41,6 +41,13 @@ export interface KindShape {
    * reader of whoever is looking (`EvalContext.linked`).
    */
   readonly linked?: ReadonlyMap<string, LinkedRelation>;
+  /**
+   * The labels a choice field's options are given, by field (Roadmap
+   * f-option-labels) — empty where none is. A template that names the
+   * field bare — a kind's `describe`, its label, a rule's sentence — says
+   * the option by its label, else its id spoken, never the id itself.
+   */
+  readonly choices?: ReadonlyMap<string, Readonly<Record<string, string>>>;
 }
 
 /** A link an expression walked and could not read: the viewer may not open the far app, or its record is not read (yet, or at all). */

@@ -1,4 +1,4 @@
-import { humanizeField } from "./humanize.js";
+import { humanizeValue } from "./humanize.js";
 import type { AnyNodeDefinition } from "./types.js";
 
 /**
@@ -29,7 +29,7 @@ export function choiceWords(
       if (def?.type === "array") def = defOf((def as { element?: unknown }).element);
       if (def?.type !== "enum" || !def.entries) continue;
       const format = definition?.display?.format?.[field];
-      (out[kind] ??= {})[field] = Object.fromEntries(Object.values(def.entries).map((option) => [String(option), format ? format(option) : humanizeField(String(option))]));
+      (out[kind] ??= {})[field] = Object.fromEntries(Object.values(def.entries).map((option) => [String(option), format ? format(option) : humanizeValue(String(option))]));
     }
   }
   return out;

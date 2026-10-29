@@ -182,7 +182,8 @@ describe("a hosted page", () => {
     // 1056 KB once the 0.1.63 batch's branches were merged, each measured alone against main: the scene face measured 1_080_549 B.
     // 1060 KB since a record came to follow the record it derives from (Roadmap f-keep-linked): the store keeping `derives` in step and `validateGraph` saying one out of step: the scene face measured 1_082_988 B, over feat/workflows.
     // 1055 KB since a workflow came to set aside what is done with and to ask about a run as one suggestion (Roadmap f-retention-rules, f-job-approvals): a lineage that names which of a suggestion's changes a person took, a decline that leaves those out, and the tray's list of a run's changes: the scene face measured 1_079_378 B, 1_549 more than feat/workflows (1_077_829).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1060 * 1024);
+    // 1056 KB since a timeline came to be accepted only where it draws, money never to read ".00", an option to be said by its label in a template and a batch of acts by each act (Roadmap f-lifelogics-findings): the timeline's bindings in words, a sum rounded to the cent and its places, a choice's labels on each kind's shape: the scene face measured 1_080_480 B, 2_813 more than main (1_077_667).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1064 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
