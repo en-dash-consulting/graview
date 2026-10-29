@@ -15,4 +15,5 @@ export { memoryWorkflowLog } from "./workflows/log.js";
 export { STEP_RUNNERS, stepRunnerOf } from "./workflows/steps.js";
 export { runActStep } from "./workflows/run-act.js";
 export { runAgentStep } from "./workflows/run-agent.js";
+export { runGenerateStep } from "./workflows/run-generate.js";
 export type { ChangeOutcome, RunWorkflowOptions, StepChange, StepContext, StepRunner, WorkflowLog, WorkflowOutcome, WorkflowRun, WorkflowRunTrigger } from "./workflows/types.js";
