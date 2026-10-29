@@ -1,5 +1,47 @@
 # @graview/embed
 
+## 0.1.63
+
+### Patch Changes
+
+- 696afa4: An app's workflows are seen and set up where the app is: on the Scene's map, from a shell and from an owner's seat, Roadmap f-jobs-declared (the Scene's part) and f-jobs-authoring-guide. A workflow said what the app does on its own, and nothing showed it: not the map a person reads the app from, not the command line a developer runs it from, not the tools an agent sets an app up with.
+  
+  From altitude each workflow now stands on the map as the app's own actor at work: in the street along the right edge of the district it writes first, a cell out from the curb and a cell apart from another beside it, never on a district's ground, wired solid to the districts its steps write and dashed to those it only reads — what its steps name (`over`, `reads`, `from`, `act`, `acts`, `generate`, `archive`) and what starts it on a change, nothing guessed. Under its title it says how its last run went when the host hands its log of runs: `workflowRuns` on the provider and the embed (a `WorkflowLog`, or anything with its `last(name)`) — "Last ran 2 hours ago: made 28", "Last ran yesterday: nothing new", "Last ran 5 minutes ago, as a dry run: would make 4", "Has not run yet". A paused one is drawn dimmed and says "Paused". Each is a group a screen reader is told in words — "Workflow: Fill out next week's events. Reads routines; writes events. Last ran 2 hours ago: made 28." — the kinds by what they are called. Dreaming, built in and at work on every district, is not drawn. The pieces are `@graview/core/scene`'s, read off the declaration's shape only, so the Scene carries no checker and no runner: `workflowsOnTheMap(app, declaredWorkflows(app), acts)`, `workflowSpots(workflows, plots)`, `lastRunWords(run, now)` and `agoWords`. The layer is fetched with the ground it stands on, and drawn only for an app that declares a workflow.
+  
+  `graview workflow <entry> [<name>] [--dry] [--now <iso>] [--data <dir> | --sqlite <file>] [--json]` is a command of `@graview/tools`, dispatched by `graview`. Without a name it lists the app's workflows — each in a sentence, active or paused, when it next runs on the app's clock and how its last run went, dreaming among them as built in. With one it runs it once by hand as the app's own actor (`workflow:<name>`, named by its title) against the store on disk and prints the run; the runs are kept beside the store (`workflow-runs.json`), so the next reads on from the last, the first after a change is dry and the next is kept. `--dry` keeps nothing. A remote store is sent to its server, and `dreaming` to `graview dream`.
+  
+  An owner's seat runs, pauses and resumes them: `run_workflow` (`{ name, dryRun? }`), answered with the run, and `pause_workflow` and `resume_workflow` (`{ name }`), which write the edit through the host and answer the edit that takes it back. A runtime lists them only for an app that declares workflows and only when its host hands `workflows` (`{ declared, run, edit? }`) — `seatWorkflows({ app, store, log, ai?, edit? })` from `@graview/tools/workflows` makes one, the pause and resume only with `edit` — and never on a read-only seat; `toolDefinitions` takes `workflows: { names, manage? }`; `graview mcp --workflows` hands its seat the runs beside the store and, for a document entry, a pause written into the document, checked first. The runner is the host's to bring, so a seat on a page carries none of it.
+  
+  The workflows harness (`scripts/verify-workflows.mjs`) mounts a household's routines, plan items, events and grocery lists with three workflows and a log of runs, in three engines and both schemes: eachWorkflowStandsBesideTheDistrictItWritesWiredToWhatItReadsAndWrites, noWorkflowStandsOnADistrictsGround, aPausedWorkflowIsDrawnDimmedAndSaysSo, aWorkflowSaysItsLastRunInWords and aScreenReaderIsToldWhatEachWorkflowReadsWritesAndDid. `a-workflow-stands-on-the-map-beside-what-it-writes.test.ts`, `an-owners-seat-runs-pauses-and-resumes-a-workflow.test.ts` and `graview-workflow-lists-and-runs-the-apps-workflows.test.ts` hold the rest. The new graview-workflows skill sets up the four workflows a person asks for in one sentence, each checked with `graview check` and a dry run.
+  
+  A hosted page carries 0.1 KB more up front (91 bytes minified, 41 gzipped; handed a compiled app, 0.1 KB: 91 and 51): the provider and the embed handing on `workflowRuns`, and the scene's door to the layer — under raises naming this changeset; no workflow code rides it, the layer coming with the ground it stands on and the seat's tools reading the workflows' names from what the host hands. The pages face alone 97 / 42 more, the embed without the studio 97 / 56, every face 9_882 / 3_356, the embed with the studio handed in 3_814 / 1_098 and Cloud's worker 5_071 bytes, each under a raise of its own (`scripts/budget-raises/a-workflow-stands-on-the-map-*.json`).
+  
+  Compatibility: ops and primitives, stored formats and the declaration and check finding codes — unchanged. The wire — unchanged. Derived tool names and input schemas — three new tools a host opts into (`run_workflow`, `pause_workflow`, `resume_workflow`), listed only when it hands `workflows` (or `toolDefinitions` is told `workflows`), so a surface that did not ask keeps its tools and its hash; an act can no longer take any of the three names. The JavaScript API — additive: `workflowRuns` on `GraviewProviderProps` and the embed's options (`WorkflowRuns`), `workflowsOnTheMap`, `workflowSpots`, `lastRunWords` and `agoWords` on `@graview/core/scene`, `seatWorkflows` and `WorkflowTools` on `@graview/tools/workflows`, `workflows` on `ToolRuntimeOptions` and `ToolDefinitionsOptions`, and `workflow` and `WORKFLOW_USAGE` on `@graview/tools/cli`. What Graview Cloud does: hands the Scene its log of runs as `workflowRuns`, hands an owner's chat seat `seatWorkflows` with its store, its log and an `edit` that writes the document through its own propose path, and offers Run now, Dry run and Pause on a workflow from its settings through the same three tools.
+- Updated dependencies [c91af18]
+- Updated dependencies [4fa4e62]
+- Updated dependencies [c85bcc0]
+- Updated dependencies [511184d]
+- Updated dependencies [e92448c]
+- Updated dependencies [ac514dc]
+- Updated dependencies [52aed08]
+- Updated dependencies [bd2a06c]
+- Updated dependencies [db91f9f]
+- Updated dependencies [53c5090]
+- Updated dependencies [696afa4]
+- Updated dependencies [013977e]
+- Updated dependencies [b2afea5]
+- Updated dependencies [affa912]
+- Updated dependencies [d6edd89]
+- Updated dependencies [45a60d6]
+  - @graview/core@0.1.63
+  - @graview/tools@0.1.63
+  - @graview/react@0.1.63
+  - @graview/primitives@0.1.63
+  - @graview/pages@0.1.63
+  - @graview/studio@0.1.63
+  - @graview/guest@0.1.63
+  - @graview/layout@0.1.63
+
 ## 0.1.62
 
 ### Patch Changes

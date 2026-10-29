@@ -66,7 +66,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.62
 
-Published October 28, 2026 · the current version
+Published October 28, 2026
 
 Calendar events invite the people they are about, a view links to the Scene, formulas build words and times, an act carries a change across a link, a rule covers every record, and the seat proposes a change to the app.
 
