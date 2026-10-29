@@ -45,22 +45,22 @@ then a dry run, then the real one.
    ```json
    { "title": "Fill out next week's events", "when": [{ "every": "sunday 18:00" }],
      "steps": [{ "generate": "event",
-       "from": [{ "kind": "routine", "where": "active", "dates": "startsAt" },
-                { "kind": "plan-item", "dates": "date" }],
+       "from": [{ "kind": "routine", "where": "active", "dates": "startsAt" }],
        "window": "next week",
        "set": { "name": { "expr": "name" }, "startsAt": "$date" },
        "link": "pattern" }] }
    ```
    A rerun changes what the source changed and never what a person changed
    on an event, unless the step says `"overwrite": true`; a skipped or moved
-   occurrence stays as the person left it.
+   occurrence stays as the person left it. Another source is another entry
+   in `from` (a plan item's `date`, a drive's weekdays `"days"`).
 
 2. **"Keep events in step with plan items."** Not a workflow: the event
    kind follows its source, in the same change as the edit, so it needs no
    clock and is never a minute behind:
    ```json
-   "event": { "derives": { "from": "plan-item", "via": "plan",
-     "set": { "name": { "expr": "name" }, "date": { "expr": "date" } } }, … }
+   "event": { "edges": { "plan": { "to": ["plan-item"], "cardinality": "one" } },
+     "derives": { "from": "plan-item", "via": "plan", "set": { "name": { "expr": "name" } } }, … }
    ```
    Renaming the plan item renames its event in that change; an edit on the
    event to a field set from a source field as it is flows back; archiving
@@ -87,7 +87,8 @@ then a dry run, then the real one.
        "key": "{id}" }] }
    ```
    A workflow whose steps write a kind a connection sends out defaults to
-   `"approve": "ask"`: a person approves the run before it leaves the app.
+   `"approve": "ask"`: each run waits in the Suggested tray as one
+   suggestion, and a person approves it before anything leaves the app.
    Say `"approve": "apply"` only when the person asked for it unattended;
    the checker then warns `workflow-sends-out-unasked` — allowed, but said.
 
