@@ -1,9 +1,4 @@
-import type { AnySchema, GraviewApp, Principal } from "@graview/core";
-import { documentOf } from "@graview/core/document";
-import type { AppWorkflows } from "@graview/core/workflows";
-
-/** The workflows an app declares: its own, else the document it was compiled from (as `declaredWorkflows` reads them). */
-const workflowsDeclaredBy = (app: object): AppWorkflows | undefined => (app as { workflows?: AppWorkflows }).workflows ?? (documentOf(app)?.workflows as AppWorkflows | undefined);
+import type { Principal } from "@graview/core";
 import type { WorkflowRun } from "../workflows/types.js";
 import type { ToolDefinition } from "./tool-definition.js";
 
@@ -25,6 +20,8 @@ import type { ToolDefinition } from "./tool-definition.js";
  * store, log and model — and how a pause is written.
  */
 export interface WorkflowTools {
+  /** The app's workflows as they stand now, in declared order: what the tools name, and whether each is paused. */
+  declared(): readonly { readonly name: string; readonly title: string; readonly status: "active" | "paused" }[];
   /** Run one now, by hand: `who` pressed it. A dry run keeps nothing; the first after a change is dry whatever is asked. */
   run(name: string, options: { readonly dryRun: boolean; readonly who?: string }): Promise<WorkflowRun>;
   /**
@@ -74,8 +71,6 @@ export function workflowToolsOf(names: readonly string[], listed: "run" | "manag
   return listed === "manage" ? [runWorkflowTool(names), pausing(true, names), pausing(false, names)] : [runWorkflowTool(names)];
 }
 
-/** The app's workflows, by name, in declared order. */
-export const workflowNames = (app: object | undefined): readonly string[] => Object.keys((app && workflowsDeclaredBy(app)) ?? {});
 
 /** What a run answers a model: the run, less the ids nobody reads, with its counts and its sentences. */
 function runAnswer(run: WorkflowRun) {
@@ -97,9 +92,10 @@ function runAnswer(run: WorkflowRun) {
 export async function runWorkflowToolCall(
   name: string,
   args: Record<string, unknown>,
-  context: { readonly app: GraviewApp<AnySchema>; readonly principal: Principal; readonly workflows: WorkflowTools },
+  context: { readonly principal: Principal; readonly workflows: WorkflowTools },
 ): Promise<{ readonly ok: true; readonly data: unknown } | { readonly ok: false; readonly error: string; readonly reason?: "invalid" | "forbidden" }> {
-  const names = workflowNames(context.app);
+  const declared = context.workflows.declared();
+  const names = declared.map((one) => one.name);
   const asked = String(args["name"] ?? "");
   if (!names.includes(asked)) return { ok: false, error: `No workflow is called "${asked}". The app's workflows are: ${names.join(", ") || "none"}. Nothing was changed.`, reason: "invalid" };
   if (name === "run_workflow") {
@@ -109,9 +105,9 @@ export async function runWorkflowToolCall(
   const edit = context.workflows.edit;
   if (!edit) return { ok: false, error: "This seat's host does not write the app's declaration, so it cannot pause or resume a workflow. Nothing was changed.", reason: "forbidden" };
   const pause = name === "pause_workflow";
-  const declared = workflowsDeclaredBy(context.app)![asked]!;
-  const status = declared.status ?? "active";
-  if ((status === "paused") === pause) return { ok: true, data: { workflow: asked, status, said: `“${declared.title}” is already ${status}. Nothing was changed.` } };
+  const one = declared.find((each) => each.name === asked)!;
+  const status = one.status;
+  if ((status === "paused") === pause) return { ok: true, data: { workflow: asked, status, said: `“${one.title}” is already ${status}. Nothing was changed.` } };
   const written = await edit({ op: pause ? "pause-workflow" : "resume-workflow", name: asked });
   if (!written.ok) return { ok: false, error: written.error };
   return {

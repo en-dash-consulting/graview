@@ -47,7 +47,7 @@ import type { ToolAnnotations, ToolDefinition } from "./tool-definition.js";
 import type { AppSuggestion } from "@graview/core/learn";
 import { authorship, markHits } from "./untrusted.js";
 import { SUBSCRIPTION_TOOLS } from "./subscription-tools.js";
-import { runWorkflowToolCall, WORKFLOW_TOOL_NAMES, workflowNames, workflowToolsOf, type WorkflowTools } from "./workflow-tools.js";
+import { runWorkflowToolCall, WORKFLOW_TOOL_NAMES, workflowToolsOf, type WorkflowTools } from "./workflow-tools.js";
 import { READ_HITS } from "./bounds.js";
 import {
   deriveAffordances,
@@ -831,8 +831,8 @@ export interface ToolDefinitionsOptions {
   readonly subscriptions?: boolean;
   /** List `list_app_suggestions`, as a runtime given `learned` lists it. */
   readonly learned?: boolean;
-  /** List `run_workflow` ("run"), or it with `pause_workflow` and `resume_workflow` ("manage"), as a runtime given `workflows` (with `workflows.edit`) lists them, for an app that declares workflows. */
-  readonly workflows?: "run" | "manage";
+  /** List `run_workflow` for these workflows (`declaredWorkflows(app)`'s names), and with `manage` `pause_workflow` and `resume_workflow`, as a runtime given `workflows` (with `workflows.edit`) lists them. */
+  readonly workflows?: { readonly names: readonly string[]; readonly manage?: boolean };
 }
 
 /**
@@ -846,7 +846,7 @@ export interface ToolDefinitionsOptions {
  * moved.
  */
 export function toolDefinitions<S extends AnySchema>(
-  app: Pick<GraviewApp<S>, "schema" | "mutations" | "policy" | "modules" | "publishing" | "workflows">,
+  app: Pick<GraviewApp<S>, "schema" | "mutations" | "policy" | "modules" | "publishing">,
   principal: Principal = { kind: "agent" },
   options: ToolDefinitionsOptions = {},
 ): { readonly definitions: readonly ToolDefinition[]; readonly hash: string } {
@@ -866,7 +866,7 @@ export function toolDefinitions<S extends AnySchema>(
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),
   ]);
-  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true, isAutomated(principal), app.schema as AnySchema, options.learned === true, workflowToolsOf(workflowNames(app), options.workflows));
+  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true, isAutomated(principal), app.schema as AnySchema, options.learned === true, workflowToolsOf(options.workflows?.names ?? [], options.workflows ? (options.workflows.manage ? "manage" : "run") : undefined));
   return { definitions, hash: surfaceHash(definitions) };
 }
 
@@ -905,7 +905,7 @@ export function createToolRuntime<S extends AnySchema>(
     isAutomated(principal),
     store.schema as AnySchema,
     options.learned !== undefined,
-    workflowToolsOf(workflowNames(options.app), options.workflows ? (options.workflows.edit ? "manage" : "run") : undefined),
+    workflowToolsOf(options.workflows?.declared().map((one) => one.name) ?? [], options.workflows ? (options.workflows.edit ? "manage" : "run") : undefined),
   );
   const hash = surfaceHash(definitions);
   /*
@@ -1217,7 +1217,7 @@ export function createToolRuntime<S extends AnySchema>(
         case "pause_workflow":
         case "resume_workflow": {
           // Run as the app's own actor, kept in the host's log; a pause is the host's write of the declaration (Roadmap f-jobs-declared).
-          const answer = await runWorkflowToolCall(definition.name, args, { app: options.app as unknown as GraviewApp<AnySchema>, principal, workflows: options.workflows! });
+          const answer = await runWorkflowToolCall(definition.name, args, { principal, workflows: options.workflows! });
           return answer.ok ? { ok: true, data: answer.data } : { ok: false, error: answer.error, ...(answer.reason ? { reason: answer.reason } : {}) };
         }
 

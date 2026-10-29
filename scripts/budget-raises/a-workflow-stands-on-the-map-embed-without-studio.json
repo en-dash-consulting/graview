@@ -1,6 +1,6 @@
 {
   "budget": "embed without the studio",
   "minified": 97,
-  "gzipped": 61,
-  "note": "Raised when an app's workflows came to stand on the Scene's map and an owner's seat came to run, pause and resume them (Roadmap f-jobs-declared): the provider and the embed hand the scene the host's log of runs (`workflowRuns`), the scene draws the workflows' layer with the ground it stands on, read off the declaration without the checker, and the tool surface lists run_workflow, pause_workflow and resume_workflow for a host that hands them. Measured at 408_803 / 142_887 against 408_706 / 142_826 on feat/workflows, minified and gzipped."
+  "gzipped": 56,
+  "note": "Raised when an app's workflows came to stand on the Scene's map and an owner's seat came to run, pause and resume them (Roadmap f-jobs-declared): the provider and the embed hand the scene the host's log of runs (`workflowRuns`), the scene draws the workflows' layer with the ground it stands on, read off the declaration without the checker, and the tool surface lists run_workflow, pause_workflow and resume_workflow for a host that hands them. Measured at 408_803 / 142_884 against 408_706 / 142_828 on feat/workflows, minified and gzipped."
 }

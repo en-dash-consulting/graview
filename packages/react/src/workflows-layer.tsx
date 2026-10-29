@@ -1,4 +1,5 @@
 import { pluralOf, SCENE_LAYERS, type AnySchema, type GraviewApp } from "@graview/core";
+import type { AppWorkflows } from "@graview/core/workflows";
 import { lastRunWords, toIso, workflowSpots, workflowsOnTheMap, type MapAct, type MapWorkflow, type SpotPlot } from "@graview/core/scene";
 import type { InterpolatedLayout } from "@graview/layout";
 import { useMemo, type ReactElement } from "react";
@@ -27,6 +28,8 @@ export interface WorkflowsLayerProps {
   /** The pan baked into the frame's cards, so a workflow stands in the street it is drawn beside. */
   readonly pan: { readonly x: number; readonly y: number };
   readonly app: GraviewApp<AnySchema>;
+  /** The workflows it declares: its own, or its document's (`declaredWorkflows`). */
+  readonly workflows: AppWorkflows;
   /** Every act the app has, the derived ones too (`store.allMutations()`): what a step that runs one writes. */
   readonly acts: readonly MapAct[];
   /** The host's log of runs; unsaid, no last run is said. */
@@ -52,8 +55,8 @@ const touchWords = (workflow: MapWorkflow, schema: AnySchema): string => {
   return [workflow.reads.length > 0 ? `reads ${said(workflow.reads)}` : "", workflow.writes.length > 0 ? `writes ${said(workflow.writes)}` : ""].filter(Boolean).join("; ");
 };
 
-export function WorkflowsLayer({ frame, width, height, pan, app, acts, runs, graphVersion, hiddenKinds }: WorkflowsLayerProps): ReactElement | null {
-  const workflows = useMemo(() => workflowsOnTheMap(app, acts), [app, acts]);
+export function WorkflowsLayer({ frame, width, height, pan, app, workflows: declared, acts, runs, graphVersion, hiddenKinds }: WorkflowsLayerProps): ReactElement | null {
+  const workflows = useMemo(() => workflowsOnTheMap(app, declared, acts), [app, declared, acts]);
   const city = frame.city;
   const plots = new Map<string, SpotPlot>();
   for (const node of frame.nodes) {

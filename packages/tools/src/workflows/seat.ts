@@ -1,4 +1,5 @@
 import type { AnySchema, GraviewApp, Store } from "@graview/core";
+import { declaredWorkflows } from "@graview/core/workflows";
 import type { HostAi } from "../ai.js";
 import type { WorkflowTools } from "../agent/workflow-tools.js";
 import { runWorkflow } from "./run.js";
@@ -20,6 +21,8 @@ export function seatWorkflows<S extends AnySchema>(options: {
   readonly edit?: WorkflowTools["edit"];
 }): WorkflowTools {
   return {
+    // Read at each call: a pause the host wrote is what the next call sees.
+    declared: () => Object.entries(declaredWorkflows(options.app) ?? {}).map(([name, one]) => ({ name, title: one.title, status: one.status === "paused" ? "paused" : "active" })),
     run: (name, { dryRun, who }) =>
       runWorkflow({
         app: options.app,

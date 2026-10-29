@@ -44,7 +44,8 @@ describe("an owner's seat and the app's workflows", () => {
     expect(names(createToolRuntime(store, { author: OWNER, app, workflows: seatWorkflows({ app, store, log }) }).definitions)).toEqual(["run_workflow"]);
     expect(names(createToolRuntime(store, { author: OWNER, app, readOnly: true, workflows: managed }).definitions)).toEqual([]);
     expect(names(createToolRuntime(store, { author: OWNER, app }).definitions)).toEqual([]);
-    expect(names(createToolRuntime(store, { author: OWNER, app: { ...app, workflows: undefined }, workflows: managed }).definitions)).toEqual([]);
+    const none = { ...app, workflows: undefined };
+    expect(names(createToolRuntime(store, { author: OWNER, app: none, workflows: seatWorkflows({ app: none, store, log, edit }) }).definitions)).toEqual([]);
   });
 
   it("names the app's workflows as the only names a call takes", () => {
@@ -57,8 +58,10 @@ describe("an owner's seat and the app's workflows", () => {
 
   it("lists the same tools without a store, from the declaration alone", () => {
     const app = household();
-    expect(names(toolDefinitions(app, OWNER, { workflows: "manage" }).definitions)).toEqual(["run_workflow", "pause_workflow", "resume_workflow"]);
-    expect(names(toolDefinitions(app, OWNER, { workflows: "run" }).definitions)).toEqual(["run_workflow"]);
+    const declared = ["next-weeks-events", "keep-events-in-step", "set-aside-done-lists"];
+    expect(names(toolDefinitions(app, OWNER, { workflows: { names: declared, manage: true } }).definitions)).toEqual(["run_workflow", "pause_workflow", "resume_workflow"]);
+    expect(names(toolDefinitions(app, OWNER, { workflows: { names: declared } }).definitions)).toEqual(["run_workflow"]);
+    expect(names(toolDefinitions(app, OWNER, { workflows: { names: [] } }).definitions)).toEqual([]);
     expect(names(toolDefinitions(app, OWNER).definitions)).toEqual([]);
   });
 

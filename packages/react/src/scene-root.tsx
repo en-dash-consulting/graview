@@ -2,6 +2,8 @@ import { SCENE_LAYERS } from "@graview/core";
 import { toIso, TOP_DOWN } from "@graview/core/city";
 import type { SceneNode } from "./scene-node.js";
 import type { AnySchema, GraviewApp, Store } from "@graview/core";
+import { documentOf } from "@graview/core/document";
+import type { AppWorkflows } from "@graview/core/workflows";
 import {
   aggregateId,
   cameraLimit,
@@ -897,6 +899,8 @@ export function Scene<S extends AnySchema>({
   children,
 }: SceneProps) {
   const context = useGraview<S>();
+  /* The app's workflows, its own or its document's: a compiled app carries them only there (`declaredWorkflows`). */
+  const declaredWorkflows = context.app ? ((context.app as { workflows?: AppWorkflows }).workflows ?? (documentOf(context.app)?.workflows as AppWorkflows | undefined)) : undefined;
   const { store, scheme, views, view, setView, selection, setSelection, setMenuAt, emphasis, brand, noteMoved, robots, motion } = context;
   // A panel beside the map shows what is chosen from altitude, a record in focus among it (`mapChoice`).
   const besideTheMap = useContext(BesideTheMap);
@@ -1279,13 +1283,14 @@ export function Scene<S extends AnySchema>({
       </Suspense>
       ) : null}
       {/* THE APP'S WORKFLOWS, each in the street beside the district it writes, wired to what it reads and writes (see workflows-layer.tsx). */}
-      {view.overview && frame.city && context.app ? (
+      {view.overview && frame.city && declaredWorkflows ? (
         <Suspense fallback={null}>
           <Workflows
             frame={frame}
             {...extent}
             pan={frame.city.pan}
             app={context.app as unknown as GraviewApp<AnySchema>}
+            workflows={declaredWorkflows}
             acts={store.allMutations() as never}
             runs={context.workflowRuns}
             graphVersion={nodes}
