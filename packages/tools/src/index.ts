@@ -46,6 +46,7 @@ export type {
   ToolCall,
 } from "./agent/tools.js";
 export type { ToolAnnotations, ToolDefinition } from "./agent/tool-definition.js";
+export type { WorkflowTools } from "./agent/workflow-tools.js";
 export type { UntrustedText } from "./agent/untrusted.js";
 export { createInAppAdapter, createMcpAdapter } from "./agent/adapters.js";
 export type { InAppAgent, McpContent, McpTool, McpToolResult } from "./agent/adapters.js";

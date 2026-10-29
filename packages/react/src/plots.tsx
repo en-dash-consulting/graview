@@ -376,6 +376,8 @@ function dueField(schema: { tryDefinition(kind: string): { readonly fields: { re
  * drawn without a browser (`sceneThumbnail`) puts them where this does.
  */
 export { districtBlocks, heightOf, villageCap, villageOf } from "@graview/core/scene";
+/* The app's workflows stand on the same ground, fetched with it (`workflows-layer.tsx`). */
+export { WorkflowsLayer } from "./workflows-layer.js";
 export type { Building } from "@graview/core/scene";
 
 /** The three faces of one building on the canvas, from its foot cell. */

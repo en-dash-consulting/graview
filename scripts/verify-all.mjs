@@ -115,6 +115,8 @@ const CHAIN = [
   ["app-links", "verify-app-links.mjs"],
   // A date that repeats: the calendar draws each occurrence of a weekly practice, marked, the kind's stop counts and says the next one, and the record changes how it repeats in words, in three engines.
   ["repeats", "verify-repeats.mjs"],
+  // An app's workflows on the scene's map: each in the street beside the district it writes, wired to what it reads and writes, a paused one dimmed and said, its last run in words, in three engines (Roadmap f-jobs-declared).
+  ["workflows", "verify-workflows.mjs"],
   // A phone drawn as a tel: link grouped for its reader, a place as a link to the reader's maps app, a duration said "1 h 30 min", typed as words and summed, on both faces at desk width, in three engines.
   ["field-types", "verify-field-types.mjs"],
   // A blank fact an act the seat may run writes is an empty slot on the record's page — "Add Allocation", reached by the keyboard, filled by the same editor — while a blank no act writes stays unsaid and a reader is offered none, in three engines.

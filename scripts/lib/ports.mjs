@@ -93,6 +93,8 @@ export const OWN = {
   "field-types-host": 5257,
   /** The host's page `verify-app-links` mounts purchase scenarios that link other apps into, with a resolver of its own (FR-171). */
   "app-links-host": 5268,
+  /** The host's page `verify-workflows` mounts a household's routines, plans, events and grocery lists into, with three workflows and a log of their runs (Roadmap f-jobs-declared). */
+  "workflows-host": 5236,
   /** The host's page `verify-repeats` mounts a running club whose practice repeats every Tuesday into: occurrences drawn, the next one said. */
   "repeats-host": 5262,
   /** The host's page `verify-long-text` mounts a workshop whose deliverable holds an email drafted in full into (FR-146–FR-148). */
