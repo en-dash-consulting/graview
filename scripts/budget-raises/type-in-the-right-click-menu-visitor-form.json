@@ -1,6 +1,6 @@
 {
   "budget": "a visitor's form alone",
   "minified": 43,
-  "gzipped": 24,
-  "note": "Raised when the right-click menu took a field to type in (Roadmap f-menu-type-anything): a popover's first stop passes over an element marked `data-graview-not-first`, so the menu opens with the keyboard on its first row and a letter typed reaches the field. 43 / 24 more. Measured at 266_890 / 97_053 against 266_847 / 97_029."
+  "gzipped": 25,
+  "note": "Raised when the right-click menu took a field to type in (Roadmap f-menu-type-anything): a popover's first stop passes over an element marked `data-graview-not-first`, so the menu opens with the keyboard on its first row and a letter typed reaches the field. 43 / 25 more. Measured at 266_903 / 97_061 against 266_860 / 97_036."
 }

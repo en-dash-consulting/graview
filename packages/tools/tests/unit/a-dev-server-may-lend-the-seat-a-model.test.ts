@@ -31,7 +31,7 @@ describe("the seat's model, through the dev server", () => {
     const reply = await seatResponder<AnySchema>(ai)(store(), "what should I do first?", { places });
     expect(reply.say).toContain("Start with the deposit");
     expect(reply.via).toBe("ai:claude");
-    expect(door.mock.calls.map(([path, init]) => [path, init?.method])).toEqual([["/__graview/ai", "GET"], ["/__graview/ai", "POST"]]);
+    expect(door.mock.calls.filter(([path]) => path === "/__graview/ai").map(([path, init]) => [path, init?.method])).toEqual([["/__graview/ai", "GET"], ["/__graview/ai", "POST"]]);
   });
 
   it("a door that names a quick model lends the page a Fast slot, each typed question asked of it as tier fast (Roadmap f-menu-type-anything)", async () => {
@@ -42,10 +42,34 @@ describe("the seat's model, through the dev server", () => {
     expect(ai.fast?.model).toBe("claude-haiku-5-5");
     const decided = await ai.fast!.decide({ typed: "fin" }, { row: { type: "choice", instructions: "Which row?", criteria: { r1: "Rename it", r2: "Finish it" } } });
     expect(decided.answers["row"]).toMatchObject({ type: "choice", choice: "r2", confidence: 0.7 });
-    expect(JSON.parse(door.mock.calls[1]![1]!.body!)).toMatchObject({ tier: "fast" });
+    expect(JSON.parse(door.mock.calls.find(([path, init]) => path === "/__graview/ai" && init?.method === "POST")![1]!.body!)).toMatchObject({ tier: "fast" });
     // A door that names none lends none.
     const plain = await aiThroughDevServer({ fetch: async () => json(200, { configured: true, model: "m", name: "claude" }) });
     expect(plain.fast).toBeUndefined();
+  });
+
+  it("a decision door holding a key for Jev makes Jev the Fast slot, in place of the quick model, its questions posted through the door", async () => {
+    const door = vi.fn(async (path: string, init?: { method?: string; body?: string }) => {
+      if (path === "/__graview/decide") return init?.method === "POST" ? { ok: true, status: 200, json: async () => ({}), text: async () => JSON.stringify({ answers: { row: { type: "choice", choice: "r1", confidence: 0.8, probabilities: { r1: 0.8 } } }, usage: { input_tokens: 40, output_tokens: 0 } }) } : json(200, { available: true, model: "jev-latest" });
+      return json(200, { configured: true, model: "claude-sonnet-5-5", fast: "claude-haiku-5-5", name: "claude" });
+    });
+    const ai = await aiThroughDevServer({ fetch: door as never });
+    expect(ai.fast?.model).toBe("jev-latest");
+    const decided = await ai.fast!.decide({ typed: "fin" }, { row: { type: "choice", instructions: "Which row?", criteria: { r1: "Finish it", none: "None of these rows" } } });
+    expect(decided.answers["row"]).toMatchObject({ type: "choice", choice: "r1" });
+    const posted = door.mock.calls.find(([path, init]) => path === "/__graview/decide" && init?.method === "POST");
+    expect(JSON.parse(posted![1]!.body!)).toMatchObject({ model: "jev-latest", questions: { row: { type: "choice" } } });
+    // No key for Jev: the decision door is closed, and the quick model stands in.
+    const closed = await aiThroughDevServer({ fetch: (async (path: string) => (path === "/__graview/decide" ? json(200, { available: false }) : json(200, { configured: true, model: "m", fast: "claude-haiku-5-5", name: "claude" }))) as never });
+    expect(closed.fast?.model).toBe("claude-haiku-5-5");
+  });
+
+  it("a door whose provider takes no turn's tools (xAI, OpenAI) lends a model that answers by completion, with no turn", async () => {
+    const ai = await aiThroughDevServer({ fetch: async (path) => (path === "/__graview/ai" ? json(200, { configured: true, provider: "xai", model: "grok-4.7", fast: "grok-4.20-0309-non-reasoning", name: "grok", turns: false }) : json(404, {})) });
+    expect(ai.name).toBe("grok");
+    expect(ai.complete).toBeDefined();
+    expect(ai.turn).toBeUndefined();
+    expect(ai.fast?.model).toBe("grok-4.20-0309-non-reasoning");
   });
 
   it("a door without a key says how to turn it on, in place of the plain sentence", async () => {

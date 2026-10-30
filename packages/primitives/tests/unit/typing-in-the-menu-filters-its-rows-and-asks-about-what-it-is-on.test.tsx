@@ -10,7 +10,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { fetchInspector, Inspector, QuickAskDoor, registerDefaultViews } from "../../src/index.js";
+import { fetchInspector, InlineAiSections, Inspector, QuickAskDoor, registerDefaultViews } from "../../src/index.js";
 import { menuMatches } from "../../src/menu-words.js";
 
 beforeAll(() => fetchInspector());
@@ -69,7 +69,9 @@ async function mount(ai: HostAi | undefined) {
         <HoldMenu />
         <main>
           <Scene renderer="dom" />
-          <Inspector placement="menu" />
+          <InlineAiSections>
+            <Inspector placement="menu" />
+          </InlineAiSections>
         </main>
         <QuickAskDoor face="scene" />
       </GraviewProvider>,
@@ -232,3 +234,34 @@ describe("the Fast slot, as the words are typed", () => {
   });
 });
 
+
+describe("suggestions arriving", () => {
+  it("fill room held from the menu's first frame, so no row below them moves (Homeflow: Send Feedback jumped as AI items populated)", async () => {
+    let answer: (() => void) | undefined;
+    const slow: FastProvider = {
+      model: "slow-fast",
+      decide: async (_state, questions) => {
+        const answers: Record<string, Answer> = {};
+        const question = questions["next"];
+        if (question?.type === "choice") {
+          // One suggestion, and only when the test says: fewer than the room held.
+          await new Promise<void>((done) => (answer = done));
+          const first = Object.keys(question.criteria)[0]!;
+          answers["next"] = { type: "choice", choice: first, confidence: 0.9, probabilities: { [first]: 0.9 } };
+        }
+        return { answers, usage: { inputTokens: 1, outputTokens: 1 } };
+      },
+    };
+    await mount({ fast: slow, thinking: stubThinking() });
+    await until(() => document.querySelector('[data-testid="inline-ai-room"]') !== null && answer !== undefined);
+    const slots = () => document.querySelectorAll('[data-testid="inline-ai-room"] > li').length;
+    const before = slots();
+    expect(document.querySelector('[data-testid="inline-ai-thinking"]')).not.toBeNull();
+    expect(before).toBe(3);
+    await act(async () => answer!());
+    await until(() => document.querySelector('[data-testid="inline-ai-thinking"]') === null);
+    expect(menu()!.querySelectorAll('[data-testid="inline-ai-room"] [data-ai-offer]').length).toBe(1);
+    // The same room: one suggestion, two rows held empty.
+    expect(slots()).toBe(before);
+  });
+});

@@ -85,8 +85,10 @@ mean once the typing rests, Enter running the one lit; words that fit
 nothing are its last row, "Ask about <it>: …", answered on the quick ask's
 card beside the thing with its thinking marked on it — the Fast slot
 picking the context the Thinking slot is told (`entry.context`) — and with
-no model the field only filters. `ANTHROPIC_API_KEY=… pnpm dev` lends both
-slots through the dev server (`GRAVIEW_AI_FAST_MODEL`). `ai={{ off: true }}` hides every AI part.
+no model the field only filters. `TYPESAFE_API_KEY=… XAI_API_KEY=… pnpm
+dev` lends both slots through the dev server — Anthropic, xAI or OpenAI
+by the key set — Jev in the Fast one (`decisionBridge`; that provider's
+small quick model without a Jev key). `ai={{ off: true }}` hides every AI part.
 Prove it with stubs: `stubFast()`, `stubThinking()` from
 `@graview/tools/inline-ai` (`pnpm verify inline-ai`).
 

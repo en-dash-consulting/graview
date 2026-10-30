@@ -78,7 +78,9 @@ function contextWords(entry: AiInteraction): string | null {
   if (!sent) return null;
   const count = (n: number, one: string, many: string) => `${n === 0 ? "no" : n} ${n === 1 ? one : many}`;
   const what = `${count(sent.candidates.length, "thing it could do", "things it could do")} and ${count(sent.records.length, "record", "records")}`;
-  return sent.by === "fast" ? `Told the model of ${what}, as ${sent.model ?? "the Fast slot"} picked them` : `Told the model of ${what} around it`;
+  // Jev by its name, whichever version answered.
+  const picker = sent.model === undefined ? "the Fast slot" : /^jev\b|^jev-/i.test(sent.model) ? "Jev" : sent.model;
+  return sent.by === "fast" ? `Told the model of ${what}, as ${picker} picked them` : `Told the model of ${what} around it`;
 }
 
 /**

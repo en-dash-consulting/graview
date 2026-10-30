@@ -1,4 +1,4 @@
-import { aiDevProxy, devFiles, sourceAliases } from "@graview/ship/dev";
+import { aiDevProxy, decisionBridge, devFiles, sourceAliases } from "@graview/ship/dev";
 import { defineConfig } from "vite";
 import { moved } from "../../scripts/lib/ports.mjs";
 
@@ -12,6 +12,13 @@ export default defineConfig({
    */
   plugins: [
     aiDevProxy(),
+    /*
+     * JEV IN THE FAST SLOT: `TYPESAFE_API_KEY=… pnpm dev` lets the page ask
+     * Jev its typed questions through `/__graview/decide`, the key held here
+     * — the right-click menu's live ranking and the context a quick ask
+     * sends. Without the key the model door's small quick model stands in.
+     */
+    decisionBridge(),
     /*
      * A TASK'S ATTACHMENTS IN DEVELOPMENT (FR-163): the dev server keeps what
      * the editor sends in memory and serves it back at `/__graview/files`.

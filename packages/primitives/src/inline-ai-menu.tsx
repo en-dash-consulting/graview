@@ -260,6 +260,12 @@ export async function askAgain(env: InlineEnv, entry: AiInteraction): Promise<In
 }
 
 const ROW: CSSProperties = { padding: "5px 10px", fontSize: "0.875rem", borderRadius: 8, width: "100%", textAlign: "left", borderWidth: 1, borderStyle: "solid", borderColor: "transparent", background: "none", boxShadow: "none" };
+/* A row that is not there: a suggestion's own button, unseen, unreachable, holding its height. */
+const SLOT = (
+  <button type="button" tabIndex={-1} disabled aria-hidden="true" style={{ ...ROW, visibility: "hidden" }}>
+    &nbsp;
+  </button>
+);
 const QUIET: CSSProperties = { margin: 0, padding: "4px 10px", fontSize: "0.8125rem", color: "var(--graview-ink-muted)" };
 
 export interface InlineAiMenuProps {
@@ -371,34 +377,63 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
     );
   };
   const failureOf = (result: InlineResult) => (result.interaction.outcome === "failed" ? (result.interaction.failed ?? "The AI could not do that here.") : undefined);
+  /*
+   * NO ROW MOVES UNDER THE POINTER AS SUGGESTIONS ARRIVE (Roadmap
+   * f-menu-type-anything; Homeflow: "it jumps down as AI items are
+   * populated", and the press meant for Send Feedback landed on another
+   * row). Asked as the menu opens, the suggestions' rows are held from the
+   * first frame — the most that can come, "Thinking…" in the first — and
+   * the room never shrinks while the menu is open: what arrives fills it, a
+   * shorter answer leaves it empty, and every row below stays where the
+   * pointer found it.
+   */
+  const status = busy && !pressed ? (
+    <p role="status" data-testid="inline-ai-thinking" style={QUIET}>
+      Thinking…
+    </p>
+  ) : asking ? (
+    <p role="status" data-testid="inline-ai-asking" style={QUIET}>
+      Asking…
+    </p>
+  ) : refused ? (
+    <p role="alert" data-testid="inline-ai-failed" style={{ ...QUIET, color: "var(--graview-warn)" }}>
+      {refused}
+    </p>
+  ) : failed ? (
+    <p role="status" style={QUIET}>
+      {failed}
+    </p>
+  ) : null;
+  const room = useRef(0);
+  room.current = Math.max(room.current, onOpen && held === undefined ? Math.max(1, 3 - existing.length) : 0, offers.length + (status ? 1 : 0));
+  const spare = Math.max(0, room.current - offers.length - (status ? 1 : 0));
   return (
     <div ref={section} data-testid="inline-ai" style={{ display: "grid", gap: 2 }}>
-      {busy && !pressed ? (
-        <p role="status" data-testid="inline-ai-thinking" style={QUIET}>
-          Thinking…
-        </p>
-      ) : asking ? (
-        <p role="status" data-testid="inline-ai-asking" style={QUIET}>
-          Asking…
-        </p>
-      ) : refused ? (
-        <p role="alert" data-testid="inline-ai-failed" style={{ ...QUIET, color: "var(--graview-warn)" }}>
-          {refused}
-        </p>
-      ) : failed ? (
-        <p role="status" style={QUIET}>
-          {failed}
-        </p>
-      ) : null}
-      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 2 }}>
+      <ul data-testid="inline-ai-room" style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* The status stands in a row's own height, over a row that is not there, so what replaces it takes the same room. */}
+        {status ? (
+          <li style={{ position: "relative" }}>
+            {SLOT}
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center" }}>{status}</div>
+          </li>
+        ) : null}
         {offers.map((offer) => (
           <li key={offer.id}>
-            <button type="button" data-menu-item={`ai-offer:${offer.id}`} data-ai-offer={offer.id} data-ai-offer-type={offer.type} onClick={() => run((landing) => takeOffer(env, suggested!, offer, landing))} style={ROW}>
+            {/* One line, whatever its words: a suggestion two lines tall would push the rows under it down. */}
+            <button type="button" data-menu-item={`ai-offer:${offer.id}`} data-ai-offer={offer.id} data-ai-offer-type={offer.type} title={offer.label} onClick={() => run((landing) => takeOffer(env, suggested!, offer, landing))} style={{ ...ROW, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {offer.label}
               <span style={{ color: "var(--graview-ink-faint)" }}> · {offer.type === "panel" ? "a panel" : offer.type === "place" ? "go there" : offer.type === "record" ? "open it" : "suggested"}</span>
             </button>
           </li>
         ))}
+        {/* The room held for what is yet to come, or came shorter: a row's height each, nothing in it. */}
+        {Array.from({ length: spare }, (_, at) => (
+          <li key={`room-${at}`} data-inline-ai-room="">
+            {SLOT}
+          </li>
+        ))}
+      </ul>
+      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 2 }}>
         {!onOpen && suggested === null ? (
           <li>
             {/* Asks once, here: the menu stays open and what is suggested arrives in it, where the keyboard goes. */}

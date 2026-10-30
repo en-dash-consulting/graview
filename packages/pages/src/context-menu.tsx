@@ -1,19 +1,14 @@
 import { argumentsTaken, fieldWords, humanizeField, layer, nounOf, pluralLabel, withArticle, type AnySchema, type Place } from "@graview/core";
 import { narrowedPath } from "@graview/core/navigate";
-import { retryingImport } from "@graview/core/retry";
 import { aggregateId } from "@graview/layout/view";
 import { GhostDoor, Inspector, NotifyDoor, useBoardMoveSection, useInlineAiSection, useNotifySection, useViewTidyingSection } from "@graview/primitives/pages";
 import { MenuSections } from "@graview/react/drawing";
-import { lazyPart, PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
-import type { Inspected } from "./inspect-sheet.js";
+import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router-dom";
 import type { PageContext } from "./page-context.js";
 import { pathOfPlace } from "./page-places.js";
 import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
-
-/* What "Inspect" opens, fetched the first time somebody asks. */
-const InspectSheet = lazyPart(retryingImport(() => import("./inspect-sheet.js").then((module) => ({ default: module.InspectSheet }))));
 
 /**
  * THE CONTEXT MENU ON THE ROUTED FACE — the scene's own menu (`Inspector`
@@ -24,16 +19,16 @@ const InspectSheet = lazyPart(retryingImport(() => import("./inspect-sheet.js").
  * Opened by a right-click, by Shift+F10 and the context-menu key on what
  * has the keyboard, and by a finger resting on the page. THE BROWSER KEEPS
  * ITS OWN MENU in a text field or editable text, over text somebody has
- * selected, and whenever Shift is held with the right-click — the way to
- * a link's "Open in new tab" too, which the menu also offers itself, with
+ * selected, and whenever Shift or Option (Alt) is held with the
+ * right-click — the way to a link's "Open in new tab" too, which the menu also offers itself, with
  * "Copy link" under it. A right-click elsewhere while text is selected
  * offers "Copy" first; a finger resting on text leaves it to the phone's
  * own selection, opening the menu only on a card, a row or a handle.
  *
  * WHAT IS UNDER THE CURSOR: a column — a status board's, or a region a
  * worker view marked `data-column="<field>:<value>"` — offers "Add a task
- * in Doing" and "Show only Doing"; and "Inspect", at the foot, says what
- * Graview knows of the thing (a page cannot open the browser's tools).
+ * in Doing" and "Show only Doing". A Ctrl+click — a one-button trackpad's
+ * right-click on a Mac — opens this menu like any right-click.
  */
 
 /** What a menu opened here is about, before it is placed. */
@@ -131,7 +126,7 @@ export function PagesContextMenu<S extends AnySchema>({ context, root, children 
 }
 
 function Menu<S extends AnySchema>({ context, root, children }: { readonly context: PageContext<S>; readonly root: RefObject<HTMLElement | null>; readonly children: ReactNode }) {
-  const { setMenuAt, keptViews } = useGraview<S>();
+  const { setMenuAt } = useGraview<S>();
   const { store } = context;
   const schema = store.schema;
   const navigate = useNavigate();
@@ -282,8 +277,6 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     return () => clearTimeout(gone);
   }, [said]);
   const say = useCallback((sentence: string) => setSaid({ sentence, at: Date.now() }), []);
-  /* What "Inspect" is showing, or nothing. */
-  const [inspected, setInspected] = useState<Inspected | null>(null);
 
   /** Opens it at an element, as the keyboard does: at the element's start, under its first line. */
   const openAt = useCallback(
@@ -421,27 +414,6 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     },
     [say],
   );
-  /*
-   * "INSPECT", AT THE FOOT, after a rule: what Graview knows of the thing
-   * under the cursor (a page cannot open the browser's own tools) — its
-   * kind, its id, the field, place and view that drew it, its column, its
-   * link, and for whoever may change the app, how it is declared.
-   */
-  const inspect = useMemo<MenuSectionSource>(
-    () => (target: MenuTarget) => {
-      if (target.face !== "pages") return null;
-      const node = target.on === undefined ? undefined : store.graph.getNode(target.on);
-      const place = target.place === undefined ? undefined : context.views?.places().find((one) => one.as === target.place);
-      const kind = node?.kind ?? place?.kind ?? target.column?.kind ?? (target.about.length === 1 && target.about[0]!.startsWith("aggregate:") ? kindOfAggregate(target.about[0]!) : undefined);
-      const path = node ? recordPath(schema, node.kind, node.id) : place ? pathOfPlace(context, place) : kind ? `/${pluralSlug(schema, kind)}` : undefined;
-      const href = path !== undefined ? new URL(`${base}${path}`, location.href).href : target.href;
-      const may = keptViews?.current().may;
-      const owner = may?.lenses === true || may?.views === true || store.policy === undefined;
-      const shown: Inspected = { on: node?.id, kind, field: target.field, place, column: target.column, href, owner, returnTo: target.element ?? null };
-      return { id: "inspect", items: [{ id: "inspect", label: "Inspect", run: () => setInspected(shown) }] };
-    },
-    [store, schema, context, base, keptViews],
-  );
   /* A value on its record's page, changed where it stands: the first row, before the record's acts. */
   const change = useMemo<MenuSectionSource>(
     () => (target: MenuTarget) => {
@@ -469,7 +441,7 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     [pathname, context, navigate],
   );
   const tidy = useViewTidyingSection(away);
-  const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : []), inspect], [copy, change, board, own, tidy, notify, inlineAi, inspect]);
+  const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [copy, change, board, own, tidy, notify, inlineAi]);
 
   return (
     <MenuSections sections={sections}>
@@ -482,9 +454,9 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
           rightDown.current = null;
           // A word the right-click itself selected (WebKit on a Mac) is put back: nobody selected it.
           const pressMade = down !== null && !down.had && Date.now() - down.at < 2000;
-          if (pressMade && !event.shiftKey && !typingIn(target)) getSelection()?.removeAllRanges();
-          // The browser's own: Shift held, a text field, editable text, text somebody selected.
-          if (event.shiftKey || typingIn(target) || onSelectedText(target)) return;
+          if (pressMade && !event.shiftKey && !event.altKey && !typingIn(target)) getSelection()?.removeAllRanges();
+          // The browser's own: Shift or Option held, a text field, editable text, text somebody selected.
+          if (event.shiftKey || event.altKey || typingIn(target) || onSelectedText(target)) return;
           event.preventDefault();
           // A right-click in the menu itself opens no second one over it.
           if (target.closest("[data-graview-popover]")) return;
@@ -542,12 +514,6 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
       <GhostDoor placement="page" />
       {/* The sheet "Notify me…" opens, already filled in. */}
       <NotifyDoor />
-      {/* What "Inspect" says of the thing under the cursor. */}
-      {inspected ? (
-        <Suspense fallback={null}>
-          <InspectSheet store={store as never} inspected={inspected} close={() => setInspected(null)} />
-        </Suspense>
-      ) : null}
       {/* "Link copied", heard and seen, quietly. */}
       <p role="status" data-testid="menu-said" style={said ? SAID : HIDDEN}>
         {said?.sentence ?? ""}

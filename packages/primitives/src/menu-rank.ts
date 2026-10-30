@@ -42,7 +42,8 @@ export function useFastRank(ai: HostAi | undefined, words: string, rows: readonl
     const keyed = new Map(held.current.map((row, at) => [`r${at + 1}`, row]));
     const timer = setTimeout(() => {
       void fast
-        .decide({ typed: asked }, { row: { type: "choice", instructions: `Which of these menu rows does somebody typing “${asked}” mean?`, criteria: Object.fromEntries([...keyed].map(([key, row]) => [key, row.label])) } })
+        // Jev's own Choice, with "none of these": words that mean no row light none.
+        .decide({ typed: asked }, { row: { type: "choice", instructions: `Which of these menu rows does somebody typing “${asked}” mean?`, criteria: { ...Object.fromEntries([...keyed].map(([key, row]) => [key, row.label])), none: "None of these rows" } } })
         .then((decided) => {
           ai?.meter?.({ tier: "fast", model: fast.model, inputTokens: decided.usage.inputTokens, outputTokens: decided.usage.outputTokens, interaction: "menu" });
           const answer = decided.answers["row"];
@@ -52,6 +53,8 @@ export function useFastRank(ai: HostAi | undefined, words: string, rows: readonl
             const row = keyed.get(key);
             if (row) chances.set(row.key, chance);
           }
+          // "None of these": the local match stands alone.
+          if (answer.choice === "none") return setRanked({ words: asked, chances: new Map() });
           const chosen = keyed.get(answer.choice);
           if (chosen && !chances.has(chosen.key)) chances.set(chosen.key, answer.confidence);
           setRanked({ words: asked, chances });

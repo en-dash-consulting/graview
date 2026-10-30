@@ -7,8 +7,9 @@ import type { Answer, Decide } from "../../src/fast.js";
 
 /**
  * FREE WORDS TAKE TWO STEPS (Roadmap f-menu-type-anything). Where a Fast
- * slot is given, it first picks which of the catalog's candidates and which
- * records around the target matter to the words; only those reach the
+ * slot is given, it first picks which of the catalog's candidates (a Choice,
+ * "none of these" among them) and which records around the target (a Noul
+ * each) matter to the words; only those reach the
  * Thinking slot, which may pick only among them; and the entry says what was
  * sent and who chose it. With no Fast slot, the default the target is
  * scoped to is sent, and said so.
@@ -54,6 +55,10 @@ const picking = (wanted: RegExp): FastProvider => ({
   decide: vi.fn<Decide>(async (_state, questions) => {
     const answers: Record<string, Answer> = {};
     for (const [key, question] of Object.entries(questions)) {
+      if (question.type === "noul") {
+        answers[key] = { type: "noul", noul: wanted.test(question.instructions) ? 0.9 : 0.05 };
+        continue;
+      }
       if (question.type !== "choice") continue;
       const names = Object.keys(question.criteria);
       const choice = names.find((name) => wanted.test(question.criteria[name] ?? "")) ?? names[0]!;

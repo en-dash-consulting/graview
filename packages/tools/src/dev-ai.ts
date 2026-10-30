@@ -1,6 +1,8 @@
-import { AI_BRIDGE_PATH, type AiBridgeAsk } from "@graview/core";
+import { AI_BRIDGE_PATH, DECISION_BRIDGE_PATH, type AiBridgeAsk } from "@graview/core";
 import { NO_AI, type HostAi } from "./ai.js";
 import { completionDecide } from "./decide.js";
+import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide } from "./providers/jev.js";
+import type { FastProvider } from "./ai.js";
 import { turnThroughMessages, type MessagesStepReply } from "./turn.js";
 
 /** What the seat says in a dev build whose server holds no key. */
@@ -22,11 +24,39 @@ type Fetch = (input: string, init?: { method?: string; headers?: Record<string, 
  * there is no door at all (a built page, another host), it is `NO_AI`, and
  * the seat says what any product's says.
  */
-export async function aiThroughDevServer(options: { readonly path?: string; readonly fetch?: Fetch } = {}): Promise<HostAi> {
+export async function aiThroughDevServer(options: { readonly path?: string; readonly decidePath?: string; readonly fetch?: Fetch } = {}): Promise<HostAi> {
+  const [ai, jev] = await Promise.all([throughTheModelDoor(options), jevThroughTheDecisionDoor(options)]);
+  return jev ? { ...ai, fast: jev } : ai;
+}
+
+/*
+ * JEV IN THE FAST SLOT IN DEVELOPMENT (Roadmap f-menu-type-anything): where
+ * the dev server holds a TypeSafe key (`decisionBridge`, TYPESAFE_API_KEY or
+ * JEV_API_KEY), the page's Fast slot is Jev itself, its typed questions
+ * posted through that door with the key on the server's side — in place of
+ * the small model the model door lends when no key for Jev is set.
+ */
+async function jevThroughTheDecisionDoor(options: { readonly decidePath?: string; readonly fetch?: Fetch }): Promise<FastProvider | undefined> {
+  const path = options.decidePath ?? DECISION_BRIDGE_PATH;
+  const call = options.fetch ?? (globalThis.fetch as unknown as Fetch | undefined);
+  if (!call) return undefined;
+  try {
+    const probe = await call(path, { method: "GET" });
+    if (!probe.ok) return undefined;
+    const status = (await probe.json()) as { available?: unknown };
+    if (status?.available !== true) return undefined;
+  } catch {
+    return undefined;
+  }
+  return { model: JEV_MODEL, decide: jevDecide({ baseUrl: path, ...(options.fetch ? { fetch: options.fetch as never } : {}) }), price: { inputPerMillion: JEV_INPUT_USD_PER_MILLION } };
+}
+
+/** The host's model through the dev server's model door, and its small quick model as the Fast slot's stand-in. */
+async function throughTheModelDoor(options: { readonly path?: string; readonly fetch?: Fetch }): Promise<HostAi> {
   const path = options.path ?? AI_BRIDGE_PATH;
   const call = options.fetch ?? (globalThis.fetch as unknown as Fetch | undefined);
   if (!call) return NO_AI;
-  let status: { configured?: unknown; name?: unknown; howTo?: unknown; fast?: unknown };
+  let status: { configured?: unknown; name?: unknown; howTo?: unknown; fast?: unknown; turns?: unknown };
   try {
     const probe = await call(path, { method: "GET" });
     if (!probe.ok) return NO_AI;
@@ -72,12 +102,16 @@ export async function aiThroughDevServer(options: { readonly path?: string; read
         const usage = body.usage as { inputTokens?: unknown; outputTokens?: unknown } | undefined;
         return { text: body.text, ...(typeof usage?.inputTokens === "number" && typeof usage.outputTokens === "number" ? { usage: { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens } } : {}) };
       },
-      /* The seat's turn (FR-160): the loop runs here, under the person's sight; the door makes each request with the key. */
-      turn: turnThroughMessages(async (request) => {
-        const body = await post(request);
-        if (!Array.isArray(body.content)) throw new Error("The model door answered with no content.");
-        return { content: body.content as MessagesStepReply["content"], stop_reason: typeof body.stop_reason === "string" ? body.stop_reason : null };
-      }),
+      /* The seat's turn (FR-160): the loop runs here, under the person's sight; the door makes each request with the key — where its provider takes a turn's tools (Anthropic), else the seat answers from `complete`. */
+      ...(status.turns === false
+        ? {}
+        : {
+            turn: turnThroughMessages(async (request) => {
+              const body = await post(request);
+              if (!Array.isArray(body.content)) throw new Error("The model door answered with no content.");
+              return { content: body.content as MessagesStepReply["content"], stop_reason: typeof body.stop_reason === "string" ? body.stop_reason : null };
+            }),
+          }),
     };
   }
   if (status?.configured === false && typeof status.howTo === "string") return { withoutModel: `${NOTHING_HERE} ${status.howTo}` };

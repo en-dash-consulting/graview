@@ -509,6 +509,8 @@ export function SceneViewHost({
         else onPick(picked, event.metaKey || event.shiftKey, joins ?? undefined);
       }}
       onContextMenu={(event) => {
+        // Option held: the browser's own menu, as on the ground (`useGroundMenu`).
+        if (event.altKey) return;
         const picked = pickedFrom(event.target);
         event.preventDefault();
         event.stopPropagation();

@@ -22,8 +22,8 @@
  * request:add-copy-link-under-open-in-a-new-tab, request:right-click-
  * context-menu-options-to-be-more-relevant-to-the-item-under-my-cursor):
  * "Copy link" right under "Open in a new tab", copying the whole address
- * and saying so; "Inspect" at the foot, a sheet of the thing's kind, id and
- * link; a selection copied by "Copy" rather than swallowed, the browser's
+ * and saying so, and no "Inspect" (shipped in 0.1.63, taken out: the menu
+ * is for what can be done); a selection copied by "Copy" rather than swallowed, the browser's
  * own menu kept on the selected text and a finger resting on text left to
  * the phone's selection; and a column — a status board's, and one a worker
  * view marked `data-column` — offering a task added in it and the place
@@ -117,6 +117,9 @@ async function serveMenuHost() {
           studio: false,
           routing: "address",
           basePath: "${MENU_BASE}/",
+          // A host's own row below the AI's, as Homeflow's "Send feedback" is: the row the jumpy menu moved.
+          ai: window.__todoAi,
+          menuSections: [() => ({ id: "host", items: [{ id: "send-feedback", label: "Send feedback", run: () => (window.__feedback = (window.__feedback ?? 0) + 1) }] })],
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
       `,
@@ -722,50 +725,14 @@ try {
     };
     await putAway(on);
 
-    /* ------------------------------------------------- Inspect, at the foot */
-    reach(`inspectSaysWhatIsUnderTheCursor_${size}`);
-    const inspecting = await pagesMenu(on, '[data-graview-record="t-deposit"]');
-    const foot = await on.evaluate(() => {
-      const sections = [...document.querySelectorAll('[data-testid="context-menu"] [data-menu-section]')];
-      return sections.at(-1)?.getAttribute("data-menu-section") ?? null;
-    });
-    await on.click(`${MENU} [data-menu-item="inspect"]`).catch(() => undefined);
-    await on.waitForSelector('[data-testid="inspect-sheet"]', { timeout: 10_000 }).catch(() => undefined);
-    const sheet = await on.evaluate(() => {
-      const shown = document.querySelector('[data-testid="inspect-sheet"]');
-      if (!shown) return null;
-      const box = shown.getBoundingClientRect();
-      return {
-        heading: shown.querySelector("h2")?.textContent ?? "",
-        kind: shown.querySelector('[data-inspect="kind"] code')?.textContent ?? null,
-        record: shown.querySelector('[data-inspect="record"] code')?.textContent ?? null,
-        link: shown.querySelector('[data-testid="inspect-link"]')?.href ?? null,
-        declared: Boolean(shown.querySelector('[data-inspect="declared"]')),
-        inTheWindow: box.left >= 0 && box.top >= 0 && box.right <= innerWidth + 1 && box.bottom <= innerHeight + 1,
-        focusIn: shown.contains(document.activeElement),
-      };
-    });
-    await on.keyboard.press("Escape");
-    await on.waitForTimeout(250);
-    const sheetGone = !(await on.$('[data-testid="inspect-sheet"]'));
-    report.checks[`inspectSaysWhatIsUnderTheCursor_${size}`] = {
-      lastRow: inspecting?.rows.at(-1) ?? null,
-      foot,
-      sheet,
-      sheetGone,
-      ok:
-        inspecting !== null &&
-        inspecting.rows.at(-1) === "inspect" &&
-        foot === "inspect" &&
-        sheet !== null &&
-        sheet.heading.includes("Pay the deposit") &&
-        sheet.kind === "task" &&
-        sheet.record === "t-deposit" &&
-        sheet.link === expectedLink &&
-        sheet.inTheWindow &&
-        sheet.focusIn &&
-        sheetGone,
+    /* ------------------------------------------------- no Inspect */
+    reach(`theMenuHasNoInspectRow_${size}`);
+    const noInspect = await pagesMenu(on, '[data-graview-record="t-deposit"]');
+    report.checks[`theMenuHasNoInspectRow_${size}`] = {
+      rows: noInspect?.rows ?? null,
+      ok: noInspect !== null && noInspect.rows.length > 0 && !noInspect.rows.includes("inspect") && !/\bInspect\b/.test(noInspect.text) && noInspect.rows.includes("copy-link"),
     };
+    await putAway(on);
 
     /* ------------------------------------------------- a selection, copied and not swallowed */
     reach(`aSelectionIsCopiedNotSwallowed_${size}`);
@@ -1107,14 +1074,24 @@ try {
         model: "fake-fast",
         decide: async (state, questions) => {
           const answers = {};
+          // The menu's own suggestions come slowly, as a real model's do: the rows below them must not move meanwhile.
+          if (questions.next) await new Promise((done) => setTimeout(done, 2000));
+          let firstRecord = true;
           for (const [key, question] of Object.entries(questions)) {
+            // Which records a quick ask is about, a Noul each: the first, and no other.
+            if (question.type === "noul") {
+              answers[key] = { type: "noul", noul: firstRecord ? 0.9 : 0.05 };
+              if (firstRecord) window.__fastPicked.push({ key: "records", said: question.instructions });
+              firstRecord = false;
+              continue;
+            }
             if (question.type !== "choice") continue;
             if (key === "row") {
               if (/complete/.test(state.typed ?? "")) answers.row = choose(question, /^Finish it$/);
               continue;
             }
-            if (key === "candidates" || key === "records") {
-              answers[key] = choose(question, key === "candidates" ? /^Finish it/ : /./);
+            if (key === "candidates") {
+              answers[key] = choose(question, /^Finish it/);
               window.__fastPicked.push({ key, said: question.criteria[answers[key].choice] });
               continue;
             }
@@ -1330,7 +1307,7 @@ try {
     typing.context[face].ok =
       handed.saw !== null &&
       handed.saw.candidates.length === 1 && pickedCandidate.endsWith(handed.saw.candidates[0]) && /^Finish it/.test(pickedCandidate) &&
-      (pickedRecord === "" ? handed.saw.records.length === 0 : handed.saw.records.length === 1 && pickedRecord.startsWith(handed.saw.records[0])) &&
+      (pickedRecord === "" ? handed.saw.records.length === 0 : handed.saw.records.length === 1 && pickedRecord.includes(handed.saw.records[0])) &&
       said !== null && said.by === "fast" && said.words.includes("fake-fast");
     typing.answer[face].ok = answer !== null && answer.beside === "t-deposit" && (answer.text ?? "").includes("not done yet") && answer.ghost && answer.proposed.length > 0 && !answer.overIt && answer.inTheWindow && answer.markGone && notMade === false && accepted === true && undone === false;
     await context.close();
@@ -1355,6 +1332,133 @@ try {
       stillOpen && noCard && placeholder === "Type to filter…";
     await offContext.close();
   }
+  /*
+   * OPTION KEEPS THE BROWSER'S OWN MENU; CTRL+CLICK IS OURS. A right-click
+   * with Option (Alt) held is the browser's — Inspect element, Look up —
+   * on the scene's card, its ground and the pages' row alike; a Ctrl+click,
+   * which a Mac's one-button trackpad sends as a contextmenu with ctrlKey,
+   * opens ours as any right-click does.
+   */
+  reach("aRightClickWithOptionShowsTheBrowsersMenu");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`option: ${error.message}`));
+    const heard = () =>
+      on.evaluate(() => {
+        const events = (window.__ctx ?? []).splice(0);
+        return { ours: Boolean(document.querySelector('[data-testid="context-menu"]')), events: events.length, prevented: events.some((event) => event.defaultPrevented) };
+      });
+    const listen = () => on.evaluate(() => {
+      window.__ctx = [];
+      window.addEventListener("contextmenu", (event) => window.__ctx.push(event), true);
+    });
+    /* A contextmenu said by the page itself on the target, as the browser would raise it, with these keys held. */
+    const said = (selector, keys) =>
+      on.evaluate(([selector, keys]) => {
+        const target = document.querySelector(selector);
+        const box = target?.getBoundingClientRect();
+        target?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, composed: true, clientX: (box?.left ?? 0) + 8, clientY: (box?.top ?? 0) + 8, ...keys }));
+      }, [selector, keys]);
+    const centerOf = (selector) => on.evaluate((selector) => {
+      const box = document.querySelector(selector)?.getBoundingClientRect();
+      return box ? { x: Math.round(box.left + Math.min(20, box.width / 2)), y: Math.round(box.top + Math.min(14, box.height / 2)) } : null;
+    }, selector);
+    const option = {};
+    const ctrl = {};
+    for (const face of ["scene", "pages"]) {
+      await on.goto(faces[face].at(""), { waitUntil: "load" });
+      await faces[face].ready(on);
+      await listen();
+      const point = await centerOf(faces[face].target);
+      if (!point) continue;
+      // Option held across a real right-click.
+      await on.keyboard.down("Alt");
+      await on.mouse.click(point.x, point.y, { button: "right" });
+      await on.keyboard.up("Alt");
+      await on.waitForTimeout(400);
+      option[face] = { how: "a right-click", ...(await heard()) };
+      // An engine whose driven right-click with Option raises no contextmenu (WebKit) is told it as the browser would say it.
+      if (option[face].events === 0) {
+        await putAway(on);
+        await said(faces[face].target, { button: 2, altKey: true });
+        await on.waitForTimeout(400);
+        option[face] = { how: "said by the page", ...(await heard()) };
+      }
+      await putAway(on);
+      // A Ctrl+click as a Mac trackpad sends it: a contextmenu from the primary button, ctrlKey held.
+      await said(faces[face].target, { button: 0, ctrlKey: true });
+      await on.waitForSelector(MENU, { timeout: 5_000 }).catch(() => undefined);
+      await on.waitForTimeout(200);
+      ctrl[face] = await heard();
+      await putAway(on);
+    }
+    report.checks.aRightClickWithOptionShowsTheBrowsersMenu = {
+      ...option,
+      ok: ["scene", "pages"].every((face) => option[face] && option[face].events >= 1 && !option[face].prevented && !option[face].ours),
+    };
+    report.checks.aCtrlClickStillOpensOurMenu = {
+      ...ctrl,
+      ok: ["scene", "pages"].every((face) => ctrl[face] && ctrl[face].events >= 1 && ctrl[face].prevented && ctrl[face].ours),
+    };
+    await context.close();
+  }
+
+  /*
+   * A ROW UNDER THE POINTER NEVER MOVES AS SUGGESTIONS ARRIVE. Homeflow: "i
+   * end up often clicking a different option when i try to hit Send Feedback
+   * because it jumps down as AI items are populated". On a row's menu on the
+   * pages of an app mounted as Cloud mounts one, whose host adds "Send
+   * feedback" below the AI's rows, the pointer goes straight to it while
+   * the Fast slot is still suggesting; its box is the same before and after
+   * the suggestions land, and the press sends feedback.
+   */
+  reach("aRowUnderThePointerNeverMovesAsSuggestionsArrive");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`steady: ${error.message}`));
+    if (!menuHost) menuHost = await serveMenuHost();
+    await on.goto(`http://localhost:${portFor("menu-host")}${MENU_BASE}/tasks`, { waitUntil: "load" });
+    await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+    await on.waitForSelector('[data-graview-record="t1"]', { timeout: 30_000 });
+    await on.click('[data-graview-record="t1"]', { button: "right" });
+    await on.waitForSelector(MENU, { timeout: 10_000 });
+    const FOOT = `${MENU} [data-menu-item="send-feedback"]`;
+    await on.waitForSelector(FOOT, { timeout: 10_000 });
+    const boxOf = () => on.evaluate((selector) => {
+      const box = document.querySelector(selector)?.getBoundingClientRect();
+      return box ? { x: Math.round(box.x * 10) / 10, y: Math.round(box.y * 10) / 10, height: Math.round(box.height * 10) / 10 } : null;
+    }, FOOT);
+    // The menu scrolls inside itself when it is taller than its room: the row into view first, as a pointer's wheel would.
+    await on.evaluate((selector) => document.querySelector(selector)?.scrollIntoView({ block: "nearest" }), FOOT);
+    const thinkingAtFirst = Boolean(await on.$(`${MENU} [data-testid="inline-ai-thinking"]`));
+    const before = await boxOf();
+    if (before) await on.mouse.move(before.x + 20, before.y + before.height / 2);
+    const hovered = await on.evaluate((selector) => document.querySelector(selector)?.matches(":hover") ?? false, FOOT);
+    await on.waitForSelector(`${MENU} [data-ai-offer]`, { timeout: 8_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const after = await boxOf();
+    const arrived = await on.evaluate(() => document.querySelectorAll('[data-testid="context-menu"] [data-ai-offer]').length);
+    // The press lands on the row the pointer went to.
+    await on.mouse.down();
+    await on.mouse.up();
+    await on.waitForTimeout(300);
+    const pressedIt = await on.evaluate(() => window.__feedback === 1);
+    report.checks.aRowUnderThePointerNeverMovesAsSuggestionsArrive = {
+      thinkingAtFirst,
+      before,
+      after,
+      window: await on.evaluate(() => innerHeight),
+      hovered,
+      arrived,
+      pressedIt,
+      ok: thinkingAtFirst && before !== null && after !== null && before.y === after.y && before.x === after.x && hovered && arrived > 0 && pressedIt,
+    };
+    await context.close();
+  }
+
   for (const [claim, of] of [
     ["typingInTheMenuFiltersItsItems", typing.filters],
     ["enterRunsTheItemTyped", typing.enter],

@@ -300,7 +300,17 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
           ],
     [menuAt, beside, affordances],
   );
-  const fastRank = useFastRank(ai, menuAt === null ? "" : typed, rankRows);
+  const fastRanked = useFastRank(ai, menuAt === null ? "" : typed, rankRows);
+  /*
+   * NOTHING MOVES UNDER A POINTER ON A ROW: while it rests on one, a ranking
+   * that arrives is held, and the rows stay as they were drawn; it applies
+   * once the pointer is off the rows. What the person types still narrows
+   * at once — that is theirs.
+   */
+  const [onRow, setOnRow] = useState(false);
+  const heldRank = useRef<{ readonly words: string; readonly rank: ReadonlyMap<string, number> | null }>({ words: "", rank: null });
+  if (!onRow) heldRank.current = { words: typed.trim(), rank: fastRanked };
+  const fastRank = onRow ? (heldRank.current.words === typed.trim() ? heldRank.current.rank : null) : fastRanked;
   /*
    * A REFUSAL IS A RESULT, said where the button was pressed.
    *
@@ -708,6 +718,15 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
       }}
       onMouseDown={(event) => event.stopPropagation()}
       onKeyDownCapture={atPointer ? (event) => typeInto(event) : undefined}
+      onPointerMove={
+        atPointer
+          ? (event) => {
+              const row = (event.target as Element).closest?.("[data-menu-item], [data-affordance]") != null;
+              if (row !== onRow) setOnRow(row);
+            }
+          : undefined
+      }
+      onPointerLeave={atPointer && onRow ? () => setOnRow(false) : undefined}
       style={{
         /*
          * Above the jacked-in page, not only above the scene.

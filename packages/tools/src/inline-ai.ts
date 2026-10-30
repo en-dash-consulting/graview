@@ -690,6 +690,8 @@ export const dismissedEntry = (entry: AiInteraction): AiInteraction => ({ ...ent
 /** How many candidates and records the Fast slot may keep, and how likely one must be to be kept past the first. */
 const CONTEXT_MOST = { candidates: 8, records: 6 } as const;
 const CONTEXT_FLOOR = 0.1;
+/** How many records around the target the Fast slot is asked about, one Noul each. */
+const CONTEXT_ASKED_RECORDS = 12;
 
 /** The records around the target, as the state tells them: the selection, then its neighbors, each once. */
 const recordsAround = (state: AiContextState): readonly { readonly id: string; readonly kind: string; readonly label: string }[] => {
@@ -703,25 +705,26 @@ function defaultContext(asked: Asked, choices: readonly AiCandidate[]): { readon
 }
 
 /**
- * THE FAST SLOT PICKS WHAT MATTERS: one decision, two choices — which of
- * the candidates could answer or act on the words, which of the records
- * around the target they are about — each kept best first while it is
- * likely enough, at least the best one, at most a few. The target itself
- * is always sent; the state keeps the records picked and nothing else
- * around it.
+ * THE FAST SLOT PICKS WHAT MATTERS, in Jev's own typed questions, one
+ * decision: a Choice of which candidate could answer or act on the words
+ * ("none of these" among them), each kept best first while it is likely
+ * enough, at least the best one unless none was chosen, at most a few; and
+ * a Noul for each record around the target — are the words about it? —
+ * kept where it is more likely so than not. The target itself is always
+ * sent; the state keeps the records picked and nothing else around it.
  */
 async function contextPicked(fast: FastProvider, said: string, asked: Asked, choices: readonly AiCandidate[]): Promise<{ readonly choices: readonly AiCandidate[]; readonly state: AiContextState; readonly context: AiContextSent }> {
   const around = recordsAround(asked.state);
   const questions: Record<string, Question> = {};
   const candidates = choices.length > 0 ? choiceAmong(choices, `Which of these could answer, or act on: ${said}`) : undefined;
-  if (candidates) questions["candidates"] = candidates.question;
-  const keyed = new Map(around.map((record, at) => [`r${at + 1}`, record]));
-  if (keyed.size > 0) questions["records"] = { type: "choice", instructions: `Which of these records is “${said}” about?`, criteria: Object.fromEntries([...keyed].map(([key, record]) => [key, `${record.label} (${record.kind})`])) };
+  if (candidates) questions["candidates"] = { ...candidates.question, criteria: { ...candidates.question.criteria, none: "None of these" } };
+  const keyed = new Map(around.slice(0, CONTEXT_ASKED_RECORDS).map((record, at) => [`record-${at + 1}`, record]));
+  for (const [key, record] of keyed) questions[key] = { type: "noul", instructions: `Is “${said}” about ${record.label} (${record.kind})?` };
   if (Object.keys(questions).length === 0) return { ...defaultContext(asked, choices), context: { by: "fast", model: fast.model, candidates: [], records: [] } };
   const answers = await decided(fast, { target: asked.state.target, asked: said }, questions, asked.meter);
   const kept = <T,>(answer: Answer | undefined, of: (key: string) => T | undefined, most: number): T[] => {
-    if (answer?.type !== "choice") return [];
-    const order = Object.entries(answer.probabilities).sort((a, b) => b[1] - a[1]);
+    if (answer?.type !== "choice" || answer.choice === "none") return [];
+    const order = Object.entries(answer.probabilities).filter(([key]) => key !== "none").sort((a, b) => b[1] - a[1]);
     if (!order.some(([key]) => key === answer.choice)) order.unshift([answer.choice, answer.confidence]);
     return order.filter(([, chance], at) => at === 0 || chance >= CONTEXT_FLOOR).flatMap(([key]) => {
       const one = of(key);
@@ -729,7 +732,14 @@ async function contextPicked(fast: FastProvider, said: string, asked: Asked, cho
     }).slice(0, most);
   };
   const picked = candidates ? kept(answers["candidates"], candidates.of, CONTEXT_MOST.candidates) : [];
-  const records = kept(answers["records"], (key) => keyed.get(key), CONTEXT_MOST.records);
+  const records = [...keyed]
+    .flatMap(([key, record]) => {
+      const answer = answers[key];
+      return answer?.type === "noul" && answer.noul > 0.5 ? [{ record, chance: answer.noul }] : [];
+    })
+    .sort((a, b) => b.chance - a.chance)
+    .slice(0, CONTEXT_MOST.records)
+    .map((one) => one.record);
   const ids = new Set(records.map((record) => record.id));
   const state: AiContextState = { ...asked.state, selection: asked.state.selection.filter((one) => ids.has(one.id)), neighbors: asked.state.neighbors.filter((one) => ids.has(one.id)) };
   return { choices: picked, state, context: { by: "fast", model: fast.model, candidates: picked.map((one) => one.id), records: records.map((one) => one.id) } };

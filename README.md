@@ -130,6 +130,8 @@ questions, give the examples a model in development:
 
 ```sh
 ANTHROPIC_API_KEY=… pnpm dev     # GRAVIEW_AI_MODEL=… to choose one; claude-sonnet-5-5 otherwise
+XAI_API_KEY=… pnpm dev           # xAI (grok-4.7), or OPENAI_API_KEY=… for OpenAI (gpt-5.4); GRAVIEW_AI_PROVIDER when several are set
+TYPESAFE_API_KEY=… XAI_API_KEY=… pnpm dev   # and Jev in the Fast slot: the right-click menu's live ranking, the context a quick ask sends
 ```
 
 The dev server holds the key and answers the page at `/__graview/ai`
