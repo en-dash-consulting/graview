@@ -68,7 +68,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.64
 
-Published October 29, 2026 · the current version
+Published October 29, 2026
 
 A workflow run says what it spent and what started it; a count of one relation is read whatever its size; an app's images load under its base and offer home-screen icons; a dark app opens through a dark screen; connection reports name their source; and the Scene holds steady under a finger and a mouse.
 

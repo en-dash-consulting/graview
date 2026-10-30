@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.64)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version ()
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -945,7 +945,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.64
 
-Published October 29, 2026 · the current version
+Published October 29, 2026
 
 A workflow run says what it spent and what started it; a count of one relation is read whatever its size; an app's images load under its base and offer home-screen icons; a dark app opens through a dark screen; connection reports name their source; and the Scene holds steady under a finger and a mouse.
 
