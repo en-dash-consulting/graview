@@ -425,11 +425,14 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
     --no-sync leaves them off. What people looked for and could not do
     (a search that found nothing, an act refused) is kept for 90 days in
     friction.json beside the data, each person reading only their own and
-    the counts, never a visitor's; --no-friction keeps none.
+    the counts, never a visitor's; --no-friction keeps none. What people
+    told Graview from the answer card (the words, what was done, how it
+    ended, 👍 or 👎) is kept for a year in told.json beside the data, read
+    back under each person's sight; --no-told keeps none.
 
 ```
 
-[--host <address>] [--trust-seat-headers] [--allow-origin <origin>] [--no-sync] [--no-friction] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it — from a program, or from a page on its own origin; a page on another origin is refused unless --allow-origin names it (say it once per origin, as http://localhost:5195), and no header names the system's seat. Each run mints a key and prints it in the address it says: only a request carrying it is believed (a page opens that address, a program passes it whole as
+[--host <address>] [--trust-seat-headers] [--allow-origin <origin>] [--no-sync] [--no-friction] [--no-told] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it — from a program, or from a page on its own origin; a page on another origin is refused unless --allow-origin names it (say it once per origin, as http://localhost:5195), and no header names the system's seat. Each run mints a key and prints it in the address it says: only a request carrying it is believed (a page opens that address, a program passes it whole as
 
 ## graview shots
 
@@ -656,6 +659,15 @@ The quick ask offers a missing capability as one plan — the least change to th
 - `checkPlanHost(host, { document, kind, members })` from `@graview/core/conformance` runs the assign-to-a-person plan against a host's two functions and the store it serves, and names what failed: composed, landed as one change said `via` the AI, every record linked, one undo taking it all back. A host runs it in its own tests; the todo example's dev host passes it.
 
 These shapes are additive within a major: a new optional key on the proposal or the answer is not a change, and a host that ignores one keeps working.
+
+##### What people tell Graview (0.1.65)
+
+Each Enter or reply on the quick ask's card is a telling (`Telling`, `@graview/core/told`), kept by the host the page reaches through `HostAi.told` (a `ToldStore`: `add`, `change`, `remove`, `list`). This is the contract Graview Cloud implements per app, and `graview serve` in `told.json` beside the store:
+
+- **The shape.** `{ id, at, by, words, target: { on, kind?, id?, place? }, reading?: { which: "itself" | "held", kind, records }, people?, decided: { type: "act", act, records } | { type: "plan", edits } | { type: "answer" } | { type: "refusal" }, slot?: "graph" | "light" | "full", stages?, ms?, outcome: "previewed" | "accepted" | "declined" | "undone" | "abandoned", rating?: "up" | "down", should?, conversation, follows?, interaction?, examples?, pinned?, excluded? }`. Records are named by id and kind only: no record's content, the person's own words kept (at most 300 characters, as is `should`). `tellingOf(draft, by)` bounds and checks a draft and stamps it; `changedTelling(telling, change)` is how a change lands (an accepted telling ends only as undone; a rating taken away takes its `should`). An undo is `outcome: "undone"`, never a 👎. New optional keys are additive.
+- **The wire.** `/graview/told`: `POST { telling }` keeps one, its author the session's, never the body's (201; 202 and nothing kept for a visitor); `PATCH /<id> { change }` — `outcome`, `rating`, `should` and `examples` by its teller, `pinned` and `excluded` by whoever keeps the app (403 otherwise); `DELETE /<id>` by its teller or an owner (204), gone for good; `GET` answers `{ tellings }`: every one to whoever keeps the app, to anybody else their own and the others' that worked in a lesson (an act over a kind, or a plan on one) at least two other people's agree on (`toldFor`, `minPeople`), and to either only those about records the asker sees (`toldSeenBy`). 413 over 16 KB, 429 past 60 a minute, 410 where the host keeps none (`--no-told`), and a page then stops asking. `toldOver(url)` is the page's client; the dev server's `devTold` answers the same at `/__graview/told`.
+- **Read back under sight.** A telling naming a record the reader cannot see — its target, the records it was read as, the people it named — is never served to them, on the wire or on the page; a page also treats a record it does not hold as unseen.
+- `checkToldHost(host, { people, seen, hidden? })` from `@graview/core/conformance` runs these against a host's door for each seat, and names what failed: kept as the session, a visitor's never kept, rated only by its teller, another person's waiting for agreement, unseen records hiding it, deleted gone. `graview serve`'s door passes it.
 
 #### 4. The declaration, the document format and check finding codes
 
@@ -1894,7 +1906,7 @@ Source: https://graview.dev/docs/packages/core.html
 pnpm add @graview/core
 ```
 
-Entry points: `@graview/core`, `@graview/core/document`, `@graview/core/compiled`, `@graview/core/retry`, `@graview/core/describe`, `@graview/core/figures`, `@graview/core/scene`, `@graview/core/city`, `@graview/core/check`, `@graview/core/blocks`, `@graview/core/arrange`, `@graview/core/shown`, `@graview/core/head`, `@graview/core/csv`, `@graview/core/navigate`, `@graview/core/provenance`, `@graview/core/history`, `@graview/core/past`, `@graview/core/linked`, `@graview/core/tidying`, `@graview/core/catalog`, `@graview/core/jobs`, `@graview/core/workflows`, `@graview/core/friction`, `@graview/core/css`, `@graview/core/learn`, `@graview/core/compose`, `@graview/core/traits`, `@graview/core/subscriptions`, `@graview/core/markdown`, `@graview/core/words`, `@graview/core/seat`, `@graview/core/publishing`, `@graview/core/field-sight`, `@graview/core/typing`, `@graview/core/search`, `@graview/core/forms`, `@graview/core/lines`, `@graview/core/json-schema`, `@graview/core/sync`, `@graview/core/import`, `@graview/core/snapshot`, `@graview/core/conformance`, `@graview/core/sqlite`, `@graview/core/scaffold`, `@graview/core/cli`, `@graview/core/testing`, `@graview/core/typed`, `@graview/core/document.schema.json`
+Entry points: `@graview/core`, `@graview/core/document`, `@graview/core/compiled`, `@graview/core/retry`, `@graview/core/describe`, `@graview/core/figures`, `@graview/core/scene`, `@graview/core/city`, `@graview/core/check`, `@graview/core/blocks`, `@graview/core/arrange`, `@graview/core/shown`, `@graview/core/head`, `@graview/core/csv`, `@graview/core/navigate`, `@graview/core/provenance`, `@graview/core/history`, `@graview/core/past`, `@graview/core/linked`, `@graview/core/tidying`, `@graview/core/catalog`, `@graview/core/jobs`, `@graview/core/workflows`, `@graview/core/friction`, `@graview/core/css`, `@graview/core/learn`, `@graview/core/told`, `@graview/core/compose`, `@graview/core/traits`, `@graview/core/subscriptions`, `@graview/core/markdown`, `@graview/core/words`, `@graview/core/seat`, `@graview/core/publishing`, `@graview/core/field-sight`, `@graview/core/typing`, `@graview/core/search`, `@graview/core/forms`, `@graview/core/lines`, `@graview/core/json-schema`, `@graview/core/sync`, `@graview/core/import`, `@graview/core/snapshot`, `@graview/core/conformance`, `@graview/core/sqlite`, `@graview/core/scaffold`, `@graview/core/cli`, `@graview/core/testing`, `@graview/core/typed`, `@graview/core/document.schema.json`
 
 ## What it is
 
@@ -3285,11 +3297,11 @@ A third party stands up their own host — a file store or SQLite, `graview serv
 
 Anything **one** deployment needs lives here. Anything only the **operator of many** deployments needs — tenancy, provisioning, deploy-to-URL, billing, fleet upgrades, the builder UX — lives in the `graview-cloud` repo, which consumes this package the way any customer would. If Cloud ever needs a private hook into the framework, that hook is a missing public seam to fix here first.
 
-## What it exports (112)
+## What it exports (118)
 
 Read off the package's own barrel, so this is what is there today.
 
-`announcePresence`, `answerSubscriptions`, `answerViews`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `BROWSER_DATABASE`, `browserFriction`, `browserStartsFresh`, `bundleAppForPage`, `conflictSentence`, `connectionsFileOf`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `Cursor`, `cursorAt`, `exportBundle`, `fileConnectionState`, `fileFriction`, `fileLearned`, `filesAt`, `fileSubscriptions`, `fileViews`, `findBundler`, `forgetFreshParam`, `freshHref`, `FRICTION_MAX_BYTES`, `FRICTION_PATH`, `FRICTION_PER_MINUTE`, `frictionDoor`, `frictionFileOf`, `GOOGLE_TOKEN_URL`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `homeScreenAnswer`, `isClientBatch`, `keepsTheApp`, `learnedFileOf`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `MAX_BODY_BYTES`, `migrateSnapshot`, `NO_BUNDLER`, `openRemote`, `openStore`, `opFormatOf`, `opsFor`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `PREVIEW_APP_PATH`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `readEnvFile`, `REFUSAL_REASONS`, `rememberedPrincipal`, `remoteFriction`, `RemoteRefusedError`, `remoteSubscriptions`, `remoteViews`, `runConnections`, `sayHeld`, `sayRefusals`, `sayReport`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedRefusals`, `seedSteps`, `seqAt`, `serve`, `SERVE_KEY`, `SERVE_USAGE`, `servedAddress`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `VIEWS_PATH`, `visitorPresence`, `whoFor`, `WIRE`, `wireRefusalOf`
+`announcePresence`, `answerSubscriptions`, `answerViews`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `BROWSER_DATABASE`, `browserFriction`, `browserStartsFresh`, `bundleAppForPage`, `conflictSentence`, `connectionsFileOf`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `Cursor`, `cursorAt`, `exportBundle`, `fileConnectionState`, `fileFriction`, `fileLearned`, `filesAt`, `fileSubscriptions`, `fileTold`, `fileViews`, `findBundler`, `forgetFreshParam`, `freshHref`, `FRICTION_MAX_BYTES`, `FRICTION_PATH`, `FRICTION_PER_MINUTE`, `frictionDoor`, `frictionFileOf`, `GOOGLE_TOKEN_URL`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `homeScreenAnswer`, `isClientBatch`, `keepsTheApp`, `learnedFileOf`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `MAX_BODY_BYTES`, `migrateSnapshot`, `NO_BUNDLER`, `openRemote`, `openStore`, `opFormatOf`, `opsFor`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `PREVIEW_APP_PATH`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `readEnvFile`, `REFUSAL_REASONS`, `rememberedPrincipal`, `remoteFriction`, `RemoteRefusedError`, `remoteSubscriptions`, `remoteViews`, `runConnections`, `sayHeld`, `sayRefusals`, `sayReport`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedRefusals`, `seedSteps`, `seqAt`, `serve`, `SERVE_KEY`, `SERVE_USAGE`, `servedAddress`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `TOLD_MAX_BYTES`, `TOLD_PATH`, `TOLD_PER_MINUTE`, `toldDoor`, `toldFileOf`, `VIEWS_PATH`, `visitorPresence`, `whoFor`, `WIRE`, `wireRefusalOf`
 
 ---
 
@@ -3858,6 +3870,10 @@ Where an app lacks what a person tells Graview to do, the quick ask offers one p
 - `onProposeChange(proposal)` — apply `proposal.edits` and then `proposal.records` (a made record named by its `mintedHint`), as the person, as one change, `via: proposal.via`; answer `{ applied: true, undo, note? }`, one undo taking the app and the records back.
 
 Prove it with `checkPlanHost` from `@graview/core/conformance`. Without a host, the card says the whole plan and who would add its first steps. `ai={{ off: true }}` hides every AI part. Prove it with stubs: `stubFast()`, `stubThinking()` from `@graview/tools/inline-ai` (`pnpm verify inline-ai`).
+
+### Keeping what people tell it
+
+Give the page `ai.told` (`toldOver(url)`, `@graview/core/told`) and every Enter on the card is a telling: the words, what it did, how it ended, and 👍 or 👎 with "What should it have done?". The menu suggests ones that worked, re-aimed here and previewed; the Studio lists them for owners. `graview serve` keeps `told.json` (`--no-told`); prove a host with `checkToldHost` (`@graview/core/conformance`, `pnpm verify told`).
 
 ### Do this
 
@@ -7801,7 +7817,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 476 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 477 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -7817,7 +7833,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | --- | --- | --- |
 | `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 71 |
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
-| `entry` | One subpath a package exports, as a product imports it. | 114 |
+| `entry` | One subpath a package exports, as a product imports it. | 115 |
 | `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 31 |
 | `check` | A thing graview check can say, read out of the checker's source. | 127 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |

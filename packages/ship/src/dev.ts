@@ -783,6 +783,9 @@ export function aiDevProxy(options: AiDevProxyOptions = {}): DevServerPlugin {
 
 // A dev server's files (FR-163): kept in memory, served back, never in a build.
 export { DEV_FILES_KINDS, DEV_FILES_MAX_BYTES, DEV_FILES_PATH, devFiles, devFilesHandler } from "./dev-files.js";
+// What people tell Graview (Roadmap f-menu-learns): kept in `.generated/told.json` while `pnpm dev` runs.
+export { DEV_TOLD_PATH, devTold, devToldHandler } from "./dev-told.js";
+export type { DevToldOptions } from "./dev-told.js";
 export type { DevFilesOptions } from "./dev-files.js";
 // A dev server's views (Roadmap f-place-menu-views): what the place menu hid and deleted, kept in memory, never in a build.
 export { DEV_VIEWS_PATH, devViews, devViewsHandler } from "./dev-views.js";

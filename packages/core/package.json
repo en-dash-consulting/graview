@@ -109,6 +109,10 @@
       "types": "./dist/learn.d.ts",
       "default": "./dist/learn.js"
     },
+    "./told": {
+      "types": "./dist/told.d.ts",
+      "default": "./dist/told.js"
+    },
     "./compose": {
       "types": "./dist/compose.d.ts",
       "default": "./dist/compose.js"

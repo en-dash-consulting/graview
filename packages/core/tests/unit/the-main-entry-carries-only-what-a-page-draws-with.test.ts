@@ -19,6 +19,7 @@ import * as history from "../../src/history.js";
 import * as jobs from "../../src/jobs.js";
 import * as workflows from "../../src/workflows.js";
 import * as learn from "../../src/learn.js";
+import * as told from "../../src/told.js";
 import * as past from "../../src/past.js";
 import * as importing from "../../src/import/index.js";
 import * as jsonSchema from "../../src/json-schema.js";
@@ -94,6 +95,8 @@ const OFF_THE_PAGE = {
   },
   // Roadmap f-learned-suggestions: the app's own actor suggesting changes to the app from evidence of use, accepted through the editor or declined for good — a host's and a command's, on no page.
   "@graview/core/learn": { from: learn, names: ["acceptAppSuggestion", "declineAppSuggestion", "keptDecisions", "LEARNING_ACTOR", "learnFromUse", "learningFrom", "memoryLearned"] },
+  // Roadmap f-menu-learns: what people tell Graview — kept, rated, read back under sight, suggested back; fetched with the answer card and the Studio.
+  "@graview/core/told": { from: told, names: ["TELLING_OUTCOMES", "TELLING_OUTCOME_WORDS", "TELLING_SLOTS", "TOLD_KEPT_MOST", "TOLD_LIMITS", "TOLD_PATH", "TOLD_RETENTION_DAYS", "agreedLessons", "changedTelling", "curatesOnly", "keptTold", "memoryTold", "ownTold", "recordsOfTelling", "similarTellings", "teachingTold", "tellingChange", "tellingDidWords", "tellingExamples", "tellingId", "tellingOf", "tellingWordsOf", "tellingWorked", "tellsOnly", "toldAfter", "toldFor", "toldMatching", "toldOver", "toldSeenBy", "toldTeachingWords"] },
   // Roadmap f-design-composer: jobs inferred and one design proposed whole — a host's, on no page; f-document-traits: what a declaration is made of, in a closed vocabulary; f-compose-from-parts: a starting document composed from a template's parts and trait modules; a kind's noun and plural as the declaration spells them, for a host that writes about its kinds (the starter); f-seat-reshape: a change to the app composed from the reading a seat proposed, its breaking changes in words — a host's, on no page (the vocabulary a page says it in is on /traits).
   "@graview/core/compose": { from: compose, names: ["ACCENT_PALETTE", "accentFor", "composeDesign", "inferJobs", "MOST_INFERRED_JOBS", "hasTrait", "nounWords", "pluralWords", "TRAIT_WORDS", "TRAITS", "traitsOf", "traitWords", "startingDocument", "composeReshape", "breakingOf", "TRAIT_BRINGS", "traitsOfDocument", "composeAppChange"] },
   "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "existingViewsOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf", "planEdits"] },

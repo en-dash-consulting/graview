@@ -57,6 +57,8 @@ import { SEAT_HEADERS, SERVE_KEY } from "./seat-headers.js";
 import { answerSubscriptions } from "./subscriptions.js";
 import { frictionDoor } from "./friction.js";
 import { FRICTION_PATH } from "./remote-friction.js";
+import { TOLD_PATH, toldDoor } from "./told.js";
+import { memoryTold, type ToldStore } from "@graview/core/told";
 import { SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
 import { VIEWS_PATH } from "./remote-views.js";
 import { answerViews, keepsTheApp } from "./views.js";
@@ -123,6 +125,7 @@ export const WIRE = [
   { method: "GET", path: "/graview/who", says: "who is here right now" },
   { method: "POST", path: "/graview/leave", says: "say you have gone — only ever yourself" },
   { method: "GET", path: SUBSCRIPTIONS_PATH, says: "the asking seat's own subscriptions (Notify me); POST `{ add: { when, alsoMine? } }` keeps one for the seat's person, `{ remove: id }` takes one of theirs away; 400 with a sentence when it could never be told anything, 403 for a seat with no id" },
+  { method: "GET", path: TOLD_PATH, says: "what people told Graview (`Telling`, `@graview/core/told`) the asking seat may read: whoever keeps the app every one, anybody else their own and the others' that worked where two people agree, only those about records the seat sees; POST `{ telling }` keeps one, its author the session's (201, 202 for a visitor); PATCH /<id> `{ change }` its outcome, rating and what it should have done (its teller), pinned or excluded (an owner); DELETE /<id> (its teller or an owner, 204); 410 where the host keeps none" },
   { method: "GET", path: FRICTION_PATH, says: "the asking seat's own friction (what it searched for and found nothing, asked and was not answered, pressed and was refused) and the counts across people, never who; POST `{ event }` keeps one, its author the session's, never the body's: 201, 202 for a visitor (never kept), 400 for what is not one of the four, 413 over 2 KB, 429 with `Retry-After` past the rate, 410 where the host keeps none" },
   { method: "GET", path: VIEWS_PATH, says: "the views the asking seat may tidy from the place menu: what is hidden, what was deleted in the last thirty days, and `may`; POST `{ hide | show | remove | restore: name }` for a script view the host keeps, `{ lens: set-lens-hidden | set-lens-export | remove-lens }` for a declared lens (set-lens-hidden and set-lens-export on a kind for its list) where the host writes the declaration; answered with the state after it, 403 with a sentence where the seat may not" },
   { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence, declaration and reload; 426 to a plain request" },
@@ -301,6 +304,15 @@ interface HandlerOptions<S extends AnySchema> {
   readonly friction?: FrictionStore | false;
   /** How long friction is kept and read back, in days: 90 unsaid. */
   readonly frictionRetentionDays?: number;
+  /**
+   * WHERE WHAT PEOPLE TELL GRAVIEW IS KEPT (Roadmap f-menu-learns): the
+   * host's `ToldStore`, at `/graview/told` (`toldOver(url)` on the page).
+   * Unsaid, this handler's memory; `graview serve` keeps it in a file
+   * beside the store (`fileTold`). `false` keeps none: the route answers
+   * 410. Whoever keeps the app (`keepsTheApp`) reads every telling and pins,
+   * excludes and deletes any; everybody else their own.
+   */
+  readonly told?: ToldStore | false;
   /** How many events one person may post a minute: 30 unsaid. */
   readonly frictionPerMinute?: number;
   /** How long a run of typing is held before the hook is told of it; `TYPING_QUIET_MS` (5 s) unsaid, 0 tells every run at once. */
@@ -650,6 +662,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
           ...(options.frictionPerMinute !== undefined ? { perMinute: options.frictionPerMinute } : {}),
         });
   let serving = serve(options.app, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
+  /** What people told Graview: the host's, else this handler's memory; nothing where the host keeps none. Read back under the asker's sight. */
+  const tellings = options.told === false ? undefined : toldDoor({ store: options.told ?? memoryTold(), app: () => serving.store as unknown as Store<AnySchema>, curates: (seat) => keepsTheApp(serving.store as never, seat) });
   /** Set while the declaration is being changed: every request and message waits for it. */
   let changing: Promise<void> | undefined;
 
@@ -838,6 +852,13 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       // The author is the session's, as an act's is: `seat()`, never the body.
       const answer = await friction(request.method, request.method === "POST" ? await request.text() : "", await seat());
       return send(answer.status, answer.body, answer.headers);
+    }
+
+    if (url.pathname === TOLD_PATH || url.pathname.startsWith(`${TOLD_PATH}/`)) {
+      if (!tellings) return send(410, { error: "This host keeps nothing of what people told Graview.", reason: "missing" });
+      // The author is the session's, as an act's is: `seat()`, never the body.
+      const answer = await tellings(request.method, url.pathname.slice(TOLD_PATH.length), request.method === "GET" || request.method === "DELETE" ? "" : await request.text(), await seat());
+      return answer.status === 204 ? new Response(null, { status: 204 }) : send(answer.status, answer.body, answer.headers);
     }
 
     if (url.pathname === VIEWS_PATH) {

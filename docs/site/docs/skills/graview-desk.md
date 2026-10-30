@@ -39,6 +39,10 @@ Where an app lacks what a person tells Graview to do, the quick ask offers one p
 
 Prove it with `checkPlanHost` from `@graview/core/conformance`. Without a host, the card says the whole plan and who would add its first steps. `ai={{ off: true }}` hides every AI part. Prove it with stubs: `stubFast()`, `stubThinking()` from `@graview/tools/inline-ai` (`pnpm verify inline-ai`).
 
+### Keeping what people tell it
+
+Give the page `ai.told` (`toldOver(url)`, `@graview/core/told`) and every Enter on the card is a telling: the words, what it did, how it ended, and 👍 or 👎 with "What should it have done?". The menu suggests ones that worked, re-aimed here and previewed; the Studio lists them for owners. `graview serve` keeps `told.json` (`--no-told`); prove a host with `checkToldHost` (`@graview/core/conformance`, `pnpm verify told`).
+
 ### Do this
 
 1. **Write the prompt from the graph.** What kinds exist, what acts exist and what they take — `generateLlmsTxt(app)` from `@graview/core/check` writes that — plus what is already there. A model that cannot see the graph invents a second Back Lawn.

@@ -11,6 +11,8 @@ import { useInlineEnv } from "./inline-ai-env.js";
 import { openQuickAsk, type QuickAskOpening } from "./quick-ask-desk.js";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 import type { AppPlan } from "./quick-ask-plan.js";
+import { changeTelling, examplesHere, keepTelling, RateTelling, tellingDraftOf, watchTelling } from "./told-card.js";
+import type { Telling } from "@graview/core/told";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -113,9 +115,16 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
   const list = useId();
   const live = useRef(true);
   const { ghost: held } = useAiDeskState(env.desk);
+  /* WHAT WAS TOLD (Roadmap f-menu-learns): this card's latest telling, kept with the host's door, and the watch on how it ends. */
+  const [telling, setTelling] = useState<Telling | null>(null);
+  const told = useRef<{ telling: Telling | null; stop?: () => void }>({ telling: null });
   useEffect(
     () => () => {
       live.current = false;
+      // Put away with nothing done: abandoned — unless a change it proposed still waits on the tray, whose answer the watch hears.
+      const last = told.current.telling;
+      const waitingOn = env.desk.get().ghost;
+      if (last && !(waitingOn && waitingOn.ghost.interaction === last.interaction && waitingOn.batch === undefined)) changeTelling(env.ai.told, last.id, { outcome: "abandoned" });
       // Put away with a change still proposed on it: the change waits on the tray at the foot instead.
       const waiting = env.desk.get().ghost;
       if (waiting?.onCard) env.desk.setGhost({ ...waiting, onCard: false });
@@ -209,12 +218,20 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       setAnswering({ said: asked, result: null });
       setPlanState({ state: "offered" });
       const members = membersOf(env.store as never, target, face);
+      /* A reply on the card follows the telling before it, in one conversation; one still only previewed was not taken. */
+      const earlier = told.current.telling;
+      if (earlier) changeTelling(env.ai.told, earlier.id, { outcome: "abandoned" });
+      const started = Date.now();
+      // The like 👍 tellings of this app, given to Jev and the light model as examples (Roadmap f-menu-learns).
+      const like = await examplesHere(env.ai.told, env.store, env.principal, asked, target);
+      const examples = [...new Set([...(earlier ? [] : (opening.suggested ? [opening.suggested] : [])), ...like.ids])];
       const result = await answerHere(env.ai, {
         ...askOf(env, target, asked),
         said: asked,
         ...(before ? { follows: before } : {}),
         ...(members.length > 0 ? { members } : {}),
         ...(place ? { where: place } : {}),
+        ...(like.examples.length > 0 ? { examples: like.examples } : {}),
       });
       env.desk.record(result.interaction);
       // Its proposed change is a ghost, drawn on this card: accepted there as one batch, with its one undo.
@@ -234,9 +251,20 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
           plan = { refused: `${result.missing.said} ${error instanceof Error ? error.message : String(error)}` };
         }
       }
-      if (live.current) setAnswering({ said: asked, result, ...(plan ? { plan } : {}) });
+      /* Kept as a telling: what was said and decided, how long it took; how it ends is heard as the person goes on. */
+      const kept = keepTelling(
+        env.ai.told,
+        tellingDraftOf(env.store, { words: asked, target, result, ...(plan ? { plan } : {}), ms: Date.now() - started, ...(earlier ? { conversation: earlier.conversation, follows: earlier.id } : {}), examples }),
+        env.principal,
+      );
+      told.current.stop?.();
+      told.current = { telling: kept ?? null, ...(kept && env.ai.told ? { stop: watchTelling(env.desk, env.ai.told, kept) } : {}) };
+      if (live.current) {
+        setTelling(kept ?? null);
+        setAnswering({ said: asked, result, ...(plan ? { plan } : {}) });
+      }
     },
-    [answering, env, target, face, onProposeChange, composeChange],
+    [answering, env, target, face, onProposeChange, composeChange, opening.suggested],
   );
 
   /*
@@ -252,18 +280,24 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
     try {
       const answered = await onProposeChange(proposal);
       if (!live.current) return;
+      const last = told.current.telling;
+      if (last) changeTelling(env.ai.told, last.id, { outcome: answered === "declined" ? "declined" : "accepted" });
       if (answered === "declined") setPlanState({ state: "declined", said: "The host declined this change to the app." });
       else setPlanState({ state: "applied", ...(typeof answered === "object" ? { undo: answered.undo, ...(answered.note ? { note: answered.note } : {}) } : {}) });
     } catch (error) {
       if (live.current) setPlanState({ state: "declined", said: error instanceof Error ? error.message : String(error) });
     }
-  }, [offered, onProposeChange, planState]);
-  const no = useCallback(() => setPlanState({ state: "declined", said: "Left as it is." }), []);
+  }, [offered, onProposeChange, planState, env.ai.told]);
+  const no = useCallback(() => {
+    if (told.current.telling) changeTelling(env.ai.told, told.current.telling.id, { outcome: "declined" });
+    setPlanState({ state: "declined", said: "Left as it is." });
+  }, [env.ai.told]);
   const undoPlan = useCallback(async () => {
     if (planState.state !== "applied" || !planState.undo) return;
     await planState.undo();
+    if (told.current.telling) changeTelling(env.ai.told, told.current.telling.id, { outcome: "undone" });
     if (live.current) setPlanState({ state: "undone" });
-  }, [planState]);
+  }, [planState, env.ai.told]);
 
   /* Opened with words already (Find's "Ask: ‘…’", Activity's "Ask again"): asked at once. */
   const first = useRef(opening.asked);
@@ -525,6 +559,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
             </ul>
           ) : null}
           {held?.onCard && held.ghost.interaction === result?.interaction.id ? <GhostTray placement="card" /> : null}
+          {result && telling && env.ai.told && telling.interaction === result.interaction.id ? <RateTelling told={env.ai.told} telling={telling} /> : null}
         </div>
       ) : null}
       <div style={{ display: "grid", gap: 4 }}>

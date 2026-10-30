@@ -38,6 +38,7 @@
       "@graview/core/subscriptions": ["./packages/core/src/subscriptions.ts"],
       "@graview/core/friction": ["./packages/core/src/friction.ts"],
       "@graview/core/learn": ["./packages/core/src/learn.ts"],
+      "@graview/core/told": ["./packages/core/src/told.ts"],
       "@graview/core/forms": ["./packages/core/src/forms.ts"],
       "@graview/core/lines": ["./packages/core/src/lines.ts"],
       "@graview/core/json-schema": ["./packages/core/src/json-schema.ts"],

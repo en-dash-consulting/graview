@@ -861,6 +861,8 @@ export interface AiInteraction {
    * plan composed — each with the model, in milliseconds. Activity says them.
    */
   readonly stages?: readonly AiStage[];
+  /** A batch it made was taken back with Undo (Roadmap f-menu-learns): a quiet sign it was not wanted, never a 👎. */
+  readonly undone?: boolean;
 }
 
 /** One stage of an interaction, timed. */

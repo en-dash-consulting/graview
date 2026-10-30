@@ -58,6 +58,7 @@ import { decideOverTheGraph, type Reading } from "./graph-plan.js";
 import type { Answer, ChoiceAnswer } from "./fast.js";
 import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide, type JevOptions } from "./providers/jev.js";
 import type { ChoiceQuestion, Question } from "./questions.js";
+import type { TellingExample } from "@graview/core/told";
 
 // ── the slots ───────────────────────────────────────────────────────────────
 
@@ -559,12 +560,15 @@ export interface QuickAsk<S extends AnySchema = AnySchema> extends InlineAsk<S> 
   readonly follows?: { readonly said: string; readonly answer: string; readonly reading?: "itself" | "held" };
   /** Where the records are, as the steps say it: the place's title. */
   readonly where?: string;
+  /** Like tellings that worked here (`tellingExamples`, `@graview/core/told`): given to the Fast slot's decision over the graph and to the light model, by name. */
+  readonly examples?: readonly TellingExample[];
 }
 
 const ANSWER_SYSTEM =
   'You answer a person\'s question about what they are looking at in an app, from the state given and nothing else. Answer only JSON: {"answer": one to three short sentences, "pick": [candidate ids that act on the answer, best first, at most three]}. Pick only ids from the candidates, and none when nothing fits. Never say an id to the person. ' +
   'Where "members" are given and the person asks for something done to every one of them, answer "each": {"act": the name of one of "member_acts", "args": the values it asks for, by name} — one act over every member, as one change. ' +
-  'Where no act can do what they ask because the app has no field or link for it, answer "lacks": one plain sentence of what the app is missing (never an id), and "need": what it would need — {"link": {"on": the kind of the records, "called": what the link is called in their words, like "assigned to", "to": the kind it points to, or a noun for one the app lacks}} or {"field": {"on": the kind, "called": its name in their words, "type": "string", "number", "date" or "boolean"}} — with "who": the name of the record their words name (for a link) or "value": the value they give (for a field).';
+  'Where no act can do what they ask because the app has no field or link for it, answer "lacks": one plain sentence of what the app is missing (never an id), and "need": what it would need — {"link": {"on": the kind of the records, "called": what the link is called in their words, like "assigned to", "to": the kind it points to, or a noun for one the app lacks}} or {"field": {"on": the kind, "called": its name in their words, "type": "string", "number", "date" or "boolean"}} — with "who": the name of the record their words name (for a link) or "value": the value they give (for a field). ' +
+  'Where "worked_before" is given, it is what people of this app asked before and what was done that they kept: where these words mean the same, do the same.';
 
 /**
  * WORDS ASKED ABOUT WHAT THE PERSON IS ON (the quick ask): answered in a
@@ -602,7 +606,7 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   let reading: Reading | undefined;
   if (fast && said && !host && (ask.target.on === "record" || ask.target.on === "list" || ask.target.on === "lens" || ask.target.on === "selection")) {
     try {
-      const graph = await timed("fast", fast.model, () => decideOverTheGraph(fast, { store: ask.store, target: ask.target, said, ...(ask.members ? { members: ask.members } : {}), ...(ask.follows ? { follows: ask.follows } : {}), ...(ask.where ? { where: ask.where } : {}) }));
+      const graph = await timed("fast", fast.model, () => decideOverTheGraph(fast, { store: ask.store, target: ask.target, said, ...(ask.members ? { members: ask.members } : {}), ...(ask.follows ? { follows: ask.follows } : {}), ...(ask.where ? { where: ask.where } : {}), ...(ask.examples ? { examples: ask.examples } : {}) }));
       const cost = costOf(fast.price, graph.usage.inputTokens, graph.usage.outputTokens);
       begun.meter({ tier: "fast", model: fast.model, inputTokens: graph.usage.inputTokens, outputTokens: graph.usage.outputTokens, ...(cost !== undefined ? { costUsd: cost } : {}) });
       reading = graph.reading;
@@ -662,6 +666,7 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
           ask: said,
           about: asked.entry.targetLabel,
           ...(ask.follows ? { follows: ask.follows } : {}),
+          ...(ask.examples && ask.examples.length > 0 ? { worked_before: ask.examples } : {}),
           state: asked.state,
           candidates: choices.map((candidate) => ({ id: candidate.id, says: candidate.description })),
           ...(members.length > 0 ? { members: members.map((node) => ({ id: node.id, label: labelOf(ask.store.schema.tryDefinition(node.kind), node as never) })), member_acts: memberActs.map((act) => ({ name: act.name, title: act.title, asks: act.asks })) } : {}),

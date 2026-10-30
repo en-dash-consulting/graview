@@ -18,6 +18,8 @@ export interface QuickAskOpening {
   readonly asked?: string;
   /** Where the keyboard goes back to when the bar is put away. */
   readonly returnTo?: HTMLElement | null;
+  /** The kept telling a menu's suggestion was taken from (Roadmap f-menu-learns): its words are asked, previewed as any, and the telling they make names it as its example. */
+  readonly suggested?: string;
 }
 
 interface Held {

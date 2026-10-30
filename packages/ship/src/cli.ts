@@ -7,6 +7,7 @@ import type { GraviewApp, PersistenceAdapter } from "@graview/core";
 import { createFileAdapter, scopeDirectory } from "./file-adapter.js";
 import { fileSubscriptions } from "./file-subscriptions.js";
 import { fileFriction } from "./file-friction.js";
+import { fileTold } from "./file-told.js";
 import { fileViews } from "./file-views.js";
 import { LIVE_PATH } from "./live.js";
 import { openStore } from "./open-store.js";
@@ -36,7 +37,7 @@ import { homeScreenAnswer } from "./home-screen.js";
  */
 export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <file>]
                        [--host <address>] [--trust-seat-headers] [--allow-origin <origin>]
-                       [--no-sync] [--no-friction]
+                       [--no-sync] [--no-friction] [--no-told]
       Serves the app's store over HTTP, and live over a WebSocket at
       /graview/live. The op log is the wire: a client sends calls, the
       store judges them under the caller's own seat, and the ops come back,
@@ -58,7 +59,10 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       --no-sync leaves them off. What people looked for and could not do
       (a search that found nothing, an act refused) is kept for 90 days in
       friction.json beside the data, each person reading only their own and
-      the counts, never a visitor's; --no-friction keeps none.
+      the counts, never a visitor's; --no-friction keeps none. What people
+      told Graview from the answer card (the words, what was done, how it
+      ended, 👍 or 👎) is kept for a year in told.json beside the data, read
+      back under each person's sight; --no-told keeps none.
 
   graview sync-seed <entry> --seed <file> [--data <dir> | --sqlite <file>]
                             [--apply] [--prune] [--json]
@@ -183,6 +187,12 @@ export function frictionFileOf(backend: Pick<StoreBackend, "adapter" | "where">,
   return root !== undefined ? join(scopeDirectory(root, scope), "friction.json") : `${backend.where}.friction.json`;
 }
 
+/** Where `graview serve` keeps what people told Graview (Roadmap f-menu-learns): beside the store, with the friction log. */
+export function toldFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
+  const root = (backend.adapter as { root?: string }).root;
+  return root !== undefined ? join(scopeDirectory(root, scope), "told.json") : `${backend.where}.told.json`;
+}
+
 /** Where the answers to the app's own suggestions about itself are kept (Roadmap f-learned-suggestions): beside the store, with the friction log they are learned from. */
 export function learnedFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
   const root = (backend.adapter as { root?: string }).root;
@@ -304,6 +314,8 @@ export async function serve(argv: readonly string[]): Promise<number> {
     views: fileViews(viewsFileOf(backend, app.name)),
     // What people could not do, kept beside the store for ninety days, or not at all.
     friction: argv.includes("--no-friction") ? false : fileFriction(frictionFileOf(backend, app.name)),
+    // What people told Graview, kept beside the store for a year, or not at all.
+    told: argv.includes("--no-told") ? false : fileTold(toldFileOf(backend, app.name)),
     onSubscriptionMatch: (match) => {
       process.stdout.write(`graview serve: notify ${match.subscription.who.name ?? match.subscription.who.id}: ${match.said}\n`);
     },
