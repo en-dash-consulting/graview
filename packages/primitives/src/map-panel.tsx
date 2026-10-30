@@ -8,7 +8,7 @@ import type { MapPanelShowing } from "./map-panel-door.js";
 import { NamedAbove } from "./primitives/index.js";
 import { Fields } from "./editable.js";
 import { isDefaultView, useGraph, useGraview, useNavigation, useViolations, ViewModeProvider, type ViewComponent } from "@graview/react/provider";
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { barPanes } from "./bar-panes-door.js";
 import { problemsNamed } from "./problem-count.js";
 import { problemsAsked, putDownProblemsAsked, subscribeToProblemsAsked } from "./map-asks.js";
@@ -54,6 +54,117 @@ export function MapPanelFor<S extends AnySchema>({ showing }: { readonly showing
   return <DistrictPanel<S> key={`district:${showing.kind}`} kind={showing.kind} />;
 }
 
+/* ------------------------------------------------------------- the sheet's rests */
+
+/*
+ * A PHONE'S SHEET STANDS AT ONE OF THREE RESTS. It stood at half the
+ * picture, and a person reading a district's records saw a handful of rows
+ * under a half-empty map. It opens at two thirds now — leaving above it the
+ * chosen district, lifted over the sheet (the city stays where it stood),
+ * its name and its showings where they fit — and its handle takes it up to
+ * nearly all of the picture or down to the half it was.
+ */
+const SHEET_RESTS = [
+  { height: "52%", share: 0.52, said: "Half of the screen" },
+  { height: "66%", share: 0.66, said: "Two thirds of the screen" },
+  { height: "calc(100% - 56px)", share: 1, said: "Nearly all of the screen" },
+] as const;
+type Rest = 0 | 1 | 2;
+/** The rest a sheet opens at: two thirds. */
+const OPENS_AT: Rest = 1;
+/** What a sheet was left at, for the next one to open at — this page's, not kept. */
+let leftAt: Rest = OPENS_AT;
+
+function useSheetRest(): [Rest, (rest: Rest) => void] {
+  const [rest, setRest] = useState<Rest>(leftAt);
+  return [
+    rest,
+    (next) => {
+      leftAt = next;
+      setRest(next);
+    },
+  ];
+}
+
+/** How tall each rest stands in this picture, in pixels: the last is the picture less the strip of map it leaves. */
+const restsIn = (picture: number) => SHEET_RESTS.map((one) => (one.share === 1 ? picture - 56 : picture * one.share));
+
+/*
+ * THE HANDLE: a finger drags the sheet and it comes to rest at the nearest
+ * of the three; the keyboard's arrows (and Home, End) step between them; a
+ * screen reader hears a separator that says how much of the screen the sheet
+ * takes. While the finger moves only the sheet's own height follows it —
+ * the map is laid out again once, when the sheet comes to rest.
+ */
+function SheetHandle({ region, rest, setRest, label }: { readonly region: RefObject<HTMLElement | null>; readonly rest: Rest; readonly setRest: (rest: Rest) => void; readonly label: string }) {
+  const held = useRef<{ id: number; from: number; height: number; rests: number[] } | null>(null);
+  const lay = (to: number) => setRest(Math.max(0, Math.min(2, to)) as Rest);
+  return (
+    <div
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label={`How much of the screen ${label} takes`}
+      aria-valuemin={0}
+      aria-valuemax={2}
+      aria-valuenow={rest}
+      aria-valuetext={SHEET_RESTS[rest].said}
+      tabIndex={0}
+      data-testid="map-panel-handle"
+      data-graview-rest={rest}
+      title="Drag to see more or less of the map"
+      onKeyDown={(event) => {
+        const to = event.key === "ArrowUp" ? rest + 1 : event.key === "ArrowDown" ? rest - 1 : event.key === "Home" ? 0 : event.key === "End" ? 2 : null;
+        if (to === null) return;
+        event.preventDefault();
+        lay(to);
+      }}
+      onPointerDown={(event) => {
+        const panel = region.current;
+        const picture = panel?.parentElement?.getBoundingClientRect().height ?? 0;
+        if (!panel || picture <= 0 || event.button !== 0) return;
+        event.stopPropagation();
+        held.current = { id: event.pointerId, from: event.clientY, height: panel.getBoundingClientRect().height, rests: restsIn(picture) };
+        panel.style.transition = "none";
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+          // A pointer the browser no longer holds: the drag goes on without the capture.
+        }
+      }}
+      onPointerMove={(event) => {
+        const drag = held.current;
+        const panel = region.current;
+        if (!drag || !panel || event.pointerId !== drag.id) return;
+        const rests = drag.rests;
+        panel.style.height = `${Math.round(Math.max(rests[0]! - 24, Math.min(rests[2]!, drag.height + drag.from - event.clientY)))}px`;
+      }}
+      onPointerUp={(event) => {
+        const drag = held.current;
+        const panel = region.current;
+        held.current = null;
+        if (!drag || !panel) return;
+        const now = panel.getBoundingClientRect().height;
+        panel.style.transition = "";
+        panel.style.height = "";
+        // A press with no drag steps up one rest, and from the top back to where it opens; a drag comes to rest at the nearest.
+        if (Math.abs(event.clientY - drag.from) < 6) lay(rest === 2 ? OPENS_AT : rest + 1);
+        else lay(drag.rests.reduce((best, at, i) => (Math.abs(at - now) < Math.abs(drag.rests[best]! - now) ? i : best), 0));
+      }}
+      onPointerCancel={() => {
+        const panel = region.current;
+        held.current = null;
+        if (panel) {
+          panel.style.transition = "";
+          panel.style.height = "";
+        }
+      }}
+      style={{ flex: "0 0 auto", display: "flex", justifyContent: "center", alignItems: "center", height: 22, cursor: "ns-resize", touchAction: "none" }}
+    >
+      <span aria-hidden="true" style={{ width: 40, height: 4, borderRadius: 2, background: "var(--graview-edge-strong, var(--graview-edge))" }} />
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------- the frame */
 
 function PanelFrame({
@@ -63,7 +174,6 @@ function PanelFrame({
   head,
   onClose,
   children,
-  sheetHeight,
 }: {
   readonly label: string;
   /** How wide it docks on a desk: a CSS length. */
@@ -72,11 +182,11 @@ function PanelFrame({
   readonly head: ReactNode;
   readonly onClose: () => void;
   readonly children: ReactNode;
-  /** How tall it stands as a sheet on a phone, as a share of the picture. */
-  readonly sheetHeight: string;
 }) {
   const region = useRef<HTMLElement | null>(null);
   const [sheet, setSheet] = useState(false);
+  const [rest, setRest] = useSheetRest();
+  const sheetHeight = SHEET_RESTS[rest].height;
   /* A PHONE'S PANEL is a sheet, decided by the box it is drawn in, not the window. */
   useLayoutEffect(() => {
     const box = region.current?.parentElement;
@@ -148,7 +258,7 @@ function PanelFrame({
         borderRadius: "var(--graview-radius, 12px)",
         boxShadow: "var(--graview-lift-high)",
         ...(sheet
-          ? { left: PANEL_GAP, right: PANEL_GAP, bottom: `calc(${PANEL_GAP} + env(safe-area-inset-bottom, 0px))`, height: sheetHeight }
+          ? { left: PANEL_GAP, right: PANEL_GAP, bottom: `calc(${PANEL_GAP} + env(safe-area-inset-bottom, 0px))`, height: sheetHeight, transition: "height 180ms ease-out" }
           : { top: PANEL_GAP, right: PANEL_GAP, bottom: PANEL_GAP, width: wide }),
       }}
     >
@@ -167,7 +277,8 @@ function PanelFrame({
       ) : (
         <style>{`:has(> [data-graview-map-panel="dock"]) { --graview-dock: calc(${wide} + 2 * ${PANEL_GAP}); }`}</style>
       )}
-      <header style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 14px 10px 18px", borderBottom: "1px solid var(--graview-edge)" }}>
+      {sheet ? <SheetHandle region={region} rest={rest} setRest={setRest} label={label} /> : null}
+      <header style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: sheet ? "4px 14px 10px 18px" : "14px 14px 10px 18px", borderBottom: "1px solid var(--graview-edge)" }}>
         <div style={{ flex: "1 1 auto", minWidth: 0 }}>{head}</div>
         <button type="button" data-testid="map-panel-close" aria-label="Close" title="Close (Escape)" onClick={onClose} style={{ flex: "0 0 auto", minWidth: 32, height: 32, borderRadius: 8, fontSize: "1.1rem", lineHeight: 1 }}>
           ×
@@ -304,7 +415,6 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
       label={named}
       testId="lens-panel"
       wide="min(max(440px, 46%), 760px)"
-      sheetHeight="60%"
       onClose={close}
       head={
         derived ? null : <>
@@ -438,7 +548,6 @@ function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
       label={`${name(id)}: its links`}
       testId="record-panel"
       wide={ownCard ? "min(max(440px, 46%), 760px)" : "min(360px, 40%)"}
-      sheetHeight="52%"
       onClose={close}
       head={
         <>
@@ -578,7 +687,6 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
       label={plural}
       testId="district-panel"
       wide="min(360px, 40%)"
-      sheetHeight="52%"
       onClose={() => setSelection([])}
       head={
         <>
