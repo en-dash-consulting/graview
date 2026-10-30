@@ -103,6 +103,44 @@ const CASES: readonly Case[] = [
   { app: "todo", on: "t-book", said: "what does this depend on?", expect: says((store, on) => ({ says: outOf(store, on, "waits-for").map((name) => name.split(" ").slice(-1)[0]!) })) },
   { app: "todo", on: "t-book", said: "is anything holding this up?", expect: says((store, on) => ({ says: outOf(store, on, "waits-for").map((name) => name.split(" ").slice(-1)[0]!) })) },
   { app: "rota", on: "s-sat-market", said: "who's doing this one?", expect: says((store, on) => ({ says: outOf(store, on, "covered-by").map((name) => name.split(" ")[0]!) })) },
+  /* Narrowing words, however they are said: a destructive act takes exactly what they narrow to, or asks which. */
+  { app: "todo", on: "week", said: "drop the ones I've done", expect: act(["drop", "remove-task"], "done") },
+  { app: "todo", on: "week", said: "archive the completed tasks", expect: act("archive-task", "done") },
+  { app: "todo", on: "week", said: "close the outstanding ones", expect: act("finish", "open") },
+  { app: "todo", on: "week", said: "finish the remaining tasks", expect: act("finish", "open") },
+  { app: "todo", on: "week", said: "mark everything still to do as done", expect: act("finish", "open") },
+  { app: "todo", on: "week", said: "clear out the finished stuff", expect: act(["drop", "remove-task", "archive-task"], "done") },
+  { app: "todo", on: "week", said: "delete the old ones", expect: { clarify: true } },
+  { app: "todo", on: "week", said: "archive the stuff here", expect: { clarify: true } },
+  /* A question never comes with a change. */
+  { app: "todo", on: "t-book", said: "is this done?", expect: says(() => ({ says: [/\b(no|not)\b/i] })) },
+  { app: "todo", on: "t-quote", said: "is it finished", expect: says(() => ({ says: [/\b(yes|done|finished)\b/i] })) },
+  { app: "todo", on: "t-book", said: "who has it?", expect: answer },
+  { app: "rota", on: "s-mon-open", said: "is this covered?", expect: says(() => ({ says: [/\b(yes|ada)\b/i] })) },
+  /* Asks or tells, judged by Jev: a question without a question mark is still a question. */
+  { app: "todo", on: "t-book", said: "has this been finished already", expect: says(() => ({ says: [/\b(no|not)\b/i] })) },
+  { app: "todo", on: "t-quote", said: "did i already close this one", expect: says(() => ({ says: [/\b(yes|done|closed|finished)\b/i] })) },
+  { app: "todo", on: "t-book", said: "any chance this is done", expect: says(() => ({ says: [/\b(no|not)\b/i] })) },
+  { app: "todo", on: "t-quote", said: "this one done or not", expect: says(() => ({ says: [/\b(yes|done)\b/i] })) },
+  /* Which records, chosen among the parts code can name: a trailing clause narrows, or the card asks. */
+  { app: "todo", on: "week", said: "delete all the ones that are finished", expect: act(["drop", "remove-task"], "done") },
+  { app: "todo", on: "week", said: "archive everything which is complete", expect: act("archive-task", "done") },
+  { app: "todo", on: "week", said: "bin everything except the done one", expect: { act: ["drop", "remove-task"], over: "open", orAsk: true } },
+  { app: "todo", on: "week", said: "wipe out all the tasks that are already finished", expect: act(["drop", "remove-task"], "done") },
+  /* Said plainly: a record named in the line is quoted, never read into the act's own words. */
+  { app: "todo", on: "t-broadband", said: "move this to someday", expect: act("move-to-list", "itself") },
+  /* Who has something, said as a statement: an instruction to give it to them. */
+  { app: "todo", on: "t-book", said: "Sam's on this", expect: { missing: "link", who: "Sam" } },
+  { app: "todo", on: "week", said: "Nora has these", expect: { missing: "link", who: "Nora" } },
+  { app: "rota", on: "s-fri-repair", said: "Cass is doing this one", expect: { act: ["cover"], over: "itself", to: "v-cass" } },
+  { app: "rota", on: "s-sat-market", said: "Dev's got this", expect: { act: ["cover"], over: "itself", to: "v-dev" } },
+  /* An act with nothing to change says what the record already is, never the act's title. */
+  { app: "rota", on: "v-ada", said: "ada is back now", expect: { answer: true, facts: () => ({ says: [/\bAda Nowak\b/, /already/i] }) } },
+  { app: "todo", on: "t-quote", said: "mark this one done", expect: { answer: true, facts: () => ({ says: [/already done/i] }) } },
+  /* Never a change claimed that was not made. */
+  { app: "rota", on: "s-mon-open", said: "take Ada off and put her on the waiting list", expect: { notClaimed: true } },
+  { app: "todo", on: "t-book", said: "send this to my accountant", expect: { notClaimed: true } },
+  { app: "rota", on: "v-bo", said: "text bo the new times", expect: { notClaimed: true } },
   /* The rota. */
   { app: "rota", on: "s-mon-open", said: "give this shift to Bo", expect: act("cover", "itself") },
   { app: "rota", on: "s-mon-open", said: "move this to friday", expect: act("move-shift", "itself") },

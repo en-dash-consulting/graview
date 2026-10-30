@@ -1125,7 +1125,16 @@ try {
             if (question.type === "choice" && key === "reading") {
               // "These" on a list are the tasks it holds; a first turn misread on purpose (__misread) is close, so the card says it.
               const misread = window.__misread === true && !/\btasks\b/i.test(said);
-              answers[key] = misread ? sure(question, "itself", 0.55) : sure(question, /\b(these|all|them|each|everything|tasks)\b/i.test(said) ? "held" : "itself");
+              // Sure where the words say which ("these", "all"); less so of "the old ones", which a destructive act must not take as all.
+              const plain = /\b(these|all|them|each|everything)\b/i.test(said);
+              const names = Object.keys(question.criteria);
+              // "Everything that's already ticked off" read as everything, sure of it — the misreading the code must catch.
+              const misreadAll = /\beverything that'?s\b/i.test(said);
+              answers[key] = misread ? sure(question, "itself", 0.55) : misreadAll ? sure(question, "held", 0.95) : names.includes("done") && /\b(done|finished|ticked|completed)\b/i.test(said) ? sure(question, "done") : names.includes("open") && /\b(open|remaining|outstanding)\b/i.test(said) ? sure(question, "open") : sure(question, /\b(these|all|them|each|everything|tasks|ones)\b/i.test(said) ? "held" : "itself", plain ? 0.92 : 0.7);
+              continue;
+            }
+            if (question.type === "choice" && key === "mood") {
+              answers[key] = sure(question, /\?\s*$|^(is|are|has|have|what|who|when|where|which|how|does)\b/i.test(said) ? "asks" : "tells");
               continue;
             }
             if (question.type === "choice" && key === "act") {
@@ -1133,7 +1142,9 @@ try {
               const closing = /\b(close|complete|finish|tick|check off)\b/i.test(said) && !/\?\s*$/.test(said);
               const held = /\b(these|all|them|each|everything|tasks)\b/i.test(said);
               const finish = Object.keys(question.criteria).find((name) => name === `${held ? "held" : "itself"}:finish`);
-              answers[key] = closing && finish ? sure(question, finish) : giving ? sure(question, "none") : sure(question, "none", 0.3);
+              const removing = /\b(delete|drop|bin|get rid of|clear out|scrap)\b/i.test(said) && !/\?\s*$/.test(said);
+              const drop = Object.keys(question.criteria).find((name) => name === `${held || /\bones\b/i.test(said) ? "held" : "itself"}:drop`);
+              answers[key] = closing && finish ? sure(question, finish) : removing && drop ? sure(question, drop) : giving ? sure(question, "none") : sure(question, "none", 0.3);
               continue;
             }
             if (question.type === "choice" && (key === "person" || key === "named")) {
@@ -1179,6 +1190,8 @@ try {
           if (/done/i.test(told.ask ?? "") && acts.includes("set-status")) return { text: JSON.stringify({ answer: "Marking each of them done.", each: { act: "set-status", args: { status: "done" } } }) };
           // A model's note to the pipeline, never to be shown as it came: a fragment, no need named.
           if (/frobnicate/i.test(told.ask ?? "")) return { text: JSON.stringify({ answer: "", lacks: "a way to frobnicate tasks" }) };
+          // Words that say a change was made, with none proposed: the card must never show them.
+          if (/waiting room/i.test(told.ask ?? "")) return { text: JSON.stringify({ answer: "This week is taken off the list and moved to the waiting room." }) };
           if (/assign/i.test(told.ask ?? "") && !acts.some((name) => /assign|give/.test(name))) return { text: JSON.stringify({ answer: "", lacks: "Tasks have no one to assign them to.", need: { link: { on: "task", called: "assigned to", to: "person" } }, who: "Nick" }) };
           window.__thinkingSaw.push({ candidates: (told.candidates ?? []).map((one) => one.says), records: [...(told.state?.selection ?? []), ...(told.state?.neighbors ?? [])].map((one) => one.label) });
           return { text: JSON.stringify({ answer: `About ${told.about}: it is not done yet, so finish it.`, pick: (told.candidates ?? []).map((one) => one.id) }) };
@@ -1351,19 +1364,25 @@ try {
         text: card.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
         ghost: card.querySelector('[data-testid="ai-ghost"]') !== null,
         proposed: [...card.querySelectorAll("[data-ghost-proposal]")].map((one) => (one.textContent ?? "").trim()),
+        // A question's change is a suggestion beside the answer, the person's to choose: "Finish it?".
+        suggested: [...card.querySelectorAll('[data-testid="quick-answer-offer"]')].map((one) => (one.textContent ?? "").trim()),
         overIt: Boolean(a && Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2),
         inTheWindow: b.left >= 0 && b.top >= 0 && b.right <= innerWidth + 1 && b.bottom <= innerHeight + 1,
         markGone: document.querySelector('[data-testid="ai-thinking-mark"]') === null && document.querySelector("[data-graview-ai-thinking]") === null,
       };
     });
     const notMade = await doneOf(on, "t-deposit");
-    await on.click('[data-testid="quick-ask"] [data-testid="ghost-accept"]').catch(() => undefined);
+    // Chosen, the suggestion is proposed as any change is: a ghost, accepted, then taken back.
+    await on.click('[data-testid="quick-ask"] [data-testid="quick-answer-offer"][data-ai-offer-type="act"]').catch(() => undefined);
+    await on.waitForSelector('[data-testid="ghost-accept"]', { timeout: 5_000 }).catch(() => undefined);
+    const stillNotMade = await doneOf(on, "t-deposit");
+    await on.click('[data-testid="ghost-accept"]').catch(() => undefined);
     await on.waitForTimeout(400);
     const accepted = await doneOf(on, "t-deposit");
-    await on.click('[data-testid="quick-ask"] [data-testid="ghost-undo"]').catch(() => undefined);
+    await on.click('[data-testid="ghost-undo"]').catch(() => undefined);
     await on.waitForTimeout(400);
     const undone = await doneOf(on, "t-deposit");
-    typing.answer[face] = { answer, notMade, accepted, undone };
+    typing.answer[face] = { answer, notMade, stillNotMade, accepted, undone };
 
     /* The Fast slot's pick is what reached the Thinking slot, and Activity says so. */
     reach(`theFastSlotsPickIsWhatReachesTheThinkingSlot_${face}`);
@@ -1384,7 +1403,7 @@ try {
       handed.saw.candidates.length === 1 && pickedCandidate.endsWith(handed.saw.candidates[0]) && /^Finish it/.test(pickedCandidate) &&
       (pickedRecord === "" ? handed.saw.records.length === 0 : handed.saw.records.length === 1 && pickedRecord.includes(handed.saw.records[0])) &&
       said !== null && said.by === "fast" && said.words.includes("fake-fast");
-    typing.answer[face].ok = answer !== null && answer.beside === "t-deposit" && (answer.text ?? "").includes("not done yet") && answer.ghost && answer.proposed.length > 0 && answer.inTheWindow && answer.markGone && notMade === false && accepted === true && undone === false;
+    typing.answer[face].ok = answer !== null && answer.beside === "t-deposit" && (answer.text ?? "").includes("not done yet") && !answer.ghost && answer.proposed.length === 0 && answer.suggested.some((one) => /\?$/.test(one)) && answer.inTheWindow && answer.markGone && notMade === false && stillNotMade === false && accepted === true && undone === false;
     await context.close();
 
     /* With AI off, the field only filters. */
@@ -1856,6 +1875,88 @@ try {
       ok:
         closing.proposed.length >= 1 && closing.proposed.length <= held && closing.proposed.every((id) => /^each:finish:t-/.test(id ?? "")) && !closing.plan && whole(closing.text) &&
         fragment !== null && whole(fragment) && !/a way to frobnicate/i.test(fragment),
+    };
+
+    /* A DESTRUCTIVE ACT OVER SEVERAL NEEDS A CLEAR READING: "delete the old ones" asks which; "delete the done ones" drops exactly the done. */
+    reach("aDestructiveActOverSeveralNeedsAClearReading");
+    await openWeek();
+    await on.keyboard.type("delete the old ones");
+    await on.keyboard.press("Enter");
+    await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const unclear = await on.evaluate(() => ({
+      text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+      proposed: [...document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]')].length,
+    }));
+    await openWeek();
+    await on.keyboard.type("delete the done ones");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"] [data-testid="ai-ghost"]', { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const clear = await on.evaluate(() => {
+      const store = (window.__menuStores ?? []).find((one) => one.schema.kinds.includes("task"));
+      const done = store ? store.graph.out("week", "holds").filter((task) => task.done === true).map((task) => task.id) : [];
+      return {
+        done,
+        text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+        proposed: [...document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]')].map((one) => one.getAttribute("data-ghost-proposal")),
+      };
+    });
+    report.checks.aDestructiveActOverSeveralNeedsAClearReading = {
+      unclear,
+      clear,
+      ok:
+        unclear.proposed === 0 && /\?$/.test((unclear.text ?? "").trim()) && /\ball \d+\b/.test(unclear.text ?? "") &&
+        clear.done.length > 0 && clear.proposed.length === clear.done.length && clear.proposed.every((id) => clear.done.some((done) => (id ?? "").endsWith(`:${done}`))),
+    };
+
+    /* AN ANSWER NEVER SAYS A CHANGE WAS MADE WHEN NONE WAS: told to do what nothing here does, the card says it can't — not that it did. */
+    reach("anAnswerNeverSaysAChangeWasMadeWhenNoneWas");
+    await openWeek();
+    await on.keyboard.type("send this to the waiting room");
+    await on.keyboard.press("Enter");
+    await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const claimed = await on.evaluate(() => ({
+      text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+      proposed: document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]').length,
+      plan: Boolean(document.querySelector('[data-testid="quick-ask-plan"]')),
+    }));
+    report.checks.anAnswerNeverSaysAChangeWasMadeWhenNoneWas = { ...claimed, ok: claimed.proposed === 0 && !claimed.plan && /can'?t/i.test(claimed.text ?? "") && !/taken off|moved to/i.test(claimed.text ?? "") };
+
+    /* A TRAILING QUALIFIER IS NEVER IGNORED BY A DESTRUCTIVE ACT: read as everything, "that's already ticked off" is left over — the card asks which. */
+    reach("aTrailingQualifierIsNeverIgnoredByADestructiveAct");
+    await openWeek();
+    await on.keyboard.type("scrap everything that's already ticked off");
+    await on.keyboard.press("Enter");
+    await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const trailing = await on.evaluate(() => ({
+      text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+      proposed: document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]').length,
+    }));
+    report.checks.aTrailingQualifierIsNeverIgnoredByADestructiveAct = { ...trailing, ok: trailing.proposed === 0 && /\?$/.test((trailing.text ?? "").trim()) && /\b1 done\b/.test(trailing.text ?? "") };
+
+    /* THE CARD SAYS WHAT WILL HAPPEN, WITH ITS VALUES: the count it acts on, the name it gives. */
+    reach("theCardSaysWhatWillHappenWithItsValues");
+    await openWeek();
+    await on.keyboard.type("close all tasks in this list");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"] [data-testid="ai-ghost"]', { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const closingSaid = await on.evaluate(() => ({ text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "", proposed: document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]').length }));
+    await openWeek();
+    await on.keyboard.type("rename this list to Packing week");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"] [data-testid="ai-ghost"]', { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const renameSaid = await on.evaluate(() => document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "");
+    report.checks.theCardSaysWhatWillHappenWithItsValues = {
+      closingSaid,
+      renameSaid,
+      ok:
+        closingSaid.proposed > 1 && new RegExp(`\\bthe ${closingSaid.proposed}\\b`).test(closingSaid.text) && !/ — |itself|each of/.test(closingSaid.text) &&
+        /^Rename (?:“?This week”? )?to “Packing week”\.$/.test(renameSaid) && !/ — |itself/.test(renameSaid),
     };
     await context.close();
   }

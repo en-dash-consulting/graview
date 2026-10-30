@@ -1,7 +1,8 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import { describe, expect, it, vi } from "vitest";
 import { createTodoUiStore } from "../apps/todo/src/ui/app.js";
-import { askedParts, asking, decideOverTheGraph, givingOf, politely, renameOf } from "../packages/tools/src/graph-plan.js";
+import { askedParts, asking, decideOverTheGraph, explicitReading, givingOf, narrowingOf, politely, renameOf, unaccounted } from "../packages/tools/src/graph-plan.js";
+import { sayChange, sayNothingToChange, saysDone } from "../packages/tools/src/say-change.js";
 import { answerHere } from "../packages/tools/src/inline-ai.js";
 import { forThePerson } from "../packages/tools/src/sentences.js";
 import type { FastProvider, ThinkingProvider } from "../packages/tools/src/ai.js";
@@ -31,7 +32,8 @@ const reading = (misread = false): FastProvider & { asked: string[] } => {
       asked.push(key);
       const names = Object.keys(question.criteria);
       const sure = (choice: string, chance = 0.92): Answer => ({ type: "choice", choice, confidence: chance, probabilities: Object.fromEntries(names.map((name) => [name, name === choice ? chance : (1 - chance) / Math.max(1, names.length - 1)])) });
-      if (key === "reading") answers[key] = misread && !/tasks/.test(said) ? sure("itself", 0.55) : sure(/\b(these|all|them|each|everything|tasks)\b/i.test(said) ? "held" : "itself");
+      if (key === "reading") answers[key] = misread && !/tasks/.test(said) ? sure("itself", 0.55) : names.includes("open") && /\b(open|remaining|outstanding)\b/i.test(said) ? sure("open") : names.includes("done") && /\b(done|finished)\b/i.test(said) ? sure("done") : sure(/\b(these|all|them|each|everything|tasks|ones)\b/i.test(said) ? "held" : "itself");
+      else if (key === "mood") answers[key] = sure(/\?\s*$|^(what|who|is|are|how)\b/i.test(said) ? "asks" : "tells");
       else if (key === "act") answers[key] = sure("none");
       else if (key === "person") answers[key] = sure(names.find((name) => /sam/i.test(String(question.criteria[name]))) ?? "none");
       else if (key === "need") answers[key] = sure("person");
@@ -123,8 +125,59 @@ describe("a plan over the graph", () => {
     expect(givingOf("this is Nora's now")).toMatchObject({ who: "Nora" });
     expect(renameOf("the name should be Packing week")).toBe("Packing week");
     expect(renameOf("call it Boxes")).toBe("Boxes");
+    expect(renameOf("rename this list to Packing week")).toBe("Packing week");
     expect(renameOf("Moving days is a better name")).toBe("Moving days");
     expect(renameOf("move it to someday")).toBeUndefined();
+  });
+
+  it("narrows by done or open however it is said, and a destructive act over several needs a clear reading (aDestructiveActOverSeveralNeedsAClearReading)", () => {
+    for (const said of ["drop the ones I've done", "archive the completed tasks", "clear out the finished stuff", "delete the done one"]) expect(narrowingOf(said), said).toEqual({ open: false, finished: true });
+    for (const said of ["close the outstanding ones", "finish the remaining tasks", "mark everything still to do as done", "the unfinished ones"]) expect(narrowingOf(said), said).toEqual({ open: true, finished: false });
+    expect(narrowingOf("open this")).toEqual({ open: false, finished: false });
+    expect(explicitReading("delete the old ones")).toBe(false);
+    expect(explicitReading("archive the stuff here")).toBe(false);
+    expect(explicitReading("drop all of these")).toBe(true);
+    expect(explicitReading("drop the ones I've done")).toBe(true);
+  });
+
+  it("says what will happen with its values and its exact count (theCardSaysWhatWillHappenWithItsValues)", () => {
+    const kept = store();
+    const act = (name: string) => kept.allMutations().find((one) => one.name === name)! as never;
+    const open = ["t-notice", "t-meter", "t-post", "t-broadband", "t-keys"];
+    expect(sayChange(kept, { act: act("finish"), args: {}, records: open, narrowed: "open", where: "in This week" })).toBe("Mark the 5 open tasks in This week done.");
+    expect(sayChange(kept, { act: act("drop"), args: {}, records: ["t-boxes"], narrowed: "done", where: "in This week" })).toMatch(/^(Drop the 1 done task in This week|Drop “Order boxes”)\.$/);
+    expect(sayChange(kept, { act: act("rename"), args: { label: "Return the keys" }, records: ["t-keys"], itself: true })).toBe("Rename to “Return the keys”.");
+    expect(sayChange(kept, { act: act("move-to-list"), args: { listId: "today" }, records: ["t-book"], itself: true })).toBe("Move “Book the van” to Today.");
+    expect(sayChange(kept, { act: act("reschedule"), args: { due: "2026-09-07" }, records: ["t-book"], itself: true })).toBe("Move “Book the van” to Monday, Sep 7.");
+  });
+
+  it("never lets a destructive act read everything past words that narrow it (aTrailingQualifierIsNeverIgnoredByADestructiveAct)", async () => {
+    const all = { which: "held" } as const;
+    for (const said of ["scrap everything that's already ticked off", "delete everything which is complete", "drop all the ones I've done", "bin everything except the done one", "delete the old ones"]) expect(unaccounted(said, all), said).toBe(true);
+    for (const said of ["drop all of these", "archive these", "delete everything"]) expect(unaccounted(said, all), said).toBe(false);
+    expect(unaccounted("scrap everything that's already ticked off", { which: "held", part: "done" })).toBe(false);
+    // Read as everything, sure of it: the card asks which, and proposes nothing.
+    const misreading: FastProvider = { model: "jev-latest", decide: async (_state, questions) => ({ answers: Object.fromEntries(Object.entries(questions).flatMap(([key, question]) => {
+      if (question.type !== "choice") return [];
+      const names = Object.keys(question.criteria);
+      const choice = key === "reading" ? "held" : key === "mood" ? "tells" : key === "act" ? names.find((name) => name === "held:drop")! : names.includes("none") ? "none" : names[0]!;
+      return [[key, { type: "choice", choice, confidence: 0.97, probabilities: Object.fromEntries(names.map((name) => [name, name === choice ? 0.97 : 0.03 / (names.length - 1)])) } as Answer]];
+    })), usage: { inputTokens: 1, outputTokens: 0 } }) };
+    const decided = await decideOverTheGraph(misreading, { store: store(), target: { on: "record", id: "week" }, said: "scrap everything that's already ticked off" });
+    expect(decided.each).toBeUndefined();
+    expect(decided.clarify).toMatch(/\?$/);
+  });
+
+  it("never says a change was made that was not, reads who has something as giving it, and says why nothing would change (anAnswerNeverSaysAChangeWasMadeWhenNoneWas)", () => {
+    for (const said of ["Ada Nowak is taken off the shift.", "Done — I've moved it.", "Marked it done.", "The task has been archived."]) expect(saysDone(said), said).toBe(true);
+    for (const said of ["I can't do that here.", "There is no waiting list in this app.", "Nobody covers it yet."]) expect(saysDone(said), said).toBe(false);
+    expect(givingOf("Sam's on this")).toMatchObject({ who: "Sam", owned: true });
+    expect(givingOf("Nora has this one")).toMatchObject({ who: "Nora", owned: true });
+    expect(givingOf("Cass is doing this one")).toMatchObject({ who: "Cass", owned: true });
+    expect(givingOf("what has this got")).toBeUndefined();
+    const kept = store();
+    const finish = kept.allMutations().find((one) => one.name === "finish")! as never;
+    expect(sayNothingToChange(kept, finish, ["t-quote"])).toBe("Nothing to change: “Get the second quote” is already done.");
   });
 
   it("reads the giving the words say, and to whom", () => {
