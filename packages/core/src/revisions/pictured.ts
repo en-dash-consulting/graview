@@ -91,9 +91,9 @@ export const MEASURE_PICTURED_PAGE = `(() => {
       const what = role in LANDMARKS ? role : tag in LANDMARKS ? tag : "";
       if (!what) continue;
       const root = el.getRootNode();
-      const labelled = (el.getAttribute("aria-labelledby") || "").split(/\\s+/).map((id) => id && root.getElementById ? root.getElementById(id) : null).filter(Boolean).map((one) => said(one.textContent)).join(" ");
+      const namedBy = (el.getAttribute("aria-labelledby") || "").split(/\\s+/).map((id) => id && root.getElementById ? root.getElementById(id) : null).filter(Boolean).map((one) => said(one.textContent)).join(" ");
       const heading = [...el.querySelectorAll("*")].find(level);
-      name = said(el.getAttribute("aria-label")) || labelled || (heading ? said(heading.textContent) : "") || LANDMARKS[what] || "";
+      name = said(el.getAttribute("aria-label")) || namedBy || (heading ? said(heading.textContent) : "") || LANDMARKS[what] || "";
       as = what === "region" ? "section" : what;
     }
     if (!name || seen.has(name.toLowerCase())) continue;

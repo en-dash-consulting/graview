@@ -92,12 +92,12 @@ export function sectionsOfDrawing(root: ElementLike): DrawnSection[] {
     const role = (element.getAttribute("role") ?? "").toLowerCase();
     const what = role in LANDMARKS ? role : tag in LANDMARKS ? tag : undefined;
     if (!what) continue;
-    const labelled = (element.getAttribute("aria-labelledby") ?? "")
+    const namedBy = (element.getAttribute("aria-labelledby") ?? "")
       .split(/\s+/)
       .flatMap((id) => (byId.get(id) ? [said(byId.get(id)!.textContent)] : []))
       .join(" ");
     const heading = [...elementsOf(element)].find((one) => one !== element && headingLevel(one) !== undefined);
-    const name = said(element.getAttribute("aria-label")) || labelled || (heading ? said(heading.textContent) : "") || LANDMARKS[what] || "";
+    const name = said(element.getAttribute("aria-label")) || namedBy || (heading ? said(heading.textContent) : "") || LANDMARKS[what] || "";
     add(name, what === "region" ? "section" : what);
   }
   return out;
