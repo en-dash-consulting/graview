@@ -22,6 +22,12 @@
  *   noAuthorWordsReachAReader — no "derived from the declaration" and no
  *   "Keep as a lens" on a phone, nor at a desk for a seat that may not
  *   change the app (Things' member);
+ *   aDistrictCardIsNoTallerThanWhatItHolds — a district's card on a phone
+ *   ends under its last row, up to the room it has, and scrolls inside only
+ *   past that;
+ *   itsHeadingIsRingedOnlyForTheKeyboard — the heading holds the keyboard
+ *   as it opens, with no ring after a tap or an address, and the ring is
+ *   drawn once a key is pressed there;
  *   nothingOverlapsTheCard — Up and the Key stand clear of the card, the
  *   card takes the phone's width with even gutters, and the card for the
  *   other districts says what it is ("3 more districts").
@@ -109,6 +115,21 @@ const measure = ({ kind, author }) => {
     // Rows that start below what the card shows (in its last 24 pixels, a name is cut): what "N more below" must count.
     unseen: stop ? [...stop.querySelectorAll('[data-testid="kind-stop-table"] tbody tr[data-graview-pick]')].filter((row) => row.getBoundingClientRect().top > scroller.getBoundingClientRect().bottom - 24).length : 0,
     beyond: beyond?.textContent?.replace(/\s+/g, " ").trim() ?? null,
+    // What the stop's box holds: from its foot to the foot of the last thing in it, and the room its card gives it.
+    fit: stop
+      ? (() => {
+          const own = stop.getBoundingClientRect();
+          const last = [...(scroller ?? stop).children].filter((child) => child.tagName !== "STYLE" && child.getBoundingClientRect().height > 0).at(-1);
+          const end = Math.max(last ? last.getBoundingClientRect().bottom : own.top, stop.querySelector('[data-testid="kind-stop-below"]')?.getBoundingClientRect().bottom ?? 0);
+          return { height: Math.round(own.height), room: Math.round(card.getBoundingClientRect().height), slack: Math.round(own.bottom - end), scrolls: scroller.scrollHeight > scroller.clientHeight + 1 };
+        })()
+      : null,
+    ring: (() => {
+      const heading = stop?.querySelector('[data-testid="kind-stop-title"]');
+      if (!heading) return null;
+      const style = getComputedStyle(heading);
+      return { focused: document.activeElement === heading, drawn: style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0 };
+    })(),
     author: new RegExp(author, "i").test(document.body.innerText),
   };
 };
@@ -150,8 +171,18 @@ try {
           const measured = await page.evaluate(measure, { kind, author: AUTHOR.source });
           const shot = resolve(SHOTS, `${app}-${kind}-${engine}.png`);
           await page.screenshot({ path: shot });
+          // A key pressed on the heading: the reader is on the keyboard now, and the ring is drawn.
+          let keyed = null;
+          if (measured.ring?.focused) {
+            await page.keyboard.press("Shift");
+            keyed = await page.evaluate(() => {
+              const heading = document.querySelector('[data-testid="kind-stop-title"]');
+              const style = heading ? getComputedStyle(heading) : null;
+              return Boolean(style && style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0);
+            });
+          }
           const reached = measured.stop ? await page.evaluate(lastRowReached) : null;
-          report.districts.push({ engine, device, app, kind, ...measured, reached, shot });
+          report.districts.push({ engine, device, app, kind, ...measured, keyed, reached, shot });
           process.stdout.write(`${engine.padEnd(8)} ${app.padEnd(11)} ${kind.padEnd(9)} here=${measured.here} rows=${measured.rows ?? "-"}/${measured.counted ?? "-"} over=${measured.overlaps.join(",") || "none"}\n`);
         } catch (error) {
           report.districts.push({ engine, device, app, kind, error: String(error?.message ?? error).split("\n")[0] });
@@ -192,6 +223,14 @@ try {
   report.checks.everyRecordItCountsIsReachable = {
     ok: ran && stops.length > 0 && stops.every((one) => (one.rows === one.counted || (one.paged && one.rows > 0)) && one.reached === true && one.belowCount === one.unseen),
     held: stops.map(({ engine, app, kind, counted, rows, paged, reached, unseen, below }) => ({ engine, app, kind, counted, rows, paged, reached, unseen, below })),
+  };
+  report.checks.aDistrictCardIsNoTallerThanWhatItHolds = {
+    ok: ran && stops.length > 0 && stops.every((one) => one.fit && one.fit.height <= one.fit.room + 1 && (one.fit.scrolls ? one.fit.height >= one.fit.room - 2 : one.fit.slack <= 24)),
+    held: stops.map(({ engine, app, kind, fit }) => ({ engine, app, kind, ...fit })),
+  };
+  report.checks.itsHeadingIsRingedOnlyForTheKeyboard = {
+    ok: ran && stops.length > 0 && stops.every((one) => one.ring?.focused === true && one.ring.drawn === false && one.keyed === true),
+    held: stops.map(({ engine, app, kind, ring, keyed }) => ({ engine, app, kind, ...ring, keyed })),
   };
   report.checks.noAuthorWordsReachAReader = {
     ok: ran && all.every((one) => one.author === false) && report.desk.find((one) => one.as === "user-sam")?.author === false && report.desk.find((one) => one.as === "user-nora")?.author === true,

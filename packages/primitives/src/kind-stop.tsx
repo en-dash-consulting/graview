@@ -391,6 +391,23 @@ function Head<S extends AnySchema>({ kind, plural, count, headingId, description
   useEffect(() => {
     const at = heading.current;
     if (!at || at.closest('[data-testid="kind-stop"]')?.contains(document.activeElement)) return;
+    /*
+     * AND RINGED ONLY FOR THE KEYBOARD. Gone into by a tap, or opened at its
+     * address, the heading held a heavy ring at rest (the coordinator, on a
+     * phone's after-shot): a programmatic focus the browser rings as if the
+     * keyboard had put it there. The keyboard is still here; the ring is
+     * drawn only when the reader came by the keyboard — what they left was
+     * ringed (`:focus-visible`) — or presses a key here.
+     */
+    let keyboard = false;
+    try {
+      keyboard = document.activeElement instanceof HTMLElement && document.activeElement !== document.body && document.activeElement.matches(":focus-visible");
+    } catch {
+      // An engine without the selector: ring it, as before.
+      keyboard = true;
+    }
+    if (keyboard) delete at.dataset["graviewQuietFocus"];
+    else at.dataset["graviewQuietFocus"] = "";
     at.focus({ preventScroll: true });
   }, [kind]);
   const run = (affordance: Affordance, args?: Record<string, unknown>): readonly string[] | void => {
@@ -409,7 +426,14 @@ function Head<S extends AnySchema>({ kind, plural, count, headingId, description
   return (
     <header className="graview-kind-stop-head">
       <div className="graview-kind-stop-title">
-        <h2 id={headingId} ref={heading} tabIndex={-1} data-testid="kind-stop-title">
+        <h2
+          id={headingId}
+          ref={heading}
+          tabIndex={-1}
+          data-testid="kind-stop-title"
+          onKeyDown={(event) => delete event.currentTarget.dataset["graviewQuietFocus"]}
+          onBlur={(event) => delete event.currentTarget.dataset["graviewQuietFocus"]}
+        >
           {plural}
         </h2>
         <p data-testid="kind-stop-count">
@@ -907,6 +931,7 @@ const KIND_STOP_CSS = `
 .graview-kind-stop{container-type:inline-size;box-sizing:border-box;height:100%;min-height:0;display:flex;flex-direction:column;gap:10px;padding:16px 18px 12px;border:1px solid var(--graview-edge);border-radius:var(--graview-radius,12px);background:var(--graview-panel);color:var(--graview-ink);box-shadow:var(--graview-lift-low);overflow:auto;overscroll-behavior:contain}
 [data-graview-map-panel] .graview-kind-stop{height:auto;padding:4px 6px 12px;border:0;box-shadow:none;background:none;overflow:visible}
 .graview-kind-stop :focus-visible{outline:2px solid var(--graview-accent);outline-offset:2px}
+.graview-kind-stop h2[data-graview-quiet-focus]:focus{outline:none}
 .graview-kind-stop button{font:inherit;cursor:pointer}
 .graview-kind-stop :is(.graview-kind-stop-more-tools,.graview-kind-stop-link,.graview-kind-stop-rule,.graview-kind-stop-name button,.graview-kind-stop-row-acts button,.graview-kind-stop-fact,.graview-kind-stop-switch button){box-shadow:none}
 .graview-kind-stop-head{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 16px}
@@ -975,6 +1000,8 @@ const KIND_STOP_CSS = `
 .graview-kind-stop-problems-line .graview-kind-stop-link{flex:0 0 auto}
 .graview-kind-stop-narrowed{margin:0;font-size:.875rem}
 .graview-kind-stop[data-graview-narrow]{overflow:hidden}
+${/* ON A PHONE THE CARD IS AS TALL AS WHAT IT HOLDS, up to the room it has, and scrolls inside only past that: three rules left two fifths of it empty. Pinned to the top of its box. */ ""}
+.graview-kind-stop[data-graview-narrow]{height:auto;max-height:100%;flex:0 1 auto;margin-bottom:auto}
 .graview-kind-stop-scroll{flex:1 1 auto;min-height:0;padding:4px;margin:-4px;display:flex;flex-direction:column;gap:10px;overflow:auto;overscroll-behavior:contain}
 [data-graview-map-panel] .graview-kind-stop-scroll{overflow:visible}
 [data-graview-map-panel] .graview-kind-stop[data-graview-narrow]{overflow:visible}
