@@ -46,8 +46,11 @@ const mutations = acts.map(([name, title, patch]) =>
 const AI: HostAi = { fast: stubFast(), thinking: stubThinking() };
 
 let openMenu: ((menu: PointerMenu) => void) | undefined;
+let present: () => string[] = () => [];
 function HoldMenu() {
-  openMenu = useGraview().setMenuAt;
+  const { setMenuAt, who } = useGraview();
+  openMenu = setMenuAt;
+  present = () => [...who.values()].map((one) => `${one.name}${one.onBehalfOfName ? `, for ${one.onBehalfOfName}` : ""} at ${one.robot?.at ?? "nowhere"}`);
   return null;
 }
 
@@ -175,6 +178,11 @@ describe("typing in the menu", () => {
     expect(menu()).toBeNull();
     expect(document.querySelector('[data-testid="quick-answer-asked"]')!.textContent).toBe("“what is left?”");
     expect(marks.some((said) => said.includes("Thinking about Pay the deposit"))).toBe(true);
+    // Graview stands among who is here while the card is open — no channel, so on this page alone.
+    expect(present()).toEqual(["Graview at t1"]);
+    await press(document.querySelector('[data-testid="quick-ask"]')!, "Escape");
+    await settle();
+    expect(present()).toEqual([]);
     // Answered, the mark is gone from the thing.
     expect(document.querySelector('[data-testid="ai-thinking-mark"]')).toBeNull();
     expect(document.querySelector("[data-graview-ai-thinking]")).toBeNull();

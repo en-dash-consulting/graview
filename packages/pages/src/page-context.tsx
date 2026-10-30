@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
 import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
-import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
+import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Onward } from "./onward.js";
 
@@ -129,6 +129,8 @@ export interface PageContext<S extends AnySchema> {
    * `"applied"` or `"declined"`. Unsaid, the seat never offers one.
    */
   readonly onProposeChange?: ProposeChangeHost;
+  /** The host's composer and checker for a change to the app (`composeChange`), for a plan the quick ask offers. */
+  readonly composeChange?: ComposeChangeHost;
   /**
    * WHERE "EXPORT CSV" SAVES A LIST (Roadmap f-view-export-csv): handed the
    * CSV text and the file name, for a host that saves files itself. Unsaid,

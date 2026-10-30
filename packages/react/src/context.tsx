@@ -21,9 +21,9 @@ import type {
 import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type DismissalStore, type Place, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
-import { createSeatTalk, type KeepLensHost, type ProposeChangeHost, type SeatTalk } from "./seat-talk.js";
+import { createSeatTalk, type ComposeChangeHost, type KeepLensHost, type ProposeChangeHost, type SeatTalk } from "./seat-talk.js";
 import { createAiDesk, type AiDesk } from "./ai-desk.js";
-import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
+import { PRESENCE_SETTINGS, tabSession, usePresenceState, type AiPresence } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout/view";
 import { EMPTY_VIEW, aggregateId, edgeOfSelection, isBandAggregate, kindOfCard, kindsOfAggregate, withFocus, withSelection } from "@graview/layout/view";
@@ -253,6 +253,8 @@ export interface GraviewContextValue<S extends AnySchema> {
    * the third part of every participant key, on its ops and its figure alike.
    */
   readonly who: ReadonlyMap<string, Presence>;
+  /** The app's AI said here while it thinks for this person, or gone (`PresenceState.aiHere`, Roadmap f-menu-type-anything). */
+  aiHere(presence: AiPresence | null): void;
   readonly following: Presence | null;
   follow(participant: string | null): void;
   /**
@@ -400,6 +402,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly onKeepLens?: KeepLensHost;
   /** Where a change to the app the seat proposed is applied: the host's, when it gave one (`GraviewProviderProps.onProposeChange`). */
   readonly onProposeChange?: ProposeChangeHost;
+  /** The host's composer and checker for a change to the app (`GraviewProviderProps.composeChange`). */
+  readonly composeChange?: ComposeChangeHost;
   /** The app this is mounted with (`GraviewProviderProps.app`), or the one it is drawn inside. */
   readonly app?: GraviewApp<S> | undefined;
   /** The reader's locale the host passed (`GraviewProviderProps.locale`, FR-178), or the one it is drawn inside. */
@@ -566,6 +570,15 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * change to the app: the tool does not exist for it.
    */
   readonly onProposeChange?: ProposeChangeHost | undefined;
+  /**
+   * THE HOST'S COMPOSER AND CHECKER FOR A CHANGE TO THE APP (Roadmap
+   * f-menu-type-anything; `composeAppChange` from `@graview/core/compose`
+   * is one): what lets the quick ask offer a missing capability as one plan
+   * that finishes the ask — the app's change and the records — rehearsed
+   * before it is offered. Unsaid, the card says what is missing and who
+   * could add it, with no plan.
+   */
+  readonly composeChange?: ComposeChangeHost | undefined;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
   /**
@@ -774,6 +787,7 @@ export function GraviewProvider<S extends AnySchema>({
   timeZone: readerTimeZone,
   onKeepLens,
   onProposeChange,
+  composeChange,
   providers,
   ai: handedAi,
   files,
@@ -869,6 +883,7 @@ export function GraviewProvider<S extends AnySchema>({
   const keepLens = onKeepLens ?? outer?.onKeepLens;
   /* The host that applies a change to the app: this provider's, else the one it is drawn inside. */
   const proposeChange = onProposeChange ?? outer?.onProposeChange;
+  const composeAppChange = composeChange ?? outer?.composeChange;
   const app = mountedApp ?? (outer?.app as GraviewApp<S> | undefined);
   /*
    * WHAT DAYS, TIMES AND NUMBERS ARE SAID IN (FR-178): the reader's a host
@@ -1186,7 +1201,7 @@ export function GraviewProvider<S extends AnySchema>({
     [setView],
   );
 
-  const { who: others, following, follow, sayWhere, sayCaret, sharing } = usePresenceState<S>({
+  const { who: others, aiHere, following, follow, sayWhere, sayCaret, sharing } = usePresenceState<S>({
     channel: presence,
     store,
     view: current,
@@ -1227,6 +1242,7 @@ export function GraviewProvider<S extends AnySchema>({
       aiDesk,
       ...(memory ? { memory } : {}),
       who: others,
+      aiHere,
       following,
       follow,
       sayWhere,
@@ -1263,6 +1279,7 @@ export function GraviewProvider<S extends AnySchema>({
       ...(brand ? { brand } : {}),
       ...(keepLens ? { onKeepLens: keepLens } : {}),
       ...(proposeChange ? { onProposeChange: proposeChange } : {}),
+      ...(composeAppChange ? { composeChange: composeAppChange } : {}),
       app,
       ...(locale ? { locale } : {}),
       ...(timeZone ? { timeZone } : {}),
@@ -1289,6 +1306,7 @@ export function GraviewProvider<S extends AnySchema>({
       aiDesk,
       memory,
       others,
+      aiHere,
       following,
       follow,
       sharing,

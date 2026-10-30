@@ -100,13 +100,49 @@ async function serveMenuHost() {
         import { mount } from "@graview/embed";
         import { registerWorkerView } from "@graview/guest/host/views";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
+        import { composeAppChange } from "@graview/core/compose";
+        import { Store } from "@graview/core";
         import tasks from ${JSON.stringify(TASKS)};
-        const compiled = compileDocumentWithoutCheck(tasks, { today: () => "2026-09-01" });
+        /*
+         * ?lean=1: the tasks with nobody to give them to — no person kind, no
+         * assignee, no Assign — the app a missing capability is asked of, its
+         * host one that applies a change to the app (and the records that
+         * finish the ask) as one change and hands back its one way back.
+         */
+        const lean = new URLSearchParams(location.search).get("lean") === "1";
+        const document0 = lean
+          ? { ...tasks, kinds: { task: { ...tasks.kinds.task, edges: {} } }, acts: { "add-task": tasks.acts["add-task"], "set-status": tasks.acts["set-status"] }, policy: { grants: [{ roles: ["owner"], mutations: "*" }], sees: [{ roles: ["owner"], kinds: ["task"] }] } }
+          : tasks;
+        const today = () => "2026-09-01";
+        const compiled = compileDocumentWithoutCheck(document0, { today });
         if (!compiled.ok) throw new Error("the document did not compile");
+        const principal = { kind: "human", id: "p1", roles: ["owner"] };
+        let current = { document: document0, app: compiled.app };
+        const onProposeChange = async (proposal) => {
+          window.__proposed = (window.__proposed ?? []).concat([proposal]);
+          const before = { ...current, store: window.__handle.store };
+          const composed = composeAppChange({ document: current.document, add: proposal.add, drop: proposal.drop });
+          if (!composed.ok) return "declined";
+          const app = composed.app;
+          const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: before.store.graph.snapshot(), ...(app.policy ? { policy: app.policy } : {}) });
+          if (proposal.records?.length) store.applyAll(proposal.records, { author: principal, ...(proposal.via ? { via: proposal.via } : {}) });
+          current = { document: composed.document, app };
+          window.__handle.setApp(app, store);
+          const undo = () => {
+            current = { document: before.document, app: before.app };
+            window.__handle.setApp(before.app, before.store);
+            window.__undone = (window.__undone ?? 0) + 1;
+          };
+          window.__undoPlan = undo;
+          // The app is drawn again for its new declaration: the host says what changed, with its one way back.
+          setTimeout(() => window.__handle.notify({ kind: "toast", sentence: "Changed the app and its records as one change.", action: { label: "Undo", onSelect: undo }, timeout: false, id: "plan" }), 50);
+          return { applied: true, undo };
+        };
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
           seed: ${JSON.stringify(BOARD_SEED)},
-          principal: { kind: "human", id: "p1", roles: ["owner"] },
+          principal,
+          ...(lean ? { onProposeChange, composeChange: composeAppChange } : {}),
           face: "pages",
           views: (schema, registry) => registerWorkerView(registry, { manifest: ${JSON.stringify(BY_HAND)}, worker: { source: ${JSON.stringify(BY_HAND_SOURCE)} } }),
           bar: true,
@@ -1105,6 +1141,10 @@ try {
         think: async ({ prompt }) => {
           await new Promise((done) => setTimeout(done, 1500));
           const told = JSON.parse(prompt);
+          const acts = (told.member_acts ?? []).map((one) => one.name);
+          // "Mark these done": one act over every member. "Assign these to nick": the app has nothing to assign with.
+          if (/done/i.test(told.ask ?? "") && acts.includes("set-status")) return { text: JSON.stringify({ answer: "Marking each of them done.", each: { act: "set-status", args: { status: "done" } } }) };
+          if (/assign/i.test(told.ask ?? "") && !acts.some((name) => /assign|give/.test(name))) return { text: JSON.stringify({ answer: "", lacks: "Tasks have no one to assign them to.", add: ["owners"], who: "Nick", then: "give each of them to Nick" }) };
           window.__thinkingSaw.push({ candidates: (told.candidates ?? []).map((one) => one.says), records: [...(told.state?.selection ?? []), ...(told.state?.neighbors ?? [])].map((one) => one.label) });
           return { text: JSON.stringify({ answer: `About ${told.about}: it is not done yet, so finish it.`, pick: (told.candidates ?? []).map((one) => one.id) }) };
         },
@@ -1332,6 +1372,143 @@ try {
       stillOpen && noCard && placeholder === "Type to filter…";
     await offContext.close();
   }
+  /*
+   * GRAVIEW IS HERE WHILE IT THINKS, AND GOES WHEN THE CARD CLOSES. Asked
+   * from the menu, the app's AI stands among who is here — in this tab's
+   * bar and, over the presence channel, in another tab's — from the words
+   * asked until the card is put away.
+   */
+  reach("graviewIsHereWhileItThinksAndGoesWhenTheCardCloses");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    const other = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`present: ${error.message}`));
+    other.on("pageerror", (error) => errors.push(`present (other tab): ${error.message}`));
+    await other.goto(faces.scene.at(""), { waitUntil: "load" });
+    await faces.scene.ready(other);
+    await opened(on, "scene", "");
+    await on.keyboard.type("is this one still waiting on anything?");
+    await on.keyboard.press("Enter");
+    const hereSays = (page) => page.evaluate(() => [...document.querySelectorAll('[data-testid="here-open"]')].map((one) => one.getAttribute("aria-label") ?? "").join(" | "));
+    await on.waitForFunction(() => [...document.querySelectorAll('[data-testid="here-open"]')].some((one) => /Graview/.test(one.getAttribute("aria-label") ?? "")), null, { timeout: 5_000 }).catch(() => undefined);
+    const whileThinking = { here: await hereSays(on), thinking: Boolean(await on.$('[data-testid="ai-thinking-mark"]')) };
+    await other.waitForFunction(() => [...document.querySelectorAll('[data-testid="here-open"]')].some((one) => /Graview/.test(one.getAttribute("aria-label") ?? "")), null, { timeout: 5_000 }).catch(() => undefined);
+    const otherTab = await hereSays(other);
+    await on.waitForFunction(() => /not done yet/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? ""), null, { timeout: 15_000 }).catch(() => undefined);
+    const answered = await hereSays(on);
+    await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
+    await on.waitForTimeout(400);
+    const closedHere = await hereSays(on);
+    await other.waitForFunction(() => ![...document.querySelectorAll('[data-testid="here-open"]')].some((one) => /Graview/.test(one.getAttribute("aria-label") ?? "")), null, { timeout: 12_000 }).catch(() => undefined);
+    const closedThere = await hereSays(other);
+    report.checks.graviewIsHereWhileItThinksAndGoesWhenTheCardCloses = {
+      whileThinking,
+      otherTab,
+      answered,
+      closedHere,
+      closedThere,
+      ok: /Graview/.test(whileThinking.here) && whileThinking.thinking && /Graview/.test(otherTab) && /Graview/.test(answered) && !/Graview/.test(closedHere) && !/Graview/.test(closedThere),
+    };
+    await context.close();
+  }
+
+  /*
+   * AN ASK ABOUT A LIST ACTS ON EVERY RECORD IN IT AS ONE CHANGE, and A
+   * MISSING CAPABILITY IS OFFERED AS ONE PLAN THAT FINISHES THE ASK — on the
+   * tasks with nobody to give them to, mounted as Cloud mounts an app, its
+   * host one that applies a change to the app.
+   */
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`plan: ${error.message}`));
+    if (!menuHost) menuHost = await serveMenuHost();
+    const openLean = async () => {
+      await on.goto(`http://localhost:${portFor("menu-host")}${MENU_BASE}/tasks?lean=1`, { waitUntil: "load" });
+      await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await on.waitForSelector('[data-graview-record="t1"]', { timeout: 30_000 });
+      await on.click(":is([data-graview-page-title], main h1, main h2) >> nth=0", { button: "right" });
+      await on.waitForSelector(MENU, { timeout: 10_000 });
+      await on.waitForTimeout(250);
+    };
+    const storeSays = () =>
+      on.evaluate(() => {
+        const store = window.__handle.store;
+        const tasks = ["t1", "t2"].map((id) => store.graph.getNode(id));
+        const people = store.graph.allNodes().filter((node) => node.kind === "person");
+        const owned = ["t1", "t2"].map((id) => store.graph.out(id, "owner").map((node) => node.name ?? node.label));
+        const last = store.log.all().at(-1);
+        return { kinds: store.schema.kinds, statuses: tasks.map((task) => task?.status), people: people.map((one) => one.name ?? one.label), owned, lastBatch: last?.batch ?? null, lastVia: last?.via ?? null };
+      });
+
+    reach("anAskAboutAListActsOnEveryRecordInItAsOneChange");
+    await openLean();
+    await on.keyboard.type("mark these done");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"] [data-testid="ai-ghost"]', { timeout: 15_000 }).catch(() => undefined);
+    const proposed = await on.evaluate(() => [...document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]')].map((one) => one.getAttribute("data-ghost-proposal")));
+    const before = await storeSays();
+    await on.click('[data-testid="quick-ask"] [data-testid="ghost-accept"]').catch(() => undefined);
+    await on.waitForTimeout(400);
+    const accepted = await storeSays();
+    const batches = await on.evaluate(() => [...new Set(window.__handle.store.log.all().slice(-2).map((op) => op.batch))]);
+    await on.click('[data-testid="quick-ask"] [data-testid="ghost-undo"]').catch(() => undefined);
+    await on.waitForTimeout(400);
+    const undone = await storeSays();
+    report.checks.anAskAboutAListActsOnEveryRecordInItAsOneChange = {
+      proposed,
+      before: before.statuses,
+      accepted: accepted.statuses,
+      batches,
+      undone: undone.statuses,
+      ok: proposed.length === 2 && proposed.every((id) => /^each:set-status:t[12]$/.test(id ?? "")) && before.statuses.some((one) => one !== "done") && accepted.statuses.every((one) => one === "done") && batches.length === 1 && JSON.stringify(undone.statuses) === JSON.stringify(before.statuses),
+    };
+
+    reach("aMissingCapabilityIsOfferedAsOnePlanThatFinishesTheAsk");
+    await openLean();
+    await on.keyboard.type("assign these to nick");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask-plan"]', { timeout: 15_000 }).catch(() => undefined);
+    const offered = await on.evaluate(() => {
+      const card = document.querySelector('[data-testid="quick-ask"]');
+      return {
+        said: card?.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+        parts: [...(card?.querySelectorAll("[data-plan-part]") ?? [])].map((one) => ({ part: one.getAttribute("data-plan-part"), said: (one.textContent ?? "").trim() })),
+        yes: Boolean(card?.querySelector('[data-testid="quick-ask-plan-yes"]')),
+        proposedYet: (window.__proposed ?? []).length,
+      };
+    });
+    const notYet = await storeSays();
+    await on.click('[data-testid="quick-ask-plan-yes"]').catch(() => undefined);
+    await on.waitForFunction(() => window.__handle.store.schema.kinds.includes("person"), null, { timeout: 10_000 }).catch(() => undefined);
+    await on.waitForTimeout(500);
+    const landed = await storeSays();
+    const undoOffered = await on.waitForSelector('[data-testid="notice-action"]', { timeout: 5_000 }).then(() => true, () => false);
+    if (undoOffered) await on.click('[data-testid="notice-action"]');
+    else await on.evaluate(() => window.__undoPlan?.());
+    await on.waitForFunction(() => !window.__handle.store.schema.kinds.includes("person"), null, { timeout: 10_000 }).catch(() => undefined);
+    await on.waitForTimeout(400);
+    const back = await storeSays();
+    const text = offered.parts.map((one) => one.said).join(" | ");
+    report.checks.aMissingCapabilityIsOfferedAsOnePlanThatFinishesTheAsk = {
+      offered,
+      notYet: { kinds: notYet.kinds, people: notYet.people },
+      landed,
+      undoOffered,
+      back: { kinds: back.kinds, owned: back.owned },
+      ok:
+        /no one to assign them to/i.test(offered.said ?? "") && /Should I\?$/.test((offered.said ?? "").trim()) && offered.yes && offered.proposedYet === 0 &&
+        /new kind, person/i.test(text) && /Tasks get an owner/.test(text) && /Add Nick as a person/.test(text) && /each of the 2 tasks here to Nick/i.test(text) &&
+        !notYet.kinds.includes("person") &&
+        landed.kinds.includes("person") && landed.people.includes("Nick") && landed.owned.every((names) => names.length === 1 && names[0] === "Nick") && landed.lastVia === "ai:fake" &&
+        undoOffered && !back.kinds.includes("person") && back.owned.every((names) => names.length === 0),
+    };
+    await context.close();
+  }
+
   /*
    * OPTION KEEPS THE BROWSER'S OWN MENU; CTRL+CLICK IS OURS. A right-click
    * with Option (Alt) held is the browser's — Inspect element, Look up —

@@ -366,7 +366,7 @@ export function ChatPanel<S extends AnySchema>({
     if (!onProposeChange) return;
     try {
       const answered = await onProposeChange(proposal);
-      if (answered === "applied") {
+      if (answered === "applied" || (typeof answered === "object" && answered.applied)) {
         settle(key, { state: "applied", said: proposal.card.said });
         noteSeat({ type: "said", author, say: `Changed the app: ${lowerFirst(proposal.card.said)}` });
       } else {

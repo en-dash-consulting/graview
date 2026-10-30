@@ -1,6 +1,7 @@
-import { layer, pluralOf, type AnySchema } from "@graview/core";
+import { layer, nameOfAuthor, pluralOf, type AnySchema } from "@graview/core";
 import { aiTargetOf, catalogOf, existingViewsOf, recordsOfTarget, type AiCandidate, type AiTarget } from "@graview/core/catalog";
 import { search } from "@graview/core/search";
+import { TRAIT_WORDS, TRAITS } from "@graview/core/traits";
 import { useAiDeskState, useGraview } from "@graview/react/provider";
 import { applyAffordance, deriveAffordances, previewAffordance } from "@graview/tools/derive";
 import { answerHere, targetWords, type InlineResult } from "@graview/tools/inline-ai";
@@ -10,6 +11,7 @@ import { askOf, drawPanel, GhostTray, takeOffer } from "./inline-ai-menu.js";
 import { useInlineEnv } from "./inline-ai-env.js";
 import { openQuickAsk, type QuickAskOpening } from "./quick-ask-desk.js";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
+import type { AppPlan } from "./quick-ask-plan.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -42,10 +44,39 @@ interface Row {
   readonly take: () => void;
 }
 
-/** What the card answered, or is answering. */
+/** What the card answered, or is answering — and, where the app lacked what was asked, the plan that would finish it. */
 interface Answering {
   readonly said: string;
   readonly result: InlineResult | null;
+  readonly plan?: AppPlan | { readonly refused: string };
+}
+
+/** Where a plan offered on the card stands: offered, on its way, landed (with its one way back), or set aside. */
+type PlanState = { readonly state: "offered" } | { readonly state: "applying" } | { readonly state: "applied"; readonly undo?: () => void | Promise<void> } | { readonly state: "declined"; readonly said: string } | { readonly state: "undone" };
+
+/** Words in the follow-up that say yes, or no, to a plan the card asks about. */
+const YES = /^(yes|yep|yeah|sure|ok(ay)?|do it|go ahead|please do)\b/i;
+const NO = /^(no|nope|don'?t|not now|never ?mind)\b/i;
+
+/**
+ * THE RECORDS A LIST OR A PLACE SHOWS (Roadmap f-menu-type-anything): what
+ * "these" and "all the tasks in this list" mean — the ones drawn on the
+ * page, of the target's kind where it has one; on the scene, every record
+ * of the kind this reader may see.
+ */
+function membersOf(store: { readonly graph: { getNode(id: string): { readonly kind: string } | undefined; allNodes(): readonly { readonly id: string; readonly kind: string }[] } }, target: AiTarget, face: "scene" | "pages"): readonly string[] {
+  const kind = target.on === "list" ? target.kind : target.on === "lens" ? target.kind : undefined;
+  if (target.on !== "list" && target.on !== "lens") return [];
+  if (face === "pages" && typeof document !== "undefined") {
+    const ids = new Set<string>();
+    for (const element of document.querySelectorAll("main [data-graview-listed], main [data-graview-record], main [data-graview-pick]")) {
+      const id = element.getAttribute("data-graview-listed") ?? element.getAttribute("data-graview-record") ?? element.getAttribute("data-graview-pick");
+      const node = id ? store.graph.getNode(id) : undefined;
+      if (id && node && (kind === undefined || node.kind === kind)) ids.add(id);
+    }
+    if (ids.size > 0) return [...ids];
+  }
+  return kind ? store.graph.allNodes().filter((node) => node.kind === kind).map((node) => node.id) : [];
 }
 
 /** Words that say what kind of row is wanted, not which: "show", "go to", "open". */
@@ -67,7 +98,8 @@ const GAP = 12;
 
 export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
   const env = useInlineEnv();
-  const { setMenuAt } = useGraview<AnySchema>();
+  const { setMenuAt, aiHere, session, people, seats, onProposeChange, composeChange } = useGraview<AnySchema>();
+  const [planState, setPlanState] = useState<PlanState>({ state: "offered" });
   const target = useMemo<AiTarget>(() => opening.target ?? aiTargetOf(opening.pointed ?? { about: [] }, (id) => env.store.graph.has(id)), [opening, env.store]);
   const about = useMemo(() => targetWords(env.store, target, env.places), [env.store, target, env.places]);
   const [words, setWords] = useState("");
@@ -89,6 +121,34 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
     },
     [env.desk],
   );
+
+  /*
+   * GRAVIEW IS HERE WHILE IT THINKS (Roadmap f-menu-type-anything): from the
+   * words asked until this card is put away — its close, Escape, a press
+   * away, an answer taken back — the app's AI stands among who is here, as
+   * a bot editing does: "Graview, for Ada", at what it was asked about, so
+   * the bar says it and the picture marks the thing; the others are told
+   * on the presence channel where there is one. A page that dies leaves it
+   * to lapse by the presence's own time.
+   */
+  const thinking = answering !== null;
+  useEffect(() => {
+    if (!thinking) return;
+    const at = recordsOfTarget(target)[0] ?? (target.on === "list" ? `kind:${target.kind}` : target.on === "lens" && target.kind ? `kind:${target.kind}` : null);
+    const person = env.principal;
+    const name = person.id ? nameOfAuthor(person, { graph: env.store.graph as never, schema: env.store.schema, ...(seats ? { seats } : {}), ...(people ? { people } : {}) }) : undefined;
+    aiHere({
+      participant: `agent:graview-for-${person.id ?? "anyone"}:${session}`,
+      kind: "agent",
+      name: "Graview",
+      ...(person.id ? { onBehalfOf: person.id, ...(name ? { onBehalfOfName: name } : {}) } : {}),
+      over: at,
+      robot: { at, mode: "thinking" },
+    });
+    return () => aiHere(null);
+    // Stands from the ask to the card's close; where it is said once, as it began.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thinking]);
 
   /* THE CATALOG OF THIS TARGET: its panels ("Show …") and places, and the acts the derivation offers this viewer on its records. */
   const catalog = useMemo(() => {
@@ -144,14 +204,58 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       setActive(-1);
       setSaid(null);
       setAnswering({ said: asked, result: null });
-      const result = await answerHere(env.ai, { ...askOf(env, target, asked), said: asked, ...(before ? { follows: before } : {}) });
+      setPlanState({ state: "offered" });
+      const members = membersOf(env.store as never, target, face);
+      const result = await answerHere(env.ai, {
+        ...askOf(env, target, asked),
+        said: asked,
+        ...(before ? { follows: before } : {}),
+        ...(members.length > 0 ? { members } : {}),
+        traits: TRAITS.map((trait) => ({ trait, says: TRAIT_WORDS[trait] })),
+      });
       env.desk.record(result.interaction);
       // Its proposed change is a ghost, drawn on this card: accepted there as one batch, with its one undo.
       if (result.ghost && result.ghost.proposals.length > 0) env.desk.setGhost({ ghost: result.ghost, onCard: true });
-      if (live.current) setAnswering({ said: asked, result });
+      /* The app lacks it: the whole plan that would finish the ask, composed and rehearsed before it is said. */
+      let plan: Answering["plan"];
+      if (result.missing) {
+        try {
+          const { planFor } = await import("./quick-ask-plan.js");
+          plan = await planFor(env, { said: asked, missing: result.missing, members, host: onProposeChange !== undefined, ...(composeChange ? { compose: composeChange } : {}) });
+        } catch (error) {
+          plan = { refused: `${result.missing.said} ${error instanceof Error ? error.message : String(error)}` };
+        }
+      }
+      if (live.current) setAnswering({ said: asked, result, ...(plan ? { plan } : {}) });
     },
-    [answering, env, target],
+    [answering, env, target, face, onProposeChange, composeChange],
   );
+
+  /*
+   * YES: THE PLAN LANDS AS ONE CHANGE. The host applies the change to the
+   * app and the records that finish the ask together, as the person, and
+   * hands back its one way back; a host that declines is said on the card.
+   */
+  const offered = answering?.plan && "question" in answering.plan ? answering.plan : undefined;
+  const yes = useCallback(async () => {
+    const proposal = offered?.proposal;
+    if (!proposal || !onProposeChange || planState.state !== "offered") return;
+    setPlanState({ state: "applying" });
+    try {
+      const answered = await onProposeChange(proposal);
+      if (!live.current) return;
+      if (answered === "declined") setPlanState({ state: "declined", said: "The host declined this change to the app." });
+      else setPlanState({ state: "applied", ...(typeof answered === "object" ? { undo: answered.undo } : {}) });
+    } catch (error) {
+      if (live.current) setPlanState({ state: "declined", said: error instanceof Error ? error.message : String(error) });
+    }
+  }, [offered, onProposeChange, planState]);
+  const no = useCallback(() => setPlanState({ state: "declined", said: "Left as it is." }), []);
+  const undoPlan = useCallback(async () => {
+    if (planState.state !== "applied" || !planState.undo) return;
+    await planState.undo();
+    if (live.current) setPlanState({ state: "undone" });
+  }, [planState]);
 
   /* Opened with words already (Find's "Ask: ‘…’", Activity's "Ask again"): asked at once. */
   const first = useRef(opening.asked);
@@ -287,7 +391,14 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       event.preventDefault();
       const row = rows[active];
       if (row) row.take();
-      else if (words.trim()) void ask(words);
+      // A plan the card asks about takes its answer in words too: "yes", "no"; anything else revises it.
+      else if (offered?.proposal && planState.state === "offered" && YES.test(words.trim())) {
+        setWords("");
+        void yes();
+      } else if (offered && planState.state === "offered" && NO.test(words.trim())) {
+        setWords("");
+        no();
+      } else if (words.trim()) void ask(words);
     }
   };
 
@@ -329,8 +440,57 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
             “{answering.said}”
           </p>
           <p data-testid="quick-answer-text" aria-live="polite" style={{ margin: 0, fontSize: "0.9375rem", lineHeight: 1.45, color: result?.interaction.outcome === "failed" ? "var(--graview-warn)" : "var(--graview-ink)", overflowWrap: "anywhere" }}>
-            {result === null ? "Thinking…" : result.interaction.outcome === "failed" ? (result.interaction.failed ?? "The AI could not answer that here.") : (result.answer ?? "")}
+            {result === null
+              ? "Thinking…"
+              : result.interaction.outcome === "failed"
+                ? (result.interaction.failed ?? "The AI could not answer that here.")
+                : answering.plan
+                  ? "question" in answering.plan
+                    ? answering.plan.question
+                    : answering.plan.refused
+                  : (result.answer ?? "")}
           </p>
+          {offered ? (
+            /* The plan, whole, before it lands: each part said, Yes and No — or, for a seat that may not change the app, who could. */
+            <section data-testid="quick-ask-plan" data-plan-state={planState.state} aria-label="What I would do" style={PLAN}>
+              <ol style={{ margin: 0, paddingInlineStart: 18, display: "grid", gap: 2 }}>
+                {offered.parts.map((part, at) => (
+                  <li key={at} data-plan-part={part.part} style={{ fontStyle: planState.state === "applied" ? "normal" : "italic" }}>
+                    {part.said}
+                  </li>
+                ))}
+              </ol>
+              {offered.proposal && onProposeChange ? (
+                planState.state === "offered" || planState.state === "applying" ? (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button type="button" data-testid="quick-ask-plan-yes" disabled={planState.state === "applying"} onClick={() => void yes()} style={OFFER}>
+                      Yes
+                    </button>
+                    <button type="button" data-testid="quick-ask-plan-no" disabled={planState.state === "applying"} onClick={no} style={OFFER}>
+                      No
+                    </button>
+                  </div>
+                ) : planState.state === "applied" ? (
+                  <div role="status" style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <span>Done, as one change.</span>
+                    {planState.undo ? (
+                      <button type="button" data-testid="quick-ask-plan-undo" onClick={() => void undoPlan()} style={OFFER}>
+                        Undo
+                      </button>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p role="status" style={{ margin: 0, color: "var(--graview-ink-muted)" }}>
+                    {planState.state === "undone" ? "Taken back." : planState.said}
+                  </p>
+                )
+              ) : (
+                <p data-testid="quick-ask-plan-who" style={{ margin: 0, color: "var(--graview-ink-muted)" }}>
+                  {`Only ${offered.whoMay ?? "whoever may change this app"} can make this change.`}
+                </p>
+              )}
+            </section>
+          ) : null}
           {result && result.offers.length > 0 ? (
             <ul aria-label="What acts on it" style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: 6 }}>
               {result.offers.map((offer) => (
@@ -529,6 +689,8 @@ const THINKING: CSSProperties = {
   pointerEvents: "none",
 };
 const THINKING_DOT: CSSProperties = { width: 7, height: 7, borderRadius: 999, background: "var(--graview-accent)", animation: "graview-thinking 1s ease-in-out infinite alternate" };
+
+const PLAN: CSSProperties = { display: "grid", gap: 8, padding: 10, borderRadius: 10, border: "1px dashed var(--graview-accent)", fontSize: "0.875rem" };
 
 const CARD: CSSProperties = {
   position: "fixed",

@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 10704,
-  "gzipped": 3626,
-  "note": "Raised when the right-click menu took a field to type in (Roadmap f-menu-type-anything): the field, every row narrowed to the words typed, the Fast slot asked which row they mean once the typing rests, Enter on the lit row, the Ask row that opens the quick ask's card on the words, the Fast slot picking the context a quick ask sends the Thinking slot, Activity saying what was sent, the thinking mark the card puts on what it is about, and the room the AI's suggestions hold from the menu's first frame so no row below them moves. 10_704 / 3_626 more. Measured at 2_577_315 / 933_654 against 2_566_611 / 930_028."
+  "minified": 17013,
+  "gzipped": 6100,
+  "note": "Raised when the right-click menu took a field to type in (Roadmap f-menu-type-anything): the field, every row narrowed to the words typed, the Fast slot asked which row they mean once the typing rests, Enter on the lit row, the Ask row that opens the quick ask's card on the words, the Fast slot picking the context a quick ask sends the Thinking slot, Activity saying what was sent, the thinking mark, the room the AI's suggestions hold so no row below them moves, Graview standing among who is here while it thinks, an ask about a list acting on each of its records, and a missing capability offered as one plan (its composer and checker the host's); Inspect and its sheet taken out. 17_013 / 6_100 more. Measured at 2_583_624 / 936_309 against 2_566_611 / 930_209."
 }

@@ -37,7 +37,9 @@ import { relationActName } from "./mutations/derived-names.js";
 import { humanizeField } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import { accentProblem } from "./theme/accent.js";
-import { traitsOfDocument, type Trait } from "./traits.js";
+import { traitsOfDocument, type Trait, type TraitName } from "./traits.js";
+import { compileDocument } from "./document/compile-checked.js";
+import { composeReshape } from "./starting-document.js";
 
 export type { DocumentEdit } from "./document/edit.js";
 /** A kind said by its noun and its plural, as the declaration spells them — for a host that writes about a document's kinds (the starter), never from the kind's id alone. */
@@ -317,4 +319,26 @@ export type { ComposedReshape, DropPart, Part, PartKind, StartingDocument, Start
  */
 export function traitsOf(source: GraviewDocument | GraviewApp<AnySchema>): Trait[] {
   return traitsOfDocument(isDocument(source) ? source : toDocument(source).document);
+}
+
+/**
+ * A CHANGE TO THE APP, COMPOSED AND CHECKED, FOR A HOST (Roadmap
+ * f-menu-type-anything): the traits a plan adds (and the parts it drops)
+ * composed onto the app's document (`composeReshape`), the edits said in
+ * words, and the changed document compiled by the checker — the app it
+ * makes, or the checker's first error as a refusal. What a host hands the
+ * quick ask (`composeChange`) so it can offer a whole plan that finishes an
+ * ask, rehearsed before it is offered; the composer and the checker stay
+ * the host's, off every page.
+ */
+export function composeAppChange(change: { readonly document: GraviewDocument; readonly add: readonly TraitName[]; readonly drop?: readonly string[] }):
+  | { readonly ok: true; readonly document: GraviewDocument; readonly app: GraviewApp<AnySchema>; readonly said: readonly string[] }
+  | { readonly ok: false; readonly refused: string } {
+  const composed = composeReshape({ document: change.document, add: change.add, drop: change.drop ?? [] });
+  const compiled = compileDocument(composed.document);
+  if (!compiled.ok) {
+    const finding = compiled.findings.find((one) => one.severity === "error") ?? compiled.findings[0];
+    return { ok: false, refused: `It would not pass the checker${finding ? `: ${finding.message}` : ""}.` };
+  }
+  return { ok: true, document: composed.document, app: compiled.app as GraviewApp<AnySchema>, said: composed.said.filter((line) => !line.startsWith("Not done")) };
 }

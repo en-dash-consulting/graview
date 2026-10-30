@@ -88,7 +88,11 @@ picking the context the Thinking slot is told (`entry.context`) — and with
 no model the field only filters. `TYPESAFE_API_KEY=… XAI_API_KEY=… pnpm
 dev` lends both slots through the dev server — Anthropic, xAI or OpenAI
 by the key set — Jev in the Fast one (`decisionBridge`; that provider's
-small quick model without a Jev key). `ai={{ off: true }}` hides every AI part.
+small quick model without a Jev key). While it thinks, "Graview, for
+<person>" stands among who is here. An ask about a list acts on each of
+its records as one change; one the app cannot do is answered with what it
+lacks and, with `onProposeChange`, one plan — the app change and the
+records — asked "Should I?" (`ReshapeProposal.records`). `ai={{ off: true }}` hides every AI part.
 Prove it with stubs: `stubFast()`, `stubThinking()` from
 `@graview/tools/inline-ai` (`pnpm verify inline-ai`).
 

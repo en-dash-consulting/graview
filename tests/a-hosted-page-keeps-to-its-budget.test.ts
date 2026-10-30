@@ -192,7 +192,7 @@ describe("a hosted page", () => {
     // 1072 KB since an app's own images came to be drawn under its base (Roadmap f-brand-marks-under-app-base) and a face that owns the page came to put the app's theme-color in its head (f-app-icons-home-screen): `assetsAt` on the provider and the frame, `assetSrc`, `useThemeColor` and `themeColorsOf`: the scene face measured 1_097_638 B, 1_414 more than main (1_096_224).
     // 1078 KB since the Scene came to hold steady under a finger and a mouse (Roadmap f-scene-interaction-pass): two fingers read from their pointers, a hand's zoom painted as a transform until it lets go, and a press a beat after a tap landing on what it was aimed at: the scene face measured 1_102_710 B, 6_486 more than main (1_096_224).
     // 1079 KB with both in batch/0-1-64: 1_097_638 + 6_486 = 1_104_124 B.
-    // 1080 KB since the right-click menu came to take typing (Roadmap f-menu-type-anything) and Option to keep the browser's own menu: a popover's first stop passing over the menu's field, Option heard on the scene's cards, lines and ground, and the pages' Inspect and its sheet taken out: the scene face measured 1_104_937 B, 813 more than batch/0-1-64 (1_104_124).
+    // 1080 KB since the right-click menu came to take typing (Roadmap f-menu-type-anything) and Option to keep the browser's own menu: a popover's first stop passing over the menu's field, Option heard on the scene's cards, lines and ground, and the pages' Inspect and its sheet taken out: the scene face measured 1_105_669 B, 829 more than main after 0.1.64 (1_104_840), Graview standing among who is here while it thinks with them.
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1080 * 1024);
   });
 

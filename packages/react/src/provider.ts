@@ -64,7 +64,7 @@ export { createSeatTalk, seatTalkKey, useSeatTalkState } from "./seat-talk.js";
 // The inline AI's desk: the interactions Activity draws and the ghost waiting to be accepted, held by the app.
 export { createAiDesk, useAiDeskState } from "./ai-desk.js";
 export type { AiDesk, AiDeskState, HeldGhost } from "./ai-desk.js";
-export type { KeepLensAnswer, KeepLensHost, LensEdit, ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
+export type { KeepLensAnswer, KeepLensHost, LensEdit, ComposeChangeHost, ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
 export type { LazyModule, LazyPartOptions, PartsWatch } from "./lazy-part.js";
 // The app as it was (Roadmap f-playback): the moment a face draws instead of now, held by its outermost provider.
 export { PlaybackContext, useLiveStore, useOwnPlayback, usePlayback, useReadersServed } from "./past.js";

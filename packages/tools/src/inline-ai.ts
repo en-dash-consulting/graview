@@ -33,7 +33,7 @@
  * when the inline AI is first opened: a page whose reader never right-
  * clicks carries none of it.
  */
-import { labelOf, pluralOf, recordFriction, type AnySchema, type AppPurpose, type Author, type MutationCall, type Principal, type Store } from "@graview/core";
+import { argumentsTaken, labelOf, pluralOf, recordFriction, type AnySchema, type AppPurpose, type Author, type MutationCall, type Principal, type Store } from "@graview/core";
 import {
   aiContextOf,
   catalogOf,
@@ -146,6 +146,24 @@ export interface InlineResult {
   readonly panel?: AiPanel;
   /** A quick ask's answer, in words. */
   readonly answer?: string;
+  /**
+   * WHAT THE APP LACKS FOR IT (Roadmap f-menu-type-anything): the model found
+   * no act that can do what was asked because the app has no field, link or
+   * kind for it — said plainly ("Tasks have no one to assign them to."), the
+   * traits that would bring it (`TRAITS`), and the person the words name, to
+   * make or find. The face composes the whole plan from it.
+   */
+  readonly missing?: AnswerMissing;
+}
+
+/** What an answer found the app lacks, and what would finish the ask. */
+export interface AnswerMissing {
+  readonly said: string;
+  readonly add: readonly string[];
+  /** The record the words name, by its name ("Nick"), to find or make. */
+  readonly who?: string;
+  /** The act to run over every record asked about once the app has it, by what it does ("give it to someone"): the plan finds it in the changed app. */
+  readonly then?: string;
 }
 
 /** A fresh interaction id: `ai-` and something unique enough for one app's history. */
@@ -524,12 +542,22 @@ export function answerOf(ai: HostAi): AnswerProvider | undefined {
 /** A quick ask: the inline ask, with the ask it follows on the same card. */
 export interface QuickAsk<S extends AnySchema = AnySchema> extends InlineAsk<S> {
   readonly said: string;
+  /**
+   * THE RECORDS A LIST OR A PLACE SHOWS, asked about as one ("all the tasks
+   * in this list"): the model may answer with one act over every one of
+   * them, previewed whole as one change.
+   */
+  readonly members?: readonly string[];
+  /** The traits the app could take (`TRAITS`, said in words), offered where the model finds the app lacks what was asked. */
+  readonly traits?: readonly { readonly trait: string; readonly says: string }[];
   /** The ask before this one on the card, and what it was answered: a follow-up, not a thread. */
   readonly follows?: { readonly said: string; readonly answer: string };
 }
 
 const ANSWER_SYSTEM =
-  'You answer a person\'s question about what they are looking at in an app, from the state given and nothing else. Answer only JSON: {"answer": one to three short sentences, "pick": [candidate ids that act on the answer, best first, at most three]}. Pick only ids from the candidates, and none when nothing fits. Never say an id to the person.';
+  'You answer a person\'s question about what they are looking at in an app, from the state given and nothing else. Answer only JSON: {"answer": one to three short sentences, "pick": [candidate ids that act on the answer, best first, at most three]}. Pick only ids from the candidates, and none when nothing fits. Never say an id to the person. ' +
+  'Where "members" are given and the person asks for something done to every one of them, answer "each": {"act": the name of one of "member_acts", "args": the values it asks for, by name} — one act over every member, as one change. ' +
+  'Where no act can do what they ask because the app has no field, link or kind for it, answer "lacks": one plain sentence of what the app is missing (never an id), "add": [the names of "traits" that would bring it], "who": the name of the record their words name, if any, and "then": what is to be done to each member once the app has it, in a few words.';
 
 /**
  * WORDS ASKED ABOUT WHAT THE PERSON IS ON (the quick ask): answered in a
@@ -563,6 +591,19 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   }
   const asked: Asked = { ...begun, state: sent.state, catalog: { ...begun.catalog, candidates: sent.choices }, entry: { ...begun.entry, context: sent.context } };
   const choices = sent.choices;
+  /* The records a list shows, as this viewer may see them, and the acts any of them takes. */
+  const members = (ask.members ?? []).flatMap((id) => {
+    const node = ask.store.graph.getNode(id);
+    return node ? [node] : [];
+  }).slice(0, 60);
+  const memberKinds = new Set(members.map((node) => node.kind));
+  const memberActs = ask.store.allMutations().flatMap((mutation) => {
+    const kinds = mutation.subject?.kinds;
+    if (!mutation.subject || !(kinds === "*" || (kinds as readonly string[]).some((kind) => memberKinds.has(kind)))) return [];
+    return [{ name: mutation.name, title: mutation.title ?? mutation.name, subjectArg: mutation.subject.arg, asks: (argumentsTaken(mutation) ?? []).filter((arg) => arg !== mutation.subject!.arg) }];
+  });
+  let each: { readonly act: string; readonly args: Readonly<Record<string, unknown>> } | undefined;
+  let missing: AnswerMissing | undefined;
   let text = "";
   let picked: { candidate: AiCandidate; confidence?: number }[] = [];
   const pickedOf = (ids: readonly unknown[]) => ids.flatMap((id) => choices.filter((candidate) => candidate.id === id)).slice(0, 3).map((candidate) => ({ candidate }));
@@ -579,12 +620,30 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
       const parsed = (await thought(
         thinking,
         ANSWER_SYSTEM,
-        JSON.stringify({ ask: said, about: asked.entry.targetLabel, ...(ask.follows ? { follows: ask.follows } : {}), state: asked.state, candidates: choices.map((candidate) => ({ id: candidate.id, says: candidate.description })) }),
+        JSON.stringify({
+          ask: said,
+          about: asked.entry.targetLabel,
+          ...(ask.follows ? { follows: ask.follows } : {}),
+          state: asked.state,
+          candidates: choices.map((candidate) => ({ id: candidate.id, says: candidate.description })),
+          ...(members.length > 0 ? { members: members.map((node) => ({ id: node.id, label: labelOf(ask.store.schema.tryDefinition(node.kind), node as never) })), member_acts: memberActs.map((act) => ({ name: act.name, title: act.title, asks: act.asks })) } : {}),
+          ...(ask.traits && ask.traits.length > 0 ? { traits: ask.traits } : {}),
+        }),
         asked,
         asked.meter,
-      )) as { answer?: unknown; pick?: unknown } | undefined;
+      )) as { answer?: unknown; pick?: unknown; each?: unknown; lacks?: unknown; add?: unknown; who?: unknown; then?: unknown } | undefined;
       text = typeof parsed?.answer === "string" ? parsed.answer.trim() : "";
       picked = pickedOf(Array.isArray(parsed?.pick) ? parsed.pick : []);
+      each = eachOf(parsed?.each);
+      if (typeof parsed?.lacks === "string" && parsed.lacks.trim()) {
+        const traits = new Set((ask.traits ?? []).map((one) => one.trait));
+        missing = {
+          said: parsed.lacks.trim(),
+          add: (Array.isArray(parsed.add) ? parsed.add : []).filter((one): one is string => typeof one === "string" && traits.has(one)),
+          ...(typeof parsed.who === "string" && parsed.who.trim() ? { who: parsed.who.trim() } : {}),
+          ...(typeof parsed.then === "string" && parsed.then.trim() ? { then: parsed.then.trim() } : {}),
+        };
+      }
     } else if (fast && choices.length > 0) {
       const { question, of } = choiceAmong(choices, `Which of these best answers, or acts on: ${said}`);
       const answers = await decided(fast, { ...asked.state, asked: said, candidates: choices.map((candidate) => ({ id: candidate.id, type: candidate.type, says: candidate.description })) }, { answer: question }, asked.meter);
@@ -594,7 +653,7 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   } catch (error) {
     return failedResult(asked, said, "ask", error instanceof Error ? error.message : String(error));
   }
-  if (!text && picked.length === 0) {
+  if (!text && picked.length === 0 && !each && !missing) {
     // The seat could not answer (Roadmap f-friction-log): the question, and the place it was asked on. A provider that failed is not this.
     const place = ask.target.on === "place" || ask.target.on === "lens" ? ask.target.place : undefined;
     const kind = ask.target.on === "list" ? ask.target.kind : ask.target.on === "lens" ? ask.target.kind : undefined;
@@ -607,6 +666,20 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
     const proposal = proposalOf(candidate);
     return proposal ? [{ ...proposal, ...(confidence !== undefined ? { confidence } : {}) }] : [];
   });
+  /*
+   * ONE ACT OVER EVERY RECORD THE LIST SHOWS, AS ONE CHANGE: a proposal for
+   * each, previewed as the person, accepted together and taken back with one
+   * undo; one the store would refuse them is left out, as any ghost's.
+   */
+  const act = each ? memberActs.find((one) => one.name === each!.act) : undefined;
+  if (act) {
+    for (const node of members) {
+      const mutation = ask.store.allMutations().find((one) => one.name === act.name);
+      const kinds = mutation?.subject?.kinds;
+      if (!mutation || !(kinds === "*" || (kinds as readonly string[]).includes(node.kind))) continue;
+      proposals.push({ id: `each:${act.name}:${node.id}`, label: `${act.title}: ${labelOf(ask.store.schema.tryDefinition(node.kind), node as never)}`, said: act.title, call: { name: act.name, args: { ...each!.args, [act.subjectArg]: node.id } }, record: node.id });
+    }
+  }
   const ghost = proposals.length > 0 ? ghostOf(ask.store, { interaction: asked.id, target: ask.target, basis: said, ...(model ? { model } : {}), proposals }, ask.principal) : undefined;
   const offers = picked.map(({ candidate }) => candidate).filter((candidate) => proposalOf(candidate) === undefined);
   const offered = [...offers.map((candidate) => offeredOf(candidate, picked.find((one) => one.candidate === candidate)?.confidence)), ...(ghost?.proposals ?? []).map((proposal) => ({ id: proposal.id, type: (proposal.field !== undefined ? "fill" : "act") as AiOffered["type"], label: proposal.label, ...(proposal.confidence !== undefined ? { confidence: proposal.confidence } : {}) }))];
@@ -614,8 +687,17 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
     interaction: { ...asked.entry, ask: { kind: "ask", said }, offered, outcome: "offered", ...(text ? { answer: text } : {}), usage: [...asked.usage] },
     offers,
     ...(ghost && ghost.proposals.length > 0 ? { ghost } : {}),
-    ...(text ? { answer: text } : {}),
+    ...(text ? { answer: text } : missing ? { answer: missing.said } : {}),
+    ...(missing ? { missing } : {}),
   };
+}
+
+/** The model's "each", read: an act's name and its values, or nothing. */
+function eachOf(value: unknown): { readonly act: string; readonly args: Readonly<Record<string, unknown>> } | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const { act, args } = value as { act?: unknown; args?: unknown };
+  if (typeof act !== "string") return undefined;
+  return { act, args: typeof args === "object" && args !== null && !Array.isArray(args) ? (args as Record<string, unknown>) : {} };
 }
 
 // ── the ghost ───────────────────────────────────────────────────────────────

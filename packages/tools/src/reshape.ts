@@ -1,8 +1,12 @@
+import type { MutationCall } from "@graview/core";
 import { documentOf, type GraviewDocument } from "@graview/core/document";
 import { hasTrait, TRAIT_BRINGS, TRAIT_WORDS, TRAITS, traitsOfDocument, type TraitName } from "@graview/core/traits";
 import type { Answer, Decide } from "./fast.js";
 import type { Question } from "./questions.js";
 import { noulOf } from "./tidy/system-one.js";
+
+/** Whether a seat may change the app's declaration — the studio's door's judgment, here for a page that fetched this entry (the quick ask's plan) without the whole of `@graview/tools`. */
+export { mayChangeDeclaration } from "./agent/declaration.js";
 
 /*
  * `@graview/tools/reshape` — ASK AI IN AN APP PROPOSES A CHANGE TO THE APP
@@ -91,6 +95,17 @@ export interface ReshapeProposal {
   /** The kinds and traits to drop, by name. */
   readonly drop: readonly string[];
   readonly card: ReshapeCard;
+  /**
+   * WHAT FINISHES THE ASK ONCE THE APP HAS CHANGED (Roadmap
+   * f-menu-type-anything): the records to make and change in the changed
+   * app — "add Nick as a person, give each task in This week to him" — as
+   * calls of its acts, a record made named by its `mintedHint` in the calls
+   * after it. The host applies them with the change to the app, as one
+   * change, previewed whole before it lands and taken back with one undo.
+   */
+  readonly records?: readonly MutationCall[];
+  /** Whose words made the plan, as the records' ops say it: `ai:<name>`. */
+  readonly via?: string;
 }
 
 /** A turn run through the host's model: the proposal (null when the reading changes nothing), the reading, the raw answers to keep, and what the call cost. */
@@ -101,8 +116,12 @@ export interface ReshapeTurn {
   readonly usage: { readonly inputTokens: number; readonly outputTokens: number };
 }
 
-/** What the host says it did with a proposal a person accepted. */
-export type ProposeChangeAnswer = "applied" | "declined";
+/**
+ * What the host says it did with a proposal a person accepted: applied or
+ * declined — or applied with the one way back, which the card offers as
+ * Undo (the change to the app and the records it made, taken back together).
+ */
+export type ProposeChangeAnswer = "applied" | "declined" | { readonly applied: true; readonly undo: () => void | Promise<void> };
 
 /**
  * THE HOST THAT APPLIES A CHANGE TO THE APP (`onProposeChange`). Handed the
@@ -115,6 +134,20 @@ export type ProposeChangeAnswer = "applied" | "declined";
  * never offers the change.
  */
 export type ProposeChangeHost = (proposal: ReshapeProposal) => ProposeChangeAnswer | Promise<ProposeChangeAnswer>;
+
+/**
+ * THE HOST'S COMPOSER, LENT TO A PAGE (Roadmap f-menu-type-anything): the
+ * traits a plan adds composed onto the app's document and judged by the
+ * checker — the changed document, the app it compiles to and the edits in
+ * words, or a refusal. `composeAppChange` from `@graview/core/compose` is
+ * one; a host hands it (`composeChange`) so the quick ask can offer a
+ * whole plan that finishes an ask, rehearsed before it is offered, while
+ * the composer and the checker stay off the page. Unsaid, a missing
+ * capability is said, and who could add it, without a plan.
+ */
+export type ComposeChangeHost = (change: { readonly document: GraviewDocument; readonly add: readonly TraitName[]; readonly drop?: readonly string[] }) =>
+  | { readonly ok: true; readonly document: GraviewDocument; readonly app: object; readonly said: readonly string[] }
+  | { readonly ok: false; readonly refused: string };
 
 /** The seat's tool, as a host's model is told of it: the Roadmap's `propose-change`, spelled as the surface spells its tools. */
 export const PROPOSE_CHANGE = "propose_change";
