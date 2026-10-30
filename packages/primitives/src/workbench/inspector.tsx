@@ -12,7 +12,7 @@ import { ROVING_ITEM, useRoving } from "../roving.js";
 import { menuMatches } from "../menu-words.js";
 import { MENU_RANK_FLOOR, useFastRank } from "../menu-rank.js";
 import { TOLD_SUGGESTED_MOST, useToldSuggestions } from "../menu-told-door.js";
-import { openQuickAsk, useQuickAskDrawn } from "../quick-ask-desk.js";
+import { openQuickAsk, preloadQuickAsk, useQuickAskDrawn, whereMenuStands } from "../quick-ask-desk.js";
 import type { InspectorPlacement } from "./inspector-door.js";
 import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -600,17 +600,20 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     if (!menuAt) return;
     const asked = words;
     const back = menuAt.returnTo ?? null;
+    // The card opens where the menu stood, read before the menu goes.
+    const from = whereMenuStands(asideRef.current);
     setMenuAt(null);
-    // The quick ask's card, beside what the menu was opened on, answering the words at once: its thinking marked on the thing itself.
-    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked, returnTo: back });
+    // The quick ask's card, where the menu stood, answering the words at once: its thinking marked on the thing itself.
+    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked, returnTo: back, ...(from ? { from } : {}) });
   };
   /* A suggestion taken: its words asked on the card, about what the menu is on, previewed like any plan — never applied from the menu. */
   const takeTold = (one: (typeof toldLike)[number]) => {
     if (!menuAt) return;
     const back = menuAt.returnTo ?? null;
+    const from = whereMenuStands(asideRef.current);
     setMenuAt(null);
-    // Asked as the plain act the row says, here: where it came from is the Studio's to say, never the card's.
-    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked: one.label, suggested: one.telling.id, returnTo: back });
+    // Asked as the plain act the row says, where the menu stood: where it came from is the Studio's to say, never the card's.
+    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked: one.label, suggested: one.telling.id, returnTo: back, ...(from ? { from } : {}) });
   };
   /* The menu's rows the keyboard walks, in the order they are drawn: not a disabled one, nor a field of a form an act opened. */
   const walkable = (): HTMLElement[] =>
@@ -633,6 +636,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     if (typing || (event.key === "Backspace" && typed !== "")) {
       event.preventDefault();
       event.stopPropagation();
+      if (typing && typed === "" && aiDesk) preloadQuickAsk(aiDesk);
       setTyped((was) => (typing ? was + event.key : was.slice(0, -1)));
       field.focus({ preventScroll: true });
       return;
@@ -1013,7 +1017,11 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
           // Not where the keyboard lands as the menu opens: the first row is, so the arrows walk the rows; a letter typed comes here.
           data-graview-not-first=""
           value={typed}
-          onChange={(event) => setTyped(event.target.value)}
+          onChange={(event) => {
+            // The first letter fetches what Enter will need; the filter itself never waits on it.
+            if (typed === "" && event.target.value !== "" && aiDesk) preloadQuickAsk(aiDesk);
+            setTyped(event.target.value);
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();

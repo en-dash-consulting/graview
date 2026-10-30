@@ -218,7 +218,8 @@ export async function serving(app, port, repoRoot) {
   const child = spawn("npx", ["vite", "--port", String(port), "--strictPort"], {
     cwd: dir,
     // No model key, and no key for Jev: what a harness sees must not depend on a model's answer (the seat says how to turn one on instead).
-    env: { ...process.env, ANTHROPIC_API_KEY: "", TYPESAFE_API_KEY: "", JEV_API_KEY: "" },
+    // No model in a harness: every key the dev server's doors read is emptied, whichever provider it names.
+    env: { ...process.env, ANTHROPIC_API_KEY: "", XAI_API_KEY: "", OPENAI_API_KEY: "", TYPESAFE_API_KEY: "", JEV_API_KEY: "" },
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
   });

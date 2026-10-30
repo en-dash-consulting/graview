@@ -63,6 +63,11 @@ export function QuickAskDoor({ face, on = true }: QuickAskDoorProps) {
     if (!drawn) return;
     const held = heldOf(aiDesk);
     held.drawn += 1;
+    /* Fetched at the first letter typed in the menu, or once the page is idle: Enter never waits for the card or the plan. */
+    held.preload = () => {
+      void cardModule.load().catch(() => undefined);
+      void import("./quick-ask-plan.js").catch(() => undefined);
+    };
     tell(held);
     return () => {
       held.drawn = Math.max(0, held.drawn - 1);

@@ -1384,7 +1384,7 @@ try {
       handed.saw.candidates.length === 1 && pickedCandidate.endsWith(handed.saw.candidates[0]) && /^Finish it/.test(pickedCandidate) &&
       (pickedRecord === "" ? handed.saw.records.length === 0 : handed.saw.records.length === 1 && pickedRecord.includes(handed.saw.records[0])) &&
       said !== null && said.by === "fast" && said.words.includes("fake-fast");
-    typing.answer[face].ok = answer !== null && answer.beside === "t-deposit" && (answer.text ?? "").includes("not done yet") && answer.ghost && answer.proposed.length > 0 && !answer.overIt && answer.inTheWindow && answer.markGone && notMade === false && accepted === true && undone === false;
+    typing.answer[face].ok = answer !== null && answer.beside === "t-deposit" && (answer.text ?? "").includes("not done yet") && answer.ghost && answer.proposed.length > 0 && answer.inTheWindow && answer.markGone && notMade === false && accepted === true && undone === false;
     await context.close();
 
     /* With AI off, the field only filters. */
@@ -1856,6 +1856,108 @@ try {
       ok:
         closing.proposed.length >= 1 && closing.proposed.length <= held && closing.proposed.every((id) => /^each:finish:t-/.test(id ?? "")) && !closing.plan && whole(closing.text) &&
         fragment !== null && whole(fragment) && !/a way to frobnicate/i.test(fragment),
+    };
+    await context.close();
+  }
+
+  /*
+   * THE CARD OPENS WHERE THE MENU STOOD, AND NEVER MOVES. Nick: "i don't
+   * want the dialog position to change when i select 'tell graview'… rn it
+   * jumps." Enter turns the menu into the card with the menu's top-left
+   * corner; the answer arriving and the plan growing move it not at all —
+   * on the scene and the pages, at a desk's width and a phone's.
+   */
+  reach("theCardOpensWhereTheMenuStoodAndNeverMoves");
+  {
+    const stood = {};
+    for (const [width, height, size] of [[1560, 940, "desk"], [390, 844, "phone"]]) {
+      const context = await browser.newContext({ viewport: { width, height }, ...(size === "phone" ? { hasTouch: true, isMobile: true } : {}) });
+      await context.addInitScript(FAKE_AI);
+      const on = await context.newPage();
+      on.on("pageerror", (error) => errors.push(`stood ${size}: ${error.message}`));
+      for (const face of ["scene", "pages"]) {
+        await opened(on, face, "");
+        const corner = (selector) => on.evaluate((selector) => {
+          const box = document.querySelector(selector)?.getBoundingClientRect();
+          return box ? { left: Math.round(box.left * 10) / 10, top: Math.round(box.top * 10) / 10, right: Math.round(box.right), bottom: Math.round(box.bottom) } : null;
+        }, selector);
+        const menuAtOpen = await corner(MENU);
+        await on.keyboard.type("assign this to Sam");
+        await on.waitForTimeout(300);
+        // Where the menu stands as Enter is pressed: the corner the card takes.
+        const menu = await corner(MENU);
+        await on.keyboard.press("Enter");
+        await on.waitForSelector('[data-testid="quick-ask"]', { timeout: 10_000 }).catch(() => undefined);
+        const opening = await corner('[data-testid="quick-ask"]');
+        const from = await on.evaluate(() => document.querySelector('[data-testid="quick-ask"]')?.getAttribute("data-quick-ask-from") ?? null);
+        await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+        const answered = await corner('[data-testid="quick-ask"]');
+        await on.waitForSelector('[data-testid="quick-ask-plan"]', { timeout: 10_000 }).catch(() => undefined);
+        await on.waitForTimeout(400);
+        const planned = await corner('[data-testid="quick-ask"]');
+        const inTheWindow = planned !== null && planned.left >= 0 && planned.top >= 0 && planned.right <= width + 1 && planned.bottom <= height + 1;
+        const same = (a, b) => a !== null && b !== null && Math.abs(a.left - b.left) <= 1 && Math.abs(a.top - b.top) <= 1;
+        // Where the menu stood: its corner, unless the card's width would leave the window — then moved left that once.
+        const fromTheMenu = menu !== null && opening !== null && Math.abs(opening.top - menu.top) <= 1 && (Math.abs(opening.left - menu.left) <= 1 || opening.right >= width - 16);
+        // The menu too stood still as it was typed in: its rows narrowed under its own top.
+        const menuSteady = same(menuAtOpen, menu);
+        stood[`${face}_${size}`] = { menuAtOpen, menu, from, opening, answered, planned, inTheWindow, menuSteady, ok: menuSteady && fromTheMenu && same(opening, answered) && same(opening, planned) && inTheWindow };
+        await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
+        await on.keyboard.press("Escape").catch(() => undefined);
+      }
+      await context.close();
+    }
+    report.checks.theCardOpensWhereTheMenuStoodAndNeverMoves = { ...stood, ok: Object.values(stood).length === 4 && Object.values(stood).every((one) => one.ok) };
+  }
+
+  /*
+   * THE FIRST LETTER FILTERS AT ONCE, AND FETCHES WHAT ENTER WILL NEED. The
+   * menu's field and its filter are drawn with the menu; the quick ask's
+   * card and the plan's code are fetched at the first letter typed, and the
+   * filter never waits for them.
+   */
+  reach("theFirstLetterFiltersAtOnce");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`first letter: ${error.message}`));
+    const timings = {};
+    for (const face of ["scene", "pages"]) {
+      await opened(on, face, "");
+      const fetchedBefore = await on.evaluate(() => performance.getEntriesByType("resource").some((one) => /quick-ask-plan/.test(one.name)));
+      // A dev server's page fetches hundreds of modules: the buffer is emptied so what the first letter fetches is kept.
+      await on.evaluate(() => {
+        performance.setResourceTimingBufferSize(5000);
+        performance.clearResourceTimings();
+      });
+      await on.evaluate(() => {
+        const menu = document.querySelector('[data-testid="context-menu"]');
+        const rows = () => menu.querySelectorAll("[data-affordance], [data-menu-item]").length;
+        const before = rows();
+        window.__letter = { pressed: 0, filtered: 0 };
+        document.addEventListener("keydown", () => { if (!window.__letter.pressed) window.__letter.pressed = performance.now(); }, { capture: true, once: true });
+        new MutationObserver((_, observer) => {
+          if (window.__letter.pressed && rows() !== before) {
+            window.__letter.filtered = performance.now();
+            observer.disconnect();
+          }
+        }).observe(menu, { subtree: true, childList: true, attributes: true });
+      });
+      await on.keyboard.press("f");
+      await on.waitForFunction(() => window.__letter.filtered > 0, null, { timeout: 5_000 }).catch(() => undefined);
+      const letter = await on.evaluate(() => ({ ms: Math.round(window.__letter.filtered - window.__letter.pressed), filtered: window.__letter.filtered > 0 }));
+      await on.waitForTimeout(800);
+      const fetchedAfter = await on.evaluate(() => performance.getEntriesByType("resource").some((one) => /quick-ask-plan/.test(one.name)));
+      const marked = await on.evaluate(() => performance.getEntriesByName("graview:quick-ask-preload").length);
+      timings[face] = { ...letter, fetchedBefore, fetchedAfter, marked };
+      await on.keyboard.press("Escape");
+      await on.keyboard.press("Escape");
+    }
+    report.checks.theFirstLetterFiltersAtOnce = {
+      ...timings,
+      // At once: within two frames of the key, the chunks fetched by then or after, never waited on.
+      ok: ["scene", "pages"].every((face) => timings[face].filtered && timings[face].ms <= 50 && timings[face].marked === 1 && !timings[face].fetchedBefore && timings[face].fetchedAfter),
     };
     await context.close();
   }

@@ -194,7 +194,8 @@ describe("a hosted page", () => {
     // 1079 KB with both in batch/0-1-64: 1_097_638 + 6_486 = 1_104_124 B.
     // 1080 KB since the right-click menu came to take typing (Roadmap f-menu-type-anything) and Option to keep the browser's own menu: a popover's first stop passing over the menu's field, Option heard on the scene's cards, lines and ground, and the pages' Inspect and its sheet taken out: the scene face measured 1_105_669 B, 829 more than main after 0.1.64 (1_104_840), Graview standing among who is here while it thinks with them.
     // 1081 KB since two figures at one spot came to be drawn once with their names together (Roadmap f-menu-type-anything: "Graview, for Nora" over "Nora's agent"): the scene face measured 1_106_241 B, 572 more than with the plan's presence alone.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1081 * 1024);
+    // 1082 KB since a menu at the pointer keeps its top as it narrows and its card opens where it stood (Roadmap f-menu-type-anything): the scene face measured 1_107_683 B, 1_442 more.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1082 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
