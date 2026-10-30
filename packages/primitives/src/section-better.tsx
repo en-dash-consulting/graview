@@ -2,16 +2,28 @@ import { layer, type AnySchema, type ViewReviseAnswer } from "@graview/core";
 import type { AiInteraction, AiStage, AiUsage } from "@graview/core/catalog";
 import { compareViewRevision } from "@graview/core/revisions";
 import { useGraview, type MenuViewSection, type ViewPlaceDraft, type ViewPlaceHandle } from "@graview/react/provider";
-import { placeOfSection, sectionUnder, viewPlaceOf } from "@graview/react/drawing";
+import { sectionUnderNow, viewPlaceOf } from "@graview/react/drawing";
 import { reviseSection, type SectionStage } from "@graview/tools/section";
 import { interactionId } from "@graview/tools/inline-ai";
+import type { Telling, TellingOutcome, ToldStore } from "@graview/core/told";
+import { retryingImport } from "@graview/core/retry";
+import { lazyModule } from "@graview/react/provider";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-import type { SectionAsk } from "./section-door.js";
+import type { SectionAsk } from "./section-menu.js";
 import { boxOf, SectionOutline } from "./section-outline.js";
 
 export { SectionOutline };
-import { nameParts, partLines, type PartRead } from "./section-words.js";
+import { nameParts, partLines, placeOfSection, type PartRead } from "./section-words.js";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
+/*
+ * WHAT WAS TOLD (Roadmap f-menu-learns): each revision offered is kept as a
+ * telling — the words, the view's section it was said on, the slot that
+ * wrote it and how long it took — and how it ended (kept, discarded, undone,
+ * refused), with the 👍/👎 strip at the card's foot as on the quick ask's.
+ * Fetched apart, never in the way of the card.
+ */
+const toldCard = /* @__PURE__ */ lazyModule(retryingImport(() => import("./told-ui.js")));
+const Rate = /* @__PURE__ */ toldCard.part((module, props: { readonly told: ToldStore; readonly telling: Telling }) => <module.RateTelling {...props} />, { quiet: true });
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -35,6 +47,18 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  * door (`KeptViews.revise`), and one Undo puts the view back. Activity
  * keeps each one as an entry.
  */
+
+/** What the door draws: the outline over the section a menu is open on, else the card asked for. */
+export interface SectionDrawnProps {
+  readonly ask: SectionAsk | null;
+  readonly open?: readonly Element[];
+  readonly close: () => void;
+}
+
+export function SectionDrawn({ ask, open, close }: SectionDrawnProps) {
+  if (ask) return <SectionCard key={ask.at} ask={ask} close={close} />;
+  return open ? <SectionOutline elements={open} /> : null;
+}
 
 export interface SectionCardProps {
   readonly ask: SectionAsk;
@@ -147,6 +171,30 @@ export function SectionCard({ ask, close }: SectionCardProps) {
   const [phase, setPhase] = useState<Phase>(ask.mode === "highlight" ? { at: "highlighting" } : ask.mode === "describe" ? { at: "asking" } : { at: "working" });
   const [words, setWords] = useState("");
   const original = useRef<string | undefined>(undefined);
+  /* The telling of the revision on offer, kept with the host's door (`ai.told`), and how it ended. */
+  const [telling, setTelling] = useState<Telling | null>(null);
+  const tellingNow = useRef<Telling | null>(null);
+  const ended = useCallback(
+    (outcome: TellingOutcome) => {
+      const now = tellingNow.current;
+      if (now && ai.told) void toldCard.load().then((module) => module.changeTelling(ai.told, now.id, { outcome }), () => undefined);
+    },
+    [ai.told],
+  );
+  /** Keeps what was said and decided as a telling: offered as a draft ("previewed"), or refused. */
+  const tell = useCallback(
+    (words: string, on: MenuViewSection, refused: boolean, stages: readonly SectionStage[], ms: number, interaction: string) => {
+      const keeps = ai.told;
+      if (!keeps) return;
+      const slot = stages.at(-1)?.stage === "thinking" ? "full" : stages.length > 0 ? "light" : undefined;
+      void toldCard.load().then((module) => {
+        const kept = module.keepTelling(keeps, { words, target: { on: "place", place: on.view }, decided: refused ? { type: "refusal" } : { type: "view", section: on.name }, ...(slot ? { slot } : {}), stages: stages.map((one) => ({ stage: one.stage === "thinking" ? "full" : "light", ms: one.ms, model: one.model })), ms, outcome: refused ? "abandoned" : "previewed", interaction }, principal);
+        tellingNow.current = kept ?? null;
+        setTelling(kept ?? null);
+      }, () => undefined);
+    },
+    [ai.told, principal],
+  );
 
   /* Put away: a draft not kept goes with the card, and the view stands as it was. */
   useEffect(
@@ -184,6 +232,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       const before = await view.source();
       if (before === undefined) return setPhase({ at: "refused", said: "This view is a whole worker script, and only a plain script's section can be revised here." });
       original.current ??= before;
+      const started = Date.now();
       const live = view.drawing();
       const liveRefused = view.refused();
       const theme = await view.theme().catch(() => ({}));
@@ -212,13 +261,17 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       if (!result.ok) {
         draft.current?.dispose();
         draft.current = null;
-        aiDesk.record(entryOf(asked, "failed", result.stages, { failed: result.refused }));
+        const failed = entryOf(asked, "failed", result.stages, { failed: result.refused });
+        aiDesk.record(failed);
+        tell(said || asked, on, true, result.stages, Date.now() - started, failed.id);
         return setPhase({ at: "refused", said: result.refused });
       }
       const notes = draft.current ? judged(view, before, live, liveRefused, draft.current, result.source).notes : [];
-      setPhase({ at: "draft", source: result.source, said: result.said, notes: result.repaired ? ["Repaired once after the first try broke the view.", ...notes] : notes, entry: entryOf(asked, "offered", result.stages) });
+      const entry = entryOf(asked, "offered", result.stages);
+      tell(said || asked, on, false, result.stages, Date.now() - started, entry.id);
+      setPhase({ at: "draft", source: result.source, said: result.said, notes: result.repaired ? ["Repaired once after the first try broke the view.", ...notes] : notes, entry });
     },
-    [ai, aiDesk, entryOf, section],
+    [ai, aiDesk, entryOf, section, tell],
   );
 
   /* Just do it: at once. */
@@ -241,18 +294,22 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       view.draw(phase.source);
       const entry: AiInteraction = { ...phase.entry, outcome: "accepted" };
       aiDesk.record(entry);
+      ended("accepted");
       setPhase({ at: "kept", source: before, ...(answer && answer.note ? { note: answer.note } : {}), answer, entry });
     } catch (error) {
       setPhase({ at: "refused", said: error instanceof Error ? error.message : "The host did not keep it." });
     }
-  }, [phase, keptViews, aiDesk, section.name]);
+  }, [phase, keptViews, aiDesk, section.name, ended]);
 
   const discard = useCallback(() => {
     draft.current?.dispose();
     draft.current = null;
-    if (phase.at === "draft") aiDesk.record({ ...phase.entry, outcome: "dismissed" });
+    if (phase.at === "draft") {
+      aiDesk.record({ ...phase.entry, outcome: "dismissed" });
+      ended("declined");
+    }
     close();
-  }, [phase, aiDesk, close]);
+  }, [phase, aiDesk, close, ended]);
 
   const undo = useCallback(async () => {
     if (phase.at !== "kept" || !handle.current) return;
@@ -263,11 +320,13 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       else await keptViews?.revise?.({ name: view.name, title: view.title, source: phase.source, before: now, section: section.name, said: "Put back as it was.", undoes: true });
       view.draw(phase.source === original.current ? undefined : phase.source);
       aiDesk.record({ ...phase.entry, outcome: "dismissed" });
+      // A quiet sign, never a 👎.
+      ended("undone");
       setPhase({ at: "undone" });
     } catch (error) {
       setPhase({ at: "refused", said: error instanceof Error ? error.message : "The host did not put it back." });
     }
-  }, [phase, keptViews, aiDesk, section.name]);
+  }, [phase, keptViews, aiDesk, section.name, ended]);
 
   /* Placed beside the section, kept there as the page moves. */
   useLayoutEffect(() => {
@@ -311,7 +370,7 @@ export function SectionCard({ ask, close }: SectionCardProps) {
         cancel={close}
         chose={(elements) => {
           const first = elements[0];
-          const under = first ? sectionUnder(first) : undefined;
+          const under = first ? sectionUnderNow(first) : undefined;
           const on = under ?? section;
           setSection(on);
           setPhase({ at: "asking", pointed: { name: nameParts(elements.map(readPart)), lines: partLines(elements.map(readPart)) } });
@@ -396,6 +455,8 @@ export function SectionCard({ ask, close }: SectionCardProps) {
             </button>
           </div>
         ) : null}
+        {/* 👍 and 👎 on what it answered, kept with its telling (Roadmap f-menu-learns). */}
+        {telling && ai.told && phase.at !== "working" && phase.at !== "asking" ? <Rate told={ai.told} telling={telling} /> : null}
       </div>
     </>
   );

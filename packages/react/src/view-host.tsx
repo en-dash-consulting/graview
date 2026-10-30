@@ -12,7 +12,7 @@ import {
 import type { ActivityMark } from "./activity.js";
 import { useGraview } from "./context.js";
 import { joinedFrom, pickedFrom, usePickTargets } from "./picking.js";
-import { sectionUnder, type MenuViewSection } from "./view-places.js";
+import { sectionsArrive, sectionsWanted, sectionUnderNow, type MenuViewSection } from "./view-places.js";
 import { WHO } from "./where-drawn.js";
 import { cssTransform, planeShadow } from "./scene-helpers.js";
 import type { SceneNode } from "./scene-node.js";
@@ -530,9 +530,15 @@ export function SceneViewHost({
          * repair at the top of the menu you opened on yours.
          */
         /* Inside a worker view's preview, the section under the cursor names the menu ("This week"). */
-        const first = event.nativeEvent.composedPath?.()[0];
-        const section = first instanceof Element ? sectionUnder(first) : undefined;
-        onMenu({ x: event.clientX, y: event.clientY, on, ...(section ? { section, title: section.name } : {}) });
+        const inner = event.nativeEvent.composedPath?.()[0] as Element | undefined;
+        const { clientX: x, clientY: y } = event;
+        const opened = () => {
+          const section = sectionUnderNow(inner);
+          onMenu({ x, y, on, ...(section ? { section, title: section.name } : {}) });
+        };
+        /* The first right-click inside a view fetches what finds its section, and the menu opens once it is here. */
+        if (sectionsWanted(inner)) void sectionsArrive().then(opened, opened);
+        else opened();
       }}
       onDoubleClick={(event) => {
         const picked = pickedFrom(event.target);

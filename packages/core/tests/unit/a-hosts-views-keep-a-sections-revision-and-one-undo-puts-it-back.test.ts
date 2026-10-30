@@ -39,3 +39,14 @@ describe("a host's views, revising a view", () => {
     expect(report.said).toContain("After revise, the host does not keep the code it was handed.");
   });
 });
+
+describe("a section's revision, as a telling", () => {
+  it("is kept as a revision of its section, said so, and a section with no name is refused", async () => {
+    const { tellingOf, tellingDidWords } = await import("../../src/told.js");
+    const by = { kind: "human", id: "p1" } as const;
+    const telling = tellingOf({ words: "Make “This week” better", target: { on: "place", place: "home" }, decided: { type: "view", section: "This week" }, outcome: "previewed" }, by);
+    expect(telling?.decided).toEqual({ type: "view", section: "This week" });
+    expect(tellingDidWords(telling!)).toBe("A revision of “This week”");
+    expect(tellingOf({ words: "x", target: { on: "place", place: "home" }, decided: { type: "view", section: " " } as never, outcome: "previewed" }, by)).toBeUndefined();
+  });
+});

@@ -1,6 +1,6 @@
 {
   "budget": "every face",
   "minified": 0,
-  "gzipped": 15600,
-  "note": "Raised when a section of a worker view came to be made better (Roadmap f-make-this-section-better): the card, the highlight overlay and the revision path (`@graview/tools/section`, and `compareViewRevision` with the sections it reads) are chunks of their own, fetched the first time one is asked for, and this budget counts every chunk. Gzipped 15_256 over a limit the minified side had 82 KB under. Measured at 2_645_365 / 960_211 against 2_606_383 / 944_718."
+  "gzipped": 17500,
+  "note": "Raised when a section of a worker view came to be made better (Roadmap f-make-this-section-better): the section finder, the menu's rows, the outline, the card, the highlight overlay and the revision path (`@graview/tools/section`, and `compareViewRevision` with the sections it reads) are chunks of their own, fetched with the first right-click inside a view or the first card, and its telling and 👍/👎 strip, and this budget counts every chunk. Measured at 2_680_042 / 974_102 with what people tell Graview merged (its own raise beside this one), against 2_614_747 / 947_621 before either."
 }

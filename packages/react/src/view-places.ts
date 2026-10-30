@@ -81,84 +81,31 @@ export function viewPlaceOf(element: Element | null | undefined): ViewPlaceHandl
   return element ? PLACES.get(element) : undefined;
 }
 
-const LANDMARK = /* @__PURE__ */ new Set(["section", "article", "nav", "aside", "header", "footer", "main", "form", "region", "search"]);
-const HEADING = /^h([1-6])$/;
-const words = (text: string | null | undefined) => (text ?? "").replace(/\s+/g, " ").trim();
-const tagOf = (element: Element) => (element.getAttribute("data-graview-as") ?? element.localName).toLowerCase();
-const levelOf = (element: Element): number | undefined => {
-  const tag = HEADING.exec(tagOf(element));
-  if (tag) return Number(tag[1]);
-  return element.getAttribute("role") === "heading" ? Number(element.getAttribute("aria-level") ?? 2) : undefined;
-};
 
-/** A landmark's name: its `data-section`, its `aria-label`, what labels it, else its first heading's words. */
-function nameOf(element: Element): string {
-  const marked = words(element.getAttribute("data-section"));
-  if (marked) return marked;
-  const label = words(element.getAttribute("aria-label"));
-  if (label) return label;
-  const root = element.getRootNode() as ParentNode & { getElementById?: (id: string) => Element | null };
-  const by = (element.getAttribute("aria-labelledby") ?? "")
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((id) => words(root.getElementById?.(id)?.textContent ?? (root as ParentNode).querySelector?.(`#${CSS.escape(id)}`)?.textContent))
-    .filter(Boolean)
-    .join(" ");
-  if (by) return by;
-  for (const inner of element.querySelectorAll("*")) if (levelOf(inner) !== undefined) return words(inner.textContent);
-  return "";
-}
-
-/** Whether an element is a section of its own: marked, a landmark, a region. */
-const isSection = (element: Element) => element.hasAttribute("data-section") || LANDMARK.has(tagOf(element)) || element.getAttribute("role") === "region";
-
-/** A heading and the siblings after it, up to the next heading as high or higher. */
-function headedBlock(heading: Element): Element[] {
-  const level = levelOf(heading) ?? 6;
-  const block = [heading];
-  for (let at = heading.nextElementSibling; at; at = at.nextElementSibling) {
-    const next = levelOf(at);
-    if (next !== undefined && next <= level) break;
-    block.push(at);
-  }
-  return block;
-}
-
-/**
- * THE SECTION OF A VIEW UNDER AN ELEMENT: the element itself under a
- * press, inside a worker view's shadow root. Nothing outside a view, and
- * nothing for a part with no name a person could say.
+/*
+ * FINDING THE SECTION IS FETCHED ON THE FIRST RIGHT-CLICK INSIDE A VIEW
+ * (`view-sections.ts`): a page that never right-clicks a view carries none
+ * of it. A face asks `sectionUnderNow` and, inside a view before it has
+ * arrived, waits for `sectionsArrive()` and opens the menu then.
  */
-export function sectionUnder(element: Element | null | undefined): MenuViewSection | undefined {
-  if (!element) return undefined;
-  const root = element.getRootNode();
-  if (typeof ShadowRoot === "undefined" || !(root instanceof ShadowRoot)) return undefined;
-  const view = root.host.getAttribute("data-worker-view");
-  if (!view) return undefined;
-  /* A section of its own around it — marked, a landmark, a region — before any heading's block inside one. */
-  for (let at: Element | null = element; at; at = at.parentElement) {
-    if (!isSection(at)) continue;
-    const name = nameOf(at);
-    if (name) return { name, view, elements: [at] };
-  }
-  /* Else a heading's block: the heading itself, or the nearest one before it among its siblings, up the tree. */
-  for (let at: Element | null = element; at; at = at.parentElement) {
-    for (let before: Element | null = at; before; before = before.previousElementSibling) {
-      if (levelOf(before) === undefined) continue;
-      const block = headedBlock(before);
-      if (!block.includes(at)) break;
-      const name = words(before.textContent);
-      if (name) return { name, view, elements: block };
-      break;
-    }
-  }
-  return undefined;
+let finding: ((element: Element) => MenuViewSection | undefined) | undefined;
+let arriving: Promise<unknown> | undefined;
+const besides = /* @__PURE__ */ new Set<() => Promise<unknown>>();
+
+/** Something else to fetch with the finder: what a face offers on a section ("Make this better"), so its menu opens whole. */
+export function alsoWhenSectionsArrive(load: () => Promise<unknown>): void {
+  besides.add(load);
 }
 
-/** The element a view is drawn in (`data-worker-view-place`), from a section of it. */
-export function placeOfSection(section: MenuViewSection): Element | undefined {
-  const first = section.elements[0];
-  const root = first?.getRootNode();
-  if (typeof ShadowRoot === "undefined" || !(root instanceof ShadowRoot)) return undefined;
-  return root.host.closest("[data-worker-view-place]") ?? root.host.parentElement ?? undefined;
+/** Fetches the section finder, once, and what is fetched beside it; resolves when `sectionUnderNow` can answer (or never will, should it not arrive). */
+export function sectionsArrive(): Promise<unknown> {
+  return (arriving ??= Promise.all([import("./view-sections.js"), ...[...besides].map((load) => load())]).then(([module]) => void (finding = module.sectionUnder)));
 }
+
+/** The section of a view under an element, once the finder has arrived (`sectionsArrive`); else undefined. */
+export function sectionUnderNow(element: Element | null | undefined): MenuViewSection | undefined {
+  return element && finding ? finding(element) : undefined;
+}
+
+/** Whether a right-click at this element must wait for the finder before the menu opens. */
+export const sectionsWanted = (element: Element | null | undefined): boolean => finding === undefined && (element?.getRootNode() as { host?: Element } | undefined)?.host?.hasAttribute("data-worker-view") === true;

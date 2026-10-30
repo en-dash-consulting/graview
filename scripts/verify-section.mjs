@@ -24,6 +24,7 @@
  *   aRevisionThatDropsStylesIsRepairedOrRefused
  *   keepThenOneUndoRestoresTheView
  *   aSeatThatMayNotChangeViewsIsNotOffered
+ *   aRevisionIsToldWithHowItEndedAndCanBeRated
  */
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -125,6 +126,7 @@ async function serveHost() {
         import { registerWorkerView } from "@graview/guest/host/views";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import { memoryViews, withMemoryRevisions } from "@graview/core";
+        import { memoryTold } from "@graview/core/told";
         import tasks from ${JSON.stringify(TASKS)};
         const visitor = new URLSearchParams(location.search).get("visitor") === "1";
         const compiled = compileDocumentWithoutCheck(tasks, { today: () => "2026-09-01" });
@@ -146,7 +148,7 @@ async function serveHost() {
           studio: false,
           routing: "address",
           basePath: "${BASE}/",
-          ai: window.__sectionAi,
+          ai: { ...window.__sectionAi, told: (window.__told = memoryTold()) },
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
       `,
@@ -440,6 +442,42 @@ try {
         keeperAfter === null,
     };
     await page.keyboard.press("Escape");
+  }
+
+  reach("aRevisionIsToldWithHowItEndedAndCanBeRated");
+  {
+    const tellings = () => page.evaluate(() => window.__told.list().map((one) => ({ words: one.words, decided: one.decided, outcome: one.outcome, rating: one.rating ?? null, target: one.target, slot: one.slot ?? null })));
+    const before = (await tellings()).length;
+    await choose(page, "Notes", "section-just-do-it");
+    await settled(page, "draft");
+    await page.waitForSelector(`${CARD} [aria-label="This was right"]`, { timeout: 10_000 });
+    const offered = (await tellings()).at(-1);
+    await page.click(`${CARD} [aria-label="This was right"]`);
+    await page.waitForFunction(() => window.__told.list().at(-1)?.rating === "up", null, { timeout: 5_000 });
+    await shot(page, "rated");
+    await page.click('[data-testid="section-discard"]');
+    await page.waitForSelector(CARD, { state: "detached" });
+    await page.waitForFunction(() => window.__told.list().at(-1)?.outcome === "declined", null, { timeout: 5_000 });
+    const all = await tellings();
+    // The kept-then-undone revision of the claim before, and the refused one, were kept too.
+    const outcomes = all.map((one) => one.outcome);
+    report.checks.aRevisionIsToldWithHowItEndedAndCanBeRated = {
+      offered,
+      last: all.at(-1),
+      outcomes,
+      ok:
+        before > 0 &&
+        offered?.outcome === "previewed" &&
+        offered?.decided?.type === "view" &&
+        offered?.decided?.section === "Notes" &&
+        offered?.target?.on === "place" &&
+        offered?.target?.place === "week" &&
+        offered?.slot === "light" &&
+        all.at(-1)?.rating === "up" &&
+        all.at(-1)?.outcome === "declined" &&
+        outcomes.includes("undone") &&
+        outcomes.includes("abandoned"),
+    };
   }
 
   reach("aSeatThatMayNotChangeViewsIsNotOffered");

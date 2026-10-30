@@ -195,8 +195,8 @@ describe("a hosted page", () => {
     // 1080 KB since the right-click menu came to take typing (Roadmap f-menu-type-anything) and Option to keep the browser's own menu: a popover's first stop passing over the menu's field, Option heard on the scene's cards, lines and ground, and the pages' Inspect and its sheet taken out: the scene face measured 1_105_669 B, 829 more than main after 0.1.64 (1_104_840), Graview standing among who is here while it thinks with them.
     // 1081 KB since two figures at one spot came to be drawn once with their names together (Roadmap f-menu-type-anything: "Graview, for Nora" over "Nora's agent"): the scene face measured 1_106_241 B, 572 more than with the plan's presence alone.
     // 1082 KB since a menu at the pointer keeps its top as it narrows and its card opens where it stood (Roadmap f-menu-type-anything): the scene face measured 1_107_683 B, 1_442 more.
-    // 1087 KB since a right-click inside a worker view came to name the menu for the section under it and offer "Make this better" (Roadmap f-make-this-section-better): `sectionUnder` and what a view's place lends, the menu's section and the door that outlines a section; the card, the overlay and the revision fetched when first asked for: the scene face measured 1_111_608 B, 3_925 more than with the menu at the pointer alone.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1087 * 1024);
+    // 1083 KB since a right-click inside a worker view came to name the menu for the section under it and offer "Make this better" (Roadmap f-make-this-section-better): only what a view's place lends and the fetch of the section finder and the menu's rows on the first right-click inside a view are here; the scene face measured 1_108_954 B, 1_271 more than the menu at the pointer alone (1_107_683).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1083 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

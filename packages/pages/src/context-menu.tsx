@@ -2,7 +2,7 @@ import { argumentsTaken, fieldWords, humanizeField, layer, nounOf, pluralLabel, 
 import { narrowedPath } from "@graview/core/navigate";
 import { aggregateId } from "@graview/layout/view";
 import { GhostDoor, Inspector, NotifyDoor, SectionBetterDoor, useBoardMoveSection, useInlineAiSection, useNotifySection, useSectionBetterSection, useViewTidyingSection } from "@graview/primitives/pages";
-import { MenuSections, sectionUnder } from "@graview/react/drawing";
+import { MenuSections, sectionsArrive, sectionsWanted, sectionUnderNow } from "@graview/react/drawing";
 import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router-dom";
@@ -258,11 +258,17 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
 
   /** Opens the menu about what is at `element`, at a point; `inner` is what was under it inside a worker view. */
   const open = useCallback(
-    (element: Element, x: number, y: number, inner: Element = element) => {
+    (element: Element, x: number, y: number, inner: Element = element, waited = false): void => {
+      /* The first right-click inside a view fetches what finds its section, and the menu opens once it is here (without one, should it not arrive). */
+      if (!waited && sectionsWanted(inner)) {
+        const then = () => open(element, x, y, inner, true);
+        void sectionsArrive().then(then, then);
+        return;
+      }
       const aimed = aimAt(element);
       const column = columnAt(inner, aimed);
       /* A section of a worker view under the cursor names the menu ("This week") and is outlined while it is open. */
-      const section = sectionUnder(inner);
+      const section = sectionUnderNow(inner);
       selection.current = selectedIn(root.current);
       const menu: PointerMenu = { ...aimed, ...(column ? { column } : {}), ...(section ? { section, title: section.name } : {}), x: Math.round(x), y: Math.round(y), returnTo: homeOf(element) };
       last.current = menu;

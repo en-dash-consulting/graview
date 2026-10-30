@@ -6,6 +6,14 @@
  * its words) and how they stand (side by side, one under another).
  */
 
+import type { MenuViewSection } from "@graview/react/provider";
+
+/** The element a view is drawn in (`data-worker-view-place`), from a section of it. */
+export function placeOfSection(section: MenuViewSection): Element | undefined {
+  const root = section.elements[0]?.getRootNode() as { host?: Element } | undefined;
+  return root?.host?.closest("[data-worker-view-place]") ?? root?.host?.parentElement ?? undefined;
+}
+
 /** One part, as it is read for its name. */
 export interface PartRead {
   readonly tag: string;

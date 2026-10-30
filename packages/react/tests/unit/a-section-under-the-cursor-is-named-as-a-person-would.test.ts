@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { placeOfSection, sectionUnder, setViewPlace, viewPlaceOf, type ViewPlaceHandle } from "../../src/view-places.js";
+import { sectionsArrive, sectionsWanted, sectionUnderNow, setViewPlace, viewPlaceOf, type ViewPlaceHandle } from "../../src/view-places.js";
+import { sectionUnder } from "../../src/view-sections.js";
 
 /*
  * THE SECTION UNDER THE CURSOR (Roadmap f-make-this-section-better): a
@@ -50,13 +51,16 @@ describe("the section under the cursor", () => {
     expect(sectionUnder(outside)).toBeUndefined();
   });
 
-  it("leads to what the view's place lends", () => {
+  it("is found once the finder has arrived, which the first right-click inside a view waits for, and leads to what the view's place lends", async () => {
     const { place, shadow } = view('<section aria-label="Lists"><p id="here">x</p></section>');
+    const here = shadow.getElementById("here");
+    expect(sectionsWanted(document.body)).toBe(false);
+    if (sectionsWanted(here)) await sectionsArrive();
+    expect(sectionsWanted(here)).toBe(false);
+    expect(sectionUnderNow(here)?.name).toBe("Lists");
     const handle = { name: "home" } as ViewPlaceHandle;
     setViewPlace(place, handle);
-    const found = sectionUnder(shadow.getElementById("here"))!;
-    expect(placeOfSection(found)).toBe(place);
-    expect(viewPlaceOf(placeOfSection(found))).toBe(handle);
+    expect(viewPlaceOf(place)).toBe(handle);
     setViewPlace(place, null);
     expect(viewPlaceOf(place)).toBeUndefined();
   });

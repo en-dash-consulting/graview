@@ -51,7 +51,9 @@ export type TellingDecided =
   | { readonly type: "act"; readonly act: string; readonly records: number }
   | { readonly type: "plan"; readonly edits: number }
   | { readonly type: "answer" }
-  | { readonly type: "refusal" };
+  | { readonly type: "refusal" }
+  /** A section of a worker view revised ("Make this better", Roadmap f-make-this-section-better), by the section's name. */
+  | { readonly type: "view"; readonly section: string };
 
 /** What the words were said on: the target's own kind and id, or the place. Never a record's content. */
 export interface TellingTarget {
@@ -176,6 +178,10 @@ function decidedOf(value: unknown): TellingDecided | undefined {
       return { type: "answer" };
     case "refusal":
       return { type: "refusal" };
+    case "view": {
+      const section = typeof asked["section"] === "string" ? asked["section"].replace(/\s+/g, " ").trim().slice(0, TOLD_LIMITS.name) : "";
+      return section ? { type: "view", section } : undefined;
+    }
     default:
       return undefined;
   }
@@ -490,6 +496,8 @@ export function tellingDidWords(telling: Telling, titleOf: (act: string) => stri
       return "An open answer";
     case "refusal":
       return "Nothing it could do";
+    case "view":
+      return `A revision of “${telling.decided.section}”`;
   }
 }
 
@@ -581,7 +589,7 @@ export interface TellingExample {
 export function tellingExamples(similar: readonly SimilarTelling[]): readonly TellingExample[] {
   return similar.map(({ telling }) => ({
     said: telling.words,
-    did: telling.decided.type === "act" ? `act ${telling.decided.act} over ${telling.reading?.which === "itself" ? "the record itself" : "each record it holds"}` : telling.decided.type === "plan" ? "a plan that changes the app" : telling.decided.type,
+    did: telling.decided.type === "act" ? `act ${telling.decided.act} over ${telling.reading?.which === "itself" ? "the record itself" : "each record it holds"}` : telling.decided.type === "plan" ? "a plan that changes the app" : telling.decided.type === "view" ? "a revision of a view's section" : telling.decided.type,
     ...(telling.reading ? { reading: telling.reading.which } : {}),
   }));
 }
