@@ -42,6 +42,8 @@ export interface GraphDecision {
   readonly each?: { readonly act: string; readonly args: Readonly<Record<string, unknown>> };
   readonly missing?: { readonly said: string; readonly need: PlanNeed; readonly who?: string };
   readonly text?: string;
+  /** Something to be done outside the app, said plainly: "I can't send email from here." */
+  readonly outside?: string;
   /** Whether Jev read the words as asking (an answer in words) rather than telling (a change). */
   readonly asks?: boolean;
   /** A question back to the person before anything is offered: which records a destructive act was meant for. */
@@ -178,6 +180,8 @@ export async function decideOverTheGraph<S extends AnySchema>(
   const questions: Record<string, Question> = {};
   if (choices.length > 1) questions["reading"] = { type: "choice", instructions: `Someone said “${said}”${options.follows ? `, replying to “${options.follows.said}”${options.follows.reading ? `, which was taken as ${options.follows.reading === "itself" ? "the record itself" : "the records it holds"}` : ""}` : ""}. Which records do they mean? "This", "it" or its name alone is the record itself; "these", "all", "them", "everything", "the lot" are never the record itself but every record it holds — unless more words say which of them: "the done ones", "that are finished", "already ticked off", "completed" mean the done ones; "outstanding", "remaining", "unfinished", "still to do", "except the done ones" mean the open ones; "late" or "overdue" the late ones. A word that says the change to make ("mark these done", "close these", "finish them") says what to do, not which records. If their words pick out some records in a way none of these says ("the old ones"), choose "something else".`, criteria: { ...Object.fromEntries(choices.map((one) => [keyOf(one), one.which === "itself" ? `${capital(one.words)} (the ${noun(one.kind)})` : capital(one.words)])), else: "Something else: some other part of them" } };
   /* Asks or tells: whether the words want an answer in words or a change made — Jev's call on every utterance; the code's patterns only a hint where Jev is unsure. */
+  /* Inside the app or outside it: sending an email or a text, calling, paying, booking or posting somewhere is not a change to a record, and never a field to add. */
+  questions["where"] = { type: "choice", instructions: `Does “${said}” want something done to the records of this app (or an answer about them), or something done outside the app — an email or a text sent, a call made, a payment, a booking, a post somewhere?`, criteria: { inside: "Inside the app: its records, or an answer about them", outside: "Outside the app: send, call, pay, book or post somewhere else" } };
   questions["mood"] = { type: "choice", instructions: `Does “${said}” ask something, wanting an answer in words, or tell me to do something, wanting a change made? A question can come without a question mark ("has this been done yet"), an instruction can be polite ("could you close these"), and saying who has something ("Sam's on this", "Nora has this one") tells me to give it to them.`, criteria: { asks: "Asks something: wants an answer in words", tells: "Tells me to do something: wants a change made" } };
   const actsOn = (kind: string) =>
     store.allMutations().filter((mutation) => mutation.subject && (mutation.subject.kinds === "*" || (mutation.subject.kinds as readonly string[]).includes(kind)));
@@ -215,6 +219,9 @@ export async function decideOverTheGraph<S extends AnySchema>(
   // Who has it, said as a statement ("Sam's on this"), gives it to them: a telling, whatever the mood's chance.
   const ownerSaid = givingOf(said)?.owned === true && !/\?\s*$/.test(said);
   const question = ownerSaid ? false : mood && mood.chance >= 0.6 ? mood.key === "asks" : asking(said);
+  /* An outside action: said plainly that it is not done from here, with the record's own link where it has one — never a plan to add a field. */
+  const whereTo = best(decided.answers["where"]);
+  if (!question && outsideVerb(said) && whereTo?.key === "outside" && whereTo.chance >= 0.6) return { sure: true, asks: false, outside: outsideWords(store, said, self?.id), usage: decided.usage };
   const reading0 = best(decided.answers["reading"]);
   const reading = choices.length > 1 ? choices.find((one) => keyOf(one) === reading0?.key) : choices[0];
   if (!reading) {
@@ -486,6 +493,31 @@ function whichOf<S extends AnySchema>(store: Store<S>, title: string, reading: R
   const all = `all ${reading.records.length} ${many}${where ? ` ${where}` : ""}`;
   if (done.length > 0 && done.length < reading.records.length) return `Should I ${verb} the ${done.length} done ${done.length === 1 ? noun : many}, or ${all}?`;
   return `Should I ${verb} ${all}? Say “all” to go ahead, or say which.`;
+}
+
+/** The words begin with an act done outside the app ("email the landlord", "text Bo", "call the van company") — not "call it X", a rename. */
+export function outsideVerb(said: string): boolean {
+  const found = /^\s*(?:please\s+|pls\s+|could you\s+|can you\s+|would you\s+|can we\s+|let'?s\s+)?(e-?mail|mail|text|sms|message|whatsapp|call|phone|ring|dial|pay|venmo|book|reserve|post|tweet|share)\b(.*)$/i.exec(said);
+  // "Call it Boxes", "call this “Packing”": a name given, not a call made.
+  return found !== null && !/^\s+(?:it|this|that|this one)\s+(?:[A-Z“"']|as\b|to\b)/.test(found[2] ?? "");
+}
+
+/** What a request outside the app would be, in the words it is refused with. */
+const OUTSIDE: readonly (readonly [RegExp, string])[] = [
+  [/\b(e-?mail|mail)\b/i, "send email"],
+  [/\b(text|sms|message|whatsapp|dm)\b/i, "send messages"],
+  [/\b(call|phone|ring|dial)\b/i, "make calls"],
+  [/\b(pay|venmo|transfer|invoice)\b/i, "make payments"],
+  [/\b(book|reserve)\b/i, "book things"],
+  [/\b(post|tweet|share)\b/i, "post outside this app"],
+];
+
+/** "I can't send email from here." — and, where the record holds an email or a link, that it is there to open. */
+export function outsideWords<S extends AnySchema>(store: Store<S>, said: string, id?: string): string {
+  const what = OUTSIDE.find(([pattern]) => pattern.test(said))?.[1] ?? "do things outside this app";
+  const node = id ? (store.graph.getNode(id) as Record<string, unknown> | undefined) : undefined;
+  const link = node ? Object.values(node).find((value): value is string => typeof value === "string" && (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || /^https?:\/\//.test(value))) : undefined;
+  return link ? `I can't ${what} from here, but its ${link.includes("@") && !link.startsWith("http") ? "email" : "link"} is ${link} — open it to do that.` : `I can't ${what} from here: this app keeps your records, and doing that happens outside it.`;
 }
 
 /** Words that ask rather than tell: a question to answer, not an act to propose. */
