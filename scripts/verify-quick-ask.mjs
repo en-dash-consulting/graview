@@ -182,6 +182,11 @@ async function drive(engine, checks, errors) {
   await page.press(FIELD, "Enter");
   await answered(page);
   const card = await cardSays(page);
+  /* A question never comes with a change: what it picked is a suggestion beside the answer ("Finish it?"), a ghost only once chosen. */
+  const ghostBeforeChosen = (await page.$(GHOST)) !== null;
+  const suggestion = await page.$('[data-testid="quick-ask"] [data-testid="quick-answer-offer"][data-ai-offer-type="act"]');
+  const suggested = suggestion ? ((await suggestion.textContent()) ?? "").trim() : null;
+  await suggestion?.click().catch(() => undefined);
   await page.waitForSelector(GHOST, { timeout: 10_000 }).catch(() => undefined);
   const ghostShown = await page.$(GHOST);
   const notMade = await storeSays(page, "t-deposit");
@@ -197,12 +202,14 @@ async function drive(engine, checks, errors) {
   }
   checks.anAnswerIsACardBesideTheRecordItsChangeAGhost = {
     card,
+    ghostBeforeChosen,
+    suggested,
     before,
     notMade,
     accepted,
     undone,
     ok:
-      card !== null && card.mode === "answer" && card.beside === "t-deposit" && !card.overIt && /as drafted/.test(card.answer ?? "") && card.ghostOnTheCard &&
+      card !== null && card.mode === "answer" && card.beside === "t-deposit" && !card.overIt && /as drafted/.test(card.answer ?? "") && !ghostBeforeChosen && /\?$/.test(suggested ?? "") &&
       ghostShown !== null && notMade.batch === before.batch &&
       accepted !== null && accepted.batch !== before.batch && (accepted.via ?? "").startsWith("ai:") && accepted.interaction !== null &&
       undone !== null && undone.done === before.done,
@@ -231,8 +238,8 @@ async function drive(engine, checks, errors) {
   reach("activityKeepsEachAskOnce");
   await page.click('[data-testid="activity-button"]');
   await page.waitForSelector('[data-testid="activity"]', { timeout: 10_000 });
-  await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="activity-interaction"]')].filter((one) => /answer “/.test(one.textContent ?? "")).length >= 2, undefined, { timeout: 10_000 }).catch(() => undefined);
-  const asks = await page.evaluate(() => [...document.querySelectorAll('[data-testid="activity-interaction"]')].map((one) => (one.textContent ?? "").replace(/\s+/g, " ").trim()).filter((text) => /answer “/.test(text)));
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="activity-interaction"]')].filter((one) => /answer “|told Graview “/.test(one.textContent ?? "")).length >= 2, undefined, { timeout: 10_000 }).catch(() => undefined);
+  const asks = await page.evaluate(() => [...document.querySelectorAll('[data-testid="activity-interaction"]')].map((one) => (one.textContent ?? "").replace(/\s+/g, " ").trim()).filter((text) => /answer “|told Graview “/.test(text)));
   checks.activityKeepsEachAskOnce = { asks, ok: asks.length === 2 && asks.some((text) => text.includes("what is left to do here?")) && asks.some((text) => text.includes("and after that?")) };
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
@@ -254,7 +261,7 @@ async function drive(engine, checks, errors) {
   }
   checks.aShowRowDrawsAPanelKeptAsALens = { drawn, kept, ok: drawn.keep && !drawn.card && kept };
 
-  /* ------------------------------------------- the menu's "Ask about this…" */
+  /* ------------------------------------------- the menu's "Tell Graview…" */
   reach("theMenuOpensItOnWhatItWasOpenedOn");
   await page.goto(`${at("todo")}/?${DAY}&ai=stub`, { waitUntil: "load", timeout: 90_000 });
   await ready(page);

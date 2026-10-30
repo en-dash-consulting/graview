@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 507,
+  "gzipped": 167,
+  "note": "Raised when the Studio, handed in, came to offer \"What Graview has been told\" (Roadmap f-menu-learns): its button and the small door that fetches the panel when it is opened — the panel itself, its filters and `@graview/core/told` are a chunk of @graview/primitives, never loaded first. 507 / 167 more. Measured at 1_864_194 / 652_509 against 1_863_687 / 652_342, which left 12 gzipped bytes of headroom."
+}

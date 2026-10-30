@@ -22,6 +22,8 @@ import { workerView, type WorkerViewDefinition } from "../../src/host/worker-rea
 const mounted = vi.hoisted(() => ({ worker: [] as { file?: (href: string) => string | undefined }[], frame: [] as { file?: (href: string) => string | undefined }[] }));
 vi.mock("../../src/host/worker.js", () => ({
   mountWorkerView: (_element: HTMLElement, options: { file?: (href: string) => string | undefined }) => (mounted.worker.push(options), { update() {}, dispose() {} }),
+  // What the view's place lends a revision (Roadmap f-make-this-section-better): made with the worker's host, nothing to these claims.
+  viewPlaceHandle: () => ({}),
 }));
 vi.mock("../../src/host/frame.js", () => ({
   mountGuestView: (_element: HTMLElement, options: { file?: (href: string) => string | undefined }) => (mounted.frame.push(options), { iframe: document.createElement("iframe"), update() {}, dispose() {} }),

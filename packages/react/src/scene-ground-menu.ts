@@ -63,8 +63,8 @@ export function useGroundMenu({
   return {
     onContextMenu: (event: ReactMouseEvent<HTMLElement>) => {
       const target = event.target as Element;
-      // The browser's own: Shift held, a text field, editable text, text somebody selected.
-      if (event.shiftKey || typingIn(target) || onSelectedText(target)) return;
+      // The browser's own: Shift or Option held, a text field, editable text, text somebody selected. Ctrl+click — a Mac trackpad's right-click — is ours.
+      if (event.shiftKey || event.altKey || typingIn(target) || onSelectedText(target)) return;
       event.preventDefault();
       // A right-click in a menu or a pane already open over the ground opens no second one; a card's is the card's (it stopped the event).
       if (target.closest("[data-graview-popover], [data-graview-offstage]")) return;

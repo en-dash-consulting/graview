@@ -5,10 +5,14 @@ import { linkProvenance, provenanceWords } from "@graview/core/provenance";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { POPOVER_STYLE, prepareAffordances, useAffordances, useApplyAffordance, useGraview, useMenuSections, usePopover, useSelection, type AffordancesAsked, type MenuSection, type MenuTarget } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { AnswerArgs, nameOf } from "./answer-args.js";
 import { VISUALLY_HIDDEN } from "../primitives/index.js";
 import { ROVING_ITEM, useRoving } from "../roving.js";
+import { menuMatches } from "../menu-words.js";
+import { MENU_RANK_FLOOR, useFastRank } from "../menu-rank.js";
+import { TOLD_SUGGESTED_MOST, useToldSuggestions } from "../menu-told-door.js";
+import { openQuickAsk, preloadQuickAsk, useQuickAskDrawn, whereMenuStands } from "../quick-ask-desk.js";
 import type { InspectorPlacement } from "./inspector-door.js";
 import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -91,7 +95,7 @@ function ChosenActs() {
 const RAIL_NEEDS = 14 + 236 + 14 + 300;
 
 function Pane({ placement }: { readonly placement: InspectorPlacement }) {
-  const { store, menuAt, setMenuAt, view, signIn } = useGraview<AnySchema>();
+  const { store, menuAt, setMenuAt, view, signIn, aiDesk, ai, principal } = useGraview<AnySchema>();
   /*
    * The pane is positioned within the SCENE'S BOX, not the window. It was
    * fixed to the viewport, which put it at the page's edge when the scene
@@ -248,7 +252,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const target: MenuTarget | null =
     menuAt === null
       ? null
-      : { face: menuAt.face ?? "scene", on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place, href: menuAt.href, act: menuAt.act, column: menuAt.column, element: menuAt.returnTo };
+      : { face: menuAt.face ?? "scene", on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place, href: menuAt.href, act: menuAt.act, column: menuAt.column, ...(menuAt.section ? { section: menuAt.section } : {}), element: menuAt.returnTo };
   const beside = useMenuSections(target);
   /*
    * Whether the derivation is withholding a creating act for want of the
@@ -275,7 +279,51 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
    * and the eleventh act of a menu was twenty-one Tabs from the key that
    * opened it (walks XI and XII).
    */
-  const roving = useRoving<HTMLOListElement>({ letters: true });
+  /*
+   * In the menu a letter is typed into the menu's own field instead (Roadmap
+   * f-menu-type-anything), so the menu's list takes no letters: only the
+   * strip keeps the type-ahead.
+   */
+  const roving = useRoving<HTMLOListElement>({ letters: menuAt === null });
+  /*
+   * WHAT IS TYPED IN THE MENU (Roadmap f-menu-type-anything): every row —
+   * the acts, the withheld, Open, Copy link, Show, Inspect — narrowed to
+   * those whose words begin with it (`menuMatches`), Enter running the one
+   * lit; and, where the host lent the app a model, the words asked of it
+   * about what the menu was opened on, as the last row. A new menu starts
+   * with nothing typed.
+   */
+  const [typed, setTyped] = useState("");
+  const typeField = useRef<HTMLInputElement | null>(null);
+  useEffect(() => setTyped(""), [menuAt]);
+  /* Asked where the quick ask is drawn at all: a host's model, AI not off, the app's setting on. */
+  const asks = useQuickAskDrawn(aiDesk);
+  /* What worked before, like the words typed here (Roadmap f-menu-learns): kept tellings re-aimed at what the menu is on, ranked with the rows. */
+  const toldLike = useToldSuggestions(asks ? ai : undefined, store, principal, menuAt === null ? "" : typed, menuAt?.on, menuAt);
+  /* The Fast slot's ranking of every row the menu could show, for the words typed, once the typing rests (`useFastRank`). */
+  const rankRows = useMemo(
+    () =>
+      menuAt === null
+        ? []
+        : [
+            ...beside.start.flatMap((section) => (section.items ?? []).map((item) => ({ key: `item:${item.id}`, label: item.label }))),
+            ...affordances.map((affordance) => ({ key: `act:${affordance.id}`, label: affordance.label })),
+            ...beside.end.flatMap((section) => (section.items ?? []).map((item) => ({ key: `item:${item.id}`, label: item.label }))),
+            ...toldLike.map((one) => ({ key: one.key, label: one.label })),
+          ],
+    [menuAt, beside, affordances, toldLike],
+  );
+  const fastRanked = useFastRank(ai, menuAt === null ? "" : typed, rankRows);
+  /*
+   * NOTHING MOVES UNDER A POINTER ON A ROW: while it rests on one, a ranking
+   * that arrives is held, and the rows stay as they were drawn; it applies
+   * once the pointer is off the rows. What the person types still narrows
+   * at once — that is theirs.
+   */
+  const [onRow, setOnRow] = useState(false);
+  const heldRank = useRef<{ readonly words: string; readonly rank: ReadonlyMap<string, number> | null }>({ words: "", rank: null });
+  if (!onRow) heldRank.current = { words: typed.trim(), rank: fastRanked };
+  const fastRank = onRow ? (heldRank.current.words === typed.trim() ? heldRank.current.rank : null) : fastRanked;
   /*
    * A REFUSAL IS A RESULT, said where the button was pressed.
    *
@@ -514,8 +562,100 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
           `${entry.label} ${entry.why}`.toLowerCase().includes(trimmedQuery),
         )
       : null;
-  const shown = matched ?? (expanded || atPointer ? arranged : arranged.slice(0, fits));
-  const hidden = matched ? 0 : arranged.length - shown.length;
+  /* Typed in the menu: its words, and whether a row's label begins with them. */
+  const words = atPointer ? typed.trim() : "";
+  /* A row fits what is typed when its words begin with it, or when the Fast slot finds it likely enough. */
+  const fitsTyped = (key: string, label: string) => words === "" || menuMatches(label, words) || (fastRank?.get(key) ?? 0) >= MENU_RANK_FLOOR;
+  const shown = (matched ?? (expanded || atPointer ? arranged : arranged.slice(0, fits))).filter((entry) => fitsTyped(`act:${entry.id}`, entry.label));
+  const hidden = matched || words ? 0 : arranged.length - shown.length;
+  const withheldShown = words ? withheld.filter((action) => fitsTyped(`act:${action.id}`, action.label)) : withheld;
+  /* A section's rows narrowed to what is typed; one drawn in place of rows (the AI's) stands down while words are typed, the Ask row below standing for it. */
+  const narrowed = (list: readonly MenuSection[]): readonly MenuSection[] =>
+    words === ""
+      ? list
+      : list.flatMap((section) => {
+          const items = (section.items ?? []).filter((item) => fitsTyped(`item:${item.id}`, item.label));
+          return items.length > 0 ? [{ id: section.id, ...(section.heading ? { heading: section.heading } : {}), items }] : [];
+        });
+  const startSections = narrowed(beside.start);
+  const endSections = narrowed(beside.end);
+  /* What the words are asked about, said in the Ask row: the menu's title, the one record, else "this". */
+  const askedAbout = menuAt?.title ?? (selection.length === 1 ? nameOf(store, selection[0]!) : selection.length > 1 ? `${selection.length} selected` : "this");
+  const askRow = atPointer && words !== "" && asks;
+  /* Up to two that worked before, the Fast slot's likeliest first once it has answered. */
+  const toldShown = atPointer && words !== "" ? (fastRank === null ? toldLike : [...toldLike].sort((a, b) => (fastRank.get(b.key) ?? 0) - (fastRank.get(a.key) ?? 0))).slice(0, TOLD_SUGGESTED_MOST) : [];
+  /*
+   * THE ROW ENTER RUNS FROM THE FIELD, lit: the first that fits the words
+   * — never one that cannot be taken back, which keeps its aimed press —
+   * else the Ask row. Nothing is lit with nothing typed.
+   */
+  /* The Fast slot's best among the rows shown, when it has answered for these words. */
+  const shownKeys = [
+    ...startSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`)),
+    ...shown.filter((entry) => !entry.destructive).map((entry) => `act:${entry.id}`),
+    ...endSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`)),
+    ...toldShown.map((one) => one.key),
+  ];
+  const ranked = fastRank === null ? undefined : [...shownKeys].sort((a, b) => (fastRank.get(b) ?? 0) - (fastRank.get(a) ?? 0)).find((key) => (fastRank.get(key) ?? 0) >= MENU_RANK_FLOOR);
+  const lit =
+    words === ""
+      ? null
+      : (ranked ??
+        startSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`))[0] ??
+        shown.filter((entry) => !entry.destructive).map((entry) => `act:${entry.id}`)[0] ??
+        endSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`))[0] ??
+        (askRow ? "ask" : null));
+  const ask = () => {
+    if (!menuAt) return;
+    const asked = words;
+    const back = menuAt.returnTo ?? null;
+    // The card opens where the menu stood, read before the menu goes.
+    const from = whereMenuStands(asideRef.current);
+    setMenuAt(null);
+    // The quick ask's card, where the menu stood, answering the words at once: its thinking marked on the thing itself.
+    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked, returnTo: back, ...(from ? { from } : {}) });
+  };
+  /* A suggestion taken: its words asked on the card, about what the menu is on, previewed like any plan — never applied from the menu. */
+  const takeTold = (one: (typeof toldLike)[number]) => {
+    if (!menuAt) return;
+    const back = menuAt.returnTo ?? null;
+    const from = whereMenuStands(asideRef.current);
+    setMenuAt(null);
+    // Asked as the plain act the row says, where the menu stood: where it came from is the Studio's to say, never the card's.
+    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked: one.label, suggested: one.telling.id, returnTo: back, ...(from ? { from } : {}) });
+  };
+  /* The menu's rows the keyboard walks, in the order they are drawn: not a disabled one, nor a field of a form an act opened. */
+  const walkable = (): HTMLElement[] =>
+    [...(asideRef.current?.querySelectorAll<HTMLElement>("[data-affordance]:not([disabled]), [data-menu-item]") ?? [])].filter((row) => row.closest("[data-graview-asking], [hidden]") === null);
+  const litRow = (): HTMLElement | null => asideRef.current?.querySelector<HTMLElement>("[data-menu-lit]") ?? null;
+  /*
+   * A LETTER TYPED ANYWHERE IN THE MENU GOES INTO ITS FIELD, the keyboard
+   * with it: the menu opens with the keyboard on its first row, so the
+   * arrows walk the rows as they always did, and on a phone no keyboard
+   * rises until the field is tapped. Space still presses the row it is on;
+   * a form an act opened in the menu types its own answers; the arrow up
+   * from the first row goes back to the field.
+   */
+  const typeInto = (event: ReactKeyboardEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    const field = typeField.current;
+    if (!field || target === field || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (target.closest("[data-graview-asking]") || typingIn(target)) return;
+    const typing = event.key.length === 1 && event.key !== " ";
+    if (typing || (event.key === "Backspace" && typed !== "")) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typing && typed === "" && aiDesk) preloadQuickAsk(aiDesk);
+      setTyped((was) => (typing ? was + event.key : was.slice(0, -1)));
+      field.focus({ preventScroll: true });
+      return;
+    }
+    if (event.key === "ArrowUp" && walkable()[0] === target) {
+      event.preventDefault();
+      event.stopPropagation();
+      field.focus({ preventScroll: true });
+    }
+  };
   /*
    * GROUPED BY WHAT THEY ANSWER. A repair arrives carrying the violation
    * that produced it, and without that sentence over it, "Cut X from
@@ -605,6 +745,16 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         if (event.relatedTarget !== null) keptFocus.current = null;
       }}
       onMouseDown={(event) => event.stopPropagation()}
+      onKeyDownCapture={atPointer ? (event) => typeInto(event) : undefined}
+      onPointerMove={
+        atPointer
+          ? (event) => {
+              const row = (event.target as Element).closest?.("[data-menu-item], [data-affordance]") != null;
+              if (row !== onRow) setOnRow(row);
+            }
+          : undefined
+      }
+      onPointerLeave={atPointer && onRow ? () => setOnRow(false) : undefined}
       style={{
         /*
          * Above the jacked-in page, not only above the scene.
@@ -868,7 +1018,58 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         </div>
       ) : null}
 
-      {atPointer ? beside.start.map((section) => <SectionDrawn key={section.id} section={section} close={() => setMenuAt(null)} />) : null}
+      {atPointer ? (
+        <input
+          ref={typeField}
+          type="text"
+          data-testid="menu-type"
+          // Not where the keyboard lands as the menu opens: the first row is, so the arrows walk the rows; a letter typed comes here.
+          data-graview-not-first=""
+          value={typed}
+          onChange={(event) => {
+            // The first letter fetches what Enter will need; the filter itself never waits on it.
+            if (typed === "" && event.target.value !== "" && aiDesk) preloadQuickAsk(aiDesk);
+            setTyped(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              // As Enter on the row itself: the keyboard on it first, so a form the act opens takes the keyboard from it.
+              const row = litRow();
+              row?.focus({ preventScroll: true });
+              row?.click();
+            } else if (event.key === "ArrowDown") {
+              event.preventDefault();
+              (litRow() ?? walkable()[0])?.focus();
+            } else if (event.key === "Escape" && typed !== "") {
+              // The words go first; the next Escape puts the menu away.
+              event.preventDefault();
+              event.stopPropagation();
+              setTyped("");
+            }
+          }}
+          placeholder={asks ? "Type to filter, or tell Graview…" : "Type to filter…"}
+          aria-label={asks ? `Filter what can be done here, or tell Graview what to do about ${askedAbout}` : "Filter what can be done here"}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="go"
+          style={{
+            boxSizing: "border-box",
+            width: "100%",
+            font: "inherit",
+            // A phone zooms into a field set under 16px.
+            fontSize: "max(1rem, 16px)",
+            padding: "5px 9px",
+            borderRadius: 8,
+            border: "1px solid var(--graview-edge)",
+            background: "var(--graview-panel)",
+            color: "var(--graview-ink)",
+          }}
+        />
+      ) : null}
+
+      {atPointer ? startSections.map((section) => <SectionDrawn key={section.id} section={section} lit={lit} close={() => setMenuAt(null)} />) : null}
 
       {failed ? (
         <p
@@ -925,7 +1126,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
           Nothing offered here matches “{query.trim()}”.
         </p>
       ) : null}
-      {gain && affordances.length === 0 ? null : affordances.length === 0 && !waiting && selection.length === 0 ? null : affordances.length === 0 && !waiting ? (
+      {(words !== "" && shown.length === 0) || (gain && affordances.length === 0) ? null : affordances.length === 0 && !waiting && selection.length === 0 ? null : affordances.length === 0 && !waiting ? (
         /*
          * An empty action list is a RESULT, not a blank space. Saying which
          * kind has no mutations declaring it as a subject is the same honesty
@@ -1038,6 +1239,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
                      */
                     data-rank={affordance.rank}
                     data-graview-destructive={affordance.destructive || undefined}
+                    data-menu-lit={lit === `act:${affordance.id}` || undefined}
                     aria-pressed={pending === affordance.id}
                     title={affordance.why}
                     style={{
@@ -1071,6 +1273,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
                       // pressed — and the ranking has already put it last.
                       ...(affordance.destructive ? { color: "var(--graview-warn)" } : {}),
                       ...(pending === affordance.id ? { color: "var(--graview-accent)" } : {}),
+                      ...(lit === `act:${affordance.id}` ? LIT_STYLE : {}),
                     }}
                     onClick={() => {
                       if (affordance.open.length > 0) {
@@ -1084,6 +1287,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
                     {affordance.open.length > 0 ? (
                       <span style={{ color: "var(--graview-ink-faint)" }}> …</span>
                     ) : null}
+                    {lit === `act:${affordance.id}` ? ENTER_MARK : null}
                     {matched?.length === 1 &&
                     matched[0]?.id === affordance.id &&
                     !affordance.destructive ? (
@@ -1199,7 +1403,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
           {gain.label}
         </button>
       ) : null}
-      {withheld.length > 0 ? (
+      {withheldShown.length > 0 ? (
         <ul
           data-testid="withheld"
           style={{
@@ -1212,7 +1416,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
             gap: 2,
           }}
         >
-          {withheld.slice(0, atPointer || allWithheld ? withheld.length : 3).map((action) => (
+          {withheldShown.slice(0, atPointer || allWithheld ? withheldShown.length : 3).map((action) => (
             <li key={action.id} style={{ display: "grid", gap: 2 }}>
               <button
                 type="button"
@@ -1274,7 +1478,33 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         </ul>
       ) : null}
 
-      {atPointer ? beside.end.map((section) => <SectionDrawn key={section.id} section={section} close={() => setMenuAt(null)} />) : null}
+      {atPointer ? endSections.map((section) => <SectionDrawn key={section.id} section={section} lit={lit} close={() => setMenuAt(null)} />) : null}
+
+      {/* What worked before, like these words: chosen, asked and previewed on the card (Roadmap f-menu-learns). */}
+      {toldShown.length > 0 ? (
+        <div data-menu-section="told" role="group" aria-label="Suggested" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5 }}>
+          {toldShown.map((one) => (
+            <button key={one.key} type="button" data-menu-item={one.key} data-told-suggestion={one.telling.id} data-menu-lit={lit === one.key || undefined} onClick={() => takeTold(one)} style={{ ...ROW_STYLE, ...(lit === one.key ? LIT_STYLE : {}) }}>
+              {one.label}
+              {lit === one.key ? ENTER_MARK : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {/* The words typed, asked about what the menu was opened on: always the last row, where the host lent a model. */}
+      {askRow ? (
+        <div data-menu-section="ask" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5 }}>
+          <button type="button" data-menu-item="ask-typed" data-menu-lit={lit === "ask" || undefined} onClick={ask} style={{ ...ROW_STYLE, ...(lit === "ask" ? LIT_STYLE : {}) }}>
+            Tell Graview <span style={{ fontWeight: 600 }}>“{words}”</span>
+            {lit === "ask" ? ENTER_MARK : null}
+          </button>
+        </div>
+      ) : null}
+      {atPointer && words !== "" && !askRow && lit === null && shown.length === 0 && withheldShown.length === 0 ? (
+        <p data-testid="menu-no-match" style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}>
+          Nothing here matches “{words}”.
+        </p>
+      ) : null}
 
       {/* The arguments appear in place, under the action that asked for them,
           rather than turning the strip into a form. */}
@@ -1294,6 +1524,21 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   );
 }
 
+/** Whether this is somewhere a person types: a field, a box of text. */
+function typingIn(element: HTMLElement): boolean {
+  if (element.isContentEditable || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) return true;
+  return element instanceof HTMLInputElement && !["button", "submit", "reset", "checkbox", "radio", "image", "file", "color", "range"].includes(element.type);
+}
+
+/** A menu's row, and the one Enter runs from the field, lit, with the key that runs it said. */
+const ROW_STYLE = { padding: "5px 10px", fontSize: "0.875rem", borderRadius: 8, width: "100%", textAlign: "left", borderWidth: 1, borderStyle: "solid", borderColor: "transparent", background: "none", boxShadow: "none" } as const;
+const LIT_STYLE = { background: "var(--graview-panel-muted)" } as const;
+const ENTER_MARK = (
+  <span aria-hidden="true" title="Enter runs it" style={{ float: "right", color: "var(--graview-ink-faint)", fontSize: "0.75rem" }}>
+    ↵
+  </span>
+);
+
 /** One shared empty, for a visitor told the way in instead. */
 const NOTHING_WITHHELD: readonly never[] = [];
 
@@ -1302,7 +1547,7 @@ const NOTHING_WITHHELD: readonly never[] = [];
  * each pressed to close the menu and run, or what it draws itself. Rows of
  * the acts' own look, so the menu reads as one list.
  */
-function SectionDrawn({ section, close }: { readonly section: MenuSection; readonly close: () => void }) {
+function SectionDrawn({ section, lit = null, close }: { readonly section: MenuSection; readonly lit?: string | null; readonly close: () => void }) {
   return (
     <div
       data-menu-section={section.id}
@@ -1321,14 +1566,16 @@ function SectionDrawn({ section, close }: { readonly section: MenuSection; reado
               <button
                 type="button"
                 data-menu-item={item.id}
+                data-menu-lit={lit === `item:${item.id}` || undefined}
                 onClick={() => {
                   close();
                   item.run();
                 }}
-                style={{ padding: "5px 10px", fontSize: "0.875rem", borderRadius: 8, width: "100%", textAlign: "left", borderWidth: 1, borderStyle: "solid", borderColor: "transparent", background: "none", boxShadow: "none" }}
+                style={{ ...ROW_STYLE, ...(lit === `item:${item.id}` ? LIT_STYLE : {}) }}
               >
                 {item.label}
                 {item.hint ? <span style={{ color: "var(--graview-ink-faint)" }}> · {item.hint}</span> : null}
+                {lit === `item:${item.id}` ? ENTER_MARK : null}
               </button>
             </li>
           ))}

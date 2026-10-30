@@ -661,7 +661,7 @@ try {
        * so no quick ask is drawn either; todo's quick ask is walked below.
        */
       const here = stop("Roadmap", "No Ask box", "No field at the foot of the page, and no quick ask where no model is lent.");
-      const regions = await ada.getByRole("region", { name: /^Ask / }).count();
+      const regions = await ada.getByRole("region", { name: /^(Ask|Tell Graview) / }).count();
       here.read("Read in order", await readingOrder(ada, cdp, { selector: "#app", skip: [BAR], items: 2 }));
       check("no Ask box: no region asks at the page's foot", regions === 0, { regions });
     }
@@ -777,7 +777,7 @@ try {
       await todoReady(todo);
       await todo.keyboard.press("ControlOrMeta+K");
       await todo.waitForSelector(ASK, { timeout: 30_000 }).catch(() => undefined);
-      const card = todo.getByRole("region", { name: /^Ask about / });
+      const card = todo.getByRole("region", { name: /^Tell Graview about / });
       const named = await card.count();
       const box = card.getByRole("combobox").first();
       const asked = Date.now();

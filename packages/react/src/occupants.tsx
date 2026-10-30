@@ -106,6 +106,52 @@ export function Occupants({ width, whereIs }: OccupantsProps): ReactElement | nu
   const others = placeOthers([...who.values()], whereIs, width);
 
   if (others.length === 0) return null;
+  /*
+   * ONE LABEL AT ONE SPOT. Two robots standing at one place — Nora's agent
+   * and Graview thinking for her — drew their names over each other. The
+   * robots at one point are drawn once, their names said together ("Nora's
+   * agent · Graview, for Nora"), so no text ever lies on other text.
+   */
+  const robotLabel = (one: { readonly presence: Parameters<typeof presenceName>[0] }) => {
+    const name = presenceName(one.presence) || "somebody";
+    // An agent said as itself ("Graview, for Nora"); a person's robot as theirs.
+    return one.presence.kind === "agent" ? name : `${name}'s agent`;
+  };
+  const together = new Map<string, string[]>();
+  for (const one of others) {
+    if (one.kind !== "robot") continue;
+    const spot = `${Math.round(one.point.x)}:${Math.round(one.point.y)}`;
+    together.set(spot, [...(together.get(spot) ?? []), robotLabel(one)]);
+  }
+  /*
+   * NO LABEL OVER ANOTHER. A person's name and a robot's beside it stood
+   * 48 px apart with names wider than that ("NORA" under "GRAVIEW, FOR
+   * NORA"). Each label's width is reckoned from its letters (0.75 rem,
+   * capitals, spaced), and a label that would lie on one already placed
+   * goes a line lower.
+   */
+  const LINE = 19;
+  const widthOf = (text: string) => text.length * 9 + 4;
+  const placedLabels: { readonly left: number; readonly right: number; readonly y: number; readonly row: number }[] = [];
+  const rowOf = new Map<string, number>();
+  const seen = new Set<string>();
+  for (const one of others) {
+    if (one.kind !== "robot" && one.kind !== "person") continue;
+    const spot = `${Math.round(one.point.x)}:${Math.round(one.point.y)}`;
+    if (one.kind === "robot" && seen.has(spot)) continue;
+    if (one.kind === "robot") seen.add(spot);
+    const text = one.kind === "robot" ? [...new Set(together.get(spot) ?? [])].join(" · ") : presenceName(one.presence) || "somebody";
+    const half = widthOf(text) / 2;
+    let row = 0;
+    while (placedLabels.some((other) => other.row === row && Math.abs(other.y - one.point.y) < LINE && other.left < one.point.x + half && other.right > one.point.x - half)) row++;
+    placedLabels.push({ left: one.point.x - half, right: one.point.x + half, y: one.point.y, row });
+    rowOf.set(`${one.kind}:${one.presence.participant}`, row);
+  }
+  const labelAt = (key: string) => {
+    const row = rowOf.get(key) ?? 0;
+    return row > 0 ? { top: 2 + row * LINE } : undefined;
+  };
+  const drawn = new Set<string>();
 
   return (
     <div className="graview-occupants" data-testid="occupants" data-graview-occupants={others.length}>
@@ -156,6 +202,10 @@ export function Occupants({ width, whereIs }: OccupantsProps): ReactElement | nu
           );
         }
         if (one.kind === "robot") {
+          const spot = `${Math.round(one.point.x)}:${Math.round(one.point.y)}`;
+          if (drawn.has(spot)) return null;
+          drawn.add(spot);
+          const label = [...new Set(together.get(spot) ?? [robotLabel(one)])].join(" · ");
           return (
             <div
               key={`robot:${one.presence.participant}`}
@@ -166,10 +216,10 @@ export function Occupants({ width, whereIs }: OccupantsProps): ReactElement | nu
               data-graview-at={one.presence.robot?.at ?? ""}
               style={{ transform: `translate(${one.point.x.toFixed(1)}px, ${one.point.y.toFixed(1)}px)`, ["--graview-hue" as string]: hue }}
             >
-              <span className="graview-figure-body" role="img" aria-label={`${name}'s agent — ${one.mode}`} style={{ cursor: "default" }}>
+              <span className="graview-figure-body" role="img" aria-label={`${label} — ${one.mode}`} style={{ cursor: "default" }}>
                 <Figure hue={hue} mode={one.mode as RobotState["mode"]} />
               </span>
-              <span className="graview-figure-name">{name}'s agent</span>
+              <span className="graview-figure-name" data-graview-label="" style={labelAt(`robot:${one.presence.participant}`)}>{label}</span>
             </div>
           );
         }
@@ -198,7 +248,7 @@ export function Occupants({ width, whereIs }: OccupantsProps): ReactElement | nu
             >
               <PersonFigure hue={hue} />
             </button>
-            <span className="graview-figure-name">{name}</span>
+            <span className="graview-figure-name" style={labelAt(`person:${one.presence.participant}`)}>{name}</span>
           </div>
         );
       })}

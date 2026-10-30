@@ -105,6 +105,10 @@ export function createBroadcastPresence(scope: string, options: BroadcastPresenc
       if (known.has(presence.participant)) fold([]);
       channel?.postMessage({ type: "here", presence } satisfies Word);
     },
+    alsoHere(presence) {
+      // Another participant this page speaks for: its word goes out, and this page's own `self` stays its own.
+      channel?.postMessage({ type: "here", presence } satisfies Word);
+    },
     onWho(listener) {
       listeners.add(listener);
       keep();

@@ -400,7 +400,7 @@ async function askTheGardener(p) {
   const row = p.locator('[data-graview-map-panel] [data-graview-record^="gardener:"]').first();
   await row.click({ button: "right" });
   await p.locator('[data-testid="context-menu"] [data-testid="affordances"] button', { hasText: "Change the" }).first().click();
-  await p.waitForSelector('[data-testid="context-menu"] input, [data-testid="context-menu"] textarea');
+  await p.waitForSelector('[data-testid="context-menu"] input:not([data-testid="menu-type"]), [data-testid="context-menu"] textarea');
 }
 
 const audit = () => {

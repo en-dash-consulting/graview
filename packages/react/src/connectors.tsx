@@ -1186,6 +1186,8 @@ export function Connectors({
                 onPickEdge(edgeId, { x: event.clientX, y: event.clientY });
               }}
               onContextMenu={(event) => {
+                // Option held: the browser's own menu.
+                if (event.altKey) return;
                 event.preventDefault();
                 event.stopPropagation();
                 onPickEdge(edgeId, { x: event.clientX, y: event.clientY });

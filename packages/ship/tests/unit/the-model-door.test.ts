@@ -55,11 +55,26 @@ describe("the model door", () => {
   it("with a key, says which model, never the key", async () => {
     const { sent, res } = respond();
     await aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY } })(request("GET"), res);
-    expect(JSON.parse(sent.body!)).toEqual({ configured: true, model: "claude-sonnet-5-5", name: "claude" });
+    expect(JSON.parse(sent.body!)).toEqual({ configured: true, provider: "anthropic", model: "claude-sonnet-5-5", fast: "claude-haiku-5-5", name: "claude", turns: true });
     expect(sent.body).not.toContain(KEY);
     const other = respond();
     await aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY, GRAVIEW_AI_MODEL: "claude-opus-5-5" } })(request("GET"), other.res);
     expect(JSON.parse(other.sent.body!)).toMatchObject({ model: "claude-opus-5-5" });
+  });
+
+  it("asks a Fast slot's prompt of the small quick model, at low effort, which GRAVIEW_AI_FAST_MODEL may name (Roadmap f-menu-type-anything)", async () => {
+    const upstream = answered('{"row": {"choice": "r1", "confidence": 0.8}}');
+    const handler = aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY }, fetch: upstream, endpoint: "https://messages.test/v1/messages" });
+    const { sent, res } = respond();
+    await handler(request("POST", JSON.stringify({ prompt: "which row?", tier: "fast" })), res);
+    const body = JSON.parse(upstream.mock.calls[0]![1].body);
+    expect(body).toMatchObject({ model: "claude-haiku-5-5", output_config: { effort: "low" }, messages: [{ role: "user", content: "which row?" }] });
+    expect(body.max_tokens).toBeLessThanOrEqual(2_000);
+    expect(body).not.toHaveProperty("fallbacks");
+    expect(JSON.parse(sent.body!)).toEqual({ text: '{"row": {"choice": "r1", "confidence": 0.8}}' });
+    const named = respond();
+    await aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY, GRAVIEW_AI_FAST_MODEL: "claude-haiku-4-5" } })(request("GET"), named.res);
+    expect(JSON.parse(named.sent.body!)).toMatchObject({ fast: "claude-haiku-4-5" });
   });
 
   it("forwards a prompt to the Messages API with the key in its header, and answers with the text alone", async () => {
@@ -151,4 +166,84 @@ describe("the model door", () => {
     // The address that trades the door's key for its cookie, and then the door.
     expect(used).toEqual([expect.any(Function), "/__graview/ai"]);
   });
+
+  /* xAI and OpenAI: one chat-completions adapter, chosen by the key that is set (Roadmap f-menu-type-anything). */
+  const chat = (content: string, status = 200, error?: string) =>
+    vi.fn(async (_url: string, _init: { method: string; headers: Record<string, string>; body: string }) => ({
+      status,
+      text: async () => JSON.stringify(error ? { error: { message: error } } : { choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }], usage: { prompt_tokens: 21, completion_tokens: 5 } }),
+    }));
+
+  for (const [provider, variable, endpoint, model, fast, name] of [
+    ["xai", "XAI_API_KEY", "https://api.x.ai/v1/chat/completions", "grok-4.7", "grok-4.20-0309-non-reasoning", "grok"],
+    ["openai", "OPENAI_API_KEY", "https://api.openai.com/v1/chat/completions", "gpt-5.4", "gpt-5.4-mini", "openai"],
+  ] as const) {
+    describe(`with ${variable}`, () => {
+      const SECRET = `sk-${provider}-test-key`;
+      it("says which provider and models, never the key, and that a turn's tools are not its", async () => {
+        const { sent, res } = respond();
+        await aiDevProxyHandler({ env: { [variable]: SECRET } })(request("GET"), res);
+        expect(JSON.parse(sent.body!)).toEqual({ configured: true, provider, model, fast, name, turns: false });
+        expect(sent.body).not.toContain(SECRET);
+      });
+
+      it("asks its chat completions with the key as a bearer, the framing a system message and the pictures as image parts, and answers the text and what it used", async () => {
+        const upstream = chat("Ada is on Thursday.");
+        const handler = aiDevProxyHandler({ env: { [variable]: SECRET }, fetch: upstream });
+        const { sent, res } = respond();
+        await handler(request("POST", JSON.stringify({ prompt: "who is on thursday?", system: "Be brief.", images: [{ mediaType: "image/png", data: "iVBORw0KGgo=" }] })), res);
+        const [url, init] = upstream.mock.calls[0]!;
+        expect(url).toBe(endpoint);
+        expect(init.headers).toMatchObject({ authorization: `Bearer ${SECRET}`, "content-type": "application/json" });
+        expect(JSON.parse(init.body)).toEqual({
+          model,
+          messages: [
+            { role: "system", content: "Be brief." },
+            { role: "user", content: [{ type: "image_url", image_url: { url: "data:image/png;base64,iVBORw0KGgo=" } }, { type: "text", text: "who is on thursday?" }] },
+          ],
+        });
+        expect(JSON.parse(sent.body!)).toEqual({ text: "Ada is on Thursday.", usage: { inputTokens: 21, outputTokens: 5 } });
+      });
+
+      it("asks a Fast slot's prompt of its small quick model", async () => {
+        const upstream = chat('{"row": {"choice": "r1", "confidence": 0.8}}');
+        await aiDevProxyHandler({ env: { [variable]: SECRET }, fetch: upstream })(request("POST", JSON.stringify({ prompt: "which row?", tier: "fast" })), respond().res);
+        expect(JSON.parse(upstream.mock.calls[0]![1].body)).toMatchObject({ model: fast });
+      });
+
+      it(`names ${variable} when the key is refused, and never says the key`, async () => {
+        const { sent, res } = respond();
+        await aiDevProxyHandler({ env: { [variable]: SECRET }, fetch: chat("", 401, `Incorrect API key provided: ${SECRET}`) })(request("POST", JSON.stringify({ prompt: "hello" })), res);
+        expect(sent.status).toBe(401);
+        expect(JSON.parse(sent.body!)).toEqual({ error: `The model refused the key in ${variable}.` });
+        const other = respond();
+        await aiDevProxyHandler({ env: { [variable]: SECRET }, fetch: chat("", 400, `bad request for ${SECRET}`) })(request("POST", JSON.stringify({ prompt: "hello" })), other.res);
+        expect(other.sent.body).not.toContain(SECRET);
+      });
+
+      it("refuses a turn's tool step, which only Anthropic takes here", async () => {
+        const upstream = chat("unused");
+        const { sent, res } = respond();
+        await aiDevProxyHandler({ env: { [variable]: SECRET }, fetch: upstream })(request("POST", JSON.stringify({ system: "s", messages: [{ role: "user", content: "hi" }], tools: [] })), res);
+        expect(sent.status).toBe(400);
+        expect(upstream).not.toHaveBeenCalled();
+      });
+    });
+  }
+
+  it("takes the provider GRAVIEW_AI_PROVIDER names when several keys are set, else Anthropic, then xAI, then OpenAI", async () => {
+    const probe = async (env: Record<string, string>) => {
+      const { sent, res } = respond();
+      await aiDevProxyHandler({ env })(request("GET"), res);
+      return (JSON.parse(sent.body!) as { provider?: string }).provider;
+    };
+    const all = { ANTHROPIC_API_KEY: KEY, XAI_API_KEY: "x", OPENAI_API_KEY: "o" };
+    expect(await probe(all)).toBe("anthropic");
+    expect(await probe({ ...all, GRAVIEW_AI_PROVIDER: "xai" })).toBe("xai");
+    expect(await probe({ XAI_API_KEY: "x", OPENAI_API_KEY: "o" })).toBe("xai");
+    expect(await probe({ OPENAI_API_KEY: "o", GRAVIEW_AI_PROVIDER: "openai" })).toBe("openai");
+    // Named, but its key is not set: the one that is.
+    expect(await probe({ OPENAI_API_KEY: "o", GRAVIEW_AI_PROVIDER: "xai" })).toBe("openai");
+  });
 });
+

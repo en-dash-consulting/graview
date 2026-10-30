@@ -334,7 +334,9 @@ const onMarked = (page) =>
     const target = document.querySelector("[data-journey-target]");
     const active = document.activeElement;
     // The control itself: a district holds controls of its own, and landing on one of those is somewhere else.
-    return !!target && active === target;
+    if (!!target && active === target) return true;
+    // Or, in the right-click menu, the row lit from its field: Enter there runs it, as Enter on the row does.
+    return !!target && active?.getAttribute("data-testid") === "menu-type" && target.hasAttribute("data-menu-lit") && target.closest('[data-testid="context-menu"]')?.contains(active) === true;
   });
 
 /**
@@ -371,6 +373,28 @@ const groupKeys = (page) =>
           if (item === target) break;
         }
         ways.push(Array(times).fill(letter));
+      }
+    }
+    /*
+     * IN THE RIGHT-CLICK MENU, A WORD TYPED (Roadmap f-menu-type-anything):
+     * a letter goes into the menu's field and narrows the rows to those it
+     * begins, the first lit, and Enter in the field runs the one lit — so
+     * the fewest letters of the target's words that light it.
+     */
+    const menu = group.closest('[data-testid="context-menu"]');
+    if (menu?.querySelector('[data-testid="menu-type"]')) {
+      const fold = (text) => text.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+      const rows = [...menu.querySelectorAll("[data-affordance]:not([disabled]), [data-menu-item]")].filter((row) => !row.closest("[data-graview-asking], [hidden]") && !row.hasAttribute("data-graview-destructive"));
+      const label = (row) => (row.textContent ?? "").replace(/[…↵]/g, "").trim();
+      const first = fold(label(target))[0] ?? "";
+      for (let n = 1; n <= first.length; n++) {
+        const typed = first.slice(0, n);
+        if (!/^[a-z0-9]+$/.test(typed)) break;
+        const lit = rows.find((row) => fold(label(row)).some((word) => word.startsWith(typed)));
+        if (lit === target) {
+          ways.push([...typed]);
+          break;
+        }
       }
     }
     return ways.sort((a, b) => a.length - b.length)[0];

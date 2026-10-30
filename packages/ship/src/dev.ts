@@ -507,15 +507,18 @@ export function decisionBridge(options: DecisionBridgeOptions = {}): DevServerPl
 /**
  * A MODEL FOR THE SEAT, IN DEVELOPMENT, with the key on this side of the door.
  *
- * Somebody running an example with `ANTHROPIC_API_KEY=… pnpm dev` wants to
- * ask it open questions; a page must never hold that key. So the page posts
- * a prompt to `/__graview/ai` and this server forwards it to the Anthropic
- * Messages API with the key from ITS environment, answering with the text
- * alone. GET says whether a key is there — and, when it is not, how to set
+ * Somebody running an example with `ANTHROPIC_API_KEY=… pnpm dev` (or
+ * `XAI_API_KEY`, or `OPENAI_API_KEY`) wants to ask it open questions; a page
+ * must never hold that key. So the page posts a prompt to `/__graview/ai`
+ * and this server forwards it with the key from ITS environment — to the
+ * Anthropic Messages API, or to xAI's or OpenAI's chat completions, one
+ * adapter for both — answering with the text alone. The provider is the
+ * one whose key is set; `GRAVIEW_AI_PROVIDER` (anthropic, xai, openai)
+ * decides when several are. GET says whether a key is there — and, when it is not, how to set
  * one, so the seat of a dev build can say so (`aiThroughDevServer`).
  *
- * A SEAT'S TURN (FR-160) posts `{ system, messages, tools, tool_choice? }`
- * instead: one step of the tool loop the page runs, forwarded as it is
+ * A SEAT'S TURN (FR-160) — on Anthropic only, which the probe says as
+ * `turns` — posts `{ system, messages, tools, tool_choice? }` instead: one step of the tool loop the page runs, forwarded as it is
  * with the model added, and answered with `{ content, stop_reason }` so
  * the page can run the reads the model asked for, as the person, and post
  * the next step. The door holds no state between steps.
@@ -532,7 +535,9 @@ export interface AiDevProxyOptions {
   readonly env?: Readonly<Record<string, string | undefined>>;
   /** The model when `GRAVIEW_AI_MODEL` is unset. */
   readonly model?: string;
-  /** The Messages API. Its real endpoint unless a test says otherwise. */
+  /** The small, quick model a page's Fast slot is lent when `GRAVIEW_AI_FAST_MODEL` is unset (Roadmap f-menu-type-anything). */
+  readonly fastModel?: string;
+  /** The provider's endpoint. Its real one unless a test says otherwise. */
   readonly endpoint?: string;
   /** The most one answer may be, in tokens. */
   readonly maxTokens?: number;
@@ -546,14 +551,60 @@ export interface AiDevProxyOptions {
 }
 
 const AI_DEFAULTS = {
-  endpoint: "https://api.anthropic.com/v1/messages",
-  model: "claude-sonnet-5-5",
+  fastMaxTokens: 2_000,
   maxTokens: 16_000,
   limitBytes: 2_000_000,
 };
 
+/** The providers the door speaks to, each by the key that names it. */
+export type AiDevProvider = "anthropic" | "xai" | "openai";
+
+/*
+ * EACH PROVIDER: its key, its endpoint, the model a seat is asked of, and a
+ * small quick one the page's Fast slot is lent when no key for Jev is set
+ * (Roadmap f-menu-type-anything). xAI and OpenAI take the same chat
+ * completions; Anthropic its Messages API.
+ */
+const PROVIDERS: Readonly<Record<AiDevProvider, { readonly key: string; readonly endpoint: string; readonly model: string; readonly fast: string; readonly name: string }>> = {
+  anthropic: { key: "ANTHROPIC_API_KEY", endpoint: "https://api.anthropic.com/v1/messages", model: "claude-sonnet-5-5", fast: "claude-haiku-5-5", name: "claude" },
+  xai: { key: "XAI_API_KEY", endpoint: "https://api.x.ai/v1/chat/completions", model: "grok-4.7", fast: "grok-4.20-0309-non-reasoning", name: "grok" },
+  openai: { key: "OPENAI_API_KEY", endpoint: "https://api.openai.com/v1/chat/completions", model: "gpt-5.4", fast: "gpt-5.4-mini", name: "openai" },
+};
+const PROVIDER_ORDER: readonly AiDevProvider[] = ["anthropic", "xai", "openai"];
+
+/** The provider whose key is set — the one `GRAVIEW_AI_PROVIDER` names when several are — and its key; none when no key is set. */
+export function aiDevProvider(env: Readonly<Record<string, string | undefined>>): { readonly provider: AiDevProvider; readonly key: string } | undefined {
+  const keyOf = (provider: AiDevProvider) => env[PROVIDERS[provider].key]?.trim() || undefined;
+  const named = env["GRAVIEW_AI_PROVIDER"]?.trim().toLowerCase() as AiDevProvider | undefined;
+  if (named && named in PROVIDERS) {
+    const key = keyOf(named);
+    if (key) return { provider: named, key };
+  }
+  for (const provider of PROVIDER_ORDER) {
+    const key = keyOf(provider);
+    if (key) return { provider, key };
+  }
+  return undefined;
+}
+
 /** What a dev build's seat says when the door is there and no key is set. */
-export const AI_HOW_TO = "Set ANTHROPIC_API_KEY when you start the dev server to turn it on.";
+export const AI_HOW_TO = "Set ANTHROPIC_API_KEY, XAI_API_KEY or OPENAI_API_KEY when you start the dev server to turn it on.";
+
+/** What chat completions answer, as far as the door reads it. */
+interface ChatReply {
+  readonly choices?: readonly { readonly message?: { readonly content?: string | null; readonly refusal?: string | null }; readonly finish_reason?: string }[];
+  readonly usage?: { readonly prompt_tokens?: number; readonly completion_tokens?: number };
+  readonly error?: { readonly message?: string } | string;
+}
+
+/** A completion's pictures as chat completions take them: image parts with data addresses, the words after them. */
+function chatContent(prompt: string, images: unknown): string | readonly unknown[] {
+  const pictures = Array.isArray(images)
+    ? images.filter((image): image is { mediaType: string; data: string } => typeof image?.mediaType === "string" && /^image\//.test(image.mediaType) && typeof image.data === "string" && image.data.length > 0)
+    : [];
+  if (pictures.length === 0) return prompt;
+  return [...pictures.map((image) => ({ type: "image_url", image_url: { url: `data:${image.mediaType};base64,${image.data}` } })), { type: "text", text: prompt }];
+}
 
 /** The models a server-side fallback and a low effort may be asked of; another model gets the plain request. */
 const CURRENT = /^claude-(?:fable-5-1|opus-5-5|opus-5|sonnet-5-5)$/;
@@ -578,11 +629,8 @@ function promptContent(prompt: string, images: unknown): string | readonly unkno
 export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
   const env = options.env ?? process.env;
   const call = options.fetch ?? (globalThis.fetch as NonNullable<AiDevProxyOptions["fetch"]>);
-  const keyOf = () => {
-    const key = env["ANTHROPIC_API_KEY"];
-    return key && key.trim().length > 0 ? key.trim() : undefined;
-  };
-  const modelOf = () => env["GRAVIEW_AI_MODEL"]?.trim() || options.model || AI_DEFAULTS.model;
+  const modelOf = (provider: AiDevProvider) => env["GRAVIEW_AI_MODEL"]?.trim() || options.model || PROVIDERS[provider].model;
+  const fastModelOf = (provider: AiDevProvider) => env["GRAVIEW_AI_FAST_MODEL"]?.trim() || options.fastModel || PROVIDERS[provider].fast;
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     if (!fromThisApp(req)) {
       // The page's probe, opened without the key: no model here until it is opened from the printed address.
@@ -590,30 +638,77 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
       else sendJson(res, 403, { error: DOOR_LOCKED });
       return;
     }
-    const key = keyOf();
-    const model = modelOf();
+    const chosen = aiDevProvider(env);
     if (req.method === "GET") {
-      sendJson(res, 200, key ? { configured: true, model, name: "claude" } : { configured: false, howTo: AI_HOW_TO });
+      sendJson(
+        res,
+        200,
+        chosen
+          ? { configured: true, provider: chosen.provider, model: modelOf(chosen.provider), fast: fastModelOf(chosen.provider), name: PROVIDERS[chosen.provider].name, turns: chosen.provider === "anthropic" }
+          : { configured: false, howTo: AI_HOW_TO },
+      );
       return;
     }
     if (req.method !== "POST") {
       sendJson(res, 405, { error: "GET to ask whether a model is here; POST a prompt." });
       return;
     }
-    if (!key) {
+    if (!chosen) {
       sendJson(res, 503, { error: `No model here. ${AI_HOW_TO}` });
       return;
     }
+    const { provider, key } = chosen;
+    const refused = `The model refused the key in ${PROVIDERS[provider].key}.`;
     try {
-      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown; system?: unknown; images?: unknown; messages?: unknown; tools?: unknown; tool_choice?: unknown };
+      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown; system?: unknown; images?: unknown; messages?: unknown; tools?: unknown; tool_choice?: unknown; tier?: unknown };
+      /* The Fast slot's stand-in: a prompt asked of the small model, never a turn. */
+      const quick = ask.tier === "fast";
       /* A turn's step: the conversation so far, the seat's read tools, and its framing. */
       const step = Array.isArray(ask.messages) && ask.messages.length > 0;
       if (!step && (typeof ask.prompt !== "string" || ask.prompt.trim().length === 0)) {
         sendJson(res, 400, { error: "A request is { prompt, system?, images? }, or a turn's { system, messages, tools }." });
         return;
       }
-      const current = CURRENT.test(model);
-      const upstream = await call(options.endpoint ?? AI_DEFAULTS.endpoint, {
+      const asked = quick ? fastModelOf(provider) : modelOf(provider);
+      if (provider !== "anthropic") {
+        /* xAI and OpenAI: one chat completion, the framing as a system message, the words (and pictures) as the person's. */
+        if (step) {
+          sendJson(res, 400, { error: `A turn's tool steps go to Anthropic only; ${PROVIDERS[provider].key} answers prompts.` });
+          return;
+        }
+        const upstream = await call(options.endpoint ?? PROVIDERS[provider].endpoint, {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+          body: JSON.stringify({
+            model: asked,
+            // The quick model reads a typed answer: the same words, the same answer.
+            ...(quick ? { temperature: 0 } : {}),
+            messages: [...(typeof ask.system === "string" && ask.system.length > 0 ? [{ role: "system", content: ask.system }] : []), { role: "user", content: chatContent(ask.prompt as string, ask.images) }],
+          }),
+        });
+        const raw = await upstream.text();
+        let reply: ChatReply = {};
+        try {
+          reply = JSON.parse(raw) as ChatReply;
+        } catch {
+          // Not JSON: said by its status below.
+        }
+        if (upstream.status < 200 || upstream.status >= 300) {
+          const said = upstream.status === 401 || upstream.status === 403 ? refused : (typeof reply.error === "string" ? reply.error : reply.error?.message) ?? `The model answered ${upstream.status}.`;
+          sendJson(res, upstream.status, { error: said.split(key).join("…") });
+          return;
+        }
+        const message = reply.choices?.[0]?.message;
+        if (message?.refusal) {
+          sendJson(res, 502, { error: "The model declined to answer that." });
+          return;
+        }
+        const used = reply.usage;
+        sendJson(res, 200, { text: message?.content ?? "", ...(typeof used?.prompt_tokens === "number" && typeof used.completion_tokens === "number" ? { usage: { inputTokens: used.prompt_tokens, outputTokens: used.completion_tokens } } : {}) });
+        return;
+      }
+      const current = !quick && CURRENT.test(asked);
+      const upstream = await call(options.endpoint ?? PROVIDERS.anthropic.endpoint, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -623,9 +718,10 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
           ...(current ? { "anthropic-beta": "server-side-fallback-2026-07-01" } : {}),
         },
         body: JSON.stringify({
-          model,
-          max_tokens: options.maxTokens ?? AI_DEFAULTS.maxTokens,
-          ...(step
+          model: asked,
+          max_tokens: quick ? AI_DEFAULTS.fastMaxTokens : (options.maxTokens ?? AI_DEFAULTS.maxTokens),
+          ...(quick ? { temperature: 0 } : {}),
+          ...(step && !quick
             ? {
                 ...(typeof ask.system === "string" && ask.system.length > 0 ? { system: ask.system } : {}),
                 messages: ask.messages,
@@ -636,7 +732,7 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
                 messages: [{ role: "user", content: promptContent(ask.prompt as string, ask.images) }],
               }),
           // A seat's answer is a few sentences: a low effort is quick and enough.
-          ...(current ? { output_config: { effort: "low" }, fallbacks: "default" } : {}),
+          ...(current ? { output_config: { effort: "low" }, fallbacks: "default" } : quick ? { output_config: { effort: "low" } } : {}),
         }),
       });
       const raw = await upstream.text();
@@ -648,8 +744,8 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
       }
       if (upstream.status < 200 || upstream.status >= 300) {
         /* The provider's status is the page's; its own sentence, which never held the key. */
-        const said = upstream.status === 401 ? "The model refused the key in ANTHROPIC_API_KEY." : reply.error?.message ?? `The model answered ${upstream.status}.`;
-        sendJson(res, upstream.status, { error: said });
+        const said = upstream.status === 401 ? refused : reply.error?.message ?? `The model answered ${upstream.status}.`;
+        sendJson(res, upstream.status, { error: said.split(key).join("…") });
         return;
       }
       if (reply.stop_reason === "refusal") {
@@ -690,6 +786,9 @@ export function aiDevProxy(options: AiDevProxyOptions = {}): DevServerPlugin {
 
 // A dev server's files (FR-163): kept in memory, served back, never in a build.
 export { DEV_FILES_KINDS, DEV_FILES_MAX_BYTES, DEV_FILES_PATH, devFiles, devFilesHandler } from "./dev-files.js";
+// What people tell Graview (Roadmap f-menu-learns): kept in `.generated/told.json` while `pnpm dev` runs.
+export { DEV_TOLD_PATH, devTold, devToldHandler } from "./dev-told.js";
+export type { DevToldOptions } from "./dev-told.js";
 export type { DevFilesOptions } from "./dev-files.js";
 // A dev server's views (Roadmap f-place-menu-views): what the place menu hid and deleted, kept in memory, never in a build.
 export { DEV_VIEWS_PATH, devViews, devViewsHandler } from "./dev-views.js";

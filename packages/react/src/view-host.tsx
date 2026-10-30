@@ -12,6 +12,7 @@ import {
 import type { ActivityMark } from "./activity.js";
 import { useGraview } from "./context.js";
 import { joinedFrom, pickedFrom, usePickTargets } from "./picking.js";
+import { sectionsArrive, sectionsWanted, sectionUnderNow, type MenuViewSection } from "./view-places.js";
 import { WHO } from "./where-drawn.js";
 import { cssTransform, planeShadow } from "./scene-helpers.js";
 import type { SceneNode } from "./scene-node.js";
@@ -48,7 +49,7 @@ interface HostProps {
    * Ask for the actions at a point, in viewport coordinates, naming what the
    * gesture landed on so the list can lead with it.
    */
-  onMenu(at: { x: number; y: number; on?: string }): void;
+  onMenu(at: { x: number; y: number; on?: string; section?: MenuViewSection; title?: string }): void;
   /** The whole selection, so the keyboard can tell a first press from a second. */
   readonly selection: readonly string[];
   onJackIn(): void;
@@ -509,6 +510,8 @@ export function SceneViewHost({
         else onPick(picked, event.metaKey || event.shiftKey, joins ?? undefined);
       }}
       onContextMenu={(event) => {
+        // Option held: the browser's own menu, as on the ground (`useGroundMenu`).
+        if (event.altKey) return;
         const picked = pickedFrom(event.target);
         event.preventDefault();
         event.stopPropagation();
@@ -526,7 +529,16 @@ export function SceneViewHost({
          * implicates several nodes in one violation put somebody else's
          * repair at the top of the menu you opened on yours.
          */
-        onMenu({ x: event.clientX, y: event.clientY, on });
+        /* Inside a worker view's preview, the section under the cursor names the menu ("This week"). */
+        const inner = event.nativeEvent.composedPath?.()[0] as Element | undefined;
+        const { clientX: x, clientY: y } = event;
+        const opened = () => {
+          const section = sectionUnderNow(inner);
+          onMenu({ x, y, on, ...(section ? { section, title: section.name } : {}) });
+        };
+        /* The first right-click inside a view fetches what finds its section, and the menu opens once it is here. */
+        if (sectionsWanted(inner)) void sectionsArrive().then(opened, opened);
+        else opened();
       }}
       onDoubleClick={(event) => {
         const picked = pickedFrom(event.target);

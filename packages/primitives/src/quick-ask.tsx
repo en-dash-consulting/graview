@@ -1,16 +1,35 @@
-import { layer, pluralOf, type AnySchema } from "@graview/core";
+import { layer, nameOfAuthor, pluralOf, type AnySchema } from "@graview/core";
 import { aiTargetOf, catalogOf, existingViewsOf, recordsOfTarget, type AiCandidate, type AiTarget } from "@graview/core/catalog";
 import { search } from "@graview/core/search";
 import { useAiDeskState, useGraview } from "@graview/react/provider";
 import { applyAffordance, deriveAffordances, previewAffordance } from "@graview/tools/derive";
-import { answerHere, targetWords, type InlineResult } from "@graview/tools/inline-ai";
+import { answerHere, plainly, targetWords, type InlineResult } from "@graview/tools/inline-ai";
 import type { Affordance } from "@graview/tools/frame";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { askOf, drawPanel, GhostTray, takeOffer } from "./inline-ai-menu.js";
 import { useInlineEnv } from "./inline-ai-env.js";
 import { openQuickAsk, type QuickAskOpening } from "./quick-ask-desk.js";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
+import type { AppPlan } from "./quick-ask-plan.js";
+import type { Telling, TellingChange, ToldStore } from "@graview/core/told";
+import { retryingImport } from "@graview/core/retry";
+import { lazyModule } from "@graview/react/provider";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
+
+/*
+ * WHAT WAS TOLD, FETCHED APART (Roadmap f-menu-learns): the telling, its
+ * thumbs and the like ones that worked are a chunk of their own, asked for
+ * once the card is open and the page is idle, and only where the host keeps
+ * tellings — never in the way of the bar, the answer or its first paint.
+ */
+const toldCard = /* @__PURE__ */ lazyModule(retryingImport(() => import("./told-ui.js")));
+const Rate = /* @__PURE__ */ toldCard.part((module, props: { readonly told: ToldStore; readonly telling: Telling }) => <module.RateTelling {...props} />, { quiet: true });
+/** After the next paint: what is kept never holds up what is drawn. */
+const afterPaint = (run: () => void): void => {
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => setTimeout(run, 0));
+  else setTimeout(run, 0);
+};
+const freshTellingId = (): string => `tl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 /**
  * THE COMMAND BAR AND ITS ANSWER CARD (`quick-ask-door.tsx`), fetched when
@@ -42,10 +61,41 @@ interface Row {
   readonly take: () => void;
 }
 
-/** What the card answered, or is answering. */
+/** What the card answered, or is answering — and, where the app lacked what was asked, the plan that would finish it. */
 interface Answering {
   readonly said: string;
   readonly result: InlineResult | null;
+  readonly plan?: AppPlan | { readonly refused: string };
+}
+
+/** Where a plan offered on the card stands: offered, on its way, landed (with its one way back), or set aside. */
+type PlanState = { readonly state: "offered" } | { readonly state: "applying" } | { readonly state: "applied"; readonly undo?: () => void | Promise<void>; readonly note?: string } | { readonly state: "declined"; readonly said: string } | { readonly state: "undone" };
+
+/** Words in the follow-up that say yes, or no, to a plan the card asks about. */
+const YES = /^(yes|yep|yeah|sure|ok(ay)?|do it|go ahead|please do)\b/i;
+const NO = /^(no|nope|don'?t|not now|never ?mind)\b/i;
+
+/**
+ * THE RECORDS A LIST OR A PLACE SHOWS (Roadmap f-menu-type-anything): what
+ * "these" and "all the tasks in this list" mean — the ones drawn on the
+ * page, of the target's kind where it has one; on the scene, every record
+ * of the kind this reader may see.
+ */
+function membersOf(store: { readonly graph: { getNode(id: string): { readonly kind: string } | undefined; allNodes(): readonly { readonly id: string; readonly kind: string }[] } }, target: AiTarget, face: "scene" | "pages"): readonly string[] {
+  const kind = target.on === "list" ? target.kind : target.on === "lens" ? target.kind : undefined;
+  // A selection is those records; what a record holds the Fast slot reads from the graph (`decideOverTheGraph`).
+  if (target.on === "selection") return target.ids;
+  if (target.on !== "list" && target.on !== "lens") return [];
+  if (face === "pages" && typeof document !== "undefined") {
+    const ids = new Set<string>();
+    for (const element of document.querySelectorAll("main [data-graview-listed], main [data-graview-record], main [data-graview-pick]")) {
+      const id = element.getAttribute("data-graview-listed") ?? element.getAttribute("data-graview-record") ?? element.getAttribute("data-graview-pick");
+      const node = id ? store.graph.getNode(id) : undefined;
+      if (id && node && (kind === undefined || node.kind === kind)) ids.add(id);
+    }
+    if (ids.size > 0) return [...ids];
+  }
+  return kind ? store.graph.allNodes().filter((node) => node.kind === kind).map((node) => node.id) : [];
 }
 
 /** Words that say what kind of row is wanted, not which: "show", "go to", "open". */
@@ -67,7 +117,8 @@ const GAP = 12;
 
 export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
   const env = useInlineEnv();
-  const { setMenuAt } = useGraview<AnySchema>();
+  const { setMenuAt, aiHere, session, people, seats, onProposeChange, composeChange } = useGraview<AnySchema>();
+  const [planState, setPlanState] = useState<PlanState>({ state: "offered" });
   const target = useMemo<AiTarget>(() => opening.target ?? aiTargetOf(opening.pointed ?? { about: [] }, (id) => env.store.graph.has(id)), [opening, env.store]);
   const about = useMemo(() => targetWords(env.store, target, env.places), [env.store, target, env.places]);
   const [words, setWords] = useState("");
@@ -76,18 +127,77 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
   const [said, setSaid] = useState<string | null>(null);
   const pane = useRef<HTMLElement | null>(null);
   const field = useRef<HTMLInputElement | null>(null);
+  const mark = useRef<HTMLSpanElement | null>(null);
   const list = useId();
   const live = useRef(true);
   const { ghost: held } = useAiDeskState(env.desk);
+  /* WHAT WAS TOLD (Roadmap f-menu-learns): this card's latest telling, kept with the host's door, and the watch on how it ends. */
+  const [telling, setTelling] = useState<Telling | null>(null);
+  const told = useRef<{ readonly id: string; readonly conversation: string; readonly interaction: string; kept?: boolean; queued?: TellingChange; stop?: () => void } | null>(null);
+  /* A change to this card's telling: handed on once it is kept, held until then. */
+  const toldSay = useCallback(
+    (change: TellingChange) => {
+      const now = told.current;
+      if (!now || !env.ai.told) return;
+      if (now.kept && toldCard.current) toldCard.current.changeTelling(env.ai.told, now.id, change);
+      else now.queued = { ...now.queued, ...change };
+    },
+    [env.ai.told],
+  );
+  /* Open, and the page idle: the telling's chunk and what the host has kept, so an Enter has its examples at hand without waiting. */
+  useEffect(() => {
+    const keeps = env.ai.told;
+    if (!keeps) return;
+    const idle = globalThis as { requestIdleCallback?: (run: () => void, options?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    const go = () => void toldCard.load().then((module) => module.toldListed(keeps), () => undefined);
+    if (idle.requestIdleCallback) {
+      const asked = idle.requestIdleCallback(go, { timeout: 1500 });
+      return () => idle.cancelIdleCallback?.(asked);
+    }
+    const later = setTimeout(go, 200);
+    return () => clearTimeout(later);
+  }, [env.ai.told]);
   useEffect(
     () => () => {
       live.current = false;
+      // Put away with nothing done: abandoned — unless a change it proposed still waits on the tray, whose answer the watch hears.
+      const last = told.current;
+      const waitingOn = env.desk.get().ghost;
+      if (last && !(waitingOn && waitingOn.ghost.interaction === last.interaction && waitingOn.batch === undefined)) toldSay({ outcome: "abandoned" });
       // Put away with a change still proposed on it: the change waits on the tray at the foot instead.
       const waiting = env.desk.get().ghost;
       if (waiting?.onCard) env.desk.setGhost({ ...waiting, onCard: false });
     },
     [env.desk],
   );
+
+  /*
+   * GRAVIEW IS HERE WHILE IT THINKS (Roadmap f-menu-type-anything): from the
+   * words asked until this card is put away — its close, Escape, a press
+   * away, an answer taken back — the app's AI stands among who is here, as
+   * a bot editing does: "Graview, for Ada", at what it was asked about, so
+   * the bar says it and the picture marks the thing; the others are told
+   * on the presence channel where there is one. A page that dies leaves it
+   * to lapse by the presence's own time.
+   */
+  const thinking = answering !== null;
+  useEffect(() => {
+    if (!thinking) return;
+    const at = recordsOfTarget(target)[0] ?? (target.on === "list" ? `kind:${target.kind}` : target.on === "lens" && target.kind ? `kind:${target.kind}` : null);
+    const person = env.principal;
+    const name = person.id ? nameOfAuthor(person, { graph: env.store.graph as never, schema: env.store.schema, ...(seats ? { seats } : {}), ...(people ? { people } : {}) }) : undefined;
+    aiHere({
+      participant: `agent:graview-for-${person.id ?? "anyone"}:${session}`,
+      kind: "agent",
+      name: "Graview",
+      ...(person.id ? { onBehalfOf: person.id, ...(name ? { onBehalfOfName: name } : {}) } : {}),
+      over: at,
+      robot: { at, mode: "thinking" },
+    });
+    return () => aiHere(null);
+    // Stands from the ask to the card's close; where it is said once, as it began.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thinking]);
 
   /* THE CATALOG OF THIS TARGET: its panels ("Show …") and places, and the acts the derivation offers this viewer on its records. */
   const catalog = useMemo(() => {
@@ -138,19 +248,108 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
     async (question: string) => {
       const asked = question.trim();
       if (!asked) return;
-      const before = answering?.result?.answer ? { said: answering.said, answer: answering.result.answer } : undefined;
+      // A reply carries what it replies to: the words, the answer, and which records they were read as being about.
+      const before = answering?.result?.answer ? { said: answering.said, answer: answering.result.answer, ...(answering.result.reading ? { reading: answering.result.reading.which } : {}) } : undefined;
+      const place = target.on === "lens" ? env.places.find((one) => one.as === target.place)?.title : target.on === "list" ? undefined : undefined;
       setWords("");
       setActive(-1);
       setSaid(null);
       setAnswering({ said: asked, result: null });
-      const result = await answerHere(env.ai, { ...askOf(env, target, asked), said: asked, ...(before ? { follows: before } : {}) });
+      setPlanState({ state: "offered" });
+      const members = membersOf(env.store as never, target, face);
+      /* A reply on the card follows the telling before it, in one conversation; one still only previewed was not taken. */
+      const earlier = told.current;
+      if (earlier) toldSay({ outcome: "abandoned" });
+      const started = Date.now();
+      // The like 👍 tellings of this app, given to Jev and the light model as examples (Roadmap f-menu-learns): only what is at hand, never waited for.
+      // Already fetched (by the menu, or as this card opened) it is here in a tick; otherwise not waited for.
+      const toldHere = env.ai.told ? (toldCard.current ?? (await Promise.race([toldCard.load().catch(() => undefined), new Promise<undefined>((resolve) => setTimeout(resolve, 50))]))) : undefined;
+      const like = env.ai.told && toldHere ? toldHere.examplesHere(env.ai.told, env.store, env.principal, asked, target) : { examples: [], ids: [] as readonly string[] };
+      const examples = [...new Set([...(earlier ? [] : (opening.suggested ? [opening.suggested] : [])), ...like.ids])];
+      const result = await answerHere(env.ai, {
+        ...askOf(env, target, asked),
+        said: asked,
+        ...(before ? { follows: before } : {}),
+        ...(members.length > 0 ? { members } : {}),
+        ...(place ? { where: place } : {}),
+        ...(like.examples.length > 0 ? { examples: like.examples } : {}),
+      });
       env.desk.record(result.interaction);
       // Its proposed change is a ghost, drawn on this card: accepted there as one batch, with its one undo.
       if (result.ghost && result.ghost.proposals.length > 0) env.desk.setGhost({ ghost: result.ghost, onCard: true });
-      if (live.current) setAnswering({ said: asked, result });
+      /* The app lacks it: the whole plan that would finish the ask, composed and rehearsed before it is said. */
+      let plan: Answering["plan"];
+      if (result.missing) {
+        try {
+          const { planFor } = await import("./quick-ask-plan.js");
+          // The records the words were read as being about, where the plan says it.
+          const from = Date.now();
+          const where = place ?? (result.reading && result.reading.which === "held" && target.on === "record" ? result.reading.words.replace(/^the \d+ \S+ in /, "") : undefined);
+          plan = await planFor(env, { said: asked, missing: result.missing, members: result.reading?.records ?? members, host: onProposeChange !== undefined, ...(composeChange ? { compose: composeChange } : {}), ...(where ? { where } : {}) });
+          // The plan composed and rehearsed, timed beside the slots' stages.
+          env.desk.record({ ...result.interaction, stages: [...(result.interaction.stages ?? []), { stage: "compose", ms: Date.now() - from }] });
+        } catch (error) {
+          // The error is the pipeline's; the person is told plainly.
+          plan = { refused: `${result.missing.said} That change could not be made here.` };
+        }
+      }
+      if (live.current) setAnswering({ said: asked, result, ...(plan ? { plan } : {}) });
+      /*
+       * KEPT AS A TELLING, AFTER THE ANSWER IS DRAWN: what was said and
+       * decided and how long it took, its id now so how it ends — said as
+       * the person goes on — is held until it is kept.
+       */
+      const keeps = env.ai.told;
+      if (!keeps) return;
+      const ms = Date.now() - started;
+      told.current?.stop?.();
+      const now: NonNullable<typeof told.current> = { id: freshTellingId(), conversation: earlier?.conversation ?? "", interaction: result.interaction.id };
+      told.current = { ...now, conversation: now.conversation || now.id };
+      const mine = told.current;
+      afterPaint(() =>
+        void toldCard.load().then((module) => {
+          const kept = module.keepTelling(keeps, { ...module.tellingDraftOf(env.store, { words: asked, target, result, ...(plan ? { plan } : {}), ms, ...(earlier ? { conversation: earlier.conversation, follows: earlier.id } : {}), examples }), id: mine.id, conversation: mine.conversation }, env.principal);
+          if (!kept) return;
+          mine.kept = true;
+          if (mine.queued) module.changeTelling(keeps, kept.id, mine.queued);
+          mine.stop = module.watchTelling(env.desk, keeps, kept);
+          if (live.current && told.current === mine) setTelling(kept);
+        }, () => undefined),
+      );
     },
-    [answering, env, target],
+    [answering, env, target, face, onProposeChange, composeChange, opening.suggested, toldSay],
   );
+
+  /*
+   * YES: THE PLAN LANDS AS ONE CHANGE. The host applies the change to the
+   * app and the records that finish the ask together, as the person, and
+   * hands back its one way back; a host that declines is said on the card.
+   */
+  const offered = answering?.plan && "question" in answering.plan ? answering.plan : undefined;
+  const yes = useCallback(async () => {
+    const proposal = offered?.proposal;
+    if (!proposal || !onProposeChange || planState.state !== "offered") return;
+    setPlanState({ state: "applying" });
+    try {
+      const answered = await onProposeChange(proposal);
+      if (!live.current) return;
+      toldSay({ outcome: answered === "declined" ? "declined" : "accepted" });
+      if (answered === "declined") setPlanState({ state: "declined", said: "The host declined this change to the app." });
+      else setPlanState({ state: "applied", ...(typeof answered === "object" ? { undo: answered.undo, ...(answered.note ? { note: answered.note } : {}) } : {}) });
+    } catch (error) {
+      if (live.current) setPlanState({ state: "declined", said: error instanceof Error ? error.message : String(error) });
+    }
+  }, [offered, onProposeChange, planState, toldSay]);
+  const no = useCallback(() => {
+    toldSay({ outcome: "declined" });
+    setPlanState({ state: "declined", said: "Left as it is." });
+  }, [toldSay]);
+  const undoPlan = useCallback(async () => {
+    if (planState.state !== "applied" || !planState.undo) return;
+    await planState.undo();
+    toldSay({ outcome: "undone" });
+    if (live.current) setPlanState({ state: "undone" });
+  }, [planState, toldSay]);
 
   /* Opened with words already (Find's "Ask: ‘…’", Activity's "Ask again"): asked at once. */
   const first = useRef(opening.asked);
@@ -243,13 +442,30 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
     }
     field.current?.focus({ preventScroll: true });
     let frame = 0;
+    let marked: HTMLElement | null = null;
+    /* OPENED FROM THE MENU, IT OPENS WHERE THE MENU STOOD and never moves: placed once, before it is first painted. */
+    const from = opening.from;
+    if (from) pinAt(element, from);
     const follow = () => {
-      placeBeside(element, anchorOf(element, target, face));
+      const anchor = anchorOf(element, target, face);
+      if (from) sayBeside(element, anchor);
+      else placeBeside(element, anchor);
+      // The thinking mark, on the thing itself while the answer is on its way.
+      const on = mark.current ? anchor : null;
+      if (marked !== on) {
+        marked?.removeAttribute("data-graview-ai-thinking");
+        on?.setAttribute("data-graview-ai-thinking", "");
+        marked = on;
+      }
+      if (mark.current) placeOn(mark.current, on);
       frame = requestAnimationFrame(follow);
     };
     follow();
-    return () => cancelAnimationFrame(frame);
-  }, [target, face]);
+    return () => {
+      cancelAnimationFrame(frame);
+      marked?.removeAttribute("data-graview-ai-thinking");
+    };
+  }, [target, face, opening.from]);
 
   /* A press outside the bar puts it away; an answer stays until it is closed. */
   useEffect(() => {
@@ -273,7 +489,14 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       event.preventDefault();
       const row = rows[active];
       if (row) row.take();
-      else if (words.trim()) void ask(words);
+      // A plan the card asks about takes its answer in words too: "yes", "no"; anything else revises it.
+      else if (offered?.proposal && planState.state === "offered" && YES.test(words.trim())) {
+        setWords("");
+        void yes();
+      } else if (offered && planState.state === "offered" && NO.test(words.trim())) {
+        setWords("");
+        no();
+      } else if (words.trim()) void ask(words);
     }
   };
 
@@ -284,7 +507,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       ref={pane}
       popover="manual"
       role="region"
-      aria-label={answering ? `Answer about ${about}` : `Ask about ${about}`}
+      aria-label={answering ? `Answer about ${about}` : `Tell Graview about ${about}`}
       data-testid="quick-ask"
       data-quick-ask={answering ? "answer" : "bar"}
       data-quick-ask-face={face}
@@ -315,8 +538,69 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
             “{answering.said}”
           </p>
           <p data-testid="quick-answer-text" aria-live="polite" style={{ margin: 0, fontSize: "0.9375rem", lineHeight: 1.45, color: result?.interaction.outcome === "failed" ? "var(--graview-warn)" : "var(--graview-ink)", overflowWrap: "anywhere" }}>
-            {result === null ? "Thinking…" : result.interaction.outcome === "failed" ? (result.interaction.failed ?? "The AI could not answer that here.") : (result.answer ?? "")}
+            {result === null
+              ? "Thinking…"
+              : result.interaction.outcome === "failed"
+                ? (result.interaction.failed ?? "The AI could not answer that here.")
+                : /* Every answer the card shows is a whole sentence for the person, never the pipeline's own note. */
+                  plainly(
+                    answering.plan
+                      ? "question" in answering.plan
+                        ? answering.plan.question
+                        : answering.plan.refused
+                      : result.answer,
+                    result.ghost && result.ghost.proposals.length > 0 ? "Here is what I would change." : result.offers.length > 0 ? "These may help." : undefined,
+                  )}
           </p>
+          {result?.taken ? (
+            /* A person said as a pronoun, and whom it was taken as, so a reply can correct it. */
+            <p data-testid="quick-ask-taken" style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
+              Taking “{result.taken.said}” as {result.taken.as}.
+            </p>
+          ) : null}
+          {result?.reading?.close ? (
+            /* A close reading said, so a reply can flip it: "Taking this as the 6 tasks in This week." */
+            <p data-testid="quick-ask-reading" style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
+              Taking this as {result.reading.words}.
+            </p>
+          ) : null}
+          {offered ? (
+            /* The plan, whole, before it lands: each part said, Yes and No — or, for a seat that may not change the app, who could. */
+            <section data-testid="quick-ask-plan" data-plan-state={planState.state} aria-label="What I would do" style={PLAN}>
+              <ol style={{ margin: 0, paddingInlineStart: 18, display: "grid", gap: 2 }}>
+                {offered.parts.map((part, at) => (
+                  <li key={at} data-plan-part={part.part} style={{ fontStyle: planState.state === "applied" ? "normal" : "italic" }}>
+                    {part.said}
+                  </li>
+                ))}
+              </ol>
+              {offered.proposal && onProposeChange ? (
+                planState.state === "offered" || planState.state === "applying" ? (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button type="button" data-testid="quick-ask-plan-yes" disabled={planState.state === "applying"} onClick={() => void yes()} style={OFFER}>
+                      Yes
+                    </button>
+                    <button type="button" data-testid="quick-ask-plan-no" disabled={planState.state === "applying"} onClick={no} style={OFFER}>
+                      No
+                    </button>
+                  </div>
+                ) : planState.state === "applied" ? (
+                  <div role="status" style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <span data-testid="quick-ask-plan-done">Done, as one change.{planState.note ? ` ${planState.note}` : ""}</span>
+                    {planState.undo ? (
+                      <button type="button" data-testid="quick-ask-plan-undo" onClick={() => void undoPlan()} style={OFFER}>
+                        Undo
+                      </button>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p role="status" style={{ margin: 0, color: "var(--graview-ink-muted)" }}>
+                    {planState.state === "undone" ? "Taken back." : planState.said}
+                  </p>
+                )
+              ) : null}
+            </section>
+          ) : null}
           {result && result.offers.length > 0 ? (
             <ul aria-label="What acts on it" style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: 6 }}>
               {result.offers.map((offer) => (
@@ -328,19 +612,20 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
                     data-ai-offer-type={offer.type}
                     onClick={() => {
                       // Put away as it lands, the way this face goes; a failure is said on the card that offered it.
-                      void takeOffer(env, result, offer, close).then((failed) => {
+                      void takeOffer(env, result, offer, close, { onCard: offer.type === "act" || offer.type === "fill" }).then((failed) => {
                         if (failed && live.current) setSaid(failed);
                       });
                     }}
                     style={OFFER}
                   >
-                    {offer.type === "panel" ? `Show ${sentenceCase(offer.label)}` : offer.type === "place" ? `Go to ${offer.label}` : offer.label}
+                    {offer.type === "panel" ? `Show ${sentenceCase(offer.label)}` : offer.type === "place" ? `Go to ${offer.label}` : offer.type === "act" || offer.type === "fill" ? `${offer.label.replace(/[.?]$/, "")}?` : offer.label}
                   </button>
                 </li>
               ))}
             </ul>
           ) : null}
           {held?.onCard && held.ghost.interaction === result?.interaction.id ? <GhostTray placement="card" /> : null}
+          {result && telling && env.ai.told && telling.interaction === result.interaction.id ? <Rate told={env.ai.told} telling={telling} /> : null}
         </div>
       ) : null}
       <div style={{ display: "grid", gap: 4 }}>
@@ -349,14 +634,14 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
           type="text"
           role="combobox"
           data-testid="quick-ask-input"
-          aria-label={answering ? `Ask a follow-up about ${about}` : `Ask about ${about}, or go somewhere`}
+          aria-label={answering ? `Reply about ${about}` : `Tell Graview about ${about}, or go somewhere`}
           aria-expanded={rows.length > 0}
           aria-controls={list}
           aria-autocomplete="list"
           {...(lit ? { "aria-activedescendant": `${list}-${active}` } : {})}
           autoComplete="off"
           enterKeyHint="go"
-          placeholder={answering ? "Ask a follow-up…" : "Ask, or go to…"}
+          placeholder={answering ? "Reply…" : "Tell Graview, or go to…"}
           value={words}
           // Read-only while it answers, never disabled: a disabled field lets go of the keyboard.
           readOnly={answering !== null && result === null}
@@ -382,7 +667,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
             >
               {row.kind === "ask" ? (
                 <span>
-                  Ask: <span style={{ fontWeight: 600 }}>‘{row.label}’</span>
+                  Tell Graview: <span style={{ fontWeight: 600 }}>‘{row.label}’</span>
                 </span>
               ) : (
                 <span>
@@ -402,6 +687,19 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       <span style={VISUALLY_HIDDEN} aria-live="polite">
         {rows.length > 0 && words.trim() ? `${rows.length} ${rows.length === 1 ? "way" : "ways"} to go on` : ""}
       </span>
+      {/*
+       * THINKING, IN PLACE (Roadmap f-menu-type-anything): while words are
+       * answered, a small mark on what they are about — the card, the row,
+       * the record's heading — not a modal; said politely to a screen reader.
+       */}
+      {answering !== null && result === null ? (
+        <span ref={mark} role="status" data-testid="ai-thinking-mark" style={THINKING}>
+          {/* Its pulse is the card's own, fetched with it: nothing a page loads up front; still for a reader who asks for less motion. */}
+          <style>{"@keyframes graview-thinking{from{opacity:.35}to{opacity:1}}@media (prefers-reduced-motion:reduce){[data-testid=ai-thinking-mark]>span{animation:none!important}}"}</style>
+          <span aria-hidden="true" style={THINKING_DOT} />
+          <span>Thinking about {about}…</span>
+        </span>
+      ) : null}
     </section>
   );
 }
@@ -416,8 +714,8 @@ function anchorOf(pane: HTMLElement | null, target: AiTarget, face: "scene" | "p
   const root: ParentNode = pane?.closest("[data-graview-embed]") ?? document;
   const ids = target.on === "list" ? [`aggregate:${target.kind}`, `kind:${target.kind}`] : target.on === "lens" && target.kind ? [`aggregate:${target.kind}`] : recordsOfTarget(target);
   for (const id of ids) {
-    // The record's own card where the picture draws one; else where it is picked from (a row of a district's list).
-    for (const element of root.querySelectorAll<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"], [data-graview-pick="${CSS.escape(id)}"]`)) {
+    // The record's own card where the picture draws one; else where it is picked from (a row of a district's list, a page's row or card).
+    for (const element of root.querySelectorAll<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"], [data-graview-pick="${CSS.escape(id)}"], [data-graview-record="${CSS.escape(id)}"], [data-graview-listed="${CSS.escape(id)}"]`)) {
       if (pane?.contains(element)) continue;
       const box = element.getBoundingClientRect();
       if (box.width > 0 && box.height > 0) return element;
@@ -462,14 +760,81 @@ function placeBeside(pane: HTMLElement, anchor: HTMLElement | null): void {
   if (style.left !== next.left) style.left = next.left;
   if (style.top !== next.top) style.top = next.top;
   if (style.width !== next.width) style.width = next.width;
-  const beside = anchor?.getAttribute("data-graview-view") ?? anchor?.getAttribute("data-graview-pick") ?? (anchor ? "page" : "");
+  const beside = anchor?.getAttribute("data-graview-view") ?? anchor?.getAttribute("data-graview-pick") ?? anchor?.getAttribute("data-graview-record") ?? anchor?.getAttribute("data-graview-listed") ?? (anchor ? "page" : "");
   if (pane.getAttribute("data-quick-ask-beside") !== beside) pane.setAttribute("data-quick-ask-beside", beside);
   if (pane.getAttribute("data-quick-ask-side") !== side) pane.setAttribute("data-quick-ask-side", side);
 }
 
+/**
+ * WHERE THE MENU STOOD: the card's top-left corner is the menu's, growing
+ * down and right; it moves left only where it would leave the window, and
+ * up only where too little of the window is left below it — once, here,
+ * before it is painted. What it holds grows inside it and scrolls past the
+ * window's foot; nothing that arrives moves it.
+ */
+function pinAt(pane: HTMLElement, from: { readonly left: number; readonly top: number }): void {
+  const view = { width: document.documentElement.clientWidth || innerWidth, height: innerHeight };
+  const width = Math.min(WIDTH, view.width - 2 * GAP);
+  const left = from.left + width > view.width - GAP ? Math.max(GAP, view.width - GAP - width) : Math.max(GAP, from.left);
+  const room = 240;
+  const top = from.top + room > view.height - GAP ? Math.max(GAP, view.height - GAP - room) : Math.max(GAP, from.top);
+  pane.style.left = `${Math.round(left)}px`;
+  pane.style.top = `${Math.round(top)}px`;
+  pane.style.width = `${Math.round(width)}px`;
+  pane.style.maxHeight = `${Math.round(view.height - top - GAP)}px`;
+  pane.setAttribute("data-quick-ask-side", "where-the-menu-stood");
+  pane.setAttribute("data-quick-ask-from", `${Math.round(from.left)},${Math.round(from.top)}`);
+}
+
+/** What a pinned card is about, said on it without moving it. */
+function sayBeside(pane: HTMLElement, anchor: HTMLElement | null): void {
+  const beside = anchor?.getAttribute("data-graview-view") ?? anchor?.getAttribute("data-graview-pick") ?? anchor?.getAttribute("data-graview-record") ?? anchor?.getAttribute("data-graview-listed") ?? (anchor ? "page" : "");
+  if (pane.getAttribute("data-quick-ask-beside") !== beside) pane.setAttribute("data-quick-ask-beside", beside);
+}
+
+/** The thinking mark, at the top right of what it is on, inside its corner; hidden where there is nothing to stand on. */
+function placeOn(mark: HTMLElement, anchor: HTMLElement | null): void {
+  const at = anchor?.getBoundingClientRect();
+  const on = anchor?.getAttribute("data-graview-view") ?? anchor?.getAttribute("data-graview-pick") ?? anchor?.getAttribute("data-graview-record") ?? anchor?.getAttribute("data-graview-listed") ?? (anchor ? "page" : "");
+  if (mark.getAttribute("data-thinking-on") !== on) mark.setAttribute("data-thinking-on", on);
+  if (!at || at.width === 0) {
+    if (mark.style.visibility !== "hidden") mark.style.visibility = "hidden";
+    return;
+  }
+  const width = mark.getBoundingClientRect().width;
+  const left = `${Math.round(Math.max(GAP / 2, at.right - width - 6))}px`;
+  const top = `${Math.round(Math.max(GAP / 2, at.top - 10))}px`;
+  if (mark.style.left !== left) mark.style.left = left;
+  if (mark.style.top !== top) mark.style.top = top;
+  if (mark.style.visibility !== "visible") mark.style.visibility = "visible";
+}
+
+const THINKING: CSSProperties = {
+  position: "fixed",
+  visibility: "hidden",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  padding: "2px 8px",
+  borderRadius: 999,
+  fontSize: "0.75rem",
+  lineHeight: 1.4,
+  whiteSpace: "nowrap",
+  color: "var(--graview-ink)",
+  background: "var(--graview-float)",
+  border: "1px dashed var(--graview-accent)",
+  boxShadow: "var(--graview-lift-low)",
+  pointerEvents: "none",
+};
+const THINKING_DOT: CSSProperties = { width: 7, height: 7, borderRadius: 999, background: "var(--graview-accent)", animation: "graview-thinking 1s ease-in-out infinite alternate" };
+
+const PLAN: CSSProperties = { display: "grid", gap: 8, padding: 10, borderRadius: 10, border: "1px dashed var(--graview-accent)", fontSize: "0.875rem" };
+
 const CARD: CSSProperties = {
   position: "fixed",
   inset: "auto",
+  // As tall as what it holds: WebKit's own popover height stretched the card to the window's (its max-height).
+  height: "auto",
   margin: 0,
   zIndex: layer("popover"),
   boxSizing: "border-box",

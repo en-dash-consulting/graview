@@ -113,7 +113,7 @@ const STOPS = [
   { name: "todo-record", title: "Things (todo): a record page", url: todo("/pages/tasks/t-deposit") },
   { name: "ask", title: "Things (todo): the quick ask", url: `${todo("/pages/tasks/t-deposit")}&ai=stub`, act: async (page) => {
     await page.keyboard.press("Meta+K");
-    const box = page.getByRole("region", { name: /^Ask about / }).getByRole("combobox").first();
+    const box = page.getByRole("region", { name: /^Tell Graview about / }).getByRole("combobox").first();
     await box.fill("What is left?");
     await box.press("Enter");
   } },

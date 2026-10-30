@@ -19,7 +19,7 @@ beforeAll(() => fetchInspector());
  * scene, and the eleventh act in its menu twenty-one Tabs from the key that
  * opened it — each act and each act's pin a stop of its own (walks XI and
  * XII). The bar's first stop is the way to what is chosen; the acts are one
- * stop, walked with the arrows, a letter to the next that begins with it, and
+ * stop, walked with the arrows, a letter typed narrowing them, and
  * each act's pin is the arrow to its right.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string(), done: z.boolean().default(false) }), plural: "Tasks", label: (node: { label: string }) => node.label });
@@ -118,11 +118,19 @@ describe("a menu of acts", () => {
     await unmount();
   });
 
-  it("goes to the next act whose words begin with a letter typed, and to an act's pin and back with the arrows across", async () => {
+  /*
+   * A letter typed in the menu goes into the menu's field and narrows the acts
+   * to those it begins (Roadmap f-menu-type-anything) — where it used to
+   * jump to the next act that began with it — and the arrow down walks on.
+   */
+  it("narrows to the acts a letter typed begins, and goes to an act's pin and back with the arrows across", async () => {
     const { unmount } = await openMenu();
     const items = () => [...menu()!.querySelectorAll<HTMLElement>("[data-affordance]")];
     await act(async () => items()[0]!.focus());
     await press(focused(), "h");
+    expect(focused().getAttribute("data-testid")).toBe("menu-type");
+    expect(items().map((item) => item.textContent)).toEqual([expect.stringContaining("Hand it on")]);
+    await press(focused(), "ArrowDown");
     expect(focused().textContent).toContain("Hand it on");
     await press(focused(), "ArrowRight");
     expect(focused().getAttribute("data-pin-for")).toBe("act-2");

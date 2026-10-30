@@ -69,6 +69,10 @@ export const OWN = {
   "declared-host": 5284,
   /** The host's page `verify-menu` mounts the tasks' status board and a view that marks its own columns into, to right-click a column. */
   "menu-host": 5212,
+  /** The host's page `verify-section` mounts the tasks into with a worker view of three named sections, to make one of them better (Roadmap f-make-this-section-better). */
+  "section-host": 5213,
+  /** The host's page `verify-told` mounts a document into whose sight keeps the people from a member (Roadmap f-menu-learns). */
+  "told-host": 5247,
   /** The host's page `verify-address` serves an app at under a base path, and an article beside it (FR-106). */
   "address-host": 5278,
   /** The host's page `verify-brand` mounts the En Dash document into, to see the whole brand drawn on both faces (FR-124, FR-125). */

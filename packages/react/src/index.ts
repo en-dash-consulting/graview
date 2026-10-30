@@ -2,6 +2,8 @@ export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, PLACE_M
 export { GoToContext, useGoTo } from "./go.js";
 export { MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.js";
 export type { MenuColumn, MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
+export { alsoWhenSectionsArrive, sectionsArrive, sectionsWanted, sectionUnderNow, setViewPlace, viewPlaceOf } from "./view-places.js";
+export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle } from "./view-places.js";
 export { BesideTheMap } from "./beside-the-map.js";
 export { HostAssetsContext, HostFilesContext, useHostAssets, useHostFiles } from "./files.js";
 export type { GoTo, GoToAlso, GoToTarget } from "./go.js";
@@ -95,7 +97,7 @@ export { createSeatTalk, seatTalkKey, useSeatTalkState } from "./seat-talk.js";
 // The inline AI's desk: the interactions Activity draws and the ghost waiting to be accepted, held by the app.
 export { createAiDesk, useAiDeskState } from "./ai-desk.js";
 export type { AiDesk, AiDeskState, HeldGhost } from "./ai-desk.js";
-export type { KeepLensAnswer, KeepLensHost, LensEdit, ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
+export type { KeepLensAnswer, KeepLensHost, LensEdit, ComposeChangeHost, ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
 export type { LazyModule, LazyPartOptions, PartsWatch } from "./lazy-part.js";
 export { prepareAffordances, useAffordances, useApplyAffordance } from "./affordances.js";
 export type { AffordancesAsked } from "./affordances.js";

@@ -37,6 +37,8 @@ import type { AnySchema } from "./schema/schema.js";
 import { seatOf } from "./seat-of.js";
 import { jobIsFor, type AppPurpose } from "./job-shape.js";
 import type { Store } from "./store.js";
+export { planEdits } from "./plan-edits.js";
+export type { PlanNeed, PlannedEdits } from "./plan-edits.js";
 
 // ── targets ─────────────────────────────────────────────────────────────────
 
@@ -794,7 +796,7 @@ export interface AiUsage {
 
 /** What was asked: a suggestion for the target, fills for its fields, a record made, a panel, or words. */
 export interface AiAsk {
-  readonly kind: "suggest" | "fill" | "record" | "panel" | "ask";
+  readonly kind: "suggest" | "fill" | "record" | "panel" | "ask" | "section";
   /** What the person asked, in their words or the menu row's. */
   readonly said: string;
 }
@@ -845,6 +847,37 @@ export interface AiInteraction {
   readonly answer?: string;
   readonly usage?: readonly AiUsage[];
   readonly failed?: string;
+  /**
+   * WHAT THE THINKING MODEL WAS TOLD ABOUT (Roadmap f-menu-type-anything):
+   * the catalog's candidates and the records around the target sent with a
+   * quick ask — picked by the Fast slot (`by: "fast"`, its `model`) from
+   * all of them, else the default the target is scoped to (`by: "default"`).
+   * The target itself is always sent.
+   */
+  readonly context?: AiContextSent;
+  /**
+   * HOW LONG EACH STAGE TOOK (Roadmap f-menu-type-anything): the Fast slot's
+   * pick over the graph, the light model's words, the full model's, the
+   * plan composed — each with the model, in milliseconds. Activity says them.
+   */
+  readonly stages?: readonly AiStage[];
+  /** A batch it made was taken back with Undo (Roadmap f-menu-learns): a quiet sign it was not wanted, never a 👎. */
+  readonly undone?: boolean;
+}
+
+/** One stage of an interaction, timed. */
+export interface AiStage {
+  readonly stage: "fast" | "light" | "thinking" | "compose";
+  readonly ms: number;
+  readonly model?: string;
+}
+
+/** The context a quick ask sent to its thinking model: who chose it, and the candidate ids and record ids it held. */
+export interface AiContextSent {
+  readonly by: "fast" | "default";
+  readonly model?: string;
+  readonly candidates: readonly string[];
+  readonly records: readonly string[];
 }
 
 /** Whether an interaction concerns a record: its target names it, it offered it, or a batch it made touched it. */

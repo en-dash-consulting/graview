@@ -84,6 +84,9 @@ export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-doo
 export type { GhostDoorProps } from "./inline-ai-door.js";
 // Notify me (Roadmap f-notify-subscriptions): its part of the context menu, the sheet, a face's own press and Activity's list, the sheet and list fetched when first drawn.
 export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
+// "Make this better" on a section of a worker view (Roadmap f-make-this-section-better): the menu's section, the outline and the card's door.
+export { SectionBetterDoor, SectionBetterSections, useSectionBetterSection } from "./section-door.js";
+export type { SectionAsk, SectionMode } from "./section-door.js";
 // "Move to ›" on a card on a status board (Roadmap f-board-move-without-buttons).
 export { BoardMoveSections, holdBoard, useBoardMoveSection } from "./board-move-section.js";
 export type { BoardHere } from "./board-move-section.js";
@@ -285,3 +288,7 @@ export type { TimelineFace } from "./past-bar.js";
 // A first look that points at the app's own controls, once (its hints fetched as they are first shown).
 export { FIRST_LOOK_ANCHORS, FirstLookDoor, firstLookKey } from "./first-look-door.js";
 export type { FirstLook, FirstLookAnchor, FirstLookDoorProps, FirstLookEnd, FirstLookOptions, FirstLookStep } from "./first-look-door.js";
+
+// What people told Graview (Roadmap f-menu-learns): the Studio's panel, fetched when it is opened.
+export { ToldPanelDoor } from "./told-panel-door.js";
+export type { ToldPanelProps } from "./told-panel-door.js";

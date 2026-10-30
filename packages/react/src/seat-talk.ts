@@ -1,6 +1,6 @@
 import type { ChatReply, OfferedQuestion, ProposedCall, SeatMove, SeatOffer } from "@graview/tools";
 import type { AddLensEdit, RemoveLensEdit, SeatDraft } from "@graview/tools/draft";
-import type { ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal } from "@graview/tools/reshape";
+import type { ComposeChangeHost, ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal } from "@graview/tools/reshape";
 import { useSyncExternalStore } from "react";
 
 /**
@@ -60,7 +60,7 @@ export interface SeatTurn {
  * change, and answers `"applied"`; or `"declined"`. Without it the seat
  * never offers a change to the app.
  */
-export type { ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal };
+export type { ComposeChangeHost, ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal };
 
 /** A lens kept from a draft: the edit, whether the declaration has it now, and whether it was taken back. */
 export interface SeatKept {

@@ -22,12 +22,21 @@
  * request:add-copy-link-under-open-in-a-new-tab, request:right-click-
  * context-menu-options-to-be-more-relevant-to-the-item-under-my-cursor):
  * "Copy link" right under "Open in a new tab", copying the whole address
- * and saying so; "Inspect" at the foot, a sheet of the thing's kind, id and
- * link; a selection copied by "Copy" rather than swallowed, the browser's
+ * and saying so, and no "Inspect" (shipped in 0.1.63, taken out: the menu
+ * is for what can be done); a selection copied by "Copy" rather than swallowed, the browser's
  * own menu kept on the selected text and a finger resting on text left to
  * the phone's selection; and a column — a status board's, and one a worker
  * view marked `data-column` — offering a task added in it and the place
  * narrowed to it.
+ *
+ * And typing in the menu (Roadmap f-menu-type-anything), on both faces: a
+ * letter typed goes into the menu's field and narrows every row to those
+ * whose words begin with it, the Fast slot then finding what they mean as
+ * the typing rests; Enter runs the one lit; words that fit nothing are
+ * asked of a fake host AI — its Fast slot picking the context, its Thinking
+ * slot told only that — about what is under the cursor, its thinking
+ * marked on the thing itself and its answer a card beside it whose change
+ * is accepted and taken back; and with AI off the field only filters.
  *
  *   node scripts/verify-menu.mjs [--engine=chromium|webkit|firefox]
  */
@@ -91,13 +100,49 @@ async function serveMenuHost() {
         import { mount } from "@graview/embed";
         import { registerWorkerView } from "@graview/guest/host/views";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
+        import { composeAppChange } from "@graview/core/compose";
+        import { Store } from "@graview/core";
         import tasks from ${JSON.stringify(TASKS)};
-        const compiled = compileDocumentWithoutCheck(tasks, { today: () => "2026-09-01" });
+        /*
+         * ?lean=1: the tasks with nobody to give them to — no person kind, no
+         * assignee, no Assign — the app a missing capability is asked of, its
+         * host one that applies a change to the app (and the records that
+         * finish the ask) as one change and hands back its one way back.
+         */
+        const lean = new URLSearchParams(location.search).get("lean") === "1";
+        const document0 = lean
+          ? { ...tasks, kinds: { task: { ...tasks.kinds.task, edges: {} } }, acts: { "add-task": tasks.acts["add-task"], "set-status": tasks.acts["set-status"] }, policy: { grants: [{ roles: ["owner"], mutations: "*" }], sees: [{ roles: ["owner"], kinds: ["task"] }] } }
+          : tasks;
+        const today = () => "2026-09-01";
+        const compiled = compileDocumentWithoutCheck(document0, { today });
         if (!compiled.ok) throw new Error("the document did not compile");
+        const principal = { kind: "human", id: "p1", roles: ["owner"] };
+        let current = { document: document0, app: compiled.app };
+        const onProposeChange = async (proposal) => {
+          window.__proposed = (window.__proposed ?? []).concat([proposal]);
+          const before = { ...current, store: window.__handle.store };
+          const composed = composeAppChange(proposal.edits ? { document: current.document, edits: proposal.edits } : { document: current.document, add: proposal.add, drop: proposal.drop });
+          if (!composed.ok) return "declined";
+          const app = composed.app;
+          const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: before.store.graph.snapshot(), ...(app.policy ? { policy: app.policy } : {}) });
+          if (proposal.records?.length) store.applyAll(proposal.records, { author: principal, ...(proposal.via ? { via: proposal.via } : {}) });
+          current = { document: composed.document, app };
+          window.__handle.setApp(app, store);
+          const undo = () => {
+            current = { document: before.document, app: before.app };
+            window.__handle.setApp(before.app, before.store);
+            window.__undone = (window.__undone ?? 0) + 1;
+          };
+          window.__undoPlan = undo;
+          // The app is drawn again for its new declaration: the host says what changed, with its one way back.
+          setTimeout(() => window.__handle.notify({ kind: "toast", sentence: "Changed the app and its records as one change.", action: { label: "Undo", onSelect: undo }, timeout: false, id: "plan" }), 50);
+          return { applied: true, undo };
+        };
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
           seed: ${JSON.stringify(BOARD_SEED)},
-          principal: { kind: "human", id: "p1", roles: ["owner"] },
+          principal,
+          ...(lean ? { onProposeChange, composeChange: composeAppChange } : {}),
           face: "pages",
           views: (schema, registry) => registerWorkerView(registry, { manifest: ${JSON.stringify(BY_HAND)}, worker: { source: ${JSON.stringify(BY_HAND_SOURCE)} } }),
           bar: true,
@@ -108,6 +153,9 @@ async function serveMenuHost() {
           studio: false,
           routing: "address",
           basePath: "${MENU_BASE}/",
+          // A host's own row below the AI's, as Homeflow's "Send feedback" is: the row the jumpy menu moved.
+          ai: window.__todoAi,
+          menuSections: [() => ({ id: "host", items: [{ id: "send-feedback", label: "Send feedback", run: () => (window.__feedback = (window.__feedback ?? 0) + 1) }] })],
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
       `,
@@ -713,50 +761,14 @@ try {
     };
     await putAway(on);
 
-    /* ------------------------------------------------- Inspect, at the foot */
-    reach(`inspectSaysWhatIsUnderTheCursor_${size}`);
-    const inspecting = await pagesMenu(on, '[data-graview-record="t-deposit"]');
-    const foot = await on.evaluate(() => {
-      const sections = [...document.querySelectorAll('[data-testid="context-menu"] [data-menu-section]')];
-      return sections.at(-1)?.getAttribute("data-menu-section") ?? null;
-    });
-    await on.click(`${MENU} [data-menu-item="inspect"]`).catch(() => undefined);
-    await on.waitForSelector('[data-testid="inspect-sheet"]', { timeout: 10_000 }).catch(() => undefined);
-    const sheet = await on.evaluate(() => {
-      const shown = document.querySelector('[data-testid="inspect-sheet"]');
-      if (!shown) return null;
-      const box = shown.getBoundingClientRect();
-      return {
-        heading: shown.querySelector("h2")?.textContent ?? "",
-        kind: shown.querySelector('[data-inspect="kind"] code')?.textContent ?? null,
-        record: shown.querySelector('[data-inspect="record"] code')?.textContent ?? null,
-        link: shown.querySelector('[data-testid="inspect-link"]')?.href ?? null,
-        declared: Boolean(shown.querySelector('[data-inspect="declared"]')),
-        inTheWindow: box.left >= 0 && box.top >= 0 && box.right <= innerWidth + 1 && box.bottom <= innerHeight + 1,
-        focusIn: shown.contains(document.activeElement),
-      };
-    });
-    await on.keyboard.press("Escape");
-    await on.waitForTimeout(250);
-    const sheetGone = !(await on.$('[data-testid="inspect-sheet"]'));
-    report.checks[`inspectSaysWhatIsUnderTheCursor_${size}`] = {
-      lastRow: inspecting?.rows.at(-1) ?? null,
-      foot,
-      sheet,
-      sheetGone,
-      ok:
-        inspecting !== null &&
-        inspecting.rows.at(-1) === "inspect" &&
-        foot === "inspect" &&
-        sheet !== null &&
-        sheet.heading.includes("Pay the deposit") &&
-        sheet.kind === "task" &&
-        sheet.record === "t-deposit" &&
-        sheet.link === expectedLink &&
-        sheet.inTheWindow &&
-        sheet.focusIn &&
-        sheetGone,
+    /* ------------------------------------------------- no Inspect */
+    reach(`theMenuHasNoInspectRow_${size}`);
+    const noInspect = await pagesMenu(on, '[data-graview-record="t-deposit"]');
+    report.checks[`theMenuHasNoInspectRow_${size}`] = {
+      rows: noInspect?.rows ?? null,
+      ok: noInspect !== null && noInspect.rows.length > 0 && !noInspect.rows.includes("inspect") && !/\bInspect\b/.test(noInspect.text) && noInspect.rows.includes("copy-link"),
     };
+    await putAway(on);
 
     /* ------------------------------------------------- a selection, copied and not swallowed */
     reach(`aSelectionIsCopiedNotSwallowed_${size}`);
@@ -1063,6 +1075,1049 @@ try {
         (rested === null || (rested.ground.opened && rested.ground.inTheWindow && rested.record.opened && rested.record.about)),
     };
     await context.close();
+  }
+
+  /* ================================================ TYPE IN THE MENU (Roadmap f-menu-type-anything) */
+  /*
+   * "When I right-click on anything, I want to be able to type in something
+   * about it. It could filter and show available actions, but I also would
+   * like it to accept freeform text and then hit enter, and see some
+   * thinking kind of thing on that part of the app that would pop back up
+   * with the changes that it is making or about to make." Driven on the
+   * scene's card and on the routed face's row for the same task, with a
+   * fake host AI that answers after a moment and proposes finishing it, and
+   * with AI off.
+   */
+  /*
+   * A FAKE HOST AI, BOTH SLOTS. The Fast slot answers each typed choice at
+   * once — the menu's rows ("complete" means "Finish it"), and which
+   * candidates and records a quick ask should send (the one that finishes
+   * the task, the first record) — keeping what it picked; the Thinking slot
+   * answers after a moment, keeping what it was told, and picks every
+   * candidate it was sent.
+   */
+  const FAKE_AI = () => {
+    window.__fastPicked = [];
+    window.__thinkingSaw = [];
+    const choose = (question, wanted) => {
+      const names = Object.keys(question.criteria);
+      const choice = names.find((name) => wanted.test(question.criteria[name])) ?? names[0];
+      return { type: "choice", choice, confidence: 0.9, probabilities: Object.fromEntries(names.map((name) => [name, name === choice ? 0.9 : 0.01])) };
+    };
+    window.__todoAi = {
+      name: "fake",
+      fast: {
+        model: "fake-fast",
+        decide: async (state, questions) => {
+          const answers = {};
+          // The menu's own suggestions come slowly, as a real model's do: the rows below them must not move meanwhile.
+          if (questions.next) await new Promise((done) => setTimeout(done, 2000));
+          // A plan over the graph: Jev's typed questions answer in about a tenth of a second.
+          if (questions.act) await new Promise((done) => setTimeout(done, 150));
+          const said = String(state.said ?? "");
+          const giving = /\b(assign|give)\b/i.test(`${said} ${state.replyingTo ?? ""}`);
+          const sure = (question, choice, chance = 0.92) => {
+            const names = Object.keys(question.criteria);
+            return { type: "choice", choice, confidence: chance, probabilities: Object.fromEntries(names.map((name) => [name, name === choice ? chance : (1 - chance) / Math.max(1, names.length - 1)])) };
+          };
+          let firstRecord = true;
+          for (const [key, question] of Object.entries(questions)) {
+            if (question.type === "choice" && key === "reading") {
+              // "These" on a list are the tasks it holds; a first turn misread on purpose (__misread) is close, so the card says it.
+              const misread = window.__misread === true && !/\btasks\b/i.test(said);
+              // Sure where the words say which ("these", "all"); less so of "the old ones", which a destructive act must not take as all.
+              const plain = /\b(these|all|them|each|everything)\b/i.test(said);
+              const names = Object.keys(question.criteria);
+              // "Everything that's already ticked off" read as everything, sure of it — the misreading the code must catch.
+              const misreadAll = /\beverything that'?s\b/i.test(said);
+              answers[key] = misread ? sure(question, "itself", 0.55) : misreadAll ? sure(question, "held", 0.95) : names.includes("done") && /\b(done|finished|ticked|completed)\b/i.test(said) ? sure(question, "done") : names.includes("open") && /\b(open|remaining|outstanding)\b/i.test(said) ? sure(question, "open") : sure(question, /\b(these|all|them|each|everything|tasks|ones)\b/i.test(said) ? "held" : "itself", plain ? 0.92 : 0.7);
+              continue;
+            }
+            if (question.type === "choice" && key === "mood") {
+              answers[key] = sure(question, /\?\s*$|^(is|are|has|have|what|who|when|where|which|how|does)\b/i.test(said) ? "asks" : "tells");
+              continue;
+            }
+            if (question.type === "choice" && key === "act") {
+              // "Close", "complete", "finish": the act that marks done, read by what it does — on the tasks a list holds.
+              const closing = /\b(close|complete|finish|tick|check off)\b/i.test(said) && !/\?\s*$/.test(said);
+              const held = /\b(these|all|them|each|everything|tasks)\b/i.test(said);
+              const finish = Object.keys(question.criteria).find((name) => name === `${held ? "held" : "itself"}:finish`);
+              const removing = /\b(delete|drop|bin|get rid of|clear out|scrap)\b/i.test(said) && !/\?\s*$/.test(said);
+              const drop = Object.keys(question.criteria).find((name) => name === `${held || /\bones\b/i.test(said) ? "held" : "itself"}:drop`);
+              answers[key] = closing && finish ? sure(question, finish) : removing && drop ? sure(question, drop) : giving ? sure(question, "none") : sure(question, "none", 0.3);
+              continue;
+            }
+            if (question.type === "choice" && (key === "person" || key === "named")) {
+              const names = Object.keys(question.criteria);
+              const named = names.find((name) => /^[pr]:/.test(name) && new RegExp(`\\b${String(question.criteria[name]).replace(/ \(.*\)$/, "")}\\b`, "i").test(said));
+              answers[key] = sure(question, named ?? (giving && key === "person" ? "new" : "none"));
+              continue;
+            }
+            if (question.type === "choice" && key === "need") {
+              answers[key] = giving ? sure(question, "person") : sure(question, "none", 0.5);
+              continue;
+            }
+            // Which records a quick ask is about, a Noul each: the first, and no other.
+            if (question.type === "noul") {
+              answers[key] = { type: "noul", noul: firstRecord ? 0.9 : 0.05 };
+              if (firstRecord) window.__fastPicked.push({ key: "records", said: question.instructions });
+              firstRecord = false;
+              continue;
+            }
+            if (question.type !== "choice") continue;
+            if (key === "row") {
+              if (/complete/.test(state.typed ?? "")) answers.row = choose(question, /^Finish it$/);
+              continue;
+            }
+            if (key === "candidates") {
+              answers[key] = choose(question, /^Finish it/);
+              window.__fastPicked.push({ key, said: question.criteria[answers[key].choice] });
+              continue;
+            }
+            answers[key] = choose(question, /./);
+          }
+          return { answers, usage: { inputTokens: 10, outputTokens: 1 } };
+        },
+      },
+      thinking: {
+        model: "fake-thinking",
+        think: async ({ prompt }) => {
+          window.__thinkingCalls = (window.__thinkingCalls ?? 0) + 1;
+          await new Promise((done) => setTimeout(done, 1500));
+          const told = JSON.parse(prompt);
+          const acts = (told.member_acts ?? []).map((one) => one.name);
+          // "Mark these done": one act over every member. "Assign these to nick": the app has nothing to assign with.
+          if (/done/i.test(told.ask ?? "") && acts.includes("set-status")) return { text: JSON.stringify({ answer: "Marking each of them done.", each: { act: "set-status", args: { status: "done" } } }) };
+          // A model's note to the pipeline, never to be shown as it came: a fragment, no need named.
+          if (/frobnicate/i.test(told.ask ?? "")) return { text: JSON.stringify({ answer: "", lacks: "a way to frobnicate tasks" }) };
+          // Words that say a change was made, with none proposed: the card must never show them.
+          if (/waiting room/i.test(told.ask ?? "")) return { text: JSON.stringify({ answer: "This week is taken off the list and moved to the waiting room." }) };
+          if (/assign/i.test(told.ask ?? "") && !acts.some((name) => /assign|give/.test(name))) return { text: JSON.stringify({ answer: "", lacks: "Tasks have no one to assign them to.", need: { link: { on: "task", called: "assigned to", to: "person" } }, who: "Nick" }) };
+          window.__thinkingSaw.push({ candidates: (told.candidates ?? []).map((one) => one.says), records: [...(told.state?.selection ?? []), ...(told.state?.neighbors ?? [])].map((one) => one.label) });
+          return { text: JSON.stringify({ answer: `About ${told.about}: it is not done yet, so finish it.`, pick: (told.candidates ?? []).map((one) => one.id) }) };
+        },
+      },
+    };
+  };
+  const KEEP_THE_STORE = () => {
+    const keep = (store) => (window.__menuStores ??= []).push(store);
+    const watch = (window.__graviewWatch ??= {});
+    const handed = watch.store;
+    watch.store = (store) => {
+      handed?.(store);
+      keep(store);
+    };
+  };
+  const doneOf = (on, id) => on.evaluate((id) => (window.__menuStores ?? []).find((one) => one.schema.kinds.includes("task"))?.graph.getNode(id)?.done === true, id);
+  /** What the menu shows as it is typed in: the field, the acts, the rows, the one lit. */
+  const typedSays = (on) =>
+    on.evaluate(() => {
+      const menu = document.querySelector('[data-testid="context-menu"]');
+      if (!menu) return null;
+      const field = menu.querySelector('[data-testid="menu-type"]');
+      const clean = (element) => (element.textContent ?? "").replace(/[…↵]/g, "").trim();
+      return {
+        typed: field?.value ?? null,
+        keyboardInTheField: document.activeElement === field,
+        acts: [...menu.querySelectorAll("[data-affordance]")].map(clean),
+        rows: [...menu.querySelectorAll("[data-menu-item]")].map((row) => ({ id: row.getAttribute("data-menu-item"), text: clean(row) })),
+        lit: menu.querySelector("[data-menu-lit]") ? clean(menu.querySelector("[data-menu-lit]")) : null,
+        noMatch: menu.querySelector('[data-testid="menu-no-match"]')?.textContent ?? null,
+      };
+    });
+  /** Every row's words begin with every word typed. */
+  const allFit = (said, words) => {
+    const fold = (text) => text.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    const wanted = fold(words);
+    return [...said.acts, ...said.rows.filter((row) => row.id !== "ask-typed").map((row) => row.text)].every((label) => wanted.every((word) => fold(label).some((one) => one.startsWith(word))));
+  };
+  const faces = {
+    scene: { at: (ai) => `${at("todo")}/?today=2026-09-01&fresh=1${ai}`, ready: async (on) => {
+      await on.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+      await on.waitForTimeout(800);
+    }, target: '[data-graview-pick="t-deposit"]' },
+    pages: { at: (ai) => `${at("todo")}/pages/tasks?today=2026-09-01&fresh=1${ai}`, ready: async (on) => {
+      await on.waitForSelector('[data-graview-record="t-deposit"]', { timeout: 60_000 });
+      await on.waitForTimeout(500);
+    }, target: '[data-graview-record="t-deposit"]' },
+  };
+  const opened = async (on, face, ai) => {
+    await on.goto(faces[face].at(ai), { waitUntil: "load" });
+    await faces[face].ready(on);
+    await on.click(faces[face].target, { button: "right" });
+    await on.waitForSelector(MENU, { timeout: 10_000 });
+    await on.waitForTimeout(250);
+  };
+  const typeIn = async (on, words) => {
+    await on.keyboard.type(words, { delay: 20 });
+    await on.waitForTimeout(250);
+    return typedSays(on);
+  };
+  const typing = { filters: {}, enter: {}, asks: {}, answer: {}, context: {}, off: {} };
+  for (const face of ["scene", "pages"]) {
+    reach(`typingInTheMenuFiltersItsItems_${face}`);
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    await context.addInitScript(KEEP_THE_STORE);
+    await context.addInitScript(KEEP_COPIES);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`typing ${face}: ${error.message}`));
+
+    /* Typing filters every row: the acts, Open, Copy link, Show in the scene, Inspect. */
+    await opened(on, face, "");
+    const firstStop = await on.evaluate(() => document.activeElement?.closest('[data-testid="context-menu"]') !== null && document.activeElement?.getAttribute("data-testid") !== "menu-type");
+    const before = await typedSays(on);
+    const fin = await typeIn(on, "fin");
+    await on.keyboard.press("Escape");
+    await on.waitForTimeout(150);
+    const cleared = await typedSays(on);
+    // A row that is not an act, found by its first word: Copy link on the pages, whatever the scene's own rows begin with.
+    const other = before?.rows.find((row) => (face === "pages" ? row.id === "copy-link" : !row.id.startsWith("ai-") && row.id !== "ask-typed")) ?? null;
+    const word = (other?.text ?? "").split(/\s+/)[0]?.toLowerCase() ?? "";
+    const copy = word ? await typeIn(on, word) : null;
+    // The Fast slot, once the typing rests: "complete" begins no row's words, and finds "Finish it".
+    await on.keyboard.press("Escape");
+    // Read at once, before the typing has rested (the Fast slot is asked 250 ms after the last key).
+    await on.keyboard.type("complete");
+    const completeAtOnce = await typedSays(on);
+    await on.waitForFunction(() => document.querySelector('[data-testid="context-menu"] [data-affordance][data-menu-lit]') !== null, null, { timeout: 5_000 }).catch(() => undefined);
+    const completeRested = await typedSays(on);
+    const fastRefines = { atOnce: completeAtOnce?.acts ?? null, rested: completeRested?.acts ?? null, lit: completeRested?.lit ?? null };
+    typing.filters[face] = { firstStop, before: { acts: before?.acts.length, rows: before?.rows.map((row) => row.id) }, fin, cleared: cleared?.typed, word, copy, fastRefines };
+    typing.filters[face].ok =
+      firstStop &&
+      before !== null && before.acts.length > 1 &&
+      fin !== null && fin.keyboardInTheField && fin.typed === "fin" && fin.acts.includes("Finish it") && fin.acts.length < before.acts.length && allFit(fin, "fin") && fin.lit === "Finish it" &&
+      cleared?.typed === "" &&
+      copy !== null && allFit(copy, copy.typed) && copy.rows.some((row) => row.id === other.id) && copy.rows.at(-1)?.id === "ask-typed" &&
+      fastRefines.atOnce !== null && !fastRefines.atOnce.includes("Finish it") && (fastRefines.rested ?? []).includes("Finish it") && fastRefines.lit === "Finish it";
+    await on.keyboard.press("Escape");
+    await on.keyboard.press("Escape");
+    await on.waitForTimeout(150);
+
+    /* Enter runs the row typed: Finish it on the scene; Copy link on the pages. */
+    reach(`enterRunsTheItemTyped_${face}`);
+    await opened(on, face, "");
+    const words = face === "pages" ? "copy li" : "finish";
+    const lit = await typeIn(on, words);
+    const doneBefore = await doneOf(on, "t-deposit");
+    await on.evaluate(() => (window.__copied = []));
+    await on.keyboard.press("Enter");
+    await on.waitForTimeout(500);
+    const ran = face === "pages" ? await on.evaluate(() => window.__copied[0] ?? null) : await doneOf(on, "t-deposit");
+    const menuGone = !(await on.$(MENU));
+    const keyboardOnBody = await on.evaluate(() => document.activeElement === document.body);
+    typing.enter[face] = { words, lit: lit?.lit, doneBefore, ran, menuGone, keyboardOnBody };
+    typing.enter[face].ok = menuGone && !keyboardOnBody && (face === "pages" ? lit?.lit === "Copy link" && ran === new URL("/pages/tasks/t-deposit", at("todo")).href : lit?.lit === "Finish it" && doneBefore === false && ran === true);
+
+    /* Free words, asked about what is under the cursor: the thinking marked on it, the answer a card beside it. */
+    reach(`freeWordsAskAboutWhatIsUnderTheCursor_${face}`);
+    await opened(on, face, "");
+    const asking = "is this one still waiting on anything?";
+    const askRow = await typeIn(on, asking);
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="ai-thinking-mark"]', { timeout: 5_000 }).catch(() => undefined);
+    await on.waitForTimeout(150);
+    const thinking = await on.evaluate(() => {
+      const mark = document.querySelector('[data-testid="ai-thinking-mark"]');
+      if (!mark) return null;
+      const on = mark.getAttribute("data-thinking-on");
+      const anchor = on ? document.querySelector(`[data-graview-ai-thinking]`) : null;
+      const m = mark.getBoundingClientRect();
+      const a = anchor?.getBoundingClientRect();
+      return {
+        on,
+        role: mark.getAttribute("role"),
+        said: (mark.textContent ?? "").trim(),
+        visible: getComputedStyle(mark).visibility === "visible" && m.width > 0,
+        anchorIs: anchor ? (anchor.getAttribute("data-graview-view") ?? anchor.getAttribute("data-graview-pick") ?? anchor.getAttribute("data-graview-record") ?? anchor.getAttribute("data-graview-listed")) : null,
+        // On the thing: its middle within the thing's box, give or take its own height.
+        onIt: Boolean(a && m.left + m.width / 2 >= a.left - 4 && m.left + m.width / 2 <= a.right + 4 && m.top + m.height / 2 >= a.top - m.height && m.top + m.height / 2 <= a.bottom + 4),
+        modal: document.querySelector('[role="dialog"][aria-modal="true"]') !== null,
+      };
+    });
+    const card = await on.evaluate(() => {
+      const card = document.querySelector('[data-testid="quick-ask"]');
+      return card ? { beside: card.getAttribute("data-quick-ask-beside"), asked: card.querySelector('[data-testid="quick-answer-asked"]')?.textContent ?? null } : null;
+    });
+    typing.asks[face] = { askRow: askRow?.rows.at(-1) ?? null, lit: askRow?.lit, thinking, card, menuGone: !(await on.$(MENU)) };
+    typing.asks[face].ok =
+      askRow !== null && askRow.acts.length === 0 && askRow.rows.at(-1)?.id === "ask-typed" && askRow.lit === `Tell Graview “${asking}”` &&
+      thinking !== null && thinking.on === "t-deposit" && thinking.anchorIs === "t-deposit" && thinking.role === "status" && thinking.said.includes("Pay the deposit") && thinking.visible && thinking.onIt && !thinking.modal &&
+      card !== null && card.beside === "t-deposit" && card.asked === `“${asking}”` && typing.asks[face].menuGone;
+
+    /* The answer beside it, its change a ghost accepted and taken back. */
+    reach(`theAnswerShowsBesideItsTargetAndCanBeTakenBack_${face}`);
+    await on.waitForFunction(() => /not done yet/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? ""), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const answer = await on.evaluate(() => {
+      const card = document.querySelector('[data-testid="quick-ask"]');
+      if (!card) return null;
+      const beside = card.getAttribute("data-quick-ask-beside");
+      const anchor = beside ? document.querySelector(`[data-graview-view="${CSS.escape(beside)}"], [data-graview-pick="${CSS.escape(beside)}"], [data-graview-record="${CSS.escape(beside)}"]`) : null;
+      const a = anchor?.getBoundingClientRect();
+      const b = card.getBoundingClientRect();
+      return {
+        beside,
+        side: card.getAttribute("data-quick-ask-side"),
+        boxes: { it: a ? [Math.round(a.left), Math.round(a.top), Math.round(a.right), Math.round(a.bottom)] : null, card: [Math.round(b.left), Math.round(b.top), Math.round(b.right), Math.round(b.bottom)] },
+        text: card.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+        ghost: card.querySelector('[data-testid="ai-ghost"]') !== null,
+        proposed: [...card.querySelectorAll("[data-ghost-proposal]")].map((one) => (one.textContent ?? "").trim()),
+        // A question's change is a suggestion beside the answer, the person's to choose: "Finish it?".
+        suggested: [...card.querySelectorAll('[data-testid="quick-answer-offer"]')].map((one) => (one.textContent ?? "").trim()),
+        overIt: Boolean(a && Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2),
+        inTheWindow: b.left >= 0 && b.top >= 0 && b.right <= innerWidth + 1 && b.bottom <= innerHeight + 1,
+        markGone: document.querySelector('[data-testid="ai-thinking-mark"]') === null && document.querySelector("[data-graview-ai-thinking]") === null,
+      };
+    });
+    const notMade = await doneOf(on, "t-deposit");
+    // Chosen, the suggestion is proposed as any change is: a ghost, accepted, then taken back.
+    await on.click('[data-testid="quick-ask"] [data-testid="quick-answer-offer"][data-ai-offer-type="act"]').catch(() => undefined);
+    await on.waitForSelector('[data-testid="ghost-accept"]', { timeout: 5_000 }).catch(() => undefined);
+    const stillNotMade = await doneOf(on, "t-deposit");
+    await on.click('[data-testid="ghost-accept"]').catch(() => undefined);
+    await on.waitForTimeout(400);
+    const accepted = await doneOf(on, "t-deposit");
+    await on.click('[data-testid="ghost-undo"]').catch(() => undefined);
+    await on.waitForTimeout(400);
+    const undone = await doneOf(on, "t-deposit");
+    typing.answer[face] = { answer, notMade, stillNotMade, accepted, undone };
+
+    /* The Fast slot's pick is what reached the Thinking slot, and Activity says so. */
+    reach(`theFastSlotsPickIsWhatReachesTheThinkingSlot_${face}`);
+    const handed = await on.evaluate(() => ({ picked: window.__fastPicked.slice(), saw: window.__thinkingSaw.at(-1) ?? null }));
+    await on.click('[data-testid="quick-ask"] [data-testid="ghost-close"], [data-testid="quick-ask-close"]').catch(() => undefined);
+    await on.keyboard.press("Escape").catch(() => undefined);
+    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await on.waitForSelector('[data-testid="interaction-context"]', { timeout: 8_000 }).catch(() => undefined);
+    const said = await on.evaluate(() => {
+      const row = document.querySelector('[data-testid="interaction-context"]');
+      return row ? { by: row.getAttribute("data-context-by"), words: (row.textContent ?? "").trim() } : null;
+    });
+    const pickedCandidate = handed.picked.find((one) => one.key === "candidates")?.said ?? "";
+    const pickedRecord = handed.picked.find((one) => one.key === "records")?.said ?? "";
+    typing.context[face] = { picked: handed.picked, saw: handed.saw, activity: said };
+    typing.context[face].ok =
+      handed.saw !== null &&
+      handed.saw.candidates.length === 1 && pickedCandidate.endsWith(handed.saw.candidates[0]) && /^Finish it/.test(pickedCandidate) &&
+      (pickedRecord === "" ? handed.saw.records.length === 0 : handed.saw.records.length === 1 && pickedRecord.includes(handed.saw.records[0])) &&
+      said !== null && said.by === "fast" && said.words.includes("fake-fast");
+    typing.answer[face].ok = answer !== null && answer.beside === "t-deposit" && (answer.text ?? "").includes("not done yet") && !answer.ghost && answer.proposed.length === 0 && answer.suggested.some((one) => /\?$/.test(one)) && answer.inTheWindow && answer.markGone && notMade === false && stillNotMade === false && accepted === true && undone === false;
+    await context.close();
+
+    /* With AI off, the field only filters. */
+    reach(`withoutAiTheFieldOnlyFilters_${face}`);
+    const offContext = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    const off = await offContext.newPage();
+    off.on("pageerror", (error) => errors.push(`typing off ${face}: ${error.message}`));
+    await opened(off, face, "&ai=off");
+    const offFin = await typeIn(off, "fin");
+    const offNothing = await typeIn(off, "zzq");
+    await off.keyboard.press("Enter");
+    await off.waitForTimeout(300);
+    const stillOpen = Boolean(await off.$(MENU));
+    const noCard = !(await off.$('[data-testid="quick-ask"]'));
+    const placeholder = await off.getAttribute('[data-testid="menu-type"]', "placeholder").catch(() => null);
+    typing.off[face] = { fin: offFin, nothing: offNothing, stillOpen, noCard, placeholder };
+    typing.off[face].ok =
+      offFin !== null && offFin.acts.includes("Finish it") && allFit(offFin, "fin") && !offFin.rows.some((row) => row.id === "ask-typed" || row.id.startsWith("ai-")) &&
+      offNothing !== null && offNothing.acts.length === 0 && offNothing.rows.length === 0 && offNothing.lit === null && (offNothing.noMatch ?? "").includes("finzzq") &&
+      stillOpen && noCard && placeholder === "Type to filter…";
+    await offContext.close();
+  }
+  /*
+   * THE MENU NEVER CALLS AN INSTRUCTION A QUESTION. Nick mostly tells it to
+   * do something: the field, the row Enter runs, the card and its reply
+   * field, Activity's line, every name a screen reader hears — none says
+   * "ask".
+   */
+  reach("theMenuNeverCallsAnInstructionAQuestion");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`words: ${error.message}`));
+    const wordsOf = (selector) =>
+      on.evaluate((selector) => {
+        const root = document.querySelector(selector);
+        if (!root) return null;
+        const named = [...root.querySelectorAll("[aria-label], [placeholder], [title]")].flatMap((one) => [one.getAttribute("aria-label"), one.getAttribute("placeholder"), one.getAttribute("title")]);
+        // The model's own answer is its words, not the app's: left out.
+        const shown = [...root.querySelectorAll("button, label, [role=option], [data-menu-item], [data-testid=quick-answer-asked], [data-testid=ai-thinking-mark]")].map((one) => one.textContent ?? "");
+        return [root.getAttribute("aria-label"), ...named, ...shown].filter(Boolean).join(" | ");
+      }, selector);
+    await opened(on, "scene", "");
+    await on.keyboard.type("assign all these to nick");
+    await on.waitForTimeout(300);
+    const inTheMenu = await wordsOf(MENU);
+    const inlineRow = await on.evaluate(() => document.querySelector('[data-menu-item="ai-ask"]')?.textContent ?? null);
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"]', { timeout: 10_000 }).catch(() => undefined);
+    await on.waitForTimeout(400);
+    const onTheCard = await wordsOf('[data-testid="quick-ask"]');
+    await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
+    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await on.waitForSelector('[data-testid="activity-interaction"]', { timeout: 8_000 }).catch(() => undefined);
+    const inActivity = await on.evaluate(() => [...document.querySelectorAll('[data-testid="activity-interaction"]')].map((one) => one.querySelector("[data-graview-activity-words]")?.textContent ?? "").join(" | "));
+    const asks = (words) => /\bask(s|ed|ing)?\b/i.test(words ?? "");
+    report.checks.theMenuNeverCallsAnInstructionAQuestion = {
+      inTheMenu,
+      inlineRow,
+      onTheCard,
+      inActivity,
+      ok: inTheMenu !== null && !asks(inTheMenu) && /Tell Graview/.test(inTheMenu) && onTheCard !== null && !asks(onTheCard) && /told Graview/.test(inActivity) && !asks(inActivity),
+    };
+    await context.close();
+  }
+
+  /*
+   * GRAVIEW IS HERE WHILE IT THINKS, AND GOES WHEN THE CARD CLOSES. Asked
+   * from the menu, the app's AI stands among who is here — in this tab's
+   * bar and, over the presence channel, in another tab's — from the words
+   * asked until the card is put away.
+   */
+  reach("graviewIsHereWhileItThinksAndGoesWhenTheCardCloses");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    const other = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`present: ${error.message}`));
+    other.on("pageerror", (error) => errors.push(`present (other tab): ${error.message}`));
+    await other.goto(faces.scene.at(""), { waitUntil: "load" });
+    await faces.scene.ready(other);
+    await opened(on, "scene", "");
+    await on.keyboard.type("is this one still waiting on anything?");
+    await on.keyboard.press("Enter");
+    const hereSays = (page) => page.evaluate(() => [...document.querySelectorAll('[data-testid="here-open"]')].map((one) => one.getAttribute("aria-label") ?? "").join(" | "));
+    await on.waitForFunction(() => [...document.querySelectorAll('[data-testid="here-open"]')].some((one) => /Graview/.test(one.getAttribute("aria-label") ?? "")), null, { timeout: 5_000 }).catch(() => undefined);
+    const whileThinking = { here: await hereSays(on), thinking: Boolean(await on.$('[data-testid="ai-thinking-mark"]')) };
+    await other.waitForFunction(() => [...document.querySelectorAll('[data-testid="here-open"]')].some((one) => /Graview/.test(one.getAttribute("aria-label") ?? "")), null, { timeout: 5_000 }).catch(() => undefined);
+    const otherTab = await hereSays(other);
+    await on.waitForFunction(() => /not done yet/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? ""), null, { timeout: 15_000 }).catch(() => undefined);
+    const answered = await hereSays(on);
+    await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
+    await on.waitForTimeout(400);
+    const closedHere = await hereSays(on);
+    await other.waitForFunction(() => ![...document.querySelectorAll('[data-testid="here-open"]')].some((one) => /Graview/.test(one.getAttribute("aria-label") ?? "")), null, { timeout: 12_000 }).catch(() => undefined);
+    const closedThere = await hereSays(other);
+    report.checks.graviewIsHereWhileItThinksAndGoesWhenTheCardCloses = {
+      whileThinking,
+      otherTab,
+      answered,
+      closedHere,
+      closedThere,
+      ok: /Graview/.test(whileThinking.here) && whileThinking.thinking && /Graview/.test(otherTab) && /Graview/.test(answered) && !/Graview/.test(closedHere) && !/Graview/.test(closedThere),
+    };
+    await context.close();
+  }
+
+  /*
+   * AN ASK ABOUT A LIST ACTS ON EVERY RECORD IN IT AS ONE CHANGE, and A
+   * MISSING CAPABILITY IS OFFERED AS ONE PLAN THAT FINISHES THE ASK — on the
+   * tasks with nobody to give them to, mounted as Cloud mounts an app, its
+   * host one that applies a change to the app.
+   */
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`plan: ${error.message}`));
+    if (!menuHost) menuHost = await serveMenuHost();
+    const openLean = async () => {
+      await on.goto(`http://localhost:${portFor("menu-host")}${MENU_BASE}/tasks?lean=1`, { waitUntil: "load" });
+      await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await on.waitForSelector('[data-graview-record="t1"]', { timeout: 30_000 });
+      await on.click(":is([data-graview-page-title], main h1, main h2) >> nth=0", { button: "right" });
+      await on.waitForSelector(MENU, { timeout: 10_000 });
+      await on.waitForTimeout(250);
+    };
+    const storeSays = () =>
+      on.evaluate(() => {
+        const store = window.__handle.store;
+        const tasks = ["t1", "t2"].map((id) => store.graph.getNode(id));
+        const people = store.graph.allNodes().filter((node) => node.kind === "person");
+        const owned = ["t1", "t2"].map((id) => store.graph.out(id, "assignedTo").map((node) => node.name ?? node.label));
+        const last = store.log.all().at(-1);
+        return { kinds: store.schema.kinds, statuses: tasks.map((task) => task?.status), people: people.map((one) => one.name ?? one.label), owned, lastBatch: last?.batch ?? null, lastVia: last?.via ?? null, rules: store.allInvariants?.().length ?? null };
+      });
+
+    reach("anAskAboutAListActsOnEveryRecordInItAsOneChange");
+    await openLean();
+    await on.keyboard.type("mark these done");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"] [data-testid="ai-ghost"]', { timeout: 15_000 }).catch(() => undefined);
+    const proposed = await on.evaluate(() => [...document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]')].map((one) => one.getAttribute("data-ghost-proposal")));
+    const before = await storeSays();
+    await on.click('[data-testid="quick-ask"] [data-testid="ghost-accept"]').catch(() => undefined);
+    await on.waitForTimeout(400);
+    const accepted = await storeSays();
+    const batches = await on.evaluate(() => [...new Set(window.__handle.store.log.all().slice(-2).map((op) => op.batch))]);
+    await on.click('[data-testid="quick-ask"] [data-testid="ghost-undo"]').catch(() => undefined);
+    await on.waitForTimeout(400);
+    const undone = await storeSays();
+    report.checks.anAskAboutAListActsOnEveryRecordInItAsOneChange = {
+      proposed,
+      before: before.statuses,
+      accepted: accepted.statuses,
+      batches,
+      undone: undone.statuses,
+      ok: proposed.length === 2 && proposed.every((id) => /^each:set-status:t[12]$/.test(id ?? "")) && before.statuses.some((one) => one !== "done") && accepted.statuses.every((one) => one === "done") && batches.length === 1 && JSON.stringify(undone.statuses) === JSON.stringify(before.statuses),
+    };
+
+    reach("aMissingCapabilityIsOfferedAsOnePlanThatFinishesTheAsk");
+    await openLean();
+    await on.keyboard.type("assign these to nick");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask-plan"]', { timeout: 15_000 }).catch(() => undefined);
+    const offered = await on.evaluate(() => {
+      const card = document.querySelector('[data-testid="quick-ask"]');
+      return {
+        said: card?.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+        parts: [...(card?.querySelectorAll("[data-plan-part]") ?? [])].map((one) => ({ part: one.getAttribute("data-plan-part"), said: (one.textContent ?? "").trim() })),
+        yes: Boolean(card?.querySelector('[data-testid="quick-ask-plan-yes"]')),
+        proposedYet: (window.__proposed ?? []).length,
+      };
+    });
+    const notYet = await storeSays();
+    await on.click('[data-testid="quick-ask-plan-yes"]').catch(() => undefined);
+    await on.waitForFunction(() => window.__handle.store.schema.kinds.includes("person"), null, { timeout: 10_000 }).catch(() => undefined);
+    await on.waitForTimeout(500);
+    const landed = await storeSays();
+    const undoOffered = await on.waitForSelector('[data-testid="notice-action"]', { timeout: 5_000 }).then(() => true, () => false);
+    if (undoOffered) await on.click('[data-testid="notice-action"]');
+    else await on.evaluate(() => window.__undoPlan?.());
+    await on.waitForFunction(() => !window.__handle.store.schema.kinds.includes("person"), null, { timeout: 10_000 }).catch(() => undefined);
+    await on.waitForTimeout(400);
+    const back = await storeSays();
+    const text = offered.parts.map((one) => one.said).join(" | ");
+    // The list the page shows is the board it opens on: "in The board".
+    const STEPS = ["Add a People list.", "Give each task an “Assigned to” field that points to a person.", "Add Nick to People.", "Assign Nick to the 2 tasks in The board."];
+    report.checks.aMissingCapabilityIsOfferedAsOnePlanThatFinishesTheAsk = {
+      offered,
+      notYet: { kinds: notYet.kinds, people: notYet.people },
+      landed,
+      undoOffered,
+      back: { kinds: back.kinds, owned: back.owned },
+      ok:
+        offered.said === "Tasks have no one assigned to them. I can do it in 4 steps. Should I?" && offered.yes && offered.proposedYet === 0 &&
+        JSON.stringify(offered.parts.map((one) => one.said)) === JSON.stringify(STEPS) &&
+        !notYet.kinds.includes("person") &&
+        landed.kinds.includes("person") && landed.people.includes("Nick") && landed.owned.every((names) => names.length === 1 && names[0] === "Nick") && landed.lastVia === "ai:fake" &&
+        undoOffered && !back.kinds.includes("person") && back.owned.every((names) => names.length === 0),
+    };
+    /* Its steps in plain words, and only what the ask needed: no rule, no new place, nothing the app's names. */
+    report.checks.aPlanSaysItsStepsInPlainWords = {
+      said: offered.said,
+      steps: offered.parts.map((one) => one.said),
+      ok: offered.parts.length > 0 && !/\b[a-z]+-[a-z]+\b|people who own things|owner link|Who has what|somebody on it|[a-z,] (Give|Set|Add) [a-z]/.test([offered.said, text].join(" ")),
+    };
+    report.checks.aPlanTakesOnlyWhatTheAskNeeds = {
+      edits: (await on.evaluate(() => (window.__proposed ?? []).at(-1)?.edits?.map((edit) => edit.op) ?? null)),
+      rulesBefore: notYet.rules,
+      rulesLanded: landed.rules,
+      ok: false,
+    };
+    report.checks.aPlanTakesOnlyWhatTheAskNeeds.ok = JSON.stringify(report.checks.aPlanTakesOnlyWhatTheAskNeeds.edits) === JSON.stringify(["add-kind", "add-relation", "add-act"]) && notYet.rules === landed.rules;
+    await context.close();
+  }
+
+  /*
+   * OPTION KEEPS THE BROWSER'S OWN MENU; CTRL+CLICK IS OURS. A right-click
+   * with Option (Alt) held is the browser's — Inspect element, Look up —
+   * on the scene's card, its ground and the pages' row alike; a Ctrl+click,
+   * which a Mac's one-button trackpad sends as a contextmenu with ctrlKey,
+   * opens ours as any right-click does.
+   */
+  reach("aRightClickWithOptionShowsTheBrowsersMenu");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`option: ${error.message}`));
+    const heard = () =>
+      on.evaluate(() => {
+        const events = (window.__ctx ?? []).splice(0);
+        return { ours: Boolean(document.querySelector('[data-testid="context-menu"]')), events: events.length, prevented: events.some((event) => event.defaultPrevented) };
+      });
+    const listen = () => on.evaluate(() => {
+      window.__ctx = [];
+      window.addEventListener("contextmenu", (event) => window.__ctx.push(event), true);
+    });
+    /* A contextmenu said by the page itself on the target, as the browser would raise it, with these keys held. */
+    const said = (selector, keys) =>
+      on.evaluate(([selector, keys]) => {
+        const target = document.querySelector(selector);
+        const box = target?.getBoundingClientRect();
+        target?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, composed: true, clientX: (box?.left ?? 0) + 8, clientY: (box?.top ?? 0) + 8, ...keys }));
+      }, [selector, keys]);
+    const centerOf = (selector) => on.evaluate((selector) => {
+      const box = document.querySelector(selector)?.getBoundingClientRect();
+      return box ? { x: Math.round(box.left + Math.min(20, box.width / 2)), y: Math.round(box.top + Math.min(14, box.height / 2)) } : null;
+    }, selector);
+    const option = {};
+    const ctrl = {};
+    for (const face of ["scene", "pages"]) {
+      await on.goto(faces[face].at(""), { waitUntil: "load" });
+      await faces[face].ready(on);
+      await listen();
+      const point = await centerOf(faces[face].target);
+      if (!point) continue;
+      // Option held across a real right-click.
+      await on.keyboard.down("Alt");
+      await on.mouse.click(point.x, point.y, { button: "right" });
+      await on.keyboard.up("Alt");
+      await on.waitForTimeout(400);
+      option[face] = { how: "a right-click", ...(await heard()) };
+      // An engine whose driven right-click with Option raises no contextmenu (WebKit) is told it as the browser would say it.
+      if (option[face].events === 0) {
+        await putAway(on);
+        await said(faces[face].target, { button: 2, altKey: true });
+        await on.waitForTimeout(400);
+        option[face] = { how: "said by the page", ...(await heard()) };
+      }
+      await putAway(on);
+      // A Ctrl+click as a Mac trackpad sends it: a contextmenu from the primary button, ctrlKey held.
+      await said(faces[face].target, { button: 0, ctrlKey: true });
+      await on.waitForSelector(MENU, { timeout: 5_000 }).catch(() => undefined);
+      await on.waitForTimeout(200);
+      ctrl[face] = await heard();
+      await putAway(on);
+    }
+    report.checks.aRightClickWithOptionShowsTheBrowsersMenu = {
+      ...option,
+      ok: ["scene", "pages"].every((face) => option[face] && option[face].events >= 1 && !option[face].prevented && !option[face].ours),
+    };
+    report.checks.aCtrlClickStillOpensOurMenu = {
+      ...ctrl,
+      ok: ["scene", "pages"].every((face) => ctrl[face] && ctrl[face].events >= 1 && ctrl[face].prevented && ctrl[face].ours),
+    };
+    await context.close();
+  }
+
+  /*
+   * A ROW UNDER THE POINTER NEVER MOVES AS SUGGESTIONS ARRIVE. Homeflow: "i
+   * end up often clicking a different option when i try to hit Send Feedback
+   * because it jumps down as AI items are populated". On a row's menu on the
+   * pages of an app mounted as Cloud mounts one, whose host adds "Send
+   * feedback" below the AI's rows, the pointer goes straight to it while
+   * the Fast slot is still suggesting; its box is the same before and after
+   * the suggestions land, and the press sends feedback.
+   */
+  reach("aRowUnderThePointerNeverMovesAsSuggestionsArrive");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`steady: ${error.message}`));
+    if (!menuHost) menuHost = await serveMenuHost();
+    await on.goto(`http://localhost:${portFor("menu-host")}${MENU_BASE}/tasks`, { waitUntil: "load" });
+    await on.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+    await on.waitForSelector('[data-graview-record="t1"]', { timeout: 30_000 });
+    await on.click('[data-graview-record="t1"]', { button: "right" });
+    await on.waitForSelector(MENU, { timeout: 10_000 });
+    const FOOT = `${MENU} [data-menu-item="send-feedback"]`;
+    await on.waitForSelector(FOOT, { timeout: 10_000 });
+    const boxOf = () => on.evaluate((selector) => {
+      const box = document.querySelector(selector)?.getBoundingClientRect();
+      return box ? { x: Math.round(box.x * 10) / 10, y: Math.round(box.y * 10) / 10, height: Math.round(box.height * 10) / 10 } : null;
+    }, FOOT);
+    // The menu scrolls inside itself when it is taller than its room: the row into view first, as a pointer's wheel would.
+    await on.evaluate((selector) => document.querySelector(selector)?.scrollIntoView({ block: "nearest" }), FOOT);
+    const thinkingAtFirst = Boolean(await on.$(`${MENU} [data-testid="inline-ai-thinking"]`));
+    const before = await boxOf();
+    if (before) await on.mouse.move(before.x + 20, before.y + before.height / 2);
+    const hovered = await on.evaluate((selector) => document.querySelector(selector)?.matches(":hover") ?? false, FOOT);
+    await on.waitForSelector(`${MENU} [data-ai-offer]`, { timeout: 8_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const after = await boxOf();
+    const arrived = await on.evaluate(() => document.querySelectorAll('[data-testid="context-menu"] [data-ai-offer]').length);
+    // The press lands on the row the pointer went to.
+    await on.mouse.down();
+    await on.mouse.up();
+    await on.waitForTimeout(300);
+    const pressedIt = await on.evaluate(() => window.__feedback === 1);
+    report.checks.aRowUnderThePointerNeverMovesAsSuggestionsArrive = {
+      thinkingAtFirst,
+      before,
+      after,
+      window: await on.evaluate(() => innerHeight),
+      hovered,
+      arrived,
+      pressedIt,
+      ok: thinkingAtFirst && before !== null && after !== null && before.y === after.y && before.x === after.x && hovered && arrived > 0 && pressedIt,
+    };
+    await context.close();
+  }
+
+  /*
+   * ALL THESE ON A LIST MEANS THE RECORDS IN IT; A REPLY REVISES THE PLAN ON
+   * THE CARD; A PLAN OVER THE GRAPH NEEDS NO THINKING MODEL. On the todo
+   * example's This week list, "assign all these to Sam": the Fast slot reads
+   * "these" as the tasks the list holds and the plan's steps act on them,
+   * with the Thinking slot never asked. Misread on purpose, the card says
+   * the reading it took in one line; the reply Nick typed revises the plan
+   * to the tasks, and Yes is offered — no checker's sentence shown.
+   */
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    await context.addInitScript(() => (window.__todoDevHost = true));
+    await context.addInitScript(KEEP_THE_STORE);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`these: ${error.message}`));
+    const WEEK = `${at("todo")}/pages/lists/week?today=2026-09-01&fresh=1`;
+    const openWeek = async () => {
+      await on.goto(WEEK, { waitUntil: "load" });
+      await on.waitForSelector("[data-graview-page-title], main h1", { timeout: 60_000 });
+      await on.waitForTimeout(500);
+      await on.click(":is([data-graview-page-title], main h1) >> nth=0", { button: "right" });
+      await on.waitForSelector(MENU, { timeout: 10_000 });
+      await on.waitForTimeout(250);
+    };
+    const cardSays = () =>
+      on.evaluate(() => {
+        const card = document.querySelector('[data-testid="quick-ask"]');
+        return {
+          said: card?.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+          reading: card?.querySelector('[data-testid="quick-ask-reading"]')?.textContent ?? null,
+          steps: [...(card?.querySelectorAll("[data-plan-part]") ?? [])].map((one) => (one.textContent ?? "").trim()),
+          yes: Boolean(card?.querySelector('[data-testid="quick-ask-plan-yes"]')),
+          refused: card?.querySelector('[data-testid="quick-ask-refused"]')?.textContent ?? null,
+          whole: card?.textContent ?? "",
+          thinkingCalls: window.__thinkingCalls ?? 0,
+        };
+      });
+    const tasksInWeek = await (async () => {
+      await on.goto(WEEK, { waitUntil: "load" });
+      await on.waitForSelector("[data-graview-page-title], main h1", { timeout: 60_000 });
+      await on.waitForTimeout(500);
+      return on.evaluate(() => (window.__menuStores ?? []).find((one) => one.schema.kinds.includes("task"))?.graph.out("week", "holds").length ?? null);
+    })();
+
+    reach("allTheseOnAListMeansTheRecordsInIt");
+    await openWeek();
+    const started = Date.now();
+    await on.keyboard.type("assign all these to Sam");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask-plan"]', { timeout: 15_000 }).catch(() => undefined);
+    const tookMs = Date.now() - started;
+    const these = await cardSays();
+    const held = tasksInWeek ?? Number(/the (\d+) tasks/.exec(these.steps.at(-1) ?? "")?.[1] ?? NaN);
+    report.checks.allTheseOnAListMeansTheRecordsInIt = {
+      ...these,
+      held,
+      ok: these.steps.at(-1) === `Assign Sam to the ${held} tasks in This week.` && held > 1 && these.reading === null && these.yes && !/list/i.test(these.said ?? ""),
+    };
+    report.checks.aPlanOverTheGraphNeedsNoThinkingModel = {
+      thinkingCalls: these.thinkingCalls,
+      tookMs,
+      stages: null,
+      ok: false,
+    };
+    await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
+    await on.keyboard.press("Escape").catch(() => undefined);
+    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await on.waitForSelector('[data-testid="interaction-stages"]', { timeout: 8_000 }).catch(() => undefined);
+    const stages = await on.evaluate(() => {
+      const details = document.querySelector('[data-testid="interaction-stages"]');
+      if (details) details.open = true;
+      return details ? (details.textContent ?? "").trim() : null;
+    });
+    report.checks.aPlanOverTheGraphNeedsNoThinkingModel.stages = stages;
+    report.checks.aPlanOverTheGraphNeedsNoThinkingModel.ok = these.thinkingCalls === 0 && these.steps.length > 0 && tookMs < 5_000 && /Jev|fake-fast/.test(stages ?? "") && !/fake-thinking/.test(stages ?? "");
+
+    reach("aReplyRevisesThePlanOnTheCard");
+    await openWeek();
+    await on.evaluate(() => (window.__misread = true));
+    await on.keyboard.type("assign all these to Sam");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask-reading"]', { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const first = await cardSays();
+    await on.fill('[data-testid="quick-ask-input"]', "no, not lists.. i want to assign the tasks in this list to sam").catch(() => undefined);
+    await on.press('[data-testid="quick-ask-input"]', "Enter").catch(() => undefined);
+    await on.waitForFunction(() => [...document.querySelectorAll('[data-testid="quick-ask"] [data-plan-part]')].some((one) => /tasks in This week/.test(one.textContent ?? "")), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const revised = await cardSays();
+    report.checks.aReplyRevisesThePlanOnTheCard = {
+      first,
+      revised,
+      ok:
+        first.reading === "Taking this as This week itself." &&
+        revised.steps.at(-1) === `Assign Sam to the ${held} tasks in This week.` && revised.yes && revised.refused === null &&
+        !/acts on|not on a list|checker/i.test(`${first.whole} ${revised.whole}`) && revised.thinkingCalls === 0,
+    };
+
+    /* THE CARD NEVER SHOWS THE PIPELINE'S OWN NOTES. "Close all tasks in this list" is the act that marks done, over the tasks; a model's fragment ("a way to frobnicate tasks") is never the card's words. */
+    reach("theCardNeverShowsThePipelinesOwnNotes");
+    await on.evaluate(() => (window.__misread = false));
+    await openWeek();
+    await on.keyboard.type("close all tasks in this list");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"] [data-testid="ai-ghost"]', { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const closing = await on.evaluate(() => ({
+      text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+      proposed: [...document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]')].map((one) => one.getAttribute("data-ghost-proposal")),
+      plan: Boolean(document.querySelector('[data-testid="quick-ask-plan"]')),
+    }));
+    await openWeek();
+    await on.keyboard.type("frobnicate these");
+    await on.keyboard.press("Enter");
+    await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const fragment = await on.evaluate(() => document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null);
+    const whole = (text) => /^[\p{Lu}\p{N}"“‘'(]/u.test(text ?? "") && /[.!?…][”’"')]*$/u.test((text ?? "").trim()) && (text ?? "").trim().split(/\s+/).length >= 3;
+    report.checks.theCardNeverShowsThePipelinesOwnNotes = {
+      closing,
+      fragment,
+      ok:
+        closing.proposed.length >= 1 && closing.proposed.length <= held && closing.proposed.every((id) => /^each:finish:t-/.test(id ?? "")) && !closing.plan && whole(closing.text) &&
+        fragment !== null && whole(fragment) && !/a way to frobnicate/i.test(fragment),
+    };
+
+    /* A DESTRUCTIVE ACT OVER SEVERAL NEEDS A CLEAR READING: "delete the old ones" asks which; "delete the done ones" drops exactly the done. */
+    reach("aDestructiveActOverSeveralNeedsAClearReading");
+    await openWeek();
+    await on.keyboard.type("delete the old ones");
+    await on.keyboard.press("Enter");
+    await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const unclear = await on.evaluate(() => ({
+      text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+      proposed: [...document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]')].length,
+    }));
+    await openWeek();
+    await on.keyboard.type("delete the done ones");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"] [data-testid="ai-ghost"]', { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const clear = await on.evaluate(() => {
+      const store = (window.__menuStores ?? []).find((one) => one.schema.kinds.includes("task"));
+      const done = store ? store.graph.out("week", "holds").filter((task) => task.done === true).map((task) => task.id) : [];
+      return {
+        done,
+        text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+        proposed: [...document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]')].map((one) => one.getAttribute("data-ghost-proposal")),
+      };
+    });
+    report.checks.aDestructiveActOverSeveralNeedsAClearReading = {
+      unclear,
+      clear,
+      ok:
+        unclear.proposed === 0 && /\?$/.test((unclear.text ?? "").trim()) && /\ball \d+\b/.test(unclear.text ?? "") &&
+        clear.done.length > 0 && clear.proposed.length === clear.done.length && clear.proposed.every((id) => clear.done.some((done) => (id ?? "").endsWith(`:${done}`))),
+    };
+
+    /* AN ANSWER NEVER SAYS A CHANGE WAS MADE WHEN NONE WAS: told to do what nothing here does, the card says it can't — not that it did. */
+    reach("anAnswerNeverSaysAChangeWasMadeWhenNoneWas");
+    await openWeek();
+    await on.keyboard.type("send this to the waiting room");
+    await on.keyboard.press("Enter");
+    await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const claimed = await on.evaluate(() => ({
+      text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+      proposed: document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]').length,
+      plan: Boolean(document.querySelector('[data-testid="quick-ask-plan"]')),
+    }));
+    report.checks.anAnswerNeverSaysAChangeWasMadeWhenNoneWas = { ...claimed, ok: claimed.proposed === 0 && !claimed.plan && /can'?t/i.test(claimed.text ?? "") && !/taken off|moved to/i.test(claimed.text ?? "") };
+
+    /* A TRAILING QUALIFIER IS NEVER IGNORED BY A DESTRUCTIVE ACT: read as everything, "that's already ticked off" is left over — the card asks which. */
+    reach("aTrailingQualifierIsNeverIgnoredByADestructiveAct");
+    await openWeek();
+    await on.keyboard.type("scrap everything that's already ticked off");
+    await on.keyboard.press("Enter");
+    await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const trailing = await on.evaluate(() => ({
+      text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+      proposed: document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]').length,
+    }));
+    report.checks.aTrailingQualifierIsNeverIgnoredByADestructiveAct = { ...trailing, ok: trailing.proposed === 0 && /\?$/.test((trailing.text ?? "").trim()) && /\b1 done\b/.test(trailing.text ?? "") };
+
+    /* THE CARD SAYS WHAT WILL HAPPEN, WITH ITS VALUES: the count it acts on, the name it gives. */
+    reach("theCardSaysWhatWillHappenWithItsValues");
+    await openWeek();
+    await on.keyboard.type("close all tasks in this list");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"] [data-testid="ai-ghost"]', { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const closingSaid = await on.evaluate(() => ({ text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "", proposed: document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]').length }));
+    await openWeek();
+    await on.keyboard.type("rename this list to Packing week");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"] [data-testid="ai-ghost"]', { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const renameSaid = await on.evaluate(() => document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "");
+    report.checks.theCardSaysWhatWillHappenWithItsValues = {
+      closingSaid,
+      renameSaid,
+      ok:
+        closingSaid.proposed > 1 && new RegExp(`\\bthe ${closingSaid.proposed}\\b`).test(closingSaid.text) && !/ — |itself|each of/.test(closingSaid.text) &&
+        /^Rename (?:“?This week”? )?to “Packing week”\.$/.test(renameSaid) && !/ — |itself/.test(renameSaid),
+    };
+    await context.close();
+  }
+
+  /*
+   * THE CARD OPENS WHERE THE MENU STOOD, AND NEVER MOVES. Nick: "i don't
+   * want the dialog position to change when i select 'tell graview'… rn it
+   * jumps." Enter turns the menu into the card with the menu's top-left
+   * corner; the answer arriving and the plan growing move it not at all —
+   * on the scene and the pages, at a desk's width and a phone's.
+   */
+  reach("theCardOpensWhereTheMenuStoodAndNeverMoves");
+  {
+    const stood = {};
+    for (const [width, height, size] of [[1560, 940, "desk"], [390, 844, "phone"]]) {
+      const context = await browser.newContext({ viewport: { width, height }, ...(size === "phone" ? { hasTouch: true, isMobile: true } : {}) });
+      await context.addInitScript(FAKE_AI);
+      const on = await context.newPage();
+      on.on("pageerror", (error) => errors.push(`stood ${size}: ${error.message}`));
+      for (const face of ["scene", "pages"]) {
+        await opened(on, face, "");
+        const corner = (selector) => on.evaluate((selector) => {
+          const box = document.querySelector(selector)?.getBoundingClientRect();
+          return box ? { left: Math.round(box.left * 10) / 10, top: Math.round(box.top * 10) / 10, right: Math.round(box.right), bottom: Math.round(box.bottom) } : null;
+        }, selector);
+        const menuAtOpen = await corner(MENU);
+        await on.keyboard.type("assign this to Sam");
+        await on.waitForTimeout(300);
+        // Where the menu stands as Enter is pressed: the corner the card takes.
+        const menu = await corner(MENU);
+        await on.keyboard.press("Enter");
+        await on.waitForSelector('[data-testid="quick-ask"]', { timeout: 10_000 }).catch(() => undefined);
+        const opening = await corner('[data-testid="quick-ask"]');
+        const from = await on.evaluate(() => document.querySelector('[data-testid="quick-ask"]')?.getAttribute("data-quick-ask-from") ?? null);
+        await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+        const answered = await corner('[data-testid="quick-ask"]');
+        await on.waitForSelector('[data-testid="quick-ask-plan"]', { timeout: 10_000 }).catch(() => undefined);
+        await on.waitForTimeout(400);
+        const planned = await corner('[data-testid="quick-ask"]');
+        const inTheWindow = planned !== null && planned.left >= 0 && planned.top >= 0 && planned.right <= width + 1 && planned.bottom <= height + 1;
+        const same = (a, b) => a !== null && b !== null && Math.abs(a.left - b.left) <= 1 && Math.abs(a.top - b.top) <= 1;
+        // Where the menu stood: its corner, unless the card's width would leave the window — then moved left that once.
+        const fromTheMenu = menu !== null && opening !== null && Math.abs(opening.top - menu.top) <= 1 && (Math.abs(opening.left - menu.left) <= 1 || opening.right >= width - 16);
+        // The menu too stood still as it was typed in: its rows narrowed under its own top.
+        const menuSteady = same(menuAtOpen, menu);
+        stood[`${face}_${size}`] = { menuAtOpen, menu, from, opening, answered, planned, inTheWindow, menuSteady, ok: menuSteady && fromTheMenu && same(opening, answered) && same(opening, planned) && inTheWindow };
+        await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
+        await on.keyboard.press("Escape").catch(() => undefined);
+      }
+      await context.close();
+    }
+    report.checks.theCardOpensWhereTheMenuStoodAndNeverMoves = { ...stood, ok: Object.values(stood).length === 4 && Object.values(stood).every((one) => one.ok) };
+  }
+
+  /*
+   * THE FIRST LETTER FILTERS AT ONCE, AND FETCHES WHAT ENTER WILL NEED. The
+   * menu's field and its filter are drawn with the menu; the quick ask's
+   * card and the plan's code are fetched at the first letter typed, and the
+   * filter never waits for them.
+   */
+  reach("theFirstLetterFiltersAtOnce");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`first letter: ${error.message}`));
+    const timings = {};
+    for (const face of ["scene", "pages"]) {
+      await opened(on, face, "");
+      const fetchedBefore = await on.evaluate(() => performance.getEntriesByType("resource").some((one) => /quick-ask-plan/.test(one.name)));
+      // A dev server's page fetches hundreds of modules: the buffer is emptied so what the first letter fetches is kept.
+      await on.evaluate(() => {
+        performance.setResourceTimingBufferSize(5000);
+        performance.clearResourceTimings();
+      });
+      await on.evaluate(() => {
+        const menu = document.querySelector('[data-testid="context-menu"]');
+        const rows = () => menu.querySelectorAll("[data-affordance], [data-menu-item]").length;
+        const before = rows();
+        window.__letter = { pressed: 0, filtered: 0 };
+        document.addEventListener("keydown", () => { if (!window.__letter.pressed) window.__letter.pressed = performance.now(); }, { capture: true, once: true });
+        new MutationObserver((_, observer) => {
+          if (window.__letter.pressed && rows() !== before) {
+            window.__letter.filtered = performance.now();
+            observer.disconnect();
+          }
+        }).observe(menu, { subtree: true, childList: true, attributes: true });
+      });
+      await on.keyboard.press("f");
+      await on.waitForFunction(() => window.__letter.filtered > 0, null, { timeout: 5_000 }).catch(() => undefined);
+      const letter = await on.evaluate(() => ({ ms: Math.round(window.__letter.filtered - window.__letter.pressed), filtered: window.__letter.filtered > 0 }));
+      await on.waitForTimeout(800);
+      const fetchedAfter = await on.evaluate(() => performance.getEntriesByType("resource").some((one) => /quick-ask-plan/.test(one.name)));
+      const marked = await on.evaluate(() => performance.getEntriesByName("graview:quick-ask-preload").length);
+      timings[face] = { ...letter, fetchedBefore, fetchedAfter, marked };
+      await on.keyboard.press("Escape");
+      await on.keyboard.press("Escape");
+    }
+    report.checks.theFirstLetterFiltersAtOnce = {
+      ...timings,
+      // At once: within two frames of the key, the chunks fetched by then or after, never waited on.
+      ok: ["scene", "pages"].every((face) => timings[face].filtered && timings[face].ms <= 50 && timings[face].marked === 1 && !timings[face].fetchedBefore && timings[face].fetchedAfter),
+    };
+    await context.close();
+  }
+
+  /*
+   * LABELS AT ONE SPOT NEVER LIE ON EACH OTHER. Nora's own agent and
+   * Graview thinking for her stand at the same list: their names are said
+   * once, together ("Nora's agent · Graview, for Nora"), and no figure's
+   * label overlaps another's.
+   */
+  reach("labelsAtOneSpotAreSaidTogetherNeverOverEachOther");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`labels: ${error.message}`));
+    await on.goto(faces.scene.at(""), { waitUntil: "load" });
+    await faces.scene.ready(on);
+    await on.evaluate(() => {
+      const channel = new BroadcastChannel("graview:who:todo");
+      const say = () => {
+        const at = new Date().toISOString();
+        channel.postMessage({ type: "here", presence: { participant: "human:user-nora:other-tab", kind: "human", name: "Nora", hue: 30, stop: "focus=t-deposit", robot: { at: "t-deposit", mode: "working" }, at } });
+        channel.postMessage({ type: "here", presence: { participant: "agent:graview:for-nora", kind: "agent", name: "Graview", onBehalfOf: "user-nora", onBehalfOfName: "Nora", hue: 260, stop: "/", robot: { at: "t-deposit", mode: "thinking" }, at } });
+      };
+      say();
+      window.__saying = setInterval(say, 1000);
+    });
+    await on.waitForFunction(() => document.querySelectorAll(".graview-figure-name").length > 0, null, { timeout: 10_000 }).catch(() => undefined);
+    await on.waitForTimeout(600);
+    const labels = await on.evaluate(() => {
+      const shown = [...document.querySelectorAll(".graview-figure-name, .graview-figure-edge, [data-graview-label]")].filter((one) => one.getBoundingClientRect().width > 0);
+      const boxes = shown.map((one) => ({ text: (one.textContent ?? "").trim(), box: one.getBoundingClientRect().toJSON() }));
+      const over = [];
+      for (let i = 0; i < boxes.length; i++)
+        for (let j = i + 1; j < boxes.length; j++) {
+          const a = boxes[i].box;
+          const b = boxes[j].box;
+          if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2) over.push([boxes[i].text, boxes[j].text]);
+        }
+      clearInterval(window.__saying);
+      return { said: [...new Set(boxes.map((one) => one.text))], over };
+    });
+    report.checks.labelsAtOneSpotAreSaidTogetherNeverOverEachOther = {
+      ...labels,
+      ok: labels.said.some((text) => /Nora's agent/.test(text) && /Graview/.test(text) && text.includes(" · ")) && labels.said.includes("Nora") && labels.over.length === 0,
+    };
+    await context.close();
+  }
+
+  for (const [claim, of] of [
+    ["typingInTheMenuFiltersItsItems", typing.filters],
+    ["enterRunsTheItemTyped", typing.enter],
+    ["freeWordsAskAboutWhatIsUnderTheCursor", typing.asks],
+    ["theAnswerShowsBesideItsTargetAndCanBeTakenBack", typing.answer],
+    ["theFastSlotsPickIsWhatReachesTheThinkingSlot", typing.context],
+    ["withoutAiTheFieldOnlyFilters", typing.off],
+  ]) {
+    report.checks[claim] = { ...of, ok: ["scene", "pages"].every((face) => of[face]?.ok === true) };
+    for (const face of ["scene", "pages"]) delete report.checks[`${claim}_${face}`];
   }
 
   reach.done();

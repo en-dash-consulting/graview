@@ -87,6 +87,8 @@ export interface AiBridgeAsk {
   readonly prompt: string;
   readonly system?: string;
   readonly images?: readonly { readonly mediaType: string; readonly data: string }[];
+  /** `"fast"`: asked of the small quick model the dev server lends the Fast slot (`GRAVIEW_AI_FAST_MODEL`), not the Thinking one. */
+  readonly tier?: "fast";
 }
 
 /** What comes back: the model's text and what the call used, or why there is none. Never the key. */

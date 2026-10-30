@@ -97,9 +97,19 @@ export interface PresenceInputs<S extends AnySchema> {
   readonly seats?: readonly { readonly label: string; readonly principal: Principal }[];
 }
 
+/** The app's AI as a page says it: who and for whom, at what; where it stands, its color and when are the page's to fill. */
+export type AiPresence = Omit<Presence, "stop" | "hue" | "at"> & { readonly hue?: number };
+
 export interface PresenceState {
-  /** The others, by participant. Empty without a channel. */
+  /** The others, by participant — and the app's AI while it thinks for this person (`aiHere`). Otherwise empty without a channel. */
   readonly who: ReadonlyMap<string, Presence>;
+  /**
+   * THE APP'S AI, HERE WHILE IT THINKS (Roadmap f-menu-type-anything): a
+   * participant this page speaks for — "Graview, for Ada", at what it is
+   * thinking about — among `who` on this page, and said on the channel
+   * (`alsoHere`) for the others while it stands; null, and it goes.
+   */
+  aiHere(presence: AiPresence | null): void;
   /** How this tab is seen, or null when it broadcasts nothing. */
   readonly sharing: { readonly participant: string; readonly name: string } | null;
   /** Whose stop this tab is adopting, if anybody's. */
@@ -261,17 +271,46 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
    * goes — a pan is a move — and a new object here told every reader of
    * the context that something had changed.
    */
+  /* The app's AI, while it thinks for this person: on this page at once, and on the channel on every heartbeat. */
+  const [ai, setAi] = useState<Presence | null>(null);
+  const stopNow = useRef(toUrl(view));
+  stopNow.current = said ?? toUrl(view);
+  const aiHere = useCallback(
+    (next: AiPresence | null) =>
+      setAi((was) => {
+        // Gone: said once with its time up, so the others' maps drop it now rather than at the TTL.
+        if (next === null && was) channel?.alsoHere?.({ ...was, at: new Date().toISOString(), until: new Date().toISOString() });
+        // Where this person is, in the app's own color for its AI.
+        return next === null ? null : { hue: hueFor("graview"), ...next, stop: stopNow.current, at: new Date().toISOString() };
+      }),
+    [channel],
+  );
+  useEffect(() => {
+    if (!ai || !channel?.alsoHere) return;
+    const sayAi = () => channel.alsoHere?.({ ...ai, at: new Date().toISOString() });
+    sayAi();
+    const beat = setInterval(sayAi, HEARTBEAT_MS);
+    return () => clearInterval(beat);
+  }, [ai, channel]);
+  const everyone = useMemo<ReadonlyMap<string, Presence>>(() => {
+    if (!ai) return who;
+    const all = new Map(who);
+    all.set(ai.participant, { ...ai, at: new Date().toISOString() });
+    return all;
+  }, [who, ai]);
+
   const shares = mine !== null;
   const sharing = useMemo(() => (shares ? { participant, name } : null), [shares, participant, name]);
   return useMemo(
     () => ({
-      who,
+      who: everyone,
+      aiHere,
       sharing,
       following,
       follow,
       sayWhere,
       sayCaret,
     }),
-    [who, sharing, following, follow, sayCaret],
+    [everyone, aiHere, sharing, following, follow, sayCaret],
   );
 }

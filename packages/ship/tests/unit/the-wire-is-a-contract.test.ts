@@ -51,6 +51,7 @@ describe("the wire", () => {
       "/graview/who",
       "/graview/leave",
       "/graview/subscriptions",
+      "/graview/told",
       "/graview/friction",
       "/graview/views",
       "/graview/live",

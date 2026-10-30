@@ -1,15 +1,18 @@
 import { aggregateId, EMPTY_VIEW, type ViewState } from "@graview/layout";
 import {
   GraviewProvider,
+  KeptViewsProvider,
   useGraph,
   useGraview,
+  type ComposeChangeHost,
   type ProposeChangeHost,
+  type ReactViewRegistry,
   type Scheme,
   type SceneProps,
 } from "@graview/react";
 import { AgentSeat, ChatPanel, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
-import type { HostFiles, PresenceChannel, Principal, SubscriptionStore } from "@graview/core";
+import type { AnySchema, GraviewApp, HostFiles, KeptViews, PresenceChannel, Principal, SubscriptionStore } from "@graview/core";
 import type { HistoryHost } from "@graview/core/history";
 import type { HostAi, ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useState } from "react";
@@ -111,8 +114,16 @@ export interface TodoAppProps {
   readonly subscriptions?: SubscriptionStore;
   /** What the host keeps outside the log for playback (`history` on the provider): a harness hands an archive here. */
   readonly history?: HistoryHost;
-  /** Where a change to the app the seat proposed is applied (Roadmap f-seat-reshape): a harness's stub host, through `__todoProposeChange`. */
+  /** Where a change to the app the seat proposed is applied (Roadmap f-seat-reshape): a harness's stub host, through `__todoProposeChange`, or the dev server's (`dev-change.ts`). */
   readonly onProposeChange?: ProposeChangeHost;
+  /** The host's composer for a plan the quick ask offers (Roadmap f-menu-type-anything): the dev server's, laid over this code app. */
+  readonly composeChange?: ComposeChangeHost;
+  /** The app as it stands, when a plan changed it in development (`dev-change.ts`); the declared one otherwise. */
+  readonly app?: GraviewApp<AnySchema>;
+  /** Views added to Things' own: in development, "At a glance" (`dev-section.ts`, Roadmap f-make-this-section-better). */
+  readonly moreViews?: (views: ReactViewRegistry<TodoSchema>) => ReactViewRegistry<TodoSchema>;
+  /** The host's views (`KeptViews`): in development, kept in memory, revised by "Make this better". */
+  readonly keptViews?: KeptViews;
 }
 
 export function TodoApp({
@@ -132,10 +143,28 @@ export function TodoApp({
   subscriptions,
   history,
   onProposeChange,
+  composeChange,
+  app,
+  moreViews,
+  keptViews,
 }: TodoAppProps) {
   const created = useMemo(() => store ?? createTodoUiStore(), [store]);
-  const views = useMemo(() => todoViews(), []);
+  const views = useMemo(() => (moreViews ? moreViews(todoViews()) : todoViews()), [moreViews]);
   const [scheme, setScheme] = useState<Scheme>(initialScheme);
+  const drawn = () => (
+    <TodoShell
+      remembers={remembers}
+      syncUrl={syncUrl}
+      renderer={renderer}
+      scheme={scheme}
+      onScheme={(next) => {
+        setScheme(next);
+        onSchemeChange?.(next);
+      }}
+      {...(attachRenderer ? { attachRenderer } : {})}
+      {...(files ? { files } : {})}
+    />
+  );
 
   return (
     <GraviewProvider
@@ -147,26 +176,16 @@ export function TodoApp({
       principal={principal ?? openingSeat()}
       seats={SEATS}
       settings={todoApp.settings ?? []}
-      app={todoApp}
+      app={(app ?? todoApp) as typeof todoApp}
       {...(onSeat ? { onSeat } : {})}
       {...(presence ? { presence } : {})}
       {...(ai ? { ai } : {})}
       {...(subscriptions ? { subscriptions } : {})}
       {...(history ? { history } : {})}
       {...(onProposeChange ? { onProposeChange } : {})}
+      {...(composeChange ? { composeChange } : {})}
     >
-      <TodoShell
-        remembers={remembers}
-        syncUrl={syncUrl}
-        renderer={renderer}
-        scheme={scheme}
-        onScheme={(next) => {
-          setScheme(next);
-          onSchemeChange?.(next);
-        }}
-        {...(attachRenderer ? { attachRenderer } : {})}
-        {...(files ? { files } : {})}
-      />
+      {keptViews ? <KeptViewsProvider keptViews={keptViews}>{drawn()}</KeptViewsProvider> : drawn()}
     </GraviewProvider>
   );
 }
