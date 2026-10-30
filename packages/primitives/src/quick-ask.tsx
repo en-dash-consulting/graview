@@ -65,8 +65,7 @@ const NO = /^(no|nope|don'?t|not now|never ?mind)\b/i;
  */
 function membersOf(store: { readonly graph: { getNode(id: string): { readonly kind: string } | undefined; allNodes(): readonly { readonly id: string; readonly kind: string }[] } }, target: AiTarget, face: "scene" | "pages"): readonly string[] {
   const kind = target.on === "list" ? target.kind : target.on === "lens" ? target.kind : undefined;
-  // "These", said of one record or a selection: those.
-  if (target.on === "record" || target.on === "field") return [target.id];
+  // A selection is those records; what a record holds the Fast slot reads from the graph (`decideOverTheGraph`).
   if (target.on === "selection") return target.ids;
   if (target.on !== "list" && target.on !== "lens") return [];
   if (face === "pages" && typeof document !== "undefined") {
@@ -201,7 +200,9 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
     async (question: string) => {
       const asked = question.trim();
       if (!asked) return;
-      const before = answering?.result?.answer ? { said: answering.said, answer: answering.result.answer } : undefined;
+      // A reply carries what it replies to: the words, the answer, and which records they were read as being about.
+      const before = answering?.result?.answer ? { said: answering.said, answer: answering.result.answer, ...(answering.result.reading ? { reading: answering.result.reading.which } : {}) } : undefined;
+      const place = target.on === "lens" ? env.places.find((one) => one.as === target.place)?.title : target.on === "list" ? undefined : undefined;
       setWords("");
       setActive(-1);
       setSaid(null);
@@ -213,6 +214,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
         said: asked,
         ...(before ? { follows: before } : {}),
         ...(members.length > 0 ? { members } : {}),
+        ...(place ? { where: place } : {}),
       });
       env.desk.record(result.interaction);
       // Its proposed change is a ghost, drawn on this card: accepted there as one batch, with its one undo.
@@ -222,9 +224,12 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       if (result.missing) {
         try {
           const { planFor } = await import("./quick-ask-plan.js");
-          // Where the records are, as the steps say it: the place the list is.
-          const place = target.on === "lens" ? env.places.find((one) => one.as === target.place)?.title : undefined;
-          plan = await planFor(env, { said: asked, missing: result.missing, members, host: onProposeChange !== undefined, ...(composeChange ? { compose: composeChange } : {}), ...(place ? { where: place } : {}) });
+          // The records the words were read as being about, where the plan says it.
+          const from = Date.now();
+          const where = place ?? (result.reading && result.reading.which === "held" && target.on === "record" ? result.reading.words.replace(/^the \d+ \S+ in /, "") : undefined);
+          plan = await planFor(env, { said: asked, missing: result.missing, members: result.reading?.records ?? members, host: onProposeChange !== undefined, ...(composeChange ? { compose: composeChange } : {}), ...(where ? { where } : {}) });
+          // The plan composed and rehearsed, timed beside the slots' stages.
+          env.desk.record({ ...result.interaction, stages: [...(result.interaction.stages ?? []), { stage: "compose", ms: Date.now() - from }] });
         } catch (error) {
           plan = { refused: `${result.missing.said} ${error instanceof Error ? error.message : String(error)}` };
         }
@@ -453,6 +458,12 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
                     : answering.plan.refused
                   : (result.answer ?? "")}
           </p>
+          {result?.reading?.close ? (
+            /* A close reading said, so a reply can flip it: "Taking this as the 6 tasks in This week." */
+            <p data-testid="quick-ask-reading" style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
+              Taking this as {result.reading.words}.
+            </p>
+          ) : null}
           {offered ? (
             /* The plan, whole, before it lands: each part said, Yes and No — or, for a seat that may not change the app, who could. */
             <section data-testid="quick-ask-plan" data-plan-state={planState.state} aria-label="What I would do" style={PLAN}>

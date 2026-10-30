@@ -855,6 +855,19 @@ export interface AiInteraction {
    * The target itself is always sent.
    */
   readonly context?: AiContextSent;
+  /**
+   * HOW LONG EACH STAGE TOOK (Roadmap f-menu-type-anything): the Fast slot's
+   * pick over the graph, the light model's words, the full model's, the
+   * plan composed — each with the model, in milliseconds. Activity says them.
+   */
+  readonly stages?: readonly AiStage[];
+}
+
+/** One stage of an interaction, timed. */
+export interface AiStage {
+  readonly stage: "fast" | "light" | "thinking" | "compose";
+  readonly ms: number;
+  readonly model?: string;
 }
 
 /** The context a quick ask sent to its thinking model: who chose it, and the candidate ids and record ids it held. */

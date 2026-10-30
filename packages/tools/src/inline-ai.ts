@@ -40,6 +40,7 @@ import {
   type AiCandidate,
   type AiCatalog,
   type AiContextSent,
+  type AiStage,
   type AiContextState,
   type AiInteraction,
   type AiOffered,
@@ -53,6 +54,7 @@ import {
 } from "@graview/core/catalog";
 import type { AiPrice, AnswerProvider, AnswerReply, FastProvider, HostAi, ThinkingProvider } from "./ai.js";
 import { firstJsonObject } from "./intelligence.js";
+import { decideOverTheGraph, type Reading } from "./graph-plan.js";
 import type { Answer, ChoiceAnswer } from "./fast.js";
 import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide, type JevOptions } from "./providers/jev.js";
 import type { ChoiceQuestion, Question } from "./questions.js";
@@ -155,6 +157,8 @@ export interface InlineResult {
    * make or find. The face composes the whole plan from it.
    */
   readonly missing?: AnswerMissing;
+  /** Which records the words were read as being about (`decideOverTheGraph`): the target itself, or the records it holds — said on the card where the pick was close. */
+  readonly reading?: Reading;
 }
 
 /** What an answer found the app lacks — the need, named — and what would finish the ask. */
@@ -551,8 +555,10 @@ export interface QuickAsk<S extends AnySchema = AnySchema> extends InlineAsk<S> 
    */
   readonly members?: readonly string[];
 
-  /** The ask before this one on the card, and what it was answered: a follow-up, not a thread. */
-  readonly follows?: { readonly said: string; readonly answer: string };
+  /** The ask before this one on the card, what it was answered, and which records it was read as being about: a reply revises it, not a thread. */
+  readonly follows?: { readonly said: string; readonly answer: string; readonly reading?: "itself" | "held" };
+  /** Where the records are, as the steps say it: the place's title. */
+  readonly where?: string;
 }
 
 const ANSWER_SYSTEM =
@@ -570,11 +576,45 @@ const ANSWER_SYSTEM =
  * follow-up carries the ask before it and its answer, and nothing older.
  */
 export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<S>): Promise<InlineResult> {
-  const begun = begin(ai, ask);
+  const begun0 = begin(ai, ask);
   const said = ask.said.trim();
   const host = answerOf(ai);
-  const thinking = thinkingOf(ai);
   const fast = fastOf(ai);
+  /* Each stage timed, as the entry keeps it: the Fast slot's pick, the light and the full model's words. */
+  const stages: AiStage[] = [];
+  const timed = async <T,>(stage: AiStage["stage"], model: string, work: () => Promise<T>): Promise<T> => {
+    const from = Date.now();
+    try {
+      return await work();
+    } finally {
+      stages.push({ stage, ms: Date.now() - from, model });
+    }
+  };
+  const begun: Asked = { ...begun0, entry: begun0.entry };
+  /*
+   * THE GRAPH FIRST (Roadmap f-menu-type-anything): on what holds records —
+   * a record that holds others, a list, a place — the Fast slot decides in
+   * one typed call which records the words mean, which act, which person,
+   * and what the app would need; code composes the answer. Sure, no model
+   * writes a word. Unsure, the reading it made still narrows what the
+   * Thinking slot is told.
+   */
+  let reading: Reading | undefined;
+  if (fast && said && !host && (ask.target.on === "record" || ask.target.on === "list" || ask.target.on === "lens" || ask.target.on === "selection")) {
+    try {
+      const graph = await timed("fast", fast.model, () => decideOverTheGraph(fast, { store: ask.store, target: ask.target, said, ...(ask.members ? { members: ask.members } : {}), ...(ask.follows ? { follows: ask.follows } : {}), ...(ask.where ? { where: ask.where } : {}) }));
+      const cost = costOf(fast.price, graph.usage.inputTokens, graph.usage.outputTokens);
+      begun.meter({ tier: "fast", model: fast.model, inputTokens: graph.usage.inputTokens, outputTokens: graph.usage.outputTokens, ...(cost !== undefined ? { costUsd: cost } : {}) });
+      reading = graph.reading;
+      if (graph.sure && (graph.each || graph.missing)) return graphResult(ask, begun, said, graph, stages);
+    } catch {
+      // The Fast slot failing leaves the Thinking slot to answer, as before there was a graph to read.
+    }
+  }
+  /* THE LIGHT MODEL FIRST: the provider's quick one words an open answer; the full one only where it had none. */
+  const light = ai.off ? undefined : ai.light;
+  const full = thinkingOf(ai);
+  const thinking = light ?? full;
   const all = begun.catalog.candidates.filter((candidate) => ready(candidate) || candidate.type === "panel" || candidate.type === "place" || candidate.type === "record").slice(0, 32);
   /*
    * TWO STEPS (Roadmap f-menu-type-anything): where a model will write the
@@ -592,8 +632,8 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   }
   const asked: Asked = { ...begun, state: sent.state, catalog: { ...begun.catalog, candidates: sent.choices }, entry: { ...begun.entry, context: sent.context } };
   const choices = sent.choices;
-  /* The records a list shows, as this viewer may see them, and the acts any of them takes. */
-  const members = (ask.members ?? []).flatMap((id) => {
+  /* The records the words are about — as the Fast slot read them, else the records the list shows — and the acts any of them takes. */
+  const members = (reading?.records ?? ask.members ?? []).flatMap((id) => {
     const node = ask.store.graph.getNode(id);
     return node ? [node] : [];
   }).slice(0, 60);
@@ -618,20 +658,19 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
       text = typeof reply.text === "string" ? reply.text.trim() : "";
       picked = pickedOf(reply.pick ?? []);
     } else if (thinking) {
-      const parsed = (await thought(
-        thinking,
-        ANSWER_SYSTEM,
-        JSON.stringify({
+      const prompt = JSON.stringify({
           ask: said,
           about: asked.entry.targetLabel,
           ...(ask.follows ? { follows: ask.follows } : {}),
           state: asked.state,
           candidates: choices.map((candidate) => ({ id: candidate.id, says: candidate.description })),
           ...(members.length > 0 ? { members: members.map((node) => ({ id: node.id, label: labelOf(ask.store.schema.tryDefinition(node.kind), node as never) })), member_acts: memberActs.map((act) => ({ name: act.name, title: act.title, asks: act.asks })) } : {}),
-        }),
-        asked,
-        asked.meter,
-      )) as { answer?: unknown; pick?: unknown; each?: unknown; lacks?: unknown; need?: unknown; who?: unknown; value?: unknown } | undefined;
+        });
+      type Parsed = { answer?: unknown; pick?: unknown; each?: unknown; lacks?: unknown; need?: unknown; who?: unknown; value?: unknown } | undefined;
+      const usable = (one: Parsed) => Boolean(one && ((typeof one.answer === "string" && one.answer.trim()) || (Array.isArray(one.pick) && one.pick.length > 0) || one.each || one.lacks));
+      let parsed = (await timed(light ? "light" : "thinking", thinking.model, () => thought(thinking, ANSWER_SYSTEM, prompt, asked, asked.meter))) as Parsed;
+      // The light model had nothing to say: the full one, once.
+      if (light && full && full !== light && !usable(parsed)) parsed = (await timed("thinking", full.model, () => thought(full, ANSWER_SYSTEM, prompt, asked, asked.meter))) as Parsed;
       text = typeof parsed?.answer === "string" ? parsed.answer.trim() : "";
       picked = pickedOf(Array.isArray(parsed?.pick) ? parsed.pick : []);
       each = eachOf(parsed?.each);
@@ -684,11 +723,37 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   const offers = picked.map(({ candidate }) => candidate).filter((candidate) => proposalOf(candidate) === undefined);
   const offered = [...offers.map((candidate) => offeredOf(candidate, picked.find((one) => one.candidate === candidate)?.confidence)), ...(ghost?.proposals ?? []).map((proposal) => ({ id: proposal.id, type: (proposal.field !== undefined ? "fill" : "act") as AiOffered["type"], label: proposal.label, ...(proposal.confidence !== undefined ? { confidence: proposal.confidence } : {}) }))];
   return {
-    interaction: { ...asked.entry, ask: { kind: "ask", said }, offered, outcome: "offered", ...(text ? { answer: text } : {}), usage: [...asked.usage] },
+    interaction: { ...asked.entry, ask: { kind: "ask", said }, offered, outcome: "offered", ...(text ? { answer: text } : {}), usage: [...asked.usage], stages },
     offers,
     ...(ghost && ghost.proposals.length > 0 ? { ghost } : {}),
     ...(text ? { answer: text } : missing ? { answer: missing.said } : {}),
-    ...(missing ? { missing } : {}),
+    ...(missing ? { missing: missing.need && reading && "link" in missing.need ? { ...missing, need: { link: { ...missing.need.link, on: reading.kind } } } : missing } : {}),
+    ...(reading ? { reading } : {}),
+  };
+}
+
+/** What the Fast slot decided over the graph, as an answer: the act over every record as one ghost, or what the app lacks — no model's words. */
+function graphResult<S extends AnySchema>(ask: QuickAsk<S>, asked: Asked, said: string, graph: Awaited<ReturnType<typeof decideOverTheGraph>>, stages: readonly AiStage[]): InlineResult {
+  const proposals: Proposal[] = [];
+  if (graph.each && graph.reading) {
+    const mutation = ask.store.allMutations().find((one) => one.name === graph.each!.act);
+    for (const id of graph.reading.records) {
+      const node = ask.store.graph.getNode(id);
+      if (!node || !mutation?.subject) continue;
+      proposals.push({ id: `each:${mutation.name}:${id}`, label: `${mutation.title ?? mutation.name}: ${labelOf(ask.store.schema.tryDefinition(node.kind), node as never)}`, said: mutation.title ?? mutation.name, call: { name: mutation.name, args: { ...graph.each.args, [mutation.subject.arg]: id } }, record: id });
+    }
+  }
+  const model = asked.usage.at(-1)?.model;
+  const ghost = proposals.length > 0 ? ghostOf(ask.store, { interaction: asked.id, target: ask.target, basis: said, ...(model ? { model } : {}), proposals }, ask.principal) : undefined;
+  const offered = (ghost?.proposals ?? []).map((proposal) => ({ id: proposal.id, type: "act" as AiOffered["type"], label: proposal.label }));
+  const text = graph.text ?? graph.missing?.said ?? "";
+  return {
+    interaction: { ...asked.entry, ask: { kind: "ask", said }, offered, outcome: "offered", ...(text ? { answer: text } : {}), usage: [...asked.usage], stages: [...stages] },
+    offers: [],
+    ...(ghost && ghost.proposals.length > 0 ? { ghost } : {}),
+    ...(text ? { answer: text } : {}),
+    ...(graph.missing ? { missing: graph.missing } : {}),
+    ...(graph.reading ? { reading: graph.reading } : {}),
   };
 }
 

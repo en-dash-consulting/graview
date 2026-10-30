@@ -75,7 +75,7 @@ function whereOf(env: InlineEnv): string {
 
 /** The plan for a missing capability, or a refusal in words when it could not be composed or would fail. */
 export async function planFor(env: InlineEnv, options: { readonly said: string; readonly missing: AnswerMissing; readonly members: readonly string[]; readonly host: boolean; readonly compose?: ComposeChangeHost; readonly where?: string }): Promise<AppPlan | { readonly refused: string }> {
-  const { missing, members } = options;
+  const { missing } = options;
   if (!missing.need) return { refused: missing.said };
   const reshape = await import("@graview/tools/reshape");
   const remembered = reshape.documentOfApp(env.app);
@@ -84,6 +84,11 @@ export async function planFor(env: InlineEnv, options: { readonly said: string; 
   if ("refused" in planned) return { refused: `${missing.said} ${planned.refused}` };
   const steps: PlanPart[] = planned.steps.map((said) => ({ part: "app", said }));
   const appSteps = steps.length;
+
+  /* THE RECORDS THE PLAN ACTS ON are of the kind it changes: a list given where its tasks were meant is retargeted by code to the records it holds, never refused in words. */
+  const ofKind = (ids: readonly string[]) => ids.filter((id) => env.store.graph.getNode(id)?.kind === planned.on);
+  const heldOfKind = (id: string) => [...env.store.graph.in(id), ...env.store.graph.out(id)].filter((node) => node.kind === planned.on).map((node) => node.id);
+  const members = ofKind(options.members).length > 0 ? ofKind(options.members) : [...new Set(options.members.flatMap(heldOfKind))];
 
   /* THE RECORDS THAT FINISH THE ASK, each said as it will happen. */
   const records: MutationCall[] = [];
@@ -132,13 +137,14 @@ export async function planFor(env: InlineEnv, options: { readonly said: string; 
 
   /* COMPOSED AND REHEARSED WHOLE before it is offered: the changed app, judged by the checker, and these records in it, as this person. */
   const composed = options.compose!({ document: remembered!, edits: planned.edits });
-  if (!composed.ok) return { refused: `${missing.said} That change is not offered: ${composed.refused.charAt(0).toLowerCase()}${composed.refused.slice(1)}` };
+  // A checker's sentence is never a person's: the change could not be made, said plainly.
+  if (!composed.ok) return { refused: `${missing.said} That change could not be made here.` };
   const app = composed.app as { readonly schema: AnySchema; readonly mutations?: readonly unknown[]; readonly invariants?: readonly unknown[]; readonly policy?: unknown };
   try {
     const scratch = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: env.store.graph.snapshot() as never } as never);
     scratch.previewAll(records, { author: env.principal });
-  } catch (error) {
-    return { refused: `${missing.said} The plan would be refused: ${error instanceof Error ? error.message : String(error)}` };
+  } catch {
+    return { refused: `${missing.said} I could not make that work here.` };
   }
   return {
     question: `${missing.said} I can do it in ${numbered} steps. Should I?`,

@@ -84,6 +84,16 @@ async function throughTheModelDoor(options: { readonly path?: string; readonly f
       name: typeof status.name === "string" ? status.name : "model",
       ...(fastModel
         ? {
+            /* The light model: the same quick one, writing the few words a plan over the graph could not decide. */
+            light: {
+              model: fastModel,
+              think: async ({ system, prompt }) => {
+                const body = await post({ prompt, ...(system ? { system } : {}), tier: "fast" } satisfies AiBridgeAsk);
+                if (typeof body.text !== "string") throw new Error("The model door answered with no text.");
+                const usage = body.usage as { inputTokens?: unknown; outputTokens?: unknown } | undefined;
+                return { text: body.text, ...(typeof usage?.inputTokens === "number" && typeof usage.outputTokens === "number" ? { usage: { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens } } : {}) };
+              },
+            },
             fast: {
               model: fastModel,
               decide: completionDecide(async ({ prompt }) => {

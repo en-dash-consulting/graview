@@ -1112,8 +1112,36 @@ try {
           const answers = {};
           // The menu's own suggestions come slowly, as a real model's do: the rows below them must not move meanwhile.
           if (questions.next) await new Promise((done) => setTimeout(done, 2000));
+          // A plan over the graph: Jev's typed questions answer in about a tenth of a second.
+          if (questions.act) await new Promise((done) => setTimeout(done, 150));
+          const said = String(state.said ?? "");
+          const giving = /\b(assign|give)\b/i.test(`${said} ${state.replyingTo ?? ""}`);
+          const sure = (question, choice, chance = 0.92) => {
+            const names = Object.keys(question.criteria);
+            return { type: "choice", choice, confidence: chance, probabilities: Object.fromEntries(names.map((name) => [name, name === choice ? chance : (1 - chance) / Math.max(1, names.length - 1)])) };
+          };
           let firstRecord = true;
           for (const [key, question] of Object.entries(questions)) {
+            if (question.type === "choice" && key === "reading") {
+              // "These" on a list are the tasks it holds; a first turn misread on purpose (__misread) is close, so the card says it.
+              const misread = window.__misread === true && !/\btasks\b/i.test(said);
+              answers[key] = misread ? sure(question, "itself", 0.55) : sure(question, /\b(these|all|them|each|everything|tasks)\b/i.test(said) ? "held" : "itself");
+              continue;
+            }
+            if (question.type === "choice" && key === "act") {
+              answers[key] = giving ? sure(question, "none") : sure(question, "none", 0.3);
+              continue;
+            }
+            if (question.type === "choice" && key === "person") {
+              const names = Object.keys(question.criteria);
+              const named = names.find((name) => name.startsWith("p:") && new RegExp(`\\b${question.criteria[name]}\\b`, "i").test(said));
+              answers[key] = sure(question, named ?? (giving ? "new" : "none"));
+              continue;
+            }
+            if (question.type === "choice" && key === "need") {
+              answers[key] = giving ? sure(question, "person") : sure(question, "none", 0.5);
+              continue;
+            }
             // Which records a quick ask is about, a Noul each: the first, and no other.
             if (question.type === "noul") {
               answers[key] = { type: "noul", noul: firstRecord ? 0.9 : 0.05 };
@@ -1139,6 +1167,7 @@ try {
       thinking: {
         model: "fake-thinking",
         think: async ({ prompt }) => {
+          window.__thinkingCalls = (window.__thinkingCalls ?? 0) + 1;
           await new Promise((done) => setTimeout(done, 1500));
           const told = JSON.parse(prompt);
           const acts = (told.member_acts ?? []).map((one) => one.name);
@@ -1547,7 +1576,7 @@ try {
       undoOffered,
       back: { kinds: back.kinds, owned: back.owned },
       ok:
-        offered.said === "Tasks have no one to assign them to. I can do it in 4 steps. Should I?" && offered.yes && offered.proposedYet === 0 &&
+        offered.said === "Tasks have no one assigned to them. I can do it in 4 steps. Should I?" && offered.yes && offered.proposedYet === 0 &&
         JSON.stringify(offered.parts.map((one) => one.said)) === JSON.stringify(STEPS) &&
         !notYet.kinds.includes("person") &&
         landed.kinds.includes("person") && landed.people.includes("Nick") && landed.owned.every((names) => names.length === 1 && names[0] === "Nick") && landed.lastVia === "ai:fake" &&
@@ -1692,6 +1721,152 @@ try {
       arrived,
       pressedIt,
       ok: thinkingAtFirst && before !== null && after !== null && before.y === after.y && before.x === after.x && hovered && arrived > 0 && pressedIt,
+    };
+    await context.close();
+  }
+
+  /*
+   * ALL THESE ON A LIST MEANS THE RECORDS IN IT; A REPLY REVISES THE PLAN ON
+   * THE CARD; A PLAN OVER THE GRAPH NEEDS NO THINKING MODEL. On the todo
+   * example's This week list, "assign all these to Sam": the Fast slot reads
+   * "these" as the tasks the list holds and the plan's steps act on them,
+   * with the Thinking slot never asked. Misread on purpose, the card says
+   * the reading it took in one line; the reply Nick typed revises the plan
+   * to the tasks, and Yes is offered — no checker's sentence shown.
+   */
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    await context.addInitScript(() => (window.__todoDevHost = true));
+    await context.addInitScript(KEEP_THE_STORE);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`these: ${error.message}`));
+    const WEEK = `${at("todo")}/pages/lists/week?today=2026-09-01&fresh=1`;
+    const openWeek = async () => {
+      await on.goto(WEEK, { waitUntil: "load" });
+      await on.waitForSelector("[data-graview-page-title], main h1", { timeout: 60_000 });
+      await on.waitForTimeout(500);
+      await on.click(":is([data-graview-page-title], main h1) >> nth=0", { button: "right" });
+      await on.waitForSelector(MENU, { timeout: 10_000 });
+      await on.waitForTimeout(250);
+    };
+    const cardSays = () =>
+      on.evaluate(() => {
+        const card = document.querySelector('[data-testid="quick-ask"]');
+        return {
+          said: card?.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+          reading: card?.querySelector('[data-testid="quick-ask-reading"]')?.textContent ?? null,
+          steps: [...(card?.querySelectorAll("[data-plan-part]") ?? [])].map((one) => (one.textContent ?? "").trim()),
+          yes: Boolean(card?.querySelector('[data-testid="quick-ask-plan-yes"]')),
+          refused: card?.querySelector('[data-testid="quick-ask-refused"]')?.textContent ?? null,
+          whole: card?.textContent ?? "",
+          thinkingCalls: window.__thinkingCalls ?? 0,
+        };
+      });
+    const tasksInWeek = await (async () => {
+      await on.goto(WEEK, { waitUntil: "load" });
+      await on.waitForSelector("[data-graview-page-title], main h1", { timeout: 60_000 });
+      await on.waitForTimeout(500);
+      return on.evaluate(() => (window.__menuStores ?? []).find((one) => one.schema.kinds.includes("task"))?.graph.out("week", "holds").length ?? null);
+    })();
+
+    reach("allTheseOnAListMeansTheRecordsInIt");
+    await openWeek();
+    const started = Date.now();
+    await on.keyboard.type("assign all these to Sam");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask-plan"]', { timeout: 15_000 }).catch(() => undefined);
+    const tookMs = Date.now() - started;
+    const these = await cardSays();
+    const held = tasksInWeek ?? Number(/the (\d+) tasks/.exec(these.steps.at(-1) ?? "")?.[1] ?? NaN);
+    report.checks.allTheseOnAListMeansTheRecordsInIt = {
+      ...these,
+      held,
+      ok: these.steps.at(-1) === `Assign Sam to the ${held} tasks in This week.` && held > 1 && these.reading === null && these.yes && !/list/i.test(these.said ?? ""),
+    };
+    report.checks.aPlanOverTheGraphNeedsNoThinkingModel = {
+      thinkingCalls: these.thinkingCalls,
+      tookMs,
+      stages: null,
+      ok: false,
+    };
+    await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
+    await on.keyboard.press("Escape").catch(() => undefined);
+    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await on.waitForSelector('[data-testid="interaction-stages"]', { timeout: 8_000 }).catch(() => undefined);
+    const stages = await on.evaluate(() => {
+      const details = document.querySelector('[data-testid="interaction-stages"]');
+      if (details) details.open = true;
+      return details ? (details.textContent ?? "").trim() : null;
+    });
+    report.checks.aPlanOverTheGraphNeedsNoThinkingModel.stages = stages;
+    report.checks.aPlanOverTheGraphNeedsNoThinkingModel.ok = these.thinkingCalls === 0 && these.steps.length > 0 && tookMs < 5_000 && /Jev|fake-fast/.test(stages ?? "") && !/fake-thinking/.test(stages ?? "");
+
+    reach("aReplyRevisesThePlanOnTheCard");
+    await openWeek();
+    await on.evaluate(() => (window.__misread = true));
+    await on.keyboard.type("assign all these to Sam");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask-reading"]', { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const first = await cardSays();
+    await on.fill('[data-testid="quick-ask-input"]', "no, not lists.. i want to assign the tasks in this list to sam").catch(() => undefined);
+    await on.press('[data-testid="quick-ask-input"]', "Enter").catch(() => undefined);
+    await on.waitForFunction(() => [...document.querySelectorAll('[data-testid="quick-ask"] [data-plan-part]')].some((one) => /tasks in This week/.test(one.textContent ?? "")), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const revised = await cardSays();
+    report.checks.aReplyRevisesThePlanOnTheCard = {
+      first,
+      revised,
+      ok:
+        first.reading === "Taking this as This week itself." &&
+        revised.steps.at(-1) === `Assign Sam to the ${held} tasks in This week.` && revised.yes && revised.refused === null &&
+        !/acts on|not on a list|checker/i.test(`${first.whole} ${revised.whole}`) && revised.thinkingCalls === 0,
+    };
+    await context.close();
+  }
+
+  /*
+   * LABELS AT ONE SPOT NEVER LIE ON EACH OTHER. Nora's own agent and
+   * Graview thinking for her stand at the same list: their names are said
+   * once, together ("Nora's agent · Graview, for Nora"), and no figure's
+   * label overlaps another's.
+   */
+  reach("labelsAtOneSpotAreSaidTogetherNeverOverEachOther");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`labels: ${error.message}`));
+    await on.goto(faces.scene.at(""), { waitUntil: "load" });
+    await faces.scene.ready(on);
+    await on.evaluate(() => {
+      const channel = new BroadcastChannel("graview:who:todo");
+      const say = () => {
+        const at = new Date().toISOString();
+        channel.postMessage({ type: "here", presence: { participant: "human:user-nora:other-tab", kind: "human", name: "Nora", hue: 30, stop: "focus=t-deposit", robot: { at: "t-deposit", mode: "working" }, at } });
+        channel.postMessage({ type: "here", presence: { participant: "agent:graview:for-nora", kind: "agent", name: "Graview", onBehalfOf: "user-nora", onBehalfOfName: "Nora", hue: 260, stop: "/", robot: { at: "t-deposit", mode: "thinking" }, at } });
+      };
+      say();
+      window.__saying = setInterval(say, 1000);
+    });
+    await on.waitForFunction(() => document.querySelectorAll(".graview-figure-name").length > 0, null, { timeout: 10_000 }).catch(() => undefined);
+    await on.waitForTimeout(600);
+    const labels = await on.evaluate(() => {
+      const shown = [...document.querySelectorAll(".graview-figure-name, .graview-figure-edge, [data-graview-label]")].filter((one) => one.getBoundingClientRect().width > 0);
+      const boxes = shown.map((one) => ({ text: (one.textContent ?? "").trim(), box: one.getBoundingClientRect().toJSON() }));
+      const over = [];
+      for (let i = 0; i < boxes.length; i++)
+        for (let j = i + 1; j < boxes.length; j++) {
+          const a = boxes[i].box;
+          const b = boxes[j].box;
+          if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2) over.push([boxes[i].text, boxes[j].text]);
+        }
+      clearInterval(window.__saying);
+      return { said: [...new Set(boxes.map((one) => one.text))], over };
+    });
+    report.checks.labelsAtOneSpotAreSaidTogetherNeverOverEachOther = {
+      ...labels,
+      ok: labels.said.some((text) => /Nora's agent/.test(text) && /Graview/.test(text) && text.includes(" · ")) && labels.said.includes("Nora") && labels.over.length === 0,
     };
     await context.close();
   }

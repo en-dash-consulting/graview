@@ -83,6 +83,14 @@ function contextWords(entry: AiInteraction): string | null {
   return sent.by === "fast" ? `Told the model of ${what}, as ${picker} picked them` : `Told the model of ${what} around it`;
 }
 
+/** How long each stage took, said: "Jev 180 ms · grok-4.20 900 ms · composed 12 ms". */
+function stageWords(entry: AiInteraction): string | null {
+  const stages = entry.stages ?? [];
+  if (stages.length === 0) return null;
+  const who = (stage: (typeof stages)[number]) => (stage.stage === "compose" ? "composed" : stage.model ? (/^jev\b|^jev-/i.test(stage.model) ? "Jev" : stage.model) : stage.stage);
+  return stages.map((stage) => `${who(stage)} ${stage.ms < 1000 ? `${Math.round(stage.ms)} ms` : `${(stage.ms / 1000).toFixed(1)} s`}`).join(" · ");
+}
+
 /**
  * ONE INTERACTION, AS ACTIVITY SAYS IT: who asked AI to do what about
  * which target, what it offered and what became of it, the batches it
@@ -97,6 +105,7 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
   const who = mine ? "you" : nameOfAuthor(entry.by, { graph: store.graph as never, schema: store.schema, seats, people });
   const models = modelWords(entry);
   const context = contextWords(entry);
+  const timing = stageWords(entry);
   const again = inlineAiOn(ai);
   const run = (work: (runner: typeof import("../inline-ai-menu.js")) => Promise<unknown>) => {
     setBusy(true);
@@ -134,6 +143,12 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
         <div data-testid="interaction-context" data-context-by={entry.context?.by} style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
           {context}
         </div>
+      ) : null}
+      {timing ? (
+        <details data-testid="interaction-stages" style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
+          <summary>How long it took</summary>
+          {timing}
+        </details>
       ) : null}
       {again ? (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

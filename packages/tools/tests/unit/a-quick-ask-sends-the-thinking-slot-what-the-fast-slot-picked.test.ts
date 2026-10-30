@@ -87,7 +87,8 @@ describe("a quick ask with a Fast slot", () => {
     const fast = picking(/doing|Pack the boxes/);
     const ai: HostAi = { fast, thinking };
     const result = await answerHere(ai, { store: make(), target, principal: me, said: "start it once the boxes are packed" });
-    expect(fast.decide).toHaveBeenCalledTimes(1);
+    // One typed call over the graph (not sure of an act here), then the context the Thinking slot is told.
+    expect(fast.decide).toHaveBeenCalledTimes(2);
     expect(told).toHaveLength(1);
     const sent = result.interaction.context!;
     expect(sent).toMatchObject({ by: "fast", model: "fake-fast" });
@@ -98,7 +99,7 @@ describe("a quick ask with a Fast slot", () => {
     expect(told[0]!.state.neighbors.map((one) => one.id)).toEqual(["t-2"]);
     expect(sent.records).toEqual(["t-2"]);
     // The usage says both steps, Fast first.
-    expect(result.interaction.usage?.map((one) => `${one.tier}:${one.model}`)).toEqual(["fast:fake-fast", "thinking:fake-thinking"]);
+    expect(result.interaction.usage?.map((one) => `${one.tier}:${one.model}`)).toEqual(["fast:fake-fast", "fast:fake-fast", "thinking:fake-thinking"]);
     // It may pick only among what it was told.
     expect(result.ghost?.proposals.map((one) => one.id)).toEqual(sent.candidates);
   });

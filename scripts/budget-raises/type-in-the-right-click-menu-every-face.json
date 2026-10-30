@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 19280,
-  "gzipped": 7296,
-  "note": "Raised when the right-click menu took a field to type in (Roadmap f-menu-type-anything): the field, every row narrowed to the words typed, the Fast slot asked which row they mean once the typing rests, Enter on the lit row, the Ask row that opens the quick ask's card on the words, the Fast slot picking the context a quick ask sends the Thinking slot, Activity saying what was sent, the thinking mark, the room the AI's suggestions hold so no row below them moves, Graview standing among who is here while it thinks, an ask about a list acting on each of its records, and a missing capability offered as one plan of the least change, written by `planEdits` (its composer and checker the host's); Inspect and its sheet taken out. 19_280 / 7_296 more. Measured at 2_585_891 / 937_505 against 2_566_611 / 930_209."
+  "minified": 29636,
+  "gzipped": 10872,
+  "note": "Raised when the right-click menu took a field to type in (Roadmap f-menu-type-anything): the field, every row narrowed to the words typed, the Fast slot asked which row they mean once the typing rests, Enter on the lit row, the Ask row that opens the quick ask's card on the words, the Fast slot picking the context a quick ask sends the Thinking slot, Activity saying what was sent, the thinking mark, the room the AI's suggestions hold so no row below them moves, Graview standing among who is here while it thinks, an ask about a list acting on each of its records, a plan over the graph decided by the Fast slot (`decideOverTheGraph`), figures at one spot drawn once and their labels never over each other, the reading a plan took and how long each stage took, and a missing capability offered as one plan of the least change, written by `planEdits` (its composer and checker the host's); Inspect and its sheet taken out. 29_636 / 10_872 more. Measured at 2_596_247 / 941_081 against 2_566_611 / 930_209."
 }

@@ -104,6 +104,14 @@ export interface HostAi {
    */
   readonly thinking?: ThinkingProvider;
   /**
+   * THE LIGHT MODEL (Roadmap f-menu-type-anything): the provider's quick one
+   * — a non-reasoning model, a small one — that words an open answer the
+   * graph could not decide, before the full Thinking slot is asked; the
+   * full one only where it had nothing. The dev server lends its fast model
+   * here.
+   */
+  readonly light?: ThinkingProvider;
+  /**
    * WHETHER A CONTEXT MENU ASKS FOR SUGGESTIONS AS IT OPENS (FR-185). Only
    * ever the Fast slot's: with no Fast slot a menu never asks on its own,
    * and offers a "Suggest…" row that asks — the Thinking slot then — when

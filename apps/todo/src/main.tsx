@@ -170,7 +170,8 @@ if (onProposeChange) {
  * (`dev-change.ts`). Nothing is written to the checkout; it is kept until
  * the page reloads.
  */
-const devChanges = dev && !onProposeChange && !navigator.webdriver ? await import("./dev-change.js") : undefined;
+// A harness that means to press Yes says so (`__todoDevHost`): a driven browser has none otherwise.
+const devChanges = dev && !onProposeChange && (!navigator.webdriver || (window as unknown as { __todoDevHost?: boolean }).__todoDevHost === true) ? await import("./dev-change.js") : undefined;
 
 /** The app and its store as they stand — changed in place by a plan in development — handed to the face. */
 function Changing({ children }: { readonly children: (shown: DevApp, host: DevAppChanges | undefined) => ReactNode }) {
