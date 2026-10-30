@@ -72,7 +72,7 @@ An act must be in the manifest. Where every member sees every record, `graview.a
 
 ### Worked examples
 
-`examples/offers-list.js` is a list lens: rows linking to their records, and a note typed and pressed in. `examples/front-page.js` is a home: a headline, a figure, an SVG ring and cards linking to a place. `examples/a-record.js` is a view of one record: a deliverable's draft read off `props.node`, and "Edit draft" prefilled. `examples/a-map-that-pans-and-zooms.js` is an SVG map whose viewBox a wheel and a pinch zoom around the pointer and a drag pans. Each opens with its manifest.
+`examples/offers-list.js` is a list lens: rows linking to their records, and a note typed and pressed in. `examples/front-page.js` is a home: a headline, a figure, an SVG ring and cards linking to a place. `examples/a-record.js` is a view of one record: a deliverable's draft read off `props.node`, and "Edit draft" prefilled. `examples/a-map-that-pans-and-zooms.js` is an SVG map a wheel and a pinch zoom at the pointer, and a drag pans. Each opens with its manifest.
 
 ### Registering it
 
@@ -86,15 +86,16 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 
 ### Then find out whether it worked
 
-1. `graview check` the app the view names: a manifest is only as sound as the declaration it reads. `checkManifest(manifest, store)` and `checkViewSource(source)` from `@graview/guest/host/views` must both say nothing.
+1. `graview check` the app the view names. `checkManifest(manifest, store)` and `checkViewSource(source)` from `@graview/guest/host/views` must both say nothing.
 2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. A view of one record runs over the first of its kind the seat sees, or the one `--record <id>` names. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
 3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means it never ran: the note under the plain face names what the page's Content-Security-Policy lacks (`worker-src blob:`).
-4. Toggle the app to dark. Does the view restyle?
+4. Toggle to dark: does it restyle?
 5. Follow each link, and tap each card on a phone, as `graview-view-links` says. A view that writes is pressed as `graview-view-forms` says.
+6. Revising one? Hand both to `compareViewRevision` (`@graview/core/revisions`): it names what the new one stopped styling.
 
 ### What the check cannot see
 
-`graview check` judges the declaration, not the script. It cannot see a view that throws on an empty graph, draws the wrong number, or takes too long on a big one. Only running it does: `graview view check` on an empty app, a full one, and a member with narrow sight. A headless run is one push with timers that never fire, and nothing laid out, so it cannot see an animation or a layout that breaks at 390; the faces can. Nor can it see a view that misleads. The host keeps it from reaching or leaking anything, not from arranging what the person may see badly.
+`graview check` judges the declaration, not the script. It cannot see a view that throws on an empty graph, draws the wrong number, or takes too long on a big one. Only running it does: `graview view check` on an empty app, a full one, and a member with narrow sight. A headless run is one push, timers unfired, nothing laid out: an animation or a layout that breaks at 390 is the faces' to show. Nor can it see a view that misleads. The host keeps it from reaching or leaking anything, not from arranging what the person may see badly.
 
 ---
 

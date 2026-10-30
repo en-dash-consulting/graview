@@ -6,6 +6,7 @@ import * as city from "../../src/city.js";
 import * as css from "../../src/css.js";
 import * as csv from "../../src/csv.js";
 import * as shown from "../../src/shown.js";
+import * as revisions from "../../src/revisions.js";
 import * as check from "../../src/check.js";
 import * as compose from "../../src/compose.js";
 import * as describePlaces from "../../src/describe.js";
@@ -50,6 +51,8 @@ const OFF_THE_PAGE = {
   "@graview/core/shown": { from: shown, names: ["shownList"] },
   // Roadmap f-view-export-csv: a place's list written as a spreadsheet, fetched when somebody presses "Export CSV".
   "@graview/core/csv": { from: csv, names: ["CSV_BOM", "csvCell", "csvFileName", "csvSafe", "listCsv", "listCsvRows", "saveShownList", "switchExport", "toCsv"] },
+  // Roadmap f-revisions-say-what-broke: what a revised view, a picture or an act broke, said with the change — a host's, on no page.
+  "@graview/core/revisions": { from: revisions, names: ["beyondAsked", "compareViewRevision", "MEASURE_PICTURED_PAGE", "namesInSelector", "picturedCoverage", "problemsMade", "sectionsOfDrawing", "selectorsOfStylesheet", "stringsOfSource", "viewProblemKey"] },
   // Roadmap f-app-wide-view-theme: the one CSS sanitizer — the guest host's as it first draws on the open kit, and the checker's for a document's `brand.views.css`.
   "@graview/core/css": { from: css, names: ["CSS_AT_RULES", "CSS_DRAWN_AS", "CSS_FRAGMENT_PROPERTIES", "CSS_FUNCTIONS", "CSS_KEYWORD_PROPERTIES", "CSS_PREFIXED_SELECTORS", "CSS_PROPERTIES", "CSS_REFUSED_SELECTORS", "OPEN_MAX_STYLESHEET", "sanitizeDeclarations", "sanitizeStylesheet", "sanitizeStylesheets", "sanitizeValue", "serializeIdent", "serializeString", "serializeValues", "tokenize"] },
   // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
