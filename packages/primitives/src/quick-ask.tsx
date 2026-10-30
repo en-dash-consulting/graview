@@ -358,9 +358,13 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
     field.current?.focus({ preventScroll: true });
     let frame = 0;
     let marked: HTMLElement | null = null;
+    /* OPENED FROM THE MENU, IT OPENS WHERE THE MENU STOOD and never moves: placed once, before it is first painted. */
+    const from = opening.from;
+    if (from) pinAt(element, from);
     const follow = () => {
       const anchor = anchorOf(element, target, face);
-      placeBeside(element, anchor);
+      if (from) sayBeside(element, anchor);
+      else placeBeside(element, anchor);
       // The thinking mark, on the thing itself while the answer is on its way.
       const on = mark.current ? anchor : null;
       if (marked !== on) {
@@ -376,7 +380,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       cancelAnimationFrame(frame);
       marked?.removeAttribute("data-graview-ai-thinking");
     };
-  }, [target, face]);
+  }, [target, face, opening.from]);
 
   /* A press outside the bar puts it away; an answer stays until it is closed. */
   useEffect(() => {
@@ -673,6 +677,33 @@ function placeBeside(pane: HTMLElement, anchor: HTMLElement | null): void {
   const beside = anchor?.getAttribute("data-graview-view") ?? anchor?.getAttribute("data-graview-pick") ?? anchor?.getAttribute("data-graview-record") ?? anchor?.getAttribute("data-graview-listed") ?? (anchor ? "page" : "");
   if (pane.getAttribute("data-quick-ask-beside") !== beside) pane.setAttribute("data-quick-ask-beside", beside);
   if (pane.getAttribute("data-quick-ask-side") !== side) pane.setAttribute("data-quick-ask-side", side);
+}
+
+/**
+ * WHERE THE MENU STOOD: the card's top-left corner is the menu's, growing
+ * down and right; it moves left only where it would leave the window, and
+ * up only where too little of the window is left below it — once, here,
+ * before it is painted. What it holds grows inside it and scrolls past the
+ * window's foot; nothing that arrives moves it.
+ */
+function pinAt(pane: HTMLElement, from: { readonly left: number; readonly top: number }): void {
+  const view = { width: document.documentElement.clientWidth || innerWidth, height: innerHeight };
+  const width = Math.min(WIDTH, view.width - 2 * GAP);
+  const left = from.left + width > view.width - GAP ? Math.max(GAP, view.width - GAP - width) : Math.max(GAP, from.left);
+  const room = 240;
+  const top = from.top + room > view.height - GAP ? Math.max(GAP, view.height - GAP - room) : Math.max(GAP, from.top);
+  pane.style.left = `${Math.round(left)}px`;
+  pane.style.top = `${Math.round(top)}px`;
+  pane.style.width = `${Math.round(width)}px`;
+  pane.style.maxHeight = `${Math.round(view.height - top - GAP)}px`;
+  pane.setAttribute("data-quick-ask-side", "where-the-menu-stood");
+  pane.setAttribute("data-quick-ask-from", `${Math.round(from.left)},${Math.round(from.top)}`);
+}
+
+/** What a pinned card is about, said on it without moving it. */
+function sayBeside(pane: HTMLElement, anchor: HTMLElement | null): void {
+  const beside = anchor?.getAttribute("data-graview-view") ?? anchor?.getAttribute("data-graview-pick") ?? anchor?.getAttribute("data-graview-record") ?? anchor?.getAttribute("data-graview-listed") ?? (anchor ? "page" : "");
+  if (pane.getAttribute("data-quick-ask-beside") !== beside) pane.setAttribute("data-quick-ask-beside", beside);
 }
 
 /** The thinking mark, at the top right of what it is on, inside its corner; hidden where there is nothing to stand on. */

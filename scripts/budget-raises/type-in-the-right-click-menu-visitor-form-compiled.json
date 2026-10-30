@@ -1,0 +1,6 @@
+{
+  "budget": "a visitor's form handed a compiled app",
+  "minified": 281,
+  "gzipped": 98,
+  "note": "Raised when the right-click menu took a field to type in (Roadmap f-menu-type-anything): a popover's first stop passes over the menu's field, and a popover at the pointer keeps its top as it narrows. 281 / 98 more. Measured at 351_351 / 128_339 against 351_070 / 128_241."
+}

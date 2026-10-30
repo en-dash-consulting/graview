@@ -325,7 +325,7 @@ const runOne = async ([name, file], again = false) => {
     const child = spawn("node", [resolve(repoRoot, "scripts", file), ...(TAKES_AN_APP.has(name) ? appPaths : [])], {
       cwd: repoRoot,
       // No model key reaches a harness's dev servers: a harness judges the app, never a model's answer of the day.
-      env: { ...process.env, ANTHROPIC_API_KEY: "", ...(quick ? { GRAVIEW_QUICK: "1" } : {}) },
+      env: { ...process.env, ANTHROPIC_API_KEY: "", XAI_API_KEY: "", OPENAI_API_KEY: "", TYPESAFE_API_KEY: "", JEV_API_KEY: "", ...(quick ? { GRAVIEW_QUICK: "1" } : {}) },
     });
     let output = "";
     /*
