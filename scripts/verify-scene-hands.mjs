@@ -61,6 +61,21 @@ const WORST_MS = 24 * SLOW;
 const UNDER = 12;
 const SETTLE = 750;
 
+/*
+ * THE PHONE TURNED IN PLAYWRIGHT'S LINUX WEBKIT, WITHOUT `isMobile`.
+ * Playwright 1.49.1's Linux WebKit kills its web process when the viewport
+ * of an `isMobile` page grows shorter while the page holds a CSS query
+ * container — any element with `container-type`, rendered; a page of one
+ * such <div> is enough, a Graview page or not
+ * (`<div style="container-type:inline-size">hi</div>`, iPhone 13, turned
+ * to landscape). Without `isMobile` it turns, Chromium turns, WebKit on a
+ * Mac turns, and 1.50.1's Linux WebKit turns. The Shell's bar and its
+ * picture are query containers the panes and the bar size against, so
+ * there is nothing in the page to change: the turn is judged here as the
+ * iPhone with only `isMobile` set aside, and `where` says so.
+ */
+const LINUX_WEBKIT_TURN = { isMobile: false };
+
 const DISTRICTS = ["kind:album", "kind:artist", "kind:song", "kind:era"];
 
 /* ------------------------------------------------------------------ */
@@ -433,18 +448,6 @@ async function turnsAndToolbar(page, where, phone) {
   await page.setViewportSize({ width, height: height + 70 });
   await page.waitForTimeout(SETTLE);
   const toolbar = await boxOf(page, "kind:song");
-  /*
-   * NOT TURNED IN PLAYWRIGHT'S LINUX WEBKIT. Its web process dies when any
-   * page of the Shell is turned — on main as well, with the header, the
-   * scene and the bar all hidden; only the Shell's own column hidden spares
-   * it — reproduced in mcr.microsoft.com/playwright:v1.49.1-noble. WebKit on
-   * a Mac turns it, and so does Chromium; the toolbar folding away is still
-   * judged here.
-   */
-  if (where.engine === "webkit" && process.platform === "linux") {
-    const state = await stateOf(page);
-    return { where, before, toolbar, turned: "not on Linux WebKit, whose web process dies turning any Shell page", selected: state.selected, ok: near(before, toolbar, 1) && state.selected.includes("kind:song") && stillPage(state) };
-  }
   await page.setViewportSize({ width: height, height: width });
   await settled(page);
   await page.setViewportSize({ width, height });
@@ -514,13 +517,13 @@ try {
      * for the crash rather than for anything it did.
      */
     const run = async (options, label, gestures) => {
-      for (const [list, gesture] of gestures) {
-        const context = await browser.newContext(options);
+      for (const [list, gesture, own = {}] of gestures) {
+        const context = await browser.newContext({ ...options, ...own });
         const page = await context.newPage();
         page.on("pageerror", (error) => errors.push(`${engine} ${label}: ${error.message}`));
         const cdp = engine === "chromium" && options.hasTouch ? await context.newCDPSession(page) : null;
         const hand = options.hasTouch ? touchHand(page, engine, cdp) : mouseHand(page);
-        const where = { engine, device: label };
+        const where = { engine, device: label, ...(own.isMobile === false ? { isMobile: false } : {}) };
         try {
           list.push(await gesture(page, hand, where, cdp));
         } catch (error) {
@@ -539,7 +542,7 @@ try {
       [seen.double, (page, hand, where) => doubleGoesIn(page, hand, where, false)],
       [seen.quick, (page, hand, where) => twoQuickTaps(page, hand, where)],
       [seen.preview, (page, hand, where) => previewScrolls(page, hand, where)],
-      [seen.turn, (page, _hand, where) => turnsAndToolbar(page, where, phone)],
+      [seen.turn, (page, _hand, where) => turnsAndToolbar(page, where, phone), engine === "webkit" && process.platform === "linux" ? LINUX_WEBKIT_TURN : {}],
       [seen.up, (page, _hand, where) => upFromFocus(page, where)],
       ...(engine === "chromium" ? [[seen.frames, (page, hand, where, cdp) => framesUnderTheHand(page, hand, cdp, where)]] : []),
     ]);
