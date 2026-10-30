@@ -44,7 +44,7 @@ describe("a document's declared lenses, in the embed's scene", () => {
     await act(async () => new Promise((done) => setTimeout(done, 30)));
     // The switch says the scene is drawn (FR-137); the bar names what the scene shows, and lists its pictures — each declared lens among them (FR-144).
     expect(host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
-    expect(host.querySelector('[data-testid="app-places-open"]')?.getAttribute("aria-label")).toMatch(/ — everything the scene shows$/);
+    expect(host.querySelector('[data-testid="app-places-open"]')?.getAttribute("aria-label")).toMatch(/ — what the scene shows$/);
     const shown = [...host.querySelectorAll('[data-testid="app-places"] [data-place-group="pictures"] [data-testid^="app-place-scene:"]')].map((entry) => entry.textContent?.trim());
     expect(shown.sort()).toEqual(declaredLenses(app).drawn.map((lens) => lens.title).sort());
     expect(host.querySelector('[data-testid="app-place-home"]')).toBeNull();

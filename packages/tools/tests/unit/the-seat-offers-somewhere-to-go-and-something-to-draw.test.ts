@@ -16,7 +16,7 @@ import { SEAT_OFFERS, offersFor } from "../../src/suggest.js";
 const TODAY = "2026-09-01";
 const store = createTodoUiStore(TODAY);
 const places = placesOf(todoApp).filter((place) => place.kind !== null && place.address.startsWith("/places/")).map((place) => ({ title: place.title, kind: place.kind, picture: true }));
-const nothing = { id: null, name: "the whole thing" };
+const nothing = { id: null, name: "everything" };
 
 describe("what the seat offers to ask, beyond what is wrong", () => {
   it("offers what falls due this week, and a board to draw, at most three in all", () => {

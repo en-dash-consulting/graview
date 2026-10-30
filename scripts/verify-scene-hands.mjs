@@ -10,6 +10,11 @@
  * one thing:
  *
  *   a tap chooses and shows no focus ring, and a tap on bare ground never pans;
+ *   on a phone the sheet a tap opens leaves the city where it stood — its
+ *   size kept, moved as one only to lift the choice above the sheet — and
+ *   nothing stands over the chosen district's controls; and it stands at two
+ *   thirds of the screen, its handle taking it up to nearly all and down to
+ *   half under a finger and from the keyboard, the city drawn at no other size;
  *   a drag — from bare ground or from a district — pans and never chooses;
  *   two fingers zoom the city under them (and on iOS, where Safari says a
  *   pinch twice, once as fingers and once as a GestureEvent, zoom it once);
@@ -60,6 +65,21 @@ const WORST_MS = 24 * SLOW;
 /** How far a district's middle may stand from the fingers or the cursor after a zoom about them, in pixels. */
 const UNDER = 12;
 const SETTLE = 750;
+
+/*
+ * THE PHONE TURNED IN PLAYWRIGHT'S LINUX WEBKIT, WITHOUT `isMobile`.
+ * Playwright 1.49.1's Linux WebKit kills its web process when the viewport
+ * of an `isMobile` page grows shorter while the page holds a CSS query
+ * container — any element with `container-type`, rendered; a page of one
+ * such <div> is enough, a Graview page or not
+ * (`<div style="container-type:inline-size">hi</div>`, iPhone 13, turned
+ * to landscape). Without `isMobile` it turns, Chromium turns, WebKit on a
+ * Mac turns, and 1.50.1's Linux WebKit turns. The Shell's bar and its
+ * picture are query containers the panes and the bar size against, so
+ * there is nothing in the page to change: the turn is judged here as the
+ * iPhone with only `isMobile` set aside, and `where` says so.
+ */
+const LINUX_WEBKIT_TURN = { isMobile: false };
 
 const DISTRICTS = ["kind:album", "kind:artist", "kind:song", "kind:era"];
 
@@ -261,12 +281,129 @@ async function tapChooses(page, hand, where) {
     selected: state.selected,
     ring: state.ring,
     /*
-     * The panel the choice opens — beside the map at a desk, a sheet over the
-     * foot on a phone — fits the city to what it leaves: one move, the one
-     * way (verify-viewport's aTapOnTheSceneMovesTheCameraOnce), and a press a
-     * beat later still lands where it was aimed (twoQuickTapsLandOnTheSecondCard).
+     * At a desk the panel the choice opens beside the map fits the city to
+     * what it leaves: one move, the one way (verify-viewport's
+     * aTapOnTheSceneMovesTheCameraOnce). On a phone the sheet leaves the city
+     * where it stood (aTapOpeningASheetLeavesTheCityWhereItStood).
      */
     ok: state.selected.includes("kind:album") && !state.ring && stillPage(state),
+  };
+}
+
+/**
+ * A TAP THAT OPENS A SHEET LEAVES THE CITY WHERE IT STOOD. On a phone a
+ * chosen district opens its sheet over the foot of the screen; the city is
+ * not drawn again at another size for it — every district keeps its size,
+ * and the city moves, if at all, as one, only so far as lifts the chosen
+ * district above the sheet — and nothing stands over the chosen district's
+ * name and showings, the zoom included.
+ */
+async function sheetLeavesTheCity(page, hand, where) {
+  await open(page);
+  const boxes = () =>
+    page.evaluate(() =>
+      Object.fromEntries([...document.querySelectorAll('.graview-ground [data-graview-view^="kind:"]')].map((card) => {
+        const box = card.getBoundingClientRect();
+        return [card.getAttribute("data-graview-view"), { x: box.x, y: box.y, width: box.width, height: box.height }];
+      })),
+    );
+  const runs = [];
+  for (const id of ["kind:album", "kind:song"]) {
+    await open(page);
+    const before = await boxes();
+    const at = before[id];
+    await hand.tap(at.x + at.width / 2, at.y + at.height / 2);
+    await page.waitForSelector("[data-graview-map-panel]", { timeout: 30_000 }).catch(() => {});
+    await settled(page);
+    const after = await boxes();
+    const said = await page.evaluate((id) => {
+      const sheet = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect() ?? null;
+      const card = document.querySelector(`.graview-ground [data-graview-view="${id}"]`);
+      // The chosen district's own controls — its name's count, its showings — each answers a press at its middle.
+      // As the watch judges them (lib/watch.mjs): a control drawn and pressable, not one shown only on hover.
+      const controls = [...(card?.querySelectorAll("button, [role='button']") ?? [])].filter((one) => {
+        const box = one.getBoundingClientRect();
+        const style = getComputedStyle(one);
+        return box.width >= 8 && box.height >= 8 && style.visibility !== "hidden" && style.pointerEvents !== "none" && Number(style.opacity) > 0 && !one.closest("[hidden],[aria-hidden='true'],[inert]");
+      });
+      const covered = controls.flatMap((one) => {
+        const box = one.getBoundingClientRect();
+        const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        // Itself, or a box that holds it (the stage a card stands on): not covered.
+        return top && (top === one || one.contains(top) || top.contains(one)) ? [] : [`${one.getAttribute("aria-label") ?? one.textContent?.trim()} under ${top?.closest("[aria-label]")?.getAttribute("aria-label") ?? top?.tagName}`];
+      });
+      const chosen = card?.getBoundingClientRect();
+      return { sheetTop: sheet?.top ?? null, chosenBottom: chosen?.bottom ?? null, covered, zoom: document.querySelector(".graview-zoom") !== null };
+    }, id);
+    const ids = Object.keys(before).filter((one) => after[one]);
+    const moves = ids.map((one) => ({ id: one, dx: after[one].x - before[one].x, dy: after[one].y - before[one].y, grew: after[one].width - before[one].width }));
+    const sameSize = moves.every((one) => Math.abs(one.grew) < 1);
+    const asOne = moves.every((one) => Math.abs(one.dx - moves[0].dx) < 1.5 && Math.abs(one.dy - moves[0].dy) < 1.5);
+    const above = said.sheetTop !== null && said.chosenBottom !== null && said.chosenBottom <= said.sheetTop + 1;
+    runs.push({ id, moved: moves.find((one) => one.id === id), sameSize, asOne, above, said, ok: sameSize && asOne && above && said.covered.length === 0 && said.sheetTop !== null });
+  }
+  return { where, runs, ok: runs.every((run) => run.ok) };
+}
+
+/**
+ * A PHONE'S SHEET SHOWS MOST OF THE SCREEN. The sheet a chosen district
+ * opens stands at two thirds of the picture, with the district still in
+ * sight above it; its handle takes it, under a finger, up to nearly all of
+ * the picture and down to half, and the keyboard's arrows step it back —
+ * and the city is drawn at no other size for any of it.
+ */
+async function sheetShowsMost(page, hand, where) {
+  await open(page);
+  const card = await boxOf(page, "kind:album");
+  await hand.tap(card.x, card.y);
+  await page.waitForSelector('[data-graview-map-panel="sheet"]', { timeout: 30_000 });
+  await settled(page);
+  const read = () =>
+    page.evaluate(() => {
+      const sheet = document.querySelector('[data-graview-map-panel="sheet"]');
+      const picture = sheet?.parentElement?.getBoundingClientRect();
+      const box = sheet?.getBoundingClientRect();
+      const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+      const chosen = document.querySelector('.graview-ground [data-graview-view="kind:album"]')?.getBoundingClientRect();
+      const handle = sheet?.querySelector('[data-testid="map-panel-handle"]');
+      const widths = [...document.querySelectorAll('.graview-ground [data-graview-view^="kind:"]')].map((one) => Math.round(one.getBoundingClientRect().width)).join(",");
+      return {
+        share: box && picture ? Number((box.height / picture.height).toFixed(3)) : null,
+        rest: handle?.getAttribute("data-graview-rest") ?? null,
+        said: handle?.getAttribute("aria-valuetext") ?? null,
+        inSight: Boolean(chosen && box && ground && chosen.bottom <= box.top + 1 && chosen.top >= ground.top - 1),
+        handle: handle ? (() => { const at = handle.getBoundingClientRect(); return { x: at.left + at.width / 2, y: at.top + at.height / 2 }; })() : null,
+        widths,
+      };
+    });
+  const opened = await read();
+  // Up, under a finger: from the handle a long way toward the top.
+  await hand.drag(opened.handle, { x: 0, y: -360 }, 12);
+  await settled(page);
+  const up = await read();
+  // Down, past where it opened: to half.
+  await hand.drag(up.handle, { x: 0, y: 520 }, 12);
+  await settled(page);
+  const down = await read();
+  // And the keyboard: one step up from half is where it opens.
+  await page.focus('[data-testid="map-panel-handle"]');
+  await page.keyboard.press("ArrowUp");
+  await settled(page);
+  const keyed = await read();
+  const state = await stateOf(page);
+  return {
+    where,
+    opened,
+    up,
+    down,
+    keyed,
+    ok:
+      opened.share >= 0.62 && opened.share <= 0.7 && opened.inSight && opened.said === "Two thirds of the screen" &&
+      up.rest === "2" && up.share >= 0.85 &&
+      down.rest === "0" && down.share >= 0.49 && down.share <= 0.56 && down.inSight &&
+      keyed.rest === "1" && keyed.inSight &&
+      [up, down, keyed].every((one) => one.widths === opened.widths) &&
+      stillPage(state),
   };
 }
 
@@ -433,18 +570,6 @@ async function turnsAndToolbar(page, where, phone) {
   await page.setViewportSize({ width, height: height + 70 });
   await page.waitForTimeout(SETTLE);
   const toolbar = await boxOf(page, "kind:song");
-  /*
-   * NOT TURNED IN PLAYWRIGHT'S LINUX WEBKIT. Its web process dies when any
-   * page of the Shell is turned — on main as well, with the header, the
-   * scene and the bar all hidden; only the Shell's own column hidden spares
-   * it — reproduced in mcr.microsoft.com/playwright:v1.49.1-noble. WebKit on
-   * a Mac turns it, and so does Chromium; the toolbar folding away is still
-   * judged here.
-   */
-  if (where.engine === "webkit" && process.platform === "linux") {
-    const state = await stateOf(page);
-    return { where, before, toolbar, turned: "not on Linux WebKit, whose web process dies turning any Shell page", selected: state.selected, ok: near(before, toolbar, 1) && state.selected.includes("kind:song") && stillPage(state) };
-  }
   await page.setViewportSize({ width: height, height: width });
   await settled(page);
   await page.setViewportSize({ width, height });
@@ -499,7 +624,7 @@ async function framesUnderTheHand(page, hand, cdp, where) {
 
 const report = { at: new Date().toISOString(), engines, app: "apps/discography", checks: {} };
 const errors = [];
-const seen = { tap: [], ground: [], drag: [], pinch: [], wheel: [], double: [], quick: [], preview: [], up: [], turn: [], page: [], frames: [] };
+const seen = { most: [], sheet: [], tap: [], ground: [], drag: [], pinch: [], wheel: [], double: [], quick: [], preview: [], up: [], turn: [], page: [], frames: [] };
 let browser;
 const discography = await serving("discography", portFor("discography"), repoRoot);
 try {
@@ -514,13 +639,13 @@ try {
      * for the crash rather than for anything it did.
      */
     const run = async (options, label, gestures) => {
-      for (const [list, gesture] of gestures) {
-        const context = await browser.newContext(options);
+      for (const [list, gesture, own = {}] of gestures) {
+        const context = await browser.newContext({ ...options, ...own });
         const page = await context.newPage();
         page.on("pageerror", (error) => errors.push(`${engine} ${label}: ${error.message}`));
         const cdp = engine === "chromium" && options.hasTouch ? await context.newCDPSession(page) : null;
         const hand = options.hasTouch ? touchHand(page, engine, cdp) : mouseHand(page);
-        const where = { engine, device: label };
+        const where = { engine, device: label, ...(own.isMobile === false ? { isMobile: false } : {}) };
         try {
           list.push(await gesture(page, hand, where, cdp));
         } catch (error) {
@@ -533,13 +658,15 @@ try {
     // A phone: its own touches.
     await run({ ...phone }, name, [
       [seen.tap, (page, hand, where) => tapChooses(page, hand, where)],
+      [seen.sheet, (page, hand, where) => sheetLeavesTheCity(page, hand, where)],
+      [seen.most, (page, hand, where) => sheetShowsMost(page, hand, where)],
       [seen.ground, (page, hand, where) => tapOnGroundNeverPans(page, hand, where)],
       [seen.drag, (page, hand, where) => dragNeverSelects(page, hand, where)],
       [seen.pinch, (page, hand, where) => pinchUnderFingers(page, hand, where)],
       [seen.double, (page, hand, where) => doubleGoesIn(page, hand, where, false)],
       [seen.quick, (page, hand, where) => twoQuickTaps(page, hand, where)],
       [seen.preview, (page, hand, where) => previewScrolls(page, hand, where)],
-      [seen.turn, (page, _hand, where) => turnsAndToolbar(page, where, phone)],
+      [seen.turn, (page, _hand, where) => turnsAndToolbar(page, where, phone), engine === "webkit" && process.platform === "linux" ? LINUX_WEBKIT_TURN : {}],
       [seen.up, (page, _hand, where) => upFromFocus(page, where)],
       ...(engine === "chromium" ? [[seen.frames, (page, hand, where, cdp) => framesUnderTheHand(page, hand, cdp, where)]] : []),
     ]);
@@ -559,6 +686,8 @@ try {
 
   const every = (list) => list.length > 0 && list.every((one) => one.ok);
   report.checks.aTapChoosesWithoutARing = { held: seen.tap, ok: every(seen.tap) };
+  report.checks.aTapOpeningASheetLeavesTheCityWhereItStood = { held: seen.sheet, ok: every(seen.sheet) };
+  report.checks.aPhonesSheetShowsMostOfTheScreen = { held: seen.most, ok: every(seen.most) };
   report.checks.aTapOnTheGroundNeverPans = { held: seen.ground, ok: every(seen.ground) };
   report.checks.aDragOnTheSceneNeverSelects = { held: seen.drag, ok: every(seen.drag) };
   report.checks.aPinchZoomsUnderTheFingers = { held: seen.pinch, ok: every(seen.pinch) };

@@ -154,7 +154,7 @@ page draws them. Run an act over three records, one of which it may not
 take: that one is named and stays chosen, and one undo takes back the rest.
 
 A right-click on a row, a value or the page's ground opens the scene's
-menu on the pages (Shift+right-click, a text field or selected text keep
+menu on the pages (Shift or Option held, a text field or selected text keep
 the browser's). A design's own row takes part as a link to its record or
 with `data-graview-record`, its own value with `data-graview-field` and
 `data-graview-editable`, which adds "Change …" to the menu.

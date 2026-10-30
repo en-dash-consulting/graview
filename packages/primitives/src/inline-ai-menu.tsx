@@ -5,7 +5,7 @@ import { deriveAffordances } from "@graview/tools/derive";
 import { acceptedEntry, acceptGhost, dismissedEntry, fillHere, ghostOf, interactionId, panelHere, proposalOf, recordHere, suggestHere, suggestsOnOpen, thinkingOf, type InlineAsk, type InlineResult } from "@graview/tools/inline-ai";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useInlineEnv, type InlineEnv } from "./inline-ai-env.js";
-import { openQuickAsk } from "./quick-ask-desk.js";
+import { openQuickAsk, whereMenuStands } from "./quick-ask-desk.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -27,7 +27,7 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  * The runner (`inlineEnv`, `askInline`, `takeOffer`, `drawPanel`,
  * `askAgain`) takes plain values, not hooks, so Activity's "Ask again" and
  * "Show the panel" and the quick ask's card (`quick-ask.tsx`) reach the
- * same code. "Ask about this…" opens the quick ask's bar on the target.
+ * same code. "Tell Graview…" opens the quick ask's bar on the target.
  */
 
 /** One ask of the inline AI, as the engine takes it: the acts the derivation offers this viewer there, the places, where they are. */
@@ -214,7 +214,7 @@ export function suggestOnce(env: InlineEnv, target: AiTarget, asker?: SuggestAsk
  * asked on goes. Its entry is kept; a failure is answered in a sentence,
  * `landing` told before anything lands.
  */
-export async function takeOffer(env: InlineEnv, result: InlineResult, offer: AiCandidate, landing?: () => void): Promise<string | undefined> {
+export async function takeOffer(env: InlineEnv, result: InlineResult, offer: AiCandidate, landing?: () => void, options: { readonly onCard?: boolean } = {}): Promise<string | undefined> {
   const entry = result.interaction;
   const proposal = proposalOf(offer);
   if (proposal) {
@@ -226,8 +226,12 @@ export async function takeOffer(env: InlineEnv, result: InlineResult, offer: AiC
       env.desk.record({ ...entry, outcome: "failed", failed });
       return failed;
     }
-    landing?.();
-    env.desk.setGhost({ ghost });
+    // A suggestion chosen on a card is proposed on that card, which stays: the ghost is the card's, accepted or put away there.
+    if (options.onCard) env.desk.setGhost({ ghost, onCard: true });
+    else {
+      landing?.();
+      env.desk.setGhost({ ghost });
+    }
     env.desk.record(entry);
     return undefined;
   }
@@ -260,6 +264,12 @@ export async function askAgain(env: InlineEnv, entry: AiInteraction): Promise<In
 }
 
 const ROW: CSSProperties = { padding: "5px 10px", fontSize: "0.875rem", borderRadius: 8, width: "100%", textAlign: "left", borderWidth: 1, borderStyle: "solid", borderColor: "transparent", background: "none", boxShadow: "none" };
+/* A row that is not there: a suggestion's own button, unseen, unreachable, holding its height. */
+const SLOT = (
+  <button type="button" tabIndex={-1} disabled aria-hidden="true" style={{ ...ROW, visibility: "hidden" }}>
+    &nbsp;
+  </button>
+);
 const QUIET: CSSProperties = { margin: 0, padding: "4px 10px", fontSize: "0.8125rem", color: "var(--graview-ink-muted)" };
 
 export interface InlineAiMenuProps {
@@ -371,34 +381,63 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
     );
   };
   const failureOf = (result: InlineResult) => (result.interaction.outcome === "failed" ? (result.interaction.failed ?? "The AI could not do that here.") : undefined);
+  /*
+   * NO ROW MOVES UNDER THE POINTER AS SUGGESTIONS ARRIVE (Roadmap
+   * f-menu-type-anything; Homeflow: "it jumps down as AI items are
+   * populated", and the press meant for Send Feedback landed on another
+   * row). Asked as the menu opens, the suggestions' rows are held from the
+   * first frame — the most that can come, "Thinking…" in the first — and
+   * the room never shrinks while the menu is open: what arrives fills it, a
+   * shorter answer leaves it empty, and every row below stays where the
+   * pointer found it.
+   */
+  const status = busy && !pressed ? (
+    <p role="status" data-testid="inline-ai-thinking" style={QUIET}>
+      Thinking…
+    </p>
+  ) : asking ? (
+    <p role="status" data-testid="inline-ai-asking" style={QUIET}>
+      Asking…
+    </p>
+  ) : refused ? (
+    <p role="alert" data-testid="inline-ai-failed" style={{ ...QUIET, color: "var(--graview-warn)" }}>
+      {refused}
+    </p>
+  ) : failed ? (
+    <p role="status" style={QUIET}>
+      {failed}
+    </p>
+  ) : null;
+  const room = useRef(0);
+  room.current = Math.max(room.current, onOpen && held === undefined ? Math.max(1, 3 - existing.length) : 0, offers.length + (status ? 1 : 0));
+  const spare = Math.max(0, room.current - offers.length - (status ? 1 : 0));
   return (
     <div ref={section} data-testid="inline-ai" style={{ display: "grid", gap: 2 }}>
-      {busy && !pressed ? (
-        <p role="status" data-testid="inline-ai-thinking" style={QUIET}>
-          Thinking…
-        </p>
-      ) : asking ? (
-        <p role="status" data-testid="inline-ai-asking" style={QUIET}>
-          Asking…
-        </p>
-      ) : refused ? (
-        <p role="alert" data-testid="inline-ai-failed" style={{ ...QUIET, color: "var(--graview-warn)" }}>
-          {refused}
-        </p>
-      ) : failed ? (
-        <p role="status" style={QUIET}>
-          {failed}
-        </p>
-      ) : null}
-      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 2 }}>
+      <ul data-testid="inline-ai-room" style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* The status stands in a row's own height, over a row that is not there, so what replaces it takes the same room. */}
+        {status ? (
+          <li style={{ position: "relative" }}>
+            {SLOT}
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center" }}>{status}</div>
+          </li>
+        ) : null}
         {offers.map((offer) => (
           <li key={offer.id}>
-            <button type="button" data-menu-item={`ai-offer:${offer.id}`} data-ai-offer={offer.id} data-ai-offer-type={offer.type} onClick={() => run((landing) => takeOffer(env, suggested!, offer, landing))} style={ROW}>
+            {/* One line, whatever its words: a suggestion two lines tall would push the rows under it down. */}
+            <button type="button" data-menu-item={`ai-offer:${offer.id}`} data-ai-offer={offer.id} data-ai-offer-type={offer.type} title={offer.label} onClick={() => run((landing) => takeOffer(env, suggested!, offer, landing))} style={{ ...ROW, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {offer.label}
               <span style={{ color: "var(--graview-ink-faint)" }}> · {offer.type === "panel" ? "a panel" : offer.type === "place" ? "go there" : offer.type === "record" ? "open it" : "suggested"}</span>
             </button>
           </li>
         ))}
+        {/* The room held for what is yet to come, or came shorter: a row's height each, nothing in it. */}
+        {Array.from({ length: spare }, (_, at) => (
+          <li key={`room-${at}`} data-inline-ai-room="">
+            {SLOT}
+          </li>
+        ))}
+      </ul>
+      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 2 }}>
         {!onOpen && suggested === null ? (
           <li>
             {/* Asks once, here: the menu stays open and what is suggested arrives in it, where the keyboard goes. */}
@@ -466,12 +505,14 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
             data-menu-item="ai-ask"
             onClick={() => {
               const back = document.activeElement;
+              // The card opens where the menu stood, read before the menu goes.
+              const from = whereMenuStands(back instanceof Element ? back.closest('[data-testid="context-menu"]') : null);
               close();
-              openQuickAsk(env.desk, { target, returnTo: back instanceof HTMLElement && back !== document.body ? back : null });
+              openQuickAsk(env.desk, { target, returnTo: back instanceof HTMLElement && back !== document.body ? back : null, ...(from ? { from } : {}) });
             }}
             style={ROW}
           >
-            Ask about this…
+            Tell Graview…
           </button>
         </li>
       </ul>
@@ -537,6 +578,8 @@ export function GhostTray({ placement = "picture" }: { readonly placement?: "pic
     if (held.batch === undefined) return;
     try {
       store.undo(held.batch, { author: principal });
+      // Taken back: said on its entry, which a telling of it hears (`@graview/core/told`).
+      if (entry) aiDesk.record({ ...entry, undone: true });
       putAway();
     } catch (error) {
       aiDesk.setGhost({ ...held, refused: error instanceof Error ? error.message : String(error) });

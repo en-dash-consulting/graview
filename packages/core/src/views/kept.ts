@@ -89,7 +89,42 @@ export interface KeptViews {
   remove(name: string, about?: { readonly title: string; readonly kind: string }): void | Promise<void>;
   restore(name: string): void | Promise<void>;
   lens?(edit: LensTidyEdit): void | Promise<void>;
+  /**
+   * A SCRIPT VIEW REVISED (Roadmap f-make-this-section-better): "Make this
+   * better" on a section of a view composed a whole new source — the
+   * section replaced, the rest kept byte for byte — and the page judged it
+   * (`compareViewRevision`, the view's own checks) before offering it. Keep
+   * hands it here: the host keeps it as it keeps a view a chat replaced
+   * (Graview Cloud: `propose_view` and `apply_view`), its replaced version
+   * among the view's own, and answers once it is kept — with the one way
+   * back where it has its own (`undo`), and a line the card says (`note`).
+   * Without `undo` the page's Undo hands the code before back here. Throws,
+   * in words, what it refused. Unsaid, no section is offered for revising.
+   * Offered only where `current().may.views`.
+   */
+  revise?(revision: ViewRevisionKept): ViewReviseAnswer | Promise<ViewReviseAnswer>;
+  /** The code the host keeps for a view it revised, where it says (a conformance check reads it back). */
+  revised?(name: string): string | undefined;
 }
+
+/** A revision of a script view, as Keep hands it to the host. */
+export interface ViewRevisionKept {
+  /** The view, by its manifest name, and its title. */
+  readonly name: string;
+  readonly title: string;
+  /** The whole new source, and the source it replaces. */
+  readonly source: string;
+  readonly before: string;
+  /** The section it revised, by name ("This week"). */
+  readonly section: string;
+  /** What changed, in a sentence, as the card said it. */
+  readonly said: string;
+  /** Set when this hands back the code before, as the page's Undo. */
+  readonly undoes?: true;
+}
+
+/** What a host answers a kept revision: nothing, or a line to say and its own way back. */
+export type ViewReviseAnswer = void | undefined | { readonly note?: string; readonly undo?: () => void | Promise<void> };
 
 /** How long a deleted view is kept: thirty days. */
 export const REMOVED_VIEW_DAYS = 30;
@@ -217,3 +252,31 @@ export function memoryViews(options: MemoryViewsOptions = {}): KeptViews {
   };
 }
 
+
+/**
+ * REVISIONS KEPT IN MEMORY (Roadmap f-make-this-section-better): the views
+ * a host keeps, with `revise` keeping each view's new code here — said
+ * "Kept until this page reloads", its undo putting the code before back —
+ * and `revised` reading it. Refused to a seat that may not change views. A
+ * dev server's, a test's; a host that keeps views for good writes its own.
+ */
+export function withMemoryRevisions(views: KeptViews): KeptViews {
+  const revised = new Map<string, string>();
+  return {
+    ...views,
+    current: () => views.current(),
+    revise(revision: ViewRevisionKept): ViewReviseAnswer {
+      if (!views.current().may.views) throw new Error("Only someone who may change this app's views can keep a revision of one.");
+      const had = revised.get(revision.name);
+      revised.set(revision.name, revision.source);
+      return {
+        note: "Kept until this page reloads.",
+        undo: () => {
+          if (had === undefined) revised.delete(revision.name);
+          else revised.set(revision.name, had);
+        },
+      };
+    },
+    revised: (name: string) => revised.get(name),
+  };
+}

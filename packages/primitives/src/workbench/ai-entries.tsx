@@ -42,7 +42,7 @@ export function ActivityFilter({ shows, onShows, mine, onMine }: { readonly show
 
 /** What was asked, as a clause after "asked AI to". */
 const askWords = (entry: AiInteraction): string =>
-  entry.ask.kind === "suggest" ? "suggest" : entry.ask.kind === "fill" ? "fill in" : entry.ask.kind === "record" ? "add one" : entry.ask.kind === "panel" ? "draw a panel" : `answer “${entry.ask.said}”`;
+  entry.ask.kind === "suggest" ? "suggest" : entry.ask.kind === "fill" ? "fill in" : entry.ask.kind === "record" ? "add one" : entry.ask.kind === "panel" ? "draw a panel" : entry.ask.kind === "section" ? entry.ask.said.replace(/^M/, "m") : `answer “${entry.ask.said}”`;
 
 /** What became of it, in a few words. */
 function outcomeWords(entry: AiInteraction): string {
@@ -72,6 +72,25 @@ function modelWords(entry: AiInteraction): string | null {
   return `${models.join(", ")}${cost !== undefined ? ` · $${cost < 0.01 ? cost.toPrecision(2) : cost.toFixed(2)}` : ""}`;
 }
 
+/** What a quick ask told its model, said: "Told the model of 2 things it could do and 1 record, as stub-fast picked them". */
+function contextWords(entry: AiInteraction): string | null {
+  const sent = entry.context;
+  if (!sent) return null;
+  const count = (n: number, one: string, many: string) => `${n === 0 ? "no" : n} ${n === 1 ? one : many}`;
+  const what = `${count(sent.candidates.length, "thing it could do", "things it could do")} and ${count(sent.records.length, "record", "records")}`;
+  // Jev by its name, whichever version answered.
+  const picker = sent.model === undefined ? "the Fast slot" : /^jev\b|^jev-/i.test(sent.model) ? "Jev" : sent.model;
+  return sent.by === "fast" ? `Told the model of ${what}, as ${picker} picked them` : `Told the model of ${what} around it`;
+}
+
+/** How long each stage took, said: "Jev 180 ms · grok-4.20 900 ms · composed 12 ms". */
+function stageWords(entry: AiInteraction): string | null {
+  const stages = entry.stages ?? [];
+  if (stages.length === 0) return null;
+  const who = (stage: (typeof stages)[number]) => (stage.stage === "compose" ? "composed" : stage.model ? (/^jev\b|^jev-/i.test(stage.model) ? "Jev" : stage.model) : stage.stage);
+  return stages.map((stage) => `${who(stage)} ${stage.ms < 1000 ? `${Math.round(stage.ms)} ms` : `${(stage.ms / 1000).toFixed(1)} s`}`).join(" · ");
+}
+
 /**
  * ONE INTERACTION, AS ACTIVITY SAYS IT: who asked AI to do what about
  * which target, what it offered and what became of it, the batches it
@@ -85,6 +104,8 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
   const mine = entry.by.kind === "human" && entry.by.onBehalfOf === undefined && (entry.by.id === undefined || principal.id === undefined || entry.by.id === principal.id);
   const who = mine ? "you" : nameOfAuthor(entry.by, { graph: store.graph as never, schema: store.schema, seats, people });
   const models = modelWords(entry);
+  const context = contextWords(entry);
+  const timing = stageWords(entry);
   const again = inlineAiOn(ai);
   const run = (work: (runner: typeof import("../inline-ai-menu.js")) => Promise<unknown>) => {
     setBusy(true);
@@ -94,7 +115,7 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
     <li data-testid="activity-interaction" data-interaction={entry.id} data-outcome={entry.outcome} style={ACTIVITY_ROW}>
       <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
         <span data-graview-activity-words="" style={ACTIVITY_WORDS}>
-          <strong style={{ fontWeight: 600 }}>{who}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>asked AI to {askWords(entry)}</span>
+          <strong style={{ fontWeight: 600 }}>{who}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>{entry.ask.kind === "ask" ? `told Graview “${entry.ask.said}”` : `asked AI to ${askWords(entry)}`}</span>
           <span style={{ color: "var(--graview-ink-faint)" }}> · {entry.targetLabel}</span>
         </span>
       </div>
@@ -118,6 +139,17 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
           {models}
         </div>
       ) : null}
+      {context ? (
+        <div data-testid="interaction-context" data-context-by={entry.context?.by} style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
+          {context}
+        </div>
+      ) : null}
+      {timing ? (
+        <details data-testid="interaction-stages" style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
+          <summary>How long it took</summary>
+          {timing}
+        </details>
+      ) : null}
       {again ? (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {entry.panel ? (
@@ -126,7 +158,7 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
             </button>
           ) : null}
           <button type="button" data-testid="interaction-again" disabled={busy} onClick={() => run((runner) => runner.askAgain(env, entry))} style={PRESSED}>
-            Ask again
+            Again
           </button>
         </div>
       ) : null}

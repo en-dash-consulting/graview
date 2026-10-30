@@ -268,7 +268,7 @@ try {
      * asked with the raw key — the same act reading two ways on two faces.
      */
     b.asksInWords = await page.evaluate(() => {
-      const input = document.querySelector('[data-testid="context-menu"] input');
+      const input = document.querySelector('[data-testid="context-menu"] input:not([data-testid="menu-type"])');
       return input ? { name: input.getAttribute("aria-label"), placeholder: input.placeholder } : null;
     });
     await page.fill('input[aria-label="Name"]', "Water the ferns");

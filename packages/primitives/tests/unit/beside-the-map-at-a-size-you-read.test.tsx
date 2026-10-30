@@ -199,8 +199,41 @@ describe("on a phone", () => {
       expect(panel.getAttribute("data-graview-map-panel")).toBe("sheet");
       const said = [...panel.querySelectorAll("style")].map((style) => style.textContent ?? "").join("");
       // Its height and the gap above and below it, and the foot of a phone that is not the screen's: the city is laid out in what is left.
-      expect(said).toContain("--graview-sheet: calc(52% + 2 * var(--graview-gap, 8px) + env(safe-area-inset-bottom, 0px))");
+      // Two thirds of the picture: the record read, the chosen district lifted over the sheet.
+      expect(said).toContain("--graview-sheet: calc(66% + 2 * var(--graview-gap, 8px) + env(safe-area-inset-bottom, 0px))");
       expect(said).not.toContain("--graview-dock");
+      await unmount();
+    } finally {
+      Element.prototype.getBoundingClientRect = desk;
+    }
+  });
+
+  it("is taken up to nearly all of the screen and down to half by its handle's keys, and says how much it takes", async () => {
+    const desk = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = () => ({ x: 0, y: 0, left: 0, top: 0, right: 390, bottom: 844, width: 390, height: 844, toJSON: () => ({}) }) as DOMRect;
+    try {
+      const { host, unmount } = await mounted(aloft, [kindCardId("area")]);
+      const panel = host.querySelector<HTMLElement>('[data-testid="district-panel"]')!;
+      const handle = panel.querySelector<HTMLElement>('[data-testid="map-panel-handle"]')!;
+      const sheet = () => [...panel.querySelectorAll("style")].map((style) => style.textContent ?? "").join("").match(/--graview-sheet: calc\(([^+]+?) \+/)?.[1];
+      const press = async (key: string) => {
+        await act(async () => {
+          handle.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+        });
+      };
+      expect(handle.getAttribute("role")).toBe("separator");
+      expect(handle.getAttribute("aria-valuetext")).toBe("Two thirds of the screen");
+      await press("ArrowUp");
+      expect(handle.getAttribute("aria-valuetext")).toBe("Nearly all of the screen");
+      expect(sheet()).toBe("calc(100% - 56px)");
+      await press("ArrowDown");
+      await press("ArrowDown");
+      expect(handle.getAttribute("aria-valuetext")).toBe("Half of the screen");
+      expect(sheet()).toBe("52%");
+      await press("End");
+      expect(panel.style.height).toBe("calc(100% - 56px)");
+      // Back where it opens, for the next sheet in this test file and the others.
+      await press("ArrowDown");
       await unmount();
     } finally {
       Element.prototype.getBoundingClientRect = desk;

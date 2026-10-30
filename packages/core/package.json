@@ -57,6 +57,10 @@
       "types": "./dist/head.d.ts",
       "default": "./dist/head.js"
     },
+    "./revisions": {
+      "types": "./dist/revisions.d.ts",
+      "default": "./dist/revisions.js"
+    },
     "./csv": {
       "types": "./dist/csv.d.ts",
       "default": "./dist/csv.js"
@@ -108,6 +112,10 @@
     "./learn": {
       "types": "./dist/learn.d.ts",
       "default": "./dist/learn.js"
+    },
+    "./told": {
+      "types": "./dist/told.d.ts",
+      "default": "./dist/told.js"
     },
     "./compose": {
       "types": "./dist/compose.d.ts",

@@ -125,6 +125,12 @@ export function placeCity(
      * does not go back to its middle to set out again.
      */
     readonly stood?: CityStood;
+    /**
+     * The part of the canvas a person sees when a sheet a choice opened covers
+     * its foot: the city stays fitted to the whole canvas, as it stood before
+     * the sheet came up, and only moves to keep the choice in what is seen.
+     */
+    readonly seen?: { readonly width: number; readonly height: number };
     /** The pan baked into the cards, recorded on the frame so the ground can tween with them. */
     readonly pan?: { readonly x: number; readonly y: number };
     /** A cell's height over its width: 0.5 at an angle, 1 from straight above. */
@@ -338,9 +344,42 @@ export function placeCity(
    * edges say what is there, and a finger pans to it. A city drawn whole
    * but too small to name is a city nobody can press.
    */
-  const closerBy = (where: { originX: number; originY: number; cell: number }, by: number) => {
-    const mid = { x: canvas.width / 2, y: canvas.height / 2 };
+  const closerBy = (where: { originX: number; originY: number; cell: number }, by: number, mid = { x: canvas.width / 2, y: canvas.height / 2 }) => {
     return { cell: where.cell * by, originX: mid.x + (where.originX - mid.x) * by, originY: mid.y + (where.originY - mid.y) * by };
+  };
+  /*
+   * WHAT IS CHOSEN STAYS IN SIGHT: the least move that keeps the chosen
+   * districts and their names inside the window — or, under a sheet, inside
+   * what the sheet leaves (`seen`), with the showings
+   * hanging under a name too where they fit — made from where the city
+   * stood, so a district already in sight is chosen with nothing moving.
+   */
+  const keptInSight = (at: { originX: number; originY: number; cell: number }): { where: typeof at; stood: CityStood } => {
+    let where = at;
+    const from = options.stood && Math.abs(options.stood.cell - where.cell) < 0.01 ? options.stood : null;
+    if (from) where = { ...where, originX: where.originX + from.x, originY: where.originY + from.y };
+    const base = { x: where.originX - (from?.x ?? 0), y: where.originY - (from?.y ?? 0) };
+    const kept = draw(where).filter((one) => options.keep?.includes(one.card.kind));
+    if (kept.length > 0) {
+      const room = options.seen ?? canvas;
+      const named = kept.flatMap((one) => [{ x: one.x - one.halfW, y: one.y - one.halfH, width: one.halfW * 2, height: one.halfH * 2 }, plateBox(one, plate(one.card))]);
+      const hung = options.seen ? kept.flatMap((one) => marqueeBox(one) ?? []) : [];
+      const extent = (all: readonly Box[]) => Math.max(...all.map((b) => b.y + b.height)) - Math.min(...all.map((b) => b.y));
+      const boxes = hung.length > 0 && extent([...named, ...hung]) <= room.height - 16 ? [...named, ...hung] : named;
+      const left = Math.min(...boxes.map((b) => b.x));
+      const right = Math.max(...boxes.map((b) => b.x + b.width));
+      const top = Math.min(...boxes.map((b) => b.y));
+      const bottom = Math.max(...boxes.map((b) => b.y + b.height));
+      const by = (low: number, high: number, span: number) => (high - low > span - 16 ? span / 2 - (low + high) / 2 : low < 8 ? 8 - low : high > span - 8 ? span - 8 - high : 0);
+      /*
+       * A SHEET TAKEN UP NEARLY TO THE TOP leaves a strip no district stands
+       * in whole: the choice is not pushed into it, under the scene's own
+       * controls at the top, and the city stays where it stood.
+       */
+      const fits = !options.seen || bottom - top <= room.height - 16;
+      if (fits) where = { ...where, originX: where.originX + by(left, right, room.width), originY: where.originY + by(top, bottom, room.height) };
+    }
+    return { where, stood: { x: where.originX - base.x, y: where.originY - base.y, cell: where.cell } };
   };
   let closer = 1;
   let stood: CityStood | undefined;
@@ -388,20 +427,16 @@ export function placeCity(
      * already in sight is chosen with nothing moving, and one past the edge
      * is brought in from there, the least it can.
      */
-    const from = options.stood && Math.abs(options.stood.cell - where.cell) < 0.01 ? options.stood : null;
-    if (from) where = { ...where, originX: where.originX + from.x, originY: where.originY + from.y };
-    const base = { x: where.originX - (from?.x ?? 0), y: where.originY - (from?.y ?? 0) };
-    const kept = draw(where).filter((one) => options.keep?.includes(one.card.kind));
-    if (kept.length > 0) {
-      const boxes = kept.flatMap((one) => [{ x: one.x - one.halfW, y: one.y - one.halfH, width: one.halfW * 2, height: one.halfH * 2 }, plateBox(one, plate(one.card))]);
-      const left = Math.min(...boxes.map((b) => b.x));
-      const right = Math.max(...boxes.map((b) => b.x + b.width));
-      const top = Math.min(...boxes.map((b) => b.y));
-      const bottom = Math.max(...boxes.map((b) => b.y + b.height));
-      const by = (low: number, high: number, span: number) => (high - low > span - 16 ? span / 2 - (low + high) / 2 : low < 8 ? 8 - low : high > span - 8 ? span - 8 - high : 0);
-      where = { ...where, originX: where.originX + by(left, right, canvas.width), originY: where.originY + by(top, bottom, canvas.height) };
-    }
-    stood = { x: where.originX - base.x, y: where.originY - base.y, cell: where.cell };
+    ({ where, stood } = keptInSight(where));
+  } else if (options.seen && options.seen.height < canvas.height) {
+    /*
+     * THE SHEET A TAP OPENED DOES NOT REFIT THE CITY. A district chosen on
+     * a phone opens its sheet over the foot of the screen, and the city was
+     * fitted again to what the sheet left: one tap drew it half again as big
+     * and somewhere else, under the finger. At the size it stood, it moves
+     * only to keep the choice above the sheet.
+     */
+    ({ where, stood } = keptInSight(where));
   }
 
   /*
@@ -411,7 +446,8 @@ export function placeCity(
    * window, and the camera pans to reach it. The names stay their size.
    */
   const zoom = options.zoom && options.zoom !== 1 ? options.zoom : 1;
-  if (zoom !== 1) where = closerBy(where, zoom);
+  // About the middle of what is seen: the camera's pan for a zoom about a point (`panForZoom`) reckons from there, and under a sheet that is not the canvas's.
+  if (zoom !== 1) where = closerBy(where, zoom, options.seen ? { x: options.seen.width / 2, y: options.seen.height / 2 } : undefined);
   const drawn = draw(where);
 
   /*

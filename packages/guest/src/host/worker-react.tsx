@@ -1,6 +1,7 @@
 import type { AnySchema, KindOfSchema, PagesArrangement, Principal, Store } from "@graview/core";
 import { DefaultDrawnElsewhere, isDefaultView, markBleeds, markPreviews, markReplacesPage, useGoTo, useGraviewIfAny, useHostAssets, useHostFiles, usePlayback, ViewContentHeight, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { useContext, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { setViewPlace } from "@graview/react/drawing";
+import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
@@ -110,8 +111,29 @@ function useDefinitionThen(definition: WorkerViewDefinition): WorkerViewDefiniti
   return useMemo(() => (then === null ? null : then === undefined ? definition : { ...definition, worker: then as WorkerViewCode }), [then, definition]);
 }
 
+/*
+ * A REVISION KEPT, DRAWN IN THIS PAGE (Roadmap f-make-this-section-better):
+ * the code a view is drawn from once "Make this better" kept a revision of
+ * it — per definition, so a host that hands the view again (its own copy
+ * of the kept code) is drawn from what it handed.
+ */
+const DRAWN_INSTEAD = new WeakMap<WorkerViewDefinition, string>();
+const drawnInsteadHeard = new Set<() => void>();
+const hearDrawnInstead = (listener: () => void) => {
+  drawnInsteadHeard.add(listener);
+  return () => void drawnInsteadHeard.delete(listener);
+};
+function drawInstead(definition: WorkerViewDefinition, source: string | undefined): void {
+  if (source === undefined) DRAWN_INSTEAD.delete(definition);
+  else DRAWN_INSTEAD.set(definition, source);
+  for (const listener of [...drawnInsteadHeard]) listener();
+}
+
 /** The region a worker view is drawn in, mounted when it is drawn; the host's half is fetched then. */
-function WorkerViewMount({ definition, store, principal, input, goTo, places, arrangement, scheme, brand, onFailure, drawsItsOwn, tick }: MountProps) {
+function WorkerViewMount({ definition: given, store, principal, input, goTo, places, arrangement, scheme, brand, onFailure, drawsItsOwn, tick }: MountProps) {
+  /* A revision kept in this page is drawn in the view's own place, from its code. */
+  const instead = useSyncExternalStore(hearDrawnInstead, () => DRAWN_INSTEAD.get(given), () => undefined);
+  const definition = useMemo<WorkerViewDefinition>(() => (instead === undefined ? given : { ...given, worker: { source: instead } }), [given, instead]);
   const holder = useRef<HTMLDivElement>(null);
   const mounted = useRef<WorkerView | null>(null);
   const hostFiles = useHostFiles();
@@ -130,10 +152,10 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, ar
     const file = definition.file ?? (latest.current.hostFiles?.src ? (href: string) => latest.current.hostFiles?.src?.(href) ?? href : undefined);
     /* Code fetched when drawn: asked now, beside the worker's host, not after it (the host judges what arrives, and says so where it does not). */
     if (typeof definition.worker === "function") void codeOf(definition.worker).catch(() => undefined);
-    const stop = untilItArrives(workerChunk, ({ mountWorkerView }) => {
-      mounted.current = mountWorkerView(element, {
+    type Chunk = Awaited<ReturnType<typeof workerChunk>>;
+    const optionsFor = (worker: WorkerViewDefinition["worker"]): Parameters<Chunk["mountWorkerView"]>[1] => ({
         manifest: definition.manifest,
-        worker: definition.worker,
+        worker,
         store,
         principal,
         input: () => latest.current.input?.() ?? {},
@@ -155,9 +177,14 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, ar
         files: () => latest.current.hostFiles,
         onContentHeight: (height) => latest.current.told?.(height),
       });
+    const stop = untilItArrives(workerChunk, (module) => {
+      mounted.current = module.mountWorkerView(element, optionsFor(definition.worker));
+      /* What the view's place lends its revision (Roadmap f-make-this-section-better), made with the worker's host. */
+      setViewPlace(element, module.viewPlaceHandle({ element, definition, mounted: () => mounted.current, optionsFor, draw: (source) => drawInstead(given, source), mount: module.mountWorkerView }));
     });
     return () => {
       stop();
+      setViewPlace(element, null);
       mounted.current?.dispose();
       mounted.current = null;
     };

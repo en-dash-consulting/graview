@@ -3,7 +3,7 @@ import type { CheckResult } from "@graview/core/check";
 import type { DocumentEdit, Finding, GraviewDocument } from "@graview/core/document";
 import { EMPTY_VIEW, withWithin } from "@graview/layout";
 import { BesideTheMap, GraviewProvider, Scene, createViews, useGraview, useGraviewIfAny, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
-import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews } from "@graview/primitives";
+import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews, ToldPanelDoor } from "@graview/primitives";
 import { mayChangeDeclaration } from "@graview/tools";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -283,8 +283,10 @@ function StudioOverlay<S extends AnySchema>({
   readonly onClose: () => void;
   readonly onApply?: StudioOnApply;
 }) {
-  const { principal, brand, scheme } = useGraview<S>();
+  const { principal, brand, scheme, store: appStore } = useGraview<S>();
   const studio = useMemo(() => createStudio(app, { principal }), [app, principal]);
+  /* What Graview has been told in this app (Roadmap f-menu-learns): its own panel, where the host keeps tellings. */
+  const [toldOpen, setToldOpen] = useState(false);
   /*
    * A DIALOG GIVES THE KEYBOARD BACK. The studio opens over the app from a
    * button in the profile; closing it removed the dialog the keyboard was
@@ -462,6 +464,11 @@ function StudioOverlay<S extends AnySchema>({
           * both are undone from the same rail — the difference is only that
           * one of them had to be asked.
           */}
+        {ai?.told ? (
+          <button type="button" data-testid="told-open" aria-expanded={toldOpen} onClick={() => setToldOpen((open) => !open)} style={{ padding: "3px 11px", fontSize: "0.875rem" }}>
+            What Graview has been told
+          </button>
+        ) : null}
         <StudioAgentPanel studio={studio as unknown as Studio<AnySchema>} />
         <ActivityRail calls={calls} seat={<StudioSeat studio={studio as unknown as Studio<AnySchema>} onCall={noteCall} />} />
         <button
@@ -527,6 +534,7 @@ function StudioOverlay<S extends AnySchema>({
           Close
         </button>
       </header>
+      {toldOpen && ai?.told ? <ToldPanelDoor told={ai.told} store={appStore as unknown as Store<AnySchema>} principal={principal} onClose={() => setToldOpen(false)} /> : null}
 
       {applied ? <Written applied={applied} studio={studio as unknown as Studio<AnySchema>} onDismiss={() => setApplied(null)} /> : null}
 

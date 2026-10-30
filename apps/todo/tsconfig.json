@@ -42,6 +42,9 @@
     },
     {
       "path": "../../packages/studio"
+    },
+    {
+      "path": "../../packages/guest"
     }
   ]
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { MenuViewSection } from "./view-places.js";
 
 /*
  * THE CONTEXT MENU'S SHAPES: what it is opened on, a row, a section, and
@@ -30,6 +31,8 @@ export interface MenuTarget {
   readonly act?: string | undefined;
   /** The column it landed in — a status board's, or a region a view marked `data-column` — when it landed in one. */
   readonly column?: MenuColumn | undefined;
+  /** The section of a worker view it landed in — "This week" — when it landed in one (`sectionUnder`). */
+  readonly section?: MenuViewSection | undefined;
   /** The element it was opened from, which the keyboard goes back to. */
   readonly element?: HTMLElement | null | undefined;
 }

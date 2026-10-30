@@ -1284,7 +1284,7 @@ try {
     ok: every(
       ({ wholeFromTheBar, pictureFromTheBar, pictureUndone }) =>
         wholeFromTheBar.face !== "pages" &&
-        wholeFromTheBar.said === "The whole thing" &&
+        wholeFromTheBar.said === "Everything" &&
         inView(wholeFromTheBar) === null &&
         pictureFromTheBar.face !== "pages" &&
         pictureFromTheBar.path === `${BASE}/places/overview` &&
@@ -1294,7 +1294,7 @@ try {
         pictureUndone.face !== "pages" &&
         pictureUndone.path === `${BASE}/places/overview` &&
         inView(pictureUndone) === null &&
-        pictureUndone.said === "The whole thing",
+        pictureUndone.said === "Everything",
     ),
   };
   /* FR-132: the scene is a place, at its own address, its stop riding on it. */

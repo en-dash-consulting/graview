@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { placePath, placeSlug, type AnySchema, type AppPlace, type GraviewApp } from "@graview/core";
+import { MEASURE_PICTURED_PAGE, picturedCoverage, type PageMeasure, type PictureCoverage } from "@graview/core/revisions";
 import { placesOf } from "@graview/core/seat";
 import { keyedAddress } from "./serve-preview.js";
 
@@ -118,8 +119,8 @@ export interface ShootOptions {
   readonly schemes: readonly ("light" | "dark")[];
   readonly widths: readonly number[];
   readonly engine: { readonly chromium: Engine };
-  /** Told each file as it is written. */
-  readonly onShot?: (file: string) => void;
+  /** Told each file as it is written, and how much of the place it holds: `coverage.whole` is false when the place was taller than the picture, and `coverage.said` names the sections it left out. */
+  readonly onShot?: (file: string, coverage?: PictureCoverage) => void;
 }
 
 /**
@@ -164,6 +165,22 @@ export async function wholePlace(page: { evaluate<T>(fn: string): Promise<T>; se
   return tall;
 }
 
+/**
+ * HOW MUCH OF THE PLACE THE PICTURE HOLDS (Roadmap
+ * f-revisions-say-what-broke): measured once the window is grown, as it is
+ * pictured. A place taller than the tallest picture, or a scene stop that
+ * is the window's worth, says what it left out by name. Undefined when the
+ * page could not be measured: a picture is never refused for it.
+ */
+export async function coverageOf(page: { evaluate<T>(fn: string): Promise<T> }): Promise<PictureCoverage | undefined> {
+  try {
+    const measure = await page.evaluate<PageMeasure>(MEASURE_PICTURED_PAGE);
+    return measure && typeof measure.height === "number" ? picturedCoverage(measure) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Every shot at every scheme and width, into `out` as `<name>-<scheme>-<width>.png`. Resolves to the files written. */
 export async function shoot(options: ShootOptions): Promise<string[]> {
   mkdirSync(options.out, { recursive: true });
@@ -184,9 +201,10 @@ export async function shoot(options: ShootOptions): Promise<string[]> {
             if (failed) throw new Error(failed);
             if (!shot.scene) await wholePlace(page, width, height);
             const file = resolve(options.out, `${shot.name}-${scheme}-${width}.png`);
+            const coverage = await coverageOf(page);
             await page.screenshot({ path: file, fullPage: !shot.scene });
             written.push(file);
-            options.onShot?.(file);
+            options.onShot?.(file, coverage);
           } finally {
             await page.close();
           }

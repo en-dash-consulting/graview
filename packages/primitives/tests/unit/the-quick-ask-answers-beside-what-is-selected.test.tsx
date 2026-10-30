@@ -103,9 +103,9 @@ describe("the quick ask", () => {
     await chord();
     await until(() => card() !== null);
     await type("finish");
-    expect(rows()).toEqual(["act: Finish it · do it", "ask: Ask: ‘finish’"]);
+    expect(rows()).toEqual(["act: Finish it · do it", "ask: Tell Graview: ‘finish’"]);
     await type("what is left to do?");
-    expect(rows()).toEqual(["ask: Ask: ‘what is left to do?’"]);
+    expect(rows()).toEqual(["ask: Tell Graview: ‘what is left to do?’"]);
   });
 
   it("offers a view the app already has first, ahead of a panel drawn new, and to adjust it where it fits in part", async () => {
@@ -124,23 +124,24 @@ describe("the quick ask", () => {
     expect(rows()[0]).toBe("place: Open and adjust Tasks by status · adjust it");
     // Nothing it has fits: no such row.
     await type("what is left to do?");
-    expect(rows()).toEqual(["ask: Ask: ‘what is left to do?’"]);
+    expect(rows()).toEqual(["ask: Tell Graview: ‘what is left to do?’"]);
   });
 
-  it("answers on the card beside it, its change a ghost not made, and a follow-up replaces the answer", async () => {
+  it("answers on the card beside it, its change a ghost not made, a question's change only a suggestion, and a follow-up replaces the answer", async () => {
     const kept = store();
     await mount(app(AI, null, true, kept));
     await chord();
     await until(() => card() !== null);
-    await type("what is left to do?");
+    await type("finish what is left to do");
     await press("Enter");
-    await until(() => document.querySelector('[data-testid="quick-answer-text"]')?.textContent?.startsWith("About") === true);
+    await until(() => desk!.get().ghost !== null && desk!.get().ghost !== undefined);
     expect(card()!.getAttribute("data-quick-ask")).toBe("answer");
-    expect(document.querySelector('[data-testid="quick-answer-text"]')!.textContent).toBe("About Pay the deposit: an answer to “what is left to do?”, as drafted.");
+    // Said as it will happen: the act and the record it acts on.
+    expect(document.querySelector('[data-testid="quick-answer-text"]')!.textContent).toMatch(/^Finish .*Pay the deposit.*\.$/);
     // Its change waits as a ghost on the desk; the store has not made it.
     expect(desk!.get().ghost?.ghost.proposals.length).toBeGreaterThan(0);
     expect(kept.graph.getNode("t1")).not.toHaveProperty("status");
-    expect(desk!.get().entries[0]).toMatchObject({ ask: { kind: "ask", said: "what is left to do?" }, outcome: "offered" });
+    expect(desk!.get().entries[0]).toMatchObject({ ask: { kind: "ask", said: "finish what is left to do" }, outcome: "offered" });
     // A follow-up: the card's answer is the new one, not a thread of both.
     await type("and after that?");
     await press("Enter");
@@ -186,7 +187,7 @@ describe("the quick ask", () => {
     await cleanup!();
     const host = await mount(tree(AI));
     const ask = host.querySelector<HTMLElement>('[data-testid="find-ask"]');
-    expect(ask?.textContent).toBe("Ask: ‘what is late’");
+    expect(ask?.textContent).toBe("Tell Graview: ‘what is late’");
     await act(async () => ask!.click());
     await until(() => document.querySelector('[data-testid="quick-answer-asked"]') !== null);
     expect(document.querySelector('[data-testid="quick-answer-asked"]')!.textContent).toBe("“what is late”");

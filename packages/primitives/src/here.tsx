@@ -79,7 +79,7 @@ export function hereSaid(others: readonly Presence[]): string {
 /**
  * WHERE SOMEBODY IS, IN THE DECLARATION'S WORDS: the picture in view, by
  * its title; the record they are on, by its label; the kind they are on, by
- * its plural; the whole thing, from above. Nothing where their stop names
+ * its plural; everything, from above. Nothing where their stop names
  * none of those, or names what this reader may not see — never an id.
  */
 export function whereSaid(stop: string, input: { readonly store: Store<AnySchema>; readonly principal: Principal; readonly hidden: ReadonlySet<string>; readonly pictures: readonly { readonly kind: string; readonly as: string; readonly title: string }[] }): string | null {
@@ -89,7 +89,7 @@ export function whereSaid(stop: string, input: { readonly store: Store<AnySchema
   const may = (kind: string) => !hidden.has(kind) && !kept.has(kind) && !store.modules.disabledKinds.has(kind);
   const picture = pictures.find((one) => one.as === view.within?.["view"] && may(one.kind));
   if (picture) return picture.title;
-  if (!view.focusId) return view.overview ? "the whole thing" : null;
+  if (!view.focusId) return view.overview ? "everything" : null;
   const kinds = kindsOfAggregate(view.focusId);
   if (kinds.length > 0) {
     if (!kinds.every(may)) return null;

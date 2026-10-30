@@ -1154,7 +1154,7 @@ function Places({ places, current, here: named, reach, scene, stands: weighed }:
             data-testid="app-places-open"
             {...popover.trigger}
             onClick={popover.toggle}
-            aria-label={stands ? `${MORE} — ${rest.length} more ${scene ? "pictures" : "places"}` : `${said} — ${scene ? "everything the scene shows" : "every place"}`}
+            aria-label={stands ? `${MORE} — ${rest.length} more ${scene ? "pictures" : "places"}` : `${said} — ${scene ? "what the scene shows" : "every place"}`}
             title={stands ? rest.map((place) => place.label).join(", ") : said}
           >
             {stands ? (

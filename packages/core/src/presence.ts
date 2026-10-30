@@ -83,6 +83,16 @@ export interface PresenceChannel {
   onWho(listener: (who: readonly Presence[]) => void): () => void;
   /** Say you have gone, and stop. */
   leave(): void;
+  /**
+   * SAY ANOTHER PARTICIPANT THIS PAGE SPEAKS FOR (Roadmap
+   * f-menu-type-anything): the app's AI thinking for the person at this
+   * page — "Graview, for Ada" — as a word of its own beside theirs. Said on
+   * every heartbeat while it stands; said once with `until` now when it
+   * goes. Leaves this page's own word, and its leaving, as they are. A
+   * channel without it carries only the page's own word, and the page shows
+   * the AI to itself.
+   */
+  alsoHere?(presence: Presence): void;
 }
 
 /** How long a presence stands after its last word: three missed heartbeats at the poll's own pace. */

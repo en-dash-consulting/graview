@@ -69,12 +69,16 @@ const CHAIN = [
   // A kind with no picture of its own opens to its stop: what it is, what is going on, its first act, a board or a table its data chooses — every example, a desk and a phone, light and dark.
   ["kind-stop", "verify-kind-stop.mjs"],
   ["menu", "verify-menu.mjs"],
+  // Make this section better: a right-click inside a worker view names the menu for its section and outlines it; Just do it, Describe changes and Highlight area revise that section alone into a draft in place, judged first — a revision that drops styles handed back once, or refused — kept through the host's view door with one Undo, and offered to nobody who may not change views.
+  ["section", "verify-section.mjs"],
   // The inline AI: suggestions from the catalog in the context menu, a ghost accepted in part as one batch with its undo, a panel kept as a lens, each interaction once in Activity and on its record's page, a host's stored entries, and nothing of it with AI off — on both faces.
   ["inline-ai", "verify-inline-ai.mjs"],
   // Notify me in two presses: from a right-click on a record in the scene, a kind's list and an act on the routed face, listed in Activity with one press to stop, somebody else's change told once and the reader's own not, and offered after an act's form.
   ["notify", "verify-notify.mjs"],
   // The quick ask, in place of the Ask box: ⌘K's bar beside what is selected completes acts, places, records and "Show …"; words asked are answered on a card beside the record or list, a change a ghost accepted as one batch, a follow-up on the card; and with AI off none of it — on both faces, in three engines.
   ["quick-ask", "verify-quick-ask.mjs"],
+  // What people tell Graview: each telling kept with what it did and how it ended, 👍 and 👎 on the card with "What should it have done?", the Studio's list an owner excludes from, what worked before suggested in the menu and still previewed, another person's only once two agree, and never one about a record the viewer cannot see (Roadmap f-menu-learns).
+  ["told", "verify-told.mjs"],
   ["seat", "verify-seat.mjs"],
   ["who", "verify-who.mjs"],
   ["calendar", "verify-calendar.mjs"],
@@ -125,6 +129,8 @@ const CHAIN = [
   ["address", "verify-address.mjs"],
   // An app fills the phone after it turns, at the screen's height on both faces and in the Shell, in Chromium and WebKit (FR-165).
   ["viewport", "verify-viewport.mjs"],
+  // Going into a district on a phone reads clean: the bar names where you are, the records before the tools, every record reachable, no author's words to a reader, nothing over the card — every district of three examples, on a Pixel and an iPhone.
+  ["drive-in", "verify-drive-in.mjs"],
   // The scene under a finger and a mouse, on the discography's thousand songs: a tap chooses and never pans, a drag never chooses, a pinch and a wheel zoom under the hand, a double-tap goes in, a quick second tap lands where it was aimed, a list scrolls without moving its card, the page behind never scrolls, and the frames keep up at a quarter speed — on a phone and a desk, in Chromium and WebKit.
   ["scene-hands", "verify-scene-hands.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
@@ -325,7 +331,7 @@ const runOne = async ([name, file], again = false) => {
     const child = spawn("node", [resolve(repoRoot, "scripts", file), ...(TAKES_AN_APP.has(name) ? appPaths : [])], {
       cwd: repoRoot,
       // No model key reaches a harness's dev servers: a harness judges the app, never a model's answer of the day.
-      env: { ...process.env, ANTHROPIC_API_KEY: "", ...(quick ? { GRAVIEW_QUICK: "1" } : {}) },
+      env: { ...process.env, ANTHROPIC_API_KEY: "", XAI_API_KEY: "", OPENAI_API_KEY: "", TYPESAFE_API_KEY: "", JEV_API_KEY: "", ...(quick ? { GRAVIEW_QUICK: "1" } : {}) },
     });
     let output = "";
     /*

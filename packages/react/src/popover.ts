@@ -174,9 +174,24 @@ export function useTopLayer(pane: RefObject<HTMLElement | null>, open: boolean, 
       frame = requestAnimationFrame(() => placePane(element, anchor, { align }));
     };
     placePane(element, anchor, { align });
+    /*
+     * A MENU AT THE POINTER NEVER JUMPS AS IT SHRINKS. Typed into, the
+     * menu's rows narrow; placed again from the point, a menu that stood
+     * over the point (too tall for the room below) fell down under it. Its
+     * own size changing keeps its top where it still fits in the window.
+     */
+    const steady = () => {
+      const was = element.style.top;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        placePane(element, anchor, { align });
+        const kept = Number.parseFloat(was);
+        if (typeof anchor === "function" && Number.isFinite(kept) && kept + element.getBoundingClientRect().height <= innerHeight - MARGIN) element.style.top = was;
+      });
+    };
     addEventListener("resize", place);
     addEventListener("scroll", place, true);
-    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => place());
+    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => steady());
     watch?.observe(element);
     return () => {
       cancelAnimationFrame(frame);
@@ -236,7 +251,8 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]):not([ty
 function firstStop(pane: HTMLElement): HTMLElement {
   for (const candidate of pane.querySelectorAll<HTMLElement>(FOCUSABLE)) {
     // Not one that is hidden, or inside something hidden (a closed setting's own pane).
-    if (candidate.closest("[hidden]") === null && getComputedStyle(candidate).visibility !== "hidden") return candidate;
+    // Nor one that says it is not where the keyboard lands (the menu's field: a letter typed reaches it from its rows).
+    if (candidate.closest("[hidden]") === null && !candidate.hasAttribute("data-graview-not-first") && getComputedStyle(candidate).visibility !== "hidden") return candidate;
   }
   return pane;
 }

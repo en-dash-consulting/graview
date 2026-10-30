@@ -1,7 +1,9 @@
 import type { ProposeChangeHost } from "@graview/react";
 import { themeCss, type Scheme } from "@graview/primitives";
-import { applySettings } from "@graview/react";
+import { applySettings, useTidiedViews } from "@graview/react";
 import { createRoot } from "react-dom/client";
+import { useMemo, useState, type ReactNode } from "react";
+import type { DevApp, DevAppChanges } from "./dev-change.js";
 import { PagesApp } from "@graview/pages";
 import { aiThroughDevServer, type HostAi } from "@graview/tools";
 import { filesAt } from "@graview/ship/browser";
@@ -159,13 +161,50 @@ if (onProposeChange) {
   const { rememberDocument, toDocument } = await import("@graview/core/document");
   rememberDocument(todoApp, toDocument(todoApp).document);
 }
+/*
+ * YES CHANGES THE APP, IN DEVELOPMENT (Roadmap f-menu-type-anything): on
+ * `pnpm dev` — never a build, never a driven browser, never beside a
+ * harness's own host — the quick ask's plan for something the app lacks
+ * is composed over this code app and, on Yes, laid over it in place with
+ * its records, the store kept beside it and one undo taking both back
+ * (`dev-change.ts`). Nothing is written to the checkout; it is kept until
+ * the page reloads.
+ */
+// A harness that means to press Yes says so (`__todoDevHost`): a driven browser has none otherwise.
+const devChanges = dev && !onProposeChange && (!navigator.webdriver || (window as unknown as { __todoDevHost?: boolean }).__todoDevHost === true) ? await import("./dev-change.js") : undefined;
 
+/*
+ * MAKE THIS SECTION BETTER, IN DEVELOPMENT (Roadmap
+ * f-make-this-section-better): on `pnpm dev` — never a build, never a
+ * driven browser — a worker view of Things' own, "At a glance", with three
+ * named sections a right-click can make better, kept in memory until the
+ * page reloads (`dev-section.ts`).
+ */
+const devSection = dev && !navigator.webdriver ? await import("./dev-section.js") : undefined;
+const keptViews = devSection?.devKeptViews();
+
+/** The routed face's views: Things' own, and in development "At a glance", tidied as the dev page's views host says. */
+const pagesRegistry = devSection ? devSection.withAtAGlance(todoViews()) : todoViews();
+function usePagesViews() {
+  return useTidiedViews(pagesRegistry, keptViews);
+}
+
+/** The app and its store as they stand — changed in place by a plan in development — handed to the face. */
+function Changing({ children }: { readonly children: (shown: DevApp, host: DevAppChanges | undefined, pagesViews: () => ReturnType<typeof todoViews>) => ReactNode }) {
+  const views = usePagesViews();
+  const start = useMemo<DevApp>(() => ({ app: todoApp as never, store: opened.store as never }), []);
+  const [shown, setShown] = useState<DevApp>(start);
+  const host = useMemo(() => devChanges?.devAppChanges(start, setShown, { principal }), [start]);
+  return <>{children(shown, host, () => views)}</>;
+}
 if (window.location.pathname.startsWith("/pages")) {
   createRoot(root).render(
+    <Changing>
+      {(shown, host, pagesViews) => (
     <PagesApp
       basename="/pages"
       context={{
-        store: opened.store,
+        store: shown.store as typeof opened.store,
         brand: thingsBrand,
         signature: true,
         sceneHref: "/",
@@ -182,15 +221,16 @@ if (window.location.pathname.startsWith("/pages")) {
          * THE APP'S PICTURES, on this face too: the same registry the scene
          * draws from, so every named lens is a page and the nav is the bar.
          */
-        views: todoViews(),
+        views: pagesViews(),
+        ...(keptViews ? { keptViews } : {}),
         settings: todoApp.settings ?? [],
-        app: todoApp,
+        app: shown.app as typeof todoApp,
         ...(presence ? { presence } : {}),
         ...(ai ? { ai } : {}),
         ...(files ? { files } : {}),
         subscriptions,
         ...(history ? { history } : {}),
-        ...(onProposeChange ? { onProposeChange } : {}),
+        ...(onProposeChange ? { onProposeChange } : host ? { onProposeChange: host.onProposeChange, composeChange: host.composeChange } : {}),
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is
@@ -199,12 +239,17 @@ if (window.location.pathname.startsWith("/pages")) {
        * register on — render the framework's own inside this shell.
        */
       registry={thingsDesign(todoApp.schema)}
-    />,
+    />
+      )}
+    </Changing>,
   );
 } else {
   createRoot(root).render(
+    <Changing>
+      {(shown, host) => (
     <TodoApp
-      store={opened.store}
+      store={shown.store as typeof opened.store}
+      app={shown.app}
       principal={principal}
       remembers={remembers}
       presence={presence}
@@ -212,12 +257,16 @@ if (window.location.pathname.startsWith("/pages")) {
       {...(files ? { files } : {})}
       subscriptions={subscriptions}
       {...(history ? { history } : {})}
-      {...(onProposeChange ? { onProposeChange } : {})}
+      {...(onProposeChange ? { onProposeChange } : host ? { onProposeChange: host.onProposeChange, composeChange: host.composeChange } : {})}
+      {...(devSection ? { moreViews: devSection.withAtAGlance } : {})}
+      {...(keptViews ? { keptViews } : {})}
       syncUrl
       renderer="auto"
       initialScheme={scheme}
       onSchemeChange={applyScheme}
-    />,
+    />
+      )}
+    </Changing>,
   );
 }
 

@@ -15,9 +15,8 @@ import { PagesApp, type PageContext } from "../../src/index.js";
 /**
  * THE RIGHT-CLICK MENU, ABOUT WHAT IS UNDER THE CURSOR (Roadmap
  * request:add-copy-link-under-open-in-a-new-tab, request:right-click-context-menu-options-to-be-more-relevant-to-the-item-under-my-cursor):
- * "Copy link" directly under "Open in a new tab", "Inspect" at the foot
- * saying what Graview knows of the thing, a selection copied rather than
- * swallowed, and a column offering a record put in it and the place
+ * "Copy link" directly under "Open in a new tab", the browser's own menu
+ * with Option held, a selection copied rather than swallowed, and a column offering a record put in it and the place
  * narrowed to it.
  */
 const task = defineNode("task", {
@@ -106,20 +105,25 @@ describe("the right-click menu on the routed face", () => {
     await until(() => host.querySelector('[data-testid="menu-said"]')?.textContent === "Link copied", "Link copied");
   });
 
-  it("says what is under the cursor when Inspect, at the foot after a rule, is pressed", async () => {
+  it("offers no Inspect: what the menu is for is what can be done (Inspect, shipped in 0.1.63, is gone)", async () => {
     const host = await tasks("/tasks");
     await rightClick(host.querySelector('[data-graview-record="deposit"] a')!);
-    const sections = [...menu()!.querySelectorAll("[data-menu-section]")];
-    expect(sections.at(-1)?.getAttribute("data-menu-section")).toBe("inspect");
-    expect(rows().at(-1)).toBe("inspect");
-    await press("inspect");
-    await until(() => document.querySelector('[data-testid="inspect-sheet"]') !== null, "the sheet");
-    const sheet = document.querySelector<HTMLElement>('[data-testid="inspect-sheet"]')!;
-    expect(sheet.querySelector('[data-inspect="kind"]')?.textContent).toContain("task");
-    expect(sheet.querySelector('[data-inspect="record"] code')?.textContent).toBe("deposit");
-    expect(sheet.querySelector<HTMLAnchorElement>('[data-testid="inspect-link"]')?.href).toBe(new URL("/tasks/deposit", location.href).href);
-    // An app with no policy is anybody's to change: its declaration is shown.
-    expect(sheet.querySelector('[data-inspect="declared"]')?.textContent).toContain("label");
+    expect(rows()).not.toContain("inspect");
+    expect(rows()).toContain("copy-link");
+  });
+
+  it("leaves a right-click with Option held to the browser's own menu, and opens ours on a Ctrl+click, a Mac trackpad's right-click", async () => {
+    const host = await tasks("/tasks");
+    const link = host.querySelector('[data-graview-record="deposit"] a')!;
+    const withOption = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, altKey: true, clientX: 40, clientY: 60 });
+    await act(async () => void link.dispatchEvent(withOption));
+    expect(withOption.defaultPrevented).toBe(false);
+    expect(menu()).toBeNull();
+    const withCtrl = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 0, ctrlKey: true, clientX: 40, clientY: 60 });
+    await act(async () => void link.dispatchEvent(withCtrl));
+    expect(withCtrl.defaultPrevented).toBe(true);
+    await opened();
+    expect(rows()).toContain("copy-link");
   });
 
   it("copies a selection rather than swallowing it: Copy first elsewhere, the browser's own menu on the selected text", async () => {

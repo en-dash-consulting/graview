@@ -546,6 +546,27 @@ function watchInPage() {
       }
     }
   };
+  /*
+   * NO LABEL LIES ON ANOTHER (Roadmap f-menu-type-anything: "Graview, for
+   * Nora" and "Nora's agent" drawn on top of each other). The names the
+   * scene writes beside its figures — and any text a page marks as a label
+   * (`data-graview-label`) — never overlap one another.
+   */
+  const labels = () => {
+    const shown = [...document.querySelectorAll(".graview-figure-name, .graview-figure-edge, [data-graview-label]")].filter((el) => !el.closest("[hidden],[aria-hidden='true']") && visible(el) && (el.textContent ?? "").trim());
+    const boxes = shown.map((el) => ({ el, box: el.getBoundingClientRect() }));
+    for (let a = 0; a < boxes.length; a++) {
+      for (let b = a + 1; b < boxes.length; b++) {
+        const one = boxes[a].box;
+        const two = boxes[b].box;
+        const across = Math.min(one.right, two.right) - Math.max(one.left, two.left);
+        const down = Math.min(one.bottom, two.bottom) - Math.max(one.top, two.top);
+        if (across > 2 && down > 2 && !boxes[a].el.contains(boxes[b].el) && !boxes[b].el.contains(boxes[a].el)) {
+          report("labels-overlap", `"${(boxes[a].el.textContent ?? "").trim()}" and "${(boxes[b].el.textContent ?? "").trim()}" are drawn over each other`, `${location.pathname}|${(boxes[a].el.textContent ?? "").trim()}|${(boxes[b].el.textContent ?? "").trim()}`);
+        }
+      }
+    }
+  };
   const scan = () => {
     queued = false;
     sideways();
@@ -568,6 +589,7 @@ function watchInPage() {
       unsettled = 0;
       covered();
       wide();
+      labels();
     }
     if ((!pattern && !minted && unsaid.size === 0 && !unseen) || !document.body) return;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);

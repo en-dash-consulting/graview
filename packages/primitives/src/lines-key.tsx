@@ -37,6 +37,24 @@ export function LinesKey<S extends AnySchema>() {
     document.addEventListener("pointerdown", away, true);
     return () => document.removeEventListener("pointerdown", away, true);
   }, [open]);
+  /*
+   * ON A PHONE, IN UP'S ROW. Under Up, the Key stood over the right edge of
+   * a district gone into (Nick, on a phone: "Up" and "Key" overlapping the
+   * card). Where the scene is narrow they share one row of their own above
+   * the card — the Key to Up's left, by Up's measured width — and the
+   * card takes the width below (`scene-options.ts`). From altitude it stays
+   * under Up, in the corner the city keeps clear.
+   */
+  const [upRoom, setUpRoom] = useState<number | null>(null);
+  useEffect(() => {
+    const up = button.current?.parentElement?.parentElement?.querySelector<HTMLElement>('[data-testid="overview"]');
+    if (!up || typeof ResizeObserver === "undefined") return;
+    const read = () => setUpRoom(Math.ceil(up.getBoundingClientRect().width));
+    read();
+    const watch = new ResizeObserver(read);
+    watch.observe(up);
+    return () => watch.disconnect();
+  }, [any]);
   if (!any) return null;
   return (
     <div
@@ -54,6 +72,9 @@ export function LinesKey<S extends AnySchema>() {
         ref={button}
         type="button"
         data-testid="lines-key"
+        className="graview-lines-key"
+        // On the ground, a phone's Key stands in Up's row; from altitude, under it, in the corner the city keeps clear.
+        data-graview-up-row={view.overview ? undefined : ""}
         aria-expanded={open}
         aria-controls={paneId}
         title="What the lines mean"
@@ -71,6 +92,7 @@ export function LinesKey<S extends AnySchema>() {
           color: open ? "var(--graview-accent)" : "var(--graview-ink-muted)",
           background: "var(--graview-float)",
           boxShadow: "var(--graview-lift-low)",
+          ...(upRoom !== null ? { ["--graview-up-room" as string]: `${upRoom}px` } : {}),
         }}
       >
         Key
@@ -80,6 +102,8 @@ export function LinesKey<S extends AnySchema>() {
           ref={pane}
           id={paneId}
           data-testid="lines-key-pane"
+          className="graview-lines-key-pane"
+          data-graview-up-row={view.overview ? undefined : ""}
           data-graview-offstage=""
           style={{
             position: "absolute",

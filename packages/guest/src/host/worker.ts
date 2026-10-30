@@ -223,6 +223,9 @@ export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitProp
  * time a view draws.
  */
 export { mountWorkerView } from "./view.js";
+// What a view's place lends its revision (Roadmap f-make-this-section-better), made when a view is first drawn.
+export { viewPlaceHandle } from "./place-handle.js";
+export type { ViewPlaceHandleOptions } from "./place-handle.js";
 export type { MountWorkerViewOptions, WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits, WorkerViewLoad } from "./view.js";
 export type { ViewRefusal } from "./open-draw.js";
 export type { OpenRefusal, OpenRefusalReason } from "./open-judge.js";

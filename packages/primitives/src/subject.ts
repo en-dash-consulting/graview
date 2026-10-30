@@ -137,7 +137,7 @@ export function useSubject<S extends AnySchema>({ hover = true }: { readonly hov
     const said = name(dwelt);
     if (said) return { id: dwelt, name: said, because: "hover" };
   }
-  /* Where you are: the picture being shown, else the district in focus, else the whole thing. */
+  /* Where you are: the picture being shown, else the district in focus, else everything. */
   const showing = view.within?.["view"];
   const place = showing ? views.places().find((one) => one.as === showing || placeSlug(one.title) === showing) : undefined;
   if (place) return { id: null, name: place.title, because: "place" };
@@ -145,7 +145,7 @@ export function useSubject<S extends AnySchema>({ hover = true }: { readonly hov
     const said = name(view.focusId);
     if (said) return { id: view.focusId, name: said, because: "place" };
   }
-  return { id: null, name: "the whole thing", because: "place" };
+  return { id: null, name: "everything", because: "place" };
 }
 
 /**

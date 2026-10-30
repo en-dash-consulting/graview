@@ -109,7 +109,7 @@ describe("the quick ask is a region, not a landmark inside one", () => {
         expect(await openQuickAsk(host)).toBe(true);
         const asking = host.querySelector('[data-testid="quick-ask"]');
         expect(asking?.getAttribute("role")).toBe("region");
-        expect(asking?.getAttribute("aria-label")).toBe("Ask about Ana");
+        expect(asking?.getAttribute("aria-label")).toBe("Tell Graview about Ana");
         expect(nested(host)).toEqual([]);
         expect(await axeSays(host)).toEqual([]);
       },

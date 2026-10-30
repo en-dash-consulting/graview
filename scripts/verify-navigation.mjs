@@ -534,8 +534,10 @@ async function aDistrictsNameIsNotMovedByHand() {
  * THE PANEL FLOATS OVER THE MAP; it is not a column beside it. Docked on a
  * desk (or a sheet on a phone) it is inset from the edges of the picture by
  * the app's gap, below the bar, with the app's radius on its corners and a
- * real elevation — and the city is laid out in the room left, so no
- * district, name or control stands under it.
+ * real elevation — and on a desk the city is laid out in the room left, so
+ * no district, name or control stands under it; on a phone the city stays
+ * where it stood and only the chosen district is lifted above the sheet, so
+ * it and the scene's controls stand clear of it.
  */
 async function thePanelFloatsOverTheMap() {
   report.mapPanel = {};
@@ -570,7 +572,15 @@ async function thePanelFloatsOverTheMap() {
       });
       const meets = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
       const under = [];
+      /*
+       * ON A PHONE, THE CHOSEN DISTRICT. A phone's sheet leaves the city where it stood and lifts the chosen district above it
+       * (Roadmap f-scene-sheet-keeps-the-city), so the other districts may lie under a sheet that stands over the map; what was
+       * chosen, and the scene's own controls, may not.
+       */
+      const chosen = new URLSearchParams(location.hash.slice(1)).get("focus")?.replace(/^aggregate:/, "") ?? null;
       for (const el of document.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-face, [data-graview-plot] .graview-plot-tile, [data-testid="overview"], [data-testid="lines-key"], .graview-zoom')) {
+        const of = el.closest("[data-graview-view]")?.getAttribute("data-graview-view")?.replace(/^kind:/, "") ?? el.closest("[data-graview-plot]")?.getAttribute("data-graview-plot")?.replace(/^kind:/, "") ?? null;
+        if (sheet && of !== null && of !== chosen) continue;
         const r = el.getBoundingClientRect();
         // What is drawn outside the window is not under anything.
         if (r.width > 0 && r.height > 0 && meets(r, box)) under.push(el.getAttribute("data-testid") ?? el.getAttribute("class")?.split(" ")[0] ?? el.tagName);
@@ -614,13 +624,20 @@ async function tabNeverLandsUnderThePanel() {
     await covering.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await covering.waitForSelector("[data-graview-map-panel]", { timeout: 15_000 }).catch(() => {});
     await covering.waitForTimeout(1200);
-    // Closer, about the middle of the part that is seen, so the city runs under the panel.
+    /*
+     * Closer, so the city runs under the panel: about the middle of the part that is seen at a desk, and on a phone about the
+     * chosen district. A phone's sheet does not fit the city again above it — the city keeps its size and the chosen district
+     * is lifted over the sheet — so the middle of what the sheet leaves can be bare ground, and a zoom about it carried every
+     * district off the screen.
+     */
     const seen = await covering.evaluate(() => {
       const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
       const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
       if (!ground || !panel) return null;
       const sheet = document.querySelector("[data-graview-map-panel]")?.getAttribute("data-graview-map-panel") === "sheet";
-      return sheet ? { x: ground.left + ground.width / 2, y: ground.top + (panel.top - ground.top) / 2 } : { x: ground.left + (panel.left - ground.left) / 2, y: ground.top + ground.height / 2 };
+      if (!sheet) return { x: ground.left + (panel.left - ground.left) / 2, y: ground.top + ground.height / 2 };
+      const chosen = document.querySelector('.graview-ground [data-graview-view="kind:task"]')?.getBoundingClientRect();
+      return chosen ? { x: chosen.left + chosen.width / 2, y: chosen.top + chosen.height / 2 } : { x: ground.left + ground.width / 2, y: ground.top + (panel.top - ground.top) / 2 };
     });
     if (seen) {
       await covering.mouse.move(seen.x, seen.y);
@@ -642,8 +659,10 @@ async function tabNeverLandsUnderThePanel() {
       const sheet = element.getAttribute("data-graview-map-panel") === "sheet";
       const seen = [...document.querySelectorAll('.graview-ground [data-graview-view^="kind:"]')]
         .map((card) => card.getBoundingClientRect())
-        // Clear of the panel, or partly under a phone's sheet already: the one nearest it is carried under.
-        .filter((r) => r.right > ground.left && r.bottom > ground.top && (sheet ? r.top < panel.top && r.top >= ground.top : r.right <= panel.left && r.left >= ground.left));
+        // Clear of the panel, or partly under a phone's sheet already: the one nearest it is carried under. On a phone one the
+        // zoom carried partly past the top counts too: the city keeps its size under the sheet, and comes closer past both.
+        // And on the screen across: one past the right edge carried under the sheet is under nothing anybody sees.
+        .filter((r) => r.right > ground.left + 20 && r.left < ground.right - 20 && r.bottom > ground.top && (sheet ? r.top < panel.top && r.bottom > ground.top + 20 : r.right <= panel.left && r.left >= ground.left));
       if (seen.length === 0) return null;
       // The one nearest the panel, carried just past its edge.
       const nearest = sheet ? seen.reduce((a, b) => (b.bottom > a.bottom ? b : a)) : seen.reduce((a, b) => (b.right > a.right ? b : a));

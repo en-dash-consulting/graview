@@ -1,0 +1,613 @@
+import { argumentsTaken, labelOf, nodeRefArgs, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import type { AiTarget, PlanNeed } from "@graview/core/catalog";
+import type { TellingExample } from "@graview/core/told";
+import type { FastProvider } from "./ai.js";
+import type { Answer } from "./fast.js";
+import type { Question } from "./questions.js";
+
+/**
+ * A PLAN OVER THE GRAPH, DECIDED BY THE FAST SLOT (Roadmap
+ * f-menu-type-anything). "Assign all these to Sam" is not an open question:
+ * with a typed graph its parts are typed decisions Jev answers in one call —
+ * which records (the list itself, or the records it holds), which act (or
+ * none of them), which person (one the app has, or someone new), and what
+ * the app would need where no act can do it — and code composes the plan
+ * from the answers. The Thinking slot is not called when Jev is sure.
+ *
+ * THE READING IS EXPLICIT. On a record that holds others — a list, a
+ * column, a group — "these", "all", "them", "each", "everything" mean the
+ * records it holds, and "this" or its name the record itself. Code offers
+ * both readings and the Fast slot picks; where the pick is close, the card
+ * says which it took in a line a reply can flip.
+ */
+
+/** Which records the words are about: the target itself, or what it holds. */
+export interface Reading {
+  readonly which: "itself" | "held";
+  /** Which of the held records, where code can name a part of them: the done ones, the open ones, the late ones. */
+  readonly part?: "done" | "open" | "late";
+  readonly records: readonly string[];
+  readonly kind: string;
+  /** "the 6 tasks in This week", "This week itself". */
+  readonly words: string;
+  /** Whether the pick was close: the card then says the reading it took. */
+  readonly close: boolean;
+  /** How sure Jev was of it, where it chose among several. */
+  readonly chance?: number;
+}
+
+/** What the Fast slot decided, read by code: an act over the records, or what the app lacks — or not sure. */
+export interface GraphDecision {
+  readonly sure: boolean;
+  readonly reading?: Reading;
+  readonly each?: { readonly act: string; readonly args: Readonly<Record<string, unknown>> };
+  readonly missing?: { readonly said: string; readonly need: PlanNeed; readonly who?: string };
+  readonly text?: string;
+  /** Something to be done outside the app, said plainly: "I can't send email from here." */
+  readonly outside?: string;
+  /** Whether Jev read the words as asking (an answer in words) rather than telling (a change). */
+  readonly asks?: boolean;
+  /** A question back to the person before anything is offered: which records a destructive act was meant for. */
+  readonly clarify?: string;
+  /** The act Jev leaned to where code could not fill its values: the light model is told it first. */
+  readonly act?: string;
+  /** A person said as a pronoun, and whom it was taken as: "her" as Nora — said on the card so a reply can correct it. */
+  readonly taken?: { readonly said: string; readonly as: string };
+  readonly usage: { readonly inputTokens: number; readonly outputTokens: number };
+}
+
+/** How sure the Fast slot must be to stand without the Thinking slot, and how sure before a reading goes unsaid. */
+export const GRAPH_SURE = 0.6;
+export const READING_SURE = 0.75;
+
+const PEOPLE = new Set(["person", "people", "user", "users", "member", "members", "volunteer", "volunteers", "staff", "contact", "contacts", "employee", "employees", "client", "clients", "customer", "customers", "guest", "guests", "player", "players", "student", "students"]);
+const capital = (words: string) => words.charAt(0).toUpperCase() + words.slice(1);
+/** Verbs that give a record to someone. */
+const GIVING: Readonly<Record<string, true>> = { assign: true, reassign: true, give: true, hand: true, delegate: true, allocate: true };
+
+/** The record a target holds others of: the biggest group of records linked to it, of one kind other than its own. */
+export function heldBy<S extends AnySchema>(store: Store<S>, id: string): { readonly kind: string; readonly ids: readonly string[] } | undefined {
+  const self = store.graph.getNode(id);
+  if (!self) return undefined;
+  const groups = new Map<string, string[]>();
+  for (const node of [...store.graph.in(id), ...store.graph.out(id)]) {
+    if (node.kind === self.kind) continue;
+    groups.set(node.kind, [...new Set([...(groups.get(node.kind) ?? []), node.id])]);
+  }
+  const biggest = [...groups.entries()].sort((a, b) => b[1].length - a[1].length)[0];
+  return biggest && biggest[1].length > 1 ? { kind: biggest[0], ids: biggest[1] } : undefined;
+}
+
+/** The kinds that are the app's people: declared so, else by their words. */
+export function peopleKinds<S extends AnySchema>(store: Store<S>): readonly string[] {
+  const schema = store.schema as AnySchema;
+  const flagged = schema.definitions.filter((definition) => (definition as { people?: boolean }).people).map((definition) => definition.kind);
+  // Declared so, and those whose words say so (the rota's volunteers beside its users).
+  return [...new Set([...flagged, ...schema.definitions.filter((definition) => [definition.kind, (definition as { noun?: string }).noun, pluralOf(schema, definition.kind)].some((word) => word !== undefined && PEOPLE.has(word.toLowerCase()))).map((definition) => definition.kind)])];
+}
+
+/** The giving the words say, and to whom: "assign … to Sam" → "assigned to", "Sam". */
+export function givingOf(words: string): { readonly called: string; readonly who?: string; readonly owned?: boolean } | undefined {
+  // A person named without "to": "Sam should take care of these", "make this Nora's job", "these are Ada's".
+  const owner =
+    /^\s*([\p{L}][\p{L}'’-]*)\s+(?:should|can|will|could|is going to|needs to)\s+(?:take care of|handle|own|do|look after|take|deal with|pick up|be on)\b/iu.exec(words)?.[1] ??
+    /\bmake\s+(?:this|these|it|them|this one)\s+([\p{L}][\p{L}-]*)['’]s\b/iu.exec(words)?.[1] ??
+    /\b(?:this|these|it|they)\s+(?:is|are)\s+([\p{L}][\p{L}-]*)['’]s\b/iu.exec(words)?.[1] ??
+    /\b([\p{L}][\p{L}-]*)['’]s\s+(?:job|task|responsibility|shift|now)\b/iu.exec(words)?.[1] ??
+    // Who has it, said as a statement: "Sam's on this", "Sam has this one", "Sam is doing this", "Sam's got these".
+    /^\s*([\p{L}][\p{L}-]*)['’]s\s+(?:on|got|doing|handling|taking|covering)\s+(?:this|it|these|that|them)\b/iu.exec(words)?.[1] ??
+    /^\s*([\p{L}][\p{L}-]*)\s+(?:has|has got|is on|is doing|is handling|is taking|is covering|takes|does|owns)\s+(?:this|it|these|that|them)(?:\s+one)?\b/iu.exec(words)?.[1];
+  if (owner && !/^(it|this|that|these|those|they|we|you|i|he|she|everyone|someone|anyone|nobody|nothing|who|what|which|there|it's|that's|who's|what's)$/i.test(owner)) return { called: "assigned to", who: capital(owner), owned: true };
+  const who = /\bto\s+([\p{L}][\p{L}'’-]*)\s*[.!?]*\s*$/iu.exec(words)?.[1];
+  const verb = words
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .find((word) => word in GIVING);
+  if (!verb) return undefined;
+  // The link is named by its role, whatever verb was typed: "give this to Nora" and "assign it to Nora" both want "assigned to".
+  return { called: "assigned to", ...(who ? { who: capital(who) } : {}) };
+}
+
+/** The fields that say a record is finished, read by a reply that narrows to the open ones. */
+const DONE = ["done", "completed", "finished", "closed"];
+/** The fields that say when a record is due, read for the late ones. */
+const DUE = ["due", "dueDate", "dueOn", "deadline"];
+
+/**
+ * WORDS THE READING DOES NOT ACCOUNT FOR: a restrictive clause ("that's
+ * already ticked off", "which are late", "the ones I've done", "except…")
+ * or a narrowing adjective ("the old ones"), read against a reading of
+ * everything held. A part (done, open, late) accounts for its clause; all
+ * of them accounts for none.
+ */
+export function unaccounted(said: string, reading: { readonly part?: string; readonly which: string }): boolean {
+  if (reading.which !== "held" || reading.part) return false;
+  return /\b(that'?s|that is|that are|that were|that have|that has|which|whose|already|except|but not|only|apart from|other than)\b/i.test(said) || /\bones? (that|which|i|we|you|i'?ve|we'?ve|i'?m)\b/i.test(said) || unreadNarrowing(said) || narrowingOf(said).open || narrowingOf(said).finished;
+}
+
+/** The best of a Choice and how sure, or nothing. */
+function best(answer: Answer | undefined): { readonly key: string; readonly chance: number } | undefined {
+  if (answer?.type !== "choice") return undefined;
+  const chance = answer.probabilities[answer.choice] ?? answer.confidence;
+  return { key: answer.choice, chance };
+}
+
+export async function decideOverTheGraph<S extends AnySchema>(
+  fast: FastProvider,
+  options: { readonly store: Store<S>; readonly target: AiTarget; readonly said: string; readonly members?: readonly string[]; readonly follows?: { readonly said: string; readonly reading?: "itself" | "held" }; readonly where?: string; readonly principal?: { readonly id: string }; readonly examples?: readonly TellingExample[] },
+): Promise<GraphDecision> {
+  const { store, target, said } = options;
+  const schema = store.schema as AnySchema;
+  const words = `${said} ${options.follows?.said ?? ""}`.trim();
+  /* THE READINGS: the record itself, and the records it holds (or the list's own records). */
+  const self = target.on === "record" ? store.graph.getNode(target.id) : undefined;
+  const held = self ? heldBy(store, self.id) : undefined;
+  const listed = (options.members ?? []).filter((id) => store.graph.getNode(id) !== undefined);
+  const readings: Reading[] = [];
+  const where = options.where ? ` in ${options.where}` : self ? ` in ${labelOf(schema.tryDefinition(self.kind), self as never)}` : "";
+  const plural = (kind: string) => pluralOf(schema, kind).toLowerCase();
+  const noun = (kind: string) => ((schema.tryDefinition(kind) as { noun?: string } | undefined)?.noun ?? kind).toLowerCase();
+  if (self) readings.push({ which: "itself", records: [self.id], kind: self.kind, words: `${labelOf(schema.tryDefinition(self.kind), self as never)} itself`, close: false });
+  const all = held ?? (listed.length > 0 ? { kind: store.graph.getNode(listed[0]!)!.kind, ids: listed.filter((id) => store.graph.getNode(id)!.kind === store.graph.getNode(listed[0]!)!.kind) } : undefined);
+  const counted = (ids: readonly string[], kind: string, part?: string) => `the ${ids.length}${part ? ` ${part}` : ""} ${ids.length === 1 ? noun(kind) : plural(kind)}${where}`;
+  if (all && all.ids.length > 0) readings.push({ which: "held", records: all.ids, kind: all.kind, words: counted(all.ids, all.kind), close: false });
+  /* A reply that only names the field keeps the reading it replies to: "call it owner" in a reply names the link the plan before it adds; said first, "call it X" renames the record. */
+  const renamed = options.follows ? /\bcall (?:it|that|the field)\s+["“']?([\p{L}][\p{L} ]*?)["”']?\s*[.!]*\s*$/iu.exec(said)?.[1] : undefined;
+  if (renamed && options.follows?.reading && readings.some((one) => one.which === options.follows!.reading)) readings.splice(0, readings.length, ...readings.filter((one) => one.which === options.follows!.reading));
+  if (readings.length === 0) return { sure: false, usage: { inputTokens: 0, outputTokens: 0 } };
+  /*
+   * WHICH RECORDS, AS PARTS CODE CAN NAME. Beside the record itself and
+   * everything it holds, the parts of what it holds that code can say
+   * exactly — the done ones, the open ones, the late ones — are readings
+   * of their own, and Jev chooses among them, or "something else". No list
+   * of narrowing words decides it: they are a hint in the question.
+   */
+  const isDone = (id: string) => DONE.some((field) => (store.graph.getNode(id) as Record<string, unknown> | undefined)?.[field] === true);
+  const today = (store as { today?: () => string | undefined }).today?.() ?? new Date().toISOString().slice(0, 10);
+  const dueOf = (id: string) => DUE.map((field) => (store.graph.getNode(id) as Record<string, unknown> | undefined)?.[field]).find((value): value is string => typeof value === "string");
+  const parts: Reading[] = [];
+  if (all && all.ids.length > 1) {
+    const done = all.ids.filter(isDone);
+    const open = all.ids.filter((id) => !isDone(id));
+    const late = open.filter((id) => (dueOf(id) ?? "9999") < today.slice(0, 10));
+    if (done.length > 0 && done.length < all.ids.length) parts.push({ which: "held", part: "done", records: done, kind: all.kind, words: counted(done, all.kind, "done"), close: false });
+    if (open.length > 0 && open.length < all.ids.length) parts.push({ which: "held", part: "open", records: open, kind: all.kind, words: counted(open, all.kind, "open"), close: false });
+    if (late.length > 0 && late.length < all.ids.length) parts.push({ which: "held", part: "late", records: late, kind: all.kind, words: counted(late, all.kind, "late"), close: false });
+  }
+  const choices = renamed ? readings : [...readings, ...parts];
+  const keyOf = (one: Reading) => one.part ?? one.which;
+
+  /* THE QUESTIONS, ONE CALL: which records, which act on them (said by what it does), which record the words name, and — where none — what the app would need. */
+  const questions: Record<string, Question> = {};
+  if (choices.length > 1) questions["reading"] = { type: "choice", instructions: `Someone said “${said}”${options.follows ? `, replying to “${options.follows.said}”${options.follows.reading ? `, which was taken as ${options.follows.reading === "itself" ? "the record itself" : "the records it holds"}` : ""}` : ""}. Which records do they mean? "This", "it" or its name alone is the record itself; "these", "all", "them", "everything", "the lot" are never the record itself but every record it holds — unless more words say which of them: "the done ones", "that are finished", "already ticked off", "completed" mean the done ones; "outstanding", "remaining", "unfinished", "still to do", "except the done ones" mean the open ones; "late" or "overdue" the late ones. A word that says the change to make ("mark these done", "close these", "finish them") says what to do, not which records. If their words pick out some records in a way none of these says ("the old ones"), choose "something else".`, criteria: { ...Object.fromEntries(choices.map((one) => [keyOf(one), one.which === "itself" ? `${capital(one.words)} (the ${noun(one.kind)})` : capital(one.words)])), else: "Something else: some other part of them" } };
+  /* Asks or tells: whether the words want an answer in words or a change made — Jev's call on every utterance; the code's patterns only a hint where Jev is unsure. */
+  /* Inside the app or outside it: sending an email or a text, calling, paying, booking or posting somewhere is not a change to a record, and never a field to add. */
+  questions["where"] = { type: "choice", instructions: `Does “${said}” want something done to the records of this app (or an answer about them), or something done outside the app — an email or a text sent, a call made, a payment, a booking, a post somewhere?`, criteria: { inside: "Inside the app: its records, or an answer about them", outside: "Outside the app: send, call, pay, book or post somewhere else" } };
+  questions["mood"] = { type: "choice", instructions: `Does “${said}” ask something, wanting an answer in words, or tell me to do something, wanting a change made? A question can come without a question mark ("has this been done yet"), an instruction can be polite ("could you close these"), and saying who has something ("Sam's on this", "Nora has this one") tells me to give it to them.`, criteria: { asks: "Asks something: wants an answer in words", tells: "Tells me to do something: wants a change made" } };
+  const actsOn = (kind: string) =>
+    store.allMutations().filter((mutation) => mutation.subject && (mutation.subject.kinds === "*" || (mutation.subject.kinds as readonly string[]).includes(kind)));
+  const offered = readings.flatMap((reading) => actsOn(reading.kind).slice(0, 24).map((mutation) => ({ key: `${reading.which}:${mutation.name}`, reading, mutation })));
+  questions["act"] = {
+    type: "choice",
+    instructions: `Which of these acts does “${words}” ask to be done? Judge each by what it does, not only its title: people say "close", "complete", "check off", "tick" or "finish" for an act that marks something done, "delete" for one that removes, "push" or "move" for one that changes a date or a place. A question, or "undo that", is none of them. "none" only where no act here does it.`,
+    criteria: { ...Object.fromEntries(offered.map((one) => [one.key, `${one.mutation.title ?? one.mutation.name}: ${sentenceOf((one.mutation as { description?: string }).description)}${effectOf(one.mutation, schema, one.reading.kind)} — on ${one.reading.which === "itself" ? `the ${noun(one.reading.kind)} itself` : `each of ${one.reading.words}`}`])), none: "None of these acts does it" },
+  };
+  /* The records the words may name: the app's people, and records of the kinds the acts here take — those whose names the words share, where there are many. */
+  const kindsOfPeople = peopleKinds(store);
+  const refKinds = new Set([...kindsOfPeople, ...offered.flatMap((one) => nodeRefArgs((one.mutation as { input?: unknown }).input).filter((ref) => ref.name !== one.mutation.subject!.arg).flatMap((ref) => ref.kinds))]);
+  const ofRefKinds = store.graph.allNodes().filter((node) => refKinds.has(node.kind) || refKinds.has("*"));
+  const stems = new Set(words.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((word) => word.length >= 3).map((word) => word.slice(0, 4)));
+  const labeled = (node: { readonly kind: string }) => labelOf(schema.tryDefinition(node.kind), node as never);
+  const nameable = (ofRefKinds.length <= 25 ? ofRefKinds : ofRefKinds.filter((node) => labeled(node).toLowerCase().split(/[^\p{L}\p{N}]+/u).some((word) => word.length >= 3 && stems.has(word.slice(0, 4))))).filter((node) => node.id !== self?.id && !readings.some((one) => one.records.includes(node.id))).slice(0, 25);
+  /*
+   * PEOPLE SAID AS PRONOUNS. "Me", "my", "mine", "myself" are the person at
+   * the seat: their own record, or the record of a kind an act takes that
+   * bears their name. "Her", "him", "them", "that person" are someone the
+   * context gives: a person the record links, the one named in the turn
+   * before. One is taken; several, Jev chooses — and the card says whom.
+   */
+  const meAt = MINE.test(said) ? principalRecord(store, options.principal, refKinds) : undefined;
+  const meName = MINE.test(said) && options.principal ? nameOfRecord(store, options.principal.id) : undefined;
+  const theirsSaid = THEIRS.exec(said);
+  const pronoun = (theirsSaid?.[1] ?? theirsSaid?.[2])?.toLowerCase();
+  const fromContext = pronoun ? contextPeople(store, self?.id, options.follows?.said, kindsOfPeople) : [];
+  if (pronoun && fromContext.length > 1) questions["pronoun"] = { type: "choice", instructions: `In “${said}”${options.follows ? `, said after “${options.follows.said}”` : ""}, whom does “${pronoun}” mean?`, criteria: { ...Object.fromEntries(fromContext.map((node) => [`r:${node.id}`, labeled(node)])), else: "Someone else" } };
+  if (nameable.length > 0) questions["named"] = { type: "choice", instructions: `Which of these does “${words}” name, as the one to give it to, move it to, link it with or put it on?`, criteria: { ...Object.fromEntries(nameable.map((node) => [`r:${node.id}`, `${labeled(node)} (${withArticle(noun(node.kind))})`])), new: "Someone or something not listed here", none: "None is named" } };
+  questions["need"] = { type: "choice", instructions: `If no act here can do “${words}”, what would each record need?`, criteria: { person: "A link to the person it is given or assigned to", other: "Something else: a field, a date, a number, a note", none: "Nothing: an act here can do it" } };
+
+  /* What this app's people said before and what worked (Roadmap f-menu-learns): examples, by name, for the same typed questions. */
+  const decided = await fast.decide({ said, ...(options.follows ? { replyingTo: options.follows.said } : {}), readings: choices.map((one) => one.words), ...(options.examples && options.examples.length > 0 ? { workedBefore: options.examples } : {}) }, questions);
+  const mood = best(decided.answers["mood"]);
+  // Who has it, said as a statement ("Sam's on this"), gives it to them: a telling, whatever the mood's chance.
+  const ownerSaid = givingOf(said)?.owned === true && !/\?\s*$/.test(said);
+  const question = ownerSaid ? false : mood && mood.chance >= 0.6 ? mood.key === "asks" : asking(said);
+  /* An outside action: said plainly that it is not done from here, with the record's own link where it has one — never a plan to add a field. */
+  const whereTo = best(decided.answers["where"]);
+  if (!question && outsideVerb(said) && whereTo?.key === "outside" && whereTo.chance >= 0.6) return { sure: true, asks: false, outside: outsideWords(store, said, self?.id), usage: decided.usage };
+  const reading0 = best(decided.answers["reading"]);
+  const reading = choices.length > 1 ? choices.find((one) => keyOf(one) === reading0?.key) : choices[0];
+  if (!reading) {
+    // "Something else" for an act that removes or sets aside: which records, asked back — never guessed.
+    const top = best(decided.answers["act"]);
+    const leaning = top && top.key !== "none" ? offered.find((one) => one.key === top.key) : undefined;
+    if (!question && leaning && removing(leaning.mutation) && all && all.ids.length > 1) {
+      const verb = (leaning.mutation.title ?? leaning.mutation.name).trim().split(/\s+/)[0]!.toLowerCase();
+      return { sure: true, asks: false, clarify: `Which of the ${all.ids.length} ${plural(all.kind)}${where} should I ${verb}? Say which, or “all”.`, usage: decided.usage };
+    }
+    return { sure: false, asks: question, usage: decided.usage };
+  }
+  const chosen = { ...reading, close: choices.length > 1 && (reading0?.chance ?? 1) < READING_SURE, chance: choices.length > 1 ? (reading0?.chance ?? 0) : 1 };
+  const act = best(decided.answers["act"]);
+  const named = best(decided.answers["named"]);
+  const chosenPronoun = best(decided.answers["pronoun"]);
+  const theirs = pronoun ? (fromContext.length === 1 ? fromContext[0] : chosenPronoun?.key.startsWith("r:") ? store.graph.getNode(chosenPronoun.key.slice(2)) : undefined) : undefined;
+  const taken = pronoun && theirs ? { said: pronoun, as: labeled(theirs) } : undefined;
+  const namedNode = meAt ?? theirs ?? (named?.key.startsWith("r:") && named.chance >= GRAPH_SURE ? store.graph.getNode(named.key.slice(2)) : undefined);
+  // The person the words give it to: said here, else in the turn before; a pronoun, as the context took it.
+  const givenHere = givingOf(said) ?? givingOf(words);
+  const whoSaid = givenHere?.who && (MINE.test(givenHere.who) ? meAt ? labeled(meAt) : meName : THEIRS_WORD.test(givenHere.who) ? (theirs ? labeled(theirs) : undefined) : givenHere.who);
+  const given = givenHere ? { called: givenHere.called, ...(whoSaid ? { who: whoSaid } : {}), ...(givenHere.owned ? { owned: true } : {}) } : undefined;
+  const giving = given && renamed ? { ...given, called: renamed.toLowerCase() } : given;
+  // Sure of the reading: likelier than not, or well ahead of the next (a typo spreads Jev's chance: "mrk these done").
+  const second = decided.answers["reading"]?.type === "choice" ? Object.entries((decided.answers["reading"] as { probabilities: Record<string, number> }).probabilities).filter(([key]) => key !== reading0?.key).reduce((most, [, chance]) => Math.max(most, chance), 0) : 0;
+  const sureOfReading = choices.length === 1 || (reading0?.chance ?? 0) >= 0.5 || ((reading0?.chance ?? 0) >= 0.35 && (reading0?.chance ?? 0) >= 1.5 * second);
+  if (!sureOfReading) return { sure: false, asks: question, reading: chosen, usage: decided.usage };
+
+  /* AN ACT CAN DO IT: the one Jev picked, on the reading's records, its values filled from the graph — else the light model fills them. */
+  const takesRefTo = (mutation: (typeof offered)[number]["mutation"], kinds: readonly string[]) => nodeRefArgs((mutation as { input?: unknown }).input).some((ref) => ref.name !== mutation.subject!.arg && (ref.kinds.includes("*") || ref.kinds.some((kind) => kinds.includes(kind))));
+  const giveTo = [...kindsOfPeople, ...(namedNode ? [namedNode.kind] : [])];
+  /* A question, or "undo that", is not an act to propose: the light model answers it in words. */
+  if (question || UNDOING.test(said)) return { sure: false, asks: question, reading: chosen, usage: decided.usage };
+  const ranks = actRanks(decided.answers["act"]);
+  const onReading = (name: string) => offered.find((one) => one.mutation.name === name && one.reading.which === chosen.which);
+  const removes = (one: (typeof offered)[number] | undefined) => Boolean(one && ((one.mutation as { destructive?: boolean }).destructive || (one.mutation as { derived?: { act?: string } }).derived?.act === "remove"));
+  let mutationName = act && act.key !== "none" ? act.key.slice(act.key.indexOf(":") + 1) : undefined;
+  let sureOfAct = act !== undefined && act.key !== "none" && act.chance >= GRAPH_SURE;
+  // Two acts that do the same thing ("Drop it", "Remove the task") split Jev's chance between them: together they are sure.
+  if (!sureOfAct && ranks.length > 1 && ranks[0]!.chance + ranks[1]!.chance >= 0.8 && removes(onReading(ranks[0]!.name)) && removes(onReading(ranks[1]!.name))) sureOfAct = true;
+  // The record the words name decides between acts: "move this to Someday" names a list, so the act that takes a list.
+  if (mutationName && namedNode && onReading(mutationName) && !takesRefTo(onReading(mutationName)!.mutation, [namedNode.kind])) {
+    // An act whose values code cannot fill ("Move the date" wants a date) gives way to one that takes the record named, when it is named surely.
+    const leaning = onReading(mutationName)!.mutation as { input?: { shape?: Record<string, { safeParse(value: unknown): { success: boolean } }> } };
+    const refNames = new Set(nodeRefArgs(leaning.input).map((ref) => ref.name));
+    const wantsAValue = Object.entries(leaning.input?.shape ?? {}).some(([arg, field]) => !refNames.has(arg) && !field.safeParse(undefined).success && !field.safeParse(calledTo(said)).success);
+    const floor = named && named.chance >= 0.9 && wantsAValue ? 0 : 0.05;
+    const taking = ranks.filter((one) => one.chance >= floor).map((one) => onReading(one.name)).find((one) => one && (one.mutation as { derived?: { act?: string } }).derived?.act !== "merge" && takesRefTo(one.mutation, [namedNode.kind]));
+    if (taking) {
+      mutationName = taking.mutation.name;
+      sureOfAct = true;
+    }
+  }
+  // Given to a person code resolved (a pronoun, "me", "X should…"), and one act here takes them: that act, whatever Jev weighed.
+  if (!sureOfAct && namedNode && giving?.who && (taken || meAt || giving.owned)) {
+    const takers = offered.filter((one) => one.reading.which === chosen.which && (one.mutation as { derived?: { act?: string } }).derived?.act !== "merge" && nodeRefArgs((one.mutation as { input?: unknown }).input).some((ref) => ref.name !== one.mutation.subject!.arg && sameAs(store, namedNode, ref.kinds) !== undefined && kindsOfPeople.some((kind) => ref.kinds.includes(kind))));
+    if (takers.length === 1) {
+      mutationName = takers[0]!.mutation.name;
+      sureOfAct = true;
+    }
+  }
+  // A record the words name, and one act here that takes it, likely enough: that act ("give this to her" — Ada — is "Cover it").
+  if (!sureOfAct && namedNode) {
+    const taking = ranks.filter((one) => one.chance >= 0.3).map((one) => onReading(one.name)).find((one) => one && (one.mutation as { derived?: { act?: string } }).derived?.act !== "merge" && nodeRefArgs((one.mutation as { input?: unknown }).input).some((ref) => ref.name !== one.mutation.subject!.arg && sameAs(store, namedNode, ref.kinds) !== undefined));
+    if (taking) {
+      mutationName = taking.mutation.name;
+      sureOfAct = true;
+    }
+  }
+  /* A RENAME SAID AS A STATEMENT ("the name should be X", "call it X", "X is a better name"): the act that writes the record's name, on the record itself, its value the words' — read by code. */
+  const newName = renamed === undefined ? renameOf(said) : undefined;
+  const itself = readings.find((one) => one.which === "itself");
+  if (newName && itself) {
+    // The act that names the record: it takes one value besides the record, and that value is its name (it writes it, or the argument is called so).
+    const NAMES = ["label", "name", "title"];
+    const naming = offered.find((one) => {
+      const rest = (argumentsTaken(one.mutation) ?? []).filter((arg) => arg !== one.mutation.subject!.arg);
+      return one.reading.which === "itself" && rest.length === 1 && (NAMES.includes(rest[0]!) || ((one.mutation as { writes?: readonly string[] }).writes ?? []).some((field) => NAMES.includes(field)));
+    });
+    const arg = naming ? (argumentsTaken(naming.mutation) ?? []).find((one) => one !== naming.mutation.subject!.arg) : undefined;
+    const field = arg ? ((naming!.mutation as { input?: { shape?: Record<string, { safeParse(value: unknown): { success: boolean } }> } }).input?.shape ?? {})[arg] : undefined;
+    if (naming && arg && field?.safeParse(newName).success) {
+      return { sure: true, reading: { ...itself, close: false }, each: { act: naming.mutation.name, args: { [arg]: newName } }, usage: decided.usage };
+    }
+  }
+  // Jev's act on the other reading ("Archive the list" where the words meant the tasks): the same act on the reading chosen.
+  if (mutationName && !onReading(mutationName)) {
+    const meant = offered.find((one) => one.mutation.name === mutationName);
+    const same = (other: (typeof offered)[number]) => {
+      const a = (meant?.mutation as { derived?: { act?: string } } | undefined)?.derived?.act;
+      const b = (other.mutation as { derived?: { act?: string } }).derived?.act;
+      return a !== undefined ? a === b : (other.mutation.title ?? other.mutation.name).split(/\s+/)[0]!.toLowerCase() === (meant?.mutation.title ?? mutationName ?? "").split(/\s+/)[0]!.toLowerCase();
+    };
+    const twin = offered.find((one) => one.reading.which === chosen.which && same(one));
+    if (twin) mutationName = twin.mutation.name;
+  }
+  const picked = mutationName && sureOfAct ? onReading(mutationName) : undefined;
+  // Words that give a record to someone are done only by an act that takes them.
+  if (picked && !(giving?.who && !takesRefTo(picked.mutation, giveTo))) {
+    const rest = (argumentsTaken(picked.mutation) ?? []).filter((arg) => arg !== picked.mutation.subject!.arg);
+    const refs = nodeRefArgs((picked.mutation as { input?: unknown }).input);
+    const shape = ((picked.mutation as { input?: { shape?: Record<string, { safeParse(value: unknown): { success: boolean } }> } }).input?.shape ?? {}) as Record<string, { safeParse(value: unknown): { success: boolean } }>;
+    const args: Record<string, unknown> = {};
+    let complete = true;
+    for (const arg of rest) {
+      const ref = refs.find((one) => one.name === arg);
+      const optional = ref ? ref.optional : (shape[arg]?.safeParse(undefined).success ?? true);
+      const meant = ref && namedNode ? sameAs(store, namedNode, ref.kinds) : undefined;
+      if (ref && meant) args[arg] = meant.id;
+      else if (!ref && !optional && rest.filter((one) => !refs.some((r) => r.name === one)).length === 1 && calledTo(said) !== undefined && shape[arg]?.safeParse(calledTo(said)).success) args[arg] = calledTo(said);
+      else if (!optional) complete = false;
+    }
+    // A change that changes nothing (an edit with no value) is not an answer.
+    if ((picked.mutation as { derived?: { act?: string } }).derived?.act === "edit" && Object.keys(args).length === 0) complete = false;
+    if (!complete) return { sure: false, reading: chosen, ...(taken ? { taken } : {}), act: picked.mutation.name, usage: decided.usage };
+    /*
+     * A DESTRUCTIVE ACT OVER SEVERAL NEEDS A CLEAR READING. "Drop the ones
+     * I've done" once proposed dropping all 6 tasks: an act that removes or
+     * sets aside is offered over more than one record only where the words
+     * said which (all of them, or the done or open ones) or Jev was sure of
+     * the reading; else the card asks which.
+     */
+    /* Over several: Jev sure of the reading (0.9), and no restrictive words left that the reading does not account for ("everything that's already ticked off" read as everything). */
+    const readingSure = choices.length === 1 || (reading0?.chance ?? 0) >= barFor(picked.mutation, said);
+    if (removing(picked.mutation) && chosen.records.length > 1 && (!readingSure || unaccounted(said, chosen))) {
+      return { sure: true, reading: chosen, clarify: whichOf(store, picked.mutation.title ?? picked.mutation.name, chosen), usage: decided.usage };
+    }
+    return { sure: true, reading: chosen, ...(taken ? { taken } : {}), each: { act: picked.mutation.name, args }, usage: decided.usage };
+  }
+
+  /* NONE CAN: code, not the model's wording, says no act here gives these records to someone — and only then what the app lacks: a link to the person the words name. */
+  const need = best(decided.answers["need"]);
+  const anActGives = offered.some((one) => one.reading.which === chosen.which && takesRefTo(one.mutation, giveTo));
+  if (giving?.who && !anActGives && ((need?.key === "person" && need.chance >= GRAPH_SURE) || meAt !== undefined || meName !== undefined || taken !== undefined || giving.owned === true)) {
+    const who = giving.who ?? (namedNode && kindsOfPeople.includes(namedNode.kind) ? labeled(namedNode) : undefined);
+    if (!who) return { sure: false, reading: chosen, usage: decided.usage };
+    const lacks = renamed ? `${capital(plural(chosen.kind))} have no ${giving.called}.` : `${capital(plural(chosen.kind))} have no one ${giving.called} them.`;
+    return { sure: true, reading: chosen, ...(taken ? { taken } : {}), missing: { said: lacks, need: { link: { on: chosen.kind, called: giving.called, to: "person" } }, who }, text: lacks, usage: decided.usage };
+  }
+  return { sure: false, reading: chosen, ...(taken ? { taken } : {}), ...(mutationName && act && act.chance >= 0.3 ? { act: mutationName } : {}), usage: decided.usage };
+}
+
+/** "Me", "my", "mine", "myself": the person at the seat. */
+const MINE = /\b(me|my|mine|myself)\b/i;
+/** Someone the context gives, where the words name a person by a pronoun. */
+const THEIRS = /\b(?:to|off|from|for|with)\s+(her|him|them|that person|whoever)\b|\b(?:take|put|move|swap|drop)\s+(her|him)\b/i;
+const THEIRS_WORD = /^(her|him|them|they|that person|whoever)$/i;
+
+/** The seat's own record: theirs by id, else one of a kind an act takes that bears their name. */
+function principalRecord<S extends AnySchema>(store: Store<S>, principal: { readonly id: string } | undefined, kinds: ReadonlySet<string>): { readonly id: string; readonly kind: string } | undefined {
+  if (!principal) return undefined;
+  const own = store.graph.getNode(principal.id);
+  const name = own ? labelOf((store.schema as AnySchema).tryDefinition(own.kind), own as never).toLowerCase() : undefined;
+  const bearing = name ? store.graph.allNodes().find((node) => node.id !== principal.id && kinds.has(node.kind) && labelOf((store.schema as AnySchema).tryDefinition(node.kind), node as never).toLowerCase() === name) : undefined;
+  // A record of a kind an act takes comes first ("take this off me": the volunteer, not the user).
+  return bearing ?? (own && kinds.has(own.kind) ? own : own);
+}
+
+/** What the seat is called, from its record. */
+function nameOfRecord<S extends AnySchema>(store: Store<S>, id: string): string | undefined {
+  const node = store.graph.getNode(id);
+  return node ? labelOf((store.schema as AnySchema).tryDefinition(node.kind), node as never) : undefined;
+}
+
+/** The people a pronoun may mean: those the record links, then those the turn before names. */
+function contextPeople<S extends AnySchema>(store: Store<S>, id: string | undefined, before: string | undefined, kinds: readonly string[]): readonly { readonly id: string; readonly kind: string }[] {
+  const schema = store.schema as AnySchema;
+  const linked = id ? [...store.graph.in(id), ...store.graph.out(id)].filter((node) => kinds.includes(node.kind)) : [];
+  const words = (before ?? "").toLowerCase();
+  const named = words ? store.graph.allNodes().filter((node) => kinds.includes(node.kind) && labelOf(schema.tryDefinition(node.kind), node as never).toLowerCase().split(/\s+/).some((word) => word.length >= 3 && new RegExp(`\\b${word.replace(/[^\p{L}\p{N}]/gu, "")}\\b`, "u").test(words))) : [];
+  // The turn before names whom it means; the record's own links are the rest.
+  const all = [...named, ...linked];
+  // One person once: the user Ada and the volunteer Ada are one Ada.
+  const nameOf = (node: { readonly id: string; readonly kind: string }) => labelOf(schema.tryDefinition(node.kind), node as never).toLowerCase();
+  return all.filter((node, index) => all.findIndex((other) => nameOf(other) === nameOf(node)) === index).slice(0, 8);
+}
+
+/** The record the words mean, as a kind an act takes: itself, or the one of that kind bearing its name (the user Ada as the volunteer Ada). */
+function sameAs<S extends AnySchema>(store: Store<S>, node: { readonly id: string; readonly kind: string }, kinds: readonly string[]): { readonly id: string; readonly kind: string } | undefined {
+  if (kinds.includes("*") || kinds.includes(node.kind)) return node;
+  const schema = store.schema as AnySchema;
+  const name = labelOf(schema.tryDefinition(node.kind), store.graph.getNode(node.id) as never).toLowerCase();
+  return store.graph.allNodes().find((other) => kinds.includes(other.kind) && labelOf(schema.tryDefinition(other.kind), other as never).toLowerCase() === name);
+}
+
+/**
+ * TWO ASKS IN ONE SENTENCE: "archive the done ones, then close the rest" is
+ * two parts, each an instruction of its own. Split at "and", "then", ", then"
+ * or "; " only where each side begins with a verb-like word and says more
+ * than a word — so "assign these to Sam and Nora" and "rename it to Pack and
+ * Go" stay one.
+ */
+export function askedParts(said: string): readonly string[] {
+  const parts = said
+    .split(/\s*(?:,\s*and then|,\s*then|\band then\b|;|\bthen\b|,?\s+and\s+)\s*/i)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length < 2 || parts.length > 3) return [said];
+  const NOT_A_VERB = /^(the|a|an|my|our|your|this|these|that|those|all|every|each|some|it|them|they|he|she|i|we|you|to|for|with|on|in|at|by|of|from|tomorrow|today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i;
+  const instruction = (part: string) => {
+    const words = part.split(/\s+/);
+    return words.length >= 2 && /^[a-z]/.test(words[0]!) && !NOT_A_VERB.test(words[0]!);
+  };
+  return parts.every(instruction) ? parts : [said];
+}
+
+/**
+ * WORDS THAT NARROW TO DONE OR OPEN RECORDS, however they are said:
+ * "finished", "completed", "the done stuff", "ones I've done", "outstanding",
+ * "remaining", "unfinished", "still to do". A bare "open" ("open this") is a
+ * verb unless a reply narrows with it.
+ */
+export function narrowingOf(said: string, replying = false): { readonly open: boolean; readonly finished: boolean } {
+  const words = said.toLowerCase();
+  const finished =
+    /\b(done|finished|completed|complete|closed|ticked|checked)( off)? (ones?|tasks?|items?|stuff|things|bits)\b/.test(words) ||
+    /\b(ones?|tasks?|items?|things|stuff) (i'?ve|we'?ve|i have|we have|that are|that'?s|already) (done|finished|completed|closed|ticked off)\b/.test(words) ||
+    /\balready (done|finished|completed)\b/.test(words) ||
+    /\bthe (finished|completed)\b/.test(words);
+  const open =
+    /\b(outstanding|remaining|unfinished|undone|incomplete|pending)\b/.test(words) ||
+    /\b(still to do|left to do|not done|not finished|not yet done)\b/.test(words) ||
+    /\b(open) (ones?|tasks?|items?|stuff|things)\b/.test(words) ||
+    (replying && /\bopen\b/.test(words));
+  return finished && open ? { open: false, finished: false } : { open, finished };
+}
+
+/** Whether the words say which records: all of them, or the done or open ones. */
+export function explicitReading(said: string): boolean {
+  const { open, finished } = narrowingOf(said);
+  if (open || finished) return true;
+  // A word that narrows in a way code does not read ("the old ones", "the big tasks") leaves the reading unclear, however sure Jev is.
+  if (unreadNarrowing(said)) return false;
+  return /\b(all|every|each|everything|the lot|the whole (list|lot)|every one|both|these|those)\b/i.test(said);
+}
+
+/** "The old ones", "the urgent tasks": a word narrowing the records that is neither done nor open — code cannot say which those are. */
+export function unreadNarrowing(said: string): boolean {
+  const found = /\bthe ([a-z]+) (ones?|tasks?|items?|stuff|things|shifts?|songs?)\b/i.exec(said)?.[1]?.toLowerCase();
+  return found !== undefined && !["other", "rest", "whole", "same"].includes(found) && !narrowingOf(`the ${found} ones`).open && !narrowingOf(`the ${found} ones`).finished;
+}
+
+/**
+ * HOW SURE JEV MUST BE of the records before an act that takes some away
+ * runs over several. Setting aside (archive, brought back by unarchive)
+ * runs at 0.75 where the words name every record ("these", "all",
+ * "everything"); removing — gone, not set aside — at 0.9, always.
+ */
+export function barFor(mutation: { readonly destructive?: boolean; readonly derived?: { readonly act?: string } }, said: string): number {
+  const settingAside = mutation.derived?.act === "archive" && mutation.destructive !== true;
+  return settingAside && /\b(these|those|all|everything|every one|each|them|the lot|the whole (list|lot))\b/i.test(said) ? 0.75 : 0.9;
+}
+
+/** An act that removes or sets aside: one that must be meant for exactly the records it takes. */
+export function removing(mutation: { readonly destructive?: boolean; readonly derived?: { readonly act?: string } }): boolean {
+  return mutation.destructive === true || mutation.derived?.act === "remove" || mutation.derived?.act === "archive";
+}
+
+/** The question back: "Should I drop the 1 done task, or all 6 tasks in This week?" */
+function whichOf<S extends AnySchema>(store: Store<S>, title: string, reading: Reading): string {
+  const schema = store.schema as AnySchema;
+  const verb = title.trim().split(/\s+/)[0]!.toLowerCase();
+  const isDone = (id: string) => DONE.some((field) => (store.graph.getNode(id) as Record<string, unknown> | undefined)?.[field] === true);
+  const done = reading.records.filter(isDone);
+  const noun = ((schema.tryDefinition(reading.kind) as { noun?: string } | undefined)?.noun ?? reading.kind).toLowerCase();
+  const many = pluralOf(schema, reading.kind).toLowerCase();
+  const where = / (in .+)$/.exec(reading.words)?.[1];
+  const all = `all ${reading.records.length} ${many}${where ? ` ${where}` : ""}`;
+  if (done.length > 0 && done.length < reading.records.length) return `Should I ${verb} the ${done.length} done ${done.length === 1 ? noun : many}, or ${all}?`;
+  return `Should I ${verb} ${all}? Say “all” to go ahead, or say which.`;
+}
+
+/** The words begin with an act done outside the app ("email the landlord", "text Bo", "call the van company") — not "call it X", a rename. */
+export function outsideVerb(said: string): boolean {
+  const found = /^\s*(?:please\s+|pls\s+|could you\s+|can you\s+|would you\s+|can we\s+|let'?s\s+)?(e-?mail|mail|text|sms|message|whatsapp|call|phone|ring|dial|pay|venmo|book|reserve|post|tweet|share)\b(.*)$/i.exec(said);
+  // "Call it Boxes", "call this “Packing”": a name given, not a call made.
+  return found !== null && !/^\s+(?:it|this|that|this one)\s+(?:[A-Z“"']|as\b|to\b)/.test(found[2] ?? "");
+}
+
+/** What a request outside the app would be, in the words it is refused with. */
+const OUTSIDE: readonly (readonly [RegExp, string])[] = [
+  [/\b(e-?mail|mail)\b/i, "send email"],
+  [/\b(text|sms|message|whatsapp|dm)\b/i, "send messages"],
+  [/\b(call|phone|ring|dial)\b/i, "make calls"],
+  [/\b(pay|venmo|transfer|invoice)\b/i, "make payments"],
+  [/\b(book|reserve)\b/i, "book things"],
+  [/\b(post|tweet|share)\b/i, "post outside this app"],
+];
+
+/** "I can't send email from here." — and, where the record holds an email or a link, that it is there to open. */
+export function outsideWords<S extends AnySchema>(store: Store<S>, said: string, id?: string): string {
+  const what = OUTSIDE.find(([pattern]) => pattern.test(said))?.[1] ?? "do things outside this app";
+  const node = id ? (store.graph.getNode(id) as Record<string, unknown> | undefined) : undefined;
+  const link = node ? Object.values(node).find((value): value is string => typeof value === "string" && (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || /^https?:\/\//.test(value))) : undefined;
+  return link ? `I can't ${what} from here, but its ${link.includes("@") && !link.startsWith("http") ? "email" : "link"} is ${link} — open it to do that.` : `I can't ${what} from here: this app keeps your records, and doing that happens outside it.`;
+}
+
+/** Words that ask rather than tell: a question to answer, not an act to propose. */
+export function asking(said: string): boolean {
+  // Said politely or indirectly, it is still an instruction: "could you close these", "please…", "I'd like…", "X should…", "can we…".
+  if (politely(said)) return false;
+  // "Do" asks only with a subject after it ("do we have…"); "do what is left" tells.
+  return /\?\s*$/.test(said) || /^\s*(who|whom|whose|what|whats|what's|when|where|which|why|how|is|are|was|were|can|could|should|any|anything|tell me|show me|list)\b/i.test(said) || /^\s*(do|does|did)\s+(you|we|i|they|it|he|she|anyone|anybody|any)\b/i.test(said);
+}
+
+/** An instruction said politely or indirectly: a request, not a question to answer in words. */
+export function politely(said: string): boolean {
+  const words = said.trim().toLowerCase();
+  if (/^(please|pls|kindly)\b/.test(words)) return true;
+  if (/^(could|can|would|will) (you|we|u)\s+(please\s+)?(?!tell|say|explain|show me what|see)\w+/.test(words) && !/^(could|can|would|will) (you|we) (be|have)\b/.test(words)) return true;
+  if (/^(i'?d like|i would like|i want|i need|let'?s|we should|we need to)\b/.test(words)) return true;
+  // "These should be marked done", "Sam should take care of these": what ought to be, said of the records or of a person.
+  if (/^[\p{L}'’]+(\s[\p{L}'’]+)?\s+(should|needs to|need to|has to|have to|ought to)\s+(be\s+)?\w+/u.test(words) && !/^(what|who|which|when|where|why|how|is|are|do|does)\b/.test(words)) return true;
+  return false;
+}
+
+/** A rename said as a statement: "name should be X", "call it X", "X is a better name", "rename it to X" → "X". */
+export function renameOf(said: string): string | undefined {
+  const text = said.trim().replace(/[.!]+$/, "");
+  const forms = [
+    /^(?:the\s+|its\s+|this\s+|list\s+|task\s+)*name\s+should\s+be\s+["“']?(.+?)["”']?$/i,
+    /^(?:please\s+)?call\s+(?:this one|this list|this task|this shift|this song|it|this)\s+["“']?(.+?)["”']?$/i,
+    /^["“']?(.+?)["”']?\s+is\s+a\s+better\s+name$/i,
+    /^(?:please\s+)?(?:re)?name\s+(?:this one|this list|this task|this shift|this song|it|this)\s+(?:to\s+|as\s+)?["“']?(.+?)["”']?$/i,
+    /^(?:let'?s\s+)?call\s+(?:it|this)\s+["“']?(.+?)["”']?$/i,
+  ];
+  for (const form of forms) {
+    const found = form.exec(text)?.[1]?.trim();
+    if (found) return found;
+  }
+  return undefined;
+}
+
+/** "Undo that": the app's own undo takes back the last change; no act here does. */
+export const UNDOING = /^\s*(undo|take (that|it) back|revert|go back)\b/i;
+
+/** The one value the words give "to" or "as": "rename this to Packing" → "Packing". */
+function calledTo(said: string): string | undefined {
+  const value = /\b(?:to|as)\s+["“']?(.+?)["”']?\s*[.!]?\s*$/i.exec(said)?.[1]?.trim();
+  return value && value.length > 0 ? value : undefined;
+}
+
+/** Every act Jev weighed, likeliest first, with how likely. */
+function actRanks(answer: Answer | undefined): readonly { readonly name: string; readonly chance: number }[] {
+  if (answer?.type !== "choice") return [];
+  return Object.entries(answer.probabilities)
+    .filter(([key]) => key !== "none")
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, chance]) => ({ name: key.slice(key.indexOf(":") + 1), chance }));
+}
+
+/** A description as the end of a sentence: its own words, a space after. */
+function sentenceOf(description: string | undefined): string {
+  const said = description?.trim();
+  return said ? `${said}${/[.!?]$/.test(said) ? "" : "."} ` : "";
+}
+
+/** What an act does, said from what it declares: the fields it writes, the links it makes and breaks, what it makes or removes. */
+export function effectOf(mutation: { readonly name: string; readonly writes?: readonly string[]; readonly sets?: Readonly<Record<string, unknown>>; readonly connects?: readonly string[]; readonly severs?: readonly string[]; readonly creates?: readonly string[]; readonly destructive?: boolean; readonly derived?: { readonly act?: string }; readonly input?: unknown; readonly subject?: { readonly arg: string } }, schema: AnySchema, kind: string): string {
+  const parts: string[] = [];
+  const args = (argumentsTaken(mutation as never) ?? []).filter((arg) => arg !== mutation.subject?.arg);
+  const refs = nodeRefArgs(mutation.input).filter((ref) => ref.name !== mutation.subject?.arg);
+  const shape = ((schema.tryDefinition(kind) as { fields?: { shape?: Record<string, { _zod?: { def?: { type?: string; innerType?: { _zod?: { def?: { type?: string } } } } } }> } } | undefined)?.fields?.shape ?? {});
+  const typeOf = (field: string) => shape[field]?._zod?.def?.type === "optional" ? shape[field]?._zod?.def?.innerType?._zod?.def?.type : shape[field]?._zod?.def?.type;
+  const derived = mutation.derived?.act;
+  if (derived === "remove") parts.push("removes it");
+  else if (derived === "archive") parts.push("sets it aside in the archive");
+  else if (derived === "unarchive") parts.push("brings it back from the archive");
+  else if (derived === "merge") parts.push("merges it into another");
+  else if (derived === "edit") parts.push("changes any of its fields to values given");
+  for (const field of mutation.writes ?? []) {
+    if (mutation.sets && field in mutation.sets) parts.push(`sets ${field} to ${String(mutation.sets[field])}`);
+    else if (args.includes(field)) parts.push(`sets ${field} to a value given`);
+    else if (typeOf(field) === "boolean") parts.push(`sets ${field} yes or no`);
+    else parts.push(`changes ${field}`);
+  }
+  for (const arg of args) if (!(mutation.writes ?? []).includes(arg) && !refs.some((ref) => ref.name === arg) && derived !== "edit") parts.push(`takes ${arg}`);
+  const to = [...new Set(refs.flatMap((ref) => ref.kinds))].filter((one) => one !== "*").join(" or ");
+  if ((mutation.connects?.length ?? 0) > 0 && (mutation.severs?.length ?? 0) > 0) parts.push(`moves it to another ${to || "record"}`);
+  else if ((mutation.connects?.length ?? 0) > 0) parts.push(`links it to ${withArticle(to || "record")}`);
+  else if ((mutation.severs?.length ?? 0) > 0) parts.push(`unlinks it from ${withArticle(to || "record")}`);
+  if (mutation.destructive && derived !== "remove") parts.push("removes it for good");
+  if ((mutation.creates?.length ?? 0) > 0) parts.push(`adds a new ${mutation.creates!.join(" or ")}`);
+  return parts.length > 0 ? `(It ${parts.join(", ")}.)` : "";
+}
+

@@ -76,6 +76,9 @@ export type { GhostDoorProps } from "./inline-ai-door.js";
 // The place menu's Hide and Delete, and what the places' foot lists (Roadmap f-place-menu-views).
 export { useViewTidyingSection, ViewTidyingSections } from "./view-tidying-sections.js";
 export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
+// "Make this better" on a section of a worker view (Roadmap f-make-this-section-better): the menu's section, the outline and the card's door.
+export { SectionBetterDoor, SectionBetterSections, useSectionBetterSection } from "./section-door.js";
+export type { SectionAsk, SectionMode } from "./section-door.js";
 // "Move to ›" on a card on a status board (Roadmap f-board-move-without-buttons).
 export { BoardMoveSections, holdBoard, useBoardMoveSection } from "./board-move-section.js";
 export type { BoardHere } from "./board-move-section.js";

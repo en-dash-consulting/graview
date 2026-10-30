@@ -18,7 +18,14 @@ const DRAWN_ONLY = [
   // A face's own sections of the context menu: drawn only once a menu is.
   "MenuSections",
   "NOTHING_FOUND",
+  "alsoWhenSectionsArrive",
   "placeOthers",
+  // A section of a view under the cursor, and what the view's place lends its revision: read once a menu is opened in a drawn view.
+  "sectionsArrive",
+  "sectionsWanted",
+  "sectionUnderNow",
+  "setViewPlace",
+  "viewPlaceOf",
   "useActivity",
   "useAttention",
   "useDrawnSize",

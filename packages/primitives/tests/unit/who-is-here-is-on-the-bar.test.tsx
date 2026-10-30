@@ -71,7 +71,7 @@ describe("who is here, in words (FR-155)", () => {
     expect(words("#focus=t1")).toBe("Book the hall");
     expect(words("#focus=aggregate:task")).toBe("Tasks");
     expect(words("#focus=aggregate:task&in.view=board")).toBe("The week's board");
-    expect(words("#overview=1")).toBe("the whole thing");
+    expect(words("#overview=1")).toBe("everything");
     expect(words("#focus=nobody-knows")).toBeNull();
     expect(words("#")).toBeNull();
     expect(words("#focus=aggregate:task", new Set(["task"]))).toBeNull();
