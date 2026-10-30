@@ -906,15 +906,12 @@ ${/* A RELATION THE BAND COULD NOT HOLD: a group with its count and first names,
   background: var(--graview-wash);
 }
 .graview-beyond-count {
-  font-family: var(--graview-font-display);
-  font-size: 1.1875rem;
-  line-height: 1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: inherit;
 }
 .graview-beyond-word {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: inherit;
 }
 .graview-beyond-chevron {
   margin-left: auto;
@@ -1174,6 +1171,19 @@ ${/* PUT AWAY WHILE A HAND MOVES THE PICTURE (data-graview-hand, written by
    somewhere else. Back with the pan the hand made. */ ""}
 .graview-ground[data-graview-hand] .graview-edge-sign {
   visibility: hidden;
+}
+${/* ON A PHONE, UP AND THE KEY SHARE ONE ROW of their own over the picture,
+   the Key to Up's left by Up's measured width (\`--graview-up-room\`), so
+   neither stands over the right edge of a district gone into. */ ""}
+@container (max-width: 639px) {
+  .graview-lines-key[data-graview-up-row] {
+    top: 14px !important;
+    height: 38px !important;
+    right: calc(22px + var(--graview-up-room, 64px) + var(--graview-dock, 0px)) !important;
+  }
+  .graview-lines-key-pane[data-graview-up-row] {
+    top: 60px !important;
+  }
 }
 @container (max-width: 639px) {
   .graview-zoom,

@@ -122,7 +122,7 @@ function clock(minutes: number): string {
  * rule whose invariant nobody registered.
  */
 export const rule = defineNode("rule", {
-  description: "Something this list holds itself to.",
+  description: "Something every list and task is held to.",
   fields: z.object({
     label: z.string().min(1),
     spec: z.union([

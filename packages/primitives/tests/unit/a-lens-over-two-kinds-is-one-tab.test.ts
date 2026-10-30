@@ -50,7 +50,7 @@ describe("one calendar over talks and workshops", () => {
   it("is one tab on the scene's bar, pressed from either district, and goes in from the district in focus", () => {
     const { store, views } = opened([timetable]);
     const scene = scenePlacesOf({ places: views.places(), hidden: new Set(), view: EMPTY_VIEW, schema: store.schema });
-    expect(scene.places.map((place) => place.label)).toEqual(["The whole thing", "The timetable"]);
+    expect(scene.places.map((place) => place.label)).toEqual(["Everything", "The timetable"]);
     const tab = scene.places[1]!.key;
     for (const kind of ["talk", "workshop"]) {
       const there = withPicture(EMPTY_VIEW, kind, "the-timetable");
@@ -58,7 +58,7 @@ describe("one calendar over talks and workshops", () => {
       expect(scene.to(tab, there)?.focusId).toBe(aggregateId(kind));
     }
     // With the talks kept from this seat, it is still one tab, over the workshops.
-    expect(scenePlacesOf({ places: views.places(), hidden: new Set(["talk"]), view: EMPTY_VIEW, schema: store.schema }).places.map((place) => place.label)).toEqual(["The whole thing", "The timetable"]);
+    expect(scenePlacesOf({ places: views.places(), hidden: new Set(["talk"]), view: EMPTY_VIEW, schema: store.schema }).places.map((place) => place.label)).toEqual(["Everything", "The timetable"]);
   });
 
   it("is one entry on the Pages bar, at one address", () => {
@@ -77,7 +77,7 @@ describe("two different calendars called the same, one over talks and one over w
   it("are two tabs on each bar, each saying whose", () => {
     const { store, views } = opened(twins);
     const scene = scenePlacesOf({ places: views.places(), hidden: new Set(), view: EMPTY_VIEW, schema: store.schema });
-    expect(scene.places.map((place) => place.label)).toEqual(["The whole thing", "The timetable · talks", "The timetable · workshops"]);
+    expect(scene.places.map((place) => place.label)).toEqual(["Everything", "The timetable · talks", "The timetable · workshops"]);
     const pictures = barPlaces({ store, principal: owner, views }).filter((place) => place.group === "pictures" && place.key !== "connections");
     expect(pictures.map((place) => [place.label, place.path])).toEqual([
       ["The timetable · talks", "/places/the-timetable?of=talks"],

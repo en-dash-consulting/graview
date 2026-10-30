@@ -46,17 +46,26 @@ export function InspectorPane({ placement = "float", chosen = true }: { readonly
  * "Acts…", which opens the same menu. Measured from the scene's box, so it
  * stands in the box it is drawn in; under Up and the key, in the picture's
  * column of controls, because at the picture's foot a notice stood over it.
+ * On a phone's ground Up and the Key share a row above the picture, and a
+ * card under it takes the width: "Acts…" stands in that row too, to the
+ * left of them, where it covers no card's "Open".
  */
 function ChosenActs() {
   const { store, setMenuAt, view } = useGraview<AnySchema>();
   const { selection } = useSelection();
   const mark = useRef<HTMLElement | null>(null);
   const [width, setWidth] = useState<number | null>(null);
+  // How far from the right the row's leftmost control (the Key, else Up) stands: "Acts…" goes to its left.
+  const [rowRight, setRowRight] = useState<number | null>(null);
   useLayoutEffect(() => {
     const parent = mark.current?.offsetParent ?? mark.current?.parentElement;
     if (!parent) return;
-    const measured = Math.round(parent.getBoundingClientRect().width);
+    const box = parent.getBoundingClientRect();
+    const measured = Math.round(box.width);
     if (measured !== width) setWidth(measured);
+    const row = [...parent.querySelectorAll<HTMLElement>('[data-testid="lines-key"][data-graview-up-row], [data-testid="overview"]')].map((one) => one.getBoundingClientRect()).filter((one) => one.width > 0 && one.top - box.top < 40);
+    const right = row.length > 0 ? Math.round(box.right - Math.min(...row.map((one) => one.left)) + 8) : null;
+    if (right !== rowRight) setRowRight(right);
   });
   const one = selection.length === 1 && !view.overview ? store.graph.getNode(selection[0]!) : undefined;
   if (!one || width === null || width >= RAIL_NEEDS) return <span ref={mark} hidden />;
@@ -71,7 +80,7 @@ function ChosenActs() {
         const at = event.currentTarget.getBoundingClientRect();
         setMenuAt({ x: Math.round(at.right), y: Math.round(at.bottom + 4), on: one.id });
       }}
-      style={{ position: "absolute", right: "calc(14px + var(--graview-dock, 0px))", top: 98, zIndex: "var(--graview-layer-overview, 10)" as never, minHeight: 30, padding: "0 12px", borderRadius: 8, fontSize: "0.8125rem", background: "var(--graview-float)", boxShadow: "var(--graview-lift-low)" }}
+      style={{ position: "absolute", ...(rowRight !== null ? { right: rowRight, top: 14, minHeight: 38 } : { right: "calc(14px + var(--graview-dock, 0px))", top: 98 }), zIndex: "var(--graview-layer-overview, 10)" as never, ...(rowRight === null ? { minHeight: 30 } : {}), padding: "0 12px", borderRadius: 8, fontSize: "0.8125rem", background: "var(--graview-float)", boxShadow: "var(--graview-lift-low)" }}
     >
       Acts…
     </button>

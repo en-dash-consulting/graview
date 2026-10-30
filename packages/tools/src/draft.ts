@@ -1234,3 +1234,6 @@ export async function runDraftTool<S extends AnySchema>(
   if (isDraftFailure(result)) return { ok: false, error: result.failed, reason: "invalid" };
   return { ok: true, data: draftAnswer(result) };
 }
+
+// Who may keep a draft for everyone: the studio's and the seat's own judgment, without the seat's tools.
+export { mayChangeDeclaration } from "./agent/declaration.js";

@@ -40,7 +40,7 @@ describe("the seat's subject is what the reader chose, else where they are", () 
   it("is the whole thing when nothing is chosen and nothing is pointed at", () => {
     const html = draw();
     expect(html).toContain('data-because="place"');
-    expect(html).toContain("the whole thing");
+    expect(html).toContain("everything");
   });
 
   it("is the selection when there is one, by the thing's own name", () => {

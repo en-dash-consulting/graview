@@ -6,9 +6,9 @@ import { withPast } from "@graview/layout/view-moves";
 import { useAffordances, useApplyAffordance } from "@graview/react";
 import { ViewBoundary } from "@graview/react/drawing";
 import { isDefaultView, useGraph, useGraview, useNavigation, useViolations, ViewModeProvider, type ViewComponent } from "@graview/react/provider";
-import { draftSight, isDraftFailure, recipeDraft, type SeatDraft } from "@graview/tools/draft";
+import { draftSight, isDraftFailure, mayChangeDeclaration, recipeDraft, type SeatDraft } from "@graview/tools/draft";
 import type { Affordance } from "@graview/tools";
-import { Suspense, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrangeBar } from "./arrange-bar.js";
 import { arrangementOf, withArrangement } from "./arrangement.js";
 import { barPanes } from "./bar-panes-door.js";
@@ -63,7 +63,91 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  *
  * Fetched when a district is first gone into (`default-views.tsx`): a page
  * that never opens one carries none of it.
+ *
+ * ON A PHONE, CONTENT FIRST. Gone into on a phone, the rules read "Acts…",
+ * a block of problems with a link under it, Filter, Arrange and Find, an
+ * author's "derived from the declaration · Keep as a lens", and then two of
+ * its three rules (Nick: "looks reallllly rough"). Where the stop is narrow
+ * (`NARROW`) it is the head — the name, the count, one line of what they
+ * are, the creating act and one "⋯" — then one line of problems that
+ * filters, then the records; Find, Filter, Arrange, the shape and the
+ * kind's acts are behind the "⋯". The author's words and "Keep as a lens"
+ * are for a seat that may change the app (`mayChangeDeclaration`), and
+ * never on a phone.
  */
+
+/** Below this width the stop is a phone's (its CSS container query says the same): content first, its tools behind one control. */
+const NARROW = 560;
+
+/**
+ * HOW MANY ROWS STAND BELOW WHAT THE CARD SHOWS. A district's card on a
+ * phone is the height the scene gives it, and its rows scroll inside it:
+ * the eras showed two of five and said nothing of the rest. Counted as the
+ * stop scrolls and resizes, and said at its foot ("3 more eras below"), a
+ * press that scrolls to them.
+ */
+function useRowsBelow(at: { readonly current: HTMLElement | null }, on: boolean): number {
+  const [below, setBelow] = useState(0);
+  useEffect(() => {
+    const element = at.current;
+    if (!element || !on) {
+      setBelow(0);
+      return;
+    }
+    let frame = 0;
+    const count = () => {
+      frame = 0;
+      const foot = element.getBoundingClientRect().bottom;
+      // A row that starts in the last few pixels is not seen either: its name is cut.
+      setBelow([...element.querySelectorAll('[data-testid="kind-stop-table"] tbody tr[data-graview-pick]')].filter((row) => row.getBoundingClientRect().top > foot - 24).length);
+    };
+    const soon = () => {
+      if (!frame) frame = requestAnimationFrame(count);
+    };
+    count();
+    element.addEventListener("scroll", soon, { passive: true });
+    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(soon);
+    watch?.observe(element);
+    const rows = element.querySelector('[data-testid="kind-stop-body"]');
+    if (rows) watch?.observe(rows);
+    return () => {
+      element.removeEventListener("scroll", soon);
+      watch?.disconnect();
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [at, on]);
+  return below;
+}
+
+/** What scrolls on a phone: the stop's content, inside it, with what is below said under it. At a desk the stop scrolls itself. */
+function Scrolls({ narrow, at, children }: { narrow: boolean; at: { current: HTMLDivElement | null }; children: ReactNode }) {
+  return narrow ? (
+    <div ref={at} className="graview-kind-stop-scroll" data-testid="kind-stop-scroll">
+      {children}
+    </div>
+  ) : (
+    <>{children}</>
+  );
+}
+
+/** Whether the stop is narrow, measured before it paints so it never draws the desk's head first. */
+function useNarrow(at: { readonly current: HTMLElement | null }): boolean {
+  const [narrow, setNarrow] = useState(false);
+  useLayoutEffect(() => {
+    const element = at.current;
+    if (!element) return;
+    const read = () => {
+      const width = element.getBoundingClientRect().width;
+      if (width > 0) setNarrow(width < NARROW);
+    };
+    read();
+    if (typeof ResizeObserver === "undefined") return;
+    const watch = new ResizeObserver(read);
+    watch.observe(element);
+    return () => watch.disconnect();
+  }, [at]);
+  return narrow;
+}
 
 export interface KindStopProps {
   readonly kind: string;
@@ -142,38 +226,81 @@ export function KindStop<S extends AnySchema>({ kind, members: given, flagged = 
 
   // Drawn by the lens it derived — a board, a calendar — rather than the table.
   const pictured = shape.shape !== "table" && draft !== undefined;
+  const section = useRef<HTMLElement | null>(null);
+  const narrow = useNarrow(section);
+  const [tooling, setTooling] = useState(false);
+  const toolsId = useId();
+  // The author's words and "Keep as a lens": for a seat that may change the app, and never on a phone.
+  const author = useMemo(() => mayChangeDeclaration(store, principal), [store, principal]);
+  const arranging =
+    (members.length > 1 || retired > 0) && !pictured ? (
+      <ArrangeBar
+        schema={schema}
+        graph={store.graph as never}
+        kind={kind}
+        arrangement={arrangement}
+        onChange={rearrange}
+        offers={offers}
+        {...(named ? { filters: named } : {})}
+        kept={{ shown: arranged.nodes.length, of: members.length }}
+        testId="kind-arrange"
+        chips={{ nodes: members as never, flagged: flaggedSet, today }}
+        {...(retired > 0 ? { past: { count: retired, widen: () => go(withPast(stop, true)) } } : {})}
+      />
+    ) : null;
+  const narrowed = Boolean(arrangement.query) || (arrangement.filter?.length ?? 0) > 0;
+  /*
+   * ON A PHONE THE RECORDS SCROLL INSIDE, and what is below them is said
+   * under them, outside what scrolls: drawn over the rows, a sticky foot
+   * covered the last row's targets.
+   */
+  const scroller = useRef<HTMLDivElement | null>(null);
+  const below = useRowsBelow(scroller, narrow && !pictured);
   return (
     <section
+      ref={section}
       aria-labelledby={headingId}
       className="graview-kind-stop"
       data-testid="kind-stop"
       data-graview-kind-stop={kind}
       data-graview-shape={shape.shape}
+      data-graview-narrow={narrow || undefined}
     >
       <style>{KIND_STOP_CSS}</style>
-      <Head kind={kind} plural={plural} count={members.length} headingId={headingId} description={definition?.description} />
-      <GoingOn kind={kind} plural={plural} members={members} today={today} arrangement={arrangement} onArrange={rearrange} />
+      <Scrolls narrow={narrow} at={scroller}>
+      <Head
+        kind={kind}
+        plural={plural}
+        count={members.length}
+        headingId={headingId}
+        description={definition?.description}
+        {...(narrow ? { tools: { open: tooling, id: toolsId, toggle: () => setTooling((now) => !now), narrowed } } : {})}
+      />
+      {narrow && tooling ? (
+        <div id={toolsId} className="graview-kind-stop-tools" data-testid="kind-stop-tools" role="group" aria-label={`Find, filter and arrange the ${plural.toLowerCase()}`}>
+          {arranging}
+          {members.length > 0 ? <ShapeLine derived={derived} shape={shape} draft={draft} author={false} /> : null}
+          <KindActs kind={kind} plural={plural} />
+        </div>
+      ) : null}
+      <GoingOn kind={kind} plural={plural} members={members} today={today} arrangement={arrangement} onArrange={rearrange} compact={narrow} />
+      {narrow && narrowed && !tooling ? (
+        <p className="graview-kind-stop-narrowed" data-testid="kind-stop-narrowed">
+          <span className="graview-kind-stop-quiet-text">
+            {numberAsRead(arranged.nodes.length)} of {numberAsRead(members.length)} shown
+          </span>{" "}
+          <button type="button" className="graview-kind-stop-link" onClick={() => rearrange({})}>
+            Show all
+          </button>
+        </p>
+      ) : null}
       {/*
         * A DERIVED LENS ARRANGES ON ITS OWN LINE, over the same stop (`in.sort`,
         * `in.filter`, `in.q`): a board and a calendar draw theirs, and the
         * table draws the list's — one line, never two.
         */}
-      {(members.length > 1 || retired > 0) && !pictured ? (
-        <ArrangeBar
-          schema={schema}
-          graph={store.graph as never}
-          kind={kind}
-          arrangement={arrangement}
-          onChange={rearrange}
-          offers={offers}
-          {...(named ? { filters: named } : {})}
-          kept={{ shown: arranged.nodes.length, of: members.length }}
-          testId="kind-arrange"
-          chips={{ nodes: members as never, flagged: flaggedSet, today }}
-          {...(retired > 0 ? { past: { count: retired, widen: () => go(withPast(stop, true)) } } : {})}
-        />
-      ) : null}
-      {members.length > 0 ? <ShapeLine derived={derived} shape={shape} draft={draft} /> : null}
+      {narrow ? null : arranging}
+      {members.length > 0 && !narrow ? <ShapeLine derived={derived} shape={shape} draft={draft} author={author} /> : null}
       <div className="graview-kind-stop-body" data-testid="kind-stop-body">
         {members.length === 0 ? (
           <p className="graview-kind-stop-empty" data-testid="kind-stop-empty">
@@ -192,14 +319,56 @@ export function KindStop<S extends AnySchema>({ kind, members: given, flagged = 
           <KindTable<S> kind={kind} nodes={arranged.nodes as readonly Rec[]} groups={arranged.grouped ? arranged.groups.map((group) => ({ key: group.key, label: group.label, nodes: group.nodes as readonly Rec[] })) : undefined} flagged={flaggedSet} plural={plural} arrangement={arrangement} />
         )}
       </div>
+      </Scrolls>
+      {below > 0 ? (
+        <button
+          type="button"
+          className="graview-kind-stop-below"
+          data-testid="kind-stop-below"
+          data-graview-below={below}
+          onClick={() => scroller.current?.scrollBy({ top: Math.round(scroller.current.clientHeight * 0.8), behavior: "smooth" })}
+        >
+          {/* "3 more eras below": the kind's own count, with "more" in it. */}
+          {counted(schema, kind, below).replace(/^(\S+)\s/, "$1 more ")} below <span aria-hidden="true">↓</span>
+        </button>
+      ) : null}
     </section>
   );
 }
 
 /* --------------------------------------------------------------- the head */
 
-function Head<S extends AnySchema>({ kind, plural, count, headingId, description }: { kind: string; plural: string; count: number; headingId: string; description: string | undefined }) {
-  const { store, setSelection, setMenuAt } = useGraview<S>();
+/** The one control a narrow stop's tools are behind: open or not, the panel it controls, and whether a filter is on. */
+interface HeadTools {
+  readonly open: boolean;
+  readonly id: string;
+  readonly toggle: () => void;
+  readonly narrowed: boolean;
+}
+
+/** "Acts…": the kind's acts, the menu every record and district opens. */
+function KindActs<S extends AnySchema>({ kind, plural }: { kind: string; plural: string }) {
+  const { setSelection, setMenuAt } = useGraview<S>();
+  return (
+    <button
+      type="button"
+      className="graview-kind-stop-quiet"
+      data-testid="kind-stop-acts"
+      aria-haspopup="menu"
+      aria-label={`What can be done with the ${plural.toLowerCase()}`}
+      onClick={(event) => {
+        const box = event.currentTarget.getBoundingClientRect();
+        setSelection([kindCardId(kind)]);
+        setMenuAt({ x: Math.round(box.left), y: Math.round(box.bottom + 4), on: kindCardId(kind) });
+      }}
+    >
+      Acts…
+    </button>
+  );
+}
+
+function Head<S extends AnySchema>({ kind, plural, count, headingId, description, tools }: { kind: string; plural: string; count: number; headingId: string; description: string | undefined; tools?: HeadTools }) {
+  const { store } = useGraview<S>();
   const about = useMemo(() => ({ about: [kindCardId(kind)] }), [kind]);
   const { affordances } = useAffordances(about);
   const { apply, preview } = useApplyAffordance();
@@ -266,20 +435,23 @@ function Head<S extends AnySchema>({ kind, plural, count, headingId, description
             {primary.label}
           </button>
         ) : null}
-        <button
-          type="button"
-          className="graview-kind-stop-quiet"
-          data-testid="kind-stop-acts"
-          aria-haspopup="menu"
-          aria-label={`What can be done with the ${plural.toLowerCase()}`}
-          onClick={(event) => {
-            const box = event.currentTarget.getBoundingClientRect();
-            setSelection([kindCardId(kind)]);
-            setMenuAt({ x: Math.round(box.left), y: Math.round(box.bottom + 4), on: kindCardId(kind) });
-          }}
-        >
-          Acts…
-        </button>
+        {tools ? (
+          <button
+            type="button"
+            className="graview-kind-stop-more-tools"
+            data-testid="kind-stop-tools-open"
+            aria-expanded={tools.open}
+            aria-controls={tools.open ? tools.id : undefined}
+            aria-label={`Find, filter, arrange and act on the ${plural.toLowerCase()}`}
+            title="Find, filter, arrange and acts"
+            data-narrowed={tools.narrowed || undefined}
+            onClick={tools.toggle}
+          >
+            <span aria-hidden="true">⋯</span>
+          </button>
+        ) : (
+          <KindActs<S> kind={kind} plural={plural} />
+        )}
       </div>
       {asking && primary ? (
         <div className="graview-kind-stop-ask" data-testid="kind-stop-ask" aria-label={primary.label} role="group">
@@ -308,7 +480,7 @@ function Head<S extends AnySchema>({ kind, plural, count, headingId, description
 type RowsProps = Parameters<typeof import("./bar-panes.js").ProblemRows>[0];
 const ProblemRows = barPanes.part((panes, props: RowsProps) => <panes.ProblemRows {...props} />, { what: "The problems", as: "li" });
 
-function GoingOn<S extends AnySchema>({ kind, plural, members, today, arrangement, onArrange }: { kind: string; plural: string; members: readonly Rec[]; today: string; arrangement: Arrangement; onArrange: (next: Arrangement) => void }) {
+function GoingOn<S extends AnySchema>({ kind, plural, members, today, arrangement, onArrange, compact = false }: { kind: string; plural: string; members: readonly Rec[]; today: string; arrangement: Arrangement; onArrange: (next: Arrangement) => void; compact?: boolean }) {
   const { store, brand, setSelection } = useGraview<S>();
   const schema = store.schema as AnySchema;
   const violations = useViolations<S>();
@@ -346,7 +518,36 @@ function GoingOn<S extends AnySchema>({ kind, plural, members, today, arrangemen
       </li>,
     );
   }
-  if (groups.length > 0) {
+  const onlyFlagged = (arrangement.filter ?? []).some((one) => one.key === "is" && one.value === "flagged");
+  if (groups.length > 0 && compact) {
+    /*
+     * ON A PHONE, ONE LINE: how many, the rules that found them, and one
+     * press that shows only the records with a problem (and back). Each
+     * flagged row says its problem on itself.
+     */
+    const rules = groups.map((group) => group.label).join(", ");
+    lines.push(
+      <li key="problems" className="graview-kind-stop-problems-line" data-testid="kind-stop-problems" data-graview-problems={problems}>
+        <span className="graview-kind-stop-warn">
+          <span aria-hidden="true">⚠ </span>
+          {problems === 1 ? "1 problem" : `${numberAsRead(problems)} problems`}
+        </span>
+        <span className="graview-kind-stop-quiet-text graview-kind-stop-rules-said" title={rules}>
+          {" "}· {rules}
+        </span>
+        <button
+          type="button"
+          className="graview-kind-stop-link"
+          data-testid="kind-stop-only-problems"
+          aria-pressed={onlyFlagged}
+          aria-label={onlyFlagged ? `Show all the ${plural.toLowerCase()}` : `Show only the ${plural.toLowerCase()} with a problem`}
+          onClick={() => (onlyFlagged ? onArrange({ ...arrangement, filter: (arrangement.filter ?? []).filter((one) => !(one.key === "is" && one.value === "flagged")) }) : keep([{ key: "is", value: "flagged" }]))}
+        >
+          {onlyFlagged ? "Show all" : "Show"}
+        </button>
+      </li>,
+    );
+  } else if (groups.length > 0) {
     lines.push(
       <li key="problems" data-testid="kind-stop-problems" data-graview-problems={problems}>
         <span className="graview-kind-stop-warn">
@@ -412,12 +613,14 @@ function ProblemLine({ group, open, onToggle, onPick }: { group: ProblemGroup; o
 
 const SHAPE_WORDS: Record<KindShape["shape"], string> = { board: "Board", calendar: "Calendar", table: "Table" };
 
-function ShapeLine<S extends AnySchema>({ derived, shape, draft }: { derived: KindShape; shape: KindShape; draft: SeatDraft | undefined }) {
+function ShapeLine<S extends AnySchema>({ derived, shape, draft, author }: { derived: KindShape; shape: KindShape; draft: SeatDraft | undefined; author: boolean }) {
   const { view: stop } = useGraview<S>();
   const { go } = useNavigation();
   const { keep } = useLensKeeping(useSceneGo());
   const [keeping, setKeeping] = useState(false);
   const choices = derived.shape === "table" ? [] : [derived.shape, "table" as const];
+  // A reader who may not change the app is told nothing of the declaration, and offered nothing to keep: only the shapes, where there are two.
+  if (!author && choices.length === 0) return null;
   return (
     <div className="graview-kind-stop-shape" data-testid="kind-stop-shape">
       {choices.length > 0 ? (
@@ -435,10 +638,12 @@ function ShapeLine<S extends AnySchema>({ derived, shape, draft }: { derived: Ki
           ))}
         </span>
       ) : null}
-      <span className="graview-kind-stop-quiet-text" data-testid="kind-stop-derived">
-        {draft ? `${draft.said.replace(/\.$/, "")}, derived from the declaration` : "Derived from the declaration"}
-      </span>
-      {draft ? (
+      {author ? (
+        <span className="graview-kind-stop-quiet-text" data-testid="kind-stop-derived">
+          {draft ? `${draft.said.replace(/\.$/, "")}, derived from the declaration` : "Derived from the declaration"}
+        </span>
+      ) : null}
+      {draft && author ? (
         <button
           type="button"
           className="graview-kind-stop-link"
@@ -703,7 +908,7 @@ const KIND_STOP_CSS = `
 [data-graview-map-panel] .graview-kind-stop{height:auto;padding:4px 6px 12px;border:0;box-shadow:none;background:none;overflow:visible}
 .graview-kind-stop :focus-visible{outline:2px solid var(--graview-accent);outline-offset:2px}
 .graview-kind-stop button{font:inherit;cursor:pointer}
-.graview-kind-stop :is(.graview-kind-stop-link,.graview-kind-stop-rule,.graview-kind-stop-name button,.graview-kind-stop-row-acts button,.graview-kind-stop-fact,.graview-kind-stop-switch button){box-shadow:none}
+.graview-kind-stop :is(.graview-kind-stop-more-tools,.graview-kind-stop-link,.graview-kind-stop-rule,.graview-kind-stop-name button,.graview-kind-stop-row-acts button,.graview-kind-stop-fact,.graview-kind-stop-switch button){box-shadow:none}
 .graview-kind-stop-head{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 16px}
 .graview-kind-stop-title{flex:1 1 16rem;min-width:0}
 .graview-kind-stop-title h2{margin:0;outline-offset:2px;font-size:var(--graview-text-heading);line-height:1.3;overflow-wrap:anywhere}
@@ -759,10 +964,30 @@ const KIND_STOP_CSS = `
 .graview-kind-stop-table-at[data-graview-choosable]{outline:none}
 [data-graview-choosable]:hover .graview-choose-all .graview-choose-box{opacity:1}
 .graview-kind-stop-table .graview-choose-at{width:1%;padding-right:0;vertical-align:middle}
+.graview-kind-stop-more-tools{position:relative;min-width:32px;min-height:32px;padding:0 8px;border:0;border-radius:8px;background:none;color:var(--graview-ink);font-size:1.125rem;line-height:1}
+.graview-kind-stop-more-tools:hover,.graview-kind-stop-more-tools[aria-expanded=true]{background:color-mix(in srgb,var(--graview-ink) 8%,transparent)}
+.graview-kind-stop-more-tools[data-narrowed]::after{content:"";position:absolute;top:8px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--graview-accent)}
+.graview-kind-stop-tools{display:grid;gap:8px;justify-items:start;padding:10px;border:1px solid var(--graview-edge);border-radius:10px}
+.graview-kind-stop-tools>*{max-width:100%}
+.graview-kind-stop-problems-line{flex-wrap:nowrap!important}
+.graview-kind-stop-problems-line .graview-kind-stop-warn{flex:0 0 auto;white-space:nowrap}
+.graview-kind-stop-rules-said{flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.graview-kind-stop-problems-line .graview-kind-stop-link{flex:0 0 auto}
+.graview-kind-stop-narrowed{margin:0;font-size:.875rem}
+.graview-kind-stop[data-graview-narrow]{overflow:hidden}
+.graview-kind-stop-scroll{flex:1 1 auto;min-height:0;padding:4px;margin:-4px;display:flex;flex-direction:column;gap:10px;overflow:auto;overscroll-behavior:contain}
+[data-graview-map-panel] .graview-kind-stop-scroll{overflow:visible}
+[data-graview-map-panel] .graview-kind-stop[data-graview-narrow]{overflow:visible}
+.graview-kind-stop-below{align-self:stretch;flex:0 0 auto;margin:0 -16px -12px;min-height:44px;padding:0 16px;border:0;border-top:1px solid var(--graview-edge);background:var(--graview-panel);color:var(--graview-accent);font-size:.875rem;text-align:left}
 @container (max-width: 559px){
-.graview-kind-stop{padding:12px}
+.graview-kind-stop{padding:14px 16px 12px}
+.graview-kind-stop-head{position:relative;padding-right:52px}
 .graview-kind-stop-acts{flex:1 1 100%}
-.graview-kind-stop-primary{flex:1 1 auto}
+.graview-kind-stop-primary{flex:0 0 auto}
+.graview-kind-stop-more-tools{position:absolute;top:-6px;right:0}
+.graview-kind-stop-name button{text-decoration:none}
+.graview-kind-stop-row-acts button{border-color:transparent;font-weight:400;color:var(--graview-ink-muted)}
+.graview-kind-stop-row-acts button:hover{color:var(--graview-ink)}
 .graview-kind-stop-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .graview-kind-stop-table,.graview-kind-stop-table tbody,.graview-kind-stop-table tr{display:block}
 .graview-kind-stop-table tr{position:relative;padding:8px 40px 8px 0;border-top:1px solid var(--graview-edge)}
@@ -781,7 +1006,7 @@ const KIND_STOP_CSS = `
 }
 @media (pointer: coarse){
 .graview-kind-stop-primary,.graview-kind-stop-quiet,.graview-kind-stop-fact,.graview-kind-stop-rule,.graview-kind-stop-link,.graview-kind-stop-switch button,.graview-kind-stop-row-acts button{min-height:44px}
-.graview-kind-stop-row-acts button{min-width:44px}
+.graview-kind-stop-row-acts button,.graview-kind-stop-more-tools{min-width:44px;min-height:44px}
 .graview-kind-stop-name button{min-height:44px}
 }
 @media (prefers-reduced-motion: reduce){.graview-kind-stop *{transition:none!important;animation:none!important}}

@@ -194,7 +194,9 @@ describe("a hosted page", () => {
     // 1079 KB with both in batch/0-1-64: 1_097_638 + 6_486 = 1_104_124 B.
     // 1080 KB since a phone's sheet came to leave the city where it stood (Roadmap f-scene-sheet-keeps-the-city): the city kept at its size under a choice's sheet with the choice lifted above it, the zoom not drawn on that sheet, and the keyboard bringing a district into sight with its showings: the scene face measured 1_105_903 B, 1_063 more than main (1_104_840).
     // 1081 KB since a phone's sheet came to show most of the screen (Roadmap f-scene-sheet-keeps-the-city, the follow-up): the choice not pushed into the sliver of map the top rest leaves and no edge signs on it; the handle itself is the panel's, fetched when a panel opens: the scene face measured 1_105_965 B, 62 more than batch/0-1-65 (1_105_903).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1081 * 1024);
+    // 1082 KB since going into a district on a phone came to read clean (Roadmap f-phone-drive-in-reads-clean): the bar naming the district or record the reader is in, the Key and a chosen record's Acts in Up's row on a phone's ground, the scene's phone layout giving Up that row, and a keyboard landing judged once the ground settles: the scene face measured 1_107_673 B, 1_770 more than before it (1_105_903).
+    // 1082 KB with both in batch/0-1-65: the scene face measured 1_107_735 B.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1082 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

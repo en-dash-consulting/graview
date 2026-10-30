@@ -932,14 +932,20 @@ async function pressDistrict(person, kind, plural) {
   if ((await page.locator(`[data-graview-view="kind:${escapeAttr(kind)}"][data-graview-selected]`).count()) > 0) return;
   const district = page.locator(`[data-graview-view="kind:${escapeAttr(kind)}"]`).first();
   if (!(await district.isVisible().catch(() => false))) {
-    // A narrow scene folds the districts it has no room for into a menu.
-    const more = page.getByRole("button", { name: /^\+\d+ more$/ }).first();
+    // A narrow scene folds the districts it has no room for into a menu, said in words: "3 more districts".
+    const more = page.getByRole("button", { name: /^\d+ more districts?$/ }).first();
     if (await more.isVisible().catch(() => false)) await person.press(more, "the folded districts");
     const item = page.getByRole("menuitem", { name: new RegExp(`^${plural}(?!\\p{L})`, "u") }).first();
     if (await item.isVisible().catch(() => false)) {
       await person.press(item, `${plural} in the menu`);
       await person.settle(400);
-      if (!(await district.isVisible().catch(() => false))) return;
+      /*
+       * The menu's press goes into the district, and the keyboard with it, to
+       * its heading. Its own card on the row, which a phone's full-width row
+       * now has room to keep (FR-143), is where the reader already is: walking
+       * there too cost a keyboard twenty-five presses nobody makes.
+       */
+      return;
     }
   }
   /*

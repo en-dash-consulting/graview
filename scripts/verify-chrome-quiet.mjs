@@ -1043,7 +1043,7 @@ try {
   };
   report.checks.thePlaceYouAreOnIsSaidOnTheRowOrThePhonesFirstLineOnBothFaces = {
     seen: results.deskBars.map(({ engine, scheme, places, face, viewport, dpr, place }) => ({ engine, scheme, places, face, viewport, dpr, place })),
-    ok: deskBarsAll && results.deskBars.every((one) => one.place.said === (one.face === "pages" ? "Email to Todd" : "The whole thing") && (one.phone ? one.place.firstLine : one.place.onTheRow)),
+    ok: deskBarsAll && results.deskBars.every((one) => one.place.said === (one.face === "pages" ? "Email to Todd" : "Everything") && (one.phone ? one.place.firstLine : one.place.onTheRow)),
   };
   report.checks.everyPlaceIsTwoPressesAwayByPointerAndKeyboard = {
     seen: results.twoPresses,
@@ -1073,7 +1073,7 @@ try {
     },
     thePlaceYouAreOnIsAlwaysSeenOnTheRowOrThePhonesFirstLine: {
       seen: standing.map((one) => ({ ...whereStanding(one), place: one.place })),
-      ok: standingAll && standing.every((one) => one.place.said === (one.face === "pages" ? "Email to Todd" : "The whole thing") && one.place.seen && ((one.box || one.width) < BAR_PHONE_WIDTH ? one.place.firstLine : one.place.onTheRow)),
+      ok: standingAll && standing.every((one) => one.place.said === (one.face === "pages" ? "Email to Todd" : "Everything") && one.place.seen && ((one.box || one.width) < BAR_PHONE_WIDTH ? one.place.firstLine : one.place.onTheRow)),
     },
     /*
      * RANKED (FR-145): the workshop's main places — Home, its three kinds and

@@ -102,8 +102,9 @@ export const BeyondCard = memo(function BeyondCard({ kinds }: { kinds: readonly 
           popover.toggle();
         }}
       >
-        <span className="graview-beyond-count">+{going.length}</span>
-        <span className="graview-beyond-word">more</span>
+        {/* What it is, in words: "3 more districts", never a bare "+3 MORE" that a reader had to press to learn. */}
+        <span className="graview-beyond-count">{going.length}</span>{" "}
+        <span className="graview-beyond-word">more district{going.length === 1 ? "" : "s"}</span>
         <span className="graview-beyond-chevron" aria-hidden="true">{open ? "▾" : "▴"}</span>
       </button>
       {open ? (

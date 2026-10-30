@@ -72,7 +72,7 @@ describe("the line about where the reader is", () => {
   });
 
   it("says the whole thing by its largest kinds when nothing is chosen", () => {
-    expect(whereLine({ store, subject: { id: null, name: "the whole thing" }, violations: [] })).toBe("The whole thing: 3 tasks and 1 list.");
+    expect(whereLine({ store, subject: { id: null, name: "everything" }, violations: [] })).toBe("Everything: 3 tasks and 1 list.");
   });
 });
 
@@ -86,7 +86,7 @@ describe("what the seat offers to ask", () => {
   });
 
   it("asks what needs attention when the trouble is elsewhere, and what is here at a place", () => {
-    const here = offersFor({ store, subject: { id: null, name: "the whole thing" }, violations: [late] });
+    const here = offersFor({ store, subject: { id: null, name: "everything" }, violations: [late] });
     expect(here.map((one) => one.ask)).toEqual(["What needs attention?", "What is here?"]);
   });
 });
@@ -119,7 +119,7 @@ describe("the acts the seat offers unprompted", () => {
   });
 
   it("are no repairs when nothing is chosen, only what the reader pinned", () => {
-    expect(offeredActs(affordances, { store, subject: { id: null, name: "the whole thing" } }).map((one) => one.affordance.id)).toEqual(["pinned", "another"]);
+    expect(offeredActs(affordances, { store, subject: { id: null, name: "everything" } }).map((one) => one.affordance.id)).toEqual(["pinned", "another"]);
   });
 });
 
