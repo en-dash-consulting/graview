@@ -43,7 +43,7 @@ describe("an ask about a list", () => {
     const { thinking, told } = answering({ answer: "Marking them done.", each: { act: "set-status", args: { status: "done" } } });
     const result = await answerHere({ thinking }, { store, target: { on: "list", kind: "task" }, principal: me, said: "mark these done", members: ["t-1", "t-3"] });
     expect(told[0]!.members!.map((one) => one.id)).toEqual(["t-1", "t-3"]);
-    expect(told[0]!.member_acts).toContainEqual({ name: "set-status", title: "Set the status", asks: ["status"] });
+    expect(told[0]!.member_acts).toContainEqual(expect.objectContaining({ name: "set-status", title: "Set the status", asks: ["status"] }));
     expect(result.ghost?.proposals.map((one) => one.id)).toEqual(["each:set-status:t-1", "each:set-status:t-3"]);
     // Proposed, not made; accepted as one batch; one undo takes both back.
     expect(store.graph.getNode("t-1")).not.toHaveProperty("status");

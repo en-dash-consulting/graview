@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createTodoUiStore } from "../apps/todo/src/ui/app.js";
 import { decideOverTheGraph, givingOf } from "../packages/tools/src/graph-plan.js";
 import { answerHere } from "../packages/tools/src/inline-ai.js";
+import { forThePerson } from "../packages/tools/src/sentences.js";
 import type { FastProvider, ThinkingProvider } from "../packages/tools/src/ai.js";
 import type { Answer, Decide } from "../packages/tools/src/fast.js";
 import { todoApp } from "../apps/todo/src/domain/app.js";
@@ -89,6 +90,22 @@ describe("a plan over the graph", () => {
     const plan = (await planFor(env, { said: "assign all these to Sam", missing: { said: "Tasks have no one assigned to them.", need: { link: { on: "task", called: "assigned to", to: "person" } }, who: "Sam" }, members: ["week"], host: false, where: "This week" })) as AppPlan;
     expect(plan.parts.at(-1)?.said).toBe(`Assign Sam to the ${held} tasks in This week.`);
     expect(JSON.stringify(plan)).not.toMatch(/acts on|not on a list/);
+  });
+
+  it("takes “me” as the person at the seat, and “her” as the one the turn before named — and says whom it took", async () => {
+    const mine = await decideOverTheGraph(reading(), { store: store(), target: { on: "record", id: "week" }, said: "assign these to me", principal: { id: "user-nora" } });
+    expect(mine.missing).toMatchObject({ need: { link: { on: "task", to: "person" } }, who: "Nora" });
+    const hers = await decideOverTheGraph(reading(), { store: store(), target: { on: "record", id: "t-book" }, said: "give this to her", follows: { said: "what does Nora have on this week?" } });
+    expect(hers.taken).toEqual({ said: "her", as: "Nora" });
+    expect(hers.missing).toMatchObject({ who: "Nora" });
+  });
+
+  it("never lets a model's note reach the card: a fragment is said plainly (theCardNeverShowsThePipelinesOwnNotes)", async () => {
+    const noting: ThinkingProvider = { model: "noting", think: async () => ({ text: JSON.stringify({ answer: "", lacks: "a way to close or archive tasks" }) }) };
+    const result = await answerHere({ fast: reading(), thinking: noting }, { store: store(), target: { on: "record", id: "week" }, principal: nora, said: "frobnicate these" });
+    expect(result.answer).toBe("I couldn't work out how to do that — try saying it another way.");
+    expect(forThePerson("a way to close or archive tasks")).toBe(false);
+    expect(forThePerson("Tasks have no one assigned to them.")).toBe(true);
   });
 
   it("reads the giving the words say, and to whom", () => {

@@ -1129,13 +1129,17 @@ try {
               continue;
             }
             if (question.type === "choice" && key === "act") {
-              answers[key] = giving ? sure(question, "none") : sure(question, "none", 0.3);
+              // "Close", "complete", "finish": the act that marks done, read by what it does — on the tasks a list holds.
+              const closing = /\b(close|complete|finish|tick|check off)\b/i.test(said) && !/\?\s*$/.test(said);
+              const held = /\b(these|all|them|each|everything|tasks)\b/i.test(said);
+              const finish = Object.keys(question.criteria).find((name) => name === `${held ? "held" : "itself"}:finish`);
+              answers[key] = closing && finish ? sure(question, finish) : giving ? sure(question, "none") : sure(question, "none", 0.3);
               continue;
             }
-            if (question.type === "choice" && key === "person") {
+            if (question.type === "choice" && (key === "person" || key === "named")) {
               const names = Object.keys(question.criteria);
-              const named = names.find((name) => name.startsWith("p:") && new RegExp(`\\b${question.criteria[name]}\\b`, "i").test(said));
-              answers[key] = sure(question, named ?? (giving ? "new" : "none"));
+              const named = names.find((name) => /^[pr]:/.test(name) && new RegExp(`\\b${String(question.criteria[name]).replace(/ \(.*\)$/, "")}\\b`, "i").test(said));
+              answers[key] = sure(question, named ?? (giving && key === "person" ? "new" : "none"));
               continue;
             }
             if (question.type === "choice" && key === "need") {
@@ -1173,6 +1177,8 @@ try {
           const acts = (told.member_acts ?? []).map((one) => one.name);
           // "Mark these done": one act over every member. "Assign these to nick": the app has nothing to assign with.
           if (/done/i.test(told.ask ?? "") && acts.includes("set-status")) return { text: JSON.stringify({ answer: "Marking each of them done.", each: { act: "set-status", args: { status: "done" } } }) };
+          // A model's note to the pipeline, never to be shown as it came: a fragment, no need named.
+          if (/frobnicate/i.test(told.ask ?? "")) return { text: JSON.stringify({ answer: "", lacks: "a way to frobnicate tasks" }) };
           if (/assign/i.test(told.ask ?? "") && !acts.some((name) => /assign|give/.test(name))) return { text: JSON.stringify({ answer: "", lacks: "Tasks have no one to assign them to.", need: { link: { on: "task", called: "assigned to", to: "person" } }, who: "Nick" }) };
           window.__thinkingSaw.push({ candidates: (told.candidates ?? []).map((one) => one.says), records: [...(told.state?.selection ?? []), ...(told.state?.neighbors ?? [])].map((one) => one.label) });
           return { text: JSON.stringify({ answer: `About ${told.about}: it is not done yet, so finish it.`, pick: (told.candidates ?? []).map((one) => one.id) }) };
@@ -1822,6 +1828,34 @@ try {
         first.reading === "Taking this as This week itself." &&
         revised.steps.at(-1) === `Assign Sam to the ${held} tasks in This week.` && revised.yes && revised.refused === null &&
         !/acts on|not on a list|checker/i.test(`${first.whole} ${revised.whole}`) && revised.thinkingCalls === 0,
+    };
+
+    /* THE CARD NEVER SHOWS THE PIPELINE'S OWN NOTES. "Close all tasks in this list" is the act that marks done, over the tasks; a model's fragment ("a way to frobnicate tasks") is never the card's words. */
+    reach("theCardNeverShowsThePipelinesOwnNotes");
+    await on.evaluate(() => (window.__misread = false));
+    await openWeek();
+    await on.keyboard.type("close all tasks in this list");
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"] [data-testid="ai-ghost"]', { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const closing = await on.evaluate(() => ({
+      text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+      proposed: [...document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]')].map((one) => one.getAttribute("data-ghost-proposal")),
+      plan: Boolean(document.querySelector('[data-testid="quick-ask-plan"]')),
+    }));
+    await openWeek();
+    await on.keyboard.type("frobnicate these");
+    await on.keyboard.press("Enter");
+    await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const fragment = await on.evaluate(() => document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null);
+    const whole = (text) => /^[\p{Lu}\p{N}"“‘'(]/u.test(text ?? "") && /[.!?…][”’"')]*$/u.test((text ?? "").trim()) && (text ?? "").trim().split(/\s+/).length >= 3;
+    report.checks.theCardNeverShowsThePipelinesOwnNotes = {
+      closing,
+      fragment,
+      ok:
+        closing.proposed.length >= 1 && closing.proposed.length <= held && closing.proposed.every((id) => /^each:finish:t-/.test(id ?? "")) && !closing.plan && whole(closing.text) &&
+        fragment !== null && whole(fragment) && !/a way to frobnicate/i.test(fragment),
     };
     await context.close();
   }
