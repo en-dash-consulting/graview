@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 400,
+  "note": "Raised in the 0.1.64 Version packages pull request: the same code with the version string 0.1.64 gzips differently. 2_566_611 minified both before and after the version step; 930_209 against 930_046 gzipped, 163 over."
+}
