@@ -121,7 +121,7 @@ async function serveMenuHost() {
         const onProposeChange = async (proposal) => {
           window.__proposed = (window.__proposed ?? []).concat([proposal]);
           const before = { ...current, store: window.__handle.store };
-          const composed = composeAppChange({ document: current.document, add: proposal.add, drop: proposal.drop });
+          const composed = composeAppChange(proposal.edits ? { document: current.document, edits: proposal.edits } : { document: current.document, add: proposal.add, drop: proposal.drop });
           if (!composed.ok) return "declined";
           const app = composed.app;
           const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: before.store.graph.snapshot(), ...(app.policy ? { policy: app.policy } : {}) });
@@ -1144,7 +1144,7 @@ try {
           const acts = (told.member_acts ?? []).map((one) => one.name);
           // "Mark these done": one act over every member. "Assign these to nick": the app has nothing to assign with.
           if (/done/i.test(told.ask ?? "") && acts.includes("set-status")) return { text: JSON.stringify({ answer: "Marking each of them done.", each: { act: "set-status", args: { status: "done" } } }) };
-          if (/assign/i.test(told.ask ?? "") && !acts.some((name) => /assign|give/.test(name))) return { text: JSON.stringify({ answer: "", lacks: "Tasks have no one to assign them to.", add: ["owners"], who: "Nick", then: "give each of them to Nick" }) };
+          if (/assign/i.test(told.ask ?? "") && !acts.some((name) => /assign|give/.test(name))) return { text: JSON.stringify({ answer: "", lacks: "Tasks have no one to assign them to.", need: { link: { on: "task", called: "assigned to", to: "person" } }, who: "Nick" }) };
           window.__thinkingSaw.push({ candidates: (told.candidates ?? []).map((one) => one.says), records: [...(told.state?.selection ?? []), ...(told.state?.neighbors ?? [])].map((one) => one.label) });
           return { text: JSON.stringify({ answer: `About ${told.about}: it is not done yet, so finish it.`, pick: (told.candidates ?? []).map((one) => one.id) }) };
         },
@@ -1294,7 +1294,7 @@ try {
     });
     typing.asks[face] = { askRow: askRow?.rows.at(-1) ?? null, lit: askRow?.lit, thinking, card, menuGone: !(await on.$(MENU)) };
     typing.asks[face].ok =
-      askRow !== null && askRow.acts.length === 0 && askRow.rows.at(-1)?.id === "ask-typed" && askRow.lit === `Ask about Pay the deposit: ${asking}` &&
+      askRow !== null && askRow.acts.length === 0 && askRow.rows.at(-1)?.id === "ask-typed" && askRow.lit === `Tell Graview “${asking}”` &&
       thinking !== null && thinking.on === "t-deposit" && thinking.anchorIs === "t-deposit" && thinking.role === "status" && thinking.said.includes("Pay the deposit") && thinking.visible && thinking.onIt && !thinking.modal &&
       card !== null && card.beside === "t-deposit" && card.asked === `“${asking}”` && typing.asks[face].menuGone;
 
@@ -1373,6 +1373,51 @@ try {
     await offContext.close();
   }
   /*
+   * THE MENU NEVER CALLS AN INSTRUCTION A QUESTION. Nick mostly tells it to
+   * do something: the field, the row Enter runs, the card and its reply
+   * field, Activity's line, every name a screen reader hears — none says
+   * "ask".
+   */
+  reach("theMenuNeverCallsAnInstructionAQuestion");
+  {
+    const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    await context.addInitScript(FAKE_AI);
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`words: ${error.message}`));
+    const wordsOf = (selector) =>
+      on.evaluate((selector) => {
+        const root = document.querySelector(selector);
+        if (!root) return null;
+        const named = [...root.querySelectorAll("[aria-label], [placeholder], [title]")].flatMap((one) => [one.getAttribute("aria-label"), one.getAttribute("placeholder"), one.getAttribute("title")]);
+        // The model's own answer is its words, not the app's: left out.
+        const shown = [...root.querySelectorAll("button, label, [role=option], [data-menu-item], [data-testid=quick-answer-asked], [data-testid=ai-thinking-mark]")].map((one) => one.textContent ?? "");
+        return [root.getAttribute("aria-label"), ...named, ...shown].filter(Boolean).join(" | ");
+      }, selector);
+    await opened(on, "scene", "");
+    await on.keyboard.type("assign all these to nick");
+    await on.waitForTimeout(300);
+    const inTheMenu = await wordsOf(MENU);
+    const inlineRow = await on.evaluate(() => document.querySelector('[data-menu-item="ai-ask"]')?.textContent ?? null);
+    await on.keyboard.press("Enter");
+    await on.waitForSelector('[data-testid="quick-ask"]', { timeout: 10_000 }).catch(() => undefined);
+    await on.waitForTimeout(400);
+    const onTheCard = await wordsOf('[data-testid="quick-ask"]');
+    await on.click('[data-testid="quick-ask-close"]').catch(() => undefined);
+    await on.click('[data-testid="activity-button"]:visible').catch(() => undefined);
+    await on.waitForSelector('[data-testid="activity-interaction"]', { timeout: 8_000 }).catch(() => undefined);
+    const inActivity = await on.evaluate(() => [...document.querySelectorAll('[data-testid="activity-interaction"]')].map((one) => one.querySelector("[data-graview-activity-words]")?.textContent ?? "").join(" | "));
+    const asks = (words) => /\bask(s|ed|ing)?\b/i.test(words ?? "");
+    report.checks.theMenuNeverCallsAnInstructionAQuestion = {
+      inTheMenu,
+      inlineRow,
+      onTheCard,
+      inActivity,
+      ok: inTheMenu !== null && !asks(inTheMenu) && /Tell Graview/.test(inTheMenu) && onTheCard !== null && !asks(onTheCard) && /told Graview/.test(inActivity) && !asks(inActivity),
+    };
+    await context.close();
+  }
+
+  /*
    * GRAVIEW IS HERE WHILE IT THINKS, AND GOES WHEN THE CARD CLOSES. Asked
    * from the menu, the app's AI stands among who is here — in this tab's
    * bar and, over the presence channel, in another tab's — from the words
@@ -1439,9 +1484,9 @@ try {
         const store = window.__handle.store;
         const tasks = ["t1", "t2"].map((id) => store.graph.getNode(id));
         const people = store.graph.allNodes().filter((node) => node.kind === "person");
-        const owned = ["t1", "t2"].map((id) => store.graph.out(id, "owner").map((node) => node.name ?? node.label));
+        const owned = ["t1", "t2"].map((id) => store.graph.out(id, "assignedTo").map((node) => node.name ?? node.label));
         const last = store.log.all().at(-1);
-        return { kinds: store.schema.kinds, statuses: tasks.map((task) => task?.status), people: people.map((one) => one.name ?? one.label), owned, lastBatch: last?.batch ?? null, lastVia: last?.via ?? null };
+        return { kinds: store.schema.kinds, statuses: tasks.map((task) => task?.status), people: people.map((one) => one.name ?? one.label), owned, lastBatch: last?.batch ?? null, lastVia: last?.via ?? null, rules: store.allInvariants?.().length ?? null };
       });
 
     reach("anAskAboutAListActsOnEveryRecordInItAsOneChange");
@@ -1493,6 +1538,8 @@ try {
     await on.waitForTimeout(400);
     const back = await storeSays();
     const text = offered.parts.map((one) => one.said).join(" | ");
+    // The list the page shows is the board it opens on: "in The board".
+    const STEPS = ["Add a People list.", "Give each task an “Assigned to” field that points to a person.", "Add Nick to People.", "Assign Nick to the 2 tasks in The board."];
     report.checks.aMissingCapabilityIsOfferedAsOnePlanThatFinishesTheAsk = {
       offered,
       notYet: { kinds: notYet.kinds, people: notYet.people },
@@ -1500,12 +1547,25 @@ try {
       undoOffered,
       back: { kinds: back.kinds, owned: back.owned },
       ok:
-        /no one to assign them to/i.test(offered.said ?? "") && /Should I\?$/.test((offered.said ?? "").trim()) && offered.yes && offered.proposedYet === 0 &&
-        /new kind, person/i.test(text) && /Tasks get an owner/.test(text) && /Add Nick as a person/.test(text) && /each of the 2 tasks here to Nick/i.test(text) &&
+        offered.said === "Tasks have no one to assign them to. I can do it in 4 steps. Should I?" && offered.yes && offered.proposedYet === 0 &&
+        JSON.stringify(offered.parts.map((one) => one.said)) === JSON.stringify(STEPS) &&
         !notYet.kinds.includes("person") &&
         landed.kinds.includes("person") && landed.people.includes("Nick") && landed.owned.every((names) => names.length === 1 && names[0] === "Nick") && landed.lastVia === "ai:fake" &&
         undoOffered && !back.kinds.includes("person") && back.owned.every((names) => names.length === 0),
     };
+    /* Its steps in plain words, and only what the ask needed: no rule, no new place, nothing the app's names. */
+    report.checks.aPlanSaysItsStepsInPlainWords = {
+      said: offered.said,
+      steps: offered.parts.map((one) => one.said),
+      ok: offered.parts.length > 0 && !/\b[a-z]+-[a-z]+\b|people who own things|owner link|Who has what|somebody on it|[a-z,] (Give|Set|Add) [a-z]/.test([offered.said, text].join(" ")),
+    };
+    report.checks.aPlanTakesOnlyWhatTheAskNeeds = {
+      edits: (await on.evaluate(() => (window.__proposed ?? []).at(-1)?.edits?.map((edit) => edit.op) ?? null)),
+      rulesBefore: notYet.rules,
+      rulesLanded: landed.rules,
+      ok: false,
+    };
+    report.checks.aPlanTakesOnlyWhatTheAskNeeds.ok = JSON.stringify(report.checks.aPlanTakesOnlyWhatTheAskNeeds.edits) === JSON.stringify(["add-kind", "add-relation", "add-act"]) && notYet.rules === landed.rules;
     await context.close();
   }
 

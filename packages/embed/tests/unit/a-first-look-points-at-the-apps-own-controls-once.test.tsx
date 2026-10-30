@@ -162,7 +162,7 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
     const onScene = await walk(scene.host);
     expect(onScene.map((one) => one.anchor)).toEqual(["faces", "problems", "ask"]);
     expect(onScene[0]!.title).toBe("Scene or Pages");
-    expect(onScene[2]!.title).toBe("Ask");
+    expect(onScene[2]!.title).toBe("Tell Graview");
     for (const one of onScene) expect(one.covers, one.anchor).toBe(false);
     await scene.done();
 

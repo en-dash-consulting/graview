@@ -106,7 +106,7 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
     <li data-testid="activity-interaction" data-interaction={entry.id} data-outcome={entry.outcome} style={ACTIVITY_ROW}>
       <div data-graview-activity-head="" style={ACTIVITY_HEAD}>
         <span data-graview-activity-words="" style={ACTIVITY_WORDS}>
-          <strong style={{ fontWeight: 600 }}>{who}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>asked AI to {askWords(entry)}</span>
+          <strong style={{ fontWeight: 600 }}>{who}</strong> <span style={{ color: "var(--graview-ink-muted)" }}>{entry.ask.kind === "ask" ? `told Graview “${entry.ask.said}”` : `asked AI to ${askWords(entry)}`}</span>
           <span style={{ color: "var(--graview-ink-faint)" }}> · {entry.targetLabel}</span>
         </span>
       </div>
@@ -143,7 +143,7 @@ export function InteractionRow({ entry, undo }: { readonly entry: AiInteraction;
             </button>
           ) : null}
           <button type="button" data-testid="interaction-again" disabled={busy} onClick={() => run((runner) => runner.askAgain(env, entry))} style={PRESSED}>
-            Ask again
+            Again
           </button>
         </div>
       ) : null}

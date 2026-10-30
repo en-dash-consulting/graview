@@ -52,7 +52,7 @@ function frameworkSteps(root: Element): FirstLookStep[] {
     { anchor: "faces", title: `${scene} or ${pages}`, words: `One app, two ways to see it: ${scene} draws every record as one picture, ${pages} as lists and pages to read and change.` },
     { anchor: "problems", title: "Whether all is in order", words: "The dot is green while every rule holds. When one is broken it counts what is wrong, and pressing it shows each one and where." },
     { anchor: "activity", title: "Activity", words: "What has happened here and who did it, each change with its way back." },
-    { anchor: "ask", title: "Ask", words: "Press ⌘K (Ctrl+K) to ask about what you have selected, or right-click it and choose Ask about this…. The answer stands beside it, and a change it proposes waits for you to accept it." },
+    { anchor: "ask", title: "Tell Graview", words: "Press ⌘K (Ctrl+K) to tell Graview what to do about what you have selected, or right-click it and type. The answer stands beside it, and a change it proposes waits for you to accept it." },
   ];
 }
 

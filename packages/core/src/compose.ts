@@ -323,22 +323,55 @@ export function traitsOf(source: GraviewDocument | GraviewApp<AnySchema>): Trait
 
 /**
  * A CHANGE TO THE APP, COMPOSED AND CHECKED, FOR A HOST (Roadmap
- * f-menu-type-anything): the traits a plan adds (and the parts it drops)
- * composed onto the app's document (`composeReshape`), the edits said in
- * words, and the changed document compiled by the checker — the app it
- * makes, or the checker's first error as a refusal. What a host hands the
- * quick ask (`composeChange`) so it can offer a whole plan that finishes an
- * ask, rehearsed before it is offered; the composer and the checker stay
- * the host's, off every page.
+ * f-menu-type-anything): the edits a plan names (`planEdits`: the least the
+ * ask needs) — or the traits a reshape adds and the parts it drops, composed
+ * (`composeReshape`) — applied to the app's document, who may run and see
+ * what it adds granted as the app's widest grant does, the steps said in
+ * words, and the changed document compiled by the checker: the app it makes,
+ * or a refusal. What a host hands the quick ask (`composeChange`) and applies
+ * a plan with; the composer and the checker stay the host's, off every page.
  */
-export function composeAppChange(change: { readonly document: GraviewDocument; readonly add: readonly TraitName[]; readonly drop?: readonly string[] }):
+export function composeAppChange(change: { readonly document: GraviewDocument; readonly edits?: readonly unknown[]; readonly add?: readonly TraitName[]; readonly drop?: readonly string[] }):
   | { readonly ok: true; readonly document: GraviewDocument; readonly app: GraviewApp<AnySchema>; readonly said: readonly string[] }
   | { readonly ok: false; readonly refused: string } {
-  const composed = composeReshape({ document: change.document, add: change.add, drop: change.drop ?? [] });
-  const compiled = compileDocument(composed.document);
+  let changed: GraviewDocument;
+  let said: string[];
+  if (change.edits) {
+    const edited = editDocument(change.document, change.edits);
+    if (!edited.ok) return { ok: false, refused: `It could not be written: ${edited.findings[0]?.message ?? "an edit was refused"}.` };
+    changed = edited.document;
+    said = [...edited.said];
+  } else {
+    const composed = composeReshape({ document: change.document, add: change.add ?? [], drop: change.drop ?? [] });
+    changed = composed.document;
+    said = composed.said.filter((line) => !line.startsWith("Not done"));
+  }
+  /*
+   * WHO MAY RUN AND SEE WHAT IT ADDS: a policy that names its acts would
+   * leave the new ones unreachable — which the checker refuses — and one
+   * that names what each role sees would hide a new kind, so both are
+   * granted as the app's widest grant is, and said.
+   */
+  const policy = changed.policy;
+  const addedActs = Object.keys(changed.acts ?? {}).filter((name) => !(name in (change.document.acts ?? {})));
+  const addedKinds = Object.keys(changed.kinds).filter((name) => !(name in change.document.kinds));
+  const listing = (policy?.grants ?? []).filter((grant) => Array.isArray(grant.mutations) && !grant.self);
+  const widest = [...listing].sort((a, b) => (b.mutations as readonly string[]).length - (a.mutations as readonly string[]).length)[0];
+  const opens = (policy?.grants ?? []).some((grant) => grant.mutations === "*");
+  let document = changed;
+  if (policy && widest && addedActs.length > 0 && !opens) {
+    document = { ...document, policy: { ...document.policy!, grants: [...document.policy!.grants, { roles: widest.roles, mutations: addedActs }] } };
+    said.push(`Who may run what it adds: ${widest.roles === "*" ? "everybody" : (widest.roles as readonly string[]).join(" and ")}.`);
+  }
+  const sees = (document.policy as { readonly sees?: readonly { readonly roles?: unknown; readonly kinds?: readonly string[] }[] } | undefined)?.sees;
+  if (sees && addedKinds.length > 0) {
+    const roles = (document.roles as readonly string[] | undefined) ?? [...new Set(sees.flatMap((one) => (Array.isArray(one.roles) ? (one.roles as string[]) : [])))];
+    document = { ...document, policy: { ...document.policy!, sees: [...sees, { roles, kinds: addedKinds }] } as never };
+  }
+  const compiled = compileDocument(document);
   if (!compiled.ok) {
     const finding = compiled.findings.find((one) => one.severity === "error") ?? compiled.findings[0];
     return { ok: false, refused: `It would not pass the checker${finding ? `: ${finding.message}` : ""}.` };
   }
-  return { ok: true, document: composed.document, app: compiled.app as GraviewApp<AnySchema>, said: composed.said.filter((line) => !line.startsWith("Not done")) };
+  return { ok: true, document, app: compiled.app as GraviewApp<AnySchema>, said };
 }

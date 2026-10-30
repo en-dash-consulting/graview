@@ -1,5 +1,6 @@
-import { argumentsTaken, Store, type AnySchema, type MutationCall } from "@graview/core";
-import { TRAIT_BRINGS, TRAIT_WORDS, type TraitName } from "@graview/core/traits";
+import { nounOf, pluralOf, Store, type AnySchema, type MutationCall } from "@graview/core";
+import { planEdits, type PlannedEdits } from "@graview/core/catalog";
+import type { GraviewDocument } from "@graview/core/document";
 import type { AnswerMissing } from "@graview/tools/inline-ai";
 import type { ComposeChangeHost, ReshapeProposal } from "@graview/tools/reshape";
 import type { InlineEnv } from "./inline-ai-env.js";
@@ -10,19 +11,22 @@ import type { InlineEnv } from "./inline-ai-env.js";
  * 'tasks have no assignment, but I can add that property, and add a People
  * kind and add Nick to it and assign him to them all… should I?'"
  *
- * Where the answer found the app lacks what was asked (`AnswerMissing`),
- * the plan is composed whole — never written by the model: the change to
- * the app from the reshape vocabulary (the host's `composeChange`, such as
- * `composeAppChange`: `composeReshape` and the checker, off the page), then the records that finish the ask in the changed app
- * (the person the words name, found or made; the act that gives each
- * record the list shows to them), each found among the changed app's own
- * acts. The checker judges the changed app and a scratch store rehearses
- * every call before anything is offered: a plan that would fail is refused
- * here, never offered. Fetched with the first such answer; no page carries
- * it up front, and the composer and the checker are the host's.
+ * The model names the need (`AnswerMissing.need`: a link, or a field); code
+ * writes the least change that gives it (`planEdits`: the kind the link
+ * points to where the app has none, the link or the field, the one act that
+ * sets it — no rule, no new place), then the records that finish the ask
+ * (the person the words name, found or made; each record the list shows
+ * given to them). Every step is said from those edits and records, in plain
+ * words, numbered, each a thing that will happen. Where the host lends its
+ * composer (`composeChange`) the changed app is judged by the checker and a
+ * scratch store rehearses every record first; a plan that would fail is
+ * refused, never offered. Where the seat may not change the app — or the app
+ * is declared in code with no host to change it — the whole plan is still
+ * said, with who would add its first steps. Fetched with the first such
+ * answer; no page carries it up front.
  */
 
-/** One step of the plan, as the card lists it. */
+/** One step of the plan, as the card numbers it. */
 export interface PlanPart {
   readonly part: "app" | "record";
   readonly said: string;
@@ -30,131 +34,117 @@ export interface PlanPart {
 
 /** The plan, as the card says it and the host is handed it. */
 export interface AppPlan {
-  /** What the card says: what is missing, what it would do, and "Should I?" where Yes is offered. */
+  /** What the card says above the steps: what is missing, and "Should I?" where Yes is offered — or who would make the first steps. */
   readonly question: string;
   readonly parts: readonly PlanPart[];
-  /** The proposal Yes hands the host — the change to the app and the records — where this seat may change the app. */
+  /** What Yes hands the host — the change to the app as edits, and the records — where this seat may change the app. */
   readonly proposal?: ReshapeProposal;
-  /** Why there is no Yes: who would have to make the change. */
+  /** Who would make the change, where Yes is not offered. */
   readonly whoMay?: string;
 }
 
-const listed = (words: readonly string[]): string => (words.length < 2 ? words.join("") : `${words.slice(0, -1).join(", ")} and ${words[words.length - 1]}`);
 const capital = (words: string) => words.charAt(0).toUpperCase() + words.slice(1);
-const lowerFirst = (words: string) => words.charAt(0).toLowerCase() + words.slice(1);
-const humanized = (name: string) => name.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[-_]+/g, " ").toLowerCase();
+const vowel = (word: string) => /^(?:[aeio]|u(?![sn]i|se|ser))/i.test(word);
 const slug = (words: string) => words.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "one";
+const range = (from: number, to: number) => (from === to ? `step ${from}` : `steps ${from}–${to}`);
+
+/** The app's kinds as a document reads them, for an app declared in code with none remembered: their words, fields and links, no acts. */
+function documentOfSchema(env: InlineEnv): GraviewDocument {
+  const schema = env.store.schema;
+  const kinds = Object.fromEntries(
+    schema.definitions.map((definition) => [
+      definition.kind,
+      { noun: nounOf(definition, definition.kind), plural: pluralOf(schema, definition.kind), fields: Object.fromEntries(Object.keys((definition.fields as { shape?: object }).shape ?? {}).map((field) => [field, { type: "string" }])), edges: definition.edges ?? {} },
+    ]),
+  );
+  return { name: env.app.name ?? "app", kinds, acts: {} } as unknown as GraviewDocument;
+}
 
 /** Who may change the app, in words: the roles every act is granted to ("an owner"), else whoever may. */
 function whoMayChange(env: InlineEnv): string {
   const owners = (env.store.policy?.grants ?? []).filter((grant) => grant.mutations === "*" && !grant.self && grant.roles !== "*").flatMap((grant) => grant.roles as readonly string[]);
-  return owners.length > 0 ? `${/^[aeiou]/i.test(owners[0]!) ? "an" : "a"} ${listed([...new Set(owners)])}` : "whoever may change this app";
+  const named = [...new Set(owners)];
+  return named.length > 0 ? `${vowel(named[0]!) ? "an" : "a"} ${named.join(" or ")}` : "whoever may change this app";
+}
+
+/** The place the list is, as the steps say it: "in This week", else "here". */
+function whereOf(env: InlineEnv): string {
+  const place = env.place ? env.places.find((one) => one.as === env.place) : undefined;
+  return place ? `in ${place.title}` : "here";
 }
 
 /** The plan for a missing capability, or a refusal in words when it could not be composed or would fail. */
-export async function planFor(env: InlineEnv, options: { readonly said: string; readonly missing: AnswerMissing; readonly members: readonly string[]; readonly host: boolean; readonly compose?: ComposeChangeHost }): Promise<AppPlan | { readonly refused: string }> {
+export async function planFor(env: InlineEnv, options: { readonly said: string; readonly missing: AnswerMissing; readonly members: readonly string[]; readonly host: boolean; readonly compose?: ComposeChangeHost; readonly where?: string }): Promise<AppPlan | { readonly refused: string }> {
   const { missing, members } = options;
-  const traits = missing.add as readonly TraitName[];
-  const words = traits.map((trait) => TRAIT_WORDS[trait]);
-  if (traits.length === 0) return { refused: `${missing.said} Nothing this app could add would do it.` };
+  if (!missing.need) return { refused: missing.said };
   const reshape = await import("@graview/tools/reshape");
-  const document = reshape.documentOfApp(env.app);
-  /* A code app: its declaration is its code, and no page changes it. */
-  if (!document) return { question: `${missing.said} Adding ${listed(words)} would do it; this app is declared in code, so whoever develops it would add that.`, parts: traits.map((trait) => ({ part: "app" as const, said: `Add ${TRAIT_WORDS[trait]}: ${TRAIT_BRINGS[trait]}` })), whoMay: "whoever develops this app" };
+  const remembered = reshape.documentOfApp(env.app);
+  const document = remembered ?? documentOfSchema(env);
+  const planned = planEdits(document, missing.need);
+  if ("refused" in planned) return { refused: `${missing.said} ${planned.refused}` };
+  const steps: PlanPart[] = planned.steps.map((said) => ({ part: "app", said }));
+  const appSteps = steps.length;
 
-  /* No composer lent by the host: what is missing, and who could add it — no plan to rehearse. */
-  if (!options.compose) {
-    const whoMay = whoMayChange(env);
-    return { question: `${missing.said} Adding ${listed(words)} would do it; ${whoMay} could add that.`, parts: traits.map((trait) => ({ part: "app" as const, said: `Add ${TRAIT_WORDS[trait]}: ${TRAIT_BRINGS[trait]}` })), whoMay };
-  }
-  const composed = options.compose({ document, add: traits, drop: [] });
-  if (!composed.ok) return { refused: `${missing.said} Adding ${listed(words)} is not offered: ${lowerFirst(composed.refused)}` };
-  const app = composed.app as { readonly schema: AnySchema; readonly mutations?: readonly unknown[]; readonly invariants?: readonly unknown[] };
-  /*
-   * THE CHANGE TO THE APP IN A PERSON'S WORDS, never its names: a kind by its
-   * noun and the fields it keeps, a link by what it says on each record, an
-   * act by its title, and the composer's own sentence for a rule, a view
-   * and who sees what — which say no name a person never sees.
-   */
-  const before0 = document;
-  const after0 = composed.document;
-  const nounOf = (kind: string) => after0.kinds[kind]?.noun ?? humanized(kind);
-  const pluralOf = (kind: string) => after0.kinds[kind]?.plural ?? `${nounOf(kind)}s`;
-  const parts: PlanPart[] = [];
-  for (const [kind, spec] of Object.entries(after0.kinds)) {
-    if (kind in before0.kinds) continue;
-    const fields = Object.keys(spec.fields ?? {}).map(humanized);
-    parts.push({ part: "app", said: `A new kind, ${nounOf(kind)}${fields.length > 0 ? `, with ${listed(fields)}` : ""}.` });
-  }
-  for (const [kind, spec] of Object.entries(after0.kinds)) {
-    for (const [name, edge] of Object.entries(spec.edges ?? {})) {
-      if (name in (before0.kinds[kind]?.edges ?? {})) continue;
-      const to = (edge.to as readonly string[]).map((one) => `${/^[aeiou]/i.test(nounOf(one)) ? "an" : "a"} ${nounOf(one)}`).join(" or ");
-      parts.push({ part: "app", said: `${capital(pluralOf(kind))} get ${/^[aeiou]/i.test(name) ? "an" : "a"} ${humanized(name)}${edge.description ? ` — ${edge.description}` : ""}: ${to}.` });
-    }
-  }
-  for (const [name, act] of Object.entries(after0.acts ?? {})) if (!(name in (before0.acts ?? {}))) parts.push({ part: "app", said: `A new act: ${(act as { title?: string }).title ?? humanized(name)}.` });
-  for (const said of composed.said) if (/^(A new rule|A lens|Everyone sees)/.test(said)) parts.push({ part: "app", said });
-
-  /* THE RECORDS: the person the words name, found or made, and each record the list shows given to them by the changed app's own act. */
+  /* THE RECORDS THAT FINISH THE ASK, each said as it will happen. */
   const records: MutationCall[] = [];
-  const memberKind = members.map((id) => env.store.graph.getNode(id)?.kind).find((kind): kind is string => kind !== undefined);
-  const before = memberKind ? (document.kinds[memberKind]?.edges ?? {}) : {};
-  const added = memberKind ? Object.entries(composed.document.kinds[memberKind]?.edges ?? {}).find(([name]) => !(name in before)) : undefined;
-  const scratch = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: env.store.graph.snapshot() as never } as never);
-  let doing: string | undefined;
-  if (added && missing.who) {
-    const [relation, edge] = added;
-    const toKind = (edge.to as readonly string[])[0]!;
-    const named = missing.who;
-    const found = scratch.graph.allNodes().find((node: Record<string, unknown> & { readonly id: string; readonly kind: string }) => node.kind === toKind && Object.values(node).some((value) => typeof value === "string" && value.toLowerCase() === named.toLowerCase()));
+  const count = members.length;
+  const kindDoc = (kind: string) => (document.kinds[kind] as { noun?: string; plural?: string } | undefined) ?? undefined;
+  const plural = (kind: string) => (kindDoc(kind)?.plural ?? `${kindDoc(kind)?.noun ?? kind}s`).toLowerCase();
+  const noun = (kind: string) => (kindDoc(kind)?.noun ?? kind).toLowerCase();
+  const where = options.where ? `in ${options.where}` : whereOf(env);
+  if (count === 0) return { refused: `${missing.said} There is nothing here to do it to.` };
+  const these = count === 1 ? `the ${noun(planned.on)} ${where}` : `the ${count} ${plural(planned.on)} ${where}`;
+  const called = capital(planned.called);
+  if (planned.relation && planned.to) {
+    const who = missing.who;
+    if (!who) return { refused: `${missing.said} Say whom to give them to.` };
+    const toPlural = planned.made ? capital((planned.edits[0] as { plural?: string }).plural ?? "people") : capital(plural(planned.to));
+    const found = planned.made ? undefined : env.store.graph.allNodes().find((node) => node.kind === planned.to && Object.values(node as Record<string, unknown>).some((value) => typeof value === "string" && value.toLowerCase() === who.toLowerCase()));
     let whom = found?.id;
     if (!whom) {
-      const makes = scratch.allMutations().find((mutation) => (mutation.creates as readonly string[] | undefined)?.includes(toKind));
-      const field = makes ? (argumentsTaken(makes) ?? []).find((arg) => arg !== "id" && ["name", "label", "title"].includes(arg)) : undefined;
-      if (!makes || !field) return { refused: `${missing.said} Adding ${listed(words)} would not leave a way to add ${named}, so it is not offered.` };
-      whom = `${toKind}-${slug(named)}`;
-      records.push({ name: makes.name, args: { [field]: named }, mintedHint: whom });
-      const noun = composed.document.kinds[toKind]?.noun ?? toKind;
-      parts.push({ part: "record", said: `Add ${named} as ${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}.` });
+      whom = `${planned.to}-${slug(who)}`;
+      const makes = planned.makes ?? env.store.allMutations().find((mutation) => (mutation.creates as readonly string[] | undefined)?.includes(planned.to!))?.name;
+      if (!makes) {
+        const some = env.store.graph.allNodes().filter((node) => node.kind === planned.to).slice(0, 3).map((node) => String((node as Record<string, unknown>)["label"] ?? (node as Record<string, unknown>)["name"] ?? "")).filter(Boolean);
+        return { refused: `${missing.said} There is nobody called ${who} among the ${toPlural.toLowerCase()} here${some.length > 0 ? ` (${some.join(", ")})` : ""}, and no way to add one from here.` };
+      }
+      records.push({ name: makes, args: { name: who }, mintedHint: whom });
+      steps.push({ part: "record", said: `Add ${who} to ${toPlural}.` });
     }
-    const gives = scratch.allMutations().find((mutation) => ((mutation as { connects?: readonly string[] }).connects ?? []).includes(relation) && mutation.subject && (mutation.subject.kinds === "*" || (mutation.subject.kinds as readonly string[]).includes(memberKind!)));
-    const to = gives ? (argumentsTaken(gives) ?? []).find((arg) => arg !== gives.subject!.arg) : undefined;
-    if (!gives || !to) return { refused: `${missing.said} Adding ${listed(words)} would not leave a way to give them to ${named}, so it is not offered.` };
-    for (const id of members) records.push({ name: gives.name, args: { [gives.subject!.arg]: id, [to]: whom } });
-    const plural = composed.document.kinds[memberKind!]?.plural ?? `${memberKind}s`;
-    const these = members.length === 1 ? `the ${composed.document.kinds[memberKind!]?.noun ?? memberKind} here` : `each of the ${members.length} ${plural} here`;
-    doing = `give ${these} to ${named}`;
-    parts.push({ part: "record", said: `${capital(doing)} (${gives.title ?? gives.name}).` });
+    for (const id of members) records.push({ name: planned.act, args: { id, [planned.arg]: whom } });
+    // "assigned to" → "Assign Nick to the 5 tasks in This week."; any other link, said as setting it.
+    const verb = /^(\w+?)ed to$/i.exec(planned.called)?.[1];
+    steps.push({ part: "record", said: verb ? `${capital(verb.toLowerCase())} ${who} to ${these}.` : `Set “${called}” to ${who} on ${these}.` });
+  } else if (planned.field) {
+    const value = missing.value;
+    if (value === undefined) return { refused: `${missing.said} Say what to set it to.` };
+    for (const id of members) records.push({ name: planned.act, args: { id, [planned.arg]: value } });
+    steps.push({ part: "record", said: `Set “${called}” to ${value} on ${these}.` });
   }
+  const numbered = steps.length;
 
-  /* REHEARSED WHOLE before it is offered: the changed app, these records, as this person. */
-  if (records.length > 0) {
-    try {
-      scratch.previewAll(records, { author: env.principal });
-    } catch (error) {
-      return { refused: `${missing.said} The plan would be refused: ${error instanceof Error ? error.message : String(error)}` };
-    }
-  }
-
-  /* Said as a person would: what the app gains, then what finishes the ask. */
-  const newKinds = Object.keys(composed.document.kinds).filter((kind) => !(kind in document.kinds)).map((kind) => `${/^[aeiou]/i.test(composed.document.kinds[kind]?.noun ?? kind) ? "an" : "a"} ${composed.document.kinds[kind]?.noun ?? kind} kind`);
-  const newLink = added && memberKind ? `${/^[aeiou]/i.test(added[0]) ? "an" : "a"} ${humanized(added[0])} on each ${composed.document.kinds[memberKind]?.noun ?? memberKind}` : undefined;
-  const gains = [...newKinds, ...(newLink ? [newLink] : [])];
-  const doings = [
-    `add ${listed(words)}${gains.length > 0 ? ` (${listed(gains)})` : ""}`,
-    ...parts.filter((one) => one.part === "record" && !(doing && one.said.startsWith(capital(doing)))).map((one) => lowerFirst(one.said.replace(/\.$/, ""))),
-    ...(doing ? [doing] : []),
-  ];
-  const may = options.host && reshape.mayChangeDeclaration(env.store, env.principal);
-  const card = reshape.reshapeCard({ said: options.said, document, add: traits, drop: [] }).card;
+  /* WHO MAKES THE FIRST STEPS: this seat, through the host — or, said once, whoever may. */
+  const may = Boolean(remembered) && options.host && options.compose !== undefined && reshape.mayChangeDeclaration(env.store, env.principal);
   if (!may) {
-    const whoMay = whoMayChange(env);
-    return { question: `${missing.said} ${capital(whoMay)} would need to ${listed(doings)}.`, parts, whoMay };
+    const whoMay = !remembered ? "whoever develops this app" : !options.host || !options.compose ? "whoever hosts this app" : whoMayChange(env);
+    return { question: `${missing.said} ${capital(whoMay)} would add ${range(1, appSteps)}; then I can do ${range(appSteps + 1, numbered)}.`, parts: steps, whoMay };
+  }
+
+  /* COMPOSED AND REHEARSED WHOLE before it is offered: the changed app, judged by the checker, and these records in it, as this person. */
+  const composed = options.compose!({ document: remembered!, edits: planned.edits });
+  if (!composed.ok) return { refused: `${missing.said} That change is not offered: ${composed.refused.charAt(0).toLowerCase()}${composed.refused.slice(1)}` };
+  const app = composed.app as { readonly schema: AnySchema; readonly mutations?: readonly unknown[]; readonly invariants?: readonly unknown[]; readonly policy?: unknown };
+  try {
+    const scratch = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: env.store.graph.snapshot() as never } as never);
+    scratch.previewAll(records, { author: env.principal });
+  } catch (error) {
+    return { refused: `${missing.said} The plan would be refused: ${error instanceof Error ? error.message : String(error)}` };
   }
   return {
-    question: `${missing.said} I can ${listed(doings)}. Should I?`,
-    parts,
-    proposal: { said: options.said, add: traits, drop: [], card, ...(records.length > 0 ? { records } : {}), via: `ai:${env.ai.name ?? "model"}` },
+    question: `${missing.said} I can do it in ${numbered} steps. Should I?`,
+    parts: steps,
+    proposal: { said: options.said, add: [], drop: [], card: { said: steps.map((one) => one.said).join(" "), adds: [], keeps: [], drops: [], breaking: [] }, edits: planned.edits, records, via: `ai:${env.ai.name ?? "model"}` },
   };
 }
+
+export type { PlannedEdits };

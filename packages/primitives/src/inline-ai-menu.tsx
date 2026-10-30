@@ -27,7 +27,7 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  * The runner (`inlineEnv`, `askInline`, `takeOffer`, `drawPanel`,
  * `askAgain`) takes plain values, not hooks, so Activity's "Ask again" and
  * "Show the panel" and the quick ask's card (`quick-ask.tsx`) reach the
- * same code. "Ask about this…" opens the quick ask's bar on the target.
+ * same code. "Tell Graview…" opens the quick ask's bar on the target.
  */
 
 /** One ask of the inline AI, as the engine takes it: the acts the derivation offers this viewer there, the places, where they are. */
@@ -506,7 +506,7 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
             }}
             style={ROW}
           >
-            Ask about this…
+            Tell Graview…
           </button>
         </li>
       </ul>

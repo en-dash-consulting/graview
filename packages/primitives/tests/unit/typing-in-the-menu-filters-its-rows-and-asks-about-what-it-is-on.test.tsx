@@ -142,7 +142,7 @@ describe("typing in the menu", () => {
     expect(lit()).toBe("Hand it on");
     // The words asked about what the menu is on are the last row, whatever else fits.
     expect(rows().at(-1)).toBe("ask-typed");
-    expect(menu()!.querySelector('[data-menu-item="ask-typed"]')!.textContent).toBe("Ask about Pay the deposit: ha");
+    expect(menu()!.querySelector('[data-menu-item="ask-typed"]')!.textContent).toBe("Tell Graview “ha”");
     await press(field()!, "Enter");
     await settle();
     expect(store.graph.getNode("t1")?.["label"]).toBe("Handed on");
@@ -171,7 +171,7 @@ describe("typing in the menu", () => {
     watching.observe(document.body, { childList: true, subtree: true });
     await typeKeys("what is left?");
     expect(shownActs()).toEqual([]);
-    expect(lit()).toBe("Ask about Pay the deposit: what is left?");
+    expect(lit()).toBe("Tell Graview “what is left?”");
     await press(field()!, "Enter");
     await until(() => document.querySelector('[data-testid="quick-answer-text"]')?.textContent?.startsWith("About") === true);
     watching.disconnect();

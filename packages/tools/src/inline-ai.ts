@@ -49,6 +49,7 @@ import {
   type CatalogAct,
   type CatalogPlace,
   type PanelCandidate,
+  type PlanNeed,
 } from "@graview/core/catalog";
 import type { AiPrice, AnswerProvider, AnswerReply, FastProvider, HostAi, ThinkingProvider } from "./ai.js";
 import { firstJsonObject } from "./intelligence.js";
@@ -156,14 +157,15 @@ export interface InlineResult {
   readonly missing?: AnswerMissing;
 }
 
-/** What an answer found the app lacks, and what would finish the ask. */
+/** What an answer found the app lacks — the need, named — and what would finish the ask. */
 export interface AnswerMissing {
   readonly said: string;
-  readonly add: readonly string[];
-  /** The record the words name, by its name ("Nick"), to find or make. */
+  /** What the app would need (`PlanNeed`): a link from each record to another kind's, or a field on each. Code writes the least change that gives it. */
+  readonly need?: PlanNeed;
+  /** The record the words name, by its name ("Nick"), to find or make, for a link. */
   readonly who?: string;
-  /** The act to run over every record asked about once the app has it, by what it does ("give it to someone"): the plan finds it in the changed app. */
-  readonly then?: string;
+  /** The value the words give, for a field. */
+  readonly value?: string;
 }
 
 /** A fresh interaction id: `ai-` and something unique enough for one app's history. */
@@ -548,8 +550,7 @@ export interface QuickAsk<S extends AnySchema = AnySchema> extends InlineAsk<S> 
    * them, previewed whole as one change.
    */
   readonly members?: readonly string[];
-  /** The traits the app could take (`TRAITS`, said in words), offered where the model finds the app lacks what was asked. */
-  readonly traits?: readonly { readonly trait: string; readonly says: string }[];
+
   /** The ask before this one on the card, and what it was answered: a follow-up, not a thread. */
   readonly follows?: { readonly said: string; readonly answer: string };
 }
@@ -557,7 +558,7 @@ export interface QuickAsk<S extends AnySchema = AnySchema> extends InlineAsk<S> 
 const ANSWER_SYSTEM =
   'You answer a person\'s question about what they are looking at in an app, from the state given and nothing else. Answer only JSON: {"answer": one to three short sentences, "pick": [candidate ids that act on the answer, best first, at most three]}. Pick only ids from the candidates, and none when nothing fits. Never say an id to the person. ' +
   'Where "members" are given and the person asks for something done to every one of them, answer "each": {"act": the name of one of "member_acts", "args": the values it asks for, by name} — one act over every member, as one change. ' +
-  'Where no act can do what they ask because the app has no field, link or kind for it, answer "lacks": one plain sentence of what the app is missing (never an id), "add": [the names of "traits" that would bring it], "who": the name of the record their words name, if any, and "then": what is to be done to each member once the app has it, in a few words.';
+  'Where no act can do what they ask because the app has no field or link for it, answer "lacks": one plain sentence of what the app is missing (never an id), and "need": what it would need — {"link": {"on": the kind of the records, "called": what the link is called in their words, like "assigned to", "to": the kind it points to, or a noun for one the app lacks}} or {"field": {"on": the kind, "called": its name in their words, "type": "string", "number", "date" or "boolean"}} — with "who": the name of the record their words name (for a link) or "value": the value they give (for a field).';
 
 /**
  * WORDS ASKED ABOUT WHAT THE PERSON IS ON (the quick ask): answered in a
@@ -627,21 +628,20 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
           state: asked.state,
           candidates: choices.map((candidate) => ({ id: candidate.id, says: candidate.description })),
           ...(members.length > 0 ? { members: members.map((node) => ({ id: node.id, label: labelOf(ask.store.schema.tryDefinition(node.kind), node as never) })), member_acts: memberActs.map((act) => ({ name: act.name, title: act.title, asks: act.asks })) } : {}),
-          ...(ask.traits && ask.traits.length > 0 ? { traits: ask.traits } : {}),
         }),
         asked,
         asked.meter,
-      )) as { answer?: unknown; pick?: unknown; each?: unknown; lacks?: unknown; add?: unknown; who?: unknown; then?: unknown } | undefined;
+      )) as { answer?: unknown; pick?: unknown; each?: unknown; lacks?: unknown; need?: unknown; who?: unknown; value?: unknown } | undefined;
       text = typeof parsed?.answer === "string" ? parsed.answer.trim() : "";
       picked = pickedOf(Array.isArray(parsed?.pick) ? parsed.pick : []);
       each = eachOf(parsed?.each);
       if (typeof parsed?.lacks === "string" && parsed.lacks.trim()) {
-        const traits = new Set((ask.traits ?? []).map((one) => one.trait));
+        const need = needOf(parsed.need);
         missing = {
           said: parsed.lacks.trim(),
-          add: (Array.isArray(parsed.add) ? parsed.add : []).filter((one): one is string => typeof one === "string" && traits.has(one)),
+          ...(need ? { need } : {}),
           ...(typeof parsed.who === "string" && parsed.who.trim() ? { who: parsed.who.trim() } : {}),
-          ...(typeof parsed.then === "string" && parsed.then.trim() ? { then: parsed.then.trim() } : {}),
+          ...(typeof parsed.value === "string" || typeof parsed.value === "number" ? { value: String(parsed.value) } : {}),
         };
       }
     } else if (fast && choices.length > 0) {
@@ -690,6 +690,19 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
     ...(text ? { answer: text } : missing ? { answer: missing.said } : {}),
     ...(missing ? { missing } : {}),
   };
+}
+
+/** The model's "need", read: a link or a field, each with the words it is called by, or nothing. */
+function needOf(value: unknown): PlanNeed | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const { link, field } = value as { link?: Record<string, unknown>; field?: Record<string, unknown> };
+  const said = (one: unknown) => (typeof one === "string" && one.trim() ? one.trim() : undefined);
+  if (link && said(link["on"]) && said(link["called"]) && said(link["to"])) return { link: { on: said(link["on"])!, called: said(link["called"])!, to: said(link["to"])! } };
+  if (field && said(field["on"]) && said(field["called"])) {
+    const type = ["string", "number", "date", "boolean"].includes(String(field["type"])) ? (field["type"] as "string") : "string";
+    return { field: { on: said(field["on"])!, called: said(field["called"])!, type } };
+  }
+  return undefined;
 }
 
 /** The model's "each", read: an act's name and its values, or nothing. */

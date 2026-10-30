@@ -1,7 +1,6 @@
 import { layer, nameOfAuthor, pluralOf, type AnySchema } from "@graview/core";
 import { aiTargetOf, catalogOf, existingViewsOf, recordsOfTarget, type AiCandidate, type AiTarget } from "@graview/core/catalog";
 import { search } from "@graview/core/search";
-import { TRAIT_WORDS, TRAITS } from "@graview/core/traits";
 import { useAiDeskState, useGraview } from "@graview/react/provider";
 import { applyAffordance, deriveAffordances, previewAffordance } from "@graview/tools/derive";
 import { answerHere, targetWords, type InlineResult } from "@graview/tools/inline-ai";
@@ -52,7 +51,7 @@ interface Answering {
 }
 
 /** Where a plan offered on the card stands: offered, on its way, landed (with its one way back), or set aside. */
-type PlanState = { readonly state: "offered" } | { readonly state: "applying" } | { readonly state: "applied"; readonly undo?: () => void | Promise<void> } | { readonly state: "declined"; readonly said: string } | { readonly state: "undone" };
+type PlanState = { readonly state: "offered" } | { readonly state: "applying" } | { readonly state: "applied"; readonly undo?: () => void | Promise<void>; readonly note?: string } | { readonly state: "declined"; readonly said: string } | { readonly state: "undone" };
 
 /** Words in the follow-up that say yes, or no, to a plan the card asks about. */
 const YES = /^(yes|yep|yeah|sure|ok(ay)?|do it|go ahead|please do)\b/i;
@@ -66,6 +65,9 @@ const NO = /^(no|nope|don'?t|not now|never ?mind)\b/i;
  */
 function membersOf(store: { readonly graph: { getNode(id: string): { readonly kind: string } | undefined; allNodes(): readonly { readonly id: string; readonly kind: string }[] } }, target: AiTarget, face: "scene" | "pages"): readonly string[] {
   const kind = target.on === "list" ? target.kind : target.on === "lens" ? target.kind : undefined;
+  // "These", said of one record or a selection: those.
+  if (target.on === "record" || target.on === "field") return [target.id];
+  if (target.on === "selection") return target.ids;
   if (target.on !== "list" && target.on !== "lens") return [];
   if (face === "pages" && typeof document !== "undefined") {
     const ids = new Set<string>();
@@ -211,7 +213,6 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
         said: asked,
         ...(before ? { follows: before } : {}),
         ...(members.length > 0 ? { members } : {}),
-        traits: TRAITS.map((trait) => ({ trait, says: TRAIT_WORDS[trait] })),
       });
       env.desk.record(result.interaction);
       // Its proposed change is a ghost, drawn on this card: accepted there as one batch, with its one undo.
@@ -221,7 +222,9 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       if (result.missing) {
         try {
           const { planFor } = await import("./quick-ask-plan.js");
-          plan = await planFor(env, { said: asked, missing: result.missing, members, host: onProposeChange !== undefined, ...(composeChange ? { compose: composeChange } : {}) });
+          // Where the records are, as the steps say it: the place the list is.
+          const place = target.on === "lens" ? env.places.find((one) => one.as === target.place)?.title : undefined;
+          plan = await planFor(env, { said: asked, missing: result.missing, members, host: onProposeChange !== undefined, ...(composeChange ? { compose: composeChange } : {}), ...(place ? { where: place } : {}) });
         } catch (error) {
           plan = { refused: `${result.missing.said} ${error instanceof Error ? error.message : String(error)}` };
         }
@@ -245,7 +248,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       const answered = await onProposeChange(proposal);
       if (!live.current) return;
       if (answered === "declined") setPlanState({ state: "declined", said: "The host declined this change to the app." });
-      else setPlanState({ state: "applied", ...(typeof answered === "object" ? { undo: answered.undo } : {}) });
+      else setPlanState({ state: "applied", ...(typeof answered === "object" ? { undo: answered.undo, ...(answered.note ? { note: answered.note } : {}) } : {}) });
     } catch (error) {
       if (live.current) setPlanState({ state: "declined", said: error instanceof Error ? error.message : String(error) });
     }
@@ -409,7 +412,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       ref={pane}
       popover="manual"
       role="region"
-      aria-label={answering ? `Answer about ${about}` : `Ask about ${about}`}
+      aria-label={answering ? `Answer about ${about}` : `Tell Graview about ${about}`}
       data-testid="quick-ask"
       data-quick-ask={answering ? "answer" : "bar"}
       data-quick-ask-face={face}
@@ -472,7 +475,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
                   </div>
                 ) : planState.state === "applied" ? (
                   <div role="status" style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <span>Done, as one change.</span>
+                    <span data-testid="quick-ask-plan-done">Done, as one change.{planState.note ? ` ${planState.note}` : ""}</span>
                     {planState.undo ? (
                       <button type="button" data-testid="quick-ask-plan-undo" onClick={() => void undoPlan()} style={OFFER}>
                         Undo
@@ -484,11 +487,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
                     {planState.state === "undone" ? "Taken back." : planState.said}
                   </p>
                 )
-              ) : (
-                <p data-testid="quick-ask-plan-who" style={{ margin: 0, color: "var(--graview-ink-muted)" }}>
-                  {`Only ${offered.whoMay ?? "whoever may change this app"} can make this change.`}
-                </p>
-              )}
+              ) : null}
             </section>
           ) : null}
           {result && result.offers.length > 0 ? (
@@ -523,14 +522,14 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
           type="text"
           role="combobox"
           data-testid="quick-ask-input"
-          aria-label={answering ? `Ask a follow-up about ${about}` : `Ask about ${about}, or go somewhere`}
+          aria-label={answering ? `Reply about ${about}` : `Tell Graview about ${about}, or go somewhere`}
           aria-expanded={rows.length > 0}
           aria-controls={list}
           aria-autocomplete="list"
           {...(lit ? { "aria-activedescendant": `${list}-${active}` } : {})}
           autoComplete="off"
           enterKeyHint="go"
-          placeholder={answering ? "Ask a follow-up…" : "Ask, or go to…"}
+          placeholder={answering ? "Reply…" : "Tell Graview, or go to…"}
           value={words}
           // Read-only while it answers, never disabled: a disabled field lets go of the keyboard.
           readOnly={answering !== null && result === null}
@@ -556,7 +555,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
             >
               {row.kind === "ask" ? (
                 <span>
-                  Ask: <span style={{ fontWeight: 600 }}>‘{row.label}’</span>
+                  Tell Graview: <span style={{ fontWeight: 600 }}>‘{row.label}’</span>
                 </span>
               ) : (
                 <span>

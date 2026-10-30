@@ -673,7 +673,7 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
                 </div>
               ))
             )}
-            {asking ? option(asking, <span style={ONE_LINE}>Ask: <span style={{ fontWeight: 600 }}>‘{asking.ask}’</span></span>, { borderTop: "1px solid var(--graview-edge)", marginTop: 4 }, { "data-testid": "find-ask" }) : null}
+            {asking ? option(asking, <span style={ONE_LINE}>Tell Graview: <span style={{ fontWeight: 600 }}>‘{asking.ask}’</span></span>, { borderTop: "1px solid var(--graview-edge)", marginTop: 4 }, { "data-testid": "find-ask" }) : null}
             {/* A long answer says how to make it short: another word, as a list's far end says "type more of the name". */}
             {manyFound > MANY_FOUND ? (
               <p role="presentation" style={NOTE} data-testid="find-more-words">
@@ -720,9 +720,9 @@ function Said({ row, schema, accents, marking, q, flag }: { row: ListRow; schema
   let name: ReactNode;
   let lines: ReactNode = null;
   if ("ask" in row) {
-    over = "Ask";
+    over = "Tell Graview";
     name = `‘${row.ask}’`;
-    lines = <p style={PANEL_LINE}>Asks it of what is selected; the answer comes on a card beside it.</p>;
+    lines = <p style={PANEL_LINE}>Says it to Graview about what is selected; the answer comes on a card beside it.</p>;
   } else if ("all" in row) {
     kind = row.all;
     over = pluralLabel(schema, row.all);

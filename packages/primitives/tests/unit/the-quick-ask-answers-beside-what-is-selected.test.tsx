@@ -103,9 +103,9 @@ describe("the quick ask", () => {
     await chord();
     await until(() => card() !== null);
     await type("finish");
-    expect(rows()).toEqual(["act: Finish it · do it", "ask: Ask: ‘finish’"]);
+    expect(rows()).toEqual(["act: Finish it · do it", "ask: Tell Graview: ‘finish’"]);
     await type("what is left to do?");
-    expect(rows()).toEqual(["ask: Ask: ‘what is left to do?’"]);
+    expect(rows()).toEqual(["ask: Tell Graview: ‘what is left to do?’"]);
   });
 
   it("offers a view the app already has first, ahead of a panel drawn new, and to adjust it where it fits in part", async () => {
@@ -124,7 +124,7 @@ describe("the quick ask", () => {
     expect(rows()[0]).toBe("place: Open and adjust Tasks by status · adjust it");
     // Nothing it has fits: no such row.
     await type("what is left to do?");
-    expect(rows()).toEqual(["ask: Ask: ‘what is left to do?’"]);
+    expect(rows()).toEqual(["ask: Tell Graview: ‘what is left to do?’"]);
   });
 
   it("answers on the card beside it, its change a ghost not made, and a follow-up replaces the answer", async () => {
@@ -186,7 +186,7 @@ describe("the quick ask", () => {
     await cleanup!();
     const host = await mount(tree(AI));
     const ask = host.querySelector<HTMLElement>('[data-testid="find-ask"]');
-    expect(ask?.textContent).toBe("Ask: ‘what is late’");
+    expect(ask?.textContent).toBe("Tell Graview: ‘what is late’");
     await act(async () => ask!.click());
     await until(() => document.querySelector('[data-testid="quick-answer-asked"]') !== null);
     expect(document.querySelector('[data-testid="quick-answer-asked"]')!.textContent).toBe("“what is late”");

@@ -82,7 +82,7 @@ Changes / AI, "Just mine") and on its record's page; `ai.interactions`
 `{ load, keep }` stores them. A letter typed in the menu narrows every row
 to those whose words begin with it, the Fast slot then lighting what they
 mean once the typing rests, Enter running the one lit; words that fit
-nothing are its last row, "Ask about <it>: …", answered on the quick ask's
+nothing are its last row, "Tell Graview “…”", answered on the quick ask's
 card beside the thing with its thinking marked on it — the Fast slot
 picking the context the Thinking slot is told (`entry.context`) — and with
 no model the field only filters. `TYPESAFE_API_KEY=… XAI_API_KEY=… pnpm
@@ -92,7 +92,24 @@ small quick model without a Jev key). While it thinks, "Graview, for
 <person>" stands among who is here. An ask about a list acts on each of
 its records as one change; one the app cannot do is answered with what it
 lacks and, with `onProposeChange`, one plan — the app change and the
-records — asked "Should I?" (`ReshapeProposal.records`). `ai={{ off: true }}` hides every AI part.
+records — asked "Should I?" (`ReshapeProposal.records`).
+
+## Hosting the plan
+
+Where an app lacks what a person tells Graview to do, the quick ask offers
+one plan: the least change (`planEdits`: a link or a field, the kind it
+points to, the act that sets it — no rule, no new place) and the records
+that finish it, each step numbered in plain words. Yes needs a host:
+
+- `composeChange({ document, edits })` — apply, grant, check; answer
+  `{ ok, document, app, said }` or a refusal (`composeAppChange` is one).
+- `onProposeChange(proposal)` — apply `proposal.edits` and then
+  `proposal.records` (a made record named by its `mintedHint`), as the
+  person, as one change, `via: proposal.via`; answer `{ applied: true,
+  undo, note? }`, one undo taking the app and the records back.
+
+Prove it with `checkPlanHost` from `@graview/core/conformance`. Without a
+host, the card says the whole plan and who would add its first steps. `ai={{ off: true }}` hides every AI part.
 Prove it with stubs: `stubFast()`, `stubThinking()` from
 `@graview/tools/inline-ai` (`pnpm verify inline-ai`).
 

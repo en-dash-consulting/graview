@@ -106,6 +106,13 @@ export interface ReshapeProposal {
   readonly records?: readonly MutationCall[];
   /** Whose words made the plan, as the records' ops say it: `ai:<name>`. */
   readonly via?: string;
+  /**
+   * THE CHANGE TO THE APP AS EDITS (Roadmap f-menu-type-anything): the least
+   * the ask needs, written by `planEdits` in the edit vocabulary; a host
+   * applies these (`composeAppChange({ document, edits })`) in place of
+   * composing `add` and `drop`, which a plan leaves empty.
+   */
+  readonly edits?: readonly unknown[];
 }
 
 /** A turn run through the host's model: the proposal (null when the reading changes nothing), the reading, the raw answers to keep, and what the call cost. */
@@ -121,7 +128,7 @@ export interface ReshapeTurn {
  * declined — or applied with the one way back, which the card offers as
  * Undo (the change to the app and the records it made, taken back together).
  */
-export type ProposeChangeAnswer = "applied" | "declined" | { readonly applied: true; readonly undo: () => void | Promise<void> };
+export type ProposeChangeAnswer = "applied" | "declined" | { readonly applied: true; readonly undo: () => void | Promise<void>; /** What the card says beside it: "Kept until this page reloads." */ readonly note?: string };
 
 /**
  * THE HOST THAT APPLIES A CHANGE TO THE APP (`onProposeChange`). Handed the
@@ -136,16 +143,16 @@ export type ProposeChangeAnswer = "applied" | "declined" | { readonly applied: t
 export type ProposeChangeHost = (proposal: ReshapeProposal) => ProposeChangeAnswer | Promise<ProposeChangeAnswer>;
 
 /**
- * THE HOST'S COMPOSER, LENT TO A PAGE (Roadmap f-menu-type-anything): the
- * traits a plan adds composed onto the app's document and judged by the
- * checker — the changed document, the app it compiles to and the edits in
- * words, or a refusal. `composeAppChange` from `@graview/core/compose` is
+ * THE HOST'S COMPOSER, LENT TO A PAGE (Roadmap f-menu-type-anything): a
+ * plan's edits (or a reshape's traits) applied to the app's document and
+ * judged by the checker — the changed document, the app it compiles to and
+ * what changed in words, or a refusal. `composeAppChange` from `@graview/core/compose` is
  * one; a host hands it (`composeChange`) so the quick ask can offer a
  * whole plan that finishes an ask, rehearsed before it is offered, while
  * the composer and the checker stay off the page. Unsaid, a missing
  * capability is said, and who could add it, without a plan.
  */
-export type ComposeChangeHost = (change: { readonly document: GraviewDocument; readonly add: readonly TraitName[]; readonly drop?: readonly string[] }) =>
+export type ComposeChangeHost = (change: { readonly document: GraviewDocument; readonly edits?: readonly unknown[]; readonly add?: readonly TraitName[]; readonly drop?: readonly string[] }) =>
   | { readonly ok: true; readonly document: GraviewDocument; readonly app: object; readonly said: readonly string[] }
   | { readonly ok: false; readonly refused: string };
 

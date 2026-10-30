@@ -1016,8 +1016,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
               setTyped("");
             }
           }}
-          placeholder={asks ? "Type to filter, or ask…" : "Type to filter…"}
-          aria-label={asks ? `Filter what can be done here, or ask about ${askedAbout}` : "Filter what can be done here"}
+          placeholder={asks ? "Type to filter, or tell Graview…" : "Type to filter…"}
+          aria-label={asks ? `Filter what can be done here, or tell Graview what to do about ${askedAbout}` : "Filter what can be done here"}
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
@@ -1452,7 +1452,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
       {askRow ? (
         <div data-menu-section="ask" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5 }}>
           <button type="button" data-menu-item="ask-typed" data-menu-lit={lit === "ask" || undefined} onClick={ask} style={{ ...ROW_STYLE, ...(lit === "ask" ? LIT_STYLE : {}) }}>
-            Ask about {askedAbout}: <span style={{ fontWeight: 600 }}>{words}</span>
+            Tell Graview <span style={{ fontWeight: 600 }}>“{words}”</span>
             {lit === "ask" ? ENTER_MARK : null}
           </button>
         </div>

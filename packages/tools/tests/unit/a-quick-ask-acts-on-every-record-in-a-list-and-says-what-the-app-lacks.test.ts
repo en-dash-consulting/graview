@@ -32,7 +32,7 @@ const make = () =>
   });
 const me: Principal = { kind: "human", id: "u-mo" };
 const answering = (reply: object) => {
-  const told: { members?: { id: string }[]; member_acts?: { name: string; asks: string[] }[]; traits?: { trait: string }[] }[] = [];
+  const told: { members?: { id: string }[]; member_acts?: { name: string; asks: string[] }[] }[] = [];
   const thinking: ThinkingProvider = { model: "fake-thinking", think: async ({ prompt }) => (told.push(JSON.parse(prompt)), { text: JSON.stringify(reply) }) };
   return { thinking, told };
 };
@@ -54,11 +54,10 @@ describe("an ask about a list", () => {
     expect(["t-1", "t-3"].map((id) => store.graph.getNode(id)?.["status"])).toEqual([undefined, undefined]);
   });
 
-  it("says what the app lacks, the traits that would bring it and whom the words name, where no act can do it", async () => {
-    const { thinking, told } = answering({ answer: "", lacks: "Tasks have no one to assign them to.", add: ["owners", "no-such-trait"], who: "Nick", then: "give each to Nick" });
-    const result = await answerHere({ thinking }, { store: make(), target: { on: "list", kind: "task" }, principal: me, said: "assign these to nick", members: ["t-1"], traits: [{ trait: "owners", says: "people who own things" }] });
-    expect(told[0]!.traits).toEqual([{ trait: "owners", says: "people who own things" }]);
-    expect(result.missing).toEqual({ said: "Tasks have no one to assign them to.", add: ["owners"], who: "Nick", then: "give each to Nick" });
+  it("says what the app lacks, the need named — a link, by what it is called and what it points to — and whom the words name, where no act can do it", async () => {
+    const { thinking } = answering({ answer: "", lacks: "Tasks have no one to assign them to.", need: { link: { on: "task", called: "assigned to", to: "person" } }, who: "Nick" });
+    const result = await answerHere({ thinking }, { store: make(), target: { on: "list", kind: "task" }, principal: me, said: "assign these to nick", members: ["t-1"] });
+    expect(result.missing).toEqual({ said: "Tasks have no one to assign them to.", need: { link: { on: "task", called: "assigned to", to: "person" } }, who: "Nick" });
     expect(result.answer).toBe("Tasks have no one to assign them to.");
     expect(result.interaction.outcome).toBe("offered");
   });

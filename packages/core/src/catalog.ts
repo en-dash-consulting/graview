@@ -37,6 +37,8 @@ import type { AnySchema } from "./schema/schema.js";
 import { seatOf } from "./seat-of.js";
 import { jobIsFor, type AppPurpose } from "./job-shape.js";
 import type { Store } from "./store.js";
+export { planEdits } from "./plan-edits.js";
+export type { PlanNeed, PlannedEdits } from "./plan-edits.js";
 
 // ── targets ─────────────────────────────────────────────────────────────────
 

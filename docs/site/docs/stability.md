@@ -144,6 +144,16 @@ Where a reader stands in a log is said on the wire as a cursor: a string only th
 - **A page from before it** (0.1.48 and earlier) sends the seq of the last op it has, a number. A server reads that, and a numeric string, as before for one minor (`seqAt`), and stops in the minor after; such a page reads nothing it is sent as a number, so the tokens in a `welcome`, an `ack` and an `ops` message do not disturb it. A seq a server can read as neither is refused `invalid` (400).
 - `SyncState.cursor` was a remote system's own string from the start and is held to the same rule: the engine keeps it and hands it back, and never reads it.
 
+##### A host that lands a plan (0.1.65)
+
+The quick ask offers a missing capability as one plan — the least change to the app and the records that finish the ask — and a host lands it through two functions it hands the provider, the embed or the pages' context. This is the contract Graview Cloud implements:
+
+- `composeChange({ document, edits })` applies the plan's `edits` (written by `planEdits` in the edit vocabulary: the kind a link points to where the app has none, the link or the field, the one act that sets it) to the app's document, grants what it adds as the app's widest grant does, judges the result with the checker, and answers `{ ok: true, document, app, said }` or `{ ok: false, refused }`. `composeAppChange` from `@graview/core/compose` is one. The page rehearses the plan's records against `app` in a scratch store before it offers the plan; it never offers one that would fail.
+- `onProposeChange(proposal)` is handed, on Yes, a `ReshapeProposal` whose `edits` are the change to the app (`add` and `drop` empty), whose `records` are the calls that finish the ask (a record made is named by its `mintedHint` in the calls after it), and whose `via` (`ai:<name>`) the records' ops carry. The host applies the change and the records as the person, as one change, and answers `{ applied: true, undo, note? }` — `undo` taking the app and the records back together, `note` said on the card — or `"applied"` with no way back, or `"declined"`. A refusal is a thrown error, said on the card. A reshape's proposal carries `add` and `drop` and no `edits`, as before.
+- `checkPlanHost(host, { document, kind, members })` from `@graview/core/conformance` runs the assign-to-a-person plan against a host's two functions and the store it serves, and names what failed: composed, landed as one change said `via` the AI, every record linked, one undo taking it all back. A host runs it in its own tests; the todo example's dev host passes it.
+
+These shapes are additive within a major: a new optional key on the proposal or the answer is not a change, and a host that ignores one keeps working.
+
 #### 4. The declaration, the document format and check finding codes
 
 A declaration that compiled and checked clean on one version compiles on the next version of the major.
