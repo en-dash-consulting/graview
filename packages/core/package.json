@@ -57,6 +57,10 @@
       "types": "./dist/head.d.ts",
       "default": "./dist/head.js"
     },
+    "./revisions": {
+      "types": "./dist/revisions.d.ts",
+      "default": "./dist/revisions.js"
+    },
     "./csv": {
       "types": "./dist/csv.d.ts",
       "default": "./dist/csv.js"

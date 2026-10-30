@@ -664,7 +664,8 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
         schemes: scheme === "both" ? ["light", "dark"] : [scheme as "light" | "dark"],
         widths,
         engine,
-        onShot: (file) => process.stdout.write(`  ${file}\n`),
+        // A picture that holds less than the whole place says so, and names what it left out (Roadmap f-revisions-say-what-broke).
+        onShot: (file, coverage) => process.stdout.write(`  ${file}\n${coverage && !coverage.whole ? `    ${coverage.said}\n` : ""}`),
       });
       process.stdout.write(`graview shots: ${files.length} picture${files.length === 1 ? "" : "s"} of ${opened.app.name} in ${out}\n`);
       return 0;
