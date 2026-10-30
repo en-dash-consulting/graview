@@ -33,7 +33,7 @@ const rulesOf = (css: string): string[] => {
 
 /* The modules only the scene face draws with; a name the scene's rules use must appear in one of these and in no other source. */
 const SCENE_FILES = [
-  ...["scene-root.tsx", "view-host.tsx", "edge-signs.tsx", "plots.tsx", "scene-hand.ts", "scene-lines.tsx", "connectors.tsx", "scene.tsx", "resolved-view.tsx", "where-drawn.tsx", "occupants.tsx", "seat-marks.tsx", "ribbons-layer.tsx", "record-links-layer.tsx"].map((file) => `react/src/${file}`),
+  ...["scene-root.tsx", "view-host.tsx", "edge-signs.tsx", "plots.tsx", "scene-hand.ts", "scene-lines.tsx", "connectors.tsx", "scene.tsx", "resolved-view.tsx", "where-drawn.tsx", "occupants.tsx", "seat-marks.tsx", "ribbons-layer.tsx", "record-links-layer.tsx", "scene-covered.ts"].map((file) => `react/src/${file}`),
   // The altitude control: the scene face's (and the Shell's, which draws `themeCss`).
   "primitives/src/workbench/back-out.tsx",
   // The panel beside the map: drawn only with the scene, by the faces that draw it.

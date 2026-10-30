@@ -1,0 +1,14 @@
+---
+"@graview/layout": patch
+"@graview/react": patch
+---
+
+On a phone, the sheet a chosen district opens leaves the city where it stood (Roadmap feature:f-scene-sheet-keeps-the-city). A tap on a district from altitude opened its sheet over the foot of the screen, and the city was fitted again to what the sheet left: drawn half again as big and somewhere else, under the finger that had just pressed it. The city now stays fitted to the whole ground under a sheet a choice opened (`seen` on `placeCity`): every district keeps its size, and the city moves, as one, only as far as lifts the chosen district — its name and, where they fit, the showings hanging under it — above the sheet. A district already above it is chosen with nothing moving. A sheet that stands with nothing chosen (the timeline over the past) still has the city fitted above it.
+
+The zoom no longer rides on that sheet. In the little of the map a phone's sheet leaves it stood over the chosen district's showings and its count of problems; while a choice's sheet is up the zoom is not drawn, two fingers zoom the city, and the zoom comes back with the sheet's ×. A box that stands on a sheet says so (`onSheet` on a `LayoutOptions.chrome` box), and under a choice's sheet the city does not step aside for it.
+
+The keyboard keeps its reach. Tab still passes over a district the sheet covers, and the district it lands on is brought into sight together with its showings where they fit, clear of a zoom standing at the foot of what is seen.
+
+The layout's tests hold the city under the sheet (`a-sheet-a-choice-opens-leaves-the-city-where-it-stood`). verify-scene-hands holds `aTapOpeningASheetLeavesTheCityWhereItStood` on a Pixel 7 and an iPhone 13: each district keeps its size, the city moves as one, the chosen district stands above the sheet and nothing stands over its controls. verify-navigation's `tabNeverLandsOnADistrictThePanelCovers` holds on a phone as before; its setup now comes closer about the chosen district rather than the middle of what the sheet leaves, which under the city's own size can be bare ground, and carries under the sheet only a district that is on the screen. A hosted page's Scene carries 1.0 KB more before it draws (1,063 bytes minified; nothing more up front), and every face and the embed with the studio handed in 0.4 KB more gzipped, raised in `scripts/budget-raises/a-phones-sheet-leaves-the-city-where-it-stood-*.json`.
+
+Compatibility: ops and primitives, stored formats, the wire, the declaration and check finding codes, and derived tool names and input schemas — unchanged. `@graview/layout` gains the optional `seen` on `placeCity` and `onSheet` on a `LayoutOptions.chrome` box; a layout given neither is laid out as before. What Graview Cloud does: nothing; every hosted app's Scene keeps its city where it stood under a phone's sheet on the next build.

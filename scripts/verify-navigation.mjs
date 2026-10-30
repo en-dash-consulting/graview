@@ -614,13 +614,20 @@ async function tabNeverLandsUnderThePanel() {
     await covering.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await covering.waitForSelector("[data-graview-map-panel]", { timeout: 15_000 }).catch(() => {});
     await covering.waitForTimeout(1200);
-    // Closer, about the middle of the part that is seen, so the city runs under the panel.
+    /*
+     * Closer, so the city runs under the panel: about the middle of the part that is seen at a desk, and on a phone about the
+     * chosen district. A phone's sheet does not fit the city again above it — the city keeps its size and the chosen district
+     * is lifted over the sheet — so the middle of what the sheet leaves can be bare ground, and a zoom about it carried every
+     * district off the screen.
+     */
     const seen = await covering.evaluate(() => {
       const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
       const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
       if (!ground || !panel) return null;
       const sheet = document.querySelector("[data-graview-map-panel]")?.getAttribute("data-graview-map-panel") === "sheet";
-      return sheet ? { x: ground.left + ground.width / 2, y: ground.top + (panel.top - ground.top) / 2 } : { x: ground.left + (panel.left - ground.left) / 2, y: ground.top + ground.height / 2 };
+      if (!sheet) return { x: ground.left + (panel.left - ground.left) / 2, y: ground.top + ground.height / 2 };
+      const chosen = document.querySelector('.graview-ground [data-graview-view="kind:task"]')?.getBoundingClientRect();
+      return chosen ? { x: chosen.left + chosen.width / 2, y: chosen.top + chosen.height / 2 } : { x: ground.left + ground.width / 2, y: ground.top + (panel.top - ground.top) / 2 };
     });
     if (seen) {
       await covering.mouse.move(seen.x, seen.y);
@@ -642,8 +649,10 @@ async function tabNeverLandsUnderThePanel() {
       const sheet = element.getAttribute("data-graview-map-panel") === "sheet";
       const seen = [...document.querySelectorAll('.graview-ground [data-graview-view^="kind:"]')]
         .map((card) => card.getBoundingClientRect())
-        // Clear of the panel, or partly under a phone's sheet already: the one nearest it is carried under.
-        .filter((r) => r.right > ground.left && r.bottom > ground.top && (sheet ? r.top < panel.top && r.top >= ground.top : r.right <= panel.left && r.left >= ground.left));
+        // Clear of the panel, or partly under a phone's sheet already: the one nearest it is carried under. On a phone one the
+        // zoom carried partly past the top counts too: the city keeps its size under the sheet, and comes closer past both.
+        // And on the screen across: one past the right edge carried under the sheet is under nothing anybody sees.
+        .filter((r) => r.right > ground.left + 20 && r.left < ground.right - 20 && r.bottom > ground.top && (sheet ? r.top < panel.top && r.bottom > ground.top + 20 : r.right <= panel.left && r.left >= ground.left));
       if (seen.length === 0) return null;
       // The one nearest the panel, carried just past its edge.
       const nearest = sheet ? seen.reduce((a, b) => (b.bottom > a.bottom ? b : a)) : seen.reduce((a, b) => (b.right > a.right ? b : a));

@@ -980,6 +980,17 @@ export function layout<S extends AnySchema>(
       },
     };
   };
+  // The chosen districts, and the one a lens is open on, stay in sight when the city runs past the window.
+  // And the district of a record in focus beside the panel: its building is lit, so it is in sight.
+  const keepKinds = [...(state.selection ?? []), ...(state.focusId ? [state.focusId] : [])].flatMap((id) => (id.startsWith("kind:") ? [id.slice(5)] : id.startsWith("aggregate:") && !id.includes("|") ? [id.slice(10)] : recordBeside && id === focus?.id ? [focus.kind as string] : []));
+  /*
+   * A SHEET OVER THE FOOT THAT A CHOICE OPENED — a phone's, where the panel
+   * cannot stand beside the map — takes no room from the city's fit: the
+   * city stays where it stood and the choice is lifted above the sheet. A
+   * sheet with nothing chosen (the timeline over the past) still has the
+   * city fitted above it.
+   */
+  const sheetOverChoice = dockBottom > 0 && dockRight === 0 && keepKinds.length > 0;
   const city = state.overview
     ? placeCity(
         slotted.map((item) => {
@@ -1006,7 +1017,7 @@ export function layout<S extends AnySchema>(
           };
         }),
         schema,
-        { width: opts.width - dockRight, height: opts.height - dockBottom },
+        { width: opts.width - dockRight, height: sheetOverChoice ? opts.height : opts.height - dockBottom },
         // The corner's chrome, where it is said, is kept clear box by box rather than as a rail down the whole right edge.
         opts.chrome ? { ...opts.inset, right: Math.min(opts.inset?.right ?? 0, 8) } : (opts.inset ?? {}),
         {
@@ -1014,13 +1025,15 @@ export function layout<S extends AnySchema>(
           ...(opts.plots ? { plots: opts.plots } : {}),
           ...(options.cityZoom && options.cityZoom !== 1 ? { zoom: options.cityZoom } : {}),
           ...(options.cityStood ? { stood: options.cityStood } : {}),
-          // The chosen districts, and the one a lens is open on, stay in sight when the city runs past the window.
-          // And the district of a record in focus beside the panel: its building is lit, so it is in sight.
-          keep: [...(state.selection ?? []), ...(state.focusId ? [state.focusId] : [])].flatMap((id) => (id.startsWith("kind:") ? [id.slice(5)] : id.startsWith("aggregate:") && !id.includes("|") ? [id.slice(10)] : recordBeside && id === focus?.id ? [focus.kind as string] : [])),
+          keep: keepKinds,
+          ...(sheetOverChoice
+            ? { seen: { width: opts.width - dockRight, height: opts.height - dockBottom } }
+            : {}),
           ...(options.tilt !== undefined ? { tilt: options.tilt } : {}),
           // Recorded, not applied: the cards already carry it, and the ground reads it to ride the same tween.
           pan: { x: state.pan?.x ?? 0, y: state.pan?.y ?? 0 },
-          ...(stamp || opts.chrome?.length ? { avoid: [...(stamp ? [stamp] : []), ...(opts.chrome ?? [])] } : {}),
+          // What would ride up on a choice's sheet (the zoom) is not drawn there: no ground the city steps aside for.
+          ...(stamp || opts.chrome?.length ? { avoid: [...(stamp ? [stamp] : []), ...(opts.chrome ?? []).filter((box) => !(sheetOverChoice && box.onSheet))] } : {}),
         },
       )
     : null;

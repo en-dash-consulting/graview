@@ -386,7 +386,12 @@ export interface LayoutOptions {
    * the rota's "Shifts ×" over "Sort"). Nothing is kept by default.
    */
   readonly headroom?: number;
-  readonly chrome?: readonly { readonly x: number; readonly y: number; readonly width: number; readonly height: number }[];
+  /**
+   * `onSheet`: the box stands on the top edge of a sheet over the foot (the
+   * zoom on a phone). Under a sheet a choice opened it is not drawn, and the
+   * city does not step aside for it.
+   */
+  readonly chrome?: readonly { readonly x: number; readonly y: number; readonly width: number; readonly height: number; readonly onSheet?: boolean }[];
   /**
    * Kinds whose group is shown by the framework's own list rather than a
    * view the app wrote. From altitude a focused group of such a kind is its

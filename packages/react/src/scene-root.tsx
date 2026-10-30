@@ -963,6 +963,14 @@ export function Scene<S extends AnySchema>({
   const keptDock = useRef(dock);
   if (grown <= 0) keptDock.current = dock;
   const docked = grown > 0 ? keptDock.current : dock;
+  /*
+   * THE SHEET A CHOICE OPENED ON A PHONE, which the city no longer makes room
+   * for (`seen` on the layout): the chosen district is lifted over it. The
+   * zoom does not ride on it then — it stood over the chosen district's
+   * showings and its count of problems, in the little of the map the sheet
+   * leaves — and comes back when the sheet goes. Two fingers zoom meanwhile.
+   */
+  const sheetOverChoice = Boolean(view.overview) && docked.bottom > 0 && docked.right === 0 && (selection.length > 0 || view.focusId !== undefined);
   const sized = useLayoutOptions<S>(seenFrom, size, unit, closer * zoom, docked, nodes, headroom, view.overview ? 0 : docked.bottom);
   // What the picture's trail covers, for the signs at the top edge to step past.
   const trailBox = useTrailBox(wrapperRef);
@@ -1433,7 +1441,7 @@ export function Scene<S extends AnySchema>({
           }}
         />
       ) : null}
-      {view.overview ? <ZoomControls zoom={zoom} zoomBy={(factor) => zoomAbout.current(factor)} above={above} setAbove={setAbove} /> : null}
+      {view.overview && !sheetOverChoice ? <ZoomControls zoom={zoom} zoomBy={(factor) => zoomAbout.current(factor)} above={above} setAbove={setAbove} /> : null}
       <Lines
         frame={frame}
         focusId={view.focusId}
