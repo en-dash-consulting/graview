@@ -18,6 +18,9 @@ import { useLayoutEffect, useState, type CSSProperties, type ReactElement, type 
 const ARROW: Record<PastTheEdge["side"], string> = { left: "←", right: "→", top: "↑", bottom: "↓" };
 /** How far apart two signs on one edge stand, at the least: one sign's height and a gap. */
 const SPACING = 36;
+/** How tall a strip of map the signs at its edges need to point from: less, and they stand on each other. */
+const SIGNS_NEED = 140;
+
 /** Room kept clear at the canvas's ends: the zoom in one corner, the way in at the other. */
 const MARGIN = 56;
 
@@ -39,6 +42,12 @@ export function EdgeSigns({
 }): ReactElement | null {
   const past = districtsPastTheEdge(result);
   if (past.length === 0) return null;
+  /*
+   * NO SIGNS ON A SLIVER. A phone's sheet taken up nearly to the top leaves
+   * a strip of map a few rows tall, and the signs for what lay past its top
+   * and its foot stood on each other there.
+   */
+  if ((result.visible ?? result).height < SIGNS_NEED) return null;
   /*
    * CLEAR OF THE SHOWINGS. A district a lens is open on hangs the names of
    * its pictures under its own; on a phone the sign for a district past the

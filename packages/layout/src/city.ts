@@ -371,7 +371,13 @@ export function placeCity(
       const top = Math.min(...boxes.map((b) => b.y));
       const bottom = Math.max(...boxes.map((b) => b.y + b.height));
       const by = (low: number, high: number, span: number) => (high - low > span - 16 ? span / 2 - (low + high) / 2 : low < 8 ? 8 - low : high > span - 8 ? span - 8 - high : 0);
-      where = { ...where, originX: where.originX + by(left, right, room.width), originY: where.originY + by(top, bottom, room.height) };
+      /*
+       * A SHEET TAKEN UP NEARLY TO THE TOP leaves a strip no district stands
+       * in whole: the choice is not pushed into it, under the scene's own
+       * controls at the top, and the city stays where it stood.
+       */
+      const fits = !options.seen || bottom - top <= room.height - 16;
+      if (fits) where = { ...where, originX: where.originX + by(left, right, room.width), originY: where.originY + by(top, bottom, room.height) };
     }
     return { where, stood: { x: where.originX - base.x, y: where.originY - base.y, cell: where.cell } };
   };

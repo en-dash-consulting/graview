@@ -12,7 +12,9 @@
  *   a tap chooses and shows no focus ring, and a tap on bare ground never pans;
  *   on a phone the sheet a tap opens leaves the city where it stood — its
  *   size kept, moved as one only to lift the choice above the sheet — and
- *   nothing stands over the chosen district's controls;
+ *   nothing stands over the chosen district's controls; and it stands at two
+ *   thirds of the screen, its handle taking it up to nearly all and down to
+ *   half under a finger and from the keyboard, the city drawn at no other size;
  *   a drag — from bare ground or from a district — pans and never chooses;
  *   two fingers zoom the city under them (and on iOS, where Safari says a
  *   pinch twice, once as fingers and once as a GestureEvent, zoom it once);
@@ -343,6 +345,68 @@ async function sheetLeavesTheCity(page, hand, where) {
   return { where, runs, ok: runs.every((run) => run.ok) };
 }
 
+/**
+ * A PHONE'S SHEET SHOWS MOST OF THE SCREEN. The sheet a chosen district
+ * opens stands at two thirds of the picture, with the district still in
+ * sight above it; its handle takes it, under a finger, up to nearly all of
+ * the picture and down to half, and the keyboard's arrows step it back —
+ * and the city is drawn at no other size for any of it.
+ */
+async function sheetShowsMost(page, hand, where) {
+  await open(page);
+  const card = await boxOf(page, "kind:album");
+  await hand.tap(card.x, card.y);
+  await page.waitForSelector('[data-graview-map-panel="sheet"]', { timeout: 30_000 });
+  await settled(page);
+  const read = () =>
+    page.evaluate(() => {
+      const sheet = document.querySelector('[data-graview-map-panel="sheet"]');
+      const picture = sheet?.parentElement?.getBoundingClientRect();
+      const box = sheet?.getBoundingClientRect();
+      const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+      const chosen = document.querySelector('.graview-ground [data-graview-view="kind:album"]')?.getBoundingClientRect();
+      const handle = sheet?.querySelector('[data-testid="map-panel-handle"]');
+      const widths = [...document.querySelectorAll('.graview-ground [data-graview-view^="kind:"]')].map((one) => Math.round(one.getBoundingClientRect().width)).join(",");
+      return {
+        share: box && picture ? Number((box.height / picture.height).toFixed(3)) : null,
+        rest: handle?.getAttribute("data-graview-rest") ?? null,
+        said: handle?.getAttribute("aria-valuetext") ?? null,
+        inSight: Boolean(chosen && box && ground && chosen.bottom <= box.top + 1 && chosen.top >= ground.top - 1),
+        handle: handle ? (() => { const at = handle.getBoundingClientRect(); return { x: at.left + at.width / 2, y: at.top + at.height / 2 }; })() : null,
+        widths,
+      };
+    });
+  const opened = await read();
+  // Up, under a finger: from the handle a long way toward the top.
+  await hand.drag(opened.handle, { x: 0, y: -360 }, 12);
+  await settled(page);
+  const up = await read();
+  // Down, past where it opened: to half.
+  await hand.drag(up.handle, { x: 0, y: 520 }, 12);
+  await settled(page);
+  const down = await read();
+  // And the keyboard: one step up from half is where it opens.
+  await page.focus('[data-testid="map-panel-handle"]');
+  await page.keyboard.press("ArrowUp");
+  await settled(page);
+  const keyed = await read();
+  const state = await stateOf(page);
+  return {
+    where,
+    opened,
+    up,
+    down,
+    keyed,
+    ok:
+      opened.share >= 0.62 && opened.share <= 0.7 && opened.inSight && opened.said === "Two thirds of the screen" &&
+      up.rest === "2" && up.share >= 0.85 &&
+      down.rest === "0" && down.share >= 0.49 && down.share <= 0.56 && down.inSight &&
+      keyed.rest === "1" && keyed.inSight &&
+      [up, down, keyed].every((one) => one.widths === opened.widths) &&
+      stillPage(state),
+  };
+}
+
 /** A tap on bare ground puts the choice down and pans nothing. */
 async function tapOnGroundNeverPans(page, hand, where) {
   await open(page, "#overview=1&sel=kind:album");
@@ -560,7 +624,7 @@ async function framesUnderTheHand(page, hand, cdp, where) {
 
 const report = { at: new Date().toISOString(), engines, app: "apps/discography", checks: {} };
 const errors = [];
-const seen = { sheet: [], tap: [], ground: [], drag: [], pinch: [], wheel: [], double: [], quick: [], preview: [], up: [], turn: [], page: [], frames: [] };
+const seen = { most: [], sheet: [], tap: [], ground: [], drag: [], pinch: [], wheel: [], double: [], quick: [], preview: [], up: [], turn: [], page: [], frames: [] };
 let browser;
 const discography = await serving("discography", portFor("discography"), repoRoot);
 try {
@@ -595,6 +659,7 @@ try {
     await run({ ...phone }, name, [
       [seen.tap, (page, hand, where) => tapChooses(page, hand, where)],
       [seen.sheet, (page, hand, where) => sheetLeavesTheCity(page, hand, where)],
+      [seen.most, (page, hand, where) => sheetShowsMost(page, hand, where)],
       [seen.ground, (page, hand, where) => tapOnGroundNeverPans(page, hand, where)],
       [seen.drag, (page, hand, where) => dragNeverSelects(page, hand, where)],
       [seen.pinch, (page, hand, where) => pinchUnderFingers(page, hand, where)],
@@ -622,6 +687,7 @@ try {
   const every = (list) => list.length > 0 && list.every((one) => one.ok);
   report.checks.aTapChoosesWithoutARing = { held: seen.tap, ok: every(seen.tap) };
   report.checks.aTapOpeningASheetLeavesTheCityWhereItStood = { held: seen.sheet, ok: every(seen.sheet) };
+  report.checks.aPhonesSheetShowsMostOfTheScreen = { held: seen.most, ok: every(seen.most) };
   report.checks.aTapOnTheGroundNeverPans = { held: seen.ground, ok: every(seen.ground) };
   report.checks.aDragOnTheSceneNeverSelects = { held: seen.drag, ok: every(seen.drag) };
   report.checks.aPinchZoomsUnderTheFingers = { held: seen.pinch, ok: every(seen.pinch) };
