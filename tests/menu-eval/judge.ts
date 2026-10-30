@@ -8,7 +8,7 @@ import { answerHere, type InlineResult } from "../../packages/tools/src/inline-a
 import { heldBy, peopleKinds } from "../../packages/tools/src/graph-plan.js";
 import { forThePerson } from "../../packages/tools/src/sentences.js";
 import { factsOf } from "../../packages/tools/src/facts.js";
-import { dayWords } from "../../packages/tools/src/say-change.js";
+import { dayWords, saysDone } from "../../packages/tools/src/say-change.js";
 import { jevDecide, jevKeyFromEnvironment, JEV_MODEL } from "../../packages/tools/src/providers/jev.js";
 import type { HostAi, ThinkingProvider } from "../../packages/tools/src/ai.js";
 
@@ -35,7 +35,7 @@ const grok = (model: string): ThinkingProvider => ({
 export type Over = "itself" | "held" | "done" | "open";
 /** What a true answer must say, read from the graph: each a word or a pattern; `atLeast` of them, else all. */
 export type Facts = (store: Store<AnySchema>, on: string) => { readonly says: readonly (string | RegExp)[]; readonly atLeast?: number };
-export type Expected = { readonly act: readonly string[]; readonly over: Over; readonly to?: string; readonly orAsk?: true } | { readonly missing: "link" | "field"; readonly who?: string } | { readonly answer: true; readonly facts?: Facts } | { readonly parts: readonly { readonly act: readonly string[]; readonly over: Over }[] } | { readonly clarify: true };
+export type Expected = { readonly act: readonly string[]; readonly over: Over; readonly to?: string; readonly orAsk?: true } | { readonly missing: "link" | "field"; readonly who?: string } | { readonly answer: true; readonly facts?: Facts } | { readonly parts: readonly { readonly act: readonly string[]; readonly over: Over }[] } | { readonly clarify: true } | { readonly notClaimed: true };
 export interface Case {
   readonly app: "todo" | "rota" | "discography";
   readonly on: string;
@@ -78,6 +78,11 @@ function judged(store: Store<AnySchema>, one: Case, on: string, result: InlineRe
   const got = proposals.length > 0 ? `${[...new Set(proposals.map((p) => p.call.name))].join("+")} × ${proposals.length}${said ? `, saying: ${said}` : ""}` : result.missing ? `missing ${result.missing.need ? Object.keys(result.missing.need)[0] : "(no need)"}: ${result.missing.said}` : result.interaction.outcome === "failed" ? `failed: ${result.interaction.failed ?? ""}` : `answer: ${said}`;
   // Whatever the card shows is a sentence for the person: never the pipeline's own note.
   if (said && !forThePerson(said)) return { ok: false, got: `${got} [not a sentence]` };
+  // No engine words: a record "itself", or an act's own title in quotes.
+  const titles = store.allMutations().map((one) => one.title).filter((title): title is string => typeof title === "string");
+  if (/\bitself\b/i.test(said) || titles.some((title) => said.includes(`“${title}”`))) return { ok: false, got: `${got} [engine words]` };
+  // Told to do something and nothing changed: never words that say it was done.
+  if (!("answer" in one.expect) && proposals.length === 0 && !result.missing && saysDone(said)) return { ok: false, got: `${got} [says a change was made that was not]` };
   const expected = one.expect;
   /*
    * THE WORDS SAY WHAT WILL HAPPEN: where an act runs over more than one
@@ -98,6 +103,8 @@ function judged(store: Store<AnySchema>, one: Case, on: string, result: InlineRe
   // Plain words: no word said twice over ("Move Move the broadband"), no pronoun before a name ("They Bo Ferreira"), and a record named in the line is quoted.
   const plain = !/\b(\w+)\s+\1\b/i.test(said) && !/^(They|It|He|She|This|These)\s+[A-Z“]/.test(said) && proposals.every((p) => { const node = store.graph.getNode(String(p.record ?? "")); const name = label(store, String(p.record ?? "")); return !node || peopleKinds(store).includes(node.kind) || !said.includes(name) || said.includes(`“${name}”`); });
   const worded = proposals.length === 0 || (counted && valued && plain && !/ — |\bitself\b|\beach of\b/.test(said));
+  // Told something the app may not do: a change proposed, a plan, or plain words that it could not — never words that it was done.
+  if ("notClaimed" in expected) return { ok: proposals.length > 0 || Boolean(result.missing) || (said.length > 0 && !saysDone(said)), got };
   if ("clarify" in expected) return { ok: proposals.length === 0 && /\?/.test(said) && /\b(all|which)\b/i.test(said), got };
   if (!worded) return { ok: false, got: `${got} [words do not say what will happen]` };
   if ("parts" in expected) {
@@ -157,16 +164,18 @@ export async function runEval(cases: readonly Case[], title: string, file: strin
         const result = await answerHere(ai, { store, target: { on: "record", id: on }, principal, said: one.said, ...(one.after ? { follows: { said: one.after, answer: "" } } : {}) });
         const ms = Date.now() - started;
         const { ok, got } = judged(store, one, on, result);
-        const expected = "clarify" in one.expect ? "a question back: which?" : "parts" in one.expect ? one.expect.parts.map((part) => `${part.act.join("|")} over ${part.over}`).join(" + ") : "act" in one.expect ? `${one.expect.act.join("|")} over ${one.expect.over}` : "missing" in one.expect ? `missing ${one.expect.missing}` : one.expect.facts ? "a true answer" : "an answer";
+        const expected = "notClaimed" in one.expect ? "a change, a plan, or words that it could not" : "clarify" in one.expect ? "a question back: which?" : "parts" in one.expect ? one.expect.parts.map((part) => `${part.act.join("|")} over ${part.over}`).join(" + ") : "act" in one.expect ? `${one.expect.act.join("|")} over ${one.expect.over}` : "missing" in one.expect ? `missing ${one.expect.missing}` : one.expect.facts ? "a true answer" : "an answer";
         return { app: one.app, on, said: one.said, expected, got, ok, ms, stages: (result.interaction.stages ?? []).map((stage) => `${stage.stage} ${stage.ms}`).join(", ") };
     });
     const times = rows.map((row) => row.ms).sort((a, b) => a - b);
     const at = (q: number) => times[Math.min(times.length - 1, Math.floor(q * times.length))]!;
     const score = rows.filter((row) => row.ok).length / rows.length;
-    const report = { at: new Date().toISOString(), fast: JEV_MODEL, light: "grok-4.20-0309-non-reasoning", score, bar: BAR, medianMs: at(0.5), p90Ms: at(0.9), rows };
+    // Decided by Jev alone: no light or Thinking model asked.
+    const jevAlone = rows.filter((row) => !/\b(light|thinking)\b/.test(row.stages)).length / rows.length;
+    const report = { at: new Date().toISOString(), fast: JEV_MODEL, light: "grok-4.20-0309-non-reasoning", score, bar: BAR, medianMs: at(0.5), p90Ms: at(0.9), jevAlone, rows };
     mkdirSync(new URL("../../docs", import.meta.url), { recursive: true });
     writeFileSync(new URL(`../../docs/${file}`, import.meta.url), `${JSON.stringify(report, null, 2)}\n`);
-    console.log(`${title} ${Math.round(score * 100)}% (${rows.filter((row) => row.ok).length}/${rows.length}), median ${at(0.5)} ms, p90 ${at(0.9)} ms`);
+    console.log(`${title} ${Math.round(score * 100)}% (${rows.filter((row) => row.ok).length}/${rows.length}), median ${at(0.5)} ms, p90 ${at(0.9)} ms, ${Math.round(jevAlone * 100)}% decided by Jev alone`);
     for (const row of rows) console.log(`${row.ok ? "ok  " : "MISS"} ${row.app}/${row.on} “${row.said}” → want ${row.expected}; got ${row.got} (${row.ms} ms; ${row.stages})`);
     return { score, rows };
 }

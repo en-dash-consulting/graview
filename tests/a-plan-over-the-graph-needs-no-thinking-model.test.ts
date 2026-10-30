@@ -2,7 +2,7 @@ import type { AnySchema, Principal, Store } from "@graview/core";
 import { describe, expect, it, vi } from "vitest";
 import { createTodoUiStore } from "../apps/todo/src/ui/app.js";
 import { askedParts, asking, decideOverTheGraph, explicitReading, givingOf, narrowingOf, politely, renameOf, unaccounted } from "../packages/tools/src/graph-plan.js";
-import { sayChange } from "../packages/tools/src/say-change.js";
+import { sayChange, sayNothingToChange, saysDone } from "../packages/tools/src/say-change.js";
 import { answerHere } from "../packages/tools/src/inline-ai.js";
 import { forThePerson } from "../packages/tools/src/sentences.js";
 import type { FastProvider, ThinkingProvider } from "../packages/tools/src/ai.js";
@@ -166,6 +166,18 @@ describe("a plan over the graph", () => {
     const decided = await decideOverTheGraph(misreading, { store: store(), target: { on: "record", id: "week" }, said: "scrap everything that's already ticked off" });
     expect(decided.each).toBeUndefined();
     expect(decided.clarify).toMatch(/\?$/);
+  });
+
+  it("never says a change was made that was not, reads who has something as giving it, and says why nothing would change (anAnswerNeverSaysAChangeWasMadeWhenNoneWas)", () => {
+    for (const said of ["Ada Nowak is taken off the shift.", "Done — I've moved it.", "Marked it done.", "The task has been archived."]) expect(saysDone(said), said).toBe(true);
+    for (const said of ["I can't do that here.", "There is no waiting list in this app.", "Nobody covers it yet."]) expect(saysDone(said), said).toBe(false);
+    expect(givingOf("Sam's on this")).toMatchObject({ who: "Sam", owned: true });
+    expect(givingOf("Nora has this one")).toMatchObject({ who: "Nora", owned: true });
+    expect(givingOf("Cass is doing this one")).toMatchObject({ who: "Cass", owned: true });
+    expect(givingOf("what has this got")).toBeUndefined();
+    const kept = store();
+    const finish = kept.allMutations().find((one) => one.name === "finish")! as never;
+    expect(sayNothingToChange(kept, finish, ["t-quote"])).toBe("Nothing to change: “Get the second quote” is already done.");
   });
 
   it("reads the giving the words say, and to whom", () => {

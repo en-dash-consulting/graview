@@ -1190,6 +1190,8 @@ try {
           if (/done/i.test(told.ask ?? "") && acts.includes("set-status")) return { text: JSON.stringify({ answer: "Marking each of them done.", each: { act: "set-status", args: { status: "done" } } }) };
           // A model's note to the pipeline, never to be shown as it came: a fragment, no need named.
           if (/frobnicate/i.test(told.ask ?? "")) return { text: JSON.stringify({ answer: "", lacks: "a way to frobnicate tasks" }) };
+          // Words that say a change was made, with none proposed: the card must never show them.
+          if (/waiting room/i.test(told.ask ?? "")) return { text: JSON.stringify({ answer: "This week is taken off the list and moved to the waiting room." }) };
           if (/assign/i.test(told.ask ?? "") && !acts.some((name) => /assign|give/.test(name))) return { text: JSON.stringify({ answer: "", lacks: "Tasks have no one to assign them to.", need: { link: { on: "task", called: "assigned to", to: "person" } }, who: "Nick" }) };
           window.__thinkingSaw.push({ candidates: (told.candidates ?? []).map((one) => one.says), records: [...(told.state?.selection ?? []), ...(told.state?.neighbors ?? [])].map((one) => one.label) });
           return { text: JSON.stringify({ answer: `About ${told.about}: it is not done yet, so finish it.`, pick: (told.candidates ?? []).map((one) => one.id) }) };
@@ -1907,6 +1909,20 @@ try {
         unclear.proposed === 0 && /\?$/.test((unclear.text ?? "").trim()) && /\ball \d+\b/.test(unclear.text ?? "") &&
         clear.done.length > 0 && clear.proposed.length === clear.done.length && clear.proposed.every((id) => clear.done.some((done) => (id ?? "").endsWith(`:${done}`))),
     };
+
+    /* AN ANSWER NEVER SAYS A CHANGE WAS MADE WHEN NONE WAS: told to do what nothing here does, the card says it can't — not that it did. */
+    reach("anAnswerNeverSaysAChangeWasMadeWhenNoneWas");
+    await openWeek();
+    await on.keyboard.type("send this to the waiting room");
+    await on.keyboard.press("Enter");
+    await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const claimed = await on.evaluate(() => ({
+      text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+      proposed: document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]').length,
+      plan: Boolean(document.querySelector('[data-testid="quick-ask-plan"]')),
+    }));
+    report.checks.anAnswerNeverSaysAChangeWasMadeWhenNoneWas = { ...claimed, ok: claimed.proposed === 0 && !claimed.plan && /can'?t/i.test(claimed.text ?? "") && !/taken off|moved to/i.test(claimed.text ?? "") };
 
     /* A TRAILING QUALIFIER IS NEVER IGNORED BY A DESTRUCTIVE ACT: read as everything, "that's already ticked off" is left over — the card asks which. */
     reach("aTrailingQualifierIsNeverIgnoredByADestructiveAct");

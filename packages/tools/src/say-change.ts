@@ -112,3 +112,38 @@ export function sayChange<S extends AnySchema>(store: Store<S>, change: ChangeSa
   }
   return `${words.charAt(0).toUpperCase()}${words.slice(1)}.`;
 }
+
+/**
+ * NOTHING TO CHANGE, SAID FROM THE RECORDS: where every record is already as
+ * the act would leave it, the card says what each already is — "“Order
+ * boxes” is already done.", "Ada Nowak's status is already available." —
+ * from the fields the act writes and their values now, never the act's
+ * title in quotes or a record "itself".
+ */
+export function sayNothingToChange<S extends AnySchema>(store: Store<S>, act: { readonly writes?: readonly string[] }, records: readonly string[]): string {
+  const schema = store.schema as AnySchema;
+  const people = peopleKinds(store);
+  const nameOf = (id: string) => {
+    const node = store.graph.getNode(id);
+    if (!node) return id;
+    const name = labelOf(schema.tryDefinition(node.kind), node as never);
+    return people.includes(node.kind) ? name : `“${name}”`;
+  };
+  const field = act.writes?.[0];
+  const first = records[0] ? (store.graph.getNode(records[0]) as Record<string, unknown> | undefined) : undefined;
+  const value = field && first ? first[field] : undefined;
+  const who = records.length === 1 ? nameOf(records[0]!) : `All ${records.length} of them`;
+  const are = records.length === 1 ? "is" : "are";
+  if (field && typeof value === "boolean") return `Nothing to change: ${who} ${are} already ${value ? "" : "not "}${field.replace(/[A-Z]/g, (letter) => ` ${letter.toLowerCase()}`)}.`;
+  if (field && (typeof value === "string" || typeof value === "number")) return `Nothing to change: ${records.length === 1 ? `${who}'s` : "their"} ${field.replace(/[A-Z]/g, (letter) => ` ${letter.toLowerCase()}`)} ${are === "is" ? "is" : "are"} already ${dayWords(String(value)) ?? value}.`;
+  return `Nothing to change: ${who} ${are} already as that would leave ${records.length === 1 ? "it" : "them"}.`;
+}
+
+/** Said where an instruction found nothing here to do it with. */
+export const CANNOT_DO_IT = "I can't do that here: nothing in this app does what you asked. Try saying it another way.";
+
+/** Words that tell of a change as made ("is taken off the shift", "has been moved", "Marked it done"), with no "can't" or "not" in them. */
+export function saysDone(text: string): boolean {
+  if (/\b(can'?t|cannot|couldn'?t|won'?t|not|no|isn'?t|doesn'?t|don'?t|unable|nothing|never)\b/i.test(text)) return false;
+  return /\b(is|are|was|were|has been|have been|got|gets)\s+(now\s+)?(\w+ed|done|taken|set|put|given|made|gone|off|out|away|moved|removed)\b/i.test(text) || /^(i'?ve|i have|done|marked|moved|removed|archived|renamed|assigned|added|scheduled|deleted|dropped|finished|closed|updated|changed|set|put|took|taken)\b/i.test(text.trim()) || /\b(i'?ve|i have)\s+\w+ed\b/i.test(text);
+}

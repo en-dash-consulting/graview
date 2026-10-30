@@ -75,13 +75,13 @@ const CASES: readonly Case[] = [
   { app: "todo", on: "week", said: "get rid of the done ones", expect: act(["drop", "remove-task", "archive-task"], "done") },
   { app: "todo", on: "week", said: "rename it Moving week", expect: act("rename", "itself") },
   { app: "todo", on: "week", said: "what should I do first?", expect: answer },
-  { app: "todo", on: "week", said: "set these aside", expect: { act: ["archive-task"], over: "held", orAsk: true } },
+  { app: "todo", on: "week", said: "set these aside", expect: act("archive-task", "held") },
   { app: "rota", on: "s-fri-repair", said: "give this shift to me", as: "user-ada", expect: { act: ["cover"], over: "itself", to: "v-ada" } },
   { app: "rota", on: "s-mon-open", said: "swap this to the saturday", expect: act("move-shift", "itself") },
   /* Polite and indirect instructions are instructions. */
   { app: "todo", on: "week", said: "could you close these for me", expect: act("finish", "held") },
   { app: "todo", on: "t-book", said: "please mark this one done", expect: act("finish", "itself") },
-  { app: "todo", on: "week", said: "i'd like these archived", expect: { act: ["archive-task"], over: "held", orAsk: true } },
+  { app: "todo", on: "week", said: "i'd like these archived", expect: act("archive-task", "held") },
   { app: "todo", on: "t-book", said: "can we push this to monday", expect: act("reschedule", "itself") },
   { app: "todo", on: "week", said: "these should be marked done", expect: act("finish", "held") },
   { app: "rota", on: "s-mon-open", said: "would you drop this shift", expect: act("drop-shift", "itself") },
@@ -129,6 +129,18 @@ const CASES: readonly Case[] = [
   { app: "todo", on: "week", said: "wipe out all the tasks that are already finished", expect: act(["drop", "remove-task"], "done") },
   /* Said plainly: a record named in the line is quoted, never read into the act's own words. */
   { app: "todo", on: "t-broadband", said: "move this to someday", expect: act("move-to-list", "itself") },
+  /* Who has something, said as a statement: an instruction to give it to them. */
+  { app: "todo", on: "t-book", said: "Sam's on this", expect: { missing: "link", who: "Sam" } },
+  { app: "todo", on: "week", said: "Nora has these", expect: { missing: "link", who: "Nora" } },
+  { app: "rota", on: "s-fri-repair", said: "Cass is doing this one", expect: { act: ["cover"], over: "itself", to: "v-cass" } },
+  { app: "rota", on: "s-sat-market", said: "Dev's got this", expect: { act: ["cover"], over: "itself", to: "v-dev" } },
+  /* An act with nothing to change says what the record already is, never the act's title. */
+  { app: "rota", on: "v-ada", said: "ada is back now", expect: { answer: true, facts: () => ({ says: [/\bAda Nowak\b/, /already/i] }) } },
+  { app: "todo", on: "t-quote", said: "mark this one done", expect: { answer: true, facts: () => ({ says: [/already done/i] }) } },
+  /* Never a change claimed that was not made. */
+  { app: "rota", on: "s-mon-open", said: "take Ada off and put her on the waiting list", expect: { notClaimed: true } },
+  { app: "todo", on: "t-book", said: "send this to my accountant", expect: { notClaimed: true } },
+  { app: "rota", on: "v-bo", said: "text bo the new times", expect: { notClaimed: true } },
   /* The rota. */
   { app: "rota", on: "s-mon-open", said: "give this shift to Bo", expect: act("cover", "itself") },
   { app: "rota", on: "s-mon-open", said: "move this to friday", expect: act("move-shift", "itself") },

@@ -56,9 +56,9 @@ import type { AiPrice, AnswerProvider, AnswerReply, FastProvider, HostAi, Thinki
 import { firstJsonObject } from "./intelligence.js";
 import { COULD_NOT_WORK_OUT, forThePerson } from "./sentences.js";
 import { factsOf, todayWords } from "./facts.js";
-import { sayChange } from "./say-change.js";
+import { CANNOT_DO_IT, sayChange, sayNothingToChange, saysDone } from "./say-change.js";
 export { COULD_NOT_WORK_OUT, forThePerson, plainly } from "./sentences.js";
-import { askedParts, asking, decideOverTheGraph, heldBy, explicitReading, removing, unaccounted, UNDOING, type GraphDecision, effectOf, type Reading } from "./graph-plan.js";
+import { askedParts, asking, barFor, decideOverTheGraph, heldBy, explicitReading, removing, unaccounted, UNDOING, type GraphDecision, effectOf, type Reading } from "./graph-plan.js";
 import type { Answer, ChoiceAnswer } from "./fast.js";
 import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide, type JevOptions } from "./providers/jev.js";
 import type { ChoiceQuestion, Question } from "./questions.js";
@@ -758,6 +758,14 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   } catch (error) {
     return failedResult(asked, said, "ask", error instanceof Error ? error.message : String(error));
   }
+  /*
+   * NEVER A CHANGE CLAIMED THAT WAS NOT MADE. Told to do something, with no
+   * change proposed, no plan and nothing picked, the model's words may not
+   * say it is done ("X is taken off the shift."): said plainly that it
+   * could not be done here instead.
+   */
+  const changed = Boolean(each) || picked.some(({ candidate }) => proposalOf(candidate) !== undefined);
+  if (!isQuestion() && !changed && !missing && text && saysDone(text)) text = CANNOT_DO_IT;
   if (!text && picked.length === 0 && !each && !missing) {
     // The seat could not answer (Roadmap f-friction-log): the question, and the place it was asked on. A provider that failed is not this.
     const place = ask.target.on === "place" || ask.target.on === "lens" ? ask.target.place : undefined;
@@ -774,7 +782,7 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   const question = isQuestion();
   /* A destructive act over several, from words that did not say which: asked back, not proposed. */
   const eachAct = each ? ask.store.allMutations().find((one) => one.name === each!.act) : undefined;
-  if (eachAct && removing(eachAct as never) && members.length > 1 && (reading ? (reading.chance ?? 1) < 0.9 || unaccounted(said, reading) : !explicitReading(said))) {
+  if (eachAct && removing(eachAct as never) && members.length > 1 && (reading ? (reading.chance ?? 1) < barFor(eachAct as never, said) || unaccounted(said, reading) : !explicitReading(said))) {
     const clarify = `Should I ${(eachAct.title ?? eachAct.name).trim().split(/\s+/)[0]!.toLowerCase()} all ${members.length} of them? Say “all” to go ahead, or say which.`;
     return { interaction: { ...asked.entry, ask: { kind: "ask", said }, offered: [], outcome: "offered", answer: clarify, usage: [...asked.usage], stages }, offers: [], answer: clarify, ...(reading ? { reading } : {}) };
   }
@@ -877,10 +885,9 @@ function graphResult<S extends AnySchema>(ask: QuickAsk<S>, asked: Asked, said: 
       if (graph.clarify) return graph.clarify;
       if (graph.each && graph.reading) {
         const mutation = ask.store.allMutations().find((one) => one.name === graph.each!.act);
-        const title = mutation?.title ?? graph.each.act;
         // Said as it will happen: the act, its values, and the records it will act on, counted as it will.
         const acting = graph.reading.records.filter((id) => kept.has(`each:${graph.each!.act}:${id}`));
-        return acting.length > 0 && mutation ? changeWords(ask.store, mutation, graph.each.args, acting, graph.reading) : `There is nothing for “${title}” to change on ${graph.reading.words}.`;
+        return acting.length > 0 && mutation ? changeWords(ask.store, mutation, graph.each.args, acting, graph.reading) : mutation ? sayNothingToChange(ask.store, mutation as never, graph.reading.records) : `Nothing here would change.`;
       }
       return graph.text ?? graph.missing?.said ?? "";
     })
