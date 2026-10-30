@@ -1,5 +1,30 @@
 # @graview/guest
 
+## 0.1.65
+
+### Patch Changes
+
+- d14b044: Right-click a section of a view to make it better, Roadmap feature:f-make-this-section-better (from Homeflow's request: "make this section better" with "just do it", "describe changes" and "highlight area"). A right-click inside a worker view now finds the section under it — an element the view marked `data-section`, a `<section>` or another landmark by its label or heading, else a heading's block (`sectionUnder`) — names the menu for it ("This week") and outlines it while the menu is open. For a seat the host says may change views, the menu offers "Make “This week” better": Just do it, Describe changes… ("What should change?") and Highlight area…, an overlay over the view where a drag or a click picks the parts meant and the card names them ("You pointed at the three day columns.") before asking "What should change here?".
+  
+  The section is revised alone. `@graview/tools/section` is new: `locateSection` finds the section's markup in the view's script with the rules that style only it, `composeSection` puts a revision in their place and keeps every other byte, and `reviseSection` asks the host's light model, then its full one where the light one's answer cannot be read. Before anything is offered the page judges the composed view: the host's own checks of a view's code, drawn as a draft in the view's place, what the open kit refused, and `compareViewRevision` against the view it replaces. A class left unstyled or a section lost is handed back to the model once with the findings, then refused in plain words; how the height moved is said. The draft stands in place with Keep and Discard; Keep goes through the host's view door, the page draws the kept code, and one Undo puts the view back. Each revision is an AI interaction in Activity (`ask.kind` `"section"`) and, where the host keeps what people tell Graview (`ai.told`), a telling: the words, the view's section it was said on (`decided: { type: "view", section }`, new), the slot and the time, and how it ended — previewed, kept (accepted), discarded (declined), undone, or refused (abandoned) — with the 👍/👎 strip at the card's foot as on the quick ask's. The section's card, the overlay and the revision path are fetched the first time one is asked for.
+  
+  The host's door is the one it already holds for script views: `KeptViews` gains an optional `revise(revision)` (handed `{ name, title, source, before, section, said }`, answering nothing or `{ note?, undo? }`) and `revised(name)`. `withMemoryRevisions(memoryViews())` keeps revisions in memory, "Kept until this page reloads." `checkViewRevisionHost` on `@graview/core/conformance` runs a host's door as the page does: revising offered only where `may.views`, the code kept, one Undo putting it back. The pages' context takes `keptViews` and tidies its views by it, as the embed and the Shell do. On `pnpm dev` the todo example gains a worker view of its own, "At a glance", with three named sections to try it on. Tests: `a-section-is-revised-alone-and-the-rest-kept-byte-for-byte`, `a-section-made-better-runs-and-loses-no-style` (run headless), `a-section-under-the-cursor-is-named-as-a-person-would`, `a-highlighted-area-is-named-by-what-it-covers`, `a-hosts-views-keep-a-sections-revision-and-one-undo-puts-it-back`, and `verify-section` in three engines.
+  
+  What a hosted page loads up front is unchanged, and so is nearly all of what a face fetches before it draws: the section finder, the menu's rows and the outline arrive with the first right-click inside a worker view (the menu opens once they are here), and the card, the overlay and the revision when one is asked for. The scene face before it draws is 1_108_954 B, 1_271 more than the menu at the pointer alone (the limit is 1083 KB, from 1082 KB), and the budget raise files ask the pages face alone for 1.3 KB minified and 0.5 KB gzipped more, every face for 17.1 KB gzipped (the chunks of their own), the embed with the studio handed in for 0.8 KB gzipped, and the guest host registering a worker view for 0.4 KB minified and 0.2 KB gzipped.
+  
+  Compatibility: ops and primitives — unchanged. Stored formats — unchanged; an AI interaction's `ask.kind` may be `"section"`. The wire — unchanged; `KeptViews` gains the optional `revise` and `revised`, `MenuTarget` and `PointerMenu` the optional `section`, `WorkerView` its `css`, and `@graview/tools/section` is a new entry. The declaration and check finding codes — unchanged. Derived tool names and input schemas — unchanged.
+  
+  What Graview Cloud does: its `KeptViews` gains `revise`, kept as `propose_view` then `apply_view` keep a view a chat replaced (the replaced version among the view's own, `restore_view` one call away), answering `{ undo }` that restores it, and offered only to owners and editors through `may.views`; it runs `checkViewRevisionHost` in its tests.
+- Updated dependencies [5b2e969]
+- Updated dependencies [51e26e3]
+- Updated dependencies [28119da]
+- Updated dependencies [afcacf2]
+- Updated dependencies [d14b044]
+- Updated dependencies [79f309e]
+- Updated dependencies [181d9fb]
+  - @graview/core@0.1.65
+  - @graview/react@0.1.65
+
 ## 0.1.64
 
 ### Patch Changes

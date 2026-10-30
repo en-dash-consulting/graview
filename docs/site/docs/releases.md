@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.65`](https://graview.dev/docs/releases.html#v0-1-65)
 - [`0.1.64`](https://graview.dev/docs/releases.html#v0-1-64)
 - [`0.1.63`](https://graview.dev/docs/releases.html#v0-1-63)
 - [`0.1.62`](https://graview.dev/docs/releases.html#v0-1-62)
@@ -66,9 +67,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.65
+
+Published October 30, 2026 · the current version
+
+Type in the right-click menu and Graview works out what you mean, says what it will do and does it on Yes; what people tell it is kept, rated and suggested back; a section of a written view can be made better in place; a revision says what it broke; and on a phone the sheet leaves the city where it stood.
+
+- **The menu takes words.** Typing in a right-click menu filters every row as you type. Free words are read against what is under the cursor: Jev, in the Fast slot, works out what you mean (the record itself, the ones it holds, the done or the open ones, a person named or said as "me" or "her"), and the card says exactly what will happen before Yes, with one Undo. When the app has no way to do it yet, it says what it would add and asks first. A thinking model is asked only when Jev is unsure; the dev server lends one from Anthropic, xAI or OpenAI. Graview stands among who is here while it works, and the card opens where the menu stood and does not move. Option with a right-click keeps the browser's own menu; Inspect is gone.
+- **What people tell Graview.** Each telling is kept with what it did, rated with a thumb, listed in the Studio under "What Graview has been told", and the ones rated right are suggested back on similar records, worded only as the act.
+- **Make a section better.** Right-click inside a section of a worker view to make it better: Just do it, Describe changes…, or Highlight area…, each a draft you keep or discard.
+- **Revisions.** A view revised, a picture taken or an act run says what it broke (`@graview/core/revisions`).
+- **The phone.** A chosen district's sheet leaves the city where it stood and shows most of the screen with a handle; going into a district reads clean, "Everything" at the top rather than "The whole thing", its card as tall as what it holds.
+
+**Before you upgrade:** New: `@graview/core/told`, `@graview/core/revisions` and `@graview/tools/section` entries; `HostAi.light`, `HostAi.told`, `AiStage`; `planEdits`, `composeAppChange`, `checkPlanHost`, `checkToldHost` and `checkViewRevisionHost`; `KeptViews.revise` and `revised`; `PresenceChannel.alsoHere`; `ToldPanelDoor`; `toldDoor` and `devTold`; the `/graview/told` route and `told.json` beside the store. Changed: `ProposeChangeAnswer` may be `{ applied: true, undo, note? }`; `ComposeChangeHost` is `{ document, edits?, add?, drop? }`; the dev server's model door takes `tier: "fast"` and answers from xAI and OpenAI as from Anthropic; the pages' menu no longer draws Inspect, and Option with a right-click reaches the page's own listeners. Ops, stored formats in the graph, the declaration, check codes and derived tool names are unchanged.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.65) · [The full changelog for 0.1.65](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0165)
+
 ## 0.1.64
 
-Published October 29, 2026 · the current version
+Published October 29, 2026
 
 A workflow run says what it spent and what started it; a count of one relation is read whatever its size; an app's images load under its base and offer home-screen icons; a dark app opens through a dark screen; connection reports name their source; and the Scene holds steady under a finger and a mouse.
 
