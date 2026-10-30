@@ -76,7 +76,14 @@ function peopleKinds<S extends AnySchema>(store: Store<S>): readonly string[] {
 }
 
 /** The giving the words say, and to whom: "assign … to Sam" → "assigned to", "Sam". */
-export function givingOf(words: string): { readonly called: string; readonly who?: string } | undefined {
+export function givingOf(words: string): { readonly called: string; readonly who?: string; readonly owned?: boolean } | undefined {
+  // A person named without "to": "Sam should take care of these", "make this Nora's job", "these are Ada's".
+  const owner =
+    /^\s*([\p{L}][\p{L}'’-]*)\s+(?:should|can|will|could|is going to|needs to)\s+(?:take care of|handle|own|do|look after|take|deal with|pick up|be on)\b/iu.exec(words)?.[1] ??
+    /\bmake\s+(?:this|these|it|them|this one)\s+([\p{L}][\p{L}-]*)['’]s\b/iu.exec(words)?.[1] ??
+    /\b(?:this|these|it|they)\s+(?:is|are)\s+([\p{L}][\p{L}-]*)['’]s\b/iu.exec(words)?.[1] ??
+    /\b([\p{L}][\p{L}-]*)['’]s\s+(?:job|task|responsibility|shift|now)\b/iu.exec(words)?.[1];
+  if (owner && !/^(it|this|that|these|those|they|we|you|i|everyone|someone|nobody|it's|that's)$/i.test(owner)) return { called: "assigned to", who: capital(owner), owned: true };
   const who = /\bto\s+([\p{L}][\p{L}'’-]*)\s*[.!?]*\s*$/iu.exec(words)?.[1];
   const verb = words
     .toLowerCase()
@@ -121,14 +128,15 @@ export async function decideOverTheGraph<S extends AnySchema>(
   const members = all && (open || finished) ? { kind: all.kind, ids: all.ids.filter((id) => (finished ? isDone(id) : !isDone(id))) } : all;
   if (members && members.ids.length > 0) readings.push({ which: "held", records: members.ids, kind: members.kind, words: `the ${members.ids.length}${open ? " open" : finished ? " done" : ""} ${members.ids.length === 1 ? noun(members.kind) : plural(members.kind)}${where}`, close: false });
   /* A reply that only narrows or names the field keeps the reading it replies to; code holds it, the model is not asked again. */
-  const renamed = /\bcall (?:it|that|the field)\s+["“']?([\p{L}][\p{L} ]*?)["”']?\s*[.!]*\s*$/iu.exec(said)?.[1];
+  // "Call it owner" in a reply names the link the plan before it adds; said first, "call it X" renames the record.
+  const renamed = options.follows ? /\bcall (?:it|that|the field)\s+["“']?([\p{L}][\p{L} ]*?)["”']?\s*[.!]*\s*$/iu.exec(said)?.[1] : undefined;
   const kept = open || finished ? "held" : renamed ? options.follows?.reading : undefined;
   if (kept && readings.some((one) => one.which === kept)) readings.splice(0, readings.length, ...readings.filter((one) => one.which === kept));
   if (readings.length === 0) return { sure: false, usage: { inputTokens: 0, outputTokens: 0 } };
 
   /* THE QUESTIONS, ONE CALL: which records, which act on them (said by what it does), which record the words name, and — where none — what the app would need. */
   const questions: Record<string, Question> = {};
-  if (readings.length > 1) questions["reading"] = { type: "choice", instructions: `Someone said “${said}”${options.follows ? `, replying to “${options.follows.said}”${options.follows.reading ? `, which was taken as ${options.follows.reading === "itself" ? "the record itself" : "the records it holds"}` : ""}` : ""}. On a record that holds others, "these", "all", "them", "each", "everything" and "the … ones" mean the records it holds; "this" or its name mean the record itself. Which do they mean?`, criteria: Object.fromEntries(readings.map((one) => [one.which, one.which === "itself" ? `${capital(one.words)} (the ${noun(one.kind)})` : capital(one.words)])) };
+  if (readings.length > 1) questions["reading"] = { type: "choice", instructions: `Someone said “${said}”${options.follows ? `, replying to “${options.follows.said}”${options.follows.reading ? `, which was taken as ${options.follows.reading === "itself" ? "the record itself" : "the records it holds"}` : ""}` : ""}. On a record that holds others, "these", "all", "them", "each", "everything", "the lot", "every one", "the whole list" and "the … ones" mean the records it holds; "this" or its name mean the record itself. Which do they mean?`, criteria: Object.fromEntries(readings.map((one) => [one.which, one.which === "itself" ? `${capital(one.words)} (the ${noun(one.kind)})` : capital(one.words)])) };
   const actsOn = (kind: string) =>
     store.allMutations().filter((mutation) => mutation.subject && (mutation.subject.kinds === "*" || (mutation.subject.kinds as readonly string[]).includes(kind)));
   const offered = readings.flatMap((reading) => actsOn(reading.kind).slice(0, 24).map((mutation) => ({ key: `${reading.which}:${mutation.name}`, reading, mutation })));
@@ -175,7 +183,7 @@ export async function decideOverTheGraph<S extends AnySchema>(
   // The person the words give it to: said here, else in the turn before; a pronoun, as the context took it.
   const givenHere = givingOf(said) ?? givingOf(words);
   const whoSaid = givenHere?.who && (MINE.test(givenHere.who) ? meAt ? labeled(meAt) : meName : THEIRS_WORD.test(givenHere.who) ? (theirs ? labeled(theirs) : undefined) : givenHere.who);
-  const given = givenHere ? { called: givenHere.called, ...(whoSaid ? { who: whoSaid } : {}) } : undefined;
+  const given = givenHere ? { called: givenHere.called, ...(whoSaid ? { who: whoSaid } : {}), ...(givenHere.owned ? { owned: true } : {}) } : undefined;
   const giving = given && renamed ? { ...given, called: renamed.toLowerCase() } : given;
   const sureOfReading = readings.length === 1 || (reading0?.chance ?? 0) >= 0.5;
   if (!sureOfReading) return { sure: false, reading: chosen, usage: decided.usage };
@@ -205,12 +213,37 @@ export async function decideOverTheGraph<S extends AnySchema>(
       sureOfAct = true;
     }
   }
+  // Given to a person code resolved (a pronoun, "me", "X should…"), and one act here takes them: that act, whatever Jev weighed.
+  if (!sureOfAct && namedNode && giving?.who && (taken || meAt || giving.owned)) {
+    const takers = offered.filter((one) => one.reading.which === chosen.which && (one.mutation as { derived?: { act?: string } }).derived?.act !== "merge" && nodeRefArgs((one.mutation as { input?: unknown }).input).some((ref) => ref.name !== one.mutation.subject!.arg && sameAs(store, namedNode, ref.kinds) !== undefined && kindsOfPeople.some((kind) => ref.kinds.includes(kind))));
+    if (takers.length === 1) {
+      mutationName = takers[0]!.mutation.name;
+      sureOfAct = true;
+    }
+  }
   // A record the words name, and one act here that takes it, likely enough: that act ("give this to her" — Ada — is "Cover it").
   if (!sureOfAct && namedNode) {
     const taking = ranks.filter((one) => one.chance >= 0.3).map((one) => onReading(one.name)).find((one) => one && (one.mutation as { derived?: { act?: string } }).derived?.act !== "merge" && nodeRefArgs((one.mutation as { input?: unknown }).input).some((ref) => ref.name !== one.mutation.subject!.arg && sameAs(store, namedNode, ref.kinds) !== undefined));
     if (taking) {
       mutationName = taking.mutation.name;
       sureOfAct = true;
+    }
+  }
+  /* A RENAME SAID AS A STATEMENT ("the name should be X", "call it X", "X is a better name"): the act that writes the record's name, on the record itself, its value the words' — read by code. */
+  const newName = renamed === undefined ? renameOf(said) : undefined;
+  const itself = readings.find((one) => one.which === "itself");
+  if (newName && itself) {
+    // The act that names the record: it takes one value besides the record, and that value is its name (it writes it, or the argument is called so).
+    const NAMES = ["label", "name", "title"];
+    const naming = offered.find((one) => {
+      const rest = (argumentsTaken(one.mutation) ?? []).filter((arg) => arg !== one.mutation.subject!.arg);
+      return one.reading.which === "itself" && rest.length === 1 && (NAMES.includes(rest[0]!) || ((one.mutation as { writes?: readonly string[] }).writes ?? []).some((field) => NAMES.includes(field)));
+    });
+    const arg = naming ? (argumentsTaken(naming.mutation) ?? []).find((one) => one !== naming.mutation.subject!.arg) : undefined;
+    const field = arg ? ((naming!.mutation as { input?: { shape?: Record<string, { safeParse(value: unknown): { success: boolean } }> } }).input?.shape ?? {})[arg] : undefined;
+    if (naming && arg && field?.safeParse(newName).success) {
+      const title = naming.mutation.title ?? naming.mutation.name;
+      return { sure: true, reading: { ...itself, close: false }, each: { act: naming.mutation.name, args: { [arg]: newName } }, text: `${capital(title)} — ${itself.words.replace(/ itself$/, "")} to “${newName}”.`, usage: decided.usage };
     }
   }
   const picked = mutationName && sureOfAct ? onReading(mutationName) : undefined;
@@ -239,7 +272,7 @@ export async function decideOverTheGraph<S extends AnySchema>(
   /* NONE CAN: code, not the model's wording, says no act here gives these records to someone — and only then what the app lacks: a link to the person the words name. */
   const need = best(decided.answers["need"]);
   const anActGives = offered.some((one) => one.reading.which === chosen.which && takesRefTo(one.mutation, giveTo));
-  if (giving?.who && !anActGives && ((need?.key === "person" && need.chance >= GRAPH_SURE) || meAt !== undefined || meName !== undefined || taken !== undefined)) {
+  if (giving?.who && !anActGives && ((need?.key === "person" && need.chance >= GRAPH_SURE) || meAt !== undefined || meName !== undefined || taken !== undefined || giving.owned === true)) {
     const who = giving.who ?? (namedNode && kindsOfPeople.includes(namedNode.kind) ? labeled(namedNode) : undefined);
     if (!who) return { sure: false, reading: chosen, usage: decided.usage };
     const lacks = renamed ? `${capital(plural(chosen.kind))} have no ${giving.called}.` : `${capital(plural(chosen.kind))} have no one ${giving.called} them.`;
@@ -291,9 +324,60 @@ function sameAs<S extends AnySchema>(store: Store<S>, node: { readonly id: strin
   return store.graph.allNodes().find((other) => kinds.includes(other.kind) && labelOf(schema.tryDefinition(other.kind), other as never).toLowerCase() === name);
 }
 
+/**
+ * TWO ASKS IN ONE SENTENCE: "archive the done ones, then close the rest" is
+ * two parts, each an instruction of its own. Split at "and", "then", ", then"
+ * or "; " only where each side begins with a verb-like word and says more
+ * than a word — so "assign these to Sam and Nora" and "rename it to Pack and
+ * Go" stay one.
+ */
+export function askedParts(said: string): readonly string[] {
+  const parts = said
+    .split(/\s*(?:,\s*and then|,\s*then|\band then\b|;|\bthen\b|,?\s+and\s+)\s*/i)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length < 2 || parts.length > 3) return [said];
+  const NOT_A_VERB = /^(the|a|an|my|our|your|this|these|that|those|all|every|each|some|it|them|they|he|she|i|we|you|to|for|with|on|in|at|by|of|from|tomorrow|today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i;
+  const instruction = (part: string) => {
+    const words = part.split(/\s+/);
+    return words.length >= 2 && /^[a-z]/.test(words[0]!) && !NOT_A_VERB.test(words[0]!);
+  };
+  return parts.every(instruction) ? parts : [said];
+}
+
 /** Words that ask rather than tell: a question to answer, not an act to propose. */
 export function asking(said: string): boolean {
+  // Said politely or indirectly, it is still an instruction: "could you close these", "please…", "I'd like…", "X should…", "can we…".
+  if (politely(said)) return false;
   return /\?\s*$/.test(said) || /^\s*(who|whom|whose|what|whats|what's|when|where|which|why|how|is|are|was|were|does|do|did|can|could|should|any|anything|tell me|show me|list)\b/i.test(said);
+}
+
+/** An instruction said politely or indirectly: a request, not a question to answer in words. */
+export function politely(said: string): boolean {
+  const words = said.trim().toLowerCase();
+  if (/^(please|pls|kindly)\b/.test(words)) return true;
+  if (/^(could|can|would|will) (you|we|u)\s+(please\s+)?(?!tell|say|explain|show me what|see)\w+/.test(words) && !/^(could|can|would|will) (you|we) (be|have)\b/.test(words)) return true;
+  if (/^(i'?d like|i would like|i want|i need|let'?s|we should|we need to)\b/.test(words)) return true;
+  // "These should be marked done", "Sam should take care of these": what ought to be, said of the records or of a person.
+  if (/^[\p{L}'’]+(\s[\p{L}'’]+)?\s+(should|needs to|need to|has to|have to|ought to)\s+(be\s+)?\w+/u.test(words) && !/^(what|who|which|when|where|why|how|is|are|do|does)\b/.test(words)) return true;
+  return false;
+}
+
+/** A rename said as a statement: "name should be X", "call it X", "X is a better name", "rename it to X" → "X". */
+export function renameOf(said: string): string | undefined {
+  const text = said.trim().replace(/[.!]+$/, "");
+  const forms = [
+    /^(?:the\s+|its\s+|this\s+|list\s+|task\s+)*name\s+should\s+be\s+["“']?(.+?)["”']?$/i,
+    /^(?:please\s+)?call\s+(?:it|this|this one|this list|this task)\s+["“']?(.+?)["”']?$/i,
+    /^["“']?(.+?)["”']?\s+is\s+a\s+better\s+name$/i,
+    /^(?:please\s+)?(?:re)?name\s+(?:it|this|this one|this list|this task)\s+(?:to\s+|as\s+)?["“']?(.+?)["”']?$/i,
+    /^(?:let'?s\s+)?call\s+(?:it|this)\s+["“']?(.+?)["”']?$/i,
+  ];
+  for (const form of forms) {
+    const found = form.exec(text)?.[1]?.trim();
+    if (found) return found;
+  }
+  return undefined;
 }
 
 /** "Undo that": the app's own undo takes back the last change; no act here does. */

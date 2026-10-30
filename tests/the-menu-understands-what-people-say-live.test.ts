@@ -78,6 +78,31 @@ const CASES: readonly Case[] = [
   { app: "todo", on: "week", said: "set these aside", expect: act("archive-task", "held") },
   { app: "rota", on: "s-fri-repair", said: "give this shift to me", as: "user-ada", expect: { act: ["cover"], over: "itself", to: "v-ada" } },
   { app: "rota", on: "s-mon-open", said: "swap this to the saturday", expect: act("move-shift", "itself") },
+  /* Polite and indirect instructions are instructions. */
+  { app: "todo", on: "week", said: "could you close these for me", expect: act("finish", "held") },
+  { app: "todo", on: "t-book", said: "please mark this one done", expect: act("finish", "itself") },
+  { app: "todo", on: "week", said: "i'd like these archived", expect: act("archive-task", "held") },
+  { app: "todo", on: "t-book", said: "can we push this to monday", expect: act("reschedule", "itself") },
+  { app: "todo", on: "week", said: "these should be marked done", expect: act("finish", "held") },
+  { app: "rota", on: "s-mon-open", said: "would you drop this shift", expect: act("drop-shift", "itself") },
+  /* Two asks in one sentence: one plan of two parts, each read on its own. */
+  { app: "todo", on: "week", said: "archive the done ones, then close the open ones", expect: { parts: [{ act: ["archive-task"], over: "done" }, { act: ["finish"], over: "open" }] } },
+  { app: "todo", on: "week", said: "drop the done ones and close the open ones", expect: { parts: [{ act: ["drop", "remove-task"], over: "done" }, { act: ["finish"], over: "open" }] } },
+  { app: "todo", on: "t-book", said: "close this and move it to someday", expect: { parts: [{ act: ["finish"], over: "itself" }, { act: ["move-to-list"], over: "itself" }] } },
+  /* A person named without "to". */
+  { app: "todo", on: "week", said: "Nora should handle these", expect: { missing: "link", who: "Nora" } },
+  { app: "todo", on: "week", said: "make these Sam's responsibility", expect: { missing: "link", who: "Sam" } },
+  { app: "todo", on: "t-book", said: "this is Nora's now", expect: { missing: "link", who: "Nora" } },
+  { app: "rota", on: "s-fri-repair", said: "Bo should take this one", expect: { act: ["cover"], over: "itself", to: "v-bo" } },
+  { app: "rota", on: "s-fri-repair", said: "this is Cass's shift now", expect: { act: ["cover"], over: "itself", to: "v-cass" } },
+  /* A rename said as a statement. */
+  { app: "todo", on: "week", said: "the name should be Packing week", expect: act("rename", "itself") },
+  { app: "todo", on: "t-book", said: "call it Book the small van", expect: act("rename", "itself") },
+  { app: "todo", on: "week", said: "Moving days is a better name", expect: act("rename", "itself") },
+  /* Facts used: the link the words are about, by name. */
+  { app: "todo", on: "t-book", said: "what does this depend on?", expect: says((store, on) => ({ says: outOf(store, on, "waits-for").map((name) => name.split(" ").slice(-1)[0]!) })) },
+  { app: "todo", on: "t-book", said: "is anything holding this up?", expect: says((store, on) => ({ says: outOf(store, on, "waits-for").map((name) => name.split(" ").slice(-1)[0]!) })) },
+  { app: "rota", on: "s-sat-market", said: "who's doing this one?", expect: says((store, on) => ({ says: outOf(store, on, "covered-by").map((name) => name.split(" ")[0]!) })) },
   /* The rota. */
   { app: "rota", on: "s-mon-open", said: "give this shift to Bo", expect: act("cover", "itself") },
   { app: "rota", on: "s-mon-open", said: "move this to friday", expect: act("move-shift", "itself") },
