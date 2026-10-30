@@ -111,7 +111,7 @@ const measure = () => {
     problems: stop.querySelector('[data-testid="kind-stop-problems"]')?.textContent ?? null,
     ids: cells.filter((text) => /^[a-z][a-z-]*:[\p{L}\p{N}-]+$/u.test(text)).slice(0, 3),
     sideways: document.documentElement.scrollWidth > innerWidth + 1,
-    insideSideways: stop.scrollWidth > stop.clientWidth + 1,
+    insideSideways: [stop, stop.querySelector('[data-testid="kind-stop-scroll"]')].some((box) => box && box.scrollWidth > box.clientWidth + 1),
     small: small.slice(0, 6),
     actsContrast,
     actsEdge,
@@ -397,8 +397,8 @@ report.checks = {
   aRowOpensItsActsOnARightClick: walks.rowMenu?.open === true && /sel=room:/.test(walks.rowMenu?.chosen ?? ""),
   // Every row is its record to the scene (`data-graview-pick`), chosen and right-clicked as a record is.
   everyRowIsItsRecord: stops.every((one) => !one.present || one.rows === 0 || one.picks === one.rows),
-  // A row's "⋯" is unmistakably a control: its glyph at 3:1 against the row at least, a visible edge.
-  aRowsActsAreVisible: stops.every((one) => !one.present || one.rows === 0 || (one.actsContrast >= 3 && one.actsEdge)),
+  // A row's "⋯" is unmistakably a control: its glyph at 3:1 against the row at least, a visible edge at a desk; on a phone a quiet glyph in a 44-pixel target, no heavy box (verify-drive-in).
+  aRowsActsAreVisible: stops.every((one) => !one.present || one.rows === 0 || (one.actsContrast >= 3 && (one.actsEdge || one.width < 600))),
   // An empty value is said, never a hole.
   noCellIsAHole: stops.every((one) => !one.present || one.holes === 0),
   // A row's name goes to its record.

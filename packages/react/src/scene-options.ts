@@ -71,6 +71,8 @@ export function useLayoutOptions<S extends AnySchema>(
   );
   // A keystroke changes the hits alone: the flagged and the log's weights are not worked out again for it.
   const relevance = useMemo(() => ({ hits: found ? foundIds(found) : NO_HITS, ...standing }), [found, standing]);
+  // A phone's scene: below the width the bar and the panes take for one (`railInset`'s 640).
+  const narrow = (size?.width ?? 1200) - dock.right < 640;
   return useMemo<LayoutOptions>(
     () => ({
       ...options,
@@ -94,11 +96,19 @@ export function useLayoutOptions<S extends AnySchema>(
        * the city opened under them: the districts and their names open
        * clear of the chrome; the foot is the strip below (`FOOT`).
        */
-      inset: { ...railInset((size?.width ?? 1200) - dock.right), top: 8, bottom: 0 },
+      /*
+       * ON A PHONE, UP AND THE KEY HAVE A ROW OF THEIR OWN (`UP_ROW`), and a
+       * district gone into takes the width under it with even gutters. The
+       * corner kept at the right gave the card four fifths of a phone, and
+       * Up and the Key still stood over its edge (Nick, in the rules on a
+       * phone): the room is taken from the top, where the row is, instead.
+       */
+      inset: narrow ? { left: 8, right: 8, top: 8, bottom: 0 } : { ...railInset((size?.width ?? 1200) - dock.right), top: 8, bottom: 0 },
       // Up and the Key stand clear of a panel too, at the corner of what the reader sees.
+      // From altitude the Key stands under Up as on a desk, so the city keeps the corner it always kept.
       chrome: [{ x: (size?.width ?? 1200) - dock.right - 176, y: 0, width: 176, height: 100 }, { ...zoomCorner(size, dock), ...(dock.bottom > 0 ? { onSheet: true } : {}) }],
       ...(dock.right > 0 || dock.bottom > 0 ? { dock } : {}),
-      ...(headroom > 0 ? { headroom } : {}),
+      ...(narrow || headroom > 0 ? { headroom: narrow ? Math.max(headroom, UP_ROW) : headroom } : {}),
       // The reader's own text size, which the cards are sized in: the city
       // grows with the words rather than holding them at a fixed 230×97.
       unit,
@@ -144,9 +154,12 @@ export function useLayoutOptions<S extends AnySchema>(
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, besideTheMap, dock.right, dock.bottom, headroom, groundFoot],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, besideTheMap, dock.right, dock.bottom, headroom, groundFoot, narrow],
   );
 }
+
+/** The row Up and the Key stand in over a phone's picture: 14 above, Up's 38, 8 below. */
+const UP_ROW = 14 + 38 + 8;
 
 /** The zoom's width (−, its level, +, "From above") and the room around it. */
 const ZOOM_WIDTH = 224;

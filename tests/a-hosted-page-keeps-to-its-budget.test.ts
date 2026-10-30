@@ -193,7 +193,8 @@ describe("a hosted page", () => {
     // 1078 KB since the Scene came to hold steady under a finger and a mouse (Roadmap f-scene-interaction-pass): two fingers read from their pointers, a hand's zoom painted as a transform until it lets go, and a press a beat after a tap landing on what it was aimed at: the scene face measured 1_102_710 B, 6_486 more than main (1_096_224).
     // 1079 KB with both in batch/0-1-64: 1_097_638 + 6_486 = 1_104_124 B.
     // 1080 KB since a phone's sheet came to leave the city where it stood (Roadmap f-scene-sheet-keeps-the-city): the city kept at its size under a choice's sheet with the choice lifted above it, the zoom not drawn on that sheet, and the keyboard bringing a district into sight with its showings: the scene face measured 1_105_903 B, 1_063 more than main (1_104_840).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1080 * 1024);
+    // 1082 KB since going into a district on a phone came to read clean (Roadmap f-phone-drive-in-reads-clean): the bar naming the district or record the reader is in, the Key and a chosen record's Acts in Up's row on a phone's ground, the scene's phone layout giving Up that row, and a keyboard landing judged once the ground settles: the scene face measured 1_107_673 B, 1_770 more than before it (1_105_903).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(1082 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

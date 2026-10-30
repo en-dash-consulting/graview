@@ -12,7 +12,7 @@ const handle = mount(document.querySelector("#garden")!, {
   seed,                       // the graph to open with, or nothing
   face: "graview",            // "scene" | "graview" | "pages" | "picture" — one named lens, no chrome: stop "#view=<place>"; leave it out and the app opens on its home view, else the scene
   stop: "#focus=plot-1",      // the scene's view state, as its URL fragment; none, and the scene opens on the overview
-  path: "/plots",             // the routed face's page; on the scene, nothing or "/places/overview" — the whole thing from above
+  path: "/plots",             // the routed face's page; on the scene, nothing or "/places/overview" — everything from above
   principal: { kind: "human", id: "june", roles: ["coordinator"] },
   bar: true,                  // the app bar over every face (the default); { faces: false, name: false } under a host's own bar
   switch: "words",            // the bar's Scene/Pages switch: its words where they fit (the default), or "icons" for its marks alone
@@ -25,7 +25,7 @@ handle.unmount();
 ```
 
 A scene with nowhere to be — no `stop`, no `path` but the overview's, no
-first place in the declaration — opens on the overview, the whole thing
+first place in the declaration — opens on the overview, everything
 from above, as `graview preview` at `/places/overview` does: `mount(stage,
 { face: "scene" })` under either routing, and `routing: "address"` at a bare
 base. A `stop` set then or later goes down to it.
@@ -57,8 +57,8 @@ connect), each with its mark, a long name wrapped. Every place is two
 presses away, Escape gives the keyboard back to the control, and the bar
 is one row of 48 px however many places there are; on a phone the place
 control is the page's first line, under the bar. On the scene the same
-control names what the scene shows — "The whole thing", or the picture in
-view — and lists its pictures (FR-144): choosing one moves the scene's
+control names what the scene shows — "Everything", the picture in
+view, or the district gone into ("Rules") — and lists its pictures (FR-144): choosing one moves the scene's
 `in.view`, and its address under `routing: "address"`, as any other way
 to a picture does. Where the bar has room after the name, the switch and
 the tools, the places themselves stand on the row as words in their order,

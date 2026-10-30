@@ -115,11 +115,11 @@ describe("the scene's places (FR-144)", () => {
   it("are the whole thing, then each picture the seat may see, grouped as on Pages, each at the scene's address for it", () => {
     const scene = scenePlacesOf({ places: registered, hidden: new Set(["secret"]), view: EMPTY_VIEW, schema: NO_SCHEMA });
     expect(scene.places.map((place) => [place.label, place.group])).toEqual([
-      ["The whole thing", "home"],
+      ["Everything", "home"],
       ["What the workshop covers", "pictures"],
       ["Email to Todd", "pictures"],
     ]);
-    // The whole thing is the overview at altitude: its address alone (FR-154).
+    // Everything is the overview at altitude: its address alone (FR-154).
     expect(scene.places[0]!.path).toBe("/places/overview");
     const todd = scene.places[2]!;
     expect(todd.path.startsWith("/places/overview#")).toBe(true);
@@ -166,8 +166,8 @@ describe("the scene's place control (FR-144)", () => {
       <AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(false)} places={workshop} current={null} reach={{}} tools={null} find={false} scenePlaces={{ places: scene.places, current: scene.current, reach: { go: (place) => went.push(place.key) } }} />,
     );
     const open = at.querySelector<HTMLButtonElement>('[data-testid="app-places-open"]')!;
-    expect(open.textContent).toBe("The whole thing");
-    expect(open.getAttribute("aria-label")).toBe("The whole thing — everything the scene shows");
+    expect(open.textContent).toBe("Everything");
+    expect(open.getAttribute("aria-label")).toBe("Everything — what the scene shows");
     // After the switch.
     expect(at.querySelector('[data-testid="app-faces"]')!.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     act(() => open.click());

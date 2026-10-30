@@ -99,8 +99,21 @@ export function useKeyboardKeepsToWhatIsSeen(
           if (box.scrollTop !== 0) box.scrollTop = 0;
           if (box.scrollLeft !== 0) box.scrollLeft = 0;
         }
-        if (keyboard && card.isConnected) bringIntoSight(card);
+        if (keyboard && card.isConnected) whenSettled(() => card.isConnected && card.contains(document.activeElement) && bringIntoSight(card));
       });
+    };
+    /*
+     * ONCE THE CAMERA HAS PUT IT DOWN. A district gone into takes the keyboard
+     * on its heading as it opens, while the camera is still bringing its card
+     * in: measured then, the card stood part way and was "brought into
+     * sight" by a pan of its own — the eras on a phone landed 26 pixels left
+     * of their gutter, with the pan in the address. The landing is judged
+     * where the camera puts the card, a few frames later.
+     */
+    const whenSettled = (then: () => void, frames = 120) => {
+      const ground = at.closest(".graview-ground") ?? at.querySelector(".graview-ground");
+      if (!ground || ground.hasAttribute("data-graview-settled") || frames <= 0) then();
+      else requestAnimationFrame(() => whenSettled(then, frames - 1));
     };
     const bringIntoSight = (card: HTMLElement) => {
       const seen = seenPart(at, live.current.dock, true);
