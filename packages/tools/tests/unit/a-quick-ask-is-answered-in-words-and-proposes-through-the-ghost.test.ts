@@ -41,7 +41,9 @@ describe("a quick ask", () => {
   it("is answered in words by the Thinking slot, its picked changes a ghost the store has not made", async () => {
     const store = make();
     const result = await answerHere({ thinking: stubThinking() }, { store, target, principal: me, said: "Do what is left here", interaction: "ai-q" });
-    expect(result.answer).toBe("About Book the van: an answer to “Do what is left here”, as drafted.");
+    // Told to do something, the changes it picked are said as they will happen, in the app's words, not the model's.
+    expect(result.answer).toMatch(/“Book the van”/);
+    expect(result.answer).not.toMatch(/as drafted/);
     expect(result.interaction).toMatchObject({ id: "ai-q", ask: { kind: "ask", said: "Do what is left here" }, outcome: "offered", answer: result.answer });
     expect(result.interaction.usage?.[0]).toMatchObject({ tier: "thinking", model: "stub-thinking" });
     expect(result.ghost?.proposals.length).toBeGreaterThan(0);
@@ -67,7 +69,7 @@ describe("a quick ask", () => {
 
   it("is the Fast slot's pick among the candidates when there is no Thinking one", async () => {
     const result = await answerHere({ fast: stubFast({ prefer: [/Status: done/] }) }, { store: make(), target, principal: me, said: "mark it done" });
-    expect(result.answer).toBe("These fit “mark it done”.");
+    expect(result.answer).toMatch(/^Set the status of “Book the van” to “done”\./);
     expect(result.ghost?.proposals[0]?.id).toBe("fill:t-1:status:done");
   });
 

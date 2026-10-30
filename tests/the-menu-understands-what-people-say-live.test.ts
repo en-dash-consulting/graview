@@ -75,13 +75,13 @@ const CASES: readonly Case[] = [
   { app: "todo", on: "week", said: "get rid of the done ones", expect: act(["drop", "remove-task", "archive-task"], "done") },
   { app: "todo", on: "week", said: "rename it Moving week", expect: act("rename", "itself") },
   { app: "todo", on: "week", said: "what should I do first?", expect: answer },
-  { app: "todo", on: "week", said: "set these aside", expect: act("archive-task", "held") },
+  { app: "todo", on: "week", said: "set these aside", expect: { act: ["archive-task"], over: "held", orAsk: true } },
   { app: "rota", on: "s-fri-repair", said: "give this shift to me", as: "user-ada", expect: { act: ["cover"], over: "itself", to: "v-ada" } },
   { app: "rota", on: "s-mon-open", said: "swap this to the saturday", expect: act("move-shift", "itself") },
   /* Polite and indirect instructions are instructions. */
   { app: "todo", on: "week", said: "could you close these for me", expect: act("finish", "held") },
   { app: "todo", on: "t-book", said: "please mark this one done", expect: act("finish", "itself") },
-  { app: "todo", on: "week", said: "i'd like these archived", expect: act("archive-task", "held") },
+  { app: "todo", on: "week", said: "i'd like these archived", expect: { act: ["archive-task"], over: "held", orAsk: true } },
   { app: "todo", on: "t-book", said: "can we push this to monday", expect: act("reschedule", "itself") },
   { app: "todo", on: "week", said: "these should be marked done", expect: act("finish", "held") },
   { app: "rota", on: "s-mon-open", said: "would you drop this shift", expect: act("drop-shift", "itself") },
@@ -117,6 +117,18 @@ const CASES: readonly Case[] = [
   { app: "todo", on: "t-quote", said: "is it finished", expect: says(() => ({ says: [/\b(yes|done|finished)\b/i] })) },
   { app: "todo", on: "t-book", said: "who has it?", expect: answer },
   { app: "rota", on: "s-mon-open", said: "is this covered?", expect: says(() => ({ says: [/\b(yes|ada)\b/i] })) },
+  /* Asks or tells, judged by Jev: a question without a question mark is still a question. */
+  { app: "todo", on: "t-book", said: "has this been finished already", expect: says(() => ({ says: [/\b(no|not)\b/i] })) },
+  { app: "todo", on: "t-quote", said: "did i already close this one", expect: says(() => ({ says: [/\b(yes|done|closed|finished)\b/i] })) },
+  { app: "todo", on: "t-book", said: "any chance this is done", expect: says(() => ({ says: [/\b(no|not)\b/i] })) },
+  { app: "todo", on: "t-quote", said: "this one done or not", expect: says(() => ({ says: [/\b(yes|done)\b/i] })) },
+  /* Which records, chosen among the parts code can name: a trailing clause narrows, or the card asks. */
+  { app: "todo", on: "week", said: "delete all the ones that are finished", expect: act(["drop", "remove-task"], "done") },
+  { app: "todo", on: "week", said: "archive everything which is complete", expect: act("archive-task", "done") },
+  { app: "todo", on: "week", said: "bin everything except the done one", expect: { act: ["drop", "remove-task"], over: "open", orAsk: true } },
+  { app: "todo", on: "week", said: "wipe out all the tasks that are already finished", expect: act(["drop", "remove-task"], "done") },
+  /* Said plainly: a record named in the line is quoted, never read into the act's own words. */
+  { app: "todo", on: "t-broadband", said: "move this to someday", expect: act("move-to-list", "itself") },
   /* The rota. */
   { app: "rota", on: "s-mon-open", said: "give this shift to Bo", expect: act("cover", "itself") },
   { app: "rota", on: "s-mon-open", said: "move this to friday", expect: act("move-shift", "itself") },

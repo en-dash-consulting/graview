@@ -5,7 +5,7 @@ import { createRotaUiStore } from "../../apps/rota/src/ui/app.js";
 import { createStore as createDiscographyStore } from "../../apps/discography/src/domain/app.js";
 import discographySeed from "../../apps/discography/src/data/seed.json" with { type: "json" };
 import { answerHere, type InlineResult } from "../../packages/tools/src/inline-ai.js";
-import { heldBy } from "../../packages/tools/src/graph-plan.js";
+import { heldBy, peopleKinds } from "../../packages/tools/src/graph-plan.js";
 import { forThePerson } from "../../packages/tools/src/sentences.js";
 import { factsOf } from "../../packages/tools/src/facts.js";
 import { dayWords } from "../../packages/tools/src/say-change.js";
@@ -35,7 +35,7 @@ const grok = (model: string): ThinkingProvider => ({
 export type Over = "itself" | "held" | "done" | "open";
 /** What a true answer must say, read from the graph: each a word or a pattern; `atLeast` of them, else all. */
 export type Facts = (store: Store<AnySchema>, on: string) => { readonly says: readonly (string | RegExp)[]; readonly atLeast?: number };
-export type Expected = { readonly act: readonly string[]; readonly over: Over; readonly to?: string } | { readonly missing: "link" | "field"; readonly who?: string } | { readonly answer: true; readonly facts?: Facts } | { readonly parts: readonly { readonly act: readonly string[]; readonly over: Over }[] } | { readonly clarify: true };
+export type Expected = { readonly act: readonly string[]; readonly over: Over; readonly to?: string; readonly orAsk?: true } | { readonly missing: "link" | "field"; readonly who?: string } | { readonly answer: true; readonly facts?: Facts } | { readonly parts: readonly { readonly act: readonly string[]; readonly over: Over }[] } | { readonly clarify: true };
 export interface Case {
   readonly app: "todo" | "rota" | "discography";
   readonly on: string;
@@ -95,8 +95,10 @@ function judged(store: Store<AnySchema>, one: Case, on: string, result: InlineRe
       return said.includes(wanted);
     }),
   );
-  const worded = proposals.length === 0 || (counted && valued && !/ — |\bitself\b|\beach of\b/.test(said));
-  if ("clarify" in expected) return { ok: proposals.length === 0 && /\?\s*$/.test(said) && /\ball\b/i.test(said), got };
+  // Plain words: no word said twice over ("Move Move the broadband"), no pronoun before a name ("They Bo Ferreira"), and a record named in the line is quoted.
+  const plain = !/\b(\w+)\s+\1\b/i.test(said) && !/^(They|It|He|She|This|These)\s+[A-Z“]/.test(said) && proposals.every((p) => { const node = store.graph.getNode(String(p.record ?? "")); const name = label(store, String(p.record ?? "")); return !node || peopleKinds(store).includes(node.kind) || !said.includes(name) || said.includes(`“${name}”`); });
+  const worded = proposals.length === 0 || (counted && valued && plain && !/ — |\bitself\b|\beach of\b/.test(said));
+  if ("clarify" in expected) return { ok: proposals.length === 0 && /\?/.test(said) && /\b(all|which)\b/i.test(said), got };
   if (!worded) return { ok: false, got: `${got} [words do not say what will happen]` };
   if ("parts" in expected) {
     // One plan of two parts: each part's act over its own records, and every change proposed one of theirs.
@@ -109,6 +111,8 @@ function judged(store: Store<AnySchema>, one: Case, on: string, result: InlineRe
     const ok = each.every((part) => part.mine.length > 0) && proposals.every((p) => each.some((part, at) => expected.parts[at]!.act.includes(p.call.name) && part.want.has(recordOf(p))));
     return { ok, got };
   }
+  // A destructive act over several, said loosely: asking which is as right as the act.
+  if ("act" in expected && expected.orAsk && proposals.length === 0 && /\?/.test(said) && /\b(all|which)\b/i.test(said)) return { ok: true, got };
   if ("act" in expected) {
     const want = new Set(recordsOf(store, on, expected.over));
     const records = proposals.map((p) => String(p.record ?? Object.values(p.call.args).find((value) => typeof value === "string" && want.has(value)) ?? ""));

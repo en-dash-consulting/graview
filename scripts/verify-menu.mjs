@@ -1127,7 +1127,14 @@ try {
               const misread = window.__misread === true && !/\btasks\b/i.test(said);
               // Sure where the words say which ("these", "all"); less so of "the old ones", which a destructive act must not take as all.
               const plain = /\b(these|all|them|each|everything)\b/i.test(said);
-              answers[key] = misread ? sure(question, "itself", 0.55) : sure(question, /\b(these|all|them|each|everything|tasks|ones)\b/i.test(said) ? "held" : "itself", plain ? 0.92 : 0.7);
+              const names = Object.keys(question.criteria);
+              // "Everything that's already ticked off" read as everything, sure of it — the misreading the code must catch.
+              const misreadAll = /\beverything that'?s\b/i.test(said);
+              answers[key] = misread ? sure(question, "itself", 0.55) : misreadAll ? sure(question, "held", 0.95) : names.includes("done") && /\b(done|finished|ticked|completed)\b/i.test(said) ? sure(question, "done") : names.includes("open") && /\b(open|remaining|outstanding)\b/i.test(said) ? sure(question, "open") : sure(question, /\b(these|all|them|each|everything|tasks|ones)\b/i.test(said) ? "held" : "itself", plain ? 0.92 : 0.7);
+              continue;
+            }
+            if (question.type === "choice" && key === "mood") {
+              answers[key] = sure(question, /\?\s*$|^(is|are|has|have|what|who|when|where|which|how|does)\b/i.test(said) ? "asks" : "tells");
               continue;
             }
             if (question.type === "choice" && key === "act") {
@@ -1135,7 +1142,7 @@ try {
               const closing = /\b(close|complete|finish|tick|check off)\b/i.test(said) && !/\?\s*$/.test(said);
               const held = /\b(these|all|them|each|everything|tasks)\b/i.test(said);
               const finish = Object.keys(question.criteria).find((name) => name === `${held ? "held" : "itself"}:finish`);
-              const removing = /\b(delete|drop|bin|get rid of|clear out)\b/i.test(said) && !/\?\s*$/.test(said);
+              const removing = /\b(delete|drop|bin|get rid of|clear out|scrap)\b/i.test(said) && !/\?\s*$/.test(said);
               const drop = Object.keys(question.criteria).find((name) => name === `${held || /\bones\b/i.test(said) ? "held" : "itself"}:drop`);
               answers[key] = closing && finish ? sure(question, finish) : removing && drop ? sure(question, drop) : giving ? sure(question, "none") : sure(question, "none", 0.3);
               continue;
@@ -1901,6 +1908,19 @@ try {
         clear.done.length > 0 && clear.proposed.length === clear.done.length && clear.proposed.every((id) => clear.done.some((done) => (id ?? "").endsWith(`:${done}`))),
     };
 
+    /* A TRAILING QUALIFIER IS NEVER IGNORED BY A DESTRUCTIVE ACT: read as everything, "that's already ticked off" is left over — the card asks which. */
+    reach("aTrailingQualifierIsNeverIgnoredByADestructiveAct");
+    await openWeek();
+    await on.keyboard.type("scrap everything that's already ticked off");
+    await on.keyboard.press("Enter");
+    await on.waitForFunction(() => !/Thinking/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "Thinking"), null, { timeout: 15_000 }).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const trailing = await on.evaluate(() => ({
+      text: document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? null,
+      proposed: document.querySelectorAll('[data-testid="quick-ask"] [data-ghost-proposal]').length,
+    }));
+    report.checks.aTrailingQualifierIsNeverIgnoredByADestructiveAct = { ...trailing, ok: trailing.proposed === 0 && /\?$/.test((trailing.text ?? "").trim()) && /\b1 done\b/.test(trailing.text ?? "") };
+
     /* THE CARD SAYS WHAT WILL HAPPEN, WITH ITS VALUES: the count it acts on, the name it gives. */
     reach("theCardSaysWhatWillHappenWithItsValues");
     await openWeek();
@@ -1920,7 +1940,7 @@ try {
       renameSaid,
       ok:
         closingSaid.proposed > 1 && new RegExp(`\\bthe ${closingSaid.proposed}\\b`).test(closingSaid.text) && !/ — |itself|each of/.test(closingSaid.text) &&
-        /^Rename This week to “Packing week”\.$/.test(renameSaid) && !/ — |itself/.test(renameSaid),
+        /^Rename (?:“?This week”? )?to “Packing week”\.$/.test(renameSaid) && !/ — |itself/.test(renameSaid),
     };
     await context.close();
   }

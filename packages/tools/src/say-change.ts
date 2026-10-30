@@ -1,4 +1,5 @@
 import { labelOf, nodeRefArgs, pluralOf, type AnySchema, type Store } from "@graview/core";
+import { peopleKinds } from "./graph-plan.js";
 
 /**
  * WHAT WILL HAPPEN, IN PLAIN WORDS (Roadmap f-menu-type-anything). The card
@@ -11,7 +12,7 @@ import { labelOf, nodeRefArgs, pluralOf, type AnySchema, type Store } from "@gra
  * on, counted as it will act on them.
  */
 export interface ChangeSaid {
-  readonly act: { readonly name: string; readonly title?: string; readonly input?: unknown; readonly subject?: { readonly arg: string } };
+  readonly act: { readonly name: string; readonly title?: string; readonly input?: unknown; readonly subject?: { readonly arg: string }; readonly describe?: (args: never, graph: never) => string };
   readonly args: Readonly<Record<string, unknown>>;
   /** The records it will act on, as many as it will act on. */
   readonly records: readonly string[];
@@ -36,6 +37,36 @@ export function dayWords(value: string): string | undefined {
 /** The change said as one sentence, its values and its count in it. */
 export function sayChange<S extends AnySchema>(store: Store<S>, change: ChangeSaid): string {
   const schema = store.schema as AnySchema;
+  /*
+   * ONE RECORD: the act's own sentence for it, where the app wrote one
+   * ("Bo Ferreira steps back", "Move "Book the van" to Today"), its quotes
+   * made a person's and its days said by name. A title is not a sentence
+   * about a record: "They have stepped back" read as "They Bo Ferreira…".
+   */
+  if (change.records.length === 1 && typeof change.act.describe === "function" && change.act.subject) {
+    try {
+      const said = change.act.describe({ ...change.args, [change.act.subject.arg]: change.records[0] } as never, store.graph as never);
+      if (typeof said === "string" && said.trim()) {
+        // A record's name in quotes, so it is never read as the act's own words ("Move “Move the broadband” to Someday"); a person's name as it is.
+        const people = peopleKinds(store);
+        // The record acted on is quoted; where it goes ("to Someday") is said as it is.
+        const named = [change.records[0]!]
+          .filter((id) => store.graph.getNode(id) !== undefined)
+          .map((id) => store.graph.getNode(id)!)
+          .filter((node) => !people.includes(node.kind))
+          .map((node) => labelOf(schema.tryDefinition(node.kind), node as never))
+          .sort((a, b) => b.length - a.length);
+        let quoted = said.trim().replace(/"([^"]*)"/g, "“$1”");
+        for (const name of named) if (!quoted.includes(`“${name}”`)) quoted = quoted.replace(name, `“${name}”`);
+        const words = quoted
+          .replace(/\b(\d{4}-\d{2}-\d{2})\b/g, (day) => dayWords(day) ?? day)
+          .replace(/[.!]+$/, "");
+        return `${words.charAt(0).toUpperCase()}${words.slice(1)}.`;
+      }
+    } catch {
+      // A sentence that could not be written for these values: the title, said below.
+    }
+  }
   const nameOf = (id: string) => {
     const node = store.graph.getNode(id);
     return node ? labelOf(schema.tryDefinition(node.kind), node as never) : undefined;
@@ -47,7 +78,11 @@ export function sayChange<S extends AnySchema>(store: Store<S>, change: ChangeSa
     .filter(([arg, value]) => arg !== subject && value !== undefined && value !== null && value !== "")
     .map(([arg, value]) => {
       const ref = refs.find((one) => one.name === arg);
-      if (ref && typeof value === "string") return { arg, said: nameOf(value) ?? value, ref: true };
+      if (ref && typeof value === "string") {
+        const node = store.graph.getNode(value);
+        const name = nameOf(value) ?? value;
+        return { arg, said: node ? name : value, ref: true };
+      }
       if (typeof value === "string") return { arg, said: dayWords(value) ?? `“${value}”`, ref: false };
       return { arg, said: String(value), ref: false };
     });
@@ -57,11 +92,16 @@ export function sayChange<S extends AnySchema>(store: Store<S>, change: ChangeSa
   const count = change.records.length;
   const object =
     change.itself && count === 1 && change.records[0]
-      ? (nameOf(change.records[0]) ?? "it")
+      ? (nameOf(change.records[0]) ? `“${nameOf(change.records[0])}”` : "it")
       : `the ${count}${change.narrowed ? ` ${change.narrowed}` : ""} ${count === 1 ? noun : (kind ? pluralOf(schema, kind).toLowerCase() : "records")}${change.where ? ` ${change.where}` : ""}`;
   let words = (change.act.title ?? change.act.name).trim().replace(/[.!]+$/, "");
   // The records: where the title says "it" (or "the task", "this"), else just after its first word.
   const pronoun = /\b(it|this|the (?:task|list|shift|record|song|item))\b/i;
+  // A title that is a sentence about its record ("They have stepped back", "It is done"): the record in the pronoun's place.
+  if (/^(they|it|this|she|he|somebody|someone)\b/i.test(words)) {
+    words = words.replace(/^(they|it|this|she|he|somebody|someone)\b/i, object).replace(/^(\S.*?)\s+\b(have|are)\b/i, (_, who: string, verb: string) => `${who} ${count === 1 ? (verb.toLowerCase() === "have" ? "has" : "is") : verb}`);
+    return `${words.charAt(0).toUpperCase()}${words.slice(1)}.`;
+  }
   // "Move the date" acts on a part of each: "Move the date of the 5 tasks in This week".
   words = pronoun.test(words) ? words.replace(pronoun, object) : /^\S+ the \w+$/i.test(words) ? `${words} of ${object}` : words.replace(/^(\S+)/, `$1 ${object}`);
   // The values: in place of "another …" where the title says so, else "to …", or "with …" for a person.
