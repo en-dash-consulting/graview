@@ -1,5 +1,5 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
-import { heldAlso, seenOnThisPage, toldListed } from "./told-listed.js";
+import { heldAlso, seenOnThisPage, toldHeld } from "./told-listed.js";
 export { seenOnThisPage, toldListed } from "./told-listed.js";
 import { recordsOfTarget, type AiInteraction, type AiTarget } from "@graview/core/catalog";
 import { similarTellings, tellingExamples, tellingOf, toldSeenBy, type Telling, type TellingDecided, type TellingDraft, type TellingExample, type TellingOutcome, type TellingRating, type TellingSlot, type ToldStore } from "@graview/core/told";
@@ -29,23 +29,18 @@ export function kindOfTarget(store: Store<AnySchema>, target: AiTarget): string 
   return first ? store.graph.getNode(first)?.kind : undefined;
 }
 
-/** The tellings a reader may be suggested: those about records they see. */
-export async function toldSeenHere(told: ToldStore, store: Store<AnySchema>, principal: Principal): Promise<readonly Telling[]> {
-  return toldSeenBy(await toldListed(told), seenOnThisPage(store, principal));
-}
-
 /**
  * THE LIKE 👍 TELLINGS, AS EXAMPLES FOR THE SLOTS: the top three like the
  * words on this kind that were rated 👍 and are not excluded — given to Jev
  * and the light model by name, and their ids kept on the telling they
  * informed.
  */
-export async function examplesHere(told: ToldStore | undefined, store: Store<AnySchema>, principal: Principal, words: string, target: AiTarget): Promise<{ readonly examples: readonly TellingExample[]; readonly ids: readonly string[] }> {
-  if (!told) return { examples: [], ids: [] };
+export function examplesHere(told: ToldStore | undefined, store: Store<AnySchema>, principal: Principal, words: string, target: AiTarget): { readonly examples: readonly TellingExample[]; readonly ids: readonly string[] } {
+  // Never in the way of an answer: only what is already at hand, read when the card opened.
+  const held = told ? toldHeld(told) : undefined;
+  if (!held) return { examples: [], ids: [] };
   const kind = kindOfTarget(store, target);
-  // Never long in the way of an answer: what the host has not answered in a moment is not waited for.
-  const seen = await Promise.race([toldSeenHere(told, store, principal), new Promise<readonly Telling[]>((resolve) => setTimeout(() => resolve([]), 400))]);
-  const like = similarTellings(seen, { words, ...(kind ? { kind } : {}) }, { reader: principal, rated: true, most: 3 });
+  const like = similarTellings(toldSeenBy(held, seenOnThisPage(store, principal)), { words, ...(kind ? { kind } : {}) }, { reader: principal, rated: true, most: 3 });
   return { examples: tellingExamples(like), ids: like.map((one) => one.telling.id) };
 }
 

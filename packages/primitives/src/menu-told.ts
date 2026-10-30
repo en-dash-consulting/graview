@@ -1,7 +1,5 @@
 import { labelOf, pluralOf, type AnySchema, type Principal, type Store } from "@graview/core";
-import type { Telling, ToldStore } from "@graview/core/told";
-import type { HostAi } from "@graview/tools";
-import { useEffect, useMemo, useState } from "react";
+import { similarTellings, toldSeenBy, type Telling, type ToldStore } from "@graview/core/told";
 import { seenOnThisPage, toldListed } from "./told-listed.js";
 
 /**
@@ -10,7 +8,8 @@ import { seenOnThisPage, toldListed } from "./told-listed.js";
  * like the words typed on this kind, that were accepted or 👍 and not
  * excluded — another person's only once enough people's agree
  * (`similarTellings`) — each said as what it did, re-aimed at what the
- * menu is on: "Finish the 6 tasks in This week, like last time". The
+ * menu is on, as the plain act and nothing else: "Finish the 6 tasks in
+ * This week" — never where it came from, which the Studio says. The
  * Fast slot re-ranks them with the menu's rows in the same Choice, at the
  * same rest (`useFastRank`). Chosen, the words are asked on the quick
  * ask's card and previewed like any plan: nothing is applied from here.
@@ -28,8 +27,6 @@ export interface ToldSuggestion {
   readonly label: string;
 }
 
-/** How many the menu offers. */
-export const TOLD_SUGGESTED_MOST = 2;
 
 const capital = (words: string) => words.charAt(0).toUpperCase() + words.slice(1);
 
@@ -50,7 +47,7 @@ function kindOn(store: Store<AnySchema>, on: string | undefined): string | undef
  */
 export function reaimed(store: Store<AnySchema>, telling: Telling, on: string | undefined): string | undefined {
   const schema = store.schema;
-  if (telling.decided.type === "plan") return `${capital(telling.words)}, like last time`;
+  if (telling.decided.type === "plan") return capital(telling.words);
   if (telling.decided.type !== "act") return undefined;
   const actName = telling.decided.act;
   const mutation = store.allMutations().find((one) => one.name === actName);
@@ -63,7 +60,7 @@ export function reaimed(store: Store<AnySchema>, telling: Telling, on: string | 
   const kind = telling.reading?.kind ?? telling.target.kind;
   if (!kind || !schema.tryDefinition(kind)) return undefined;
   if (telling.reading?.which === "itself" || (!telling.reading && node?.kind === kind)) {
-    return node && node.kind === kind && name ? `${capital(said(name))}, like last time` : undefined;
+    return node && node.kind === kind && name ? capital(said(name)) : undefined;
   }
   const held = node
     ? new Set([...store.graph.in(node.id), ...store.graph.out(node.id)].filter((one) => one.kind === kind).map((one) => one.id)).size
@@ -72,37 +69,20 @@ export function reaimed(store: Store<AnySchema>, telling: Telling, on: string | 
       : 0;
   if (held === 0) return undefined;
   const noun = held === 1 ? ((schema.tryDefinition(kind) as { noun?: string } | undefined)?.noun ?? kind).toLowerCase() : pluralOf(schema, kind).toLowerCase();
-  return `${capital(said(`the ${held} ${noun}${name ? ` in ${name}` : ""}`))}, like last time`;
+  return capital(said(`the ${held} ${noun}${name ? ` in ${name}` : ""}`));
+}
+
+/** What the menu has read: the tellings this reader may be offered. */
+export async function readToldHere(told: ToldStore, store: Store<AnySchema>, principal: Principal): Promise<readonly Telling[]> {
+  return toldSeenBy(await toldListed(told), seenOnThisPage(store, principal));
 }
 
 /** The tellings like the words typed in the menu that worked, re-aimed here: at most `most`, before the Fast slot re-ranks them. */
-export function useToldSuggestions(ai: HostAi | undefined, store: Store<AnySchema>, principal: Principal, words: string, on: string | undefined, opened: unknown, most = 4): readonly ToldSuggestion[] {
-  const told: ToldStore | undefined = ai && !ai.off ? ai.told : undefined;
-  const typing = words.trim() !== "";
-  const [read, setRead] = useState<{ readonly tellings: readonly Telling[]; readonly similar: typeof import("@graview/core/told").similarTellings } | null>(null);
-  // Each menu reads them again: what was told since the last one is suggested in the next.
-  useEffect(() => setRead(null), [opened]);
-  useEffect(() => {
-    if (!told || !typing || read) return;
-    let live = true;
-    void import("@graview/core/told")
-      .then(async (core) => {
-        const listed = await toldListed(told);
-        if (live) setRead({ tellings: core.toldSeenBy(listed, seenOnThisPage(store, principal)), similar: core.similarTellings });
-      })
-      .catch(() => undefined);
-    return () => {
-      live = false;
-    };
-  }, [told, typing, read, store, principal]);
-  return useMemo(() => {
-    if (!read || !typing) return [];
-    const kind = kindOn(store, on);
-    return read
-      .similar(read.tellings, { words, ...(kind ? { kind } : {}) }, { reader: principal, most })
-      .flatMap(({ telling }) => {
-        const label = reaimed(store, telling, on);
-        return label ? [{ key: `told:${telling.id}`, telling, label }] : [];
-      });
-  }, [read, typing, words, store, principal, on, most]);
+export function toldSuggestionsFrom(tellings: readonly Telling[], store: Store<AnySchema>, principal: Principal, words: string, on: string | undefined, most = 4): readonly ToldSuggestion[] {
+  if (words.trim() === "") return [];
+  const kind = kindOn(store, on);
+  return similarTellings(tellings, { words, ...(kind ? { kind } : {}) }, { reader: principal, most }).flatMap(({ telling }) => {
+    const label = reaimed(store, telling, on);
+    return label ? [{ key: `told:${telling.id}`, telling, label }] : [];
+  });
 }

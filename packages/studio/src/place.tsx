@@ -3,7 +3,7 @@ import type { CheckResult } from "@graview/core/check";
 import type { DocumentEdit, Finding, GraviewDocument } from "@graview/core/document";
 import { EMPTY_VIEW, withWithin } from "@graview/layout";
 import { BesideTheMap, GraviewProvider, Scene, createViews, useGraview, useGraviewIfAny, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
-import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews } from "@graview/primitives";
+import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews, ToldPanelDoor } from "@graview/primitives";
 import { mayChangeDeclaration } from "@graview/tools";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -16,7 +16,6 @@ import { createStudio, type Studio } from "./studio.js";
 import type { WrittenFile } from "./source.js";
 import { Downloads, InPlaceWriter } from "./in-place.js";
 import { useStudioDoor } from "./write-in-place.js";
-import { ToldPanel } from "./told-panel.js";
 
 /**
  * THE STUDIO IS A PLACE ON THE BAR, not a package you mount by hand.
@@ -535,7 +534,7 @@ function StudioOverlay<S extends AnySchema>({
           Close
         </button>
       </header>
-      {toldOpen && ai?.told ? <ToldPanel told={ai.told} store={appStore as unknown as Store<AnySchema>} principal={principal} onClose={() => setToldOpen(false)} /> : null}
+      {toldOpen && ai?.told ? <ToldPanelDoor told={ai.told} store={appStore as unknown as Store<AnySchema>} principal={principal} onClose={() => setToldOpen(false)} /> : null}
 
       {applied ? <Written applied={applied} studio={studio as unknown as Studio<AnySchema>} onDismiss={() => setApplied(null)} /> : null}
 

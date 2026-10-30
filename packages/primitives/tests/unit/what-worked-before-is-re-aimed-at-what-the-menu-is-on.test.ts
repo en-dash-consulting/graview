@@ -31,12 +31,12 @@ const told = (draft: Partial<TellingDraft>) =>
   tellingOf({ words: "mark these done", target: { on: "record", kind: "list", id: "today" }, reading: { which: "held", kind: "task", records: ["x", "y"] }, decided: { type: "act", act: "finish", records: 2 }, outcome: "accepted", ...draft }, { kind: "human", id: "ada" })!;
 
 describe("a similar telling that worked is suggested, re-aimed at what the menu is on", () => {
-  it("says the act over the records here, as it was over the records there: the act's own words, its object put in", () => {
-    expect(reaimed(store as never, told({}), "week")).toBe("Mark the 3 tasks in This week done, like last time");
+  it("says only the act over the records here: the act's own words, its object put in, nothing of where it came from", () => {
+    expect(reaimed(store as never, told({}), "week")).toBe("Mark the 3 tasks in This week done");
   });
 
   it("says the record itself where it was the record itself", () => {
-    expect(reaimed(store as never, told({ target: { on: "record", kind: "task", id: "x" }, reading: { which: "itself", kind: "task", records: ["x"] }, decided: { type: "act", act: "finish", records: 1 } }), "a")).toBe("Mark Task a done, like last time");
+    expect(reaimed(store as never, told({ target: { on: "record", kind: "task", id: "x" }, reading: { which: "itself", kind: "task", records: ["x"] }, decided: { type: "act", act: "finish", records: 1 } }), "a")).toBe("Mark Task a done");
   });
 
   it("offers nothing where it cannot be aimed: no record of the kind it acted on, or an act the app no longer has", () => {

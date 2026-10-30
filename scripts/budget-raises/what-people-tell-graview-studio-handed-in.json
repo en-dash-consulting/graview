@@ -1,6 +1,0 @@
-{
-  "budget": "embed with the studio handed in",
-  "minified": 0,
-  "gzipped": 5200,
-  "note": "Raised when the Studio, handed in, came to list what Graview has been told (Roadmap f-menu-learns): its panel, its filters by rating, outcome and kind, pin, exclude and delete, and `@graview/core/told` they read with. Measured at 1_877_567 / 657_461, 5_107 gzipped bytes over the limit of 2_000_311 / 652_354 it held before; 0 / 5_200 more."
-}

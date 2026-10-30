@@ -154,7 +154,7 @@ const FAKE_AI = () => {
         for (const [key, question] of Object.entries(questions)) {
           if (question.type !== "choice") continue;
           const names = Object.keys(question.criteria);
-          if (key === "reading") answers[key] = sure(question, /\b(these|all|them|each|everything)\b/i.test(String(state.said ?? "")) ? "held" : "itself");
+          if (key === "reading") answers[key] = sure(question, /\b(these|all|them|each|everything|tasks)\b/i.test(String(state.said ?? "")) ? "held" : "itself");
           else if (key === "act") answers[key] = sure(question, names.find((name) => /^held:finish$/.test(name)) ?? "none");
           else if (key === "person" || key === "need") answers[key] = sure(question, "none");
           else if (key === "row") answers[key] = sure(question, "none", 0.5);
@@ -246,6 +246,46 @@ const tasksDone = (page, ids) => page.evaluate((ids) => {
 const errors = [];
 try {
   browser = await launchEngine(ENGINE);
+
+  /* ─────────── the menu filters on the first key, before anything of the tellings loads ─────────── */
+  reach("typingFiltersBeforeAnythingLoads");
+  {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await context.addInitScript(FAKE_AI);
+    const page = await context.newPage();
+    page.on("pageerror", (error) => errors.push(String(error)));
+    // Everything of the tellings held back: the card's telling and thumbs, the menu's suggestions, the Studio's panel.
+    const TOLD = /told-ui|menu-told\.ts|told-card|told-listed|told-panel\.tsx/;
+    const asked = [];
+    await page.route(TOLD, (route) => (asked.push(route.request().url()), route.abort()));
+    await page.goto(`${at("todo")}/pages/lists?${DAY}&fresh=1`, { waitUntil: "load" });
+    await page.waitForSelector('[data-graview-record="week"]', { timeout: 60_000 });
+    await page.waitForTimeout(500);
+    await page.click('[data-graview-record="week"]', { button: "right" });
+    await page.waitForSelector(MENU, { timeout: 10_000 });
+    const before = await page.evaluate(() => document.querySelectorAll('[data-testid="context-menu"] [data-menu-item], [data-testid="context-menu"] [data-affordance]').length);
+    const askedBeforeTheKey = asked.length;
+    // The first two letters of the first act the menu offers.
+    const letters = await page.evaluate(() => (document.querySelector('[data-testid="context-menu"] [data-affordance]')?.textContent ?? "").trim().toLowerCase().slice(0, 2));
+    await page.keyboard.type(letters);
+    await page.waitForTimeout(60);
+    const after = await page.evaluate(() => ({
+      field: document.querySelector('[data-testid="menu-type"]')?.value ?? null,
+      rows: [...document.querySelectorAll('[data-testid="context-menu"] [data-menu-item], [data-testid="context-menu"] [data-affordance]')].map((row) => (row.textContent ?? "").replace(/[…↵]/g, "").trim()),
+    }));
+    const fold = (text) => text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    const narrowed = after.rows.filter((row) => !/^Tell Graview/.test(row));
+    report.checks.typingFiltersBeforeAnythingLoads = {
+      before,
+      after,
+      letters,
+      toldAskedBeforeTheKey: askedBeforeTheKey,
+      toldHeldBack: asked.length,
+      // Asked or not before the key (an idle menu may ask), held back all the same: the rows narrow at once without it.
+      ok: letters.length === 2 && after.field === letters && narrowed.length > 0 && narrowed.length < before && narrowed.every((row) => fold(row).some((word) => word.startsWith(letters))),
+    };
+    await context.close();
+  }
 
   /* ─────────── a telling is kept with what it did and how it ended ─────────── */
   reach("aTellingIsKeptWithWhatItDidAndHowItEnded");
@@ -379,7 +419,7 @@ try {
     if (row) await page.click(`[data-told-suggestion="${row.id}"]`);
     await page.waitForSelector('[data-testid="ai-ghost"]', { timeout: 20_000 }).catch(() => {});
     await page.waitForTimeout(400);
-    const card = await page.evaluate(() => ({ asked: document.querySelector('[data-testid="quick-answer-asked"]')?.textContent?.trim(), ghost: document.querySelector('[data-testid="ai-ghost"]') !== null }));
+    const card = await page.evaluate(() => ({ asked: document.querySelector('[data-testid="quick-answer-asked"]')?.textContent?.trim(), said: document.querySelector('[data-testid="quick-ask"]')?.textContent ?? null, ghost: document.querySelector('[data-testid="ai-ghost"]') !== null }));
     const done = await tasksDone(page, weekTasks);
     const newest = (await toldNow(page)).at(-1);
     const examples = await page.evaluate(() => window.__fastStates.filter((state) => Array.isArray(state.workedBefore)).map((state) => state.workedBefore));
@@ -391,8 +431,11 @@ try {
       examplesGiven: examples.length,
       ok:
         menu.suggested.length === 1 &&
-        row.text === `Mark the ${weekTasks.length} tasks in This week done, like last time` &&
-        card.asked === "“mark these done”" &&
+        // The row's words are only the act on what the menu is on: nothing of where it came from.
+        row.text === `Mark the ${weekTasks.length} tasks in This week done` &&
+        !/last time|again|before|you did|times/i.test(row.text) &&
+        card.asked === `“Mark the ${weekTasks.length} tasks in This week done”` &&
+        !/last time|you did this|like before/i.test(card.said ?? "") &&
         card.ghost &&
         weekTasks.length > 0 &&
         done.join() === before.join() &&

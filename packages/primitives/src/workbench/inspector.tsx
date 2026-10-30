@@ -11,7 +11,7 @@ import { VISUALLY_HIDDEN } from "../primitives/index.js";
 import { ROVING_ITEM, useRoving } from "../roving.js";
 import { menuMatches } from "../menu-words.js";
 import { MENU_RANK_FLOOR, useFastRank } from "../menu-rank.js";
-import { TOLD_SUGGESTED_MOST, useToldSuggestions } from "../menu-told.js";
+import { TOLD_SUGGESTED_MOST, useToldSuggestions } from "../menu-told-door.js";
 import { openQuickAsk, useQuickAskDrawn } from "../quick-ask-desk.js";
 import type { InspectorPlacement } from "./inspector-door.js";
 import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
@@ -605,11 +605,12 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked, returnTo: back });
   };
   /* A suggestion taken: its words asked on the card, about what the menu is on, previewed like any plan — never applied from the menu. */
-  const takeTold = (telling: (typeof toldLike)[number]["telling"]) => {
+  const takeTold = (one: (typeof toldLike)[number]) => {
     if (!menuAt) return;
     const back = menuAt.returnTo ?? null;
     setMenuAt(null);
-    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked: telling.words, suggested: telling.id, returnTo: back });
+    // Asked as the plain act the row says, here: where it came from is the Studio's to say, never the card's.
+    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked: one.label, suggested: one.telling.id, returnTo: back });
   };
   /* The menu's rows the keyboard walks, in the order they are drawn: not a disabled one, nor a field of a form an act opened. */
   const walkable = (): HTMLElement[] =>
@@ -1464,9 +1465,9 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
 
       {/* What worked before, like these words: chosen, asked and previewed on the card (Roadmap f-menu-learns). */}
       {toldShown.length > 0 ? (
-        <div data-menu-section="told" role="group" aria-label="Like last time" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5 }}>
+        <div data-menu-section="told" role="group" aria-label="Suggested" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5 }}>
           {toldShown.map((one) => (
-            <button key={one.key} type="button" data-menu-item={one.key} data-told-suggestion={one.telling.id} data-menu-lit={lit === one.key || undefined} onClick={() => takeTold(one.telling)} style={{ ...ROW_STYLE, ...(lit === one.key ? LIT_STYLE : {}) }}>
+            <button key={one.key} type="button" data-menu-item={one.key} data-told-suggestion={one.telling.id} data-menu-lit={lit === one.key || undefined} onClick={() => takeTold(one)} style={{ ...ROW_STYLE, ...(lit === one.key ? LIT_STYLE : {}) }}>
               {one.label}
               {lit === one.key ? ENTER_MARK : null}
             </button>
