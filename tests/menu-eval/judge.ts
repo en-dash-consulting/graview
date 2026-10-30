@@ -8,6 +8,7 @@ import { answerHere, type InlineResult } from "../../packages/tools/src/inline-a
 import { heldBy } from "../../packages/tools/src/graph-plan.js";
 import { forThePerson } from "../../packages/tools/src/sentences.js";
 import { factsOf } from "../../packages/tools/src/facts.js";
+import { dayWords } from "../../packages/tools/src/say-change.js";
 import { jevDecide, jevKeyFromEnvironment, JEV_MODEL } from "../../packages/tools/src/providers/jev.js";
 import type { HostAi, ThinkingProvider } from "../../packages/tools/src/ai.js";
 
@@ -34,7 +35,7 @@ const grok = (model: string): ThinkingProvider => ({
 export type Over = "itself" | "held" | "done" | "open";
 /** What a true answer must say, read from the graph: each a word or a pattern; `atLeast` of them, else all. */
 export type Facts = (store: Store<AnySchema>, on: string) => { readonly says: readonly (string | RegExp)[]; readonly atLeast?: number };
-export type Expected = { readonly act: readonly string[]; readonly over: Over; readonly to?: string } | { readonly missing: "link" | "field"; readonly who?: string } | { readonly answer: true; readonly facts?: Facts } | { readonly parts: readonly { readonly act: readonly string[]; readonly over: Over }[] };
+export type Expected = { readonly act: readonly string[]; readonly over: Over; readonly to?: string } | { readonly missing: "link" | "field"; readonly who?: string } | { readonly answer: true; readonly facts?: Facts } | { readonly parts: readonly { readonly act: readonly string[]; readonly over: Over }[] } | { readonly clarify: true };
 export interface Case {
   readonly app: "todo" | "rota" | "discography";
   readonly on: string;
@@ -78,6 +79,25 @@ function judged(store: Store<AnySchema>, one: Case, on: string, result: InlineRe
   // Whatever the card shows is a sentence for the person: never the pipeline's own note.
   if (said && !forThePerson(said)) return { ok: false, got: `${got} [not a sentence]` };
   const expected = one.expect;
+  /*
+   * THE WORDS SAY WHAT WILL HAPPEN: where an act runs over more than one
+   * record, the count it runs over is in the words; every value it takes
+   * (a record by its name, a day by its name, words given) is named.
+   */
+  const byAct = new Map<string, number>();
+  for (const p of proposals) byAct.set(p.call.name, (byAct.get(p.call.name) ?? 0) + 1);
+  const counted = [...byAct.values()].every((n) => n === 1 || new RegExp(`\\b${n}\\b`).test(said));
+  const subjectOf = (name: string) => store.allMutations().find((one) => one.name === name)?.subject?.arg;
+  const valued = proposals.every((p) =>
+    Object.entries(p.call.args).every(([arg, value]) => {
+      if (arg === subjectOf(p.call.name) || typeof value !== "string" || value === "") return true;
+      const wanted = store.graph.getNode(value) ? label(store, value) : (dayWords(value) ?? value);
+      return said.includes(wanted);
+    }),
+  );
+  const worded = proposals.length === 0 || (counted && valued && !/ — |\bitself\b|\beach of\b/.test(said));
+  if ("clarify" in expected) return { ok: proposals.length === 0 && /\?\s*$/.test(said) && /\ball\b/i.test(said), got };
+  if (!worded) return { ok: false, got: `${got} [words do not say what will happen]` };
   if ("parts" in expected) {
     // One plan of two parts: each part's act over its own records, and every change proposed one of theirs.
     const recordOf = (p: (typeof proposals)[number]) => String(p.record ?? "");
@@ -97,14 +117,14 @@ function judged(store: Store<AnySchema>, one: Case, on: string, result: InlineRe
     return { ok, got };
   }
   if ("missing" in expected) return { ok: Boolean(result.missing?.need && expected.missing in result.missing.need && (!expected.who || result.missing.who === expected.who)), got: `${got}${result.missing?.who ? ` (who ${result.missing.who})` : ""}${result.taken ? ` [taking “${result.taken.said}” as ${result.taken.as}]` : ""}` };
-  // An answer may offer a change beside it, never one made over every record.
+  // A question never comes with a change: a suggestion beside the answer is the person's to choose, never the card's proposal.
   const facts = expected.facts?.(store, on);
   // What the model was told: a fact it was given and did not say is the answer's fault; one never given is the pipeline's.
   const told = facts ? JSON.stringify(factsOf(store, people[one.app], [on, ...(heldBy(store, on)?.ids ?? [])])) : "";
   const given = facts ? facts.says.filter((fact) => (typeof fact === "string" ? told.toLowerCase().includes(fact.toLowerCase()) : true)).length : 0;
   const found = facts ? facts.says.filter((fact) => (typeof fact === "string" ? said.toLowerCase().includes(fact.toLowerCase()) : fact.test(said))).length : 0;
   const true_ = !facts || (facts.says.length > 0 && found >= (facts.atLeast ?? facts.says.length));
-  return { ok: proposals.every((p) => !p.id.startsWith("each:")) && !result.missing && result.interaction.outcome !== "failed" && said.length > 0 && true_, got: facts ? `${got} [facts said ${found}/${facts.says.length}, given ${given}: ${facts.says.map(String).join(", ")}]` : got };
+  return { ok: proposals.length === 0 && !result.missing && result.interaction.outcome !== "failed" && said.length > 0 && true_, got: facts ? `${got} [facts said ${found}/${facts.says.length}, given ${given}: ${facts.says.map(String).join(", ")}]` : got };
 }
 
 
@@ -133,7 +153,7 @@ export async function runEval(cases: readonly Case[], title: string, file: strin
         const result = await answerHere(ai, { store, target: { on: "record", id: on }, principal, said: one.said, ...(one.after ? { follows: { said: one.after, answer: "" } } : {}) });
         const ms = Date.now() - started;
         const { ok, got } = judged(store, one, on, result);
-        const expected = "parts" in one.expect ? one.expect.parts.map((part) => `${part.act.join("|")} over ${part.over}`).join(" + ") : "act" in one.expect ? `${one.expect.act.join("|")} over ${one.expect.over}` : "missing" in one.expect ? `missing ${one.expect.missing}` : one.expect.facts ? "a true answer" : "an answer";
+        const expected = "clarify" in one.expect ? "a question back: which?" : "parts" in one.expect ? one.expect.parts.map((part) => `${part.act.join("|")} over ${part.over}`).join(" + ") : "act" in one.expect ? `${one.expect.act.join("|")} over ${one.expect.over}` : "missing" in one.expect ? `missing ${one.expect.missing}` : one.expect.facts ? "a true answer" : "an answer";
         return { app: one.app, on, said: one.said, expected, got, ok, ms, stages: (result.interaction.stages ?? []).map((stage) => `${stage.stage} ${stage.ms}`).join(", ") };
     });
     const times = rows.map((row) => row.ms).sort((a, b) => a - b);

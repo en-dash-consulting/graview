@@ -182,6 +182,11 @@ async function drive(engine, checks, errors) {
   await page.press(FIELD, "Enter");
   await answered(page);
   const card = await cardSays(page);
+  /* A question never comes with a change: what it picked is a suggestion beside the answer ("Finish it?"), a ghost only once chosen. */
+  const ghostBeforeChosen = (await page.$(GHOST)) !== null;
+  const suggestion = await page.$('[data-testid="quick-ask"] [data-testid="quick-answer-offer"][data-ai-offer-type="act"]');
+  const suggested = suggestion ? ((await suggestion.textContent()) ?? "").trim() : null;
+  await suggestion?.click().catch(() => undefined);
   await page.waitForSelector(GHOST, { timeout: 10_000 }).catch(() => undefined);
   const ghostShown = await page.$(GHOST);
   const notMade = await storeSays(page, "t-deposit");
@@ -197,12 +202,14 @@ async function drive(engine, checks, errors) {
   }
   checks.anAnswerIsACardBesideTheRecordItsChangeAGhost = {
     card,
+    ghostBeforeChosen,
+    suggested,
     before,
     notMade,
     accepted,
     undone,
     ok:
-      card !== null && card.mode === "answer" && card.beside === "t-deposit" && !card.overIt && /as drafted/.test(card.answer ?? "") && card.ghostOnTheCard &&
+      card !== null && card.mode === "answer" && card.beside === "t-deposit" && !card.overIt && /as drafted/.test(card.answer ?? "") && !ghostBeforeChosen && /\?$/.test(suggested ?? "") &&
       ghostShown !== null && notMade.batch === before.batch &&
       accepted !== null && accepted.batch !== before.batch && (accepted.via ?? "").startsWith("ai:") && accepted.interaction !== null &&
       undone !== null && undone.done === before.done,

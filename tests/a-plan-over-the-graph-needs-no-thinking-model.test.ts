@@ -1,7 +1,8 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import { describe, expect, it, vi } from "vitest";
 import { createTodoUiStore } from "../apps/todo/src/ui/app.js";
-import { askedParts, asking, decideOverTheGraph, givingOf, politely, renameOf } from "../packages/tools/src/graph-plan.js";
+import { askedParts, asking, decideOverTheGraph, explicitReading, givingOf, narrowingOf, politely, renameOf } from "../packages/tools/src/graph-plan.js";
+import { sayChange } from "../packages/tools/src/say-change.js";
 import { answerHere } from "../packages/tools/src/inline-ai.js";
 import { forThePerson } from "../packages/tools/src/sentences.js";
 import type { FastProvider, ThinkingProvider } from "../packages/tools/src/ai.js";
@@ -123,8 +124,30 @@ describe("a plan over the graph", () => {
     expect(givingOf("this is Nora's now")).toMatchObject({ who: "Nora" });
     expect(renameOf("the name should be Packing week")).toBe("Packing week");
     expect(renameOf("call it Boxes")).toBe("Boxes");
+    expect(renameOf("rename this list to Packing week")).toBe("Packing week");
     expect(renameOf("Moving days is a better name")).toBe("Moving days");
     expect(renameOf("move it to someday")).toBeUndefined();
+  });
+
+  it("narrows by done or open however it is said, and a destructive act over several needs a clear reading (aDestructiveActOverSeveralNeedsAClearReading)", () => {
+    for (const said of ["drop the ones I've done", "archive the completed tasks", "clear out the finished stuff", "delete the done one"]) expect(narrowingOf(said), said).toEqual({ open: false, finished: true });
+    for (const said of ["close the outstanding ones", "finish the remaining tasks", "mark everything still to do as done", "the unfinished ones"]) expect(narrowingOf(said), said).toEqual({ open: true, finished: false });
+    expect(narrowingOf("open this")).toEqual({ open: false, finished: false });
+    expect(explicitReading("delete the old ones")).toBe(false);
+    expect(explicitReading("archive the stuff here")).toBe(false);
+    expect(explicitReading("drop all of these")).toBe(true);
+    expect(explicitReading("drop the ones I've done")).toBe(true);
+  });
+
+  it("says what will happen with its values and its exact count (theCardSaysWhatWillHappenWithItsValues)", () => {
+    const kept = store();
+    const act = (name: string) => kept.allMutations().find((one) => one.name === name)! as never;
+    const open = ["t-notice", "t-meter", "t-post", "t-broadband", "t-keys"];
+    expect(sayChange(kept, { act: act("finish"), args: {}, records: open, narrowed: "open", where: "in This week" })).toBe("Mark the 5 open tasks in This week done.");
+    expect(sayChange(kept, { act: act("drop"), args: {}, records: ["t-boxes"], narrowed: "done", where: "in This week" })).toBe("Drop the 1 done task in This week.");
+    expect(sayChange(kept, { act: act("rename"), args: { label: "Return the keys" }, records: ["t-keys"], itself: true })).toBe("Rename Hand back the keys to “Return the keys”.");
+    expect(sayChange(kept, { act: act("move-to-list"), args: { listId: "today" }, records: ["t-book"], itself: true })).toBe("Move Book the van to Today.");
+    expect(sayChange(kept, { act: act("reschedule"), args: { due: "2026-09-07" }, records: ["t-book"], itself: true })).toBe("Move the date of Book the van to Monday, Sep 7.");
   });
 
   it("reads the giving the words say, and to whom", () => {

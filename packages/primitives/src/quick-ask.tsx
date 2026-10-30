@@ -527,13 +527,13 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
                     data-ai-offer-type={offer.type}
                     onClick={() => {
                       // Put away as it lands, the way this face goes; a failure is said on the card that offered it.
-                      void takeOffer(env, result, offer, close).then((failed) => {
+                      void takeOffer(env, result, offer, close, { onCard: offer.type === "act" || offer.type === "fill" }).then((failed) => {
                         if (failed && live.current) setSaid(failed);
                       });
                     }}
                     style={OFFER}
                   >
-                    {offer.type === "panel" ? `Show ${sentenceCase(offer.label)}` : offer.type === "place" ? `Go to ${offer.label}` : offer.label}
+                    {offer.type === "panel" ? `Show ${sentenceCase(offer.label)}` : offer.type === "place" ? `Go to ${offer.label}` : offer.type === "act" || offer.type === "fill" ? `${offer.label.replace(/[.?]$/, "")}?` : offer.label}
                   </button>
                 </li>
               ))}

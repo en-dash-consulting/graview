@@ -103,6 +103,20 @@ const CASES: readonly Case[] = [
   { app: "todo", on: "t-book", said: "what does this depend on?", expect: says((store, on) => ({ says: outOf(store, on, "waits-for").map((name) => name.split(" ").slice(-1)[0]!) })) },
   { app: "todo", on: "t-book", said: "is anything holding this up?", expect: says((store, on) => ({ says: outOf(store, on, "waits-for").map((name) => name.split(" ").slice(-1)[0]!) })) },
   { app: "rota", on: "s-sat-market", said: "who's doing this one?", expect: says((store, on) => ({ says: outOf(store, on, "covered-by").map((name) => name.split(" ")[0]!) })) },
+  /* Narrowing words, however they are said: a destructive act takes exactly what they narrow to, or asks which. */
+  { app: "todo", on: "week", said: "drop the ones I've done", expect: act(["drop", "remove-task"], "done") },
+  { app: "todo", on: "week", said: "archive the completed tasks", expect: act("archive-task", "done") },
+  { app: "todo", on: "week", said: "close the outstanding ones", expect: act("finish", "open") },
+  { app: "todo", on: "week", said: "finish the remaining tasks", expect: act("finish", "open") },
+  { app: "todo", on: "week", said: "mark everything still to do as done", expect: act("finish", "open") },
+  { app: "todo", on: "week", said: "clear out the finished stuff", expect: act(["drop", "remove-task", "archive-task"], "done") },
+  { app: "todo", on: "week", said: "delete the old ones", expect: { clarify: true } },
+  { app: "todo", on: "week", said: "archive the stuff here", expect: { clarify: true } },
+  /* A question never comes with a change. */
+  { app: "todo", on: "t-book", said: "is this done?", expect: says(() => ({ says: [/\b(no|not)\b/i] })) },
+  { app: "todo", on: "t-quote", said: "is it finished", expect: says(() => ({ says: [/\b(yes|done|finished)\b/i] })) },
+  { app: "todo", on: "t-book", said: "who has it?", expect: answer },
+  { app: "rota", on: "s-mon-open", said: "is this covered?", expect: says(() => ({ says: [/\b(yes|ada)\b/i] })) },
   /* The rota. */
   { app: "rota", on: "s-mon-open", said: "give this shift to Bo", expect: act("cover", "itself") },
   { app: "rota", on: "s-mon-open", said: "move this to friday", expect: act("move-shift", "itself") },
