@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 0,
+  "gzipped": 100,
+  "note": "Raised in the 0.1.64 Version packages pull request: the same code with the version string 0.1.64 gzips differently. 722_209 minified both before and after the version step; 264_269 against 264_262 gzipped, 7 over."
+}
