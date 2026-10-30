@@ -574,6 +574,8 @@ export function GhostTray({ placement = "picture" }: { readonly placement?: "pic
     if (held.batch === undefined) return;
     try {
       store.undo(held.batch, { author: principal });
+      // Taken back: said on its entry, which a telling of it hears (`@graview/core/told`).
+      if (entry) aiDesk.record({ ...entry, undone: true });
       putAway();
     } catch (error) {
       aiDesk.setGhost({ ...held, refused: error instanceof Error ? error.message : String(error) });

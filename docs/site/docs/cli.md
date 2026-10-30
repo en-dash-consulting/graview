@@ -124,11 +124,14 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
     --no-sync leaves them off. What people looked for and could not do
     (a search that found nothing, an act refused) is kept for 90 days in
     friction.json beside the data, each person reading only their own and
-    the counts, never a visitor's; --no-friction keeps none.
+    the counts, never a visitor's; --no-friction keeps none. What people
+    told Graview from the answer card (the words, what was done, how it
+    ended, 👍 or 👎) is kept for a year in told.json beside the data, read
+    back under each person's sight; --no-told keeps none.
 
 ```
 
-[--host <address>] [--trust-seat-headers] [--allow-origin <origin>] [--no-sync] [--no-friction] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it — from a program, or from a page on its own origin; a page on another origin is refused unless --allow-origin names it (say it once per origin, as http://localhost:5195), and no header names the system's seat. Each run mints a key and prints it in the address it says: only a request carrying it is believed (a page opens that address, a program passes it whole as
+[--host <address>] [--trust-seat-headers] [--allow-origin <origin>] [--no-sync] [--no-friction] [--no-told] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it — from a program, or from a page on its own origin; a page on another origin is refused unless --allow-origin names it (say it once per origin, as http://localhost:5195), and no header names the system's seat. Each run mints a key and prints it in the address it says: only a request carrying it is believed (a page opens that address, a program passes it whole as
 
 ## graview shots
 

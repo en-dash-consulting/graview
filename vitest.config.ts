@@ -49,6 +49,7 @@ export default defineConfig({
       "@graview/core/friction": fileURLToPath(new URL("./packages/core/src/friction.ts", import.meta.url)),
       "@graview/core/css": fileURLToPath(new URL("./packages/core/src/css.ts", import.meta.url)),
       "@graview/core/learn": fileURLToPath(new URL("./packages/core/src/learn.ts", import.meta.url)),
+      "@graview/core/told": fileURLToPath(new URL("./packages/core/src/told.ts", import.meta.url)),
       "@graview/core/forms": fileURLToPath(new URL("./packages/core/src/forms.ts", import.meta.url)),
       "@graview/core/lines": fileURLToPath(new URL("./packages/core/src/lines.ts", import.meta.url)),
       "@graview/core/json-schema": fileURLToPath(new URL("./packages/core/src/json-schema.ts", import.meta.url)),

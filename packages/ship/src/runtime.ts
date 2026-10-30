@@ -22,6 +22,9 @@ export type { RemoteSubscriptionsOptions } from "./remote-subscriptions.js";
 // The friction log (Roadmap f-friction-log): the wire's door, and its client.
 export { FRICTION_MAX_BYTES, FRICTION_PER_MINUTE, frictionDoor } from "./friction.js";
 export type { FrictionAnswer, FrictionDoorOptions } from "./friction.js";
+// What people tell Graview (Roadmap f-menu-learns): the wire's door.
+export { TOLD_MAX_BYTES, TOLD_PATH, TOLD_PER_MINUTE, toldDoor } from "./told.js";
+export type { ToldAnswer, ToldDoorOptions } from "./told.js";
 export { FRICTION_PATH, remoteFriction } from "./remote-friction.js";
 export type { RemoteFriction, RemoteFrictionOptions } from "./remote-friction.js";
 // The views a person tidies from the place menu (Roadmap f-place-menu-views): the wire's route, and its client.

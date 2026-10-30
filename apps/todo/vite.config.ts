@@ -1,4 +1,4 @@
-import { aiDevProxy, decisionBridge, devFiles, sourceAliases } from "@graview/ship/dev";
+import { aiDevProxy, decisionBridge, devFiles, devTold, sourceAliases } from "@graview/ship/dev";
 import { defineConfig } from "vite";
 import { moved } from "../../scripts/lib/ports.mjs";
 
@@ -25,6 +25,12 @@ export default defineConfig({
      * Serve only, like the model's door.
      */
     devFiles(),
+    /*
+     * WHAT PEOPLE TELL GRAVIEW IN DEVELOPMENT (Roadmap f-menu-learns): the
+     * answer card's tellings, their 👍 and 👎, kept in `.generated/told.json`
+     * — the menu suggests from them and the Studio lists them. Serve only.
+     */
+    devTold(),
   ],
   resolve: {
     // Every export of every framework package, from its source: read from the

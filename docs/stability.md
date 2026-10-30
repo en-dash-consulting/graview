@@ -162,6 +162,15 @@ A right-click inside a worker view names the menu for the section under it (`Men
 
 The revision's shapes are additive within a major, as the plan's are.
 
+#### What people tell Graview (0.1.65)
+
+Each Enter or reply on the quick ask's card is a telling (`Telling`, `@graview/core/told`), kept by the host the page reaches through `HostAi.told` (a `ToldStore`: `add`, `change`, `remove`, `list`). This is the contract Graview Cloud implements per app, and `graview serve` in `told.json` beside the store:
+
+- **The shape.** `{ id, at, by, words, target: { on, kind?, id?, place? }, reading?: { which: "itself" | "held", kind, records }, people?, decided: { type: "act", act, records } | { type: "plan", edits } | { type: "answer" } | { type: "refusal" }, slot?: "graph" | "light" | "full", stages?, ms?, outcome: "previewed" | "accepted" | "declined" | "undone" | "abandoned", rating?: "up" | "down", should?, conversation, follows?, interaction?, examples?, pinned?, excluded? }`. Records are named by id and kind only: no record's content, the person's own words kept (at most 300 characters, as is `should`). `tellingOf(draft, by)` bounds and checks a draft and stamps it; `changedTelling(telling, change)` is how a change lands (an accepted telling ends only as undone; a rating taken away takes its `should`). An undo is `outcome: "undone"`, never a 👎. New optional keys are additive.
+- **The wire.** `/graview/told`: `POST { telling }` keeps one, its author the session's, never the body's (201; 202 and nothing kept for a visitor); `PATCH /<id> { change }` — `outcome`, `rating`, `should` and `examples` by its teller, `pinned` and `excluded` by whoever keeps the app (403 otherwise); `DELETE /<id>` by its teller or an owner (204), gone for good; `GET` answers `{ tellings }`: every one to whoever keeps the app, to anybody else their own and the others' that worked in a lesson (an act over a kind, or a plan on one) at least two other people's agree on (`toldFor`, `minPeople`), and to either only those about records the asker sees (`toldSeenBy`). 413 over 16 KB, 429 past 60 a minute, 410 where the host keeps none (`--no-told`), and a page then stops asking. `toldOver(url)` is the page's client; the dev server's `devTold` answers the same at `/__graview/told`.
+- **Read back under sight.** A telling naming a record the reader cannot see — its target, the records it was read as, the people it named — is never served to them, on the wire or on the page; a page also treats a record it does not hold as unseen.
+- `checkToldHost(host, { people, seen, hidden? })` from `@graview/core/conformance` runs these against a host's door for each seat, and names what failed: kept as the session, a visitor's never kept, rated only by its teller, another person's waiting for agreement, unseen records hiding it, deleted gone. `graview serve`'s door passes it.
+
 ### 4. The declaration, the document format and check finding codes
 
 A declaration that compiled and checked clean on one version compiles on the next version of the major.

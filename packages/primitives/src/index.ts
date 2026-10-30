@@ -288,3 +288,7 @@ export type { TimelineFace } from "./past-bar.js";
 // A first look that points at the app's own controls, once (its hints fetched as they are first shown).
 export { FIRST_LOOK_ANCHORS, FirstLookDoor, firstLookKey } from "./first-look-door.js";
 export type { FirstLook, FirstLookAnchor, FirstLookDoorProps, FirstLookEnd, FirstLookOptions, FirstLookStep } from "./first-look-door.js";
+
+// What people told Graview (Roadmap f-menu-learns): the Studio's panel, fetched when it is opened.
+export { ToldPanelDoor } from "./told-panel-door.js";
+export type { ToldPanelProps } from "./told-panel-door.js";

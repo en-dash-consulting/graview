@@ -1,5 +1,6 @@
 import type { SearchRanker } from "@graview/core";
 import type { AiCatalog, AiContextState, AiInteraction, AiTarget, AiUsage } from "@graview/core/catalog";
+import type { ToldStore } from "@graview/core/told";
 import type { ToolDefinition } from "./agent/tool-definition.js";
 import type { Completion } from "./intelligence.js";
 import type { Decide } from "./fast.js";
@@ -150,6 +151,16 @@ export interface HostAi {
    * the entries live as long as the page.
    */
   readonly interactions?: AiInteractionHost;
+  /**
+   * WHERE WHAT PEOPLE TELL GRAVIEW IS KEPT (Roadmap f-menu-learns): each
+   * telling the answer card makes (`Telling`, `@graview/core/told`) is
+   * added, its outcome and rating changed as the person goes on, and the
+   * kept ones listed for the menu's suggestions, the slots' examples and
+   * the Studio's "What Graview has been told". `toldOver(url)` for a served
+   * host (`graview serve`, the dev server's `devTold`), `memoryTold()` for a
+   * page alone. Unsaid, nothing is kept, nothing is suggested.
+   */
+  readonly told?: ToldStore;
   /** Told of every call to a model, with the interaction it served: tier, model, tokens and cost, for a host that meters. */
   readonly meter?: (usage: AiUsage & { readonly interaction: string }) => void;
 }

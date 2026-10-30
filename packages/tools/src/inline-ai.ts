@@ -61,6 +61,7 @@ import { askedParts, asking, decideOverTheGraph, UNDOING, type GraphDecision, ef
 import type { Answer, ChoiceAnswer } from "./fast.js";
 import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide, type JevOptions } from "./providers/jev.js";
 import type { ChoiceQuestion, Question } from "./questions.js";
+import type { TellingExample } from "@graview/core/told";
 
 // ── the slots ───────────────────────────────────────────────────────────────
 
@@ -564,6 +565,8 @@ export interface QuickAsk<S extends AnySchema = AnySchema> extends InlineAsk<S> 
   readonly follows?: { readonly said: string; readonly answer: string; readonly reading?: "itself" | "held" };
   /** Where the records are, as the steps say it: the place's title. */
   readonly where?: string;
+  /** Like tellings that worked here (`tellingExamples`, `@graview/core/told`): given to the Fast slot's decision over the graph and to the light model, by name. */
+  readonly examples?: readonly TellingExample[];
 }
 
 const ANSWER_SYSTEM =
@@ -609,7 +612,7 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   let taken: { readonly said: string; readonly as: string } | undefined;
   if (fast && said && !host && (ask.target.on === "record" || ask.target.on === "list" || ask.target.on === "lens" || ask.target.on === "selection")) {
     try {
-      const deciding = (words: string) => decideOverTheGraph(fast, { store: ask.store, target: ask.target, said: words, ...(ask.principal.id ? { principal: { id: ask.principal.id } } : {}), ...(ask.members ? { members: ask.members } : {}), ...(ask.follows ? { follows: ask.follows } : {}), ...(ask.where ? { where: ask.where } : {}) });
+      const deciding = (words: string) => decideOverTheGraph(fast, { store: ask.store, target: ask.target, said: words, ...(ask.principal.id ? { principal: { id: ask.principal.id } } : {}), ...(ask.members ? { members: ask.members } : {}), ...(ask.follows ? { follows: ask.follows } : {}), ...(ask.where ? { where: ask.where } : {}), ...(ask.examples ? { examples: ask.examples } : {}) });
       /* TWO ASKS IN ONE SENTENCE ("archive the done ones, then close the rest"): one plan of two parts, each part read on its own — its own records, its own act — decided together. */
       const parts = askedParts(said);
       if (parts.length > 1) {
@@ -683,6 +686,8 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
           ask: said,
           about: asked.entry.targetLabel,
           ...(ask.follows ? { follows: ask.follows } : {}),
+          // Like tellings that worked (Roadmap f-menu-learns), said only when there are some: the instructions are otherwise unchanged.
+          ...(ask.examples && ask.examples.length > 0 ? { worked_before: ask.examples, worked_before_is: "What people of this app asked before and what was done that they kept: where these words mean the same, do the same." } : {}),
           state: asked.state,
           candidates: choices.map((candidate) => ({ id: candidate.id, says: candidate.description })),
           // What is true of the records the words are about, as this person sees them: an open answer is only as true as this.

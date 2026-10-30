@@ -77,6 +77,8 @@ const CHAIN = [
   ["notify", "verify-notify.mjs"],
   // The quick ask, in place of the Ask box: ⌘K's bar beside what is selected completes acts, places, records and "Show …"; words asked are answered on a card beside the record or list, a change a ghost accepted as one batch, a follow-up on the card; and with AI off none of it — on both faces, in three engines.
   ["quick-ask", "verify-quick-ask.mjs"],
+  // What people tell Graview: each telling kept with what it did and how it ended, 👍 and 👎 on the card with "What should it have done?", the Studio's list an owner excludes from, what worked before suggested in the menu and still previewed, another person's only once two agree, and never one about a record the viewer cannot see (Roadmap f-menu-learns).
+  ["told", "verify-told.mjs"],
   ["seat", "verify-seat.mjs"],
   ["who", "verify-who.mjs"],
   ["calendar", "verify-calendar.mjs"],

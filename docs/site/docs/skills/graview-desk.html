@@ -1827,6 +1827,8 @@ main.landing > section.agent-hero { padding-top: clamp(40px, 6vh, 72px); gap: va
 <li><code>onProposeChange(proposal)</code> — apply <code>proposal.edits</code> and then <code>proposal.records</code> (a made record named by its <code>mintedHint</code>), as the person, as one change, <code>via: proposal.via</code>; answer `{ applied: true, undo, note? }`, one undo taking the app and the records back.</li>
 </ul>
 <p>Prove it with <code>checkPlanHost</code> from <code>@graview/core/conformance</code>. Without a host, the card says the whole plan and who would add its first steps. <code>ai={{ off: true }}</code> hides every AI part. Prove it with stubs: <code>stubFast()</code>, <code>stubThinking()</code> from <code>@graview/tools/inline-ai</code> (<code>pnpm verify inline-ai</code>).</p>
+<h3>Keeping what people tell it</h3>
+<p>Give the page <code>ai.told</code> (<code>toldOver(url)</code>, <code>@graview/core/told</code>) and every Enter on the card is a telling: the words, what it did, how it ended, and 👍 or 👎 with "What should it have done?". The menu suggests ones that worked, re-aimed here and previewed; the Studio lists them for owners. <code>graview serve</code> keeps <code>told.json</code> (<code>--no-told</code>); prove a host with <code>checkToldHost</code> (<code>@graview/core/conformance</code>, <code>pnpm verify told</code>).</p>
 <h3>Do this</h3>
 <ol>
 <li><strong>Write the prompt from the graph.</strong> What kinds exist, what acts exist and what they take — <code>generateLlmsTxt(app)</code> from <code>@graview/core/check</code> writes that — plus what is already there. A model that cannot see the graph invents a second Back Lawn.</li>

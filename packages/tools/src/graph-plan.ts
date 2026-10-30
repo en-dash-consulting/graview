@@ -1,5 +1,6 @@
 import { argumentsTaken, labelOf, nodeRefArgs, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
 import type { AiTarget, PlanNeed } from "@graview/core/catalog";
+import type { TellingExample } from "@graview/core/told";
 import type { FastProvider } from "./ai.js";
 import type { Answer } from "./fast.js";
 import type { Question } from "./questions.js";
@@ -106,7 +107,7 @@ function best(answer: Answer | undefined): { readonly key: string; readonly chan
 
 export async function decideOverTheGraph<S extends AnySchema>(
   fast: FastProvider,
-  options: { readonly store: Store<S>; readonly target: AiTarget; readonly said: string; readonly members?: readonly string[]; readonly follows?: { readonly said: string; readonly reading?: "itself" | "held" }; readonly where?: string; readonly principal?: { readonly id: string } },
+  options: { readonly store: Store<S>; readonly target: AiTarget; readonly said: string; readonly members?: readonly string[]; readonly follows?: { readonly said: string; readonly reading?: "itself" | "held" }; readonly where?: string; readonly principal?: { readonly id: string }; readonly examples?: readonly TellingExample[] },
 ): Promise<GraphDecision> {
   const { store, target, said } = options;
   const schema = store.schema as AnySchema;
@@ -168,7 +169,8 @@ export async function decideOverTheGraph<S extends AnySchema>(
   if (nameable.length > 0) questions["named"] = { type: "choice", instructions: `Which of these does “${words}” name, as the one to give it to, move it to, link it with or put it on?`, criteria: { ...Object.fromEntries(nameable.map((node) => [`r:${node.id}`, `${labeled(node)} (${withArticle(noun(node.kind))})`])), new: "Someone or something not listed here", none: "None is named" } };
   questions["need"] = { type: "choice", instructions: `If no act here can do “${words}”, what would each record need?`, criteria: { person: "A link to the person it is given or assigned to", other: "Something else: a field, a date, a number, a note", none: "Nothing: an act here can do it" } };
 
-  const decided = await fast.decide({ said, ...(options.follows ? { replyingTo: options.follows.said } : {}), readings: readings.map((one) => one.words) }, questions);
+  /* What this app's people said before and what worked (Roadmap f-menu-learns): examples, by name, for the same typed questions. */
+  const decided = await fast.decide({ said, ...(options.follows ? { replyingTo: options.follows.said } : {}), readings: readings.map((one) => one.words), ...(options.examples && options.examples.length > 0 ? { workedBefore: options.examples } : {}) }, questions);
   const reading0 = best(decided.answers["reading"]);
   const which = readings.length > 1 ? (reading0?.key === "itself" || reading0?.key === "held" ? reading0.key : undefined) : readings[0]!.which;
   const reading = readings.find((one) => one.which === which);

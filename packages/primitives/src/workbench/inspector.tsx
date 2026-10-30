@@ -11,6 +11,7 @@ import { VISUALLY_HIDDEN } from "../primitives/index.js";
 import { ROVING_ITEM, useRoving } from "../roving.js";
 import { menuMatches } from "../menu-words.js";
 import { MENU_RANK_FLOOR, useFastRank } from "../menu-rank.js";
+import { TOLD_SUGGESTED_MOST, useToldSuggestions } from "../menu-told-door.js";
 import { openQuickAsk, preloadQuickAsk, useQuickAskDrawn, whereMenuStands } from "../quick-ask-desk.js";
 import type { InspectorPlacement } from "./inspector-door.js";
 import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
@@ -85,7 +86,7 @@ function ChosenActs() {
 const RAIL_NEEDS = 14 + 236 + 14 + 300;
 
 function Pane({ placement }: { readonly placement: InspectorPlacement }) {
-  const { store, menuAt, setMenuAt, view, signIn, aiDesk, ai } = useGraview<AnySchema>();
+  const { store, menuAt, setMenuAt, view, signIn, aiDesk, ai, principal } = useGraview<AnySchema>();
   /*
    * The pane is positioned within the SCENE'S BOX, not the window. It was
    * fixed to the viewport, which put it at the page's edge when the scene
@@ -288,6 +289,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   useEffect(() => setTyped(""), [menuAt]);
   /* Asked where the quick ask is drawn at all: a host's model, AI not off, the app's setting on. */
   const asks = useQuickAskDrawn(aiDesk);
+  /* What worked before, like the words typed here (Roadmap f-menu-learns): kept tellings re-aimed at what the menu is on, ranked with the rows. */
+  const toldLike = useToldSuggestions(asks ? ai : undefined, store, principal, menuAt === null ? "" : typed, menuAt?.on, menuAt);
   /* The Fast slot's ranking of every row the menu could show, for the words typed, once the typing rests (`useFastRank`). */
   const rankRows = useMemo(
     () =>
@@ -297,8 +300,9 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
             ...beside.start.flatMap((section) => (section.items ?? []).map((item) => ({ key: `item:${item.id}`, label: item.label }))),
             ...affordances.map((affordance) => ({ key: `act:${affordance.id}`, label: affordance.label })),
             ...beside.end.flatMap((section) => (section.items ?? []).map((item) => ({ key: `item:${item.id}`, label: item.label }))),
+            ...toldLike.map((one) => ({ key: one.key, label: one.label })),
           ],
-    [menuAt, beside, affordances],
+    [menuAt, beside, affordances, toldLike],
   );
   const fastRanked = useFastRank(ai, menuAt === null ? "" : typed, rankRows);
   /*
@@ -569,6 +573,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   /* What the words are asked about, said in the Ask row: the menu's title, the one record, else "this". */
   const askedAbout = menuAt?.title ?? (selection.length === 1 ? nameOf(store, selection[0]!) : selection.length > 1 ? `${selection.length} selected` : "this");
   const askRow = atPointer && words !== "" && asks;
+  /* Up to two that worked before, the Fast slot's likeliest first once it has answered. */
+  const toldShown = atPointer && words !== "" ? (fastRank === null ? toldLike : [...toldLike].sort((a, b) => (fastRank.get(b.key) ?? 0) - (fastRank.get(a.key) ?? 0))).slice(0, TOLD_SUGGESTED_MOST) : [];
   /*
    * THE ROW ENTER RUNS FROM THE FIELD, lit: the first that fits the words
    * — never one that cannot be taken back, which keeps its aimed press —
@@ -579,6 +585,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     ...startSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`)),
     ...shown.filter((entry) => !entry.destructive).map((entry) => `act:${entry.id}`),
     ...endSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`)),
+    ...toldShown.map((one) => one.key),
   ];
   const ranked = fastRank === null ? undefined : [...shownKeys].sort((a, b) => (fastRank.get(b) ?? 0) - (fastRank.get(a) ?? 0)).find((key) => (fastRank.get(key) ?? 0) >= MENU_RANK_FLOOR);
   const lit =
@@ -598,6 +605,15 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     setMenuAt(null);
     // The quick ask's card, where the menu stood, answering the words at once: its thinking marked on the thing itself.
     openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked, returnTo: back, ...(from ? { from } : {}) });
+  };
+  /* A suggestion taken: its words asked on the card, about what the menu is on, previewed like any plan — never applied from the menu. */
+  const takeTold = (one: (typeof toldLike)[number]) => {
+    if (!menuAt) return;
+    const back = menuAt.returnTo ?? null;
+    const from = whereMenuStands(asideRef.current);
+    setMenuAt(null);
+    // Asked as the plain act the row says, where the menu stood: where it came from is the Studio's to say, never the card's.
+    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked: one.label, suggested: one.telling.id, returnTo: back, ...(from ? { from } : {}) });
   };
   /* The menu's rows the keyboard walks, in the order they are drawn: not a disabled one, nor a field of a form an act opened. */
   const walkable = (): HTMLElement[] =>
@@ -1455,6 +1471,17 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
 
       {atPointer ? endSections.map((section) => <SectionDrawn key={section.id} section={section} lit={lit} close={() => setMenuAt(null)} />) : null}
 
+      {/* What worked before, like these words: chosen, asked and previewed on the card (Roadmap f-menu-learns). */}
+      {toldShown.length > 0 ? (
+        <div data-menu-section="told" role="group" aria-label="Suggested" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5 }}>
+          {toldShown.map((one) => (
+            <button key={one.key} type="button" data-menu-item={one.key} data-told-suggestion={one.telling.id} data-menu-lit={lit === one.key || undefined} onClick={() => takeTold(one)} style={{ ...ROW_STYLE, ...(lit === one.key ? LIT_STYLE : {}) }}>
+              {one.label}
+              {lit === one.key ? ENTER_MARK : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {/* The words typed, asked about what the menu was opened on: always the last row, where the host lent a model. */}
       {askRow ? (
         <div data-menu-section="ask" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5 }}>

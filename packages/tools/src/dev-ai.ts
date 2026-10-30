@@ -1,4 +1,5 @@
 import { AI_BRIDGE_PATH, DECISION_BRIDGE_PATH, type AiBridgeAsk } from "@graview/core";
+import { toldOver, type ToldStore } from "@graview/core/told";
 import { NO_AI, type HostAi } from "./ai.js";
 import { completionDecide } from "./decide.js";
 import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide } from "./providers/jev.js";
@@ -24,9 +25,33 @@ type Fetch = (input: string, init?: { method?: string; headers?: Record<string, 
  * there is no door at all (a built page, another host), it is `NO_AI`, and
  * the seat says what any product's says.
  */
-export async function aiThroughDevServer(options: { readonly path?: string; readonly decidePath?: string; readonly fetch?: Fetch } = {}): Promise<HostAi> {
-  const [ai, jev] = await Promise.all([throughTheModelDoor(options), jevThroughTheDecisionDoor(options)]);
-  return jev ? { ...ai, fast: jev } : ai;
+export async function aiThroughDevServer(options: { readonly path?: string; readonly decidePath?: string; readonly toldPath?: string; readonly fetch?: Fetch } = {}): Promise<HostAi> {
+  const [ai, jev, told] = await Promise.all([throughTheModelDoor(options), jevThroughTheDecisionDoor(options), toldThroughTheDevServer(options)]);
+  const lent = jev ? { ...ai, fast: jev } : ai;
+  return told && !lent.off ? { ...lent, told } : lent;
+}
+
+/** Where the dev server keeps what people tell Graview (`devTold`, `@graview/ship/dev`): `/__graview/told`. */
+export const DEV_TOLD_DOOR = "/__graview/told";
+
+/*
+ * WHAT PEOPLE TELL GRAVIEW, KEPT BY THE DEV SERVER (Roadmap f-menu-learns):
+ * where it answers `/__graview/told`, the page keeps its tellings there —
+ * the answer card's ratings, the menu's suggestions, the Studio's list.
+ */
+async function toldThroughTheDevServer(options: { readonly toldPath?: string; readonly fetch?: Fetch }): Promise<ToldStore | undefined> {
+  const path = options.toldPath ?? DEV_TOLD_DOOR;
+  const call = options.fetch ?? (globalThis.fetch as unknown as Fetch | undefined);
+  if (!call) return undefined;
+  try {
+    const probe = await call(path, { method: "GET" });
+    if (!probe.ok) return undefined;
+    const body = (await probe.json()) as { tellings?: unknown };
+    if (!Array.isArray(body?.tellings)) return undefined;
+  } catch {
+    return undefined;
+  }
+  return toldOver("", { path, ...(options.fetch ? { fetch: options.fetch as unknown as typeof fetch } : {}) });
 }
 
 /*

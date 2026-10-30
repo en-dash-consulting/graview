@@ -20,6 +20,8 @@ export interface QuickAskOpening {
   readonly returnTo?: HTMLElement | null;
   /** Where the menu stood, when the card is the menu turned into it: the card opens with this top-left corner and never moves. */
   readonly from?: { readonly left: number; readonly top: number };
+  /** The kept telling a menu's suggestion was taken from (Roadmap f-menu-learns): its words are asked, previewed as any, and the telling they make names it as its example. */
+  readonly suggested?: string;
 }
 
 /** Where a menu stands now, as the card it turns into opens: its top-left corner in the window. */
