@@ -214,7 +214,7 @@ export function suggestOnce(env: InlineEnv, target: AiTarget, asker?: SuggestAsk
  * asked on goes. Its entry is kept; a failure is answered in a sentence,
  * `landing` told before anything lands.
  */
-export async function takeOffer(env: InlineEnv, result: InlineResult, offer: AiCandidate, landing?: () => void): Promise<string | undefined> {
+export async function takeOffer(env: InlineEnv, result: InlineResult, offer: AiCandidate, landing?: () => void, options: { readonly onCard?: boolean } = {}): Promise<string | undefined> {
   const entry = result.interaction;
   const proposal = proposalOf(offer);
   if (proposal) {
@@ -226,8 +226,12 @@ export async function takeOffer(env: InlineEnv, result: InlineResult, offer: AiC
       env.desk.record({ ...entry, outcome: "failed", failed });
       return failed;
     }
-    landing?.();
-    env.desk.setGhost({ ghost });
+    // A suggestion chosen on a card is proposed on that card, which stays: the ghost is the card's, accepted or put away there.
+    if (options.onCard) env.desk.setGhost({ ghost, onCard: true });
+    else {
+      landing?.();
+      env.desk.setGhost({ ghost });
+    }
     env.desk.record(entry);
     return undefined;
   }

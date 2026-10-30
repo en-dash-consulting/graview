@@ -1,6 +1,6 @@
 {
   "budget": "embed with the studio handed in",
-  "minified": 1000,
-  "gzipped": 400,
-  "note": "Raised when the right-click menu's plan over the graph came to the first load (Roadmap f-menu-type-anything): figures at one spot drawn once, their labels stacked so none lies on another, the quick ask's reading line and Activity's timings. Measured at 1_862_933 / 652_072, 118 gzipped bytes over the limit of 1_999_311 / 651_954 it held before; 1_000 / 400 more."
+  "minified": 1748,
+  "gzipped": 440,
+  "note": "Raised when the right-click menu's plan over the graph came to the first load (Roadmap f-menu-type-anything): figures at one spot drawn once, their labels stacked so none lies on another, the quick ask's reading line and Activity's timings. Measured at 1_862_933 / 652_072, 118 gzipped bytes over the limit of 1_999_311 / 651_954 it held before; 1_748 / 440 more; measured at 1_863_687 / 652_360 with the menu at the pointer keeping its top, the card opening where the menu stood and the first letter's fetch."
 }

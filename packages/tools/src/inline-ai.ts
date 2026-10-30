@@ -56,8 +56,9 @@ import type { AiPrice, AnswerProvider, AnswerReply, FastProvider, HostAi, Thinki
 import { firstJsonObject } from "./intelligence.js";
 import { COULD_NOT_WORK_OUT, forThePerson } from "./sentences.js";
 import { factsOf, todayWords } from "./facts.js";
+import { CANNOT_DO_IT, sayChange, sayNothingToChange, saysDone } from "./say-change.js";
 export { COULD_NOT_WORK_OUT, forThePerson, plainly } from "./sentences.js";
-import { askedParts, asking, decideOverTheGraph, UNDOING, type GraphDecision, effectOf, type Reading } from "./graph-plan.js";
+import { askedParts, asking, barFor, decideOverTheGraph, heldBy, explicitReading, removing, unaccounted, UNDOING, type GraphDecision, effectOf, type Reading } from "./graph-plan.js";
 import type { Answer, ChoiceAnswer } from "./fast.js";
 import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide, type JevOptions } from "./providers/jev.js";
 import type { ChoiceQuestion, Question } from "./questions.js";
@@ -570,7 +571,7 @@ export interface QuickAsk<S extends AnySchema = AnySchema> extends InlineAsk<S> 
 }
 
 const ANSWER_SYSTEM =
-  'You answer a person who typed words about what they are looking at in an app, from the state given and nothing else: "facts" says the fields and links of each record ("covered by Ada Nowak", "holds it: This week"), as they see them — answer from them, and never say a record has no link the facts show. Before answering, look through "facts" for the link or field the words are about — what it waits for, who covers it, what holds it, when it is due — and name it: "what is blocking this" is answered by its "waits for" links, by name. Answer only JSON: {"answer": one to three short, whole sentences written to the person, "pick": [candidate ids that act on the answer, best first, at most three]}. Pick only ids from the candidates, and none when nothing fits. Never say an id to the person. ' +
+  'You answer a person who typed words about what they are looking at in an app, from the state given and nothing else: "facts" says the fields and links of each record ("covered by Ada Nowak", "holds it: This week"), as they see them — answer from them, and never say a record has no link the facts show. Before answering, look through "facts" for the link or field the words are about — what it waits for, who covers it, what holds it, when it is due — and name it: "what is blocking this" is answered by its "waits for" links, by name. A link the facts do not show is not there: say plainly that there is none, never borrow one from another record, and answer what was asked — a count by counting, a day by its day. Answer only JSON: {"answer": one to three short, whole sentences written to the person, "pick": [candidate ids that act on the answer, best first, at most three]}. Pick only ids from the candidates, and none when nothing fits. Never say an id to the person. ' +
   'Where "members" are given and the person asks for something done to them, answer "each": {"act": the name of one of "member_acts", "args": every value it asks for, by name, dates as YYYY-MM-DD counted from "today"; the facts already say each day against today, so trust those} — one act over every member, as one change. Judge an act by what it does ("does"), not only its title: "close", "complete", "check off", "tick" and "finish" are an act that marks something done; "delete" one that removes; "push", "move" and "postpone" one that changes a date or a place. Where "fast_leaned_to" names an act, it is likely the one: fill its values. When the person tells it to do something, answer "each" (with a short "answer" saying what it will do): nothing is done until they accept, so never say in words that it is done, and never ask them to confirm ("Move it to Friday?"): the card asks them, so answer "each". Where "people" maps a word like "her" or "me" to a name, that is who they mean. ' +
   'Only where no act among "member_acts" or the candidates does what they ask, because the app has no field or link for it, answer "lacks": one whole sentence to the person saying what the app is missing (never an id, never a note to yourself), and "need": what it would need — {"link": {"on": the kind of the records, "called": what the link is called in their words, like "assigned to", "to": the kind it points to, or a noun for one the app lacks}} or {"field": {"on": the kind, "called": its name in their words, "type": "string", "number", "date" or "boolean"}} — with "who": the name of the record their words name (for a link) or "value": the value they give (for a field). When they ask for a change the app has no field or link for ("make these urgent", "give these a priority"), answer "lacks" and "need", never only "answer". A question is answered in "answer", never with "each" or "lacks"; so is "undo that", which the app\'s own Undo does.';
 
@@ -609,6 +610,8 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
    */
   let reading: Reading | undefined;
   let leaned: string | undefined;
+  // Asks or tells, as Jev read it; the code's patterns only where Jev was not asked.
+  let asksJev: boolean | undefined;
   let taken: { readonly said: string; readonly as: string } | undefined;
   if (fast && said && !host && (ask.target.on === "record" || ask.target.on === "list" || ask.target.on === "lens" || ask.target.on === "selection")) {
     try {
@@ -621,19 +624,21 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
           const cost = costOf(fast.price, one.usage.inputTokens, one.usage.outputTokens);
           begun.meter({ tier: "fast", model: fast.model, inputTokens: one.usage.inputTokens, outputTokens: one.usage.outputTokens, ...(cost !== undefined ? { costUsd: cost } : {}) });
         }
-        if (several.every((one) => one.sure && one.each)) return graphResult(ask, begun, said, several, stages);
+        if (several.every((one) => one.sure && one.each && !one.asks)) return graphResult(ask, begun, said, several, stages);
       }
       const graph = await timed("fast", fast.model, () => deciding(said));
       const cost = costOf(fast.price, graph.usage.inputTokens, graph.usage.outputTokens);
       begun.meter({ tier: "fast", model: fast.model, inputTokens: graph.usage.inputTokens, outputTokens: graph.usage.outputTokens, ...(cost !== undefined ? { costUsd: cost } : {}) });
       reading = graph.reading;
       leaned = graph.act;
+      asksJev = graph.asks;
       taken = graph.taken;
-      if (graph.sure && (graph.each || graph.missing)) return graphResult(ask, begun, said, graph, stages);
+      if (graph.sure && (graph.each || graph.missing || graph.clarify)) return graphResult(ask, begun, said, graph, stages);
     } catch {
       // The Fast slot failing leaves the Thinking slot to answer, as before there was a graph to read.
     }
   }
+  const isQuestion = () => asksJev ?? asking(said);
   /* THE LIGHT MODEL FIRST: the provider's quick one words an open answer; the full one only where it had none. */
   const light = ai.off ? undefined : ai.light;
   const full = thinkingOf(ai);
@@ -691,7 +696,8 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
           state: asked.state,
           candidates: choices.map((candidate) => ({ id: candidate.id, says: candidate.description })),
           // What is true of the records the words are about, as this person sees them: an open answer is only as true as this.
-          facts: factsOf(ask.store, ask.principal, [...new Set([...(ask.target.on === "record" ? [ask.target.id] : []), ...members.map((node) => node.id)])], todayOf(ask.store)),
+          // The record, the records the words were read as, and — whatever the reading — what the record holds: a question about a list is answered from its records.
+          facts: factsOf(ask.store, ask.principal, [...new Set([...(ask.target.on === "record" ? [ask.target.id, ...(heldBy(ask.store, ask.target.id)?.ids ?? [])] : []), ...members.map((node) => node.id), ...(ask.members ?? [])])], todayOf(ask.store)),
           ...(members.length > 0 ? { members: members.map((node) => ({ id: node.id, label: labelOf(ask.store.schema.tryDefinition(node.kind), node as never) })), member_acts: memberActs.map((act) => ({ name: act.name, title: act.title, does: act.does, asks: act.asks })) } : {}),
           ...(leaned ? { fast_leaned_to: leaned } : {}),
           ...(taken ? { people: { [taken.said]: taken.as } } : {}),
@@ -703,25 +709,31 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
       // The light model had nothing to say: the full one, once.
       if (light && full && full !== light && !usable(parsed)) parsed = (await timed("thinking", full.model, () => thought(full, ANSWER_SYSTEM, prompt, asked, asked.meter))) as Parsed;
       // Told to do something, it only talked: asked once more for the change, or for what the app lacks.
-      const told = !asking(said) && !UNDOING.test(said) && members.length > 0;
+      const told = !isQuestion() && !UNDOING.test(said) && members.length > 0;
       const proposes = (ids: unknown) => Array.isArray(ids) && ids.some((id) => { const candidate = choices.find((one) => one.id === id); return candidate !== undefined && proposalOf(candidate) !== undefined; });
       if (told && parsed && !parsed.each && !parsed.lacks && !proposes(parsed.pick)) {
-        const again = (await timed(light ? "light" : "thinking", thinking.model, () => thought(thinking, ANSWER_SYSTEM, JSON.stringify({ ...JSON.parse(prompt), told: "They told you to do this, not asked a question: answer \"each\" with an act from member_acts and its values, or \"lacks\" and \"need\" where none can — for example {\"lacks\": \"Tasks have no priority yet.\", \"need\": {\"field\": {\"on\": \"task\", \"called\": \"priority\", \"type\": \"string\"}}, \"value\": \"high\"}." }), asked, asked.meter))) as Parsed;
+        const again = (await timed(light ? "light" : "thinking", thinking.model, () => thought(thinking, ANSWER_SYSTEM, JSON.stringify({ ...JSON.parse(prompt), told: "They told you to do this, not asked a question. Reply with exactly one of two shapes, never \"answer\" alone: \"each\" with an act from member_acts and its values, or \"lacks\" and \"need\" (and \"value\") where no act can — for example {\"lacks\": \"Tasks have no priority yet.\", \"need\": {\"field\": {\"on\": \"task\", \"called\": \"priority\", \"type\": \"string\"}}, \"value\": \"high\"}." }), asked, asked.meter))) as Parsed;
         if (again && (again.each || again.lacks)) parsed = again;
+        // Still only words: the act Jev leaned to, where it needs no value it was not given — never words in place of the change.
+        else if (leaned) {
+          const lean = memberActs.find((one) => one.name === leaned);
+          const required = lean ? (ask.store.allMutations().find((one) => one.name === lean.name)?.input as { shape?: Record<string, { safeParse(value: unknown): { success: boolean } }> } | undefined)?.shape ?? {} : {};
+          if (lean && lean.asks.every((arg) => required[arg]?.safeParse(undefined).success ?? true)) parsed = { ...parsed, answer: "", each: { act: lean.name, args: {} } };
+        }
       }
       // Told to do something and answered with one act over the records: the other changes it picked are not what was asked.
-      if (!asking(said) && parsed?.each) parsed = { ...parsed, pick: Array.isArray(parsed.pick) ? parsed.pick.filter((id) => { const candidate = choices.find((one) => one.id === id); return candidate !== undefined && proposalOf(candidate) === undefined; }) : parsed.pick };
+      if (!isQuestion() && parsed?.each) parsed = { ...parsed, pick: Array.isArray(parsed.pick) ? parsed.pick.filter((id) => { const candidate = choices.find((one) => one.id === id); return candidate !== undefined && proposalOf(candidate) === undefined; }) : parsed.pick };
       // Asked a question: answered in words, never a change made over every record.
-      if (asking(said) && parsed) parsed = { ...parsed, each: undefined };
+      if (isQuestion() && parsed) parsed = { ...parsed, each: undefined };
       // An answer that is not whole sentences — a fragment, a list — is asked for once more, as sentences to the person.
       if (parsed && typeof parsed.answer === "string" && parsed.answer.trim() && !forThePerson(parsed.answer) && !parsed.each && !parsed.lacks) {
         const again = (await timed(light ? "light" : "thinking", thinking.model, () => thought(thinking, ANSWER_SYSTEM, JSON.stringify({ ...JSON.parse(prompt), rewrite: `Your answer was not whole sentences: “${String(parsed!.answer).slice(0, 300)}”. Say it again in one to three whole sentences to the person, each begun with a capital and ended with a full stop.` }), asked, asked.meter))) as Parsed;
         if (again && typeof again.answer === "string" && forThePerson(again.answer)) parsed = { ...parsed, answer: again.answer };
         // A question answered by name ("Pay the deposit"): the names are the answer, said as one sentence.
-        else if (asking(said) && /^[\p{L}\p{N}"“'(][^{}[\]]*$/u.test(String(parsed.answer).trim()) && String(parsed.answer).trim().split(/\s+/).length >= 2) parsed = { ...parsed, answer: `${String(parsed.answer).trim().charAt(0).toUpperCase()}${String(parsed.answer).trim().slice(1).replace(/[\s,;:]+$/, "")}.` };
+        else if (isQuestion() && /^[\p{L}\p{N}"“'(][^{}[\]]*$/u.test(String(parsed.answer).trim()) && String(parsed.answer).trim().split(/\s+/).length >= 2) parsed = { ...parsed, answer: `${String(parsed.answer).trim().charAt(0).toUpperCase()}${String(parsed.answer).trim().slice(1).replace(/[\s,;:]+$/, "")}.` };
       }
       // A question answered with no words at all (a change picked, nothing said): asked once more, for the answer.
-      if (asking(said) && parsed && !(typeof parsed.answer === "string" && parsed.answer.trim())) {
+      if (isQuestion() && parsed && !(typeof parsed.answer === "string" && parsed.answer.trim())) {
         const again = (await timed(light ? "light" : "thinking", thinking.model, () => thought(thinking, ANSWER_SYSTEM, JSON.stringify({ ...JSON.parse(prompt), rewrite: "This is a question: answer it in \"answer\", in one to three whole sentences, from the facts." }), asked, asked.meter))) as Parsed;
         if (again && typeof again.answer === "string" && forThePerson(again.answer)) parsed = { ...parsed, answer: again.answer };
       }
@@ -751,6 +763,14 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   } catch (error) {
     return failedResult(asked, said, "ask", error instanceof Error ? error.message : String(error));
   }
+  /*
+   * NEVER A CHANGE CLAIMED THAT WAS NOT MADE. Told to do something, with no
+   * change proposed, no plan and nothing picked, the model's words may not
+   * say it is done ("X is taken off the shift."): said plainly that it
+   * could not be done here instead.
+   */
+  const changed = Boolean(each) || picked.some(({ candidate }) => proposalOf(candidate) !== undefined);
+  if (!isQuestion() && !changed && !missing && text && saysDone(text)) text = CANNOT_DO_IT;
   if (!text && picked.length === 0 && !each && !missing) {
     // The seat could not answer (Roadmap f-friction-log): the question, and the place it was asked on. A provider that failed is not this.
     const place = ask.target.on === "place" || ask.target.on === "lens" ? ask.target.place : undefined;
@@ -759,8 +779,20 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
     return failedResult(asked, said, "ask", "The AI had no answer to that here.");
   }
   const model = asked.usage.at(-1)?.model;
+  /*
+   * A QUESTION NEVER COMES WITH A CHANGE. Answered in words, any act it
+   * picked is offered beside the answer as a suggestion the person chooses
+   * ("Mark it done?"), never proposed as the card's change.
+   */
+  const question = isQuestion();
+  /* A destructive act over several, from words that did not say which: asked back, not proposed. */
+  const eachAct = each ? ask.store.allMutations().find((one) => one.name === each!.act) : undefined;
+  if (eachAct && removing(eachAct as never) && members.length > 1 && (reading ? (reading.chance ?? 1) < barFor(eachAct as never, said) || unaccounted(said, reading) : !explicitReading(said))) {
+    const clarify = `Should I ${(eachAct.title ?? eachAct.name).trim().split(/\s+/)[0]!.toLowerCase()} all ${members.length} of them? Say “all” to go ahead, or say which.`;
+    return { interaction: { ...asked.entry, ask: { kind: "ask", said }, offered: [], outcome: "offered", answer: clarify, usage: [...asked.usage], stages }, offers: [], answer: clarify, ...(reading ? { reading } : {}) };
+  }
   // A change picked is a proposal, previewed as the person: never made until it is accepted.
-  const proposals = picked.flatMap(({ candidate, confidence }) => {
+  const proposals = (question ? [] : picked).flatMap(({ candidate, confidence }) => {
     const proposal = proposalOf(candidate);
     return proposal ? [{ ...proposal, ...(confidence !== undefined ? { confidence } : {}) }] : [];
   });
@@ -781,7 +813,23 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   // One change to a record once: an act over every member and a candidate that is the same act on one of them are one proposal.
   const once = proposals.filter((proposal, index) => proposals.findIndex((other) => other.call.name === proposal.call.name && JSON.stringify(other.call.args) === JSON.stringify(proposal.call.args)) === index);
   const ghost = once.length > 0 ? ghostOf(ask.store, { interaction: asked.id, target: ask.target, basis: said, ...(model ? { model } : {}), proposals: once }, ask.principal) : undefined;
-  const offers = picked.map(({ candidate }) => candidate).filter((candidate) => proposalOf(candidate) === undefined);
+  const offers = picked.map(({ candidate }) => candidate).filter((candidate) => question || proposalOf(candidate) === undefined);
+  // Changes the model picked one by one, for an instruction: each said as it will happen, in the app's words, never the model's.
+  if (!each && !question && ghost && ghost.proposals.length > 0) {
+    text = ghost.proposals
+      .slice(0, 3)
+      .flatMap((proposal) => {
+        const mutation = ask.store.allMutations().find((one) => one.name === proposal.call.name);
+        const record = mutation?.subject ? proposal.call.args[mutation.subject.arg] : undefined;
+        return mutation && typeof record === "string" ? [sayChange(ask.store, { act: mutation as never, args: proposal.call.args, records: [record], itself: true })] : [];
+      })
+      .join(" ");
+  }
+  // The change said as it will happen, its values and its records counted as the ghost keeps them: not the model's words for it.
+  if (each && eachAct && ghost) {
+    const acting = members.map((node) => node.id).filter((id) => ghost.proposals.some((proposal) => proposal.id === `each:${eachAct.name}:${id}`));
+    if (acting.length > 0) text = changeWords(ask.store, eachAct, each.args, acting, reading ?? (members.length === 1 && ask.target.on === "record" && members[0]!.id === ask.target.id ? { which: "itself", records: acting, kind: members[0]!.kind, words: "", close: false } : undefined));
+  }
   const offered = [...offers.map((candidate) => offeredOf(candidate, picked.find((one) => one.candidate === candidate)?.confidence)), ...(ghost?.proposals ?? []).map((proposal) => ({ id: proposal.id, type: (proposal.field !== undefined ? "fill" : "act") as AiOffered["type"], label: proposal.label, ...(proposal.confidence !== undefined ? { confidence: proposal.confidence } : {}) }))];
   return {
     interaction: { ...asked.entry, ask: { kind: "ask", said }, offered, outcome: "offered", ...(text ? { answer: text } : {}), usage: [...asked.usage], stages },
@@ -792,6 +840,13 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
     ...(reading ? { reading } : {}),
     ...(taken ? { taken } : {}),
   };
+}
+
+/** A change in words, from its act, its values and the records it will act on (`sayChange`), with what the reading narrowed them by. */
+function changeWords<S extends AnySchema>(store: Store<S>, act: { readonly name: string; readonly title?: string; readonly input?: unknown; readonly subject?: { readonly arg: string } }, args: Readonly<Record<string, unknown>>, records: readonly string[], reading: Reading | undefined): string {
+  const narrowed = reading?.part;
+  const where = reading ? / (in .+)$/.exec(reading.words)?.[1] : undefined;
+  return sayChange(store, { act, args, records, ...(narrowed ? { narrowed } : {}), ...(where ? { where } : {}), itself: reading?.which === "itself" });
 }
 
 /** The day the store reckons from, where it keeps one: "today" in what a model is told, so "tomorrow" is a date. */
@@ -832,10 +887,12 @@ function graphResult<S extends AnySchema>(ask: QuickAsk<S>, asked: Asked, said: 
   const kept = new Set((ghost?.proposals ?? []).map((proposal) => proposal.id));
   const text = graphs
     .map((graph) => {
+      if (graph.clarify) return graph.clarify;
       if (graph.each && graph.reading) {
-        const title = ask.store.allMutations().find((one) => one.name === graph.each!.act)?.title ?? graph.each.act;
-        const any = graph.reading.records.some((id) => kept.has(`each:${graph.each!.act}:${id}`));
-        return any ? (graph.text ?? "") : `There is nothing for “${title}” to change on ${graph.reading.words}.`;
+        const mutation = ask.store.allMutations().find((one) => one.name === graph.each!.act);
+        // Said as it will happen: the act, its values, and the records it will act on, counted as it will.
+        const acting = graph.reading.records.filter((id) => kept.has(`each:${graph.each!.act}:${id}`));
+        return acting.length > 0 && mutation ? changeWords(ask.store, mutation, graph.each.args, acting, graph.reading) : mutation ? sayNothingToChange(ask.store, mutation as never, graph.reading.records) : `Nothing here would change.`;
       }
       return graph.text ?? graph.missing?.said ?? "";
     })
@@ -1023,7 +1080,11 @@ export function stubFast(options: { readonly model?: string; readonly prefer?: r
     decide: async (state, questions) => {
       const answers: Record<string, Answer> = {};
       for (const [key, question] of Object.entries(questions)) {
-        if (question.type === "choice") {
+        if (question.type === "choice" && key === "mood") {
+          // Asks or tells, as the code's own patterns read it: a stub has no judgment of its own to give.
+          const choice = asking(String((state as { said?: unknown }).said ?? "")) ? "asks" : "tells";
+          answers[key] = { type: "choice", choice, confidence: 0.9, probabilities: { [choice]: 0.9, [choice === "asks" ? "tells" : "asks"]: 0.1 } };
+        } else if (question.type === "choice") {
           const names = Object.keys(question.criteria);
           const rank = (name: string) => {
             const words = `${name} ${question.criteria[name] ?? ""}`;

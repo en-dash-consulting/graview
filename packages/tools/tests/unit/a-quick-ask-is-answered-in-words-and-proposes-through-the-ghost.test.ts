@@ -31,18 +31,27 @@ const me: Principal = { kind: "human", id: "u-mo" };
 const target = { on: "record", id: "t-1" } as const;
 
 describe("a quick ask", () => {
+  it("asked a question, answers in words and offers its changes beside it as suggestions — never a ghost", async () => {
+    const result = await answerHere({ thinking: stubThinking() }, { store: make(), target, principal: me, said: "What is left here?", interaction: "ai-q" });
+    expect(result.answer).toBe("About Book the van: an answer to “What is left here?”, as drafted.");
+    expect(result.ghost).toBeUndefined();
+    expect(result.offers.some((offer) => offer.type === "act")).toBe(true);
+  });
+
   it("is answered in words by the Thinking slot, its picked changes a ghost the store has not made", async () => {
     const store = make();
-    const result = await answerHere({ thinking: stubThinking() }, { store, target, principal: me, said: "What is left here?", interaction: "ai-q" });
-    expect(result.answer).toBe("About Book the van: an answer to “What is left here?”, as drafted.");
-    expect(result.interaction).toMatchObject({ id: "ai-q", ask: { kind: "ask", said: "What is left here?" }, outcome: "offered", answer: result.answer });
+    const result = await answerHere({ thinking: stubThinking() }, { store, target, principal: me, said: "Do what is left here", interaction: "ai-q" });
+    // Told to do something, the changes it picked are said as they will happen, in the app's words, not the model's.
+    expect(result.answer).toMatch(/“Book the van”/);
+    expect(result.answer).not.toMatch(/as drafted/);
+    expect(result.interaction).toMatchObject({ id: "ai-q", ask: { kind: "ask", said: "Do what is left here" }, outcome: "offered", answer: result.answer });
     expect(result.interaction.usage?.[0]).toMatchObject({ tier: "thinking", model: "stub-thinking" });
     expect(result.ghost?.proposals.length).toBeGreaterThan(0);
     // Proposed, not made.
     expect(store.graph.getNode("t-1")).not.toHaveProperty("status");
     const kept = acceptGhost(store, result.ghost!, { author: me, ids: [result.ghost!.proposals[0]!.id] });
     expect(kept.ok).toBe(true);
-    expect(store.log.all().at(-1)?.lineage).toMatchObject({ interaction: "ai-q", basis: "Asked “What is left here?”" });
+    expect(store.log.all().at(-1)?.lineage).toMatchObject({ interaction: "ai-q", basis: "Asked “Do what is left here”" });
   });
 
   it("is the host's Answer slot's when given: handed the words, the follow-up's one step back and the catalog, an unknown id dropped", async () => {
@@ -60,7 +69,7 @@ describe("a quick ask", () => {
 
   it("is the Fast slot's pick among the candidates when there is no Thinking one", async () => {
     const result = await answerHere({ fast: stubFast({ prefer: [/Status: done/] }) }, { store: make(), target, principal: me, said: "mark it done" });
-    expect(result.answer).toBe("These fit “mark it done”.");
+    expect(result.answer).toMatch(/^Set the status of “Book the van” to “done”\./);
     expect(result.ghost?.proposals[0]?.id).toBe("fill:t-1:status:done");
   });
 
