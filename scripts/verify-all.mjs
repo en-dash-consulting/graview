@@ -69,6 +69,8 @@ const CHAIN = [
   // A kind with no picture of its own opens to its stop: what it is, what is going on, its first act, a board or a table its data chooses — every example, a desk and a phone, light and dark.
   ["kind-stop", "verify-kind-stop.mjs"],
   ["menu", "verify-menu.mjs"],
+  // Make this section better: a right-click inside a worker view names the menu for its section and outlines it; Just do it, Describe changes and Highlight area revise that section alone into a draft in place, judged first — a revision that drops styles handed back once, or refused — kept through the host's view door with one Undo, and offered to nobody who may not change views.
+  ["section", "verify-section.mjs"],
   // The inline AI: suggestions from the catalog in the context menu, a ghost accepted in part as one batch with its undo, a panel kept as a lens, each interaction once in Activity and on its record's page, a host's stored entries, and nothing of it with AI off — on both faces.
   ["inline-ai", "verify-inline-ai.mjs"],
   // Notify me in two presses: from a right-click on a record in the scene, a kind's list and an act on the routed face, listed in Activity with one press to stop, somebody else's change told once and the reader's own not, and offered after an act's form.

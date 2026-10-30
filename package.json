@@ -23,6 +23,7 @@
     "dev:todo": "pnpm --filter @graview/todo dev",
     "engines": "node scripts/verify-engines.mjs",
     "menu": "node scripts/verify-menu.mjs",
+    "section": "node scripts/verify-section.mjs",
     "navigation": "node scripts/verify-navigation.mjs",
     "gauntlet": "node scripts/verify-gauntlet.mjs",
     "dev:gauntlet": "pnpm --filter @graview/gauntlet dev",

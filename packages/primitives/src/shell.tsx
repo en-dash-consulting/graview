@@ -24,6 +24,7 @@ import { ResolveAppContext } from "./resolve-app-context.js";
 import { FirstLookDoor, type FirstLook } from "./first-look-door.js";
 import { GhostDoor, InlineAiSections } from "./inline-ai-door.js";
 import { NotifyDoor, NotifySections } from "./notify-door.js";
+import { SectionBetterDoor, SectionBetterSections } from "./section-door.js";
 import { BoardMoveSections } from "./board-move-section.js";
 import { ViewTidyingSections } from "./view-tidying-sections.js";
 import { QuickAskDoor } from "./quick-ask-door.js";
@@ -333,13 +334,18 @@ function ShellFace<S extends AnySchema>({
             <InlineAiSections>
               {/* Hide and Delete for a place, opened from the bar's places (Roadmap f-place-menu-views). */}
               <ViewTidyingSections>
-                <Inspector placement="menu" />
+                {/* "Make this better" on a section of a worker view (Roadmap f-make-this-section-better). */}
+                <SectionBetterSections>
+                  <Inspector placement="menu" />
+                </SectionBetterSections>
               </ViewTidyingSections>
             </InlineAiSections>
           </BoardMoveSections>
         </NotifySections>
         {/* The sheet "Notify me…" opens, already filled in. */}
         <NotifyDoor />
+        {/* A section a menu is open on, outlined; its card, where "Make this better" was asked. */}
+        <SectionBetterDoor />
         {/* What the inline AI proposed and has not made: Accept, Accept some, Dismiss, then its undo. */}
         <GhostDoor />
         {/* After an act, the way back on the board, and ⌘Z (FR-153): as on the pages. */}

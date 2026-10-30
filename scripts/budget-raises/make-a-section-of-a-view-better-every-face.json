@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 15600,
+  "note": "Raised when a section of a worker view came to be made better (Roadmap f-make-this-section-better): the card, the highlight overlay and the revision path (`@graview/tools/section`, and `compareViewRevision` with the sections it reads) are chunks of their own, fetched the first time one is asked for, and this budget counts every chunk. Gzipped 15_256 over a limit the minified side had 82 KB under. Measured at 2_645_365 / 960_211 against 2_606_383 / 944_718."
+}

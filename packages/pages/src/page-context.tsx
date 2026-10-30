@@ -1,5 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
-import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
+import { freshAddress, sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore, type DismissalStore, type KeptViews } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { AwaySummary, FieldTyping, KeepLensHost, ProposeChangeHost, ComposeChangeHost, MenuSectionSource, OnExport, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
@@ -131,6 +131,13 @@ export interface PageContext<S extends AnySchema> {
   readonly onProposeChange?: ProposeChangeHost;
   /** The host's composer and checker for a change to the app (`composeChange`), for a plan the quick ask offers. */
   readonly composeChange?: ComposeChangeHost;
+  /**
+   * THE HOST'S VIEWS (`KeptViews`, Roadmap f-make-this-section-better):
+   * where it lends `revise`, "Make this better" on a section of a worker
+   * view, kept through it; the place menu's Hide and Delete too. The
+   * registry is the host's to tidy (`useTidiedViews`), as `views` is.
+   */
+  readonly keptViews?: KeptViews;
   /**
    * WHERE "EXPORT CSV" SAVES A LIST (Roadmap f-view-export-csv): handed the
    * CSV text and the file name, for a host that saves files itself. Unsaid,

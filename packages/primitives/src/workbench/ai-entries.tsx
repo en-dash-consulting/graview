@@ -42,7 +42,7 @@ export function ActivityFilter({ shows, onShows, mine, onMine }: { readonly show
 
 /** What was asked, as a clause after "asked AI to". */
 const askWords = (entry: AiInteraction): string =>
-  entry.ask.kind === "suggest" ? "suggest" : entry.ask.kind === "fill" ? "fill in" : entry.ask.kind === "record" ? "add one" : entry.ask.kind === "panel" ? "draw a panel" : `answer “${entry.ask.said}”`;
+  entry.ask.kind === "suggest" ? "suggest" : entry.ask.kind === "fill" ? "fill in" : entry.ask.kind === "record" ? "add one" : entry.ask.kind === "panel" ? "draw a panel" : entry.ask.kind === "section" ? entry.ask.said.replace(/^M/, "m") : `answer “${entry.ask.said}”`;
 
 /** What became of it, in a few words. */
 function outcomeWords(entry: AiInteraction): string {

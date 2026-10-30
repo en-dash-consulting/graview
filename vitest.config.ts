@@ -84,6 +84,7 @@ export default defineConfig({
       "@graview/tools/several": fileURLToPath(new URL("./packages/tools/src/several.ts", import.meta.url)),
       "@graview/tools/starter": fileURLToPath(new URL("./packages/tools/src/starter.ts", import.meta.url)),
       "@graview/tools/reshape": fileURLToPath(new URL("./packages/tools/src/reshape.ts", import.meta.url)),
+      "@graview/tools/section": fileURLToPath(new URL("./packages/tools/src/section.ts", import.meta.url)),
       "@graview/tools": src("tools"),
       // The subpath first, or the bare-name alias swallows it.
       "@graview/render/gpu": fileURLToPath(

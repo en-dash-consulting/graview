@@ -1,16 +1,18 @@
 import { aggregateId, EMPTY_VIEW, type ViewState } from "@graview/layout";
 import {
   GraviewProvider,
+  KeptViewsProvider,
   useGraph,
   useGraview,
   type ComposeChangeHost,
   type ProposeChangeHost,
+  type ReactViewRegistry,
   type Scheme,
   type SceneProps,
 } from "@graview/react";
 import { AgentSeat, ChatPanel, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
-import type { AnySchema, GraviewApp, HostFiles, PresenceChannel, Principal, SubscriptionStore } from "@graview/core";
+import type { AnySchema, GraviewApp, HostFiles, KeptViews, PresenceChannel, Principal, SubscriptionStore } from "@graview/core";
 import type { HistoryHost } from "@graview/core/history";
 import type { HostAi, ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useState } from "react";
@@ -118,6 +120,10 @@ export interface TodoAppProps {
   readonly composeChange?: ComposeChangeHost;
   /** The app as it stands, when a plan changed it in development (`dev-change.ts`); the declared one otherwise. */
   readonly app?: GraviewApp<AnySchema>;
+  /** Views added to Things' own: in development, "At a glance" (`dev-section.ts`, Roadmap f-make-this-section-better). */
+  readonly moreViews?: (views: ReactViewRegistry<TodoSchema>) => ReactViewRegistry<TodoSchema>;
+  /** The host's views (`KeptViews`): in development, kept in memory, revised by "Make this better". */
+  readonly keptViews?: KeptViews;
 }
 
 export function TodoApp({
@@ -139,10 +145,26 @@ export function TodoApp({
   onProposeChange,
   composeChange,
   app,
+  moreViews,
+  keptViews,
 }: TodoAppProps) {
   const created = useMemo(() => store ?? createTodoUiStore(), [store]);
-  const views = useMemo(() => todoViews(), []);
+  const views = useMemo(() => (moreViews ? moreViews(todoViews()) : todoViews()), [moreViews]);
   const [scheme, setScheme] = useState<Scheme>(initialScheme);
+  const drawn = () => (
+    <TodoShell
+      remembers={remembers}
+      syncUrl={syncUrl}
+      renderer={renderer}
+      scheme={scheme}
+      onScheme={(next) => {
+        setScheme(next);
+        onSchemeChange?.(next);
+      }}
+      {...(attachRenderer ? { attachRenderer } : {})}
+      {...(files ? { files } : {})}
+    />
+  );
 
   return (
     <GraviewProvider
@@ -163,18 +185,7 @@ export function TodoApp({
       {...(onProposeChange ? { onProposeChange } : {})}
       {...(composeChange ? { composeChange } : {})}
     >
-      <TodoShell
-        remembers={remembers}
-        syncUrl={syncUrl}
-        renderer={renderer}
-        scheme={scheme}
-        onScheme={(next) => {
-          setScheme(next);
-          onSchemeChange?.(next);
-        }}
-        {...(attachRenderer ? { attachRenderer } : {})}
-        {...(files ? { files } : {})}
-      />
+      {keptViews ? <KeptViewsProvider keptViews={keptViews}>{drawn()}</KeptViewsProvider> : drawn()}
     </GraviewProvider>
   );
 }

@@ -43,6 +43,7 @@ import { createPointerStore, type PointerStore, type ScenePoint } from "./pointe
 import { HostAssetsContext, HostFilesContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
 import type { MenuColumn, MenuSectionSource } from "./menu-types.js";
+import type { MenuViewSection } from "./view-places.js";
 
 import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
@@ -123,6 +124,8 @@ export interface PointerMenu {
   readonly act?: string | undefined;
   /** The column it was opened in (`MenuTarget.column`). */
   readonly column?: MenuColumn | undefined;
+  /** The section of a worker view it was opened in (`MenuTarget.section`): the menu is headed with its name. */
+  readonly section?: MenuViewSection | undefined;
   /**
    * AN ACT TO BEGIN AT ONCE, its form open under it with these values
    * already given — "Add a task in Doing" from a column's menu: the add act,

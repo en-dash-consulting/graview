@@ -1,8 +1,8 @@
 import { argumentsTaken, fieldWords, humanizeField, layer, nounOf, pluralLabel, withArticle, type AnySchema, type Place } from "@graview/core";
 import { narrowedPath } from "@graview/core/navigate";
 import { aggregateId } from "@graview/layout/view";
-import { GhostDoor, Inspector, NotifyDoor, useBoardMoveSection, useInlineAiSection, useNotifySection, useViewTidyingSection } from "@graview/primitives/pages";
-import { MenuSections } from "@graview/react/drawing";
+import { GhostDoor, Inspector, NotifyDoor, SectionBetterDoor, useBoardMoveSection, useInlineAiSection, useNotifySection, useSectionBetterSection, useViewTidyingSection } from "@graview/primitives/pages";
+import { MenuSections, sectionUnder } from "@graview/react/drawing";
 import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router-dom";
@@ -261,8 +261,10 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     (element: Element, x: number, y: number, inner: Element = element) => {
       const aimed = aimAt(element);
       const column = columnAt(inner, aimed);
+      /* A section of a worker view under the cursor names the menu ("This week") and is outlined while it is open. */
+      const section = sectionUnder(inner);
       selection.current = selectedIn(root.current);
-      const menu: PointerMenu = { ...aimed, ...(column ? { column } : {}), x: Math.round(x), y: Math.round(y), returnTo: homeOf(element) };
+      const menu: PointerMenu = { ...aimed, ...(column ? { column } : {}), ...(section ? { section, title: section.name } : {}), x: Math.round(x), y: Math.round(y), returnTo: homeOf(element) };
       last.current = menu;
       setMenuAt(menu);
     },
@@ -441,7 +443,9 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     [pathname, context, navigate],
   );
   const tidy = useViewTidyingSection(away);
-  const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [copy, change, board, own, tidy, notify, inlineAi]);
+  /* "Make “This week” better" on a section of a worker view, for a seat that may change views (Roadmap f-make-this-section-better). */
+  const better = useSectionBetterSection();
+  const sections = useMemo(() => [copy, change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(better ? [better] : []), ...(inlineAi ? [inlineAi] : [])], [copy, change, board, own, tidy, notify, better, inlineAi]);
 
   return (
     <MenuSections sections={sections}>
@@ -514,6 +518,8 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
       <GhostDoor placement="page" />
       {/* The sheet "Notify me…" opens, already filled in. */}
       <NotifyDoor />
+      {/* A section a menu is open on, outlined; its card, where "Make this better" was asked. */}
+      <SectionBetterDoor />
       {/* "Link copied", heard and seen, quietly. */}
       <p role="status" data-testid="menu-said" style={said ? SAID : HIDDEN}>
         {said?.sentence ?? ""}

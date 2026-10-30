@@ -266,6 +266,8 @@ export interface WorkerView {
   readonly refused: readonly ViewRefusal[];
   /** How tall what it drew is, in CSS pixels, as the host last measured it (`onContentHeight`); `undefined` before it draws. */
   readonly contentHeight: number | undefined;
+  /** The view's stylesheets as drawn, one after another (Roadmap f-make-this-section-better: what a revision is compared by). */
+  readonly css: string;
   /**
    * How many times a fast device's time this page's views are given
    * (Roadmap f-view-budget-fits-device): 1 on a fast page, up to 4; what
@@ -1014,6 +1016,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
       get contentHeight() {
         return contentHeight;
+      },
+      get css() {
+        return drawing?.css ?? "";
       },
       get pace() {
         return pace;

@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@graview/core": "workspace:*",
+    "@graview/guest": "workspace:*",
     "@graview/layout": "workspace:*",
     "@graview/pages": "workspace:*",
     "@graview/primitives": "workspace:*",

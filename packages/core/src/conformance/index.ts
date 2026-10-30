@@ -26,6 +26,8 @@ export type { ConformanceFixture, DocumentFixture, LogFixture, Announcement } fr
 export { ANNOUNCED, FIXTURES };
 export { checkPlanHost } from "./plan-host.js";
 export type { PlanHost, PlanHostReport } from "./plan-host.js";
+export { checkViewRevisionHost } from "./view-revision-host.js";
+export type { ViewRevisionHostReport } from "./view-revision-host.js";
 
 /** The pieces of a build the kit judges. A host passes its own; absent pieces are this build's. */
 export interface ConformanceBuild {

@@ -242,7 +242,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const target: MenuTarget | null =
     menuAt === null
       ? null
-      : { face: menuAt.face ?? "scene", on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place, href: menuAt.href, act: menuAt.act, column: menuAt.column, element: menuAt.returnTo };
+      : { face: menuAt.face ?? "scene", on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place, href: menuAt.href, act: menuAt.act, column: menuAt.column, ...(menuAt.section ? { section: menuAt.section } : {}), element: menuAt.returnTo };
   const beside = useMenuSections(target);
   /*
    * Whether the derivation is withholding a creating act for want of the

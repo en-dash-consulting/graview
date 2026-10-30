@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
-import { BoardMoveSections, DraftDoor, GhostDoor, InlineAiSections, Inspector, LinesKey, MapPanel, NotifyDoor, NotifySections, OverviewButton, PastBar, QuickAskDoor, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, ShowInstallation, useCallLog, viewsCss, ViewTidyingSections } from "@graview/primitives/scene";
+import { BoardMoveSections, DraftDoor, GhostDoor, InlineAiSections, Inspector, LinesKey, MapPanel, NotifyDoor, NotifySections, OverviewButton, PastBar, QuickAskDoor, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, ShowInstallation, useCallLog, viewsCss, ViewTidyingSections, SectionBetterDoor, SectionBetterSections } from "@graview/primitives/scene";
 import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
 import { BesideTheMap, PanFree, Scene, UrlSync } from "@graview/react";
@@ -62,13 +62,18 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, quickAsk
           <InlineAiSections>
             {/* Hide and Delete for a place, opened from the bar's places (Roadmap f-place-menu-views). */}
             <ViewTidyingSections>
-              <Inspector placement="menu" />
+              {/* "Make this better" on a section of a worker view (Roadmap f-make-this-section-better). */}
+              <SectionBetterSections>
+                <Inspector placement="menu" />
+              </SectionBetterSections>
             </ViewTidyingSections>
           </InlineAiSections>
         </BoardMoveSections>
       </NotifySections>
       {/* The sheet "Notify me…" opens (Roadmap f-notify-subscriptions). */}
       <NotifyDoor />
+      {/* A section a menu is open on, outlined; its card, where "Make this better" was asked. */}
+      <SectionBetterDoor />
       {/* What the inline AI proposed and has not made. */}
       <GhostDoor />
       {/* The scene's Find and its Activity, in the bar's places for them (FR-131), as the whole-page Shell puts them. */}

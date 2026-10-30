@@ -796,7 +796,7 @@ export interface AiUsage {
 
 /** What was asked: a suggestion for the target, fills for its fields, a record made, a panel, or words. */
 export interface AiAsk {
-  readonly kind: "suggest" | "fill" | "record" | "panel" | "ask";
+  readonly kind: "suggest" | "fill" | "record" | "panel" | "ask" | "section";
   /** What the person asked, in their words or the menu row's. */
   readonly said: string;
 }
