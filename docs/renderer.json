@@ -1,0 +1,154 @@
+{
+  "at": "2026-10-30T09:14:22.436Z",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "frameMs": 16.67,
+  "domBlurFrameMs": 25,
+  "gpu": {
+    "path": {
+      "renderer": "gpu",
+      "blur": true,
+      "inCanvas": 5,
+      "notices": []
+    },
+    "browser": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+    "hitsWhereLaidOut": false,
+    "said": [],
+    "rects": {
+      "focused": {
+        "x": 64,
+        "y": 87,
+        "width": 1192,
+        "height": 648
+      },
+      "receded": {
+        "x": 40,
+        "y": 775,
+        "width": 263,
+        "height": 51
+      }
+    },
+    "reducedTransparency": {
+      "renderer": "gpu",
+      "blur": false,
+      "inCanvas": 5,
+      "notices": []
+    },
+    "focusedPlane": {
+      "share": 0,
+      "mean": 0
+    },
+    "recededPlane": {
+      "share": 0.15284,
+      "mean": 0.324
+    },
+    "framesUnblurred": {
+      "frames": 7149,
+      "p50": 0.4,
+      "p95": 3.7,
+      "worst": 37.4
+    },
+    "framesBlurred": {
+      "frames": 8922,
+      "p50": 0.3,
+      "p95": 3.2,
+      "worst": 18.8
+    },
+    "stillOnGpuAfterMoving": true,
+    "reducedMotion": {
+      "renderer": "gpu",
+      "blur": false,
+      "inCanvas": 5,
+      "notices": []
+    }
+  },
+  "dom": {
+    "path": {
+      "renderer": "dom",
+      "blur": true,
+      "inCanvas": 0,
+      "notices": []
+    },
+    "said": [],
+    "framesBlurred": {
+      "frames": 6463,
+      "p50": 0.4,
+      "p95": 3.7,
+      "worst": 36.6
+    },
+    "blurAfterMoving": true,
+    "reducedTransparency": {
+      "renderer": "dom",
+      "blur": false,
+      "inCanvas": 0,
+      "notices": []
+    },
+    "framesUnblurred": {
+      "frames": 7651,
+      "p50": 0.4,
+      "p95": 3.7,
+      "worst": 18.8
+    },
+    "reducedMotion": {
+      "renderer": "dom",
+      "blur": false,
+      "inCanvas": 0,
+      "notices": []
+    }
+  },
+  "without": {
+    "firefox": {
+      "renderer": "dom",
+      "blur": true,
+      "inCanvas": 0,
+      "notices": [],
+      "said": []
+    },
+    "webkit": {
+      "renderer": "dom",
+      "blur": true,
+      "inCanvas": 0,
+      "notices": [],
+      "said": []
+    },
+    "chromium without capture": {
+      "renderer": "dom",
+      "blur": true,
+      "inCanvas": 0,
+      "notices": [],
+      "said": []
+    },
+    "chromium with its adapter refused": {
+      "renderer": "dom",
+      "blur": true,
+      "inCanvas": 0,
+      "notices": [],
+      "said": [],
+      "browserSaid": [
+        "warning: Failed to create WebGPU Context Provider"
+      ]
+    }
+  },
+  "tree": {
+    "same": true,
+    "lines": 74
+  },
+  "picture": {
+    "share": 0.00863,
+    "mean": 0.632
+  },
+  "claims": {
+    "aChromiumThatCanCaptureDrawsOnTheGpuByDefault": true,
+    "theAccessibilityTreeIsTheSameOnBothPaths": true,
+    "theTwoPathsDrawTheSamePicture": true,
+    "onTheGpuTheFocusedPlaneIsSharp": true,
+    "onTheGpuTheRecededPlanesAreBlurred": true,
+    "onTheGpuBlurHoldsTheBudgetItHoldsWithout": true,
+    "theDomPathBlursWithinBudgetOrNotAtAll": true,
+    "reducedTransparencyTurnsBlurOffOnBothPaths": true,
+    "reducedMotionTurnsBlurOffOnBothPaths": true,
+    "aPageWithoutTheGpuPathDrawsOnTheDomPathAndSaysNothing": true
+  }
+}

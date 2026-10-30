@@ -1,7 +1,7 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import { describe, expect, it, vi } from "vitest";
 import { createTodoUiStore } from "../apps/todo/src/ui/app.js";
-import { decideOverTheGraph, givingOf } from "../packages/tools/src/graph-plan.js";
+import { askedParts, asking, decideOverTheGraph, givingOf, politely, renameOf } from "../packages/tools/src/graph-plan.js";
 import { answerHere } from "../packages/tools/src/inline-ai.js";
 import { forThePerson } from "../packages/tools/src/sentences.js";
 import type { FastProvider, ThinkingProvider } from "../packages/tools/src/ai.js";
@@ -106,6 +106,25 @@ describe("a plan over the graph", () => {
     expect(result.answer).toBe("I couldn't work out how to do that — try saying it another way.");
     expect(forThePerson("a way to close or archive tasks")).toBe(false);
     expect(forThePerson("Tasks have no one assigned to them.")).toBe(true);
+  });
+
+  it("reads polite and indirect instructions as instructions, two asks as two parts, a person named without “to”, and a rename said as a statement", () => {
+    for (const said of ["could you close these for me", "please mark this done", "i'd like these archived", "can we push this to monday", "these should be marked done", "Sam should take care of these"]) {
+      expect(politely(said), said).toBe(true);
+      expect(asking(said), said).toBe(false);
+    }
+    for (const said of ["could you tell me what is due?", "what is left?", "is this late?"]) expect(asking(said), said).toBe(true);
+    expect(askedParts("archive the done ones, then close the open ones")).toEqual(["archive the done ones", "close the open ones"]);
+    expect(askedParts("close this and move it to someday")).toEqual(["close this", "move it to someday"]);
+    expect(askedParts("assign these to Sam and Nora")).toEqual(["assign these to Sam and Nora"]);
+    expect(askedParts("rename it to Pack and Go")).toEqual(["rename it to Pack and Go"]);
+    expect(givingOf("Nora should handle these")).toMatchObject({ called: "assigned to", who: "Nora" });
+    expect(givingOf("make these Sam's responsibility")).toMatchObject({ who: "Sam" });
+    expect(givingOf("this is Nora's now")).toMatchObject({ who: "Nora" });
+    expect(renameOf("the name should be Packing week")).toBe("Packing week");
+    expect(renameOf("call it Boxes")).toBe("Boxes");
+    expect(renameOf("Moving days is a better name")).toBe("Moving days");
+    expect(renameOf("move it to someday")).toBeUndefined();
   });
 
   it("reads the giving the words say, and to whom", () => {

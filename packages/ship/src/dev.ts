@@ -681,6 +681,8 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
           headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
           body: JSON.stringify({
             model: asked,
+            // The quick model reads a typed answer: the same words, the same answer.
+            ...(quick ? { temperature: 0 } : {}),
             messages: [...(typeof ask.system === "string" && ask.system.length > 0 ? [{ role: "system", content: ask.system }] : []), { role: "user", content: chatContent(ask.prompt as string, ask.images) }],
           }),
         });
@@ -718,6 +720,7 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
         body: JSON.stringify({
           model: asked,
           max_tokens: quick ? AI_DEFAULTS.fastMaxTokens : (options.maxTokens ?? AI_DEFAULTS.maxTokens),
+          ...(quick ? { temperature: 0 } : {}),
           ...(step && !quick
             ? {
                 ...(typeof ask.system === "string" && ask.system.length > 0 ? { system: ask.system } : {}),
