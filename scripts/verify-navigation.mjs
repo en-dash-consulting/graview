@@ -534,8 +534,10 @@ async function aDistrictsNameIsNotMovedByHand() {
  * THE PANEL FLOATS OVER THE MAP; it is not a column beside it. Docked on a
  * desk (or a sheet on a phone) it is inset from the edges of the picture by
  * the app's gap, below the bar, with the app's radius on its corners and a
- * real elevation — and the city is laid out in the room left, so no
- * district, name or control stands under it.
+ * real elevation — and on a desk the city is laid out in the room left, so
+ * no district, name or control stands under it; on a phone the city stays
+ * where it stood and only the chosen district is lifted above the sheet, so
+ * it and the scene's controls stand clear of it.
  */
 async function thePanelFloatsOverTheMap() {
   report.mapPanel = {};
@@ -570,7 +572,15 @@ async function thePanelFloatsOverTheMap() {
       });
       const meets = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
       const under = [];
+      /*
+       * ON A PHONE, THE CHOSEN DISTRICT. A phone's sheet leaves the city where it stood and lifts the chosen district above it
+       * (Roadmap f-scene-sheet-keeps-the-city), so the other districts may lie under a sheet that stands over the map; what was
+       * chosen, and the scene's own controls, may not.
+       */
+      const chosen = new URLSearchParams(location.hash.slice(1)).get("focus")?.replace(/^aggregate:/, "") ?? null;
       for (const el of document.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-face, [data-graview-plot] .graview-plot-tile, [data-testid="overview"], [data-testid="lines-key"], .graview-zoom')) {
+        const of = el.closest("[data-graview-view]")?.getAttribute("data-graview-view")?.replace(/^kind:/, "") ?? el.closest("[data-graview-plot]")?.getAttribute("data-graview-plot")?.replace(/^kind:/, "") ?? null;
+        if (sheet && of !== null && of !== chosen) continue;
         const r = el.getBoundingClientRect();
         // What is drawn outside the window is not under anything.
         if (r.width > 0 && r.height > 0 && meets(r, box)) under.push(el.getAttribute("data-testid") ?? el.getAttribute("class")?.split(" ")[0] ?? el.tagName);
