@@ -51,8 +51,8 @@ export const READING_SURE = 0.75;
 
 const PEOPLE = new Set(["person", "people", "user", "users", "member", "members", "volunteer", "volunteers", "staff", "contact", "contacts", "employee", "employees", "client", "clients", "customer", "customers", "guest", "guests", "player", "players", "student", "students"]);
 const capital = (words: string) => words.charAt(0).toUpperCase() + words.slice(1);
-/** Verbs that give a record to someone, and how each says it was done. */
-const GIVING: Readonly<Record<string, string>> = { assign: "assigned", reassign: "assigned", give: "given", hand: "handed", delegate: "delegated", allocate: "allocated" };
+/** Verbs that give a record to someone. */
+const GIVING: Readonly<Record<string, true>> = { assign: true, reassign: true, give: true, hand: true, delegate: true, allocate: true };
 
 /** The record a target holds others of: the biggest group of records linked to it, of one kind other than its own. */
 export function heldBy<S extends AnySchema>(store: Store<S>, id: string): { readonly kind: string; readonly ids: readonly string[] } | undefined {
@@ -83,7 +83,8 @@ export function givingOf(words: string): { readonly called: string; readonly who
     .split(/[^a-z]+/)
     .find((word) => word in GIVING);
   if (!verb) return undefined;
-  return { called: `${GIVING[verb]} to`, ...(who ? { who: capital(who) } : {}) };
+  // The link is named by its role, whatever verb was typed: "give this to Nora" and "assign it to Nora" both want "assigned to".
+  return { called: "assigned to", ...(who ? { who: capital(who) } : {}) };
 }
 
 /** The fields that say a record is finished, read by a reply that narrows to the open ones. */

@@ -5,7 +5,7 @@ import { deriveAffordances } from "@graview/tools/derive";
 import { acceptedEntry, acceptGhost, dismissedEntry, fillHere, ghostOf, interactionId, panelHere, proposalOf, recordHere, suggestHere, suggestsOnOpen, thinkingOf, type InlineAsk, type InlineResult } from "@graview/tools/inline-ai";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useInlineEnv, type InlineEnv } from "./inline-ai-env.js";
-import { openQuickAsk } from "./quick-ask-desk.js";
+import { openQuickAsk, whereMenuStands } from "./quick-ask-desk.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -501,8 +501,10 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
             data-menu-item="ai-ask"
             onClick={() => {
               const back = document.activeElement;
+              // The card opens where the menu stood, read before the menu goes.
+              const from = whereMenuStands(back instanceof Element ? back.closest('[data-testid="context-menu"]') : null);
               close();
-              openQuickAsk(env.desk, { target, returnTo: back instanceof HTMLElement && back !== document.body ? back : null });
+              openQuickAsk(env.desk, { target, returnTo: back instanceof HTMLElement && back !== document.body ? back : null, ...(from ? { from } : {}) });
             }}
             style={ROW}
           >

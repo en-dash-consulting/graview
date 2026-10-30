@@ -371,7 +371,7 @@ export interface ReviseSectionOptions {
   /** The words the section shows now. */
   readonly shows?: string;
   /**
-   * THE PAGE'S JUDGEMENT of a composed view: the findings that keep it from
+   * THE PAGE'S JUDGMENT of a composed view: the findings that keep it from
    * being offered (empty when it may be), in sentences — drawn as a draft,
    * the host's own checks, compared with what it replaces.
    */

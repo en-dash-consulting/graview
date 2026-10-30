@@ -67,8 +67,9 @@ export function viewPlaceHandle({ element, definition, mounted, optionsFor, draw
         ...optionsFor({ source }),
         fallback: false,
         onFailure: (reason, detail) => settle({ failed: detail ?? `It failed (${reason}).` }),
+        /* Drawn once it stands some height: an empty first measure is the region before the view's first drawing. */
         onContentHeight: (height) => {
-          if (height !== undefined) settle({});
+          if (height !== undefined && height > 0) settle({});
         },
       });
       void drawn.then(() => clearTimeout(late));

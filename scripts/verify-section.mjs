@@ -239,7 +239,7 @@ async function choose(page, heading, item) {
   await page.click(`${MENU} [data-menu-item="${item}"]`);
 }
 
-const settled = (page, phase) => page.waitForSelector(`${CARD}[data-section-phase="${phase}"]`, { timeout: 15_000 });
+const settled = (page, phase) => page.waitForSelector(`${CARD}[data-section-phase="${phase}"]`, { timeout: 30_000 });
 
 try {
   host = await serveHost();

@@ -10,7 +10,7 @@ import { composeSection, locateSection, readSectionReply, reviseSection, section
  * block — with the rules that style only it; a revision replaces exactly
  * those, and every other byte of the script stays as it was. The light
  * model asks first, the full one where its answer cannot be read; what the
- * page's judgement finds is handed back once, then refused in words.
+ * page's judgment finds is handed back once, then refused in words.
  */
 const before = readFileSync(new URL("../../../guest/tests/fixtures/revisions/home-before.js", import.meta.url), "utf8");
 
@@ -93,7 +93,7 @@ describe("the model's answer", () => {
 });
 
 describe("revising a section", () => {
-  it("asks the light model, and offers what the page's judgement passes", async () => {
+  it("asks the light model, and offers what the page's judgment passes", async () => {
     const heard: string[] = [];
     const ai: HostAi = { light: slot("light", [JSON.stringify(WEEK)], heard), thinking: slot("full", []) };
     const result = await reviseSection({ ai, source: before, section: "This week", mode: "just", judge: async () => [] });

@@ -1,0 +1,133 @@
+import type { AnySchema, Principal, Store } from "@graview/core";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { createTodoUiStore } from "../../apps/todo/src/ui/app.js";
+import { createRotaUiStore } from "../../apps/rota/src/ui/app.js";
+import { createStore as createDiscographyStore } from "../../apps/discography/src/domain/app.js";
+import discographySeed from "../../apps/discography/src/data/seed.json" with { type: "json" };
+import { answerHere, type InlineResult } from "../../packages/tools/src/inline-ai.js";
+import { heldBy } from "../../packages/tools/src/graph-plan.js";
+import { forThePerson } from "../../packages/tools/src/sentences.js";
+import { jevDecide, jevKeyFromEnvironment, JEV_MODEL } from "../../packages/tools/src/providers/jev.js";
+import type { HostAi, ThinkingProvider } from "../../packages/tools/src/ai.js";
+
+/*
+ * THE MENU'S LIVE EVAL, SHARED (Roadmap f-menu-type-anything): the cases'
+ * shape, the apps they are asked on, how an answer is judged — the act and
+ * its records, the plan's need, or an answer's facts read from the graph —
+ * and the run, four at a time, written to docs/. The cases tuned on and the
+ * held-out ones are two files that use it.
+ */
+export const jev = jevKeyFromEnvironment();
+export const xai = process.env["XAI_API_KEY"];
+export const BAR = 0.9;
+
+const grok = (model: string): ThinkingProvider => ({
+  model,
+  think: async ({ system, prompt }) => {
+    const answer = await fetch("https://api.x.ai/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${xai}` }, body: JSON.stringify({ model, messages: [{ role: "system", content: system }, { role: "user", content: prompt }] }) });
+    const body = (await answer.json()) as { choices?: { message?: { content?: string } }[]; usage?: { prompt_tokens?: number; completion_tokens?: number } };
+    return { text: body.choices?.[0]?.message?.content ?? "", usage: { inputTokens: body.usage?.prompt_tokens ?? 0, outputTokens: body.usage?.completion_tokens ?? 0 } };
+  },
+});
+
+export type Over = "itself" | "held" | "done" | "open";
+/** What a true answer must say, read from the graph: each a word or a pattern; `atLeast` of them, else all. */
+export type Facts = (store: Store<AnySchema>, on: string) => { readonly says: readonly (string | RegExp)[]; readonly atLeast?: number };
+export type Expected = { readonly act: readonly string[]; readonly over: Over; readonly to?: string } | { readonly missing: "link" | "field"; readonly who?: string } | { readonly answer: true; readonly facts?: Facts };
+export interface Case {
+  readonly app: "todo" | "rota" | "discography";
+  readonly on: string;
+  readonly said: string;
+  readonly expect: Expected;
+  /** The turn before on the same card. */
+  readonly after?: string;
+  /** Who is at the seat, where not the app's usual one. */
+  readonly as?: string;
+}
+export const act = (names: string | readonly string[], over: Over): Expected => ({ act: typeof names === "string" ? [names] : names, over });
+export const answer: Expected = { answer: true };
+export const says = (facts: Facts): Expected => ({ answer: true, facts });
+export const label = (store: Store<AnySchema>, id: string) => String((store.graph.getNode(id) as Record<string, unknown> | undefined)?.["label"] ?? id);
+export const outOf = (store: Store<AnySchema>, id: string, kind: string) => store.graph.out(id, kind).map((node) => label(store, node.id));
+export const inOf = (store: Store<AnySchema>, id: string, kind: string) => store.graph.in(id, kind).map((node) => label(store, node.id));
+export const tasksIn = (store: Store<AnySchema>, list: string) => store.graph.out(list, "holds") as unknown as Record<string, unknown>[];
+export const number = (n: number) => new RegExp(`\\b(${n}|${["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"][n] ?? n})\\b`, "i");
+
+
+const people: Record<Case["app"], Principal> = {
+  todo: { kind: "human", id: "user-nora", roles: ["keeper"] },
+  rota: { kind: "human", id: "user-jo", roles: ["coordinator"] },
+  discography: { kind: "human", id: "user-label", roles: ["label"] },
+};
+const storeOf = (app: Case["app"]): Store<AnySchema> =>
+  (app === "todo" ? createTodoUiStore("2026-09-01") : app === "rota" ? createRotaUiStore("2026-09-01") : createDiscographyStore({ snapshot: discographySeed as never })) as unknown as Store<AnySchema>;
+
+/** The records an "over" names, as the store holds them before the ask. */
+function recordsOf(store: Store<AnySchema>, on: string, over: Over): readonly string[] {
+  if (over === "itself") return [on];
+  const held = heldBy(store, on)?.ids ?? [];
+  const done = (id: string) => (store.graph.getNode(id) as Record<string, unknown> | undefined)?.["done"] === true;
+  return over === "held" ? held : over === "done" ? held.filter(done) : held.filter((id) => !done(id));
+}
+
+function judged(store: Store<AnySchema>, one: Case, on: string, result: InlineResult): { readonly ok: boolean; readonly got: string } {
+  const proposals = result.ghost?.proposals ?? [];
+  const said = result.answer ?? "";
+  const got = proposals.length > 0 ? `${[...new Set(proposals.map((p) => p.call.name))].join("+")} × ${proposals.length}` : result.missing ? `missing ${result.missing.need ? Object.keys(result.missing.need)[0] : "(no need)"}: ${result.missing.said}` : result.interaction.outcome === "failed" ? `failed: ${result.interaction.failed ?? ""}` : `answer: ${said}`;
+  // Whatever the card shows is a sentence for the person: never the pipeline's own note.
+  if (said && !forThePerson(said)) return { ok: false, got: `${got} [not a sentence]` };
+  const expected = one.expect;
+  if ("act" in expected) {
+    const want = new Set(recordsOf(store, on, expected.over));
+    const records = proposals.map((p) => String(p.record ?? Object.values(p.call.args).find((value) => typeof value === "string" && want.has(value)) ?? ""));
+    // A ghost leaves out what the store would refuse (finishing what is done): every record proposed is one meant, and most of those meant are there.
+    const ok = proposals.length > 0 && proposals.every((p) => expected.act.includes(p.call.name)) && (!expected.to || proposals.every((p) => Object.values(p.call.args).includes(expected.to))) && records.every((id) => want.has(id)) && (expected.over === "itself" || expected.over === "done" || records.length >= Math.ceil(want.size / 2));
+    return { ok, got };
+  }
+  if ("missing" in expected) return { ok: Boolean(result.missing?.need && expected.missing in result.missing.need && (!expected.who || result.missing.who === expected.who)), got: `${got}${result.missing?.who ? ` (who ${result.missing.who})` : ""}${result.taken ? ` [taking “${result.taken.said}” as ${result.taken.as}]` : ""}` };
+  // An answer may offer a change beside it, never one made over every record.
+  const facts = expected.facts?.(store, on);
+  const found = facts ? facts.says.filter((fact) => (typeof fact === "string" ? said.toLowerCase().includes(fact.toLowerCase()) : fact.test(said))).length : 0;
+  const true_ = !facts || (facts.says.length > 0 && found >= (facts.atLeast ?? facts.says.length));
+  return { ok: proposals.every((p) => !p.id.startsWith("each:")) && !result.missing && result.interaction.outcome !== "failed" && said.length > 0 && true_, got: facts ? `${got} [facts ${found}/${facts.says.length}: ${facts.says.map(String).join(", ")}]` : got };
+}
+
+
+/** Asks every case live, judges it, writes the table to docs/<file>, and says the score and the times. */
+export async function runEval(cases: readonly Case[], title: string, file: string): Promise<{ readonly score: number; readonly rows: readonly { readonly ok: boolean }[] }> {
+    const ai: HostAi = { name: "grok", fast: { model: JEV_MODEL, decide: jevDecide({ apiKey: jev! }) }, light: grok("grok-4.20-0309-non-reasoning"), thinking: grok("grok-4.20-0309-non-reasoning") };
+    const songs = (discographySeed as { nodes: { id: string; kind: string; status?: string }[] }).nodes.filter((node) => node.kind === "song");
+    const SONG = songs[0]!.id;
+    // Four at a time, as several people typing would: the times are each ask's own, not a queue's.
+    const pool = async <T, R>(items: readonly T[], width: number, work: (item: T) => Promise<R>): Promise<R[]> => {
+      const out: R[] = new Array(items.length);
+      let next = 0;
+      await Promise.all(Array.from({ length: width }, async () => {
+        while (next < items.length) {
+          const index = next++;
+          out[index] = await work(items[index]!);
+        }
+      }));
+      return out;
+    };
+    const rows = await pool(cases, 4, async (one) => {
+        const store = storeOf(one.app);
+        const on = one.on === "SONG" ? SONG : one.on;
+        const started = Date.now();
+        const principal = one.as ? { ...people[one.app], id: one.as } : people[one.app];
+        const result = await answerHere(ai, { store, target: { on: "record", id: on }, principal, said: one.said, ...(one.after ? { follows: { said: one.after, answer: "" } } : {}) });
+        const ms = Date.now() - started;
+        const { ok, got } = judged(store, one, on, result);
+        const expected = "act" in one.expect ? `${one.expect.act.join("|")} over ${one.expect.over}` : "missing" in one.expect ? `missing ${one.expect.missing}` : one.expect.facts ? "a true answer" : "an answer";
+        return { app: one.app, on, said: one.said, expected, got, ok, ms, stages: (result.interaction.stages ?? []).map((stage) => `${stage.stage} ${stage.ms}`).join(", ") };
+    });
+    const times = rows.map((row) => row.ms).sort((a, b) => a - b);
+    const at = (q: number) => times[Math.min(times.length - 1, Math.floor(q * times.length))]!;
+    const score = rows.filter((row) => row.ok).length / rows.length;
+    const report = { at: new Date().toISOString(), fast: JEV_MODEL, light: "grok-4.20-0309-non-reasoning", score, bar: BAR, medianMs: at(0.5), p90Ms: at(0.9), rows };
+    mkdirSync(new URL("../../docs", import.meta.url), { recursive: true });
+    writeFileSync(new URL(`../../docs/${file}`, import.meta.url), `${JSON.stringify(report, null, 2)}\n`);
+    console.log(`${title} ${Math.round(score * 100)}% (${rows.filter((row) => row.ok).length}/${rows.length}), median ${at(0.5)} ms, p90 ${at(0.9)} ms`);
+    for (const row of rows) console.log(`${row.ok ? "ok  " : "MISS"} ${row.app}/${row.on} “${row.said}” → want ${row.expected}; got ${row.got} (${row.ms} ms; ${row.stages})`);
+    return { score, rows };
+}

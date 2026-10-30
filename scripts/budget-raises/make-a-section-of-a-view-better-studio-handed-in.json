@@ -1,6 +1,6 @@
 {
   "budget": "embed with the studio handed in",
   "minified": 0,
-  "gzipped": 1400,
-  "note": "Raised when a right-click inside a worker view came to name the menu for its section and offer \"Make this better\" (Roadmap f-make-this-section-better), the faces' share of it. Measured at 1_866_903 / 653_620 against 1_862_933 / 652_068."
+  "gzipped": 1600,
+  "note": "Raised when a right-click inside a worker view came to name the menu for its section and offer \"Make this better\" (Roadmap f-make-this-section-better), the faces' share of it. Measured at 1_867_659 / 653_859 over the menu at the pointer that keeps its top (1_866_903 / 653_620 before it, against 1_862_933 / 652_068)."
 }
