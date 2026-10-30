@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { join, resolve } from "node:path";
 import type { Author } from "@graview/core";
 import type { ToldStore } from "@graview/core/told";
-import { DOOR_LOCKED, fromThisApp, openDoors, readBody, sendJson, type DevServerPlugin } from "./door.js";
+import { DOOR_LOCKED, fromThisApp, openDoors, probeWithoutKey, readBody, sendJson, type DevServerPlugin } from "./door.js";
 import { fileTold } from "./file-told.js";
 import { TOLD_MAX_BYTES, toldDoor } from "./told.js";
 
@@ -34,7 +34,8 @@ export function devToldHandler(options: DevToldOptions & { readonly root?: strin
   const door = toldDoor({ store, curates: () => true });
   const path = options.path ?? DEV_TOLD_PATH;
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    if (!fromThisApp(req)) return sendJson(res, 403, { error: DOOR_LOCKED });
+    /* A page without the door's key asking whether it is here (a driven browser, a harness) is told it is not, as the model's door tells it, never a 403 in its console. */
+    if (!fromThisApp(req)) return probeWithoutKey(req) ? sendJson(res, 200, { available: false }) : sendJson(res, 403, { error: DOOR_LOCKED });
     const url = (req.url ?? "/").split("?")[0]!;
     const rest = url.startsWith(path) ? url.slice(path.length) : url === "/" ? "" : url;
     const method = req.method ?? "GET";
