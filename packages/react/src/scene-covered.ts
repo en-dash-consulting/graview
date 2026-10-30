@@ -27,9 +27,21 @@ function cardOf(element: Element | null, stage: HTMLElement): HTMLElement | null
 }
 
 /** The part of the scene the reader sees: its box, less what the panel floats over. */
-function seenPart(stage: HTMLElement, dock: { readonly right: number; readonly bottom: number }) {
+function seenPart(stage: HTMLElement, dock: { readonly right: number; readonly bottom: number }, clearOfTheZoom = false) {
   const box = stage.getBoundingClientRect();
-  return { left: box.left, top: box.top, right: box.right - dock.right, bottom: box.bottom - dock.bottom, box };
+  let bottom = box.bottom - dock.bottom;
+  /*
+   * ABOVE THE ZOOM THAT RIDES ON A PHONE'S SHEET, for a card the keyboard
+   * brings into sight: the zoom stands at the foot of what is seen, and a
+   * district brought up to the sheet's edge had its showings and its count
+   * of problems under the zoom's "+". Tab still passes over only what the
+   * sheet itself covers.
+   */
+  if (clearOfTheZoom && dock.bottom > 0) {
+    const zoom = stage.querySelector(".graview-zoom")?.getBoundingClientRect();
+    if (zoom && zoom.height > 0 && zoom.top < bottom && zoom.bottom > bottom - zoom.height - 24) bottom = Math.min(bottom, zoom.top);
+  }
+  return { left: box.left, top: box.top, right: box.right - dock.right, bottom, box };
 }
 
 export function useKeyboardKeepsToWhatIsSeen(
@@ -91,9 +103,17 @@ export function useKeyboardKeepsToWhatIsSeen(
       });
     };
     const bringIntoSight = (card: HTMLElement) => {
-      const seen = seenPart(at, live.current.dock);
-      const r = card.getBoundingClientRect();
+      const seen = seenPart(at, live.current.dock, true);
+      const own = card.getBoundingClientRect();
+      // The showings hanging under a district's name stand past its box, and they are what is pressed next.
+      const hung = card.querySelector(".graview-drive-in")?.getBoundingClientRect();
+      const showings = hung && hung.width > 0 && hung.height > 0 ? hung : null;
       const margin = 12;
+      const whole = showings
+        ? { left: Math.min(own.left, showings.left), right: Math.max(own.right, showings.right), top: Math.min(own.top, showings.top), bottom: Math.max(own.bottom, showings.bottom) }
+        : own;
+      // With its showings where they fit in what is seen; where they do not, the district itself, as before.
+      const r = whole.bottom - whole.top <= seen.bottom - seen.top - 2 * margin ? whole : own;
       const shift = (low: number, high: number, from: number, to: number) =>
         // Larger than the part that is seen: its start is shown. Otherwise only as far as it takes.
         to - from > high - low - 2 * margin ? low + margin - from : from < low + margin ? low + margin - from : to > high - margin ? high - margin - to : 0;

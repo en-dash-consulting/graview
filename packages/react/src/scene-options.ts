@@ -96,7 +96,7 @@ export function useLayoutOptions<S extends AnySchema>(
        */
       inset: { ...railInset((size?.width ?? 1200) - dock.right), top: 8, bottom: 0 },
       // Up and the Key stand clear of a panel too, at the corner of what the reader sees.
-      chrome: [{ x: (size?.width ?? 1200) - dock.right - 176, y: 0, width: 176, height: 100 }, zoomCorner(size, dock)],
+      chrome: [{ x: (size?.width ?? 1200) - dock.right - 176, y: 0, width: 176, height: 100 }, { ...zoomCorner(size, dock), ...(dock.bottom > 0 ? { onSheet: true } : {}) }],
       ...(dock.right > 0 || dock.bottom > 0 ? { dock } : {}),
       ...(headroom > 0 ? { headroom } : {}),
       // The reader's own text size, which the cards are sized in: the city
