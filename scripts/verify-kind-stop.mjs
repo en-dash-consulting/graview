@@ -104,6 +104,11 @@ const measure = () => {
     shape: stop.getAttribute("data-graview-shape"),
     named: heading?.tagName === "H2" && (heading.textContent ?? "").length > 0,
     fills: host ? Math.round((box.height / host.height) * 100) : null,
+    // On a phone the stop is as tall as what it holds, up to its box: it fits when nothing in it scrolls, or fills when something does.
+    fits: (() => {
+      const scroller = stop.querySelector('[data-testid="kind-stop-scroll"]');
+      return Boolean(scroller) && scroller.scrollHeight <= scroller.clientHeight + 1;
+    })(),
     primary: stop.querySelector('[data-testid="kind-stop-primary"]')?.textContent ?? null,
     primaryFirst: firstControl?.getAttribute("data-testid") === "kind-stop-primary",
     rows: stop.querySelectorAll('[data-testid="kind-stop-table"] tbody tr').length,
@@ -367,8 +372,8 @@ report.checks = {
   everyKindWithoutAPictureOpensToItsStop: stops.length > 0 && stops.every((one) => one.present),
   // None is six chips and "+30 more".
   noKindOpensToABareListOfChips: stops.every((one) => one.chips === 0 && !one.moreChip),
-  // Its region is named by its heading, and it fills the box a lens fills.
-  theStopIsNamedAndFillsItsBox: stops.every((one) => !one.present || (one.named && (one.fills ?? 0) >= 95)),
+  // Its region is named by its heading, and it fills the box a lens fills — on a phone, as tall as what it holds up to that box (verify-drive-in).
+  theStopIsNamedAndFillsItsBox: stops.every((one) => !one.present || (one.named && ((one.fills ?? 0) >= 95 || (one.width < 600 && one.fits)))),
   // Where the seat may make one, the kind's creating act is the first control.
   thePrimaryActIsTheFirstControl: stops.every((one) => !one.present || one.primary === null || one.primaryFirst) && stops.some((one) => one.primary === "Add a room"),
   // A kind with a choice of states opens to a board with its states: seedbed's plantings.
