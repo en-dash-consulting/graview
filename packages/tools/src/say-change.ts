@@ -147,3 +147,27 @@ export function saysDone(text: string): boolean {
   if (/\b(can'?t|cannot|couldn'?t|won'?t|not|no|isn'?t|doesn'?t|don'?t|unable|nothing|never)\b/i.test(text)) return false;
   return /\b(is|are|was|were|has been|have been|got|gets)\s+(now\s+)?(\w+ed|done|taken|set|put|given|made|gone|off|out|away|moved|removed)\b/i.test(text) || /^(i'?ve|i have|done|marked|moved|removed|archived|renamed|assigned|added|scheduled|deleted|dropped|finished|closed|updated|changed|set|put|took|taken)\b/i.test(text.trim()) || /\b(i'?ve|i have)\s+\w+ed\b/i.test(text);
 }
+
+/** Words that say someone or something is not here. */
+const ABSENT = /\b(not in (this|the) app|isn'?t in (this|the) app|is not in (this|the) app|not (yet )?(a|one of the) (user|member|person|people|volunteer|record)s?|doesn'?t exist|does not exist|no one (called|named)|nobody (called|named)|not found|no such|there is no|there'?s no|no (user|person|member|volunteer|record|one) (called|named))\b/i;
+
+/**
+ * NEVER SOMETHING FALSE ABOUT THE APP: the records an answer says are not
+ * here, where the graph holds them — "Sam is not in this app yet" while Sam
+ * is one of its users. Answers the records it named and said were absent.
+ */
+export function claimedAbsent<S extends AnySchema>(store: Store<S>, text: string): readonly { readonly id: string; readonly name: string; readonly kind: string }[] {
+  if (!ABSENT.test(text)) return [];
+  const schema = store.schema as AnySchema;
+  const people = peopleKinds(store);
+  const words = text.toLowerCase();
+  return store.graph
+    .allNodes()
+    .flatMap((node) => {
+      const name = labelOf(schema.tryDefinition(node.kind), node as never);
+      const first = name.split(/\s+/)[0]!;
+      const named = name.length >= 3 && (words.includes(name.toLowerCase()) || (people.includes(node.kind) && first.length >= 3 && new RegExp(`\\b${first.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "")}\\b`, "u").test(words)));
+      return named ? [{ id: node.id, name, kind: node.kind }] : [];
+    })
+    .slice(0, 5);
+}

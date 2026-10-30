@@ -56,9 +56,9 @@ import type { AiPrice, AnswerProvider, AnswerReply, FastProvider, HostAi, Thinki
 import { firstJsonObject } from "./intelligence.js";
 import { COULD_NOT_WORK_OUT, forThePerson } from "./sentences.js";
 import { factsOf, todayWords } from "./facts.js";
-import { CANNOT_DO_IT, sayChange, sayNothingToChange, saysDone } from "./say-change.js";
+import { CANNOT_DO_IT, claimedAbsent, sayChange, sayNothingToChange, saysDone } from "./say-change.js";
 export { COULD_NOT_WORK_OUT, forThePerson, plainly } from "./sentences.js";
-import { askedParts, asking, barFor, decideOverTheGraph, heldBy, explicitReading, removing, unaccounted, UNDOING, type GraphDecision, effectOf, type Reading } from "./graph-plan.js";
+import { askedParts, asking, barFor, decideOverTheGraph, heldBy, outsideVerb, outsideWords, peopleKinds, explicitReading, removing, unaccounted, UNDOING, type GraphDecision, effectOf, type Reading } from "./graph-plan.js";
 import type { Answer, ChoiceAnswer } from "./fast.js";
 import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide, type JevOptions } from "./providers/jev.js";
 import type { ChoiceQuestion, Question } from "./questions.js";
@@ -633,7 +633,7 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
       leaned = graph.act;
       asksJev = graph.asks;
       taken = graph.taken;
-      if (graph.sure && (graph.each || graph.missing || graph.clarify)) return graphResult(ask, begun, said, graph, stages);
+      if (graph.sure && (graph.each || graph.missing || graph.clarify || graph.outside)) return graphResult(ask, begun, said, graph, stages);
     } catch {
       // The Fast slot failing leaves the Thinking slot to answer, as before there was a graph to read.
     }
@@ -674,6 +674,8 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
   });
   let each: { readonly act: string; readonly args: Readonly<Record<string, unknown>> } | undefined;
   let missing: AnswerMissing | undefined;
+  // What the model was told, kept to ask it again.
+  let promptOf: string | undefined;
   let text = "";
   let picked: { candidate: AiCandidate; confidence?: number }[] = [];
   const pickedOf = (ids: readonly unknown[]) => ids.flatMap((id) => choices.filter((candidate) => candidate.id === id)).slice(0, 3).map((candidate) => ({ candidate }));
@@ -701,8 +703,11 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
           ...(members.length > 0 ? { members: members.map((node) => ({ id: node.id, label: labelOf(ask.store.schema.tryDefinition(node.kind), node as never) })), member_acts: memberActs.map((act) => ({ name: act.name, title: act.title, does: act.does, asks: act.asks })) } : {}),
           ...(leaned ? { fast_leaned_to: leaned } : {}),
           ...(taken ? { people: { [taken.said]: taken.as } } : {}),
+          // Everyone in the app, by name — not who is linked to this record: an answer never says someone is not in the app while they are.
+          everyone_in_the_app: peopleKinds(ask.store).flatMap((kind) => ask.store.graph.allNodes().filter((node) => node.kind === kind)).slice(0, 40).map((node) => labelOf(ask.store.schema.tryDefinition(node.kind), node as never)),
           ...(todayOf(ask.store) ? { today: todayWords(todayOf(ask.store)!) } : {}),
         });
+      promptOf = prompt;
       type Parsed = { answer?: unknown; pick?: unknown; each?: unknown; lacks?: unknown; need?: unknown; who?: unknown; value?: unknown } | undefined;
       const usable = (one: Parsed) => Boolean(one && ((typeof one.answer === "string" && one.answer.trim()) || (Array.isArray(one.pick) && one.pick.length > 0) || one.each || one.lacks));
       let parsed = (await timed(light ? "light" : "thinking", thinking.model, () => thought(thinking, ANSWER_SYSTEM, prompt, asked, asked.meter))) as Parsed;
@@ -769,6 +774,24 @@ export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<
    * say it is done ("X is taken off the shift."): said plainly that it
    * could not be done here instead.
    */
+  /* NEVER SOMETHING FALSE ABOUT THE APP: an answer that says someone or something here is absent is asked for again with who is here, and else said truly by code. */
+  for (const words of [text, missing?.said ?? ""]) {
+    const absent = words ? claimedAbsent(ask.store, words) : [];
+    if (absent.length === 0 || !thinking) continue;
+    const here = absent.map((one) => `${one.name} (${pluralOf(ask.store.schema, one.kind).toLowerCase()})`).join(", ");
+    const again = (await timed(light ? "light" : "thinking", thinking.model, () => thought(thinking, ANSWER_SYSTEM, JSON.stringify({ ...JSON.parse(promptOf ?? "{}"), known: `These are in the app: ${here}. Never say they are not.` }), asked, asked.meter))) as { answer?: unknown; each?: unknown } | undefined;
+    const retold = typeof again?.answer === "string" ? again.answer.trim() : "";
+    const fixed = retold && forThePerson(retold) && claimedAbsent(ask.store, retold).length === 0 ? retold : `${absent[0]!.name} is here, one of its ${pluralOf(ask.store.schema, absent[0]!.kind).toLowerCase()}. Try saying it another way.`;
+    if (words !== text) missing = undefined;
+    text = fixed;
+  }
+  // Outside the app ("email this", "text Sam"): said plainly, never a field to add.
+  if (!isQuestion() && outsideVerb(said) && !/\b(field|link|column)\b/i.test(said)) {
+    missing = undefined;
+    each = undefined;
+    picked = [];
+    text = outsideWords(ask.store, said, ask.target.on === "record" ? ask.target.id : undefined);
+  }
   const changed = Boolean(each) || picked.some(({ candidate }) => proposalOf(candidate) !== undefined);
   if (!isQuestion() && !changed && !missing && text && saysDone(text)) text = CANNOT_DO_IT;
   if (!text && picked.length === 0 && !each && !missing) {
@@ -888,6 +911,7 @@ function graphResult<S extends AnySchema>(ask: QuickAsk<S>, asked: Asked, said: 
   const text = graphs
     .map((graph) => {
       if (graph.clarify) return graph.clarify;
+      if (graph.outside) return graph.outside;
       if (graph.each && graph.reading) {
         const mutation = ask.store.allMutations().find((one) => one.name === graph.each!.act);
         // Said as it will happen: the act, its values, and the records it will act on, counted as it will.

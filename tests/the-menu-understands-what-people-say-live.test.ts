@@ -140,7 +140,17 @@ const CASES: readonly Case[] = [
   /* Never a change claimed that was not made. */
   { app: "rota", on: "s-mon-open", said: "take Ada off and put her on the waiting list", expect: { notClaimed: true } },
   { app: "todo", on: "t-book", said: "send this to my accountant", expect: { notClaimed: true } },
-  { app: "rota", on: "v-bo", said: "text bo the new times", expect: { notClaimed: true } },
+  /* Outside the app: not a field to add. */
+  { app: "rota", on: "v-bo", said: "text bo the new times", expect: { outside: true } },
+  { app: "todo", on: "t-deposit", said: "email the landlord about this", expect: { outside: true } },
+  { app: "todo", on: "t-book", said: "call the van company", expect: { outside: true } },
+  { app: "todo", on: "t-deposit", said: "pay the landlord online", expect: { outside: true } },
+  { app: "todo", on: "week", said: "post this list on facebook", expect: { outside: true } },
+  { app: "rota", on: "s-mon-open", said: "ring ada about monday", expect: { outside: true } },
+  /* Never something false about who is here. */
+  { app: "todo", on: "week", said: "is Sam one of the users here?", expect: says(() => ({ says: [/\b(yes|sam)\b/i] })) },
+  { app: "rota", on: "s-mon-open", said: "is Jo Harding in this app?", expect: says(() => ({ says: [/\b(yes|jo)\b/i] })) },
+  { app: "rota", on: "s-mon-open", said: "does cass volunteer here", expect: says(() => ({ says: [/\b(yes|cass)\b/i] })) },
   /* The rota. */
   { app: "rota", on: "s-mon-open", said: "give this shift to Bo", expect: act("cover", "itself") },
   { app: "rota", on: "s-mon-open", said: "move this to friday", expect: act("move-shift", "itself") },

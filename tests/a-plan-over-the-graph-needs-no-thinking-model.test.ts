@@ -1,8 +1,8 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import { describe, expect, it, vi } from "vitest";
 import { createTodoUiStore } from "../apps/todo/src/ui/app.js";
-import { askedParts, asking, decideOverTheGraph, explicitReading, givingOf, narrowingOf, politely, renameOf, unaccounted } from "../packages/tools/src/graph-plan.js";
-import { sayChange, sayNothingToChange, saysDone } from "../packages/tools/src/say-change.js";
+import { askedParts, asking, decideOverTheGraph, explicitReading, givingOf, narrowingOf, outsideVerb, outsideWords, politely, renameOf, unaccounted } from "../packages/tools/src/graph-plan.js";
+import { claimedAbsent, sayChange, sayNothingToChange, saysDone } from "../packages/tools/src/say-change.js";
 import { answerHere } from "../packages/tools/src/inline-ai.js";
 import { forThePerson } from "../packages/tools/src/sentences.js";
 import type { FastProvider, ThinkingProvider } from "../packages/tools/src/ai.js";
@@ -178,6 +178,16 @@ describe("a plan over the graph", () => {
     const kept = store();
     const finish = kept.allMutations().find((one) => one.name === "finish")! as never;
     expect(sayNothingToChange(kept, finish, ["t-quote"])).toBe("Nothing to change: “Get the second quote” is already done.");
+  });
+
+  it("never says something here is absent, and says an outside action plainly rather than adding a field", () => {
+    const kept = store();
+    expect(claimedAbsent(kept, "Sam is not in this app yet.").map((one) => one.id)).toContain("user-sam");
+    expect(claimedAbsent(kept, "There is no task called Book the van.").map((one) => one.id)).toContain("t-book");
+    expect(claimedAbsent(kept, "Sam is one of the users here.")).toEqual([]);
+    for (const said of ["email the landlord about this", "text bo the new times", "call the van company", "pay the landlord online", "post this list on facebook"]) expect(outsideVerb(said), said).toBe(true);
+    for (const said of ["call it Boxes", "call this Packing", "mark this done", "book"]) expect(outsideVerb(said), said).toBe(said === "book");
+    expect(outsideWords(kept, "email the landlord about this", "t-deposit")).toBe("I can't send email from here: this app keeps your records, and doing that happens outside it.");
   });
 
   it("reads the giving the words say, and to whom", () => {
