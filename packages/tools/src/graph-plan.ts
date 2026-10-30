@@ -1,4 +1,4 @@
-import { argumentsTaken, labelOf, nodeRefArgs, pluralOf, type AnySchema, type Store } from "@graview/core";
+import { argumentsTaken, labelOf, nodeRefArgs, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
 import type { AiTarget, PlanNeed } from "@graview/core/catalog";
 import type { FastProvider } from "./ai.js";
 import type { Answer } from "./fast.js";
@@ -38,6 +38,10 @@ export interface GraphDecision {
   readonly each?: { readonly act: string; readonly args: Readonly<Record<string, unknown>> };
   readonly missing?: { readonly said: string; readonly need: PlanNeed; readonly who?: string };
   readonly text?: string;
+  /** The act Jev leaned to where code could not fill its values: the light model is told it first. */
+  readonly act?: string;
+  /** A person said as a pronoun, and whom it was taken as: "her" as Nora — said on the card so a reply can correct it. */
+  readonly taken?: { readonly said: string; readonly as: string };
   readonly usage: { readonly inputTokens: number; readonly outputTokens: number };
 }
 
@@ -45,10 +49,10 @@ export interface GraphDecision {
 export const GRAPH_SURE = 0.6;
 export const READING_SURE = 0.75;
 
-const PEOPLE = new Set(["person", "people", "user", "users", "member", "members"]);
+const PEOPLE = new Set(["person", "people", "user", "users", "member", "members", "volunteer", "volunteers", "staff", "contact", "contacts", "employee", "employees", "client", "clients", "customer", "customers", "guest", "guests", "player", "players", "student", "students"]);
 const capital = (words: string) => words.charAt(0).toUpperCase() + words.slice(1);
 /** Verbs that give a record to someone, and how each says it was done. */
-const GIVING: Readonly<Record<string, string>> = { assign: "assigned", give: "given", hand: "handed", delegate: "delegated", send: "sent", allocate: "allocated", route: "routed", pass: "passed" };
+const GIVING: Readonly<Record<string, string>> = { assign: "assigned", reassign: "assigned", give: "given", hand: "handed", delegate: "delegated", allocate: "allocated" };
 
 /** The record a target holds others of: the biggest group of records linked to it, of one kind other than its own. */
 export function heldBy<S extends AnySchema>(store: Store<S>, id: string): { readonly kind: string; readonly ids: readonly string[] } | undefined {
@@ -67,8 +71,8 @@ export function heldBy<S extends AnySchema>(store: Store<S>, id: string): { read
 function peopleKinds<S extends AnySchema>(store: Store<S>): readonly string[] {
   const schema = store.schema as AnySchema;
   const flagged = schema.definitions.filter((definition) => (definition as { people?: boolean }).people).map((definition) => definition.kind);
-  if (flagged.length > 0) return flagged;
-  return schema.definitions.filter((definition) => [definition.kind, (definition as { noun?: string }).noun, pluralOf(schema, definition.kind)].some((word) => word !== undefined && PEOPLE.has(word.toLowerCase()))).map((definition) => definition.kind);
+  // Declared so, and those whose words say so (the rota's volunteers beside its users).
+  return [...new Set([...flagged, ...schema.definitions.filter((definition) => [definition.kind, (definition as { noun?: string }).noun, pluralOf(schema, definition.kind)].some((word) => word !== undefined && PEOPLE.has(word.toLowerCase()))).map((definition) => definition.kind)])];
 }
 
 /** The giving the words say, and to whom: "assign … to Sam" → "assigned to", "Sam". */
@@ -94,7 +98,7 @@ function best(answer: Answer | undefined): { readonly key: string; readonly chan
 
 export async function decideOverTheGraph<S extends AnySchema>(
   fast: FastProvider,
-  options: { readonly store: Store<S>; readonly target: AiTarget; readonly said: string; readonly members?: readonly string[]; readonly follows?: { readonly said: string; readonly reading?: "itself" | "held" }; readonly where?: string },
+  options: { readonly store: Store<S>; readonly target: AiTarget; readonly said: string; readonly members?: readonly string[]; readonly follows?: { readonly said: string; readonly reading?: "itself" | "held" }; readonly where?: string; readonly principal?: { readonly id: string } },
 ): Promise<GraphDecision> {
   const { store, target, said } = options;
   const schema = store.schema as AnySchema;
@@ -110,24 +114,49 @@ export async function decideOverTheGraph<S extends AnySchema>(
   if (self) readings.push({ which: "itself", records: [self.id], kind: self.kind, words: `${labelOf(schema.tryDefinition(self.kind), self as never)} itself`, close: false });
   const all = held ?? (listed.length > 0 ? { kind: store.graph.getNode(listed[0]!)!.kind, ids: listed.filter((id) => store.graph.getNode(id)!.kind === store.graph.getNode(listed[0]!)!.kind) } : undefined);
   /* A reply that narrows ("only the open ones") keeps what is not done — read by code from the records, not by a model. */
-  const open = /\b(open|not done|unfinished|left to do|still to do)\b/i.test(said) && options.follows !== undefined;
-  const members = all && open ? { kind: all.kind, ids: all.ids.filter((id) => !DONE.some((field) => (store.graph.getNode(id) as Record<string, unknown> | undefined)?.[field] === true)) } : all;
-  if (members && members.ids.length > 0) readings.push({ which: "held", records: members.ids, kind: members.kind, words: `the ${members.ids.length}${open ? " open" : ""} ${members.ids.length === 1 ? noun(members.kind) : plural(members.kind)}${where}`, close: false });
+  const open = (/\b(open|not done|unfinished|left to do|still to do)\b/i.test(said) && options.follows !== undefined) || /\b(open|unfinished|undone) ones\b/i.test(said);
+  const finished = /\b(done|finished|completed|closed|ticked) ones\b/i.test(said);
+  const isDone = (id: string) => DONE.some((field) => (store.graph.getNode(id) as Record<string, unknown> | undefined)?.[field] === true);
+  const members = all && (open || finished) ? { kind: all.kind, ids: all.ids.filter((id) => (finished ? isDone(id) : !isDone(id))) } : all;
+  if (members && members.ids.length > 0) readings.push({ which: "held", records: members.ids, kind: members.kind, words: `the ${members.ids.length}${open ? " open" : finished ? " done" : ""} ${members.ids.length === 1 ? noun(members.kind) : plural(members.kind)}${where}`, close: false });
   /* A reply that only narrows or names the field keeps the reading it replies to; code holds it, the model is not asked again. */
   const renamed = /\bcall (?:it|that|the field)\s+["“']?([\p{L}][\p{L} ]*?)["”']?\s*[.!]*\s*$/iu.exec(said)?.[1];
-  const kept = open ? "held" : renamed ? options.follows?.reading : undefined;
+  const kept = open || finished ? "held" : renamed ? options.follows?.reading : undefined;
   if (kept && readings.some((one) => one.which === kept)) readings.splice(0, readings.length, ...readings.filter((one) => one.which === kept));
   if (readings.length === 0) return { sure: false, usage: { inputTokens: 0, outputTokens: 0 } };
 
-  /* THE QUESTIONS, ONE CALL: which records, which act on them, which person, and — where none — what the app would need. */
+  /* THE QUESTIONS, ONE CALL: which records, which act on them (said by what it does), which record the words name, and — where none — what the app would need. */
   const questions: Record<string, Question> = {};
-  if (readings.length > 1) questions["reading"] = { type: "choice", instructions: `Someone said “${said}”${options.follows ? `, replying to “${options.follows.said}”${options.follows.reading ? `, which was taken as ${options.follows.reading === "itself" ? "the record itself" : "the records it holds"}` : ""}` : ""}. On a record that holds others, "these", "all", "them", "each" and "everything" mean the records it holds; "this" or its name mean the record itself. Which do they mean?`, criteria: Object.fromEntries(readings.map((one) => [one.which, one.which === "itself" ? `${capital(one.words)} (the ${noun(one.kind)})` : capital(one.words)])) };
+  if (readings.length > 1) questions["reading"] = { type: "choice", instructions: `Someone said “${said}”${options.follows ? `, replying to “${options.follows.said}”${options.follows.reading ? `, which was taken as ${options.follows.reading === "itself" ? "the record itself" : "the records it holds"}` : ""}` : ""}. On a record that holds others, "these", "all", "them", "each", "everything" and "the … ones" mean the records it holds; "this" or its name mean the record itself. Which do they mean?`, criteria: Object.fromEntries(readings.map((one) => [one.which, one.which === "itself" ? `${capital(one.words)} (the ${noun(one.kind)})` : capital(one.words)])) };
   const actsOn = (kind: string) =>
     store.allMutations().filter((mutation) => mutation.subject && (mutation.subject.kinds === "*" || (mutation.subject.kinds as readonly string[]).includes(kind)));
-  const offered = readings.flatMap((reading) => actsOn(reading.kind).slice(0, 20).map((mutation) => ({ key: `${reading.which}:${mutation.name}`, reading, mutation })));
-  questions["act"] = { type: "choice", instructions: `Which of these does “${words}” ask to be done? "none" where no act here can do it.`, criteria: { ...Object.fromEntries(offered.map((one) => [one.key, `${one.mutation.title ?? one.mutation.name} — on ${one.reading.which === "itself" ? `the ${noun(one.reading.kind)} itself` : `each of ${one.reading.words}`}`])), none: "None of these can do it" } };
-  const people = peopleKinds(store).flatMap((kind) => store.graph.allNodes().filter((node) => node.kind === kind)).slice(0, 30);
-  if (people.length > 0) questions["person"] = { type: "choice", instructions: `Whom does “${words}” name?`, criteria: { ...Object.fromEntries(people.map((node) => [`p:${node.id}`, labelOf(schema.tryDefinition(node.kind), node as never)])), new: "Someone not listed here", none: "Nobody is named" } };
+  const offered = readings.flatMap((reading) => actsOn(reading.kind).slice(0, 24).map((mutation) => ({ key: `${reading.which}:${mutation.name}`, reading, mutation })));
+  questions["act"] = {
+    type: "choice",
+    instructions: `Which of these acts does “${words}” ask to be done? Judge each by what it does, not only its title: people say "close", "complete", "check off", "tick" or "finish" for an act that marks something done, "delete" for one that removes, "push" or "move" for one that changes a date or a place. A question, or "undo that", is none of them. "none" only where no act here does it.`,
+    criteria: { ...Object.fromEntries(offered.map((one) => [one.key, `${one.mutation.title ?? one.mutation.name}: ${sentenceOf((one.mutation as { description?: string }).description)}${effectOf(one.mutation, schema, one.reading.kind)} — on ${one.reading.which === "itself" ? `the ${noun(one.reading.kind)} itself` : `each of ${one.reading.words}`}`])), none: "None of these acts does it" },
+  };
+  /* The records the words may name: the app's people, and records of the kinds the acts here take — those whose names the words share, where there are many. */
+  const kindsOfPeople = peopleKinds(store);
+  const refKinds = new Set([...kindsOfPeople, ...offered.flatMap((one) => nodeRefArgs((one.mutation as { input?: unknown }).input).filter((ref) => ref.name !== one.mutation.subject!.arg).flatMap((ref) => ref.kinds))]);
+  const ofRefKinds = store.graph.allNodes().filter((node) => refKinds.has(node.kind) || refKinds.has("*"));
+  const stems = new Set(words.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((word) => word.length >= 3).map((word) => word.slice(0, 4)));
+  const labeled = (node: { readonly kind: string }) => labelOf(schema.tryDefinition(node.kind), node as never);
+  const nameable = (ofRefKinds.length <= 25 ? ofRefKinds : ofRefKinds.filter((node) => labeled(node).toLowerCase().split(/[^\p{L}\p{N}]+/u).some((word) => word.length >= 3 && stems.has(word.slice(0, 4))))).filter((node) => node.id !== self?.id && !readings.some((one) => one.records.includes(node.id))).slice(0, 25);
+  /*
+   * PEOPLE SAID AS PRONOUNS. "Me", "my", "mine", "myself" are the person at
+   * the seat: their own record, or the record of a kind an act takes that
+   * bears their name. "Her", "him", "them", "that person" are someone the
+   * context gives: a person the record links, the one named in the turn
+   * before. One is taken; several, Jev chooses — and the card says whom.
+   */
+  const meAt = MINE.test(said) ? principalRecord(store, options.principal, refKinds) : undefined;
+  const meName = MINE.test(said) && options.principal ? nameOfRecord(store, options.principal.id) : undefined;
+  const theirsSaid = THEIRS.exec(said);
+  const pronoun = (theirsSaid?.[1] ?? theirsSaid?.[2])?.toLowerCase();
+  const fromContext = pronoun ? contextPeople(store, self?.id, options.follows?.said, kindsOfPeople) : [];
+  if (pronoun && fromContext.length > 1) questions["pronoun"] = { type: "choice", instructions: `In “${said}”${options.follows ? `, said after “${options.follows.said}”` : ""}, whom does “${pronoun}” mean?`, criteria: { ...Object.fromEntries(fromContext.map((node) => [`r:${node.id}`, labeled(node)])), else: "Someone else" } };
+  if (nameable.length > 0) questions["named"] = { type: "choice", instructions: `Which of these does “${words}” name, as the one to give it to, move it to, link it with or put it on?`, criteria: { ...Object.fromEntries(nameable.map((node) => [`r:${node.id}`, `${labeled(node)} (${withArticle(noun(node.kind))})`])), new: "Someone or something not listed here", none: "None is named" } };
   questions["need"] = { type: "choice", instructions: `If no act here can do “${words}”, what would each record need?`, criteria: { person: "A link to the person it is given or assigned to", other: "Something else: a field, a date, a number, a note", none: "Nothing: an act here can do it" } };
 
   const decided = await fast.decide({ said, ...(options.follows ? { replyingTo: options.follows.said } : {}), readings: readings.map((one) => one.words) }, questions);
@@ -137,47 +166,185 @@ export async function decideOverTheGraph<S extends AnySchema>(
   if (!reading) return { sure: false, usage: decided.usage };
   const chosen = { ...reading, close: readings.length > 1 && (reading0?.chance ?? 1) < READING_SURE };
   const act = best(decided.answers["act"]);
-  const person = best(decided.answers["person"]);
-  const personId = person?.key.startsWith("p:") && person.chance >= GRAPH_SURE ? person.key.slice(2) : undefined;
-  const given = givingOf(words);
+  const named = best(decided.answers["named"]);
+  const chosenPronoun = best(decided.answers["pronoun"]);
+  const theirs = pronoun ? (fromContext.length === 1 ? fromContext[0] : chosenPronoun?.key.startsWith("r:") ? store.graph.getNode(chosenPronoun.key.slice(2)) : undefined) : undefined;
+  const taken = pronoun && theirs ? { said: pronoun, as: labeled(theirs) } : undefined;
+  const namedNode = meAt ?? theirs ?? (named?.key.startsWith("r:") && named.chance >= GRAPH_SURE ? store.graph.getNode(named.key.slice(2)) : undefined);
+  // The person the words give it to: said here, else in the turn before; a pronoun, as the context took it.
+  const givenHere = givingOf(said) ?? givingOf(words);
+  const whoSaid = givenHere?.who && (MINE.test(givenHere.who) ? meAt ? labeled(meAt) : meName : THEIRS_WORD.test(givenHere.who) ? (theirs ? labeled(theirs) : undefined) : givenHere.who);
+  const given = givenHere ? { called: givenHere.called, ...(whoSaid ? { who: whoSaid } : {}) } : undefined;
   const giving = given && renamed ? { ...given, called: renamed.toLowerCase() } : given;
   const sureOfReading = readings.length === 1 || (reading0?.chance ?? 0) >= 0.5;
   if (!sureOfReading) return { sure: false, reading: chosen, usage: decided.usage };
 
-  /* AN ACT CAN DO IT: over every record the reading names, its values filled from the graph — or not sure. */
-  /* An act the words name: one of its title's words begins one of theirs ("finish" for "Finish it") — else not one to run without a model's word. */
-  /* A kind's own name is not an act's name: "Change the task" is not named by "the tasks". */
-  const nouns = new Set(readings.flatMap((one) => [noun(one.kind), noun(store.graph.getNode(String((options.target as { id?: string }).id ?? ""))?.kind ?? "")]).map((word) => word.toLowerCase().slice(0, 4)));
-  const said4 = new Set(words.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((word) => word.length >= 4).map((word) => word.slice(0, 4)).filter((stem) => !nouns.has(stem)));
-  const named = (title: string) => title.toLowerCase().split(/[^\p{L}\p{N}]+/u).some((word) => word.length >= 4 && said4.has(word.slice(0, 4)));
-  const kindsOfPeople = peopleKinds(store);
-  const givesAPerson = (mutation: (typeof offered)[number]["mutation"]) => nodeRefArgs((mutation as { input?: unknown }).input).some((ref) => ref.kinds.some((kind) => kindsOfPeople.includes(kind)));
-  /* Words that give a record to someone are done only by an act that takes a person. */
-  const picked = act && act.key !== "none" && act.chance >= GRAPH_SURE ? offered.find((one) => one.key === act.key && one.reading.which === chosen.which && named(one.mutation.title ?? one.mutation.name) && (!giving || givesAPerson(one.mutation))) : undefined;
-  if (picked) {
+  /* AN ACT CAN DO IT: the one Jev picked, on the reading's records, its values filled from the graph — else the light model fills them. */
+  const takesRefTo = (mutation: (typeof offered)[number]["mutation"], kinds: readonly string[]) => nodeRefArgs((mutation as { input?: unknown }).input).some((ref) => ref.name !== mutation.subject!.arg && (ref.kinds.includes("*") || ref.kinds.some((kind) => kinds.includes(kind))));
+  const giveTo = [...kindsOfPeople, ...(namedNode ? [namedNode.kind] : [])];
+  /* A question, or "undo that", is not an act to propose: the light model answers it in words. */
+  if (asking(said) || UNDOING.test(said)) return { sure: false, reading: chosen, usage: decided.usage };
+  const ranks = actRanks(decided.answers["act"]);
+  const onReading = (name: string) => offered.find((one) => one.mutation.name === name && one.reading.which === chosen.which);
+  const removes = (one: (typeof offered)[number] | undefined) => Boolean(one && ((one.mutation as { destructive?: boolean }).destructive || (one.mutation as { derived?: { act?: string } }).derived?.act === "remove"));
+  let mutationName = act && act.key !== "none" ? act.key.slice(act.key.indexOf(":") + 1) : undefined;
+  let sureOfAct = act !== undefined && act.key !== "none" && act.chance >= GRAPH_SURE;
+  // Two acts that do the same thing ("Drop it", "Remove the task") split Jev's chance between them: together they are sure.
+  if (!sureOfAct && ranks.length > 1 && ranks[0]!.chance + ranks[1]!.chance >= 0.8 && removes(onReading(ranks[0]!.name)) && removes(onReading(ranks[1]!.name))) sureOfAct = true;
+  // The record the words name decides between acts: "move this to Someday" names a list, so the act that takes a list.
+  if (mutationName && namedNode && onReading(mutationName) && !takesRefTo(onReading(mutationName)!.mutation, [namedNode.kind])) {
+    // An act whose values code cannot fill ("Move the date" wants a date) gives way to one that takes the record named, when it is named surely.
+    const leaning = onReading(mutationName)!.mutation as { input?: { shape?: Record<string, { safeParse(value: unknown): { success: boolean } }> } };
+    const refNames = new Set(nodeRefArgs(leaning.input).map((ref) => ref.name));
+    const wantsAValue = Object.entries(leaning.input?.shape ?? {}).some(([arg, field]) => !refNames.has(arg) && !field.safeParse(undefined).success && !field.safeParse(calledTo(said)).success);
+    const floor = named && named.chance >= 0.9 && wantsAValue ? 0 : 0.05;
+    const taking = ranks.filter((one) => one.chance >= floor).map((one) => onReading(one.name)).find((one) => one && (one.mutation as { derived?: { act?: string } }).derived?.act !== "merge" && takesRefTo(one.mutation, [namedNode.kind]));
+    if (taking) {
+      mutationName = taking.mutation.name;
+      sureOfAct = true;
+    }
+  }
+  // A record the words name, and one act here that takes it, likely enough: that act ("give this to her" — Ada — is "Cover it").
+  if (!sureOfAct && namedNode) {
+    const taking = ranks.filter((one) => one.chance >= 0.3).map((one) => onReading(one.name)).find((one) => one && (one.mutation as { derived?: { act?: string } }).derived?.act !== "merge" && nodeRefArgs((one.mutation as { input?: unknown }).input).some((ref) => ref.name !== one.mutation.subject!.arg && sameAs(store, namedNode, ref.kinds) !== undefined));
+    if (taking) {
+      mutationName = taking.mutation.name;
+      sureOfAct = true;
+    }
+  }
+  const picked = mutationName && sureOfAct ? onReading(mutationName) : undefined;
+  // Words that give a record to someone are done only by an act that takes them.
+  if (picked && !(giving?.who && !takesRefTo(picked.mutation, giveTo))) {
     const rest = (argumentsTaken(picked.mutation) ?? []).filter((arg) => arg !== picked.mutation.subject!.arg);
     const refs = nodeRefArgs((picked.mutation as { input?: unknown }).input);
+    const shape = ((picked.mutation as { input?: { shape?: Record<string, { safeParse(value: unknown): { success: boolean } }> } }).input?.shape ?? {}) as Record<string, { safeParse(value: unknown): { success: boolean } }>;
     const args: Record<string, unknown> = {};
+    let complete = true;
     for (const arg of rest) {
       const ref = refs.find((one) => one.name === arg);
-      if (ref && personId && ref.kinds.includes(store.graph.getNode(personId)!.kind)) args[arg] = personId;
-      else if (!ref?.optional) return { sure: false, reading: chosen, usage: decided.usage };
+      const optional = ref ? ref.optional : (shape[arg]?.safeParse(undefined).success ?? true);
+      const meant = ref && namedNode ? sameAs(store, namedNode, ref.kinds) : undefined;
+      if (ref && meant) args[arg] = meant.id;
+      else if (!ref && !optional && rest.filter((one) => !refs.some((r) => r.name === one)).length === 1 && calledTo(said) !== undefined && shape[arg]?.safeParse(calledTo(said)).success) args[arg] = calledTo(said);
+      else if (!optional) complete = false;
     }
+    // A change that changes nothing (an edit with no value) is not an answer.
+    if ((picked.mutation as { derived?: { act?: string } }).derived?.act === "edit" && Object.keys(args).length === 0) complete = false;
+    if (!complete) return { sure: false, reading: chosen, ...(taken ? { taken } : {}), act: picked.mutation.name, usage: decided.usage };
     const title = picked.mutation.title ?? picked.mutation.name;
-    return { sure: true, reading: chosen, each: { act: picked.mutation.name, args }, text: `${capital(title)} — ${chosen.records.length === 1 ? `on ${chosen.words}` : `each of ${chosen.words}`}.`, usage: decided.usage };
+    return { sure: true, reading: chosen, ...(taken ? { taken } : {}), each: { act: picked.mutation.name, args }, text: `${capital(title)} — ${chosen.records.length === 1 ? `on ${chosen.words}` : `each of ${chosen.words}`}.`, usage: decided.usage };
   }
 
-  /* NONE CAN: what the app lacks, in words, and the need — a link to the person the words name. */
+  /* NONE CAN: code, not the model's wording, says no act here gives these records to someone — and only then what the app lacks: a link to the person the words name. */
   const need = best(decided.answers["need"]);
-  /* Code, not the model's wording, says whether an act here can give a record to a person: one that takes a person on this reading's records. */
-  const anActGives = offered.some((one) => one.reading.which === chosen.which && givesAPerson(one.mutation));
-  const noneCan = (act?.key === "none" && act.chance >= GRAPH_SURE) || !anActGives;
-  if (noneCan && need?.key === "person" && need.chance >= GRAPH_SURE && giving) {
-    const who = personId ? labelOf(schema.tryDefinition(store.graph.getNode(personId)!.kind), store.graph.getNode(personId) as never) : giving.who;
+  const anActGives = offered.some((one) => one.reading.which === chosen.which && takesRefTo(one.mutation, giveTo));
+  if (giving?.who && !anActGives && ((need?.key === "person" && need.chance >= GRAPH_SURE) || meAt !== undefined || meName !== undefined || taken !== undefined)) {
+    const who = giving.who ?? (namedNode && kindsOfPeople.includes(namedNode.kind) ? labeled(namedNode) : undefined);
     if (!who) return { sure: false, reading: chosen, usage: decided.usage };
     const lacks = renamed ? `${capital(plural(chosen.kind))} have no ${giving.called}.` : `${capital(plural(chosen.kind))} have no one ${giving.called} them.`;
-    return { sure: true, reading: chosen, missing: { said: lacks, need: { link: { on: chosen.kind, called: giving.called, to: "person" } }, who }, text: lacks, usage: decided.usage };
+    return { sure: true, reading: chosen, ...(taken ? { taken } : {}), missing: { said: lacks, need: { link: { on: chosen.kind, called: giving.called, to: "person" } }, who }, text: lacks, usage: decided.usage };
   }
-  return { sure: false, reading: chosen, usage: decided.usage };
+  return { sure: false, reading: chosen, ...(taken ? { taken } : {}), ...(mutationName && act && act.chance >= 0.3 ? { act: mutationName } : {}), usage: decided.usage };
+}
+
+/** "Me", "my", "mine", "myself": the person at the seat. */
+const MINE = /\b(me|my|mine|myself)\b/i;
+/** Someone the context gives, where the words name a person by a pronoun. */
+const THEIRS = /\b(?:to|off|from|for|with)\s+(her|him|them|that person|whoever)\b|\b(?:take|put|move|swap|drop)\s+(her|him)\b/i;
+const THEIRS_WORD = /^(her|him|them|they|that person|whoever)$/i;
+
+/** The seat's own record: theirs by id, else one of a kind an act takes that bears their name. */
+function principalRecord<S extends AnySchema>(store: Store<S>, principal: { readonly id: string } | undefined, kinds: ReadonlySet<string>): { readonly id: string; readonly kind: string } | undefined {
+  if (!principal) return undefined;
+  const own = store.graph.getNode(principal.id);
+  const name = own ? labelOf((store.schema as AnySchema).tryDefinition(own.kind), own as never).toLowerCase() : undefined;
+  const bearing = name ? store.graph.allNodes().find((node) => node.id !== principal.id && kinds.has(node.kind) && labelOf((store.schema as AnySchema).tryDefinition(node.kind), node as never).toLowerCase() === name) : undefined;
+  // A record of a kind an act takes comes first ("take this off me": the volunteer, not the user).
+  return bearing ?? (own && kinds.has(own.kind) ? own : own);
+}
+
+/** What the seat is called, from its record. */
+function nameOfRecord<S extends AnySchema>(store: Store<S>, id: string): string | undefined {
+  const node = store.graph.getNode(id);
+  return node ? labelOf((store.schema as AnySchema).tryDefinition(node.kind), node as never) : undefined;
+}
+
+/** The people a pronoun may mean: those the record links, then those the turn before names. */
+function contextPeople<S extends AnySchema>(store: Store<S>, id: string | undefined, before: string | undefined, kinds: readonly string[]): readonly { readonly id: string; readonly kind: string }[] {
+  const schema = store.schema as AnySchema;
+  const linked = id ? [...store.graph.in(id), ...store.graph.out(id)].filter((node) => kinds.includes(node.kind)) : [];
+  const words = (before ?? "").toLowerCase();
+  const named = words ? store.graph.allNodes().filter((node) => kinds.includes(node.kind) && labelOf(schema.tryDefinition(node.kind), node as never).toLowerCase().split(/\s+/).some((word) => word.length >= 3 && new RegExp(`\\b${word.replace(/[^\p{L}\p{N}]/gu, "")}\\b`, "u").test(words))) : [];
+  // The turn before names whom it means; the record's own links are the rest.
+  const all = [...named, ...linked];
+  // One person once: the user Ada and the volunteer Ada are one Ada.
+  const nameOf = (node: { readonly id: string; readonly kind: string }) => labelOf(schema.tryDefinition(node.kind), node as never).toLowerCase();
+  return all.filter((node, index) => all.findIndex((other) => nameOf(other) === nameOf(node)) === index).slice(0, 8);
+}
+
+/** The record the words mean, as a kind an act takes: itself, or the one of that kind bearing its name (the user Ada as the volunteer Ada). */
+function sameAs<S extends AnySchema>(store: Store<S>, node: { readonly id: string; readonly kind: string }, kinds: readonly string[]): { readonly id: string; readonly kind: string } | undefined {
+  if (kinds.includes("*") || kinds.includes(node.kind)) return node;
+  const schema = store.schema as AnySchema;
+  const name = labelOf(schema.tryDefinition(node.kind), store.graph.getNode(node.id) as never).toLowerCase();
+  return store.graph.allNodes().find((other) => kinds.includes(other.kind) && labelOf(schema.tryDefinition(other.kind), other as never).toLowerCase() === name);
+}
+
+/** Words that ask rather than tell: a question to answer, not an act to propose. */
+export function asking(said: string): boolean {
+  return /\?\s*$/.test(said) || /^\s*(who|whom|whose|what|whats|what's|when|where|which|why|how|is|are|was|were|does|do|did|can|could|should|any|anything|tell me|show me|list)\b/i.test(said);
+}
+
+/** "Undo that": the app's own undo takes back the last change; no act here does. */
+export const UNDOING = /^\s*(undo|take (that|it) back|revert|go back)\b/i;
+
+/** The one value the words give "to" or "as": "rename this to Packing" → "Packing". */
+function calledTo(said: string): string | undefined {
+  const value = /\b(?:to|as)\s+["“']?(.+?)["”']?\s*[.!]?\s*$/i.exec(said)?.[1]?.trim();
+  return value && value.length > 0 ? value : undefined;
+}
+
+/** Every act Jev weighed, likeliest first, with how likely. */
+function actRanks(answer: Answer | undefined): readonly { readonly name: string; readonly chance: number }[] {
+  if (answer?.type !== "choice") return [];
+  return Object.entries(answer.probabilities)
+    .filter(([key]) => key !== "none")
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, chance]) => ({ name: key.slice(key.indexOf(":") + 1), chance }));
+}
+
+/** A description as the end of a sentence: its own words, a space after. */
+function sentenceOf(description: string | undefined): string {
+  const said = description?.trim();
+  return said ? `${said}${/[.!?]$/.test(said) ? "" : "."} ` : "";
+}
+
+/** What an act does, said from what it declares: the fields it writes, the links it makes and breaks, what it makes or removes. */
+export function effectOf(mutation: { readonly name: string; readonly writes?: readonly string[]; readonly sets?: Readonly<Record<string, unknown>>; readonly connects?: readonly string[]; readonly severs?: readonly string[]; readonly creates?: readonly string[]; readonly destructive?: boolean; readonly derived?: { readonly act?: string }; readonly input?: unknown; readonly subject?: { readonly arg: string } }, schema: AnySchema, kind: string): string {
+  const parts: string[] = [];
+  const args = (argumentsTaken(mutation as never) ?? []).filter((arg) => arg !== mutation.subject?.arg);
+  const refs = nodeRefArgs(mutation.input).filter((ref) => ref.name !== mutation.subject?.arg);
+  const shape = ((schema.tryDefinition(kind) as { fields?: { shape?: Record<string, { _zod?: { def?: { type?: string; innerType?: { _zod?: { def?: { type?: string } } } } } }> } } | undefined)?.fields?.shape ?? {});
+  const typeOf = (field: string) => shape[field]?._zod?.def?.type === "optional" ? shape[field]?._zod?.def?.innerType?._zod?.def?.type : shape[field]?._zod?.def?.type;
+  const derived = mutation.derived?.act;
+  if (derived === "remove") parts.push("removes it");
+  else if (derived === "archive") parts.push("sets it aside in the archive");
+  else if (derived === "unarchive") parts.push("brings it back from the archive");
+  else if (derived === "merge") parts.push("merges it into another");
+  else if (derived === "edit") parts.push("changes any of its fields to values given");
+  for (const field of mutation.writes ?? []) {
+    if (mutation.sets && field in mutation.sets) parts.push(`sets ${field} to ${String(mutation.sets[field])}`);
+    else if (args.includes(field)) parts.push(`sets ${field} to a value given`);
+    else if (typeOf(field) === "boolean") parts.push(`sets ${field} yes or no`);
+    else parts.push(`changes ${field}`);
+  }
+  for (const arg of args) if (!(mutation.writes ?? []).includes(arg) && !refs.some((ref) => ref.name === arg) && derived !== "edit") parts.push(`takes ${arg}`);
+  const to = [...new Set(refs.flatMap((ref) => ref.kinds))].filter((one) => one !== "*").join(" or ");
+  if ((mutation.connects?.length ?? 0) > 0 && (mutation.severs?.length ?? 0) > 0) parts.push(`moves it to another ${to || "record"}`);
+  else if ((mutation.connects?.length ?? 0) > 0) parts.push(`links it to ${withArticle(to || "record")}`);
+  else if ((mutation.severs?.length ?? 0) > 0) parts.push(`unlinks it from ${withArticle(to || "record")}`);
+  if (mutation.destructive && derived !== "remove") parts.push("removes it for good");
+  if ((mutation.creates?.length ?? 0) > 0) parts.push(`adds a new ${mutation.creates!.join(" or ")}`);
+  return parts.length > 0 ? `(It ${parts.join(", ")}.)` : "";
 }
 

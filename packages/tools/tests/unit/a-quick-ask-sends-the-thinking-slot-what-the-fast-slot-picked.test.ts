@@ -61,7 +61,8 @@ const picking = (wanted: RegExp): FastProvider => ({
       }
       if (question.type !== "choice") continue;
       const names = Object.keys(question.criteria);
-      const choice = names.find((name) => wanted.test(question.criteria[name] ?? "")) ?? names[0]!;
+      // No act here is sure to do it: the Thinking slot is asked.
+      const choice = key === "act" ? "none" : (names.find((name) => wanted.test(question.criteria[name] ?? "")) ?? names[0]!);
       answers[key] = { type: "choice", choice, confidence: 0.9, probabilities: Object.fromEntries(names.map((name) => [name, name === choice ? 0.9 : 0.01])) };
     }
     return { answers, usage: { inputTokens: 20, outputTokens: 1 } };

@@ -3,7 +3,7 @@ import { aiTargetOf, catalogOf, existingViewsOf, recordsOfTarget, type AiCandida
 import { search } from "@graview/core/search";
 import { useAiDeskState, useGraview } from "@graview/react/provider";
 import { applyAffordance, deriveAffordances, previewAffordance } from "@graview/tools/derive";
-import { answerHere, targetWords, type InlineResult } from "@graview/tools/inline-ai";
+import { answerHere, plainly, targetWords, type InlineResult } from "@graview/tools/inline-ai";
 import type { Affordance } from "@graview/tools/frame";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { askOf, drawPanel, GhostTray, takeOffer } from "./inline-ai-menu.js";
@@ -231,7 +231,8 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
           // The plan composed and rehearsed, timed beside the slots' stages.
           env.desk.record({ ...result.interaction, stages: [...(result.interaction.stages ?? []), { stage: "compose", ms: Date.now() - from }] });
         } catch (error) {
-          plan = { refused: `${result.missing.said} ${error instanceof Error ? error.message : String(error)}` };
+          // The error is the pipeline's; the person is told plainly.
+          plan = { refused: `${result.missing.said} That change could not be made here.` };
         }
       }
       if (live.current) setAnswering({ said: asked, result, ...(plan ? { plan } : {}) });
@@ -452,12 +453,22 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
               ? "Thinking…"
               : result.interaction.outcome === "failed"
                 ? (result.interaction.failed ?? "The AI could not answer that here.")
-                : answering.plan
-                  ? "question" in answering.plan
-                    ? answering.plan.question
-                    : answering.plan.refused
-                  : (result.answer ?? "")}
+                : /* Every answer the card shows is a whole sentence for the person, never the pipeline's own note. */
+                  plainly(
+                    answering.plan
+                      ? "question" in answering.plan
+                        ? answering.plan.question
+                        : answering.plan.refused
+                      : result.answer,
+                    result.ghost && result.ghost.proposals.length > 0 ? "Here is what I would change." : result.offers.length > 0 ? "These may help." : undefined,
+                  )}
           </p>
+          {result?.taken ? (
+            /* A person said as a pronoun, and whom it was taken as, so a reply can correct it. */
+            <p data-testid="quick-ask-taken" style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
+              Taking “{result.taken.said}” as {result.taken.as}.
+            </p>
+          ) : null}
           {result?.reading?.close ? (
             /* A close reading said, so a reply can flip it: "Taking this as the 6 tasks in This week." */
             <p data-testid="quick-ask-reading" style={{ margin: 0, fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>
