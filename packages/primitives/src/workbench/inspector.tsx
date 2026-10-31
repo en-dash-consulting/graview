@@ -611,13 +611,22 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     const back = menuAt.returnTo ?? null;
     // The card opens where the menu stood, read before the menu goes.
     const from = whereMenuStands(asideRef.current);
-    setMenuAt(null);
     // The quick ask's card, where the menu stood, answering the words at once: its thinking marked on the thing itself.
     const quick = () => openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked, returnTo: back, ...(from ? { from } : {}) });
-    /* Words about how the part under the cursor looks are a section's to take ("Make “Tasks” better", Roadmap f-make-any-page-better); the rest the quick ask's. */
+    /*
+     * Words about how the part under the cursor looks are a section's to take ("Make “Tasks” better", Roadmap f-make-any-page-better); the rest the quick ask's.
+     * The menu stays, the keyboard in it, until the words are placed: a menu put away first left the keyboard on nothing while the Fast slot answered.
+     */
     const taker = [...beside.start, ...beside.end].find((section) => section.takesWords);
-    if (!taker) return quick();
-    void taker.takesWords!(asked).then((took) => (took ? undefined : quick()), quick);
+    if (!taker) {
+      setMenuAt(null);
+      return quick();
+    }
+    const placed = (took: boolean) => {
+      setMenuAt(null);
+      if (!took) quick();
+    };
+    void taker.takesWords!(asked).then(placed, () => placed(false));
   };
   /* A suggestion taken: its words asked on the card, about what the menu is on, previewed like any plan — never applied from the menu. */
   const takeTold = (one: (typeof toldLike)[number]) => {

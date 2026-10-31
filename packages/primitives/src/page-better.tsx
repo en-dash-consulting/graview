@@ -424,7 +424,9 @@ export function PageCard({ ask, close }: { readonly ask: Extract<SectionAsk, { p
       if (event.key !== "Escape") return;
       event.preventDefault();
       discard();
-      ask.returnTo?.focus?.();
+      const back = ask.returnTo?.isConnected ? ask.returnTo : document.querySelector<HTMLElement>("[data-graview-page-title], main h1");
+      if (back && !back.hasAttribute("tabindex") && !back.matches("a[href], button, input, select, textarea")) back.setAttribute("tabindex", "-1");
+      back?.focus?.();
     };
     document.addEventListener("keydown", key);
     return () => document.removeEventListener("keydown", key);
