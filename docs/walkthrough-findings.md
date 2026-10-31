@@ -5436,7 +5436,7 @@ in dark (FR-187).
 - expected: `--record <id>` (or the first record of the attached kind) for a view whose cardinality is one
 - actual: `graview view check` takes no record, and `workerViewProps` reads across every record of `reads.kinds` when there is no node
 - where it belongs: `packages/guest/src/cli.ts`, `packages/guest/src/host/manifest.ts`
-- status: open (minor, logged for a task)
+- status: fixed in "graview view check runs a view of one record over a record, the one --record names or the first of its kind the seat sees, and a view's pictures are reckoned over the records linked to its own first" (6959652d2), released in 0.1.40
 
 ### W-243 · `graview shots --places "Station sheet"` refuses a draft view's title and does not list it, though the page links "Also as: Station sheet"
 - stage: FR-187 (a page opened on a draft view) · face: — · width: 390 · scheme: dark
@@ -5445,7 +5445,7 @@ in dark (FR-187).
 - expected: the draft's place among the places `shots` takes by title and lists
 - actual: `shots` reads the places from the document alone
 - where it belongs: `packages/ship/src/shots.ts`
-- status: open (minor, logged for a task)
+- status: fixed in "graview shots --places takes a draft view's title, as it takes a kept view's, and lists its place among the places" (380c23647), released in 0.1.40
 
 ### W-244 · A status board says "Nothing here." over columns that hold thousands of records behind the horizon
 - stage: FR-189 (the review queue) · face: pages · width: 1280 · scheme: light
@@ -5454,21 +5454,21 @@ in dark (FR-187).
 - expected: a retired column says "+N past", as a district and a list do
 - actual: the board counts current records only, and says so nowhere
 - where it belongs: `packages/primitives` (the columns lens)
-- status: open (minor, logged for a task)
+- status: fixed in "A status board says how many records the lifecycle hides in each column, "+N past" where it said "Nothing here.", and shows them there with a press" (d2ef34ec2), released in 0.1.40
 
 ### W-245 · `graview shots` and `graview preview` take a document only, so an app declared in code cannot picture a draft view
 - stage: FR-187 · face: — · width: — · scheme: —
 - severity: minor — "graview shots: a declaration document (a .json file) is required"; walk13's contact sheet, a view of a code app, could be pictured only over a document written for the purpose
 - class: no-way-to-do-a-job
 - where it belongs: `packages/ship/src/shots.ts`, `packages/ship/src/serve-preview.ts`
-- status: open (minor, logged for a task)
+- status: fixed in "graview shots and graview preview picture an app declared in code, as graview check loads it: the store runs the app and the page imports its module bundled with the project's esbuild" (674748ef7), released in 0.1.40
 
 ### W-246 · A unit test of the pages' resting-pointer chips fails under the full suite's load and passes alone
 - stage: setup (`pnpm test` on a fresh checkout) · face: — · width: — · scheme: —
 - severity: minor — "shows the Fast slot's sure suggestion after the dwell" in `several-chosen-and-a-resting-pointer-ask-only-the-fast-slot.test.tsx` failed once in 6,836 tests and passed three times alone; a timing test under load
 - class: harness-or-setup-itself
 - where it belongs: `packages/pages/tests/unit/several-chosen-and-a-resting-pointer-ask-only-the-fast-slot.test.tsx`
-- status: open (minor, logged for a task)
+- status: fixed in "The pages' resting-pointer chips test waits for the chip it judges, about the record its offer names, instead of 180 ms against a 150 ms dwell, so it holds under the full suite's load" (95bb78ea3), released in 0.1.40
 
 Three blockers, W-239 to W-241, each fixed with a criterion verified
 failing without its fix, and five minors, W-242 to W-246, logged for tasks.
