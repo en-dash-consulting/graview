@@ -105,6 +105,49 @@ export interface KeptViews {
   revise?(revision: ViewRevisionKept): ViewReviseAnswer | Promise<ViewReviseAnswer>;
   /** The code the host keeps for a view it revised, where it says (a conformance check reads it back). */
   revised?(name: string): string | undefined;
+  /**
+   * A BUILT-IN PAGE MADE ITS OWN VIEW (Roadmap f-make-any-page-better):
+   * "Make “Tasks” better" asked for something the view spec has no word
+   * for, the person said Yes to "Make “Tasks” its own view", and the page
+   * drafted a worker view seeded from the page as it stands, judged it
+   * (`compareViewRevision`, the view's own checks) and shows it as that
+   * page's view. `draftFork` draws it there on this page only (null puts
+   * the built-in page back); `fork` keeps it — the host keeps it as it
+   * keeps a view a chat drew, the page's view from now on, the built-in
+   * page still reached under "Also as" — and answers once kept, with the
+   * one way back (`undo`) and a line the card says (`note`); `forked` is
+   * what the page draws: the views kept so, and the draft. Throws, in
+   * words, what it refused. Unsaid (any of the three), a page is never
+   * offered its own view. Offered only where `current().may.views`.
+   */
+  fork?(fork: ViewForkKept): ViewReviseAnswer | Promise<ViewReviseAnswer>;
+  draftFork?(fork: ViewForkKept | null): void;
+  forked?(): readonly ViewForkKept[];
+}
+
+/** Which built-in page a view was made of: a kind's list, a record's page (every record of the kind), or the home. */
+export type ForkedPage = { readonly page: "list"; readonly kind: string } | { readonly page: "record"; readonly kind: string } | { readonly page: "home" };
+
+/** A built-in page made its own view, as the page hands it to the host: a worker view's manifest and its plain script. */
+export interface ViewForkKept {
+  readonly manifest: {
+    readonly name: string;
+    /** None for a page's own view: it is that page, not a place of its own. */
+    readonly title?: string;
+    readonly attach: string;
+    readonly cardinality: "one" | "many";
+    /** The view is the whole page it was made of: always, but for the home's, which is the home's body. */
+    readonly replaces?: "page";
+    readonly reads?: { readonly kinds?: readonly string[]; readonly edges?: readonly string[] };
+  };
+  /** Its plain script, against the `graview` global. */
+  readonly source: string;
+  /** The page it was made of. */
+  readonly from: ForkedPage;
+  /** What changed, in a sentence, as the card said it. */
+  readonly said: string;
+  /** Set on what `forked` lists while it is a draft, shown on this page only. */
+  readonly draft?: true;
 }
 
 /** A revision of a script view, as Keep hands it to the host. */
@@ -262,9 +305,50 @@ export function memoryViews(options: MemoryViewsOptions = {}): KeptViews {
  */
 export function withMemoryRevisions(views: KeptViews): KeptViews {
   const revised = new Map<string, string>();
+  /* The pages made their own views (Roadmap f-make-any-page-better): kept by name, and the one draft shown. */
+  let forks: readonly ViewForkKept[] = [];
+  let drafted: ViewForkKept | null = null;
+  let listed: readonly ViewForkKept[] | null = null;
+  const heard = new Set<() => void>();
+  const moved = () => {
+    listed = null;
+    for (const listener of heard) listener();
+  };
+  const mayViews = () => {
+    if (!views.current().may.views) throw new Error("Only someone who may change this app's views can make a page its own view.");
+  };
   return {
     ...views,
     current: () => views.current(),
+    onChange(listener: () => void) {
+      heard.add(listener);
+      const inner = views.onChange?.(listener);
+      return () => {
+        heard.delete(listener);
+        inner?.();
+      };
+    },
+    fork(fork: ViewForkKept): ViewReviseAnswer {
+      mayViews();
+      const had = forks;
+      const { draft: _draft, ...kept } = fork;
+      forks = [...forks.filter((one) => one.manifest.name !== fork.manifest.name), kept];
+      if (drafted?.manifest.name === fork.manifest.name) drafted = null;
+      moved();
+      return {
+        note: "Kept until this page reloads.",
+        undo: () => {
+          forks = had;
+          moved();
+        },
+      };
+    },
+    draftFork(fork: ViewForkKept | null) {
+      if (fork) mayViews();
+      drafted = fork ? { ...fork, draft: true } : null;
+      moved();
+    },
+    forked: () => (listed ??= drafted ? [...forks.filter((one) => one.manifest.name !== drafted!.manifest.name), drafted] : forks),
     revise(revision: ViewRevisionKept): ViewReviseAnswer {
       if (!views.current().may.views) throw new Error("Only someone who may change this app's views can keep a revision of one.");
       const had = revised.get(revision.name);

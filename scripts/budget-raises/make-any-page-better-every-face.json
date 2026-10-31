@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 12400,
+  "note": "Raised when a built-in page came to be made better (Roadmap f-make-any-page-better): the page's parts, the page's card, the routing of typed words, the spec draft and the page's own view (`@graview/tools/section`'s `draftPageSpec`, `draftPageView`) are chunks of their own, fetched with the first right-click on a page and the first card, and this budget counts every chunk. Measured at 2_739_449 / 994_984 against 982_617 gzipped before; the tarballs measure a few bytes either side of it from run to run, so 12_400."
+}

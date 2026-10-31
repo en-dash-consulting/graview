@@ -22,6 +22,8 @@ const DRAWN_ONLY = [
   "placeOthers",
   // A section of a view under the cursor, and what the view's place lends its revision: read once a menu is opened in a drawn view.
   "sectionsArrive",
+  // Whether a right-click on a page's own parts waits for "Make … better" (Roadmap f-make-any-page-better).
+  "partsWanted",
   "sectionsWanted",
   "sectionUnderNow",
   "setViewPlace",

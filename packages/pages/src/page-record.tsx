@@ -4,7 +4,7 @@ import { lineageWords, linkProvenance } from "@graview/core/provenance";
 import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, ROVING_ITEM, useLined, useRoving } from "@graview/primitives/pages";
 import { bleeds, isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useRef, useState } from "react";
 import { blankWritable, rankedRepairs, recordFacts } from "./facts.js";
 import { fileFieldsOf } from "@graview/core/blocks";
@@ -52,6 +52,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   // A value is changed where it stands where the face provides the store its edits run through (a face handed views).
   const inPlace = useGraviewIfAny<S>() !== null;
   const params = useParams();
+  /* The page the app draws by itself, though a view replaces it, reached under "Also as" (Roadmap f-make-any-page-better). */
+  const builtIn = useSearchParams()[0].get("drawn") === "built-in";
   const id = decodeURIComponent(params["id"] ?? "");
   const facts = recordFacts(store, id, {
     ...(principal ? { principal } : {}),
@@ -128,7 +130,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * (`DefaultView`) draws only what it adds to it here.
    */
   const ownPage = context.views?.lookup(facts.kind, { cardinality: "one", fidelity: "full" });
-  const PageView = ownPage !== undefined && !isDefaultView(ownPage) ? (ownPage as ComponentType<ViewProps<S>>) : undefined;
+  const PageView = ownPage !== undefined && !isDefaultView(ownPage) && !(builtIn && replacesPage(ownPage)) ? (ownPage as ComponentType<ViewProps<S>>) : undefined;
   /*
    * WHAT THE PAGE VIEW ALREADY SAYS IS NOT SAID AGAIN (FR-141). A kind's
    * declared page heads this record, and the facts and the related records
@@ -214,6 +216,14 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
             </Bleed>
           </DefaultViewElsewhere>
+          {whole ? (
+            <p style={{ margin: "8px 0 0", color: "var(--graview-ink-muted)", fontSize: "0.875rem" }} data-testid="record-also-as">
+              Also as:{" "}
+              <Link to={`${recordPath(store.schema, facts.kind, id)}?drawn=built-in`} style={{ color: "inherit" }} data-testid="built-in-page">
+                Built-in page
+              </Link>
+            </p>
+          ) : null}
         </section>
       ) : null}
 

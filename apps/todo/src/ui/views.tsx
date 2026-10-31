@@ -10,7 +10,9 @@ import {
   hueFor,
   registerDeclaredLenses,
   registerDefaultViews,
+  registerViewSpecs,
 } from "@graview/primitives";
+import type { AnySchema, GraviewApp } from "@graview/core";
 import { todoApp } from "../domain/app.js";
 import { todoSchema, type TodoSchema } from "../domain/schema.js";
 import { labelsThatFit, whatIsLeft } from "./what-is-left.js";
@@ -540,8 +542,9 @@ const HIDDEN = {
   border: 0,
 } as const;
 
-export function todoViews() {
-  const registry = registerDefaultViews(todoSchema, createViews(todoSchema));
+export function todoViews(app: GraviewApp<AnySchema> = todoApp as never) {
+  /* What the declaration says as data (its view spec) over the defaults, so a change to it in development draws (Roadmap f-make-any-page-better). */
+  const registry = registerViewSpecs(registerDefaultViews(todoSchema, createViews(todoSchema)), todoSchema, app.viewSpecs as never);
   const own = registry
     .register("task", { cardinality: "one", fidelity: "full" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "summary" }, TaskView)
@@ -567,6 +570,6 @@ export function todoViews() {
    * draws each as a place. Laid over last, so the week — declared last —
    * is what the tasks' district draws when an address names no picture.
    */
-  return registerDeclaredLenses(own, todoApp);
+  return registerDeclaredLenses(own, app as never);
 }
 

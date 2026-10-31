@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 566,
+  "gzipped": 203,
+  "changeset": "make-any-page-better.md",
+  "note": "Raised when a built-in page came to be made better (Roadmap f-make-any-page-better): the host's `onDraftChange` handed through the provider and the frame, and the frame drawing what the host's views list as forked (`useForkedViews`), with the worker's host fetched only once it lists one; the page's parts, its card and the drafts are chunks of their own. Measured at 662_835 / 230_305 against 662_269 / 230_103 minified and gzipped."
+}

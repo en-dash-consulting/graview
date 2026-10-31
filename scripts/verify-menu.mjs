@@ -1133,6 +1133,11 @@ try {
               answers[key] = misread ? sure(question, "itself", 0.55) : misreadAll ? sure(question, "held", 0.95) : names.includes("done") && /\b(done|finished|ticked|completed)\b/i.test(said) ? sure(question, "done") : names.includes("open") && /\b(open|remaining|outstanding)\b/i.test(said) ? sure(question, "open") : sure(question, /\b(these|all|them|each|everything|tasks|ones)\b/i.test(said) ? "held" : "itself", plain ? 0.92 : 0.7);
               continue;
             }
+            // Words about how the page looks are "Make … better"'s (Roadmap f-make-any-page-better); the asks here are about the records.
+            if (question.type === "choice" && key === "about") {
+              answers[key] = sure(question, /\b(look|layout|bigger|smaller|style)\b/i.test(String(state.typed ?? "")) ? "look" : "records");
+              continue;
+            }
             if (question.type === "choice" && key === "mood") {
               answers[key] = sure(question, /\?\s*$|^(is|are|has|have|what|who|when|where|which|how|does)\b/i.test(said) ? "asks" : "tells");
               continue;

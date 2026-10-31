@@ -1,7 +1,7 @@
 import { createSchema, Store, type AnyNodeDefinition, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
 import { composeAppChange } from "@graview/core/compose";
 import { rememberDocument, toDocument, type GraviewDocument } from "@graview/core/document";
-import type { ComposeChangeHost, ProposeChangeHost } from "@graview/tools/reshape";
+import type { ComposeChangeHost, DraftChangeHost, ProposeChangeHost } from "@graview/tools/reshape";
 
 /**
  * YES CHANGES THE APP, IN DEVELOPMENT (Roadmap f-menu-type-anything): a host
@@ -29,18 +29,23 @@ export interface DevApp {
 export interface DevAppChanges {
   readonly composeChange: ComposeChangeHost;
   readonly onProposeChange: ProposeChangeHost;
+  /** A change to the app shown on this page only, the app put back by its undo (Roadmap f-make-any-page-better). */
+  readonly onDraftChange: DraftChangeHost;
   /** The app and the store the page shows now. */
   current(): DevApp;
 }
 
-/** What the change adds, laid over the code app: its kinds, its new links, its new acts and rules. */
+/** What the change adds, laid over the code app: its kinds, its new links, its new acts and rules — and how its pages read (its view spec, its glances, how its lists open). */
 function laidOver(code: GraviewApp<AnySchema>, compiled: GraviewApp<AnySchema>): GraviewApp<AnySchema> {
   const kinds = new Set<string>(code.schema.kinds);
   const extended = code.schema.definitions.map((definition) => {
     const changed = compiled.schema.tryDefinition(definition.kind) as AnyNodeDefinition | undefined;
     const had = (definition.edges ?? {}) as Record<string, unknown>;
     const added = Object.fromEntries(Object.entries((changed?.edges ?? {}) as Record<string, unknown>).filter(([name]) => !(name in had)));
-    return Object.keys(added).length > 0 ? ({ ...definition, edges: { ...had, ...added } } as AnyNodeDefinition) : definition;
+    // A glance the change says, over the code's.
+    const display = (changed as { readonly display?: unknown } | undefined)?.display;
+    const shown = display !== undefined && JSON.stringify(display) !== JSON.stringify((definition as { readonly display?: unknown }).display) ? { display } : {};
+    return Object.keys(added).length > 0 || "display" in shown ? ({ ...definition, ...shown, ...(Object.keys(added).length > 0 ? { edges: { ...had, ...added } } : {}) } as AnyNodeDefinition) : definition;
   });
   const fresh = compiled.schema.definitions.filter((definition) => !kinds.has(definition.kind));
   const schema = createSchema([...extended, ...fresh] as readonly AnyNodeDefinition[]);
@@ -61,9 +66,25 @@ function laidOver(code: GraviewApp<AnySchema>, compiled: GraviewApp<AnySchema>):
     ...code,
     ...(policy ? { policy } : {}),
     schema,
+    ...(compiled.viewSpecs ? { viewSpecs: compiled.viewSpecs } : {}),
+    ...(compiled.home ? { home: compiled.home } : {}),
+    ...(compiled.pages ? { pages: compiled.pages } : {}),
     mutations: [...(code.mutations ?? []), ...(compiled.mutations ?? []).filter((mutation) => !named.has(mutation.name))],
     invariants: [...(code.invariants ?? []), ...(compiled.invariants ?? []).filter((invariant) => !ruled.has(invariant.name))],
   } as GraviewApp<AnySchema>;
+}
+
+/** A store made as the app says — its policy and modules with its schema, acts and rules — over the records another holds. */
+function storeOver(app: GraviewApp<AnySchema>, records: Store<AnySchema>): Store<AnySchema> {
+  const modules = (app as { readonly modules?: unknown }).modules;
+  return new Store<AnySchema>({
+    ...(app.policy ? { policy: app.policy } : {}),
+    ...(modules ? { modules } : {}),
+    schema: app.schema,
+    mutations: app.mutations ?? [],
+    invariants: app.invariants ?? [],
+    snapshot: records.graph.snapshot() as never,
+  } as never);
 }
 
 /**
@@ -102,15 +123,7 @@ export function devAppChanges(start: DevApp, swap: (next: DevApp) => void, optio
     const app = laidOver(before.app, composed.app);
     rememberDocument(app, composed.document);
     documents.set(app, composed.document);
-    const modules = (app as { readonly modules?: unknown }).modules;
-    const store = new Store<AnySchema>({
-      ...(app.policy ? { policy: app.policy } : {}),
-      ...(modules ? { modules } : {}),
-      schema: app.schema,
-      mutations: app.mutations ?? [],
-      invariants: app.invariants ?? [],
-      snapshot: before.store.graph.snapshot() as never,
-    } as never);
+    const store = storeOver(app, before.store);
     // The plan's records, as one change, said as the AI's.
     if (proposal.records && proposal.records.length > 0) store.applyAll(proposal.records, { ...(options.principal ? { author: options.principal } : {}), ...(proposal.via ? { via: proposal.via as never } : {}) });
     current = { app, store };
@@ -124,5 +137,17 @@ export function devAppChanges(start: DevApp, swap: (next: DevApp) => void, optio
       },
     };
   };
-  return { composeChange, onProposeChange, current: () => current };
+  /* SHOWN ON THIS PAGE ONLY (Roadmap f-make-any-page-better): the changed app over the same records, and back as it stood on undo; `current` is left as it is, so a Keep composes over the app that stands. */
+  const onDraftChange: DraftChangeHost = (proposal) => {
+    const before = current;
+    const composed = composeAppChange({ document: documentOfCode(before.app), edits: proposal.edits ?? [] });
+    if (!composed.ok) throw new Error(composed.refused);
+    const app = laidOver(before.app, composed.app);
+    rememberDocument(app, composed.document);
+    documents.set(app, composed.document);
+    // Its own store over the same records, as the changed app says it (a glance is the schema's); the page's records are put back on undo.
+    swap({ app, store: storeOver(app, before.store) });
+    return { undo: () => swap(current) };
+  };
+  return { composeChange, onProposeChange, onDraftChange, current: () => current };
 }

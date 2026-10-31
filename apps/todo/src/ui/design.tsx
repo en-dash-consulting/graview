@@ -1,6 +1,9 @@
 import { dayAsRead, dayOfMonthAsRead, fieldWords, humanizeField, labelOf, logoOf, type Arrangement, type Principal, type Violation } from "@graview/core";
 import { KindFigure, NotifyButton, RecordInteractionsDoor, ROVING_ITEM, useMarkup, useRoving } from "@graview/primitives";
 import {
+  DefaultHomePage,
+  DefaultListPage,
+  DefaultRecordPage,
   DerivedForm,
   ListPage,
   PageFind,
@@ -17,8 +20,10 @@ import {
 } from "@graview/pages";
 import { editableFields, type Affordance, type AffordanceSet, type EditableField } from "@graview/tools";
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { replacesPage } from "@graview/react";
 import type { TodoSchema } from "../domain/schema.js";
+import { todoApp } from "../domain/app.js";
 import { today } from "./when.js";
 
 type S = TodoSchema;
@@ -441,12 +446,15 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
     kind === "task"
       ? { group: { by: "holds" }, filter: [{ key: "done", value: "false" }], sort: { by: "label", direction: "asc" } }
       : { sort: { by: "label", direction: "asc" } };
+  /* How the declaration says the list opens wins over Things' own once it changes from what Things' code says (a change kept in development, `arrange-pages`): a change to it draws here. */
+  const said = (app: { readonly pages?: { readonly lists?: Readonly<Record<string, unknown>> } } | undefined) => JSON.stringify(app?.pages?.lists?.[kind] ?? null);
+  const declared = context.app !== undefined && said(context.app as never) !== said(todoApp as never);
   return (
     <ListPage
       context={context}
       kind={kind}
       bare
-      opening={opening}
+      {...(declared ? {} : { opening })}
       row={(node, facts) =>
         kind === "task" ? (
           <TaskRow task={node as unknown as TaskNode} context={context} flagged={flagged} now={now} />
@@ -1148,6 +1156,25 @@ const longDate = (day: string): string => dayAsRead(day);
 
 /* ------------------------------------------------------------ the design */
 
+/*
+ * A PAGE MADE ITS OWN VIEW (Roadmap f-make-any-page-better): where the host
+ * keeps a view that replaces a kind's list, a task's page or the home, the
+ * framework's page draws it — Things' own stays under "Also as"
+ * (`?drawn=built-in`).
+ */
+function OwnOrThings({ context, kind, which }: { context: Ctx; kind: string; which: "list" | "record" }) {
+  const builtIn = useSearchParams()[0].get("drawn") === "built-in";
+  const own = context.views?.lookup(kind as never, { cardinality: which === "list" ? "many" : "one", fidelity: "full" });
+  if (own !== undefined && replacesPage(own) && !builtIn) return which === "list" ? <DefaultListPage context={context} /> : <DefaultRecordPage context={context} />;
+  return which === "list" ? <KindList context={context} kind={kind} /> : <KindRecord context={context} kind={kind} />;
+}
+
+function HomeOrOwn({ context }: { context: Ctx }) {
+  const builtIn = useSearchParams()[0].get("drawn") === "built-in";
+  const hosts = context.views?.homes?.().at(-1)?.name !== undefined;
+  return hosts && !builtIn ? <DefaultHomePage context={context} /> : <Home context={context} />;
+}
+
 /**
  * Every surface replaced, over the same derivations.
  *
@@ -1157,13 +1184,10 @@ const longDate = (day: string): string => dayAsRead(day);
  */
 export function thingsDesign(schema: S) {
   const page = (component: (props: { context: Ctx }) => ReactNode) => component as PageComponent<S>;
-  const forKind = (kind: string, which: "list" | "record") =>
-    page(({ context }: { context: Ctx }) =>
-      which === "list" ? <KindList context={context} kind={kind} /> : <KindRecord context={context} kind={kind} />,
-    );
+  const forKind = (kind: string, which: "list" | "record") => page(({ context }: { context: Ctx }) => <OwnOrThings context={context} kind={kind} which={which} />);
   let registry = createPageRegistry<S, PageComponent<S>>(schema)
     .surface("shell", Shell)
-    .surface("home", page(Home))
+    .surface("home", page(HomeOrOwn))
     .surface("problems", page(Problems));
   for (const kind of ["task", "list", "rule", "reason"] as const) {
     registry = registry

@@ -252,7 +252,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const target: MenuTarget | null =
     menuAt === null
       ? null
-      : { face: menuAt.face ?? "scene", on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place, href: menuAt.href, act: menuAt.act, column: menuAt.column, ...(menuAt.section ? { section: menuAt.section } : {}), element: menuAt.returnTo };
+      : { face: menuAt.face ?? "scene", on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place, href: menuAt.href, act: menuAt.act, column: menuAt.column, ...(menuAt.section ? { section: menuAt.section } : {}), ...(menuAt.page ? { page: menuAt.page } : {}), element: menuAt.returnTo };
   const beside = useMenuSections(target);
   /*
    * Whether the derivation is withholding a creating act for want of the
@@ -611,9 +611,22 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     const back = menuAt.returnTo ?? null;
     // The card opens where the menu stood, read before the menu goes.
     const from = whereMenuStands(asideRef.current);
-    setMenuAt(null);
     // The quick ask's card, where the menu stood, answering the words at once: its thinking marked on the thing itself.
-    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked, returnTo: back, ...(from ? { from } : {}) });
+    const quick = () => openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked, returnTo: back, ...(from ? { from } : {}) });
+    /*
+     * Words about how the part under the cursor looks are a section's to take ("Make “Tasks” better", Roadmap f-make-any-page-better); the rest the quick ask's.
+     * The menu stays, the keyboard in it, until the words are placed: a menu put away first left the keyboard on nothing while the Fast slot answered.
+     */
+    const taker = [...beside.start, ...beside.end].find((section) => section.takesWords);
+    if (!taker) {
+      setMenuAt(null);
+      return quick();
+    }
+    const placed = (took: boolean) => {
+      setMenuAt(null);
+      if (!took) quick();
+    };
+    void taker.takesWords!(asked).then(placed, () => placed(false));
   };
   /* A suggestion taken: its words asked on the card, about what the menu is on, previewed like any plan — never applied from the menu. */
   const takeTold = (one: (typeof toldLike)[number]) => {

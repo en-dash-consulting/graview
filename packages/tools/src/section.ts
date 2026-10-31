@@ -1,6 +1,8 @@
 import type { HostAi, ThinkingProvider, ThinkingReply } from "./ai.js";
 import { thinkingOf } from "./inline-ai.js";
 
+export { mayChangeDeclaration } from "./agent/declaration.js";
+
 /*
  * `@graview/tools/section` — MAKE THIS SECTION BETTER (Roadmap
  * f-make-this-section-better).
@@ -425,3 +427,6 @@ export async function reviseSection(options: ReviseSectionOptions): Promise<Revi
   if (findings.length > 0) return { ok: false, refused: `It could not be revised without breaking the view: ${findings.join(" ")}`, stages };
   return { ok: true, source, said: again.said, located, repaired: true, stages };
 }
+
+export { aboutTheLook, OWN_VIEW_WHEN_SURE, draftPageSpec, draftPageView, forkManifest, notTheSpec, PAGE_SPEC_OPS, PAGE_SPEC_SYSTEM, PAGE_VIEW_SYSTEM, pageSpecPrompt, pageViewPrompt, readPageSpecReply, readPageViewReply, specCanSay } from "./page-better.js";
+export type { DraftPageSpecOptions, DraftPageSpecResult, DraftPageViewOptions, DraftPageViewResult, ForkManifest, PagePartSaid } from "./page-better.js";
