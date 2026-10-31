@@ -2,10 +2,11 @@ import type { HistoryHost } from "@graview/core/history";
 import { assetSrc, faviconHref, type Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore, type DismissalStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useThemeColor, useViewportHeight, type BarAction, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard, type NoticeReport, type NoticeReporting } from "@graview/primitives/frame";
-import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
+import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type AwaySummary, type ErrorReport, type FieldTyping, type KeepLensHost, type ProposeChangeHost, type ComposeChangeHost, type DraftChangeHost, type MenuSectionSource, type OnExport, type ReactViewRegistry, type ReaderMemory, type Scheme, type WorkflowRuns } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
+import { useForkedViews } from "./draft.js";
 import { storeOf, useHostScheme } from "./frame-light.js";
 
 /*
@@ -328,6 +329,15 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   /** The host's composer and checker for a change to the app: what lets the quick ask offer a missing capability as one plan (`composeAppChange` from `@graview/core/compose`). */
   readonly composeChange?: ComposeChangeHost;
   /**
+   * WHERE A CHANGE TO THE APP IS SHOWN BEFORE IT IS KEPT (Roadmap
+   * f-make-any-page-better): "Make “Tasks” better" hands its drafted
+   * view-spec edits here, and the host draws this page with them — nothing
+   * written, nobody else shown — answering how to put the page back
+   * (`setApp` with the changed app, then the app before). Unsaid, the card
+   * says what would change without drawing it.
+   */
+  readonly onDraftChange?: DraftChangeHost;
+  /**
    * THE AI THE SEAT MAY USE, decided by the host and never by a reader:
    * `{ complete }` (the host's model: prompt in, text out) for open
    * questions and views no template draws, `decide` for typed decisions,
@@ -524,8 +534,10 @@ export function useViews<S extends AnySchema>(
     registerReaderLenses(views, app.schema, appKeyOf(props.brand ?? app.brand, app.schema));
     return (draft ? draft.register(views as never) : views) as ReactViewRegistry<S>;
   }, [props.views, app.schema, app.viewSpecs, app.lenses, app.pages, app.home, draft]);
+  // The pages the host made views of their own (Roadmap f-make-any-page-better), and the one shown as a draft.
+  const forked = useForkedViews(views, props.keptViews, app.schema);
   // What the host lists as hidden or deleted (Roadmap f-place-menu-views), tidied out of every face at once.
-  return useTidiedViews(views, props.keptViews);
+  return useTidiedViews(forked, props.keptViews);
 }
 
 /**
@@ -753,6 +765,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     onKeepLens: props.onKeepLens,
     onProposeChange: props.onProposeChange,
     composeChange: props.composeChange,
+    onDraftChange: props.onDraftChange,
     ai: props.ai,
     files: props.files,
     assetsAt: props.assetsAt,

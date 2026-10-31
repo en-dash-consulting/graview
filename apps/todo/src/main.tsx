@@ -183,17 +183,23 @@ const devChanges = dev && !onProposeChange && (!navigator.webdriver || (window a
 const devSection = dev && !navigator.webdriver ? await import("./dev-section.js") : undefined;
 const keptViews = devSection?.devKeptViews();
 
-/** The routed face's views: Things' own, and in development "At a glance", tidied as the dev page's views host says. */
-const pagesRegistry = devSection ? devSection.withAtAGlance(todoViews()) : todoViews();
-function usePagesViews() {
-  return useTidiedViews(pagesRegistry, keptViews);
+/*
+ * The routed face's views: Things' own over the app as it stands (a change
+ * to its view spec in development draws), in development "At a glance" and
+ * the pages made views of their own (Roadmap f-make-any-page-better), tidied
+ * as the dev page's views host says.
+ */
+function usePagesViews(app: DevApp["app"]) {
+  const own = useMemo(() => (devSection ? devSection.withAtAGlance(todoViews(app)) : todoViews(app)), [app]);
+  const forked = devSection ? devSection.useForked(own, keptViews!) : own;
+  return useTidiedViews(forked, keptViews);
 }
 
 /** The app and its store as they stand — changed in place by a plan in development — handed to the face. */
 function Changing({ children }: { readonly children: (shown: DevApp, host: DevAppChanges | undefined, pagesViews: () => ReturnType<typeof todoViews>) => ReactNode }) {
-  const views = usePagesViews();
   const start = useMemo<DevApp>(() => ({ app: todoApp as never, store: opened.store as never }), []);
   const [shown, setShown] = useState<DevApp>(start);
+  const views = usePagesViews(shown.app);
   const host = useMemo(() => devChanges?.devAppChanges(start, setShown, { principal }), [start]);
   return <>{children(shown, host, () => views)}</>;
 }
@@ -230,7 +236,7 @@ if (window.location.pathname.startsWith("/pages")) {
         ...(files ? { files } : {}),
         subscriptions,
         ...(history ? { history } : {}),
-        ...(onProposeChange ? { onProposeChange } : host ? { onProposeChange: host.onProposeChange, composeChange: host.composeChange } : {}),
+        ...(onProposeChange ? { onProposeChange } : host ? { onProposeChange: host.onProposeChange, composeChange: host.composeChange, onDraftChange: host.onDraftChange } : {}),
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is

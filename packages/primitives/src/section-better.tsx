@@ -56,12 +56,17 @@ export interface SectionDrawnProps {
 }
 
 export function SectionDrawn({ ask, open, close }: SectionDrawnProps) {
-  if (ask) return <SectionCard key={ask.at} ask={ask} close={close} />;
+  if (ask?.part) return <PageCard key={ask.at} ask={ask} close={close} />;
+  if (ask?.section) return <SectionCard key={ask.at} ask={ask} close={close} />;
   return open ? <SectionOutline elements={open} /> : null;
 }
 
+/* A built-in page's card (Roadmap f-make-any-page-better), fetched the first time it is asked for. */
+const pageCard = /* @__PURE__ */ lazyModule(retryingImport(() => import("./page-better.js")));
+const PageCard = /* @__PURE__ */ pageCard.part((module, props: { readonly ask: Extract<SectionAsk, { part: object }>; readonly close: () => void }) => <module.PageCard {...props} />, { what: "Make this better" });
+
 export interface SectionCardProps {
-  readonly ask: SectionAsk;
+  readonly ask: Extract<SectionAsk, { section: MenuViewSection }>;
   readonly close: () => void;
 }
 
@@ -168,8 +173,8 @@ export function SectionCard({ ask, close }: SectionCardProps) {
   const draft = useRef<ViewPlaceDraft | null>(null);
   const card = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
-  const [phase, setPhase] = useState<Phase>(ask.mode === "highlight" ? { at: "highlighting" } : ask.mode === "describe" ? { at: "asking" } : { at: "working" });
-  const [words, setWords] = useState("");
+  const [phase, setPhase] = useState<Phase>(ask.mode === "highlight" ? { at: "highlighting" } : ask.mode === "describe" && !ask.words ? { at: "asking" } : { at: "working" });
+  const [words, setWords] = useState(ask.words ?? "");
   const original = useRef<string | undefined>(undefined);
   /* The telling of the revision on offer, kept with the host's door (`ai.told`), and how it ended. */
   const [telling, setTelling] = useState<Telling | null>(null);
@@ -274,13 +279,13 @@ export function SectionCard({ ask, close }: SectionCardProps) {
     [ai, aiDesk, entryOf, section, tell],
   );
 
-  /* Just do it: at once. */
+  /* Just do it: at once — and words typed in the menu about the look, asked at once too. */
   const began = useRef(false);
   useEffect(() => {
-    if (ask.mode !== "just" || began.current) return;
+    if (began.current || !(ask.mode === "just" || (ask.mode === "describe" && ask.words))) return;
     began.current = true;
-    void revise("just", "");
-  }, [ask.mode, revise]);
+    void revise(ask.mode, ask.words ?? "");
+  }, [ask.mode, ask.words, revise]);
 
   const keep = useCallback(async () => {
     if (phase.at !== "draft" || !keptViews?.revise || !handle.current) return;
@@ -365,8 +370,9 @@ export function SectionCard({ ask, close }: SectionCardProps) {
   if (phase.at === "highlighting") {
     return (
       <Highlighter
-        place={place}
-        section={section}
+        box={place}
+        root={place?.querySelector("[data-worker-view]")?.shadowRoot?.querySelector("[data-graview-view-root]") ?? undefined}
+        whole={section.elements}
         cancel={close}
         chose={(elements) => {
           const first = elements[0];
@@ -468,10 +474,9 @@ export function SectionCard({ ask, close }: SectionCardProps) {
  * or "Cancel", puts it away; "The whole section" takes the section itself
  * for a keyboard.
  */
-function Highlighter({ place, section, cancel, chose }: { readonly place: Element | undefined; readonly section: MenuViewSection; readonly cancel: () => void; readonly chose: (elements: readonly Element[]) => void }) {
+export function Highlighter({ box: place, root, whole, wholeSaid = "The whole section", cancel, chose }: { readonly box: Element | null | undefined; readonly root: Element | null | undefined; readonly whole: readonly Element[]; readonly wholeSaid?: string; readonly cancel: () => void; readonly chose: (elements: readonly Element[]) => void }) {
   const cover = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
-  const root = place?.querySelector("[data-worker-view]")?.shadowRoot?.querySelector("[data-graview-view-root]") ?? undefined;
   useLayoutEffect(() => {
     let frame = 0;
     const follow = () => {
@@ -530,8 +535,8 @@ function Highlighter({ place, section, cancel, chose }: { readonly place: Elemen
     >
       <p style={COVER_HINT}>
         Drag over the part to change, or click one ·{" "}
-        <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => chose(section.elements)} style={LINK}>
-          The whole section
+        <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => chose(whole)} style={LINK}>
+          {wholeSaid}
         </button>{" "}
         ·{" "}
         <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={cancel} style={LINK}>
@@ -543,6 +548,7 @@ function Highlighter({ place, section, cancel, chose }: { readonly place: Elemen
   );
 }
 
+export { readPart, placeBeside };
 const CARD: CSSProperties = {
   position: "fixed",
   zIndex: layer("popover"),
@@ -572,3 +578,6 @@ const PAD = 12;
 const COVER: CSSProperties = { userSelect: "none", WebkitUserSelect: "none", position: "fixed", zIndex: layer("popover"), boxSizing: "border-box", cursor: "crosshair", touchAction: "none", outline: "2px dashed var(--graview-accent)", background: "color-mix(in srgb, var(--graview-accent) 6%, transparent)" };
 const COVER_HINT: CSSProperties = { position: "absolute", left: 8, top: 8, margin: 0, padding: "4px 10px", borderRadius: 999, fontSize: "0.8125rem", color: "var(--graview-ink)", background: "var(--graview-float, var(--graview-panel))", border: "1px solid var(--graview-edge)", boxShadow: "var(--graview-lift-low)", cursor: "default" };
 const DRAG: CSSProperties = { position: "absolute", border: "2px solid var(--graview-accent)", background: "color-mix(in srgb, var(--graview-accent) 14%, transparent)", borderRadius: 4, pointerEvents: "none" };
+
+/** The card's look, shared with a built-in page's card. */
+export const LOOK = { CARD, HEAD, MUTED, THINKING, ROW, FIELD, PRIMARY, QUIET } as const;

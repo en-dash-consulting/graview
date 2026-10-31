@@ -1,7 +1,7 @@
 import { counted as countOf, isCurrent, isWithheld, numberAsRead, type AnySchema, type Operation, type Violation } from "@graview/core";
 import { bleeds, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { HomeLine } from "@graview/primitives/pages";
 import { kindMap } from "./facts.js";
 import { pluralSlug } from "./registry.js";
@@ -84,6 +84,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   const { principal } = context;
   const { store, brand, invariantContext } = context;
   useStoreTick(store);
+  /* The home the app draws by itself, though a host's view is its body, reached under "Also as" (Roadmap f-make-any-page-better). */
+  const builtIn = useSearchParams()[0].get("drawn") === "built-in";
   const violations = store.violations(invariantContext);
   const { recent, kept } = recently(store.log.all());
   // In the declaration's order, less what it leaves off the home (FR-80).
@@ -124,7 +126,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
    * below: blocks about records that do not exist yet would be a page of
    * dashes, and the beginning is what an empty installation needs.
    */
-  const HomeView = context.views?.homeView?.() as ComponentType<ViewProps<S>> | undefined;
+  const hostsHome = context.views?.homes?.().at(-1)?.name !== undefined;
+  const HomeView = builtIn && hostsHome ? undefined : (context.views?.homeView?.() as ComponentType<ViewProps<S>> | undefined);
   const anything = (store.schema.kinds as readonly string[]).some((kind) => store.graph.nodesOfKind(kind as never).length > 0);
   if (HomeView && anything) {
     /*
@@ -148,6 +151,14 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
               <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} {...(flagged.length > 0 ? { flagged } : {})} />
             </Bleed>
           </HomeLine.Provider>
+          {hostsHome ? (
+            <p style={{ ...quiet, margin: 0 }} data-testid="home-also-as">
+              Also as:{" "}
+              <Link to="/?drawn=built-in" style={{ color: "inherit" }} data-testid="built-in-home">
+                Built-in home
+              </Link>
+            </p>
+          ) : null}
         </div>
       </PageMain>
     );

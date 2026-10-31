@@ -20,7 +20,7 @@
 export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, PLACE_MENU_EVENT, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
 // Sections of the context menu beside its acts: a host's are the provider's `menuSections`; a face adds its own with `MenuSections` (`./drawing`).
-export type { MenuColumn, MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
+export type { MenuColumn, MenuItem, MenuPage, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 // A section of a view under the cursor (Roadmap f-make-this-section-better); finding one and what a view's place lends are `./drawing`'s.
 export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle } from "./view-places.js";
 // Whether a panel beside the map lists a district opened from altitude.
@@ -66,7 +66,7 @@ export { createSeatTalk, seatTalkKey, useSeatTalkState } from "./seat-talk.js";
 // The inline AI's desk: the interactions Activity draws and the ghost waiting to be accepted, held by the app.
 export { createAiDesk, useAiDeskState } from "./ai-desk.js";
 export type { AiDesk, AiDeskState, HeldGhost } from "./ai-desk.js";
-export type { KeepLensAnswer, KeepLensHost, LensEdit, ComposeChangeHost, ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
+export type { KeepLensAnswer, KeepLensHost, LensEdit, ComposeChangeHost, DraftChangeHost, ProposeChangeAnswer, ProposeChangeHost, ReshapeProposal, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
 export type { LazyModule, LazyPartOptions, PartsWatch } from "./lazy-part.js";
 // The app as it was (Roadmap f-playback): the moment a face draws instead of now, held by its outermost provider.
 export { PlaybackContext, useLiveStore, useOwnPlayback, usePlayback, useReadersServed } from "./past.js";

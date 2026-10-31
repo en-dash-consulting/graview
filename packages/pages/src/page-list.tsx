@@ -104,6 +104,7 @@ export interface ListPageProps<S extends AnySchema> {
  */
 export function DefaultListPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const params = useParams();
+  const builtIn = useSearchParams()[0].get("drawn") === BUILT_IN;
   const kind = kindOfSlug(context.store.schema, params["slug"] ?? "");
   if (!kind) {
     return (
@@ -121,9 +122,13 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
    * stands in for nothing, and the list is the app's own again.
    */
   const own = context.views?.lookup(kind, { cardinality: "many", fidelity: "full" });
-  if (own !== undefined && replacesPage(own)) return <ListOfView context={context} kind={kind} view={own as ComponentType<ViewProps<S>>} />;
+  /* The list the app draws by itself stays reached under "Also as" (Roadmap f-make-any-page-better): `?drawn=built-in`. */
+  if (own !== undefined && replacesPage(own) && !builtIn) return <ListOfView context={context} kind={kind} view={own as ComponentType<ViewProps<S>>} />;
   return <ListPage context={context} kind={kind} />;
 }
+
+/** The address word that draws a kind's list or a record's page as the app draws it by itself, though a view replaces it: `?drawn=built-in`. */
+export const BUILT_IN = "built-in";
 
 /**
  * THE KIND'S LIST PAGE, AS ITS VIEW DRAWS IT (FR-203): the trail and the
@@ -143,6 +148,12 @@ function ListOfView<S extends AnySchema>({ context, kind, view: View }: { readon
       <header style={{ display: "grid", gap: 4 }}>
         <HeadTrail context={context} />
         <PageTitle context={context}>{plural}</PageTitle>
+        <p style={{ margin: 0, color: "var(--graview-ink-muted)", fontSize: "0.875rem" }} data-testid="kind-pictures">
+          Also as:{" "}
+          <Link to={`/${pluralSlug(store.schema, kind)}?drawn=${BUILT_IN}`} style={{ color: "inherit" }} data-testid="built-in-list">
+            Built-in list
+          </Link>
+        </p>
       </header>
       <section data-testid="list-view" style={{ display: "grid", minWidth: 0 }}>
         <ViewBoundary kind={kind} view={plural}>

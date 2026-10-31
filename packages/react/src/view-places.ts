@@ -107,5 +107,8 @@ export function sectionUnderNow(element: Element | null | undefined): MenuViewSe
   return element && finding ? finding(element) : undefined;
 }
 
+/** Whether a right-click on a page's own parts, outside any view, must wait for what a face offers on them ("Make “Tasks” better") before the menu opens. */
+export const partsWanted = (): boolean => finding === undefined && besides.size > 0;
+
 /** Whether a right-click at this element must wait for the finder before the menu opens. */
 export const sectionsWanted = (element: Element | null | undefined): boolean => finding === undefined && (element?.getRootNode() as { host?: Element } | undefined)?.host?.hasAttribute("data-worker-view") === true;

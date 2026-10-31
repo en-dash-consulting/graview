@@ -40,6 +40,10 @@ Every template, view spec, rule, sum and sort reads `net` like a field (`{ field
 
 1. **Say counts and times in words.** Templates say counts in words: `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three"), `{at | time}` ("10:47 AM"). A field's label, a group's heading and what an empty list says are words, not templates: braces there would be drawn as typed, and `view-braces` warns of them. A `describe` or `label` written in code is not a template either: say the value in code (`momentAsRead(node.startsAt)`), and `describe-template-in-code` warns of `{field}` returned there.
 
+### When a person makes a page better
+
+A right-click anywhere on a page the app draws by itself — a row, the heading, a record's page, the home — offers "Make “Tasks” better" to a seat that may change the app. It tries the spec first: a draft of the spec's own edits only (set-view, set-glance, set-page-fields, arrange-pages' sort, group and filters, set-label, set-format), compiled by the checker and drawn on that page before anyone keeps it. A list groups only by a choice or a yes-or-no field. What the spec cannot say, or a page your own design draws without reading the spec, is offered as a worker view of its own; `?drawn=built-in` still reaches the page the app draws. A host lends `composeChange`, `onProposeChange` and `onDraftChange` for the first and `KeptViews.fork` for the second (`checkViewForkHost` checks it).
+
 ### Then find out whether it worked
 
 ```sh

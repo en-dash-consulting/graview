@@ -33,8 +33,26 @@ export interface MenuTarget {
   readonly column?: MenuColumn | undefined;
   /** The section of a worker view it landed in — "This week" — when it landed in one (`sectionUnder`). */
   readonly section?: MenuViewSection | undefined;
+  /** The routed face's page it landed on, outside a worker view: what the page is about, and the element itself under the gesture. */
+  readonly page?: MenuPage | undefined;
   /** The element it was opened from, which the keyboard goes back to. */
   readonly element?: HTMLElement | null | undefined;
+}
+
+/**
+ * THE PAGE A MENU WAS OPENED ON, ON THE ROUTED FACE (Roadmap
+ * f-make-any-page-better): what the page itself is about — a record's page
+ * (`on`), a kind's list (`about`, its group), a place, else the home — and
+ * the element itself the gesture landed on, from which "Make “Tasks”
+ * better" names the part a person would call it.
+ */
+export interface MenuPage {
+  readonly on?: string | undefined;
+  readonly about?: readonly string[] | undefined;
+  readonly place?: string | undefined;
+  /** The page is the home. */
+  readonly home?: boolean | undefined;
+  readonly at: Element;
 }
 
 /**
@@ -84,6 +102,14 @@ export interface MenuSection {
    * its first frame. Never a model call, nor a change: nothing is shown.
    */
   readonly prepare?: () => void;
+  /**
+   * WORDS TYPED IN THE MENU THIS SECTION MAY TAKE in place of the quick ask
+   * (Roadmap f-make-any-page-better): "make the cards bigger" is about how
+   * the page under the cursor looks, so "Make “Tasks” better" takes it.
+   * Asked when the typed words are told; resolves true when it took them,
+   * false to leave them to the quick ask.
+   */
+  readonly takesWords?: (words: string) => Promise<boolean>;
 }
 
 /** A host's or a face's contribution: told what the menu is opened on, it answers a section or nothing. */

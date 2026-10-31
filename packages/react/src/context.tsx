@@ -21,7 +21,7 @@ import type {
 import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type DismissalStore, type Place, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
-import { createSeatTalk, type ComposeChangeHost, type KeepLensHost, type ProposeChangeHost, type SeatTalk } from "./seat-talk.js";
+import { createSeatTalk, type ComposeChangeHost, type DraftChangeHost, type KeepLensHost, type ProposeChangeHost, type SeatTalk } from "./seat-talk.js";
 import { createAiDesk, type AiDesk } from "./ai-desk.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState, type AiPresence } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
@@ -42,7 +42,7 @@ import {
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import { HostAssetsContext, HostFilesContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
-import type { MenuColumn, MenuSectionSource } from "./menu-types.js";
+import type { MenuColumn, MenuPage, MenuSectionSource } from "./menu-types.js";
 import type { MenuViewSection } from "./view-places.js";
 
 import { createMotionStore, type MotionStore } from "./motion-store.js";
@@ -126,6 +126,8 @@ export interface PointerMenu {
   readonly column?: MenuColumn | undefined;
   /** The section of a worker view it was opened in (`MenuTarget.section`): the menu is headed with its name. */
   readonly section?: MenuViewSection | undefined;
+  /** The routed face's page it was opened on (`MenuTarget.page`). */
+  readonly page?: MenuPage | undefined;
   /**
    * AN ACT TO BEGIN AT ONCE, its form open under it with these values
    * already given — "Add a task in Doing" from a column's menu: the add act,
@@ -407,6 +409,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly onProposeChange?: ProposeChangeHost;
   /** The host's composer and checker for a change to the app (`GraviewProviderProps.composeChange`). */
   readonly composeChange?: ComposeChangeHost;
+  /** Where a change to the app is shown on this page only, not kept (`GraviewProviderProps.onDraftChange`). */
+  readonly onDraftChange?: DraftChangeHost;
   /** The app this is mounted with (`GraviewProviderProps.app`), or the one it is drawn inside. */
   readonly app?: GraviewApp<S> | undefined;
   /** The reader's locale the host passed (`GraviewProviderProps.locale`, FR-178), or the one it is drawn inside. */
@@ -582,6 +586,14 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * could add it, with no plan.
    */
   readonly composeChange?: ComposeChangeHost | undefined;
+  /**
+   * A CHANGE TO THE APP SHOWN ON THIS PAGE ONLY (`DraftChangeHost`, Roadmap
+   * f-make-any-page-better): "Make “Tasks” better" draws the page with
+   * drafted view-spec edits before they are kept; the host lays the changed
+   * app over this page alone and answers how to put it back. Unsaid, the
+   * card says what would change without drawing it.
+   */
+  readonly onDraftChange?: DraftChangeHost | undefined;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
   /**
@@ -791,6 +803,7 @@ export function GraviewProvider<S extends AnySchema>({
   onKeepLens,
   onProposeChange,
   composeChange,
+  onDraftChange,
   providers,
   ai: handedAi,
   files,
@@ -887,6 +900,7 @@ export function GraviewProvider<S extends AnySchema>({
   /* The host that applies a change to the app: this provider's, else the one it is drawn inside. */
   const proposeChange = onProposeChange ?? outer?.onProposeChange;
   const composeAppChange = composeChange ?? outer?.composeChange;
+  const draftChange = onDraftChange ?? outer?.onDraftChange;
   const app = mountedApp ?? (outer?.app as GraviewApp<S> | undefined);
   /*
    * WHAT DAYS, TIMES AND NUMBERS ARE SAID IN (FR-178): the reader's a host
@@ -1283,6 +1297,7 @@ export function GraviewProvider<S extends AnySchema>({
       ...(keepLens ? { onKeepLens: keepLens } : {}),
       ...(proposeChange ? { onProposeChange: proposeChange } : {}),
       ...(composeAppChange ? { composeChange: composeAppChange } : {}),
+      ...(draftChange ? { onDraftChange: draftChange } : {}),
       app,
       ...(locale ? { locale } : {}),
       ...(timeZone ? { timeZone } : {}),

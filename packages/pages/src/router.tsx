@@ -722,6 +722,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
       {...(context.onProposeChange ? { onProposeChange: context.onProposeChange } : {})}
       {...(context.composeChange ? { composeChange: context.composeChange } : {})}
+      {...(context.onDraftChange ? { onDraftChange: context.onDraftChange } : {})}
       {...(context.keptViews ? { keptViews: context.keptViews } : {})}
       {...(context.onExport ? { onExport: context.onExport } : {})}
       {...(context.ai ? { ai: context.ai } : {})}

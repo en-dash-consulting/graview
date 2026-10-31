@@ -28,6 +28,8 @@ export { checkPlanHost } from "./plan-host.js";
 export type { PlanHost, PlanHostReport } from "./plan-host.js";
 export { checkViewRevisionHost } from "./view-revision-host.js";
 export type { ViewRevisionHostReport } from "./view-revision-host.js";
+export { checkViewForkHost } from "./view-fork-host.js";
+export type { ViewForkHostReport } from "./view-fork-host.js";
 export { checkToldHost } from "./told-host.js";
 export type { ToldHost, ToldHostReport } from "./told-host.js";
 

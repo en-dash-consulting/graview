@@ -2,7 +2,7 @@ import type { AnySchema } from "@graview/core";
 import { alsoWhenSectionsArrive, MenuSections } from "@graview/react/drawing";
 import { useGraview, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
 import { inlineAiOn } from "@graview/tools/frame";
-import { useMemo, useSyncExternalStore, type ReactNode } from "react";
+import { useMemo, useRef, useSyncExternalStore, type ReactNode } from "react";
 
 /**
  * MAKE THIS SECTION BETTER (Roadmap f-make-this-section-better): the door,
@@ -23,6 +23,13 @@ import { useMemo, useSyncExternalStore, type ReactNode } from "react";
  * a model and did not turn AI off, where its views lend `revise`, where it
  * says this seat may change views (`current().may.views`), and where the
  * view's code is a plain script the page holds.
+ *
+ * MAKE ANY PAGE BETTER (Roadmap f-make-any-page-better): a built-in page's
+ * parts — the page, its list, a group — are offered the same way on the
+ * routed face ("Make “Tasks” better"), where the host lends a change to
+ * the app (`composeChange` and `onProposeChange`) or a page its own view
+ * (`KeptViews.fork`); the menu's section is fetched with the first
+ * right-click on such a page, and the menu opens once it is here.
  */
 
 export type { SectionAsk, SectionMode } from "./section-menu.js";
@@ -39,10 +46,14 @@ const load = () =>
 
 /** "Make “This week” better" on the context menu, or nothing where it is not this seat's to offer. */
 export function useSectionBetterSection(): MenuSectionSource | null {
-  const { ai, aiDesk, keptViews } = useGraview<AnySchema>();
-  alsoWhenSectionsArrive(load);
-  const on = inlineAiOn(ai) && typeof keptViews?.revise === "function";
-  return useMemo<MenuSectionSource | null>(() => (on ? (target: MenuTarget) => (target.section && menu && keptViews ? menu.sectionFor(target, aiDesk, keptViews) : null) : null), [on, aiDesk, keptViews]);
+  const here = useGraview<AnySchema>();
+  const { ai, keptViews, onProposeChange, composeChange } = here;
+  const held = useRef(here);
+  held.current = here;
+  const pages = (onProposeChange !== undefined && composeChange !== undefined) || typeof keptViews?.fork === "function";
+  const on = inlineAiOn(ai) && (typeof keptViews?.revise === "function" || pages);
+  if (on) alsoWhenSectionsArrive(load);
+  return useMemo<MenuSectionSource | null>(() => (on ? (target: MenuTarget) => ((target.section || target.page) && menu ? menu.sectionFor(target, held.current) : null) : null), [on]);
 }
 
 const NONE: readonly MenuSectionSource[] = [];

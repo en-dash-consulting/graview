@@ -2,7 +2,7 @@ import { argumentsTaken, fieldWords, humanizeField, layer, nounOf, pluralLabel, 
 import { narrowedPath } from "@graview/core/navigate";
 import { aggregateId } from "@graview/layout/view";
 import { GhostDoor, Inspector, NotifyDoor, SectionBetterDoor, useBoardMoveSection, useInlineAiSection, useNotifySection, useSectionBetterSection, useViewTidyingSection } from "@graview/primitives/pages";
-import { MenuSections, sectionsArrive, sectionsWanted, sectionUnderNow } from "@graview/react/drawing";
+import { MenuSections, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow } from "@graview/react/drawing";
 import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuColumn, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router-dom";
@@ -260,7 +260,7 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
   const open = useCallback(
     (element: Element, x: number, y: number, inner: Element = element, waited = false): void => {
       /* The first right-click inside a view fetches what finds its section, and the menu opens once it is here (without one, should it not arrive). */
-      if (!waited && sectionsWanted(inner)) {
+      if (!waited && (sectionsWanted(inner) || partsWanted())) {
         const then = () => open(element, x, y, inner, true);
         void sectionsArrive().then(then, then);
         return;
@@ -270,11 +270,13 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
       /* A section of a worker view under the cursor names the menu ("This week") and is outlined while it is open. */
       const section = sectionUnderNow(inner);
       selection.current = selectedIn(root.current);
-      const menu: PointerMenu = { ...aimed, ...(column ? { column } : {}), ...(section ? { section, title: section.name } : {}), x: Math.round(x), y: Math.round(y), returnTo: homeOf(element) };
+      /* Else the page's own part under it — the page, its list, a group — which "Make “Tasks” better" names (Roadmap f-make-any-page-better). */
+      const page = aimAtPage();
+      const menu: PointerMenu = { ...aimed, ...(column ? { column } : {}), ...(section ? { section, title: section.name } : { page: { on: page.on, about: page.about, place: page.place, home: pathname === "/", at: inner } }), x: Math.round(x), y: Math.round(y), returnTo: homeOf(element) };
       last.current = menu;
       setMenuAt(menu);
     },
-    [aimAt, columnAt, setMenuAt, root],
+    [aimAt, aimAtPage, columnAt, setMenuAt, root, pathname],
   );
 
   /* "Link copied", said quietly at the foot of the page and gone. */
