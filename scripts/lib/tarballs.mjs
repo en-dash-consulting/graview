@@ -14,7 +14,8 @@ import { resolve } from "node:path";
 
 export function packTarballs(repoRoot, into) {
   const tarballs = {};
-  for (const name of readdirSync(resolve(repoRoot, "packages")).sort()) {
+  // Folders only: Finder leaves a .DS_Store beside them on a Mac.
+  for (const name of readdirSync(resolve(repoRoot, "packages"), { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort()) {
     const dir = resolve(repoRoot, "packages", name);
     const manifest = JSON.parse(readFileSync(resolve(dir, "package.json"), "utf8"));
     execFileSync("pnpm", ["pack", "--pack-destination", into], {

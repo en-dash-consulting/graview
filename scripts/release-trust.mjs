@@ -34,7 +34,10 @@ const NPM = ["-y", "npm@12"];
 const apply = process.argv.includes("--apply");
 const pause = () => spawnSync("sleep", ["2"]);
 
-const names = readdirSync(join(root, "packages"))
+// Folders only: Finder leaves a .DS_Store beside them on a Mac.
+const names = readdirSync(join(root, "packages"), { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name)
   .sort()
   .map((dir) => JSON.parse(readFileSync(join(root, "packages", dir, "package.json"), "utf8")))
   .filter((manifest) => !manifest.private)
