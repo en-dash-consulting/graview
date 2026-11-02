@@ -3,7 +3,7 @@ import { composeAppChange } from "@graview/core/compose";
 import type { GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 import type { HostAi } from "../../src/ai.js";
-import { aboutTheLook, draftPageSpec, draftPageView, forkManifest, notTheSpec, specCanSay } from "../../src/section.js";
+import { aboutTheLook, cssFindings, describeChange, draftPageSpec, draftPageView, drawnFindings, forkManifest, notTheSpec, readPageViewReply, specCanSay, type DrawnRead } from "../../src/section.js";
 
 /**
  * MAKE ANY PAGE BETTER (Roadmap f-make-any-page-better): words typed in the
@@ -117,16 +117,72 @@ describe("a page made its own view", () => {
     expect(forkManifest({ name: "The week", slot: "place", kind: "task" }, links)).toBeUndefined();
   });
 
-  it("is written by the light model from the page as it stands, the full one where it cannot be read, and repaired once with what broke", async () => {
+  it("is written by the light model from the page as it stands, and handed back to it once with what broke", async () => {
     const first = JSON.stringify({ source: "graview.onProps(() => graview.render(graview.html`<p>x</p>`));", said: "First." });
-    const second = JSON.stringify({ source: "graview.onProps((props) => graview.render(graview.html`<h1>Tasks</h1>`));", said: "Kept the heading." });
-    const { ai, asked } = slots([], [first, second]);
+    const second = JSON.stringify({ source: "graview.onProps((props) => graview.render(graview.html`<h2>Someday</h2>`));", said: "Kept the heading." });
+    const { ai, asked } = slots([first, second], []);
     const manifest = forkManifest(part, { kinds: [], edges: [] })!;
-    const drafted = await draftPageView({ ai, part, manifest, mode: "describe", words: "cards side by side", outline: "# Tasks\n- Write the brief", data: {}, judge: async (source) => (source.includes("<h1>Tasks</h1>") ? [] : ["It no longer draws “Tasks”, which the page drew."]) });
+    const drafted = await draftPageView({ ai, part, manifest, mode: "describe", words: "cards side by side", outline: "# Tasks\n## Someday\n- Write the brief", data: {}, judge: async (source) => (source.includes("<h2>Someday</h2>") ? [] : ["It no longer shows the heading “Someday”."]) });
     expect(drafted.ok).toBe(true);
     if (!drafted.ok) return;
     expect(drafted.repaired).toBe(true);
-    expect(asked.map((one) => one.slot)).toEqual(["light", "full", "full"]);
+    expect(asked.map((one) => one.slot)).toEqual(["light", "light"]);
     expect(asked[0]!.prompt["as_it_stands"]).toContain("# Tasks");
+    expect(asked[1]!.prompt["what_broke"]).toEqual(["It no longer shows the heading “Someday”."]);
+  });
+
+  it("goes to the full model once after the light one's repair, then says plainly it could not, showing nothing", async () => {
+    const broken = JSON.stringify({ source: "graview.onProps(() => graview.render(graview.html`<p>x</p>`));", said: "Looks modern." });
+    const { ai, asked } = slots([broken, broken], [broken]);
+    const manifest = forkManifest(part, { kinds: [], edges: [] })!;
+    const drafted = await draftPageView({ ai, part, manifest, mode: "just", outline: "# Tasks", data: {}, judge: async () => ["It no longer shows “Write the brief”."] });
+    expect(drafted).toMatchObject({ ok: false, refused: "I couldn't make a version that looks right." });
+    expect(asked.map((one) => one.slot)).toEqual(["light", "light", "full"]);
+  });
+
+  it("repairs a stylesheet the host would strip before drawing it, and iterates on the draft so far", async () => {
+    const hosted = JSON.stringify({ source: "graview.style(`:host { display: block; } .pg { display: grid; }`); graview.onProps(() => graview.render(graview.html`<div class=\"pg\"></div>`));", said: "" });
+    const fine = JSON.stringify({ source: "graview.style(`.pg { display: grid; }`); graview.onProps(() => graview.render(graview.html`<div class=\"pg\"></div>`));", said: "" });
+    const { ai, asked } = slots([hosted, fine], []);
+    let drawn = 0;
+    const manifest = forkManifest(part, { kinds: [], edges: [] })!;
+    const drafted = await draftPageView({ ai, part, manifest, mode: "describe", words: "bigger", current: "graview.render('old')", outline: "# Tasks", data: {}, judge: async () => (drawn++, []) });
+    expect(drafted.ok).toBe(true);
+    expect(drawn).toBe(1);
+    expect(String(asked[1]!.prompt["what_broke"])).toContain(":host");
+    expect(asked[0]!.prompt["your_view_so_far"]).toBe("graview.render('old')");
+  });
+});
+
+describe("a draft read against the page it replaces", () => {
+  const card = (label: string, top: number, left: number, size = 16) => ({ label, top, left, size });
+  const before: DrawnRead = { headings: ["Lists", "Someday"], records: [card("Write the brief", 100, 0), card("Book the hall", 140, 0)], text: "Lists Someday Write the brief Due Sep 3 Book the hall" };
+
+  it("finds what a draft lost, drew twice, or said as the computer keeps it", () => {
+    const after: DrawnRead = { headings: ["Lists", "Lists", "Someday"], records: [card("Write the brief", 100, 0)], text: "Lists Lists Someday Write the brief 2026-09-03 order 2 true" };
+    const found = drawnFindings(before, after, { fields: ["order", "due"] });
+    expect(found.some((one) => one.includes("“Book the hall”"))).toBe(true);
+    expect(found.some((one) => one.includes("drawn twice"))).toBe(true);
+    expect(found.some((one) => one.includes("2026-09-03"))).toBe(true);
+    expect(found.some((one) => one.includes("“true”"))).toBe(true);
+    expect(found.some((one) => one.includes("“order”"))).toBe(true);
+    expect(drawnFindings(before, { ...before, text: `${before.text} <section aria-labelledby="x"><h2>Today</h2>` }).some((one) => one.includes("markup as words"))).toBe(true);
+    expect(drawnFindings(before, before)).toEqual([]);
+  });
+
+  it("says what changed from the readings, never the model's words", () => {
+    const after: DrawnRead = { headings: ["Lists", "Someday"], records: [card("Book the hall", 100, 0, 20), card("Write the brief", 100, 300, 20)], text: before.text };
+    expect(describeChange("Lists", before, after)).toBe("Lists now show side by side, two to a line, in bigger type and in a new order.");
+    expect(describeChange("Lists", before, before)).toBeUndefined();
+  });
+
+  it("reads a script a model wrapped as a page would wrap it as the script inside", () => {
+    const wrapped = JSON.stringify({ source: "<script>\ngraview.onProps(() => graview.render(graview.html`<p>x</p>`));\n</script>", said: "" });
+    expect(readPageViewReply(wrapped)?.source).toBe("graview.onProps(() => graview.render(graview.html`<p>x</p>`));");
+  });
+
+  it("reads a stylesheet as the host's sanitizer does", () => {
+    expect(cssFindings("graview.style(`.a { color: var(--graview-ink); }`);")).toEqual([]);
+    expect(cssFindings("graview.style(`:host { display: block; }`);")[0]).toContain(":host");
   });
 });

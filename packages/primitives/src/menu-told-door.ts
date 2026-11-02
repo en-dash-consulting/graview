@@ -51,5 +51,5 @@ export function useToldSuggestions(ai: HostAi | undefined, store: Store<AnySchem
       live = false;
     };
   }, [told, typing, wanted, read, store, principal]);
-  return useMemo(() => (read && typing ? read.module.toldSuggestionsFrom(read.tellings, store, principal, words, on, most) : []), [read, typing, words, store, principal, on, most]);
+  return useMemo(() => (read ? (typing ? read.module.toldSuggestionsFrom(read.tellings, store, principal, words, on, most) : read.module.toldForHere(read.tellings, store, principal, on, 3)) : []), [read, typing, words, store, principal, on, most]);
 }

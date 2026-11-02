@@ -148,10 +148,9 @@ function ListOfView<S extends AnySchema>({ context, kind, view: View }: { readon
       <header style={{ display: "grid", gap: 4 }}>
         <HeadTrail context={context} />
         <PageTitle context={context}>{plural}</PageTitle>
-        <p style={{ margin: 0, color: "var(--graview-ink-muted)", fontSize: "0.875rem" }} data-testid="kind-pictures">
-          Also as:{" "}
-          <Link to={`/${pluralSlug(store.schema, kind)}?drawn=${BUILT_IN}`} style={{ color: "inherit" }} data-testid="built-in-list">
-            Built-in list
+        <p style={{ margin: 0, color: "var(--graview-ink-muted)", fontSize: "0.875rem" }} data-testid="kind-original">
+          <Link to={`/${pluralSlug(store.schema, kind)}?drawn=${BUILT_IN}`} style={{ color: "inherit" }} data-testid="built-in-list" aria-label={`The original ${plural} page`}>
+            Original
           </Link>
         </p>
       </header>

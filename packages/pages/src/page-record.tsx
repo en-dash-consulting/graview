@@ -217,10 +217,9 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             </Bleed>
           </DefaultViewElsewhere>
           {whole ? (
-            <p style={{ margin: "8px 0 0", color: "var(--graview-ink-muted)", fontSize: "0.875rem" }} data-testid="record-also-as">
-              Also as:{" "}
-              <Link to={`${recordPath(store.schema, facts.kind, id)}?drawn=built-in`} style={{ color: "inherit" }} data-testid="built-in-page">
-                Built-in page
+            <p style={{ margin: "8px 0 0", color: "var(--graview-ink-muted)", fontSize: "0.875rem" }} data-testid="record-original">
+              <Link to={`${recordPath(store.schema, facts.kind, id)}?drawn=built-in`} style={{ color: "inherit" }} data-testid="built-in-page" aria-label="The original page">
+                Original
               </Link>
             </p>
           ) : null}

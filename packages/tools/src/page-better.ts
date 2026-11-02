@@ -2,6 +2,7 @@ import type { GraviewDocument } from "@graview/core/document";
 import type { Decide } from "./fast.js";
 import type { HostAi, ThinkingProvider } from "./ai.js";
 import { thinkingOf } from "./inline-ai.js";
+import { cssFindings } from "./draft-check.js";
 import type { SectionMode, SectionStage } from "./section.js";
 
 /*
@@ -290,17 +291,18 @@ export function forkManifest(part: PagePartSaid, links: { readonly kinds: readon
 
 export const PAGE_VIEW_SYSTEM = [
   "You write a Graview worker view: one plain script, no imports and no build, that draws one page of an app through the global `graview`, in place of the page the app drew by itself.",
-  "The global: graview.style(css) a stylesheet; graview.onProps((props) => …) on every push of what it is shown; graview.render(graview.html`…`) draws markup, every ${value} escaped; graview.html`` nests.",
+  "The global: graview.style(css) a stylesheet; graview.onProps((props) => …) on every push of what it is shown; graview.render(graview.html`…`) draws markup, every ${value} escaped; graview.html`` nests: a list is ${items.map((one) => graview.html`<li>…</li>`)}. Never build HTML as a string or with join(): a string is drawn as its words.",
   "props.nodes holds the records a view of many is drawn for and those it reads; props.node the record a view of one is drawn for. A record is plain data: id, kind, label, and each field by name. props.edges are {kind, from, to}. props.choices[kind][field][option] is a choice's label.",
-  'Link to a record with <a data-record="${node.id}">…</a>. Give repeated rows data-key="${node.id}". Name each part a person would name with a heading, in a <section aria-labelledby="part-h"> whose heading has id="part-h"; never aria-label.',
-  "Style with var(--graview-ink), var(--graview-ink-muted), var(--graview-panel), var(--graview-edge), var(--graview-accent), var(--graview-ground), var(--graview-radius) — never colors of your own. Lay it out well at a phone's width and at a desk's. Set no height.",
-  "Never write the words import, export or require, nor <script>, <style>, or on…= attributes. Never style :host, ::slotted or ::part, nor use url(), @import or @font-face: style the view's own outer element instead.",
-  "You are told the page as it stands — its headings and what it shows — and the data it reads. Keep every heading it has (the same words) and show the same data, then change it as asked.",
-  'Answer with one JSON object and nothing else: {"source": "<the whole script>", "said": "<one sentence to the person saying what you changed>"}.',
+  'Link to a record with <a data-record="${node.id}">…</a>. Give repeated rows data-key="${node.id}". Name each part a person would name with a heading inside a <section aria-labelledby="x-h"> whose heading has id="x-h"; never aria-label.',
+  "The page draws its own title above your view: never draw the page's title again. Draw each other heading the page had, with the same words, and every record the page showed.",
+  "Say things in words a person reads: a date as the page said it (“Sep 3”, built with new Date(value).toLocaleDateString(props.locale, { month: \"short\", day: \"numeric\" })), never as stored (2026-09-03); never show a field's own name (order, done, holds), an id, true, false, null or undefined. Leave out a value the page did not show unless asked for it.",
+  "CSS the host keeps: plain rules on your own classes and elements, one level, and @media. Give your outer element a class (class=\"pg\") and style that: never :host, ::slotted or ::part, no url(), @import, @font-face, @keyframes or nesting. Colors, type and corners only through var(--graview-ink), var(--graview-ink-muted), var(--graview-panel), var(--graview-edge), var(--graview-accent), var(--graview-ground), var(--graview-radius). position may be static, relative, absolute or sticky. Set no height; lay it out well at a phone's width and at a desk's.",
+  "Never write the words import, export or require, nor <script>, <style>, or on…= attributes.",
+  'Answer with one JSON object and nothing else: {"source": "<the whole script>", "said": "<a few words on what you changed>"}.',
 ].join("\n");
 
-/** What the model is told of the page it rewrites as a view. */
-export function pageViewPrompt(ask: { readonly part: PagePartSaid; readonly manifest: ForkManifest; readonly mode: SectionMode; readonly words?: string; readonly highlighted?: readonly string[]; readonly outline: string; readonly data: unknown; readonly findings?: readonly string[]; readonly last?: unknown }): string {
+/** What the model is told of the page it rewrites as a view — or, with `current`, of the draft so far that it changes again. */
+export function pageViewPrompt(ask: { readonly part: PagePartSaid; readonly manifest: ForkManifest; readonly mode: SectionMode; readonly words?: string; readonly highlighted?: readonly string[]; readonly outline: string; readonly data: unknown; readonly keep?: PageViewKeeps; readonly current?: string; readonly findings?: readonly string[]; readonly last?: unknown }): string {
   const asked = ask.mode === "just" ? "Make this page better: easier to read at a glance, laid out cleanly, in the app's own look. Change no data it shows." : (ask.words ?? "").trim();
   return JSON.stringify({
     page: ask.part.name,
@@ -308,17 +310,28 @@ export function pageViewPrompt(ask: { readonly part: PagePartSaid; readonly mani
     asked,
     ...(ask.highlighted?.length ? { pointed_at: ask.highlighted } : {}),
     as_it_stands: ask.outline.slice(0, 4000),
+    ...(ask.keep ? { the_page_draws_its_title: ask.keep.title, keep_these_headings: ask.keep.headings, show_each_of_these_records: ask.keep.records } : {}),
+    ...(ask.current ? { your_view_so_far: ask.current.slice(0, 8000), change: "Change your view so far as asked; keep everything else of it." } : {}),
     data: ask.data,
     ...(ask.findings?.length ? { your_last_answer: ask.last, what_broke: ask.findings, repair: "Your last answer broke as said in what_broke. Answer again, fixing each one." } : {}),
   });
 }
 
-/** The model's view read: the script and the sentence; undefined when it is not one. */
+/** The model's view read: the script and its few words; undefined when it is not one. */
 export function readPageViewReply(text: string): { readonly source: string; readonly said: string } | undefined {
   const parsed = jsonOf(text);
-  const source = parsed?.["source"];
+  const given = parsed?.["source"];
+  // A script wrapped as a page would wrap it (`<script>…</script>`, a code fence) is the script inside.
+  const source = typeof given === "string" ? given.trim().replace(/^```(?:js|javascript)?\s*/i, "").replace(/\s*```$/, "").replace(/^<script[^>]*>\s*/i, "").replace(/\s*<\/script>\s*$/i, "") : undefined;
   if (typeof source !== "string" || !/graview\.(render|onProps)/.test(source)) return undefined;
-  return { source, said: typeof parsed!["said"] === "string" && (parsed!["said"] as string).trim() ? (parsed!["said"] as string).trim() : "Made it a view of its own." };
+  return { source, said: typeof parsed!["said"] === "string" ? (parsed!["said"] as string).trim() : "" };
+}
+
+/** What a new design must keep of the page: its title (drawn by the page, never again), its other headings, and the records it showed, by their words. */
+export interface PageViewKeeps {
+  readonly title: string;
+  readonly headings: readonly string[];
+  readonly records: readonly string[];
 }
 
 export interface DraftPageViewOptions {
@@ -332,47 +345,69 @@ export interface DraftPageViewOptions {
   readonly outline: string;
   /** The data it reads: the kind's fields and a few records. */
   readonly data: unknown;
-  /** THE PAGE'S JUDGMENT of a view: drawn as a draft, the host's own checks, compared with the page it replaces — the findings that keep it from being offered. */
+  /** The draft so far, changed again by `words` (a step on the bar). */
+  readonly current?: string;
+  /** What it must keep of the page, said to the model plainly. */
+  readonly keep?: PageViewKeeps;
+  /**
+   * THE PAGE'S JUDGMENT of a view: drawn where nobody sees it yet, the
+   * host's own checks, compared with the page it replaces — the findings
+   * that keep it from being shown. What the host would strip from its
+   * stylesheets is found before it is drawn at all (`cssFindings`).
+   */
   readonly judge: (source: string) => Promise<readonly string[]>;
-  /** Told when the first try failed and is handed back, with what broke. */
+  /** Told each time a try failed and is handed back, with what broke. */
   readonly repairing?: (findings: readonly string[]) => void;
 }
 
-export type DraftPageViewResult = { readonly ok: true; readonly source: string; readonly said: string; readonly repaired: boolean; readonly stages: readonly SectionStage[] } | { readonly ok: false; readonly refused: string; readonly stages: readonly SectionStage[] };
+/** Who is asked, try by try: the light model, the light one again with what broke, then the full one once — or the full one twice where it is all there is. */
+export function repairTries(light: ThinkingProvider | undefined, full: ThinkingProvider | undefined): ThinkingProvider[] {
+  if (light) return [light, light, ...(full && full !== light ? [full] : [])];
+  return full ? [full, full] : [];
+}
+
+/** What the card says where no version passed: plain, and never the findings. */
+export const COULD_NOT = "I couldn't make a version that looks right.";
+
+export type DraftPageViewResult =
+  | { readonly ok: true; readonly source: string; readonly said: string; readonly repaired: boolean; readonly tries: number; readonly stages: readonly SectionStage[] }
+  | { readonly ok: false; readonly refused: string; readonly findings: readonly string[]; readonly stages: readonly SectionStage[] };
 
 /**
- * THE PAGE AS A VIEW OF ITS OWN, revised as asked: the light model first
- * (the full one where its answer cannot be read), judged on the page; what
- * fails is handed back once to the full model, and refused in words if it
- * fails again.
+ * THE PAGE AS A VIEW OF ITS OWN, revised as asked: the light model first,
+ * judged where nobody sees it; what breaks is handed back to the light
+ * model once more, then to the full one once, with what broke. A version
+ * that never passes is refused in plain words (`COULD_NOT`), and nothing
+ * of it is shown.
  */
 export async function draftPageView(options: DraftPageViewOptions): Promise<DraftPageViewResult> {
   const stages: SectionStage[] = [];
   const light = options.ai.off ? undefined : options.ai.light;
   const full = thinkingOf(options.ai);
   const first = light ?? full;
-  if (!first) return { ok: false, refused: options.ai.withoutModel ?? "Making a page its own view needs AI, and none is on here.", stages };
+  if (!first) return { ok: false, refused: options.ai.withoutModel ?? "Changing how a page looks needs AI, and none is on here.", findings: [], stages };
   const ask = asker(stages);
-  const base = { part: options.part, manifest: options.manifest, mode: options.mode, outline: options.outline, data: options.data, ...(options.words ? { words: options.words } : {}), ...(options.highlighted ? { highlighted: options.highlighted } : {}) };
-  const read = async (provider: ThinkingProvider, stage: SectionStage["stage"], prompt: string) => {
-    const text = await ask(provider, stage, PAGE_VIEW_SYSTEM, prompt);
+  const base = { part: options.part, manifest: options.manifest, mode: options.mode, outline: options.outline, data: options.data, ...(options.words ? { words: options.words } : {}), ...(options.highlighted ? { highlighted: options.highlighted } : {}), ...(options.current ? { current: options.current } : {}), ...(options.keep ? { keep: options.keep } : {}) };
+  const read = async (provider: ThinkingProvider, prompt: string) => {
+    const text = await ask(provider, provider === light ? "light" : "thinking", PAGE_VIEW_SYSTEM, prompt);
     return text === undefined ? undefined : readPageViewReply(text);
   };
-  /*
-   * The light model first, as everywhere a card drafts: a whole page from a
-   * reasoning model took minutes where the light one took seconds. The full
-   * one where the light one's answer cannot be read, and to repair.
-   */
-  let view = await read(first, first === light ? "light" : "thinking", pageViewPrompt(base));
-  if (!view && light && full && full !== light) view = await read(full, "thinking", pageViewPrompt(base));
-  if (!view) return { ok: false, refused: "The model did not answer with a view of this page.", stages };
-  let findings = await options.judge(view.source);
-  if (findings.length === 0) return { ok: true, source: view.source, said: view.said, repaired: false, stages };
-  const repairer = full ?? first;
-  options.repairing?.(findings);
-  const again = await read(repairer, repairer === light ? "light" : "thinking", pageViewPrompt({ ...base, findings, last: { source: view.source.slice(0, 6000), said: view.said } }));
-  if (!again) return { ok: false, refused: `It could not be drawn without breaking: ${findings.join(" ")}`, stages };
-  findings = await options.judge(again.source);
-  if (findings.length > 0) return { ok: false, refused: `It could not be drawn without breaking: ${findings.join(" ")}`, stages };
-  return { ok: true, source: again.source, said: again.said, repaired: true, stages };
+  /* The light model, again with what broke, then the full one once: a whole page from a reasoning model takes minutes where the light one takes seconds. */
+  const tries = repairTries(light, full);
+  let findings: readonly string[] = [];
+  let last: { readonly source: string; readonly said: string } | undefined;
+  for (let at = 0; at < tries.length; at++) {
+    const provider = tries[at]!;
+    if (at > 0) options.repairing?.(findings);
+    const view = await read(provider, pageViewPrompt(at === 0 ? base : { ...base, findings, last: last ? { source: last.source.slice(0, 6000) } : undefined }));
+    if (!view) {
+      findings = ["The answer was not one JSON object with the whole script in `source`."];
+      continue;
+    }
+    last = view;
+    const stripped = cssFindings(view.source);
+    findings = stripped.length > 0 ? stripped : await options.judge(view.source);
+    if (findings.length === 0) return { ok: true, source: view.source, said: view.said, repaired: at > 0, tries: at + 1, stages };
+  }
+  return { ok: false, refused: COULD_NOT, findings, stages };
 }

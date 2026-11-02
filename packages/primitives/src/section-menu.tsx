@@ -2,7 +2,7 @@ import { retryingImport } from "@graview/core/retry";
 import type { AnySchema } from "@graview/core";
 import { viewPlaceOf } from "@graview/react/drawing";
 import { placeOfSection } from "./section-words.js";
-import { pageMayChange, pagePartOf, PARTS, type PagePart } from "./page-parts.js";
+import { nudgesFor, pageMayChange, pagePartOf, PARTS, type PagePart } from "./page-parts.js";
 import { aboutTheLook } from "@graview/tools/section";
 import { lazyModule, useGraview, type AiDesk, type GraviewContextValue, type MenuSection, type MenuTarget, type MenuViewSection } from "@graview/react/provider";
 
@@ -19,7 +19,8 @@ import { SectionOutline } from "./section-outline.js";
  */
 
 /** How the card was asked for. */
-export type SectionMode = "just" | "describe" | "highlight";
+/** How the card was asked for: at once, in words, by pointing — or opened to choose (Better UI with nothing typed). */
+export type SectionMode = "just" | "describe" | "highlight" | "choose";
 
 /** The card asked for: on which section of a view, or which part of a built-in page; how; and the words, where the menu was typed in. */
 export type SectionAsk = ({ readonly section: MenuViewSection; readonly part?: undefined } | { readonly part: PagePart; readonly section?: undefined }) & {
@@ -72,35 +73,28 @@ const Drawn = /* @__PURE__ */ drawn.part((module, props: SectionDrawnProps) => {
 /** What the menu's section reads of the provider as it opens: the desk, the host's views and its door to a change to the app. */
 export type SectionHere = Pick<GraviewContextValue<AnySchema>, "aiDesk" | "ai" | "keptViews" | "store" | "principal" | "onProposeChange" | "composeChange" | "app" | "views">;
 
-/** The three ways in, the same on a view's section and on a page's part. */
-const ways = (name: string, open: (mode: SectionMode) => () => void, takesWords: (words: string) => Promise<boolean>, prepare: () => void): MenuSection => ({
+/*
+ * ✨ BETTER UI, A WAY TO ASK UNDER THE MENU'S FIELD (Roadmap
+ * f-make-any-page-better): its button beside Chat, lit where the Fast slot
+ * reads typed words as about how the part looks (`aboutTheLook`); pressed
+ * with words, the card asks them at once; with none, it opens to choose —
+ * Just do it, Describe changes…, Highlight area….
+ */
+const betterMode = (here: SectionHere, name: string, open: (words?: string) => void, nudges: () => readonly string[], prepare: () => void): MenuSection => ({
   id: "make-better",
-  heading: `Make “${name}” better`,
-  // First: the menu was opened on it, and is named for it.
   at: "start",
-  items: [
-    { id: "section-just-do-it", label: "Just do it", hint: "You see it before it is kept", run: open("just") },
-    { id: "section-describe", label: "Describe changes…", run: open("describe") },
-    { id: "section-highlight", label: "Highlight area…", run: open("highlight") },
-  ],
+  mode: {
+    id: "better",
+    label: "Better UI",
+    mark: "✨",
+    claims: async (words) => (await aboutTheLook(here.ai, words, name)).about === "look",
+    open,
+    nudges,
+  },
   prepare,
-  takesWords,
 });
 
-/*
- * WORDS ABOUT THE LOOK (Roadmap f-make-any-page-better): words typed in the
- * menu are asked of the Fast slot — about how this looks or is laid out,
- * or about the records — and taken here when they are about the look, the
- * card opened with them already asked.
- */
-const lookWords = (here: SectionHere, name: string, ask: (words: string) => void) => async (words: string): Promise<boolean> => {
-  const routed = await aboutTheLook(here.ai, words, name);
-  if (routed.about !== "look") return false;
-  ask(words);
-  return true;
-};
-
-/** "Make “This week” better" for a menu opened on a section of a view, or "Make “Tasks” better" on a page's part, or nothing where it is not this seat's to offer. */
+/** ✨ Better UI for a menu opened on a section of a view or on a page's part, or nothing where it is not this seat's to offer. */
 export function sectionFor(target: MenuTarget, here: SectionHere): MenuSection | null {
   const { aiDesk, keptViews } = here;
   const section = target.section;
@@ -108,14 +102,14 @@ export function sectionFor(target: MenuTarget, here: SectionHere): MenuSection |
   if (section) {
     // Asked as the menu opens: the host says who may change views now, and the view's place must lend a revision.
     if (!keptViews?.revise || keptViews.current().may.views !== true || !viewPlaceOf(placeOfSection(section))) return null;
-    const open = (mode: SectionMode) => () => askSection(aiDesk, { section, mode, returnTo });
-    return ways(section.name, open, lookWords(here, section.name, (words) => askSection(aiDesk, { section, mode: "describe", words, returnTo })), () => drawn.prefetch());
+    const open = (words?: string) => askSection(aiDesk, words ? { section, mode: "describe", words, returnTo } : { section, mode: "choose", returnTo });
+    return betterMode(here, section.name, open, () => [`Make “${section.name}” easier to read at a glance`], () => drawn.prefetch());
   }
   const part = target.page && target.face === "pages" ? pagePartOf(target.page, here) : undefined;
   if (!part || !pageMayChange(part, here)) return null;
   PARTS.set(target.page!.at, part);
-  const open = (mode: SectionMode) => () => askSection(aiDesk, { part, mode, returnTo });
-  return ways(part.name, open, lookWords(here, part.name, (words) => askSection(aiDesk, { part, mode: "describe", words, returnTo })), () => drawn.prefetch());
+  const open = (words?: string) => askSection(aiDesk, words ? { part, mode: "describe", words, returnTo } : { part, mode: "choose", returnTo });
+  return betterMode(here, part.name, open, () => nudgesFor(part, here), () => drawn.prefetch());
 }
 
 /** The elements of the page's part a menu is open on, where "Make … better" named one. */

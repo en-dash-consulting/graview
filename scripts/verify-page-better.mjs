@@ -13,13 +13,20 @@
  * of its own from the page as it stands.
  *
  * Claims (docs/page-better.json):
- *   aTasksRowOffersMakeTheListBetter
- *   theTasksHeadingOffersMakeTheListBetter
- *   aTasksPageOffersMakeItBetter
- *   theHomeOffersMakeItBetter
- *   lookWordsTypedInTheMenuGoToMakeBetterAndRecordWordsToTheQuickAsk
- *   aSpecDraftShowsKeepLandsOneChangeAndUndoTakesItBack
- *   whatTheSpecCannotSayIsOfferedAsItsOwnViewKeptAsThePagesView
+ *   theFieldIsFirstAndFocused
+ *   theTwoWaysAreButtonsWithNamesUnderTheField
+ *   suggestedFillsWithoutMovingTheMenusTop
+ *   moreRevealsTheRest
+ *   theMenuOffersBetterUiOnTheHeadingATasksPageAndHome
+ *   theLitWayFollowsTheFastSlotOnTypedWords
+ *   aSettingsDraftIsShownUncoveredKeptAsOneChangeAndUndone
+ *   aBrokenDraftIsNeverShown
+ *   aNewDesignIsRepairedUnderCoverThenGivenThePage
+ *   beforeAndAfterToggleTheOriginalInPlace
+ *   iteratingMakesASecondStepAndStepBackRestoresTheFirst
+ *   keepMakesItThePageAndOneUndoTakesItAway
+ *   aBetterUiSuggestionOpensItsCardWithADraft
+ *   onAPhoneTheSameLayoutFitsAsASheet
  *   aSeatThatMayNotChangeTheAppIsNotOffered
  */
 import { createServer } from "node:http";
@@ -65,25 +72,42 @@ const SEED = {
 
 /*
  * THE FAKE HOST AI. The Fast slot: words about the look ("bigger", "show",
- * "look", "cards") are the look's, others the records'; "bigger" and "side
- * by side" need drawing the spec has none for. The light slot drafts the
- * row's spec with the due date in it. The full slot writes the page as a
- * view of cards, every heading it was told drawn as it was.
+ * "look", "cards", "smaller") are the look's, others the records'; "bigger"
+ * and "side by side" need drawing the settings have no word for; Suggested
+ * picks the last candidate first and tags "Show …"/"Sort …"/"Make …" as the
+ * look's — after a beat, as a real model would. The light slot drafts the
+ * row's settings with the due date in it, and writes the page as a new
+ * design of cards as `window.__viewScenario` says: "good", "broken-first"
+ * (the first try loses a record, the repair keeps it) or "always-broken".
  */
 const FAKE_AI = () => {
   const asked = (window.__pageAsked = []);
-  const choice = (key, choice) => ({ type: "choice", choice, confidence: 0.92, probabilities: { [choice]: 0.92 } });
+  window.__viewScenario = "good";
+  const choice = (choice, chance = 0.92) => ({ type: "choice", choice, confidence: chance, probabilities: { [choice]: chance } });
   const decide = async (state, questions) => {
     asked.push({ slot: "fast", state, keys: Object.keys(questions) });
     const answers = {};
-    for (const key of Object.keys(questions)) {
+    if (questions.pick) await new Promise((done) => setTimeout(done, 600));
+    for (const [key, question] of Object.entries(questions)) {
       const words = String(state.typed ?? state.asked ?? "");
-      if (key === "about") answers[key] = choice(key, /look|bigger|show|cards|rows|nicer/.test(words) ? "look" : "records");
-      else if (key === "can") answers[key] = choice(key, /bigger|side by side|colou?r/.test(words) ? "drawing" : "spec");
-      else answers[key] = choice(key, Object.keys(questions[key].criteria ?? { none: 1 }).at(-1));
+      if (key === "about") answers[key] = choice(/look|bigger|smaller|show|cards|rows|nicer/.test(words) ? "look" : "records");
+      else if (key === "can") answers[key] = choice(/bigger|side by side|colou?r|smaller/.test(words) ? "drawing" : "spec");
+      else if (key === "pick") {
+        const keys = Object.keys(question.criteria);
+        answers[key] = { type: "choice", choice: keys.at(-1), confidence: 0.6, probabilities: Object.fromEntries(keys.map((one, at) => [one, (at + 1) / keys.length])) };
+      } else if (key.startsWith("about_")) answers[key] = choice(/^(Show|Sort|Make)\b/.test(String(question.instructions).replace(/^Is “/, "")) ? "look" : "records");
+      else answers[key] = choice(Object.keys(question.criteria ?? { none: 1 }).at(-1));
     }
     return { answers, usage: { inputTokens: 10, outputTokens: 2 } };
   };
+  const view = ({ lose, small, card }) =>
+    [
+      `graview.style(\`.pg { display: grid; gap: 12px; } .pb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; } .pb-card { display: block; padding: 16px; font-size: ${small ? "0.875rem" : "1.375rem"}; border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); background: var(--graview-panel); }\`);`,
+      "graview.onProps((props) => {",
+      `  const tasks = props.nodes.filter((node) => node.kind === 'task')${lose ? ".slice(1)" : ""};`,
+      `  graview.render(graview.html\`<div class="pg"><div class="pb-grid">\${tasks.map((task) => graview.html\`<a class="pb-card" data-key="\${task.id}" data-record="\${task.id}">\${task.label}</a>\`)}</div></div>\`);`,
+      "});",
+    ].join("\n") + (card ? "" : "");
   const think = (slot) => async ({ prompt }) => {
     let parsed;
     try {
@@ -92,17 +116,12 @@ const FAKE_AI = () => {
       return { text: "I can only answer about this page." };
     }
     asked.push({ slot, ...parsed });
-    if (parsed.now !== undefined) return { text: JSON.stringify({ edits: [{ op: "set-view", kind: "task", slot: "row", blocks: [{ title: "{label}" }, { badge: "{status}" }, { field: "due", as: "date", label: "Due" }] }], said: "Each row shows its status and when it is due." }) };
+    if (parsed.now !== undefined) return { text: JSON.stringify({ edits: [{ op: "set-view", kind: "task", slot: "row", blocks: [{ title: "{label}" }, { badge: "{status}" }, { field: "due", as: "date", label: "Due" }] }], said: "Each row looks modern and friendly now." }) };
     if (parsed.as_it_stands !== undefined) {
-      const headings = String(parsed.as_it_stands).split("\n").filter((line) => line.startsWith("#")).map((line) => { const level = line.match(/^#+/)[0].length; return `<h${level}>${line.replace(/^#+\s*/, "")}</h${level}>`; }).join("");
-      const source = [
-        "graview.style(`.pb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; } .pb-card { display: block; padding: 16px; font-size: 1.25rem; border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); background: var(--graview-panel); }`);",
-        "graview.onProps((props) => {",
-        "  const tasks = props.nodes.filter((node) => node.kind === 'task');",
-        `  graview.render(graview.html\`<div class="pb-page">${headings.replace(/`/g, "")}<div class="pb-grid">\${tasks.map((task) => graview.html\`<a class="pb-card" data-key="\${task.id}" data-record="\${task.id}">\${task.label}</a>\`)}</div></div>\`);`,
-        "});",
-      ].join("\n");
-      return { text: JSON.stringify({ source, said: "The tasks are big cards, side by side." }) };
+      const scenario = window.__viewScenario;
+      const repairing = Array.isArray(parsed.what_broke);
+      const lose = scenario === "always-broken" || (scenario === "broken-first" && !repairing);
+      return { text: JSON.stringify({ source: view({ lose, small: Boolean(parsed.your_view_so_far) }), said: "Clean cards, a friendly intro, looks modern." }) };
     }
     return { text: "{}" };
   };
@@ -206,7 +225,11 @@ async function serveHost() {
 const URL_OF = (path, query = "") => `http://localhost:${portFor("page-better-host")}${BASE}${path}${query}`;
 const MENU = '[data-testid="context-menu"]';
 const CARD = '[data-testid="section-card"]';
+const BAR = '[data-better-bar]';
 const MAIN = "[data-graview-page-main]";
+const ROW = "[data-graview-record] a, [data-graview-listed] a";
+/* Words no person should read on the card or the bar. */
+const JARGON = /own view|\bhost\b|stylesheet|\bspec\b|also as|worker|\bcss\b|manifest/i;
 
 async function shot(page, name) {
   if (!SHOTS) return;
@@ -231,28 +254,72 @@ async function menuOn(page, selector) {
   await page.waitForSelector(MENU, { timeout: 10_000 });
 }
 
-/** What the menu offers to make better: its heading and its rows. */
-const offered = (page) =>
+/** What the menu shows, top to bottom: its title, the field and where the keyboard is, the two ways and which is lit, Suggested, the acts, More…. */
+const menuSays = (page) =>
   page.evaluate(() => {
     const menu = document.querySelector('[data-testid="context-menu"]');
-    const section = menu?.querySelector('[data-menu-section="make-better"]');
-    return { heading: section?.textContent ?? null, rows: [...(section?.querySelectorAll("[data-menu-item]") ?? [])].map((row) => row.getAttribute("data-menu-item")), outlined: document.querySelector('[data-testid="section-outline"]') !== null };
+    const field = menu?.querySelector('[data-testid="menu-type"]');
+    const order = [...(menu?.querySelectorAll('[data-testid="menu-type"], [data-testid="menu-modes"], [data-menu-section="suggested"], [data-testid="affordances"], [data-menu-item="more"]') ?? [])].map((one) => one.getAttribute("data-testid") ?? one.getAttribute("data-menu-section") ?? one.getAttribute("data-menu-item"));
+    const modes = [...(menu?.querySelectorAll("[data-menu-mode]") ?? [])].map((one) => ({ mode: one.getAttribute("data-menu-mode"), name: one.getAttribute("aria-label"), pressed: one.getAttribute("aria-pressed"), tag: one.tagName }));
+    const suggested = [...(menu?.querySelectorAll('[data-menu-section="suggested"] [data-menu-item]') ?? [])].map((one) => ({ text: one.textContent.trim(), mode: one.getAttribute("data-suggested-mode") }));
+    const box = menu?.getBoundingClientRect();
+    return {
+      title: menu?.querySelector("strong")?.textContent ?? null,
+      placeholder: field?.getAttribute("placeholder") ?? null,
+      focused: document.activeElement === field,
+      order,
+      modes,
+      suggested,
+      acts: [...(menu?.querySelectorAll("[data-affordance]:not([disabled])") ?? [])].filter((one) => !one.closest("[hidden]")).map((one) => one.textContent.trim()),
+      more: Boolean(menu?.querySelector('[data-menu-item="more"]')),
+      rest: [...(menu?.querySelectorAll("[data-menu-item]") ?? [])].filter((one) => !one.closest("[hidden]")).map((one) => one.getAttribute("data-menu-item")),
+      heading: menu?.querySelector('[data-menu-section="make-better"]')?.textContent ?? null,
+      box: box ? { top: Math.round(box.top), left: Math.round(box.left), right: Math.round(box.right), bottom: Math.round(box.bottom), width: Math.round(box.width) } : null,
+    };
   });
-const threeWays = (seen) => seen.rows.join() === "section-just-do-it,section-describe,section-highlight";
+const offersBetter = (seen) => seen.modes.some((one) => one.mode === "better" && one.tag === "BUTTON" && one.name === "Better UI") && seen.modes.some((one) => one.mode === "chat" && one.name === "Chat");
 const settled = (page, phase) => page.waitForSelector(`${CARD}[data-section-phase="${phase}"]`, { timeout: 30_000 });
 
-/** Types words into the menu's field and presses Enter: the row lit, or the words told. */
+/** Types words into the menu's field, waits for the Fast slot, and says which way is lit. */
 async function typeInMenu(page, words) {
   await page.focus(`${MENU} [data-testid="menu-type"]`);
-  await page.keyboard.type(words, { delay: 20 });
-  await page.waitForTimeout(400);
-  const row = await page.waitForSelector(`${MENU} [data-menu-item="ask-typed"]`, { timeout: 5_000 }).catch(() => null);
-  if (!row) throw new Error(`no "Tell Graview" row; the menu says: ${await page.textContent(MENU)} · the keyboard is on ${await page.evaluate(() => document.activeElement?.outerHTML?.slice(0, 200))}`);
-  await row.click();
+  await page.keyboard.type(words, { delay: 15 });
+  await page.waitForTimeout(700);
+  return page.evaluate(() => document.querySelector('[data-menu-mode][aria-pressed="true"]')?.getAttribute("data-menu-mode") ?? null);
 }
 
 /** The rows the list page draws now, by their words. */
 const rows = (page) => page.$$eval(`${MAIN} [data-graview-record], ${MAIN} [data-graview-listed]`, (all) => all.map((one) => one.textContent.replace(/\s+/g, " ").trim()));
+/** Every word the card or the bar shows a person now. */
+const cardWords = (page) => page.evaluate(() => [...document.querySelectorAll('[data-testid="section-card"], [data-testid="redesigning"]')].map((one) => one.innerText).join(" | "));
+/** Whether the bar stands clear of the part it changed: their boxes in the window do not meet. */
+const barClear = (page) =>
+  page.evaluate(() => {
+    const bar = document.querySelector("[data-better-bar]")?.getBoundingClientRect();
+    const part = (document.querySelector('[data-testid="list-view"]') ?? document.querySelector('[data-testid="records"]') ?? document.querySelector("[data-graview-page-main]"))?.getBoundingClientRect();
+    if (!bar || !part) return { bar: Boolean(bar), part: Boolean(part), clear: false };
+    const meet = bar.left < part.right && bar.right > part.left && bar.top < part.bottom && bar.bottom > part.top;
+    return { bar: { top: Math.round(bar.top), bottom: Math.round(bar.bottom) }, part: { top: Math.round(part.top), bottom: Math.round(part.bottom) }, clear: !meet, inWindow: bar.bottom <= innerHeight && bar.left >= 0 && bar.right <= document.documentElement.clientWidth };
+  });
+
+/**
+ * Watches, every frame, for a draft seen uncovered before it passed: a new
+ * design's drawing on the page while no cover hides it and the bar does
+ * not yet offer it. Read back with `seenBroken`.
+ */
+const watchUncovered = (page) =>
+  page.evaluate(() => {
+    window.__uncovered = [];
+    const look = () => {
+      const region = document.querySelector('[data-worker-view="task-list"]');
+      const covered = document.querySelector("[data-graview-redesigning]");
+      const offered = document.querySelector('[data-better-bar][data-section-phase="view"]');
+      if (region && !covered && !offered && region.getBoundingClientRect().height > 0) window.__uncovered.push(Date.now());
+      window.__watching = requestAnimationFrame(look);
+    };
+    look();
+  });
+const seenBroken = (page) => page.evaluate(() => (cancelAnimationFrame(window.__watching), window.__uncovered.length));
 
 try {
   host = await serveHost();
@@ -264,170 +331,308 @@ try {
   page.on("console", (message) => message.type() === "error" && consoled.push(message.text().slice(0, 300)));
   await ready(page, "/tasks");
 
-  reach("aTasksRowOffersMakeTheListBetter");
+  reach("theFieldIsFirstAndFocused");
   {
-    await menuOn(page, "[data-graview-record] a, [data-graview-listed] a");
-    const seen = await offered(page);
+    await menuOn(page, ROW);
+    const seen = await menuSays(page);
     await shot(page, "menu-on-a-row");
-    report.checks.aTasksRowOffersMakeTheListBetter = { ...seen, ok: /Make “Tasks” better/.test(seen.heading ?? "") && threeWays(seen) && seen.outlined };
+    report.checks.theFieldIsFirstAndFocused = { ...seen, ok: seen.order[0] === "menu-type" && seen.placeholder === "Tell Graview what you want…" && seen.focused && seen.heading === null };
   }
 
-  reach("theTasksHeadingOffersMakeTheListBetter");
+  reach("theTwoWaysAreButtonsWithNamesUnderTheField");
   {
-    await menuOn(page, "[data-graview-page-title]");
-    const seen = await offered(page);
-    report.checks.theTasksHeadingOffersMakeTheListBetter = { ...seen, ok: /Make “Tasks” better/.test(seen.heading ?? "") && threeWays(seen) };
+    const seen = await menuSays(page);
+    report.checks.theTwoWaysAreButtonsWithNamesUnderTheField = { modes: seen.modes, order: seen.order, ok: offersBetter(seen) && seen.order[1] === "menu-modes" && seen.modes.some((one) => one.pressed === "true") };
+  }
+
+  reach("suggestedFillsWithoutMovingTheMenusTop");
+  {
+    await page.keyboard.press("Escape");
+    await page.waitForSelector(MENU, { state: "detached" }).catch(() => {});
+    const box = await page.locator(`${MAIN} ${ROW}`).first().boundingBox();
+    await page.mouse.click(Math.round(box.x + 12), Math.round(box.y + box.height / 2), { button: "right" });
+    await page.waitForSelector(MENU, { timeout: 10_000 });
+    const first = await menuSays(page);
+    await page.waitForFunction(() => window.__pageAsked.some((one) => one.slot === "fast" && one.keys.includes("pick")), null, { timeout: 10_000 });
+    await page.waitForTimeout(900);
+    const later = await menuSays(page);
+    await shot(page, "menu-suggested");
+    report.checks.suggestedFillsWithoutMovingTheMenusTop = {
+      first: { box: first.box, suggested: first.suggested },
+      later: { box: later.box, suggested: later.suggested },
+      ok:
+        later.suggested.length >= 2 &&
+        later.suggested.length <= 3 &&
+        later.suggested.every((one) => one.mode === "chat" || one.mode === "better") &&
+        later.suggested.some((one) => one.mode === "better") &&
+        first.box?.top === later.box?.top &&
+        first.box?.left === later.box?.left &&
+        later.suggested.every((one) => !/last time/i.test(one.text)),
+    };
+  }
+
+  reach("moreRevealsTheRest");
+  {
+    const before = await menuSays(page);
+    await page.click(`${MENU} [data-menu-item="more"]`);
+    await page.waitForTimeout(200);
+    const after = await menuSays(page);
+    const rest = await page.evaluate(() => [...document.querySelectorAll('[data-testid="context-menu"] [data-menu-item]')].filter((one) => !one.closest("[hidden]")).map((one) => one.getAttribute("data-menu-item")));
+    const restBefore = before.rest;
+    report.checks.moreRevealsTheRest = { actsBefore: before.acts, actsAfter: after.acts, restBefore, rest, ok: before.more && before.acts.length <= 4 && !restBefore.includes("copy-link") && !after.more && after.acts.length > before.acts.length && rest.includes("copy-link") };
     await page.keyboard.press("Escape");
   }
 
-  reach("aTasksPageOffersMakeItBetter");
+  reach("theMenuOffersBetterUiOnTheHeadingATasksPageAndHome");
   {
+    await menuOn(page, "[data-graview-page-title]");
+    const heading = await menuSays(page);
+    await page.keyboard.press("Escape");
     await page.evaluate(() => window.__handle.setPath("/tasks/t1"));
     await page.waitForFunction(() => document.querySelector("[data-graview-page-main] [data-graview-page-title]")?.textContent?.includes("Write the brief"), null, { timeout: 15_000 });
     await menuOn(page, "[data-graview-page-title]");
-    const seen = await offered(page);
+    const record = await menuSays(page);
     await shot(page, "menu-on-a-task");
-    report.checks.aTasksPageOffersMakeItBetter = { ...seen, ok: /Make “Task page” better/.test(seen.heading ?? "") && threeWays(seen) };
     await page.keyboard.press("Escape");
-  }
-
-  reach("theHomeOffersMakeItBetter");
-  {
     await page.evaluate(() => window.__handle.setPath("/"));
     await page.waitForFunction(() => location.pathname.replace(/\/$/, "") === "/better", null, { timeout: 15_000 });
-    await page.waitForSelector(MAIN, { timeout: 15_000 });
     await page.waitForTimeout(300);
     const box = await page.locator(MAIN).first().boundingBox();
     await page.mouse.click(Math.round(box.x + 24), Math.round(box.y + 24), { button: "right" });
     await page.waitForSelector(MENU, { timeout: 10_000 });
-    const seen = await offered(page);
-    report.checks.theHomeOffersMakeItBetter = { ...seen, path: await page.evaluate(() => location.pathname), ok: /Make “Home” better/.test(seen.heading ?? "") && threeWays(seen) };
+    const home = await menuSays(page);
+    await page.click(`${MENU} [data-menu-mode="better"]`);
+    await settled(page, "choose");
+    const card = await page.evaluate(() => document.querySelector('[data-testid="section-card"]')?.innerText ?? "");
     await page.keyboard.press("Escape");
+    report.checks.theMenuOffersBetterUiOnTheHeadingATasksPageAndHome = {
+      heading: heading.modes,
+      record: record.modes,
+      home: home.modes,
+      card,
+      ok: offersBetter(heading) && offersBetter(record) && offersBetter(home) && /Change how “Home” looks/.test(card) && /Just do it/.test(card) && /Describe changes/.test(card) && /Highlight area/.test(card),
+    };
   }
 
-  reach("lookWordsTypedInTheMenuGoToMakeBetterAndRecordWordsToTheQuickAsk");
+  reach("theLitWayFollowsTheFastSlotOnTypedWords");
   {
     await page.evaluate(() => window.__handle.setPath("/tasks"));
     await page.waitForFunction(() => document.querySelector("[data-graview-page-main] [data-graview-page-title]")?.textContent?.trim() === "Tasks", null, { timeout: 15_000 });
-    // Record words first: the quick ask's, never the page's card.
-    await menuOn(page, "[data-graview-record] a, [data-graview-listed] a");
-    await typeInMenu(page, "close these");
+    await menuOn(page, ROW);
+    const recordsLit = await typeInMenu(page, "close these");
+    await page.keyboard.press("Enter");
     await page.waitForSelector('[data-testid="quick-ask"]', { timeout: 15_000 });
     const recordsWent = { quickAsk: true, card: (await page.$(CARD)) !== null };
     await page.click('[data-testid="quick-ask-close"]').catch(() => page.keyboard.press("Escape"));
     await page.waitForSelector('[data-testid="quick-ask"]', { state: "detached", timeout: 5_000 }).catch(() => {});
-    const rowsBefore = await rows(page);
-    await menuOn(page, "[data-graview-record] a, [data-graview-listed] a");
-    await typeInMenu(page, "show the due date on each row");
-    await page.waitForSelector(`${CARD}[data-page-card]`, { timeout: 15_000 });
-    const looked = { card: true, quickAsk: (await page.$('[data-testid="quick-ask"]')) !== null, routedBy: await page.evaluate(() => window.__pageAsked.filter((one) => one.slot === "fast" && one.keys.includes("about")).at(-1)?.state ?? null) };
-    report.checks.lookWordsTypedInTheMenuGoToMakeBetterAndRecordWordsToTheQuickAsk = {
-      recordsWent,
-      looked,
-      ok: recordsWent.quickAsk && !recordsWent.card && looked.card && !looked.quickAsk && looked.routedBy?.typed === "show the due date on each row",
-    };
+    await menuOn(page, ROW);
+    const lookLit = await typeInMenu(page, "show the due date on each row");
+    await shot(page, "menu-better-lit");
+    report.checks.theLitWayFollowsTheFastSlotOnTypedWords = { recordsLit, lookLit, recordsWent, ok: recordsLit === "chat" && lookLit === "better" && recordsWent.quickAsk && !recordsWent.card };
+  }
 
-    reach("aSpecDraftShowsKeepLandsOneChangeAndUndoTakesItBack");
+  reach("aSettingsDraftIsShownUncoveredKeptAsOneChangeAndUndone");
+  {
+    const rowsBefore = await rows(page);
+    await page.keyboard.press("Enter");
+    await page.waitForSelector(`${CARD}[data-page-card], ${BAR}`, { timeout: 15_000 });
     await settled(page, "spec");
     const drafted = await rows(page);
-    const draftLine = await page.textContent('[data-testid="section-draft-line"]');
-    const steps = await page.$$eval('[data-testid="section-steps"] li', (all) => all.map((one) => one.textContent));
-    const asked = await page.evaluate(() => window.__pageAsked.filter((one) => one.slot !== "fast" && one.now !== undefined).map((one) => one.slot));
+    const said = await page.textContent('[data-testid="section-status"]');
+    const clear = await barClear(page);
+    const words = await cardWords(page);
     const during = await page.evaluate(() => ({ drafts: window.__changes.drafts, applied: window.__changes.applied }));
-    await shot(page, "spec-draft");
+    await shot(page, "settings-draft");
     await page.click('[data-testid="section-keep"]');
     await settled(page, "kept");
     const kept = await page.evaluate(() => ({ applied: window.__changes.applied, row: window.__changes.document().views?.task?.row ?? null }));
-    const keptRows = await rows(page);
-    const said = await page.textContent('[data-testid="section-status"]');
     await page.click('[data-testid="section-undo"]');
     await settled(page, "undone");
     await page.waitForTimeout(300);
     const back = await page.evaluate(() => ({ undone: window.__changes.undone, row: window.__changes.document().views?.task?.row ?? null }));
     const backRows = await rows(page);
-    report.checks.aSpecDraftShowsKeepLandsOneChangeAndUndoTakesItBack = {
-      rowsBefore,
-      drafted,
-      draftLine,
-      steps,
-      asked,
+    report.checks.aSettingsDraftIsShownUncoveredKeptAsOneChangeAndUndone = {
+      said,
+      clear,
       during,
       kept,
-      keptRows,
-      said,
       back,
-      backRows,
-      ok:
-        asked.join() === "light" &&
-        during.drafts === 1 &&
-        during.applied === 0 &&
-        /Draft — shown on this page, not kept/.test(draftLine ?? "") &&
-        drafted.join("|") !== rowsBefore.join("|") &&
-        kept.applied === 1 &&
-        Array.isArray(kept.row) &&
-        keptRows.join("|") === drafted.join("|") &&
-        /^Kept\./.test(said ?? "") &&
-        back.undone === 1 &&
-        back.row === null &&
-        backRows.join("|") === rowsBefore.join("|"),
+      ok: during.drafts >= 1 && during.applied === 0 && drafted.join("|") !== rowsBefore.join("|") && !/modern and friendly/.test(said ?? "") && clear.clear && kept.applied === 1 && Array.isArray(kept.row) && back.undone === 1 && back.row === null && backRows.join("|") === rowsBefore.join("|") && !JARGON.test(words),
     };
-    await page.keyboard.press("Escape");
-    await page.waitForSelector(CARD, { state: "detached" }).catch(() => {});
+    await page.click('[data-testid="section-close"]').catch(() => page.keyboard.press("Escape"));
   }
 
-  reach("whatTheSpecCannotSayIsOfferedAsItsOwnViewKeptAsThePagesView");
+  reach("aBrokenDraftIsNeverShown");
   {
-    await menuOn(page, "[data-graview-record] a, [data-graview-listed] a");
-    await page.click(`${MENU} [data-menu-item="section-describe"]`);
+    await page.evaluate(() => (window.__viewScenario = "always-broken"));
+    await menuOn(page, ROW);
+    await page.click(`${MENU} [data-menu-mode="better"]`);
+    await settled(page, "choose");
+    await page.click('[data-testid="section-describe"]');
     await settled(page, "asking");
     await page.keyboard.type("make the cards bigger and side by side");
     await page.keyboard.press("Enter");
-    await settled(page, "own");
+    await settled(page, "design");
     const question = await page.textContent('[data-testid="section-own-view"]');
-    await shot(page, "own-view-question");
+    await watchUncovered(page);
     await page.click('[data-testid="section-own-yes"]');
+    await settled(page, "refused");
+    const uncovered = await seenBroken(page);
+    const refused = await page.textContent('[data-testid="section-status"]');
+    const left = await page.evaluate(() => ({ region: document.querySelector('[data-worker-view="task-list"]') !== null, listed: window.__keeper.forked().length }));
+    const tries = await page.evaluate(() => window.__pageAsked.filter((one) => one.as_it_stands !== undefined).map((one) => one.slot));
+    const words = await cardWords(page);
+    await shot(page, "broken-refused");
+    report.checks.aBrokenDraftIsNeverShown = {
+      question,
+      uncovered,
+      refused,
+      left,
+      tries,
+      ok: uncovered === 0 && refused === "I couldn't make a version that looks right." && !left.region && left.listed === 0 && tries.join() === "light,light,thinking" && !JARGON.test(`${question} ${words}`) && (await page.$('[data-testid="section-iterate"]')) !== null,
+    };
+    await page.click('[data-testid="section-close"]');
+  }
+
+  reach("aNewDesignIsRepairedUnderCoverThenGivenThePage");
+  {
+    await page.evaluate(() => ((window.__viewScenario = "broken-first"), (window.__pageAsked.length = 0)));
+    await menuOn(page, ROW);
+    await page.click(`${MENU} [data-menu-mode="better"]`);
+    await settled(page, "choose");
+    await page.click('[data-testid="section-describe"]');
+    await settled(page, "asking");
+    await page.keyboard.type("make the cards bigger and side by side");
+    await page.keyboard.press("Enter");
+    await settled(page, "design");
+    await watchUncovered(page);
+    await page.click('[data-testid="section-own-yes"]');
+    await page.waitForSelector('[data-testid="redesigning"]', { timeout: 10_000 });
+    const cover = await page.textContent('[data-testid="redesigning"]');
+    await shot(page, "redesigning");
     await settled(page, "view");
-    const drafted = await page.evaluate(() => ({
-      region: document.querySelector('[data-worker-view="task-list"]') !== null,
-      cards: document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelectorAll(".pb-card").length ?? 0,
-      listed: window.__keeper.forked().map((one) => ({ name: one.manifest.name, draft: one.draft === true })),
-    }));
-    const draftLine = await page.textContent('[data-testid="section-draft-line"]');
-    await shot(page, "own-view-draft");
+    const uncovered = await seenBroken(page);
+    const said = await page.textContent('[data-testid="section-status"]');
+    const clear = await barClear(page);
+    const words = await cardWords(page);
+    const drawn = await page.evaluate(() => document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelectorAll(".pb-card").length ?? 0);
+    await shot(page, "design-draft");
+    report.checks.aNewDesignIsRepairedUnderCoverThenGivenThePage = {
+      cover,
+      uncovered,
+      said,
+      clear,
+      drawn,
+      ok: /Graview is redesigning “Tasks”/.test(cover ?? "") && uncovered === 0 && drawn === 3 && /^Tasks now show/.test(said ?? "") && !/modern|friendly/.test(said ?? "") && clear.clear && clear.inWindow && !JARGON.test(words),
+    };
+  }
+
+  reach("beforeAndAfterToggleTheOriginalInPlace");
+  {
+    await page.click('[data-testid="section-before"]');
+    await page.waitForTimeout(400);
+    const before = await page.evaluate(() => ({ view: document.querySelector('[data-worker-view="task-list"]') !== null, rows: document.querySelectorAll("[data-graview-page-main] [data-graview-record], [data-graview-page-main] [data-graview-listed]").length, pressed: document.querySelector('[data-testid="section-before"]')?.getAttribute("aria-pressed") }));
+    await shot(page, "before");
+    await page.click('[data-testid="section-after"]');
+    await page.waitForFunction(() => document.querySelector('[data-worker-view="task-list"]')?.shadowRoot?.querySelector(".pb-card"), null, { timeout: 10_000 });
+    const after = await page.evaluate(() => ({ view: document.querySelector('[data-worker-view="task-list"]') !== null, pressed: document.querySelector('[data-testid="section-after"]')?.getAttribute("aria-pressed") }));
+    report.checks.beforeAndAfterToggleTheOriginalInPlace = { before, after, ok: !before.view && before.rows === 3 && before.pressed === "true" && after.view && after.pressed === "true" };
+  }
+
+  reach("iteratingMakesASecondStepAndStepBackRestoresTheFirst");
+  {
+    const size = () => page.evaluate(() => Number.parseFloat(getComputedStyle(document.querySelector('[data-worker-view="task-list"]').shadowRoot.querySelector(".pb-card")).fontSize));
+    const first = await size();
+    await page.fill('[data-testid="section-iterate"]', "make them smaller");
+    await page.press('[data-testid="section-iterate"]', "Enter");
+    await page.waitForFunction(() => document.querySelector('[data-testid="section-step"]')?.textContent === "Step 2 of 2", null, { timeout: 20_000 });
+    await page.waitForTimeout(300);
+    const second = await size();
+    const said = await page.textContent('[data-testid="section-status"]');
+    await shot(page, "second-step");
+    await page.click('[data-testid="section-step-back"]');
+    await page.waitForFunction(() => !document.querySelector('[data-testid="section-step"]'), null, { timeout: 10_000 });
+    await page.waitForTimeout(400);
+    const back = await size();
+    report.checks.iteratingMakesASecondStepAndStepBackRestoresTheFirst = { first, second, back, said, ok: second < first && back === first };
+  }
+
+  reach("keepMakesItThePageAndOneUndoTakesItAway");
+  {
     await page.click('[data-testid="section-keep"]');
     await settled(page, "kept");
     await page.waitForTimeout(300);
-    const kept = await page.evaluate(() => ({
-      listed: window.__keeper.forked().map((one) => ({ name: one.manifest.name, draft: one.draft === true, replaces: one.manifest.replaces, attach: one.manifest.attach, cardinality: one.manifest.cardinality })),
-      region: document.querySelector('[data-testid="list-view"] [data-worker-view="task-list"]') !== null,
-      alsoAs: document.querySelector('[data-testid="built-in-list"]')?.textContent ?? null,
-    }));
-    await shot(page, "own-view-kept");
+    const kept = await page.evaluate(() => ({ listed: window.__keeper.forked().map((one) => ({ name: one.manifest.name, draft: one.draft === true })), view: document.querySelector('[data-testid="list-view"] [data-worker-view="task-list"]') !== null, original: document.querySelector('[data-testid="built-in-list"]')?.textContent ?? null }));
+    const words = await cardWords(page);
+    await shot(page, "kept");
     await page.click('[data-testid="built-in-list"]');
     await page.waitForFunction(() => location.search.includes("drawn=built-in"), null, { timeout: 10_000 });
     await page.waitForTimeout(300);
-    const builtIn = { rows: (await rows(page)).length, view: await page.evaluate(() => document.querySelector('[data-worker-view="task-list"]') !== null) };
-    report.checks.whatTheSpecCannotSayIsOfferedAsItsOwnViewKeptAsThePagesView = {
-      question,
-      drafted,
-      draftLine,
+    const original = { rows: (await rows(page)).length, view: await page.evaluate(() => document.querySelector('[data-worker-view="task-list"]') !== null) };
+    await page.goBack();
+    await page.waitForTimeout(300);
+    await page.click('[data-testid="section-undo"]');
+    await settled(page, "undone");
+    await page.waitForTimeout(300);
+    const undone = await page.evaluate(() => ({ listed: window.__keeper.forked().length, view: document.querySelector('[data-worker-view="task-list"]') !== null }));
+    report.checks.keepMakesItThePageAndOneUndoTakesItAway = {
       kept,
-      builtIn,
-      ok:
-        /That needs its own view\. Make “Tasks” its own view and change it\?/.test(question ?? "") &&
-        drafted.region &&
-        drafted.cards === 3 &&
-        drafted.listed.some((one) => one.name === "task-list" && one.draft) &&
-        kept.listed.length === 1 &&
-        kept.listed[0].name === "task-list" &&
-        !kept.listed[0].draft &&
-        kept.listed[0].replaces === "page" &&
-        kept.listed[0].cardinality === "many" &&
-        kept.region &&
-        kept.alsoAs === "Built-in list" &&
-        builtIn.rows === 3 &&
-        !builtIn.view,
+      original,
+      undone,
+      ok: kept.listed.length === 1 && !kept.listed[0].draft && kept.view && kept.original === "Original" && original.rows === 3 && !original.view && undone.listed === 0 && !undone.view && !JARGON.test(words),
     };
+    await page.click('[data-testid="section-close"]').catch(() => page.keyboard.press("Escape"));
+  }
+
+  reach("aBetterUiSuggestionOpensItsCardWithADraft");
+  {
+    await page.evaluate(() => (window.__viewScenario = "good"));
+    await menuOn(page, ROW);
+    await page.waitForFunction(() => document.querySelector('[data-menu-section="suggested"] [data-suggested-mode="better"]'), null, { timeout: 10_000 });
+    const label = await page.textContent('[data-menu-section="suggested"] [data-suggested-mode="better"]');
+    await page.click('[data-menu-section="suggested"] [data-suggested-mode="better"]');
+    await page.waitForSelector(`${BAR}:is([data-section-phase="spec"],[data-section-phase="view"]), ${CARD}[data-section-phase="design"]`, { timeout: 30_000 });
+    const phase = await page.getAttribute(CARD, "data-section-phase");
+    if (phase === "design") {
+      await page.click('[data-testid="section-own-yes"]');
+      await page.waitForSelector(`${BAR}[data-section-phase="view"]`, { timeout: 30_000 });
+    }
+    const drafted = await page.getAttribute(CARD, "data-section-phase");
+    await shot(page, "suggestion-draft");
+    report.checks.aBetterUiSuggestionOpensItsCardWithADraft = { label, phase, drafted, ok: drafted === "spec" || drafted === "view" };
+    await page.click('[data-testid="section-discard"]').catch(() => page.keyboard.press("Escape"));
+    await page.waitForTimeout(300);
+  }
+
+  reach("onAPhoneTheSameLayoutFitsAsASheet");
+  {
+    const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+    await phone.addInitScript(FAKE_AI);
+    const on = await phone.newPage();
+    on.on("pageerror", (error) => errors.push(`phone: ${error.message}`));
+    await ready(on, "/tasks");
+    await menuOn(on, ROW);
+    const seen = await menuSays(on);
+    await shot(on, "phone-menu");
+    await on.click(`${MENU} [data-menu-mode="better"]`);
+    await on.waitForSelector(`${CARD}[data-section-phase="choose"]`, { timeout: 10_000 });
+    await on.click('[data-testid="section-describe"]');
+    await on.waitForSelector(`${CARD}[data-section-phase="asking"]`);
+    await on.fill('[data-testid="section-words"]', "make the cards bigger and side by side");
+    await on.press('[data-testid="section-words"]', "Enter");
+    await on.waitForSelector(`${CARD}[data-section-phase="design"]`, { timeout: 15_000 });
+    await on.click('[data-testid="section-own-yes"]');
+    await on.waitForSelector(`${BAR}[data-section-phase="view"]`, { timeout: 30_000 });
+    const clear = await barClear(on);
+    await shot(on, "phone-design-draft");
+    await on.click('[data-testid="section-discard"]');
+    report.checks.onAPhoneTheSameLayoutFitsAsASheet = {
+      order: seen.order,
+      box: seen.box,
+      clear,
+      ok: seen.order[0] === "menu-type" && seen.order[1] === "menu-modes" && offersBetter(seen) && seen.box !== null && seen.box.left >= 0 && seen.box.right <= 390 && clear.clear && clear.inWindow,
+    };
+    await phone.close();
   }
 
   reach("aSeatThatMayNotChangeTheAppIsNotOffered");
@@ -436,8 +641,8 @@ try {
     visitor.on("pageerror", (error) => errors.push(error.message));
     await ready(visitor, "/tasks", "?visitor=1");
     await menuOn(visitor, "[data-graview-page-title]");
-    const seen = await offered(visitor);
-    report.checks.aSeatThatMayNotChangeTheAppIsNotOffered = { ...seen, ok: seen.heading === null && seen.rows.length === 0 && !seen.outlined };
+    const seen = await menuSays(visitor);
+    report.checks.aSeatThatMayNotChangeTheAppIsNotOffered = { modes: seen.modes, ok: !seen.modes.some((one) => one.mode === "better") && !(await visitor.$('[data-testid="section-outline"]')) };
     await visitor.close();
   }
 

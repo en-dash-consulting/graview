@@ -235,11 +235,15 @@ async function ready(page, query = "") {
   await page.waitForFunction(() => document.querySelector('[data-worker-view-place="week"] > [data-worker-view="week"]')?.shadowRoot?.querySelector("h2"), null, { timeout: 30_000 });
 }
 
-/** Opens "Make “<heading>” better" and presses one of its rows. */
+/** Opens ✨ Better UI on the section under "<heading>" and presses one of its card's ways in. */
 async function choose(page, heading, item) {
   await openMenuOn(page, heading);
-  await page.click(`${MENU} [data-menu-item="${item}"]`);
+  await page.click(`${MENU} [data-menu-mode="better"]`);
+  await page.waitForSelector(`${CARD}[data-section-phase="choose"]`, { timeout: 10_000 });
+  await page.click(`${CARD} [data-testid="${item}"]`);
 }
+/* Words no person should read on the card or the bar. */
+const JARGON = /own view|\bhost\b|stylesheet|\bspec\b|also as|worker|\bcss\b|manifest/i;
 
 const settled = (page, phase) => page.waitForSelector(`${CARD}[data-section-phase="${phase}"]`, { timeout: 30_000 });
 
@@ -264,8 +268,8 @@ try {
       const box = outline?.getBoundingClientRect();
       return {
         title: menu?.querySelector("strong")?.textContent ?? null,
-        heading: menu?.querySelector('[data-menu-section="make-better"]')?.textContent ?? null,
-        rows: [...(menu?.querySelectorAll('[data-menu-section="make-better"] [data-menu-item]') ?? [])].map((row) => row.getAttribute("data-menu-item")),
+        modes: [...(menu?.querySelectorAll("[data-menu-mode]") ?? [])].map((one) => one.getAttribute("data-menu-mode")),
+        field: menu?.querySelector('[data-testid="menu-type"]')?.getAttribute("placeholder") ?? null,
         outline: box ? { left: Math.round(box.left), top: Math.round(box.top), width: Math.round(box.width), height: Math.round(box.height) } : null,
         section: { left: Math.round(section.left), top: Math.round(section.top), width: Math.round(section.width), height: Math.round(section.height) },
       };
@@ -274,7 +278,7 @@ try {
     const around = seen.outline && Math.abs(seen.outline.left - (seen.section.left - 3)) <= 2 && Math.abs(seen.outline.width - (seen.section.width + 6)) <= 2 && Math.abs(seen.outline.height - (seen.section.height + 6)) <= 2;
     report.checks.aSectionUnderTheCursorNamesTheMenuAndIsOutlined = {
       ...seen,
-      ok: seen.title === "Doing" && /Make “Doing” better/.test(seen.heading ?? "") && seen.rows.join() === "section-just-do-it,section-describe,section-highlight" && around === true,
+      ok: seen.title === "Doing" && seen.modes.join() === "chat,better" && seen.field === "Tell Graview what you want…" && around === true,
     };
     await page.keyboard.press("Escape");
   }
@@ -290,13 +294,19 @@ try {
     const card = await page.textContent(CARD);
     const others = ["This", "Notes"].every((name) => after.draft?.[name]?.html === before.live?.[name]?.html && after.draft?.[name]?.classes === before.live?.[name]?.classes);
     report.checks.justDoItRevisesOnlyThatSectionAndShowsADraft = {
+      ...(await page.evaluate(() => {
+        const bar = document.querySelector("[data-better-bar]")?.getBoundingClientRect();
+        const place = document.querySelector('[data-worker-view-place="week"] [data-graview-section-draft]')?.getBoundingClientRect();
+        return { barClear: Boolean(bar && place && !(bar.left < place.right && bar.right > place.left && bar.top < place.bottom && bar.bottom > place.top)) };
+      })),
       slot: asked?.slot,
       askedOnlyTheSection: asked?.markup?.startsWith('<section class="tk-doing"') && !asked.markup.includes("tk-notes"),
       draftDoing: after.draft?.Doing?.classes,
       othersUnchanged: others,
       liveHiddenUnderTheDraft: after.liveShown === false,
       card,
-      ok: asked?.slot === "light" && asked.markup.startsWith('<section class="tk-doing"') && !asked.markup.includes("tk-notes") && after.draft?.Doing?.classes === "tk-doing tk-better" && others && after.liveShown === false && /Draft/.test(card ?? "") && /Keep/.test(card ?? ""),
+      bar: await page.evaluate(() => Boolean(document.querySelector("[data-better-bar]"))),
+      ok: asked?.slot === "light" && asked.markup.startsWith('<section class="tk-doing"') && !asked.markup.includes("tk-notes") && after.draft?.Doing?.classes === "tk-doing tk-better" && others && after.liveShown === false && /Keep/.test(card ?? "") && /Before/.test(card ?? "") && /After/.test(card ?? "") && !JARGON.test(card ?? ""),
     };
     await page.click('[data-testid="section-discard"]');
     await page.waitForSelector(CARD, { state: "detached" });
@@ -372,7 +382,7 @@ try {
     await page.keyboard.press("Enter");
     await settled(page, "draft");
     const repaired = await page.evaluate((from) => window.__sectionPrompts.slice(from), from);
-    const notes = await page.$$eval('[data-testid="section-note"]', (all) => all.map((one) => one.textContent));
+    const notes = [];
     await page.click('[data-testid="section-discard"]');
     await page.waitForSelector(CARD, { state: "detached" });
     const from2 = await page.evaluate(() => window.__sectionPrompts.length);
@@ -393,15 +403,14 @@ try {
       tries,
       noDraftLeft: left.draft === null && left.liveShown === true,
       ok:
-        repaired.map((one) => one.slot).join() === "light,thinking" &&
+        repaired.map((one) => one.slot).join() === "light,light" &&
         (repaired[1]?.what_broke ?? []).some((one) => /tk-doing/.test(one) && /no rule styles it/.test(one)) &&
-        notes.some((note) => /Repaired once/.test(note)) &&
-        /^It could not be revised without breaking the view: .*tk-doing/.test(refused ?? "") &&
-        tries === 2 &&
+        refused === "I couldn't make a version that looks right." &&
+        tries === 3 &&
         left.draft === null &&
         left.liveShown === true,
     };
-    await page.keyboard.press("Escape");
+    await page.click('[data-testid="section-close"]');
     await page.waitForSelector(CARD, { state: "detached" });
   }
 
@@ -488,7 +497,7 @@ try {
     await openMenuOn(visitor, "Doing");
     const seen = await visitor.evaluate(() => {
       const menu = document.querySelector('[data-testid="context-menu"]');
-      return { title: menu?.querySelector("strong")?.textContent ?? null, offered: menu?.querySelector('[data-menu-section="make-better"]') !== null, rows: [...(menu?.querySelectorAll("[data-menu-item]") ?? [])].map((row) => row.getAttribute("data-menu-item")) };
+      return { title: menu?.querySelector("strong")?.textContent ?? null, offered: menu?.querySelector('[data-menu-mode="better"]') !== null, rows: [...(menu?.querySelectorAll("[data-menu-item]") ?? [])].map((row) => row.getAttribute("data-menu-item")) };
     });
     await shot(visitor, "visitor-menu");
     report.checks.aSeatThatMayNotChangeViewsIsNotOffered = { ...seen, ok: seen.title === "Doing" && seen.offered === false && !seen.rows.some((row) => row?.startsWith("section-")) };

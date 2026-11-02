@@ -24,6 +24,7 @@
  *
  *   node scripts/verify-inline-ai.mjs [--engine=chromium|webkit|firefox]
  */
+import { unfold } from "./lib/menu-more.mjs";
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -97,6 +98,7 @@ const lastBatch = (page) =>
 /** The AI section of the open menu, once its suggestions have arrived. */
 async function aiSection(page) {
   await page.waitForSelector(MENU, { timeout: 10_000 });
+  await unfold(page);
   await page.waitForSelector(`${AI} [data-ai-offer], ${AI} [data-menu-item="ai-fill"]`, { timeout: 10_000 }).catch(() => undefined);
   await page.waitForFunction(() => !document.querySelector('[data-testid="inline-ai-thinking"]'), undefined, { timeout: 10_000 }).catch(() => undefined);
   return page.evaluate(() => {
@@ -666,6 +668,7 @@ try {
   await ready(host);
   await host.click('[data-graview-pick="t-deposit"]', { button: "right" });
   await host.waitForSelector(MENU, { timeout: 10_000 });
+  await unfold(host);
   await host.waitForTimeout(400);
   const sceneOff = await host.evaluate(() => ({ section: document.querySelector('[data-menu-section="inline-ai"]') !== null, seat: document.querySelector('[data-graview-quick-ask], [data-testid="seat-field"]') !== null }));
   await putAway(host);
@@ -678,6 +681,7 @@ try {
   await host.waitForTimeout(500);
   await host.click(HEADING, { button: "right" });
   await host.waitForSelector(MENU, { timeout: 10_000 });
+  await unfold(host);
   await host.waitForTimeout(400);
   const pagesOff = await host.evaluate(() => ({
     section: document.querySelector('[data-menu-section="inline-ai"]') !== null,

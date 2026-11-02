@@ -103,13 +103,31 @@ export interface MenuSection {
    */
   readonly prepare?: () => void;
   /**
-   * WORDS TYPED IN THE MENU THIS SECTION MAY TAKE in place of the quick ask
-   * (Roadmap f-make-any-page-better): "make the cards bigger" is about how
-   * the page under the cursor looks, so "Make “Tasks” better" takes it.
-   * Asked when the typed words are told; resolves true when it took them,
-   * false to leave them to the quick ask.
+   * A WAY TO ASK, beside Chat under the menu's field (Roadmap
+   * f-make-any-page-better): ✨ Better UI on a part of a page. A section
+   * that is a mode draws no rows; the menu draws its button.
    */
-  readonly takesWords?: (words: string) => Promise<boolean>;
+  readonly mode?: MenuMode;
+}
+
+/**
+ * A WAY TO ASK UNDER THE MENU'S FIELD (Roadmap f-make-any-page-better): its
+ * name and mark ("✨ Better UI"), whether typed words are its own — asked
+ * of the Fast slot as they are typed, lighting its button — the card it
+ * opens, with the words asked at once or with nothing typed to choose how,
+ * and the nudges it suggests here.
+ */
+export interface MenuMode {
+  /** Unique in the menu; carried as `data-menu-mode`. */
+  readonly id: string;
+  readonly label: string;
+  readonly mark: string;
+  /** Whether these words are this mode's ("make the cards bigger"). */
+  readonly claims: (words: string) => Promise<boolean>;
+  /** Opens its card: with words, asked at once; without, to choose. */
+  readonly open: (words?: string) => void;
+  /** What is worth suggesting here in this mode, in words: the act alone. */
+  readonly nudges?: () => readonly string[];
 }
 
 /** A host's or a face's contribution: told what the menu is opened on, it answers a section or nothing. */

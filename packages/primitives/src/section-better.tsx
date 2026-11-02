@@ -3,7 +3,7 @@ import type { AiInteraction, AiStage, AiUsage } from "@graview/core/catalog";
 import { compareViewRevision } from "@graview/core/revisions";
 import { useGraview, type MenuViewSection, type ViewPlaceDraft, type ViewPlaceHandle } from "@graview/react/provider";
 import { sectionUnderNow, viewPlaceOf } from "@graview/react/drawing";
-import { reviseSection, type SectionStage } from "@graview/tools/section";
+import { describeChange, drawnFindings, reviseSection, type DrawnRead, type SectionStage } from "@graview/tools/section";
 import { interactionId } from "@graview/tools/inline-ai";
 import type { Telling, TellingOutcome, ToldStore } from "@graview/core/told";
 import { retryingImport } from "@graview/core/retry";
@@ -11,6 +11,7 @@ import { lazyModule } from "@graview/react/provider";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import type { SectionAsk } from "./section-menu.js";
 import { boxOf, SectionOutline } from "./section-outline.js";
+import { DraftBar, readDrawn, Redesigning } from "./better-bar.js";
 
 export { SectionOutline };
 import { nameParts, partLines, placeOfSection, type PartRead } from "./section-words.js";
@@ -38,14 +39,17 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  *                      should change here?"
  *
  * The revision is composed whole — the section replaced, every other byte
- * of the view kept — and judged before it is offered: the host's own
- * checks of a view's code, drawn as a draft in the view's place, and
- * compared with what it replaces (`compareViewRevision`): a class left
- * unstyled or a section lost is handed back to the model once, then
- * refused in words; how its height moved is said. The draft stands in the
- * view's place with Keep and Discard; Keep goes through the host's view
- * door (`KeptViews.revise`), and one Undo puts the view back. Activity
- * keeps each one as an entry.
+ * of the view kept — and judged before anybody sees it (Roadmap
+ * f-make-any-page-better): drawn as a draft in the view's place under a
+ * cover saying "Graview is redesigning “This week”…", its stylesheet read
+ * by the host's sanitizer, the host's checks of a view's code, compared
+ * with what it replaces (`compareViewRevision`, `drawnFindings`). What
+ * breaks is handed back — the light model again, then the full one once —
+ * and what never passes is said plainly. Once it passed, the cover lifts
+ * and the card is a bar at the window's foot (`DraftBar`): what changed,
+ * said by code; Before and After; another step in words, and a step back;
+ * Keep through the host's view door (`KeptViews.revise`), one Undo after.
+ * Activity keeps each one as an entry.
  */
 
 /** What the door draws: the outline over the section a menu is open on, else the card asked for. */
@@ -72,13 +76,14 @@ export interface SectionCardProps {
 
 type Phase =
   | { readonly at: "highlighting" }
+  | { readonly at: "choose" }
   | { readonly at: "asking"; readonly pointed?: { readonly name: string; readonly lines: readonly string[] } }
   | { readonly at: "working"; readonly pointed?: { readonly name: string; readonly lines: readonly string[] } }
-  | { readonly at: "draft"; readonly source: string; readonly said: string; readonly notes: readonly string[]; readonly entry: AiInteraction }
-  | { readonly at: "keeping"; readonly source: string; readonly entry: AiInteraction }
+  | { readonly at: "draft" }
+  | { readonly at: "keeping" }
   | { readonly at: "kept"; readonly source: string; readonly note?: string; readonly answer: ViewReviseAnswer; readonly entry: AiInteraction }
   | { readonly at: "undone" }
-  | { readonly at: "refused"; readonly said: string };
+  | { readonly at: "refused"; readonly said: string; readonly retry?: boolean };
 
 const WIDTH = 360;
 const GAP = 12;
@@ -165,17 +170,28 @@ function judged(handle: ViewPlaceHandle, before: string, live: ReturnType<ViewPl
   return { findings, notes };
 }
 
+/** The labels a view's drawing shows for its records: each keyed row's words. */
+function keyedLabels(root: ParentNode | null | undefined): string[] {
+  if (!root) return [];
+  return [...new Set([...root.querySelectorAll("[data-key]")].map((one) => (one.textContent ?? "").replace(/\s+/g, " ").trim()).filter((label) => label.length > 1 && label.length < 80))].slice(0, 40);
+}
+
 export function SectionCard({ ask, close }: SectionCardProps) {
-  const { ai, aiDesk, principal, keptViews } = useGraview<AnySchema>();
+  const { ai, aiDesk, aiHere, session, principal, keptViews } = useGraview<AnySchema>();
   const [section, setSection] = useState<MenuViewSection>(ask.section);
   const place = placeOfSection(ask.section);
   const handle = useRef<ViewPlaceHandle | undefined>(viewPlaceOf(place));
   const draft = useRef<ViewPlaceDraft | null>(null);
   const card = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
-  const [phase, setPhase] = useState<Phase>(ask.mode === "highlight" ? { at: "highlighting" } : ask.mode === "describe" && !ask.words ? { at: "asking" } : { at: "working" });
+  const [phase, setPhase] = useState<Phase>(ask.mode === "highlight" ? { at: "highlighting" } : ask.mode === "choose" ? { at: "choose" } : ask.mode === "describe" && !ask.words ? { at: "asking" } : { at: "working" });
   const [words, setWords] = useState(ask.words ?? "");
+  /* The view's code before any step, the steps since, and whether the original is shown to compare. */
   const original = useRef<string | undefined>(undefined);
+  const before = useRef<DrawnRead | null>(null);
+  const steps = useRef<{ readonly source: string; readonly said: string; readonly entry: AiInteraction }[]>([]);
+  const [comparing, setComparing] = useState(false);
+  const [, setTick] = useState(0);
   /* The telling of the revision on offer, kept with the host's door (`ai.told`), and how it ended. */
   const [telling, setTelling] = useState<Telling | null>(null);
   const tellingNow = useRef<Telling | null>(null);
@@ -210,6 +226,15 @@ export function SectionCard({ ask, close }: SectionCardProps) {
     [],
   );
 
+  /* GRAVIEW IS HERE WHILE IT WORKS, as it is beside the quick ask. */
+  const working = phase.at === "working";
+  useEffect(() => {
+    if (!working) return;
+    aiHere({ participant: `agent:graview-for-${principal.id ?? "anyone"}:${session}`, kind: "agent", name: "Graview", ...(principal.id ? { onBehalfOf: principal.id } : {}), over: null, robot: { at: null, mode: "thinking" } });
+    return () => aiHere(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [working]);
+
   const entryOf = useCallback(
     (said: string, outcome: AiInteraction["outcome"], stages: readonly SectionStage[], extra: Partial<AiInteraction> = {}): AiInteraction => ({
       id: interactionId(),
@@ -227,56 +252,73 @@ export function SectionCard({ ask, close }: SectionCardProps) {
     [principal, section.view],
   );
 
-  /** Revise the section: asked, composed whole, judged as a draft in the view's place, offered or refused. */
+  /** The draft drawn in the view's place: the code given, drawn again. */
+  const drawDraft = useCallback(async (source: string) => {
+    draft.current?.dispose();
+    const view = handle.current!;
+    const drawn = view.draft(source);
+    draft.current = drawn;
+    await drawn.drawn;
+    return drawn;
+  }, []);
+
+  /** Revise the section: asked, composed whole, drawn under cover in the view's place and judged there, shown only once it passed. */
   const revise = useCallback(
     async (mode: SectionAsk["mode"], said: string, pointed?: { readonly name: string; readonly lines: readonly string[] }, on: MenuViewSection = section) => {
       const view = handle.current;
-      const asked = mode === "just" ? `Make “${on.name}” better` : `Make “${on.name}” better: ${said}`;
-      if (!view) return setPhase({ at: "refused", said: "This view is not drawn here any more." });
+      const asked = mode === "just" || mode === "choose" ? `Make “${on.name}” better` : `Make “${on.name}” better: ${said}`;
+      if (!view) return setPhase({ at: "refused", said: "This view isn't on the page any more." });
       setPhase({ at: "working", ...(pointed ? { pointed } : {}) });
-      const before = await view.source();
-      if (before === undefined) return setPhase({ at: "refused", said: "This view is a whole worker script, and only a plain script's section can be revised here." });
-      original.current ??= before;
+      const live = await view.source();
+      if (live === undefined) return setPhase({ at: "refused", said: "This view can't be changed here." });
+      original.current ??= live;
+      const from = steps.current.at(-1)?.source ?? live;
       const started = Date.now();
-      const live = view.drawing();
+      const liveDrawing = view.drawing();
       const liveRefused = view.refused();
+      before.current ??= readDrawn(liveDrawing.root?.parentElement ?? liveDrawing.root ?? place, keyedLabels(liveDrawing.root));
       const theme = await view.theme().catch(() => ({}));
       const result = await reviseSection({
         ai,
-        source: before,
+        source: from,
         section: on.name,
-        mode,
+        mode: mode === "choose" ? "just" : mode,
         ...(said ? { words: said } : {}),
         ...(pointed ? { highlighted: [pointed.name, ...pointed.lines] } : {}),
         theme,
         shows: shownBy(on.elements),
         judge: async (source) => {
-          draft.current?.dispose();
-          draft.current = null;
           const refused = await view.check(source);
           if (refused.length > 0) return refused;
-          const drawn = view.draft(source);
-          draft.current = drawn;
+          const drawn = await drawDraft(source);
           const { failed } = await drawn.drawn;
           if (failed) return [`The view did not draw: ${failed}`];
           await new Promise((settled) => requestAnimationFrame(() => requestAnimationFrame(settled)));
-          return judged(view, before, live, liveRefused, drawn, source).findings;
+          const root = drawn.drawing().root;
+          return [...judged(view, original.current!, liveDrawing, liveRefused, drawn, source).findings, ...drawnFindings(before.current!, readDrawn(root?.parentElement ?? root, before.current!.records.map((one) => one.label)))];
         },
       });
       if (!result.ok) {
-        draft.current?.dispose();
-        draft.current = null;
-        const failed = entryOf(asked, "failed", result.stages, { failed: result.refused });
+        const last = steps.current.at(-1);
+        if (last) await drawDraft(last.source);
+        else {
+          draft.current?.dispose();
+          draft.current = null;
+        }
+        const failed = entryOf(asked, "failed", result.stages, { failed: (result.findings ?? []).join(" ") || result.refused });
         aiDesk.record(failed);
         tell(said || asked, on, true, result.stages, Date.now() - started, failed.id);
-        return setPhase({ at: "refused", said: result.refused });
+        return setPhase({ at: "refused", said: result.refused, retry: true });
       }
-      const notes = draft.current ? judged(view, before, live, liveRefused, draft.current, result.source).notes : [];
+      const root = draft.current?.drawing().root;
+      const now = readDrawn(root?.parentElement ?? root, before.current!.records.map((one) => one.label));
       const entry = entryOf(asked, "offered", result.stages);
       tell(said || asked, on, false, result.stages, Date.now() - started, entry.id);
-      setPhase({ at: "draft", source: result.source, said: result.said, notes: result.repaired ? ["Repaired once after the first try broke the view.", ...notes] : notes, entry });
+      steps.current.push({ source: result.source, said: describeChange(on.name, before.current!, now) ?? `“${on.name}” has changed. Compare Before and After.`, entry });
+      setComparing(false);
+      setPhase({ at: "draft" });
     },
-    [ai, aiDesk, entryOf, section, tell],
+    [ai, aiDesk, entryOf, section, tell, drawDraft, place],
   );
 
   /* Just do it: at once — and words typed in the menu about the look, asked at once too. */
@@ -287,30 +329,51 @@ export function SectionCard({ ask, close }: SectionCardProps) {
     void revise(ask.mode, ask.words ?? "");
   }, [ask.mode, ask.words, revise]);
 
+  const current = steps.current.at(-1);
+  const compare = useCallback(
+    async (original: boolean) => {
+      if (!current || original === comparing) return;
+      setComparing(original);
+      if (original) {
+        draft.current?.dispose();
+        draft.current = null;
+      } else await drawDraft(current.source);
+    },
+    [current, comparing, drawDraft],
+  );
+  const stepBack = useCallback(async () => {
+    if (steps.current.length < 2) return;
+    steps.current.pop();
+    setComparing(false);
+    await drawDraft(steps.current.at(-1)!.source);
+    setTick((n) => n + 1);
+  }, [drawDraft]);
+
   const keep = useCallback(async () => {
-    if (phase.at !== "draft" || !keptViews?.revise || !handle.current) return;
+    const step = steps.current.at(-1);
+    if (phase.at !== "draft" || !step || !keptViews?.revise || !handle.current) return;
     const view = handle.current;
-    const before = (await view.source()) ?? "";
-    setPhase({ at: "keeping", source: phase.source, entry: phase.entry });
+    const was = (await view.source()) ?? "";
+    setPhase({ at: "keeping" });
     try {
-      const answer = await keptViews.revise({ name: view.name, title: view.title, source: phase.source, before, section: section.name, said: phase.said });
+      const answer = await keptViews.revise({ name: view.name, title: view.title, source: step.source, before: was, section: section.name, said: step.said });
       draft.current?.dispose();
       draft.current = null;
-      view.draw(phase.source);
-      const entry: AiInteraction = { ...phase.entry, outcome: "accepted" };
-      aiDesk.record(entry);
+      view.draw(step.source);
+      aiDesk.record({ ...step.entry, outcome: "accepted" });
       ended("accepted");
-      setPhase({ at: "kept", source: before, ...(answer && answer.note ? { note: answer.note } : {}), answer, entry });
-    } catch (error) {
-      setPhase({ at: "refused", said: error instanceof Error ? error.message : "The host did not keep it." });
+      setPhase({ at: "kept", source: was, ...(answer && answer.note ? { note: answer.note } : {}), answer, entry: step.entry });
+    } catch {
+      setPhase({ at: "refused", said: "It couldn't be kept." });
     }
   }, [phase, keptViews, aiDesk, section.name, ended]);
 
   const discard = useCallback(() => {
     draft.current?.dispose();
     draft.current = null;
-    if (phase.at === "draft") {
-      aiDesk.record({ ...phase.entry, outcome: "dismissed" });
+    const step = steps.current.at(-1);
+    if (phase.at === "draft" && step) {
+      aiDesk.record({ ...step.entry, outcome: "dismissed" });
       ended("declined");
     }
     close();
@@ -328,30 +391,29 @@ export function SectionCard({ ask, close }: SectionCardProps) {
       // A quiet sign, never a 👎.
       ended("undone");
       setPhase({ at: "undone" });
-    } catch (error) {
-      setPhase({ at: "refused", said: error instanceof Error ? error.message : "The host did not put it back." });
+    } catch {
+      setPhase({ at: "refused", said: "It couldn't be put back." });
     }
   }, [phase, keptViews, aiDesk, section.name, ended]);
 
-  /* Placed beside the section, kept there as the page moves. */
+  /* While it asks, the card stands beside the section; then the bar is docked at the window's foot. */
+  const asking = phase.at === "choose" || phase.at === "asking";
   useLayoutEffect(() => {
+    if (!asking) return;
     let frame = 0;
     const follow = () => {
-      if (card.current) {
-        const drafted = place?.querySelector("[data-graview-section-draft]");
-        placeBeside(card.current, drafted ? boxOf([drafted]) : boxOf(section.elements) ?? (place ? boxOf([place]) : null));
-      }
+      if (card.current) placeBeside(card.current, boxOf(section.elements) ?? (place ? boxOf([place]) : null));
       frame = requestAnimationFrame(follow);
     };
     follow();
     return () => cancelAnimationFrame(frame);
-  }, [section, place]);
+  }, [section, place, asking]);
 
   /* The keyboard: in the field when it asks, else on the card's first button. */
   useEffect(() => {
     if (phase.at === "asking") field.current?.focus();
-    else if (phase.at !== "highlighting") card.current?.querySelector<HTMLElement>("button[data-first]")?.focus();
-  }, [phase.at]);
+    else if (asking) card.current?.querySelector<HTMLElement>("button[data-first]")?.focus();
+  }, [phase.at, asking]);
 
   /* Escape puts it away: a draft is discarded, the keyboard goes back where it was. */
   useEffect(() => {
@@ -364,8 +426,6 @@ export function SectionCard({ ask, close }: SectionCardProps) {
     document.addEventListener("keydown", key);
     return () => document.removeEventListener("keydown", key);
   }, [discard, ask.returnTo]);
-
-  const pointed = phase.at === "asking" || phase.at === "working" ? phase.pointed : undefined;
 
   if (phase.at === "highlighting") {
     return (
@@ -385,85 +445,99 @@ export function SectionCard({ ask, close }: SectionCardProps) {
     );
   }
 
-  const drafted = phase.at === "draft" || phase.at === "keeping";
-  const outlined = drafted ? [...(place?.querySelectorAll("[data-graview-section-draft]") ?? [])] : phase.at === "kept" || phase.at === "undone" ? [] : section.elements;
+  if (asking) {
+    const pointed = phase.at === "asking" ? phase.pointed : undefined;
+    return (
+      <>
+        {section.elements.length > 0 ? <SectionOutline elements={section.elements} /> : null}
+        <div ref={card} role="dialog" aria-label={`Change how “${section.name}” looks`} data-testid="section-card" data-section-phase={phase.at} data-graview-popover="" style={CARD}>
+          <p style={HEAD}>
+            Change how <strong>“{section.name}”</strong> looks
+          </p>
+          {pointed ? (
+            <p data-testid="section-pointed" style={MUTED}>
+              You pointed at {pointed.name}.
+            </p>
+          ) : null}
+          {phase.at === "choose" ? (
+            <div style={{ display: "grid", gap: 6 }}>
+              <button type="button" data-first="" data-testid="section-just-do-it" onClick={() => void revise("just", "")} style={PRIMARY}>
+                Just do it
+              </button>
+              <button type="button" data-testid="section-describe" onClick={() => setPhase({ at: "asking" })} style={QUIET}>
+                Describe changes…
+              </button>
+              <button type="button" data-testid="section-highlight" onClick={() => setPhase({ at: "highlighting" })} style={QUIET}>
+                Highlight area…
+              </button>
+            </div>
+          ) : (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (words.trim()) void revise(pointed ? "highlight" : "describe", words.trim(), pointed);
+              }}
+              style={{ display: "grid", gap: 8 }}
+            >
+              <label style={VISUALLY_HIDDEN} htmlFor="graview-section-words">
+                {pointed ? "What should change here?" : "What should change?"}
+              </label>
+              <input id="graview-section-words" ref={field} data-testid="section-words" value={words} onChange={(event) => setWords(event.target.value)} placeholder={pointed ? "What should change here?" : "What should change?"} style={FIELD} />
+              <div style={ROW}>
+                <button type="submit" data-first="" disabled={!words.trim()} style={PRIMARY}>
+                  Change it
+                </button>
+                <button type="button" onClick={close} style={QUIET}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      {outlined.length > 0 ? <SectionOutline elements={outlined} label={drafted ? "Draft" : undefined} /> : null}
-      <div ref={card} role="dialog" aria-label={`Make “${section.name}” better`} data-testid="section-card" data-section-phase={phase.at} data-graview-popover="" style={CARD}>
-        <p style={HEAD}>
-          Make <strong>“{section.name}”</strong> better
-        </p>
-        {pointed ? (
-          <p data-testid="section-pointed" style={MUTED}>
-            You pointed at {pointed.name}.
-          </p>
-        ) : null}
-        {phase.at === "asking" ? (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (words.trim()) void revise(ask.mode, words.trim(), phase.pointed);
-            }}
-            style={{ display: "grid", gap: 8 }}
-          >
-            <label style={VISUALLY_HIDDEN} htmlFor="graview-section-words">
-              {phase.pointed ? "What should change here?" : "What should change?"}
-            </label>
-            <input id="graview-section-words" ref={field} data-testid="section-words" value={words} onChange={(event) => setWords(event.target.value)} placeholder={phase.pointed ? "What should change here?" : "What should change?"} style={FIELD} />
-            <div style={ROW}>
-              <button type="submit" data-first="" disabled={!words.trim()} style={PRIMARY}>
-                Revise
-              </button>
-              <button type="button" onClick={close} style={QUIET}>
-                Cancel
-              </button>
-            </div>
-          </form>
-        ) : null}
-        <p role="status" aria-live="polite" data-testid="section-status" style={phase.at === "working" || phase.at === "keeping" ? THINKING : MUTED}>
-          {phase.at === "working" ? `Revising “${section.name}”…` : phase.at === "keeping" ? "Keeping it…" : phase.at === "draft" ? phase.said : phase.at === "kept" ? `Kept.${phase.note ? ` ${phase.note}` : ""}` : phase.at === "undone" ? "Put back as it was." : phase.at === "refused" ? phase.said : ""}
-        </p>
-        {phase.at === "draft" ? (
-          <>
-            <p data-testid="section-draft-line" style={MUTED}>
-              Draft — shown in place, not kept.
-            </p>
-            {phase.notes.map((note) => (
-              <p key={note} data-testid="section-note" style={MUTED}>
-                {note}
-              </p>
-            ))}
-            <div style={ROW}>
-              <button type="button" data-first="" data-testid="section-keep" onClick={() => void keep()} style={PRIMARY}>
-                Keep
-              </button>
-              <button type="button" data-testid="section-discard" onClick={discard} style={QUIET}>
-                Discard
-              </button>
-            </div>
-          </>
-        ) : null}
-        {phase.at === "kept" ? (
-          <div style={ROW}>
-            <button type="button" data-first="" data-testid="section-undo" onClick={() => void undo()} style={QUIET}>
-              Undo
-            </button>
-            <button type="button" onClick={close} style={QUIET}>
-              Close
-            </button>
-          </div>
-        ) : null}
-        {phase.at === "refused" || phase.at === "undone" ? (
-          <div style={ROW}>
-            <button type="button" data-first="" onClick={close} style={QUIET}>
-              Close
-            </button>
-          </div>
-        ) : null}
+      {phase.at === "working" ? <Redesigning over={place} name={section.name} /> : null}
+      <DraftBar
+        phase={phase.at}
+        name={section.name}
+        busy={phase.at === "working" || phase.at === "keeping"}
+        said={
+          phase.at === "working"
+            ? `Graview is redesigning “${section.name}”…`
+            : phase.at === "keeping"
+              ? "Keeping it…"
+              : phase.at === "draft"
+                ? (current?.said ?? "")
+                : phase.at === "kept"
+                  ? `Kept.${phase.note ? ` ${phase.note}` : ""}`
+                  : phase.at === "undone"
+                    ? "Put back as it was."
+                    : phase.at === "refused"
+                      ? phase.said
+                      : ""
+        }
+        {...(phase.at === "draft" || phase.at === "working" ? { scope: `This changes how “${section.name}” looks for everyone in this app.` } : {})}
+        {...(phase.at === "draft"
+          ? {
+              compare: { before: comparing, toggle: (original: boolean) => void compare(original) },
+              iterate: (more: string) => void revise("describe", more),
+              keep: () => void keep(),
+              discard,
+              step: { at: steps.current.length, of: steps.current.length, ...(steps.current.length > 1 ? { back: () => void stepBack() } : {}) },
+            }
+          : {})}
+        {...(phase.at === "working" ? { discard } : {})}
+        {...(phase.at === "refused" && phase.retry ? { retry: (more: string) => void revise("describe", more) } : {})}
+        {...(phase.at === "kept" ? { undo: () => void undo() } : {})}
+        {...(phase.at === "kept" || phase.at === "undone" || phase.at === "refused" ? { close } : {})}
+      >
         {/* 👍 and 👎 on what it answered, kept with its telling (Roadmap f-menu-learns). */}
-        {telling && ai.told && phase.at !== "working" && phase.at !== "asking" ? <Rate told={ai.told} telling={telling} /> : null}
-      </div>
+        {telling && ai.told && phase.at !== "working" ? <Rate told={ai.told} telling={telling} /> : null}
+      </DraftBar>
     </>
   );
 }

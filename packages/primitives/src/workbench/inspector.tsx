@@ -10,9 +10,10 @@ import { AnswerArgs, nameOf } from "./answer-args.js";
 import { VISUALLY_HIDDEN } from "../primitives/index.js";
 import { ROVING_ITEM, useRoving } from "../roving.js";
 import { menuMatches } from "../menu-words.js";
-import { MENU_RANK_FLOOR, useFastRank } from "../menu-rank.js";
+import { MENU_RANK_FLOOR, MENU_RANK_REST_MS, useFastRank } from "../menu-rank.js";
 import { TOLD_SUGGESTED_MOST, useToldSuggestions } from "../menu-told-door.js";
 import { openQuickAsk, preloadQuickAsk, useQuickAskDrawn, whereMenuStands } from "../quick-ask-desk.js";
+import { useSuggested, type MenuSuggestion } from "../menu-suggested.js";
 import type { InspectorPlacement } from "./inspector-door.js";
 import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -325,6 +326,44 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   if (!onRow) heldRank.current = { words: typed.trim(), rank: fastRanked };
   const fastRank = onRow ? (heldRank.current.words === typed.trim() ? heldRank.current.rank : null) : fastRanked;
   /*
+   * TWO WAYS TO ASK, UNDER THE FIELD (Roadmap f-make-any-page-better): 💬
+   * Chat — the records, the app's structure, anything broader, the quick
+   * ask's card — and ✨ Better UI where the part under the cursor lends it
+   * (a section's `mode`). As words are typed the Fast slot says which they
+   * are and lights it; a click, or the arrows, choose the other; with
+   * nothing typed each opens its card.
+   */
+  const better = useMemo(() => [...beside.start, ...beside.end].find((section) => section.mode)?.mode, [beside]);
+  const modes: readonly ("chat" | "better")[] = menuAt === null ? [] : [...(asks ? (["chat"] as const) : []), ...(better ? (["better"] as const) : [])];
+  const [modeChosen, setModeChosen] = useState<"chat" | "better" | null>(null);
+  const [modeHeard, setModeHeard] = useState<{ readonly words: string; readonly mode: "chat" | "better" } | null>(null);
+  useEffect(() => setModeChosen(null), [menuAt, typed]);
+  useEffect(() => {
+    const asked = typed.trim();
+    if (!better || !asks || asked === "") return;
+    let live = true;
+    const timer = setTimeout(() => void better.claims(asked).then((look) => live && setModeHeard({ words: asked, mode: look ? "better" : "chat" }), () => undefined), MENU_RANK_REST_MS);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [typed, better, asks]);
+  const modeLit: "chat" | "better" | null = modes.length === 0 ? null : (modeChosen ?? (modes.length === 1 ? modes[0]! : modeHeard && modeHeard.words === typed.trim() ? modeHeard.mode : "chat"));
+  /* SUGGESTED: two or three things worth doing here, each tagged by its way, picked by the Fast slot once it answers. */
+  const suggestCandidates = useMemo((): MenuSuggestion[] => {
+    if (menuAt === null || modes.length === 0) return [];
+    const nudges = (better?.nudges?.() ?? []).map((label, at): MenuSuggestion => ({ key: `nudge:${at}`, label, mode: "better", source: "nudge" }));
+    const told = toldLike.slice(0, 2).map((one): MenuSuggestion => ({ key: one.key, label: one.label, mode: "chat", source: "told" }));
+    const acts = affordances
+      .filter((one) => !one.destructive && !one.ties && one.provider !== "invariant")
+      .slice(0, 2)
+      .map((one): MenuSuggestion => ({ key: `act:${one.id}`, label: one.label, mode: "chat", source: "act" }));
+    return asks ? [...nudges, ...told, ...acts] : nudges;
+  }, [menuAt, modes.length, better, toldLike, affordances, asks]);
+  /* What the answer depends on: the record the menu is on (a new object whenever it changes), else the graph as it stands. */
+  const dependsOn = useMemo(() => (menuAt?.on !== undefined ? (store.graph.getNode(menuAt.on) as object | undefined) : undefined) ?? graphStamp(store), [menuAt, store, affordances]);
+  const suggested = useSuggested(ai, suggestCandidates, { name: menuAt?.title ?? (selection.length === 1 ? nameOf(store, selection[0]!) : "this"), opened: menuAt, better: better !== undefined, depends: dependsOn }, onRow);
+  /*
    * A REFUSAL IS A RESULT, said where the button was pressed.
    *
    * A mutation that throws — a validation failure, a guard's own sentence —
@@ -525,7 +564,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
    * tail honest. Everything past nine scrolls inside the pane's own box
    * once shown.
    */
-  const fits = Math.max(1, Math.min(9, affordances.length));
+  const fits = atPointer ? 4 : Math.max(1, Math.min(9, affordances.length));
 
   /*
    * ORDERED FOR READING, not only for ranking: what a broken rule demands,
@@ -577,11 +616,16 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
           const items = (section.items ?? []).filter((item) => fitsTyped(`item:${item.id}`, item.label));
           return items.length > 0 ? [{ id: section.id, ...(section.heading ? { heading: section.heading } : {}), items }] : [];
         });
-  const startSections = narrowed(beside.start);
-  const endSections = narrowed(beside.end);
+  /* A way to ask draws no rows: its button is under the field. Past the first acts, the rest wait behind More… until it is pressed or words are typed. */
+  const folded = atPointer && !expanded && words === "";
+  const startSections = narrowed(beside.start).filter((section) => (section.items?.length ?? 0) > 0 || section.render);
+  const endSections = narrowed(beside.end).filter((section) => (section.items?.length ?? 0) > 0 || section.render);
+  /* Which acts wait behind More…: past the first few, while folded. Drawn, and hidden — no stop for the keyboard, nothing a screen reader is told — until More… is pressed. */
+  const behindMore = new Set(folded ? shown.slice(fits).map((entry) => entry.id) : []);
+  const moreWaits = folded && (arranged.length > fits || withheld.length > 0 || beside.end.some((section) => (section.items?.length ?? 0) > 0 || section.render));
   /* What the words are asked about, said in the Ask row: the menu's title, the one record, else "this". */
   const askedAbout = menuAt?.title ?? (selection.length === 1 ? nameOf(store, selection[0]!) : selection.length > 1 ? `${selection.length} selected` : "this");
-  const askRow = atPointer && words !== "" && asks;
+  const askRow = atPointer && words !== "" && modes.length > 0;
   /* Up to two that worked before, the Fast slot's likeliest first once it has answered. */
   const toldShown = atPointer && words !== "" ? (fastRank === null ? toldLike : [...toldLike].sort((a, b) => (fastRank.get(b.key) ?? 0) - (fastRank.get(a.key) ?? 0))).slice(0, TOLD_SUGGESTED_MOST) : [];
   /*
@@ -604,29 +648,28 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         startSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`))[0] ??
         shown.filter((entry) => !entry.destructive).map((entry) => `act:${entry.id}`)[0] ??
         endSections.flatMap((section) => (section.items ?? []).map((item) => `item:${item.id}`))[0] ??
-        (askRow ? "ask" : null));
-  const ask = () => {
+        (askRow && modeLit ? "mode" : null));
+  const ask = (asked: string = words) => {
     if (!menuAt) return;
-    const asked = words;
     const back = menuAt.returnTo ?? null;
     // The card opens where the menu stood, read before the menu goes.
     const from = whereMenuStands(asideRef.current);
     // The quick ask's card, where the menu stood, answering the words at once: its thinking marked on the thing itself.
-    const quick = () => openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked, returnTo: back, ...(from ? { from } : {}) });
-    /*
-     * Words about how the part under the cursor looks are a section's to take ("Make “Tasks” better", Roadmap f-make-any-page-better); the rest the quick ask's.
-     * The menu stays, the keyboard in it, until the words are placed: a menu put away first left the keyboard on nothing while the Fast slot answered.
-     */
-    const taker = [...beside.start, ...beside.end].find((section) => section.takesWords);
-    if (!taker) {
-      setMenuAt(null);
-      return quick();
-    }
-    const placed = (took: boolean) => {
-      setMenuAt(null);
-      if (!took) quick();
-    };
-    void taker.takesWords!(asked).then(placed, () => placed(false));
+    setMenuAt(null);
+    openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, ...(asked ? { asked } : {}), returnTo: back, ...(from ? { from } : {}) });
+  };
+  /** A way to ask, pressed: Chat asks the quick ask (the words, or nothing yet); Better UI opens its card (the words asked at once, or to choose). */
+  const runMode = (mode: "chat" | "better", said = words) => {
+    if (!menuAt) return;
+    if (mode === "chat") return ask(said);
+    setMenuAt(null);
+    better?.open(said || undefined);
+  };
+  /** A suggestion taken: through its way's card, previewed there before anything lands. */
+  const takeSuggested = (one: MenuSuggestion) => {
+    const told = one.source === "told" ? toldLike.find((each) => each.key === one.key) : undefined;
+    if (told && one.mode === "chat") return takeTold(told);
+    runMode(one.mode === "better" && better ? "better" : "chat", one.label);
   };
   /* A suggestion taken: its words asked on the card, about what the menu is on, previewed like any plan — never applied from the menu. */
   const takeTold = (one: (typeof toldLike)[number]) => {
@@ -638,8 +681,9 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     openQuickAsk(aiDesk, { pointed: { on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place }, asked: one.label, suggested: one.telling.id, returnTo: back, ...(from ? { from } : {}) });
   };
   /* The menu's rows the keyboard walks, in the order they are drawn: not a disabled one, nor a field of a form an act opened. */
+  /* The ways to ask are walked with the left and right arrows; the rows, up and down from the field. */
   const walkable = (): HTMLElement[] =>
-    [...(asideRef.current?.querySelectorAll<HTMLElement>("[data-affordance]:not([disabled]), [data-menu-item]") ?? [])].filter((row) => row.closest("[data-graview-asking], [hidden]") === null);
+    [...(asideRef.current?.querySelectorAll<HTMLElement>("[data-affordance]:not([disabled]), [data-menu-item]:not([data-menu-mode])") ?? [])].filter((row) => row.closest("[data-graview-asking], [hidden]") === null);
   const litRow = (): HTMLElement | null => asideRef.current?.querySelector<HTMLElement>("[data-menu-lit]") ?? null;
   /*
    * A LETTER TYPED ANYWHERE IN THE MENU GOES INTO ITS FIELD, the keyboard
@@ -946,6 +990,110 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         </button>
       )}
 
+      {atPointer ? (
+        <input
+          ref={typeField}
+          type="text"
+          data-testid="menu-type"
+          // Where the keyboard lands as the menu opens, where a pointer is fine: the aim is to type what you want. On a phone it waits to be tapped, so no keyboard rises over the menu.
+          {...(FINE_POINTER() ? {} : { "data-graview-not-first": "" })}
+          value={typed}
+          onChange={(event) => {
+            // The first letter fetches what Enter will need; the filter itself never waits on it.
+            if (typed === "" && event.target.value !== "" && aiDesk) preloadQuickAsk(aiDesk);
+            setTyped(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              // As Enter on the row itself: the keyboard on it first, so a form the act opens takes the keyboard from it.
+              const row = litRow();
+              row?.focus({ preventScroll: true });
+              row?.click();
+            } else if (event.key === "ArrowDown") {
+              event.preventDefault();
+              (litRow() ?? walkable()[0])?.focus();
+            } else if (event.key === "Enter" && !litRow() && modeLit) {
+              event.preventDefault();
+              runMode(modeLit);
+            } else if (event.key === "Escape" && typed !== "") {
+              // The words go first; the next Escape puts the menu away.
+              event.preventDefault();
+              event.stopPropagation();
+              setTyped("");
+            }
+          }}
+          placeholder={modes.length > 0 ? "Tell Graview what you want…" : "Type to filter…"}
+          aria-label={modes.length > 0 ? `Tell Graview what you want with ${askedAbout}, or filter what can be done here` : "Filter what can be done here"}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="go"
+          style={{
+            boxSizing: "border-box",
+            width: "100%",
+            font: "inherit",
+            // A phone zooms into a field set under 16px.
+            fontSize: "max(1rem, 16px)",
+            padding: "5px 9px",
+            borderRadius: 8,
+            border: "1px solid var(--graview-edge)",
+            background: "var(--graview-panel)",
+            color: "var(--graview-ink)",
+          }}
+        />
+      ) : null}
+
+      {atPointer && modes.length > 0 ? (
+        <div role="group" aria-label={modes.length > 1 ? "Chat or Better UI" : "Chat"} data-testid="menu-modes" style={{ display: "flex", gap: 6 }}>
+          {modes.map((mode) => {
+            const on = modeLit === mode;
+            const label = mode === "chat" ? "Chat" : (better?.label ?? "Better UI");
+            const mark = mode === "chat" ? "💬" : (better?.mark ?? "✨");
+            return (
+              <button
+                key={mode}
+                type="button"
+                data-menu-mode={mode}
+                {...(mode === "chat" ? { "data-menu-item": "ask-typed" } : {})}
+                data-menu-lit={(lit === "mode" && on) || undefined}
+                aria-pressed={on}
+                aria-label={words ? `${label}: ${words}` : label}
+                onClick={() => runMode(mode)}
+                onKeyDown={(event) => {
+                  if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const next = modes[(modes.indexOf(mode) + (event.key === "ArrowRight" ? 1 : modes.length - 1)) % modes.length]!;
+                  setModeChosen(next);
+                  asideRef.current?.querySelector<HTMLElement>(`[data-menu-mode="${next}"]`)?.focus();
+                }}
+                style={on ? MODE_ON : MODE_OFF}
+              >
+                <span aria-hidden="true">{mark}</span> {label}
+                {lit === "mode" && on ? ENTER_MARK : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {atPointer && words === "" && suggested.length > 0 ? (
+        <div data-menu-section="suggested" role="group" aria-label="Suggested" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5, minHeight: suggested.length * 31 + 22 }}>
+          <span aria-hidden="true" style={GROUP_HEAD}>Suggested</span>
+          {suggested.map((one, at) => (
+            <button key={one.key} type="button" data-menu-item={`suggested-${at}`} data-suggested-mode={one.mode} onClick={() => takeSuggested(one)} style={{ ...ROW_STYLE, display: "flex", gap: 8, alignItems: "baseline", minWidth: 0 }}>
+              <span aria-hidden="true" style={{ color: "var(--graview-accent)" }}>✦</span>
+              <span title={one.label} style={{ flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{one.label}</span>
+              <span title={one.mode === "better" ? "Better UI" : "Chat"} style={{ fontSize: "0.8125rem" }}>
+                <span aria-hidden="true">{one.mode === "better" ? "✨" : "💬"}</span>
+                <span style={VISUALLY_HIDDEN}>{one.mode === "better" ? " (Better UI)" : " (Chat)"}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       {/*
         * A selected relation says WHAT IT MEANS — the declaration's own
         * sentence — and offers both of its ends as the next place to stand.
@@ -1031,56 +1179,6 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         </div>
       ) : null}
 
-      {atPointer ? (
-        <input
-          ref={typeField}
-          type="text"
-          data-testid="menu-type"
-          // Not where the keyboard lands as the menu opens: the first row is, so the arrows walk the rows; a letter typed comes here.
-          data-graview-not-first=""
-          value={typed}
-          onChange={(event) => {
-            // The first letter fetches what Enter will need; the filter itself never waits on it.
-            if (typed === "" && event.target.value !== "" && aiDesk) preloadQuickAsk(aiDesk);
-            setTyped(event.target.value);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              // As Enter on the row itself: the keyboard on it first, so a form the act opens takes the keyboard from it.
-              const row = litRow();
-              row?.focus({ preventScroll: true });
-              row?.click();
-            } else if (event.key === "ArrowDown") {
-              event.preventDefault();
-              (litRow() ?? walkable()[0])?.focus();
-            } else if (event.key === "Escape" && typed !== "") {
-              // The words go first; the next Escape puts the menu away.
-              event.preventDefault();
-              event.stopPropagation();
-              setTyped("");
-            }
-          }}
-          placeholder={asks ? "Type to filter, or tell Graview…" : "Type to filter…"}
-          aria-label={asks ? `Filter what can be done here, or tell Graview what to do about ${askedAbout}` : "Filter what can be done here"}
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          enterKeyHint="go"
-          style={{
-            boxSizing: "border-box",
-            width: "100%",
-            font: "inherit",
-            // A phone zooms into a field set under 16px.
-            fontSize: "max(1rem, 16px)",
-            padding: "5px 9px",
-            borderRadius: 8,
-            border: "1px solid var(--graview-edge)",
-            background: "var(--graview-panel)",
-            color: "var(--graview-ink)",
-          }}
-        />
-      ) : null}
 
       {atPointer ? startSections.map((section) => <SectionDrawn key={section.id} section={section} lit={lit} close={() => setMenuAt(null)} />) : null}
 
@@ -1225,7 +1323,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
               {section.items.map((affordance) => (
                 <li
                   key={affordance.id}
-                  style={{ display: "flex", gap: 2, alignItems: "stretch" }}
+                  hidden={behindMore.has(affordance.id)}
+                  style={{ display: behindMore.has(affordance.id) ? "none" : "flex", gap: 2, alignItems: "stretch" }}
                   onKeyDown={(event) => {
                     // Its pin is beside it: the arrow to the right, and back.
                     if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -1375,7 +1474,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
               ))}
             </Fragment>
           ))}
-          {hidden > 0 ? (
+          {hidden > 0 && !atPointer ? (
             <li>
               <button
                 type="button"
@@ -1418,12 +1517,13 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
       ) : null}
       {withheldShown.length > 0 ? (
         <ul
+          hidden={folded}
           data-testid="withheld"
           style={{
             margin: 0,
             padding: 0,
             listStyle: "none",
-            display: "flex",
+            display: folded ? "none" : "flex",
             flexDirection: "column",
             flexWrap: "nowrap",
             gap: 2,
@@ -1491,7 +1591,17 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         </ul>
       ) : null}
 
-      {atPointer ? endSections.map((section) => <SectionDrawn key={section.id} section={section} lit={lit} close={() => setMenuAt(null)} />) : null}
+      {moreWaits ? (
+        <button type="button" data-menu-item="more" onClick={() => setExpanded(true)} style={{ ...ROW_STYLE, color: "var(--graview-ink-muted)" }}>
+          More…
+        </button>
+      ) : null}
+      {atPointer && endSections.length > 0 ? (
+        <div data-menu-more="" hidden={folded} style={{ display: folded ? "none" : "contents" }}>
+          {/* A section drawn in place of rows (the AI's) is drawn only once More… is pressed: Suggested is what asks the Fast slot as the menu opens. */}
+          {endSections.filter((section) => !folded || !section.render).map((section) => <SectionDrawn key={section.id} section={section} lit={lit} close={() => setMenuAt(null)} />)}
+        </div>
+      ) : null}
 
       {/* What worked before, like these words: chosen, asked and previewed on the card (Roadmap f-menu-learns). */}
       {toldShown.length > 0 ? (
@@ -1502,15 +1612,6 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
               {lit === one.key ? ENTER_MARK : null}
             </button>
           ))}
-        </div>
-      ) : null}
-      {/* The words typed, asked about what the menu was opened on: always the last row, where the host lent a model. */}
-      {askRow ? (
-        <div data-menu-section="ask" style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5 }}>
-          <button type="button" data-menu-item="ask-typed" data-menu-lit={lit === "ask" || undefined} onClick={ask} style={{ ...ROW_STYLE, ...(lit === "ask" ? LIT_STYLE : {}) }}>
-            Tell Graview <span style={{ fontWeight: 600 }}>“{words}”</span>
-            {lit === "ask" ? ENTER_MARK : null}
-          </button>
         </div>
       ) : null}
       {atPointer && words !== "" && !askRow && lit === null && shown.length === 0 && withheldShown.length === 0 ? (
@@ -1546,6 +1647,22 @@ function typingIn(element: HTMLElement): boolean {
 /** A menu's row, and the one Enter runs from the field, lit, with the key that runs it said. */
 const ROW_STYLE = { padding: "5px 10px", fontSize: "0.875rem", borderRadius: 8, width: "100%", textAlign: "left", borderWidth: 1, borderStyle: "solid", borderColor: "transparent", background: "none", boxShadow: "none" } as const;
 const LIT_STYLE = { background: "var(--graview-panel-muted)" } as const;
+/** One object for the graph as it stands, a new one once anything is applied: what a list's Suggested is asked again by. */
+const STAMPS = /* @__PURE__ */ new WeakMap<object, { readonly length: number; readonly stamp: object }>();
+function graphStamp(store: { readonly log: { all(): readonly unknown[] } }): object {
+  const length = store.log.all().length;
+  const held = STAMPS.get(store);
+  if (held && held.length === length) return held.stamp;
+  const stamp = { length };
+  STAMPS.set(store, { length, stamp });
+  return stamp;
+}
+/** Whether the pointer is a fine one (a mouse, a trackpad): there the menu's field takes the keyboard as it opens. */
+const FINE_POINTER = () => typeof matchMedia === "function" && matchMedia("(pointer: fine)").matches;
+const MODE_BASE = { display: "inline-flex", alignItems: "center", gap: 5, minHeight: 30, padding: "0 11px", fontSize: "0.8125rem", borderRadius: 999, cursor: "pointer", borderWidth: 1, borderStyle: "solid", boxShadow: "none" } as const;
+const MODE_ON = { ...MODE_BASE, borderColor: "var(--graview-accent)", background: "color-mix(in srgb, var(--graview-accent) 14%, transparent)", color: "var(--graview-ink)", fontWeight: 600 } as const;
+const MODE_OFF = { ...MODE_BASE, borderColor: "var(--graview-edge)", background: "none", color: "var(--graview-ink-muted)" } as const;
+const GROUP_HEAD = { fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)", padding: "0 10px" } as const;
 const ENTER_MARK = (
   <span aria-hidden="true" title="Enter runs it" style={{ float: "right", color: "var(--graview-ink-faint)", fontSize: "0.75rem" }}>
     ↵

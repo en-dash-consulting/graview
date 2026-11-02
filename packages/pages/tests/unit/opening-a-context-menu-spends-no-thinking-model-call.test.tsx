@@ -112,6 +112,13 @@ const close = async () => {
 const menu = () => document.querySelector<HTMLElement>(MENU);
 const item = (id: string) => menu()?.querySelector<HTMLButtonElement>(`[data-menu-item="${id}"]`) ?? null;
 const offers = () => menu()?.querySelectorAll("[data-ai-offer]").length ?? 0;
+const suggestedRows = () => menu()?.querySelectorAll('[data-menu-section="suggested"] [data-menu-item]').length ?? 0;
+/* The AI's own section stands behind More…, with what else the menu holds. */
+const more = async () => {
+  const button = item("more");
+  if (button) await act(async () => button.click());
+  await settle();
+};
 
 describe("opening a context menu spends no thinking-model call", () => {
   it("with only a thinking slot, opening and closing the menu makes no AI call, and Suggest… asks with one press", async () => {
@@ -119,6 +126,7 @@ describe("opening a context menu spends no thinking-model call", () => {
     const { host } = await rendered({ thinking });
     await openOn(host);
     expect(menu()).not.toBeNull();
+    await more();
     expect(menu()!.querySelector('[data-testid="inline-ai"]')).not.toBeNull();
     expect(menu()!.querySelector('[data-testid="inline-ai-thinking"]')).toBeNull();
     expect(offers()).toBe(0);
@@ -127,6 +135,7 @@ describe("opening a context menu spends no thinking-model call", () => {
     expect(calls).toEqual({ fast: 0, thinking: 0 });
 
     await openOn(host);
+    await more();
     const suggest = item("ai-suggest");
     expect(suggest?.textContent).toBe("Suggest…");
     await act(async () => suggest!.click());
@@ -138,19 +147,22 @@ describe("opening a context menu spends no thinking-model call", () => {
     expect(item("ai-suggest")).toBeNull();
   });
 
-  it("with a Fast slot, the menu still suggests as it opens, from the Fast slot only", async () => {
+  it("with a Fast slot, the menu's Suggested asks it once as it opens, and nothing else does", async () => {
     const { calls, fast, thinking } = counted();
     const { host } = await rendered({ fast, thinking });
     await openOn(host);
+    await settle();
     expect(calls).toEqual({ fast: 1, thinking: 0 });
-    expect(offers()).toBeGreaterThan(0);
-    expect(item("ai-suggest")).toBeNull();
+    expect(suggestedRows()).toBeGreaterThan(0);
+    expect(offers()).toBe(0);
   });
 
   it("a host that says suggestOnOpen: false is asked only when Suggest… is pressed, even with a Fast slot", async () => {
     const { calls, fast } = counted();
     const { host } = await rendered({ fast, suggestOnOpen: false });
     await openOn(host);
+    expect(calls).toEqual({ fast: 0, thinking: 0 });
+    await more();
     expect(calls).toEqual({ fast: 0, thinking: 0 });
     await act(async () => item("ai-suggest")!.click());
     await settle();

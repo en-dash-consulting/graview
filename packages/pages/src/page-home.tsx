@@ -152,10 +152,9 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
             </Bleed>
           </HomeLine.Provider>
           {hostsHome ? (
-            <p style={{ ...quiet, margin: 0 }} data-testid="home-also-as">
-              Also as:{" "}
-              <Link to="/?drawn=built-in" style={{ color: "inherit" }} data-testid="built-in-home">
-                Built-in home
+            <p style={{ ...quiet, margin: 0 }} data-testid="home-original">
+              <Link to="/?drawn=built-in" style={{ color: "inherit" }} data-testid="built-in-home" aria-label="The original home page">
+                Original
               </Link>
             </p>
           ) : null}

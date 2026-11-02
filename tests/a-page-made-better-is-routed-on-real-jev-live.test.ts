@@ -80,4 +80,48 @@ describe.skipIf(!key)("make any page better, on real Jev", () => {
     }
     console.log(`LIVE EVAL make any page better: ${agreed} of ${PHRASINGS.length} end as wanted\n${rows.join("\n")}`);
   }, 600_000);
+
+  /*
+   * SUGGESTED, TAGGED BY JEV: the menu's candidates on Things' Tasks list —
+   * the nudges a part gives and the obvious acts — each classed 💬 Chat or
+   * ✨ Better UI, asked as the menu asks (`suggestionQuestions` in
+   * `menu-suggested.ts`), in one call.
+   */
+  it("tags each suggestion on the Tasks list as Chat or Better UI", async () => {
+    const decide = jevDecide({ apiKey: key! });
+    const SUGGESTIONS: readonly { readonly label: string; readonly mode: "chat" | "better" }[] = [
+      { label: "Show the due date on each row", mode: "better" },
+      { label: "Sort these by due date, soonest first", mode: "better" },
+      { label: "Make “Tasks” easier to read at a glance", mode: "better" },
+      { label: "Finish it", mode: "chat" },
+      { label: "Set the status", mode: "chat" },
+      { label: "Move it to another list", mode: "chat" },
+      { label: "Archive the task", mode: "chat" },
+    ];
+    const questions: Record<string, unknown> = {
+      pick: { type: "choice", instructions: "Somebody right-clicked “Tasks” in an app. Which of these would they most likely want to do next?", criteria: Object.fromEntries(SUGGESTIONS.map((one, at) => [`s${at + 1}`, one.label])) },
+    };
+    SUGGESTIONS.forEach((one, at) => {
+      questions[`about_s${at + 1}`] = {
+        type: "choice",
+        instructions: `Is “${one.label}” about how “Tasks” looks or is laid out, or about the records in it?`,
+        criteria: { look: "How it looks or is laid out: style, size, what each row or card shows, its order or grouping", records: "The records themselves: changing, finishing, adding, assigning or asking about them" },
+      };
+    });
+    const began = Date.now();
+    const decided = await decide({ on: "Tasks" }, questions as never);
+    const ms = Date.now() - began;
+    const pick = decided.answers["pick"];
+    const rows = ["| suggestion | want | Jev tagged | confidence |", "|---|---|---|---|"];
+    let agreed = 0;
+    SUGGESTIONS.forEach((one, at) => {
+      const answer = decided.answers[`about_s${at + 1}`];
+      const tagged = answer?.type === "choice" ? (answer.choice === "look" ? "better" : "chat") : "—";
+      if (tagged === one.mode) agreed += 1;
+      rows.push(`| ${one.label} | ${one.mode === "better" ? "✨ Better UI" : "💬 Chat"} | ${tagged === "better" ? "✨ Better UI" : tagged === "chat" ? "💬 Chat" : "—"} | ${answer?.type === "choice" ? answer.confidence.toFixed(2) : "—"} |`);
+    });
+    const top = pick?.type === "choice" ? Object.entries(pick.probabilities).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => SUGGESTIONS[Number(k.slice(1)) - 1]?.label) : [];
+    console.log(`LIVE EVAL suggestions: ${agreed} of ${SUGGESTIONS.length} tagged as wanted, in one call of ${ms} ms; Jev's top three: ${top.join(" · ")}\n${rows.join("\n")}`);
+    expect(agreed).toBeGreaterThan(0);
+  }, 120_000);
 });

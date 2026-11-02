@@ -1,7 +1,7 @@
 export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, PLACE_MENU_EVENT, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
 export { MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.js";
-export type { MenuColumn, MenuItem, MenuPage, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
+export type { MenuColumn, MenuItem, MenuMode, MenuPage, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";
 export { alsoWhenSectionsArrive, partsWanted, sectionsArrive, sectionsWanted, sectionUnderNow, setViewPlace, viewPlaceOf } from "./view-places.js";
 export type { MenuViewSection, ViewPlaceDraft, ViewPlaceDrawing, ViewPlaceHandle } from "./view-places.js";
 export { BesideTheMap } from "./beside-the-map.js";

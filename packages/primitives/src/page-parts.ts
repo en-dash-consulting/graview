@@ -1,4 +1,4 @@
-import { nounOf, pluralLabel, type AnySchema } from "@graview/core";
+import { fieldWords, nounOf, pluralLabel, type AnySchema } from "@graview/core";
 import type { GraviewContextValue, MenuPage } from "@graview/react/provider";
 import { mayChangeDeclaration } from "@graview/tools/section";
 
@@ -84,4 +84,48 @@ export function pageMayChange(part: PagePart, here: PartHere): boolean {
   const spec = here.onProposeChange !== undefined && here.composeChange !== undefined && mayChangeDeclaration(here.store, here.principal);
   const fork = part.slot !== "place" && typeof here.keptViews?.fork === "function" && typeof here.keptViews.draftFork === "function" && here.keptViews.current().may.views === true;
   return spec || fork;
+}
+
+const ISO = /^\d{4}-\d{2}-\d{2}/;
+/** A value as a page would say it, for finding it in the page's words: a day as "Sep 3". */
+const sayable = (value: unknown): string | undefined => {
+  if (typeof value === "number") return String(value);
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  if (ISO.test(value)) {
+    const day = new Date(`${value.slice(0, 10)}T12:00:00`);
+    return Number.isNaN(day.getTime()) ? undefined : day.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  return value.length <= 40 ? value : undefined;
+};
+
+/**
+ * WHAT IS WORTH SUGGESTING ON A PART (Roadmap f-make-any-page-better), as
+ * ✨ Better UI nudges in the menu: a field the rows do not show
+ * ("Show due dates on each row"), a list with dates not sorted by them
+ * ("Sort these by due date"), and, always, making it easier to read.
+ */
+export function nudgesFor(part: PagePart, here: PartHere): string[] {
+  const nudges: string[] = [];
+  const { store } = here;
+  const text = ((part.main as HTMLElement | null)?.innerText ?? "").toLowerCase();
+  if ((part.slot === "list" || part.slot === "group") && part.kind) {
+    const definition = store.schema.tryDefinition(part.kind);
+    const fields = Object.keys(((definition as { fields?: { shape?: object } } | undefined)?.fields?.shape ?? {}) as object).filter((field) => !["label", "name", "title"].includes(field));
+    const shown = store.graph.nodesOfKind(part.kind).filter((node) => text.includes(String((node as Record<string, unknown>)["label"] ?? "").toLowerCase())).slice(0, 6);
+    const words = (field: string) => fieldWords(definition, field).toLowerCase();
+    const dated = fields.find((field) => shown.some((node) => typeof (node as Record<string, unknown>)[field] === "string" && ISO.test(String((node as Record<string, unknown>)[field]))));
+    const missing = fields.find((field) => {
+      const said = shown.map((node) => sayable((node as Record<string, unknown>)[field])).filter((one): one is string => one !== undefined);
+      return said.length > 0 && said.every((one) => !text.includes(one.toLowerCase()));
+    });
+    if (missing) {
+      const day = shown.some((node) => ISO.test(String((node as Record<string, unknown>)[missing] ?? "")));
+      nudges.push(day && !/date|day/.test(words(missing)) ? `Show the ${words(missing)} date on each row` : `Show ${words(missing)} on each row`);
+    }
+    const sorted = here.views.arrangement?.()?.lists?.[part.kind] as { readonly sort?: string | { readonly by?: string } } | undefined;
+    const by = typeof sorted?.sort === "string" ? sorted.sort : sorted?.sort?.by;
+    if (dated && by !== dated) nudges.push(`Sort these by ${/date|day/.test(words(dated)) ? words(dated) : `${words(dated)} date`}, soonest first`);
+  }
+  nudges.push(`Make “${part.name}” easier to read at a glance`);
+  return nudges.slice(0, 3);
 }
